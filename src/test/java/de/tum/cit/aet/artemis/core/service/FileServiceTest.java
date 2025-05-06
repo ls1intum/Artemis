@@ -42,6 +42,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.util.ResourceUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class FileServiceTest extends AbstractSpringIntegrationIndependentTest {
@@ -171,7 +172,7 @@ class FileServiceTest extends AbstractSpringIntegrationIndependentTest {
         FileUtils.writeStringToFile(filePath.toFile(), payload, StandardCharsets.UTF_8);
         Path newFolder = Path.of(".", "exportTest", "newFolder");
 
-        Path newPath = fileService.copyExistingFileToTarget(filePath, newFolder);
+        Path newPath = fileService.copyExistingFileToTarget(filePath, newFolder, FilePathType.COURSE_ICON);
         assertThat(newPath).isNotNull();
 
         assertThat(FileUtils.readFileToString(newPath.toFile(), StandardCharsets.UTF_8)).isEqualTo(payload);
@@ -179,7 +180,7 @@ class FileServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     void testCopyExistingFileToTarget_newFile() {
-        assertThat(fileService.copyExistingFileToTarget(null, Path.of(".", "exportTest"))).isNull();
+        assertThat(fileService.copyExistingFileToTarget(null, Path.of(".", "exportTest"), FilePathType.DRAG_ITEM)).isNull();
     }
 
     @Test
@@ -187,7 +188,7 @@ class FileServiceTest extends AbstractSpringIntegrationIndependentTest {
         // We don't need to create a file here as we expect the method to terminate early
         Path tempPath = Path.of(".", "uploads", "files", "temp", "testFile.txt");
         Path newPath = Path.of(".", "exportTest");
-        assertThat(fileService.copyExistingFileToTarget(tempPath, newPath)).isNull();
+        assertThat(fileService.copyExistingFileToTarget(tempPath, newPath, FilePathType.TEMPORARY)).isNull();
     }
 
     @Test

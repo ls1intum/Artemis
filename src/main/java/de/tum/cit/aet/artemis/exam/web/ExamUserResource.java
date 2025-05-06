@@ -88,7 +88,7 @@ public class ExamUserResource {
         if (signatureFile != null) {
             String oldPathString = examUser.getSigningImagePath();
             Path basePath = FilePathService.getExamUserSignatureFilePath();
-            Path savePath = fileService.saveFile(signatureFile, basePath, false);
+            Path savePath = fileService.saveFile(signatureFile, basePath, FilePathType.EXAM_USER_SIGNATURE, false);
             examUser.setSigningImagePath(FilePathService.externalUriForFileSystemPath(savePath, FilePathType.EXAM_USER_SIGNATURE, examUser.getId()).toString());
 
             if (oldPathString != null) {

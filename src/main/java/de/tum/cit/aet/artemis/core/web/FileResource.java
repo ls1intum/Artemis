@@ -425,7 +425,7 @@ public class FileResource {
      */
     @GetMapping("files/exam-user/{examUserId}/*")
     @EnforceAtLeastInstructor
-    public ResponseEntity<byte[]> getExamUserImage(@PathVariable Long examUserId) {
+    public ResponseEntity<byte[]> getExamUserImage(@PathVariable long examUserId) {
         log.debug("REST request to get image for exam user : {}", examUserId);
         ExamUserApi api = examUserApi.orElseThrow(() -> new ExamApiNotPresentException(ExamUserApi.class));
 

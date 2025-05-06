@@ -233,7 +233,7 @@ public class AccountResource {
             fileService.schedulePathForDeletion(FilePathService.fileSystemPathForExternalUri(new URI(user.getImageUrl()), FilePathType.PROFILE_PICTURE), 0);
         }
 
-        Path savePath = fileService.saveFile(file, basePath, false);
+        Path savePath = fileService.saveFile(file, basePath, FilePathType.PROFILE_PICTURE, false);
         String publicPath = FilePathService.externalUriForFileSystemPath(savePath, FilePathType.PROFILE_PICTURE, user.getId()).toString();
         userRepository.updateUserImageUrl(user.getId(), publicPath);
         user.setImageUrl(publicPath);

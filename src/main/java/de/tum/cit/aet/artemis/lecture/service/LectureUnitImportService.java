@@ -168,7 +168,7 @@ public class LectureUnitImportService {
             filePathType = FilePathType.LECTURE_ATTACHMENT;
         }
         log.debug("Copying attachment file from {} to {}", oldPath, newPath);
-        Path savePath = fileService.copyExistingFileToTarget(oldPath, newPath);
+        Path savePath = fileService.copyExistingFileToTarget(oldPath, newPath, filePathType);
         attachment.setLink(FilePathService.externalUriForFileSystemPath(savePath, filePathType, entityId).toString());
         return attachment;
     }

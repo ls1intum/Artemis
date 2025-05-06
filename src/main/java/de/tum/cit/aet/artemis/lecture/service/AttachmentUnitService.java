@@ -176,7 +176,7 @@ public class AttachmentUnitService {
     private void handleFile(MultipartFile file, Attachment attachment, boolean keepFilename, Long attachmentUnitId) {
         if (file != null && !file.isEmpty()) {
             Path basePath = FilePathService.getAttachmentUnitFileSystemPath().resolve(attachmentUnitId.toString());
-            Path savePath = fileService.saveFile(file, basePath, keepFilename);
+            Path savePath = fileService.saveFile(file, basePath, FilePathType.ATTACHMENT_UNIT, keepFilename);
             attachment.setLink(FilePathService.externalUriForFileSystemPath(savePath, FilePathType.ATTACHMENT_UNIT, attachmentUnitId).toString());
             attachment.setUploadDate(ZonedDateTime.now());
         }
@@ -202,7 +202,7 @@ public class AttachmentUnitService {
 
             // Update student version of attachment
             Path basePath = FilePathService.getAttachmentUnitFileSystemPath().resolve(attachmentUnitId.toString());
-            Path savePath = fileService.saveFile(studentVersionFile, basePath.resolve("student"), true);
+            Path savePath = fileService.saveFile(studentVersionFile, basePath.resolve("student"), FilePathType.STUDENT_VERSION_SLIDES, true);
             attachment.setStudentVersion(FilePathService.externalUriForFileSystemPath(savePath, FilePathType.STUDENT_VERSION_SLIDES, attachmentUnitId).toString());
             attachmentRepository.save(attachment);
         }

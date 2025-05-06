@@ -131,7 +131,9 @@ public class ExamUserService {
             ExamUser examUser = examUserOptional.get();
             String oldPathString = examUser.getStudentImagePath();
             MultipartFile studentImageFile = fileService.convertByteArrayToMultipart("student_image", ".png", examUserWithImageDTO.image().imageInBytes());
-            Path savedPath = fileService.saveFile(studentImageFile, FilePathService.getStudentImageFilePath(), false);
+            String externalUri = "/exam-user/" + examUser.getId() + "/" + studentImageFile.getOriginalFilename();
+            Path basePath = FilePathService.getStudentImageFilePath().resolve(examUser.getId().toString());
+            Path savedPath = fileService.saveFile(studentImageFile, basePath, FilePathType.EXAM_ATTENDANCE_CHECK_STUDENT_IMAGE, true);
 
             examUser.setStudentImagePath(FilePathService.externalUriForFileSystemPath(savedPath, FilePathType.EXAM_ATTENDANCE_CHECK_STUDENT_IMAGE, examUser.getId()).toString());
             examUserRepository.save(examUser);

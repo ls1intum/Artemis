@@ -175,7 +175,7 @@ public class QuizExerciseImportService extends ExerciseImportService {
             if (Files.exists(FilePathService.fileSystemPathForExternalUri(backgroundFilePublicPath, FilePathType.DRAG_AND_DROP_BACKGROUND))) {
                 // Need to copy the file and get a new path, otherwise two different questions would share the same image and would cause problems in case one was deleted
                 Path oldPath = FilePathService.fileSystemPathForExternalUri(backgroundFilePublicPath, FilePathType.DRAG_AND_DROP_BACKGROUND);
-                Path newPath = fileService.copyExistingFileToTarget(oldPath, FilePathService.getDragAndDropBackgroundFilePath());
+                Path newPath = fileService.copyExistingFileToTarget(oldPath, FilePathService.getDragAndDropBackgroundFilePath(), FilePathType.DRAG_AND_DROP_BACKGROUND);
                 dndQuestion.setBackgroundFilePath(FilePathService.externalUriForFileSystemPath(newPath, FilePathType.DRAG_AND_DROP_BACKGROUND, null).toString());
             }
         }
@@ -219,7 +219,7 @@ public class QuizExerciseImportService extends ExerciseImportService {
             if (Files.exists(FilePathService.fileSystemPathForExternalUri(pictureFilePublicPath, FilePathType.DRAG_ITEM))) {
                 // Need to copy the file and get a new path, same as above
                 Path oldDragItemPath = FilePathService.fileSystemPathForExternalUri(pictureFilePublicPath, FilePathType.DRAG_ITEM);
-                Path newDragItemPath = fileService.copyExistingFileToTarget(oldDragItemPath, FilePathService.getDragItemFilePath());
+                Path newDragItemPath = fileService.copyExistingFileToTarget(oldDragItemPath, FilePathService.getDragItemFilePath(), FilePathType.DRAG_ITEM);
                 dragItem.setPictureFilePath(FilePathService.externalUriForFileSystemPath(newDragItemPath, FilePathType.DRAG_ITEM, null).toString());
             }
         }

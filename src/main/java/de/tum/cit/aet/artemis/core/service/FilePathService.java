@@ -198,7 +198,7 @@ public class FilePathService {
             case COURSE_ICON -> getCourseIconFilePath().resolve(filename);
             case PROFILE_PICTURE -> getProfilePictureFilePath().resolve(filename);
             case EXAM_USER_SIGNATURE -> getExamUserSignatureFilePath().resolve(filename);
-            case EXAM_ATTENDANCE_CHECK_STUDENT_IMAGE -> getStudentImageFilePath().resolve(filename);
+            case EXAM_ATTENDANCE_CHECK_STUDENT_IMAGE -> getStudentImageFileSystemPath(path, filename);
             case LECTURE_ATTACHMENT -> getLectureAttachmentFileSystemPath(path, filename);
             case SLIDE -> getSlideFileSystemPath(path, filename);
             case STUDENT_VERSION_SLIDES -> getStudentVersionSlidesFileSystemPath(path, filename);
@@ -286,6 +286,19 @@ public class FilePathService {
         }
         catch (IllegalArgumentException e) {
             throw new FilePathParsingException("External URI does not contain correct attachmentUnitId or slideId: " + path, e);
+        }
+    }
+
+    @NotNull
+    private static Path getStudentImageFileSystemPath(@NotNull Path path, @NotNull String filename) {
+        try {
+            String studentId = path.getName(1).toString();
+            Long.parseLong(studentId);
+            var suffix = Path.of(studentId, filename);
+            return getStudentImageFilePath().resolve(suffix);
+        }
+        catch (IllegalArgumentException e) {
+            throw new FilePathParsingException("External URI does not contain correct studentId: " + path, e);
         }
     }
 

@@ -24,6 +24,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { addPublicFilePrefix } from 'app/app.constants';
 
 const cssClasses = {
     alreadyRegistered: 'already-registered',
@@ -316,4 +317,6 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
             });
         }
     }
+
+    protected readonly addPublicFilePrefix = addPublicFilePrefix;
 }

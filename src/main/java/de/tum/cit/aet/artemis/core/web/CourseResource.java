@@ -292,7 +292,7 @@ public class CourseResource {
 
         if (file != null) {
             Path basePath = FilePathService.getCourseIconFilePath();
-            Path savePath = fileService.saveFile(file, basePath, false);
+            Path savePath = fileService.saveFile(file, basePath, FilePathType.COURSE_ICON, false);
             courseUpdate.setCourseIcon(FilePathService.externalUriForFileSystemPath(savePath, FilePathType.COURSE_ICON, courseId).toString());
             if (existingCourse.getCourseIcon() != null) {
                 // delete old course icon
