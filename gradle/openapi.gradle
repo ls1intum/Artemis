@@ -34,7 +34,7 @@
     }
 
     openApiGenerate {
-        generatorName = "typescript-angular"
+        generatorName = "typescript-fetch"
         inputSpec.set(file("${rootDir}/openapi/openapi.yaml").toURI().toString())
         outputDir = "${rootDir}/src/main/webapp/app/tutorialgroup/openapi"
         apiPackage = "api"
@@ -143,7 +143,7 @@
         description = 'Remove leading underscores and numeric suffixes from OpenAPI TS methods, and add // @ts-nocheck'
 
         doLast {
-            def genDir = file("$project.rootDir/src/main/webapp/app/tutorialgroup/openapi")
+            def genDir = file("$project.rootDir/src/main/webapp/app/openapi")
             fileTree(dir: genDir, include: '**/*.ts').each { File tsFile ->
                 def content = tsFile.text
 
@@ -174,19 +174,32 @@
 //    tasks.named('pruneOpenApiSpec') {
 //        dependsOn tasks.named('generateOpenApiDocs')
 //    }
-    //tasks.named('normalizeOperationIds') {
-    //    dependsOn 'pruneOpenApiSpec'
-    //}
-    tasks.named('openApiGenerate') {
-        dependsOn 'pruneOpenApiSpec'
+    tasks.register('generateHeyApi', Exec) {
+        group = "api"
+        description = "Generate TS client via Hey API codegen"
+
+        // 2) Define the CLI invocation
+        commandLine = [
+            "npx", "@hey-api/openapi-ts",
+            "--input", "$rootDir/openapi/openapi.yaml",
+            "--output", "$rootDir/src/main/webapp/app/openapi",
+            "--client", "@hey-api/client-fetch",
+        ]
+
+        // 3) Incremental build inputs/outputs (optional)
+        inputs.file("$rootDir/openapi/openapi.yaml")
+        outputs.dir("$rootDir/src/main/webapp/app/openapi")
     }
 
-    tasks.named('openApiGenerate') {
+    tasks.named('generateHeyApi') {
         finalizedBy 'postProcessTsFiles'
     }
-    tasks.named( 'openApiGenerate') {
+    tasks.named('generateHeyApi') {
+        dependsOn 'pruneOpenApiSpec'
+    }
+    tasks.named( 'generateHeyApi') {
         doFirst {
-            delete file("$rootDir/src/main/webapp/app/tutorialgroup/openapi")
+            delete file("$rootDir/src/main/webapp/app/openapi")
             println "✔ Deleted old openapi files"
         }
     }
