@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.core.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import java.time.ZonedDateTime;
 
 /**
  * Data Transfer Object for Online Courses.
@@ -13,5 +14,5 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param registrationId The registration ID associated with the LTI platform for the course.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record OnlineCourseDTO(Long id, String title, String shortName, String registrationId) {
+public record OnlineCourseDTO(Long id, String title, String shortName, String registrationId, ZonedDateTime startDate, ZonedDateTime endDate, String description, Long numberOfStudents) {
 }
