@@ -26,6 +26,7 @@ export class LtiCourseCardComponent {
             this.contentColor = getContrastingTextColor(this.courseColor);
             console.log("desc:" + this.course().description);
             console.log("date:" + this.course().startDate);
+            console.log(courseValue);
         });
     }
 }
