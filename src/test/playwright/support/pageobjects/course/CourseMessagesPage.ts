@@ -241,8 +241,20 @@ export class CourseMessagesPage {
      * @param message - The content of the message to verify.
      */
     async checkMessage(messageId: number, message: string) {
-        const messagePreview = this.getSinglePost(messageId).locator('.markdown-preview').getByText(message);
-        await expect(messagePreview).toBeVisible();
+        const postElement = this.getSinglePost(messageId);
+        await expect(postElement).toBeVisible({
+            timeout: 10000,
+        });
+
+        const markdownPreview = postElement.locator('.markdown-preview');
+        await expect(markdownPreview).toBeVisible({
+            timeout: 120000,
+        });
+
+        const messagePreview = markdownPreview.getByText(message);
+        await expect(messagePreview).toBeVisible({
+            timeout: 10000,
+        });
     }
 
     /**
@@ -274,11 +286,6 @@ export class CourseMessagesPage {
         const responsePromise = this.page.waitForResponse(`api/communication/courses/*/messages/*`);
         await postLocator.locator('#save').click();
         await responsePromise;
-
-        await this.page.waitForSelector(`#item-${messageId} .markdown-preview:has-text("${message}")`, {
-            state: 'visible',
-            timeout: 120000,
-        });
     }
 
     /**
