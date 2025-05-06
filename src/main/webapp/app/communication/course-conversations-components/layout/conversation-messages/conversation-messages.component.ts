@@ -301,11 +301,9 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             return;
         }
 
-        // Sort posts by creation date.
-        const sortedPosts = [...this.posts].sort((a, b) => {
-            const aDate = (a as any).creationDateDayjs;
-            const bDate = (b as any).creationDateDayjs;
-            return aDate?.valueOf() - bDate?.valueOf();
+        // Sort posts by the creation date
+        const sortedPosts = this.posts.sort((a, b) => {
+            return a.creationDate!.valueOf() - b.creationDate!.valueOf();
         });
 
         // Compute new grouping based on current posts.
