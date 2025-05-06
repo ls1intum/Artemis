@@ -94,6 +94,9 @@ describe('MessageInlineInputComponent', () => {
     }));
 
     it('should invoke metis service with edited post', fakeAsync(() => {
+        // Monaco editor writes a warning here that does not affect the test result, so we disable the check
+        jest.spyOn(console, 'warn').mockImplementation(() => {});
+
         component.posting = directMessageUser1;
         component.ngOnChanges();
 
