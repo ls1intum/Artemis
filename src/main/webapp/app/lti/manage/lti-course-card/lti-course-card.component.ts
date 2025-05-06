@@ -6,12 +6,13 @@ import { RouterLink } from '@angular/router';
 import { NgStyle } from '@angular/common';
 import { getContrastingTextColor } from 'app/shared/util/color.utils';
 import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 @Component({
     selector: 'jhi-overview-lti-course-card',
     templateUrl: './lti-course-card.component.html',
     styleUrls: ['../../../core/course/overview/course-card/course-card.scss'],
-    imports: [RouterLink, NgStyle, SecuredImageComponent, TranslateDirective],
+    imports: [RouterLink, NgStyle, SecuredImageComponent, TranslateDirective, ArtemisDatePipe],
 })
 export class LtiCourseCardComponent {
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
