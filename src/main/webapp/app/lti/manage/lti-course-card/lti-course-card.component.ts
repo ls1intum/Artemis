@@ -5,12 +5,13 @@ import { CachingStrategy, SecuredImageComponent } from 'app/shared/image/secured
 import { RouterLink } from '@angular/router';
 import { NgStyle } from '@angular/common';
 import { getContrastingTextColor } from 'app/shared/util/color.utils';
+import { TranslateDirective } from '../../../shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-overview-lti-course-card',
     templateUrl: './lti-course-card.component.html',
     styleUrls: ['../../../core/course/overview/course-card/course-card.scss'],
-    imports: [RouterLink, NgStyle, SecuredImageComponent],
+    imports: [RouterLink, NgStyle, SecuredImageComponent, TranslateDirective],
 })
 export class LtiCourseCardComponent {
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
@@ -24,9 +25,6 @@ export class LtiCourseCardComponent {
             const courseValue = this.course();
             this.courseColor = courseValue?.color || this.ARTEMIS_DEFAULT_COLOR;
             this.contentColor = getContrastingTextColor(this.courseColor);
-            console.log("desc:" + this.course().description);
-            console.log("date:" + this.course().startDate);
-            console.log(courseValue);
         });
     }
 }
