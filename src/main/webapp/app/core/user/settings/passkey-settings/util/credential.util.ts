@@ -45,5 +45,4 @@ export async function addNewPasskey(user: User | undefined, webauthnApiService: 
         }
         return;
     }
-    await this.updateRegisteredPasskeys();
 }

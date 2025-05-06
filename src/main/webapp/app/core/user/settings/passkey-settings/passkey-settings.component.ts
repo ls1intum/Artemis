@@ -41,8 +41,6 @@ export class PasskeySettingsComponent implements OnDestroy {
     protected readonly faTimes = faTimes;
     protected readonly faKey = faKey;
     protected readonly MAX_PASSKEY_LABEL_LENGTH = 64;
-    protected readonly addNewPasskey = (user: User | undefined, webauthnApiService: WebauthnApiService, alertService: AlertService) =>
-        addNewPasskey(user, webauthnApiService, alertService);
 
     protected alertService = inject(AlertService);
     protected webauthnApiService = inject(WebauthnApiService);
@@ -72,6 +70,11 @@ export class PasskeySettingsComponent implements OnDestroy {
 
     ngOnDestroy(): void {
         this.authStateSubscription.unsubscribe();
+    }
+
+    async addPasskey() {
+        await addNewPasskey(this.currentUser(), this.webauthnApiService, this.alertService);
+        await this.updateRegisteredPasskeys();
     }
 
     async updateRegisteredPasskeys(): Promise<void> {
