@@ -142,6 +142,7 @@
                 "editMessage": "Edit message",
                 "deleteMessage": "Delete message",
                 "replyMessage": "Reply in thread",
+                "viewThread": "View thread",
                 "forwardMessage": "Forward message",
                 "deletedContent": "Post is being deleted in {{ progress }} second(s).",
                 "undoDelete": "Undo delete",
@@ -151,7 +152,8 @@
                 "bookmarkPostArchived": "Archive saved post",
                 "bookmarkPostComplete": "Mark saved post as done",
                 "thread": "Thread",
-                "saved": "Saved for later"
+                "saved": "Saved for later",
+                "repliedToThread": "replied to a thread:"
             },
             "answerPost": {
                 "created": "New reply successfully created",

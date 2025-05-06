@@ -30,7 +30,7 @@ import { OneToOneChatService } from 'app/communication/conversations/service/one
 import { Router, RouterState, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { OneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { AnswerPostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -51,6 +51,8 @@ import { AnswerPost } from 'app/communication/shared/entities/answer-post.model'
 import { ConversationService } from 'app/communication/conversations/service/conversation.service';
 import { MockConversationService } from 'test/helpers/mocks/service/mock-conversation.service';
 import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 
 describe('PostComponent', () => {
     let component: PostComponent;
@@ -81,6 +83,8 @@ describe('PostComponent', () => {
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
                 { provide: ConversationService, useClass: MockConversationService },
                 { provide: MetisConversationService, useClass: MockMetisConversationService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
             declarations: [
                 PostComponent,
@@ -114,6 +118,9 @@ describe('PostComponent', () => {
                     },
                 } as RouterState;
                 router.setRouterState(mockRouterState);
+                global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+                    return new MockResizeObserver(callback);
+                });
             });
     });
 
@@ -567,5 +574,31 @@ describe('PostComponent', () => {
 
             expect(component.showSearchResultInAnswersHint).toBeFalse();
         });
+    });
+
+    it('should remove markdown formatting from content', () => {
+        component.posting = { ...post, displayPriority: DisplayPriority.PINNED };
+        fixture.detectChanges();
+
+        const markdownContent = `
+            This is **bold** text.
+            This is *italic* text.
+            This is a [link](http://example.com).
+            Here is some \`inline code\`.
+            ~~Strikethrough~~ should be visible.
+            <ins>Underline</ins> should be visible.
+            [user]Alice[/user] is a user.`;
+
+        const expectedOutput = `
+            This is bold text.
+            This is italic text.
+            This is a link.
+            Here is some inline code.
+            Strikethrough should be visible.
+            Underline should be visible.
+            Alice is a user.`;
+
+        component.removeMarkdown(markdownContent);
+        expect(component.newContent).toEqual(expectedOutput);
     });
 });

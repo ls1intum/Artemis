@@ -15,7 +15,7 @@
             {{ posting.creationDate | artemisDate: 'time' }}
         </span>
     }
-    @if (!isConsecutive()) {
+    @if (!isConsecutive() || posting.originalPostId) {
         <div class="ps-3">
             <jhi-posting-header
                 [previewMode]="previewMode()"
@@ -27,6 +27,18 @@
                 (onUserNameClicked)="onUserNameClicked()"
                 [lastReadDate]="lastReadDate()"
             />
+        </div>
+    }
+    @if (posting.originalPostId) {
+        <div class="message-container post-content-padding text-muted fs-smaller mt-1">
+            <div class="message-content">
+                <span class="flex-wrapper">
+                    <span class="replied-text" jhiTranslate="artemisApp.metis.post.repliedToThread"></span>
+                    <a (click)="originalPost && onTriggerNavigateToPost(originalPost)" class="one-line">
+                        {{ newContent }}
+                    </a>
+                </span>
+            </div>
         </div>
     }
     <div class="align-items-center">
@@ -203,10 +215,19 @@
                 <span jhiTranslate="artemisApp.metis.post.deleteMessage"></span>
             </button>
         }
-        <button class="dropdown-item d-flex" (click)="isCommunicationPage ? openThread.emit() : reactionsBarComponent()?.openAnswerView()">
-            <fa-icon [icon]="faComments" class="item-icon" />
-            <span jhiTranslate="artemisApp.metis.post.replyMessage"></span>
-        </button>
+        @if (!isThreadSidebar) {
+            @if (!posting.originalPostId) {
+                <button class="dropdown-item d-flex" (click)="isCommunicationPage ? openThread.emit() : reactionsBarComponent()?.openAnswerView()">
+                    <fa-icon [icon]="faComments" class="item-icon" />
+                    <span jhiTranslate="artemisApp.metis.post.replyMessage"></span>
+                </button>
+            } @else {
+                <button class="dropdown-item d-flex" (click)="isCommunicationPage ? onTriggerNavigateToPost(originalPost!) : reactionsBarComponent()?.openAnswerView()">
+                    <fa-icon [icon]="faComments" class="item-icon" />
+                    <span jhiTranslate="artemisApp.metis.post.viewThread"></span>
+                </button>
+            }
+        }
         <button class="dropdown-item d-flex" (click)="toggleSavePost()">
             <fa-icon [icon]="posting.isSaved ? faBookmark : farBookmark" class="item-icon" />
             <span [jhiTranslate]="posting.isSaved ? 'artemisApp.metis.post.removeBookmarkPost' : 'artemisApp.metis.post.bookmarkPost'"></span>
