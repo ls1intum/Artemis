@@ -1,4 +1,5 @@
 // merge-coverage-reports.mjs
+/* global console, process */
 import path from 'path';
 import { fileURLToPath } from 'url';
 import archiver from 'archiver';
@@ -65,7 +66,7 @@ if (fs.existsSync(sequentialCoveragePath)) {
     console.log('Sequential coverage report does not exist, skipping');
 }
 
-// Ensure coverage directory exists
+// Ensure a coverage directory exists
 if (!fs.existsSync(coverageDir)) {
     fs.mkdirSync(coverageDir, { recursive: true });
 }
