@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.OptionalDouble;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -159,12 +160,21 @@ public class TutorialGroupService {
         else {
             sessions = tutorialGroupSessionRepository.findAllByTutorialGroupId(tutorialGroup.getId());
         }
-        sessions.stream()
-                .filter(tutorialGroupSession -> TutorialGroupSessionStatus.ACTIVE.equals(tutorialGroupSession.getStatus())
-                        && tutorialGroupSession.getEnd().isBefore(ZonedDateTime.now()))
-                .sorted(Comparator.comparing(TutorialGroupSession::getStart).reversed()).limit(3)
-                .map(tutorialGroupSession -> Optional.ofNullable(tutorialGroupSession.getAttendanceCount())).flatMap(Optional::stream).mapToInt(attendance -> attendance).average()
-                .ifPresentOrElse(value -> tutorialGroup.setAverageAttendance((int) Math.round(value)), () -> tutorialGroup.setAverageAttendance(null));
+        OptionalDouble avg = sessions.stream()
+                // 1) only sessions that have already ended
+                .filter(s -> s.getEnd().isBefore(ZonedDateTime.now()))
+                // 2) sort newest → oldest
+                .sorted(Comparator.comparing(TutorialGroupSession::getStart).reversed())
+                // 3) pick the last three scheduled slots (even if some are cancelled)
+                .limit(3)
+                // 4) drop cancelled ones
+                .filter(s -> TutorialGroupSessionStatus.ACTIVE.equals(s.getStatus()))
+                // 5) drop those without recorded attendance
+                .map(TutorialGroupSession::getAttendanceCount).filter(Objects::nonNull)
+                // 6) average whatever remains (could be 0,1,2 or 3 sessions)
+                .mapToInt(Integer::intValue).average();
+
+        avg.ifPresentOrElse(v -> tutorialGroup.setAverageAttendance((int) Math.round(v)), () -> tutorialGroup.setAverageAttendance(null));
     }
 
     /**
