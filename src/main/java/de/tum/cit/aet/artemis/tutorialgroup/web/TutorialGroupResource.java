@@ -128,7 +128,7 @@ public class TutorialGroupResource {
      * @param tutorialGroupId the id of the tutorial group
      * @return ResponseEntity with status 200 (OK) and with body containing the title of the tutorial group
      */
-    @GetMapping("tutorial-groups/{tutorialGroupId}/titleabc")
+    @GetMapping("tutorial-groups/{tutorialGroupId}/title")
     @EnforceAtLeastStudent
     public ResponseEntity<String> getTitle(@PathVariable Long tutorialGroupId) {
         log.debug("REST request to get title of TutorialGroup : {}", tutorialGroupId);
