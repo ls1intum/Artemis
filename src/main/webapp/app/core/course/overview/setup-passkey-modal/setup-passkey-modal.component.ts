@@ -34,6 +34,7 @@ export class SetupPasskeyModalComponent {
 
     async setupPasskey() {
         await addNewPasskey(this.accountService.userIdentity, this.webauthnApiService, this.alertService);
+        this.alertService.success('artemisApp.userSettings.passkeySettingsPage.success.registration');
         this.closeModal();
     }
 
