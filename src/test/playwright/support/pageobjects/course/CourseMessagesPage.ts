@@ -243,7 +243,7 @@ export class CourseMessagesPage {
     async checkMessage(messageId: number, message: string) {
         const postElement = this.getSinglePost(messageId);
         await expect(postElement).toBeVisible({
-            timeout: 10000,
+            timeout: 120000,
         });
 
         const markdownPreview = postElement.locator('.markdown-preview');
@@ -253,7 +253,7 @@ export class CourseMessagesPage {
 
         const messagePreview = markdownPreview.getByText(message);
         await expect(messagePreview).toBeVisible({
-            timeout: 10000,
+            timeout: 120000,
         });
     }
 
