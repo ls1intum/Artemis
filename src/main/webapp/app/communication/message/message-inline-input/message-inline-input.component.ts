@@ -67,11 +67,10 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
         this.metisService.updatePost(this.posting).subscribe({
             next: () => {
                 this.isLoading = false;
+                this.cdr.detectChanges();
             },
             error: () => {
                 this.isLoading = false;
-            },
-            complete: () => {
                 this.cdr.detectChanges();
             },
         });

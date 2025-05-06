@@ -37,6 +37,11 @@ describe('MessageInlineInputComponent', () => {
         })
             .compileComponents()
             .then(() => {
+                global.ResizeObserver = jest.fn().mockImplementation(() => ({
+                    observe: jest.fn(),
+                    unobserve: jest.fn(),
+                    disconnect: jest.fn(),
+                }));
                 fixture = TestBed.createComponent(MessageInlineInputComponent);
                 component = fixture.componentInstance;
                 metisService = TestBed.inject(MetisService);
