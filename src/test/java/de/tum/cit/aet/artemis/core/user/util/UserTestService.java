@@ -204,7 +204,7 @@ public class UserTestService {
     // Test
     public void deleteUser_isSuccessful() throws Exception {
         student.setRegistrationNumber("123");
-        student.setImageUrl("https://www.somewebsite.com/image.jpg");
+        student.setImageUrl("images/user/profiles-pictures/image.jpg");
         userTestRepository.save(student);
 
         request.delete("/api/core/admin/users/" + student.getLogin(), HttpStatus.OK);
