@@ -282,6 +282,7 @@ export class MetisService implements OnDestroy {
             const updateIndex = this.cachedPosts.findIndex((cachedPost) => cachedPost.id === post.id);
 
             if (updateIndex !== -1) {
+                // We update the date immediately so that the client is aware about the post being edited without having to wait for the update call to finish
                 this.cachedPosts[updateIndex].updatedDate = dayjs();
                 this.posts$.next(this.cachedPosts);
             }
