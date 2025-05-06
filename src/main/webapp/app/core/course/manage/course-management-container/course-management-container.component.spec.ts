@@ -217,12 +217,33 @@ describe('CourseManagementContainerComponent', () => {
                 profileService = TestBed.inject(ProfileService);
                 courseSidebarService = TestBed.inject(CourseSidebarService);
                 router = TestBed.inject(Router);
-                findSpy = jest.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
+                findSpy = jest.spyOn(courseService, 'find').mockReturnValue(
+                    of(
+                        new HttpResponse({
+                            body: course1,
+                            headers: new HttpHeaders(),
+                        }),
+                    ),
+                );
                 metisConversationService = fixture.debugElement.injector.get(MetisConversationService);
 
-                findOneForDashboardSpy = jest.spyOn(courseService, 'findOneForDashboard').mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
+                findOneForDashboardSpy = jest.spyOn(courseService, 'findOneForDashboard').mockReturnValue(
+                    of(
+                        new HttpResponse({
+                            body: course1,
+                            headers: new HttpHeaders(),
+                        }),
+                    ),
+                );
 
-                jest.spyOn(courseService, 'findAllForDropdown').mockReturnValue(of(new HttpResponse({ body: coursesDropdown, headers: new HttpHeaders() })));
+                jest.spyOn(courseService, 'findAllForDropdown').mockReturnValue(
+                    of(
+                        new HttpResponse({
+                            body: coursesDropdown,
+                            headers: new HttpHeaders(),
+                        }),
+                    ),
+                );
 
                 getDeletionSummarySpy = jest.spyOn(courseAdminService, 'getDeletionSummary').mockReturnValue(
                     of(
@@ -256,7 +277,6 @@ describe('CourseManagementContainerComponent', () => {
                 jest.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
             });
     }));
-
     afterEach(() => {
         component.ngOnDestroy();
         jest.restoreAllMocks();
@@ -469,9 +489,11 @@ describe('CourseManagementContainerComponent', () => {
 
     it('should render controls if child has configuration', () => {
         const stubSubComponent = TestBed.createComponent(ControlsTestingComponent);
-        component.onSubRouteActivate(stubSubComponent.componentInstance);
         fixture.detectChanges();
+        component.courseBody()!.nativeElement = { scrollTop: 123 } as HTMLElement;
+        component.onSubRouteActivate(stubSubComponent.componentInstance);
         stubSubComponent.detectChanges();
+        expect(component.courseBody()?.nativeElement.scrollTop).toBe(0);
 
         const expectedButton = fixture.debugElement.query(By.css('#test-button'));
         expect(expectedButton).not.toBeNull();

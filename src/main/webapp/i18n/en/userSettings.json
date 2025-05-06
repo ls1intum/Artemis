@@ -9,6 +9,7 @@
             "vcsAccessTokenSettings": "VCS Token",
             "passkeys": "Passkeys",
             "accountInformation": "Account Information",
+            "learnerProfile": "Learner Profile",
             "notificationSettings": "Notifications",
             "notificationSettingsFilterInfo": "These settings also filter the notification sidebar",
             "scienceSettings": "Science",
@@ -90,17 +91,22 @@
                 "onlyOnePerAuthenticator": "You can only register one passkey for this site per authenticator (e.g. one in Apple Keychain and another one in Google Password Manager, etc.). Creating a second passkey with the same authenticator will overwrite the first registered passkey, which you will need to remove manually from Artemis.",
                 "learnMore": "Learn more about passkeys.",
                 "noneRegistered": "You have not registered any passkeys with Artemis yet.",
-                "actions": "Actions",
                 "deletePasskeyQuestion": "Do you really want to delete your passkey for passwordless authentication with Artemis?",
                 "noPasskeyRegistered": "You have not registered any passkeys with Artemis yet.",
                 "addNewPasskey": "Add a passkey",
-                "label": "Label",
-                "created": "Created",
-                "lastUsed": "Last used",
+                "yourPasskeys": "Your passkeys",
+                "created": "Created on",
+                "lastUsed": "Last used on",
+                "label": "label",
+                "validation": {
+                    "labelLength": "The label must not exceed {{maxLabelLength}} characters."
+                },
                 "error": {
                     "login": "Login with Passkey failed. Please check you registered a passkey with Artemis.",
                     "passkeyAlreadyRegistered": "You have already registered a passkey with the selected authenticator, choose a different authenticator if you want to register another passkey.",
-                    "registration": "The passkey could not be registered. Please try again."
+                    "registration": "The passkey could not be registered. Please try again.",
+                    "save": "The passkey could not be saved. Please try again.",
+                    "delete": "The passkey could not be deleted. Please try again."
                 }
             },
             "accountInformationPage": {

@@ -45,10 +45,6 @@ public class CompetencyRelationApi extends AbstractAtlasApi {
         return lectureUnitLinkRepository.saveAll(lectureUnitLinks);
     }
 
-    public void deleteAllLectureUnitLinks(Iterable<CompetencyLectureUnitLink> lectureUnitLinks) {
-        lectureUnitLinkRepository.deleteAll(lectureUnitLinks);
-    }
-
     public void deleteAllLectureUnitLinksByLectureId(Long lectureId) {
         lectureUnitLinkRepository.deleteAllByLectureId(lectureId);
     }

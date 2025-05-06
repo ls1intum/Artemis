@@ -14,6 +14,8 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { LearningPathDTO } from 'app/atlas/shared/entities/learning-path.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { ScienceService } from 'app/shared/science/science.service';
+import { MockProvider } from 'ng-mocks';
 
 describe('LearningPathStudentPageComponent', () => {
     let component: LearningPathStudentPageComponent;
@@ -54,6 +56,7 @@ describe('LearningPathStudentPageComponent', () => {
                         startLearningPathForCurrentUser: jest.fn().mockReturnValue(() => Promise.resolve()),
                     },
                 },
+                MockProvider(ScienceService),
             ],
         })
             .overrideComponent(LearningPathStudentPageComponent, {

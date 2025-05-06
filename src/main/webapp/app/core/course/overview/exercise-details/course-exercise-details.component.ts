@@ -32,7 +32,6 @@ import { MAX_RESULT_HISTORY_LENGTH, ResultHistoryComponent } from 'app/exercise/
 import { isCommunicationEnabled, isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
 import { ExerciseCacheService } from 'app/exercise/services/exercise-cache.service';
 import { IrisSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
-import { AbstractScienceComponent } from 'app/shared/science/science.component';
 import { ScienceEventType } from 'app/shared/science/science.model';
 import { PROFILE_IRIS } from 'app/app.constants';
 import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
@@ -56,6 +55,8 @@ import { LtiInitializerComponent } from './lti-initializer/lti-initializer.compo
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ResetRepoButtonComponent } from 'app/core/course/overview/exercise-details/reset-repo-button/reset-repo-button.component';
+import { ScienceService } from 'app/shared/science/science.service';
+import { CompetencyContributionComponent } from 'app/atlas/shared/competency-contribution/competency-contribution.component';
 
 interface InstructorActionItem {
     routerLink: string;
@@ -93,9 +94,10 @@ interface InstructorActionItem {
         LtiInitializerComponent,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
+        CompetencyContributionComponent,
     ],
 })
-export class CourseExerciseDetailsComponent extends AbstractScienceComponent implements OnInit, OnDestroy {
+export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     private exerciseService = inject(ExerciseService);
     private participationWebsocketService = inject(ParticipationWebsocketService);
     private participationService = inject(ParticipationService);
@@ -107,6 +109,7 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     private complaintService = inject(ComplaintService);
     private artemisMarkdown = inject(ArtemisMarkdownService);
     private readonly cdr = inject(ChangeDetectorRef);
+    private readonly scienceService = inject(ScienceService);
 
     readonly AssessmentType = AssessmentType;
     readonly PlagiarismVerdict = PlagiarismVerdict;
@@ -163,10 +166,6 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     faAngleDown = faAngleDown;
     faAngleUp = faAngleUp;
 
-    constructor() {
-        super(ScienceEventType.EXERCISE__OPEN);
-    }
-
     ngOnInit() {
         const courseIdParams$ = this.route.parent?.parent?.params;
         const exerciseIdParams$ = this.route.params;
@@ -184,11 +183,7 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
                     this.loadExercise();
                 }
 
-                // log event
-                if (this.exerciseId) {
-                    this.setResourceId(this.exerciseId);
-                }
-                this.logEvent();
+                this.scienceService.logEvent(ScienceEventType.EXERCISE__OPEN, this.exerciseId);
             });
         }
 

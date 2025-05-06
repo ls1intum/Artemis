@@ -38,7 +38,7 @@ artemis:
     external-system-request:
         batch-size: 50  # wait the time below after 50 requests
         batch-waiting-time: 30000   # in ms = 30s
-    iosAppId: "2J3C6P6X3N.de.tum.cit.artemis"
+    iosAppId: "T7PP2KY2B6.de.tum.cit.ase.artemis"
     androidAppPackage: "de.tum.cit.aet.artemis"
     androidSha256CertFingerprints: "D2:E1:A6:6F:8C:00:55:97:9F:30:2F:3D:79:A9:5D:78:85:1F:C5:21:5A:7F:81:B3:BF:60:22:71:EF:6F:60:24"
 

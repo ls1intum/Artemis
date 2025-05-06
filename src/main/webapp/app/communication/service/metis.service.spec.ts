@@ -50,6 +50,8 @@ import { Posting, PostingType, SavedPostStatus } from 'app/communication/shared/
 import { ForwardedMessageService } from 'app/communication/service/forwarded-message.service';
 import { MockForwardedMessageService } from 'test/helpers/mocks/service/mock-forwarded-message.service';
 import { ForwardedMessage } from 'app/communication/shared/entities/forwarded-message.model';
+import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
 
 describe('Metis Service', () => {
     let metisService: MetisService;
@@ -83,6 +85,7 @@ describe('Metis Service', () => {
                 MockProvider(SessionStorageService),
                 MockProvider(ConversationService),
                 { provide: MetisService, useClass: MetisService },
+                { provide: MetisConversationService, useClass: MockMetisConversationService },
                 { provide: ReactionService, useClass: MockReactionService },
                 { provide: PostService, useClass: MockPostService },
                 { provide: ForwardedMessageService, useClass: MockForwardedMessageService },
@@ -677,7 +680,7 @@ describe('Metis Service', () => {
 
         it('should update plagiarism posts received over WebSocket', () => {
             // Setup
-            const post = { ...plagiarismPost, conversation: { id: 22 } };
+            const post = { ...plagiarismPost };
 
             const mockPostDTO = {
                 post: post,
@@ -695,7 +698,7 @@ describe('Metis Service', () => {
 
             // Emulate receiving a message
             mockReceiveObservable.next(mockPostDTO);
-            expect(metisService['cachedPosts']).toContain(post);
+            expect(metisService['cachedPosts'].findIndex((post) => post.id === mockPostDTO.post.id)).toBeTruthy();
         });
 
         it('should update displayed conversation messages if new message does not match search text', fakeAsync(() => {
@@ -1078,4 +1081,50 @@ describe('Metis Service', () => {
             expect(pinnedPostsResult[0].tags).toEqual(['newTag']);
         }));
     });
+
+    it('should properly set answer.post properties when receiving a post update via WebSocket', fakeAsync(() => {
+        // Set up test data
+        metisService.setCourse(course);
+
+        // Create a post with answers in the cached posts
+        const originalPost: Post = {
+            id: 456,
+            content: 'Original content',
+            author: { id: 789, login: 'author' },
+            conversation: { id: 123 },
+            answers: [{ id: 100, content: 'Answer 1' } as AnswerPost, { id: 101, content: 'Answer 2' } as AnswerPost],
+        } as Post;
+
+        metisService['cachedPosts'] = [originalPost];
+        metisService['currentPostContextFilter'] = { conversationIds: [123] } as PostContextFilter;
+
+        // Create an updated post DTO (as would be received from WebSocket)
+        const updatedPost: Post = {
+            id: 456,
+            content: 'Updated content',
+            author: { id: 789, login: 'author' },
+            conversation: { id: 123 },
+            answers: [{ id: 100, content: 'Updated Answer 1', post: { id: 456 } } as AnswerPost, { id: 101, content: 'Updated Answer 2', post: { id: 456 } } as AnswerPost],
+        } as Post;
+
+        const updateDTO: MetisPostDTO = {
+            action: MetisPostAction.UPDATE,
+            post: updatedPost,
+        };
+
+        // Call the method that handles WebSocket updates
+        metisService['handleNewOrUpdatedMessage'](updateDTO);
+        tick();
+
+        // Verify that the answer.post properties are set correctly for all answers
+        const updatedCachedPost = metisService['cachedPosts'][0];
+        expect(updatedCachedPost.answers?.length).toBe(2);
+
+        updatedCachedPost.answers?.forEach((answer) => {
+            expect(answer.post).toBeDefined();
+            expect(answer.post?.id).toBe(456);
+            expect(answer.post?.author).toEqual({ id: 789, login: 'author' });
+            expect(answer.post?.conversation).toEqual({ id: 123 });
+        });
+    }));
 });

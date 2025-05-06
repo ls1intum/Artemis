@@ -27,6 +27,7 @@ export class LearningPathLectureUnitComponent {
     private readonly learningPathNavigationService = inject(LearningPathNavigationService);
     private readonly alertService = inject(AlertService);
 
+    readonly courseId = input.required<number>();
     readonly lectureUnitId = input.required<number>();
     readonly isLoading = signal<boolean>(false);
     readonly lectureUnit = signal<LectureUnit | undefined>(undefined);
