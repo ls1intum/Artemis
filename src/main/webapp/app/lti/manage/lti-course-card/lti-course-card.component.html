@@ -33,10 +33,10 @@
             <!-- Right column -->
             <div class="col-6">
                 @if (course().startDate) {
-                    <p><strong>Start Date:</strong> {{ course().startDate }}</p>
+                    <p><strong>Start Date:</strong> {{ course().startDate.format('YYYY-MM-DD') }}</p>
                 }
                 @if (course().endDate) {
-                    <p><strong>End Date:</strong> {{ course().endDate }}</p>
+                    <p><strong>End Date:</strong> {{ course().endDate.format('YYYY-MM-DD') }}</p>
                 }
             </div>
         </div>
