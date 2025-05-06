@@ -22,11 +22,10 @@
 
             jvmArgs = ["-Dspring.profiles.active=test,artemis,core,atlas,scheduling,athena,apollon,iris,aeolus,theia,lti," +
 
-                           "dev","-Dspringdoc.packages-to-scan=${System.getProperty("springdoc.packages-to-scan")}"
+                           "dev","-Dspringdoc.packages-to-scan=de.tum.cit.aet.artemis.tutorialgroup.web"
             ]
 
-           // "-Dspringdoc.packages-to-scan=${project.findProperty("springdoc.packages-to-scan")}"
-// TODO add package later
+// TODO add package later add ${System.getProperty("springdoc.packages-to-scan")} package via cli property
             args.set(["--artemis.user-management.use-external=false","--artemis.iris.url=http://iris.fake=",
                       "--artemis.iris.secret-token=token", "--spring.jpa.database=h2", "--spring.datasource.url=jdbc:h2:mem:mydb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE", "--spring.datasource.username=sa", --"spring.datasource.password=", "--aeolus.url=http://aeolus.fake"])
 
@@ -40,7 +39,7 @@
         apiPackage = "api"
         modelPackage = "model"
         configOptions = [
-            serviceSuffix: "ApiService",
+            apiNameSuffix      : "ApiService",
             supportsES6: "true",
             serviceFileSuffix: "Api.service"
         ]
@@ -114,31 +113,6 @@
         }
     }
 
-    tasks.register('normalizeOperationIds') {
-        description = 'Strip prefixes from operationId (e.g. User-update → update)'
-
-        doLast {
-            def root       = project.rootDir
-            def inputFile  = file("$root/openapi/openapi-pruned.yaml")
-            def outputFile = file("$root/openapi/openapi-normalized.yaml")
-            def yaml       = new Yaml()
-            def spec       = yaml.load(inputFile.text) as Map<String, Object>
-
-            // Walk all paths and operations
-            spec.paths?.each { path, opsMap ->
-                opsMap.each { method, op ->
-                    if (op.operationId instanceof String) {
-                        def parts = op.operationId.split('_', 2)
-                        op.operationId = parts[0]
-                    }
-                }
-            }
-
-            outputFile.text = yaml.dump(spec)
-            println "✔ Normalized operationIds written to $outputFile"
-        }
-    }
-
     tasks.register('postProcessTsFiles') {
         description = 'Remove leading underscores and numeric suffixes from OpenAPI TS methods, and add // @ts-nocheck'
 
@@ -191,13 +165,13 @@
         outputs.dir("$rootDir/src/main/webapp/app/openapi")
     }
 
-    tasks.named('generateHeyApi') {
+    tasks.named('openApiGenerate') {
         finalizedBy 'postProcessTsFiles'
     }
-    tasks.named('generateHeyApi') {
+    tasks.named('openApiGenerate') {
         dependsOn 'pruneOpenApiSpec'
     }
-    tasks.named( 'generateHeyApi') {
+    tasks.named( 'openApiGenerate') {
         doFirst {
             delete file("$rootDir/src/main/webapp/app/openapi")
             println "✔ Deleted old openapi files"
