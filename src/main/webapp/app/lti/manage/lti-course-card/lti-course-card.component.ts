@@ -19,13 +19,21 @@ export class LtiCourseCardComponent {
     CachingStrategy = CachingStrategy;
     courseColor: string;
     contentColor: string;
+    startDate: string;
+    endDate: string;
 
     constructor() {
         effect(() => {
             const courseValue = this.course();
             this.courseColor = courseValue?.color || this.ARTEMIS_DEFAULT_COLOR;
             this.contentColor = getContrastingTextColor(this.courseColor);
-            console.log(courseValue);
+
+            if (courseValue.startDate) {
+                this.startDate = courseValue.startDate.format('YYYY-MM-DD');
+            }
+            if (courseValue.endDate) {
+                this.endDate = courseValue.endDate.format('YYYY-MM-DD');
+            }
         });
     }
 }
