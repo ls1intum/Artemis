@@ -24,6 +24,7 @@ logging:
         de.jplag.Submission: ERROR
         de.jplag.logging: WARN
         de.jplag.reporting: WARN
+        org.springdoc: TRACE
     logback:
         rollingpolicy:
             max-history: 90
@@ -285,7 +286,6 @@ springdoc:
     path: /api-docs
     # Having these endpoints publicly available is a security risk, so we disable them by default
     enabled: false
-  packages-to-scan: de.tum.cit.aet.artemis.core.web.admin
   swagger-ui:
     path: api.html
     operationsSorter: method
