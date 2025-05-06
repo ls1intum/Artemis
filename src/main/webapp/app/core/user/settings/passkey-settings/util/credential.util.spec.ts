@@ -44,7 +44,7 @@ describe('getCredentialWithGracefullyHandlingAuthenticatorIssues', () => {
             response: {
                 attestationObject: 'ChQe',
                 authenticatorData: 'KDI8',
-                clientDataJSON: 'eyJ0ZXN0In0=',
+                clientDataJSON: 'eyJ0ZXN0In0',
                 publicKey: 'RlBa',
                 publicKeyAlgorithm: -7,
                 signature: undefined,
@@ -83,7 +83,7 @@ describe('getCredentialWithGracefullyHandlingAuthenticatorIssues', () => {
             rawId: 'AQID',
             response: {
                 authenticatorData: 'ChQe',
-                clientDataJSON: 'eyJ0ZXN0In0=',
+                clientDataJSON: 'eyJ0ZXN0In0',
                 signature: 'KDI8',
                 userHandle: 'RlBa',
             },
