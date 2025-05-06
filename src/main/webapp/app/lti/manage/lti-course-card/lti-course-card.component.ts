@@ -6,6 +6,7 @@ import { RouterLink } from '@angular/router';
 import { NgStyle } from '@angular/common';
 import { getContrastingTextColor } from 'app/shared/util/color.utils';
 import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { dayJs } from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-overview-lti-course-card',
@@ -29,10 +30,10 @@ export class LtiCourseCardComponent {
             this.contentColor = getContrastingTextColor(this.courseColor);
 
             if (courseValue.startDate) {
-                this.startDate = courseValue.startDate.format('YYYY-MM-DD');
+                this.startDate = dayJs(courseValue.startDate).format('YYYY-MM-DD');
             }
             if (courseValue.endDate) {
-                this.endDate = courseValue.endDate.format('YYYY-MM-DD');
+                this.endDate = dayJs(courseValue.endDate).format('YYYY-MM-DD');
             }
         });
     }
