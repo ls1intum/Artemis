@@ -65,6 +65,7 @@ describe('AttachmentUnitComponent', () => {
         component = fixture.componentInstance;
 
         fixture.componentRef.setInput('lectureUnit', attachmentUnit);
+        fixture.componentRef.setInput('courseId', 1);
     });
 
     afterEach(() => {

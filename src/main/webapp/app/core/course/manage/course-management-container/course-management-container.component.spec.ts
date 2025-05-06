@@ -34,7 +34,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { AfterViewInit, Component, ElementRef, EventEmitter, TemplateRef, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, TemplateRef, ViewChild } from '@angular/core';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/shared/tab-bar/tab-bar';
 import { CourseManagementContainerComponent } from 'app/core/course/manage/course-management-container/course-management-container.component';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
@@ -217,12 +217,33 @@ describe('CourseManagementContainerComponent', () => {
                 profileService = TestBed.inject(ProfileService);
                 courseSidebarService = TestBed.inject(CourseSidebarService);
                 router = TestBed.inject(Router);
-                findSpy = jest.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
+                findSpy = jest.spyOn(courseService, 'find').mockReturnValue(
+                    of(
+                        new HttpResponse({
+                            body: course1,
+                            headers: new HttpHeaders(),
+                        }),
+                    ),
+                );
                 metisConversationService = fixture.debugElement.injector.get(MetisConversationService);
 
-                findOneForDashboardSpy = jest.spyOn(courseService, 'findOneForDashboard').mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
+                findOneForDashboardSpy = jest.spyOn(courseService, 'findOneForDashboard').mockReturnValue(
+                    of(
+                        new HttpResponse({
+                            body: course1,
+                            headers: new HttpHeaders(),
+                        }),
+                    ),
+                );
 
-                jest.spyOn(courseService, 'findAllForDropdown').mockReturnValue(of(new HttpResponse({ body: coursesDropdown, headers: new HttpHeaders() })));
+                jest.spyOn(courseService, 'findAllForDropdown').mockReturnValue(
+                    of(
+                        new HttpResponse({
+                            body: coursesDropdown,
+                            headers: new HttpHeaders(),
+                        }),
+                    ),
+                );
 
                 getDeletionSummarySpy = jest.spyOn(courseAdminService, 'getDeletionSummary').mockReturnValue(
                     of(
@@ -254,10 +275,8 @@ describe('CourseManagementContainerComponent', () => {
                 jest.spyOn(metisConversationService, 'course', 'get').mockReturnValue(course);
                 jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(course1);
                 jest.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
-                component.courseBody = { nativeElement: { scrollTop: 123 } } as ElementRef<HTMLElement>;
             });
     }));
-
     afterEach(() => {
         component.ngOnDestroy();
         jest.restoreAllMocks();
@@ -470,10 +489,11 @@ describe('CourseManagementContainerComponent', () => {
 
     it('should render controls if child has configuration', () => {
         const stubSubComponent = TestBed.createComponent(ControlsTestingComponent);
-        component.onSubRouteActivate(stubSubComponent.componentInstance);
         fixture.detectChanges();
+        component.courseBody()!.nativeElement = { scrollTop: 123 } as HTMLElement;
+        component.onSubRouteActivate(stubSubComponent.componentInstance);
         stubSubComponent.detectChanges();
-        expect(component.courseBody.nativeElement.scrollTop).toBe(0);
+        expect(component.courseBody()?.nativeElement.scrollTop).toBe(0);
 
         const expectedButton = fixture.debugElement.query(By.css('#test-button'));
         expect(expectedButton).not.toBeNull();
