@@ -65,9 +65,6 @@ export class PostService extends PostingService<Post> {
         if (postContextFilter.filterToUnresolved) {
             params = params.set('filterToUnresolved', postContextFilter.filterToUnresolved);
         }
-        if (postContextFilter.filterToOwn) {
-            params = params.set('filterToOwn', postContextFilter.filterToOwn);
-        }
         if (postContextFilter.filterToAnsweredOrReacted) {
             params = params.set('filterToAnsweredOrReacted', postContextFilter.filterToAnsweredOrReacted);
         }
@@ -94,7 +91,14 @@ export class PostService extends PostingService<Post> {
      * @return the updated post
      */
     update<T extends Posting>(courseId: number, post: T): Observable<EntityResponseType> {
-        const copy = this.convertPostingDateFromClient(post);
+        const updatedPost = {
+            id: post.id,
+            content: post.content,
+            title: (post as Post).title,
+            creationDate: post.creationDate,
+            updatedDate: post.updatedDate,
+        };
+        const copy = this.convertPostingDateFromClient(updatedPost);
         return this.http
             .put<Post>(`${this.getResourceEndpoint(courseId, undefined, post)}/${post.id}`, copy, { observe: 'response' })
             .pipe(map(this.convertPostingResponseDateFromServer));
