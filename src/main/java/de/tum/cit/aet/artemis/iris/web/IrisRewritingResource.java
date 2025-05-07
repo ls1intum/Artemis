@@ -59,7 +59,6 @@ public class IrisRewritingResource {
         var user = userRepository.getUserWithGroupsAndAuthorities();
         var course = courseRepository.findByIdElseThrow(courseId);
         rewritingService.executeRewritingPipeline(user, course, request.variant(), request.toBeRewritten());
-        log.debug("REST request to rewrite text: {}", request.toBeRewritten());
         return ResponseEntity.ok().build();
     }
 
