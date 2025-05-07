@@ -316,7 +316,7 @@ public class SecurityConfiguration {
                 publicKeyCredentialCreationOptionsRepository,
                 publicKeyCredentialRequestOptionsRepository
             );
-            var androidAppRelease = "android:apk-key-hash:fqGKBkDrSPLF-n_CrKmrhX7EdfQx8jzBWtWwE4f-NDE";
+            var androidAppRelease = "android:apk-key-hash:0uGmb4wAVZefMC89ealdeIUfxSFaf4Gzv2Aice9vYCQ";
             var androidAppDebug = "android:apk-key-hash:f8uZdBkwFUuGS4pzsAmUUhn2vZBqfBaxdjevdLFIO2w";
             http.with(webAuthnConfigurer, configurer -> {
                 configurer
