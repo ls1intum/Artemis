@@ -16,7 +16,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { Router } from '@angular/router';
 import { of } from 'rxjs';
-import { input } from '@angular/core';
 
 describe('StudentsUploadImagesDialogComponent', () => {
     let fixture: ComponentFixture<StudentsUploadImagesDialogComponent>;
