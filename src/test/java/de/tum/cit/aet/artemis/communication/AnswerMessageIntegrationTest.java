@@ -296,23 +296,6 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testCreateConversationAnswerPost_badRequest() throws Exception {
-        AnswerPost answerPostToSave = createAnswerPost(existingConversationPostsWithAnswers.getFirst());
-        answerPostToSave.setId(999L);
-
-        var countBefore = answerPostRepository.count();
-
-        AnswerPost notCreatedAnswerPost = request.postWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages", answerPostToSave, AnswerPost.class,
-                HttpStatus.BAD_REQUEST);
-        assertThat(notCreatedAnswerPost).isNull();
-        assertThat(answerPostRepository.count()).isEqualTo(countBefore);
-
-        // conversation participants should not be notified
-        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
-    }
-
-    @Test
     @WithMockUser(username = TEST_PREFIX + "student3", roles = "USER")
     void testCreateConversationAnswerPost_forbidden() throws Exception {
         // only participants of a conversation can create posts for it

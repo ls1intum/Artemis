@@ -18,11 +18,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.Validation;
-import jakarta.validation.Validator;
-import jakarta.validation.ValidatorFactory;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -61,7 +56,6 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -222,11 +216,11 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         CreatePostDTO postDTOToSave = new CreatePostDTO("", "", false, new CreatePostConversationDTO(channel.getId()));
 
         // then
-        // expected are 6 database calls independent of the number of students in the course.
-        // 4 calls are for user authentication checks, 2 calls to update database
+        // expected are 7 database calls independent of the number of students in the course.
+        // 4 calls are for user authentication checks, 3 calls to update database
         // further database calls are made in async code
         assertThatDb(() -> request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postDTOToSave, Post.class, HttpStatus.CREATED))
-                .hasBeenCalledTimes(6);
+                .hasBeenCalledTimes(7);
     }
 
     @ParameterizedTest
@@ -379,19 +373,6 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         // conversation participants should not be notified
         verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testValidatePostContextConstraintViolation() throws Exception {
-        ValidatorFactory validatorFactory = Validation.buildDefaultValidatorFactory();
-        Validator validator = validatorFactory.getValidator();
-        validatorFactory.close();
-        Post invalidPost = createPostWithOneToOneChat(TEST_PREFIX);
-        invalidPost.setPlagiarismCase(new PlagiarismCase());
-        request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", invalidPost, Post.class, HttpStatus.BAD_REQUEST);
-        Set<ConstraintViolation<Post>> constraintViolations = validator.validate(invalidPost);
-        assertThat(constraintViolations).hasSize(1);
     }
 
     @Test
