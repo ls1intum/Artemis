@@ -342,12 +342,10 @@ public class FileService implements DisposableBean {
      * @throws IllegalArgumentException if the file path is invalid
      */
     public static void sanitizeFilePathByCheckingForInvalidCharactersElseThrow(String filePath) {
-        Path path = Path.of(filePath);
-        for (Path segment : path) {
-            String part = segment.toString();
-            if (part.contains("..") || part.contains("\\")) {
-                throw new IllegalArgumentException("Invalid file path segment: " + part);
-            }
+        URI uriToCheck = URI.create(filePath);
+        URI normalizedPath = uriToCheck.normalize();
+        if (!uriToCheck.equals(normalizedPath)) {
+            throw new IllegalArgumentException("Path is not valid!");
         }
     }
 

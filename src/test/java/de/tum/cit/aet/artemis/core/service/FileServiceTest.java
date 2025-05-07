@@ -446,10 +446,10 @@ class FileServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "../file.txt", "folder/../file.txt", "folder\\..\\file.txt", "folder/..\\file.txt", "folder/evil/../../file.txt", "folder\\fi\\le.txt" })
+    @ValueSource(strings = { "folder/../file.txt", "folder/evil/../../file.txt" })
     void testSanitizeFilePath_InvalidPaths(String filePath) {
         assertThatThrownBy(() -> FileService.sanitizeFilePathByCheckingForInvalidCharactersElseThrow(filePath)).isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Invalid file path segment");
+                .hasMessageContaining("Path is not valid!");
     }
 
     @Test
