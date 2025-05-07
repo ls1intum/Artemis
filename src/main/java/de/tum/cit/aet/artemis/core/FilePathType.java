@@ -3,17 +3,20 @@ package de.tum.cit.aet.artemis.core;
 import de.tum.cit.aet.artemis.core.service.FilePathService;
 
 /**
- * Enum representing the different types of file paths/URIs used in the system.
- * Each type corresponds to a specific path prefix in the file path/URI.
- * see {@link FilePathService} for the actual path generation.
- * Make sure that the enum value reflects the actual path prefix, so it's easy to find in the file system.
- * Make sure related items in the file system are grouped together.
+ * <p><b>Enum representing the different types of file paths/URIs used in the system.</b></p>
+ * <p>Each type corresponds to a specific path prefix in the file path/URI.</p>
  *
+ * <ul>
+ *   <li>Make sure that the enum value reflects the actual path prefix, so it's easy to find in the file system.</li>
+ *   <li>Ensure related items in the file system are grouped together.</li>
+ * </ul>
+ *
+ * @see FilePathService for the actual path generation.
  */
 public enum FilePathType {
     // @formatter:off
 
-    /** Lecture file paths **/
+    /** <strong>Lecture file paths</strong> **/
     LECTURE_ATTACHMENT,
     ATTACHMENT_UNIT,
     /** Path for slide images when attachments are split into single slides **/

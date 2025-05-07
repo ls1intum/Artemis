@@ -48,8 +48,6 @@ public class FilePathService {
     }
 
     /**
-     * Returns the path for temporary files.
-     *
      * @return the path to the temporary files directory
      */
     @NotNull
@@ -68,8 +66,6 @@ public class FilePathService {
     }
 
     /**
-     * Returns the path for drag item images.
-     *
      * @return the path to the drag item images directory
      */
     @NotNull
