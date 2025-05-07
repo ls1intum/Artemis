@@ -1,4 +1,4 @@
-import { Component, OnDestroy, ViewEncapsulation, inject, viewChild } from '@angular/core';
+import { Component, Input, OnDestroy, ViewEncapsulation, inject, viewChild } from '@angular/core';
 import { FormsModule, NgForm } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -37,8 +37,9 @@ export class StudentsUploadImagesDialogComponent implements OnDestroy {
     notFoundUsers?: NotFoundExamUserType;
     file: File;
 
-    courseId: number;
-    exam: Exam;
+    // we cannot use input<> here because then the data is undefined
+    @Input() courseId: number;
+    @Input() exam: Exam;
 
     isParsing = false;
     hasParsed = false;

@@ -49,6 +49,12 @@ const cssClasses = {
     ],
 })
 export class ExamStudentsComponent implements OnInit, OnDestroy {
+    protected readonly ButtonType = ButtonType;
+    protected readonly ButtonSize = ButtonSize;
+    protected readonly ActionType = ActionType;
+    protected readonly missingImage = '/content/images/missing_image.png';
+    protected readonly addPublicFilePrefix = addPublicFilePrefix;
+
     private route = inject(ActivatedRoute);
     private alertService = inject(AlertService);
     private examManagementService = inject(ExamManagementService);
@@ -57,11 +63,6 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
     private studentExamService = inject(StudentExamService);
 
     dataTable = viewChild.required(DataTableComponent);
-
-    readonly ButtonType = ButtonType;
-    readonly ButtonSize = ButtonSize;
-    readonly ActionType = ActionType;
-    readonly missingImage = '/content/images/missing_image.png';
 
     courseId: number;
     exam: Exam;
@@ -317,6 +318,4 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
             });
         }
     }
-
-    protected readonly addPublicFilePrefix = addPublicFilePrefix;
 }

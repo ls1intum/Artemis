@@ -48,8 +48,6 @@ public class FilePathService {
     }
 
     /**
-     * Returns the path for temporary files.
-     *
      * @return the path to the temporary files directory
      */
     @NotNull
@@ -58,8 +56,6 @@ public class FilePathService {
     }
 
     /**
-     * Returns the path for drag and drop background images.
-     *
      * @return the path to the drag and drop backgrounds directory
      */
     @NotNull
@@ -68,8 +64,6 @@ public class FilePathService {
     }
 
     /**
-     * Returns the path for drag item images.
-     *
      * @return the path to the drag item images directory
      */
     @NotNull
@@ -78,8 +72,6 @@ public class FilePathService {
     }
 
     /**
-     * Returns the path for course icon images.
-     *
      * @return the path to the course icons directory
      */
     @NotNull
@@ -88,8 +80,6 @@ public class FilePathService {
     }
 
     /**
-     * Returns the path for user profile pictures.
-     *
      * @return the path to the profile pictures directory
      */
     @NotNull
@@ -98,8 +88,6 @@ public class FilePathService {
     }
 
     /**
-     * Returns the path for exam user signature images.
-     *
      * @return the path to the exam user signatures directory
      */
     @NotNull
@@ -108,8 +96,6 @@ public class FilePathService {
     }
 
     /**
-     * Returns the path for student images used in exam attendance checks.
-     *
      * @return the path to the student images directory
      */
     @NotNull
@@ -118,8 +104,6 @@ public class FilePathService {
     }
 
     /**
-     * Returns the path for lecture attachments.
-     *
      * @return the path to the lecture attachments directory
      */
     @NotNull
@@ -128,8 +112,6 @@ public class FilePathService {
     }
 
     /**
-     * Returns the path for files associated with attachment units.
-     *
      * @return the path to the attachment unit files directory
      */
     @NotNull
@@ -138,8 +120,6 @@ public class FilePathService {
     }
 
     /**
-     * Returns the path for file upload exercise submissions.
-     *
      * @return the path to the file upload exercises directory
      */
     @NotNull
@@ -148,8 +128,6 @@ public class FilePathService {
     }
 
     /**
-     * Returns the path for markdown files.
-     *
      * @return the path to the markdown files directory
      */
     @NotNull
@@ -158,8 +136,6 @@ public class FilePathService {
     }
 
     /**
-     * Returns the path for markdown files associated with a specific conversation in a course.
-     *
      * @param courseId       the course ID
      * @param conversationId the conversation ID
      * @return the path to the markdown files for the conversation
@@ -366,6 +342,14 @@ public class FilePathService {
 
     /**
      * Generates the external URI for a slide file based on the provided path, filename, and ID.
+     * <p>
+     * Example:
+     *
+     * <pre>
+     *     Path fileSystemPath = Path.of("uploads", "attachments", "attachment-unit", "1", "slide", "3", "slide_17.png");
+     *     URI externalUri = FilePathService.externalUriForFileSystemPath(fileSystemPath, FilePathType.SLIDE, "3");
+     *     externalUri: attachments/attachment-unit/1/slide/3/slide_17.png
+     * </pre>
      *
      * @param path     the path to the slide in the local filesystem
      * @param filename the name of the file
@@ -386,6 +370,14 @@ public class FilePathService {
 
     /**
      * Generates the external URI for a file upload exercise submission based on the provided path, filename, and ID.
+     * <p>
+     * Example:
+     *
+     * <pre>
+     *     Path fileSystemPath = Path.of("uploads", "file-upload-exercises", "1", "submissions", "2", "submission.pdf");
+     *     URI externalUri = FilePathService.externalUriForFileSystemPath(fileSystemPath, FilePathType.FILE_UPLOAD_SUBMISSION, "2);
+     *     externalUri: file-upload-exercises/1/submissions/2/submission.pdf
+     * </pre>
      *
      * @param path     the path to the file upload exercise
      * @param filename the name of the file
