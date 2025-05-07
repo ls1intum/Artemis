@@ -1,12 +1,12 @@
 <div class="lecture-unit-card col clickable">
     <div class="lecture-unit-header row px-4 m-0" id="lecture-unit-toggle-button" (click)="toggleCollapse()">
         <div class="d-flex p-0 justify-content-between align-items-center">
-            <div class="d-flex">
+            <div class="d-flex align-items-center">
                 <fa-icon class="me-3" size="lg" [icon]="icon()" />
                 <h5 class="m-0">{{ lectureUnit().name ?? '' }}</h5>
                 @if (!isVisibleToStudents()) {
                     <span
-                        class="badge bg-warning ms-2"
+                        class="badge bg-warning ms-2 me-2"
                         ngbTooltip="{{ 'artemisApp.textUnit.notReleasedTooltip' | artemisTranslate }} {{ lectureUnit().releaseDate | artemisDate }}"
                         jhiTranslate="artemisApp.courseOverview.exerciseList.notReleased"
                     ></span>
@@ -42,6 +42,7 @@
     @if (!isCollapsed()) {
         <div id="lecture-unit-body" class="lecture-unit-body px-4 py-2">
             <ng-content />
+            <jhi-competency-contribution [courseId]="courseId()" [learningObjectId]="this.lectureUnit().id!" [isExercise]="false" />
         </div>
     }
 </div>

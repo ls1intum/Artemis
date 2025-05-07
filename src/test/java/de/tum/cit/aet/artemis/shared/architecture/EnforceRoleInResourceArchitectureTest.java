@@ -11,6 +11,7 @@ import com.tngtech.archunit.lang.ConditionEvents;
 
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceRoleInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceRoleInExercise;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceRoleInLectureUnit;
 
 /**
  * This class contains architecture tests for endpoints with EnforceRoleInResource annotations.
@@ -57,5 +58,27 @@ class EnforceRoleInResourceArchitectureTest extends AbstractArchitectureTest {
                 .areDeclaredInClassesThat().areAnnotatedWith(EnforceRoleInExercise.class).and().areDeclaredInClassesThat().areNotAnnotations().should(haveParameterWithAnnotation);
 
         enforceRoleInExercise.check(productionClasses);
+    }
+
+    @Test
+    void testEnforceRoleInLectureUnitEndpointHasLectureUnitIdParameter() {
+        ArchCondition<JavaMethod> haveParameterWithAnnotation = new ArchCondition<>("have a parameter with EnforceRoleInLectureUnit annotation") {
+
+            @Override
+            public void check(JavaMethod method, ConditionEvents events) {
+                // Get annotation
+                var enforceRoleInLectureUnitAnnotation = getAnnotation(EnforceRoleInLectureUnit.class, method);
+                var lectureUnitIdFieldName = enforceRoleInLectureUnitAnnotation.resourceIdFieldName();
+                if (hasNoParameterWithName(method, lectureUnitIdFieldName)) {
+                    events.add(violated(method, String.format("Method %s does not have a parameter named %s", method.getFullName(), lectureUnitIdFieldName)));
+                }
+            }
+        };
+
+        var enforceRoleInLectureUnit = methods().that().areAnnotatedWith(EnforceRoleInLectureUnit.class).or().areMetaAnnotatedWith(EnforceRoleInLectureUnit.class).or()
+                .areDeclaredInClassesThat().areAnnotatedWith(EnforceRoleInLectureUnit.class).and().areDeclaredInClassesThat().areNotAnnotations()
+                .should(haveParameterWithAnnotation);
+
+        enforceRoleInLectureUnit.check(productionClasses);
     }
 }

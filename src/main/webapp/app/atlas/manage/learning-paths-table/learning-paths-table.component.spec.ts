@@ -11,6 +11,8 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { LearningPathInformationDTO } from 'app/atlas/shared/entities/learning-path.model';
 import { SearchResult, SearchTermPageableSearch } from 'app/shared/table/pageable-table';
 import { By } from '@angular/platform-browser';
+import { ScienceService } from 'app/shared/science/science.service';
+import { MockProvider } from 'ng-mocks';
 
 describe('LearningPathsTableComponent', () => {
     let component: LearningPathsTableComponent;
@@ -45,6 +47,7 @@ describe('LearningPathsTableComponent', () => {
                     useClass: MockTranslateService,
                 },
                 { provide: AlertService, useClass: MockAlertService },
+                MockProvider(ScienceService),
             ],
         }).compileComponents();
 

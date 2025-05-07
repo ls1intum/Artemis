@@ -7,7 +7,9 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -28,6 +30,7 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
@@ -132,6 +135,10 @@ public class AttachmentUnitResource {
         AttachmentUnit existingAttachmentUnit = attachmentUnitRepository.findWithSlidesAndCompetenciesByIdElseThrow(attachmentUnitId);
         checkAttachmentUnitCourseAndLecture(existingAttachmentUnit, lectureId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, existingAttachmentUnit.getLecture().getCourse(), null);
+
+        if (!validateHiddenSlidesDates(hiddenPages)) {
+            throw new BadRequestAlertException("Hidden slide dates cannot be in the past", ENTITY_NAME, "invalidHiddenDates");
+        }
 
         AttachmentUnit savedAttachmentUnit = attachmentUnitService.updateAttachmentUnit(existingAttachmentUnit, attachmentUnit, attachment, file, keepFilename, hiddenPages,
                 pageOrder);
@@ -367,6 +374,36 @@ public class AttachmentUnitResource {
         }
         if (!filePath.toString().endsWith(".pdf")) {
             throw new BadRequestAlertException("The file must be a pdf", ENTITY_NAME, "wrongFileType");
+        }
+    }
+
+    /**
+     * Validates that all hidden slide dates are not in the past
+     */
+    private boolean validateHiddenSlidesDates(String hiddenPagesJson) {
+        if (hiddenPagesJson == null || hiddenPagesJson.isEmpty()) {
+            return true;
+        }
+
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            List<Map<String, Object>> hiddenPagesList = objectMapper.readValue(hiddenPagesJson, new TypeReference<>() {
+            });
+            ZonedDateTime now = ZonedDateTime.now();
+
+            for (Map<String, Object> page : hiddenPagesList) {
+                String dateStr = (String) page.get("date");
+                ZonedDateTime date = ZonedDateTime.parse(dateStr);
+
+                if (date.isBefore(now)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        catch (Exception e) {
+            log.error("Error validating hidden slide dates", e);
+            return false;
         }
     }
 }

@@ -63,6 +63,7 @@
             "jwkSetUri": "JWKSet URI",
             "customName": "Benutzerdefinierter Name",
             "exercises": "Aufgaben",
+            "lectures": "Vorlesungen",
             "startExercise": "<strong>Herzlich willkommen bei Artemis!</strong> Klicke auf den Button <i>Aufgabe starten</i>!",
             "ltiSuccessLoginRequired": "LTI Übung erfolgreich gestartet. Bitte melde dich als Nutzer:in {{user}} an.",
             "lti": "LTI",

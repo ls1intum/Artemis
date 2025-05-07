@@ -50,7 +50,7 @@
                                 defaultPictureId="user-default-profile-picture"
                                 [authorId]="postToForward()?.author?.id"
                                 [authorName]="postToForward()?.author?.name"
-                                [imageUrl]="option.img"
+                                [imageUrl]="addPublicFilePrefix(option.img)"
                                 style="margin-right: 0.2rem"
                             />
                         }
