@@ -23,6 +23,9 @@ import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 @RequestMapping(".well-known/") // Intentionally not prefixed with "communication"
 public class AndroidAppSiteAssociationResource {
 
+    @Value("${server.url}")
+    private String artemisServerUrl;
+
     @Value("${artemis.androidAppPackage: #{null}}")
     private String androidAppPackage;
 
@@ -51,7 +54,7 @@ public class AndroidAppSiteAssociationResource {
         final AndroidAssetLinksStatement.AndroidTarget appTarget = new AndroidAssetLinksStatement.AndroidTarget("android_app", androidAppPackage,
                 List.of(sha256CertFingerprintRelease, sha256CertFingerprintDebug));
 
-        final AndroidAssetLinksStatement.WebTarget webTarget = new AndroidAssetLinksStatement.WebTarget("web", "https://artemis.tum.de");
+        final AndroidAssetLinksStatement.WebTarget webTarget = new AndroidAssetLinksStatement.WebTarget("web", artemisServerUrl);
 
         final List<String> relations = List.of("delegate_permission/common.handle_all_urls", "delegate_permission/common.get_login_creds");
 
