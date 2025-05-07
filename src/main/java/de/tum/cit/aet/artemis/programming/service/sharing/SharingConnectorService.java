@@ -113,7 +113,7 @@ public class SharingConnectorService {
     /**
      * the shared secret api key
      */
-    @Value("${artemis.sharing.actionName:Export to Artemis@somewhere}")
+    @Value("${artemis.sharing.actionname:Export to Artemis@somewhere}")
     private String actionName;
 
     /**

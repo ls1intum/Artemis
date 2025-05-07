@@ -11,7 +11,7 @@ artemis:
     # if not set, you have to wait for the next scheduled reinitialization request from the sharing platform
     # (typically every 10 minutes)
     serverurl: http://localhost:9001
-    actionName: Export to Artemis@testInstance
+    actionname: Export to Artemis@testInstance
 
 
 
