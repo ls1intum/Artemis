@@ -45,12 +45,19 @@ describe('SetupPasskeyModalComponent', () => {
         const localStorageSpy = jest.spyOn(localStorage, 'setItem');
         const closeModalSpy = jest.spyOn(activeModal, 'close');
 
+        const expectedDateOnlyWithDayToEnsureTestIsNotFlaky = new Date();
+        expectedDateOnlyWithDayToEnsureTestIsNotFlaky.setDate(expectedDateOnlyWithDayToEnsureTestIsNotFlaky.getDate() + 30);
+        expectedDateOnlyWithDayToEnsureTestIsNotFlaky.setHours(0, 0, 0, 0);
+
         component.remindMeIn30Days();
 
-        const expectedDate = new Date();
-        expectedDate.setDate(expectedDate.getDate() + 30);
+        const savedDate = new Date(localStorageSpy.mock.calls[0][1]);
 
-        expect(localStorageSpy).toHaveBeenCalledWith(EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, expectedDate.toISOString());
+        const savedDateOnlyWithDay = new Date(savedDate);
+        savedDateOnlyWithDay.setHours(0, 0, 0, 0);
+        expect(savedDateOnlyWithDay.getTime()).toBe(expectedDateOnlyWithDayToEnsureTestIsNotFlaky.getTime());
+
+        expect(localStorageSpy).toHaveBeenCalledWith(EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, savedDate.toISOString());
         expect(closeModalSpy).toHaveBeenCalled();
     });
 });
