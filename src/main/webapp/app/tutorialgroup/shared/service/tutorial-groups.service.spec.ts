@@ -28,7 +28,6 @@ describe('TutorialGroupService', () => {
 
     it('getUniqueCampusValues', fakeAsync(() => {
         const returnedFromService = ['Test', 'Test2'];
-        jest.spyOn(service.tutorialGroupApi, 'getUniqueCampusValues').mockReturnValue();
         service
             .getUniqueCampusValues(1)
             .pipe(take(1))
