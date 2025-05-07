@@ -208,6 +208,7 @@ public class FileService implements DisposableBean {
      *
      * @param file         the file to save
      * @param basePath     the base path to save the file to
+     * @param filePathType the type of the file path
      * @param keepFilename whether to keep the original filename or not
      * @return the path where the file was saved
      */
@@ -296,6 +297,7 @@ public class FileService implements DisposableBean {
      *
      * @param oldFilePath  the old file path
      * @param targetFolder the folder that a file should be copied to
+     * @param filePathType the type of the file path
      * @return the resulting file path or null on error
      */
     public Path copyExistingFileToTarget(Path oldFilePath, Path targetFolder, FilePathType filePathType) {
