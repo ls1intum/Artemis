@@ -71,6 +71,11 @@ public class UserDTO extends AuditingEntityDTO {
 
     private ZonedDateTime vcsAccessTokenExpiryDate;
 
+    /**
+     * True if at least one passkey has been registered for this user.
+     */
+    private boolean hasRegisteredAPasskey = false;
+
     private ZonedDateTime externalLLMUsageAccepted;
 
     public UserDTO() {
@@ -233,6 +238,14 @@ public class UserDTO extends AuditingEntityDTO {
 
     public ZonedDateTime getVcsAccessTokenExpiryDate() {
         return vcsAccessTokenExpiryDate;
+    }
+
+    public void setHasRegisteredAPasskey(boolean hasCreatedPasskeys) {
+        this.hasRegisteredAPasskey = hasCreatedPasskeys;
+    }
+
+    public boolean getHasRegisteredAPasskey() {
+        return hasRegisteredAPasskey;
     }
 
     @Override

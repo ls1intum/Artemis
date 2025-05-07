@@ -11,25 +11,12 @@ import { PasskeyDTO } from 'app/core/user/settings/passkey-settings/dto/passkey.
 import { PasskeySettingsApiService } from 'app/core/user/settings/passkey-settings/passkey-settings-api.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ActionType, EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
-import { getOS } from 'app/shared/util/os-detector.util';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/button/button.component';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { CustomMaxLengthDirective } from 'app/shared/validators/custom-max-length-validator/custom-max-length-validator.directive';
-import { createCredentialOptions } from 'app/core/user/settings/passkey-settings/util/credential-option.util';
-import { getCredentialWithGracefullyHandlingAuthenticatorIssues } from 'app/core/user/settings/passkey-settings/util/credential.util';
-import { InvalidCredentialError } from 'app/core/user/settings/passkey-settings/entities/invalid-credential-error';
-
-const InvalidStateError = {
-    name: 'InvalidStateError',
-    authenticatorCredentialAlreadyRegisteredWithRelyingPartyCode: 11,
-};
-
-const UserAbortedPasskeyCreationError = {
-    code: 0,
-    name: 'NotAllowedError',
-};
+import { addNewPasskey } from 'app/core/user/settings/passkey-settings/util/credential.util';
 
 export interface DisplayedPasskey extends PasskeyDTO {
     isEditingLabel?: boolean;
@@ -55,9 +42,9 @@ export class PasskeySettingsComponent implements OnDestroy {
     protected readonly faKey = faKey;
     protected readonly MAX_PASSKEY_LABEL_LENGTH = 64;
 
+    protected alertService = inject(AlertService);
+    protected webauthnApiService = inject(WebauthnApiService);
     private accountService = inject(AccountService);
-    private alertService = inject(AlertService);
-    private webauthnApiService = inject(WebauthnApiService);
     private passkeySettingsApiService = inject(PasskeySettingsApiService);
 
     private dialogErrorSource = new Subject<string>();
@@ -85,53 +72,13 @@ export class PasskeySettingsComponent implements OnDestroy {
         this.authStateSubscription.unsubscribe();
     }
 
-    async updateRegisteredPasskeys(): Promise<void> {
-        this.registeredPasskeys.set(await this.passkeySettingsApiService.getRegisteredPasskeys());
+    async addPasskey() {
+        await addNewPasskey(this.currentUser(), this.webauthnApiService, this.alertService);
+        await this.updateRegisteredPasskeys();
     }
 
-    async addNewPasskey() {
-        try {
-            const user = this.currentUser();
-            if (!user) {
-                // noinspection ExceptionCaughtLocallyJS - intended to be caught locally
-                throw new Error('User or Username is not defined');
-            }
-            const registrationOptions = await this.webauthnApiService.getRegistrationOptions();
-            const credentialOptions = createCredentialOptions(registrationOptions, user);
-
-            const authenticatorCredential = await navigator.credentials.create({
-                publicKey: credentialOptions,
-            });
-            const credential = getCredentialWithGracefullyHandlingAuthenticatorIssues(authenticatorCredential);
-            if (!credential) {
-                // noinspection ExceptionCaughtLocallyJS - intended to be caught locally
-                throw new InvalidCredentialError();
-            }
-
-            await this.webauthnApiService.registerPasskey({
-                publicKey: {
-                    credential: credential,
-                    label: `${user.email} - ${getOS()}`,
-                },
-            });
-        } catch (error) {
-            const userPressedCancelInPasskeyCreationDialog = error.name == UserAbortedPasskeyCreationError.name && error.code == UserAbortedPasskeyCreationError.code;
-            if (userPressedCancelInPasskeyCreationDialog) {
-                return;
-            }
-
-            if (error instanceof InvalidCredentialError) {
-                this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.invalidCredential');
-            } else if (error.name == InvalidStateError.name && error.code == InvalidStateError.authenticatorCredentialAlreadyRegisteredWithRelyingPartyCode) {
-                this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.passkeyAlreadyRegistered');
-            } else {
-                this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.registration');
-            }
-
-            throw error;
-        }
-
-        await this.updateRegisteredPasskeys();
+    async updateRegisteredPasskeys(): Promise<void> {
+        this.registeredPasskeys.set(await this.passkeySettingsApiService.getRegisteredPasskeys());
     }
 
     private loadCurrentUser() {
