@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -89,4 +90,26 @@ public interface LearningPathRepository extends ArtemisJpaRepository<LearningPat
     default LearningPath findWithCompetenciesAndLectureUnitsAndExercisesAndLearnerProfileByIdElseThrow(long learningPathId) {
         return getValueElseThrow(findWithCompetenciesAndLectureUnitsAndExercisesAndLearnerProfileById(learningPathId), learningPathId);
     }
+
+    /**
+     * Link a competency to all learning paths of a course that do not already have this competency linked.
+     * IMPORTANT: Be aware that this pypasses Hibernate's change tracking! Be careful if you rely on it elsewhere.
+     *
+     * @param courseId     the id of the course containing the learning paths
+     * @param competencyId the id of the competency to link
+     */
+    @Modifying
+    @Query(value = """
+            INSERT INTO learning_path_competencies (learning_path_id, competencies_id)
+            SELECT lp.id, :competencyId
+            FROM learning_path lp
+            WHERE lp.course_id = :courseId
+                AND NOT EXISTS (
+                    SELECT 1
+                    FROM learning_path_competencies lpc
+                    WHERE lpc.learning_path_id = lp.id
+                        AND lpc.competencies_id = :competencyId
+                )
+            """, nativeQuery = true)
+    void linkCompetencyToLearningPathsOfCourse(@Param("courseId") long courseId, @Param("competencyId") long competencyId);
 }

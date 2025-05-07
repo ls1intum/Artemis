@@ -16,6 +16,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.data.domain.Page;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
@@ -193,12 +194,10 @@ public class LearningPathService {
      * @param competency Competency that should be added to each learning path
      * @param courseId   course id that the learning paths belong to
      */
+    @Transactional
     @Async
     public void linkCompetencyToLearningPathsOfCourse(@NotNull CourseCompetency competency, long courseId) {
-        var course = courseRepository.findWithEagerLearningPathsAndLearningPathCompetenciesByIdElseThrow(courseId);
-        var learningPaths = course.getLearningPaths();
-        learningPaths.forEach(learningPath -> learningPath.addCompetency(competency));
-        learningPathRepository.saveAll(learningPaths);
+        learningPathRepository.linkCompetencyToLearningPathsOfCourse(courseId, competency.getId());
         log.debug("Linked competency (id={}) to learning paths", competency.getId());
     }
 
