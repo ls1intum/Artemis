@@ -14,6 +14,11 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record CreatePostDTO(String content, String title, boolean hasForwardedMessages, Conversation conversation, PlagiarismCase plagiarismCase) {
 
+    /**
+     * Converts this DTO to a Post entity.
+     *
+     * @return a new Post entity with the data from this DTO
+     */
     public Post toEntity() {
         Post post = new Post();
         post.setContent(this.content);

@@ -13,6 +13,11 @@ import de.tum.cit.aet.artemis.communication.domain.Post;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record CreateAnswerPostDTO(String content, Post post) {
 
+    /**
+     * Converts this DTO to an AnswerPost entity.
+     *
+     * @return a new AnswerPost entity with the data from this DTO
+     */
     public AnswerPost toEntity() {
         AnswerPost answer = new AnswerPost();
         answer.setContent(this.content);
