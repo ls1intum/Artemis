@@ -3,24 +3,19 @@ import { LtiCourseCardComponent } from 'app/lti/manage/lti-course-card/lti-cours
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
-import { Directive, Input } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import dayjs from 'dayjs/esm';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { MockDirective } from 'ng-mocks';
 
-@Directive({
-    selector: '[jhiTranslate]',
-})
-class MockTranslateDirective {
-    @Input() jhiTranslate: string;
-}
 describe('LtiCourseCardComponent', () => {
     let component: LtiCourseCardComponent;
     let fixture: ComponentFixture<LtiCourseCardComponent>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [LtiCourseCardComponent, MockTranslateDirective],
+            imports: [LtiCourseCardComponent, MockDirective(TranslateDirective)],
             providers: [
                 {
                     provide: ActivatedRoute,
