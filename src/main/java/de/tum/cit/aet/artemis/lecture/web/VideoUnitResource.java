@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastEditorInLectureUnit;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.VideoUnit;
@@ -67,7 +68,7 @@ public class VideoUnitResource {
      * @return the ResponseEntity with status 200 (OK) and with body the video unit, or with status 404 (Not Found)
      */
     @GetMapping("lectures/{lectureId}/video-units/{videoUnitId}")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInLectureUnit(resourceIdFieldName = "videoUnitId")
     public ResponseEntity<VideoUnit> getVideoUnit(@PathVariable Long videoUnitId, @PathVariable Long lectureId) {
         log.debug("REST request to get VideoUnit : {}", videoUnitId);
         var videoUnit = videoUnitRepository.findByIdWithCompetenciesElseThrow(videoUnitId);
