@@ -22,18 +22,14 @@ describe('ExamModePickerComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(ExamModePickerComponent);
                 component = fixture.componentInstance;
-                TestBed.runInInjectionContext(() => {
-                    component.exam = input(exam);
-                    component.disableInput = input(false);
-                });
+                fixture.componentRef.setInput('exam', exam);
+                fixture.componentRef.setInput('disableInput', false);
             });
     });
 
     it('should be in readonly mode', () => {
         const examCopy = { ...exam };
-        TestBed.runInInjectionContext(() => {
-            component.disableInput = input(true);
-        });
+        fixture.componentRef.setInput('disableInput', true);
         fixture.detectChanges();
         component.setExamMode(true);
         expect(component.exam()).toEqual(examCopy);

@@ -1,5 +1,4 @@
 import { HttpClientModule } from '@angular/common/http';
-import { input, model } from '@angular/core';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -77,14 +76,12 @@ describe('ExamParticipationCoverComponent', () => {
                 accountService = TestBed.inject(AccountService);
                 artemisServerDateService = TestBed.inject(ArtemisServerDateService);
 
-                TestBed.runInInjectionContext(() => {
-                    component.startView = input(false);
-                    component.exam = input(exam);
-                    component.studentExam = model(studentExam);
-                    component.handInEarly = input(false);
-                    component.handInPossible = input(true);
-                    component.testRunStartTime = input(undefined);
-                });
+                fixture.componentRef.setInput('startView', false);
+                fixture.componentRef.setInput('exam', exam);
+                fixture.componentRef.setInput('studentExam', studentExam);
+                fixture.componentRef.setInput('handInEarly', false);
+                fixture.componentRef.setInput('handInPossible', true);
+                fixture.componentRef.setInput('testRunStartTime', undefined);
             });
     });
 
@@ -105,16 +102,12 @@ describe('ExamParticipationCoverComponent', () => {
         fixture.detectChanges();
         component.ngOnChanges();
 
-        TestBed.runInInjectionContext(() => {
-            component.startView = input(true);
-        });
+        fixture.componentRef.setInput('startView', true);
 
         component.updateConfirmation();
         expect(component.startEnabled).toBeFalse();
 
-        TestBed.runInInjectionContext(() => {
-            component.startView = input(false);
-        });
+        fixture.componentRef.setInput('startView', false);
         component.updateConfirmation();
         expect(component.endEnabled).toBeFalse();
     });
@@ -240,9 +233,6 @@ describe('ExamParticipationCoverComponent', () => {
         component.exam().visibleDate = dayjs().subtract(1, 'hours');
         expect(component.startButtonEnabled).toBeTrue();
 
-        TestBed.runInInjectionContext(() => {
-            component.handInPossible = input(true);
-        });
         expect(component.endButtonEnabled).toBeTrue();
     });
 

@@ -14,7 +14,6 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { MockProvider } from 'ng-mocks';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { input } from '@angular/core';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 describe('FileUploadExamSummaryComponent', () => {
@@ -38,10 +37,8 @@ describe('FileUploadExamSummaryComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(FileUploadExamSummaryComponent);
                 component = fixture.componentInstance;
-                TestBed.runInInjectionContext(() => {
-                    component.submission = input(fileUploadSubmission);
-                    component.exercise = input({} as Exercise);
-                });
+                fixture.componentRef.setInput('submission', fileUploadSubmission);
+                fixture.componentRef.setInput('exercise', {} as Exercise);
             });
     });
 
@@ -53,11 +50,8 @@ describe('FileUploadExamSummaryComponent', () => {
     it('should render submission when exercise and submisssion is set', () => {
         const exercise = { id: 1234, studentParticipations: [{ id: 1 }] } as FileUploadExercise;
         const submission = { submitted: true, filePath: 'filePath.pdf' } as FileUploadSubmission;
-        TestBed.runInInjectionContext(() => {
-            component.submission = input(submission);
-            component.exercise = input(exercise);
-        });
-
+        fixture.componentRef.setInput('submission', submission);
+        fixture.componentRef.setInput('exercise', exercise);
         fixture.detectChanges();
 
         const fileUploadSubmissionComponent = fixture.debugElement.query(By.directive(FileUploadSubmissionComponent)).componentInstance;

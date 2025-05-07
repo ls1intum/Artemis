@@ -17,7 +17,6 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { input, model } from '@angular/core';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { facSaveSuccess, facSaveWarning } from 'app/shared/icons/icons';
 
@@ -63,9 +62,7 @@ describe('ExamNavigationSidebarComponent', () => {
             { id: 1, type: ExerciseType.TEXT } as Exercise,
             { id: 2, type: ExerciseType.MODELING } as Exercise,
         ];
-        TestBed.runInInjectionContext(() => {
-            comp.exercises = input(exercises);
-        });
+        fixture.componentRef.setInput('exercises', exercises);
     });
 
     beforeEach(fakeAsync(() => {
@@ -77,9 +74,7 @@ describe('ExamNavigationSidebarComponent', () => {
         // Given
         // Create an exam session, which is not an initial session.
         const examSessions = [{ initialSession: false } as ExamSession];
-        TestBed.runInInjectionContext(() => {
-            comp.examSessions = input(examSessions);
-        });
+        fixture.componentRef.setInput('examSessions', examSessions);
         const exerciseToBeSynced = comp.exercises()[0];
         jest.spyOn(repositoryService, 'getStatus').mockReturnValue(of({ repositoryStatus: CommitState.UNCOMMITTED_CHANGES }));
 
@@ -208,19 +203,17 @@ describe('ExamNavigationSidebarComponent', () => {
     });
 
     it('should set exercise button status to synced active if it is the active exercise in the exam timeline view', () => {
-        TestBed.runInInjectionContext(() => {
-            comp.examTimeLineView = input(true);
-            comp.exerciseIndex = model(0);
-        });
+        fixture.componentRef.setInput('examTimeLineView', true);
+        fixture.componentRef.setInput('exerciseIndex', 0);
+
         expect(comp.setExerciseButtonStatus(0)).toBe('synced saved');
         expect(comp.icon).toEqual(facSaveSuccess);
     });
 
     it('should set exercise button status to synced if it is not the active exercise in the exam timeline view', () => {
-        TestBed.runInInjectionContext(() => {
-            comp.examTimeLineView = input(true);
-            comp.exerciseIndex = model(0);
-        });
+        fixture.componentRef.setInput('examTimeLineView', true);
+        fixture.componentRef.setInput('exerciseIndex', 0);
+
         expect(comp.setExerciseButtonStatus(1)).toBe('synced');
         expect(comp.icon).toEqual(facSaveSuccess);
     });

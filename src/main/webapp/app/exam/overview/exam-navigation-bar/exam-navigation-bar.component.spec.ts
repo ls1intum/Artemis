@@ -17,7 +17,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { input, model } from '@angular/core';
 
 describe('Exam Navigation Bar Component', () => {
     let fixture: ComponentFixture<ExamNavigationBarComponent>;
@@ -59,10 +58,8 @@ describe('Exam Navigation Bar Component', () => {
             { id: 1, type: ExerciseType.TEXT } as Exercise,
             { id: 2, type: ExerciseType.MODELING } as Exercise,
         ];
-        TestBed.runInInjectionContext(() => {
-            comp.endDate = input(dayjs());
-            comp.exercises = input(exercises);
-        });
+        fixture.componentRef.setInput('endDate', dayjs());
+        fixture.componentRef.setInput('exercises', exercises);
     });
 
     beforeEach(fakeAsync(() => {
@@ -75,9 +72,7 @@ describe('Exam Navigation Bar Component', () => {
         // Create an exam session, which is not an initial session.
         const examSessions = [{ initialSession: false } as ExamSession];
         const exerciseToBeSynced = comp.exercises()[0];
-        TestBed.runInInjectionContext(() => {
-            comp.examSessions = input(examSessions);
-        });
+        fixture.componentRef.setInput('examSessions', examSessions);
         jest.spyOn(repositoryService, 'getStatus').mockReturnValue(of({ repositoryStatus: CommitState.UNCOMMITTED_CHANGES }));
 
         // When
@@ -131,44 +126,29 @@ describe('Exam Navigation Bar Component', () => {
     });
 
     it('should tell the type of the selected programming exercise', () => {
-        TestBed.runInInjectionContext(() => {
-            comp.exerciseIndex = model(0);
-        });
-
+        fixture.componentRef.setInput('exerciseIndex', 0);
         expect(comp.isProgrammingExercise()).toBeTrue();
     });
 
     it('should tell the type of the selected text exercise', () => {
-        TestBed.runInInjectionContext(() => {
-            comp.exerciseIndex = model(1);
-        });
-
+        fixture.componentRef.setInput('exerciseIndex', 1);
         expect(comp.isProgrammingExercise()).toBeFalse();
     });
 
     it('should tell the type of the selected modeling exercise', () => {
-        TestBed.runInInjectionContext(() => {
-            comp.exerciseIndex = model(2);
-        });
-
+        fixture.componentRef.setInput('exerciseIndex', 2);
         expect(comp.isProgrammingExercise()).toBeFalse();
     });
 
     it('save the exercise with changeExercise', () => {
         jest.spyOn(comp, 'changePage');
-        const changeExercise = true;
-
-        comp.saveExercise(changeExercise);
-
+        comp.saveExercise(true);
         expect(comp.changePage).toHaveBeenCalledOnce();
     });
 
     it('save the exercise without changeExercise', () => {
         jest.spyOn(comp, 'changePage');
-        const changeExercise = false;
-
-        comp.saveExercise(changeExercise);
-
+        comp.saveExercise(false);
         expect(comp.changePage).not.toHaveBeenCalled();
     });
 
@@ -257,19 +237,15 @@ describe('Exam Navigation Bar Component', () => {
     });
 
     it('should set exercise button status to synced active if it is the active exercise in the exam timeline view', () => {
-        TestBed.runInInjectionContext(() => {
-            comp.examTimeLineView = input(true);
-            comp.exerciseIndex = model(0);
-        });
+        fixture.componentRef.setInput('examTimeLineView', true);
+        fixture.componentRef.setInput('exerciseIndex', 0);
         expect(comp.setExerciseButtonStatus(0)).toBe('synced active');
         expect(comp.icon).toEqual(faCheck);
     });
 
     it('should set exercise button status to synced if it is not the active exercise in the exam timeline view', () => {
-        TestBed.runInInjectionContext(() => {
-            comp.examTimeLineView = input(true);
-            comp.exerciseIndex = model(0);
-        });
+        fixture.componentRef.setInput('examTimeLineView', true);
+        fixture.componentRef.setInput('exerciseIndex', 0);
         expect(comp.setExerciseButtonStatus(1)).toBe('synced');
         expect(comp.icon).toEqual(faCheck);
     });

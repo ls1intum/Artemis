@@ -12,7 +12,6 @@ import { SubmissionType } from 'app/exercise/shared/entities/submission/submissi
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { input } from '@angular/core';
 import { ExamResultSummaryExerciseCardHeaderComponent } from 'app/exam/overview/summary/exercises/header/exam-result-summary-exercise-card-header.component';
 import { ResultSummaryExerciseInfo } from 'app/exam/overview/summary/exam-result-summary.component';
 
@@ -51,12 +50,11 @@ describe('ExamResultSummaryExerciseCardHeaderComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(ExamResultSummaryExerciseCardHeaderComponent);
                 component = fixture.componentInstance;
-                TestBed.runInInjectionContext(() => {
-                    component.index = input(3);
-                    component.exercise = input(programmingExercise);
-                    component.exerciseInfo = input({ isCollapsed: false } as ResultSummaryExerciseInfo);
-                    component.resultsPublished = input(false);
-                });
+
+                fixture.componentRef.setInput('index', 3);
+                fixture.componentRef.setInput('exercise', programmingExercise);
+                fixture.componentRef.setInput('exerciseInfo', { isCollapsed: false } as ResultSummaryExerciseInfo);
+                fixture.componentRef.setInput('resultsPublished', false);
             });
     });
 
@@ -75,9 +73,7 @@ describe('ExamResultSummaryExerciseCardHeaderComponent', () => {
         [{ studentParticipations: [{ submissions: [{ type: SubmissionType.MANUAL }] }] }, false],
         [{ studentParticipations: [{ submissions: [{ type: SubmissionType.ILLEGAL }] }] }, true],
     ])('should handle missing/empty fields correctly for %o when displaying illegal submission badge', (exercise, shouldBeNonNull) => {
-        TestBed.runInInjectionContext(() => {
-            component.exercise = input(exercise as Exercise);
-        });
+        fixture.componentRef.setInput('exercise', exercise as Exercise);
 
         fixture.detectChanges();
         const span = fixture.debugElement.query(By.css('.badge.bg-danger'));

@@ -25,7 +25,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { input } from '@angular/core';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 const user = { id: 1, name: 'Test User' } as User;
@@ -113,12 +112,10 @@ describe('ProgrammingExamSummaryComponent', () => {
                 fixture = TestBed.createComponent(ProgrammingExamSummaryComponent);
                 component = fixture.componentInstance;
 
-                TestBed.runInInjectionContext(() => {
-                    component.exercise = input(programmingExercise);
-                    component.participation = input(programmingParticipation);
-                    component.submission = input(programmingSubmission);
-                    component.exam = input(exam);
-                });
+                fixture.componentRef.setInput('exercise', programmingExercise);
+                fixture.componentRef.setInput('participation', programmingParticipation);
+                fixture.componentRef.setInput('submission', programmingSubmission);
+                fixture.componentRef.setInput('exam', exam);
             });
     });
 
@@ -133,10 +130,7 @@ describe('ProgrammingExamSummaryComponent', () => {
     });
 
     it('should show result if present and results are published', () => {
-        TestBed.runInInjectionContext(() => {
-            component.isAfterResultsArePublished = input(true);
-        });
-
+        fixture.componentRef.setInput('isAfterResultsArePublished', true);
         fixture.detectChanges();
 
         expect(component.feedbackComponentParameters.exercise).toEqual(programmingExercise);
@@ -148,10 +142,7 @@ describe('ProgrammingExamSummaryComponent', () => {
     });
 
     it('should not show results if not yet published', () => {
-        TestBed.runInInjectionContext(() => {
-            component.isAfterResultsArePublished = input(false);
-        });
-
+        fixture.componentRef.setInput('isAfterResultsArePublished', false);
         fixture.detectChanges();
 
         const feedbackComponent = fixture.debugElement.query(By.directive(FeedbackComponent))?.componentInstance;

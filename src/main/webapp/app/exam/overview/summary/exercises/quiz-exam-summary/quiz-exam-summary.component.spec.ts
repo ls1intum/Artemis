@@ -23,7 +23,6 @@ import dayjs from 'dayjs/esm';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
-import { input } from '@angular/core';
 
 const multipleChoiceQuestion = { id: 1, type: QuizQuestionType.MULTIPLE_CHOICE } as MultipleChoiceQuestion;
 const wrongAnswerOption = { id: 1, isCorrect: false, question: multipleChoiceQuestion } as AnswerOption;
@@ -66,7 +65,12 @@ const submissionWithAnswers = {
     submittedAnswers: [multipleChoiceSubmittedAnswer, dragAndDropSubmittedAnswer, shortAnswerSubmittedAnswer],
     submitted: true,
 } as QuizSubmission;
-const exercise = { id: 1, studentParticipations: [studentParticipation], quizQuestions: [multipleChoiceQuestion, dragAndDropQuestion, shortAnswerQuestion] } as QuizExercise;
+
+const exercise = {
+    id: 1,
+    studentParticipations: [studentParticipation],
+    quizQuestions: [multipleChoiceQuestion, dragAndDropQuestion, shortAnswerQuestion],
+} as QuizExercise;
 
 describe('QuizExamSummaryComponent', () => {
     let fixture: ComponentFixture<QuizExamSummaryComponent>;
@@ -87,20 +91,16 @@ describe('QuizExamSummaryComponent', () => {
                 const submission = { id: 2, submittedAnswers: [] };
                 const resultsPublished = true;
                 const exam = { id: 1 } as Exam;
-                TestBed.runInInjectionContext(() => {
-                    component.quizParticipation = input(quizParticipation);
-                    component.submission = input(submission);
-                    component.resultsPublished = input(resultsPublished);
-                    component.exam = input(exam);
-                });
+                fixture.componentRef.setInput('quizParticipation', quizParticipation);
+                fixture.componentRef.setInput('submission', submission);
+                fixture.componentRef.setInput('resultsPublished', resultsPublished);
+                fixture.componentRef.setInput('exam', exam);
             });
     });
 
     it('should initialize', () => {
         const exam = { id: 1, publishResultsDate: dayjs().subtract(1, 'hours') } as Exam;
-        TestBed.runInInjectionContext(() => {
-            component.exam = input(exam);
-        });
+        fixture.componentRef.setInput('exam', exam);
         component.ngOnChanges();
         expect(component).not.toBeNull();
         expect(component.exam).not.toBeNull();
@@ -108,9 +108,7 @@ describe('QuizExamSummaryComponent', () => {
     });
 
     it('should initialize the solution dictionaries correctly', () => {
-        TestBed.runInInjectionContext(() => {
-            component.submission = input(submissionWithAnswers);
-        });
+        fixture.componentRef.setInput('submission', submissionWithAnswers);
         component.ngOnChanges();
         expect(component.selectedAnswerOptions.get(1)![0]).toEqual(correctAnswerOption);
         expect(component.getScoreForQuizQuestion(1)).toBe(1);

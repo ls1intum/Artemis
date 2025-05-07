@@ -14,7 +14,6 @@ import { SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
-import { input } from '@angular/core';
 
 describe('TextExamSummaryComponent', () => {
     let fixture: ComponentFixture<TextExamSummaryComponent>;
@@ -51,10 +50,8 @@ describe('TextExamSummaryComponent', () => {
     });
 
     it('should initialize', () => {
-        TestBed.runInInjectionContext(() => {
-            component.submission = input({} as TextSubmission);
-            component.exercise = input({} as Exercise);
-        });
+        fixture.componentRef.setInput('submission', {} as TextSubmission);
+        fixture.componentRef.setInput('exercise', {} as Exercise);
         fixture.detectChanges();
         expect(component).not.toBeNull();
         expect(fixture.debugElement.nativeElement.querySelector('div').innerHTML).toContain('No submission');
@@ -62,10 +59,8 @@ describe('TextExamSummaryComponent', () => {
 
     it('should display the submission text', () => {
         const submissionText = 'A test submission text';
-        TestBed.runInInjectionContext(() => {
-            component.submission = input({ text: submissionText } as TextSubmission);
-            component.exercise = input({ studentParticipations: [{ id: 1 }] } as Exercise);
-        });
+        fixture.componentRef.setInput('submission', { text: submissionText } as TextSubmission);
+        fixture.componentRef.setInput('exercise', { studentParticipations: [{ id: 1 }] } as Exercise);
         fixture.detectChanges();
 
         const textEditorComponent = fixture.debugElement.query(By.directive(TextEditorComponent)).componentInstance;

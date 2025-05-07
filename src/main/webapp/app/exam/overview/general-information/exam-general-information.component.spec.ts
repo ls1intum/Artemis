@@ -6,7 +6,6 @@ import { ExamGeneralInformationComponent } from 'app/exam/overview/general-infor
 import dayjs from 'dayjs/esm';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { input } from '@angular/core';
 
 let fixture: ComponentFixture<ExamGeneralInformationComponent>;
 let component: ExamGeneralInformationComponent;
@@ -38,10 +37,8 @@ describe('ExamGeneralInformationComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(ExamGeneralInformationComponent);
                 component = fixture.componentInstance;
-                TestBed.runInInjectionContext(() => {
-                    component.exam = input(exam);
-                    component.studentExam = input(studentExam);
-                });
+                fixture.componentRef.setInput('exam', exam);
+                fixture.componentRef.setInput('studentExam', studentExam);
             });
     });
 
@@ -50,9 +47,7 @@ describe('ExamGeneralInformationComponent', () => {
     });
 
     it('should initialize', () => {
-        TestBed.runInInjectionContext(() => {
-            component.studentExam = input({} as StudentExam);
-        });
+        fixture.componentRef.setInput('studentExam', {} as StudentExam);
         fixture.detectChanges();
         component.ngOnChanges();
         expect(fixture).toBeDefined();
@@ -68,9 +63,7 @@ describe('ExamGeneralInformationComponent', () => {
 
     it('should detect if the end date is on another day', () => {
         exam.endDate = dayjs(exam.startDate).add(2, 'days');
-        TestBed.runInInjectionContext(() => {
-            component.studentExam = input({} as StudentExam);
-        });
+        fixture.componentRef.setInput('studentExam', {} as StudentExam);
         fixture.detectChanges();
         component.ngOnChanges();
         expect(fixture).toBeDefined();

@@ -24,7 +24,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { input } from '@angular/core';
 
 let fixture: ComponentFixture<ExamResultOverviewComponent>;
 let component: ExamResultOverviewComponent;
@@ -186,11 +185,9 @@ describe('ExamResultOverviewComponent', () => {
                 component = fixture.componentInstance;
                 exam.course = course;
                 component.gradingScaleExists = false;
-                const exerciseInfos = {};
-                TestBed.runInInjectionContext(() => {
-                    component.studentExamWithGrade = input(studentExamWithGrade);
-                    component.exerciseInfos = input(exerciseInfos);
-                });
+
+                fixture.componentRef.setInput('studentExamWithGrade', studentExamWithGrade);
+                fixture.componentRef.setInput('exerciseInfos', {});
             });
     });
 
@@ -304,9 +301,7 @@ describe('ExamResultOverviewComponent', () => {
             //@ts-ignore spying on private method
             const summedAchievedExerciseScorePercentageSpy = jest.spyOn(component, 'summedAchievedExerciseScorePercentage');
             component.studentExamWithGrade().studentResult.overallScoreAchieved = undefined;
-            TestBed.runInInjectionContext(() => {
-                component.exerciseInfos = input({});
-            });
+            fixture.componentRef.setInput('exerciseInfos', {});
 
             component.ngOnInit();
 
@@ -317,9 +312,7 @@ describe('ExamResultOverviewComponent', () => {
             //@ts-ignore spying on private method
             const summedAchievedExerciseScorePercentageSpy = jest.spyOn(component, 'summedAchievedExerciseScorePercentage');
             component.studentExamWithGrade().studentResult.overallScoreAchieved = 0;
-            TestBed.runInInjectionContext(() => {
-                component.exerciseInfos = input({});
-            });
+            fixture.componentRef.setInput('exerciseInfos', {});
 
             component.ngOnInit();
 

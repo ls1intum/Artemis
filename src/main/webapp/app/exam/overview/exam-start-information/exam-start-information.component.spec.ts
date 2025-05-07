@@ -13,7 +13,6 @@ import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { provideRouter } from '@angular/router';
-import { input } from '@angular/core';
 
 let fixture: ComponentFixture<ExamStartInformationComponent>;
 let component: ExamStartInformationComponent;
@@ -54,10 +53,8 @@ describe('ExamStartInformationComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(ExamStartInformationComponent);
                 component = fixture.componentInstance;
-                TestBed.runInInjectionContext(() => {
-                    component.exam = input(exam);
-                    component.studentExam = input(studentExam);
-                });
+                fixture.componentRef.setInput('exam', exam);
+                fixture.componentRef.setInput('studentExam', studentExam);
             });
     });
 
@@ -154,10 +151,8 @@ describe('ExamStartInformationComponent', () => {
 
         const studentExam1 = { id: 1, exam, user } as StudentExam;
 
-        TestBed.runInInjectionContext(() => {
-            component.exam = input(exam1);
-            component.studentExam = input(studentExam1);
-        });
+        fixture.componentRef.setInput('exam', exam1);
+        fixture.componentRef.setInput('studentExam', studentExam1);
         const informationBoxStub = jest.spyOn(component, 'buildInformationBox');
         const informationBoxDataStub = jest.spyOn(component, 'prepareInformationBoxData');
         fixture.detectChanges();

@@ -33,9 +33,7 @@ describe('StudentExamWorkingTimeComponent', () => {
 
     const setExamWithWorkingTime = (workingTimeSeconds: number) => {
         studentExam.workingTime = workingTimeSeconds;
-        TestBed.runInInjectionContext(() => {
-            comp.studentExam = input(studentExam);
-        });
+        fixture.componentRef.setInput('studentExam', studentExam);
         comp.ngOnInit();
     };
 
@@ -60,9 +58,7 @@ describe('StudentExamWorkingTimeComponent', () => {
     });
 
     it('should only count exams as test runs if they explicitly are', () => {
-        TestBed.runInInjectionContext(() => {
-            comp.studentExam = input(studentExam);
-        });
+        fixture.componentRef.setInput('studentExam', studentExam);
 
         studentExam.testRun = undefined;
         comp.ngOnInit();

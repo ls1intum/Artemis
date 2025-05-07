@@ -8,7 +8,6 @@ import { MockPipe } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { provideHttpClient } from '@angular/common/http';
-import { input } from '@angular/core';
 
 describe('ExamTimerComponent', () => {
     let component: ExamTimerComponent;
@@ -27,10 +26,9 @@ describe('ExamTimerComponent', () => {
         fixture = TestBed.createComponent(ExamTimerComponent);
         component = fixture.componentInstance;
         dateService = TestBed.inject(ArtemisServerDateService);
-        TestBed.runInInjectionContext(() => {
-            component.endDate = input(inFuture);
-            component.criticalTime = input(dayjs.duration(200));
-        });
+
+        fixture.componentRef.setInput('endDate', inFuture);
+        fixture.componentRef.setInput('criticalTime', dayjs.duration(200));
     });
 
     it('should call ngOnInit', () => {
@@ -59,10 +57,8 @@ describe('ExamTimerComponent', () => {
     });
 
     it('should update time in the template correctly', fakeAsync(() => {
-        TestBed.runInInjectionContext(() => {
-            // 30 minutes left
-            component.endDate = input(dayjs(now).add(30, 'minutes'));
-        });
+        // 30 minutes left
+        fixture.componentRef.setInput('endDate', dayjs(now).add(30, 'minutes'));
         jest.spyOn(dateService, 'now').mockReturnValueOnce(dayjs(now)).mockReturnValueOnce(dayjs(now)).mockReturnValueOnce(dayjs(now).add(5, 'minutes'));
         fixture.detectChanges();
         tick();
