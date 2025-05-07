@@ -4,10 +4,10 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
- * DTO for creating an Answer Post with only the necessary fields.
+ * DTO for using a post in CreatAnswerPostDTO with only the id.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public record CreateAnswerPostDTO(String content, ParentPostDTO post) {
+public record ParentPostDTO(long id) {
 
 }

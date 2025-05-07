@@ -92,14 +92,15 @@ public class AnswerMessageService extends PostingService {
     public AnswerPost createAnswerMessage(Long courseId, CreateAnswerPostDTO answerMessage) {
         final User author = this.userRepository.getUserWithGroupsAndAuthorities();
 
-        var newAnswerMessage = answerMessage.toEntity();
+        var newAnswerMessage = new AnswerPost();
+        newAnswerMessage.setContent(answerMessage.content());
 
-        var conversationId = answerMessage.post().getConversation().getId();
+        Post post = conversationMessageRepository.findMessagePostByIdElseThrow(answerMessage.post().id());
+        var conversationId = post.getConversation().getId();
         // For group chats we need the participants to generate the conversation title
         var conversation = conversationService.isMemberOrCreateForCourseWideElseThrow(conversationId, author, Optional.empty())
                 .orElse(conversationService.loadConversationWithParticipantsIfGroupChat(conversationId));
 
-        Post post = conversationMessageRepository.findMessagePostByIdElseThrow(answerMessage.post().getId());
         var course = preCheckUserAndCourseForMessaging(author, courseId);
 
         if (conversation instanceof Channel channel) {

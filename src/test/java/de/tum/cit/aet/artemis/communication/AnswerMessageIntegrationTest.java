@@ -29,6 +29,8 @@ import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.CourseNotification;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
+import de.tum.cit.aet.artemis.communication.dto.CreateAnswerPostDTO;
+import de.tum.cit.aet.artemis.communication.dto.ParentPostDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostDTO;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
@@ -125,10 +127,11 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         assertThat(persistedCourse.getCourseInformationSharingConfiguration()).isEqualTo(courseInformationSharingConfiguration);
 
         AnswerPost answerPostToSave = createAnswerPost(existingConversationPostsWithAnswers.get(2));
+        CreateAnswerPostDTO answerPostDTOToSave = new CreateAnswerPostDTO(answerPostToSave.getContent(), new ParentPostDTO(answerPostToSave.getPost().getId()));
 
         var countBefore = answerPostRepository.count();
 
-        AnswerPost createdAnswerPost = request.postWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages", answerPostToSave, AnswerPost.class,
+        AnswerPost createdAnswerPost = request.postWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages", answerPostDTOToSave, AnswerPost.class,
                 HttpStatus.CREATED);
         conversationUtilService.assertSensitiveInformationHidden(createdAnswerPost);
         // should not be automatically post resolving
@@ -195,6 +198,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         Post savedMessage = conversationMessageRepository.save(message);
 
         AnswerPost answerPostToSave = createAnswerPost(savedMessage);
+        CreateAnswerPostDTO answerPostDTOToSave = new CreateAnswerPostDTO(answerPostToSave.getContent(), new ParentPostDTO(answerPostToSave.getPost().getId()));
 
         var countBefore = answerPostRepository.count();
 
@@ -203,7 +207,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         if (conversation instanceof Channel theChannel) {
             theChannel.setExam(null);
         }
-        AnswerPost createdAnswerPost = request.postWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages", answerPostToSave, AnswerPost.class,
+        AnswerPost createdAnswerPost = request.postWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages", answerPostDTOToSave, AnswerPost.class,
                 HttpStatus.CREATED);
         conversationUtilService.assertSensitiveInformationHidden(createdAnswerPost);
         // should not be automatically post resolving
@@ -252,9 +256,11 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         User mentionedUser = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         answerPostToSave.setContent("[user]" + mentionedUser.getName() + "(" + mentionedUser.getLogin() + ")[/user]");
 
+        CreateAnswerPostDTO answerPostDTOToSave = new CreateAnswerPostDTO(answerPostToSave.getContent(), new ParentPostDTO(answerPostToSave.getPost().getId()));
+
         var countBefore = answerPostRepository.count();
 
-        AnswerPost createdAnswerPost = request.postWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages", answerPostToSave, AnswerPost.class,
+        AnswerPost createdAnswerPost = request.postWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages", answerPostDTOToSave, AnswerPost.class,
                 HttpStatus.CREATED);
         conversationUtilService.assertSensitiveInformationHidden(createdAnswerPost);
         // should not be automatically post resolving
@@ -273,8 +279,9 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
 
         var countBefore = answerPostRepository.count();
         AnswerPost postToSave = createAnswerPost(existingConversationPostsWithAnswers.getFirst());
+        CreateAnswerPostDTO answerPostDTOToSave = new CreateAnswerPostDTO(postToSave.getContent(), new ParentPostDTO(postToSave.getPost().getId()));
 
-        AnswerPost notCreatedAnswerPost = request.postWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages", postToSave, AnswerPost.class,
+        AnswerPost notCreatedAnswerPost = request.postWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages", answerPostDTOToSave, AnswerPost.class,
                 HttpStatus.BAD_REQUEST);
 
         assertThat(notCreatedAnswerPost).isNull();
@@ -311,10 +318,11 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         // only participants of a conversation can create posts for it
         // attempt to save new answerPost under someone elses conversation
         AnswerPost answerPostToSave = createAnswerPost(existingConversationPostsWithAnswers.get(2));
+        CreateAnswerPostDTO answerPostDTOToSave = new CreateAnswerPostDTO(answerPostToSave.getContent(), new ParentPostDTO(answerPostToSave.getPost().getId()));
 
         var countBefore = answerPostRepository.count();
 
-        AnswerPost notCreatedAnswerPost = request.postWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages", answerPostToSave, AnswerPost.class,
+        AnswerPost notCreatedAnswerPost = request.postWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages", answerPostDTOToSave, AnswerPost.class,
                 HttpStatus.FORBIDDEN);
 
         assertThat(notCreatedAnswerPost).isNull();
@@ -662,8 +670,9 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         Post savedMessage = conversationMessageRepository.save(post);
 
         AnswerPost answerPostToSave = createAnswerPost(savedMessage);
+        CreateAnswerPostDTO answerPostDTOToSave = new CreateAnswerPostDTO(answerPostToSave.getContent(), new ParentPostDTO(answerPostToSave.getPost().getId()));
 
-        request.postWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
+        request.postWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages", answerPostDTOToSave, AnswerPost.class, HttpStatus.CREATED);
 
         await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
             List<CourseNotification> notifications = courseNotificationRepository.findAll();
@@ -688,8 +697,9 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
 
         AnswerPost answerPostToSave = createAnswerPost(savedMessage);
         answerPostToSave.setContent("[user]" + mentionedUser.getName() + "(" + mentionedUser.getLogin() + ")[/user] Check this out!");
+        CreateAnswerPostDTO answerPostDTOToSave = new CreateAnswerPostDTO(answerPostToSave.getContent(), new ParentPostDTO(answerPostToSave.getPost().getId()));
 
-        request.postWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
+        request.postWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages", answerPostDTOToSave, AnswerPost.class, HttpStatus.CREATED);
 
         await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
             List<CourseNotification> notifications = courseNotificationRepository.findAll();

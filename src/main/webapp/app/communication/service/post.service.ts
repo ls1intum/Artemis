@@ -31,8 +31,7 @@ export class PostService extends PostingService<Post> {
             content: post.content,
             title: (post as Post).title,
             hasForwardedMessages: post.hasForwardedMessages,
-            conversation: post.conversation,
-            plagiarismCase: post.plagiarismCase,
+            conversation: post.conversation ? { id: post.conversation.id } : undefined,
             creationDate: post.creationDate,
             updatedDate: post.updatedDate,
         };

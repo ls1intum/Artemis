@@ -85,7 +85,7 @@ public class ConversationMessageResource {
         log.debug("POST createMessage invoked for course {} with post {}", courseId, post.content());
         long start = System.nanoTime();
 
-        if (post.conversation() == null || post.conversation().getId() == null) {
+        if (post.conversation() == null) {
             throw new BadRequestAlertException("A new message post must have a conversation", conversationMessagingService.getEntityName(), "conversationnotset");
         }
         CreatedConversationMessage createdMessageData = conversationMessagingService.createMessage(courseId, post);

@@ -24,7 +24,7 @@ export class AnswerPostService extends PostingService<AnswerPost> {
     create(courseId: number, answerPost: AnswerPost): Observable<EntityResponseType> {
         const answerPostDTO = {
             content: answerPost.content,
-            post: answerPost.post,
+            post: answerPost.post ? { id: answerPost.post.id } : undefined,
             creationDate: answerPost.creationDate,
             updatedDate: answerPost.updatedDate,
         };
