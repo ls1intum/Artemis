@@ -3,7 +3,6 @@
         <button type="button" class="btn-close" (click)="dismissConsistencyCheck()" aria-label="Close"></button>
         <h4 class="alert-heading" jhiTranslate="artemisApp.programmingExercise.artemisIntelligence.consistencyCheckAlert.title"></h4>
         <h5 jhiTranslate="artemisApp.programmingExercise.artemisIntelligence.consistencyCheckAlert.inconsistencies"></h5>
-
         <ul>
             @for (element of formattedConsistency(); track element.suggestion) {
                 <div>
@@ -12,7 +11,6 @@
                 </div>
             }
         </ul>
-
         <h4 class="alert-heading" jhiTranslate="artemisApp.programmingExercise.artemisIntelligence.consistencyCheckAlert.improvement"></h4>
         <div [innerHtml]="this.improvement()"></div>
     </div>
