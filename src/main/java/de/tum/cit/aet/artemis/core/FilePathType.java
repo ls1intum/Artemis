@@ -11,16 +11,16 @@ import de.tum.cit.aet.artemis.core.service.FilePathService;
  * </p>
  *
  * <ul>
- * <li>Make sure that the enum value reflects the actual path prefix, so it's straightforward to find in the file system.</li>
+ * <li>Make sure that the enum value reflects the actual path prefix, so it's easy to find in the file system.</li>
  * <li>Ensure related items in the file system are grouped together.</li>
  * </ul>
  *
- * @see FilePathService FilePathService for the actual path generation.
+ * @see FilePathService for the actual path generation.
  */
 public enum FilePathType {
     // @formatter:off
 
-    /** <strong> Lecture file paths </strong> **/
+    /** Lecture file paths **/
     LECTURE_ATTACHMENT,
     ATTACHMENT_UNIT,
     /** Path for slide images when attachments are split into single slides **/

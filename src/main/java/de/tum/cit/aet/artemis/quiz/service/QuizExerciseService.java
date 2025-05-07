@@ -294,7 +294,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         }
 
         var allFilesToRemoveMerged = filesToRemove.entrySet().stream()
-                .flatMap(entry -> entry.getValue().stream().map(p -> FilePathService.fileSystemPathForExternalUri(URI.create(p), entry.getKey()))).filter(Objects::nonNull)
+                .flatMap(entry -> entry.getValue().stream().map(path -> FilePathService.fileSystemPathForExternalUri(URI.create(path), entry.getKey()))).filter(Objects::nonNull)
                 .toList();
 
         fileService.deleteFiles(allFilesToRemoveMerged);
@@ -324,7 +324,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
         // Don't do anything if the path is null because it's getting removed
         if (newBackgroundPath != null) {
-            var oldBackgroundPaths = oldPaths.get(FilePathType.DRAG_AND_DROP_BACKGROUND);
+            Set<String> oldBackgroundPaths = oldPaths.get(FilePathType.DRAG_AND_DROP_BACKGROUND);
             if (oldBackgroundPaths.contains(newBackgroundPath)) {
                 // Path didn't change
                 filesToRemove.get(FilePathType.DRAG_AND_DROP_BACKGROUND).remove(newBackgroundPath);
@@ -337,7 +337,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
         for (var dragItem : dragAndDropQuestion.getDragItems()) {
             String newDragItemPath = dragItem.getPictureFilePath();
-            var dragItemOldPaths = oldPaths.get(FilePathType.DRAG_ITEM);
+            Set<String> dragItemOldPaths = oldPaths.get(FilePathType.DRAG_ITEM);
             if (newDragItemPath != null && !dragItemOldPaths.contains(newDragItemPath)) {
                 // Path changed and file was provided
                 saveDndDragItemPicture(dragItem, fileMap, null);
