@@ -308,7 +308,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
         // Compute new grouping based on current posts.
         const computedGroups: PostGroup[] = [];
-        let currentGroup: PostGroup | null = null;
+        let currentGroup: PostGroup | undefined = undefined;
 
         sortedPosts.forEach((post) => {
             if (!currentGroup) {
