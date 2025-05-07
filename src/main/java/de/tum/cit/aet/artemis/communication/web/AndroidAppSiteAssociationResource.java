@@ -42,24 +42,34 @@ public class AndroidAppSiteAssociationResource {
      */
     @GetMapping(value = "assetlinks.json", produces = "application/json")
     @ManualConfig
-    public ResponseEntity<List<AndroidAssetLinksEntry>> getAndroidAssetLinks() {
+    public ResponseEntity<List<AndroidAssetLinksStatement>> getAndroidAssetLinks() {
         if (androidAppPackage == null || androidAppPackage.length() < 4 || sha256CertFingerprintRelease == null || sha256CertFingerprintRelease.length() < 20) {
             log.debug("Android Assetlinks information is not configured!");
             return ResponseEntity.notFound().build();
         }
 
-        final AndroidAssetLinksEntry.AndroidTarget appTarget = new AndroidAssetLinksEntry.AndroidTarget("android_app", androidAppPackage,
+        final AndroidAssetLinksStatement.AndroidTarget appTarget = new AndroidAssetLinksStatement.AndroidTarget("android_app", androidAppPackage,
                 List.of(sha256CertFingerprintRelease, sha256CertFingerprintDebug));
 
-        final AndroidAssetLinksEntry handleAllUrlsAndCreds = new AndroidAssetLinksEntry(
-                List.of("delegate_permission/common.handle_all_urls", "delegate_permission/common.get_login_creds"), appTarget);
+        final AndroidAssetLinksStatement.WebTarget webTarget = new AndroidAssetLinksStatement.WebTarget("web", "https://artemis.tum.de");
 
-        return ResponseEntity.ok(List.of(handleAllUrlsAndCreds));
+        final List<String> relations = List.of("delegate_permission/common.handle_all_urls", "delegate_permission/common.get_login_creds");
+
+        final AndroidAssetLinksStatement appStatement = new AndroidAssetLinksStatement(relations, appTarget);
+        final AndroidAssetLinksStatement webStatement = new AndroidAssetLinksStatement(relations, webTarget);
+
+        return ResponseEntity.ok(List.of(appStatement, webStatement));
     }
 
-    public record AndroidAssetLinksEntry(List<String> relation, AndroidTarget target) {
+    public record AndroidAssetLinksStatement(List<String> relation, Target target) {
 
-        public record AndroidTarget(String namespace, String package_name, List<String> sha256_cert_fingerprints) {
+        public interface Target {
+        }
+
+        public record AndroidTarget(String namespace, String package_name, List<String> sha256_cert_fingerprints) implements Target {
+        }
+
+        public record WebTarget(String namespace, String site) implements Target {
         }
     }
 }
