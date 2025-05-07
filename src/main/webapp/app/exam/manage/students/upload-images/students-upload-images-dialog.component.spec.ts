@@ -56,8 +56,8 @@ describe('StudentsUploadImagesDialogComponent', () => {
                 examManagementService = TestBed.inject(ExamManagementService);
 
                 TestBed.runInInjectionContext(() => {
-                    component.exam = input(exam);
-                    component.courseId = input(course.id!);
+                    component.exam = exam;
+                    component.courseId = course.id!;
                 });
 
                 ngbModal = TestBed.get(NgbActiveModal);
