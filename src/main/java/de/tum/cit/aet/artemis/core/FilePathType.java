@@ -15,7 +15,7 @@ import de.tum.cit.aet.artemis.core.service.FilePathService;
  * <li>Ensure related items in the file system are grouped together.</li>
  * </ul>
  *
- * @see FilePathService for the actual path generation.
+ * @see FilePathService FilePathService for the actual path generation.
  */
 public enum FilePathType {
     // @formatter:off
