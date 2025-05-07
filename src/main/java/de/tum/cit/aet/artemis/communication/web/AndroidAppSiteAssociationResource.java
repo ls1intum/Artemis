@@ -26,8 +26,11 @@ public class AndroidAppSiteAssociationResource {
     @Value("${artemis.androidAppPackage: #{null}}")
     private String androidAppPackage;
 
-    @Value("${artemis.androidSha256CertFingerprints: #{null}}")
-    private String sha256CertFingerprints;
+    @Value("${artemis.androidSha256CertFingerprints.release: #{null}}")
+    private String sha256CertFingerprintRelease;
+
+    @Value("${artemis.androidSha256CertFingerprints.debug: #{null}}")
+    private String sha256CertFingerprintDebug;
 
     private static final Logger log = LoggerFactory.getLogger(AndroidAppSiteAssociationResource.class);
 
@@ -40,18 +43,18 @@ public class AndroidAppSiteAssociationResource {
     @GetMapping(value = "assetlinks.json", produces = "application/json")
     @ManualConfig
     public ResponseEntity<List<AndroidAssetLinksEntry>> getAndroidAssetLinks() {
-        if (androidAppPackage == null || androidAppPackage.length() < 4 || sha256CertFingerprints == null || sha256CertFingerprints.length() < 20) {
+        if (androidAppPackage == null || androidAppPackage.length() < 4 || sha256CertFingerprintRelease == null || sha256CertFingerprintRelease.length() < 20) {
             log.debug("Android Assetlinks information is not configured!");
             return ResponseEntity.notFound().build();
         }
 
-        final AndroidAssetLinksEntry.AndroidTarget appTarget = new AndroidAssetLinksEntry.AndroidTarget("android_app", androidAppPackage, List.of(sha256CertFingerprints));
+        final AndroidAssetLinksEntry.AndroidTarget appTarget = new AndroidAssetLinksEntry.AndroidTarget("android_app", androidAppPackage,
+                List.of(sha256CertFingerprintRelease, sha256CertFingerprintDebug));
 
-        final AndroidAssetLinksEntry handleAllUrls = new AndroidAssetLinksEntry(List.of("delegate_permission/common.handle_all_urls"), appTarget);
+        final AndroidAssetLinksEntry handleAllUrlsAndCreds = new AndroidAssetLinksEntry(
+                List.of("delegate_permission/common.handle_all_urls", "delegate_permission/common.get_login_creds"), appTarget);
 
-        final AndroidAssetLinksEntry getLoginCredentials = new AndroidAssetLinksEntry(List.of("delegate_permission/common.get_login_creds"), appTarget);
-
-        return ResponseEntity.ok(List.of(handleAllUrls, getLoginCredentials));
+        return ResponseEntity.ok(List.of(handleAllUrlsAndCreds));
     }
 
     public record AndroidAssetLinksEntry(List<String> relation, AndroidTarget target) {
