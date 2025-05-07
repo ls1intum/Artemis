@@ -11,16 +11,16 @@ import de.tum.cit.aet.artemis.core.service.FilePathService;
  * </p>
  *
  * <ul>
- * <li>Make sure that the enum value reflects the actual path prefix, so it's easy to find in the file system.</li>
+ * <li>Make sure that the enum value reflects the actual path prefix, so it's straightforward to find in the file system.</li>
  * <li>Ensure related items in the file system are grouped together.</li>
  * </ul>
  *
- * @see FilePathService for the actual path generation.
+ * @see FilePathService FilePathService for the actual path generation.
  */
 public enum FilePathType {
     // @formatter:off
 
-    /** Lecture file paths **/
+    /** <strong> Lecture file paths </strong> **/
     LECTURE_ATTACHMENT,
     ATTACHMENT_UNIT,
     /** Path for slide images when attachments are split into single slides **/
@@ -28,23 +28,23 @@ public enum FilePathType {
     /** Path for the student version of slides. This is a version of the actual slides with hidden slides published to students **/
     STUDENT_VERSION_SLIDES,
 
-    /** Dnd Quiz file paths **/
+    /** <strong> Dnd Quiz file paths </strong> **/
     DRAG_AND_DROP_BACKGROUND,
     DRAG_ITEM,
 
-    /** Exam participant information file paths **/
+    /** <strong> Exam participant information file paths </strong> **/
     EXAM_USER_SIGNATURE,
     EXAM_USER_IMAGE,
 
-    /** Course file paths **/
+    /** <strong> Course file paths </strong> **/
     COURSE_ICON,
 
-    /** User file paths **/
+    /** <strong> User file paths </strong> **/
     PROFILE_PICTURE,
 
-    /** Exercise file paths **/
+    /** <strong> Exercise file paths </strong> **/
     FILE_UPLOAD_SUBMISSION,
 
-    /** Other file paths **/
+    /** <strong> Other file paths </strong> **/
     TEMPORARY
 }
