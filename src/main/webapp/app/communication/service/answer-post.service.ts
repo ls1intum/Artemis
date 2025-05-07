@@ -33,7 +33,14 @@ export class AnswerPostService extends PostingService<AnswerPost> {
      * @return {Observable<EntityResponseType>}
      */
     update(courseId: number, answerPost: AnswerPost): Observable<EntityResponseType> {
-        const copy = this.convertPostingDateFromClient(answerPost);
+        const updatedAnswer = {
+            id: answerPost.id,
+            content: answerPost.content,
+            resolvesPost: answerPost.resolvesPost,
+            creationDate: answerPost.creationDate,
+            updatedDate: answerPost.updatedDate,
+        };
+        const copy = this.convertPostingDateFromClient(updatedAnswer);
         return this.http
             .put<AnswerPost>(`${this.getResourceEndpoint(courseId, answerPost)}/${answerPost.id}`, copy, { observe: 'response' })
             .pipe(map(this.convertPostingResponseDateFromServer));
