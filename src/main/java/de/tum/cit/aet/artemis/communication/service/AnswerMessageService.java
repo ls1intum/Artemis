@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewAnswe
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewMentionNotification;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.PostDTO;
+import de.tum.cit.aet.artemis.communication.dto.UpdatePostingDTO;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
@@ -163,11 +164,11 @@ public class AnswerMessageService extends PostingService {
      * @param answerMessage   answer message to update
      * @return updated answer message that was persisted
      */
-    public AnswerPost updateAnswerMessage(Long courseId, Long answerMessageId, AnswerPost answerMessage) {
+    public AnswerPost updateAnswerMessage(Long courseId, Long answerMessageId, UpdatePostingDTO answerMessage) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // checks
-        if (answerMessage.getId() == null || !Objects.equals(answerMessage.getId(), answerMessageId)) {
+        if (!Objects.equals(answerMessage.id(), answerMessageId)) {
             throw new BadRequestAlertException("Invalid id", METIS_ANSWER_POST_ENTITY_NAME, "idnull");
         }
         AnswerPost existingAnswerMessage = this.findById(answerMessageId);
@@ -176,15 +177,15 @@ public class AnswerMessageService extends PostingService {
 
         Conversation conversation = conversationService.getConversationById(existingAnswerMessage.getPost().getConversation().getId());
         var course = preCheckUserAndCourseForMessaging(user, courseId);
-        parseUserMentions(course, answerMessage.getContent());
+        parseUserMentions(course, answerMessage.content());
         // only the content of the message can be updated
-        existingAnswerMessage.setContent(answerMessage.getContent());
+        existingAnswerMessage.setContent(answerMessage.content());
 
         // determine if the update operation is to mark the answer message as resolving the original post
-        if (existingAnswerMessage.doesResolvePost() != answerMessage.doesResolvePost()) {
+        if (existingAnswerMessage.doesResolvePost() != answerMessage.resolvesPost()) {
             // check if requesting user is allowed to mark this answer message as resolving, i.e. if user is author or original message or at least tutor
             mayMarkAnswerMessageAsResolvingElseThrow(existingAnswerMessage, user, course);
-            existingAnswerMessage.setResolvesPost(answerMessage.doesResolvePost());
+            existingAnswerMessage.setResolvesPost(answerMessage.resolvesPost());
             // sets the message as resolved if there exists any resolving answer
             existingAnswerMessage.getPost().setResolved(existingAnswerMessage.getPost().getAnswers().stream().anyMatch(AnswerPost::doesResolvePost));
             postRepository.save(existingAnswerMessage.getPost());
@@ -192,7 +193,7 @@ public class AnswerMessageService extends PostingService {
         else {
             // check if requesting user is allowed to update the content, i.e. if user is author of answer message or at least tutor
             mayUpdateOrDeleteAnswerMessageElseThrow(existingAnswerMessage, user);
-            existingAnswerMessage.setContent(answerMessage.getContent());
+            existingAnswerMessage.setContent(answerMessage.content());
             existingAnswerMessage.setUpdatedDate(ZonedDateTime.now());
         }
 

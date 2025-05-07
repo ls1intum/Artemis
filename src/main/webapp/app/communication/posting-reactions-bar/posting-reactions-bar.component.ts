@@ -219,6 +219,10 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
     }
 
     getShowNewMessageIcon(): boolean {
+        if (!this.sortedAnswerPosts()) {
+            return false;
+        }
+
         let showIcon = false;
         // iterate over all answer posts
         (this.sortedAnswerPosts() as unknown as AnswerPost[]).forEach((answerPost: Posting) => {
