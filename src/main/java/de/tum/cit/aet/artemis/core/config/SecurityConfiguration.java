@@ -316,9 +316,11 @@ public class SecurityConfiguration {
                 publicKeyCredentialCreationOptionsRepository,
                 publicKeyCredentialRequestOptionsRepository
             );
+            var androidAppRelease = "android:apk-key-hash:fqGKBkDrSPLF-n_CrKmrhX7EdfQx8jzBWtWwE4f-NDE";
+            var androidAppDebug = "android:apk-key-hash:f8uZdBkwFUuGS4pzsAmUUhn2vZBqfBaxdjevdLFIO2w";
             http.with(webAuthnConfigurer, configurer -> {
                 configurer
-                    .allowedOrigins(clientUrlToRegisterPasskey.toString(), clientUrlToAuthenticateWithPasskey.toString())
+                    .allowedOrigins(clientUrlToRegisterPasskey.toString(), clientUrlToAuthenticateWithPasskey.toString(), androidAppRelease, androidAppDebug)
                     .rpId(clientUrlToRegisterPasskey.getHost())
                     .rpName("Artemis");
             });
