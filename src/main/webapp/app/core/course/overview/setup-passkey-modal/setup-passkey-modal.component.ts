@@ -4,7 +4,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { faKey, faShieldHalved } from '@fortawesome/free-solid-svg-icons';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { Router } from '@angular/router';
 import { addNewPasskey } from 'app/core/user/settings/passkey-settings/util/credential.util';
 import { WebauthnApiService } from 'app/core/user/settings/passkey-settings/webauthn-api.service';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -22,15 +21,9 @@ export class SetupPasskeyModalComponent {
     protected readonly faShieldHalved = faShieldHalved;
 
     private activeModal = inject(NgbActiveModal);
-    private router = inject(Router);
     private webauthnApiService = inject(WebauthnApiService);
     private alertService = inject(AlertService);
     private accountService = inject(AccountService);
-
-    navigateToSetupPasskey() {
-        this.closeModal();
-        this.router.navigateByUrl('/user-settings/passkeys');
-    }
 
     async setupPasskey() {
         await addNewPasskey(this.accountService.userIdentity, this.webauthnApiService, this.alertService);
