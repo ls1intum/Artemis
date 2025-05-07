@@ -31,6 +31,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import de.tum.cit.aet.artemis.communication.domain.CreatedConversationMessage;
 import de.tum.cit.aet.artemis.communication.domain.DisplayPriority;
 import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.communication.dto.CreatePostDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostContextFilterDTO;
 import de.tum.cit.aet.artemis.communication.dto.UpdatePostingDTO;
 import de.tum.cit.aet.artemis.communication.service.ConversationMessagingService;
@@ -80,13 +81,11 @@ public class ConversationMessageResource {
      */
     @PostMapping("courses/{courseId}/messages")
     @EnforceAtLeastStudent
-    public ResponseEntity<Post> createMessage(@PathVariable Long courseId, @Valid @RequestBody Post post) throws URISyntaxException {
-        log.debug("POST createMessage invoked for course {} with post {}", courseId, post.getContent());
+    public ResponseEntity<Post> createMessage(@PathVariable Long courseId, @Valid @RequestBody CreatePostDTO post) throws URISyntaxException {
+        log.debug("POST createMessage invoked for course {} with post {}", courseId, post.content());
         long start = System.nanoTime();
-        if (post.getId() != null) {
-            throw new BadRequestAlertException("A new message post cannot already have an ID", conversationMessagingService.getEntityName(), "idexists");
-        }
-        if (post.getConversation() == null || post.getConversation().getId() == null) {
+
+        if (post.conversation() == null || post.conversation().getId() == null) {
             throw new BadRequestAlertException("A new message post must have a conversation", conversationMessagingService.getEntityName(), "conversationnotset");
         }
         CreatedConversationMessage createdMessageData = conversationMessagingService.createMessage(courseId, post);
