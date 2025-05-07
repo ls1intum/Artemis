@@ -65,9 +65,6 @@ export class PostService extends PostingService<Post> {
         if (postContextFilter.filterToUnresolved) {
             params = params.set('filterToUnresolved', postContextFilter.filterToUnresolved);
         }
-        if (postContextFilter.filterToOwn) {
-            params = params.set('filterToOwn', postContextFilter.filterToOwn);
-        }
         if (postContextFilter.filterToAnsweredOrReacted) {
             params = params.set('filterToAnsweredOrReacted', postContextFilter.filterToAnsweredOrReacted);
         }

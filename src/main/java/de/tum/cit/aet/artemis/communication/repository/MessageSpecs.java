@@ -170,8 +170,10 @@ public class MessageSpecs {
             else {
                 // Post should not have any answer that resolves
                 Predicate noResolvingAnswer = criteriaBuilder.isFalse(root.get(Post_.resolved));
+                // Posts in announcement channels can not be answered, therefore they can not be unresolved
+                Predicate notAnnouncementChannel = criteriaBuilder.isFalse(root.get(Post_.conversation).get(Channel_.IS_ANNOUNCEMENT_CHANNEL));
 
-                return criteriaBuilder.and(noResolvingAnswer);
+                return criteriaBuilder.and(noResolvingAnswer, notAnnouncementChannel);
             }
         });
     }
