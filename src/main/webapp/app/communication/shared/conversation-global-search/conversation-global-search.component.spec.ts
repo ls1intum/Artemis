@@ -291,7 +291,7 @@ describe('ConversationGlobalSearchComponent', () => {
     }));
 
     it('should preselect a filter and update the search term, mode, and dropdown visibility', fakeAsync(() => {
-        const filter = { mode: 1, value: 'in:' } as SearchFilter;
+        const filter = { mode: 1, value: 'in:' };
 
         const focusInputSpy = jest.spyOn(component, 'focusInput');
         const startFilteringSpy = jest.spyOn(component, 'startFiltering');
