@@ -20,9 +20,5 @@ export function createCredentialOptions(options: PublicKeyCredentialCreationOpti
             ...credential,
             id: decodeBase64url(credential.id),
         })),
-        authenticatorSelection: {
-            requireResidentKey: true,
-            userVerification: 'preferred',
-        },
     };
 }
