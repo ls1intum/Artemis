@@ -249,7 +249,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
     /**
      * <p>
      * Reflects the case when the configuration property
-     * <code>artemis.user-management.passkey.ask-to-setup</code> is set to <strong>false</strong>.
+     * <code>artemis.user-management.passkey.ask-users-to-setup</code> is set to <strong>false</strong>.
      * </p>
      *
      * <p>
