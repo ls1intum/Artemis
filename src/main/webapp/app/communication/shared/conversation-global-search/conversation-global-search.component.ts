@@ -354,7 +354,7 @@ export class ConversationGlobalSearchComponent implements OnInit, OnDestroy {
     }
 
     selectActiveOption(): void {
-        if (this.activeDropdownIndex >= 0 && this.activeDropdownIndex < this.filteredOptions.length) {
+        if (this.fullSearchTerm && this.activeDropdownIndex >= 0 && this.activeDropdownIndex < this.filteredOptions.length) {
             const selectedOption = this.filteredOptions[this.activeDropdownIndex];
             this.selectOption(selectedOption);
         }
