@@ -171,7 +171,7 @@ public class PublicAccountResource {
         User user = userOptional.get();
         boolean askToSetupPasskey = false;
         if (askUsersToSetupPasskey) {
-            askToSetupPasskey = this.passkeyCredentialsRepository.existsByUserId(user.getId());
+            askToSetupPasskey = !this.passkeyCredentialsRepository.existsByUserId(user.getId());
         }
         user.setVisibleRegistrationNumber();
         UserDTO userDTO = new UserDTO(user);

@@ -231,7 +231,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
         UserDTO account = request.get("/api/core/public/account", HttpStatus.OK, UserDTO.class);
         assertThat(account).isNotNull();
-        assertThat(account.getAskToSetupPasskey()).isFalse();
+        assertThat(account.getAskToSetupPasskey()).isTrue();
     }
 
     @Test
@@ -243,7 +243,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         UserDTO account = request.get("/api/core/public/account", HttpStatus.OK, UserDTO.class);
 
         assertThat(account).isNotNull();
-        assertThat(account.getAskToSetupPasskey()).isTrue();
+        assertThat(account.getAskToSetupPasskey()).isFalse();
     }
 
     /**
