@@ -245,8 +245,8 @@ public class UserDTO extends AuditingEntityDTO {
         return vcsAccessTokenExpiryDate;
     }
 
-    public void setAskToSetupPasskey(boolean hasCreatedPasskeys) {
-        this.askToSetupPasskey = hasCreatedPasskeys;
+    public void setAskToSetupPasskey(boolean askToSetupPasskey) {
+        this.askToSetupPasskey = askToSetupPasskey;
     }
 
     public boolean getAskToSetupPasskey() {

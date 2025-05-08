@@ -57,7 +57,7 @@ public class PublicAccountResource {
     @Value("${artemis.user-management.registration.allowed-email-pattern:#{null}}")
     private Optional<Pattern> allowedEmailPattern;
 
-    @Value("${artemis.user-management.passkey.ask-users-to-setup:false}")
+    @Value("${artemis.user-management.passkey.ask-users-to-setup:true}")
     private boolean askUsersToSetupPasskey;
 
     private final AccountService accountService;
