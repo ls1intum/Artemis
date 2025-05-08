@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.communication.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -46,13 +47,18 @@ public class AndroidAppSiteAssociationResource {
     @GetMapping(value = "assetlinks.json", produces = "application/json")
     @ManualConfig
     public ResponseEntity<List<AndroidAssetLinksStatement>> getAndroidAssetLinks() {
-        if (androidAppPackage == null || androidAppPackage.length() < 4 || sha256CertFingerprintRelease == null || sha256CertFingerprintRelease.length() < 20) {
+        if (androidAppPackage == null || androidAppPackage.length() < 4 || sha256CertFingerprintRelease == null || sha256CertFingerprintRelease.length() < 20
+        // The debug fingerprint is optional, so we don't check it
+        ) {
             log.debug("Android Assetlinks information is not configured!");
             return ResponseEntity.notFound().build();
         }
 
-        final AndroidAssetLinksStatement.AndroidTarget appTarget = new AndroidAssetLinksStatement.AndroidTarget("android_app", androidAppPackage,
-                List.of(sha256CertFingerprintRelease, sha256CertFingerprintDebug));
+        List<String> fingerprints = new ArrayList<>(List.of(sha256CertFingerprintRelease));
+        if (sha256CertFingerprintDebug != null) {
+            fingerprints.add(sha256CertFingerprintDebug);
+        }
+        final AndroidAssetLinksStatement.AndroidTarget appTarget = new AndroidAssetLinksStatement.AndroidTarget("android_app", androidAppPackage, fingerprints);
 
         final AndroidAssetLinksStatement.WebTarget webTarget = new AndroidAssetLinksStatement.WebTarget("web", artemisServerUrl);
 
