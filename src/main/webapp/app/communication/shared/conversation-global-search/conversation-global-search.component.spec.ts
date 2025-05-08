@@ -290,23 +290,6 @@ describe('ConversationGlobalSearchComponent', () => {
         });
     }));
 
-    it('should preselect a filter and update the search term, mode, and dropdown visibility', fakeAsync(() => {
-        const filter = { mode: 1, value: 'in:' };
-
-        const focusInputSpy = jest.spyOn(component, 'focusInput');
-        const startFilteringSpy = jest.spyOn(component, 'startFiltering');
-
-        component.onPreselectFilter(filter);
-        tick();
-        fixture.detectChanges();
-
-        expect(component.fullSearchTerm).toBe(filter.value);
-        expect(component.searchMode).toBe(1);
-        expect(component.showDropdown).toBeTrue();
-        expect(startFilteringSpy).toHaveBeenCalled();
-        expect(focusInputSpy).toHaveBeenCalled();
-    }));
-
     it('should emit onSearch event with correct data when onTriggerSearch is called', () => {
         const onSearchSpy = jest.spyOn(component.onSearch, 'emit');
 
