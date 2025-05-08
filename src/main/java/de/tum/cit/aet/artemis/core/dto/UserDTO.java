@@ -76,7 +76,7 @@ public class UserDTO extends AuditingEntityDTO {
      * <ul>
      * <li>No passkey has been registered for this user yet</li>
      * <li>and the passkey feature is enabled</li>
-     * <li>and <code>artemis.user-settings.passkey.ask-to-setup</code> is set to true</li>
+     * <li>and <code>artemis.user-management.passkey.ask-users-to-setup</code> is set to true</li>
      * </ul>
      */
     private boolean askToSetupPasskey = false;
