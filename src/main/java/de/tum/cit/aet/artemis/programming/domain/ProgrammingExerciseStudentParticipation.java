@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.programming.domain;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 
@@ -16,6 +17,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 public class ProgrammingExerciseStudentParticipation extends StudentParticipation implements ProgrammingExerciseParticipation {
 
     @Column(name = "repository_url")
+    @Convert(converter = RepositoryUrlConverter.class)
     private String repositoryUri;
 
     @Column(name = "build_plan_id")

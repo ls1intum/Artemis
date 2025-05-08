@@ -191,7 +191,8 @@ public class ProgrammingExerciseUtilService {
         TemplateProgrammingExerciseParticipation participation = new TemplateProgrammingExerciseParticipation();
         participation.setProgrammingExercise(exercise);
         participation.setBuildPlanId(exercise.generateBuildPlanId(BuildPlanType.TEMPLATE));
-        participation.setRepositoryUri(String.format("%s/git/%s/%s.git", artemisVersionControlUrl, exercise.getProjectKey(), repoName));
+        String vcBaseUrl = artemisVersionControlUrl.endsWith("/") ? artemisVersionControlUrl : artemisVersionControlUrl + "/";
+        participation.setRepositoryUri(String.format("%sgit/%s/%s.git", vcBaseUrl, exercise.getProjectKey(), repoName));
         participation.setInitializationState(InitializationState.INITIALIZED);
         templateProgrammingExerciseParticipationTestRepo.save(participation);
         exercise.setTemplateParticipation(participation);
@@ -209,7 +210,8 @@ public class ProgrammingExerciseUtilService {
         SolutionProgrammingExerciseParticipation participation = new SolutionProgrammingExerciseParticipation();
         participation.setProgrammingExercise(exercise);
         participation.setBuildPlanId(exercise.generateBuildPlanId(BuildPlanType.SOLUTION));
-        participation.setRepositoryUri(String.format("%s/git/%s/%s.git", artemisVersionControlUrl, exercise.getProjectKey(), repoName));
+        String vcBaseUrl = artemisVersionControlUrl.endsWith("/") ? artemisVersionControlUrl : artemisVersionControlUrl + "/";
+        participation.setRepositoryUri(String.format("%sgit/%s/%s.git", vcBaseUrl, exercise.getProjectKey(), repoName));
         participation.setInitializationState(InitializationState.INITIALIZED);
         solutionProgrammingExerciseParticipationRepo.save(participation);
         exercise.setSolutionParticipation(participation);

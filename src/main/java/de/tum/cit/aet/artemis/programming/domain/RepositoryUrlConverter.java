@@ -1,0 +1,109 @@
+package de.tum.cit.aet.artemis.programming.domain;
+
+import java.net.URI;
+import java.util.regex.Pattern;
+
+import jakarta.persistence.AttributeConverter;
+import jakarta.persistence.Converter;
+import jakarta.ws.rs.core.UriBuilder;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+
+/**
+ * This class is responsible for converting the repository URL to a database value and vice versa.
+ * A repository URL generally has the following form:
+ * <p>
+ * {vc.url}/git/{project_key}/{user_part}.git
+ * <p>
+ * We want to store only the {project_key}/{user_part} part in the database as this identifies the repository uniquely.
+ */
+@Converter
+public class RepositoryUrlConverter implements AttributeConverter<String, String> {
+
+    private static final Logger log = LoggerFactory.getLogger(RepositoryUrlConverter.class);
+
+    private final String prefix;
+
+    private final String postfix;
+
+    private final Pattern pattern;
+
+    /**
+     * @param vcUrlString The base URL of the version control system
+     */
+    public RepositoryUrlConverter(@Value("${artemis.version-control.url}") String vcUrlString) {
+        if (vcUrlString == null || vcUrlString.isEmpty()) {
+            this.pattern = null;
+            this.prefix = "";
+            this.postfix = "";
+            return;
+        }
+
+        URI vcUrl;
+        try {
+            vcUrl = UriBuilder.fromUri(vcUrlString).path("git").build();
+        }
+        catch (IllegalArgumentException e) {
+            RepositoryUrlConverter.log.debug("Invalid version control URL: {}", vcUrlString);
+
+            this.pattern = null;
+            this.prefix = "";
+            this.postfix = "";
+            return;
+        }
+
+        this.prefix = vcUrl.toString();
+        this.postfix = ".git";
+        this.pattern = Pattern.compile("^" + Pattern.quote(prefix) + "(.*?)" + Pattern.quote(postfix) + "$");
+    }
+
+    /**
+     * Converts the original repository URL to a database value.
+     * Removes {vc.url}/git/ and .git from the repository URL.
+     *
+     * @param attribute The original repository URL in the form {vc.url}/git/{project_key}/{user_part}.git
+     * @return The database value in the form {project_key}/{user_part}
+     */
+    @Override
+    public String convertToDatabaseColumn(String attribute) {
+        if (attribute == null) {
+            return null;
+        }
+
+        if (pattern == null) {
+            return attribute;
+        }
+
+        // Remove prefix and postfix by regex
+        var matcher = pattern.matcher(attribute);
+        if (!matcher.matches()) {
+            throw new IllegalArgumentException("Invalid repository URL: " + attribute + "\n Does not match pattern:" + pattern.toString());
+        }
+
+        // Extract the {project_key}/{user_part} part
+        return matcher.group(1);
+    }
+
+    /**
+     * Converts the database value back to the original repository URL.
+     * Adds {vc.url}/git/ and .git back to the {project_key}/{user_part} part.
+     *
+     * @param dbData The database value in the form {project_key}/{user_part}
+     * @return The original repository URL in the form {vc.url}/git/{project_key}/{user_part}.git
+     */
+    @Override
+    public String convertToEntityAttribute(String dbData) {
+        if (dbData == null) {
+            return null;
+        }
+
+        if (pattern == null) {
+            return dbData;
+        }
+
+        // Add prefix and postfix back
+        return prefix + dbData + postfix;
+    }
+}
