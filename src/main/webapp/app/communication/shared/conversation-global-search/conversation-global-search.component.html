@@ -73,7 +73,7 @@
                         } @else {
                             @for (option of filteredOptions; let i = $index; track option) {
                                 <li
-                                    class="list-group-item list-group-item-action dropdown-option"
+                                    class="list-group-item dropdown-option"
                                     [class.active]="i === activeDropdownIndex"
                                     (mousedown)="selectOption(option)"
                                     (mouseover)="setActiveDropdownIndex(i)"
@@ -104,13 +104,27 @@
                         }
                     </ul>
                 } @else {
-                    <!-- Show search tips only if no dropdown -->
+                    <!-- Show available filters only if no dropdown and no text -->
                     <ul class="list-group">
-                        <li class="list-group-item dropdown-option">
-                            <strong>{{ USER_FILTER.value }}</strong> to filter by authors (e.g., <code>from:John</code>)
+                        <li
+                            class="list-group-item dropdown-option"
+                            [class.active]="0 === activeDropdownIndex"
+                            (mousedown)="onPreselectFilter(USER_FILTER)"
+                            (mouseover)="setActiveDropdownIndex(0)"
+                            (focus)="setActiveDropdownIndex(0)"
+                        >
+                            <strong>{{ USER_FILTER.value }}</strong>
+                            <span class="me-2" jhiTranslate="artemisApp.metis.globalSearch.filterUserPreselection"></span>
                         </li>
-                        <li class="list-group-item dropdown-option">
-                            <strong>{{ CONVERSATION_FILTER.value }}</strong> to filter by conversation (e.g., <code>in:general</code>)
+                        <li
+                            class="list-group-item dropdown-option"
+                            [class.active]="1 === activeDropdownIndex"
+                            (mousedown)="onPreselectFilter(CONVERSATION_FILTER)"
+                            (mouseover)="setActiveDropdownIndex(1)"
+                            (focus)="setActiveDropdownIndex(0)"
+                        >
+                            <strong>{{ CONVERSATION_FILTER.value }}</strong>
+                            <span class="me-2" jhiTranslate="artemisApp.metis.globalSearch.filterConversationPreselection"></span>
                         </li>
                     </ul>
                 }

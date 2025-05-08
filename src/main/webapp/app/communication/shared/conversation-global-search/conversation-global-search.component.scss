@@ -33,23 +33,6 @@
     color: var(--form-control-color);
 }
 
-.autocomplete-dropdown {
-    position: absolute;
-    width: calc(100% - 3rem);
-    max-height: 200px;
-    overflow-y: auto;
-    z-index: 1000;
-    border: 1px solid #ced4da;
-    border-radius: 0.25rem;
-    margin-top: -1px;
-    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-}
-
-.dropdown-option {
-    padding: 0.5rem 1rem;
-    cursor: pointer;
-}
-
 .badge {
     display: inline-flex;
     align-items: center;
@@ -82,7 +65,7 @@
     }
 
     .input-group {
-        z-index: 2;
+        z-index: 11;
         position: relative;
     }
 
@@ -92,29 +75,12 @@
         left: 0;
         right: -1px;
         background-color: var(--module-bg);
-        box-shadow: 0 10px 10px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 8px 10px rgba(0, 0, 0, 0.15);
         padding: 20px 8px 8px;
         border: 1px solid var(--border-color);
         border-top: none;
         margin-top: -4px;
-        z-index: 2;
+        z-index: 11;
         border-radius: 0 0 0.25rem 0.25rem;
-    }
-
-    .autocomplete-dropdown {
-        list-style: none;
-        margin: 0;
-        padding: 0;
-        max-height: 300px;
-    }
-
-    .dropdown-option {
-        cursor: pointer;
-        transition: background-color 0.2s;
-    }
-
-    .dropdown-option.active,
-    .dropdown-option:hover {
-        background-color: #f1f1f1;
     }
 }

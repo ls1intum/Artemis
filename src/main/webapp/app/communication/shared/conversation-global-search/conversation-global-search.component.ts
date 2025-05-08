@@ -16,7 +16,6 @@ import { CourseManagementService } from 'app/core/course/manage/services/course-
 import { ButtonComponent, ButtonType } from 'app/shared/components/button/button.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AccountService } from 'app/core/auth/account.service';
-import { DialogModule } from 'primeng/dialog';
 
 export interface ConversationGlobalSearchConfig {
     searchTerm: string;
@@ -39,10 +38,10 @@ enum SearchMode {
     USER,
 }
 
-type SearchPrefix = { mode: SearchMode.CONVERSATION; value: 'in:' } | { mode: SearchMode.USER; value: 'from:' };
+type SearchFilter = { mode: SearchMode.CONVERSATION; value: 'in:' } | { mode: SearchMode.USER; value: 'from:' };
 
-const CONVERSATION_FILTER: SearchPrefix = { mode: SearchMode.CONVERSATION, value: 'in:' };
-const USER_FILTER: SearchPrefix = { mode: SearchMode.USER, value: 'from:' };
+const CONVERSATION_FILTER: SearchFilter = { mode: SearchMode.CONVERSATION, value: 'in:' };
+const USER_FILTER: SearchFilter = { mode: SearchMode.USER, value: 'from:' };
 
 enum UserSearchStatus {
     TOO_SHORT,
@@ -54,7 +53,7 @@ enum UserSearchStatus {
     selector: 'jhi-conversation-global-search',
     templateUrl: './conversation-global-search.component.html',
     styleUrls: ['./conversation-global-search.component.scss'],
-    imports: [FormsModule, ButtonComponent, TranslateDirective, ArtemisTranslatePipe, ProfilePictureComponent, FaIconComponent, NgbTooltip, DialogModule],
+    imports: [FormsModule, ButtonComponent, TranslateDirective, ArtemisTranslatePipe, ProfilePictureComponent, FaIconComponent, NgbTooltip],
 })
 export class ConversationGlobalSearchComponent implements OnInit, OnDestroy {
     protected readonly addPublicFilePrefix = addPublicFilePrefix;
@@ -116,6 +115,10 @@ export class ConversationGlobalSearchComponent implements OnInit, OnDestroy {
 
     filterItems(event: Event): void {
         this.fullSearchTerm = (event.target as HTMLInputElement).value;
+        this.startFiltering();
+    }
+
+    startFiltering(): void {
         this.activeDropdownIndex = 0;
 
         // Check if search starts with "in:" for conversations
@@ -307,7 +310,13 @@ export class ConversationGlobalSearchComponent implements OnInit, OnDestroy {
         }
     }
 
-    onPreselectFilter(): void {}
+    onPreselectFilter(filter: SearchFilter): void {
+        this.fullSearchTerm = filter.value;
+        this.searchMode = filter.mode;
+        this.showDropdown = true;
+        this.startFiltering();
+        this.focusInput();
+    }
 
     onTriggerSearch() {
         this.onSearch.emit({
@@ -315,6 +324,7 @@ export class ConversationGlobalSearchComponent implements OnInit, OnDestroy {
             selectedConversations: this.selectedConversations,
             selectedAuthors: this.selectedAuthors,
         });
+        this.isSearchActive = false;
     }
 
     navigateDropdown(step: number, event: Event): void {
