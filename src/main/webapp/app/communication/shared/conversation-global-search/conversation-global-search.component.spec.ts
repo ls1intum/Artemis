@@ -217,6 +217,24 @@ describe('ConversationGlobalSearchComponent', () => {
         expect(component.showDropdown).toBeFalse();
     }));
 
+    it('should activate search when input is clicked and search term is empty', () => {
+        component.fullSearchTerm = '';
+        component.isSearchActive = false;
+
+        component.onSearchInputClick();
+
+        expect(component.isSearchActive).toBeTrue();
+    });
+
+    it('should not activate search when input is clicked and search term is not empty', () => {
+        component.fullSearchTerm = 'test';
+        component.isSearchActive = false;
+
+        component.onSearchInputClick();
+
+        expect(component.isSearchActive).toBeFalse();
+    });
+
     it('should navigate dropdown with keyboard and select with enter', fakeAsync(() => {
         const selectOptionSpy = jest.spyOn(component, 'selectOption');
         component.fullSearchTerm = 'in:general';
@@ -272,6 +290,23 @@ describe('ConversationGlobalSearchComponent', () => {
         });
     }));
 
+    it('should preselect a filter and update the search term, mode, and dropdown visibility', fakeAsync(() => {
+        const filter = { mode: 1, value: 'in:' } as SearchFilter;
+
+        const focusInputSpy = jest.spyOn(component, 'focusInput');
+        const startFilteringSpy = jest.spyOn(component, 'startFiltering');
+
+        component.onPreselectFilter(filter);
+        tick();
+        fixture.detectChanges();
+
+        expect(component.fullSearchTerm).toBe(filter.value);
+        expect(component.searchMode).toBe(1);
+        expect(component.showDropdown).toBeTrue();
+        expect(startFilteringSpy).toHaveBeenCalled();
+        expect(focusInputSpy).toHaveBeenCalled();
+    }));
+
     it('should emit onSearch event with correct data when onTriggerSearch is called', () => {
         const onSearchSpy = jest.spyOn(component.onSearch, 'emit');
 
@@ -290,6 +325,7 @@ describe('ConversationGlobalSearchComponent', () => {
 
     it('should close the dropdown when clicking outside the search input', fakeAsync(() => {
         component.showDropdown = true;
+        component.isSearchActive = true;
         fixture.detectChanges();
 
         const mockEvent = {
@@ -301,6 +337,7 @@ describe('ConversationGlobalSearchComponent', () => {
         fixture.detectChanges();
 
         expect(component.showDropdown).toBeFalse();
+        expect(component.isSearchActive).toBeFalse();
     }));
 
     it('should focus the input when Ctrl+K or Cmd+K is pressed', () => {
