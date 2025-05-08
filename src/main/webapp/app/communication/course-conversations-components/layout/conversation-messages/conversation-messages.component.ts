@@ -19,7 +19,7 @@ import {
     input,
     output,
 } from '@angular/core';
-import { faCircleNotch, faEnvelope, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch, faEnvelope, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { Conversation, ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { Subject, forkJoin, map, takeUntil } from 'rxjs';
 import { Post } from 'app/communication/shared/entities/post.model';
@@ -87,12 +87,10 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
     @Output() openThread = new EventEmitter<Post>();
 
-    @ViewChild('searchInput') searchInput: ElementRef;
     @ViewChildren('postingThread') messages: QueryList<PostingThreadComponent>;
     @ViewChild('container') content: ElementRef;
 
     @Input() course?: Course;
-    @Input() searchbarCollapsed = false;
     @Input() contentHeightDev = false;
     showOnlyPinned = input<boolean>(false);
     pinnedCount = output<number>();
@@ -124,7 +122,6 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     public isFetchingPosts = true;
     // Icons
     faTimes = faTimes;
-    faSearch = faSearch;
     faEnvelope = faEnvelope;
     faCircleNotch = faCircleNotch;
     isMobile = false;
@@ -254,10 +251,6 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         }
 
         if (this.course && this._activeConversation) {
-            if (this.searchInput) {
-                this.searchInput.nativeElement.value = '';
-                this.searchText = '';
-            }
             this.canStartSaving = false;
             this.onSearch();
             this.createEmptyPost();
@@ -392,14 +385,32 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
                                 }
                             });
 
+                            const fetchedPostIds = new Set(fetchedPosts.map((post) => post.id));
+                            const fetchedAnswerPostIds = new Set(fetchedAnswerPosts.map((answerPost) => answerPost.id));
+
                             this.posts = this.posts.map((post) => {
                                 const forwardedMessages = map.get(post.id!) || [];
-                                post.forwardedPosts = fetchedPosts.filter((fetchedPost) =>
-                                    forwardedMessages.some((message) => message.sourceId === fetchedPost.id && message.sourceType?.toString() === 'POST'),
-                                );
-                                post.forwardedAnswerPosts = fetchedAnswerPosts.filter((fetchedAnswerPost) =>
-                                    forwardedMessages.some((message) => message.sourceId === fetchedAnswerPost.id && message.sourceType?.toString() === 'ANSWER'),
-                                );
+                                post.forwardedPosts = forwardedMessages
+                                    .filter((message) => message.sourceType?.toString() === 'POST')
+                                    .map((message) => {
+                                        if (message.sourceId && !fetchedPostIds.has(message.sourceId)) {
+                                            // A source post has not been found so it was most likely deleted.
+                                            // We return undefined to indicate a missing post and handle it later (see forwarded-message.component)
+                                            return undefined;
+                                        }
+                                        return fetchedPosts.find((fetchedPost) => fetchedPost.id === message.sourceId);
+                                    });
+
+                                post.forwardedAnswerPosts = forwardedMessages
+                                    .filter((message) => message.sourceType?.toString() === 'ANSWER')
+                                    .map((message) => {
+                                        if (message.sourceId && !fetchedAnswerPostIds.has(message.sourceId)) {
+                                            // A source post has not been found so it was most likely deleted.
+                                            // We return undefined to indicate a missing post and handle it later (see forwarded-message.component)
+                                            return undefined;
+                                        }
+                                        return fetchedAnswerPosts.find((fetchedAnswerPost) => fetchedAnswerPost.id === message.sourceId);
+                                    });
                                 return post;
                             });
 
@@ -490,18 +501,6 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         requestAnimationFrame(() => {
             this.content.nativeElement.scrollTop = this.content.nativeElement.scrollHeight;
         });
-    }
-
-    onSearchQueryInput($event: Event) {
-        const searchTerm = ($event.target as HTMLInputElement).value?.trim().toLowerCase() ?? '';
-        this.search$.next(searchTerm);
-    }
-
-    clearSearchInput() {
-        if (this.searchInput) {
-            this.searchInput.nativeElement.value = '';
-            this.searchInput.nativeElement.dispatchEvent(new Event('input'));
-        }
     }
 
     private setupScrollDebounce(): void {

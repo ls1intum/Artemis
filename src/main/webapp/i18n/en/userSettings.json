@@ -1,7 +1,6 @@
 {
     "artemisApp": {
         "userSettings": {
-            "settings": "Settings",
             "saveChanges": "Save Changes",
             "saveSettingsSuccessAlert": "Your Settings have been successfully saved.",
             "userSettings": "User Settings",
@@ -9,6 +8,7 @@
             "vcsAccessTokenSettings": "VCS Token",
             "passkeys": "Passkeys",
             "accountInformation": "Account Information",
+            "learnerProfile": "Learner Profile",
             "notificationSettings": "Notifications",
             "notificationSettingsFilterInfo": "These settings also filter the notification sidebar",
             "scienceSettings": "Science",
@@ -86,8 +86,7 @@
                 "actions": "Actions"
             },
             "passkeySettingsPage": {
-                "infoText": "Passkeys are webauthn credentials that validate your identity using touch, facial recognition, a device password, or a PIN. Passkeys can be used as a password replacement.",
-                "onlyOnePerAuthenticator": "You can only register one passkey for this site per authenticator (e.g. one in Apple Keychain and another one in Google Password Manager, etc.). Creating a second passkey with the same authenticator will overwrite the first registered passkey, which you will need to remove manually from Artemis.",
+                "infoText": "Passkeys offer a modern, secure, and convenient alternative to passwords. They protect your account from phishing, credential theft, and password reuse.",
                 "learnMore": "Learn more about passkeys.",
                 "noneRegistered": "You have not registered any passkeys with Artemis yet.",
                 "deletePasskeyQuestion": "Do you really want to delete your passkey for passwordless authentication with Artemis?",
@@ -100,13 +99,27 @@
                 "validation": {
                     "labelLength": "The label must not exceed {{maxLabelLength}} characters."
                 },
+                "success": {
+                    "registration": "Your passkey has been successfully registered. You can manage your passkeys in the user settings."
+                },
                 "error": {
+                    "invalidCredential": "An invalid passkey was provided. Please try again with a different authenticator (e.g. Apple Keychain, Windows Hello, Google Password Manager, etc.).",
                     "login": "Login with Passkey failed. Please check you registered a passkey with Artemis.",
                     "passkeyAlreadyRegistered": "You have already registered a passkey with the selected authenticator, choose a different authenticator if you want to register another passkey.",
                     "registration": "The passkey could not be registered. Please try again.",
                     "save": "The passkey could not be saved. Please try again.",
                     "delete": "The passkey could not be deleted. Please try again."
                 }
+            },
+            "setupPasskeyModal": {
+                "title": "Stay Secure with Passkeys",
+                "description": {
+                    "howItWorks": "Your passkey is stored on your device and secured with biometrics or a PIN, making login fast and safe — without the need to remember a password.",
+                    "recommendation": "We recommend setting up a passkey now to enhance your account’s security and enjoy a seamless, passwordless login experience."
+                },
+                "setupLater": "Set Up Later",
+                "setupPasskey": "Set Up Passkey",
+                "remindMeIn30Days": "Remind Me in 30 Days"
             },
             "accountInformationPage": {
                 "registrationNumber": "Registration Number",

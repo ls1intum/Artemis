@@ -25,4 +25,11 @@ public interface PasskeyCredentialsRepository extends ArtemisJpaRepository<Passk
             WHERE credential.user.id = :userId
             """)
     List<PasskeyCredential> findByUser(@Param("userId") long userId);
+
+    @Query("""
+            SELECT COUNT(credential) > 0
+            FROM PasskeyCredential credential
+            WHERE credential.user.id = :userId
+            """)
+    boolean existsByUserId(@Param("userId") long userId);
 }
