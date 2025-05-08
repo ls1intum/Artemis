@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.core.util;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +12,6 @@ class AndroidApkKeyHashUtilTest {
         String expectedHash = "android:apk-key-hash:0uGmb4wAVZefMC89ealdeIUfxSFaf4Gzv2Aice9vYCQ";
 
         String actualHash = AndroidApkKeyHashUtil.getHashFromFingerprint(fingerprint);
-        assertEquals(expectedHash, actualHash);
+        assertThat(actualHash).isEqualTo(expectedHash);
     }
 }
