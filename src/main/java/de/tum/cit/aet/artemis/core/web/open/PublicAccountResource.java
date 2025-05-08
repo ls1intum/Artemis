@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.exception.LoginAlreadyUsedException;
 import de.tum.cit.aet.artemis.core.exception.PasswordViolatesRequirementsException;
+import de.tum.cit.aet.artemis.core.repository.PasskeyCredentialsRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
@@ -64,11 +65,15 @@ public class PublicAccountResource {
 
     private final UserRepository userRepository;
 
-    public PublicAccountResource(AccountService accountService, UserService userService, MailService mailService, UserRepository userRepository) {
+    private final PasskeyCredentialsRepository passkeyCredentialsRepository;
+
+    public PublicAccountResource(AccountService accountService, UserService userService, MailService mailService, UserRepository userRepository,
+            PasskeyCredentialsRepository passkeyCredentialsRepository) {
         this.accountService = accountService;
         this.userService = userService;
         this.mailService = mailService;
         this.userRepository = userRepository;
+        this.passkeyCredentialsRepository = passkeyCredentialsRepository;
     }
 
     /**
@@ -161,11 +166,13 @@ public class PublicAccountResource {
         }
 
         User user = userOptional.get();
+        boolean hasUserRegisteredAPasskey = this.passkeyCredentialsRepository.existsByUserId(user.getId());
         user.setVisibleRegistrationNumber();
         UserDTO userDTO = new UserDTO(user);
         // we set this value on purpose here: the user can only fetch their own information, make the token available for constructing the token-based clone-URL
         userDTO.setVcsAccessToken(user.getVcsAccessToken());
         userDTO.setVcsAccessTokenExpiryDate(user.getVcsAccessTokenExpiryDate());
+        userDTO.setHasRegisteredAPasskey(hasUserRegisteredAPasskey);
         log.debug("GET /account {} took {}ms", user.getLogin(), System.currentTimeMillis() - start);
         return ResponseEntity.ok(userDTO);
     }

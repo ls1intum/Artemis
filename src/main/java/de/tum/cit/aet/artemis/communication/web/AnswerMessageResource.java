@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
+import de.tum.cit.aet.artemis.communication.dto.CreateAnswerPostDTO;
 import de.tum.cit.aet.artemis.communication.dto.UpdatePostingDTO;
 import de.tum.cit.aet.artemis.communication.service.AnswerMessageService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -52,8 +53,8 @@ public class AnswerMessageResource {
      */
     @PostMapping("courses/{courseId}/answer-messages")
     @EnforceAtLeastStudent
-    public ResponseEntity<AnswerPost> createAnswerMessage(@PathVariable Long courseId, @RequestBody AnswerPost answerMessage) throws URISyntaxException {
-        log.debug("POST createAnswerMessage invoked for course {} with message {}", courseId, answerMessage.getContent());
+    public ResponseEntity<AnswerPost> createAnswerMessage(@PathVariable Long courseId, @RequestBody CreateAnswerPostDTO answerMessage) throws URISyntaxException {
+        log.debug("POST createAnswerMessage invoked for course {} with message {}", courseId, answerMessage.content());
         long start = System.nanoTime();
         AnswerPost createdAnswerMessage = answerMessageService.createAnswerMessage(courseId, answerMessage);
         // creation of answerMessage should not trigger alert

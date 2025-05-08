@@ -20,6 +20,7 @@ import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewAnswerNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewMentionNotification;
+import de.tum.cit.aet.artemis.communication.dto.CreateAnswerPostDTO;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.PostDTO;
 import de.tum.cit.aet.artemis.communication.dto.UpdatePostingDTO;
@@ -88,42 +89,40 @@ public class AnswerMessageService extends PostingService {
      * @param answerMessage answer message to create
      * @return created answer message that was persisted
      */
-    public AnswerPost createAnswerMessage(Long courseId, AnswerPost answerMessage) {
+    public AnswerPost createAnswerMessage(Long courseId, CreateAnswerPostDTO answerMessage) {
         final User author = this.userRepository.getUserWithGroupsAndAuthorities();
 
-        // check
-        if (answerMessage.getId() != null) {
-            throw new BadRequestAlertException("A new answer post cannot already have an ID", METIS_ANSWER_POST_ENTITY_NAME, "idexists");
-        }
+        var newAnswerMessage = new AnswerPost();
+        newAnswerMessage.setContent(answerMessage.content());
 
-        var conversationId = answerMessage.getPost().getConversation().getId();
+        Post post = conversationMessageRepository.findMessagePostByIdElseThrow(answerMessage.post().id());
+        var conversationId = post.getConversation().getId();
         // For group chats we need the participants to generate the conversation title
         var conversation = conversationService.isMemberOrCreateForCourseWideElseThrow(conversationId, author, Optional.empty())
                 .orElse(conversationService.loadConversationWithParticipantsIfGroupChat(conversationId));
 
-        Post post = conversationMessageRepository.findMessagePostByIdElseThrow(answerMessage.getPost().getId());
         var course = preCheckUserAndCourseForMessaging(author, courseId);
 
         if (conversation instanceof Channel channel) {
             channelAuthorizationService.isAllowedToCreateNewAnswerPostInChannel(channel, author);
         }
 
-        Set<User> mentionedUsers = parseUserMentions(course, answerMessage.getContent());
+        Set<User> mentionedUsers = parseUserMentions(course, answerMessage.content());
 
         // use post from database rather than user input
-        answerMessage.setPost(post);
+        newAnswerMessage.setPost(post);
         // set author to current user
-        answerMessage.setAuthor(author);
+        newAnswerMessage.setAuthor(author);
         // on creation of an answer message, we set the resolves_post field to false per default since this feature is not used for messages
-        answerMessage.setResolvesPost(false);
-        AnswerPost savedAnswerMessage = answerPostRepository.save(answerMessage);
+        newAnswerMessage.setResolvesPost(false);
+        AnswerPost savedAnswerMessage = answerPostRepository.save(newAnswerMessage);
         savedAnswerMessage.getPost().setConversation(conversation);
         setAuthorRoleForPosting(savedAnswerMessage, course);
 
         var newAnswerNotification = new NewAnswerNotification(courseId, conversation.getCourse().getTitle(), conversation.getCourse().getCourseIcon(), post.getContent(),
-                post.getCreationDate().toString(), post.getAuthor().getName(), post.getId(), answerMessage.getContent(), answerMessage.getCreationDate().toString(),
-                answerMessage.getAuthor().getName(), answerMessage.getAuthor().getId(), answerMessage.getAuthor().getImageUrl(), answerMessage.getId(),
-                conversation.getHumanReadableNameForReceiver(answerMessage.getAuthor()), conversationId);
+                post.getCreationDate().toString(), post.getAuthor().getName(), post.getId(), newAnswerMessage.getContent(), newAnswerMessage.getCreationDate().toString(),
+                newAnswerMessage.getAuthor().getName(), newAnswerMessage.getAuthor().getId(), newAnswerMessage.getAuthor().getImageUrl(), newAnswerMessage.getId(),
+                conversation.getHumanReadableNameForReceiver(newAnswerMessage.getAuthor()), conversationId);
 
         var usersInvolved = conversationMessageRepository.findUsersWhoRepliedInMessage(post.getId());
         usersInvolved.add(post.getAuthor());
@@ -131,22 +130,22 @@ public class AnswerMessageService extends PostingService {
         var notificationRecipientsList = getNotificationRecipients(conversation).toList();
 
         var mentionedUserRecipients = singleUserNotificationService.filterAllowedRecipientsInMentionedUsers(mentionedUsers, conversation)
-                .filter((mentionedUser) -> !Objects.equals(mentionedUser.getId(), answerMessage.getAuthor().getId())).toList();
+                .filter((mentionedUser) -> !Objects.equals(mentionedUser.getId(), newAnswerMessage.getAuthor().getId())).toList();
 
         // We only send notifications to users that are part of the conversation, did not mute or hide it and if they were not mentioned (since they get a separate notification
         // for that)
         var filteredUsersInvolved = usersInvolved.stream()
                 .filter(user -> notificationRecipientsList.stream()
-                        .anyMatch(recipient -> recipient.userId() == user.getId() && recipient.userId() != answerMessage.getAuthor().getId() && !recipient.isConversationHidden()
+                        .anyMatch(recipient -> recipient.userId() == user.getId() && recipient.userId() != newAnswerMessage.getAuthor().getId() && !recipient.isConversationHidden()
                                 && !recipient.isConversationMuted() && mentionedUserRecipients.stream().noneMatch((mentionedUser) -> recipient.userId() == mentionedUser.getId())))
                 .collect(Collectors.toCollection(ArrayList::new));
 
         this.courseNotificationService.sendCourseNotification(newAnswerNotification, filteredUsersInvolved);
 
         var mentionCourseNotification = new NewMentionNotification(courseId, conversation.getCourse().getTitle(), conversation.getCourse().getCourseIcon(),
-                answerMessage.getContent(), post.getCreationDate().toString(), post.getAuthor().getName(), post.getId(), answerMessage.getContent(),
-                answerMessage.getCreationDate().toString(), answerMessage.getAuthor().getName(), answerMessage.getAuthor().getId(), answerMessage.getAuthor().getImageUrl(),
-                answerMessage.getId(), conversation.getHumanReadableNameForReceiver(answerMessage.getAuthor()), conversationId);
+                newAnswerMessage.getContent(), post.getCreationDate().toString(), post.getAuthor().getName(), post.getId(), newAnswerMessage.getContent(),
+                newAnswerMessage.getCreationDate().toString(), newAnswerMessage.getAuthor().getName(), newAnswerMessage.getAuthor().getId(),
+                newAnswerMessage.getAuthor().getImageUrl(), newAnswerMessage.getId(), conversation.getHumanReadableNameForReceiver(newAnswerMessage.getAuthor()), conversationId);
 
         this.courseNotificationService.sendCourseNotification(mentionCourseNotification, mentionedUserRecipients);
 
