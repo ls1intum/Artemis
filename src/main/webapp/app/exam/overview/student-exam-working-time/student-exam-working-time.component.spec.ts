@@ -3,7 +3,6 @@ import dayjs from 'dayjs/esm';
 import { StudentExamWorkingTimeComponent } from 'app/exam/overview/student-exam-working-time/student-exam-working-time.component';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
-import { input } from '@angular/core';
 
 describe('StudentExamWorkingTimeComponent', () => {
     let fixture: ComponentFixture<StudentExamWorkingTimeComponent>;
