@@ -16,6 +16,7 @@ import { CourseManagementService } from 'app/core/course/manage/services/course-
 import { ButtonComponent, ButtonType } from 'app/shared/components/button/button.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AccountService } from 'app/core/auth/account.service';
+import { DialogModule } from 'primeng/dialog';
 
 export interface ConversationGlobalSearchConfig {
     searchTerm: string;
@@ -30,8 +31,6 @@ interface CombinedOption {
     img?: string;
 }
 
-const PREFIX_CONVERSATION_SEARCH = 'in:';
-const PREFIX_USER_SEARCH = 'from:';
 const PREFIX_USER_SEARCH_ME = 'me';
 
 enum SearchMode {
@@ -39,6 +38,11 @@ enum SearchMode {
     CONVERSATION,
     USER,
 }
+
+type SearchPrefix = { mode: SearchMode.CONVERSATION; value: 'in:' } | { mode: SearchMode.USER; value: 'from:' };
+
+const CONVERSATION_FILTER: SearchPrefix = { mode: SearchMode.CONVERSATION, value: 'in:' };
+const USER_FILTER: SearchPrefix = { mode: SearchMode.USER, value: 'from:' };
 
 enum UserSearchStatus {
     TOO_SHORT,
@@ -50,14 +54,14 @@ enum UserSearchStatus {
     selector: 'jhi-conversation-global-search',
     templateUrl: './conversation-global-search.component.html',
     styleUrls: ['./conversation-global-search.component.scss'],
-    imports: [FormsModule, ButtonComponent, TranslateDirective, ArtemisTranslatePipe, ProfilePictureComponent, FaIconComponent, NgbTooltip],
+    imports: [FormsModule, ButtonComponent, TranslateDirective, ArtemisTranslatePipe, ProfilePictureComponent, FaIconComponent, NgbTooltip, DialogModule],
 })
 export class ConversationGlobalSearchComponent implements OnInit, OnDestroy {
     protected readonly addPublicFilePrefix = addPublicFilePrefix;
     readonly SearchMode = SearchMode;
     readonly UserSearchStatus = UserSearchStatus;
-    protected readonly PREFIX_CONVERSATION_SEARCH = PREFIX_CONVERSATION_SEARCH;
-    protected readonly PREFIX_USER_SEARCH = PREFIX_USER_SEARCH;
+    protected readonly CONVERSATION_FILTER = CONVERSATION_FILTER;
+    protected readonly USER_FILTER = USER_FILTER;
 
     private courseManagementService = inject(CourseManagementService);
     private accountService = inject(AccountService);
@@ -75,6 +79,7 @@ export class ConversationGlobalSearchComponent implements OnInit, OnDestroy {
     selectedAuthors: UserPublicInfoDTO[] = [];
 
     showDropdown = false;
+    isSearchActive = false;
     searchMode: SearchMode = SearchMode.NORMAL;
     userSearchStatus: UserSearchStatus = UserSearchStatus.LOADING;
 
@@ -114,19 +119,19 @@ export class ConversationGlobalSearchComponent implements OnInit, OnDestroy {
         this.activeDropdownIndex = 0;
 
         // Check if search starts with "in:" for conversations
-        if (this.fullSearchTerm.startsWith(PREFIX_CONVERSATION_SEARCH)) {
-            const searchQuery = this.fullSearchTerm.substring(PREFIX_CONVERSATION_SEARCH.length).toLowerCase();
+        if (this.fullSearchTerm.startsWith(CONVERSATION_FILTER.value)) {
+            const searchQuery = this.fullSearchTerm.substring(CONVERSATION_FILTER.value.length).toLowerCase();
             this.searchTermWithoutPrefix = searchQuery;
             this.filterConversations(searchQuery);
-            this.searchMode = SearchMode.CONVERSATION;
+            this.searchMode = CONVERSATION_FILTER.mode;
             this.showDropdown = true;
         }
         // Check if search starts with "from:" for users
-        else if (this.fullSearchTerm.startsWith(PREFIX_USER_SEARCH)) {
-            const searchQuery = this.fullSearchTerm.substring(PREFIX_USER_SEARCH.length).toLowerCase();
+        else if (this.fullSearchTerm.startsWith(USER_FILTER.value)) {
+            const searchQuery = this.fullSearchTerm.substring(USER_FILTER.value.length).toLowerCase();
             this.searchTermWithoutPrefix = searchQuery;
             this.filterUsers(searchQuery);
-            this.searchMode = SearchMode.USER;
+            this.searchMode = USER_FILTER.mode;
             this.showDropdown = true;
         } else {
             this.searchMode = SearchMode.NORMAL;
@@ -296,6 +301,14 @@ export class ConversationGlobalSearchComponent implements OnInit, OnDestroy {
         });
     }
 
+    onSearchInputClick(): void {
+        if (!this.fullSearchTerm.trim()) {
+            this.isSearchActive = true;
+        }
+    }
+
+    onPreselectFilter(): void {}
+
     onTriggerSearch() {
         this.onSearch.emit({
             searchTerm: this.fullSearchTerm,
@@ -344,6 +357,7 @@ export class ConversationGlobalSearchComponent implements OnInit, OnDestroy {
         // Close dropdown when clicking outside
         if (this.searchElement && !this.searchElement()!.nativeElement.contains(event.target)) {
             this.closeDropdown();
+            this.isSearchActive = false;
         }
     }
 
