@@ -57,6 +57,9 @@ public class PublicAccountResource {
     @Value("${artemis.user-management.registration.allowed-email-pattern:#{null}}")
     private Optional<Pattern> allowedEmailPattern;
 
+    @Value("${artemis.user-management.passkey.ask-users-to-setup:false}")
+    private boolean askUsersToSetupPasskey;
+
     private final AccountService accountService;
 
     private final UserService userService;
@@ -166,13 +169,16 @@ public class PublicAccountResource {
         }
 
         User user = userOptional.get();
-        boolean hasUserRegisteredAPasskey = this.passkeyCredentialsRepository.existsByUserId(user.getId());
+        boolean askToSetupPasskey = false;
+        if (askUsersToSetupPasskey) {
+            askToSetupPasskey = this.passkeyCredentialsRepository.existsByUserId(user.getId());
+        }
         user.setVisibleRegistrationNumber();
         UserDTO userDTO = new UserDTO(user);
         // we set this value on purpose here: the user can only fetch their own information, make the token available for constructing the token-based clone-URL
         userDTO.setVcsAccessToken(user.getVcsAccessToken());
         userDTO.setVcsAccessTokenExpiryDate(user.getVcsAccessTokenExpiryDate());
-        userDTO.setHasRegisteredAPasskey(hasUserRegisteredAPasskey);
+        userDTO.setAskToSetupPasskey(askToSetupPasskey);
         log.debug("GET /account {} took {}ms", user.getLogin(), System.currentTimeMillis() - start);
         return ResponseEntity.ok(userDTO);
     }
