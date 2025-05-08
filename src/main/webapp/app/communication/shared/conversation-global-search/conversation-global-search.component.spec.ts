@@ -217,22 +217,12 @@ describe('ConversationGlobalSearchComponent', () => {
         expect(component.showDropdown).toBeFalse();
     }));
 
-    it('should activate search when input is clicked and search term is empty', () => {
-        component.fullSearchTerm = '';
+    it('should activate search when input is clicked', () => {
         component.isSearchActive = false;
 
         component.onSearchInputClick();
 
         expect(component.isSearchActive).toBeTrue();
-    });
-
-    it('should not activate search when input is clicked and search term is not empty', () => {
-        component.fullSearchTerm = 'test';
-        component.isSearchActive = false;
-
-        component.onSearchInputClick();
-
-        expect(component.isSearchActive).toBeFalse();
     });
 
     it('should navigate dropdown with keyboard and select with enter', fakeAsync(() => {

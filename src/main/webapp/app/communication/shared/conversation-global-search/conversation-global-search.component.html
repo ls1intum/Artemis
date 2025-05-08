@@ -47,7 +47,7 @@
             <div class="filter-suggestions">
                 @if (showDropdown) {
                     <!-- Suggestions dropdown -->
-                    <ul class="list-group">
+                    <ul class="list-group suggestions-dropdown">
                         @if (filteredOptions.length === 0) {
                             <li class="list-group-item">
                                 @if (searchMode === SearchMode.CONVERSATION) {
@@ -121,7 +121,7 @@
                             [class.active]="1 === activeDropdownIndex"
                             (mousedown)="onPreselectFilter(CONVERSATION_FILTER)"
                             (mouseover)="setActiveDropdownIndex(1)"
-                            (focus)="setActiveDropdownIndex(0)"
+                            (focus)="setActiveDropdownIndex(1)"
                         >
                             <strong>{{ CONVERSATION_FILTER.value }}</strong>
                             <span class="me-2" jhiTranslate="artemisApp.metis.globalSearch.filterConversationPreselection"></span>

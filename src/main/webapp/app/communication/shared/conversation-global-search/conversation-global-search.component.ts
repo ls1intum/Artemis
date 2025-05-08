@@ -305,9 +305,7 @@ export class ConversationGlobalSearchComponent implements OnInit, OnDestroy {
     }
 
     onSearchInputClick(): void {
-        if (!this.fullSearchTerm.trim()) {
-            this.isSearchActive = true;
-        }
+        this.isSearchActive = true;
     }
 
     onPreselectFilter(filter: SearchFilter): void {
