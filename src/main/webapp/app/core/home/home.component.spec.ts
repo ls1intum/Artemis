@@ -154,7 +154,7 @@ describe('HomeComponent', () => {
         it('should not open the modal if the user has already registered a passkey', () => {
             component.isPasskeyEnabled = true;
             const openModalSpy = jest.spyOn(modalService, 'open');
-            accountService.userIdentity = { hasRegisteredAPasskey: true } as any;
+            accountService.userIdentity = { askToSetupPasskey: true } as any;
 
             component.openSetupPasskeyModal();
 
