@@ -38,7 +38,6 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.merge.MergeStrategy;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -47,6 +46,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.util.LinkedMultiValueMap;
 
 import ch.qos.logback.classic.Level;
@@ -89,19 +89,8 @@ import de.tum.cit.aet.artemis.programming.web.repository.FileSubmission;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
 // @TestPropertySource(properties = { "artemis.version-control.url=file:${java.io.tmpdir}" })
+@ContextConfiguration(initializers = LocalRepoUrlInitializer.class)
 class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
-
-    private static final org.slf4j.Logger log = LoggerFactory.getLogger(RepositoryIntegrationTest.class);
-
-    static {
-        // print tmp directory
-        log.error("Temporary directory: {}", System.getProperty("java.io.tmpdir"));
-    }
-
-    @BeforeAll
-    static void logTemp() {
-        log.error("Temporary directory: {}", System.getProperty("java.io.tmpdir"));
-    }
 
     @Autowired
     private ExamTestRepository examRepository;

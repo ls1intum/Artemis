@@ -5,6 +5,7 @@ import java.util.regex.Pattern;
 
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
+import jakarta.ws.rs.core.UriBuilder;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,7 +43,7 @@ public class RepositoryUrlConverter implements AttributeConverter<String, String
 
         URI vcUrl;
         try {
-            vcUrl = URI.create(vcUrlString);
+            vcUrl = UriBuilder.fromUri(vcUrlString).path("git").build();
         }
         catch (IllegalArgumentException e) {
             RepositoryUrlConverter.log.debug("Invalid version control URL: {}", vcUrlString);
@@ -53,7 +54,7 @@ public class RepositoryUrlConverter implements AttributeConverter<String, String
             return;
         }
 
-        this.prefix = vcUrl.resolve("git").toString();
+        this.prefix = vcUrl.toString();
         this.postfix = ".git";
         this.pattern = Pattern.compile("^" + Pattern.quote(prefix) + "(.*?)" + Pattern.quote(postfix) + "$");
     }
@@ -78,7 +79,7 @@ public class RepositoryUrlConverter implements AttributeConverter<String, String
         // Remove prefix and postfix by regex
         var matcher = pattern.matcher(attribute);
         if (!matcher.matches()) {
-            throw new IllegalArgumentException("Invalid repository URL: " + attribute);
+            throw new IllegalArgumentException("Invalid repository URL: " + attribute + "\n Does not match pattern:" + pattern.toString());
         }
 
         // Extract the {project_key}/{user_part} part
