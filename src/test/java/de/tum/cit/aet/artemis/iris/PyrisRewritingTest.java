@@ -39,7 +39,7 @@ class PyrisRewritingTest extends AbstractIrisIntegrationTest {
 
     @BeforeEach
     void initTestCase() throws Exception {
-        userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
+        userUtilService.addUsers(TEST_PREFIX, 2, 1, 0, 2);
         List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, true, 1);
 
         this.course1 = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
