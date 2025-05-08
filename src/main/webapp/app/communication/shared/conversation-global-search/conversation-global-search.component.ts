@@ -59,8 +59,8 @@ export class ConversationGlobalSearchComponent implements OnInit, OnDestroy {
     protected readonly addPublicFilePrefix = addPublicFilePrefix;
     readonly SearchMode = SearchMode;
     readonly UserSearchStatus = UserSearchStatus;
-    protected readonly CONVERSATION_FILTER = CONVERSATION_FILTER;
-    protected readonly USER_FILTER = USER_FILTER;
+    readonly CONVERSATION_FILTER = CONVERSATION_FILTER;
+    readonly USER_FILTER = USER_FILTER;
 
     private courseManagementService = inject(CourseManagementService);
     private accountService = inject(AccountService);
