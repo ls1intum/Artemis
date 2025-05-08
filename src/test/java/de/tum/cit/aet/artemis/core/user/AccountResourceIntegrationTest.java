@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
@@ -243,6 +244,32 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
 
         assertThat(account).isNotNull();
         assertThat(account.getAskToSetupPasskey()).isTrue();
+    }
+
+    /**
+     * <p>
+     * Reflects the case when the configuration property
+     * <code>artemis.user-management.passkey.ask-to-setup</code> is set to <strong>false</strong>.
+     * </p>
+     *
+     * <p>
+     * If it were set to <strong>true</strong>, the value of <code>askUserToSetupPasskey</code>
+     * would be <strong>true</strong>. However, since the configuration does not display the modal,
+     * the value is always returned as <strong>false</strong>.
+     * </p>
+     */
+    @Test
+    @WithMockUser(username = AUTHENTICATEDUSER)
+    void testGetAccountWhenAskUsersToSetupPasskeyIsFalse() throws Exception {
+        User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
+        passkeyCredentialUtilService.createAndSavePasskeyCredential(user);
+
+        ReflectionTestUtils.setField(publicAccountResource, "askUsersToSetupPasskey", false);
+
+        UserDTO account = request.get("/api/core/public/account", HttpStatus.OK, UserDTO.class);
+
+        assertThat(account).isNotNull();
+        assertThat(account.getAskToSetupPasskey()).isFalse();
     }
 
     @Test
