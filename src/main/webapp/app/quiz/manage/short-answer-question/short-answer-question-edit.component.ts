@@ -471,8 +471,15 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         }
         const solution = new ShortAnswerSolution();
         solution.text = InsertShortAnswerOptionAction.DEFAULT_TEXT_SHORT;
-        this.insertShortAnswerOptionAction.executeInCurrentEditor({ optionText: solution.text });
-        this.questionUpdated.emit();
+        // Add solution directly to the question if re-evaluation is in progress
+        if (this.reEvaluationInProgress) {
+            this.shortAnswerQuestion.solutions.push(solution);
+            this.questionUpdated.emit();
+            // Use the editor to add the solution
+        } else {
+            this.insertShortAnswerOptionAction.executeInCurrentEditor({ optionText: solution.text });
+            this.questionUpdated.emit();
+        }
     }
 
     /**

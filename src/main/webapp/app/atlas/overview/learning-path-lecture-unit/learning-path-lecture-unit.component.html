@@ -10,19 +10,19 @@
         <div class="col p-0">
             @switch (lectureUnit.type) {
                 @case (LectureUnitType.VIDEO) {
-                    <jhi-video-unit [lectureUnit]="lectureUnit" (onCompletion)="setLearningObjectCompletion($event)" />
+                    <jhi-video-unit [courseId]="courseId()" [lectureUnit]="lectureUnit" (onCompletion)="setLearningObjectCompletion($event)" />
                 }
                 @case (LectureUnitType.TEXT) {
-                    <jhi-text-unit [lectureUnit]="lectureUnit" (onCompletion)="setLearningObjectCompletion($event)" />
+                    <jhi-text-unit [courseId]="courseId()" [lectureUnit]="lectureUnit" (onCompletion)="setLearningObjectCompletion($event)" />
                 }
                 @case (LectureUnitType.ATTACHMENT) {
-                    <jhi-attachment-unit [lectureUnit]="lectureUnit" (onCompletion)="setLearningObjectCompletion($event)" />
+                    <jhi-attachment-unit [courseId]="courseId()" [lectureUnit]="lectureUnit" (onCompletion)="setLearningObjectCompletion($event)" />
                 }
                 @case (LectureUnitType.EXERCISE) {
                     <jhi-exercise-unit [exerciseUnit]="lectureUnit" />
                 }
                 @case (LectureUnitType.ONLINE) {
-                    <jhi-online-unit [lectureUnit]="lectureUnit" (onCompletion)="setLearningObjectCompletion($event)" />
+                    <jhi-online-unit [courseId]="courseId()" [lectureUnit]="lectureUnit" (onCompletion)="setLearningObjectCompletion($event)" />
                 }
             }
         </div>

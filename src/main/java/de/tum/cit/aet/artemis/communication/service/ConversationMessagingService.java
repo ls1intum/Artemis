@@ -35,9 +35,11 @@ import de.tum.cit.aet.artemis.communication.domain.conversation.OneToOneChat;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewAnnouncementNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewMentionNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewPostNotification;
+import de.tum.cit.aet.artemis.communication.dto.CreatePostDTO;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.PostContextFilterDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostDTO;
+import de.tum.cit.aet.artemis.communication.dto.UpdatePostingDTO;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
 import de.tum.cit.aet.artemis.communication.repository.PostRepository;
@@ -90,20 +92,24 @@ public class ConversationMessagingService extends PostingService {
     /**
      * Creates a new message in a conversation
      *
-     * @param courseId   the id where the conversation is located
-     * @param newMessage the message to be created includes the conversation id
+     * @param courseId the id where the conversation is located
+     * @param message  the post to be created includes the conversation id
      * @return the created message and associated data
      */
-    public CreatedConversationMessage createMessage(Long courseId, Post newMessage) {
+    public CreatedConversationMessage createMessage(Long courseId, CreatePostDTO message) {
         var author = this.userRepository.getUserWithGroupsAndAuthorities();
+
+        var newMessage = message.toEntity();
         newMessage.setAuthor(author);
         newMessage.setDisplayPriority(DisplayPriority.NONE);
 
-        var conversationId = newMessage.getConversation().getId();
+        var conversationId = message.conversation().id();
 
         var conversation = conversationService.isMemberOrCreateForCourseWideElseThrow(conversationId, author, Optional.empty())
                 .orElse(conversationService.loadConversationWithParticipantsIfGroupChat(conversationId));
         log.debug("      createMessage:conversationService.isMemberOrCreateForCourseWideElseThrow DONE");
+
+        newMessage.setConversation(conversation);
 
         var course = preCheckUserAndCourseForMessaging(author, courseId);
 
@@ -303,10 +309,10 @@ public class ConversationMessagingService extends PostingService {
      * @param messagePost post to update
      * @return updated post that was persisted
      */
-    public Post updateMessage(Long courseId, Long postId, Post messagePost) {
+    public Post updateMessage(Long courseId, Long postId, UpdatePostingDTO messagePost) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         // check
-        if (messagePost.getId() == null || !Objects.equals(messagePost.getId(), postId)) {
+        if (!Objects.equals(messagePost.id(), postId)) {
             throw new BadRequestAlertException("Invalid id", METIS_POST_ENTITY_NAME, "idnull");
         }
 
@@ -314,11 +320,11 @@ public class ConversationMessagingService extends PostingService {
         Conversation conversation = mayUpdateOrDeleteMessageElseThrow(existingMessage, user);
         var course = preCheckUserAndCourseForMessaging(user, courseId);
 
-        parseUserMentions(course, messagePost.getContent());
+        parseUserMentions(course, messagePost.content());
 
         // update: allow overwriting of values only for depicted fields
-        existingMessage.setContent(messagePost.getContent());
-        existingMessage.setTitle(messagePost.getTitle());
+        existingMessage.setContent(messagePost.content());
+        existingMessage.setTitle(messagePost.title());
         existingMessage.setUpdatedDate(ZonedDateTime.now());
 
         Post updatedPost = conversationMessageRepository.save(existingMessage);
