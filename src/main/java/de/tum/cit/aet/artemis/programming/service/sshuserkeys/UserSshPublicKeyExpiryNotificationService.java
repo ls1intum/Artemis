@@ -79,7 +79,7 @@ public class UserSshPublicKeyExpiryNotificationService {
 
         contextVariables.put("sshKey", key);
         if (key.getExpiryDate() != null) {
-            contextVariables.put("expiryDate", key.getExpiryDate().format(DateTimeFormatter.ofPattern("dd.MM.yyyy - HH:mm")));
+            contextVariables.put("expiryDate", key.getExpiryDate().format(DateTimeFormatter.ofPattern("dd.MM.yyyy - HH:mm:ss")));
         }
         else {
             contextVariables.put("expiryDate", "-");
