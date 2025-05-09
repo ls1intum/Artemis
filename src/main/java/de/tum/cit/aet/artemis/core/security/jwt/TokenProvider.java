@@ -21,6 +21,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
+import org.springframework.security.web.webauthn.authentication.WebAuthnAuthentication;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -44,6 +45,8 @@ public class TokenProvider {
     private static final Logger log = LoggerFactory.getLogger(TokenProvider.class);
 
     private static final String AUTHORITIES_KEY = "auth";
+
+    private static final String AUTHENTICATED_WITH_PASSKEY_KEY = "authenticatedWithPasskey";
 
     private SecretKey key;
 
@@ -113,7 +116,8 @@ public class TokenProvider {
         String authorities = authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.joining(","));
 
         long validity = System.currentTimeMillis() + duration;
-        JwtBuilder jwtBuilder = Jwts.builder().subject(authentication.getName()).claim(AUTHORITIES_KEY, authorities).issuedAt(new Date());
+        JwtBuilder jwtBuilder = Jwts.builder().subject(authentication.getName()).claim(AUTHORITIES_KEY, authorities)
+                .claim(AUTHENTICATED_WITH_PASSKEY_KEY, authentication instanceof WebAuthnAuthentication).issuedAt(new Date());
 
         if (tool != null) {
             jwtBuilder.claim("tools", tool);
@@ -198,5 +202,13 @@ public class TokenProvider {
 
     public Date getExpirationDate(String authToken) {
         return parseClaims(authToken).getExpiration();
+    }
+
+    public Date getIssuedAtDate(String authToken) {
+        return parseClaims(authToken).getIssuedAt();
+    }
+
+    public boolean getAuthenticatedWithPasskey(String authToken) {
+        return parseClaims(authToken).get(AUTHENTICATED_WITH_PASSKEY_KEY, Boolean.class);
     }
 }
