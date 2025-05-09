@@ -164,9 +164,8 @@ public class BuildJobManagementService {
                 return future.get(buildJobTimeoutSeconds, TimeUnit.SECONDS);
             }
             catch (Exception ex) {
-                if (DockerUtil.isDockerNotAvailable(ex)) {
-                    log.error("Cannot connect to Docker Host. Make sure Docker is running and configured properly! Error while listing containers for cleanup: {}",
-                            ex.getMessage());
+                if (DockerUtil.isDockerNotAvailable((Exception) ex.getCause())) {
+                    log.error("Cannot connect to Docker Host. Make sure Docker is running and configured properly! {}", ex.getCause().getMessage());
                     throw new CompletionException(ex);
                 }
                 // RejectedExecutionException is thrown if the queue size limit (defined in "artemis.continuous-integration.queue-size-limit") is reached.
