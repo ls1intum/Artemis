@@ -312,6 +312,12 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
 
         final var newCompetency = restCall.apply(this);
 
+        try {
+            Thread.sleep(100); // wait for async processing
+        }
+        catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
         final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
         final var learningPathOptional = learningPathRepository.findWithEagerCompetenciesByCourseIdAndUserId(course.getId(), student.getId());
         assertThat(learningPathOptional).isPresent();
