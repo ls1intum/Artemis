@@ -6,9 +6,21 @@ import { TranslateService } from '@ngx-translate/core';
 import { CompetencyGraphDTO, CompetencyGraphEdgeDTO, CompetencyGraphNodeDTO } from 'app/atlas/shared/entities/learning-path.model';
 import { SizeUpdate } from 'app/atlas/manage/competency-node/competency-node.component';
 
+import { Component } from '@angular/core';
+import { getComponentInstanceFromFixture } from 'test/helpers/utils/general-test.utils';
+
+@Component({
+    template: '<jhi-competency-graph [competencyGraph]="competencyGraph"/>',
+    imports: [CompetencyGraphComponent],
+})
+class WrapperComponent {
+    competencyGraph: CompetencyGraphDTO;
+}
+
 describe('CompetencyGraphComponent', () => {
-    let component: CompetencyGraphComponent;
-    let fixture: ComponentFixture<CompetencyGraphComponent>;
+    let component: WrapperComponent;
+    let fixture: ComponentFixture<WrapperComponent>;
+    let graphComponent: CompetencyGraphComponent;
 
     const competencyGraph = <CompetencyGraphDTO>{
         nodes: [
@@ -31,7 +43,7 @@ describe('CompetencyGraphComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [CompetencyGraphComponent, NoopAnimationsModule],
+            imports: [WrapperComponent, NoopAnimationsModule],
             providers: [
                 {
                     provide: TranslateService,
@@ -40,10 +52,13 @@ describe('CompetencyGraphComponent', () => {
             ],
         }).compileComponents();
 
-        fixture = TestBed.createComponent(CompetencyGraphComponent);
+        fixture = TestBed.createComponent(WrapperComponent);
         component = fixture.componentInstance;
+        graphComponent = getComponentInstanceFromFixture(fixture, 'jhi-competency-graph') as CompetencyGraphComponent;
 
-        fixture.componentRef.setInput('competencyGraph', competencyGraph);
+        component.competencyGraph = competencyGraph;
+
+        fixture.detectChanges();
     });
 
     afterEach(() => {
@@ -52,7 +67,7 @@ describe('CompetencyGraphComponent', () => {
 
     it('should initialize', async () => {
         expect(component).toBeTruthy();
-        expect(component.competencyGraph()).toEqual(competencyGraph);
+        expect(graphComponent.competencyGraph()).toEqual(competencyGraph);
     });
 
     it('should have nodes and edges', async () => {
@@ -60,23 +75,23 @@ describe('CompetencyGraphComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.nodes()).toEqual(competencyGraph.nodes);
-        expect(component.edges()).toEqual(edgesWithUniqueIds);
+        expect(graphComponent.nodes()).toEqual(competencyGraph.nodes);
+        expect(graphComponent.edges()).toEqual(edgesWithUniqueIds);
     });
 
     it('should handle empty nodes array gracefully', () => {
-        component['internalCompetencyGraph'].set({ nodes: [], edges: [] });
+        graphComponent['internalCompetencyGraph'].set({ nodes: [], edges: [] });
         const sizeUpdate: SizeUpdate = { id: '1', dimension: { width: 100, height: 100 } };
-        component.setNodeDimension(sizeUpdate);
+        graphComponent.setNodeDimension(sizeUpdate);
 
-        expect(component.nodes()).toHaveLength(0);
+        expect(graphComponent.nodes()).toHaveLength(0);
     });
 
     it('should not update dimension if node id does not exist', () => {
         const sizeUpdate: SizeUpdate = { id: '3', dimension: { width: 100, height: 100 } };
-        const originalNodes = [...component.nodes()];
-        component.setNodeDimension(sizeUpdate);
+        const originalNodes = [...graphComponent.nodes()];
+        graphComponent.setNodeDimension(sizeUpdate);
 
-        expect(component.nodes()).toEqual(originalNodes);
+        expect(graphComponent.nodes()).toEqual(originalNodes);
     });
 });
