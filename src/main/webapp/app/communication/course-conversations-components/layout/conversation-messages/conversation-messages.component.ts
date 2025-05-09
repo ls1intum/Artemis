@@ -497,9 +497,16 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     };
 
     scrollToBottomOfMessages() {
-        // Use setTimeout to ensure the scroll happens after the new message is rendered
+        // Use requestAnimationFrame to wait for the DOM update
         requestAnimationFrame(() => {
-            this.content.nativeElement.scrollTop = this.content.nativeElement.scrollHeight;
+            // Add a small delay to ensure rendering is complete
+            setTimeout(() => {
+                this.content.nativeElement.scrollTop = this.content.nativeElement.scrollHeight;
+
+                if (Math.abs(this.content.nativeElement.scrollHeight - this.content.nativeElement.scrollTop - this.content.nativeElement.clientHeight) > 1) {
+                    this.content.nativeElement.scrollTop = this.content.nativeElement.scrollHeight;
+                }
+            }, 50);
         });
     }
 
