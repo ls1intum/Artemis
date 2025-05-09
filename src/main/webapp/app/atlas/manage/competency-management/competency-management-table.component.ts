@@ -128,10 +128,10 @@ export class CompetencyManagementTableComponent {
      * @param competencyId the id of the competency
      */
     deleteCompetency(competencyId: number) {
-        this.service.delete(competencyId, this.courseId).subscribe({
+        this.service.delete(competencyId, this.courseId()).subscribe({
             next: () => {
                 this.dialogErrorSource.next('');
-                this.competencyDeleted.next(competencyId);
+                this.competencyDeleted.emit(competencyId);
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });
