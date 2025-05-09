@@ -30,6 +30,8 @@ class JWTFilterTest {
 
     private JWTFilter jwtFilter;
 
+    private JWTCookieService jwtCookieService;
+
     @BeforeEach
     void setup() {
         JHipsterProperties jHipsterProperties = new JHipsterProperties();
@@ -42,7 +44,7 @@ class JWTFilterTest {
         ReflectionTestUtils.setField(tokenProvider, "key", Keys.hmacShaKeyFor(Decoders.BASE64.decode(base64Secret)));
 
         ReflectionTestUtils.setField(tokenProvider, "tokenValidityInMilliseconds", 60000);
-        jwtFilter = new JWTFilter(tokenProvider);
+        jwtFilter = new JWTFilter(tokenProvider, jwtCookieService);
         SecurityContextHolder.getContext().setAuthentication(null);
     }
 
