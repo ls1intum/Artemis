@@ -1,5 +1,6 @@
 import { DebugElement, OnChanges, SimpleChange, SimpleChanges } from '@angular/core';
 import { By } from '@angular/platform-browser';
+import { ComponentFixture } from '@angular/core/testing';
 
 export const getFocusedElement = (debugElement: DebugElement) => {
     const focusedElement = debugElement.query(By.css(':focus')).nativeElement;
@@ -36,4 +37,9 @@ export const triggerChanges = (comp: OnChanges, ...changes: Array<{ property: st
         return { ...acc, [property]: new SimpleChange(previousValue, currentValue, firstChange) };
     }, {});
     comp.ngOnChanges(simpleChanges);
+};
+
+export const getComponentInstanceFromFixture = (fixture: ComponentFixture<any>, selector: string) => {
+    const element = fixture.debugElement.query(By.css(selector));
+    return element ? element.componentInstance : null;
 };
