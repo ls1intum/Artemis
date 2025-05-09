@@ -12,6 +12,7 @@ import {
     input,
     model,
     output,
+    signal,
     viewChild,
 } from '@angular/core';
 import { Post } from 'app/communication/shared/entities/post.model';
@@ -98,7 +99,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     static activeDropdownPost: PostComponent | undefined = undefined;
 
     showReactionSelector = false;
-    displayInlineInput = false;
+    displayInlineInput = signal(false);
     routerLink: RouteComponents;
     queryParams = {};
     showAnnouncementIcon = false;
@@ -358,8 +359,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     }
 
     protected setDisplayInlineInput(active: boolean) {
-        this.displayInlineInput = active;
-        this.changeDetector.detectChanges();
+        this.displayInlineInput.set(active);
     }
 
     private assignPostingToPost() {
