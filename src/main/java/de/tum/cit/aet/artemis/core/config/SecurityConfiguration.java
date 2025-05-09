@@ -88,6 +88,8 @@ public class SecurityConfiguration {
 
     private final PublicKeyCredentialRequestOptionsRepository publicKeyCredentialRequestOptionsRepository;
 
+    private final DomainUserDetailsService userDetailsService;
+
     @Value("#{'${spring.prometheus.monitoringIp:127.0.0.1}'.split(',')}")
     private List<String> monitoringIpAddresses;
 
@@ -134,7 +136,7 @@ public class SecurityConfiguration {
             PublicKeyCredentialCreationOptionsRepository publicKeyCredentialCreationOptionsRepository,
             PublicKeyCredentialRequestOptionsRepository publicKeyCredentialRequestOptionsRepository,
             PublicKeyCredentialUserEntityRepository publicKeyCredentialUserEntityRepository, TokenProvider tokenProvider, UserCredentialRepository userCredentialRepository,
-            UserRepository userRepository) {
+            UserRepository userRepository, DomainUserDetailsService userDetailsService) {
         this.converter = converter;
         this.corsFilter = corsFilter;
         this.customLti13Configurer = customLti13Configurer;
@@ -147,6 +149,7 @@ public class SecurityConfiguration {
         this.tokenProvider = tokenProvider;
         this.userCredentialRepository = userCredentialRepository;
         this.userRepository = userRepository;
+        this.userDetailsService = userDetailsService;
     }
 
     /**
@@ -342,6 +345,6 @@ public class SecurityConfiguration {
      * @return JWTConfigurer configured with a token provider that generates and validates JWT tokens.
      */
     private JWTConfigurer securityConfigurerAdapter() {
-        return new JWTConfigurer(tokenProvider, jwtCookieService);
+        return new JWTConfigurer(tokenProvider, jwtCookieService, userDetailsService);
     }
 }

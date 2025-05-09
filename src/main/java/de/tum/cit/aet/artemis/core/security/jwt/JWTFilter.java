@@ -11,12 +11,15 @@ import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.ws.rs.NotAuthorizedException;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.GenericFilterBean;
 import org.springframework.web.util.WebUtils;
@@ -36,15 +39,19 @@ public class JWTFilter extends GenericFilterBean {
 
     private final JWTCookieService jwtCookieService;
 
+    private final UserDetailsService userDetailsService;
+
+    // TODO add validation here (post construct)
     @Value("${jhipster.security.authentication.jwt.token-validity-in-seconds-for-passkey}")
     private long tokenValidityInSecondsForPasskey;
 
-    public JWTFilter(TokenProvider tokenProvider, JWTCookieService jwtCookieService) {
+    public JWTFilter(TokenProvider tokenProvider, JWTCookieService jwtCookieService, UserDetailsService userDetailsService) {
         this.tokenProvider = tokenProvider;
         this.jwtCookieService = jwtCookieService;
+        this.userDetailsService = userDetailsService;
     }
 
-    private void rotateTokenSilently(String jwtToken, Authentication authentication, HttpServletResponse response) {
+    private void rotateTokenSilently(String jwtToken, Authentication authentication, HttpServletResponse response) throws NotAuthorizedException {
         Date issuedAt = this.tokenProvider.getIssuedAtDate(jwtToken);
         Date expirationDate = this.tokenProvider.getExpirationDate(jwtToken);
 
@@ -57,6 +64,12 @@ public class JWTFilter extends GenericFilterBean {
             long now = new Date().getTime();
             long newTokenExpirationTime = Math.min(now + tokenValidityInSeconds, issuedAt.getTime() + this.tokenValidityInSecondsForPasskey);
             long rotatedTokenDuration = newTokenExpirationTime - now;
+
+            UserDetails updatedUserDetails = userDetailsService.loadUserByUsername(authentication.getName());
+            if (!updatedUserDetails.equals(authentication.getPrincipal())) {
+                throw new NotAuthorizedException("User details have changed, cannot rotate token");
+            }
+
             String rotatedToken = this.tokenProvider.createToken(authentication, issuedAt, new Date(newTokenExpirationTime), this.tokenProvider.getTools(jwtToken));
 
             ResponseCookie responseCookie = jwtCookieService.buildRotatedCookie(rotatedToken, rotatedTokenDuration);
