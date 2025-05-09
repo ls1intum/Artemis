@@ -302,3 +302,10 @@ export function compareSoftDueDate(a: CourseCompetency, b: CourseCompetency): nu
     }
     return 0;
 }
+
+export class CompetencyContributionCardDTO {
+    competencyId: number;
+    title: string;
+    weight: number;
+    mastery?: number;
+}

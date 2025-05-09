@@ -53,6 +53,8 @@ const esModules = [
     'ngx-webstorage',
     'rxjs/operators',
     'trigram-utils',
+    'primeng',
+    '@primeuix'
 ].join('|');
 
 const {
@@ -91,10 +93,10 @@ module.exports = {
     coverageThreshold: {
         global: {
             // TODO: in the future, the following values should increase to at least 90%
-            statements: 88.95,
-            branches: 75.1,
-            functions: 82.9,
-            lines: 89.01,
+            statements: 89.18,
+            branches: 75.33,
+            functions: 83.08,
+            lines: 89.25,
         },
     },
     coverageReporters: ['clover', 'json', 'lcov', 'text-summary'],

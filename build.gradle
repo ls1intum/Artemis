@@ -21,14 +21,14 @@ plugins {
     id "com.google.cloud.tools.jib" version "3.4.5"
     id "com.gorylenko.gradle-git-properties" version "2.5.0"
     id "io.spring.dependency-management" version "1.1.7"
-    id "nebula.lint" version "20.5.7"
+    id "nebula.lint" version "20.5.8"
     id "org.liquibase.gradle" version "${liquibase_plugin_version}"
     id "org.owasp.dependencycheck" version "12.1.1"
     id "org.springframework.boot" version "${spring_boot_version}"
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "8.0.5"
+version = "8.0.7"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -37,7 +37,7 @@ java {
 }
 
 wrapper {
-    gradleVersion = "8.13"
+    gradleVersion = "8.14"
 }
 
 node {
@@ -155,7 +155,7 @@ configurations.configureEach {
 dependencies {
 
     // Required by Spring cloud
-    implementation "org.apache.httpcomponents.client5:httpclient5:5.4.3"
+    implementation "org.apache.httpcomponents.client5:httpclient5:5.4.4"
     implementation "org.apache.httpcomponents.core5:httpcore5:5.3.4"
     implementation "org.apache.httpcomponents:httpmime:4.5.14"
 
@@ -191,7 +191,7 @@ dependencies {
     implementation "org.apache.logging.log4j:log4j-to-slf4j:2.24.3"
 
     // Used for LTI (e.g. Moodle --> Artemis)
-    implementation "uk.ac.ox.ctl:spring-security-lti13:0.3.2"
+    implementation "uk.ac.ox.ctl:spring-security-lti13:0.3.3"
 
     // https://search.maven.org/artifact/org.eclipse.jgit/org.eclipse.jgit
     implementation "org.eclipse.jgit:org.eclipse.jgit:${jgit_version}"
@@ -225,7 +225,7 @@ dependencies {
     // required by Saml2, should NOT be used in other places, we explicitly use the newest version to avoid security vulnerabilities
     implementation "org.apache.santuario:xmlsec:4.0.4"
 
-    implementation "org.jsoup:jsoup:1.19.1"
+    implementation "org.jsoup:jsoup:1.20.1"
     // needed by e.g. spring security saml2, we explicitly use the newest version to avoid security vulnerabilities
     implementation "commons-codec:commons-codec:1.18.0"
 
@@ -320,7 +320,7 @@ dependencies {
 
     // passkey functionality to simplify login
     implementation "com.webauthn4j:webauthn4j-spring-security-core:0.11.0.RELEASE"
-    implementation 'com.webauthn4j:webauthn4j-core:0.29.0.RELEASE'
+    implementation 'com.webauthn4j:webauthn4j-core:0.29.1.RELEASE'
 
     implementation "org.springframework.security:spring-security-config:${spring_security_version}"
     implementation "org.springframework.security:spring-security-data:${spring_security_version}"
@@ -363,7 +363,7 @@ dependencies {
 
     // used for testing and Java Template Upgrade Service
     implementation "org.apache.maven:maven-model:3.9.9"
-    implementation "org.apache.pdfbox:pdfbox:3.0.4"
+    implementation "org.apache.pdfbox:pdfbox:3.0.5"
     implementation "org.apache.commons:commons-csv:1.14.0"
     implementation "org.commonmark:commonmark:0.24.0"
     implementation "commons-fileupload:commons-fileupload:1.5"
@@ -419,7 +419,7 @@ dependencies {
     testImplementation "io.github.classgraph:classgraph:4.8.179"
     testImplementation "org.awaitility:awaitility:4.3.0"
     testImplementation "org.apache.maven.shared:maven-invoker:3.3.0"
-    testImplementation "org.gradle:gradle-tooling-api:8.13"
+    testImplementation "org.gradle:gradle-tooling-api:8.14"
     testImplementation "org.apache.maven.surefire:surefire-report-parser:3.5.3"
     testImplementation "io.zonky.test:embedded-database-spring-test:2.6.0"
 
