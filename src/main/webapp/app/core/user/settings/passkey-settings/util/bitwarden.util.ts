@@ -1,4 +1,4 @@
-import cloneDeep from 'lodash';
+import { cloneDeep } from 'lodash-es';
 import { MalformedBitwardenCredential } from 'app/core/user/settings/passkey-settings/entities/malformed-bitwarden-credential';
 import { encodeAsBase64Url } from 'app/shared/util/base64.util';
 
