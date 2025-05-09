@@ -6,10 +6,31 @@ import { CourseCompetencyApiService } from 'app/atlas/shared/services/course-com
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { CompetencyRelationDTO, CompetencyRelationType, CourseCompetency, UpdateCourseCompetencyRelationDTO } from 'app/atlas/shared/entities/competency.model';
+import { Component } from '@angular/core';
+import { getComponentInstanceFromFixture } from 'test/helpers/utils/general-test.utils';
+
+@Component({
+    template: `
+        <jhi-course-competency-relation-form
+            [(selectedRelationId)]="selectedRelationId"
+            [courseId]="courseId"
+            [(relations)]="relations"
+            [courseCompetencies]="courseCompetencies"
+        />
+    `,
+    imports: [CourseCompetencyRelationFormComponent],
+})
+class WrapperComponent {
+    selectedRelationId?: number;
+    courseId: number;
+    relations: CompetencyRelationDTO[];
+    courseCompetencies: CourseCompetency[];
+}
 
 describe('CourseCompetencyRelationFormComponent', () => {
-    let component: CourseCompetencyRelationFormComponent;
-    let fixture: ComponentFixture<CourseCompetencyRelationFormComponent>;
+    let component: WrapperComponent;
+    let fixture: ComponentFixture<WrapperComponent>;
+    let courseCompetencyRelationFormComponent: CourseCompetencyRelationFormComponent;
     let courseCompetencyApiService: CourseCompetencyApiService;
     let alertService: AlertService;
 
@@ -70,13 +91,16 @@ describe('CourseCompetencyRelationFormComponent', () => {
         updateCourseCompetencyRelationSpy = jest.spyOn(courseCompetencyApiService, 'updateCourseCompetencyRelation').mockResolvedValue();
         deleteCourseCompetencyRelationSpy = jest.spyOn(courseCompetencyApiService, 'deleteCourseCompetencyRelation').mockResolvedValue();
 
-        fixture = TestBed.createComponent(CourseCompetencyRelationFormComponent);
+        fixture = TestBed.createComponent(WrapperComponent);
         component = fixture.componentInstance;
+        courseCompetencyRelationFormComponent = getComponentInstanceFromFixture(fixture, 'jhi-course-competency-relation-form') as CourseCompetencyRelationFormComponent;
 
-        fixture.componentRef.setInput('courseId', courseId);
-        fixture.componentRef.setInput('courseCompetencies', courseCompetencies);
-        fixture.componentRef.setInput('relations', relations);
-        fixture.componentRef.setInput('selectedRelationId', undefined);
+        component.courseId = courseId;
+        component.courseCompetencies = courseCompetencies;
+        component.relations = relations;
+        component.selectedRelationId = undefined;
+
+        fixture.detectChanges();
     });
 
     afterEach(() => {
@@ -84,91 +108,91 @@ describe('CourseCompetencyRelationFormComponent', () => {
     });
 
     it('should set relationAlreadyExists correctly', () => {
-        component.headCompetencyId.set(2);
-        component.tailCompetencyId.set(1);
-        component.relationType.set(CompetencyRelationType.ASSUMES);
+        courseCompetencyRelationFormComponent.headCompetencyId.set(2);
+        courseCompetencyRelationFormComponent.tailCompetencyId.set(1);
+        courseCompetencyRelationFormComponent.relationType.set(CompetencyRelationType.ASSUMES);
 
         fixture.detectChanges();
 
-        expect(component.relationAlreadyExists()).toBeTrue();
+        expect(courseCompetencyRelationFormComponent.relationAlreadyExists()).toBeTrue();
     });
 
     it('should set exactRelationAlreadyExists correctly', () => {
-        component.headCompetencyId.set(2);
-        component.tailCompetencyId.set(1);
-        component.relationType.set(CompetencyRelationType.EXTENDS);
+        courseCompetencyRelationFormComponent.headCompetencyId.set(2);
+        courseCompetencyRelationFormComponent.tailCompetencyId.set(1);
+        courseCompetencyRelationFormComponent.relationType.set(CompetencyRelationType.EXTENDS);
 
         fixture.detectChanges();
 
-        expect(component.exactRelationAlreadyExists()).toBeTrue();
+        expect(courseCompetencyRelationFormComponent.exactRelationAlreadyExists()).toBeTrue();
     });
 
     it('should select relation if selectedRelationId is set', () => {
-        fixture.componentRef.setInput('selectedRelationId', selectedRelationId);
+        component.selectedRelationId = selectedRelationId;
 
         fixture.detectChanges();
 
-        expect(component.headCompetencyId()).toBe(2);
-        expect(component.tailCompetencyId()).toBe(1);
-        expect(component.relationType()).toBe(CompetencyRelationType.EXTENDS);
+        expect(courseCompetencyRelationFormComponent.headCompetencyId()).toBe(2);
+        expect(courseCompetencyRelationFormComponent.tailCompetencyId()).toBe(1);
+        expect(courseCompetencyRelationFormComponent.relationType()).toBe(CompetencyRelationType.EXTENDS);
     });
 
     it('should set headCompetencyId if it is undefined', () => {
-        component.headCompetencyId.set(undefined);
-        component.tailCompetencyId.set(2);
+        courseCompetencyRelationFormComponent.headCompetencyId.set(undefined);
+        courseCompetencyRelationFormComponent.tailCompetencyId.set(2);
 
-        component.selectCourseCompetency(1);
+        courseCompetencyRelationFormComponent.selectCourseCompetency(1);
 
-        expect(component.headCompetencyId()).toBe(1);
-        expect(component.tailCompetencyId()).toBeUndefined();
+        expect(courseCompetencyRelationFormComponent.headCompetencyId()).toBe(1);
+        expect(courseCompetencyRelationFormComponent.tailCompetencyId()).toBeUndefined();
     });
 
     it('should set tailCompetencyId if headCompetencyId is defined and tailCompetencyId is undefined', () => {
-        component.headCompetencyId.set(1);
-        component.tailCompetencyId.set(undefined);
+        courseCompetencyRelationFormComponent.headCompetencyId.set(1);
+        courseCompetencyRelationFormComponent.tailCompetencyId.set(undefined);
 
-        component.selectCourseCompetency(2);
+        courseCompetencyRelationFormComponent.selectCourseCompetency(2);
 
-        expect(component.tailCompetencyId()).toBe(2);
+        expect(courseCompetencyRelationFormComponent.tailCompetencyId()).toBe(2);
     });
 
     it('should reset headCompetencyId if both headCompetencyId and tailCompetencyId are defined', () => {
-        component.headCompetencyId.set(1);
-        component.tailCompetencyId.set(2);
+        courseCompetencyRelationFormComponent.headCompetencyId.set(1);
+        courseCompetencyRelationFormComponent.tailCompetencyId.set(2);
 
-        component.selectCourseCompetency(3);
+        courseCompetencyRelationFormComponent.selectCourseCompetency(3);
 
-        expect(component.headCompetencyId()).toBe(3);
-        expect(component.tailCompetencyId()).toBeUndefined();
+        expect(courseCompetencyRelationFormComponent.headCompetencyId()).toBe(3);
+        expect(courseCompetencyRelationFormComponent.tailCompetencyId()).toBeUndefined();
     });
 
     it('should create relation', async () => {
-        component.headCompetencyId.set(2);
-        component.tailCompetencyId.set(3);
-        component.relationType.set(CompetencyRelationType.EXTENDS);
+        courseCompetencyRelationFormComponent.headCompetencyId.set(2);
+        courseCompetencyRelationFormComponent.tailCompetencyId.set(3);
+        courseCompetencyRelationFormComponent.relationType.set(CompetencyRelationType.EXTENDS);
 
-        await component['createRelation']();
+        await courseCompetencyRelationFormComponent['createRelation']();
 
         expect(createCourseCompetencyRelationSpy).toHaveBeenCalledExactlyOnceWith(courseId, {
             headCompetencyId: 2,
             tailCompetencyId: 3,
             relationType: CompetencyRelationType.EXTENDS,
         });
-        expect(component.headCompetencyId()).toBe(2);
-        expect(component.tailCompetencyId()).toBe(3);
-        expect(component.relationType()).toBe(CompetencyRelationType.EXTENDS);
-        expect(component.selectedRelationId()).toBe(2);
-        expect(component.relations()).toEqual([...relations, newRelation]);
+        expect(courseCompetencyRelationFormComponent.headCompetencyId()).toBe(2);
+        expect(courseCompetencyRelationFormComponent.tailCompetencyId()).toBe(3);
+        expect(courseCompetencyRelationFormComponent.relationType()).toBe(CompetencyRelationType.EXTENDS);
+        expect(courseCompetencyRelationFormComponent.selectedRelationId()).toBe(2);
+        expect(courseCompetencyRelationFormComponent.relations()).toEqual([...relations, newRelation]);
     });
 
     it('should set isLoading correctly when creating a relation', async () => {
-        const isLoadingSpy = jest.spyOn(component.isLoading, 'set');
+        const isLoadingSpy = jest.spyOn(courseCompetencyRelationFormComponent.isLoading, 'set');
 
-        component.headCompetencyId.set(2);
-        component.tailCompetencyId.set(3);
-        component.relationType.set(CompetencyRelationType.EXTENDS);
+        courseCompetencyRelationFormComponent.headCompetencyId.set(2);
+        courseCompetencyRelationFormComponent.tailCompetencyId.set(3);
+        courseCompetencyRelationFormComponent.relationType.set(CompetencyRelationType.EXTENDS);
 
-        await component['createRelation']();
+        await courseCompetencyRelationFormComponent['createRelation']();
 
         expect(isLoadingSpy).toHaveBeenNthCalledWith(1, true);
         expect(isLoadingSpy).toHaveBeenNthCalledWith(2, false);
@@ -179,23 +203,23 @@ describe('CourseCompetencyRelationFormComponent', () => {
         createCourseCompetencyRelationSpy.mockRejectedValue(error);
         const alertServiceErrorSpy = jest.spyOn(alertService, 'error');
 
-        component.headCompetencyId.set(2);
-        component.tailCompetencyId.set(3);
-        component.relationType.set(CompetencyRelationType.EXTENDS);
+        courseCompetencyRelationFormComponent.headCompetencyId.set(2);
+        courseCompetencyRelationFormComponent.tailCompetencyId.set(3);
+        courseCompetencyRelationFormComponent.relationType.set(CompetencyRelationType.EXTENDS);
 
-        await component['createRelation']();
+        await courseCompetencyRelationFormComponent['createRelation']();
 
         expect(alertServiceErrorSpy).toHaveBeenCalledOnce();
     });
 
     it('should update relation', async () => {
-        fixture.componentRef.setInput('selectedRelationId', selectedRelationId);
+        component.selectedRelationId = selectedRelationId;
 
         fixture.detectChanges();
 
-        component.relationType.set(CompetencyRelationType.ASSUMES);
+        courseCompetencyRelationFormComponent.relationType.set(CompetencyRelationType.ASSUMES);
 
-        await component['updateRelation']();
+        await courseCompetencyRelationFormComponent['updateRelation']();
 
         expect(updateCourseCompetencyRelationSpy).toHaveBeenCalledExactlyOnceWith(courseId, selectedRelationId, <UpdateCourseCompetencyRelationDTO>{
             newRelationType: CompetencyRelationType.ASSUMES,
@@ -206,18 +230,18 @@ describe('CourseCompetencyRelationFormComponent', () => {
             }
             return relation;
         });
-        expect(component.relations()).toEqual(newRelations);
+        expect(courseCompetencyRelationFormComponent.relations()).toEqual(newRelations);
     });
 
     it('should set isLoading correctly when updating a relation', async () => {
-        const isLoadingSpy = jest.spyOn(component.isLoading, 'set');
-        fixture.componentRef.setInput('selectedRelationId', selectedRelationId);
+        const isLoadingSpy = jest.spyOn(courseCompetencyRelationFormComponent.isLoading, 'set');
+        component.selectedRelationId = selectedRelationId;
 
         fixture.detectChanges();
 
-        component.relationType.set(CompetencyRelationType.ASSUMES);
+        courseCompetencyRelationFormComponent.relationType.set(CompetencyRelationType.ASSUMES);
 
-        await component['updateRelation']();
+        await courseCompetencyRelationFormComponent['updateRelation']();
 
         expect(isLoadingSpy).toHaveBeenNthCalledWith(1, true);
         expect(isLoadingSpy).toHaveBeenNthCalledWith(2, false);
@@ -226,23 +250,23 @@ describe('CourseCompetencyRelationFormComponent', () => {
     it('should show error when updating relation fails', async () => {
         updateCourseCompetencyRelationSpy.mockRejectedValue('Error updating relation');
         const alertServiceErrorSpy = jest.spyOn(alertService, 'error');
-        fixture.componentRef.setInput('selectedRelationId', selectedRelationId);
+        component.selectedRelationId = selectedRelationId;
 
         fixture.detectChanges();
 
-        component.relationType.set(CompetencyRelationType.ASSUMES);
+        courseCompetencyRelationFormComponent.relationType.set(CompetencyRelationType.ASSUMES);
 
-        await component['updateRelation']();
+        await courseCompetencyRelationFormComponent['updateRelation']();
 
         expect(alertServiceErrorSpy).toHaveBeenCalledOnce();
     });
 
     it('should select head course competency', () => {
-        component['selectHeadCourseCompetency'](2);
+        courseCompetencyRelationFormComponent['selectHeadCourseCompetency'](2);
 
-        expect(component.headCompetencyId()).toBe(2);
-        expect(component.tailCompetencyId()).toBeUndefined();
-        expect(component.selectedRelationId()).toBeUndefined();
+        expect(courseCompetencyRelationFormComponent.headCompetencyId()).toBe(2);
+        expect(courseCompetencyRelationFormComponent.tailCompetencyId()).toBeUndefined();
+        expect(courseCompetencyRelationFormComponent.selectedRelationId()).toBeUndefined();
     });
 
     it('should set tailCompetencyId and selectedRelationId when an existing relation is found', async () => {
@@ -250,13 +274,13 @@ describe('CourseCompetencyRelationFormComponent', () => {
         await fixture.whenStable();
 
         const tailId = 1;
-        component.headCompetencyId.set(2);
-        component.relationType.set(CompetencyRelationType.EXTENDS);
+        courseCompetencyRelationFormComponent.headCompetencyId.set(2);
+        courseCompetencyRelationFormComponent.relationType.set(CompetencyRelationType.EXTENDS);
 
-        component['selectTailCourseCompetency'](tailId);
+        courseCompetencyRelationFormComponent['selectTailCourseCompetency'](tailId);
 
-        expect(component.tailCompetencyId()).toBe(1);
-        expect(component.selectedRelationId()).toBe(1);
+        expect(courseCompetencyRelationFormComponent.tailCompetencyId()).toBe(1);
+        expect(courseCompetencyRelationFormComponent.selectedRelationId()).toBe(1);
     });
 
     it('should set tailCompetencyId and clear selectedRelationId when no existing relation is found', async () => {
@@ -264,42 +288,42 @@ describe('CourseCompetencyRelationFormComponent', () => {
         await fixture.whenStable();
 
         const tailId = 2;
-        component.headCompetencyId.set(3);
-        component.relationType.set(CompetencyRelationType.EXTENDS);
+        courseCompetencyRelationFormComponent.headCompetencyId.set(3);
+        courseCompetencyRelationFormComponent.relationType.set(CompetencyRelationType.EXTENDS);
 
-        component['selectTailCourseCompetency'](tailId);
+        courseCompetencyRelationFormComponent['selectTailCourseCompetency'](tailId);
 
-        expect(component.tailCompetencyId()).toBe(2);
-        expect(component.selectedRelationId()).toBeUndefined();
+        expect(courseCompetencyRelationFormComponent.tailCompetencyId()).toBe(2);
+        expect(courseCompetencyRelationFormComponent.selectedRelationId()).toBeUndefined();
     });
 
     it('should not allow to create circular dependencies', () => {
-        component.headCompetencyId.set(1);
-        component.tailCompetencyId.set(1);
-        component.relationType.set(CompetencyRelationType.EXTENDS);
+        courseCompetencyRelationFormComponent.headCompetencyId.set(1);
+        courseCompetencyRelationFormComponent.tailCompetencyId.set(1);
+        courseCompetencyRelationFormComponent.relationType.set(CompetencyRelationType.EXTENDS);
 
-        expect(component['selectableTailCourseCompetencyIds']).not.toContain(1);
-        expect(component.showCircularDependencyError()).toBeTrue();
+        expect(courseCompetencyRelationFormComponent['selectableTailCourseCompetencyIds']).not.toContain(1);
+        expect(courseCompetencyRelationFormComponent.showCircularDependencyError()).toBeTrue();
     });
 
     it('should delete relation', async () => {
-        fixture.componentRef.setInput('selectedRelationId', selectedRelationId);
+        component.selectedRelationId = selectedRelationId;
 
         fixture.detectChanges();
 
-        await component['deleteRelation']();
+        await courseCompetencyRelationFormComponent['deleteRelation']();
 
         expect(deleteCourseCompetencyRelationSpy).toHaveBeenCalledExactlyOnceWith(courseId, selectedRelationId);
-        expect(component.relations()).toHaveLength(relations.length - 1);
+        expect(courseCompetencyRelationFormComponent.relations()).toHaveLength(relations.length - 1);
     });
 
     it('should set isLoading correctly when deleting a relation', async () => {
-        const isLoadingSpy = jest.spyOn(component.isLoading, 'set');
-        fixture.componentRef.setInput('selectedRelationId', selectedRelationId);
+        const isLoadingSpy = jest.spyOn(courseCompetencyRelationFormComponent.isLoading, 'set');
+        component.selectedRelationId = selectedRelationId;
 
         fixture.detectChanges();
 
-        await component['deleteRelation']();
+        await courseCompetencyRelationFormComponent['deleteRelation']();
 
         expect(isLoadingSpy).toHaveBeenNthCalledWith(1, true);
         expect(isLoadingSpy).toHaveBeenNthCalledWith(2, false);
@@ -308,11 +332,11 @@ describe('CourseCompetencyRelationFormComponent', () => {
     it('should show error when deleting relation fails', async () => {
         deleteCourseCompetencyRelationSpy.mockRejectedValue('Error deleting relation');
         const alertServiceErrorSpy = jest.spyOn(alertService, 'error');
-        fixture.componentRef.setInput('selectedRelationId', selectedRelationId);
+        component.selectedRelationId = selectedRelationId;
 
         fixture.detectChanges();
 
-        await component['deleteRelation']();
+        await courseCompetencyRelationFormComponent['deleteRelation']();
 
         expect(alertServiceErrorSpy).toHaveBeenCalledOnce();
     });
