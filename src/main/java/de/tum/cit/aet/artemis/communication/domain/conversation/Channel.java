@@ -49,7 +49,7 @@ public class Channel extends Conversation {
      * What is the current topic of this channel? (shown in header)
      */
     @Column(name = "topic")
-    @Size(min = 1, max = 250)
+    @Size(max = 250)
     @Nullable
     private String topic;
 
