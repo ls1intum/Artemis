@@ -31,6 +31,7 @@ import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker'
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { LoadingNotificationInterceptor } from 'app/core/loading-notification/loading-notification.interceptor';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
+import { __DEV_MODE__ } from 'app/core/environments/environment';
 
 export const appConfig: ApplicationConfig = {
     providers: [
@@ -77,9 +78,17 @@ export const appConfig: ApplicationConfig = {
             inject(TraceService);
             // Ensure the service is initialized before any routing happens
             inject(ArtemisNavigationUtilService);
+
             // we load this as early as possible to ensure that all config options are loaded before any routing or rendering happens
-            // this is important so that all components can access the profile info, by returning it here, this blocks the app initialization until profile info was loaded
-            return profileService.loadProfileInfo();
+            // this is important so that all components can access the profile info.
+            // The behavior differs between local development and production.
+            // For local development we make an http call to the server, this blocks the app initialization until profile info was loaded
+            // For production we read the server-injected <meta> tag and that is non-blocking
+            if (__DEV_MODE__) {
+                return profileService.loadProfileInfoForLocalDevelopment();
+            } else {
+                profileService.loadProfileInfo();
+            }
         }),
         /**
          * @description Interceptor declarations:

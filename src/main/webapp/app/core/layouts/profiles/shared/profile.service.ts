@@ -1,9 +1,10 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { PROFILE_DEV, PROFILE_PROD } from 'app/app.constants';
 import { ProfileInfo } from '../profile-info.model';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { BrowserFingerprintService } from 'app/core/account/fingerprint/browser-fingerprint.service';
+import { MetaInfoService } from 'app/core/layouts/profiles/meta-info.service';
+import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
@@ -11,12 +12,18 @@ export class ProfileService {
     private http = inject(HttpClient);
     private featureToggleService = inject(FeatureToggleService);
     private browserFingerprintService = inject(BrowserFingerprintService);
+    private metaInfoService = inject(MetaInfoService);
 
     /** Internal mutable reference */
     private profileInfo: ProfileInfo;
 
     // Should only be called once by the app initializer
-    public async loadProfileInfo(): Promise<void> {
+    public loadProfileInfo() {
+        this.profileInfo = this.metaInfoService.getMetaInformationFromHtml();
+        this.featureToggleService.initializeFeatureToggles(this.profileInfo.features);
+        this.browserFingerprintService.initialize(this.profileInfo.studentExamStoreSessionData);
+    }
+    public async loadProfileInfoForLocalDevelopment() {
         this.profileInfo = await firstValueFrom(this.http.get<ProfileInfo>('management/info'));
         this.featureToggleService.initializeFeatureToggles(this.profileInfo.features);
         this.browserFingerprintService.initialize(this.profileInfo.studentExamStoreSessionData);

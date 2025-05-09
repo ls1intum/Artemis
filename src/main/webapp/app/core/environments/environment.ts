@@ -5,3 +5,5 @@
 export const __DEBUG_INFO_ENABLED__ = false;
 export const __VERSION__ = '0.0.0';
 export const I18N_HASH = '';
+
+export const __DEV_MODE__ = false;
