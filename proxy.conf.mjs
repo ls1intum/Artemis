@@ -12,6 +12,7 @@ export default [
             "/auth/",
             "/health/",
             "/public/",
+            '/index.html',
             "/.well-known/",
             "/webauthn/",
             "/login/webauthn"
