@@ -1,8 +1,10 @@
-<div class="course-notification-preset-picker" ngbDropdown>
-    <button class="btn btn-outline-secondary" type="button" ngbDropdownToggle>
-        <fa-icon [icon]="farEye" class="me-1" />
-        <span jhiTranslate="artemisApp.courseNotification.preset.dropdown"></span>:
-        <span [jhiTranslate]="selectedPresetLangKey"></span>
+<div [ngClass]="{ 'is-small-button': isSmallButton }" class="course-notification-preset-picker" ngbDropdown>
+    <button [ngClass]="{ 'btn-sm': isSmallButton }" class="btn btn-outline-secondary d-flex align-items-center" type="button" ngbDropdownToggle>
+        <fa-icon [icon]="farEye" class="course-notification-preset-picker-eye-icon" />
+        <span class="course-notification-preset-picker-text">
+            <span jhiTranslate="artemisApp.courseNotification.preset.dropdown"></span>:
+            <span [jhiTranslate]="selectedPresetLangKey"></span>
+        </span>
     </button>
     <div ngbDropdownMenu>
         @for (preset of availableCourseSettingPresets(); track preset) {
