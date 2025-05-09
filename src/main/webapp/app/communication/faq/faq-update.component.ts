@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -12,24 +12,19 @@ import { FaqService } from 'app/communication/faq/faq.service';
 import { FaqCategory } from 'app/communication/shared/entities/faq-category.model';
 import { loadCourseFaqCategories } from 'app/communication/faq/faq.utils';
 import { AccountService } from 'app/core/auth/account.service';
-import { RewriteAction } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewrite.action';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { PROFILE_IRIS } from 'app/app.constants';
-import RewritingVariant from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-variant';
-import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
 import { CategorySelectorComponent } from 'app/shared/category-selector/category-selector.component';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
-import RewriteResult from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
-import { FaqConsistencyComponent } from 'app/communication/faq/faq-consistency.component';
 
 @Component({
     selector: 'jhi-faq-update',
     templateUrl: './faq-update.component.html',
     styleUrls: ['./faq-update.component.scss'],
-    imports: [CategorySelectorComponent, MarkdownEditorMonacoComponent, TranslateDirective, FontAwesomeModule, FormsModule, FaqConsistencyComponent],
+    imports: [CategorySelectorComponent, MarkdownEditorMonacoComponent, TranslateDirective, FontAwesomeModule, FormsModule],
 })
 export class FaqUpdateComponent implements OnInit {
     private alertService = inject(AlertService);
@@ -39,7 +34,6 @@ export class FaqUpdateComponent implements OnInit {
     private router = inject(Router);
     private profileService = inject(ProfileService);
     private accountService = inject(AccountService);
-    private artemisIntelligenceService = inject(ArtemisIntelligenceService);
 
     faq: Faq;
     isSaving: boolean;
@@ -50,19 +44,8 @@ export class FaqUpdateComponent implements OnInit {
     isAtLeastInstructor = false;
     domainActionsDescription = [new FormulaAction()];
 
-    renderedConsistencyCheckResultMarkdown = signal<RewriteResult>({
-        result: '',
-        inconsistencies: [],
-        suggestions: [],
-        improvement: '',
-    });
-
-    showConsistencyCheck = computed(() => !!this.renderedConsistencyCheckResultMarkdown().result);
-
     irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
-    artemisIntelligenceActions = computed(() =>
-        this.irisEnabled ? [new RewriteAction(this.artemisIntelligenceService, RewritingVariant.FAQ, this.courseId, this.renderedConsistencyCheckResultMarkdown)] : [],
-    );
+
     // Icons
     readonly faQuestionCircle = faQuestionCircle;
     readonly faSave = faSave;
@@ -187,14 +170,5 @@ export class FaqUpdateComponent implements OnInit {
     handleMarkdownChange(markdown: string): void {
         this.faq.questionAnswer = markdown;
         this.validate();
-    }
-
-    dismissConsistencyCheck() {
-        this.renderedConsistencyCheckResultMarkdown.set({
-            result: '',
-            inconsistencies: [],
-            suggestions: [],
-            improvement: '',
-        });
     }
 }
