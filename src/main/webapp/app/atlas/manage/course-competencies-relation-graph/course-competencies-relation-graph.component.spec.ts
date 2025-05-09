@@ -4,6 +4,27 @@ import { CourseCompetenciesRelationGraphComponent } from 'app/atlas/manage/cours
 import { CompetencyRelationDTO, CompetencyRelationType, CourseCompetency, CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { Component } from '@angular/core';
+import { getComponentInstanceFromFixture } from 'test/helpers/utils/general-test.utils';
+
+@Component({
+    template: `
+        <jhi-course-competencies-relation-graph
+            [(selectedRelationId)]="selectedRelationId"
+            [relations]="relations"
+            [courseCompetencies]="courseCompetencies"
+            (onCourseCompetencySelection)="onCourseCompetencySelection($event)"
+        />
+    `,
+    imports: [CourseCompetenciesRelationGraphComponent],
+})
+class WrapperComponent {
+    selectedRelationId?: number;
+    relations: CompetencyRelationDTO[];
+    courseCompetencies: CourseCompetency[];
+
+    onCourseCompetencySelection(id: number) {}
+}
 
 interface CourseCompetencyStyle {
     dimension: {
@@ -21,8 +42,9 @@ interface CourseCompetencyStyle {
 type StyledCourseCompetency = CourseCompetency & CourseCompetencyStyle;
 
 describe('CourseCompetenciesRelationGraphComponent', () => {
-    let component: CourseCompetenciesRelationGraphComponent;
-    let fixture: ComponentFixture<CourseCompetenciesRelationGraphComponent>;
+    let component: WrapperComponent;
+    let fixture: ComponentFixture<WrapperComponent>;
+    let courseCompetenciesRelationGraphComponent: CourseCompetenciesRelationGraphComponent;
 
     const courseCompetencies: StyledCourseCompetency[] = [
         {
@@ -54,7 +76,7 @@ describe('CourseCompetenciesRelationGraphComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [CourseCompetenciesRelationGraphComponent, NoopAnimationsModule],
+            imports: [WrapperComponent, NoopAnimationsModule],
             providers: [
                 {
                     provide: TranslateService,
@@ -63,12 +85,15 @@ describe('CourseCompetenciesRelationGraphComponent', () => {
             ],
         }).compileComponents();
 
-        fixture = TestBed.createComponent(CourseCompetenciesRelationGraphComponent);
+        fixture = TestBed.createComponent(WrapperComponent);
         component = fixture.componentInstance;
+        courseCompetenciesRelationGraphComponent = getComponentInstanceFromFixture(fixture, 'jhi-course-competencies-relation-graph') as CourseCompetenciesRelationGraphComponent;
 
-        fixture.componentRef.setInput('courseCompetencies', courseCompetencies);
-        fixture.componentRef.setInput('relations', relations);
-        fixture.componentRef.setInput('selectedRelationId', 1);
+        component.courseCompetencies = courseCompetencies;
+        component.relations = relations;
+        component.selectedRelationId = 1;
+
+        fixture.detectChanges();
     });
 
     afterEach(() => {
@@ -77,12 +102,12 @@ describe('CourseCompetenciesRelationGraphComponent', () => {
 
     it('should initialize', async () => {
         expect(component).toBeDefined();
-        expect(component.courseCompetencies()).toEqual(courseCompetencies);
-        expect(component.relations()).toEqual(relations);
+        expect(courseCompetenciesRelationGraphComponent.courseCompetencies()).toEqual(courseCompetencies);
+        expect(courseCompetenciesRelationGraphComponent.relations()).toEqual(relations);
     });
 
     it('should map edges correctly', () => {
-        expect(component.edges()).toEqual(
+        expect(courseCompetenciesRelationGraphComponent.edges()).toEqual(
             relations.map((relation) => {
                 return {
                     id: 'edge-' + relation.id!.toString(),
@@ -100,7 +125,7 @@ describe('CourseCompetenciesRelationGraphComponent', () => {
     it('should map nodes correctly', () => {
         fixture.detectChanges();
 
-        expect(component.nodes()).toEqual(
+        expect(courseCompetenciesRelationGraphComponent.nodes()).toEqual(
             courseCompetencies.map((cc) => {
                 return {
                     id: cc.id!.toString(),
@@ -119,7 +144,7 @@ describe('CourseCompetenciesRelationGraphComponent', () => {
 
     it('should update node dimension', () => {
         fixture.detectChanges();
-        component['setNodeDimension']({ id: '1', dimension: { width: 0, height: 45.59 } });
-        expect(component.nodes().find((node) => node.id === '1')?.dimension).toEqual({ width: 0, height: 45.59 });
+        courseCompetenciesRelationGraphComponent['setNodeDimension']({ id: '1', dimension: { width: 0, height: 45.59 } });
+        expect(courseCompetenciesRelationGraphComponent.nodes().find((node) => node.id === '1')?.dimension).toEqual({ width: 0, height: 45.59 });
     });
 });
