@@ -506,7 +506,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
                 if (Math.abs(this.content.nativeElement.scrollHeight - this.content.nativeElement.scrollTop - this.content.nativeElement.clientHeight) > 1) {
                     this.content.nativeElement.scrollTop = this.content.nativeElement.scrollHeight;
                 }
-            }, 50);
+            }, 100);
         });
     }
 
