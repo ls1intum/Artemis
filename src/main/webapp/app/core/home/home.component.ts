@@ -12,7 +12,6 @@ import { EventManager } from 'app/shared/service/event-manager.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { faCircleNotch, faKey } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
-
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Saml2LoginComponent } from './saml2-login/saml2-login.component';
@@ -21,6 +20,10 @@ import { WebauthnService } from 'app/core/user/settings/passkey-settings/webauth
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { WebauthnApiService } from 'app/core/user/settings/passkey-settings/webauthn-api.service';
 import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/button/button.component';
+import { getCredentialWithGracefullyHandlingAuthenticatorIssues } from 'app/core/user/settings/passkey-settings/util/credential.util';
+import { InvalidCredentialError } from 'app/core/user/settings/passkey-settings/entities/invalid-credential-error';
+import { EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, SetupPasskeyModalComponent } from 'app/core/course/overview/setup-passkey-modal/setup-passkey-modal.component';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     selector: 'jhi-home',
@@ -46,6 +49,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     private translateService = inject(TranslateService);
     private webauthnService = inject(WebauthnService);
     private webauthnApiService = inject(WebauthnApiService);
+    private modalService = inject(NgbModal);
 
     protected usernameTouched = false;
     protected passwordTouched = false;
@@ -82,6 +86,32 @@ export class HomeComponent implements OnInit, AfterViewChecked {
 
     profileInfo: ProfileInfo;
 
+    /**
+     * <p>
+     * We want users to use passkey authentication over password authentication.
+     * </p>
+     * <p>
+     * If the passkey feature is enabled and no passkeys are set up yet, we display a modal that informs the user about passkeys and forwards to the setup page.
+     * </p>
+     */
+    openSetupPasskeyModal(): void {
+        if (!this.isPasskeyEnabled) {
+            return;
+        }
+
+        const earliestReminderDate = localStorage.getItem(EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY);
+        const userDisabledReminderForCurrentTimeframe = earliestReminderDate && new Date() < new Date(earliestReminderDate);
+        if (userDisabledReminderForCurrentTimeframe) {
+            return;
+        }
+
+        if (this.accountService.userIdentity?.hasRegisteredAPasskey) {
+            return;
+        }
+
+        this.modalService.open(SetupPasskeyModalComponent, { size: 'lg', backdrop: 'static' });
+    }
+
     ngOnInit() {
         this.initializeWithProfileInfo();
         this.accountService.identity().then((user) => {
@@ -102,17 +132,30 @@ export class HomeComponent implements OnInit, AfterViewChecked {
 
     async loginWithPasskey() {
         try {
-            const credential = await this.webauthnService.getCredential();
+            const authenticatorCredential = await this.webauthnService.getCredential();
 
-            if (!credential || credential.type != 'public-key') {
-                alert("Credential is undefined or type is not 'public-key'");
-                return;
+            if (!authenticatorCredential || authenticatorCredential.type != 'public-key') {
+                // noinspection ExceptionCaughtLocallyJS - intended to be caught locally
+                throw new InvalidCredentialError();
+            }
+
+            const credential = getCredentialWithGracefullyHandlingAuthenticatorIssues(authenticatorCredential) as unknown as PublicKeyCredential;
+            if (!credential) {
+                // noinspection ExceptionCaughtLocallyJS - intended to be caught locally
+                throw new InvalidCredentialError();
             }
 
             await this.webauthnApiService.loginWithPasskey(credential);
             this.handleLoginSuccess();
         } catch (error) {
-            this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.login');
+            if (error instanceof InvalidCredentialError) {
+                this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.invalidCredential');
+            } else {
+                this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.login');
+            }
+            // eslint-disable-next-line no-undef
+            console.error(error);
+            throw error;
         }
     }
 
@@ -185,7 +228,10 @@ export class HomeComponent implements OnInit, AfterViewChecked {
                 password: this.password,
                 rememberMe: this.rememberMe,
             })
-            .then(() => this.handleLoginSuccess())
+            .then(() => {
+                this.handleLoginSuccess();
+                this.openSetupPasskeyModal();
+            })
             .catch(() => {
                 this.authenticationError = true;
             })
@@ -212,7 +258,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
         this.account = account;
         if (account) {
             // previousState was set in the authExpiredInterceptor before being redirected to the login modal.
-            // since login is successful, go to stored previousState and clear previousState
+            // since login is successful, go to the stored previousState and clear the previousState
             const redirect = this.stateStorageService.getUrl();
             if (redirect && redirect !== '') {
                 this.stateStorageService.storeUrl('');
@@ -221,10 +267,6 @@ export class HomeComponent implements OnInit, AfterViewChecked {
                 this.router.navigate(['courses']);
             }
         }
-    }
-
-    isAuthenticated() {
-        return this.accountService.isAuthenticated();
     }
 
     inputChange(event: any) {
