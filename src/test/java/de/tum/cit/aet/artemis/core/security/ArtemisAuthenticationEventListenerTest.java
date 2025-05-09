@@ -21,13 +21,13 @@ import org.springframework.security.core.Authentication;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 
 @ExtendWith(MockitoExtension.class)
 class ArtemisAuthenticationEventListenerTest {
 
     @Mock
-    private UserRepository userRepository;
+    private UserTestRepository userRepository;
 
     @Mock
     private MailSendingService mailSendingService;
