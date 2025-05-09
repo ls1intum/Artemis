@@ -169,16 +169,16 @@ public class PublicAccountResource {
         }
 
         User user = userOptional.get();
-        boolean askToSetupPasskey = false;
+        boolean shouldPromptUserToSetupPasskey = false;
         if (askUsersToSetupPasskey) {
-            askToSetupPasskey = !this.passkeyCredentialsRepository.existsByUserId(user.getId());
+            shouldPromptUserToSetupPasskey = !this.passkeyCredentialsRepository.existsByUserId(user.getId());
         }
         user.setVisibleRegistrationNumber();
         UserDTO userDTO = new UserDTO(user);
         // we set this value on purpose here: the user can only fetch their own information, make the token available for constructing the token-based clone-URL
         userDTO.setVcsAccessToken(user.getVcsAccessToken());
         userDTO.setVcsAccessTokenExpiryDate(user.getVcsAccessTokenExpiryDate());
-        userDTO.setAskToSetupPasskey(askToSetupPasskey);
+        userDTO.setAskToSetupPasskey(shouldPromptUserToSetupPasskey);
         log.debug("GET /account {} took {}ms", user.getLogin(), System.currentTimeMillis() - start);
         return ResponseEntity.ok(userDTO);
     }
