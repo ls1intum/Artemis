@@ -2,14 +2,20 @@ package de.tum.cit.aet.artemis.core.security;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.authentication.event.AuthenticationSuccessEvent;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 
@@ -21,6 +27,8 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 @Profile(PROFILE_CORE)
 @Component
 public class ArtemisAuthenticationEventListener implements ApplicationListener<AuthenticationSuccessEvent> {
+
+    private static final Logger log = LoggerFactory.getLogger(ArtemisAuthenticationEventListener.class);
 
     private final UserRepository userRepository;
 
@@ -39,15 +47,20 @@ public class ArtemisAuthenticationEventListener implements ApplicationListener<A
      */
     @Override
     public void onApplicationEvent(AuthenticationSuccessEvent event) {
-        var authentication = event.getAuthentication();
+        Authentication authentication = event.getAuthentication();
         try {
-            var recipient = userRepository.getUserByLoginElseThrow(authentication.getName());
+            User recipient = userRepository.getUserByLoginElseThrow(authentication.getName());
+            var contextVariables = new HashMap<String, Object>();
+            ZonedDateTime now = ZonedDateTime.now();
+            contextVariables.put("loginDate", now.format(DateTimeFormatter.ofPattern("dd.MM.yyyy")));
+            contextVariables.put("loginTime", now.format(DateTimeFormatter.ofPattern("HH:mm:ss")));
 
             if (!recipient.isInternal()) {
-                mailSendingService.buildAndSendAsync(recipient, "email.notification.login.title", "mail/notification/newLoginEmail", new HashMap<>());
+                mailSendingService.buildAndSendAsync(recipient, "email.notification.login.title", "mail/notification/newLoginEmail", contextVariables);
             }
         }
         catch (EntityNotFoundException ignored) {
+            log.error("User with login {} not found when trying to send newLoginEmail", authentication.getName());
         }
     }
 

@@ -19,6 +19,7 @@ import org.springframework.security.web.webauthn.management.WebAuthnRelyingParty
 import org.springframework.security.web.webauthn.registration.WebAuthnRegistrationFilter;
 
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 
 /**
@@ -57,7 +58,7 @@ public class ArtemisWebAuthnRegistrationFilter extends WebAuthnRegistrationFilte
         super.doFilterInternal(request, response, filterChain);
 
         if (isWebAuthnRegistrationRequest(request) && response.getStatus() == HttpStatus.OK.value()) {
-            var recipient = userRepository.getUser();
+            User recipient = userRepository.getUser();
 
             if (!recipient.isInternal()) {
                 mailSendingService.buildAndSendAsync(recipient, "email.notification.newPasskey.title", "mail/notification/newPasskeyEmail", new HashMap<>());
