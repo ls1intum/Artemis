@@ -89,7 +89,7 @@ public class IrisTextExerciseChatSessionService implements IrisChatBasedFeatureI
             throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
         }
         var exercise = textRepositoryApi.orElseThrow(() -> new TextApiNotPresentException(TextApi.class)).findByIdElseThrow(session.getExercise().getId());
-        var settings = irisSettingsService.getCombinedIrisSettingsFor(exercise, false).irisLectureChatSettings();
+        var settings = irisSettingsService.getCombinedIrisSettingsFor(exercise, false).irisTextExerciseChatSettings();
         if (!settings.enabled()) {
             throw new ConflictException("Iris is not enabled for this exercise", "Iris", "irisDisabled");
         }
