@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.core.management.SecurityMetersService;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.UnsupportedJwtException;
@@ -111,8 +112,9 @@ public class TokenProvider {
     public String createToken(Authentication authentication, long duration, @Nullable ToolTokenType tool) {
         String authorities = authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.joining(","));
 
-        var validity = System.currentTimeMillis() + duration;
-        var jwtBuilder = Jwts.builder().subject(authentication.getName()).claim(AUTHORITIES_KEY, authorities);
+        long validity = System.currentTimeMillis() + duration;
+        JwtBuilder jwtBuilder = Jwts.builder().subject(authentication.getName()).claim(AUTHORITIES_KEY, authorities).issuedAt(new Date());
+
         if (tool != null) {
             jwtBuilder.claim("tools", tool);
         }
