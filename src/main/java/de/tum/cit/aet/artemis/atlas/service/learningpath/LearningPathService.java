@@ -163,6 +163,7 @@ public class LearningPathService {
         LearningPath lpToCreate = new LearningPath();
         lpToCreate.setUser(user);
         lpToCreate.setCourse(course);
+        lpToCreate.setCompetencies(new HashSet<>());
         lpToCreate.getCompetencies().addAll(course.getCompetencies());
         lpToCreate.getCompetencies().addAll(course.getPrerequisites());
         var persistedLearningPath = learningPathRepository.save(lpToCreate);
