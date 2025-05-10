@@ -1,8 +1,7 @@
 package de.tum.cit.aet.artemis.buildagent.service;
 
+import java.net.ConnectException;
 import java.net.SocketException;
-
-import org.eclipse.angus.mail.iap.ConnectionException;
 
 public final class DockerUtil {
 
@@ -11,7 +10,7 @@ public final class DockerUtil {
     }
 
     public static boolean isDockerConnectionRefused(Throwable ex) {
-        return ex.getCause() instanceof ConnectionException;
+        return ex.getCause() instanceof ConnectException && ex.getCause().getMessage().contains("Connection refused");
     }
 
     public static boolean isDockerNotAvailable(Exception ex) {
