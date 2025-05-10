@@ -21,6 +21,7 @@ import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { UMLDiagramType } from '@ls1intum/apollon';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 
 describe('Course LTI Configuration Component', () => {
     let comp: CourseLtiConfigurationComponent;
@@ -44,8 +45,14 @@ describe('Course LTI Configuration Component', () => {
     const quizExercise = new QuizExercise(course, undefined);
     const fileUploadExercise = new FileUploadExercise(course, undefined);
     const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
-    const courseWithExercises = new Course();
-    courseWithExercises.exercises = [programmingExercise, quizExercise, fileUploadExercise, modelingExercise];
+
+    const lecture = new Lecture();
+    lecture.course = course;
+    lecture.title = 'Lecture Title';
+
+    const courseWithExercisesAndLectures = new Course();
+    courseWithExercisesAndLectures.exercises = [programmingExercise, quizExercise, fileUploadExercise, modelingExercise];
+    courseWithExercisesAndLectures.lectures = [lecture];
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -71,7 +78,7 @@ describe('Course LTI Configuration Component', () => {
         TestBed.inject(CourseManagementService);
         sortService = TestBed.inject(SortService);
 
-        findWithExercisesStub = jest.spyOn(TestBed.inject(CourseManagementService), 'findWithExercises');
+        findWithExercisesStub = jest.spyOn(TestBed.inject(CourseManagementService), 'findWithExercisesAndLecturesAndCompetencies');
     });
 
     afterEach(() => {
@@ -88,7 +95,7 @@ describe('Course LTI Configuration Component', () => {
             findWithExercisesStub.mockReturnValue(
                 of(
                     new HttpResponse({
-                        body: courseWithExercises,
+                        body: courseWithExercisesAndLectures,
                         status: 200,
                     }),
                 ),
@@ -97,7 +104,7 @@ describe('Course LTI Configuration Component', () => {
 
             expect(comp.course).toEqual(course);
             expect(comp.onlineCourseConfiguration).toEqual(course.onlineCourseConfiguration);
-            expect(comp.exercises).toEqual(courseWithExercises.exercises);
+            expect(comp.exercises).toEqual(courseWithExercisesAndLectures.exercises);
             expect(findWithExercisesStub).toHaveBeenCalledOnce();
         });
     });
@@ -106,7 +113,7 @@ describe('Course LTI Configuration Component', () => {
         findWithExercisesStub.mockReturnValue(
             of(
                 new HttpResponse({
-                    body: courseWithExercises,
+                    body: courseWithExercisesAndLectures,
                     status: 200,
                 }),
             ),
@@ -118,6 +125,24 @@ describe('Course LTI Configuration Component', () => {
 
         const tableRows = fixture.debugElement.queryAll(By.css('tbody > tr'));
         expect(tableRows).toHaveLength(4);
+    });
+
+    it('should display lecture in lecture tab', () => {
+        findWithExercisesStub.mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: courseWithExercisesAndLectures,
+                    status: 200,
+                }),
+            ),
+        );
+        comp.ngOnInit();
+        comp.activeTab = 3;
+
+        fixture.detectChanges();
+
+        const tableRows = fixture.debugElement.queryAll(By.css('tbody > tr'));
+        expect(tableRows).toHaveLength(1);
     });
 
     it('should call sortService when sortRows is called', () => {
