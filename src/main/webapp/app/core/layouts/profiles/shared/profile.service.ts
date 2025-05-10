@@ -19,7 +19,7 @@ export class ProfileService {
 
     // Should only be called once by the app initializer
     public loadProfileInfo() {
-        this.profileInfo = this.metaInfoService.getMetaInformationFromHtml();
+        this.profileInfo = this.metaInfoService.getActiveProfilesAndModuleFeaturesFromHtmlMeta();
         this.featureToggleService.initializeFeatureToggles(this.profileInfo.features);
         this.browserFingerprintService.initialize(this.profileInfo.studentExamStoreSessionData);
     }

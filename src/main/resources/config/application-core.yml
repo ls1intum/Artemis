@@ -1,6 +1,6 @@
 artemis:
     atlas:
-        enabled: true
+        enabled: false
     exam:
         enabled: true
     plagiarism:

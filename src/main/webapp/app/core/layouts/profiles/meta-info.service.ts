@@ -7,9 +7,17 @@ export class MetaInfoService {
     readonly features: string[];
     private meta = inject(Meta);
 
-    public getMetaInformationFromHtml(): ProfileInfo {
-        const activeProfilesMetaTag = this.meta.getTag("name='active-features'");
-        const activeProfiles = activeProfilesMetaTag?.content.split(',') ?? [];
-        return { activeProfiles } as ProfileInfo;
+    public getActiveProfilesAndModuleFeaturesFromHtmlMeta(): ProfileInfo {
+        const activeProfiles = this.getActiveProfilesFromHtmlMeta();
+        const activeModuleFeatures = this.getActiveModuleFeaturesFromHtmlMeta();
+        return { activeProfiles, activeModuleFeatures } as ProfileInfo;
+    }
+    private getActiveProfilesFromHtmlMeta(): string[] {
+        const activeProfilesMetaTag = this.meta.getTag("name='active-profiles'");
+        return activeProfilesMetaTag?.content.split(',') ?? [];
+    }
+    private getActiveModuleFeaturesFromHtmlMeta(): string[] {
+        const activeModuleFeaturesMetaTag = this.meta.getTag("name='active-module-features'");
+        return activeModuleFeaturesMetaTag?.content.split(',') ?? [];
     }
 }
