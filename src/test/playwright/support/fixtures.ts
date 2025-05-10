@@ -1,4 +1,4 @@
-import { test as base } from '@playwright/test';
+import { test as base } from './baseFixtures';
 import { LoginPage } from './pageobjects/LoginPage';
 import { UserCredentials } from './users';
 import { NavigationBar } from './pageobjects/NavigationBar';

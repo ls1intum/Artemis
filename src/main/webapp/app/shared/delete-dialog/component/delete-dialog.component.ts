@@ -19,6 +19,13 @@ import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
     imports: [FormsModule, TranslateDirective, ConfirmEntityNameComponent, FaIconComponent, NgClass, ArtemisTranslatePipe],
 })
 export class DeleteDialogComponent implements OnInit, OnDestroy {
+    protected readonly faBan = faBan;
+    protected readonly faSpinner = faSpinner;
+    protected readonly faTimes = faTimes;
+    protected readonly faTrash = faTrash;
+    protected readonly faCheck = faCheck;
+    protected readonly faUndo = faUndo;
+
     private activeModal = inject(NgbActiveModal);
     private alertService = inject(AlertService);
 
@@ -47,13 +54,6 @@ export class DeleteDialogComponent implements OnInit, OnDestroy {
     // used by *ngFor in the template
     objectKeys = Object.keys;
 
-    // Icons
-    faBan = faBan;
-    faSpinner = faSpinner;
-    faTimes = faTimes;
-    faTrash = faTrash;
-    faCheck = faCheck;
-    faUndo = faUndo;
     warningTextColor: string;
 
     /**

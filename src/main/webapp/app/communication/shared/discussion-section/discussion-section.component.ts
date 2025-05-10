@@ -7,6 +7,7 @@ import { ActivatedRoute, Params, Router } from '@angular/router';
 import { Subject, combineLatest, map, takeUntil } from 'rxjs';
 import { MetisService } from 'app/communication/service/metis.service';
 import { Post } from 'app/communication/shared/entities/post.model';
+import { User } from 'app/core/user/user.model';
 import { PostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { HttpResponse } from '@angular/common/http';
 import { faArrowLeft, faChevronLeft, faChevronRight, faGripLinesVertical, faLongArrowRight } from '@fortawesome/free-solid-svg-icons';
@@ -24,6 +25,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { ChannelService } from 'app/communication/conversations/service/channel.service';
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-discussion-section',
@@ -46,6 +48,7 @@ import { CourseStorageService } from 'app/core/course/manage/services/course-sto
 export class DiscussionSectionComponent extends CourseDiscussionDirective implements AfterViewInit, OnDestroy {
     private channelService = inject(ChannelService);
     private courseStorageService = inject(CourseStorageService);
+    private accountService = inject(AccountService);
     private activatedRoute = inject(ActivatedRoute);
     private router = inject(Router);
     private formBuilder = inject(FormBuilder);
@@ -73,6 +76,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
     collapsed = false;
     currentPostId?: number;
     currentPost?: Post;
+    currentUser?: User;
     shouldSendMessage: boolean;
     readonly PAGE_TYPE = PageType.PAGE_SECTION;
 
@@ -128,6 +132,9 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
             if (this.currentPostId && this.posts.length > 0) {
                 this.currentPost = this.posts.find((post) => post.id === this.currentPostId);
             }
+        });
+        this.accountService.identity().then((user: User) => {
+            this.currentUser = user!;
         });
         this.metisService.totalNumberOfPosts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((totalNumberOfPosts: number) => {
             this.totalNumberOfPosts = totalNumberOfPosts;
@@ -279,9 +286,9 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
         this.currentPostContextFilter = {
             courseId: undefined,
             conversationIds: this.channel?.id ? [this.channel?.id] : undefined,
+            authorIds: this.formGroup.get('filterToOwn')?.value && this.currentUser?.id ? [this.currentUser.id] : undefined,
             searchText: this.searchText?.trim(),
             filterToUnresolved: this.formGroup.get('filterToUnresolved')?.value,
-            filterToOwn: this.formGroup.get('filterToOwn')?.value,
             filterToAnsweredOrReacted: this.formGroup.get('filterToAnsweredOrReacted')?.value,
             pagingEnabled: true,
             page: 0,

@@ -31,7 +31,9 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import de.tum.cit.aet.artemis.communication.domain.CreatedConversationMessage;
 import de.tum.cit.aet.artemis.communication.domain.DisplayPriority;
 import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.communication.dto.CreatePostDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostContextFilterDTO;
+import de.tum.cit.aet.artemis.communication.dto.UpdatePostingDTO;
 import de.tum.cit.aet.artemis.communication.service.ConversationMessagingService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
@@ -79,13 +81,11 @@ public class ConversationMessageResource {
      */
     @PostMapping("courses/{courseId}/messages")
     @EnforceAtLeastStudent
-    public ResponseEntity<Post> createMessage(@PathVariable Long courseId, @Valid @RequestBody Post post) throws URISyntaxException {
-        log.debug("POST createMessage invoked for course {} with post {}", courseId, post.getContent());
+    public ResponseEntity<Post> createMessage(@PathVariable Long courseId, @Valid @RequestBody CreatePostDTO post) throws URISyntaxException {
+        log.debug("POST createMessage invoked for course {} with post {}", courseId, post.content());
         long start = System.nanoTime();
-        if (post.getId() != null) {
-            throw new BadRequestAlertException("A new message post cannot already have an ID", conversationMessagingService.getEntityName(), "idexists");
-        }
-        if (post.getConversation() == null || post.getConversation().getId() == null) {
+
+        if (post.conversation() == null) {
             throw new BadRequestAlertException("A new message post must have a conversation", conversationMessagingService.getEntityName(), "conversationnotset");
         }
         CreatedConversationMessage createdMessageData = conversationMessagingService.createMessage(courseId, post);
@@ -117,13 +117,6 @@ public class ConversationMessageResource {
         final var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         final var course = courseRepository.findByIdElseThrow(postContextFilter.courseId());
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
-
-        // Converting deprecated filterToOwn flag to authorIds filter containing only the current user's ID (temporary workaround)
-        if (postContextFilter.filterToOwn() != null && postContextFilter.filterToOwn()) {
-            postContextFilter = new PostContextFilterDTO(postContextFilter.courseId(), postContextFilter.plagiarismCaseId(), postContextFilter.conversationIds(),
-                    new long[] { requestingUser.getId() }, postContextFilter.searchText(), postContextFilter.filterToCourseWide(), postContextFilter.filterToUnresolved(), null,
-                    postContextFilter.filterToAnsweredOrReacted(), postContextFilter.postSortCriterion(), postContextFilter.sortingOrder(), postContextFilter.pinnedOnly());
-        }
 
         if (postContextFilter.conversationIds() != null && postContextFilter.conversationIds().length > 0) {
             posts = conversationMessagingService.getMessages(pageable, postContextFilter, requestingUser, course.getId());
@@ -161,17 +154,17 @@ public class ConversationMessageResource {
      *
      * @param courseId    id of the course the message post belongs to
      * @param messageId   id of the message post to update
-     * @param messagePost message post to update
+     * @param updatedPost message post to update
      * @return ResponseEntity with status 200 (OK) containing the updated message post in the response body,
      *         or with status 400 (Bad Request) if the checks on user, course or post validity fail
      */
     @PutMapping("courses/{courseId}/messages/{messageId}")
     @EnforceAtLeastStudent
-    public ResponseEntity<Post> updateMessage(@PathVariable Long courseId, @PathVariable Long messageId, @RequestBody Post messagePost) {
-        log.debug("PUT updateMessage invoked for course {} with post {}", courseId, messagePost.getContent());
+    public ResponseEntity<Post> updateMessage(@PathVariable Long courseId, @PathVariable Long messageId, @RequestBody UpdatePostingDTO updatedPost) {
+        log.debug("PUT updateMessage invoked for course {} with post {}", courseId, updatedPost.content());
         long start = System.nanoTime();
         // Note: authorization is checked in the service method
-        Post updatedMessagePost = conversationMessagingService.updateMessage(courseId, messageId, messagePost);
+        Post updatedMessagePost = conversationMessagingService.updateMessage(courseId, messageId, updatedPost);
         log.debug("updateMessage took {}", TimeLogUtil.formatDurationFrom(start));
         return new ResponseEntity<>(updatedMessagePost, null, HttpStatus.OK);
     }

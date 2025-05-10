@@ -10,7 +10,7 @@ import org.springframework.security.web.webauthn.api.PublicKeyCredentialType;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.core.repository.webauthn.COSEAlgorithm;
+import de.tum.cit.aet.artemis.core.repository.passkey.COSEAlgorithm;
 
 /**
  * We cannot directly use the SpringSecurity object as it is not serializable.
