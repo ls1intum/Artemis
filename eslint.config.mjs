@@ -125,6 +125,10 @@ export default tseslint.config(
                         {
                             name: 'dayjs',
                             message: "Please import from 'dayjs/esm' instead."
+                        },
+                        {
+                            name: 'lodash',
+                            message: "Please import from 'lodash-es' instead."
                         }
                     ]
                 }
