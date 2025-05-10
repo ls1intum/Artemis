@@ -7,11 +7,20 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
-import java.io.IOException;
+import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
@@ -25,13 +34,21 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ArgumentsSource;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpStatus;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider;
+import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.programming.domain.AeolusTarget;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -43,6 +60,7 @@ import de.tum.cit.aet.artemis.programming.dto.CheckoutDirectoriesDTO;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService;
 
 // TestInstance.Lifecycle.PER_CLASS allows all test methods in this class to share the same instance of the test class.
 // This reduces the overhead of repeatedly creating and tearing down a new Spring application context for each test method.
@@ -72,6 +90,9 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
     private LocalRepository assignmentRepository;
 
     private Competency competency;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    private ProgrammingExerciseTestService programmingExerciseTestService;
 
     @BeforeAll
     void setupAll() {
@@ -124,14 +145,18 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         localVCLocalCITestService.verifyRepositoryFoldersExist(programmingExercise, localVCBasePath);
 
         competency = competencyUtilService.createCompetency(course);
+
+        programmingExerciseTestService.setupTestUsers(TEST_PREFIX, 0, 0, 0, 0);
+        programmingExerciseTestService.setup(this, versionControlService, localVCGitBranchService);
     }
 
     @AfterEach
-    void tearDown() throws IOException {
+    void tearDown() throws Exception {
         templateRepository.resetLocalRepo();
         solutionRepository.resetLocalRepo();
         testsRepository.resetLocalRepo();
         assignmentRepository.resetLocalRepo();
+        programmingExerciseTestService.tearDown();
     }
 
     @Disabled
@@ -283,6 +308,161 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         localVCLocalCITestService.testLatestSubmission(templateParticipation.getId(), null, 0, false);
         localVCLocalCITestService.testLatestSubmission(solutionParticipation.getId(), null, 13, false);
         verify(competencyProgressApi).updateProgressByLearningObjectAsync(eq(importedExercise));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importFromFile_missingExerciseDetailsJson_badRequest() throws Exception {
+        programmingExerciseTestService.importFromFile_missingExerciseDetailsJson_badRequest();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importFromFile_fileNoZip_badRequest() throws Exception {
+        programmingExerciseTestService.importFromFile_fileNoZip_badRequest();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importFromFile_tutor_forbidden() throws Exception {
+        programmingExerciseTestService.importFromFile_tutor_forbidden();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importFromFile_missingRepository_BadRequest() throws Exception {
+        programmingExerciseTestService.importFromFile_missingRepository_BadRequest();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importFromFile_exception_DirectoryDeleted() throws Exception {
+        programmingExerciseTestService.importFromFile_exception_DirectoryDeleted();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createProgrammingExercise_failToCreateProjectInCi() throws Exception {
+        programmingExerciseTestService.createProgrammingExercise_failToCreateProjectInCi();
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @ArgumentsSource(InvalidExamExerciseDatesArgumentProvider.class)
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createProgrammingExerciseForExam_invalidExercise_dates(InvalidExamExerciseDateConfiguration dates) throws Exception {
+        programmingExerciseTestService.createProgrammingExerciseForExam_invalidExercise_dates(dates);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createProgrammingExerciseForExam_DatesSet() throws Exception {
+        programmingExerciseTestService.createProgrammingExerciseForExam_DatesSet();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createProgrammingExercise_setInvalidExampleSolutionPublicationDate_badRequest() throws Exception {
+        programmingExerciseTestService.createProgrammingExercise_setInvalidExampleSolutionPublicationDate_badRequest();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importFromFile_validImportZip_changeTitle_success() throws Exception {
+        String uniqueSuffix = java.util.UUID.randomUUID().toString().replace("-", "").substring(0, 20).toUpperCase();
+        var resource = new ClassPathResource("test-data/import-from-file/valid-import.zip");
+        ZipInputStream zipInputStream = new ZipInputStream(resource.getInputStream());
+        String detailsJsonString = null;
+        ZipEntry entry;
+        while ((entry = zipInputStream.getNextEntry()) != null) {
+            if (entry.getName().endsWith(".json")) {
+                // Read the JSON file as a String
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                byte[] buffer = new byte[1024];
+                int len;
+                while ((len = zipInputStream.read(buffer)) > 0) {
+                    baos.write(buffer, 0, len);
+                }
+                detailsJsonString = baos.toString(StandardCharsets.UTF_8);
+                break;
+            }
+        }
+        zipInputStream.close();
+        assertThat(detailsJsonString).isNotNull();
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        objectMapper.findAndRegisterModules();
+        ProgrammingExercise parsedExercise = objectMapper.readValue(detailsJsonString, ProgrammingExercise.class);
+        if (parsedExercise.getBuildConfig() == null) {
+            parsedExercise.setBuildConfig(new de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig());
+        }
+        // Change the title and short name to unique values
+        String oldTitle = parsedExercise.getTitle();
+        String newTitle = "TITLE" + uniqueSuffix;
+        String newShortName = "SHORT" + uniqueSuffix;
+        parsedExercise.setTitle(newTitle);
+        parsedExercise.setShortName(newShortName);
+        parsedExercise.setCourse(course);
+        parsedExercise.setId(null);
+        parsedExercise.setChannelName("testchannel-pe-imported");
+        parsedExercise.forceNewProjectKey();
+        // Prepare the file for import
+        MockMultipartFile file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
+        // Count old title occurrences in the original zip
+        int oldTitleCountInZip = 0;
+        try (ZipInputStream zipIn = new ZipInputStream(new FileInputStream(resource.getFile()))) {
+            ZipEntry zipEntry;
+            while ((zipEntry = zipIn.getNextEntry()) != null) {
+                if (!zipEntry.isDirectory() && zipEntry.getName().endsWith(".zip")) {
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    byte[] buf = new byte[1024];
+                    int n;
+                    while ((n = zipIn.read(buf)) > 0) {
+                        baos.write(buf, 0, n);
+                    }
+                    String content = baos.toString(StandardCharsets.UTF_8);
+                    int idx = 0;
+                    while ((idx = content.indexOf(oldTitle, idx)) != -1) {
+                        oldTitleCountInZip++;
+                        idx += oldTitle.length();
+                    }
+                }
+            }
+        }
+        ProgrammingExercise importedExercise = request.postWithMultipartFile("/api/programming/courses/" + course.getId() + "/programming-exercises/import-from-file",
+                parsedExercise, "programmingExercise", file, ProgrammingExercise.class, HttpStatus.OK);
+
+        assertThat(importedExercise).isNotNull();
+        assertThat(importedExercise.getTitle()).isEqualTo(newTitle);
+        assertThat(importedExercise.getProgrammingLanguage()).isEqualTo(parsedExercise.getProgrammingLanguage());
+        assertThat(importedExercise.getCourseViaExerciseGroupOrCourseMember()).isEqualTo(course);
+
+        String repoClonePath = System.getProperty("artemis.repo-clone-path", "repos");
+        String projectKey = parsedExercise.getProjectKey();
+        String[] repoDirs = { projectKey + "-exercise", projectKey + "-solution", projectKey + "-tests" };
+        int newTitleCount = 0;
+        int oldTitleCount = 0;
+        for (String repoDir : repoDirs) {
+            Path repoPath = Paths.get(repoClonePath, projectKey, repoDir.toLowerCase());
+            if (!Files.exists(repoPath))
+                continue;
+            List<Path> files = new ArrayList<>();
+            Files.walk(repoPath).filter(Files::isRegularFile).forEach(files::add);
+            for (Path filePath : files) {
+                String content = new String(Files.readAllBytes(filePath), StandardCharsets.UTF_8);
+                int idx = 0;
+                while ((idx = content.indexOf(newTitle, idx)) != -1) {
+                    newTitleCount++;
+                    idx += newTitle.length();
+                }
+                idx = 0;
+                while ((idx = content.indexOf(oldTitle, idx)) != -1) {
+                    oldTitleCount++;
+                    idx += oldTitle.length();
+                }
+            }
+        }
+        assertThat(newTitleCount).isEqualTo(oldTitleCountInZip);
+        assertThat(oldTitleCount).isZero();
     }
 
     @Nested
