@@ -6,8 +6,10 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import jakarta.annotation.PostConstruct;
 
@@ -56,6 +58,7 @@ import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 import de.tum.cit.aet.artemis.core.security.passkey.ArtemisWebAuthnConfigurer;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.user.PasswordService;
+import de.tum.cit.aet.artemis.core.util.AndroidApkKeyHashUtil;
 import de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer;
 
 @Configuration
@@ -102,6 +105,12 @@ public class SecurityConfiguration {
 
     @Value("${client.port:${server.port}}")
     private String port;
+
+    @Value("${artemis.androidSha256CertFingerprints.release: #{null}}")
+    private String androidSha256CertFingerprintRelease;
+
+    @Value("${artemis.androidSha256CertFingerprints.debug: #{null}}")
+    private String androidSha256CertFingerprintDebug;
 
     private URL clientUrlToRegisterPasskey;
 
@@ -316,9 +325,16 @@ public class SecurityConfiguration {
                 publicKeyCredentialCreationOptionsRepository,
                 publicKeyCredentialRequestOptionsRepository
             );
+            Set<String> allowedOrigins = new HashSet<>(Set.of(clientUrlToRegisterPasskey.toString(), clientUrlToAuthenticateWithPasskey.toString()));
+            if (androidSha256CertFingerprintRelease != null) {
+                allowedOrigins.add(AndroidApkKeyHashUtil.getHashFromFingerprint(androidSha256CertFingerprintRelease));
+            }
+            if (androidSha256CertFingerprintDebug != null) {
+                allowedOrigins.add(AndroidApkKeyHashUtil.getHashFromFingerprint(androidSha256CertFingerprintDebug));
+            }
             http.with(webAuthnConfigurer, configurer -> {
                 configurer
-                    .allowedOrigins(clientUrlToRegisterPasskey.toString(), clientUrlToAuthenticateWithPasskey.toString())
+                    .allowedOrigins(allowedOrigins)
                     .rpId(clientUrlToRegisterPasskey.getHost())
                     .rpName("Artemis");
             });
