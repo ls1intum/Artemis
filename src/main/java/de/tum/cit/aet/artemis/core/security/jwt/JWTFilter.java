@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.core.security.jwt;
 
 import java.io.IOException;
+import java.util.Date;
 
 import jakarta.annotation.Nullable;
 import jakarta.servlet.FilterChain;
@@ -11,6 +12,9 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.StringUtils;
@@ -30,8 +34,34 @@ public class JWTFilter extends GenericFilterBean {
 
     private final TokenProvider tokenProvider;
 
-    public JWTFilter(TokenProvider tokenProvider) {
+    private final JWTCookieService jwtCookieService;
+
+    @Value("${jhipster.security.authentication.jwt.token-validity-in-seconds-for-passkey}")
+    private long tokenValidityInSecondsForPasskey;
+
+    public JWTFilter(TokenProvider tokenProvider, JWTCookieService jwtCookieService) {
         this.tokenProvider = tokenProvider;
+        this.jwtCookieService = jwtCookieService;
+    }
+
+    private void rotateTokenSilently(String jwtToken, Authentication authentication, HttpServletResponse response) {
+        Date issuedAt = this.tokenProvider.getIssuedAtDate(jwtToken);
+        Date expirationDate = this.tokenProvider.getExpirationDate(jwtToken);
+
+        long currentTime = System.currentTimeMillis();
+        long tokenValidityInSeconds = this.tokenProvider.getTokenValidity(false);
+        long remainingLifetime = expirationDate.getTime() - currentTime;
+
+        boolean isRemainingLifetimeBelowHalf = remainingLifetime < tokenValidityInSeconds / 2;
+        if (isRemainingLifetimeBelowHalf) {
+            long now = new Date().getTime();
+            long newTokenExpirationTime = Math.min(now + tokenValidityInSeconds, issuedAt.getTime() + this.tokenValidityInSecondsForPasskey);
+            long rotatedTokenDuration = newTokenExpirationTime - now;
+            String rotatedToken = this.tokenProvider.createToken(authentication, issuedAt, new Date(newTokenExpirationTime), this.tokenProvider.getTools(jwtToken));
+
+            ResponseCookie responseCookie = jwtCookieService.buildRotatedCookie(rotatedToken, rotatedTokenDuration);
+            response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
+        }
     }
 
     @Override
@@ -49,6 +79,11 @@ public class JWTFilter extends GenericFilterBean {
 
         if (jwtToken != null) {
             Authentication authentication = this.tokenProvider.getAuthentication(jwtToken);
+
+            if (this.tokenProvider.getAuthenticatedWithPasskey(jwtToken)) {
+                rotateTokenSilently(jwtToken, authentication, httpServletResponse);
+            }
+
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
 

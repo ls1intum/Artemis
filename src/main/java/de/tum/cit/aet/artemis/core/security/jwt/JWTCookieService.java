@@ -64,6 +64,10 @@ public class JWTCookieService {
         return buildJWTCookie(jwt, Duration.of(duration, ChronoUnit.MILLIS));
     }
 
+    public ResponseCookie buildRotatedCookie(String rotatedJwtToken, long duration) {
+        return buildJWTCookie(rotatedJwtToken, Duration.of(duration, ChronoUnit.MILLIS));
+    }
+
     /**
      * Builds the cookie containing the jwt for a logout and sets it in the response
      *
