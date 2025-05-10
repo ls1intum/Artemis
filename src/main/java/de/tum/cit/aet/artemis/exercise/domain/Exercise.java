@@ -523,19 +523,19 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
      * Returns all results of an exercise for give participation that have a completion date. If the exercise is restricted like {@link QuizExercise} please override this function
      * with the respective filter. (relevancy depends on Exercise type => this should be overridden by subclasses if necessary)
      *
-     * @param participation the participation whose results we are considering
-     * @return all results of given participation, or null, if none exist
+     * @param results results which should be taken into account
+     * @return results of given participation, or null, if none exist
      */
-    public Set<Result> findResultsFilteredForStudents(Participation participation) {
+    public Set<Result> filterResultsForStudents(Collection<Result> results) {
         boolean isAssessmentOver = getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
         if (!isAssessmentOver) {
             // This allows the showing of preliminary feedback in case the assessment due date is set before its over.
             if (this instanceof TextExercise || this instanceof ModelingExercise) {
-                return participation.getResults().stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA).collect(Collectors.toSet());
+                return results.stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA).collect(Collectors.toSet());
             }
             return Set.of();
         }
-        return participation.getResults().stream().filter(result -> result.getCompletionDate() != null).collect(Collectors.toSet());
+        return results.stream().filter(result -> result.getCompletionDate() != null).collect(Collectors.toSet());
     }
 
     public Set<TutorParticipation> getTutorParticipations() {

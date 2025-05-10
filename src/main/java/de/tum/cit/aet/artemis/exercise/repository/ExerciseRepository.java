@@ -345,6 +345,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             """)
     Optional<Exercise> findByIdWithEagerExampleSubmissions(@Param("exerciseId") Long exerciseId);
 
+    // TODO: we should not load all posts here, if at all the last 20 posts are needed
     @Query("""
             SELECT DISTINCT e
             FROM Exercise e
