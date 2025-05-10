@@ -38,12 +38,16 @@ public class StudentExamApi extends AbstractExamApi {
         return studentExamRepository.findAllWithExercisesByExamId(examId);
     }
 
-    public Optional<StudentExam> findByExamIdAndParticipationId(long examId, long userId) {
-        return studentExamRepository.findByExamIdAndParticipationId(examId, userId);
+    public Optional<StudentExam> findByExamIdAndParticipationId(long examId, long participationId) {
+        return studentExamRepository.findByExamIdAndParticipationId(examId, participationId);
     }
 
     public Optional<Boolean> isSubmitted(long examId, long userId) {
         return studentExamRepository.isSubmitted(examId, userId);
+    }
+
+    public Optional<Boolean> isSubmitted(long participationId) {
+        return studentExamRepository.isSubmitted(participationId);
     }
 
     public void save(StudentExam studentExam) {

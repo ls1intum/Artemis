@@ -189,7 +189,13 @@ public class ParticipationAuthorizationCheckService {
 
         if (exercise.isExamExercise()) {
             var api = studentExamApi.orElseThrow(() -> new ExamApiNotPresentException(StudentExamApi.class));
-            var studentExamSubmitted = api.isSubmitted(exercise.getExam().getId(), participation.getParticipant().getId());
+            Optional<Boolean> studentExamSubmitted;
+            if (exercise.isTestExamExercise()) {
+                studentExamSubmitted = api.isSubmitted(participation.getId());
+            }
+            else {
+                studentExamSubmitted = api.isSubmitted(exercise.getExam().getId(), participation.getParticipant().getId());
+            }
             // if the corresponding student exam was already submitted, the participation is locked
             // if the student exam does not exist yet, the participation should not exist either
             return studentExamSubmitted.orElse(true);
