@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TextEditorComponent } from 'app/text/overview/text-editor/text-editor.component';
@@ -9,8 +9,8 @@ import { TextEditorComponent } from 'app/text/overview/text-editor/text-editor.c
     imports: [TextEditorComponent],
 })
 export class TextExamSummaryComponent {
-    @Input() exercise: Exercise;
-    @Input() submission: TextSubmission;
-    @Input() expandProblemStatement = false;
-    @Input() isAfterResultsArePublished = false;
+    exercise = input.required<Exercise>();
+    submission = input.required<TextSubmission>();
+    expandProblemStatement = input(false);
+    isAfterResultsArePublished = input(false);
 }

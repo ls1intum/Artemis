@@ -7,7 +7,6 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { By } from '@angular/platform-browser';
 import { NgbModal, NgbModalRef, NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonComponent } from 'app/shared/components/button/button.component';
-import { input } from '@angular/core';
 
 describe('StudentsUploadImagesButtonComponent', () => {
     let fixture: ComponentFixture<StudentsUploadImagesButtonComponent>;
@@ -37,10 +36,8 @@ describe('StudentsUploadImagesButtonComponent', () => {
         const result = new Promise((resolve) => resolve(true));
         const modalServiceOpenStub = jest.spyOn(modalService, 'open').mockReturnValue(<NgbModalRef>{ componentInstance, result });
 
-        TestBed.runInInjectionContext(() => {
-            comp.exam = input({} as Exam);
-            comp.courseId = input(1);
-        });
+        fixture.componentRef.setInput('exam', {} as Exam);
+        fixture.componentRef.setInput('courseId', 1);
         comp.openUploadImagesDialog(new MouseEvent('click'));
 
         const openUploadImagesDialogButton = fixture.debugElement.query(By.css('jhi-button'));

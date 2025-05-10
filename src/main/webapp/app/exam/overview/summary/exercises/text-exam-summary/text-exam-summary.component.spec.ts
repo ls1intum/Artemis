@@ -50,6 +50,8 @@ describe('TextExamSummaryComponent', () => {
     });
 
     it('should initialize', () => {
+        fixture.componentRef.setInput('submission', {} as TextSubmission);
+        fixture.componentRef.setInput('exercise', {} as Exercise);
         fixture.detectChanges();
         expect(component).not.toBeNull();
         expect(fixture.debugElement.nativeElement.querySelector('div').innerHTML).toContain('No submission');
@@ -57,8 +59,8 @@ describe('TextExamSummaryComponent', () => {
 
     it('should display the submission text', () => {
         const submissionText = 'A test submission text';
-        component.submission = { text: submissionText } as TextSubmission;
-        component.exercise = { studentParticipations: [{ id: 1 }] } as Exercise;
+        fixture.componentRef.setInput('submission', { text: submissionText } as TextSubmission);
+        fixture.componentRef.setInput('exercise', { studentParticipations: [{ id: 1 }] } as Exercise);
         fixture.detectChanges();
 
         const textEditorComponent = fixture.debugElement.query(By.directive(TextEditorComponent)).componentInstance;
