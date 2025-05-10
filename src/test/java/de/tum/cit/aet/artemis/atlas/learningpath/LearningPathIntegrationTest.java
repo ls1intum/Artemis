@@ -196,7 +196,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
         assertThat(updatedCourse.getLearningPaths()).isNotNull();
         assertThat(updatedCourse.getLearningPaths().size()).as("should create LearningPath for each student").isEqualTo(NUMBER_OF_STUDENTS);
         updatedCourse.getLearningPaths().forEach(
-                lp -> assertThat(lp.getCompetencies().size()).as("LearningPath (id={}) should have be linked to all " + "Competencies", lp.getId()).isEqualTo(competencies.length));
+                lp -> assertThat(lp.getCompetencies().size()).as("LearningPath (id={}) should have be linked to all Competencies", lp.getId()).isEqualTo(competencies.length));
     }
 
     @Test
