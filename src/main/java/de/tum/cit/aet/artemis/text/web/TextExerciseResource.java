@@ -480,6 +480,13 @@ public class TextExerciseResource {
             }
         }
 
+        if (submissions.isEmpty()) {
+            TextSubmission textSubmission = new TextSubmission();
+            textSubmission.setParticipation(participation);
+            textSubmission.setSubmitted(false);
+            participation.addSubmission(textSubmission);
+        }
+
         if (!(authCheckService.isAtLeastInstructorForExercise(textExercise, user) || participation.isOwnedBy(user))) {
             participation.filterSensitiveInformation();
         }
