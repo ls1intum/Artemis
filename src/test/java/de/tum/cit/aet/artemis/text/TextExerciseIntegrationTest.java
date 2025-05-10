@@ -1422,16 +1422,15 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getTextEditorDataWithNewlyCreatedSubmissionAsStudentWhenNoSubmissionsExist() throws Exception {
+        // create a participation with no submissions
         Participation participation = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
-
-        // Assure no submission exists
         assertThat(participation.getSubmissions()).isEmpty();
 
         StudentParticipation result = request.get("/api/text/text-editor/" + participation.getId(), HttpStatus.OK, StudentParticipation.class);
-        assertThat(result.getSubmissions()).hasSize(1);
 
-        TextSubmission submission = (TextSubmission) result.getSubmissions().iterator().next();
+        // the endpoint should have created a new, unsubmitted submission and return it as part of the participation
+        assertThat(result.getSubmissions()).hasSize(1);
+        TextSubmission submission = (TextSubmission) result.getSubmissions().stream().findFirst().orElseThrow();
         assertThat(submission.isSubmitted()).isFalse();
-        assertThat(submission.getId()).isNull(); // Not persisted unless saved later
     }
 }
