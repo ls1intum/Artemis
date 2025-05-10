@@ -48,6 +48,7 @@ import org.springframework.web.filter.CorsFilter;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 import org.zalando.problem.spring.web.advice.security.SecurityProblemSupport;
 
+import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.DomainUserDetailsService;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -90,6 +91,8 @@ public class SecurityConfiguration {
     private final PublicKeyCredentialCreationOptionsRepository publicKeyCredentialCreationOptionsRepository;
 
     private final PublicKeyCredentialRequestOptionsRepository publicKeyCredentialRequestOptionsRepository;
+
+    private final MailSendingService mailSendingService;
 
     @Value("#{'${spring.prometheus.monitoringIp:127.0.0.1}'.split(',')}")
     private List<String> monitoringIpAddresses;
@@ -143,7 +146,7 @@ public class SecurityConfiguration {
             PublicKeyCredentialCreationOptionsRepository publicKeyCredentialCreationOptionsRepository,
             PublicKeyCredentialRequestOptionsRepository publicKeyCredentialRequestOptionsRepository,
             PublicKeyCredentialUserEntityRepository publicKeyCredentialUserEntityRepository, TokenProvider tokenProvider, UserCredentialRepository userCredentialRepository,
-            UserRepository userRepository) {
+            UserRepository userRepository, MailSendingService mailSendingService) {
         this.converter = converter;
         this.corsFilter = corsFilter;
         this.customLti13Configurer = customLti13Configurer;
@@ -156,6 +159,7 @@ public class SecurityConfiguration {
         this.tokenProvider = tokenProvider;
         this.userCredentialRepository = userCredentialRepository;
         this.userRepository = userRepository;
+        this.mailSendingService = mailSendingService;
     }
 
     /**
@@ -323,7 +327,8 @@ public class SecurityConfiguration {
                 publicKeyCredentialUserEntityRepository,
                 userCredentialRepository,
                 publicKeyCredentialCreationOptionsRepository,
-                publicKeyCredentialRequestOptionsRepository
+                publicKeyCredentialRequestOptionsRepository,
+                mailSendingService
             );
             Set<String> allowedOrigins = new HashSet<>(Set.of(clientUrlToRegisterPasskey.toString(), clientUrlToAuthenticateWithPasskey.toString()));
             if (androidSha256CertFingerprintRelease != null) {

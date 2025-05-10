@@ -23,8 +23,8 @@ import org.springframework.security.web.webauthn.management.UserCredentialReposi
 import org.springframework.security.web.webauthn.management.WebAuthnRelyingPartyOperations;
 import org.springframework.security.web.webauthn.management.Webauthn4JRelyingPartyOperations;
 import org.springframework.security.web.webauthn.registration.PublicKeyCredentialCreationOptionsRepository;
-import org.springframework.security.web.webauthn.registration.WebAuthnRegistrationFilter;
 
+import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 
@@ -78,10 +78,12 @@ public class ArtemisWebAuthnConfigurer<H extends HttpSecurityBuilder<H>> extends
 
     private final PublicKeyCredentialRequestOptionsRepository publicKeyCredentialRequestOptionsRepository;
 
+    private final MailSendingService mailSendingService;
+
     public ArtemisWebAuthnConfigurer(HttpMessageConverter<Object> converter, JWTCookieService jwtCookieService, UserRepository userRepository,
             PublicKeyCredentialUserEntityRepository publicKeyCredentialUserEntityRepository, UserCredentialRepository userCredentialRepository,
             PublicKeyCredentialCreationOptionsRepository publicKeyCredentialCreationOptionsRepository,
-            PublicKeyCredentialRequestOptionsRepository publicKeyCredentialRequestOptionsRepository) {
+            PublicKeyCredentialRequestOptionsRepository publicKeyCredentialRequestOptionsRepository, MailSendingService mailSendingService) {
         this.converter = converter;
         this.jwtCookieService = jwtCookieService;
         this.publicKeyCredentialUserEntityRepository = publicKeyCredentialUserEntityRepository;
@@ -89,6 +91,7 @@ public class ArtemisWebAuthnConfigurer<H extends HttpSecurityBuilder<H>> extends
         this.userRepository = userRepository;
         this.publicKeyCredentialCreationOptionsRepository = publicKeyCredentialCreationOptionsRepository;
         this.publicKeyCredentialRequestOptionsRepository = publicKeyCredentialRequestOptionsRepository;
+        this.mailSendingService = mailSendingService;
     }
 
     /**
@@ -148,7 +151,7 @@ public class ArtemisWebAuthnConfigurer<H extends HttpSecurityBuilder<H>> extends
         var createCredentialOptionsFilter = new ArtemisPublicKeyCredentialCreationOptionsFilter(rpOperations);
         createCredentialOptionsFilter.setCreationOptionsRepository(publicKeyCredentialCreationOptionsRepository);
 
-        var webAuthnRegistrationFilter = new WebAuthnRegistrationFilter(userCredentialRepository, rpOperations);
+        var webAuthnRegistrationFilter = new ArtemisWebAuthnRegistrationFilter(userCredentialRepository, rpOperations, mailSendingService, userRepository);
         webAuthnRegistrationFilter.setCreationOptionsRepository(publicKeyCredentialCreationOptionsRepository);
 
         var authOptionsFilter = new PublicKeyCredentialRequestOptionsFilter(rpOperations);
