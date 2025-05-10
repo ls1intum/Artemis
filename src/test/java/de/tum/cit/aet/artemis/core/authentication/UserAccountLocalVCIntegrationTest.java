@@ -9,7 +9,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.core.user.util.UserTestService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
-class UserAccountLocalVcsIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
+class UserAccountLocalVCIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "userlvc"; // shorter prefix as user's name is limited to 50 chars
 

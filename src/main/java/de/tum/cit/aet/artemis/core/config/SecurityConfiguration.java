@@ -301,7 +301,7 @@ public class SecurityConfiguration {
                     .requestMatchers("/management/prometheus/**").access((authentication, context) -> new AuthorizationDecision(monitoringIpAddresses.contains(context.getRequest().getRemoteAddr())));
 
                     // LocalVC related URLs: LocalVCPushFilter and LocalVCFetchFilter handle authentication on their own
-                    if (profileService.isLocalVcsActive()) {
+                    if (profileService.isLocalVCActive()) {
                         requests.requestMatchers("/git/**").permitAll();
                     }
 

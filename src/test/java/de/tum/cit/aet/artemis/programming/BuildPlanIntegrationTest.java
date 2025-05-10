@@ -14,7 +14,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPlan;
 
-class BuildPlanIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVcTest {
+class BuildPlanIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVCTest {
 
     private static final String TEST_PREFIX = "buildplanintegration";
 

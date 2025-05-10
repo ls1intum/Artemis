@@ -5,12 +5,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVcTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTest;
 
 /**
  * Contains the one automatic test covering all rest endpoints for authorization tests.
  */
-class AuthorizationJenkinsLocalVcEndpointTest extends AbstractSpringIntegrationJenkinsLocalVcTest {
+class AuthorizationJenkinsLocalVCEndpointTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
 
     @Autowired
     private ApplicationContext applicationContext;
