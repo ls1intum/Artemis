@@ -851,7 +851,7 @@ public class CourseService {
         // For the average score we need to only consider scores which are included completely or as bonus
         Set<Exercise> includedExercises = exercises.stream().filter(Exercise::isCourseExercise)
                 .filter(exercise -> !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)).collect(Collectors.toSet());
-        Double averageScoreForCourse = participantScoreRepository.findAvgScore(includedExercises);
+        Double averageScoreForCourse = participantScoreRepository.findAvgRatedScore(includedExercises);
         averageScoreForCourse = averageScoreForCourse != null ? averageScoreForCourse : 0.0;
         double currentMaxAverageScore = includedExercises.stream().map(Exercise::getMaxPoints).mapToDouble(Double::doubleValue).sum();
 
