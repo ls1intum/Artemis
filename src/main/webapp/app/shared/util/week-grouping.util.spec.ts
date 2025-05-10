@@ -81,12 +81,12 @@ describe('WeekGroupingUtil', () => {
 
     it('handles different group keys correctly', () => {
         const currentItems: SidebarCardElement[] = [
-            { title: 'Current 1', id: 'c1', size: 'M', startDate: dayjs() },
-            { title: 'Current 2', id: 'c2', size: 'M', startDate: dayjs().add(1, 'day') },
-            { title: 'Current 3', id: 'c3', size: 'M', startDate: dayjs().add(1, 'day') },
-            { title: 'Current 4', id: 'c4', size: 'M', startDate: dayjs().add(1, 'day') },
-            { title: 'Current 5', id: 'c5', size: 'M', startDate: dayjs().add(1, 'day') },
-            { title: 'Current 6', id: 'c6', size: 'M', startDate: dayjs().add(1, 'day') },
+            { title: 'Current 1', id: 'c1', size: 'M', startDate: dayjs().startOf('week').add(0, 'day') }, // Sunday
+            { title: 'Current 2', id: 'c2', size: 'M', startDate: dayjs().startOf('week').add(1, 'day') },
+            { title: 'Current 3', id: 'c3', size: 'M', startDate: dayjs().startOf('week').add(2, 'day') },
+            { title: 'Current 4', id: 'c4', size: 'M', startDate: dayjs().startOf('week').add(3, 'day') },
+            { title: 'Current 5', id: 'c5', size: 'M', startDate: dayjs().startOf('week').add(4, 'day') },
+            { title: 'Current 6', id: 'c6', size: 'M', startDate: dayjs().startOf('week').add(5, 'day') },
         ];
 
         const futureItems: SidebarCardElement[] = [
