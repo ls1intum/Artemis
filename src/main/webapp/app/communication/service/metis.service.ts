@@ -1,4 +1,4 @@
-import { HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable, OnDestroy, inject } from '@angular/core';
 import { Params } from '@angular/router';
 import { AnswerPostService } from 'app/communication/service/answer-post.service';
@@ -29,7 +29,7 @@ import { Post } from 'app/communication/shared/entities/post.model';
 import { Posting, PostingType, SavedPostStatus } from 'app/communication/shared/entities/posting.model';
 import { Reaction } from 'app/communication/shared/entities/reaction.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course, CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
 import { WebsocketService } from 'app/shared/service/websocket.service';
@@ -37,6 +37,7 @@ import dayjs from 'dayjs/esm';
 import { cloneDeep } from 'lodash-es';
 import { BehaviorSubject, Observable, ReplaySubject, Subscription, catchError, forkJoin, map, of, switchMap, tap, throwError } from 'rxjs';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { AlertService } from 'app/shared/service/alert.service';
 
 @Injectable()
 export class MetisService implements OnDestroy {
@@ -49,6 +50,8 @@ export class MetisService implements OnDestroy {
     private forwardedMessageService = inject(ForwardedMessageService);
     private savedPostService = inject(SavedPostService);
     private metisConversationService = inject(MetisConversationService);
+    private http = inject(HttpClient);
+    private alertService = inject(AlertService);
 
     private posts$: ReplaySubject<Post[]> = new ReplaySubject<Post[]>(1);
     private tags$: BehaviorSubject<string[]> = new BehaviorSubject<string[]>([]);
@@ -966,5 +969,24 @@ export class MetisService implements OnDestroy {
             const updatedPinnedPosts = currentPinnedPosts.filter((pinnedPost) => pinnedPost.id !== postId);
             this.pinnedPosts$.next(updatedPinnedPosts);
         }
+    }
+
+    public enableCommunication(courseId: number, withMessaging: boolean): void {
+        const httpParams = new HttpParams();
+        if (withMessaging) {
+            httpParams.set('withMessaging', 'true');
+        }
+        this.http.put('api/communication/courses/' + courseId + '/enable', undefined, { params: httpParams }).subscribe({
+            next: () => {
+                if (withMessaging) {
+                    this.course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
+                } else {
+                    this.course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_ONLY;
+                }
+            },
+            error: () => {
+                this.alertService.error('artemisApp.metis.communicationDisabled.enableError');
+            },
+        });
     }
 }

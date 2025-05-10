@@ -59,6 +59,7 @@ import { AccordionGroups, ChannelTypeIcons, CollapseState, SidebarCardElement, S
 import { LinkifyService } from 'app/communication/link-preview/services/linkify.service';
 import { LinkPreviewService } from 'app/communication/link-preview/services/link-preview.service';
 import { ConversationGlobalSearchComponent, ConversationGlobalSearchConfig } from 'app/communication/shared/conversation-global-search/conversation-global-search.component';
+import { FeatureActivationComponent } from 'app/shared/feature-activation/feature-activation.component';
 
 const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
     favoriteChannels: { entityData: [] },
@@ -133,6 +134,7 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
         SavedPostsComponent,
         ConversationThreadSidebarComponent,
         ConversationGlobalSearchComponent,
+        FeatureActivationComponent,
     ],
 })
 export class CourseConversationsComponent implements OnInit, OnDestroy {
@@ -639,5 +641,9 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         this.metisConversationService.setActiveConversation(id);
         this.changeDetector.detectChanges();
     }
-    enableCommunication(withMessaging?: boolean) {}
+    enableCommunication(withMessaging = true) {
+        if (this.course?.id) {
+            this.metisService.enableCommunication(this.course.id, withMessaging);
+        }
+    }
 }

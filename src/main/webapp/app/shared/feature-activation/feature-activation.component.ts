@@ -2,7 +2,7 @@
 import { Component, input, output } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { ButtonComponent } from 'app/shared/components/button/button.component';
+import { ButtonComponent, ButtonType } from 'app/shared/components/button/button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
@@ -12,6 +12,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     imports: [ButtonComponent, TranslateDirective, FaIconComponent],
 })
 export class FeatureActivationComponent {
+    protected readonly ButtonType = ButtonType;
     headerTitle = input.required<string>();
     description = input.required<string>();
     headerIcon = input<IconProp>();

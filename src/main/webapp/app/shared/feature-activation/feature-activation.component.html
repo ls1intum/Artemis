@@ -20,7 +20,7 @@
         <div class="card-footer bg-transparent border-top-0 pt-0 mt-0 pb-4 d-flex gap-2">
             <jhi-button [title]="activateButtonText()" [isLoading]="isLoading()" (onClick)="enable.emit()" />
             @if (secondActivateButtonText()) {
-                <jhi-button [title]="secondActivateButtonText()!" [isLoading]="isLoading()" (onClick)="enableWithSecondButton.emit()" />
+                <jhi-button [btnType]="ButtonType.SECONDARY" [title]="secondActivateButtonText()!" [isLoading]="isLoading()" (onClick)="enableWithSecondButton.emit()" />
             }
         </div>
     </div>
