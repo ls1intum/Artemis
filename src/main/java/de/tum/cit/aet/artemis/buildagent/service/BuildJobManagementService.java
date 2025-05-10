@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.buildagent.service;
 
+import static de.tum.cit.aet.artemis.buildagent.service.DockerUtil.isDockerNotAvailable;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 
 import java.io.PrintWriter;
@@ -164,7 +165,7 @@ public class BuildJobManagementService {
                 return future.get(buildJobTimeoutSeconds, TimeUnit.SECONDS);
             }
             catch (Exception ex) {
-                if (DockerUtil.isDockerNotAvailable((Exception) ex.getCause())) {
+                if (ex.getCause() != null && isDockerNotAvailable((Exception) ex.getCause())) {
                     log.error("Cannot connect to Docker Host. Make sure Docker is running and configured properly! {}", ex.getCause().getMessage());
                     throw new CompletionException(ex);
                 }
