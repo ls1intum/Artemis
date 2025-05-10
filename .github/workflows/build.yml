@@ -28,17 +28,13 @@ on:
     - '.prettierrc'
     - '.whitesource'
     - 'artemis-server-cli'
-    - 'check_client_override_version_updates.sh'
-    - 'check_modules.sh'
     - 'CITATION.cff'
     - 'jest.config.js'
     - 'linting.sh'
-    - 'per-module-coverage-recorder.sh'
     - 'proxy.conf.mjs'
     - 'read.ms'
     - 'result.md'
-    - 'stub.js'
-    - 'update_version.sh'
+    - 'src/test/javascript/spec/stub.js'
 
   push:
     branches:
