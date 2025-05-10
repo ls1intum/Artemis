@@ -4,7 +4,7 @@ import { CourseCompetency, CourseCompetencyType } from 'app/atlas/shared/entitie
 import { AlertService } from 'app/shared/service/alert.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { onError } from 'app/shared/util/global.utils';
-import { Component, HostListener, OnInit, inject } from '@angular/core';
+import { Component, HostListener, effect, inject } from '@angular/core';
 import { faBan, faFileImport, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ButtonType } from 'app/shared/components/button/button.component';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -19,7 +19,7 @@ import { CourseCompetencyService } from 'app/atlas/shared/services/course-compet
 @Component({
     template: '',
 })
-export abstract class ImportCourseCompetenciesComponent implements OnInit, ComponentCanDeactivate {
+export abstract class ImportCourseCompetenciesComponent implements ComponentCanDeactivate {
     // this attribute has to be set when using the common template (import-course-competencies.component.html)
     abstract entityType: string;
     // set this attribute to hide the options to import relation
@@ -79,7 +79,13 @@ export abstract class ImportCourseCompetenciesComponent implements OnInit, Compo
     private readonly translateService: TranslateService = inject(TranslateService);
     private readonly sortingService: SortService = inject(SortService);
 
-    ngOnInit(): void {
+    constructor() {
+        effect(() => {
+            this.initialize();
+        });
+    }
+
+    initialize(): void {
         this.courseId = Number(this.activatedRoute.snapshot.paramMap.get('courseId'));
         // load competencies and prerequisites of this course to disable their import buttons
         const courseCompetencySubscription = this.courseCompetencyService.getAllForCourse(this.courseId);

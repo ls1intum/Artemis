@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, effect, inject, signal, untracked } from '@angular/core';
+import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { AlertService } from 'app/shared/service/alert.service';
 import { CompetencyWithTailRelationDTO, CourseCompetency, CourseCompetencyType, getIcon } from 'app/atlas/shared/entities/competency.model';
@@ -28,7 +28,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
     templateUrl: './competency-management.component.html',
     imports: [CompetencyManagementTableComponent, TranslateDirective, FontAwesomeModule, RouterModule],
 })
-export class CompetencyManagementComponent implements OnInit {
+export class CompetencyManagementComponent {
     protected readonly faEdit = faEdit;
     protected readonly faPlus = faPlus;
     protected readonly faFileImport = faFileImport;
@@ -72,14 +72,13 @@ export class CompetencyManagementComponent implements OnInit {
                 }
             });
         });
-    }
-
-    ngOnInit(): void {
-        const lastVisit = sessionStorage.getItem('lastTimeVisitedCourseCompetencyExplanation');
-        if (!lastVisit) {
-            this.openCourseCompetencyExplanation();
-        }
-        sessionStorage.setItem('lastTimeVisitedCourseCompetencyExplanation', Date.now().toString());
+        effect(() => {
+            const lastVisit = sessionStorage.getItem('lastTimeVisitedCourseCompetencyExplanation');
+            if (!lastVisit) {
+                this.openCourseCompetencyExplanation();
+            }
+            sessionStorage.setItem('lastTimeVisitedCourseCompetencyExplanation', Date.now().toString());
+        });
     }
 
     private async loadIrisEnabled() {
