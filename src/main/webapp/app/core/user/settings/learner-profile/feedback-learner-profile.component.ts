@@ -10,6 +10,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { faSave } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { LearnerProfileDTO } from 'app/learner-profile/shared/entities/learner-profile.model';
 
 @Component({
     selector: 'jhi-feedback-learner-profile',
@@ -26,24 +27,24 @@ export class FeedbackLearnerProfileComponent implements OnInit {
 
     editing = false;
     profileId: number;
-    feedbackAlternativeStandard = signal<number>(0);
-    feedbackFollowupSummary = signal<number>(0);
-    feedbackBriefDetailed = signal<number>(0);
-    initialFeedbackAlternativeStandard = 0;
-    initialFeedbackFollowupSummary = 0;
-    initialFeedbackBriefDetailed = 0;
+    feedbackAlternativeStandard = signal<number>(1);
+    feedbackFollowupSummary = signal<number>(1);
+    feedbackBriefDetailed = signal<number>(1);
+    initialFeedbackAlternativeStandard = 1;
+    initialFeedbackFollowupSummary = 1;
+    initialFeedbackBriefDetailed = 1;
 
     async ngOnInit() {
         await this.loadProfile();
     }
 
     update() {
-        const learnerProfile = {
+        const learnerProfile = new LearnerProfileDTO({
             id: this.profileId,
             feedbackAlternativeStandard: this.feedbackAlternativeStandard(),
             feedbackFollowupSummary: this.feedbackFollowupSummary(),
             feedbackBriefDetailed: this.feedbackBriefDetailed(),
-        };
+        });
 
         // Try to update profile
         this.learnerProfileAPIService.putUpdatedLearnerProfile(learnerProfile).then(
@@ -78,10 +79,13 @@ export class FeedbackLearnerProfileComponent implements OnInit {
     async loadProfile() {
         const profile = await this.learnerProfileAPIService.getLearnerProfileForCurrentUser();
         this.profileId = profile.id;
+
         this.feedbackAlternativeStandard.set(profile.feedbackAlternativeStandard);
         this.initialFeedbackAlternativeStandard = profile.feedbackAlternativeStandard;
+
         this.feedbackFollowupSummary.set(profile.feedbackFollowupSummary);
         this.initialFeedbackFollowupSummary = profile.feedbackFollowupSummary;
+
         this.feedbackBriefDetailed.set(profile.feedbackBriefDetailed);
         this.initialFeedbackBriefDetailed = profile.feedbackBriefDetailed;
     }

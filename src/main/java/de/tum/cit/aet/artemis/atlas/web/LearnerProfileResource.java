@@ -81,7 +81,7 @@ public class LearnerProfileResource {
      */
     private void validateProfileField(int value, String fieldName) {
         if (value < MIN_PROFILE_VALUE || value > MAX_PROFILE_VALUE) {
-            throw new BadRequestAlertException(fieldName + " field is outside valid bounds", CourseLearnerProfile.ENTITY_NAME, fieldName.toLowerCase() + "OutOfBounds", true);
+            throw new BadRequestAlertException(fieldName + " field is outside valid bounds", LearnerProfile.ENTITY_NAME, fieldName.toLowerCase() + "OutOfBounds", true);
         }
     }
 
@@ -151,7 +151,7 @@ public class LearnerProfileResource {
 
         LearnerProfile updateProfile = learnerProfileRepository.findByUserElseThrow(user);
 
-        validateProfileField(learnerProfileDTO.feedbackAlternativeStandard(), "FeedbackCreativeGuidance");
+        validateProfileField(learnerProfileDTO.feedbackAlternativeStandard(), "FeedbackAlternativeStandard");
         validateProfileField(learnerProfileDTO.feedbackFollowupSummary(), "FeedbackFollowupSummary");
         validateProfileField(learnerProfileDTO.feedbackBriefDetailed(), "FeedbackBriefDetailed");
 
