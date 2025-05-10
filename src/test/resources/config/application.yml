@@ -236,7 +236,7 @@ zonky:
 
 server:
     port: 8080
-    url: https://artemislocal.cit.tum.de
+    url: http://localhost
     forward-headers-strategy: native
 
 management:

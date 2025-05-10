@@ -242,7 +242,7 @@ public class MetricsBean {
             calculateActiveUserMetrics();
         }
 
-        if (profileService.isLocalCiActive()) {
+        if (profileService.isLocalCIActive()) {
             registerLocalCIMetrics();
         }
 

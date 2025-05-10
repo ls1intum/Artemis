@@ -88,7 +88,7 @@ spring:
 
 server:
     port: 8080
-    url: https://artemislocal.cit.tum.de
+    url: http://localhost # NOTE you need to override this
 
 # at the moment metrics are disabled for build agents
 management:

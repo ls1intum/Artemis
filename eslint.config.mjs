@@ -33,7 +33,7 @@ export default tseslint.config(
             'target/',
             'uploads/',
             'supporting_scripts/',
-            'stub.js',
+            'src/test/javascript/spec/stub.js',
             '.lintstagedrc.js',
             'jest.config.js',
             'prebuild.mjs',
