@@ -35,8 +35,7 @@ public class DefaultUserCourseNotificationSettingPreset extends UserCourseNotifi
 
     public DefaultUserCourseNotificationSettingPreset() {
         presetMap = Map.ofEntries(
-                Map.entry(NewPostNotification.class,
-                        Map.of(NotificationChannelOption.EMAIL, false, NotificationChannelOption.WEBAPP, false, NotificationChannelOption.PUSH, true)),
+                Map.entry(NewPostNotification.class, Map.of(NotificationChannelOption.EMAIL, false, NotificationChannelOption.WEBAPP, false, NotificationChannelOption.PUSH, true)),
                 Map.entry(NewAnswerNotification.class,
                         Map.of(NotificationChannelOption.EMAIL, false, NotificationChannelOption.WEBAPP, true, NotificationChannelOption.PUSH, true)),
                 Map.entry(NewMentionNotification.class,
