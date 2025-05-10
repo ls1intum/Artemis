@@ -117,7 +117,7 @@ public class SharedQueueProcessingService {
     @Value("${artemis.continuous-integration.build-agent.display-name:}")
     private String buildAgentDisplayName;
 
-    @Value("${artemis.continuous-integration.pause-after-consecutive-failed-jobs:10}")
+    @Value("${artemis.continuous-integration.pause-after-consecutive-failed-jobs:100}")
     private int pauseAfterConsecutiveFailedJobs;
 
     public SharedQueueProcessingService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, BuildAgentConfiguration buildAgentConfiguration,
@@ -390,6 +390,7 @@ public class SharedQueueProcessingService {
             else {
                 status = BuildStatus.FAILED;
                 log.error("Error while processing build job: {}", buildJob, ex);
+                consecutiveBuildJobFailures.incrementAndGet();
             }
 
             job = new BuildJobQueueItem(buildJob, completionDate, status);
