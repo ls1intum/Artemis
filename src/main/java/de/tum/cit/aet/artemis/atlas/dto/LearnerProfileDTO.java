@@ -14,6 +14,9 @@ public record LearnerProfileDTO(long id, int feedbackAlternativeStandard, int fe
      * @return LearnerProfile DTO for transfer
      */
     public static LearnerProfileDTO of(LearnerProfile learnerProfile) {
+        if (learnerProfile == null) {
+            return null;
+        }
         return new LearnerProfileDTO(learnerProfile.getId(), learnerProfile.getFeedbackAlternativeStandard(), learnerProfile.getFeedbackFollowupSummary(),
                 learnerProfile.getFeedbackBriefDetailed());
     }

@@ -223,7 +223,6 @@ public class AthenaFeedbackSuggestionsService {
      * @throws BadRequestAlertException if the maximum number of Athena feedback requests is exceeded
      */
     public void checkRateLimitOrThrow(StudentParticipation participation) {
-        // TODO: Deprecated code snippet below
         List<Result> athenaResults = participation.getResults().stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA).toList();
 
         long countOfSuccessfulRequests = athenaResults.stream().filter(result -> result.isSuccessful() == Boolean.TRUE).count();

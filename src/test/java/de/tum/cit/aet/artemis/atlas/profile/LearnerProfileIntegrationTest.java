@@ -135,24 +135,18 @@ class LearnerProfileIntegrationTest extends AbstractAtlasIntegrationTest {
     @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
     void shouldNotUpdateFeedbackProfileWithInvalidValues() throws Exception {
         // Test values less than 1
-        request.put("/api/atlas/learner-profiles/1", Map.of("feedback_alternative_standard", 0, "feedback_followup_summary", 1, "feedback_brief_detailed", 1),
-                HttpStatus.BAD_REQUEST);
+        request.put("/api/atlas/learner-profiles/1", Map.of("feedbackAlternativeStandard", 0, "feedbackFollowupSummary", 1, "feedbackBriefDetailed", 1), HttpStatus.BAD_REQUEST);
 
-        request.put("/api/atlas/learner-profiles/1", Map.of("feedback_alternative_standard", 1, "feedback_followup_summary", 0, "feedback_brief_detailed", 1),
-                HttpStatus.BAD_REQUEST);
+        request.put("/api/atlas/learner-profiles/1", Map.of("feedbackAlternativeStandard", 1, "feedbackFollowupSummary", 0, "feedbackBriefDetailed", 1), HttpStatus.BAD_REQUEST);
 
-        request.put("/api/atlas/learner-profiles/1", Map.of("feedback_alternative_standard", 1, "feedback_followup_summary", 1, "feedback_brief_detailed", 0),
-                HttpStatus.BAD_REQUEST);
+        request.put("/api/atlas/learner-profiles/1", Map.of("feedbackAlternativeStandard", 1, "feedbackFollowupSummary", 1, "feedbackBriefDetailed", 0), HttpStatus.BAD_REQUEST);
 
         // Test values greater than 5
-        request.put("/api/atlas/learner-profiles/1", Map.of("feedback_alternative_standard", 6, "feedback_followup_summary", 1, "feedback_brief_detailed", 1),
-                HttpStatus.BAD_REQUEST);
+        request.put("/api/atlas/learner-profiles/1", Map.of("feedbackAlternativeStandard", 6, "feedbackFollowupSummary", 1, "feedbackBriefDetailed", 1), HttpStatus.BAD_REQUEST);
 
-        request.put("/api/atlas/learner-profiles/1", Map.of("feedback_alternative_standard", 1, "feedback_followup_summary", 6, "feedback_brief_detailed", 1),
-                HttpStatus.BAD_REQUEST);
+        request.put("/api/atlas/learner-profiles/1", Map.of("feedbackAlternativeStandard", 1, "feedbackFollowupSummary", 6, "feedbackBriefDetailed", 1), HttpStatus.BAD_REQUEST);
 
-        request.put("/api/atlas/learner-profiles/1", Map.of("feedback_alternative_standard", 1, "feedback_followup_summary", 1, "feedback_brief_detailed", 6),
-                HttpStatus.BAD_REQUEST);
+        request.put("/api/atlas/learner-profiles/1", Map.of("feedbackAlternativeStandard", 1, "feedbackFollowupSummary", 1, "feedbackBriefDetailed", 6), HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -164,9 +158,9 @@ class LearnerProfileIntegrationTest extends AbstractAtlasIntegrationTest {
         // Create new values within valid range (1-5)
         Map<String, Object> updatedProfile = new HashMap<>();
         updatedProfile.put("id", currentProfile.get("id"));
-        updatedProfile.put("feedback_alternative_standard", 3);
-        updatedProfile.put("feedback_followup_summary", 4);
-        updatedProfile.put("feedback_brief_detailed", 5);
+        updatedProfile.put("feedbackAlternativeStandard", 3);
+        updatedProfile.put("feedbackFollowupSummary", 4);
+        updatedProfile.put("feedbackBriefDetailed", 5);
 
         // Update profile
         Map<String, Object> response = request.putWithResponseBody("/api/atlas/learner-profiles/" + currentProfile.get("id"), updatedProfile, Map.class, HttpStatus.OK);
@@ -182,7 +176,7 @@ class LearnerProfileIntegrationTest extends AbstractAtlasIntegrationTest {
     @Test
     @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
     void shouldRejectInvalidFeedbackProfileId() throws Exception {
-        Map<String, Object> profile = Map.of("feedback_alternative_standard", 3, "feedback_followup_summary", 4, "feedback_brief_detailed", 5);
+        Map<String, Object> profile = Map.of("feedbackAlternativeStandard", 3, "feedbackFollowupSummary", 4, "feedbackBriefDetailed", 5);
 
         // Test with non-existent ID
         request.put("/api/atlas/learner-profiles/999", profile, HttpStatus.BAD_REQUEST);

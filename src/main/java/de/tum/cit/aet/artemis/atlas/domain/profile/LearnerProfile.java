@@ -42,17 +42,17 @@ public class LearnerProfile extends DomainObject {
     @Column(name = "feedback_alternative_standard")
     @Min(1)
     @Max(5)
-    private int feedbackAlternativeStandard;
+    private int feedbackAlternativeStandard = 3;
 
     @Column(name = "feedback_followup_summary")
     @Min(1)
     @Max(5)
-    private int feedbackFollowupSummary;
+    private int feedbackFollowupSummary = 3;
 
     @Column(name = "feedback_brief_detailed")
     @Min(1)
     @Max(5)
-    private int feedbackBriefDetailed;
+    private int feedbackBriefDetailed = 3;
 
     public void setUser(User user) {
         this.user = user;
