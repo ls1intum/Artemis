@@ -77,6 +77,8 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
     COURSE = IrisSettingsType.COURSE;
     TEXT_EXERCISE_CHAT = IrisSubSettingsType.TEXT_EXERCISE_CHAT;
     CHAT = IrisSubSettingsType.CHAT;
+    COURSE_CHAT = IrisSubSettingsType.COURSE_CHAT;
+    LECTURE = IrisSubSettingsType.LECTURE;
     // Button types
     WARNING = ButtonType.WARNING;
     // Icons
@@ -219,6 +221,13 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
         } else {
             this.subSettings.disabledProactiveEvents = [...(this.subSettings.disabledProactiveEvents ?? []), event] as IrisEventType[];
         }
+    }
+
+    onCustomInstructionsChange(customInstructions: string) {
+        if (!this.subSettings) {
+            return;
+        }
+        this.subSettings.customInstructions = customInstructions;
     }
 
     get inheritDisabled() {

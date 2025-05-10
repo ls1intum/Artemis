@@ -23,6 +23,7 @@ export abstract class IrisSubSettings implements BaseEntity {
     selectedVariant?: string;
     enabledForCategories?: string[];
     disabledProactiveEvents?: IrisEventType[];
+    customInstructions?: string;
 }
 
 export class IrisChatSubSettings extends IrisSubSettings {
