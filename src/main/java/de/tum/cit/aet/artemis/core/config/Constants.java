@@ -323,9 +323,19 @@ public final class Constants {
     public static final String PROFILE_APOLLON = "apollon";
 
     /**
-     * The name of the Spring profile used for the Aeolus external system.
+     * The name of the Spring profile used for the external Aeolus system.
      */
     public static final String PROFILE_AEOLUS = "aeolus";
+
+    /**
+     * The name of the Spring profile used for the external LDAP system.
+     */
+    public static final String PROFILE_LDAP = "ldap";
+
+    /**
+     * The name of the Spring profile used for the external LDAP system.
+     */
+    public static final String PROFILE_LDAP_ONLY = "ldap-only";
 
     /**
      * The name of the Spring profile used for activating LTI in Artemis, see {@link de.tum.cit.aet.artemis.lti.web.LtiResource}.

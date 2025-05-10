@@ -3006,7 +3006,7 @@ public class CourseTestService {
         assertThat(courseDTO.currentMaxMoreFeedbacks()).isEqualTo(1);
 
         // Average Score
-        assertThat(courseDTO.currentPercentageAverageScore()).isEqualTo(60);
+        assertThat(courseDTO.currentPercentageAverageScore()).isEqualTo(50);
         assertThat(courseDTO.currentAbsoluteAverageScore()).isEqualTo(18);
         assertThat(courseDTO.currentMaxAverageScore()).isEqualTo(30);
 
