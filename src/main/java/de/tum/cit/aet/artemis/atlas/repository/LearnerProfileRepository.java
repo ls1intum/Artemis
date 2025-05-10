@@ -4,6 +4,8 @@ import java.util.Optional;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +23,9 @@ public interface LearnerProfileRepository extends ArtemisJpaRepository<LearnerPr
     default LearnerProfile findByUserElseThrow(User user) {
         return getValueElseThrow(findByUser(user));
     }
+
+    @Query("SELECT lp FROM LearnerProfile lp WHERE lp.id = :id")
+    Optional<LearnerProfile> findByIdInitialized(@Param("id") Long id);
 
     @Transactional // ok because of delete
     @Modifying

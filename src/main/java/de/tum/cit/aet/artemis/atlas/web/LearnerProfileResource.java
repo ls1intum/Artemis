@@ -18,8 +18,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.profile.CourseLearnerProfile;
+import de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile;
 import de.tum.cit.aet.artemis.atlas.dto.CourseLearnerProfileDTO;
+import de.tum.cit.aet.artemis.atlas.dto.LearnerProfileDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CourseLearnerProfileRepository;
+import de.tum.cit.aet.artemis.atlas.repository.LearnerProfileRepository;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -46,9 +49,12 @@ public class LearnerProfileResource {
 
     private final CourseLearnerProfileRepository courseLearnerProfileRepository;
 
-    public LearnerProfileResource(UserRepository userRepository, CourseLearnerProfileRepository courseLearnerProfileRepository) {
+    private final LearnerProfileRepository learnerProfileRepository;
+
+    public LearnerProfileResource(UserRepository userRepository, CourseLearnerProfileRepository courseLearnerProfileRepository, LearnerProfileRepository learnerProfileRepository) {
         this.userRepository = userRepository;
         this.courseLearnerProfileRepository = courseLearnerProfileRepository;
+        this.learnerProfileRepository = learnerProfileRepository;
     }
 
     /**
@@ -75,7 +81,7 @@ public class LearnerProfileResource {
      */
     private void validateProfileField(int value, String fieldName) {
         if (value < MIN_PROFILE_VALUE || value > MAX_PROFILE_VALUE) {
-            throw new BadRequestAlertException(fieldName + " field is outside valid bounds", CourseLearnerProfile.ENTITY_NAME, fieldName.toLowerCase() + "OutOfBounds", true);
+            throw new BadRequestAlertException(fieldName + " field is outside valid bounds", LearnerProfile.ENTITY_NAME, fieldName.toLowerCase() + "OutOfBounds", true);
         }
     }
 
@@ -117,5 +123,43 @@ public class LearnerProfileResource {
 
         CourseLearnerProfile result = courseLearnerProfileRepository.save(updateProfile);
         return ResponseEntity.ok(CourseLearnerProfileDTO.of(result));
+    }
+
+    @GetMapping("learner-profiles")
+    @EnforceAtLeastStudent
+    public ResponseEntity<LearnerProfileDTO> getLearnerProfile() {
+        User user = userRepository.getUser();
+        LearnerProfile profile = learnerProfileRepository.findByUserElseThrow(user);
+        return ResponseEntity.ok(LearnerProfileDTO.of(profile));
+    }
+
+    /**
+     * PUT /learner-profiles/{learnerProfileId} : update fields in a {@link LearnerProfile}.
+     *
+     * @param learnerProfileId  ID of the LearnerProfile
+     * @param learnerProfileDTO {@link LearnerProfileDTO} object from the request body.
+     * @return A ResponseEntity with a status matching the validity of the request containing the updated profile.
+     */
+    @PutMapping(value = "learner-profiles/{learnerProfileId}")
+    @EnforceAtLeastStudent
+    public ResponseEntity<LearnerProfileDTO> updateLearnerProfile(@PathVariable long learnerProfileId, @RequestBody LearnerProfileDTO learnerProfileDTO) {
+        User user = userRepository.getUser();
+
+        if (learnerProfileDTO.id() != learnerProfileId) {
+            throw new BadRequestAlertException("Provided learnerProfileId does not match learnerProfile.", LearnerProfile.ENTITY_NAME, "objectDoesNotMatchId", true);
+        }
+
+        LearnerProfile updateProfile = learnerProfileRepository.findByUserElseThrow(user);
+
+        validateProfileField(learnerProfileDTO.feedbackAlternativeStandard(), "FeedbackAlternativeStandard");
+        validateProfileField(learnerProfileDTO.feedbackFollowupSummary(), "FeedbackFollowupSummary");
+        validateProfileField(learnerProfileDTO.feedbackBriefDetailed(), "FeedbackBriefDetailed");
+
+        updateProfile.setFeedbackAlternativeStandard(learnerProfileDTO.feedbackAlternativeStandard());
+        updateProfile.setFeedbackFollowupSummary(learnerProfileDTO.feedbackFollowupSummary());
+        updateProfile.setFeedbackBriefDetailed(learnerProfileDTO.feedbackBriefDetailed());
+
+        LearnerProfile result = learnerProfileRepository.save(updateProfile);
+        return ResponseEntity.ok(LearnerProfileDTO.of(result));
     }
 }
