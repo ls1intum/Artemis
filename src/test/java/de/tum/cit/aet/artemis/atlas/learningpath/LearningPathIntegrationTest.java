@@ -208,7 +208,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
         assertThat(updatedCourse.getLearningPathsEnabled()).as("should enable LearningPaths").isTrue();
         assertThat(updatedCourse.getLearningPaths()).isNotNull();
         assertThat(updatedCourse.getLearningPaths().size()).as("should create LearningPath for each student").isEqualTo(NUMBER_OF_STUDENTS);
-        updatedCourse.getLearningPaths().forEach(lp -> assertThat(lp.getProgress()).as("LearningPath (id={}) should " + "have no progress", lp.getId()).isEqualTo(0));
+        updatedCourse.getLearningPaths().forEach(lp -> assertThat(lp.getProgress()).as("LearningPath (id={}) should have no progress", lp.getId()).isEqualTo(0));
     }
 
     @Test
@@ -317,7 +317,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
         await().untilAsserted(() -> {
             final var learningPathOptional = learningPathRepository.findWithEagerCompetenciesByCourseIdAndUserId(course.getId(), student.getId());
             assertThat(learningPathOptional).isPresent();
-            assertThat(learningPathOptional.get().getCompetencies()).as("should contain new " + "competency").contains(newCompetency);
+            assertThat(learningPathOptional.get().getCompetencies()).as("should contain new competency").contains(newCompetency);
             assertThat(learningPathOptional.get().getCompetencies().size()).as("should not remove old competencies").isEqualTo(competencies.length + 1);
             final var oldCompetencies = Set.of(competencies[0], competencies[1], competencies[2], competencies[3], competencies[4]);
             assertThat(learningPathOptional.get().getCompetencies()).as("should not remove old competencies").containsAll(oldCompetencies);
@@ -356,8 +356,8 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
         assertThat(learningPathOptional).isPresent();
         assertThat(learningPathOptional.get().getCompetencies()).as("should not contain deleted competency").doesNotContain(competencies[0]);
         final var nonDeletedCompetencies = Set.of(competencies[1], competencies[2], competencies[3], competencies[4]);
-        assertThat(learningPathOptional.get().getCompetencies().size()).as("should contain competencies that have not" + " been deleted").isEqualTo(nonDeletedCompetencies.size());
-        assertThat(learningPathOptional.get().getCompetencies()).as("should contain competencies that have not been " + "deleted").containsAll(nonDeletedCompetencies);
+        assertThat(learningPathOptional.get().getCompetencies().size()).as("should contain competencies that have not been deleted").isEqualTo(nonDeletedCompetencies.size());
+        assertThat(learningPathOptional.get().getCompetencies()).as("should contain competencies that have not been deleted").containsAll(nonDeletedCompetencies);
     }
 
     @Test
@@ -374,8 +374,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
     }
 
     /**
-     * This only tests if the end point successfully retrieves the health status. The correctness of the health
-     * status is tested in LearningPathServiceTest.
+     * This only tests if the end point successfully retrieves the health status. The correctness of the health status is tested in LearningPathServiceTest.
      *
      * @throws Exception the request failed
      * @see de.tum.cit.aet.artemis.atlas.service.LearningPathServiceTest
@@ -484,7 +483,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
         void shouldGenerateLearningPath() throws Exception {
             course.setLearningPathsEnabled(true);
             course = courseRepository.save(course);
-            final var response = request.postWithResponseBody("/api/atlas/courses/" + course.getId() + "/learning" + "-path", null, LearningPathDTO.class, HttpStatus.CREATED);
+            final var response = request.postWithResponseBody("/api/atlas/courses/" + course.getId() + "/learning-path", null, LearningPathDTO.class, HttpStatus.CREATED);
             assertThat(response).isNotNull();
             final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
             final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
@@ -710,9 +709,8 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
         final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
-        final var result = request.get("/api/atlas/learning-path/" + learningPath.getId() + "/relative-navigation" + "?learningObjectId=" + textUnit.getId()
-                + "&learningObjectType=" + LearningPathNavigationObjectDTO.LearningObjectType.LECTURE + "&competencyId=" + competencies[0].getId(), HttpStatus.OK,
-                LearningPathNavigationDTO.class);
+        final var result = request.get("/api/atlas/learning-path/" + learningPath.getId() + "/relative-navigation?learningObjectId=" + textUnit.getId() + "&learningObjectType="
+                + LearningPathNavigationObjectDTO.LearningObjectType.LECTURE + "&competencyId=" + competencies[0].getId(), HttpStatus.OK, LearningPathNavigationDTO.class);
 
         verifyNavigationResult(result, null, textUnit, textExercise);
 
@@ -736,8 +734,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
         final var result = request.get("/api/atlas/learning-path/" + learningPath.getId() + "/navigation-overview", HttpStatus.OK, LearningPathNavigationOverviewDTO.class);
 
-        // TODO: currently learning objects connected to more than one competency are provided twice in the learning
-        // path
+        // TODO: currently learning objects connected to more than one competency are provided twice in the learning path
         // TODO: this is not a problem for the navigation overview as the duplicates are filtered out
 
         assertThat(result.learningObjects()).hasSize(2);
