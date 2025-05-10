@@ -74,7 +74,7 @@ describe('PasskeySettingsComponent', () => {
     it('should handle errors when adding a new passkey', async () => {
         jest.spyOn(alertService, 'addErrorAlert');
         jest.spyOn(webauthnApiService, 'getRegistrationOptions').mockRejectedValue(new Error('Test Error'));
-        await expect(component.addNewPasskey()).rejects.toThrow('Test Error');
+        await expect(component.addPasskey()).rejects.toThrow('Test Error');
         expect(alertService.addErrorAlert).toHaveBeenCalledWith('artemisApp.userSettings.passkeySettingsPage.error.registration');
     });
 
