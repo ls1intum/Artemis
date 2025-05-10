@@ -90,7 +90,8 @@
                 "directMessages": "Direct Messages",
                 "filterConversationPlaceholder": "Filter conversations",
                 "setChannelAsRead": "Mark all channels as read",
-                "recents": "Recents"
+                "recents": "Recents",
+                "weekRange": "{{ start }} - {{ end }}"
             },
             "menu": {
                 "exercises": "Exercises",

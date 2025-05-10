@@ -321,7 +321,7 @@ export const courseManagementState: Routes = [
                                 loadComponent: () => import('app/atlas/manage/edit/edit-competency.component').then((m) => m.EditCompetencyComponent),
                                 data: {
                                     authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-                                    pageTitle: 'artemisApp.competency.editCompetency.title',
+                                    pageTitle: 'artemisApp.competency.edit.title',
                                 },
                                 canActivate: [UserRouteAccessService],
                             },

@@ -7,6 +7,7 @@ import {
     OnChanges,
     OnInit,
     Renderer2,
+    effect,
     inject,
     input,
     model,
@@ -40,6 +41,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ForwardedMessageComponent } from 'app/communication/forwarded-message/forwarded-message.component';
+import { CourseWideSearchConfig } from 'app/communication/course-conversations-components/course-wide-search/course-wide-search.component';
 
 @Component({
     selector: 'jhi-post',
@@ -85,7 +87,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     // if the post is previewed in the create/edit modal,
     // we need to pass the ref in order to close it when navigating to the previewed post via post title
     modalRef = input<NgbModalRef | undefined>(undefined);
-    searchQuery = input<string>('');
+    searchConfig = input<CourseWideSearchConfig | undefined>(undefined);
     showAnswers = model<boolean>(false);
 
     openThread = output<void>();
@@ -112,7 +114,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     mayEdit = false;
     mayDelete = false;
     canPin = false;
-    originalPostDetails: Post | AnswerPost | undefined = undefined;
+    originalPostDetails: Post | AnswerPost | undefined;
     readonly onNavigateToPost = output<Posting>();
 
     // Icons
@@ -126,14 +128,21 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     readonly faShare = faShare;
 
     isConsecutive = input<boolean>(false);
-    forwardedPosts = input<Post[]>([]);
-    forwardedAnswerPosts = input<AnswerPost[]>([]);
+    forwardedPosts = input<(Post | undefined)[]>([]);
+    forwardedAnswerPosts = input<(AnswerPost | undefined)[]>([]);
     dropdownPosition = { x: 0, y: 0 };
     course: Course;
+
+    hasOriginalPostBeenDeleted: boolean;
 
     constructor() {
         super();
         this.course = this.metisService.getCourse() ?? throwError('Course not found');
+        effect(() => {
+            const hasDeletedForwardedPost = this.forwardedPosts().length > 0 && this.forwardedPosts()[0] === undefined;
+            const hasDeletedForwardedAnswerPost = this.forwardedAnswerPosts().length > 0 && this.forwardedAnswerPosts()[0] === undefined;
+            this.hasOriginalPostBeenDeleted = hasDeletedForwardedAnswerPost || hasDeletedForwardedPost;
+        });
     }
 
     get reactionsBar() {
@@ -226,9 +235,21 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     }
 
     updateShowSearchResultInAnswersHint() {
-        const searchQuery = this.searchQuery()?.toLowerCase();
-        if (!searchQuery) {
+        const searchConfig = this.searchConfig();
+        if (!searchConfig || !this.posting.answers) {
             this.showSearchResultInAnswersHint = false;
+            return;
+        }
+
+        const searchQuery = searchConfig.searchTerm.toLowerCase();
+        if (!searchQuery) {
+            const selectedAuthorIds = searchConfig.selectedAuthors.map((author) => author.id);
+            const isSearchAuthorInAnswers =
+                this.posting.answers?.some((answer) => {
+                    const answerAuthorId = answer.author?.id;
+                    return selectedAuthorIds.includes(answerAuthorId);
+                }) ?? false;
+            this.showSearchResultInAnswersHint = isSearchAuthorInAnswers;
             return;
         }
 
@@ -242,20 +263,12 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     fetchForwardedMessages(): void {
         try {
             if (this.forwardedPosts().length > 0) {
-                const forwardedMessage = this.forwardedPosts()[0];
-
-                if (forwardedMessage?.id) {
-                    this.originalPostDetails = forwardedMessage;
-                    this.changeDetector.markForCheck();
-                }
+                this.originalPostDetails = this.forwardedPosts()[0];
+                this.changeDetector.markForCheck();
             }
             if (this.forwardedAnswerPosts().length > 0) {
-                const forwardedMessage = this.forwardedAnswerPosts()[0];
-
-                if (forwardedMessage?.id) {
-                    this.originalPostDetails = forwardedMessage;
-                    this.changeDetector.markForCheck();
-                }
+                this.originalPostDetails = this.forwardedAnswerPosts()[0];
+                this.changeDetector.markForCheck();
             }
         } catch (error) {
             throw new Error(error.toString());
@@ -351,7 +364,10 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         }
     }
 
-    protected onTriggerNavigateToPost(post: Posting) {
+    protected onTriggerNavigateToPost(post: Posting | undefined) {
+        if (!post) {
+            return;
+        }
         this.onNavigateToPost.emit(post);
     }
 }

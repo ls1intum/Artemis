@@ -354,7 +354,7 @@ examples.forEach((activeConversation) => {
         }));
 
         it('should emit collapseSearch when toggleSearchBar is called', () => {
-            const collapseSearchSpy = jest.spyOn(component.collapseSearch, 'emit');
+            const collapseSearchSpy = jest.spyOn(component.onSearchClick, 'emit');
             component.toggleSearchBar();
 
             expect(collapseSearchSpy).toHaveBeenCalledOnce();

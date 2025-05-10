@@ -105,9 +105,9 @@ import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
+import de.tum.cit.aet.artemis.lecture.api.LectureApi;
+import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
-import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
-import de.tum.cit.aet.artemis.lecture.service.LectureService;
 import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismCaseApi;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -139,7 +139,9 @@ public class CourseService {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final LectureService lectureService;
+    private final Optional<LectureApi> lectureApi;
+
+    private final Optional<LectureRepositoryApi> lectureRepositoryApi;
 
     private final UserService userService;
 
@@ -201,8 +203,6 @@ public class CourseService {
 
     private final Optional<IrisSettingsApi> irisSettingsApi;
 
-    private final LectureRepository lectureRepository;
-
     private final PostRepository postRepository;
 
     private final AnswerPostRepository answerPostRepository;
@@ -217,27 +217,28 @@ public class CourseService {
 
     private final CourseNotificationRepository courseNotificationRepository;
 
-    public CourseService(Optional<ExamMetricsApi> examMetricsApi, CourseRepository courseRepository, ExerciseService exerciseService,
-            ExerciseDeletionService exerciseDeletionService, AuthorizationCheckService authCheckService, UserRepository userRepository, LectureService lectureService,
-            AuditEventRepository auditEventRepository, UserService userService, Optional<ExamDeletionApi> examDeletionApi, Optional<CompetencyProgressApi> competencyProgressApi,
-            Optional<ExamRepositoryApi> examRepositoryApi, Optional<ExerciseGroupApi> exerciseGroupApi, CourseExamExportService courseExamExportService,
-            GradingScaleRepository gradingScaleRepository, StatisticsRepository statisticsRepository, StudentParticipationRepository studentParticipationRepository,
-            TutorLeaderboardService tutorLeaderboardService, RatingRepository ratingRepository, ComplaintService complaintService, ComplaintRepository complaintRepository,
-            ResultRepository resultRepository, ComplaintResponseRepository complaintResponseRepository, SubmissionRepository submissionRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository, ExerciseRepository exerciseRepository, ParticipantScoreRepository participantScoreRepository,
-            PresentationPointsCalculationService presentationPointsCalculationService, Optional<TutorialGroupApi> tutorialGroupApi, Optional<PlagiarismCaseApi> plagiarismCaseApi,
-            ConversationRepository conversationRepository, Optional<LearningPathApi> learningPathApi, Optional<IrisSettingsApi> irisSettingsApi,
-            LectureRepository lectureRepository, Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi, Optional<PrerequisitesApi> prerequisitesApi,
-            Optional<CompetencyRelationApi> competencyRelationApi, PostRepository postRepository, AnswerPostRepository answerPostRepository, BuildJobRepository buildJobRepository,
-            FaqRepository faqRepository, Optional<LearnerProfileApi> learnerProfileApi, LLMTokenUsageTraceRepository llmTokenUsageTraceRepository,
-            CourseNotificationRepository courseNotificationRepository) {
+    public CourseService(Optional<ExamMetricsApi> examMetricsApi, Optional<LectureApi> lectureApi, Optional<LectureRepositoryApi> lectureRepositoryApi,
+            CourseRepository courseRepository, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService, AuthorizationCheckService authCheckService,
+            UserRepository userRepository, AuditEventRepository auditEventRepository, UserService userService, Optional<ExamDeletionApi> examDeletionApi,
+            Optional<CompetencyProgressApi> competencyProgressApi, Optional<ExamRepositoryApi> examRepositoryApi, Optional<ExerciseGroupApi> exerciseGroupApi,
+            CourseExamExportService courseExamExportService, GradingScaleRepository gradingScaleRepository, StatisticsRepository statisticsRepository,
+            StudentParticipationRepository studentParticipationRepository, TutorLeaderboardService tutorLeaderboardService, RatingRepository ratingRepository,
+            ComplaintService complaintService, ComplaintRepository complaintRepository, ResultRepository resultRepository, ComplaintResponseRepository complaintResponseRepository,
+            SubmissionRepository submissionRepository, ProgrammingExerciseRepository programmingExerciseRepository, ExerciseRepository exerciseRepository,
+            ParticipantScoreRepository participantScoreRepository, PresentationPointsCalculationService presentationPointsCalculationService,
+            Optional<TutorialGroupApi> tutorialGroupApi, Optional<PlagiarismCaseApi> plagiarismCaseApi, ConversationRepository conversationRepository,
+            Optional<LearningPathApi> learningPathApi, Optional<IrisSettingsApi> irisSettingsApi, Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi,
+            Optional<PrerequisitesApi> prerequisitesApi, Optional<CompetencyRelationApi> competencyRelationApi, PostRepository postRepository,
+            AnswerPostRepository answerPostRepository, BuildJobRepository buildJobRepository, FaqRepository faqRepository, Optional<LearnerProfileApi> learnerProfileApi,
+            LLMTokenUsageTraceRepository llmTokenUsageTraceRepository, CourseNotificationRepository courseNotificationRepository) {
         this.examMetricsApi = examMetricsApi;
+        this.lectureApi = lectureApi;
+        this.lectureRepositoryApi = lectureRepositoryApi;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
         this.exerciseDeletionService = exerciseDeletionService;
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
-        this.lectureService = lectureService;
         this.exerciseGroupApi = exerciseGroupApi;
         this.auditEventRepository = auditEventRepository;
         this.userService = userService;
@@ -264,7 +265,6 @@ public class CourseService {
         this.conversationRepository = conversationRepository;
         this.learningPathApi = learningPathApi;
         this.irisSettingsApi = irisSettingsApi;
-        this.lectureRepository = lectureRepository;
         this.tutorialGroupChannelManagementApi = tutorialGroupChannelManagementApi;
         this.prerequisitesApi = prerequisitesApi;
         this.competencyRelationApi = competencyRelationApi;
@@ -361,7 +361,7 @@ public class CourseService {
         exerciseService.loadExerciseDetailsIfNecessary(course, user);
         examRepositoryApi.ifPresent(api -> course.setExams(api.findByCourseIdForUser(course.getId(), user.getId(), user.getGroups(), ZonedDateTime.now())));
         // TODO: in the future, we only want to know if lectures exist, the actual lectures will be loaded when the user navigates into the lecture
-        course.setLectures(lectureService.filterVisibleLecturesWithActiveAttachments(course, course.getLectures(), user));
+        lectureApi.ifPresent(api -> course.setLectures(api.filterVisibleLecturesWithActiveAttachments(course, course.getLectures(), user)));
         // NOTE: in this call we only want to know if competencies exist in the course, we will load them when the user navigates into them
         competencyProgressApi.ifPresent(api -> course.setNumberOfCompetencies(api.countByCourse(course)));
         // NOTE: in this call we only want to know if prerequisites exist in the course, we will load them when the user navigates into them
@@ -419,7 +419,7 @@ public class CourseService {
         }
         var examCounts = examMetricsApi.map(api -> api.countVisibleExams(courseIds, ZonedDateTime.now())).orElse(Set.of());
 
-        var lectureCounts = lectureRepository.countVisibleLectures(courseIds, ZonedDateTime.now());
+        var lectureCounts = lectureRepositoryApi.map(api -> api.countVisibleLectures(courseIds, ZonedDateTime.now())).orElse(Set.of());
 
         long startFilterAll = System.nanoTime();
         var courses = userVisibleCourses.stream().peek(course -> {
@@ -491,7 +491,7 @@ public class CourseService {
 
         long numberOfCommunicationPosts = postRepository.countPostsByCourseId(courseId);
         long numberOfAnswerPosts = answerPostRepository.countAnswerPostsByCourseId(courseId);
-        long numberLectures = lectureRepository.countByCourse_Id(courseId);
+        long numberLectures = lectureRepositoryApi.map(api -> api.countByCourseId(courseId)).orElse(0L);
         long numberExams = examMetricsApi.map(api -> api.countByCourseId(courseId)).orElse(0L);
 
         Map<ExerciseType, Long> countByExerciseType = exerciseService.countByCourseIdGroupByType(courseId);
@@ -511,7 +511,7 @@ public class CourseService {
      * <li>The Course</li>
      * <li>All Exercises including:
      * submissions, participations, results, repositories and build plans, see {@link ExerciseDeletionService#delete}</li>
-     * <li>All Lectures and their Attachments, see {@link LectureService#delete}</li>
+     * <li>All Lectures and their Attachments, see {@link de.tum.cit.aet.artemis.lecture.service.LectureService#delete}</li>
      * <li>All default groups created by Artemis, see {@link UserService#deleteGroup}</li>
      * <li>All Exams, see {@link ExamDeletionApi#delete}</li>
      * <li>The Grading Scale if such exists, see {@link GradingScaleRepository#delete}</li>
@@ -597,8 +597,13 @@ public class CourseService {
     }
 
     private void deleteLecturesOfCourse(Course course) {
+        if (lectureApi.isEmpty()) {
+            return;
+        }
+        LectureApi api = lectureApi.get();
+
         for (Lecture lecture : course.getLectures()) {
-            lectureService.delete(lecture, false);
+            api.delete(lecture, false);
         }
     }
 
@@ -846,7 +851,7 @@ public class CourseService {
         // For the average score we need to only consider scores which are included completely or as bonus
         Set<Exercise> includedExercises = exercises.stream().filter(Exercise::isCourseExercise)
                 .filter(exercise -> !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)).collect(Collectors.toSet());
-        Double averageScoreForCourse = participantScoreRepository.findAvgScore(includedExercises);
+        Double averageScoreForCourse = participantScoreRepository.findAvgRatedScore(includedExercises);
         averageScoreForCourse = averageScoreForCourse != null ? averageScoreForCourse : 0.0;
         double currentMaxAverageScore = includedExercises.stream().map(Exercise::getMaxPoints).mapToDouble(Double::doubleValue).sum();
 

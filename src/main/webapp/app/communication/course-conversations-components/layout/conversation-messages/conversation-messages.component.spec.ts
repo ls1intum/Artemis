@@ -14,7 +14,7 @@ import { Post } from 'app/communication/shared/entities/post.model';
 import { BehaviorSubject, of } from 'rxjs';
 import { Conversation, ConversationDTO, ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from 'test/helpers/sample/conversationExampleModels';
-import { Directive, ElementRef, EventEmitter, Input, Output, QueryList, input, runInInjectionContext } from '@angular/core';
+import { Directive, EventEmitter, Input, Output, QueryList, input, runInInjectionContext } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ChannelDTO, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
@@ -123,24 +123,6 @@ examples.forEach((activeConversation) => {
             component.course = course;
             component._activeConversation = activeConversation;
             component.posts = [examplePost];
-        }));
-
-        it('should fetch posts on search input and clear search again on clear button press', fakeAsync(() => {
-            const getFilteredPostSpy = jest.spyOn(metisService, 'getFilteredPosts');
-            const inputField = fixture.debugElement.query(By.css('#searchInput'));
-            inputField.nativeElement.value = 'test';
-            inputField.nativeElement.dispatchEvent(new Event('input'));
-            tick(301);
-            expect(component.searchText).toBe('test');
-            expect(getFilteredPostSpy).toHaveBeenCalledOnce();
-            fixture.detectChanges();
-
-            getFilteredPostSpy.mockClear();
-            const clearButton = fixture.debugElement.query(By.css('#clearSearchButton'));
-            clearButton.nativeElement.click();
-            tick(301);
-            expect(component.searchText).toBe('');
-            expect(getFilteredPostSpy).toHaveBeenCalledOnce();
         }));
 
         it('should fetch posts on next page fetch', fakeAsync(() => {
@@ -352,8 +334,8 @@ examples.forEach((activeConversation) => {
 
             tick();
 
-            expect(component.posts[0].forwardedPosts).toEqual([]);
-            expect(component.posts[0].forwardedAnswerPosts).toEqual([]);
+            expect(component.posts[0].forwardedPosts).toEqual([undefined]);
+            expect(component.posts[0].forwardedAnswerPosts).toEqual([undefined]);
         }));
 
         it('should not fetch source posts or answers for empty forwarded messages', fakeAsync(() => {
@@ -408,15 +390,36 @@ examples.forEach((activeConversation) => {
             expect(getSourcePostsSpy).toHaveBeenCalled();
             expect(getSourceAnswersSpy).toHaveBeenCalled();
 
+            const forwardedPosts = component.posts[0].forwardedPosts;
+            const forwardedAnswerPosts = component.posts[0].forwardedAnswerPosts;
+
             expect(component.posts).toHaveLength(1);
-            expect(component.posts[0].forwardedPosts).toBeDefined();
-            expect(component.posts[0].forwardedAnswerPosts).toBeDefined();
+            expect(forwardedPosts).toBeDefined();
+            expect(forwardedAnswerPosts).toBeDefined();
 
-            expect(component.posts[0].forwardedPosts!).toHaveLength(mockSourcePosts.length);
-            expect(component.posts[0].forwardedAnswerPosts!).toHaveLength(mockSourceAnswerPosts.length);
+            if (forwardedPosts) {
+                expect(forwardedPosts).toHaveLength(mockSourcePosts.length);
+                forwardedPosts.forEach((post) => {
+                    if (post) {
+                        expect(post.id).toBeDefined();
+                        expect(post.id).toBe(10);
+                    } else {
+                        expect(post).toBeUndefined();
+                    }
+                });
+            }
 
-            expect(component.posts[0].forwardedPosts![0].id).toBe(10);
-            expect(component.posts[0].forwardedAnswerPosts![0].id).toBe(11);
+            if (forwardedAnswerPosts) {
+                expect(forwardedAnswerPosts).toHaveLength(mockSourceAnswerPosts.length);
+                forwardedAnswerPosts.forEach((post) => {
+                    if (post) {
+                        expect(post.id).toBeDefined();
+                        expect(post.id).toBe(11);
+                    } else {
+                        expect(post).toBeUndefined();
+                    }
+                });
+            }
         }));
 
         it('should filter posts to show only pinned posts when showOnlyPinned is true', () => {
@@ -517,9 +520,6 @@ examples.forEach((activeConversation) => {
 
             component._activeConversation = { id: 123, type: ConversationType.CHANNEL };
             component.course = { id: 1 } as Course;
-            component.searchInput = {
-                nativeElement: { value: '' },
-            } as ElementRef;
 
             component['onActiveConversationChange']();
             tick();

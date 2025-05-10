@@ -262,7 +262,8 @@ export class CourseUpdateComponent implements OnInit {
                 unenrollmentEnabled: new FormControl(this.course.unenrollmentEnabled),
                 unenrollmentEndDate: new FormControl(this.course.unenrollmentEndDate),
                 color: new FormControl(this.course.color),
-                courseIcon: new FormControl(this.course.courseIconPath),
+                courseIcon: new FormControl(this.course.courseIcon),
+                timeZone: new FormControl(this.course.timeZone),
             },
             { validators: CourseValidator },
         );

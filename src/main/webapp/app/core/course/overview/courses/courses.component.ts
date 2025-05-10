@@ -20,6 +20,7 @@ import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.co
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { CourseAccessStorageService } from 'app/core/course/shared/services/course-access-storage.service';
+import { addPublicFilePrefix } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-overview',
@@ -38,16 +39,16 @@ import { CourseAccessStorageService } from 'app/core/course/shared/services/cour
     ],
 })
 export class CoursesComponent implements OnInit, OnDestroy {
+    protected readonly faPenAlt = faPenAlt;
+    protected readonly faArrowDownAZ = faArrowDownAZ;
+    protected readonly faArrowUpAZ = faArrowUpAZ;
+    protected readonly faDoorOpen = faDoorOpen;
+
     private courseService = inject(CourseManagementService);
     private teamService = inject(TeamService);
     private websocketService = inject(WebsocketService);
     private router = inject(Router);
     private courseAccessStorageService = inject(CourseAccessStorageService);
-
-    protected readonly faPenAlt = faPenAlt;
-    protected readonly faArrowDownAZ = faArrowDownAZ;
-    protected readonly faArrowUpAZ = faArrowUpAZ;
-    protected readonly faDoorOpen = faDoorOpen;
 
     courses: Course[];
     public nextRelevantCourse?: Course;
@@ -89,6 +90,7 @@ export class CoursesComponent implements OnInit, OnDestroy {
                         return;
                     }
                     res.body.courses.forEach((courseDto: CourseForDashboardDTO) => {
+                        courseDto.course.courseIconPath = addPublicFilePrefix(courseDto.course.courseIcon);
                         courses.push(courseDto.course);
                     });
                     this.courses = sortCourses(courses);
