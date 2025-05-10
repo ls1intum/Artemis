@@ -129,7 +129,7 @@ module.exports = {
         '@src/(.*)': '<rootDir>/src/src/$1',
         '@state/(.*)': '<rootDir>/src/app/state/$1',
         '^lodash-es$': 'lodash',
-        '\\.css$': '<rootDir>/stub.js',
+        '\\.css$': '<rootDir>/src/test/javascript/spec/stub.js',
         '^monaco-editor$': '<rootDir>/node_modules/monaco-editor/esm/vs/editor/editor.api.js',
     },
 };

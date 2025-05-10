@@ -24,9 +24,9 @@ import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVcTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTest;
 
-class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsLocalVcTest {
+class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
 
     private static final String TEST_PREFIX = "authorizationservice";
 

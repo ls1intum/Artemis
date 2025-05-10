@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.core.service.ldap;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LDAP_OR_LDAP_ONLY;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -9,7 +11,7 @@ import org.springframework.ldap.core.support.LdapContextSource;
 import org.springframework.security.ldap.SpringSecurityLdapTemplate;
 
 @Configuration
-@Profile("ldap | ldap-only")
+@Profile(PROFILE_LDAP_OR_LDAP_ONLY)
 @EnableLdapRepositories(basePackages = "de.tum.cit.aet.artemis.core.repository.ldap")
 public class LdapConfig {
 

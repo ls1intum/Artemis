@@ -10,18 +10,13 @@ import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
-import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalVcSamlTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalVCSamlTest;
 
-public abstract class AbstractProgrammingIntegrationLocalVcSamlTest extends AbstractSpringIntegrationLocalVcSamlTest {
-
-    // Repositories
-    @Autowired
-    protected BuildPlanRepository buildPlanRepository;
+public abstract class AbstractProgrammingIntegrationLocalVCSamlTest extends AbstractSpringIntegrationLocalVCSamlTest {
 
     @Autowired
     protected ParticipationTestRepository participationRepository;

@@ -29,7 +29,7 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 
 /**
  * Note: this class should be independent of the actual VCS and CIS and contains common test logic for scenarios:
- * 1) Jenkins + LocalVc
+ * 1) Jenkins + LocalVC
  */
 @Service
 @Profile(SPRING_PROFILE_TEST)
