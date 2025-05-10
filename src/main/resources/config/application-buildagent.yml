@@ -10,6 +10,8 @@
 artemis:
     atlas:
       enabled: false
+    lecture:
+      enabled: false
     exam:
       enabled: false
     plagiarism:

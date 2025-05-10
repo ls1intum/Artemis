@@ -390,6 +390,11 @@ public final class Constants {
     public static final String MODULE_FEATURE_EXAM = "exam";
 
     /**
+     * The name of the module feature used for Lecture functionality.
+     */
+    public static final String MODULE_FEATURE_LECTURE = "lecture";
+
+    /**
      * The name of the module feature used for plagiarism functionality.
      */
     public static final String MODULE_FEATURE_PLAGIARISM = "plagiarism";
@@ -413,6 +418,11 @@ public final class Constants {
      * The name of the property used to enable or disable exam functionality.
      */
     public static final String EXAM_ENABLED_PROPERTY_NAME = "artemis.exam.enabled";
+
+    /**
+     * The name of the property used to enable or disable Lecture functionality.
+     */
+    public static final String LECTURE_ENABLED_PROPERTY_NAME = "artemis.lecture.enabled";
 
     /**
      * The name of the property used to enable or disable plagiarism functionality.
