@@ -6,9 +6,7 @@ import java.net.URI;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -22,6 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.ImageDTO;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
@@ -132,13 +131,15 @@ public class ExamUserService {
             ExamUser examUser = examUserOptional.get();
             String oldPathString = examUser.getStudentImagePath();
             MultipartFile studentImageFile = fileService.convertByteArrayToMultipart("student_image", ".png", examUserWithImageDTO.image().imageInBytes());
-            Path savedPath = fileService.saveFile(studentImageFile, FilePathService.getStudentImageFilePath(), false);
+            String externalUri = "/exam-user/" + examUser.getId() + "/" + studentImageFile.getOriginalFilename();
+            Path basePath = FilePathService.getStudentImageFilePath().resolve(examUser.getId().toString());
+            Path savedPath = fileService.saveFile(studentImageFile, basePath, FilePathType.EXAM_USER_IMAGE, true);
 
-            examUser.setStudentImagePath(FilePathService.publicPathForActualPathOrThrow(savedPath, examUser.getId()).toString());
+            examUser.setStudentImagePath(FilePathService.externalUriForFileSystemPath(savedPath, FilePathType.EXAM_USER_IMAGE, examUser.getId()).toString());
             examUserRepository.save(examUser);
 
             if (oldPathString != null) {
-                Path oldPath = FilePathService.actualPathForPublicPath(URI.create(oldPathString));
+                Path oldPath = FilePathService.fileSystemPathForExternalUri(URI.create(oldPathString), FilePathType.EXAM_USER_IMAGE);
                 fileService.schedulePathForDeletion(oldPath, 0);
             }
         }
@@ -153,8 +154,13 @@ public class ExamUserService {
      * @param user the exam user whose images should be deleted
      */
     public void deleteAvailableExamUserImages(ExamUser user) {
-        Stream.of(user.getSigningImagePath(), user.getStudentImagePath()).filter(Objects::nonNull).map(URI::create).map(FilePathService::actualPathForPublicPath)
-                .forEach(path -> fileService.schedulePathForDeletion(path, 0));
+        Optional.ofNullable(user.getSigningImagePath()).map(URI::create).map(uri -> FilePathService.fileSystemPathForExternalUri(uri, FilePathType.EXAM_USER_SIGNATURE))
+                .ifPresent(path -> {
+                    fileService.schedulePathForDeletion(path, 0);
+                });
+
+        Optional.ofNullable(user.getStudentImagePath()).map(URI::create).map(uri -> FilePathService.fileSystemPathForExternalUri(uri, FilePathType.EXAM_USER_IMAGE))
+                .ifPresent(path -> fileService.schedulePathForDeletion(path, 0));
     }
 
     /**
