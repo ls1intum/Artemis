@@ -6,10 +6,9 @@ import java.util.Set;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -46,9 +45,7 @@ public class LearningPath extends DomainObject {
     @JsonIgnoreProperties({ "competencies", "prerequisites", "exercises" })
     private Course course;
 
-    @ManyToMany
-    @JoinTable(name = "competency_learning_path", joinColumns = @JoinColumn(name = "learning_path_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "competency_id", referencedColumnName = "id"))
-    @JsonIgnoreProperties({ "exercises", "course", "learningPaths" })
+    @Transient
     private Set<CourseCompetency> competencies = new HashSet<>();
 
     public int getProgress() {

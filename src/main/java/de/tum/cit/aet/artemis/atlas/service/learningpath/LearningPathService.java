@@ -14,7 +14,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.data.domain.Page;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
@@ -164,6 +163,7 @@ public class LearningPathService {
         LearningPath lpToCreate = new LearningPath();
         lpToCreate.setUser(user);
         lpToCreate.setCourse(course);
+        lpToCreate.setCompetencies(new HashSet<>());
         lpToCreate.getCompetencies().addAll(course.getCompetencies());
         lpToCreate.getCompetencies().addAll(course.getPrerequisites());
         var persistedLearningPath = learningPathRepository.save(lpToCreate);
@@ -185,52 +185,6 @@ public class LearningPathService {
         final Page<LearningPath> learningPathPage = learningPathRepository.findByLoginOrNameInCourse(searchTerm, courseId, pageable);
         final List<LearningPathInformationDTO> contentDTOs = learningPathPage.getContent().stream().map(LearningPathInformationDTO::of).toList();
         return new SearchResultPageDTO<>(contentDTOs, learningPathPage.getTotalPages());
-    }
-
-    /**
-     * Links given competency to all learning paths of the course.
-     *
-     * @param competency Competency that should be added to each learning path
-     * @param courseId   course id that the learning paths belong to
-     */
-    @Async
-    public void linkCompetencyToLearningPathsOfCourse(@NotNull CourseCompetency competency, long courseId) {
-        var course = courseRepository.findWithEagerLearningPathsAndLearningPathCompetenciesByIdElseThrow(courseId);
-        var learningPaths = course.getLearningPaths();
-        learningPaths.forEach(learningPath -> learningPath.addCompetency(competency));
-        learningPathRepository.saveAll(learningPaths);
-        log.debug("Linked competency (id={}) to learning paths", competency.getId());
-    }
-
-    /**
-     * Links a list of competencies to all learning paths of the course.
-     *
-     * @param competencies The list of competencies that should be added
-     * @param courseId     course id that the learning paths belong to
-     */
-    public void linkCompetenciesToLearningPathsOfCourse(@NotNull List<? extends CourseCompetency> competencies, long courseId) {
-        if (competencies.isEmpty()) {
-            return;
-        }
-        var course = courseRepository.findWithEagerLearningPathsAndLearningPathCompetenciesByIdElseThrow(courseId);
-        var learningPaths = course.getLearningPaths();
-        learningPaths.forEach(learningPath -> learningPath.addCompetencies(new HashSet<>(competencies)));
-        learningPathRepository.saveAll(learningPaths);
-        log.debug("Linked {} competencies to learning paths", competencies.size());
-    }
-
-    /**
-     * Remove linked competency from all learning paths of the course.
-     *
-     * @param competency Competency that should be removed from each learning path
-     * @param courseId   course id that the learning paths belong to
-     */
-    public void removeLinkedCompetencyFromLearningPathsOfCourse(@NotNull CourseCompetency competency, long courseId) {
-        var course = courseRepository.findWithEagerLearningPathsAndLearningPathCompetenciesByIdElseThrow(courseId);
-        var learningPaths = course.getLearningPaths();
-        learningPaths.forEach(learningPath -> learningPath.removeCompetency(competency));
-        learningPathRepository.saveAll(learningPaths);
-        log.debug("Removed linked competency (id={}) from learning paths", competency.getId());
     }
 
     /**

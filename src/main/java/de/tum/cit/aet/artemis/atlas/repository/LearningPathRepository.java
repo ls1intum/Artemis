@@ -1,92 +1,104 @@
 package de.tum.cit.aet.artemis.atlas.repository;
 
-import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
-
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
+import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.LearningPath;
-import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+import de.tum.cit.aet.artemis.atlas.domain.competency.Prerequisite;
 
 @Conditional(AtlasEnabled.class)
 @Repository
-public interface LearningPathRepository extends ArtemisJpaRepository<LearningPath, Long> {
+public class LearningPathRepository {
 
-    Optional<LearningPath> findByCourseIdAndUserId(long courseId, long userId);
+    protected final LearningPathJpaRepository learningPathJpaRepository;
 
-    default LearningPath findByCourseIdAndUserIdElseThrow(long courseId, long userId) {
-        return getValueElseThrow(findByCourseIdAndUserId(courseId, userId));
+    private final CompetencyRepository competencyRepository;
+
+    private final PrerequisiteRepository prerequisiteRepository;
+
+    public LearningPathRepository(LearningPathJpaRepository learningPathJpaRepository, CompetencyRepository competencyRepository, PrerequisiteRepository prerequisiteRepository) {
+        this.learningPathJpaRepository = learningPathJpaRepository;
+        this.competencyRepository = competencyRepository;
+        this.prerequisiteRepository = prerequisiteRepository;
     }
 
-    @EntityGraph(type = LOAD, attributePaths = { "user" })
-    Optional<LearningPath> findWithEagerUserById(long learningPathId);
-
-    default LearningPath findWithEagerUserByIdElseThrow(long learningPathId) {
-        return getValueElseThrow(findWithEagerUserById(learningPathId), learningPathId);
+    public Optional<LearningPath> findByCourseIdAndUserId(long courseId, long userId) {
+        return learningPathJpaRepository.findByCourseIdAndUserId(courseId, userId);
     }
 
-    @EntityGraph(type = LOAD, attributePaths = { "competencies" })
-    Optional<LearningPath> findWithEagerCompetenciesByCourseIdAndUserId(long courseId, long userId);
-
-    @EntityGraph(type = LOAD, attributePaths = { "course" })
-    Optional<LearningPath> findWithEagerCourseById(long learningPathId);
-
-    default LearningPath findWithEagerCourseByIdElseThrow(long learningPathId) {
-        return getValueElseThrow(findWithEagerCourseById(learningPathId), learningPathId);
+    public LearningPath findByCourseIdAndUserIdElseThrow(long courseId, long userId) {
+        return learningPathJpaRepository.findByCourseIdAndUserIdElseThrow(courseId, userId);
     }
 
-    @EntityGraph(type = LOAD, attributePaths = { "course", "competencies" })
-    Optional<LearningPath> findWithEagerCourseAndCompetenciesById(long learningPathId);
-
-    default LearningPath findWithEagerCourseAndCompetenciesByIdElseThrow(long learningPathId) {
-        return getValueElseThrow(findWithEagerCourseAndCompetenciesById(learningPathId), learningPathId);
+    public LearningPath findWithEagerUserByIdElseThrow(long learningPathId) {
+        return learningPathJpaRepository.findWithEagerUserByIdElseThrow(learningPathId);
     }
 
-    @Query("""
-            SELECT lp
-            FROM LearningPath lp
-            WHERE (lp.course.id = :courseId)
-                AND (
-                    lp.user.login LIKE %:searchTerm%
-                    OR CONCAT(lp.user.firstName, ' ', lp.user.lastName) LIKE %:searchTerm%
-                )
-            """)
-    Page<LearningPath> findByLoginOrNameInCourse(@Param("searchTerm") String searchTerm, @Param("courseId") long courseId, Pageable pageable);
+    public LearningPath findWithEagerCourseByIdElseThrow(long learningPathId) {
+        return learningPathJpaRepository.findWithEagerCourseByIdElseThrow(learningPathId);
+    }
 
-    @Query("""
-            SELECT COUNT (learningPath)
-            FROM LearningPath learningPath
-            WHERE learningPath.course.id = :courseId
-                AND learningPath.user.deleted = FALSE
-                AND learningPath.course.studentGroupName MEMBER OF learningPath.user.groups
-            """)
-    long countLearningPathsOfEnrolledStudentsInCourse(@Param("courseId") long courseId);
+    public LearningPath findWithEagerCourseAndCompetenciesByIdElseThrow(long learningPathId) {
+        final var learningPath = learningPathJpaRepository.findWithEagerCourseByIdElseThrow(learningPathId);
+        return addTransientCompetencies(learningPath);
+    }
 
-    @Query("""
-            SELECT l
-            FROM LearningPath l
-            LEFT JOIN FETCH l.competencies c
-            LEFT JOIN FETCH c.lectureUnitLinks lul
-            LEFT JOIN FETCH lul.lectureUnit
-            LEFT JOIN FETCH c.exerciseLinks el
-            LEFT JOIN FETCH el.exercise
-            LEFT JOIN FETCH l.user u
-            LEFT JOIN FETCH u.learnerProfile lp
-            LEFT JOIN FETCH lp.courseLearnerProfiles clp
-            WHERE l.id = :learningPathId
-                AND clp.course.id = l.course.id
-            """)
-    Optional<LearningPath> findWithCompetenciesAndLectureUnitsAndExercisesAndLearnerProfileById(@Param("learningPathId") long learningPathId);
+    public Optional<LearningPath> findWithEagerCompetenciesByCourseIdAndUserId(long courseId, long userId) {
+        final var learningPath = learningPathJpaRepository.findByCourseIdAndUserId(courseId, userId);
+        return learningPath.map(this::addTransientCompetencies);
+    }
 
-    default LearningPath findWithCompetenciesAndLectureUnitsAndExercisesAndLearnerProfileByIdElseThrow(long learningPathId) {
-        return getValueElseThrow(findWithCompetenciesAndLectureUnitsAndExercisesAndLearnerProfileById(learningPathId), learningPathId);
+    public Page<LearningPath> findByLoginOrNameInCourse(String searchTerm, long courseId, Pageable pageable) {
+        return learningPathJpaRepository.findByLoginOrNameInCourse(searchTerm, courseId, pageable);
+    }
+
+    public long countLearningPathsOfEnrolledStudentsInCourse(long courseId) {
+        return learningPathJpaRepository.countLearningPathsOfEnrolledStudentsInCourse(courseId);
+    }
+
+    public Optional<LearningPath> findWithCompetenciesAndLectureUnitsAndExercisesAndLearnerProfileById(long learningPathId) {
+        final var learningPath = learningPathJpaRepository.findWithUserAndLearnerProfileById(learningPathId);
+        return learningPath.map(this::addTransientCompetenciesAndLectureUnitsAndExercises);
+    }
+
+    public LearningPath findWithCompetenciesAndLectureUnitsAndExercisesAndLearnerProfileByIdElseThrow(long learningPathId) {
+        return learningPathJpaRepository.getValueElseThrow(findWithCompetenciesAndLectureUnitsAndExercisesAndLearnerProfileById(learningPathId), learningPathId);
+    }
+
+    private LearningPath addTransientCompetencies(LearningPath learningPath) {
+        final var competencies = competencyRepository.findByLearningPathId(learningPath.getId());
+        final var prerequisites = prerequisiteRepository.findByLearningPathId(learningPath.getId());
+        return addTransientCompetencies(learningPath, competencies, prerequisites);
+    }
+
+    private LearningPath addTransientCompetenciesAndLectureUnitsAndExercises(LearningPath learningPath) {
+        final var competencies = competencyRepository.findByLearningPathIdWithLectureUnitsAndExercises(learningPath.getId());
+        final var prerequisites = prerequisiteRepository.findByLearningPathIdWithLectureUnitsAndExercises(learningPath.getId());
+        return addTransientCompetencies(learningPath, competencies, prerequisites);
+    }
+
+    public LearningPath addTransientCompetencies(LearningPath learningPath, Set<Competency> competencies, Set<Prerequisite> prerequisites) {
+        final var courseCompetencies = new HashSet<CourseCompetency>();
+        courseCompetencies.addAll(competencies);
+        courseCompetencies.addAll(prerequisites);
+        learningPath.setCompetencies(courseCompetencies);
+        return learningPath;
+    }
+
+    public LearningPath save(LearningPath learningPath) {
+        return learningPathJpaRepository.save(learningPath);
+    }
+
+    public LearningPath findByIdElseThrow(long learningPathId) {
+        return learningPathJpaRepository.findByIdElseThrow(learningPathId);
     }
 }

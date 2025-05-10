@@ -173,7 +173,7 @@ class LtiDeepLinkingServiceTest {
         createMockOidcIdToken();
         Course course = createMockCourse();
         course.setLearningPathsEnabled(false);
-        when(courseRepository.findWithEagerLearningPathsAndLearningPathCompetenciesByIdElseThrow(anyLong())).thenReturn(course);
+        when(courseRepository.findByIdElseThrow(anyLong())).thenReturn(course);
 
         assertThatExceptionOfType(BadRequestAlertException.class)
                 .isThrownBy(() -> ltiDeepLinkingService.performDeepLinking(oidcIdToken, "test_registration_id", 1L, null, DeepLinkingType.LEARNING_PATH))
@@ -237,7 +237,7 @@ class LtiDeepLinkingServiceTest {
 
         Course course = createMockCourse();
         course.setLearningPathsEnabled(true);
-        when(courseRepository.findWithEagerLearningPathsAndLearningPathCompetenciesByIdElseThrow(course.getId())).thenReturn(course);
+        when(courseRepository.findByIdElseThrow(course.getId())).thenReturn(course);
 
         String deepLinkResponse = ltiDeepLinkingService.performDeepLinking(oidcIdToken, "test_registration_id", course.getId(), null, DeepLinkingType.LEARNING_PATH);
 

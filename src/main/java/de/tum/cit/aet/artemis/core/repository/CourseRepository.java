@@ -103,15 +103,6 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "competencies", "prerequisites" })
     Optional<Course> findWithEagerCompetenciesAndPrerequisitesById(long courseId);
 
-    @Query("""
-            SELECT c
-            FROM Course c
-                LEFT JOIN FETCH c.learningPaths learningPaths
-                LEFT JOIN FETCH learningPaths.competencies
-            WHERE c.id = :courseId
-            """)
-    Optional<Course> findWithEagerLearningPathsAndLearningPathCompetencies(@Param("courseId") long courseId);
-
     // Note: we load attachments directly because otherwise, they will be loaded in subsequent DB calls due to the EAGER relationship
     @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.attachments" })
     Optional<Course> findWithEagerLecturesById(long courseId);
@@ -452,11 +443,6 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
     @NotNull
     default Course findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(long courseId) {
         return getValueElseThrow(findWithEagerCompetenciesAndPrerequisitesById(courseId), courseId);
-    }
-
-    @NotNull
-    default Course findWithEagerLearningPathsAndLearningPathCompetenciesByIdElseThrow(long courseId) {
-        return getValueElseThrow(findWithEagerLearningPathsAndLearningPathCompetencies(courseId), courseId);
     }
 
     Page<Course> findByTitleIgnoreCaseContaining(String partialTitle, Pageable pageable);
