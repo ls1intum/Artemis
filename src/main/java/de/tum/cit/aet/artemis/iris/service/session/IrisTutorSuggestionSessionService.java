@@ -1,0 +1,120 @@
+package de.tum.cit.aet.artemis.iris.service.session;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
+
+import java.util.Objects;
+import java.util.Optional;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import de.tum.cit.aet.artemis.communication.repository.PostRepository;
+import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
+import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
+import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
+import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
+import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
+import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
+import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
+
+/**
+ * Service for managing Iris tutor suggestion sessions.
+ * <p>
+ * This service is responsible for handling the business logic of Iris tutor suggestion sessions.
+ * </p>
+ */
+@Service
+@Profile(PROFILE_IRIS)
+public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionService<IrisTutorSuggestionSession> implements IrisRateLimitedFeatureInterface {
+
+    private static final Logger log = LoggerFactory.getLogger(IrisTutorSuggestionSessionService.class);
+
+    private final IrisSessionRepository irisSessionRepository;
+
+    private final IrisChatWebsocketService irisChatWebsocketService;
+
+    private final IrisRateLimitService rateLimitService;
+
+    private final PyrisPipelineService pyrisPipelineService;
+
+    private final AuthorizationCheckService authCheckService;
+
+    private final IrisSettingsService irisSettingsService;
+
+    private final PostRepository postRepository;
+
+    public IrisTutorSuggestionSessionService(IrisSessionRepository irisSessionRepository, ObjectMapper objectMapper, IrisMessageService irisMessageService,
+            IrisChatWebsocketService irisChatWebsocketService, LLMTokenUsageService llmTokenUsageService, IrisRateLimitService rateLimitService,
+            PyrisPipelineService pyrisPipelineService, AuthorizationCheckService authCheckService, IrisSettingsService irisSettingsService, PostRepository postRepository) {
+        super(irisSessionRepository, objectMapper, irisMessageService, irisChatWebsocketService, llmTokenUsageService);
+        this.irisSessionRepository = irisSessionRepository;
+        this.irisChatWebsocketService = irisChatWebsocketService;
+        this.rateLimitService = rateLimitService;
+        this.pyrisPipelineService = pyrisPipelineService;
+        this.authCheckService = authCheckService;
+        this.irisSettingsService = irisSettingsService;
+        this.postRepository = postRepository;
+    }
+
+    @Override
+    protected void setLLMTokenUsageParameters(LLMTokenUsageService.LLMTokenUsageBuilder builder, IrisTutorSuggestionSession session) {
+        var post = postRepository.findPostOrMessagePostByIdElseThrow(session.getPostId());
+        builder.withCourse(post.getCoursePostingBelongsTo().getId());
+    }
+
+    @Override
+    public void sendOverWebsocket(IrisTutorSuggestionSession session, IrisMessage message) {
+        irisChatWebsocketService.sendMessage(session, message, null);
+    }
+
+    @Override
+    public void requestAndHandleResponse(IrisTutorSuggestionSession irisSession) {
+        requestAndHandleResponse(irisSession, Optional.empty());
+    }
+
+    /**
+     * Requests and handles the response from the Pyris pipeline for the given session.
+     *
+     * @param session The IrisTutorSuggestionSession to handle
+     * @param event   Optional event to pass to the Pyris pipeline
+     */
+    public void requestAndHandleResponse(IrisTutorSuggestionSession session, Optional<String> event) {
+        var chatSession = (IrisTutorSuggestionSession) irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
+
+        var variant = "default";
+        var post = postRepository.findPostOrMessagePostByIdElseThrow(session.getPostId());
+
+        pyrisPipelineService.executeTutorSuggestionPipeline(variant, chatSession, event, post);
+    }
+
+    @Override
+    public void checkRateLimit(User user) {
+        rateLimitService.checkRateLimitElseThrow(user);
+    }
+
+    @Override
+    public void checkHasAccessTo(User user, IrisTutorSuggestionSession irisSession) {
+        var post = postRepository.findPostOrMessagePostByIdElseThrow(irisSession.getPostId());
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, post.getCoursePostingBelongsTo(), user);
+        if (!Objects.equals(irisSession.getUser(), user)) {
+            throw new AccessForbiddenException("Iris Session", irisSession.getId());
+        }
+    }
+
+    @Override
+    public void checkIsFeatureActivatedFor(IrisTutorSuggestionSession irisSession) {
+        var post = postRepository.findPostOrMessagePostByIdElseThrow(irisSession.getPostId());
+        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.TUTOR_SUGGESTION, post.getCoursePostingBelongsTo());
+    }
+}

@@ -87,11 +87,18 @@ public class IrisMessageResource {
     public ResponseEntity<IrisMessage> createMessage(@PathVariable Long sessionId, @RequestBody IrisMessage message) throws URISyntaxException {
         var session = irisSessionRepository.findByIdElseThrow(sessionId);
         irisSessionService.checkIsIrisActivated(session);
-        var user = userRepository.getUser();
-        irisSessionService.checkHasAccessToIrisSession(session, user);
-        irisSessionService.checkRateLimit(session, user);
 
-        var savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.USER);
+        // Messages by TUT_SUG are send by the tutor suggestion system, which is not the user
+        IrisMessage savedMessage;
+        if (message.getSender() == IrisMessageSender.TUT_SUG) {
+            savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.TUT_SUG);
+        }
+        else {
+            var user = userRepository.getUser();
+            irisSessionService.checkHasAccessToIrisSession(session, user);
+            irisSessionService.checkRateLimit(session, user);
+            savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.USER);
+        }
         savedMessage.setMessageDifferentiator(message.getMessageDifferentiator());
         irisSessionService.sendOverWebsocket(savedMessage, session);
         irisSessionService.requestMessageFromIris(session);
