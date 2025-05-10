@@ -858,6 +858,47 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(resultPosts).extracting(Post::getContent).contains("SearchTestGroup");
     }
 
+    @ParameterizedTest
+    @MethodSource("searchQueryAndAuthorProvider")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testWhetherShouldIncludeBasePostWhenSearchingMessagesByContentAndAuthor(String searchQuery, String authorLogin, boolean shouldBeIncluded) throws Exception {
+        // Create base post by student1 with content "base"
+        Post basePost = createPostWithOneToOneChat(TEST_PREFIX);
+        basePost.setContent("base");
+        basePost = createPostAndAwaitAsyncCode(basePost);
+
+        // Add an answer from student2 with content "answer" to the base post
+        userUtilService.changeUser(TEST_PREFIX + "student2");
+        AnswerPost answer = new AnswerPost();
+        answer.setContent("answer");
+        answer.setPost(basePost);
+        createAnswerPostAndAwaitAsyncCode(answer);
+
+        // Use PostContextFilterDTO and conversationMessageRepository.findMessages
+        long conversationId = basePost.getConversation().getId();
+        long authorId = userTestRepository.findOneByLogin(authorLogin).orElseThrow().getId();
+        PostContextFilterDTO filter = new PostContextFilterDTO(courseId, null, new long[] { conversationId }, new long[] { authorId }, searchQuery, false, false, false,
+                PostSortCriterion.CREATION_DATE, SortingOrder.DESCENDING);
+        Page<Post> returnedPage = conversationMessageRepository.findMessages(filter, Pageable.unpaged(), 0L /* Not used here */);
+        List<Post> returnedPosts = returnedPage.getContent();
+
+        if (shouldBeIncluded) {
+            assertThat(returnedPosts).isNotEmpty();
+            assertThat(returnedPosts).extracting(Post::getContent).contains("base");
+        }
+        else {
+            assertThat(returnedPosts).isEmpty();
+        }
+    }
+
+    private static Stream<Arguments> searchQueryAndAuthorProvider() {
+        String baseAuthor = TEST_PREFIX + "student1";
+        String answerAuthor = TEST_PREFIX + "student2";
+
+        return Stream.of(Arguments.of("base", baseAuthor, true), Arguments.of("answer", answerAuthor, true), Arguments.of("base", answerAuthor, false),
+                Arguments.of("answer", baseAuthor, false));
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldSendCourseNotificationForNewPostWhenFeatureIsEnabled() throws Exception {
@@ -998,6 +1039,16 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         var postDTOToSave = new CreatePostDTO(postToSave.getContent(), postToSave.getTitle(), postToSave.getHasForwardedMessages(),
                 new CreatePostConversationDTO(postToSave.getConversation().getId()));
         return request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postDTOToSave, Post.class, HttpStatus.CREATED);
+    }
+
+    /**
+     * Calls the POST /answer-messages endpoint to create a new answer post
+     *
+     * @param answerPostToSave answer post to save in the database
+     * @return saved answer post
+     */
+    private AnswerPost createAnswerPostAndAwaitAsyncCode(AnswerPost answerPostToSave) throws Exception {
+        return request.postWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
     }
 
     private static List<CourseInformationSharingConfiguration> courseInformationSharingConfigurationProvider() {
