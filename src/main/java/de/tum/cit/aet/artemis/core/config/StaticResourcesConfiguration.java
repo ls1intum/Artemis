@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.config;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import org.springframework.boot.actuate.info.InfoEndpoint;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -26,7 +27,7 @@ public class StaticResourcesConfiguration {
     }
 
     @Bean
-    public IndexHtmlTransformer transformer(Environment environment) {
-        return new IndexHtmlTransformer(environment);
+    public IndexHtmlTransformer transformer(Environment environment, InfoEndpoint infoEndpoint) {
+        return new IndexHtmlTransformer(environment, infoEndpoint);
     }
 }
