@@ -361,6 +361,8 @@ public class SharedQueueProcessingService {
             localProcessingJobs.decrementAndGet();
             buildAgentInformationService.updateLocalBuildAgentInformationWithRecentJob(finishedJob, isPaused.get());
 
+            consecutiveBuildJobFailures.set(0);
+
             // process next build job if node is available
             checkAvailabilityAndProcessNextBuild();
         });
@@ -500,6 +502,7 @@ public class SharedQueueProcessingService {
             isPaused.set(false);
             processResults.set(true);
             buildAgentConfiguration.openBuildAgentServices();
+            consecutiveBuildJobFailures.set(0);
 
             // Cleanup docker containers
             buildAgentDockerService.cleanUpContainers();
