@@ -419,9 +419,7 @@ public class SharedQueueProcessingService {
                 log.error("Build agent has failed to process build jobs {} times in a row. Pausing build agent.", consecutiveBuildJobFailures.get());
                 pauseBuildAgent();
             }
-            else {
-                log.debug("Build agent has failed to process build jobs {} times in a row.", consecutiveBuildJobFailures.get());
-            }
+
             checkAvailabilityAndProcessNextBuild();
             return null;
         });
