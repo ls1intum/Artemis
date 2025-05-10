@@ -3007,7 +3007,7 @@ public class CourseTestService {
 
         // Average Score
         assertThat(courseDTO.currentPercentageAverageScore()).isEqualTo(50);
-        assertThat(courseDTO.currentAbsoluteAverageScore()).isEqualTo(18);
+        assertThat(courseDTO.currentAbsoluteAverageScore()).isEqualTo(15);
         assertThat(courseDTO.currentMaxAverageScore()).isEqualTo(30);
 
         course2.setStartDate(now.minusWeeks(20));
