@@ -42,11 +42,10 @@ public class TeamWebsocketService {
      * @param exercise                    Exercise for which the team assignment has been made
      * @param existingTeam                Team before the update (null when a team was created)
      * @param updatedTeam                 Team after the update (null when a team was deleted)
-     * @param participationsOfUpdatedTeam Student participations of the updated team
+     * @param participationsOfUpdatedTeam Student participations of the updated team (without submissions and results)
      */
     public void sendTeamAssignmentUpdate(Exercise exercise, @Nullable Team existingTeam, @Nullable Team updatedTeam, List<StudentParticipation> participationsOfUpdatedTeam) {
         // Users in the existing team that are no longer in the updated team were unassigned => inform them
-        // TODO: do we really need participations with submissions and results for the team assignment payload?
         if (existingTeam != null) {
             TeamAssignmentPayload payload = new TeamAssignmentPayload(exercise, null, List.of());
             Set<User> unassignedUsers = new HashSet<>(existingTeam.getStudents());

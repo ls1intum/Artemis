@@ -16,6 +16,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -830,4 +831,14 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
         }
         return results;
     }
+
+    @Query("""
+            SELECT r
+            FROM Result r
+                LEFT JOIN FETCH r.submission
+            WHERE r.submission.participation.id = :participationId
+                AND r.completionDate IS NOT NULL
+            ORDER BY r.id DESC
+            """)
+    List<Result> findLatestResultsForParticipation(@Param("participationId") Long participationId, Pageable pageable);
 }

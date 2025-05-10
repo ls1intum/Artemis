@@ -348,7 +348,6 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     @Query("""
             SELECT DISTINCT e
             FROM Exercise e
-                LEFT JOIN FETCH e.posts
                 LEFT JOIN FETCH e.categories
                 LEFT JOIN FETCH e.submissionPolicy
             WHERE e.id = :exerciseId

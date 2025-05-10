@@ -29,8 +29,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 
 /**
@@ -41,6 +39,7 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 @Table(name = "post")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+// TODO: delete exercise_id, lecture_id and course_id in post table
 public class Post extends Posting {
 
     @Size(max = 200)
@@ -60,18 +59,6 @@ public class Post extends Posting {
     @CollectionTable(name = "post_tag", joinColumns = @JoinColumn(name = "post_id"))
     @Column(name = "text")
     private Set<String> tags = new HashSet<>();
-
-    @ManyToOne
-    @JsonIncludeProperties({ "id", "title" })
-    private Exercise exercise;
-
-    @ManyToOne
-    @JsonIncludeProperties({ "id", "title" })
-    private Lecture lecture;
-
-    @ManyToOne
-    @JsonIncludeProperties({ "id", "title" })
-    private Course course;
 
     @ManyToOne
     private Conversation conversation;
@@ -172,10 +159,6 @@ public class Post extends Posting {
 
     public void addTag(String tag) {
         this.tags.add(tag);
-    }
-
-    public void setCourse(Course course) {
-        this.course = course;
     }
 
     public Conversation getConversation() {

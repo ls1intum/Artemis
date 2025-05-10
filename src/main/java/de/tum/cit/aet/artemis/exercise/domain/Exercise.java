@@ -51,7 +51,6 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.TutorParticipation;
 import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
-import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.DueDateStat;
@@ -169,11 +168,6 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("exercise")
     private Set<Attachment> attachments = new HashSet<>();
-
-    @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonIncludeProperties({ "id" })
-    private Set<Post> posts = new HashSet<>();
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -427,14 +421,6 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         this.attachments = attachments;
     }
 
-    public Set<Post> getPosts() {
-        return posts;
-    }
-
-    public void setPosts(Set<Post> posts) {
-        this.posts = posts;
-    }
-
     public Set<PlagiarismCase> getPlagiarismCases() {
         return plagiarismCases;
     }
@@ -523,19 +509,19 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
      * Returns all results of an exercise for give participation that have a completion date. If the exercise is restricted like {@link QuizExercise} please override this function
      * with the respective filter. (relevancy depends on Exercise type => this should be overridden by subclasses if necessary)
      *
-     * @param participation the participation whose results we are considering
-     * @return all results of given participation, or null, if none exist
+     * @param results results which should be taken into account
+     * @return results of given participation, or null, if none exist
      */
-    public Set<Result> findResultsFilteredForStudents(Participation participation) {
+    public Set<Result> filterResultsForStudents(Collection<Result> results) {
         boolean isAssessmentOver = getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
         if (!isAssessmentOver) {
             // This allows the showing of preliminary feedback in case the assessment due date is set before its over.
             if (this instanceof TextExercise || this instanceof ModelingExercise) {
-                return participation.getResults().stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA).collect(Collectors.toSet());
+                return results.stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA).collect(Collectors.toSet());
             }
             return Set.of();
         }
-        return participation.getResults().stream().filter(result -> result.getCompletionDate() != null).collect(Collectors.toSet());
+        return results.stream().filter(result -> result.getCompletionDate() != null).collect(Collectors.toSet());
     }
 
     public Set<TutorParticipation> getTutorParticipations() {
@@ -904,7 +890,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
      * Just setting the collections to {@code null} breaks the automatic orphan removal and change detection in the database.
      */
     public void disconnectRelatedEntities() {
-        Stream.of(teams, gradingCriteria, studentParticipations, tutorParticipations, exampleSubmissions, attachments, posts, plagiarismCases).filter(Objects::nonNull)
+        Stream.of(teams, gradingCriteria, studentParticipations, tutorParticipations, exampleSubmissions, attachments, plagiarismCases).filter(Objects::nonNull)
                 .forEach(Collection::clear);
     }
 }
