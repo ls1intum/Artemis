@@ -19,8 +19,6 @@ import static org.mockito.Mockito.doReturn;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -33,8 +31,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
@@ -223,7 +219,7 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVcTest extends Abstra
         // Note: Step 2c) is not needed in the Jenkins setup
     }
 
-    public void mockConnectorRequestsForStartPractice(ProgrammingExercise exercise, String username, Set<User> users) throws IOException, URISyntaxException {
+    public void mockConnectorRequestsForStartPractice(ProgrammingExercise exercise, String username) throws IOException {
         // Step 2a)
         jenkinsRequestMockProvider.mockCopyBuildPlanForParticipation(exercise, username);
         // Step 2b)
@@ -232,14 +228,14 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVcTest extends Abstra
     }
 
     @Override
-    public void mockUpdatePlanRepositoryForParticipation(ProgrammingExercise exercise, String username) throws IOException, URISyntaxException {
+    public void mockUpdatePlanRepositoryForParticipation(ProgrammingExercise exercise, String username) throws IOException {
         final var projectKey = exercise.getProjectKey();
         final var repoName = projectKey.toLowerCase() + "-" + username;
         mockUpdatePlanRepository(exercise, username, ASSIGNMENT_REPO_NAME, repoName);
     }
 
     @Override
-    public void mockUpdatePlanRepository(ProgrammingExercise exercise, String planName, String repoNameInCI, String repoNameInVcs) throws IOException, URISyntaxException {
+    public void mockUpdatePlanRepository(ProgrammingExercise exercise, String planName, String repoNameInCI, String repoNameInVcs) throws IOException {
         jenkinsRequestMockProvider.mockUpdatePlanRepository(exercise.getProjectKey(), planName, false);
     }
 
@@ -353,7 +349,7 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVcTest extends Abstra
     }
 
     @Override
-    public void mockHealthInCiService(boolean isRunning, HttpStatus httpStatus) throws Exception {
+    public void mockHealthInCiService(boolean isRunning, HttpStatus httpStatus) {
         jenkinsRequestMockProvider.mockHealth(isRunning, httpStatus);
     }
 
@@ -412,67 +408,67 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVcTest extends Abstra
     }
 
     @Override
-    public void mockCopyRepositoryForParticipation(ProgrammingExercise exercise, String username) throws URISyntaxException, IOException {
+    public void mockCopyRepositoryForParticipation(ProgrammingExercise exercise, String username) {
         // Not needed for this test
     }
 
     @Override
-    public void mockRepositoryWritePermissionsForTeam(Team team, User newStudent, ProgrammingExercise exercise, HttpStatus status) throws Exception {
+    public void mockRepositoryWritePermissionsForTeam(Team team, User newStudent, ProgrammingExercise exercise, HttpStatus status) {
         // Not needed for this test
     }
 
     @Override
-    public void mockRepositoryWritePermissionsForStudent(User student, ProgrammingExercise exercise, HttpStatus status) throws Exception {
+    public void mockRepositoryWritePermissionsForStudent(User student, ProgrammingExercise exercise, HttpStatus status) {
         // Not needed for this test
     }
 
     @Override
-    public void mockRetrieveArtifacts(ProgrammingExerciseStudentParticipation participation) throws MalformedURLException, URISyntaxException, JsonProcessingException {
+    public void mockRetrieveArtifacts(ProgrammingExerciseStudentParticipation participation) {
         // Not needed for this test
     }
 
     @Override
-    public void mockFetchCommitInfo(String projectKey, String repositorySlug, String hash) throws URISyntaxException, JsonProcessingException {
+    public void mockFetchCommitInfo(String projectKey, String repositorySlug, String hash) {
         // Not needed for this test
     }
 
     @Override
-    public void mockCreateGroupInUserManagement(String groupName) throws Exception {
+    public void mockCreateGroupInUserManagement(String groupName) {
         // Not needed for this test
     }
 
     @Override
-    public void mockDeleteGroupInUserManagement(String groupName) throws Exception {
+    public void mockDeleteGroupInUserManagement(String groupName) {
         // Not needed for this test
     }
 
     @Override
-    public void mockDeleteRepository(String projectKey, String repositoryName, boolean shouldFail) throws Exception {
+    public void mockDeleteRepository(String projectKey, String repositoryName, boolean shouldFail) {
         // Not needed for this test
     }
 
     @Override
-    public void mockDeleteProjectInVcs(String projectKey, boolean shouldFail) throws Exception {
+    public void mockDeleteProjectInVcs(String projectKey, boolean shouldFail) {
         // Not needed for this test
     }
 
     @Override
-    public void mockCheckIfProjectExistsInVcs(ProgrammingExercise exercise, boolean existsInVcs) throws Exception {
+    public void mockCheckIfProjectExistsInVcs(ProgrammingExercise exercise, boolean existsInVcs) {
         // Not needed for this test
     }
 
     @Override
-    public void mockRepositoryUriIsValid(VcsRepositoryUri vcsTemplateRepositoryUri, String projectKey, boolean b) throws Exception {
+    public void mockRepositoryUriIsValid(VcsRepositoryUri vcsTemplateRepositoryUri, String projectKey, boolean b) {
         // Not needed for this test
     }
 
     @Override
-    public void mockDefaultBranch(ProgrammingExercise programmingExercise) throws IOException {
+    public void mockDefaultBranch(ProgrammingExercise programmingExercise) {
         // Not needed for this test
     }
 
     @Override
-    public void mockUserExists(String username) throws Exception {
+    public void mockUserExists(String username) {
         // Not needed for this test
     }
 }

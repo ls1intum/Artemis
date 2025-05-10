@@ -11,7 +11,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_THEIA;
-import static org.mockito.Mockito.when;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.net.URL;
@@ -19,7 +18,6 @@ import java.nio.file.Path;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.parallel.ResourceLock;
 import org.mockito.Mockito;
@@ -138,12 +136,6 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     @MockitoSpyBean
     protected BuildAgentConfiguration buildAgentConfiguration;
 
-    /**
-     * This is the mock(DockerClient.class).
-     * Subclasses can use this to dynamically mock methods of the DockerClient.
-     */
-    protected DockerClient dockerClient;
-
     @MockitoSpyBean
     protected ResourceLoaderService resourceLoaderService;
 
@@ -210,20 +202,9 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
 
     protected static DockerClient dockerClientMock;
 
-    @BeforeAll
-    protected static void mockDockerClient() throws InterruptedException {
-        dockerClientMock = DockerClientTestService.mockDockerClient();
-    }
-
     @BeforeEach
     void clearBuildJobsBefore() {
         buildJobRepository.deleteAll();
-    }
-
-    @BeforeEach
-    protected void mockBuildAgentServices() {
-        when(buildAgentConfiguration.getDockerClient()).thenReturn(dockerClientMock);
-        this.dockerClient = dockerClientMock;
     }
 
     @AfterEach

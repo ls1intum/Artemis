@@ -14,9 +14,6 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URISyntaxException;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
@@ -28,8 +25,6 @@ import org.springframework.security.saml2.provider.service.registration.RelyingP
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -61,27 +56,25 @@ public abstract class AbstractSpringIntegrationLocalVcSamlTest extends AbstractA
     }
 
     @Override
-    public void mockConnectorRequestsForSetup(ProgrammingExercise exercise, boolean failToCreateCiProject, boolean useCustomBuildPlanDefinition, boolean useCustomBuildPlanWorked)
-            throws Exception {
+    public void mockConnectorRequestsForSetup(ProgrammingExercise exercise, boolean failToCreateCiProject, boolean useCustomBuildPlanDefinition, boolean useCustomBuildPlanWorked) {
         // saml2-specific mocks
         doReturn(null).when(relyingPartyRegistrationRepository).findByRegistrationId(anyString());
         doNothing().when(mailService).sendSAML2SetPasswordMail(any(User.class));
     }
 
     @Override
-    public void mockConnectorRequestForImportFromFile(ProgrammingExercise exerciseForImport) throws Exception {
+    public void mockConnectorRequestForImportFromFile(ProgrammingExercise exerciseForImport) {
         mockConnectorRequestsForSetup(exerciseForImport, false, false, false);
     }
 
     @Override
-    public void mockConnectorRequestsForImport(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean recreateBuildPlans, boolean addAuxRepos)
-            throws Exception {
+    public void mockConnectorRequestsForImport(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean recreateBuildPlans, boolean addAuxRepos) {
         // Not needed for this test
     }
 
     @Override
     public void mockImportProgrammingExerciseWithFailingEnablePlan(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean planExistsInCi,
-            boolean shouldPlanEnableFail) throws Exception {
+            boolean shouldPlanEnableFail) {
         // Not needed for this test
     }
 
@@ -91,133 +84,133 @@ public abstract class AbstractSpringIntegrationLocalVcSamlTest extends AbstractA
     }
 
     @Override
-    public void mockConnectorRequestsForResumeParticipation(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists) throws Exception {
+    public void mockConnectorRequestsForResumeParticipation(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists) {
         // Not needed for this test
     }
 
     @Override
-    public void mockUpdatePlanRepositoryForParticipation(ProgrammingExercise exercise, String username) throws IOException, URISyntaxException {
+    public void mockUpdatePlanRepositoryForParticipation(ProgrammingExercise exercise, String username) {
         // Not needed for this test
     }
 
     @Override
-    public void mockUpdatePlanRepository(ProgrammingExercise exercise, String planName, String repoNameInCI, String repoNameInVcs) throws IOException, URISyntaxException {
+    public void mockUpdatePlanRepository(ProgrammingExercise exercise, String planName, String repoNameInCI, String repoNameInVcs) {
         // Not needed for this test
     }
 
     @Override
-    public void mockCopyRepositoryForParticipation(ProgrammingExercise exercise, String username) throws URISyntaxException, IOException {
+    public void mockCopyRepositoryForParticipation(ProgrammingExercise exercise, String username) {
         // Not needed for this test
     }
 
     @Override
-    public void mockRepositoryWritePermissionsForTeam(Team team, User newStudent, ProgrammingExercise exercise, HttpStatus status) throws Exception {
+    public void mockRepositoryWritePermissionsForTeam(Team team, User newStudent, ProgrammingExercise exercise, HttpStatus status) {
         // Not needed for this test
     }
 
     @Override
-    public void mockRepositoryWritePermissionsForStudent(User student, ProgrammingExercise exercise, HttpStatus status) throws Exception {
+    public void mockRepositoryWritePermissionsForStudent(User student, ProgrammingExercise exercise, HttpStatus status) {
         // Not needed for this test
     }
 
     @Override
-    public void mockRetrieveArtifacts(ProgrammingExerciseStudentParticipation participation) throws MalformedURLException, URISyntaxException, JsonProcessingException {
+    public void mockRetrieveArtifacts(ProgrammingExerciseStudentParticipation participation) {
         // Not needed for this test
     }
 
     @Override
-    public void mockFetchCommitInfo(String projectKey, String repositorySlug, String hash) throws URISyntaxException, JsonProcessingException {
+    public void mockFetchCommitInfo(String projectKey, String repositorySlug, String hash) {
         // Not needed for this test
     }
 
     @Override
-    public void mockCopyBuildPlan(ProgrammingExerciseStudentParticipation participation) throws Exception {
+    public void mockCopyBuildPlan(ProgrammingExerciseStudentParticipation participation) {
         // Not needed for this test
     }
 
     @Override
-    public void mockConfigureBuildPlan(ProgrammingExerciseStudentParticipation participation) throws Exception {
+    public void mockConfigureBuildPlan(ProgrammingExerciseStudentParticipation participation) {
         // Not needed for this test
     }
 
     @Override
-    public void mockTriggerFailedBuild(ProgrammingExerciseStudentParticipation participation) throws Exception {
+    public void mockTriggerFailedBuild(ProgrammingExerciseStudentParticipation participation) {
         // Not needed for this test
     }
 
     @Override
-    public void mockNotifyPush(ProgrammingExerciseStudentParticipation participation) throws Exception {
+    public void mockNotifyPush(ProgrammingExerciseStudentParticipation participation) {
         // Not needed for this test
     }
 
     @Override
-    public void mockTriggerParticipationBuild(ProgrammingExerciseStudentParticipation participation) throws Exception {
+    public void mockTriggerParticipationBuild(ProgrammingExerciseStudentParticipation participation) {
         // Not needed for this test
     }
 
     @Override
-    public void mockTriggerInstructorBuildAll(ProgrammingExerciseStudentParticipation participation) throws Exception {
+    public void mockTriggerInstructorBuildAll(ProgrammingExerciseStudentParticipation participation) {
         // Not needed for this test
     }
 
     @Override
-    public void resetMockProvider() throws Exception {
+    public void resetMockProvider() {
         // Not needed for this test
     }
 
     @Override
-    public void mockUpdateUserInUserManagement(String oldLogin, User user, String password, Set<String> oldGroups) throws Exception {
+    public void mockUpdateUserInUserManagement(String oldLogin, User user, String password, Set<String> oldGroups) {
         // Not needed for this test
     }
 
     @Override
-    public void mockUpdateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldEditorGroup, String oldTeachingAssistantGroup) throws Exception {
+    public void mockUpdateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldEditorGroup, String oldTeachingAssistantGroup) {
         // Not needed for this test
     }
 
     @Override
     public void mockFailUpdateCoursePermissionsInCi(Course updatedCourse, String oldInstructorGroup, String oldEditorGroup, String oldTeachingAssistantGroup,
-            boolean failToAddUsers, boolean failToRemoveUsers) throws Exception {
+            boolean failToAddUsers, boolean failToRemoveUsers) {
         // Not needed for this test
     }
 
     @Override
-    public void mockCreateUserInUserManagement(User user, boolean userExistsInCi) throws Exception {
+    public void mockCreateUserInUserManagement(User user, boolean userExistsInCi) {
         // Not needed for this test
     }
 
     @Override
-    public void mockFailToCreateUserInExternalUserManagement(User user, boolean failInVcs, boolean failInCi, boolean failToGetCiUser) throws Exception {
+    public void mockFailToCreateUserInExternalUserManagement(User user, boolean failInVcs, boolean failInCi, boolean failToGetCiUser) {
         // Not needed for this test
     }
 
     @Override
-    public void mockCreateGroupInUserManagement(String groupName) throws Exception {
+    public void mockCreateGroupInUserManagement(String groupName) {
         // Not needed for this test
     }
 
     @Override
-    public void mockDeleteGroupInUserManagement(String groupName) throws Exception {
+    public void mockDeleteGroupInUserManagement(String groupName) {
         // Not needed for this test
     }
 
     @Override
-    public void mockAddUserToGroupInUserManagement(User user, String group, boolean failInCi) throws Exception {
+    public void mockAddUserToGroupInUserManagement(User user, String group, boolean failInCi) {
         // Not needed for this test
     }
 
     @Override
-    public void mockRemoveUserFromGroup(User user, String group, boolean failInCi) throws Exception {
+    public void mockRemoveUserFromGroup(User user, String group, boolean failInCi) {
         // Not needed for this test
     }
 
     @Override
-    public void mockDeleteRepository(String projectKey, String repositoryName, boolean shouldFail) throws Exception {
+    public void mockDeleteRepository(String projectKey, String repositoryName, boolean shouldFail) {
         // Not needed for this test
     }
 
     @Override
-    public void mockDeleteProjectInVcs(String projectKey, boolean shouldFail) throws Exception {
+    public void mockDeleteProjectInVcs(String projectKey, boolean shouldFail) {
         // Not needed for this test
     }
 
@@ -227,33 +220,32 @@ public abstract class AbstractSpringIntegrationLocalVcSamlTest extends AbstractA
     }
 
     @Override
-    public void mockDeleteBuildPlanProject(String projectKey, boolean shouldFail) throws Exception {
+    public void mockDeleteBuildPlanProject(String projectKey, boolean shouldFail) {
         // Not needed for this test
     }
 
     @Override
-    public void mockGetBuildPlan(String projectKey, String planName, boolean planExistsInCi, boolean planIsActive, boolean planIsBuilding, boolean failToGetBuild)
-            throws Exception {
+    public void mockGetBuildPlan(String projectKey, String planName, boolean planExistsInCi, boolean planIsActive, boolean planIsBuilding, boolean failToGetBuild) {
         // Not needed for this test
     }
 
     @Override
-    public void mockGetBuildPlanConfig(String projectKey, String planName) throws Exception {
+    public void mockGetBuildPlanConfig(String projectKey, String planName) {
         // Not needed for this test
     }
 
     @Override
-    public void mockHealthInCiService(boolean isRunning, HttpStatus httpStatus) throws Exception {
+    public void mockHealthInCiService(boolean isRunning, HttpStatus httpStatus) {
         // Not needed for this test
     }
 
     @Override
-    public void mockCheckIfProjectExistsInVcs(ProgrammingExercise exercise, boolean existsInVcs) throws Exception {
+    public void mockCheckIfProjectExistsInVcs(ProgrammingExercise exercise, boolean existsInVcs) {
         // Not needed for this test
     }
 
     @Override
-    public void mockCheckIfProjectExistsInCi(ProgrammingExercise exercise, boolean existsInCi, boolean shouldFail) throws Exception {
+    public void mockCheckIfProjectExistsInCi(ProgrammingExercise exercise, boolean existsInCi, boolean shouldFail) {
         // Not needed for this test
     }
 
@@ -263,32 +255,32 @@ public abstract class AbstractSpringIntegrationLocalVcSamlTest extends AbstractA
     }
 
     @Override
-    public void mockRepositoryUriIsValid(VcsRepositoryUri vcsTemplateRepositoryUri, String projectKey, boolean b) throws Exception {
+    public void mockRepositoryUriIsValid(VcsRepositoryUri vcsTemplateRepositoryUri, String projectKey, boolean b) {
         // Not needed for this test
     }
 
     @Override
-    public void mockTriggerBuild(AbstractBaseProgrammingExerciseParticipation solutionParticipation) throws Exception {
+    public void mockTriggerBuild(AbstractBaseProgrammingExerciseParticipation solutionParticipation) {
         // Not needed for this test
     }
 
     @Override
-    public void mockTriggerBuildFailed(AbstractBaseProgrammingExerciseParticipation solutionParticipation) throws Exception {
+    public void mockTriggerBuildFailed(AbstractBaseProgrammingExerciseParticipation solutionParticipation) {
         // Not needed for this test
     }
 
     @Override
-    public void mockDefaultBranch(ProgrammingExercise programmingExercise) throws IOException {
+    public void mockDefaultBranch(ProgrammingExercise programmingExercise) {
         // Not needed for this test
     }
 
     @Override
-    public void mockUserExists(String username) throws Exception {
+    public void mockUserExists(String username) {
         // Not needed for this test
     }
 
     @Override
-    public void mockGetCiProjectMissing(ProgrammingExercise exercise) throws IOException {
+    public void mockGetCiProjectMissing(ProgrammingExercise exercise) {
         // Not needed for this test
     }
 }
