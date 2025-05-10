@@ -51,7 +51,6 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.TutorParticipation;
 import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
-import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.DueDateStat;
@@ -169,11 +168,6 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("exercise")
     private Set<Attachment> attachments = new HashSet<>();
-
-    @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonIncludeProperties({ "id" })
-    private Set<Post> posts = new HashSet<>();
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -425,14 +419,6 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
 
     public void setAttachments(Set<Attachment> attachments) {
         this.attachments = attachments;
-    }
-
-    public Set<Post> getPosts() {
-        return posts;
-    }
-
-    public void setPosts(Set<Post> posts) {
-        this.posts = posts;
     }
 
     public Set<PlagiarismCase> getPlagiarismCases() {
@@ -904,7 +890,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
      * Just setting the collections to {@code null} breaks the automatic orphan removal and change detection in the database.
      */
     public void disconnectRelatedEntities() {
-        Stream.of(teams, gradingCriteria, studentParticipations, tutorParticipations, exampleSubmissions, attachments, posts, plagiarismCases).filter(Objects::nonNull)
+        Stream.of(teams, gradingCriteria, studentParticipations, tutorParticipations, exampleSubmissions, attachments, plagiarismCases).filter(Objects::nonNull)
                 .forEach(Collection::clear);
     }
 }

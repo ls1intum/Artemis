@@ -308,7 +308,7 @@ public class ExerciseResource {
     }
 
     /**
-     * GET /exercises/:exerciseId/details : sends exercise details including all results for the currently logged-in user
+     * GET /exercises/:exerciseId/details : sends exercise details including up to the latest 20 results for the currently logged-in user
      * NOTE: this should only be used for course exercises, not for exam exercises
      *
      * @param exerciseId the exerciseId of the exercise to get the repos from
