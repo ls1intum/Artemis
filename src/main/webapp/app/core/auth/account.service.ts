@@ -48,6 +48,7 @@ export class AccountService implements IAccountService {
     private authenticationState = new BehaviorSubject<User | undefined>(undefined);
     private prefilledUsernameValue?: string;
 
+    // TODO get and set userIdentity should be converted to a signal instead
     get userIdentity() {
         return this.userIdentityValue;
     }
