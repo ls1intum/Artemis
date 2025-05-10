@@ -51,7 +51,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipatio
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 
-class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVcTest {
+class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVCTest {
 
     private static final String TEST_PREFIX = "programmingsubmission";
 

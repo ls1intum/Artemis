@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.communication.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -23,11 +24,17 @@ import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 @RequestMapping(".well-known/") // Intentionally not prefixed with "communication"
 public class AndroidAppSiteAssociationResource {
 
+    @Value("${server.url}")
+    private String artemisServerUrl;
+
     @Value("${artemis.androidAppPackage: #{null}}")
     private String androidAppPackage;
 
-    @Value("${artemis.androidSha256CertFingerprints: #{null}}")
-    private String sha256CertFingerprints;
+    @Value("${artemis.androidSha256CertFingerprints.release: #{null}}")
+    private String sha256CertFingerprintRelease;
+
+    @Value("${artemis.androidSha256CertFingerprints.debug: #{null}}")
+    private String sha256CertFingerprintDebug;
 
     private static final Logger log = LoggerFactory.getLogger(AndroidAppSiteAssociationResource.class);
 
@@ -39,24 +46,39 @@ public class AndroidAppSiteAssociationResource {
      */
     @GetMapping(value = "assetlinks.json", produces = "application/json")
     @ManualConfig
-    public ResponseEntity<List<AndroidAssetLinksEntry>> getAndroidAssetLinks() {
-        if (androidAppPackage == null || androidAppPackage.length() < 4 || sha256CertFingerprints == null || sha256CertFingerprints.length() < 20) {
+    public ResponseEntity<List<AndroidAssetLinksStatement>> getAndroidAssetLinks() {
+        if (androidAppPackage == null || androidAppPackage.length() < 4 || sha256CertFingerprintRelease == null || sha256CertFingerprintRelease.length() < 20
+        // The debug fingerprint is optional, so we don't check it
+        ) {
             log.debug("Android Assetlinks information is not configured!");
             return ResponseEntity.notFound().build();
         }
 
-        final AndroidAssetLinksEntry.AndroidTarget appTarget = new AndroidAssetLinksEntry.AndroidTarget("android_app", androidAppPackage, List.of(sha256CertFingerprints));
+        List<String> fingerprints = new ArrayList<>(List.of(sha256CertFingerprintRelease));
+        if (sha256CertFingerprintDebug != null) {
+            fingerprints.add(sha256CertFingerprintDebug);
+        }
+        final AndroidAssetLinksStatement.AndroidTarget appTarget = new AndroidAssetLinksStatement.AndroidTarget("android_app", androidAppPackage, fingerprints);
 
-        final AndroidAssetLinksEntry handleAllUrls = new AndroidAssetLinksEntry(List.of("delegate_permission/common.handle_all_urls"), appTarget);
+        final AndroidAssetLinksStatement.WebTarget webTarget = new AndroidAssetLinksStatement.WebTarget("web", artemisServerUrl);
 
-        final AndroidAssetLinksEntry getLoginCredentials = new AndroidAssetLinksEntry(List.of("delegate_permission/common.get_login_creds"), appTarget);
+        final List<String> relations = List.of("delegate_permission/common.handle_all_urls", "delegate_permission/common.get_login_creds");
 
-        return ResponseEntity.ok(List.of(handleAllUrls, getLoginCredentials));
+        final AndroidAssetLinksStatement appStatement = new AndroidAssetLinksStatement(relations, appTarget);
+        final AndroidAssetLinksStatement webStatement = new AndroidAssetLinksStatement(relations, webTarget);
+
+        return ResponseEntity.ok(List.of(appStatement, webStatement));
     }
 
-    public record AndroidAssetLinksEntry(List<String> relation, AndroidTarget target) {
+    public record AndroidAssetLinksStatement(List<String> relation, Target target) {
 
-        public record AndroidTarget(String namespace, String package_name, List<String> sha256_cert_fingerprints) {
+        public interface Target {
+        }
+
+        public record AndroidTarget(String namespace, String package_name, List<String> sha256_cert_fingerprints) implements Target {
+        }
+
+        public record WebTarget(String namespace, String site) implements Target {
         }
     }
 }

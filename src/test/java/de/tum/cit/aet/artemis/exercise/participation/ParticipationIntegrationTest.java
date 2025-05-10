@@ -510,7 +510,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         prepareMocksForProgrammingExercise(user.getLogin(), true);
 
-        mockConnectorRequestsForStartPractice(programmingExercise, TEST_PREFIX + "student1", Set.of(user));
+        mockConnectorRequestsForStartPractice(programmingExercise, TEST_PREFIX + "student1");
 
         StudentParticipation participation = request.postWithResponseBody("/api/exercise/exercises/" + programmingExercise.getId() + "/participations/practice", null,
                 StudentParticipation.class, HttpStatus.CREATED);

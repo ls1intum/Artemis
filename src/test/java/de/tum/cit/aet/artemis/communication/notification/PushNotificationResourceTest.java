@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.communication.notification;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
@@ -45,12 +44,15 @@ class PushNotificationResourceTest extends AbstractSpringIntegrationIndependentT
 
     @BeforeEach
     void setup() {
+        // make sure the configurations are empty to avoid flaky tests
+        pushNotificationDeviceConfigurationRepository.deleteAll();
         user = userUtilService.createAndSaveUser(USER_LOGIN);
     }
 
     @AfterEach
     void teardown() {
         userRepository.delete(user);
+        // make sure the configurations are empty to avoid flaky tests
         pushNotificationDeviceConfigurationRepository.deleteAll();
     }
 
@@ -59,13 +61,10 @@ class PushNotificationResourceTest extends AbstractSpringIntegrationIndependentT
     void shouldRegisterTokenWhenCredentialsAreValid() throws Exception {
         PushNotificationRegisterBody body = new PushNotificationRegisterBody(FAKE_FIREBASE_TOKEN, PushNotificationDeviceType.FIREBASE);
         PushNotificationRegisterDTO response = request.postWithResponseBody("/api/communication/push_notification/register", body, PushNotificationRegisterDTO.class);
-
         assertThat(response.secretKey()).isNotEmpty();
-        List<PushNotificationDeviceConfiguration> deviceConfigurations = pushNotificationDeviceConfigurationRepository.findByUserIn(Set.of(user),
-                PushNotificationDeviceType.FIREBASE);
 
-        // TODO: why do the tests sometimes return 2 device configurations?
-        assertThat(deviceConfigurations).hasSizeBetween(1, 2); // this avoids flaky tests, normally the size should be 1, but apparently some cleanup does not work
+        var deviceConfigurations = pushNotificationDeviceConfigurationRepository.findByUserIn(Set.of(user), PushNotificationDeviceType.FIREBASE);
+        assertThat(deviceConfigurations).hasSize(1);
         PushNotificationDeviceConfiguration config = deviceConfigurations.getFirst();
         assertThat(config.getDeviceType()).isEqualTo(PushNotificationDeviceType.FIREBASE);
         assertThat(config.getExpirationDate()).isInTheFuture();
@@ -77,13 +76,10 @@ class PushNotificationResourceTest extends AbstractSpringIntegrationIndependentT
     void shouldRegisterVersionCodeWhenSupplied() throws Exception {
         PushNotificationRegisterBody body = new PushNotificationRegisterBody(FAKE_FIREBASE_TOKEN, PushNotificationDeviceType.FIREBASE, PushNotificationApiType.DEFAULT, "1.1.1");
         PushNotificationRegisterDTO response = request.postWithResponseBody("/api/communication/push_notification/register", body, PushNotificationRegisterDTO.class);
-
         assertThat(response.secretKey()).isNotEmpty();
-        List<PushNotificationDeviceConfiguration> deviceConfigurations = pushNotificationDeviceConfigurationRepository.findByUserIn(Set.of(user),
-                PushNotificationDeviceType.FIREBASE);
 
-        // TODO: why do the tests sometimes return 2 device configurations?
-        assertThat(deviceConfigurations).hasSizeBetween(1, 2); // this avoids flaky tests, normally the size should be 1, but apparently some cleanup does not work
+        var deviceConfigurations = pushNotificationDeviceConfigurationRepository.findByUserIn(Set.of(user), PushNotificationDeviceType.FIREBASE);
+        assertThat(deviceConfigurations).hasSize(1);
         PushNotificationDeviceConfiguration config = deviceConfigurations.getFirst();
         assertThat(config.getDeviceType()).isEqualTo(PushNotificationDeviceType.FIREBASE);
         assertThat(config.getExpirationDate()).isInTheFuture();
@@ -96,8 +92,7 @@ class PushNotificationResourceTest extends AbstractSpringIntegrationIndependentT
         PushNotificationRegisterBody body = new PushNotificationRegisterBody(FAKE_FIREBASE_TOKEN, PushNotificationDeviceType.FIREBASE, PushNotificationApiType.DEFAULT, "asdf");
         PushNotificationRegisterDTO response = request.postWithResponseBody("/api/push_notification/register", body, PushNotificationRegisterDTO.class);
         assertThat(response).isNull();
-        List<PushNotificationDeviceConfiguration> deviceConfigurations = pushNotificationDeviceConfigurationRepository.findByUserIn(Set.of(user),
-                PushNotificationDeviceType.FIREBASE);
+        var deviceConfigurations = pushNotificationDeviceConfigurationRepository.findByUserIn(Set.of(user), PushNotificationDeviceType.FIREBASE);
         assertThat(deviceConfigurations).hasSize(0);
     }
 
@@ -108,10 +103,7 @@ class PushNotificationResourceTest extends AbstractSpringIntegrationIndependentT
 
         PushNotificationUnregisterRequest body = new PushNotificationUnregisterRequest(FAKE_FIREBASE_TOKEN, PushNotificationDeviceType.FIREBASE);
         request.delete("/api/communication/push_notification/unregister", HttpStatus.OK, body);
-
-        List<PushNotificationDeviceConfiguration> deviceConfigurations = pushNotificationDeviceConfigurationRepository.findByUserIn(Set.of(user),
-                PushNotificationDeviceType.FIREBASE);
-
+        var deviceConfigurations = pushNotificationDeviceConfigurationRepository.findByUserIn(Set.of(user), PushNotificationDeviceType.FIREBASE);
         assertThat(deviceConfigurations).isEmpty();
     }
 
