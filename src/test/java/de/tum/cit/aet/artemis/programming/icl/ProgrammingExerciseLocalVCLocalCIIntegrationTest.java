@@ -49,8 +49,6 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider;
 import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
-import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
-
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
 import de.tum.cit.aet.artemis.programming.domain.AeolusTarget;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -166,7 +164,6 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         programmingExerciseTestService.tearDown();
     }
 
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateProgrammingExercise() throws Exception {
@@ -244,7 +241,6 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         request.put("/api/programming/programming-exercises", programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteProgrammingExercise() throws Exception {
@@ -377,7 +373,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
     void importFromFile_validImportZip_changeTitle_success() throws Exception {
         aeolusRequestMockProvider.enableMockingOfRequests();
         aeolusRequestMockProvider.mockFailedGenerateBuildPlan(AeolusTarget.CLI);
-        
+
         String uniqueSuffix = java.util.UUID.randomUUID().toString().replace("-", "").substring(0, 20).toUpperCase();
         var resource = new ClassPathResource("test-data/import-from-file/valid-import.zip");
         ZipInputStream zipInputStream = new ZipInputStream(resource.getInputStream());
