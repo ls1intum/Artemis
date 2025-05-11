@@ -75,7 +75,9 @@
                 "noConversationFound": "Keine Unterhaltung für '{{ search }}' gefunden",
                 "noUserFound": "Kein Benutzer für '{{ search }}' gefunden",
                 "userQueryTooShort": "Bitte gib mindestens 3 Zeichen ein, um nach einem/einer Nutzer:in zu suchen.",
-                "toolTip": "Gib 'in:' ein, um eine Unterhaltung zum Suchen auszuwählen, oder 'from:', um Nachrichten von einem/einer bestimmten Nutzer:in zu finden"
+                "toolTip": "Gib 'in:' ein, um eine Unterhaltung zum Suchen auszuwählen, oder 'from:', um Nachrichten von einem/einer bestimmten Nutzer:in zu finden",
+                "filterConversationPreselection": "um in einer Unterhaltung zu suchen",
+                "filterUserPreselection": "um Nachrichten von einem/einer bestimmten Nutzer:in zu finden"
             },
             "overview": {
                 "title": "Nachrichten",
