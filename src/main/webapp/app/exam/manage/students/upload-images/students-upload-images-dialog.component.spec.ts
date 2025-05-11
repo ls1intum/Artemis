@@ -103,7 +103,6 @@ describe('StudentsUploadImagesDialogComponent', () => {
             listOfExamUserRegistrationNumbers: ['12345678'],
         };
         const examServiceStub = jest.spyOn(examManagementService, 'saveImages').mockReturnValue(of(new HttpResponse({ body: response })));
-
         component.parsePDFFile();
 
         expect(examServiceStub).toHaveBeenCalledOnce();
