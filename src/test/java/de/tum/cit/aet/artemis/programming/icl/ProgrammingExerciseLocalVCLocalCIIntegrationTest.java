@@ -32,7 +32,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
+import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
 import de.tum.cit.aet.artemis.programming.domain.AeolusTarget;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -55,7 +55,7 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 // concurrently. For example, it prevents overloading the LocalCI's result processing system with too many build job results at the same time, which could lead to flaky tests
 // or timeouts. By keeping everything in the same thread, we maintain more predictable and stable test behavior, while not increasing the test execution time significantly.
 @Execution(ExecutionMode.SAME_THREAD)
-class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
+class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
 
     private static final String TEST_PREFIX = "progexlocalvclocalci";
 
@@ -124,6 +124,11 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         localVCLocalCITestService.verifyRepositoryFoldersExist(programmingExercise, localVCBasePath);
 
         competency = competencyUtilService.createCompetency(course);
+    }
+
+    @Override
+    protected String getTestPrefix() {
+        return TEST_PREFIX;
     }
 
     @AfterEach

@@ -33,7 +33,7 @@ import de.tum.cit.aet.artemis.programming.service.ci.notification.dto.TestCaseDe
 import de.tum.cit.aet.artemis.programming.service.ci.notification.dto.TestResultsDTO;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 
-class ProgrammingSubmissionAndResultLocalVcJenkinsIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVcTest {
+class ProgrammingSubmissionAndResultLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVCTest {
 
     private static final String TEST_PREFIX = "progsubreslocalvcjen";
 

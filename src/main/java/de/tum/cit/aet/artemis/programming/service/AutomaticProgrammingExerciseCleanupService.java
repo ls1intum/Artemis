@@ -79,7 +79,7 @@ public class AutomaticProgrammingExerciseCleanupService {
             return;
         }
         try {
-            if (!profileService.isLocalCiActive()) {
+            if (!profileService.isLocalCIActive()) {
                 // no build plan cleanup is needed for systems using LocalCI
                 cleanupBuildPlansOnContinuousIntegrationServer();
             }

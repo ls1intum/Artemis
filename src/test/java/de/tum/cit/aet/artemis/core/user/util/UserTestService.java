@@ -64,7 +64,7 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 
 /**
  * Note: this class should be independent of the actual VCS and CIS and contains common test logic for scenarios:
- * 1) Jenkins + LocalVc
+ * 1) Jenkins + LocalVC
  */
 @Service
 @Profile(SPRING_PROFILE_TEST)
@@ -204,7 +204,7 @@ public class UserTestService {
     // Test
     public void deleteUser_isSuccessful() throws Exception {
         student.setRegistrationNumber("123");
-        student.setImageUrl("https://www.somewebsite.com/image.jpg");
+        student.setImageUrl("images/user/profiles-pictures/image.jpg");
         userTestRepository.save(student);
 
         request.delete("/api/core/admin/users/" + student.getLogin(), HttpStatus.OK);

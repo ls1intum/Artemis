@@ -323,9 +323,27 @@ public final class Constants {
     public static final String PROFILE_APOLLON = "apollon";
 
     /**
-     * The name of the Spring profile used for the Aeolus external system.
+     * The name of the Spring profile used for the external Aeolus system.
      */
     public static final String PROFILE_AEOLUS = "aeolus";
+
+    /**
+     * The name of the Spring profile used for the external LDAP system.
+     * Use this profile if you want to synchronize users with an external LDAP system, but you want to route the authentication through another system
+     */
+    public static final String PROFILE_LDAP = "ldap";
+
+    /**
+     * The name of the Spring profile used for authentication via LDAP only.
+     * Use this profile if you want to use LDAP authentication (incl. user synchronization)
+     * NOTE: in the future we will remove this profile and combine both (due to ambiguity), then there will only be the LDAP profile exclusively
+     */
+    @Deprecated
+    public static final String PROFILE_LDAP_ONLY = "ldap-only";
+
+    // Will be removed and replaced with PROFILE_LDAP
+    @Deprecated
+    public static final String PROFILE_LDAP_OR_LDAP_ONLY = PROFILE_LDAP + " | " + PROFILE_LDAP_ONLY;
 
     /**
      * The name of the Spring profile used for activating LTI in Artemis, see {@link de.tum.cit.aet.artemis.lti.web.LtiResource}.
