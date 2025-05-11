@@ -566,7 +566,7 @@ public class CourseUtilService {
         participationProgramming = studentParticipationRepo.save(participationProgramming);
 
         // Setup results
-        Result resultModeling = generateResult(true, 10D);
+        Result resultModeling = generateResult(true, 100D);
         resultModeling.setAssessmentType(AssessmentType.MANUAL);
         resultModeling.setCompletionDate(ZonedDateTime.now());
 
@@ -650,6 +650,19 @@ public class CourseUtilService {
         fileUploadSubmission = submissionRepository.save(fileUploadSubmission);
         quizSubmission = submissionRepository.save(quizSubmission);
         programmingSubmission = submissionRepository.save(programmingSubmission);
+
+        resultModeling.setSubmission(modelingSubmission);
+        resultText.setSubmission(textSubmission);
+        resultFileUpload.setSubmission(fileUploadSubmission);
+        resultQuiz.setSubmission(quizSubmission);
+        resultProgramming.setSubmission(programmingSubmission);
+
+        // Save results
+        resultRepo.save(resultModeling);
+        resultRepo.save(resultText);
+        resultRepo.save(resultFileUpload);
+        resultRepo.save(resultQuiz);
+        resultRepo.save(resultProgramming);
 
         // Save exercises
         exerciseRepository.save(modelingExercise);
