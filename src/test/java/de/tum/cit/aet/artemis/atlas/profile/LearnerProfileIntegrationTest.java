@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.atlas.profile;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
-import java.util.Map;
 import java.util.Set;
 
 import org.hibernate.Hibernate;
@@ -41,12 +40,12 @@ class LearnerProfileIntegrationTest extends AbstractAtlasIntegrationTest {
     @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
     void shouldReturnCourseProfilesForUser() throws Exception {
 
-        Map<Long, CourseLearnerProfileDTO> response = request.getMap("/api/atlas/course-learner-profiles", HttpStatus.OK, Long.class, CourseLearnerProfileDTO.class);
+        Set<CourseLearnerProfileDTO> response = request.getSet("/api/atlas/course-learner-profiles", HttpStatus.OK, CourseLearnerProfileDTO.class);
 
         Set<CourseLearnerProfile> profiles = courseLearnerProfileRepository.findAllByLogin(STUDENT1_OF_COURSE);
 
         for (CourseLearnerProfile profile : profiles) {
-            assertThat(response.get(profile.getCourse().getId())).isEqualTo(CourseLearnerProfileDTO.of(profile));
+            assertThat(response.iterator().next()).isEqualTo(CourseLearnerProfileDTO.of(profile));
         }
     }
 

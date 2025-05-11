@@ -37,8 +37,8 @@ export class CourseLearnerProfileComponent implements OnInit {
 
     faSave = faSave;
 
-    courseLearnerProfiles: CourseLearnerProfileDTO[];
-    activeCourse: number;
+    courseLearnerProfiles: CourseLearnerProfileDTO[] = []; // initialize empty array to avoid undefined error
+    activeCourseId: number;
 
     disabled = true;
     editing = false;
@@ -60,9 +60,9 @@ export class CourseLearnerProfileComponent implements OnInit {
 
         // courseId of -1 represents no course selected
         if (courseId !== '-1') {
-            this.activeCourse = Number(courseId);
+            this.activeCourseId = Number(courseId);
             this.disabled = false;
-            const courseLearnerProfile = this.getCourseLearnerProfile(this.activeCourse);
+            const courseLearnerProfile = this.getCourseLearnerProfile(this.activeCourseId);
             if (!courseLearnerProfile) {
                 return;
             }
@@ -93,7 +93,7 @@ export class CourseLearnerProfileComponent implements OnInit {
     }
 
     update() {
-        const courseLearnerProfile = this.getCourseLearnerProfile(this.activeCourse);
+        const courseLearnerProfile = this.getCourseLearnerProfile(this.activeCourseId);
         if (!courseLearnerProfile) {
             return;
         }
