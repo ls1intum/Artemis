@@ -40,6 +40,7 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastEditorInLectureUnit;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
@@ -101,12 +102,11 @@ public class AttachmentUnitResource {
      * @return the ResponseEntity with status 200 (OK) and with body the attachment unit, or with status 404 (Not Found)
      */
     @GetMapping("lectures/{lectureId}/attachment-units/{attachmentUnitId}")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInLectureUnit(resourceIdFieldName = "attachmentUnitId")
     public ResponseEntity<AttachmentUnit> getAttachmentUnit(@PathVariable Long attachmentUnitId, @PathVariable Long lectureId) {
         log.debug("REST request to get AttachmentUnit : {}", attachmentUnitId);
         AttachmentUnit attachmentUnit = attachmentUnitRepository.findWithSlidesAndCompetenciesByIdElseThrow(attachmentUnitId);
         checkAttachmentUnitCourseAndLecture(attachmentUnit, lectureId);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, attachmentUnit.getLecture().getCourse(), null);
 
         return ResponseEntity.ok().body(attachmentUnit);
     }
@@ -126,7 +126,7 @@ public class AttachmentUnitResource {
      * @return the ResponseEntity with status 200 (OK) and with body the updated attachmentUnit
      */
     @PutMapping(value = "lectures/{lectureId}/attachment-units/{attachmentUnitId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInLectureUnit(resourceIdFieldName = "attachmentUnitId")
     public ResponseEntity<AttachmentUnit> updateAttachmentUnit(@PathVariable Long lectureId, @PathVariable Long attachmentUnitId, @RequestPart AttachmentUnit attachmentUnit,
             @RequestPart Attachment attachment, @RequestPart(required = false) MultipartFile file, @RequestPart(required = false) String hiddenPages,
             @RequestPart(required = false) String pageOrder, @RequestParam(defaultValue = "false") boolean keepFilename,
@@ -134,7 +134,6 @@ public class AttachmentUnitResource {
         log.debug("REST request to update an attachment unit : {}", attachmentUnit);
         AttachmentUnit existingAttachmentUnit = attachmentUnitRepository.findWithSlidesAndCompetenciesByIdElseThrow(attachmentUnitId);
         checkAttachmentUnitCourseAndLecture(existingAttachmentUnit, lectureId);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, existingAttachmentUnit.getLecture().getCourse(), null);
 
         if (!validateHiddenSlidesDates(hiddenPages)) {
             throw new BadRequestAlertException("Hidden slide dates cannot be in the past", ENTITY_NAME, "invalidHiddenDates");
@@ -316,7 +315,7 @@ public class AttachmentUnitResource {
      * @return the ResponseEntity with status 200 (OK) and with body the updated attachmentUnit
      */
     @PutMapping("lectures/{lectureId}/attachment-units/{attachmentUnitId}/student-version")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInLectureUnit(resourceIdFieldName = "attachmentUnitId")
     public ResponseEntity<AttachmentUnit> updateAttachmentUnitStudentVersion(@PathVariable Long lectureId, @PathVariable Long attachmentUnitId,
             @RequestParam("studentVersion") MultipartFile studentVersionFile) {
 

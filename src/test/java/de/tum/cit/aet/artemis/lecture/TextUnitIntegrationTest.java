@@ -160,7 +160,7 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         persistTextUnitWithLecture();
         assertThat(this.textUnit.getId()).isNotNull();
         request.delete("/api/lecture/lectures/" + lecture.getId() + "/lecture-units/" + this.textUnit.getId(), HttpStatus.OK);
-        request.get("/api/lecture/lectures/" + lecture.getId() + "/text-units/" + this.textUnit.getId(), HttpStatus.NOT_FOUND, TextUnit.class);
+        request.get("/api/lecture/lectures/" + lecture.getId() + "/text-units/" + this.textUnit.getId(), HttpStatus.FORBIDDEN, TextUnit.class);
         verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(textUnit), eq(Optional.empty()));
     }
 

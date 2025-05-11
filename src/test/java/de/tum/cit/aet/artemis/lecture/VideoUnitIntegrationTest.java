@@ -208,7 +208,7 @@ class VideoUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest 
         this.videoUnit = (VideoUnit) lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture1.getId()).orElseThrow().getLectureUnits().stream().findFirst().orElseThrow();
         assertThat(this.videoUnit.getId()).isNotNull();
         request.delete("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + this.videoUnit.getId(), HttpStatus.OK);
-        request.get("/api/lecture/lectures/" + lecture1.getId() + "/video-units/" + this.videoUnit.getId(), HttpStatus.NOT_FOUND, VideoUnit.class);
+        request.get("/api/lecture/lectures/" + lecture1.getId() + "/video-units/" + this.videoUnit.getId(), HttpStatus.FORBIDDEN, VideoUnit.class);
         verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(videoUnit), eq(Optional.empty()));
     }
 

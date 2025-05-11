@@ -269,7 +269,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest
         this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().orElseThrow();
         assertThat(this.onlineUnit.getId()).isNotNull();
         request.delete("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + this.onlineUnit.getId(), HttpStatus.OK);
-        request.get("/api/lecture/lectures/" + lecture1.getId() + "/online-units/" + this.onlineUnit.getId(), HttpStatus.NOT_FOUND, OnlineUnit.class);
+        request.get("/api/lecture/lectures/" + lecture1.getId() + "/online-units/" + this.onlineUnit.getId(), HttpStatus.FORBIDDEN, OnlineUnit.class);
         verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(onlineUnit), eq(Optional.empty()));
     }
 

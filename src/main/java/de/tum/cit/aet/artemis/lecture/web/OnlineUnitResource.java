@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastEditorInLectureUnit;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.OnlineUnit;
@@ -77,12 +78,11 @@ public class OnlineUnitResource {
      * @return the ResponseEntity with status 200 (OK) and with body the online unit, or with status 404 (Not Found)
      */
     @GetMapping("lectures/{lectureId}/online-units/{onlineUnitId}")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInLectureUnit(resourceIdFieldName = "onlineUnitId")
     public ResponseEntity<OnlineUnit> getOnlineUnit(@PathVariable Long onlineUnitId, @PathVariable Long lectureId) {
         log.debug("REST request to get onlineUnit : {}", onlineUnitId);
         var onlineUnit = onlineUnitRepository.findByIdWithCompetenciesElseThrow(onlineUnitId);
         checkOnlineUnitCourseAndLecture(onlineUnit, lectureId);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, onlineUnit.getLecture().getCourse(), null);
         return ResponseEntity.ok().body(onlineUnit);
     }
 
