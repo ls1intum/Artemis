@@ -39,10 +39,10 @@ import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionT
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseResultTestService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVcTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTest;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
-public abstract class AbstractProgrammingIntegrationJenkinsLocalVcTest extends AbstractSpringIntegrationJenkinsLocalVcTest {
+public abstract class AbstractProgrammingIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
 
     // Config
     @Value("${artemis.continuous-integration.artemis-authentication-token-value}")

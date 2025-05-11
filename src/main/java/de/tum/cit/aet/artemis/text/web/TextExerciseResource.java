@@ -480,6 +480,14 @@ public class TextExerciseResource {
             }
         }
 
+        // if all submissions were deleted, add a new one since the client relies on the existence of at least one submission
+        if (submissions.isEmpty()) {
+            TextSubmission textSubmission = new TextSubmission();
+            textSubmission.setParticipation(participation);
+            textSubmission.setSubmitted(false);
+            participation.addSubmission(textSubmission);
+        }
+
         if (!(authCheckService.isAtLeastInstructorForExercise(textExercise, user) || participation.isOwnedBy(user))) {
             participation.filterSensitiveInformation();
         }
