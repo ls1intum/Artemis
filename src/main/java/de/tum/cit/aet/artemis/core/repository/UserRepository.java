@@ -1213,4 +1213,58 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                     OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
             """)
     boolean isAtLeastInstructorInExercise(@Param("login") String login, @Param("exerciseId") long exerciseId);
+
+    @Query("""
+            SELECT COUNT(user) > 0
+            FROM User user
+            INNER JOIN LectureUnit lectureUnit
+            ON user.login = :login
+                AND lectureUnit.id = :lectureUnitId
+            LEFT JOIN lectureUnit.lecture.course course
+            WHERE (course.studentGroupName MEMBER OF user.groups)
+                    OR (course.teachingAssistantGroupName MEMBER OF user.groups)
+                    OR (course.editorGroupName MEMBER OF user.groups)
+                    OR (course.instructorGroupName MEMBER OF user.groups)
+                    OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
+            """)
+    boolean isAtLeastStudentInLectureUnit(@Param("login") String login, @Param("lectureUnitId") long lectureUnitId);
+
+    @Query("""
+            SELECT COUNT(user) > 0
+            FROM User user
+            INNER JOIN LectureUnit lectureUnit
+            ON user.login = :login
+                AND lectureUnit.id = :lectureUnitId
+            LEFT JOIN lectureUnit.lecture.course course
+            WHERE (course.teachingAssistantGroupName MEMBER OF user.groups)
+                    OR (course.editorGroupName MEMBER OF user.groups)
+                    OR (course.instructorGroupName MEMBER OF user.groups)
+                    OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
+            """)
+    boolean isAtLeastTeachingAssistantInLectureUnit(@Param("login") String login, @Param("lectureUnitId") long lectureUnitId);
+
+    @Query("""
+            SELECT COUNT(user) > 0
+            FROM User user
+            INNER JOIN LectureUnit lectureUnit
+            ON user.login = :login
+                AND lectureUnit.id = :lectureUnitId
+            LEFT JOIN lectureUnit.lecture.course course
+            WHERE (course.editorGroupName MEMBER OF user.groups)
+                    OR (course.instructorGroupName MEMBER OF user.groups)
+                    OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
+            """)
+    boolean isAtLeastEditorInLectureUnit(@Param("login") String login, @Param("lectureUnitId") long lectureUnitId);
+
+    @Query("""
+            SELECT COUNT(user) > 0
+            FROM User user
+            INNER JOIN LectureUnit lectureUnit
+            ON user.login = :login
+                AND lectureUnit.id = :lectureUnitId
+            LEFT JOIN lectureUnit.lecture.course course
+            WHERE (course.instructorGroupName MEMBER OF user.groups)
+                    OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
+            """)
+    boolean isAtLeastInstructorInLectureUnit(@Param("login") String login, @Param("lectureUnitId") long lectureUnitId);
 }

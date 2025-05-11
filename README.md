@@ -147,7 +147,7 @@ The following members of the project management team are responsible for specifi
 * [How to set up your local development environment](https://docs.artemis.cit.tum.de/dev/setup/)
 * [Server coding and design guidelines](https://docs.artemis.cit.tum.de/dev/guidelines/server/)
 * [Client coding and design guidelines](https://docs.artemis.cit.tum.de/dev/guidelines/client/)
-* [Code Review Guidelines](https://docs.artemis.cit.tum.de/dev/development-process/#review)
+* [Code Review Guidelines](https://docs.artemis.cit.tum.de/dev/development-process/development-process.html#review-process)
 * [Performance Guidelines](https://docs.artemis.cit.tum.de/dev/guidelines/performance/)
 
 ### Documentation
@@ -191,7 +191,7 @@ Refer to [Using JHipster in production](http://www.jhipster.tech/production) for
 The following command can automate the deployment to a server. The example shows the deployment to the main Artemis test server (which runs a virtual machine):
 
 ```shell
-./artemis-server-cli deploy username@artemis-test0.artemis.in.tum.de -w build/libs/Artemis-8.0.5.war
+./artemis-server-cli deploy username@artemis-test0.artemis.in.tum.de -w build/libs/Artemis-8.0.7.war
 ```
 
 ## Architecture

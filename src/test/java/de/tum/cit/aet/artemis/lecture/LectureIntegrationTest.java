@@ -303,7 +303,6 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(originalLecture.getId()).isEqualTo(lectureId);
         // should not fetch lecture units or posts
         assertThat(originalLecture.getLectureUnits()).isNullOrEmpty();
-        assertThat(originalLecture.getPosts()).isNullOrEmpty();
     }
 
     @Test

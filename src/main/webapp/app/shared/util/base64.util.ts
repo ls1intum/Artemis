@@ -41,3 +41,15 @@ export function decodeBase64url(input: string | BufferSource): ArrayBuffer {
 
     return bytes.buffer;
 }
+
+/**
+ * Base64 encoding used in URLs (URL-safe Base64) replaces / with _ and + with - to avoid issues with reserved characters in URLs.
+ * It ensures the result does not include padding (=).
+ */
+export function encodeAsBase64Url(uint8array: Uint8Array) {
+    // eslint-disable-next-line no-undef
+    return btoa(String.fromCharCode(...uint8array))
+        .replace(/\//g, '_')
+        .replace(/\+/g, '-')
+        .replace(/=+$/, ''); // Remove padding
+}

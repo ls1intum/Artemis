@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
@@ -43,7 +44,8 @@ class AttachmentServiceTest extends AbstractSpringIntegrationIndependentTest {
         // AttachmentUnit with no hidden slides
         AttachmentUnit testAttachmentUnit1 = lectureUtilService.createAttachmentUnitWithSlidesAndFile(5, true);
         testAttachment1 = testAttachmentUnit1.getAttachment();
-        testAttachment1.setStudentVersion("temp/example.pdf"); // Set an existing student version to verify it gets removed
+        testAttachment1.setStudentVersion("attachments/attachment-unit/" + testAttachmentUnit1.getId() + "/student/example.pdf"); // Set an existing student version to verify it
+                                                                                                                                  // gets removed
 
         // AttachmentUnit with hidden slides
         AttachmentUnit testAttachmentUnit2 = lectureUtilService.createAttachmentUnitWithSlidesAndFile(5, true);
@@ -62,7 +64,7 @@ class AttachmentServiceTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
     void testRegenerateStudentVersion_withNoHiddenSlides() {
         String originalPath = testAttachment1.getStudentVersion();
-        Path actualFilePath = FilePathService.actualPathForPublicPath(URI.create(originalPath));
+        Path actualFilePath = FilePathService.fileSystemPathForExternalUri(URI.create(originalPath), FilePathType.STUDENT_VERSION_SLIDES);
 
         attachmentService.regenerateStudentVersion(testAttachment1);
         assertThat(testAttachment1.getStudentVersion()).isNull();
@@ -74,7 +76,7 @@ class AttachmentServiceTest extends AbstractSpringIntegrationIndependentTest {
     void testRegenerateStudentVersion_withHiddenSlides() {
         attachmentService.regenerateStudentVersion(testAttachment2);
         String originalPath = testAttachment2.getStudentVersion();
-        Path actualFilePath = FilePathService.actualPathForPublicPath(URI.create(originalPath));
+        Path actualFilePath = FilePathService.fileSystemPathForExternalUri(URI.create(originalPath), FilePathType.STUDENT_VERSION_SLIDES);
 
         assertThat(testAttachment2.getStudentVersion()).isNotNull();
         assertThat(Files.exists(actualFilePath)).isTrue();
@@ -104,7 +106,8 @@ class AttachmentServiceTest extends AbstractSpringIntegrationIndependentTest {
         // Get hidden slides
         List<Slide> hiddenSlides = slideRepository.findByAttachmentUnitIdAndHiddenNotNull(testAttachment2.getAttachmentUnit().getId());
 
-        byte[] pdfData = attachmentService.generateStudentVersionPdf(FilePathService.actualPathForPublicPath(URI.create(testAttachment2.getLink())).toFile(), hiddenSlides);
+        byte[] pdfData = attachmentService.generateStudentVersionPdf(
+                FilePathService.fileSystemPathForExternalUri(URI.create(testAttachment2.getLink()), FilePathType.ATTACHMENT_UNIT).toFile(), hiddenSlides);
 
         // Verify output
         assertThat(pdfData).isNotNull();
