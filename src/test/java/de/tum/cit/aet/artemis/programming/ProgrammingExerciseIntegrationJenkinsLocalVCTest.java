@@ -23,7 +23,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.util.ArgumentSources;
 
-class ProgrammingExerciseIntegrationJenkinsLocalVcTest extends AbstractProgrammingIntegrationJenkinsLocalVcTest {
+class ProgrammingExerciseIntegrationJenkinsLocalVCTest extends AbstractProgrammingIntegrationJenkinsLocalVCTest {
 
     private static final String TEST_PREFIX = "progexjenklocalvc";
 
