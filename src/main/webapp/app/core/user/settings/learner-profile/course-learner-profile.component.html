@@ -32,8 +32,8 @@
         <div class="col">
             <jhi-double-slider
                 [title]="translateService.instant('artemisApp.learnerProfile.courseLearnerProfile.aimForGradeOrBonus')"
-                [min]="1"
-                [max]="5"
+                [min]="MIN_PROFILE_VALUE"
+                [max]="MAX_PROFILE_VALUE"
                 [initialValue]="initialAimForGradeOrBonus"
                 [(currentValue)]="aimForGradeOrBonus"
                 (currentValueChange)="this.editing = true"
@@ -42,8 +42,8 @@
         <div class="col">
             <jhi-double-slider
                 [title]="translateService.instant('artemisApp.learnerProfile.courseLearnerProfile.timeInvestment')"
-                [min]="1"
-                [max]="5"
+                [min]="MIN_PROFILE_VALUE"
+                [max]="MAX_PROFILE_VALUE"
                 [initialValue]="initialTimeInvestment"
                 [(currentValue)]="timeInvestment"
                 (currentValueChange)="this.editing = true"
@@ -52,8 +52,8 @@
         <div class="col align-items-end">
             <jhi-double-slider
                 [title]="translateService.instant('artemisApp.learnerProfile.courseLearnerProfile.repetitionIntensity')"
-                [min]="1"
-                [max]="5"
+                [min]="MIN_PROFILE_VALUE"
+                [max]="MAX_PROFILE_VALUE"
                 [initialValue]="initialRepetitionIntensity"
                 [(currentValue)]="repetitionIntensity"
                 (currentValueChange)="this.editing = true"

@@ -1,5 +1,8 @@
 package de.tum.cit.aet.artemis.atlas.web;
 
+import static de.tum.cit.aet.artemis.atlas.domain.profile.CourseLearnerProfile.MAX_PROFILE_VALUE;
+import static de.tum.cit.aet.artemis.atlas.domain.profile.CourseLearnerProfile.MIN_PROFILE_VALUE;
+
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -28,16 +31,6 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 @RestController
 @RequestMapping("api/atlas/")
 public class LearnerProfileResource {
-
-    /**
-     * Minimum value allowed for profile fields representing values on a Likert scale.
-     */
-    private static final int MIN_PROFILE_VALUE = 1;
-
-    /**
-     * Maximum value allowed for profile fields representing values on a Likert scale.
-     */
-    private static final int MAX_PROFILE_VALUE = 5;
 
     private static final Logger log = LoggerFactory.getLogger(LearnerProfileResource.class);
 
@@ -74,7 +67,8 @@ public class LearnerProfileResource {
      */
     private void validateProfileField(int value, String fieldName) {
         if (value < MIN_PROFILE_VALUE || value > MAX_PROFILE_VALUE) {
-            throw new BadRequestAlertException(fieldName + " field is outside valid bounds", CourseLearnerProfile.ENTITY_NAME, fieldName.toLowerCase() + "OutOfBounds", true);
+            String message = String.format("%s (%d) is outside valid bounds [%d, %d]", fieldName, value, MIN_PROFILE_VALUE, MAX_PROFILE_VALUE);
+            throw new BadRequestAlertException(message, CourseLearnerProfile.ENTITY_NAME, fieldName.toLowerCase() + "OutOfBounds", true);
         }
     }
 

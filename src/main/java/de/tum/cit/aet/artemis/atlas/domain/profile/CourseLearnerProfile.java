@@ -26,6 +26,16 @@ public class CourseLearnerProfile extends DomainObject {
 
     public static final String ENTITY_NAME = "courseLearnerProfile";
 
+    /**
+     * Minimum value allowed for profile fields representing values on a Likert scale.
+     */
+    public static final int MIN_PROFILE_VALUE = 1;
+
+    /**
+     * Maximum value allowed for profile fields representing values on a Likert scale.
+     */
+    public static final int MAX_PROFILE_VALUE = 5;
+
     @ManyToOne
     @JoinColumn(name = "learner_profile_id")
     private LearnerProfile learnerProfile;
@@ -35,18 +45,18 @@ public class CourseLearnerProfile extends DomainObject {
     private Course course;
 
     @Column(name = "aim_for_grade_or_bonus")
-    @Min(0)
-    @Max(5)
+    @Min(MIN_PROFILE_VALUE)
+    @Max(MAX_PROFILE_VALUE)
     private int aimForGradeOrBonus;
 
     @Column(name = "time_investment")
-    @Min(0)
-    @Max(5)
+    @Min(MIN_PROFILE_VALUE)
+    @Max(MAX_PROFILE_VALUE)
     private int timeInvestment;
 
     @Column(name = "repetition_intensity")
-    @Min(0)
-    @Max(5)
+    @Min(MIN_PROFILE_VALUE)
+    @Max(MAX_PROFILE_VALUE)
     private int repetitionIntensity;
 
     public void setLearnerProfile(LearnerProfile learnerProfile) {

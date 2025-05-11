@@ -23,6 +23,18 @@ export class CourseLearnerProfileComponent implements OnInit {
     private learnerProfileAPIService = inject(LearnerProfileApiService);
     protected translateService = inject(TranslateService);
 
+    /**
+     * Minimum value allowed for profile fields representing values on a Likert scale.
+     * Must be the same as in the server in CourseLearnerProfile.java
+     */
+    MIN_PROFILE_VALUE = 1;
+
+    /**
+     * Maximum value allowed for profile fields representing values on a Likert scale.
+     * Must be the same as in the server in CourseLearnerProfile.java
+     */
+    MAX_PROFILE_VALUE = 5;
+
     faSave = faSave;
 
     courseLearnerProfiles: CourseLearnerProfileDTO[];
@@ -30,12 +42,13 @@ export class CourseLearnerProfileComponent implements OnInit {
 
     disabled = true;
     editing = false;
-    aimForGradeOrBonus = signal<number>(0);
-    timeInvestment = signal<number>(0);
-    repetitionIntensity = signal<number>(0);
-    initialAimForGradeOrBonus = 0;
-    initialTimeInvestment = 0;
-    initialRepetitionIntensity = 0;
+    aimForGradeOrBonus = signal<number>(1);
+    timeInvestment = signal<number>(1);
+    repetitionIntensity = signal<number>(1);
+
+    initialAimForGradeOrBonus = 1;
+    initialTimeInvestment = 1;
+    initialRepetitionIntensity = 1;
 
     async ngOnInit() {
         await this.loadProfiles();
@@ -54,16 +67,21 @@ export class CourseLearnerProfileComponent implements OnInit {
                 return;
             }
 
-            // Update displayed values to new course
-            this.aimForGradeOrBonus.set(courseLearnerProfile.aimForGradeOrBonus);
-            this.initialAimForGradeOrBonus = this.aimForGradeOrBonus();
-            this.timeInvestment.set(courseLearnerProfile.timeInvestment);
-            this.initialTimeInvestment = this.timeInvestment();
-            this.repetitionIntensity.set(courseLearnerProfile.repetitionIntensity);
-            this.initialRepetitionIntensity = this.repetitionIntensity();
+            this.updateProfileValues(courseLearnerProfile);
         } else {
             this.disabled = true;
         }
+    }
+
+    updateProfileValues(courseLearnerProfile: CourseLearnerProfileDTO) {
+        // Update displayed values to new course
+        this.initialAimForGradeOrBonus = courseLearnerProfile.aimForGradeOrBonus;
+        this.initialTimeInvestment = courseLearnerProfile.timeInvestment;
+        this.initialRepetitionIntensity = courseLearnerProfile.repetitionIntensity;
+        // update signals
+        this.aimForGradeOrBonus.set(courseLearnerProfile.aimForGradeOrBonus);
+        this.timeInvestment.set(courseLearnerProfile.timeInvestment);
+        this.repetitionIntensity.set(courseLearnerProfile.repetitionIntensity);
     }
 
     getCourseLearnerProfile(courseId: number): CourseLearnerProfileDTO | undefined {
@@ -87,10 +105,9 @@ export class CourseLearnerProfileComponent implements OnInit {
         this.learnerProfileAPIService.putUpdatedCourseLearnerProfile(courseLearnerProfile).then(
             (courseLearnerProfile) => {
                 // update profile with response from server
-                this.courseLearnerProfiles[this.activeCourse] = courseLearnerProfile;
-                this.initialAimForGradeOrBonus = this.aimForGradeOrBonus();
-                this.initialTimeInvestment = this.timeInvestment();
-                this.initialRepetitionIntensity = this.repetitionIntensity();
+                const index = this.courseLearnerProfiles.findIndex((profile) => profile.id === courseLearnerProfile.id);
+                this.courseLearnerProfiles[index] = courseLearnerProfile;
+                this.updateProfileValues(courseLearnerProfile);
 
                 this.editing = false;
 
