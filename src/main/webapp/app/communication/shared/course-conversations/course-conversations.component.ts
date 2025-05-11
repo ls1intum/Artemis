@@ -1,5 +1,5 @@
 import { NgClass } from '@angular/common';
-import { ChangeDetectorRef, Component, EventEmitter, OnDestroy, OnInit, ViewEncapsulation, inject, viewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, OnDestroy, OnInit, ViewEncapsulation, computed, inject, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
@@ -138,7 +138,9 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
     ],
 })
 export class CourseConversationsComponent implements OnInit, OnDestroy {
-    protected readonly isCommunicationEnabled = isCommunicationEnabled;
+    protected readonly isCommunicationEnabled = computed(() => {
+        return isCommunicationEnabled(this.course());
+    });
     protected readonly faComments = faComments;
     private router = inject(Router);
     private activatedRoute = inject(ActivatedRoute);
@@ -153,7 +155,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     private openSidebarEventSubscription: Subscription;
     private toggleSidebarEventSubscription: Subscription;
     private breakpointSubscription: Subscription;
-    course?: Course;
+    course = signal<Course>(new Course());
     isLoading = false;
     isServiceSetUp = false;
     messagingEnabled = false;
@@ -174,6 +176,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     selectedSavedPostStatus: undefined | SavedPostStatus = undefined;
     showOnlyPinned = false;
     pinnedCount: number = 0;
+    isManagementView = false;
 
     readonly CHANNEL_TYPE_ICON = CHANNEL_TYPE_ICON;
     readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
@@ -224,10 +227,11 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
     private setupMetis() {
         this.metisService.setPageType(PageType.OVERVIEW);
-        this.metisService.setCourse(this.course!);
+        this.metisService.setCourse(this.course());
     }
 
     ngOnInit(): void {
+        this.isManagementView = this.router.url.includes('course-management');
         this.isMobile = this.layoutService.isBreakpointActive(CustomBreakpointNames.extraSmall);
 
         this.breakpointSubscription = this.layoutService.subscribeToLayoutChanges().subscribe(() => {
@@ -259,7 +263,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         this.isLoading = true;
         this.metisConversationService.isServiceSetup$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((isServiceSetUp: boolean) => {
             if (isServiceSetUp) {
-                this.course = this.metisConversationService.course;
+                this.course.set(this.metisConversationService.course!);
                 this.initializeCourseWideSearchConfig();
                 this.initializeSidebarAccordions();
                 this.setupMetis();
@@ -272,7 +276,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                 this.subscribeToConversationsOfUser();
                 this.updateQueryParameters();
                 this.prepareSidebarData();
-                this.metisConversationService.checkIsCodeOfConductAccepted(this.course!);
+                this.metisConversationService.checkIsCodeOfConductAccepted(this.course());
                 this.isServiceSetUp = true;
                 this.isLoading = false;
             }
@@ -401,8 +405,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     }
 
     acceptCodeOfConduct() {
-        if (this.course) {
-            this.metisConversationService.acceptCodeOfConduct(this.course);
+        if (this.course()) {
+            this.metisConversationService.acceptCodeOfConduct(this.course());
         }
     }
 
@@ -418,7 +422,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     }
 
     initializeSidebarAccordions() {
-        this.messagingEnabled = isMessagingEnabled(this.course);
+        this.messagingEnabled = isMessagingEnabled(this.course());
         this.accordionConversationGroups = this.messagingEnabled
             ? { ...DEFAULT_CHANNEL_GROUPS, groupChats: { entityData: [] }, directMessages: { entityData: [] } }
             : DEFAULT_CHANNEL_GROUPS;
@@ -456,8 +460,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     prepareSidebarData() {
         this.metisConversationService.forceRefresh().subscribe({
             complete: () => {
-                this.sidebarConversations = this.courseOverviewService.mapConversationsToSidebarCardElements(this.course!, this.conversationsOfUser);
-                this.accordionConversationGroups = this.courseOverviewService.groupConversationsByChannelType(this.course!, this.conversationsOfUser, this.messagingEnabled);
+                this.sidebarConversations = this.courseOverviewService.mapConversationsToSidebarCardElements(this.course(), this.conversationsOfUser);
+                this.accordionConversationGroups = this.courseOverviewService.groupConversationsByChannelType(this.course(), this.conversationsOfUser, this.messagingEnabled);
                 this.accordionConversationGroups.recents.entityData = this.sidebarConversations?.filter((item) => item.isCurrent) || [];
                 this.updateSidebarData();
             },
@@ -472,8 +476,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
             groupedData: this.accordionConversationGroups,
             ungroupedData: this.sidebarConversations,
             showAccordionLeadingIcon: true,
-            messagingEnabled: isMessagingEnabled(this.course),
-            canCreateChannel: canCreateChannel(this.course!),
+            messagingEnabled: isMessagingEnabled(this.course()),
+            canCreateChannel: canCreateChannel(this.course()),
         };
     }
 
@@ -571,7 +575,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     }
 
     markAllChannelAsRead() {
-        this.metisConversationService.markAllChannelsAsRead(this.course).subscribe({
+        this.metisConversationService.markAllChannelsAsRead(this.course()).subscribe({
             complete: () => {
                 this.metisConversationService.forceRefresh().subscribe({
                     complete: () => {
@@ -642,8 +646,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         this.changeDetector.detectChanges();
     }
     enableCommunication(withMessaging = true) {
-        if (this.course?.id) {
-            this.metisService.enableCommunication(this.course.id, withMessaging);
+        if (this.course()?.id) {
+            this.metisService.enableCommunication(this.course().id!, withMessaging);
         }
     }
 }

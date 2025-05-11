@@ -1,18 +1,18 @@
-@if (isCommunicationEnabled(this.course)) {
+@if (isCommunicationEnabled()) {
     <jhi-loading-indicator-container [isLoading]="isLoading">
         <div [hidden]="!isCodeOfConductAccepted">
             <jhi-conversation-global-search
                 [conversations]="conversationsOfUser"
-                [courseId]="course?.id"
+                [courseId]="course()?.id"
                 (onSearch)="onSearch($event)"
                 (onSelectionChange)="onSelectionChange($event)"
             />
         </div>
 
         <!-- only display after isCodeOfConductAccepted is loaded and set to false -->
-        @if (course && isCodeOfConductAccepted === false) {
+        @if (course() && isCodeOfConductAccepted === false) {
             <div class="module-bg px-3 py-3 code-of-conduct">
-                <jhi-course-conversations-code-of-conduct [course]="course!" />
+                <jhi-course-conversations-code-of-conduct [course]="course()" />
                 <button
                     id="acceptCodeOfConductButton"
                     class="btn btn-primary"
@@ -22,14 +22,14 @@
                 ></button>
             </div>
         }
-        @if (isCodeOfConductAccepted && isServiceSetUp && course) {
+        @if (isCodeOfConductAccepted && isServiceSetUp && course()) {
             <div class="d-flex justify-content-between">
                 <div class="communication-content-sidebar" [ngClass]="{ 'sidebar-collapsed': isCollapsed, 'is-not-in-active-conversation': !activeConversation }">
                     <jhi-sidebar
                         (onSelectConversation)="onConversationSelected($event)"
                         (onUpdateSidebar)="prepareSidebarData()"
                         [itemSelected]="conversationSelected"
-                        [courseId]="course.id"
+                        [courseId]="course().id"
                         [sidebarData]="sidebarData"
                         (onCreateChannelPressed)="openCreateChannelDialog()"
                         (onMarkAllChannelsAsRead)="markAllChannelAsRead()"
@@ -43,9 +43,9 @@
                         [reEmitNonDistinctSidebarEvents]="true"
                     />
                 </div>
-                @if (course && !activeConversation && isCodeOfConductPresented) {
+                @if (course() && !activeConversation && isCodeOfConductPresented) {
                     <div class="col pe-0 flex-grow-1">
-                        <jhi-course-conversations-code-of-conduct [course]="course!" />
+                        <jhi-course-conversations-code-of-conduct [course]="course()" />
                     </div>
                 }
                 <div
@@ -57,7 +57,7 @@
                         <jhi-conversation-messages
                             [contentHeightDev]="!isProduction || isTestServer"
                             (openThread)="openThread($event)"
-                            [course]="course"
+                            [course]="course()"
                             (onNavigateToPost)="onTriggerNavigateToPost($event)"
                             [focusPostId]="focusPostId"
                             [openThreadOnFocus]="openThreadOnFocus"
@@ -72,7 +72,7 @@
                                 (onNavigateToPost)="onTriggerNavigateToPost($event)"
                             />
                         } @else {
-                            <jhi-saved-posts [savedPostStatus]="selectedSavedPostStatus" [courseId]="course.id!" (onNavigateToPost)="onNavigateToPost($event)" />
+                            <jhi-saved-posts [savedPostStatus]="selectedSavedPostStatus" [courseId]="course().id!" (onNavigateToPost)="onNavigateToPost($event)" />
                         }
                     }
                 </div>
@@ -89,7 +89,7 @@
             </div>
         }
     </jhi-loading-indicator-container>
-} @else {
+} @else if (isManagementView && !isCommunicationEnabled()) {
     <div class="module-bg p-3 rounded rounded-3 scrollable-content">
         <jhi-feature-activation
             [headerTitle]="'artemisApp.communicationDisabled.title'"
