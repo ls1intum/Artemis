@@ -375,6 +375,9 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importFromFile_validImportZip_changeTitle_success() throws Exception {
+        aeolusRequestMockProvider.enableMockingOfRequests();
+        aeolusRequestMockProvider.mockFailedGenerateBuildPlan(AeolusTarget.CLI);
+        
         String uniqueSuffix = java.util.UUID.randomUUID().toString().replace("-", "").substring(0, 20).toUpperCase();
         var resource = new ClassPathResource("test-data/import-from-file/valid-import.zip");
         ZipInputStream zipInputStream = new ZipInputStream(resource.getInputStream());
