@@ -17,9 +17,35 @@ import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker'
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { Component } from '@angular/core';
+import { getComponentInstanceFromFixture } from 'test/helpers/utils/general-test.utils';
+
+@Component({
+    template: `<jhi-competency-form
+        [isEditMode]="isEditMode"
+        [formData]="formData"
+        (formSubmitted)="formSubmitted($event)"
+        [courseId]="courseId"
+        [lecturesOfCourseWithLectureUnits]="lecturesOfCourseWithLectureUnits"
+        [averageStudentScore]="averageStudentScore"
+        [competency]="competency"
+    /> `,
+    imports: [CompetencyFormComponent],
+})
+class WrappedComponent {
+    isEditMode: boolean;
+    formData: CourseCompetencyFormData;
+    courseId: number;
+    lecturesOfCourseWithLectureUnits?: Lecture[];
+    averageStudentScore?: number;
+    competency: Competency;
+
+    formSubmitted(formData: CourseCompetencyFormData) {}
+}
 
 describe('CompetencyFormComponent', () => {
-    let competencyFormComponentFixture: ComponentFixture<CompetencyFormComponent>;
+    let fixture: ComponentFixture<WrappedComponent>;
+    let component: WrappedComponent;
     let competencyFormComponent: CompetencyFormComponent;
 
     let translateService: TranslateService;
@@ -34,10 +60,13 @@ describe('CompetencyFormComponent', () => {
         global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
             return new MockResizeObserver(callback);
         });
-        competencyFormComponentFixture = TestBed.createComponent(CompetencyFormComponent);
-        competencyFormComponent = competencyFormComponentFixture.componentInstance;
+        fixture = TestBed.createComponent(WrappedComponent);
+        component = fixture.componentInstance;
+        competencyFormComponent = getComponentInstanceFromFixture(fixture, 'jhi-competency-form') as CompetencyFormComponent;
 
         translateService = TestBed.inject(TranslateService);
+
+        fixture.detectChanges();
     });
 
     afterEach(() => {
@@ -45,8 +74,8 @@ describe('CompetencyFormComponent', () => {
     });
 
     it('should initialize', () => {
-        competencyFormComponentFixture.detectChanges();
-        expect(competencyFormComponent).toBeDefined();
+        fixture.detectChanges();
+        expect(component).toBeDefined();
     });
 
     it('should submit valid form', fakeAsync(() => {
@@ -63,7 +92,7 @@ describe('CompetencyFormComponent', () => {
 
         jest.spyOn(courseCompetencyService, 'getAllForCourse').mockReturnValue(of(response));
 
-        competencyFormComponentFixture.detectChanges();
+        fixture.detectChanges();
 
         const exampleTitle = 'uniqueName';
         competencyFormComponent.titleControl!.setValue(exampleTitle);
@@ -76,16 +105,16 @@ describe('CompetencyFormComponent', () => {
         exampleLecture.id = 1;
         exampleLecture.lectureUnits = [exampleLectureUnit];
 
-        competencyFormComponentFixture.detectChanges();
+        fixture.detectChanges();
         tick(250); // async validator fires after 250ms and fully filled in form should now be valid!
         expect(competencyFormComponent.form.valid).toBeTrue();
         expect(getAllTitlesSpy).toHaveBeenCalledOnce();
         const submitFormSpy = jest.spyOn(competencyFormComponent, 'submitForm');
         const submitFormEventSpy = jest.spyOn(competencyFormComponent.formSubmitted, 'emit');
 
-        const submitButton = competencyFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
+        const submitButton = fixture.debugElement.nativeElement.querySelector('#submitButton');
         submitButton.click();
-        competencyFormComponentFixture.detectChanges();
+        fixture.detectChanges();
 
         flush();
         expect(submitFormSpy).toHaveBeenCalledOnce();
@@ -94,7 +123,7 @@ describe('CompetencyFormComponent', () => {
     }));
 
     it('should correctly set form values in edit mode', () => {
-        competencyFormComponent.isEditMode = true;
+        component.isEditMode = true;
         const textUnit = new TextUnit();
         textUnit.id = 1;
         const formData: CourseCompetencyFormData = {
@@ -105,8 +134,8 @@ describe('CompetencyFormComponent', () => {
             taxonomy: CompetencyTaxonomy.ANALYZE,
             optional: true,
         };
-        competencyFormComponentFixture.detectChanges();
-        competencyFormComponent.formData = formData;
+        fixture.detectChanges();
+        component.formData = formData;
         competencyFormComponent.ngOnChanges();
 
         expect(competencyFormComponent.titleControl?.value).toEqual(formData.title);
@@ -116,13 +145,13 @@ describe('CompetencyFormComponent', () => {
     });
 
     it('should suggest taxonomy when title changes', () => {
-        competencyFormComponentFixture.detectChanges();
+        fixture.detectChanges();
 
-        const commonCourseCompetencyFormComponent = competencyFormComponentFixture.debugElement.query(By.directive(CommonCourseCompetencyFormComponent)).componentInstance;
+        const commonCourseCompetencyFormComponent = fixture.debugElement.query(By.directive(CommonCourseCompetencyFormComponent)).componentInstance;
         const suggestTaxonomySpy = jest.spyOn(commonCourseCompetencyFormComponent, 'suggestTaxonomies');
         const translateSpy = createTranslateSpy();
 
-        const titleInput = competencyFormComponentFixture.nativeElement.querySelector('#title');
+        const titleInput = fixture.nativeElement.querySelector('#title');
         titleInput.value = 'Building a tool: create a plan and implement something!';
         titleInput.dispatchEvent(new Event('input'));
 
@@ -135,9 +164,9 @@ describe('CompetencyFormComponent', () => {
     });
 
     it('should suggest taxonomy when description changes', () => {
-        competencyFormComponentFixture.detectChanges();
+        fixture.detectChanges();
 
-        const commonCourseCompetencyFormComponent = competencyFormComponentFixture.debugElement.query(By.directive(CommonCourseCompetencyFormComponent)).componentInstance;
+        const commonCourseCompetencyFormComponent = fixture.debugElement.query(By.directive(CommonCourseCompetencyFormComponent)).componentInstance;
         const suggestTaxonomySpy = jest.spyOn(commonCourseCompetencyFormComponent, 'suggestTaxonomies');
         const translateSpy = createTranslateSpy();
 
@@ -155,10 +184,10 @@ describe('CompetencyFormComponent', () => {
         const existingTitles = ['nameExisting'];
         const courseCompetencyService = TestBed.inject(CourseCompetencyService);
         jest.spyOn(courseCompetencyService, 'getCourseCompetencyTitles').mockReturnValue(of(new HttpResponse({ body: existingTitles, status: 200 })));
-        competencyFormComponent.isEditMode = true;
-        competencyFormComponent.formData.title = 'initialName';
+        component.isEditMode = true;
+        component.formData.title = 'initialName';
 
-        competencyFormComponentFixture.detectChanges();
+        fixture.detectChanges();
 
         const titleControl = competencyFormComponent.titleControl!;
         tick(250);
