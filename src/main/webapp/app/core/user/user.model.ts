@@ -16,9 +16,14 @@ export class User extends Account {
     public vcsAccessTokenExpiryDate?: string;
     public externalLLMUsageAccepted?: dayjs.Dayjs;
     /**
-     * true if at least one passkey is registered for this user
+     * True if
+     * <ul>
+     * <li>No passkey has been registered for this user yet</li>
+     * <li>and the passkey feature is enabled</li>
+     * <li>and <code>artemis.user-management.passkey.ask-users-to-setup</code> is set to true</li>
+     * </ul>
      */
-    public hasRegisteredAPasskey?: boolean;
+    public askToSetupPasskey?: boolean;
 
     constructor(
         id?: number,
@@ -39,7 +44,7 @@ export class User extends Account {
         vcsAccessToken?: string,
         vcsAccessTokenExpiryDate?: string,
         externalLLMUsageAccepted?: dayjs.Dayjs,
-        hasRegisteredAPasskey?: boolean,
+        askToSetupPasskey?: boolean,
     ) {
         super(activated, authorities, email, firstName, langKey, lastName, login, imageUrl);
         this.id = id;
@@ -52,7 +57,7 @@ export class User extends Account {
         this.vcsAccessToken = vcsAccessToken;
         this.vcsAccessTokenExpiryDate = vcsAccessTokenExpiryDate;
         this.externalLLMUsageAccepted = externalLLMUsageAccepted;
-        this.hasRegisteredAPasskey = hasRegisteredAPasskey;
+        this.askToSetupPasskey = askToSetupPasskey;
     }
 }
 /**
