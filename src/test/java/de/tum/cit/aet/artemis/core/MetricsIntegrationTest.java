@@ -28,7 +28,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.assessment.domain.ParticipantScore;
 import de.tum.cit.aet.artemis.assessment.repository.StudentScoreRepository;
 import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService;
-import de.tum.cit.aet.artemis.assessment.util.StudentScoreUtilService;
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
@@ -68,9 +67,6 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     private StudentScoreRepository studentScoreRepository;
 
     @Autowired
-    protected StudentScoreUtilService studentScoreUtilService;
-
-    @Autowired
     protected LectureUtilService lectureUtilService;
 
     @Autowired
@@ -90,8 +86,6 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @BeforeEach
     void setupTestScenario() {
         ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 100;
-        studentScoreRepository.deleteAll();
-
         userUtilService.addUsers(TEST_PREFIX, 3, 1, 1, 1);
 
         course = courseUtilService.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(TEST_PREFIX, true);
@@ -150,20 +144,33 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         @Test
         @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
-        void shouldReturnAverageScores() throws Exception {
+        void shouldReturnAverageScores() {
             final var exercises = exerciseTestRepository.findAllExercisesByCourseIdWithEagerParticipation(course.getId());
-            exercises.forEach(exercise -> studentScoreUtilService.createRatedStudentScore(exercise, userUtilService.getUserByLogin(STUDENT_OF_COURSE), 5));
-            final var result = request.get("/api/atlas/metrics/course/" + course.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
-            assertThat(result).isNotNull();
-            assertThat(result.exerciseMetrics()).isNotNull();
-            final var averageScores = result.exerciseMetrics().averageScore();
 
-            final var expectedAverageScores = exercises.stream().collect(Collectors.toMap(Exercise::getId,
-                    exercise -> exercise.getStudentParticipations().stream().flatMap(participation -> participation.getStudents().stream()).mapToDouble(
-                            student -> studentScoreRepository.findByExercise_IdAndUser_Id(exercise.getId(), student.getId()).map(ParticipantScore::getLastRatedScore).orElse(0.0))
-                            .average().orElse(0.0)));
+            // we do not need to create new rated scores here as the ParticipantScoreScheduleService will create them for us, we just have to account for the async execution
+            // we have to pass the security context to the runnable as otherwise the user is unauthenticated and the request fails with a 401
+            SecurityContext context = SecurityContextHolder.getContext();
+            ThrowingRunnable assertion = () -> new DelegatingSecurityContextRunnable(() -> {
+                final StudentMetricsDTO result;
+                try {
+                    result = request.get("/api/atlas/metrics/course/" + course.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
+                }
+                catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+                assertThat(result).isNotNull();
+                assertThat(result.exerciseMetrics()).isNotNull();
+                final var averageScores = result.exerciseMetrics().averageScore();
 
-            assertThat(averageScores).isEqualTo(expectedAverageScores);
+                final var expectedAverageScores = exercises.stream()
+                        .collect(Collectors.toMap(Exercise::getId, exercise -> exercise.getStudentParticipations().stream()
+                                .flatMap(participation -> participation.getStudents().stream()).mapToDouble(student -> studentScoreRepository
+                                        .findByExercise_IdAndUser_Id(exercise.getId(), student.getId()).map(ParticipantScore::getLastRatedScore).orElse(0.0))
+                                .average().orElse(0.0)));
+
+                assertThat(averageScores).isEqualTo(expectedAverageScores);
+            }, context).run();
+            await().untilAsserted(assertion);
         }
 
         @Test
@@ -173,27 +180,25 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             // we do not need to create new rated scores here as the ParticipantScoreScheduleService will create them for us, we just have to account for the async execution
             // we have to pass the security context to the runnable as otherwise the user is unauthenticated and the request fails with a 401
             SecurityContext context = SecurityContextHolder.getContext();
-            ThrowingRunnable assertion = () -> {
-                new DelegatingSecurityContextRunnable(() -> {
-                    final StudentMetricsDTO result;
-                    try {
-                        result = request.get("/api/atlas/metrics/course/" + course.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
-                    }
-                    catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                    assertThat(result).isNotNull();
-                    assertThat(result.exerciseMetrics()).isNotNull();
-                    final var score = result.exerciseMetrics().score();
+            ThrowingRunnable assertion = () -> new DelegatingSecurityContextRunnable(() -> {
+                final StudentMetricsDTO result;
+                try {
+                    result = request.get("/api/atlas/metrics/course/" + course.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
+                }
+                catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+                assertThat(result).isNotNull();
+                assertThat(result.exerciseMetrics()).isNotNull();
+                final var score = result.exerciseMetrics().score();
 
-                    var expectedScores = exercises.stream()
-                            .map(exercise -> studentScoreRepository.findByExercise_IdAndUser_Id(exercise.getId(), userID)
-                                    .map(studentScore -> Map.entry(exercise.getId(), studentScore.getLastRatedScore())))
-                            .filter(Optional::isPresent).map(Optional::get).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                var expectedScores = exercises.stream()
+                        .map(exercise -> studentScoreRepository.findByExercise_IdAndUser_Id(exercise.getId(), userID)
+                                .map(studentScore -> Map.entry(exercise.getId(), studentScore.getLastRatedScore())))
+                        .filter(Optional::isPresent).map(Optional::get).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
-                    assertThat(score).isEqualTo(expectedScores);
-                }, context).run();
-            };
+                assertThat(score).isEqualTo(expectedScores);
+            }, context).run();
 
             await().untilAsserted(assertion);
 
@@ -242,8 +247,8 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         @Test
         @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
-        void shouldFindLatestSubmissionDates() throws Exception {
-            Set<Long> exerciseIds = new HashSet<Long>();
+        void shouldFindLatestSubmissionDates() {
+            Set<Long> exerciseIds = new HashSet<>();
             final var exercises = exerciseRepository.findAllExercisesByCourseId(courseWithTestRuns.getId()).stream()
                     .map(exercise -> exerciseRepository.findWithEagerStudentParticipationsStudentAndSubmissionsById(exercise.getId()).orElseThrow());
 
@@ -262,8 +267,8 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         @Test
         @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
-        void shouldFindLatestSubmissionDatesByUser() throws Exception {
-            Set<Long> exerciseIds = new HashSet<Long>();
+        void shouldFindLatestSubmissionDatesByUser() {
+            Set<Long> exerciseIds = new HashSet<>();
             final var exercises = exerciseRepository.findAllExercisesByCourseId(courseWithTestRuns.getId()).stream()
                     .map(exercise -> exerciseRepository.findWithEagerStudentParticipationsStudentAndSubmissionsById(exercise.getId()).orElseThrow());
             final var userID = userUtilService.getUserByLogin(TEST_PREFIX + "student1").getId();
@@ -283,20 +288,32 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         @Test
         @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
-        void shouldReturnCompleted() throws Exception {
+        void shouldReturnCompleted() {
             final var exercises = exerciseRepository.findAllExercisesByCourseId(course.getId());
-            exercises.forEach(exercise -> studentScoreUtilService.createRatedStudentScore(exercise, userUtilService.getUserByLogin(STUDENT_OF_COURSE), MIN_SCORE_GREEN));
 
-            final var result = request.get("/api/atlas/metrics/course/" + course.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
-            assertThat(result).isNotNull();
-            assertThat(result.exerciseMetrics()).isNotNull();
-            final var completed = result.exerciseMetrics().completed();
+            // we do not need to create new rated scores here as the ParticipantScoreScheduleService will create them for us, we just have to account for the async execution
+            // we have to pass the security context to the runnable as otherwise the user is unauthenticated and the request fails with a 401
+            SecurityContext context = SecurityContextHolder.getContext();
+            ThrowingRunnable assertion = () -> new DelegatingSecurityContextRunnable(() -> {
 
-            final var expectedCompleted = exercises.stream().map(Exercise::getId).filter(
-                    id -> studentScoreRepository.findByExercise_IdAndUser_Id(id, userID).map(studentScore -> studentScore.getLastRatedScore() >= MIN_SCORE_GREEN).orElse(false))
-                    .collect(Collectors.toSet());
+                final StudentMetricsDTO result;
+                try {
+                    result = request.get("/api/atlas/metrics/course/" + course.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
+                }
+                catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+                assertThat(result).isNotNull();
+                assertThat(result.exerciseMetrics()).isNotNull();
+                final var completed = result.exerciseMetrics().completed();
 
-            assertThat(completed).isEqualTo(expectedCompleted);
+                final var expectedCompleted = exercises.stream().map(Exercise::getId).filter(
+                        id -> studentScoreRepository.findByExercise_IdAndUser_Id(id, userID).map(studentScore -> studentScore.getLastRatedScore() >= MIN_SCORE_GREEN).orElse(false))
+                        .collect(Collectors.toSet());
+
+                assertThat(completed).isEqualTo(expectedCompleted);
+            }, context).run();
+            await().untilAsserted(assertion);
         }
     }
 

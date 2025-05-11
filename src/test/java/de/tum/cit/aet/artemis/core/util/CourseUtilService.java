@@ -566,7 +566,7 @@ public class CourseUtilService {
         participationProgramming = studentParticipationRepo.save(participationProgramming);
 
         // Setup results
-        Result resultModeling = generateResult(true, 10D);
+        Result resultModeling = generateResult(true, 100D);
         resultModeling.setAssessmentType(AssessmentType.MANUAL);
         resultModeling.setCompletionDate(ZonedDateTime.now());
 
