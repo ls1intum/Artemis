@@ -156,7 +156,7 @@ export class ExerciseService {
     }
 
     /**
-     * Get exercise details including all results for the currently logged-in user
+     * Get exercise details including up to the latest 20 results for the currently logged-in user
      * @param exerciseId - Id of the exercise to get the repos from
      */
     getExerciseDetails(exerciseId: number): Observable<EntityDetailsResponseType> {

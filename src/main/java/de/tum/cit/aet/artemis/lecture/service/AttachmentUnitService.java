@@ -228,6 +228,5 @@ public class AttachmentUnitService {
     public void prepareAttachmentUnitForClient(AttachmentUnit attachmentUnit) {
         attachmentUnit.getLecture().setLectureUnits(null);
         attachmentUnit.getLecture().setAttachments(null);
-        attachmentUnit.getLecture().setPosts(null);
     }
 }
