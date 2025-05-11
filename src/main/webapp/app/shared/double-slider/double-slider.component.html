@@ -6,8 +6,8 @@
         }
     </div>
     <div class="sliders_control">
-        <input id="initialSlider" class="form-range" type="range" [value]="initialValue()" min="{{ min() }}" max="{{ max() }}" disabled />
         <input id="currentSlider" class="form-range" type="range" [ngModel]="currentValue()" (ngModelChange)="onChange($event)" min="{{ min() }}" max="{{ max() }}" list="rating" />
+        <input id="initialSlider" class="form-range" type="range" [value]="initialValue()" min="{{ min() }}" max="{{ max() }}" disabled />
 
         <datalist id="rating" style="--list-length: 2">
             <option value="{{ min() }}">{{ minLabel() || min() }}</option>

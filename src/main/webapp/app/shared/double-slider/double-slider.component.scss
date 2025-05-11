@@ -3,34 +3,74 @@
     min-height: 25px;
 }
 
+/* Current slider styles */
 input[type='range']#currentSlider::-webkit-slider-thumb {
     background-color: var(--primary);
     cursor: pointer;
+    position: relative;
+    z-index: 3;
 }
 
 input[type='range']#currentSlider::-moz-range-thumb {
     background-color: var(--primary);
     cursor: pointer;
+    position: relative;
+    z-index: 3;
 }
 
 input[type='range']#currentSlider::-ms-thumb {
     background-color: var(--primary);
     cursor: pointer;
+    position: relative;
+    z-index: 3;
+}
+
+/* Initial slider styles - show thumb but keep it behind current slider thumb */
+input[type='range']#initialSlider::-webkit-slider-thumb {
+    position: relative;
+    z-index: 2;
+    visibility: visible;
+    opacity: 0.7;
+}
+
+input[type='range']#initialSlider::-moz-range-thumb {
+    position: relative;
+    z-index: 2;
+    visibility: visible;
+    opacity: 0.7;
+}
+
+input[type='range']#initialSlider::-ms-thumb {
+    position: relative;
+    z-index: 2;
+    visibility: visible;
+    opacity: 0.7;
 }
 
 input[type='range'] {
     position: absolute;
 }
 
+/* Set z-index for entire sliders */
 #currentSlider {
-    z-index: 1;
+    z-index: 2;
 }
 
 #initialSlider {
     pointer-events: none;
+    z-index: 1;
 }
 
+/* Make track transparent for current slider */
 #currentSlider::-moz-range-track {
+    background-color: transparent;
+}
+
+#currentSlider::-webkit-slider-runnable-track {
+    background-color: transparent;
+}
+
+#currentSlider::-ms-track {
     background-color: transparent;
 }
 
