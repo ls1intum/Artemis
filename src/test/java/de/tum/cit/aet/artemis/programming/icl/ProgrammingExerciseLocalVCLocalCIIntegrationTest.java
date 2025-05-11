@@ -408,24 +408,19 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
             if (!Files.exists(repoPath))
                 continue;
             List<Path> files = new ArrayList<>();
-            try {
-                Files.walk(repoPath).filter(Files::isRegularFile).forEach(files::add);
-                for (Path filePath : files) {
-                    String content = Files.readString(filePath);
-                    int idx = 0;
-                    while ((idx = content.indexOf(newTitle, idx)) != -1) {
-                        newTitleCount++;
-                        idx += newTitle.length();
-                    }
-                    idx = 0;
-                    while ((idx = content.indexOf(oldTitle, idx)) != -1) {
-                        oldTitleCount++;
-                        idx += oldTitle.length();
-                    }
+            Files.walk(repoPath).filter(Files::isRegularFile).forEach(files::add);
+            for (Path filePath : files) {
+                String content = new String(Files.readAllBytes(filePath), StandardCharsets.UTF_8);
+                int idx = 0;
+                while ((idx = content.indexOf(newTitle, idx)) != -1) {
+                    newTitleCount++;
+                    idx += newTitle.length();
                 }
-            }
-            catch (IOException e) {
-                throw new RuntimeException("Error walking through repository files", e);
+                idx = 0;
+                while ((idx = content.indexOf(oldTitle, idx)) != -1) {
+                    oldTitleCount++;
+                    idx += oldTitle.length();
+                }
             }
         }
         assertThat(newTitleCount).isEqualTo(countOccurrencesInZip(importResult.resource(), oldTitle));
