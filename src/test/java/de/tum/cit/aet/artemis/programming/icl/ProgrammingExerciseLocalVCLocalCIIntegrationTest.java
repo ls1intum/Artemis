@@ -375,75 +375,26 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         aeolusRequestMockProvider.mockFailedGenerateBuildPlan(AeolusTarget.CLI);
 
         String uniqueSuffix = java.util.UUID.randomUUID().toString().replace("-", "").substring(0, 20).toUpperCase();
-        var resource = new ClassPathResource("test-data/import-from-file/valid-import.zip");
-        ZipInputStream zipInputStream = new ZipInputStream(resource.getInputStream());
-        String detailsJsonString = null;
-        ZipEntry entry;
-        while ((entry = zipInputStream.getNextEntry()) != null) {
-            if (entry.getName().endsWith(".json")) {
-                // Read the JSON file as a String
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                byte[] buffer = new byte[1024];
-                int len;
-                while ((len = zipInputStream.read(buffer)) > 0) {
-                    baos.write(buffer, 0, len);
-                }
-                detailsJsonString = baos.toString(StandardCharsets.UTF_8);
-                break;
-            }
-        }
-        zipInputStream.close();
-        assertThat(detailsJsonString).isNotNull();
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        objectMapper.findAndRegisterModules();
-        ProgrammingExercise parsedExercise = objectMapper.readValue(detailsJsonString, ProgrammingExercise.class);
-        if (parsedExercise.getBuildConfig() == null) {
-            parsedExercise.setBuildConfig(new de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig());
-        }
-        // Change the title and short name to unique values
-        String oldTitle = parsedExercise.getTitle();
         String newTitle = "TITLE" + uniqueSuffix;
         String newShortName = "SHORT" + uniqueSuffix;
-        parsedExercise.setTitle(newTitle);
-        parsedExercise.setShortName(newShortName);
-        parsedExercise.setCourse(course);
-        parsedExercise.setId(null);
-        parsedExercise.setChannelName("testchannel-pe-imported");
-        parsedExercise.forceNewProjectKey();
-        // Prepare the file for import
-        MockMultipartFile file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
-        // Count old title occurrences in the original zip
-        int oldTitleCountInZip = 0;
-        try (ZipInputStream zipIn = new ZipInputStream(new FileInputStream(resource.getFile()))) {
-            ZipEntry zipEntry;
-            while ((zipEntry = zipIn.getNextEntry()) != null) {
-                if (!zipEntry.isDirectory() && zipEntry.getName().endsWith(".zip")) {
-                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                    byte[] buf = new byte[1024];
-                    int n;
-                    while ((n = zipIn.read(buf)) > 0) {
-                        baos.write(buf, 0, n);
-                    }
-                    String content = baos.toString(StandardCharsets.UTF_8);
-                    int idx = 0;
-                    while ((idx = content.indexOf(oldTitle, idx)) != -1) {
-                        oldTitleCountInZip++;
-                        idx += oldTitle.length();
-                    }
-                }
-            }
-        }
-        ProgrammingExercise importedExercise = request.postWithMultipartFile("/api/programming/courses/" + course.getId() + "/programming-exercises/import-from-file",
-                parsedExercise, "programmingExercise", file, ProgrammingExercise.class, HttpStatus.OK);
+
+        ImportFileResult importResult = prepareExerciseImport("test-data/import-from-file/valid-import.zip", exercise -> {
+            String oldTitle = exercise.getTitle();
+            exercise.setTitle(newTitle);
+            exercise.setShortName(newShortName);
+            return oldTitle;
+        });
+
+        ProgrammingExercise importedExercise = importResult.importedExercise();
+        String oldTitle = (String) importResult.additionalData();
 
         assertThat(importedExercise).isNotNull();
         assertThat(importedExercise.getTitle()).isEqualTo(newTitle);
-        assertThat(importedExercise.getProgrammingLanguage()).isEqualTo(parsedExercise.getProgrammingLanguage());
+        assertThat(importedExercise.getProgrammingLanguage()).isEqualTo(importResult.parsedExercise().getProgrammingLanguage());
         assertThat(importedExercise.getCourseViaExerciseGroupOrCourseMember()).isEqualTo(course);
 
         String repoClonePath = System.getProperty("artemis.repo-clone-path", "repos");
-        String projectKey = parsedExercise.getProjectKey();
+        String projectKey = importResult.parsedExercise().getProjectKey();
         String[] repoDirs = { projectKey + "-exercise", projectKey + "-solution", projectKey + "-tests" };
         int newTitleCount = 0;
         int oldTitleCount = 0;
@@ -467,8 +418,99 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
                 }
             }
         }
-        assertThat(newTitleCount).isEqualTo(oldTitleCountInZip);
+        assertThat(newTitleCount).isEqualTo(countOccurrencesInZip(importResult.resource(), oldTitle));
         assertThat(oldTitleCount).isZero();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importFromFile_validImportZip() throws Exception {
+        aeolusRequestMockProvider.enableMockingOfRequests();
+        aeolusRequestMockProvider.mockFailedGenerateBuildPlan(AeolusTarget.CLI);
+
+        ImportFileResult importResult = prepareExerciseImport("test-data/import-from-file/valid-import.zip", exercise -> null);
+        ProgrammingExercise importedExercise = importResult.importedExercise();
+
+        assertThat(importedExercise).isNotNull();
+        assertThat(importedExercise.getTitle()).isEqualTo(importResult.parsedExercise().getTitle());
+        assertThat(importedExercise.getProgrammingLanguage()).isEqualTo(importResult.parsedExercise().getProgrammingLanguage());
+        assertThat(importedExercise.getCourseViaExerciseGroupOrCourseMember()).isEqualTo(course);
+    }
+
+    private record ImportFileResult(ClassPathResource resource, ProgrammingExercise parsedExercise, ProgrammingExercise importedExercise, Object additionalData) {
+    }
+
+    private interface ExerciseModifier<T> {
+
+        T modify(ProgrammingExercise exercise);
+    }
+
+    private ImportFileResult prepareExerciseImport(String resourcePath, ExerciseModifier<?> modifier) throws Exception {
+        var resource = new ClassPathResource(resourcePath);
+        ZipInputStream zipInputStream = new ZipInputStream(resource.getInputStream());
+        String detailsJsonString = null;
+        ZipEntry entry;
+        while ((entry = zipInputStream.getNextEntry()) != null) {
+            if (entry.getName().endsWith(".json")) {
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                byte[] buffer = new byte[1024];
+                int len;
+                while ((len = zipInputStream.read(buffer)) > 0) {
+                    baos.write(buffer, 0, len);
+                }
+                detailsJsonString = baos.toString(StandardCharsets.UTF_8);
+                break;
+            }
+        }
+        zipInputStream.close();
+        assertThat(detailsJsonString).isNotNull();
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        objectMapper.findAndRegisterModules();
+        ProgrammingExercise parsedExercise = objectMapper.readValue(detailsJsonString, ProgrammingExercise.class);
+
+        if (parsedExercise.getBuildConfig() == null) {
+            parsedExercise.setBuildConfig(new de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig());
+        }
+
+        Object additionalData = modifier.modify(parsedExercise);
+
+        parsedExercise.setCourse(course);
+        parsedExercise.setId(null);
+        parsedExercise.setChannelName("testchannel-pe-imported");
+        parsedExercise.forceNewProjectKey();
+
+        MockMultipartFile file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
+
+        ProgrammingExercise importedExercise = request.postWithMultipartFile("/api/programming/courses/" + course.getId() + "/programming-exercises/import-from-file",
+                parsedExercise, "programmingExercise", file, ProgrammingExercise.class, HttpStatus.OK);
+
+        return new ImportFileResult(resource, parsedExercise, importedExercise, additionalData);
+    }
+
+    private int countOccurrencesInZip(ClassPathResource resource, String searchString) throws Exception {
+        int count = 0;
+        try (ZipInputStream zipIn = new ZipInputStream(new FileInputStream(resource.getFile()))) {
+            ZipEntry zipEntry;
+            while ((zipEntry = zipIn.getNextEntry()) != null) {
+                if (!zipEntry.isDirectory() && zipEntry.getName().endsWith(".zip")) {
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    byte[] buf = new byte[1024];
+                    int n;
+                    while ((n = zipIn.read(buf)) > 0) {
+                        baos.write(buf, 0, n);
+                    }
+                    String content = baos.toString(StandardCharsets.UTF_8);
+                    int idx = 0;
+                    while ((idx = content.indexOf(searchString, idx)) != -1) {
+                        count++;
+                        idx += searchString.length();
+                    }
+                }
+            }
+        }
+        return count;
     }
 
     @Nested
