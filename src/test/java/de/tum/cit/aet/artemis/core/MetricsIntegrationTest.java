@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.core;
 import static de.tum.cit.aet.artemis.core.config.Constants.MIN_SCORE_GREEN;
 import static de.tum.cit.aet.artemis.core.util.TimeUtil.toRelativeTime;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 import java.util.Comparator;
 import java.util.HashSet;
@@ -12,12 +13,16 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.awaitility.core.ThrowingRunnable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.concurrent.DelegatingSecurityContextRunnable;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.assessment.domain.ParticipantScore;
@@ -83,8 +88,9 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     private static final String STUDENT_OF_COURSE = TEST_PREFIX + "student1";
 
     @BeforeEach
-    void setupTestScenario() throws Exception {
+    void setupTestScenario() {
         ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 100;
+        studentScoreRepository.deleteAll();
 
         userUtilService.addUsers(TEST_PREFIX, 3, 1, 1, 1);
 
@@ -162,22 +168,35 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         @Test
         @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
-        void shouldReturnScore() throws Exception {
+        void shouldReturnScore() {
             final var exercises = exerciseRepository.findAllExercisesByCourseId(course.getId());
+            // we do not need to create new rated scores here as the ParticipantScoreScheduleService will create them for us, we just have to account for the async execution
+            // we have to pass the security context to the runnable as otherwise the user is unauthenticated and the request fails with a 401
+            SecurityContext context = SecurityContextHolder.getContext();
+            ThrowingRunnable assertion = () -> {
+                new DelegatingSecurityContextRunnable(() -> {
+                    final StudentMetricsDTO result;
+                    try {
+                        result = request.get("/api/atlas/metrics/course/" + course.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
+                    }
+                    catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                    assertThat(result).isNotNull();
+                    assertThat(result.exerciseMetrics()).isNotNull();
+                    final var score = result.exerciseMetrics().score();
 
-            exercises.forEach(exercise -> studentScoreUtilService.createRatedStudentScore(exercise, userUtilService.getUserByLogin(STUDENT_OF_COURSE), 0.5));
+                    var expectedScores = exercises.stream()
+                            .map(exercise -> studentScoreRepository.findByExercise_IdAndUser_Id(exercise.getId(), userID)
+                                    .map(studentScore -> Map.entry(exercise.getId(), studentScore.getLastRatedScore())))
+                            .filter(Optional::isPresent).map(Optional::get).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
-            final var result = request.get("/api/atlas/metrics/course/" + course.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
-            assertThat(result).isNotNull();
-            assertThat(result.exerciseMetrics()).isNotNull();
-            final var score = result.exerciseMetrics().score();
+                    assertThat(score).isEqualTo(expectedScores);
+                }, context).run();
+            };
 
-            var expectedScores = exercises.stream()
-                    .map(exercise -> studentScoreRepository.findByExercise_IdAndUser_Id(exercise.getId(), userID)
-                            .map(studentScore -> Map.entry(exercise.getId(), studentScore.getLastRatedScore())))
-                    .filter(Optional::isPresent).map(Optional::get).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+            await().untilAsserted(assertion);
 
-            assertThat(score).isEqualTo(expectedScores);
         }
 
         @Test
