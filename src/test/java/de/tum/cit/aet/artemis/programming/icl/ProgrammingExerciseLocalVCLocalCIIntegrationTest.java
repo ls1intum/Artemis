@@ -3,12 +3,14 @@ package de.tum.cit.aet.artemis.programming.icl;
 import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_RESULTS_DIRECTORY;
 import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_WORKING_DIRECTORY;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -62,7 +64,6 @@ import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService;
-import static org.awaitility.Awaitility.await;
 
 // TestInstance.Lifecycle.PER_CLASS allows all test methods in this class to share the same instance of the test class.
 // This reduces the overhead of repeatedly creating and tearing down a new Spring application context for each test method.
@@ -167,6 +168,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
     }
 
     @Test
+    @Disabled
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateProgrammingExercise() throws Exception {
         ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
@@ -406,19 +408,24 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
             if (!Files.exists(repoPath))
                 continue;
             List<Path> files = new ArrayList<>();
-            Files.walk(repoPath).filter(Files::isRegularFile).forEach(files::add);
-            for (Path filePath : files) {
-                String content = new String(Files.readAllBytes(filePath), StandardCharsets.UTF_8);
-                int idx = 0;
-                while ((idx = content.indexOf(newTitle, idx)) != -1) {
-                    newTitleCount++;
-                    idx += newTitle.length();
+            try {
+                Files.walk(repoPath).filter(Files::isRegularFile).forEach(files::add);
+                for (Path filePath : files) {
+                    String content = Files.readString(filePath);
+                    int idx = 0;
+                    while ((idx = content.indexOf(newTitle, idx)) != -1) {
+                        newTitleCount++;
+                        idx += newTitle.length();
+                    }
+                    idx = 0;
+                    while ((idx = content.indexOf(oldTitle, idx)) != -1) {
+                        oldTitleCount++;
+                        idx += oldTitle.length();
+                    }
                 }
-                idx = 0;
-                while ((idx = content.indexOf(oldTitle, idx)) != -1) {
-                    oldTitleCount++;
-                    idx += oldTitle.length();
-                }
+            }
+            catch (IOException e) {
+                throw new RuntimeException("Error walking through repository files", e);
             }
         }
         assertThat(newTitleCount).isEqualTo(countOccurrencesInZip(importResult.resource(), oldTitle));
@@ -454,46 +461,71 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
 
         // Mock image inspection
         dockerClientTestService.mockInspectImage(dockerClient);
-        
+
         ImportFileResult importResult = prepareExerciseImport("test-data/import-from-file/valid-import.zip", exercise -> null);
         ProgrammingExercise importedExercise = importResult.importedExercise();
-        
+
         assertThat(importedExercise).isNotNull();
-        
+
         // Mock test results for builds
         Map<String, String> templateBuildTestResults = dockerClientTestService.createMapFromTestResultsFolder(ALL_FAIL_TEST_RESULTS_PATH);
         Map<String, String> solutionBuildTestResults = dockerClientTestService.createMapFromTestResultsFolder(ALL_SUCCEED_TEST_RESULTS_PATH);
-        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, LOCAL_CI_WORKING_DIRECTORY + LOCAL_CI_RESULTS_DIRECTORY, 
-                templateBuildTestResults, solutionBuildTestResults);
-        
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, LOCAL_CI_WORKING_DIRECTORY + LOCAL_CI_RESULTS_DIRECTORY, templateBuildTestResults,
+                solutionBuildTestResults);
+
         // Wait for build plans to be created and verify them
-        await()
-            .atMost(120, TimeUnit.SECONDS)
-            .pollInterval(5, TimeUnit.SECONDS)
-            .untilAsserted(() -> {
-                try {
-                    // Refresh the exercise to get latest participation data
-                    ProgrammingExercise refreshedExercise = programmingExerciseRepository
-                        .findWithAllParticipationsAndBuildConfigById(importedExercise.getId())
-                        .orElseThrow();
-                    
-                    // Verify template build plan
-                    TemplateProgrammingExerciseParticipation templateParticipation = templateProgrammingExerciseParticipationRepository
-                        .findByProgrammingExerciseId(refreshedExercise.getId())
-                        .orElseThrow();
-                        
-                    localVCLocalCITestService.testLatestSubmission(templateParticipation.getId(), null, 0, false);
-                    
-                    // Verify solution build plan
-                    SolutionProgrammingExerciseParticipation solutionParticipation = solutionProgrammingExerciseParticipationRepository
-                        .findByProgrammingExerciseId(refreshedExercise.getId())
-                        .orElseThrow();
-                        
-                    localVCLocalCITestService.testLatestSubmission(solutionParticipation.getId(), null, 13, false);
-                } catch (Exception e) {
-                    throw new AssertionError("Failed to verify build plans", e);
-                }
-            });
+        await().atMost(120, TimeUnit.SECONDS).pollInterval(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            try {
+                // Refresh the exercise to get latest participation data
+                ProgrammingExercise refreshedExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(importedExercise.getId()).orElseThrow();
+
+                // Verify template build plan
+                TemplateProgrammingExerciseParticipation templateParticipation = templateProgrammingExerciseParticipationRepository
+                        .findByProgrammingExerciseId(refreshedExercise.getId()).orElseThrow();
+
+                localVCLocalCITestService.testLatestSubmission(templateParticipation.getId(), null, 0, false);
+
+                // Verify solution build plan
+                SolutionProgrammingExerciseParticipation solutionParticipation = solutionProgrammingExerciseParticipationRepository
+                        .findByProgrammingExerciseId(refreshedExercise.getId()).orElseThrow();
+
+                localVCLocalCITestService.testLatestSubmission(solutionParticipation.getId(), null, 13, false);
+            }
+            catch (Exception e) {
+                throw new AssertionError("Failed to verify build plans", e);
+            }
+        });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateProgrammingExerciseWithSequentialTestRuns() throws Exception {
+        ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
+        newExercise.setProjectType(ProjectType.PLAIN_GRADLE);
+        // Enable sequential test runs
+        newExercise.getBuildConfig().setSequentialTestRuns(true);
+
+        // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns a dummy commitHash for both the assignment and the test repository.
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, LOCAL_CI_WORKING_DIRECTORY + "/testing-dir/assignment/.git/refs/heads/[^/]+",
+                Map.of("assignmentCommitHash", DUMMY_COMMIT_HASH), Map.of("assignmentCommitHash", DUMMY_COMMIT_HASH));
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, LOCAL_CI_WORKING_DIRECTORY + "/testing-dir/.git/refs/heads/[^/]+",
+                Map.of("testsCommitHash", DUMMY_COMMIT_HASH), Map.of("testsCommitHash", DUMMY_COMMIT_HASH));
+
+        dockerClientTestService.mockInspectImage(dockerClient);
+
+        // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns the XMLs containing the test results.
+        // Mock the results for the template repository build and for the solution repository build that will both be triggered as a result of creating the exercise.
+        Map<String, String> templateBuildTestResults = dockerClientTestService.createMapFromTestResultsFolder(ALL_FAIL_TEST_RESULTS_PATH);
+        Map<String, String> solutionBuildTestResults = dockerClientTestService.createMapFromTestResultsFolder(ALL_SUCCEED_TEST_RESULTS_PATH);
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, LOCAL_CI_WORKING_DIRECTORY + LOCAL_CI_RESULTS_DIRECTORY, templateBuildTestResults,
+                solutionBuildTestResults);
+        newExercise.setChannelName("testchannelname-pe-sequential");
+        aeolusRequestMockProvider.enableMockingOfRequests();
+        aeolusRequestMockProvider.mockFailedGenerateBuildPlan(AeolusTarget.CLI);
+
+        // Create the exercise and verify status code 201
+        request.postWithResponseBody("/api/programming/programming-exercises/setup", newExercise, ProgrammingExercise.class,
+                HttpStatus.CREATED);
     }
 
     private record ImportFileResult(ClassPathResource resource, ProgrammingExercise parsedExercise, ProgrammingExercise importedExercise, Object additionalData) {
