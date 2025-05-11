@@ -1,4 +1,3 @@
-import cloneDeep from 'lodash';
 import { MalformedBitwardenCredential } from 'app/core/user/settings/passkey-settings/entities/malformed-bitwarden-credential';
 import { encodeAsBase64Url } from 'app/shared/util/base64.util';
 
@@ -37,27 +36,24 @@ export function getCredentialFromMalformedBitwardenObject(malformedBitwardenCred
         return null;
     }
 
-    const clonedCredential: Credential = cloneDeep(malformedBitwardenCredential) as unknown as Credential;
-    const credential = JSON.parse(JSON.stringify(clonedCredential));
-
     return {
         //@ts-expect-error authenticatorAttachment is a method in the (getAuthenticatorAttachment) object, but we return it as property here for simplicity, assuming that we only want to stringify it afterward anyway
-        authenticatorAttachment: credential.authenticatorAttachment,
+        authenticatorAttachment: malformedBitwardenCredential.authenticatorAttachment,
         clientExtensionResults: malformedBitwardenCredential.getClientExtensionResults(),
-        id: credential.id,
-        rawId: convertToBase64(credential.rawId),
+        id: malformedBitwardenCredential.id,
+        rawId: convertToBase64(malformedBitwardenCredential.rawId),
         response: {
-            attestationObject: convertToBase64(credential.response.attestationObject),
+            attestationObject: convertToBase64(malformedBitwardenCredential.response.attestationObject),
             authenticatorData: convertToBase64(
                 malformedBitwardenCredential.response.authenticatorData ?? malformedBitwardenCredential.response.getAuthenticatorData?.() ?? undefined,
             ),
-            clientDataJSON: convertToBase64(credential.response.clientDataJSON),
+            clientDataJSON: convertToBase64(malformedBitwardenCredential.response.clientDataJSON),
             publicKey: convertToBase64(malformedBitwardenCredential.response.getPublicKey?.() ?? undefined),
             publicKeyAlgorithm: malformedBitwardenCredential.response.getPublicKeyAlgorithm?.() ?? undefined,
             transports: malformedBitwardenCredential.response.getTransports?.() ?? undefined,
             signature: convertToBase64(malformedBitwardenCredential.response.signature),
             userHandle: convertToBase64(malformedBitwardenCredential.response.userHandle),
         },
-        type: credential.type,
+        type: malformedBitwardenCredential.type,
     };
 }
