@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -61,6 +62,7 @@ import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService;
+import static org.awaitility.Awaitility.await;
 
 // TestInstance.Lifecycle.PER_CLASS allows all test methods in this class to share the same instance of the test class.
 // This reduces the overhead of repeatedly creating and tearing down a new Spring application context for each test method.
@@ -169,6 +171,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
     void testCreateProgrammingExercise() throws Exception {
         ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
         newExercise.setProjectType(ProjectType.PLAIN_GRADLE);
+        newExercise.setTestRepositoryUri(localVCBaseUrl + "/git/" + newExercise.getProjectKey() + "/" + newExercise.getProjectKey().toLowerCase() + "-tests.git");
         newExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, newExercise, 1)));
         newExercise.getCompetencyLinks().forEach(link -> link.getCompetency().setCourse(null));
 
@@ -435,6 +438,62 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         assertThat(importedExercise.getTitle()).isEqualTo(importResult.parsedExercise().getTitle());
         assertThat(importedExercise.getProgrammingLanguage()).isEqualTo(importResult.parsedExercise().getProgrammingLanguage());
         assertThat(importedExercise.getCourseViaExerciseGroupOrCourseMember()).isEqualTo(course);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importFromFile_verifyBuildPlansCreated() throws Exception {
+        aeolusRequestMockProvider.enableMockingOfRequests();
+        aeolusRequestMockProvider.mockFailedGenerateBuildPlan(AeolusTarget.CLI);
+
+        // Mock commit hash retrieval
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, LOCAL_CI_WORKING_DIRECTORY + "/testing-dir/assignment/.git/refs/heads/[^/]+",
+                Map.of("assignmentCommitHash", DUMMY_COMMIT_HASH), Map.of("assignmentCommitHash", DUMMY_COMMIT_HASH));
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, LOCAL_CI_WORKING_DIRECTORY + "/testing-dir/.git/refs/heads/[^/]+",
+                Map.of("testsCommitHash", DUMMY_COMMIT_HASH), Map.of("testsCommitHash", DUMMY_COMMIT_HASH));
+
+        // Mock image inspection
+        dockerClientTestService.mockInspectImage(dockerClient);
+        
+        ImportFileResult importResult = prepareExerciseImport("test-data/import-from-file/valid-import.zip", exercise -> null);
+        ProgrammingExercise importedExercise = importResult.importedExercise();
+        
+        assertThat(importedExercise).isNotNull();
+        
+        // Mock test results for builds
+        Map<String, String> templateBuildTestResults = dockerClientTestService.createMapFromTestResultsFolder(ALL_FAIL_TEST_RESULTS_PATH);
+        Map<String, String> solutionBuildTestResults = dockerClientTestService.createMapFromTestResultsFolder(ALL_SUCCEED_TEST_RESULTS_PATH);
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, LOCAL_CI_WORKING_DIRECTORY + LOCAL_CI_RESULTS_DIRECTORY, 
+                templateBuildTestResults, solutionBuildTestResults);
+        
+        // Wait for build plans to be created and verify them
+        await()
+            .atMost(120, TimeUnit.SECONDS)
+            .pollInterval(5, TimeUnit.SECONDS)
+            .untilAsserted(() -> {
+                try {
+                    // Refresh the exercise to get latest participation data
+                    ProgrammingExercise refreshedExercise = programmingExerciseRepository
+                        .findWithAllParticipationsAndBuildConfigById(importedExercise.getId())
+                        .orElseThrow();
+                    
+                    // Verify template build plan
+                    TemplateProgrammingExerciseParticipation templateParticipation = templateProgrammingExerciseParticipationRepository
+                        .findByProgrammingExerciseId(refreshedExercise.getId())
+                        .orElseThrow();
+                        
+                    localVCLocalCITestService.testLatestSubmission(templateParticipation.getId(), null, 0, false);
+                    
+                    // Verify solution build plan
+                    SolutionProgrammingExerciseParticipation solutionParticipation = solutionProgrammingExerciseParticipationRepository
+                        .findByProgrammingExerciseId(refreshedExercise.getId())
+                        .orElseThrow();
+                        
+                    localVCLocalCITestService.testLatestSubmission(solutionParticipation.getId(), null, 13, false);
+                } catch (Exception e) {
+                    throw new AssertionError("Failed to verify build plans", e);
+                }
+            });
     }
 
     private record ImportFileResult(ClassPathResource resource, ProgrammingExercise parsedExercise, ProgrammingExercise importedExercise, Object additionalData) {
