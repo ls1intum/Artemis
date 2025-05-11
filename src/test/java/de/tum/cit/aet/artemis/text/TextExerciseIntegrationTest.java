@@ -62,6 +62,7 @@ import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.TeamAssignmentConfig;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
@@ -1416,5 +1417,20 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         else {
             assertThat(textExerciseFromApi.getExampleSolution()).isEqualTo(textExercise.getExampleSolution());
         }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getTextEditorDataWithNewlyCreatedSubmissionAsStudentWhenNoSubmissionsExist() throws Exception {
+        // create a participation with no submissions
+        Participation participation = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
+        assertThat(participation.getSubmissions()).isEmpty();
+
+        StudentParticipation result = request.get("/api/text/text-editor/" + participation.getId(), HttpStatus.OK, StudentParticipation.class);
+
+        // the endpoint should have created a new, unsubmitted submission and return it as part of the participation
+        assertThat(result.getSubmissions()).hasSize(1);
+        TextSubmission submission = (TextSubmission) result.getSubmissions().stream().findFirst().orElseThrow();
+        assertThat(submission.isSubmitted()).isFalse();
     }
 }
