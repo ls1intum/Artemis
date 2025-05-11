@@ -22,8 +22,8 @@
     </div>
     <select class="form-select col-auto w-auto" (change)="courseChanged($event)">
         <option value="-1" jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.selectCourse" selected></option>
-        @for (course of courses; track course.id) {
-            <option value="{{ course.id }}">{{ course.title }}</option>
+        @for (courseLearnerProfile of courseLearnerProfiles; track courseLearnerProfile.courseId) {
+            <option value="{{ courseLearnerProfile.courseId }}">{{ courseLearnerProfile.courseTitle }}</option>
         }
     </select>
 </div>

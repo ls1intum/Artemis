@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.atlas.profile;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -42,20 +41,12 @@ class LearnerProfileIntegrationTest extends AbstractAtlasIntegrationTest {
     @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
     void shouldReturnCourseProfilesForUser() throws Exception {
 
-        Map<String, Map<String, Object>> response = request.get("/api/atlas/course-learner-profiles", HttpStatus.OK, Map.class);
-
-        // Convert response to actual objects
-        Map<Long, CourseLearnerProfileDTO> responseProfiles = new HashMap<>();
-        response.forEach((key, value) -> {
-            CourseLearnerProfileDTO courseLearnerProfileDTO = new CourseLearnerProfileDTO((Integer) value.get("id"), (Integer) value.get("courseId"),
-                    (Integer) value.get("aimForGradeOrBonus"), (Integer) value.get("timeInvestment"), (Integer) value.get("repetitionIntensity"));
-            responseProfiles.put(Long.parseLong(key), courseLearnerProfileDTO);
-        });
+        Map<Long, CourseLearnerProfileDTO> response = request.getMap("/api/atlas/course-learner-profiles", HttpStatus.OK, Long.class, CourseLearnerProfileDTO.class);
 
         Set<CourseLearnerProfile> profiles = courseLearnerProfileRepository.findAllByLogin(STUDENT1_OF_COURSE);
 
         for (CourseLearnerProfile profile : profiles) {
-            assertThat(responseProfiles.get(profile.getCourse().getId())).isEqualTo(CourseLearnerProfileDTO.of(profile));
+            assertThat(response.get(profile.getCourse().getId())).isEqualTo(CourseLearnerProfileDTO.of(profile));
         }
     }
 
@@ -63,7 +54,7 @@ class LearnerProfileIntegrationTest extends AbstractAtlasIntegrationTest {
     @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
     void shouldRejectInvalidProfileId() throws Exception {
 
-        CourseLearnerProfileDTO dto = new CourseLearnerProfileDTO(2, 0, 1, 1, 1);
+        CourseLearnerProfileDTO dto = new CourseLearnerProfileDTO(2, 0, "title1", 1, 1, 1);
         request.put("/api/atlas/course-learner-profiles/" + 1, dto, HttpStatus.BAD_REQUEST);
         request.put("/api/atlas/course-learner-profiles/" + 0, dto, HttpStatus.BAD_REQUEST);
         request.put("/api/atlas/course-learner-profiles/" + 2, dto, HttpStatus.BAD_REQUEST);
@@ -73,17 +64,17 @@ class LearnerProfileIntegrationTest extends AbstractAtlasIntegrationTest {
     @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
     void shouldNotUpdateWithInvalidValues() throws Exception {
 
-        CourseLearnerProfileDTO dto = new CourseLearnerProfileDTO(0, 0, 0, 1, 1);
+        CourseLearnerProfileDTO dto = new CourseLearnerProfileDTO(0, 0, "title1", 0, 1, 1);
         request.put("/api/atlas/course-learner-profiles/" + 0, dto, HttpStatus.BAD_REQUEST);
-        dto = new CourseLearnerProfileDTO(0, 0, 6, 1, 1);
+        dto = new CourseLearnerProfileDTO(0, 0, "title1", 6, 1, 1);
         request.put("/api/atlas/course-learner-profiles/" + 0, dto, HttpStatus.BAD_REQUEST);
-        dto = new CourseLearnerProfileDTO(0, 0, 1, 0, 1);
+        dto = new CourseLearnerProfileDTO(0, 0, "title1", 1, 0, 1);
         request.put("/api/atlas/course-learner-profiles/" + 0, dto, HttpStatus.BAD_REQUEST);
-        dto = new CourseLearnerProfileDTO(0, 0, 1, 6, 1);
+        dto = new CourseLearnerProfileDTO(0, 0, "title1", 1, 6, 1);
         request.put("/api/atlas/course-learner-profiles/" + 0, dto, HttpStatus.BAD_REQUEST);
-        dto = new CourseLearnerProfileDTO(0, 0, 1, 1, 0);
+        dto = new CourseLearnerProfileDTO(0, 0, "title1", 1, 1, 0);
         request.put("/api/atlas/course-learner-profiles/" + 0, dto, HttpStatus.BAD_REQUEST);
-        dto = new CourseLearnerProfileDTO(0, 0, 1, 1, 6);
+        dto = new CourseLearnerProfileDTO(0, 0, "title1", 1, 1, 6);
         request.put("/api/atlas/course-learner-profiles/" + 0, dto, HttpStatus.BAD_REQUEST);
     }
 
@@ -92,7 +83,8 @@ class LearnerProfileIntegrationTest extends AbstractAtlasIntegrationTest {
     void shouldUpdateLearnerProfile() throws Exception {
 
         CourseLearnerProfile courseLearnerProfile = courseLearnerProfileRepository.findAllByLogin(STUDENT1_OF_COURSE).stream().findAny().get();
-        CourseLearnerProfileDTO dto = new CourseLearnerProfileDTO(courseLearnerProfile.getId(), courseLearnerProfile.getCourse().getId(),
+        var course = courseLearnerProfile.getCourse();
+        CourseLearnerProfileDTO dto = new CourseLearnerProfileDTO(courseLearnerProfile.getId(), course.getId(), course.getTitle(),
                 (courseLearnerProfile.getAimForGradeOrBonus()) % 4 + 1, (courseLearnerProfile.getTimeInvestment()) % 4 + 1,
                 (courseLearnerProfile.getRepetitionIntensity()) % 4 + 1);
 

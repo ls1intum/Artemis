@@ -1,35 +1,31 @@
+import { KeyValuePipe, NgClass } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { DoubleSliderComponent } from 'app/shared/double-slider/double-slider.component';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
-import { Course } from 'app/core/course/shared/entities/course.model';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faSave } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { LearnerProfileApiService } from 'app/learner-profile/service/learner-profile-api.service';
 import { CourseLearnerProfileDTO } from 'app/learner-profile/shared/entities/learner-profile.model';
-import { AlertService, AlertType } from 'app/shared/service/alert.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { NgClass } from '@angular/common';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { faSave } from '@fortawesome/free-solid-svg-icons';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { DoubleSliderComponent } from 'app/shared/double-slider/double-slider.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { AlertService, AlertType } from 'app/shared/service/alert.service';
 
 @Component({
     selector: 'jhi-course-learner-profile',
     templateUrl: './course-learner-profile.component.html',
     styleUrls: ['./course-learner-profile.component.scss'],
-    imports: [DoubleSliderComponent, TranslateDirective, NgClass, ArtemisTranslatePipe, FaIconComponent, HelpIconComponent],
+    imports: [DoubleSliderComponent, TranslateDirective, NgClass, ArtemisTranslatePipe, FaIconComponent, HelpIconComponent, KeyValuePipe],
 })
 export class CourseLearnerProfileComponent implements OnInit {
-    private courseManagementService = inject(CourseManagementService);
     private alertService = inject(AlertService);
     private learnerProfileAPIService = inject(LearnerProfileApiService);
     protected translateService = inject(TranslateService);
 
     faSave = faSave;
 
-    courses: Course[];
-    courseLearnerProfiles: Record<number, CourseLearnerProfileDTO>;
+    courseLearnerProfiles: CourseLearnerProfileDTO[];
     activeCourse: number;
 
     disabled = true;
@@ -43,7 +39,6 @@ export class CourseLearnerProfileComponent implements OnInit {
 
     async ngOnInit() {
         await this.loadProfiles();
-        this.loadCourses();
     }
 
     courseChanged(event: Event) {
@@ -54,7 +49,10 @@ export class CourseLearnerProfileComponent implements OnInit {
         if (courseId !== '-1') {
             this.activeCourse = Number(courseId);
             this.disabled = false;
-            const courseLearnerProfile = this.courseLearnerProfiles[this.activeCourse];
+            const courseLearnerProfile = this.getCourseLearnerProfile(this.activeCourse);
+            if (!courseLearnerProfile) {
+                return;
+            }
 
             // Update displayed values to new course
             this.aimForGradeOrBonus.set(courseLearnerProfile.aimForGradeOrBonus);
@@ -68,8 +66,19 @@ export class CourseLearnerProfileComponent implements OnInit {
         }
     }
 
+    getCourseLearnerProfile(courseId: number): CourseLearnerProfileDTO | undefined {
+        return this.courseLearnerProfiles.find((courseLearnerProfile) => {
+            if (courseLearnerProfile.courseId === courseId) {
+                return courseLearnerProfile;
+            }
+        });
+    }
+
     update() {
-        const courseLearnerProfile = this.courseLearnerProfiles[this.activeCourse];
+        const courseLearnerProfile = this.getCourseLearnerProfile(this.activeCourse);
+        if (!courseLearnerProfile) {
+            return;
+        }
         courseLearnerProfile.aimForGradeOrBonus = this.aimForGradeOrBonus();
         courseLearnerProfile.timeInvestment = this.timeInvestment();
         courseLearnerProfile.repetitionIntensity = this.repetitionIntensity();
@@ -107,21 +116,5 @@ export class CourseLearnerProfileComponent implements OnInit {
 
     async loadProfiles() {
         this.courseLearnerProfiles = await this.learnerProfileAPIService.getCourseLearnerProfilesForCurrentUser();
-    }
-
-    loadCourses() {
-        this.courses = [];
-        //iterate over each course ID in courseLearnerProfiles map to retrieve course title
-        Object.keys(this.courseLearnerProfiles).forEach((course) => {
-            // course is guaranteed to be int, as this.courseLearnerProfiles has type Record<number, ... >
-            this.courseManagementService.find(parseInt(course)).subscribe({
-                next: (res: HttpResponse<Course>) => {
-                    if (!res.body) {
-                        return;
-                    }
-                    this.courses.push(res.body);
-                },
-            });
-        });
     }
 }
