@@ -12,8 +12,8 @@ export class ProgrammingExerciseBuildConfig {
     public dockerFlags?: string;
     public windfile?: WindFile;
     public theiaImage?: string;
-    public allowBranching?: boolean;
-    public branchRegex?: string;
+    public allowBranching: boolean;
+    public branchRegex: string;
 
     constructor() {
         this.checkoutSolutionRepository = false; // default value
