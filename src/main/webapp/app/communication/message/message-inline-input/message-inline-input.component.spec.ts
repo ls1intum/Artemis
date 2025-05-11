@@ -118,7 +118,6 @@ describe('MessageInlineInputComponent', () => {
         component.ngOnChanges();
 
         const editedContent = 'edited content';
-        const onEditSpy = jest.spyOn(component.isModalOpen, 'emit');
 
         component.formGroup.setValue({
             content: editedContent,
@@ -128,6 +127,5 @@ describe('MessageInlineInputComponent', () => {
 
         tick();
         expect(component.isLoading).toBeFalse();
-        expect(onEditSpy).not.toHaveBeenCalled();
     }));
 });

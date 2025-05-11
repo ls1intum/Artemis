@@ -278,6 +278,17 @@ export class MetisService implements OnDestroy {
      * @return updated post
      */
     updatePost(post: Post): Observable<Post> {
+        if (post.id) {
+            const updateIndex = this.cachedPosts.findIndex((cachedPost) => cachedPost.id === post.id);
+            const foundCachedPost = updateIndex !== -1;
+            if (foundCachedPost) {
+                // We update the date immediately so that the client is aware about the post being edited without having to wait for the update call to finish
+                this.cachedPosts[updateIndex].updatedDate = dayjs();
+                this.cachedPosts[updateIndex].content = post.content;
+                this.posts$.next(this.cachedPosts);
+            }
+        }
+
         return this.postService.update(this.courseId, post).pipe(
             map((res: HttpResponse<Post>) => res.body!),
             tap((updatedPost: Post) => {
