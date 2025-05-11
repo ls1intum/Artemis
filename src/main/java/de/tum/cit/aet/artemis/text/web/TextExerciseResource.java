@@ -480,7 +480,7 @@ public class TextExerciseResource {
             }
         }
 
-        // if all submissions were deleted, add a new one since the client relies on the existence of at least one
+        // if all submissions were deleted, add a new one since the client relies on the existence of at least one submission
         if (submissions.isEmpty()) {
             TextSubmission textSubmission = new TextSubmission();
             textSubmission.setParticipation(participation);
