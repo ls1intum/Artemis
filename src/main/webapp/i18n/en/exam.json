@@ -597,7 +597,7 @@
             "quizPool": "Quiz Pool",
             "delete": {
                 "question": "Are you sure you want to permanently delete the Exam <strong>{{ title }}</strong>? All associated elements will be deleted including the Student Exams. This action can NOT be undone!",
-                "typeNameToConfirm": "Please type in the name of the exam to confirm.",
+                "typeNameToConfirm": "Please type in the name of the exam to confirm:",
                 "summary": {
                     "title": "Exam Summary",
                     "numberExerciseGroups": "Number of Exercise Groups",
@@ -620,7 +620,7 @@
             },
             "reset": {
                 "question": "Are you sure you want to permanently reset the Exam <strong>{{ title }}</strong>? All Student Exams will be deleted. Registered students and the exercise configurations will remain. This action can NOT be undone!",
-                "typeNameToConfirm": "Please type in the name of the exam to confirm.",
+                "typeNameToConfirm": "Please type in the name of the exam to confirm:",
                 "success": "The exam has been successfully reset."
             },
             "checklist": {
@@ -720,8 +720,8 @@
                 "title": "Edit Exam Duration",
                 "label": "Change exam duration",
                 "duration": "The new duration of the exam will be <strong>{{ duration }}</strong>.",
-                "question": "This will change the working time for all students. Do you really want to edit the duration of the exam <code>{{ title }}</code>?",
-                "typeNameToConfirm": "Please type in the name of the exam to confirm."
+                "question": "This will change the working time for all students. Do you really want to edit the duration of the exam <bold>{{ title }}</bold>?",
+                "typeNameToConfirm": "Please type in the name of the exam to confirm:"
             },
             "announcementCreate": {
                 "button": "Create Announcement",
