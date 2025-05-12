@@ -14,6 +14,7 @@ import de.tum.cit.aet.artemis.atlas.AbstractAtlasIntegrationTest;
 import de.tum.cit.aet.artemis.atlas.domain.profile.CourseLearnerProfile;
 import de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile;
 import de.tum.cit.aet.artemis.atlas.dto.CourseLearnerProfileDTO;
+import de.tum.cit.aet.artemis.atlas.dto.LearnerProfileDTO;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 
@@ -126,48 +127,53 @@ class LearnerProfileIntegrationTest extends AbstractAtlasIntegrationTest {
     @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
     void shouldNotUpdateFeedbackProfileWithInvalidValues() throws Exception {
         // Test values less than 1
-        request.put("/api/atlas/learner-profiles/1", Map.of("feedbackAlternativeStandard", 0, "feedbackFollowupSummary", 1, "feedbackBriefDetailed", 1), HttpStatus.BAD_REQUEST);
+        LearnerProfileDTO invalidProfile1 = new LearnerProfileDTO(1L, 0, 1, 1);
+        request.put("/api/atlas/learner-profiles/1", invalidProfile1, HttpStatus.BAD_REQUEST);
 
-        request.put("/api/atlas/learner-profiles/1", Map.of("feedbackAlternativeStandard", 1, "feedbackFollowupSummary", 0, "feedbackBriefDetailed", 1), HttpStatus.BAD_REQUEST);
+        LearnerProfileDTO invalidProfile2 = new LearnerProfileDTO(1L, 1, 0, 1);
+        request.put("/api/atlas/learner-profiles/1", invalidProfile2, HttpStatus.BAD_REQUEST);
 
-        request.put("/api/atlas/learner-profiles/1", Map.of("feedbackAlternativeStandard", 1, "feedbackFollowupSummary", 1, "feedbackBriefDetailed", 0), HttpStatus.BAD_REQUEST);
+        LearnerProfileDTO invalidProfile3 = new LearnerProfileDTO(1L, 1, 1, 0);
+        request.put("/api/atlas/learner-profiles/1", invalidProfile3, HttpStatus.BAD_REQUEST);
 
         // Test values greater than 5
-        request.put("/api/atlas/learner-profiles/1", Map.of("feedbackAlternativeStandard", 6, "feedbackFollowupSummary", 1, "feedbackBriefDetailed", 1), HttpStatus.BAD_REQUEST);
+        LearnerProfileDTO invalidProfile4 = new LearnerProfileDTO(1L, 6, 1, 1);
+        request.put("/api/atlas/learner-profiles/1", invalidProfile4, HttpStatus.BAD_REQUEST);
 
-        request.put("/api/atlas/learner-profiles/1", Map.of("feedbackAlternativeStandard", 1, "feedbackFollowupSummary", 6, "feedbackBriefDetailed", 1), HttpStatus.BAD_REQUEST);
+        LearnerProfileDTO invalidProfile5 = new LearnerProfileDTO(1L, 1, 6, 1);
+        request.put("/api/atlas/learner-profiles/1", invalidProfile5, HttpStatus.BAD_REQUEST);
 
-        request.put("/api/atlas/learner-profiles/1", Map.of("feedbackAlternativeStandard", 1, "feedbackFollowupSummary", 1, "feedbackBriefDetailed", 6), HttpStatus.BAD_REQUEST);
+        LearnerProfileDTO invalidProfile6 = new LearnerProfileDTO(1L, 1, 1, 6);
+        request.put("/api/atlas/learner-profiles/1", invalidProfile6, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
     void shouldUpdateFeedbackLearnerProfile() throws Exception {
         // Get current profile
-        Map<String, Object> currentProfile = request.get("/api/atlas/learner-profiles", HttpStatus.OK, Map.class);
+        LearnerProfileDTO currentProfile = request.get("/api/atlas/learner-profiles", HttpStatus.OK, LearnerProfileDTO.class);
 
         // Create new values within valid range (1-5)
-        Map<String, Object> updatedProfile = new HashMap<>();
-        updatedProfile.put("id", currentProfile.get("id"));
-        updatedProfile.put("feedbackAlternativeStandard", 3);
-        updatedProfile.put("feedbackFollowupSummary", 4);
-        updatedProfile.put("feedbackBriefDetailed", 5);
+        LearnerProfileDTO updatedProfile = new LearnerProfileDTO(currentProfile.id(), 3, // feedbackAlternativeStandard
+                4, // feedbackFollowupSummary
+                5  // feedbackBriefDetailed
+        );
 
         // Update profile
-        Map<String, Object> response = request.putWithResponseBody("/api/atlas/learner-profiles/" + currentProfile.get("id"), updatedProfile, Map.class, HttpStatus.OK);
+        LearnerProfileDTO response = request.putWithResponseBody("/api/atlas/learner-profiles/" + currentProfile.id(), updatedProfile, LearnerProfileDTO.class, HttpStatus.OK);
 
         // Verify response matches what we sent
         assertThat(response).isEqualTo(updatedProfile);
 
         // Verify the update was persisted by fetching again
-        Map<String, Object> persistedProfile = request.get("/api/atlas/learner-profiles", HttpStatus.OK, Map.class);
+        LearnerProfileDTO persistedProfile = request.get("/api/atlas/learner-profiles", HttpStatus.OK, LearnerProfileDTO.class);
         assertThat(persistedProfile).isEqualTo(updatedProfile);
     }
 
     @Test
     @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
     void shouldRejectInvalidFeedbackProfileId() throws Exception {
-        Map<String, Object> profile = Map.of("feedbackAlternativeStandard", 3, "feedbackFollowupSummary", 4, "feedbackBriefDetailed", 5);
+        LearnerProfileDTO profile = new LearnerProfileDTO(1L, 3, 4, 5);
 
         // Test with non-existent ID
         request.put("/api/atlas/learner-profiles/999", profile, HttpStatus.BAD_REQUEST);

@@ -23,6 +23,18 @@ export class FeedbackLearnerProfileComponent implements OnInit {
     private learnerProfileAPIService = inject(LearnerProfileApiService);
     protected translateService = inject(TranslateService);
 
+    /**
+     * Minimum value allowed for profile fields representing values on a Likert scale.
+     * Must be the same as in the server in LearnerProfile.java
+     */
+    MIN_PROFILE_VALUE = 1;
+
+    /**
+     * Maximum value allowed for profile fields representing values on a Likert scale.
+     * Must be the same as in the server in LearnerProfile.java
+     */
+    MAX_PROFILE_VALUE = 5;
+
     faSave = faSave;
 
     editing = false;
