@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, InputSignal, OnInit, Output, inject, input } from '@angular/core';
+import { Component, Input, OnInit, inject, input, output } from '@angular/core';
 import { faCheck, faExclamation, faExclamationTriangle, faQuestionCircle, faTrash, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
@@ -40,16 +40,16 @@ export class UnreferencedFeedbackDetailComponent implements OnInit {
     structuredGradingCriterionService = inject(StructuredGradingCriterionService);
 
     @Input() public feedback: Feedback;
-    resultId: InputSignal<number> = input.required<number>();
-    @Input() isSuggestion: boolean;
-    @Input() public readOnly: boolean;
-    @Input() highlightDifferences: boolean;
-    @Input() useDefaultFeedbackSuggestionBadgeText: boolean;
+    readonly resultId = input.required<number>();
+    readonly isSuggestion = input<boolean>();
+    public readonly readOnly = input.required<boolean>();
+    readonly highlightDifferences = input<boolean>(false);
+    readonly useDefaultFeedbackSuggestionBadgeText = input.required<boolean>();
 
-    @Output() public onFeedbackChange = new EventEmitter<Feedback>();
-    @Output() public onFeedbackDelete = new EventEmitter<Feedback>();
-    @Output() onAcceptSuggestion = new EventEmitter<Feedback>();
-    @Output() onDiscardSuggestion = new EventEmitter<Feedback>();
+    public readonly onFeedbackChange = output<Feedback>();
+    public readonly onFeedbackDelete = output<Feedback>();
+    readonly onAcceptSuggestion = output<Feedback>();
+    readonly onDiscardSuggestion = output<Feedback>();
     private feedbackService = inject(FeedbackService);
 
     // Icons

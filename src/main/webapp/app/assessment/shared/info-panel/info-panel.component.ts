@@ -7,5 +7,5 @@ import { Component, input } from '@angular/core';
 })
 export class InfoPanelComponent {
     readonly panelHeader = input.required<string>();
-    readonly panelDescriptionHeader = input.required<string>();
+    readonly panelDescriptionHeader = input<string>();
 }

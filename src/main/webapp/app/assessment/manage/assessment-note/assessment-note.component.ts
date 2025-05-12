@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, Input, output } from '@angular/core';
 import { AssessmentNote } from 'app/assessment/shared/entities/assessment-note.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
@@ -10,7 +10,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 })
 export class AssessmentNoteComponent {
     private _assessmentNote: AssessmentNote;
-    @Output() onAssessmentNoteChange = new EventEmitter<AssessmentNote>();
+    readonly onAssessmentNoteChange = output<AssessmentNote>();
 
     @Input() set assessmentNote(assessmentNote: AssessmentNote | undefined) {
         if (assessmentNote === undefined) {

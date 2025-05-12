@@ -36,11 +36,14 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(StructuredGradingInstructionsAssessmentLayoutComponent);
                 comp = fixture.componentInstance;
+                fixture.componentRef.setInput('readonly', undefined);
+                fixture.componentRef.setInput('criteria', undefined);
             });
     });
 
     it('should initialize', () => {
-        comp.readonly = true;
+        fixture.componentRef.setInput('readonly', true);
+
         comp.ngOnInit();
         expect(comp.allowDrop).toBeFalse();
         expect(comp.disableDrag()).toBeFalse();
@@ -71,7 +74,7 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
             title: 'title',
             structuredGradingInstructions: [{ id: 2, feedback: 'feedback', credits: 1 } as GradingInstruction],
         } as GradingCriterion;
-        comp.criteria = [gradingCriterionOne, gradingCriterionTwo];
+        fixture.componentRef.setInput('criteria', [gradingCriterionOne, gradingCriterionTwo]);
         fixture.detectChanges();
         tick();
         expect(comp.expandableSections).toHaveLength(2);

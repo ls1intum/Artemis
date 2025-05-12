@@ -19,7 +19,7 @@ describe('AssessmentWarningComponent', () => {
     });
 
     it('should not be before exercise due date if the exercise has no due date', () => {
-        component.exercise = new ProgrammingExercise(undefined, undefined);
+        fixture.componentRef.setInput('exercise', new ProgrammingExercise(undefined, undefined));
 
         component.ngOnChanges();
 
@@ -30,7 +30,7 @@ describe('AssessmentWarningComponent', () => {
     it('should be before the exercise due date if the exercise due date is in the future', () => {
         const exercise = new ProgrammingExercise(undefined, undefined);
         exercise.dueDate = dayjs().add(2, 'hours');
-        component.exercise = exercise;
+        fixture.componentRef.setInput('exercise', exercise);
 
         component.ngOnChanges();
 
@@ -60,8 +60,8 @@ describe('AssessmentWarningComponent', () => {
         // a submission without participation should just be ignored and not change the result
         const submission4 = new ProgrammingSubmission();
 
-        component.exercise = exercise;
-        component.submissions = [submission2, submission4, submission3, submission1];
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('submissions', [submission2, submission4, submission3, submission1]);
         component.ngOnChanges();
 
         expect(component.isBeforeExerciseDueDate).toBeFalse();

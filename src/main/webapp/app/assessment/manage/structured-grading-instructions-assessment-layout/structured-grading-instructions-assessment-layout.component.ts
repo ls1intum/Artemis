@@ -1,6 +1,6 @@
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
-import { AfterViewInit, Component, Input, OnInit, QueryList, ViewChildren } from '@angular/core';
+import { AfterViewInit, Component, OnInit, QueryList, ViewChildren, input } from '@angular/core';
 import { faCompress, faExpand, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import { ExpandableSectionComponent } from 'app/assessment/manage/assessment-instructions/expandable-section/expandable-section.component';
 import { delay, startWith } from 'rxjs';
@@ -17,8 +17,8 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
     imports: [FaIconComponent, TranslateDirective, ExpandableSectionComponent, NgbTooltip, HelpIconComponent, HtmlForMarkdownPipe],
 })
 export class StructuredGradingInstructionsAssessmentLayoutComponent implements OnInit, AfterViewInit {
-    @Input() public criteria: GradingCriterion[];
-    @Input() readonly: boolean;
+    public readonly criteria = input.required<GradingCriterion[]>();
+    readonly readonly = input<boolean>();
     allowDrop: boolean;
     // Icons
     faInfoCircle = faInfoCircle;
@@ -32,7 +32,7 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
      * OnInit set the allowDrop property to allow drop of SGI if not in readOnly mode
      */
     ngOnInit(): void {
-        this.allowDrop = !this.readonly;
+        this.allowDrop = !this.readonly();
     }
 
     ngAfterViewInit() {

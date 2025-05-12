@@ -35,7 +35,7 @@ describe('AssessmentComplaintAlertComponent', () => {
     function setComplaintOfType(type: ComplaintType): void {
         const complaint = new Complaint();
         complaint.complaintType = type;
-        component.complaint = complaint;
+        fixture.componentRef.setInput('complaint', complaint);
         fixture.detectChanges();
     }
 

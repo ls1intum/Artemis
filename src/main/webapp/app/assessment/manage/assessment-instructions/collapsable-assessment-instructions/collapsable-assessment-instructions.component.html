@@ -1,8 +1,8 @@
-@if (!collapsed) {
+@if (!collapsed()) {
     <div class="expanded-instructions instructions-container">
         <div class="draggable-left"><fa-icon [icon]="faGripLinesVertical" /></div>
         <div class="card">
-            <div class="card-header text-white bg-primary" (click)="collapsed = !collapsed">
+            <div class="card-header text-white bg-primary" (click)="collapsed.set(!collapsed())">
                 <h3 class="card-title">
                     <fa-icon [icon]="farListAlt" />&nbsp;
                     <span jhiTranslate="artemisApp.assessmentInstructions.instructions.instructions"></span>
@@ -11,17 +11,17 @@
             </div>
             <div class="wrapper-scroll-y scrollbar vh-100">
                 <jhi-assessment-instructions
-                    [readOnly]="readOnly"
+                    [readOnly]="readOnly()"
                     class="card-body markdown-preview"
-                    [exercise]="exercise"
-                    [isAssessmentTraining]="isAssessmentTraining"
-                    [showAssessmentInstructions]="showAssessmentInstructions"
+                    [exercise]="exercise()"
+                    [isAssessmentTraining]="isAssessmentTraining()"
+                    [showAssessmentInstructions]="showAssessmentInstructions()"
                 />
             </div>
         </div>
     </div>
 } @else {
-    <div class="collapsed-instructions instructions-container text-white bg-primary" (click)="collapsed = !collapsed">
+    <div class="collapsed-instructions instructions-container text-white bg-primary" (click)="collapsed.set(!collapsed())">
         <fa-icon [icon]="faChevronLeft" />
         <span jhiTranslate="artemisApp.assessmentInstructions.instructions.instructions"></span>
         <fa-icon [icon]="faChevronLeft" />

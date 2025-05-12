@@ -1,12 +1,12 @@
-<div (drop)="updateFeedbackOnDrop($event)" (dragover)="$event.preventDefault()" class="unreferenced-feedback-detail card mb-3" [class.is-suggestion]="isSuggestion">
+<div (drop)="updateFeedbackOnDrop($event)" (dragover)="$event.preventDefault()" class="unreferenced-feedback-detail card mb-3" [class.is-suggestion]="isSuggestion()">
     <div class="card-header">
-        @if (isSuggestion || Feedback.isFeedbackSuggestion(feedback)) {
-            <jhi-feedback-suggestion-badge [feedback]="feedback" [useDefaultText]="useDefaultFeedbackSuggestionBadgeText" />
+        @if (isSuggestion() || Feedback.isFeedbackSuggestion(feedback)) {
+            <jhi-feedback-suggestion-badge [feedback]="feedback" [useDefaultText]="useDefaultFeedbackSuggestionBadgeText()" />
         }
         @if (feedback.gradingInstruction) {
             <jhi-grading-instruction-link-icon [feedback]="feedback" />
         }
-        @if (!readOnly) {
+        @if (!readOnly()) {
             <button
                 jhiDeleteButton
                 [buttonSize]="ButtonSize.SMALL"
@@ -22,7 +22,7 @@
             </button>
         }
         <!-- Accept/Discard for feedback suggestions -->
-        @if (isSuggestion) {
+        @if (isSuggestion()) {
             <div class="row float-end suggestion-action-buttons">
                 <button class="btn btn-success m-1 btn-sm" (click)="onAcceptSuggestion.emit(feedback)">
                     <fa-icon [icon]="faCheck" />
@@ -45,8 +45,8 @@
                 step="0.5"
                 [(ngModel)]="feedback.credits"
                 (ngModelChange)="emitChanges()"
-                [disabled]="!!feedback.gradingInstruction || readOnly"
-                [readOnly]="!!feedback.gradingInstruction || readOnly"
+                [disabled]="!!feedback.gradingInstruction || readOnly()"
+                [readOnly]="!!feedback.gradingInstruction || readOnly()"
                 [required]="!feedback.gradingInstruction"
             />
         </div>
@@ -71,8 +71,8 @@
                     rows="2"
                     [(ngModel)]="feedback.detailText"
                     (ngModelChange)="emitChanges()"
-                    [readOnly]="readOnly"
-                    [disabled]="readOnly"
+                    [readOnly]="readOnly()"
+                    [disabled]="readOnly()"
                     [placeholder]="
                         feedback.gradingInstruction?.feedback
                             ? ('artemisApp.assessment.additionalFeedbackCommentPlaceholder' | artemisTranslate)
@@ -100,6 +100,6 @@
                 }
             </div>
         }
-        <jhi-assessment-correction-round-badge [feedback]="feedback" [highlightDifferences]="highlightDifferences" />
+        <jhi-assessment-correction-round-badge [feedback]="feedback" [highlightDifferences]="highlightDifferences()" />
     </div>
 </div>

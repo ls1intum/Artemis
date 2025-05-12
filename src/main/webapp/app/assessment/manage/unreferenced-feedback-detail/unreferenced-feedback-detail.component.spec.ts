@@ -67,7 +67,6 @@ describe('Unreferenced Feedback Detail Component', () => {
         } as Feedback;
         const emitSpy = jest.spyOn(comp.onFeedbackDelete, 'emit');
         comp.delete();
-        fixture.detectChanges();
 
         expect(emitSpy).toHaveBeenCalledOnce();
     });

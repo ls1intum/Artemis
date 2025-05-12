@@ -37,7 +37,7 @@ export class ComplaintsStudentViewComponent implements OnInit {
     readonly exercise = input.required<Exercise>();
     readonly participation = input.required<StudentParticipation>();
     readonly result = input<Result>();
-    readonly exam = input.required<Exam>();
+    readonly exam = input<Exam>();
     // flag to indicate exam test run. Default set to false.
     readonly testRun = input(false);
 
@@ -150,11 +150,10 @@ export class ComplaintsStudentViewComponent implements OnInit {
      * These are only allowed if they are submitted within the student review period.
      */
     private isWithinExamReviewPeriod(): boolean {
-        const exam = this.exam();
         if (this.testRun()) {
             return true;
-        } else if (exam.examStudentReviewStart && exam.examStudentReviewEnd) {
-            return this.serverDateService.now().isBetween(dayjs(exam.examStudentReviewStart), dayjs(exam.examStudentReviewEnd));
+        } else if (this.exam()?.examStudentReviewStart && this.exam()?.examStudentReviewEnd) {
+            return this.serverDateService.now().isBetween(dayjs(this.exam()?.examStudentReviewStart), dayjs(this.exam()?.examStudentReviewEnd));
         }
         return false;
     }

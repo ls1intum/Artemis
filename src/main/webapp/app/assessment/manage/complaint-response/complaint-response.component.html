@@ -1,22 +1,24 @@
-@if (complaint.accepted !== undefined && complaint.complaintResponse) {
-    <div>
-        <p class="col-12 mt-4">
-            {{
-                complaint.complaintType === ComplaintType.COMPLAINT
-                    ? ('artemisApp.complaint.responseExists' | artemisTranslate)
-                    : ('artemisApp.moreFeedback.responseExists' | artemisTranslate)
-            }}
-            <span [ngbTooltip]="complaint.complaintResponse.submittedTime | artemisDate">{{ complaint.complaintResponse.submittedTime | artemisTimeAgo }}</span
-            >:
-        </p>
-        <textarea
-            id="complainResponseTextArea"
-            class="col-12 px-1"
-            rows="4"
-            [(ngModel)]="complaint.complaintResponse.responseText"
-            [readOnly]="true"
-            [disabled]="true"
-            [maxLength]="maxComplaintResponseTextLimit"
-        ></textarea>
-    </div>
+@if (complaint(); as complaint) {
+    @if (complaint !== undefined && complaint.complaintResponse) {
+        <div>
+            <p class="col-12 mt-4">
+                {{
+                    complaint.complaintType === ComplaintType.COMPLAINT
+                        ? ('artemisApp.complaint.responseExists' | artemisTranslate)
+                        : ('artemisApp.moreFeedback.responseExists' | artemisTranslate)
+                }}
+                <span [ngbTooltip]="complaint.complaintResponse.submittedTime | artemisDate">{{ complaint.complaintResponse.submittedTime | artemisTimeAgo }}</span
+                >:
+            </p>
+            <textarea
+                id="complainResponseTextArea"
+                class="col-12 px-1"
+                rows="4"
+                [(ngModel)]="complaint.complaintResponse.responseText"
+                [readOnly]="true"
+                [disabled]="true"
+                [maxLength]="maxComplaintResponseTextLimit()"
+            ></textarea>
+        </div>
+    }
 }

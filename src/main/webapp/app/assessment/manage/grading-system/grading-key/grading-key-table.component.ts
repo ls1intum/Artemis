@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, model } from '@angular/core';
 import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
 import { GradeStep, GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
 import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
@@ -33,8 +33,8 @@ export class GradingKeyTableComponent implements OnInit {
 
     readonly GradeEditMode = GradeEditMode;
 
-    @Input() studentGradeOrBonusPointsOrGradeBonus?: string;
-    @Input() forBonus?: boolean;
+    studentGradeOrBonusPointsOrGradeBonus = model<string>();
+    forBonus = model<boolean>();
 
     plagiarismGrade: string;
     noParticipationGrade: string;
@@ -54,9 +54,9 @@ export class GradingKeyTableComponent implements OnInit {
         const { courseId, examId, forBonus, isExam, studentGradeOrBonusPointsOrGradeBonus } = loadGradingKeyUrlParams(this.route);
         this.courseId = courseId;
         this.examId = examId;
-        this.forBonus = this.forBonus || forBonus;
+        this.forBonus.set(this.forBonus() || forBonus);
         this.isExam = isExam;
-        this.studentGradeOrBonusPointsOrGradeBonus = this.studentGradeOrBonusPointsOrGradeBonus || studentGradeOrBonusPointsOrGradeBonus;
+        this.studentGradeOrBonusPointsOrGradeBonus.set(this.studentGradeOrBonusPointsOrGradeBonus() || studentGradeOrBonusPointsOrGradeBonus);
 
         this.findGradeSteps(this.courseId, this.examId).subscribe((gradeSteps) => {
             if (gradeSteps) {
@@ -85,7 +85,7 @@ export class GradingKeyTableComponent implements OnInit {
     }
 
     private findGradeSteps(courseId: number, examId?: number): Observable<GradeStepsDTO | undefined> {
-        if (!this.forBonus) {
+        if (!this.forBonus()) {
             return this.gradingSystemService.findGradeSteps(courseId, examId);
         } else {
             // examId must be present if forBonus is true.
