@@ -39,8 +39,8 @@ import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
  * <li>
  * Using custom repositories for register & authenticate option requests, as the default implementation in
  * memory storage would not work on multinode systems (instead we are using hazelcast
- * {@link de.tum.cit.aet.artemis.core.repository.webauthn.HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository}
- * {@link de.tum.cit.aet.artemis.core.repository.webauthn.HazelcastPublicKeyCredentialRequestOptionsRepository})
+ * {@link de.tum.cit.aet.artemis.core.repository.passkey.HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository}
+ * {@link de.tum.cit.aet.artemis.core.repository.passkey.HazelcastPublicKeyCredentialRequestOptionsRepository})
  * </li>
  * </ul>
  *

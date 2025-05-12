@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.communication.domain.conversation.OneToOneChat;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewAnnouncementNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewMentionNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewPostNotification;
+import de.tum.cit.aet.artemis.communication.dto.CreatePostDTO;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.PostContextFilterDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostDTO;
@@ -91,20 +92,24 @@ public class ConversationMessagingService extends PostingService {
     /**
      * Creates a new message in a conversation
      *
-     * @param courseId   the id where the conversation is located
-     * @param newMessage the message to be created includes the conversation id
+     * @param courseId the id where the conversation is located
+     * @param message  the post to be created includes the conversation id
      * @return the created message and associated data
      */
-    public CreatedConversationMessage createMessage(Long courseId, Post newMessage) {
+    public CreatedConversationMessage createMessage(Long courseId, CreatePostDTO message) {
         var author = this.userRepository.getUserWithGroupsAndAuthorities();
+
+        var newMessage = message.toEntity();
         newMessage.setAuthor(author);
         newMessage.setDisplayPriority(DisplayPriority.NONE);
 
-        var conversationId = newMessage.getConversation().getId();
+        var conversationId = message.conversation().id();
 
         var conversation = conversationService.isMemberOrCreateForCourseWideElseThrow(conversationId, author, Optional.empty())
                 .orElse(conversationService.loadConversationWithParticipantsIfGroupChat(conversationId));
         log.debug("      createMessage:conversationService.isMemberOrCreateForCourseWideElseThrow DONE");
+
+        newMessage.setConversation(conversation);
 
         var course = preCheckUserAndCourseForMessaging(author, courseId);
 

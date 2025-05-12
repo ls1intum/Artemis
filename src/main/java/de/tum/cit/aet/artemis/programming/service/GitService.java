@@ -177,7 +177,7 @@ public class GitService extends AbstractGitService {
      */
     @Override
     protected URI getGitUri(VcsRepositoryUri vcsRepositoryUri) throws URISyntaxException {
-        if (profileService.isLocalVcsCiActive()) {
+        if (profileService.isLocalVCorCIActive()) {
             // Create less generic LocalVCRepositoryUri out of VcsRepositoryUri.
             LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(vcsRepositoryUri.toString());
             return localVCRepositoryUri.getLocalRepositoryPath(localVCBasePath).toUri();
@@ -1312,7 +1312,7 @@ public class GitService extends AbstractGitService {
     public List<CommitInfoDTO> getCommitInfos(VcsRepositoryUri vcsRepositoryUri) throws GitAPIException {
         List<CommitInfoDTO> commitInfos = new ArrayList<>();
 
-        if (profileService.isLocalVcsActive()) {
+        if (profileService.isLocalVCActive()) {
             log.debug("Using local VCS for getting commit info on repo {}", vcsRepositoryUri);
             try (var repo = getBareRepository(vcsRepositoryUri); var git = new Git(repo)) {
                 getCommitInfo(git, commitInfos);

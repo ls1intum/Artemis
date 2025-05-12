@@ -23,10 +23,10 @@ import de.tum.cit.aet.artemis.core.user.util.UserTestService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsUserManagementService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVcTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTest;
 
 // TODO: rewrite this test to use LocalVC
-class UserJenkinsLocalVcIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVcTest {
+class UserJenkinsLocalVCIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
 
     private static final String TEST_PREFIX = "userjenk"; // shorter prefix as user's name is limited to 50 chars
 

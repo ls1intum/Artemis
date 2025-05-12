@@ -12,9 +12,9 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.AppenderBase;
 import de.tum.cit.aet.artemis.shared.base.AbstractArtemisIntegrationTest;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVcTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTest;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalVcSamlTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalVCSamlTest;
 
 /**
  * This custom appender is used to capture the logs of multiple tests running in parallel.
@@ -31,7 +31,7 @@ public class ParallelConsoleAppender extends AppenderBase<ILoggingEvent> {
 
     private static final ConcurrentMap<Class<?>, ByteArrayOutputStream> TEST_GROUP_TO_ENCODED_LOGS = new ConcurrentHashMap<>();
 
-    private static final Set<Class<?>> TEST_GROUPS = Set.of(AbstractSpringIntegrationLocalVcSamlTest.class, AbstractSpringIntegrationJenkinsLocalVcTest.class,
+    private static final Set<Class<?>> TEST_GROUPS = Set.of(AbstractSpringIntegrationLocalVCSamlTest.class, AbstractSpringIntegrationJenkinsLocalVCTest.class,
             AbstractSpringIntegrationLocalCILocalVCTest.class, AbstractSpringIntegrationIndependentTest.class);
 
     @Override

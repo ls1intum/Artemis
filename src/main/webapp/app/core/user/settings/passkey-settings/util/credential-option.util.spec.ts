@@ -16,7 +16,7 @@ describe('Credential Option Util', () => {
         challenge: 'mockChallenge',
         user: undefined,
         excludeCredentials: [{ id: 'mockCredentialId', type: 'public-key' }],
-        authenticatorSelection: undefined,
+        authenticatorSelection: { requireResidentKey: true, userVerification: 'preferred' },
     } as unknown as PublicKeyCredentialCreationOptions;
 
     beforeEach(() => {
