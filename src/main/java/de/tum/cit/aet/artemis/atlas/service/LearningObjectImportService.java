@@ -269,7 +269,6 @@ public class LearningObjectImportService {
         programmingExercise.setTutorParticipations(new HashSet<>());
         programmingExercise.setExampleSubmissions(new HashSet<>());
         programmingExercise.setAttachments(new HashSet<>());
-        programmingExercise.setPosts(new HashSet<>());
         programmingExercise.setPlagiarismCases(new HashSet<>());
         programmingExercise.setCompetencyLinks(new HashSet<>());
     }
