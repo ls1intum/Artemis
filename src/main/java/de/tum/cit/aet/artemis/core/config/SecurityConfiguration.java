@@ -2,16 +2,8 @@ package de.tum.cit.aet.artemis.core.config;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
-
-import jakarta.annotation.PostConstruct;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,7 +24,6 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.CsrfConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
-import org.springframework.security.config.annotation.web.configurers.WebAuthnConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -40,25 +31,19 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
-import org.springframework.security.web.webauthn.authentication.PublicKeyCredentialRequestOptionsRepository;
-import org.springframework.security.web.webauthn.management.PublicKeyCredentialUserEntityRepository;
-import org.springframework.security.web.webauthn.management.UserCredentialRepository;
-import org.springframework.security.web.webauthn.registration.PublicKeyCredentialCreationOptionsRepository;
 import org.springframework.web.filter.CorsFilter;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 import org.zalando.problem.spring.web.advice.security.SecurityProblemSupport;
 
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.DomainUserDetailsService;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.filter.SpaWebFilter;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTConfigurer;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
-import de.tum.cit.aet.artemis.core.security.passkey.ArtemisWebAuthnConfigurer;
+import de.tum.cit.aet.artemis.core.security.passkey.ArtemisPasskeyWebAuthnConfigurer;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.user.PasswordService;
-import de.tum.cit.aet.artemis.core.util.AndroidApkKeyHashUtil;
 import de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer;
 
 @Configuration
@@ -73,89 +58,30 @@ public class SecurityConfiguration {
 
     private final Optional<CustomLti13Configurer> customLti13Configurer;
 
+    private final ArtemisPasskeyWebAuthnConfigurer passkeyWebAuthnConfigurer;
+
     private final JWTCookieService jwtCookieService;
 
     private final PasswordService passwordService;
 
     private final ProfileService profileService;
 
-    private final PublicKeyCredentialUserEntityRepository publicKeyCredentialUserEntityRepository;
-
     private final TokenProvider tokenProvider;
-
-    private final UserCredentialRepository userCredentialRepository;
-
-    private final UserRepository userRepository;
-
-    private final PublicKeyCredentialCreationOptionsRepository publicKeyCredentialCreationOptionsRepository;
-
-    private final PublicKeyCredentialRequestOptionsRepository publicKeyCredentialRequestOptionsRepository;
 
     @Value("#{'${spring.prometheus.monitoringIp:127.0.0.1}'.split(',')}")
     private List<String> monitoringIpAddresses;
 
-    @Value("${" + Constants.PASSKEY_ENABLED_PROPERTY_NAME + ":false}")
-    private boolean passkeyEnabled;
-
-    /**
-     * We expect the server URL to equal the client URL
-     */
-    @Value("${server.url}")
-    private String serverUrl;
-
-    @Value("${client.port:${server.port}}")
-    private String port;
-
-    @Value("${artemis.androidSha256CertFingerprints.release: #{null}}")
-    private String androidSha256CertFingerprintRelease;
-
-    @Value("${artemis.androidSha256CertFingerprints.debug: #{null}}")
-    private String androidSha256CertFingerprintDebug;
-
-    private URL clientUrlToRegisterPasskey;
-
-    private URL clientUrlToAuthenticateWithPasskey;
-
-    /**
-     * Validates the configuration for allowed origins when passkey authentication is enabled.
-     * <p>
-     * This method ensures that the server URL and port are correctly configured for WebAuthn
-     * when passkey authentication is enabled. If the configuration is invalid, an exception is thrown.
-     * </p>
-     *
-     * @throws IllegalStateException if the server URL configuration is invalid
-     */
-    @PostConstruct
-    public void validatePasskeyAllowedOriginConfiguration() {
-        if (passkeyEnabled) {
-            try {
-                clientUrlToRegisterPasskey = new URI(serverUrl).toURL();
-                clientUrlToAuthenticateWithPasskey = new URI(serverUrl + ":" + port).toURL();
-            }
-            catch (URISyntaxException | MalformedURLException e) {
-                throw new IllegalStateException("Invalid server URL configuration for WebAuthn: " + e.getMessage(), e);
-            }
-        }
-    }
-
     public SecurityConfiguration(CorsFilter corsFilter, MappingJackson2HttpMessageConverter converter, Optional<CustomLti13Configurer> customLti13Configurer,
-            JWTCookieService jwtCookieService, PasswordService passwordService, ProfileService profileService,
-            PublicKeyCredentialCreationOptionsRepository publicKeyCredentialCreationOptionsRepository,
-            PublicKeyCredentialRequestOptionsRepository publicKeyCredentialRequestOptionsRepository,
-            PublicKeyCredentialUserEntityRepository publicKeyCredentialUserEntityRepository, TokenProvider tokenProvider, UserCredentialRepository userCredentialRepository,
-            UserRepository userRepository) {
+            ArtemisPasskeyWebAuthnConfigurer passkeyWebAuthnConfigurer, JWTCookieService jwtCookieService, PasswordService passwordService, ProfileService profileService,
+            TokenProvider tokenProvider) {
         this.converter = converter;
         this.corsFilter = corsFilter;
         this.customLti13Configurer = customLti13Configurer;
+        this.passkeyWebAuthnConfigurer = passkeyWebAuthnConfigurer;
         this.jwtCookieService = jwtCookieService;
         this.passwordService = passwordService;
         this.profileService = profileService;
-        this.publicKeyCredentialCreationOptionsRepository = publicKeyCredentialCreationOptionsRepository;
-        this.publicKeyCredentialRequestOptionsRepository = publicKeyCredentialRequestOptionsRepository;
-        this.publicKeyCredentialUserEntityRepository = publicKeyCredentialUserEntityRepository;
         this.tokenProvider = tokenProvider;
-        this.userCredentialRepository = userCredentialRepository;
-        this.userRepository = userRepository;
     }
 
     /**
@@ -315,30 +241,9 @@ public class SecurityConfiguration {
             //  PROBLEM: This currently would break LocalVC cloning via http based on the LocalVCServletService
             //.httpBasic(Customizer.withDefaults());
 
-        if (passkeyEnabled) {
-            WebAuthnConfigurer<HttpSecurity> webAuthnConfigurer = new ArtemisWebAuthnConfigurer<>(
-                converter,
-                jwtCookieService,
-                userRepository,
-                publicKeyCredentialUserEntityRepository,
-                userCredentialRepository,
-                publicKeyCredentialCreationOptionsRepository,
-                publicKeyCredentialRequestOptionsRepository
-            );
-            Set<String> allowedOrigins = new HashSet<>(Set.of(clientUrlToRegisterPasskey.toString(), clientUrlToAuthenticateWithPasskey.toString()));
-            if (androidSha256CertFingerprintRelease != null) {
-                allowedOrigins.add(AndroidApkKeyHashUtil.getHashFromFingerprint(androidSha256CertFingerprintRelease));
-            }
-            if (androidSha256CertFingerprintDebug != null) {
-                allowedOrigins.add(AndroidApkKeyHashUtil.getHashFromFingerprint(androidSha256CertFingerprintDebug));
-            }
-            http.with(webAuthnConfigurer, configurer -> {
-                configurer
-                    .allowedOrigins(allowedOrigins)
-                    .rpId(clientUrlToRegisterPasskey.getHost())
-                    .rpName("Artemis");
-            });
-        }
+        // Configure WebAuthn passkey if enabled
+        passkeyWebAuthnConfigurer.configure(http);
+
         // @formatter:on
 
         // Conditionally adds configuration for LTI if it is active.
