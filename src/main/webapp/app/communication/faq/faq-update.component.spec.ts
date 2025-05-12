@@ -21,11 +21,13 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { FaqCategory } from 'app/communication/shared/entities/faq-category.model';
 import { FaqConsistencyComponent } from './faq-consistency.component';
+import { RewriteAction } from '../../shared/monaco-editor/model/actions/artemis-intelligence/rewrite.action';
 
 describe('FaqUpdateComponent', () => {
     let faqUpdateComponentFixture: ComponentFixture<FaqUpdateComponent>;
     let faqUpdateComponent: FaqUpdateComponent;
     let faqService: FaqService;
+    let profileService: ProfileService;
     let activatedRoute: ActivatedRoute;
     let router: Router;
     let faq1: Faq;
@@ -103,6 +105,7 @@ describe('FaqUpdateComponent', () => {
         faqUpdateComponent = faqUpdateComponentFixture.componentInstance;
 
         faqService = TestBed.inject(FaqService);
+        profileService = TestBed.inject(ProfileService);
         alertService = TestBed.inject(AlertService);
 
         router = TestBed.inject(Router);
@@ -271,4 +274,29 @@ describe('FaqUpdateComponent', () => {
         faqUpdateComponent.handleMarkdownChange('test');
         expect(faqUpdateComponent.faq.questionAnswer).toBe('test');
     });
+
+    it('should have no intelligence action when IRIS is not active', fakeAsync(() => {
+        faqUpdateComponentFixture = TestBed.createComponent(FaqUpdateComponent);
+        faqUpdateComponent = faqUpdateComponentFixture.componentInstance;
+        faqUpdateComponentFixture.detectChanges();
+        tick();
+
+        expect(faqUpdateComponent.artemisIntelligenceActions()).toEqual([]);
+    }));
+
+    it('should have intelligence action when IRIS is active', fakeAsync(() => {
+        const isProfileActiveSpy = jest.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
+
+        faqUpdateComponentFixture = TestBed.createComponent(FaqUpdateComponent);
+        faqUpdateComponent = faqUpdateComponentFixture.componentInstance;
+        faqUpdateComponent.courseId = 1;
+        faqUpdateComponentFixture.detectChanges();
+        tick();
+
+        expect(isProfileActiveSpy).toHaveBeenCalledWith('iris');
+
+        const actions = faqUpdateComponent.artemisIntelligenceActions();
+        expect(actions).toHaveLength(1);
+        expect(actions[0]).toBeInstanceOf(RewriteAction);
+    }));
 });
