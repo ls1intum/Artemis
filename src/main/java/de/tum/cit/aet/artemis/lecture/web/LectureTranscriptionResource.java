@@ -128,8 +128,8 @@ public class LectureTranscriptionResource {
     public ResponseEntity<?> startNebulaTranscriptionAndSave(@PathVariable Long lectureId, @PathVariable Long lectureUnitId, @RequestBody NebulaTranscriptionRequestDTO request) {
         try {
             // Call Nebula and get the transcription
-            LectureTranscriptionDTO transcriptionDTO = nebulaRestClient.post().uri(nebulaBaseUrl + "/start-transcribe").header("Content-Type", "application/json").body(request)
-                    .retrieve().body(LectureTranscriptionDTO.class);
+            LectureTranscriptionDTO transcriptionDTO = nebulaRestClient.post().uri(nebulaBaseUrl + "/start-transcribe").header("Content-Type", "application/json")
+                    .header("Authorization", nebulaSecretToken).body(request).retrieve().body(LectureTranscriptionDTO.class);
 
             if (transcriptionDTO.segments().isEmpty()) {
                 log.error("Nebula returned empty transcription for Lecture ID: {}, Lecture Unit ID: {}", lectureId, lectureUnitId);
@@ -138,10 +138,11 @@ public class LectureTranscriptionResource {
 
             // Save transcription immediately
             LectureTranscription savedTranscription = lectureTranscriptionService.saveTranscription(lectureId, lectureUnitId, transcriptionDTO);
-
+            LectureTranscriptionDTO dto = new LectureTranscriptionDTO(savedTranscription.getLectureUnit().getId(), savedTranscription.getLanguage(),
+                    savedTranscription.getSegments());
             log.info("Transcription successfully saved for Lecture ID: {}, Lecture Unit ID: {}", lectureId, lectureUnitId);
 
-            return ResponseEntity.ok(savedTranscription);
+            return ResponseEntity.ok(dto);
 
         }
         catch (Exception e) {
