@@ -1,7 +1,7 @@
 import { Injectable, OnDestroy, inject } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
-import { IrisAssistantMessage, IrisMessage, IrisSender, IrisTutorSuggestionRequestMessage, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
+import { IrisAssistantMessage, IrisMessage, IrisSender, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
 import { BehaviorSubject, Observable, Subscription, catchError, map, of, tap, throwError } from 'rxjs';
 import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
 import { IrisExerciseChatSession } from 'app/iris/shared/entities/iris-exercise-chat-session.model';
@@ -28,6 +28,13 @@ export enum ChatServiceMode {
  */
 @Injectable({ providedIn: 'root' })
 export class IrisChatService implements OnDestroy {
+    private modeRequiresLLMAcceptance = new Map<ChatServiceMode, boolean>([
+        [ChatServiceMode.TEXT_EXERCISE, true],
+        [ChatServiceMode.EXERCISE, true],
+        [ChatServiceMode.COURSE, true],
+        [ChatServiceMode.LECTURE, true],
+        [ChatServiceMode.TUTOR_SUGGESTION, false],
+    ]);
     http = inject(IrisChatHttpService);
     ws = inject(IrisWebsocketService);
     status = inject(IrisStatusService);
@@ -69,9 +76,11 @@ export class IrisChatService implements OnDestroy {
     }
 
     protected start() {
-        if (this.accountService.userIdentity?.externalLLMUsageAccepted || this.hasJustAcceptedExternalLLMUsage) {
-            this.getCurrentSessionOrCreate().subscribe(this.handleNewSession());
-        } else if (this.sessionCreationIdentifier?.includes(ChatServiceMode.TUTOR_SUGGESTION)) {
+        const requiresAcceptance = this.sessionCreationIdentifier
+            ? this.modeRequiresLLMAcceptance.get(Object.values(ChatServiceMode).find((mode) => this.sessionCreationIdentifier?.includes(mode)) as ChatServiceMode)
+            : true;
+
+        if (requiresAcceptance === false || this.accountService.userIdentity?.externalLLMUsageAccepted || this.hasJustAcceptedExternalLLMUsage) {
             this.getCurrentSessionOrCreate().subscribe(this.handleNewSession());
         }
     }
@@ -110,11 +119,7 @@ export class IrisChatService implements OnDestroy {
         if (!this.sessionId) {
             return throwError(() => new Error('Not initialized'));
         }
-
-        const newMessage = new IrisTutorSuggestionRequestMessage();
-        newMessage.sender = IrisSender.TUT_SUG;
-        newMessage.content = [new IrisTextMessageContent('Requested tutor suggestion')];
-        return this.http.createTutorSuggestion(this.sessionId, newMessage).pipe(
+        return this.http.createTutorSuggestion(this.sessionId).pipe(
             map(() => undefined),
             catchError((error: HttpErrorResponse) => {
                 this.handleSendHttpError(error);

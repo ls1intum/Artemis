@@ -13,5 +13,5 @@ package de.tum.cit.aet.artemis.iris.domain.message;
  * based on an incomplete understanding of the requirements of the Iris subsystem.
  */
 public enum IrisMessageSender {
-    USER, LLM, TUT_SUG
+    USER, LLM
 }
