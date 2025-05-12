@@ -7,20 +7,12 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
-import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
@@ -36,13 +28,10 @@ import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
-import org.springframework.core.io.ClassPathResource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
@@ -60,6 +49,8 @@ import de.tum.cit.aet.artemis.programming.dto.CheckoutDirectoriesDTO;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseImportTestService;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseImportTestService.ImportFileResult;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService;
 
 // TestInstance.Lifecycle.PER_CLASS allows all test methods in this class to share the same instance of the test class.
@@ -91,8 +82,11 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
 
     private Competency competency;
 
-    @org.springframework.beans.factory.annotation.Autowired
+    @Autowired
     private ProgrammingExerciseTestService programmingExerciseTestService;
+
+    @Autowired
+    private ProgrammingExerciseImportTestService programmingExerciseImportTestService;
 
     @BeforeAll
     void setupAll() {
@@ -379,12 +373,12 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         String newTitle = "TITLE" + uniqueSuffix;
         String newShortName = "SHORT" + uniqueSuffix;
 
-        ImportFileResult importResult = prepareExerciseImport("test-data/import-from-file/valid-import.zip", exercise -> {
+        ImportFileResult importResult = programmingExerciseImportTestService.prepareExerciseImport("test-data/import-from-file/valid-import.zip", exercise -> {
             String oldTitle = exercise.getTitle();
             exercise.setTitle(newTitle);
             exercise.setShortName(newShortName);
             return oldTitle;
-        });
+        }, course);
 
         ProgrammingExercise importedExercise = importResult.importedExercise();
         String oldTitle = (String) importResult.additionalData();
@@ -396,30 +390,11 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
 
         String repoClonePath = System.getProperty("artemis.repo-clone-path", "repos");
         String projectKey = importResult.parsedExercise().getProjectKey();
-        String[] repoDirs = { projectKey + "-exercise", projectKey + "-solution", projectKey + "-tests" };
-        int newTitleCount = 0;
-        int oldTitleCount = 0;
-        for (String repoDir : repoDirs) {
-            Path repoPath = Paths.get(repoClonePath, projectKey, repoDir.toLowerCase());
-            if (!Files.exists(repoPath))
-                continue;
-            List<Path> files = new ArrayList<>();
-            Files.walk(repoPath).filter(Files::isRegularFile).forEach(files::add);
-            for (Path filePath : files) {
-                String content = new String(Files.readAllBytes(filePath), StandardCharsets.UTF_8);
-                int idx = 0;
-                while ((idx = content.indexOf(newTitle, idx)) != -1) {
-                    newTitleCount++;
-                    idx += newTitle.length();
-                }
-                idx = 0;
-                while ((idx = content.indexOf(oldTitle, idx)) != -1) {
-                    oldTitleCount++;
-                    idx += oldTitle.length();
-                }
-            }
-        }
-        assertThat(newTitleCount).isEqualTo(countOccurrencesInZip(importResult.resource(), oldTitle));
+        Path exercisePath = Paths.get(repoClonePath, projectKey);
+        int newTitleCount = programmingExerciseImportTestService.countOccurrencesInDirectory(exercisePath, newTitle);
+        int oldTitleCount = programmingExerciseImportTestService.countOccurrencesInDirectory(exercisePath, oldTitle);
+
+        assertThat(newTitleCount).isEqualTo(programmingExerciseImportTestService.countOccurrencesInZip(importResult.resource(), oldTitle));
         assertThat(oldTitleCount).isZero();
     }
 
@@ -429,7 +404,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         aeolusRequestMockProvider.enableMockingOfRequests();
         aeolusRequestMockProvider.mockFailedGenerateBuildPlan(AeolusTarget.CLI);
 
-        ImportFileResult importResult = prepareExerciseImport("test-data/import-from-file/valid-import.zip", exercise -> null);
+        ImportFileResult importResult = programmingExerciseImportTestService.prepareExerciseImport("test-data/import-from-file/valid-import.zip", exercise -> null, course);
         ProgrammingExercise importedExercise = importResult.importedExercise();
 
         assertThat(importedExercise).isNotNull();
@@ -453,7 +428,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         // Mock image inspection
         dockerClientTestService.mockInspectImage(dockerClient);
 
-        ImportFileResult importResult = prepareExerciseImport("test-data/import-from-file/valid-import.zip", exercise -> null);
+        ImportFileResult importResult = programmingExerciseImportTestService.prepareExerciseImport("test-data/import-from-file/valid-import.zip", exercise -> null, course);
         ProgrammingExercise importedExercise = importResult.importedExercise();
 
         assertThat(importedExercise).isNotNull();
@@ -513,82 +488,6 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
 
         // Create the exercise and verify status code 201
         request.postWithResponseBody("/api/programming/programming-exercises/setup", newExercise, ProgrammingExercise.class, HttpStatus.CREATED);
-    }
-
-    private record ImportFileResult(ClassPathResource resource, ProgrammingExercise parsedExercise, ProgrammingExercise importedExercise, Object additionalData) {
-    }
-
-    private interface ExerciseModifier<T> {
-
-        T modify(ProgrammingExercise exercise);
-    }
-
-    private ImportFileResult prepareExerciseImport(String resourcePath, ExerciseModifier<?> modifier) throws Exception {
-        var resource = new ClassPathResource(resourcePath);
-        ZipInputStream zipInputStream = new ZipInputStream(resource.getInputStream());
-        String detailsJsonString = null;
-        ZipEntry entry;
-        while ((entry = zipInputStream.getNextEntry()) != null) {
-            if (entry.getName().endsWith(".json")) {
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                byte[] buffer = new byte[1024];
-                int len;
-                while ((len = zipInputStream.read(buffer)) > 0) {
-                    baos.write(buffer, 0, len);
-                }
-                detailsJsonString = baos.toString(StandardCharsets.UTF_8);
-                break;
-            }
-        }
-        zipInputStream.close();
-        assertThat(detailsJsonString).isNotNull();
-
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        objectMapper.findAndRegisterModules();
-        ProgrammingExercise parsedExercise = objectMapper.readValue(detailsJsonString, ProgrammingExercise.class);
-
-        if (parsedExercise.getBuildConfig() == null) {
-            parsedExercise.setBuildConfig(new de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig());
-        }
-
-        Object additionalData = modifier.modify(parsedExercise);
-
-        parsedExercise.setCourse(course);
-        parsedExercise.setId(null);
-        parsedExercise.setChannelName("testchannel-pe-imported");
-        parsedExercise.forceNewProjectKey();
-
-        MockMultipartFile file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
-
-        ProgrammingExercise importedExercise = request.postWithMultipartFile("/api/programming/courses/" + course.getId() + "/programming-exercises/import-from-file",
-                parsedExercise, "programmingExercise", file, ProgrammingExercise.class, HttpStatus.OK);
-
-        return new ImportFileResult(resource, parsedExercise, importedExercise, additionalData);
-    }
-
-    private int countOccurrencesInZip(ClassPathResource resource, String searchString) throws Exception {
-        int count = 0;
-        try (ZipInputStream zipIn = new ZipInputStream(new FileInputStream(resource.getFile()))) {
-            ZipEntry zipEntry;
-            while ((zipEntry = zipIn.getNextEntry()) != null) {
-                if (!zipEntry.isDirectory() && zipEntry.getName().endsWith(".zip")) {
-                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                    byte[] buf = new byte[1024];
-                    int n;
-                    while ((n = zipIn.read(buf)) > 0) {
-                        baos.write(buf, 0, n);
-                    }
-                    String content = baos.toString(StandardCharsets.UTF_8);
-                    int idx = 0;
-                    while ((idx = content.indexOf(searchString, idx)) != -1) {
-                        count++;
-                        idx += searchString.length();
-                    }
-                }
-            }
-        }
-        return count;
     }
 
     @Nested
