@@ -24,9 +24,13 @@ import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 
 import de.tum.cit.aet.artemis.core.config.migration.DatabaseMigration;
+import liquibase.Liquibase;
 import liquibase.Scope;
 import liquibase.SingletonScopeManager;
+import liquibase.database.DatabaseFactory;
+import liquibase.database.jvm.JdbcConnection;
 import liquibase.integration.spring.SpringLiquibase;
+import liquibase.resource.ClassLoaderResourceAccessor;
 import tech.jhipster.config.JHipsterConstants;
 import tech.jhipster.config.liquibase.SpringLiquibaseUtil;
 
@@ -70,6 +74,20 @@ public class LiquibaseConfiguration {
         if (!env.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
             this.databaseMigration = new DatabaseMigration(currentVersionString, dataSource);
             databaseMigration.checkMigrationPath();
+        }
+
+        try {
+            log.info("Clearing Liquibase checksums manually before SpringLiquibase starts...");
+
+            Liquibase liquibase = new Liquibase("classpath:config/liquibase/master.xml", new ClassLoaderResourceAccessor(),
+                    DatabaseFactory.getInstance().findCorrectDatabaseImplementation(new JdbcConnection(dataSource.getConnection())));
+
+            liquibase.clearCheckSums();
+            log.info("Liquibase checksums cleared successfully.");
+        }
+        catch (Exception e) {
+            log.error("Failed to clear Liquibase checksums", e);
+            throw new IllegalStateException("Could not clear Liquibase checksums", e);
         }
 
         SpringLiquibase liquibase = SpringLiquibaseUtil.createSpringLiquibase(liquibaseDataSource.getIfAvailable(), liquibaseProperties, dataSource, dataSourceProperties);
