@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,6 +29,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.TutorParticipation;
 import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.TutorParticipationService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
@@ -105,12 +107,14 @@ public class ExerciseResource {
 
     private final Optional<PlagiarismCaseApi> plagiarismCaseApi;
 
+    private final ResultRepository resultRepository;
+
     public ExerciseResource(ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService, ParticipationService participationService,
             UserRepository userRepository, Optional<ExamDateApi> examDateApi, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
             ExampleSubmissionRepository exampleSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             GradingCriterionRepository gradingCriterionRepository, ExerciseRepository exerciseRepository, QuizBatchService quizBatchService,
             ParticipationRepository participationRepository, Optional<ExamAccessApi> examAccessApi, Optional<IrisSettingsApi> irisSettingsApi,
-            Optional<PlagiarismCaseApi> plagiarismCaseApi) {
+            Optional<PlagiarismCaseApi> plagiarismCaseApi, ResultRepository resultRepository) {
         this.exerciseService = exerciseService;
         this.exerciseDeletionService = exerciseDeletionService;
         this.participationService = participationService;
@@ -127,6 +131,7 @@ public class ExerciseResource {
         this.examAccessApi = examAccessApi;
         this.irisSettingsApi = irisSettingsApi;
         this.plagiarismCaseApi = plagiarismCaseApi;
+        this.resultRepository = resultRepository;
     }
 
     /**
@@ -303,7 +308,7 @@ public class ExerciseResource {
     }
 
     /**
-     * GET /exercises/:exerciseId/details : sends exercise details including all results for the currently logged-in user
+     * GET /exercises/:exerciseId/details : sends exercise details including up to the latest 20 results for the currently logged-in user
      * NOTE: this should only be used for course exercises, not for exam exercises
      *
      * @param exerciseId the exerciseId of the exercise to get the repos from
@@ -326,10 +331,13 @@ public class ExerciseResource {
             throw new AccessForbiddenException();
         }
 
-        List<StudentParticipation> participations = participationService.findByExerciseAndStudentIdWithEagerResultsAndSubmissions(exercise, user.getId());
+        List<StudentParticipation> participations = participationService.findByExerciseAndStudentId(exercise, user.getId());
+        // normally we only have one participation here (only in case of practice mode, there could be two)
         exercise.setStudentParticipations(new HashSet<>());
         for (StudentParticipation participation : participations) {
-            participation.setResults(exercise.findResultsFilteredForStudents(participation));
+            // load the 20 last results with submission here for the participation (avoid loading all results in case there are many, e.g. in excessive programming exercises)
+            var results = resultRepository.findLatestResultsForParticipation(participation.getId(), PageRequest.of(0, 20));
+            participation.setResults(exercise.filterResultsForStudents(results));
             // By filtering the results available yet, they can become null for the exercise.
             if (participation.getResults() != null) {
                 participation.getResults().forEach(Result::filterSensitiveInformation);

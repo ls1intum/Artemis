@@ -25,7 +25,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.StreamUtils;
 
 import de.tum.cit.aet.artemis.core.exception.JenkinsException;
-import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationJenkinsLocalVcTest;
+import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationJenkinsLocalVCTest;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -33,7 +33,7 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildPlan;
 import de.tum.cit.aet.artemis.programming.service.jenkins.build_plan.JenkinsBuildPlanUtils;
 import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobService;
 
-class JenkinsServiceTest extends AbstractProgrammingIntegrationJenkinsLocalVcTest {
+class JenkinsServiceTest extends AbstractProgrammingIntegrationJenkinsLocalVCTest {
 
     private static final String TEST_PREFIX = "jenkinsservicetest";
 

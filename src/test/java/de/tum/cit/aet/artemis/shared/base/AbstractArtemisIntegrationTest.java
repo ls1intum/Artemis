@@ -79,9 +79,6 @@ import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 @AutoConfigureEmbeddedDatabase
 public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
 
-    @Value("${server.url}")
-    protected String artemisServerUrl;
-
     @Value("${artemis.version-control.default-branch:main}")
     protected String defaultBranch;
 
