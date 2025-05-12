@@ -16,6 +16,7 @@ import { CopyIconButtonComponent } from 'app/shared/components/copy-icon-button/
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 
 @Component({
     selector: 'jhi-course-lti-configuration',
@@ -49,6 +50,7 @@ export class CourseLtiConfigurationComponent implements OnInit {
     course: Course;
     onlineCourseConfiguration: OnlineCourseConfiguration;
     exercises: Exercise[];
+    lectures: Lecture[];
 
     activeTab = 1;
 
@@ -69,9 +71,12 @@ export class CourseLtiConfigurationComponent implements OnInit {
             if (course) {
                 this.course = course;
                 this.onlineCourseConfiguration = course.onlineCourseConfiguration;
-                this.courseManagementService.findWithExercises(course.id).subscribe((findWithExercisesResult) => {
-                    if (findWithExercisesResult?.body?.exercises) {
-                        this.exercises = findWithExercisesResult.body.exercises;
+                this.courseManagementService.findWithExercisesAndLecturesAndCompetencies(course.id).subscribe((findWithExercisesAndLecturesResult) => {
+                    if (findWithExercisesAndLecturesResult?.body?.exercises) {
+                        this.exercises = findWithExercisesAndLecturesResult.body.exercises;
+                    }
+                    if (findWithExercisesAndLecturesResult?.body?.lectures) {
+                        this.lectures = findWithExercisesAndLecturesResult.body.lectures;
                     }
                 });
             }
@@ -83,6 +88,10 @@ export class CourseLtiConfigurationComponent implements OnInit {
      */
     getExerciseLti13LaunchUrl(exercise: Exercise): string {
         return `${location.origin}/courses/${this.course.id}/exercises/${exercise.id}`; // Needs to match url in Lti13Service
+    }
+
+    getLectureLti13LaunchUrl(lecture: Lecture): string {
+        return `${location.origin}/courses/${this.course.id}/lectures/${lecture.id}`;
     }
 
     sortRows() {

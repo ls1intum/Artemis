@@ -19,7 +19,7 @@ import {
     input,
     output,
 } from '@angular/core';
-import { faCircleNotch, faEnvelope, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch, faEnvelope, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { Conversation, ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { Subject, forkJoin, map, takeUntil } from 'rxjs';
 import { Post } from 'app/communication/shared/entities/post.model';
@@ -87,12 +87,10 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
     @Output() openThread = new EventEmitter<Post>();
 
-    @ViewChild('searchInput') searchInput: ElementRef;
     @ViewChildren('postingThread') messages: QueryList<PostingThreadComponent>;
     @ViewChild('container') content: ElementRef;
 
     @Input() course?: Course;
-    @Input() searchbarCollapsed = false;
     @Input() contentHeightDev = false;
     showOnlyPinned = input<boolean>(false);
     pinnedCount = output<number>();
@@ -124,7 +122,6 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     public isFetchingPosts = true;
     // Icons
     faTimes = faTimes;
-    faSearch = faSearch;
     faEnvelope = faEnvelope;
     faCircleNotch = faCircleNotch;
     isMobile = false;
@@ -254,10 +251,6 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         }
 
         if (this.course && this._activeConversation) {
-            if (this.searchInput) {
-                this.searchInput.nativeElement.value = '';
-                this.searchText = '';
-            }
             this.canStartSaving = false;
             this.onSearch();
             this.createEmptyPost();
@@ -295,45 +288,73 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     }
 
     private groupPosts(): void {
+        // If there are no posts, clear groupedPosts and exit.
         if (!this.posts || this.posts.length === 0) {
             this.groupedPosts = [];
             return;
         }
 
-        const sortedPosts = this.posts.sort((a, b) => {
+        // Sort posts by the creation date
+        const sortedPosts = [...this.posts].sort((a, b) => {
             return a.creationDate!.valueOf() - b.creationDate!.valueOf();
         });
 
-        const groups: PostGroup[] = [];
-        let currentGroup: PostGroup = {
-            author: sortedPosts[0].author,
-            posts: [{ ...sortedPosts[0], isConsecutive: false }],
-        };
+        // Compute new grouping based on current posts.
+        const computedGroups: PostGroup[] = [];
+        let currentGroup: PostGroup | undefined = undefined;
 
-        for (let i = 1; i < sortedPosts.length; i++) {
-            const currentPost = sortedPosts[i];
-            const lastPostInGroup = currentGroup.posts[currentGroup.posts.length - 1];
+        sortedPosts.forEach((post) => {
+            if (!currentGroup) {
+                // Start new group if none exists.
+                currentGroup = { author: post.author, posts: [{ ...post, isConsecutive: false }] };
+                return;
+            }
+
+            const lastPost = currentGroup.posts[currentGroup.posts.length - 1];
+            const currentDate = post.creationDate;
+            const lastDate = lastPost.creationDate;
 
             let timeDiff = Number.MAX_SAFE_INTEGER;
-            if (currentPost.creationDate && lastPostInGroup.creationDate) {
-                timeDiff = currentPost.creationDate.diff(lastPostInGroup.creationDate, 'minute');
+            if (currentDate && lastDate) {
+                timeDiff = currentDate.diff(lastDate, 'minute');
             }
 
-            if (currentPost.author?.id === currentGroup.author?.id && timeDiff < 5 && timeDiff >= 0) {
-                currentGroup.posts.push({ ...currentPost, isConsecutive: true }); // consecutive post
+            if (this.isAuthorEqual(currentGroup, { author: post.author, posts: [] }) && timeDiff < 5 && timeDiff >= 0) {
+                currentGroup.posts.push({ ...post, isConsecutive: true });
             } else {
-                groups.push(currentGroup);
-                currentGroup = {
-                    author: currentPost.author,
-                    posts: [{ ...currentPost, isConsecutive: false }],
-                };
+                computedGroups.push(currentGroup);
+                currentGroup = { author: post.author, posts: [{ ...post, isConsecutive: false }] };
             }
+        });
+        if (currentGroup) {
+            computedGroups.push(currentGroup);
         }
 
-        groups.push(currentGroup);
+        // Update existing groups in place if possible.
+        if (this.groupedPosts.length === computedGroups.length) {
+            computedGroups.forEach((g, i) => {
+                if (this.groupedPosts[i].author?.id === g.author?.id) {
+                    // If the group belongs to the same author, update its posts array in place.
+                    this.groupedPosts[i].posts.splice(0, this.groupedPosts[i].posts.length, ...g.posts);
+                } else {
+                    // If group identity has changed, replace the group.
+                    this.groupedPosts[i] = g;
+                }
+            });
+        } else {
+            this.groupedPosts = computedGroups;
+        }
 
-        this.groupedPosts = groups;
+        // Trigger Angular change detection.
         this.cdr.detectChanges();
+    }
+
+    private isAuthorEqual(groupA: PostGroup, groupB: PostGroup): boolean {
+        // Both groups are equal if neither has an author; otherwise, they are not
+        if (!groupA.author || !groupB.author) {
+            return !groupA.author && !groupB.author;
+        }
+        return groupA.author.id === groupB.author.id;
     }
 
     setPosts(): void {
@@ -433,10 +454,9 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
                     this.groupPosts();
                 }
             });
-        } else {
-            // No posts with forwarded messages
-            this.groupPosts();
         }
+        // Incrementally update the grouped posts.
+        this.groupPosts();
     }
 
     fetchNextPage() {
@@ -508,18 +528,6 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         requestAnimationFrame(() => {
             this.content.nativeElement.scrollTop = this.content.nativeElement.scrollHeight;
         });
-    }
-
-    onSearchQueryInput($event: Event) {
-        const searchTerm = ($event.target as HTMLInputElement).value?.trim().toLowerCase() ?? '';
-        this.search$.next(searchTerm);
-    }
-
-    clearSearchInput() {
-        if (this.searchInput) {
-            this.searchInput.nativeElement.value = '';
-            this.searchInput.nativeElement.dispatchEvent(new Event('input'));
-        }
     }
 
     private setupScrollDebounce(): void {

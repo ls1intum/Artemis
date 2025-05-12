@@ -1,5 +1,5 @@
 import { NgClass } from '@angular/common';
-import { ChangeDetectorRef, Component, ElementRef, EventEmitter, HostListener, OnDestroy, OnInit, ViewEncapsulation, inject, viewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, OnDestroy, OnInit, ViewEncapsulation, inject, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
@@ -16,7 +16,6 @@ import {
     faMessage,
     faPersonChalkboard,
     faPlus,
-    faSearch,
     faTimes,
 } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
@@ -35,7 +34,6 @@ import { CourseOverviewService } from 'app/core/course/overview/services/course-
 import { CourseSidebarService } from 'app/core/course/overview/services/course-sidebar.service';
 import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
 import { LayoutService } from 'app/shared/breakpoints/layout.service';
-import { ButtonComponent, ButtonType } from 'app/shared/components/button/button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
@@ -43,7 +41,6 @@ import { AnswerPost } from 'app/communication/shared/entities/answer-post.model'
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { MetisService } from 'app/communication/service/metis.service';
 import { PageType, SortDirection } from 'app/communication/metis.util';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
 import { EMPTY, Observable, Subject, Subscription, from, take, takeUntil } from 'rxjs';
 import { catchError, debounceTime, distinctUntilChanged } from 'rxjs/operators';
@@ -61,6 +58,7 @@ import {
 import { AccordionGroups, ChannelTypeIcons, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/shared/types/sidebar';
 import { LinkifyService } from 'app/communication/link-preview/services/linkify.service';
 import { LinkPreviewService } from 'app/communication/link-preview/services/link-preview.service';
+import { ConversationGlobalSearchComponent, ConversationGlobalSearchConfig } from 'app/communication/shared/conversation-global-search/conversation-global-search.component';
 
 const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
     favoriteChannels: { entityData: [] },
@@ -125,7 +123,6 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
     imports: [
         LoadingIndicatorContainerComponent,
         FormsModule,
-        ButtonComponent,
         CourseConversationsCodeOfConductComponent,
         TranslateDirective,
         NgClass,
@@ -135,7 +132,7 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
         CourseWideSearchComponent,
         SavedPostsComponent,
         ConversationThreadSidebarComponent,
-        ArtemisTranslatePipe,
+        ConversationGlobalSearchComponent,
     ],
 })
 export class CourseConversationsComponent implements OnInit, OnDestroy {
@@ -159,7 +156,6 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     postInThread?: Post;
     activeConversation?: ConversationDTO = undefined;
     conversationsOfUser: ConversationDTO[] = [];
-    channelSearchCollapsed = true;
 
     conversationSelected = true;
     sidebarData: SidebarData;
@@ -184,17 +180,14 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     isCodeOfConductPresented = false;
 
     courseWideSearch = viewChild<CourseWideSearchComponent>(CourseWideSearchComponent);
-    searchElement = viewChild<ElementRef>('courseWideSearchInput');
+    globalSearchComponent = viewChild<ConversationGlobalSearchComponent>(ConversationGlobalSearchComponent);
 
     courseWideSearchConfig: CourseWideSearchConfig;
-    courseWideSearchTerm = '';
-    readonly ButtonType = ButtonType;
 
     // Icons
     faPlus = faPlus;
     faTimes = faTimes;
     faFilter = faFilter;
-    faSearch = faSearch;
 
     createChannelFn?: (channel: ChannelDTO) => Observable<never>;
     channelActions$ = new EventEmitter<ChannelAction>();
@@ -412,11 +405,12 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     initializeCourseWideSearchConfig() {
         this.courseWideSearchConfig = new CourseWideSearchConfig();
         this.courseWideSearchConfig.searchTerm = '';
-        this.courseWideSearchConfig.filterToCourseWide = true;
+        this.courseWideSearchConfig.filterToCourseWide = false;
         this.courseWideSearchConfig.filterToUnresolved = false;
-        this.courseWideSearchConfig.filterToOwn = false;
         this.courseWideSearchConfig.filterToAnsweredOrReacted = false;
         this.courseWideSearchConfig.sortingOrder = SortDirection.ASCENDING;
+        this.courseWideSearchConfig.selectedAuthors = [];
+        this.courseWideSearchConfig.selectedConversations = [];
     }
 
     initializeSidebarAccordions() {
@@ -426,24 +420,33 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
             : DEFAULT_CHANNEL_GROUPS;
     }
 
-    hideSearchTerm() {
-        this.courseWideSearchTerm = '';
-    }
-
-    onSearch() {
+    onSearch(searchInfo: ConversationGlobalSearchConfig) {
         if (this.isMobile) {
-            if (this.courseWideSearchTerm) {
+            const isSearchNonEmpty = searchInfo?.searchTerm || searchInfo?.selectedConversations.length > 0 || searchInfo?.selectedAuthors.length > 0;
+            if (isSearchNonEmpty) {
                 this.courseSidebarService.closeSidebar();
             } else {
                 this.courseSidebarService.openSidebar();
             }
         }
+
         this.selectedSavedPostStatus = undefined;
         this.metisConversationService.setActiveConversation(undefined);
         this.activeConversation = undefined;
         this.updateQueryParameters();
-        this.courseWideSearchConfig.searchTerm = this.courseWideSearchTerm;
+        this.courseWideSearchConfig.searchTerm = searchInfo.searchTerm;
+        this.courseWideSearchConfig.selectedConversations = searchInfo.selectedConversations;
+        this.courseWideSearchConfig.selectedAuthors = searchInfo.selectedAuthors;
         this.courseWideSearch()?.onSearch();
+    }
+
+    onSelectionChange(searchInfo: ConversationGlobalSearchConfig) {
+        this.courseWideSearchConfig.selectedConversations = searchInfo.selectedConversations;
+        this.courseWideSearchConfig.selectedAuthors = searchInfo.selectedAuthors;
+        this.courseWideSearch()?.onSearchConfigSelectionChange();
+
+        // We don't update the searchTerm here because that should only happen on explicit search
+        // and we don't trigger a search automatically to avoid excessive API calls
     }
 
     prepareSidebarData() {
@@ -609,20 +612,14 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
             });
     }
 
-    toggleChannelSearch() {
-        this.channelSearchCollapsed = !this.channelSearchCollapsed;
+    triggerSearchInConversation() {
+        if (this.globalSearchComponent() && this.activeConversation) {
+            this.globalSearchComponent()!.focusWithSelectedConversation(this.activeConversation);
+        }
     }
 
     openThread(postToOpen: Post | undefined) {
         this.postInThread = postToOpen;
-    }
-
-    @HostListener('document:keydown', ['$event'])
-    handleSearchShortcut(event: KeyboardEvent) {
-        if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
-            event.preventDefault();
-            this.searchElement()!.nativeElement.focus();
-        }
     }
 
     onTriggerNavigateToPost(post: Posting) {

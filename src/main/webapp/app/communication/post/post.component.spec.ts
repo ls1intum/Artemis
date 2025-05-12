@@ -10,7 +10,7 @@ import { PostingContentComponent } from 'app/communication/posting-content/posti
 import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.service';
 import { MetisService } from 'app/communication/service/metis.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { DisplayPriority, PageType } from 'app/communication/metis.util';
+import { DisplayPriority, PageType, SortDirection } from 'app/communication/metis.util';
 import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
 import { OverlayModule } from '@angular/cdk/overlay';
 import {
@@ -51,6 +51,7 @@ import { AnswerPost } from 'app/communication/shared/entities/answer-post.model'
 import { ConversationService } from 'app/communication/conversations/service/conversation.service';
 import { MockConversationService } from 'test/helpers/mocks/service/mock-conversation.service';
 import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
+import { CourseWideSearchConfig } from 'app/communication/course-conversations-components/course-wide-search/course-wide-search.component';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 
@@ -64,11 +65,22 @@ describe('PostComponent', () => {
     let metisServiceGetPageTypeStub: jest.SpyInstance;
     let router: MockRouter;
     let mainContainer: HTMLElement;
+    let searchConfig: CourseWideSearchConfig;
 
     beforeEach(() => {
         mainContainer = document.createElement('div');
         mainContainer.classList.add('posting-infinite-scroll-container');
         document.body.appendChild(mainContainer);
+
+        searchConfig = {
+            searchTerm: '',
+            selectedConversations: [],
+            selectedAuthors: [],
+            filterToCourseWide: false,
+            filterToUnresolved: false,
+            filterToAnsweredOrReacted: false,
+            sortingOrder: SortDirection.ASCENDING,
+        };
 
         return TestBed.configureTestingModule({
             imports: [MockDirective(NgbTooltip), OverlayModule, MockModule(BrowserAnimationsModule)],
@@ -529,7 +541,15 @@ describe('PostComponent', () => {
 
         runInInjectionContext(fixture.debugElement.injector, () => {
             component.posting = testPost;
-            component.searchQuery = input<string>('answer');
+            component.searchConfig = input<CourseWideSearchConfig>({
+                searchTerm: 'answer',
+                selectedConversations: [],
+                selectedAuthors: [],
+                filterToCourseWide: false,
+                filterToUnresolved: false,
+                filterToAnsweredOrReacted: false,
+                sortingOrder: SortDirection.ASCENDING,
+            });
             component.showSearchResultInAnswersHint = false;
             component.ngOnChanges();
 
@@ -542,7 +562,8 @@ describe('PostComponent', () => {
 
         runInInjectionContext(fixture.debugElement.injector, () => {
             component.posting = testPost;
-            component.searchQuery = input<string>('answer');
+            searchConfig.searchTerm = 'answer';
+            component.searchConfig = input<CourseWideSearchConfig>(searchConfig);
             component.showSearchResultInAnswersHint = false;
             component.ngOnChanges();
 
@@ -555,7 +576,8 @@ describe('PostComponent', () => {
 
         runInInjectionContext(fixture.debugElement.injector, () => {
             component.posting = testPost;
-            component.searchQuery = input<string>('base');
+            searchConfig.searchTerm = 'base';
+            component.searchConfig = input<CourseWideSearchConfig>(searchConfig);
             component.showSearchResultInAnswersHint = true;
             component.ngOnChanges();
 
@@ -568,11 +590,26 @@ describe('PostComponent', () => {
 
         runInInjectionContext(fixture.debugElement.injector, () => {
             component.posting = testPost;
-            component.searchQuery = input<string>('');
+            component.searchConfig = input<CourseWideSearchConfig>(searchConfig);
             component.showSearchResultInAnswersHint = true;
             component.ngOnChanges();
 
             expect(component.showSearchResultInAnswersHint).toBeFalse();
+        });
+    });
+
+    // update to true when selected author is in answers
+    it('should update showSearchResultInAnswersHint to true for selected author in answers', () => {
+        const testPost = { id: 123, content: 'Base Post', answers: [{ content: 'Answer', author: { id: 1, internal: true } }] };
+
+        runInInjectionContext(fixture.debugElement.injector, () => {
+            component.posting = testPost;
+            searchConfig.selectedAuthors = [{ id: 1 }];
+            component.searchConfig = input<CourseWideSearchConfig>(searchConfig);
+            component.showSearchResultInAnswersHint = true;
+            component.ngOnChanges();
+
+            expect(component.showSearchResultInAnswersHint).toBeTrue();
         });
     });
 

@@ -4,7 +4,7 @@ import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angul
 import { Subject, takeUntil } from 'rxjs';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { ChannelDTO, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
+import { getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { MetisService } from 'app/communication/service/metis.service';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
@@ -19,6 +19,7 @@ import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
 import { PostingThreadComponent } from 'app/communication/posting-thread/posting-thread.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { Posting } from 'app/communication/shared/entities/posting.model';
+import { UserPublicInfoDTO } from 'app/core/user/user.model';
 
 @Component({
     selector: 'jhi-course-wide-search',
@@ -58,6 +59,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     public isFetchingPosts = true;
     totalNumberOfPosts = 0;
     posts: Post[] = [];
+    private allConversationIds: number[] = [];
     previousScrollDistanceFromTop: number;
     page = 1;
 
@@ -98,6 +100,9 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
         });
         this.metisService.totalNumberOfPosts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((totalNumberOfPosts: number) => {
             this.totalNumberOfPosts = totalNumberOfPosts;
+        });
+        this.metisConversationService.conversationsOfUser$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversations: ConversationDTO[]) => {
+            this.allConversationIds = conversations.map((conversation) => conversation.id!);
         });
     }
 
@@ -145,32 +150,25 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
 
         if (!searchConfig) return;
 
+        let conversationIds = searchConfig.selectedConversations?.map((conversation) => conversation.id!);
+        if (!conversationIds || conversationIds.length === 0) {
+            conversationIds = this.allConversationIds;
+        }
+
         this.currentPostContextFilter = {
             courseId: this.course?.id,
             searchText: searchConfig.searchTerm ? searchConfig.searchTerm.trim() : undefined,
+            authorIds: searchConfig.selectedAuthors?.map((author) => author.id!),
+            conversationIds: conversationIds,
             postSortCriterion: PostSortCriterion.CREATION_DATE,
             filterToCourseWide: searchConfig.filterToCourseWide,
             filterToUnresolved: searchConfig.filterToUnresolved,
-            filterToOwn: searchConfig.filterToOwn,
             filterToAnsweredOrReacted: searchConfig.filterToAnsweredOrReacted,
             sortingOrder: searchConfig.sortingOrder,
             pagingEnabled: true,
             page: this.page - 1,
             pageSize: 50,
         };
-        this.metisConversationService.conversationsOfUser$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversations: ConversationDTO[]) => {
-            this.currentPostContextFilter!.conversationIds = conversations
-                .filter((conversation) => !(this.currentPostContextFilter?.filterToUnresolved && this.conversationIsAnnouncement(conversation)))
-                .map((conversation) => conversation.id!);
-        });
-    }
-
-    conversationIsAnnouncement(conversation: ConversationDTO) {
-        if (conversation.type === 'channel') {
-            const channel = conversation as ChannelDTO;
-            return channel.isAnnouncementChannel;
-        }
-        return false;
     }
 
     postsTrackByFn = (index: number, post: Post): number => post.id!;
@@ -180,17 +178,36 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     }
 
     onSearch() {
-        // We want to search across all conversations, but only load public posts on init
-        const searchConfig = this.courseWideSearchConfig();
-        const searchText = searchConfig.searchTerm ? searchConfig.searchTerm.trim() : undefined;
-        this.courseWideSearchConfig().filterToCourseWide = !(searchText && searchText.length > 0);
         this.commandMetisToFetchPosts(true);
+    }
+
+    /**
+     * Monitor the search config for changes to selected conversations
+     */
+    onSearchConfigSelectionChange(): void {
+        const config = this.courseWideSearchConfig();
+        if (!config) return;
+
+        const hasSelectedConversations = config.selectedConversations?.length > 0;
+
+        const filterToCourseWideControl = this.formGroup?.get('filterToCourseWide');
+        if (filterToCourseWideControl) {
+            if (hasSelectedConversations) {
+                // When conversations are selected, disable the courseWide checkbox and set to false
+                filterToCourseWideControl.setValue(false);
+                filterToCourseWideControl.disable();
+            } else {
+                filterToCourseWideControl.enable();
+            }
+
+            config.filterToCourseWide = filterToCourseWideControl.value;
+        }
     }
 
     resetFormGroup(): void {
         this.formGroup = this.formBuilder.group({
+            filterToCourseWide: false,
             filterToUnresolved: false,
-            filterToOwn: false,
             filterToAnsweredOrReacted: false,
         });
     }
@@ -203,8 +220,8 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     onSelectContext(): void {
         const searchConfig = this.courseWideSearchConfig();
         if (!searchConfig) return;
+        searchConfig.filterToCourseWide = this.formGroup.get('filterToCourseWide')?.value;
         searchConfig.filterToUnresolved = this.formGroup.get('filterToUnresolved')?.value;
-        searchConfig.filterToOwn = this.formGroup.get('filterToOwn')?.value;
         searchConfig.filterToAnsweredOrReacted = this.formGroup.get('filterToAnsweredOrReacted')?.value;
         searchConfig.sortingOrder = this.sortingOrder;
         this.commandMetisToFetchPosts(true);
@@ -217,9 +234,10 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
 
 export class CourseWideSearchConfig {
     searchTerm: string;
+    selectedConversations: ConversationDTO[];
+    selectedAuthors: UserPublicInfoDTO[];
     filterToCourseWide: boolean;
     filterToUnresolved: boolean;
-    filterToOwn: boolean;
     filterToAnsweredOrReacted: boolean;
     sortingOrder: SortDirection;
 }

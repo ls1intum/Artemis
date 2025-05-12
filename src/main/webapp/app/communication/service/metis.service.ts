@@ -278,6 +278,17 @@ export class MetisService implements OnDestroy {
      * @return updated post
      */
     updatePost(post: Post): Observable<Post> {
+        if (post.id) {
+            const updateIndex = this.cachedPosts.findIndex((cachedPost) => cachedPost.id === post.id);
+            const foundCachedPost = updateIndex !== -1;
+            if (foundCachedPost) {
+                // We update the date immediately so that the client is aware about the post being edited without having to wait for the update call to finish
+                this.cachedPosts[updateIndex].updatedDate = dayjs();
+                this.cachedPosts[updateIndex].content = post.content;
+                this.posts$.next(this.cachedPosts);
+            }
+        }
+
         return this.postService.update(this.courseId, post).pipe(
             map((res: HttpResponse<Post>) => res.body!),
             tap((updatedPost: Post) => {
@@ -698,13 +709,14 @@ export class MetisService implements OnDestroy {
 
         switch (postDTO.action) {
             case MetisPostAction.CREATE:
-                const doesNotMatchOwnFilter = this.currentPostContextFilter.filterToOwn && postDTO.post.author?.id !== this.user.id;
+                const isAuthorFilterActive = this.currentPostContextFilter.authorIds && this.currentPostContextFilter.authorIds?.length > 0;
+                const doesNotMatchAuthorFilter = isAuthorFilterActive && postDTO.post.author?.id && !this.currentPostContextFilter.authorIds?.includes(postDTO.post.author?.id);
                 const doesNotMatchReactedFilter = this.currentPostContextFilter.filterToAnsweredOrReacted;
                 const doesNotMatchSearchString =
                     this.currentPostContextFilter.searchText?.length &&
                     !postDTO.post.content?.toLowerCase().includes(this.currentPostContextFilter.searchText.toLowerCase().trim());
 
-                if (doesNotMatchOwnFilter || doesNotMatchReactedFilter || doesNotMatchSearchString) {
+                if (doesNotMatchAuthorFilter || doesNotMatchReactedFilter || doesNotMatchSearchString) {
                     break;
                 }
                 // we can add the received conversation message to the cached messages without violating the current context filter setting

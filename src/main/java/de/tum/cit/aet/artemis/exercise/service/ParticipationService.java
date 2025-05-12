@@ -695,24 +695,6 @@ public class ParticipationService {
     }
 
     /**
-     * Get all programming exercise participations belonging to exercise and student with eager results and submissions.
-     *
-     * @param exercise  the exercise
-     * @param studentId the id of student
-     * @return the list of programming exercise participations belonging to exercise and student
-     */
-    public List<StudentParticipation> findByExerciseAndStudentIdWithEagerResultsAndSubmissions(Exercise exercise, Long studentId) {
-        // TODO: do we really need to fetch all this information here?
-        if (exercise.isTeamMode()) {
-            Optional<Team> optionalTeam = teamRepository.findOneByExerciseIdAndUserId(exercise.getId(), studentId);
-            return optionalTeam
-                    .map(team -> studentParticipationRepository.findByExerciseIdAndTeamIdWithEagerResultsAndLegalSubmissionsAndTeamStudents(exercise.getId(), team.getId()))
-                    .orElse(List.of());
-        }
-        return studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerResultsAndSubmissions(exercise.getId(), studentId);
-    }
-
-    /**
      * Deletes the build plan on the continuous integration server and sets the initialization state of the participation to inactive.
      * This means the participation can be resumed in the future
      *

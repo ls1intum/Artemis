@@ -256,6 +256,8 @@ def coverage_to_table(covs):
 
     for cov in covs:
         class_file = cov[0].rsplit("/", 1)[1]
+        if class_file.endswith(".spec.ts"):  # Exclude .spec.ts files
+            continue
         line_coverage = cov[1]
         confirmation = "✅ ❌"
         if line_coverage.startswith("100"):
