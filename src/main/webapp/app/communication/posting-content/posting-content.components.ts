@@ -289,6 +289,6 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     contentPartTrack(index: number) {
-        return this.posting()?.id + '_' + index;
+        return this.posting()?.id + '_' + index + '_' + this.posting()?.updatedDate?.toString();
     }
 }

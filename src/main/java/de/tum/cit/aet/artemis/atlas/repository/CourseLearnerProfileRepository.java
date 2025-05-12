@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.repository;
 
+import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
@@ -34,7 +35,17 @@ public interface CourseLearnerProfileRepository extends ArtemisJpaRepository<Cou
     @Query("""
             SELECT clp
             FROM CourseLearnerProfile clp
+                LEFT JOIN FETCH clp.course
             WHERE clp.learnerProfile.user.login = :login
             """)
     Set<CourseLearnerProfile> findAllByLogin(@Param("login") String login);
+
+    @Query("""
+            SELECT clp
+            FROM CourseLearnerProfile clp
+                LEFT JOIN FETCH clp.course
+            WHERE clp.learnerProfile.user.login = :login
+                AND clp.id = :courseLearnerProfileId
+            """)
+    Optional<CourseLearnerProfile> findByLoginAndId(@Param("login") String login, @Param("courseLearnerProfileId") long courseLearnerProfileId);
 }

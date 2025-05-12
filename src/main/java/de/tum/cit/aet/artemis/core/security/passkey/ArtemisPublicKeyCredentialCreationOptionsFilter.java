@@ -43,7 +43,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
  * This class is based on {@link org.springframework.security.web.webauthn.registration.PublicKeyCredentialCreationOptionsFilter}
  * But we need to set a different {@link PublicKeyCredentialCreationOptionsRepository} to make sure the passkey registration works well on multinode-systems.
  * Therefore, we need to provide {@link ArtemisPublicKeyCredentialCreationOptionsFilter#setCreationOptionsRepository} so we can use
- * {@link de.tum.cit.aet.artemis.core.repository.webauthn.HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository}
+ * {@link de.tum.cit.aet.artemis.core.repository.passkey.HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository}
  * </p>
  *
  * @see org.springframework.security.web.webauthn.registration.PublicKeyCredentialCreationOptionsFilter
