@@ -11,7 +11,6 @@ import { By } from '@angular/platform-browser';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
-import { ComplaintType } from '../../shared/entities/complaint.model';
 
 describe('ComplaintsFormComponent', () => {
     const teamComplaints = 42;
