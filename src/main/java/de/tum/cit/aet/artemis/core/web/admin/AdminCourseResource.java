@@ -31,6 +31,7 @@ import org.springframework.web.multipart.MultipartFile;
 import de.tum.cit.aet.artemis.communication.domain.DefaultChannelType;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
+import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -151,8 +152,8 @@ public class AdminCourseResource {
 
         if (file != null) {
             Path basePath = FilePathService.getCourseIconFilePath();
-            Path savePath = fileService.saveFile(file, basePath, false);
-            createdCourse.setCourseIcon(FilePathService.publicPathForActualPathOrThrow(savePath, createdCourse.getId()).toString());
+            Path savePath = fileService.saveFile(file, basePath, FilePathType.COURSE_ICON, false);
+            createdCourse.setCourseIcon(FilePathService.externalUriForFileSystemPath(savePath, FilePathType.COURSE_ICON, createdCourse.getId()).toString());
             createdCourse = courseRepository.save(createdCourse);
         }
 
@@ -179,7 +180,7 @@ public class AdminCourseResource {
 
         courseService.delete(course);
         if (course.getCourseIcon() != null) {
-            fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(URI.create(course.getCourseIcon())), 0);
+            fileService.schedulePathForDeletion(FilePathService.fileSystemPathForExternalUri(URI.create(course.getCourseIcon()), FilePathType.COURSE_ICON), 0);
         }
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, Course.ENTITY_NAME, course.getTitle())).build();
     }

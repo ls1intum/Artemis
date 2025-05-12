@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.lecture.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.core.service.FilePathService.actualPathForPublicPath;
+import static de.tum.cit.aet.artemis.core.service.FilePathService.fileSystemPathForExternalUri;
 
 import java.net.URI;
 import java.nio.file.Path;
@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationService;
+import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -97,13 +98,13 @@ public class AttachmentResource {
         attachment.setAttachmentUnit(originalAttachment.getAttachmentUnit());
 
         if (file != null) {
-            Path basePath = FilePathService.getLectureAttachmentFilePath().resolve(originalAttachment.getLecture().getId().toString());
-            Path savePath = fileService.saveFile(file, basePath, true);
-            attachment.setLink(FilePathService.publicPathForActualPathOrThrow(savePath, originalAttachment.getLecture().getId()).toString());
+            Path basePath = FilePathService.getLectureAttachmentFileSystemPath().resolve(originalAttachment.getLecture().getId().toString());
+            Path savePath = fileService.saveFile(file, basePath, FilePathType.LECTURE_ATTACHMENT, true);
+            attachment.setLink(FilePathService.externalUriForFileSystemPath(savePath, FilePathType.LECTURE_ATTACHMENT, originalAttachment.getLecture().getId()).toString());
             // Delete the old file
             URI oldPath = URI.create(originalAttachment.getLink());
-            fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(oldPath), 0);
-            this.fileService.evictCacheForPath(FilePathService.actualPathForPublicPathOrThrow(oldPath));
+            fileService.schedulePathForDeletion(FilePathService.fileSystemPathForExternalUri(oldPath, FilePathType.LECTURE_ATTACHMENT), 0);
+            this.fileService.evictCacheForPath(FilePathService.fileSystemPathForExternalUri(oldPath, FilePathType.LECTURE_ATTACHMENT));
         }
 
         Attachment result = attachmentRepository.save(attachment);
@@ -176,8 +177,8 @@ public class AttachmentResource {
         try {
             if (AttachmentType.FILE.equals(attachment.getAttachmentType())) {
                 URI oldPath = URI.create(attachment.getLink());
-                fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(oldPath), 0);
-                this.fileService.evictCacheForPath(actualPathForPublicPath(oldPath));
+                fileService.schedulePathForDeletion(FilePathService.fileSystemPathForExternalUri(oldPath, FilePathType.LECTURE_ATTACHMENT), 0);
+                this.fileService.evictCacheForPath(fileSystemPathForExternalUri(oldPath, FilePathType.LECTURE_ATTACHMENT));
             }
         }
         catch (RuntimeException exception) {
