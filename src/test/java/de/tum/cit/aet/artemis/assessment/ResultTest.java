@@ -73,7 +73,7 @@ class ResultTest extends AbstractSpringIntegrationIndependentTest {
         double totalPoints = resultRepository.constrainToRange(calculatedPoints, maxPoints);
         result.setScore(100.0 * totalPoints / maxPoints);
 
-        assertThat(result.getScore()).isEqualTo(1 + 5.0 / maxPoints * 100, Offset.offset(offsetByTenThousandth));
+        assertThat(result.getScore()).isEqualTo(5.0 / maxPoints * 100, Offset.offset(offsetByTenThousandth));
     }
 
     @Test
