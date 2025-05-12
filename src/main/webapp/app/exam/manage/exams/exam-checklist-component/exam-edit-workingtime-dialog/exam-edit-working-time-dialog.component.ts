@@ -16,6 +16,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 @Component({
     selector: 'jhi-edit-working-time-dialog',
     templateUrl: './exam-edit-working-time-dialog.component.html',
+    styleUrls: ['./exam-edit-working-time-dialog.component.scss'],
     imports: [FormsModule, TranslateDirective, WorkingTimeControlComponent, WorkingTimeChangeComponent, ConfirmEntityNameComponent, FaIconComponent],
 })
 export class ExamEditWorkingTimeDialogComponent {
