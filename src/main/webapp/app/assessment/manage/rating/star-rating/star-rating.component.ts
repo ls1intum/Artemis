@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, Input, Output, ViewEncapsulation, viewChild } from '@angular/core';
+import { Component, ElementRef, Input, ViewEncapsulation, output, viewChild } from '@angular/core';
 import { Subject } from 'rxjs';
 
 @Component({
@@ -75,7 +75,11 @@ export class StarRatingComponent {
         });
     }
 
-    @Output() rate: EventEmitter<{ oldValue: number; newValue: number; starRating: StarRatingComponent }> = new EventEmitter();
+    readonly rate = output<{
+        oldValue: number;
+        newValue: number;
+        starRating: StarRatingComponent;
+    }>();
 
     @Input() set checkedColor(value: string) {
         this._checkedColor = value;
