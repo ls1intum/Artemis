@@ -77,16 +77,16 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
         fixture.componentRef.setInput('criteria', [gradingCriterionOne, gradingCriterionTwo]);
         fixture.detectChanges();
         tick();
-        expect(comp.expandableSections).toHaveLength(2);
-        comp.expandableSections.forEach((section) => {
+        expect(comp.expandableSections()).toHaveLength(2);
+        comp.expandableSections().forEach((section) => {
             expect(section.isCollapsed).toBeFalse();
         });
         comp.collapseAll();
-        comp.expandableSections.forEach((section) => {
+        comp.expandableSections().forEach((section) => {
             expect(section.isCollapsed).toBeTrue();
         });
         comp.expandAll();
-        comp.expandableSections.forEach((section) => {
+        comp.expandableSections().forEach((section) => {
             expect(section.isCollapsed).toBeFalse();
         });
     }));
