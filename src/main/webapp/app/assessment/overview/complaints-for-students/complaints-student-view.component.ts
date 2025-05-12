@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, ElementRef, OnInit, inject, input, viewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, OnInit, ViewChild, inject, input } from '@angular/core';
 import { Exercise, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
@@ -41,7 +41,7 @@ export class ComplaintsStudentViewComponent implements OnInit {
     // flag to indicate exam test run. Default set to false.
     readonly testRun = input(false);
 
-    readonly complaintScrollpoint = viewChild.required<ElementRef>('complaintScrollpoint');
+    @ViewChild('complaintScrollpoint') complaintScrollpoint: ElementRef;
 
     submission: Submission;
     complaint: Complaint;
@@ -171,6 +171,6 @@ export class ComplaintsStudentViewComponent implements OnInit {
      * Function to scroll to the complaint form
      */
     private scrollToComplaint(): void {
-        this.complaintScrollpoint()?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        this.complaintScrollpoint?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'end' });
     }
 }

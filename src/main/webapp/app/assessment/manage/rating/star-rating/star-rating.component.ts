@@ -1,4 +1,4 @@
-import { Component, ElementRef, Input, ViewEncapsulation, output, viewChild } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, Output, ViewChild, ViewEncapsulation } from '@angular/core';
 import { Subject } from 'rxjs';
 
 @Component({
@@ -32,7 +32,7 @@ export class StarRatingComponent {
     private static readonly CLS_DEFAULT_STAR: string = 'star';
     private static readonly CLS_HALF_STAR: string = 'half';
 
-    private readonly mainElement = viewChild.required<ElementRef>('starMain');
+    @ViewChild('starMain', { static: true }) private mainElement: ElementRef;
 
     constructor() {
         this.onStarsCountChange = new Subject();
@@ -75,17 +75,17 @@ export class StarRatingComponent {
         });
     }
 
-    readonly rate = output<{
-        oldValue: number;
-        newValue: number;
-        starRating: StarRatingComponent;
-    }>();
+    @Output() rate: EventEmitter<{ oldValue: number; newValue: number; starRating: StarRatingComponent }> = new EventEmitter();
 
     @Input() set checkedColor(value: string) {
         this._checkedColor = value;
         if (this._checkedColor) {
             this.onCheckedColorChange.next(this._checkedColor);
         }
+    }
+
+    get checkedColor(): string {
+        return this._checkedColor;
     }
 
     @Input() set uncheckedColor(value: string) {
@@ -140,12 +140,11 @@ export class StarRatingComponent {
     }
 
     private makeEditable() {
-        const mainElement = this.mainElement();
-        if (!mainElement) {
+        if (!this.mainElement) {
             return;
         }
-        mainElement.nativeElement.style.cursor = 'pointer';
-        mainElement.nativeElement.title = this.value;
+        this.mainElement.nativeElement.style.cursor = 'pointer';
+        this.mainElement.nativeElement.title = this.value;
         this.stars.forEach((star: HTMLElement) => {
             star.style.cursor = 'pointer';
             star.title = star.dataset.index!;
@@ -153,12 +152,11 @@ export class StarRatingComponent {
     }
 
     private makeReadOnly() {
-        const mainElement = this.mainElement();
-        if (!mainElement) {
+        if (!this.mainElement) {
             return;
         }
-        mainElement.nativeElement.style.cursor = 'default';
-        mainElement.nativeElement.title = this.value;
+        this.mainElement.nativeElement.style.cursor = 'default';
+        this.mainElement.nativeElement.title = this.value;
         this.stars.forEach((star: HTMLElement) => {
             star.style.cursor = 'default';
             star.title = '';
@@ -166,13 +164,12 @@ export class StarRatingComponent {
     }
 
     private addEvents() {
-        const mainElement = this.mainElement();
-        if (!mainElement || this.readOnly) {
+        if (!this.mainElement || this.readOnly) {
             return;
         }
-        mainElement.nativeElement.addEventListener('mouseleave', this.offStar.bind(this));
-        mainElement.nativeElement.style.cursor = 'pointer';
-        mainElement.nativeElement.title = this.value;
+        this.mainElement.nativeElement.addEventListener('mouseleave', this.offStar.bind(this));
+        this.mainElement.nativeElement.style.cursor = 'pointer';
+        this.mainElement.nativeElement.title = this.value;
         this.stars.forEach((star: HTMLElement) => {
             star.addEventListener('click', this.onRate.bind(this));
             star.addEventListener('mouseenter', this.onStar.bind(this));
@@ -228,11 +225,10 @@ export class StarRatingComponent {
     }
 
     private setStars() {
-        const mainElement = this.mainElement();
-        if (!mainElement) {
+        if (!this.mainElement) {
             return;
         }
-        const starContainer: HTMLDivElement = mainElement.nativeElement;
+        const starContainer: HTMLDivElement = this.mainElement.nativeElement;
         const maxStars = [...Array(this._totalStars).keys()];
         this.stars.length = 0;
         starContainer.innerHTML = '';
@@ -290,8 +286,7 @@ export class StarRatingComponent {
     }
 
     private generateRating(forceGenerate = false) {
-        const mainElement = this.mainElement();
-        if (!mainElement) {
+        if (!this.mainElement) {
             return;
         }
         if (this.readOnly && !forceGenerate) {
@@ -301,7 +296,7 @@ export class StarRatingComponent {
         if (this.stars.length === 0) {
             this.setStars();
         }
-        mainElement.nativeElement.title = this.value;
+        this.mainElement.nativeElement.title = this.value;
 
         let hasDecimals = this.value % 1 !== 0;
         const fullStars = Math.floor(this.value);
