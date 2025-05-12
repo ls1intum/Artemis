@@ -24,6 +24,7 @@ import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.m
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { MockCourseManagementService } from 'test/helpers/mocks/service/mock-course-management.service';
+import { ElementRef } from '@angular/core';
 import { ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
@@ -167,7 +168,11 @@ describe('ComplaintsStudentViewComponent', () => {
 
             // Mock complaint scrollpoint
             const scrollIntoViewMock = jest.fn();
-            component.complaintScrollpoint()!.nativeElement['scrollIntoView'] = scrollIntoViewMock;
+            component.complaintScrollpoint = {
+                nativeElement: {
+                    scrollIntoView: scrollIntoViewMock,
+                },
+            } as ElementRef;
 
             const button = fixture.debugElement.nativeElement.querySelector('#complain');
             button.click();
@@ -259,7 +264,11 @@ describe('ComplaintsStudentViewComponent', () => {
 
             // Mock complaint scrollpoint
             const scrollIntoViewMock = jest.fn();
-            component.complaintScrollpoint()!.nativeElement['scrollIntoView'] = scrollIntoViewMock;
+            component.complaintScrollpoint = {
+                nativeElement: {
+                    scrollIntoView: scrollIntoViewMock,
+                },
+            } as ElementRef;
 
             const button = fixture.debugElement.nativeElement.querySelector('#complain');
             button.click();
@@ -283,7 +292,11 @@ describe('ComplaintsStudentViewComponent', () => {
 
             // Mock complaint scrollpoint
             const scrollIntoViewMock = jest.fn();
-            component.complaintScrollpoint()!.nativeElement['scrollIntoView'] = scrollIntoViewMock;
+            component.complaintScrollpoint = {
+                nativeElement: {
+                    scrollIntoView: scrollIntoViewMock,
+                },
+            } as ElementRef;
 
             const button = fixture.debugElement.nativeElement.querySelector('#more-feedback');
             button.click();
