@@ -42,7 +42,6 @@ import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
 import { NgClass } from '@angular/common';
 import { PostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { MessageInlineInputComponent } from 'app/communication/message/message-inline-input/message-inline-input.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ForwardedMessageDTO } from 'app/communication/shared/entities/forwarded-message.model';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { Posting, PostingType } from 'app/communication/shared/entities/posting.model';
@@ -58,18 +57,13 @@ interface PostGroup {
     templateUrl: './conversation-messages.component.html',
     styleUrls: ['./conversation-messages.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [
-        FaIconComponent,
-        TranslateDirective,
-        InfiniteScrollDirective,
-        NgClass,
-        PostingThreadComponent,
-        PostCreateEditModalComponent,
-        MessageInlineInputComponent,
-        ArtemisTranslatePipe,
-    ],
+    imports: [FaIconComponent, TranslateDirective, InfiniteScrollDirective, NgClass, PostingThreadComponent, PostCreateEditModalComponent, MessageInlineInputComponent],
 })
 export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnDestroy, OnChanges {
+    protected readonly faTimes = faTimes;
+    protected readonly faEnvelope = faEnvelope;
+    protected readonly faCircleNotch = faCircleNotch;
+
     metisService = inject(MetisService);
     metisConversationService = inject(MetisConversationService);
     cdr = inject(ChangeDetectorRef);
@@ -120,10 +114,6 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     totalNumberOfPosts = 0;
     page = 1;
     public isFetchingPosts = true;
-    // Icons
-    faTimes = faTimes;
-    faEnvelope = faEnvelope;
-    faCircleNotch = faCircleNotch;
     isMobile = false;
     isHiddenInputWithCallToAction = false;
     isHiddenInputFull = false;
