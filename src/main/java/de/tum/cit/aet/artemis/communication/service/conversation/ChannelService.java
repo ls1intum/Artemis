@@ -118,10 +118,10 @@ public class ChannelService {
         if (channelDTO.getName() != null && !channelDTO.getName().equals(channel.getName())) {
             channel.setName(channelDTO.getName().trim());
         }
-        if (!channelDTO.getDescription().equals(channel.getDescription())) {
+        if (channelDTO.getDescription() != null && !channelDTO.getDescription().equals(channel.getDescription())) {
             channel.setDescription(channelDTO.getDescription().trim());
         }
-        if (!channelDTO.getTopic().equals(channel.getTopic())) {
+        if (channelDTO.getTopic() != null && !channelDTO.getTopic().equals(channel.getTopic())) {
             channel.setTopic(channelDTO.getTopic().trim());
         }
         this.channelIsValidOrThrow(courseId, channel);
