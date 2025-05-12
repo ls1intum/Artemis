@@ -75,7 +75,9 @@
                 "noConversationFound": "No conversation found for '{{ search }}'",
                 "noUserFound": "No user found for '{{ search }}'",
                 "userQueryTooShort": "Please enter at least 3 characters to search for a user.",
-                "toolTip": "Type 'in:' to select a conversation to search in or 'from:' to get messages from a specific author"
+                "toolTip": "Type 'in:' to select a conversation to search in or 'from:' to get messages from a specific author",
+                "filterConversationPreselection": "to filter by conversation",
+                "filterUserPreselection": "to filter by author"
             },
             "overview": {
                 "title": "Posts",
