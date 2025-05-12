@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.atlas.web;
 import static de.tum.cit.aet.artemis.atlas.domain.profile.CourseLearnerProfile.MAX_PROFILE_VALUE;
 import static de.tum.cit.aet.artemis.atlas.domain.profile.CourseLearnerProfile.MIN_PROFILE_VALUE;
 
+import java.time.ZonedDateTime;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -51,11 +53,18 @@ public class LearnerProfileResource {
      */
     @GetMapping("course-learner-profiles")
     @EnforceAtLeastStudent
-    public ResponseEntity<Set<CourseLearnerProfileDTO>> getCourseLearnerProfiles() {
-        User user = userRepository.getUser();
+public ResponseEntity<Set<CourseLearnerProfileDTO>> getCourseLearnerProfiles() {
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get all CourseLearnerProfiles of user {}", user.getLogin());
-        Set<CourseLearnerProfileDTO> courseLearnerProfiles = courseLearnerProfileRepository.findAllByLogin(user.getLogin()).stream().map(CourseLearnerProfileDTO::of)
-                .collect(Collectors.toSet());
+        var now = ZonedDateTime.now();
+        Set<Long, CourseLearnerProfileDTO> courseLearnerProfiles = courseLearnerProfileRepository.findAllByLoginWithCourse(user.getLogin()).stream()
+            // Check if course is active
+            .filter(profile -> profile.getCourse().getEndDate() == null || profile.getCourse().getEndDate().isAfter(now))
+            .filter(profile -> profile.getCourse().getStartDate() == null || profile.getCourse().getStartDate().isBefore(now))
+            // Check if user is student in course
+            .filter(profile -> user.getGroups().contains(profile.getCourse().getStudentGroupName()))
+            .map(CourseLearnerProfileDTO::of)
+            .collect(Collectors.toSet());
         return ResponseEntity.ok(courseLearnerProfiles);
     }
 
