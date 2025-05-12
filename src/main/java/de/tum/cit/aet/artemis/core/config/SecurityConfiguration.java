@@ -10,8 +10,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.converter.HttpMessageConverter;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
@@ -39,7 +37,6 @@ import de.tum.cit.aet.artemis.core.security.DomainUserDetailsService;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.filter.SpaWebFilter;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTConfigurer;
-import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 import de.tum.cit.aet.artemis.core.security.passkey.ArtemisPasskeyWebAuthnConfigurer;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
@@ -54,13 +51,9 @@ public class SecurityConfiguration {
 
     private final CorsFilter corsFilter;
 
-    private final HttpMessageConverter<Object> converter;
-
     private final Optional<CustomLti13Configurer> customLti13Configurer;
 
     private final ArtemisPasskeyWebAuthnConfigurer passkeyWebAuthnConfigurer;
-
-    private final JWTCookieService jwtCookieService;
 
     private final PasswordService passwordService;
 
@@ -71,14 +64,11 @@ public class SecurityConfiguration {
     @Value("#{'${spring.prometheus.monitoringIp:127.0.0.1}'.split(',')}")
     private List<String> monitoringIpAddresses;
 
-    public SecurityConfiguration(CorsFilter corsFilter, MappingJackson2HttpMessageConverter converter, Optional<CustomLti13Configurer> customLti13Configurer,
-            ArtemisPasskeyWebAuthnConfigurer passkeyWebAuthnConfigurer, JWTCookieService jwtCookieService, PasswordService passwordService, ProfileService profileService,
-            TokenProvider tokenProvider) {
-        this.converter = converter;
+    public SecurityConfiguration(CorsFilter corsFilter, Optional<CustomLti13Configurer> customLti13Configurer, ArtemisPasskeyWebAuthnConfigurer passkeyWebAuthnConfigurer,
+            PasswordService passwordService, ProfileService profileService, TokenProvider tokenProvider) {
         this.corsFilter = corsFilter;
         this.customLti13Configurer = customLti13Configurer;
         this.passkeyWebAuthnConfigurer = passkeyWebAuthnConfigurer;
-        this.jwtCookieService = jwtCookieService;
         this.passwordService = passwordService;
         this.profileService = profileService;
         this.tokenProvider = tokenProvider;
