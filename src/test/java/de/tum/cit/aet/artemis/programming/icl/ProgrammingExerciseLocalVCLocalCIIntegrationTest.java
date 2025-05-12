@@ -512,8 +512,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         aeolusRequestMockProvider.mockFailedGenerateBuildPlan(AeolusTarget.CLI);
 
         // Create the exercise and verify status code 201
-        request.postWithResponseBody("/api/programming/programming-exercises/setup", newExercise, ProgrammingExercise.class,
-                HttpStatus.CREATED);
+        request.postWithResponseBody("/api/programming/programming-exercises/setup", newExercise, ProgrammingExercise.class, HttpStatus.CREATED);
     }
 
     private record ImportFileResult(ClassPathResource resource, ProgrammingExercise parsedExercise, ProgrammingExercise importedExercise, Object additionalData) {
