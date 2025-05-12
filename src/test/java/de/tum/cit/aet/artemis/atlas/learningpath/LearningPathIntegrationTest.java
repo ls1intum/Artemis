@@ -33,7 +33,6 @@ import de.tum.cit.aet.artemis.atlas.domain.profile.CourseLearnerProfile;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyGraphNodeDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyNameDTO;
-import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathCompetencyGraphDTO;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathDTO;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathHealthDTO;
@@ -152,16 +151,6 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
         CompetencyImportOptionsDTO importOptions = new CompetencyImportOptionsDTO(Set.of(competencyToImport.getId()), Optional.empty(), false, false, false, Optional.empty(),
                 false);
         return request.postWithResponseBody("/api/atlas/courses/" + course.getId() + "/competencies/import", importOptions, Competency.class, HttpStatus.CREATED);
-    }
-
-    private List<CompetencyWithTailRelationDTO> importCompetenciesRESTCall(int numberOfCompetencies) throws Exception {
-        final var course2 = courseUtilService.createCourse();
-        for (int i = 0; i < numberOfCompetencies; i++) {
-            competencyUtilService.createCompetency(course2);
-        }
-        CompetencyImportOptionsDTO importOptions = new CompetencyImportOptionsDTO(Set.of(), Optional.of(course2.getId()), false, false, false, Optional.empty(), false);
-        return request.postListWithResponseBody("/api/atlas/courses/" + course.getId() + "/competencies/import-all", importOptions, CompetencyWithTailRelationDTO.class,
-                HttpStatus.CREATED);
     }
 
     private void deleteCompetencyRESTCall(Competency competency) throws Exception {
@@ -346,7 +335,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
 
         // add competency with completed learning unit
-        final var createdCompetency = createCompetencyRESTCall();
+        createCompetencyRESTCall();
 
         final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
         var learningPath = learningPathRepository.findWithEagerCompetenciesByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
