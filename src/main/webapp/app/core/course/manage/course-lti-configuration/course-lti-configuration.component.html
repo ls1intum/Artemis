@@ -192,6 +192,57 @@
                 </div>
             </ng-template>
         </ng-container>
+        <ng-container ngbNavItem [ngbNavItem]="3">
+            <a ngbNavLink jhiTranslate="artemisApp.lti.lectures"></a>
+            <ng-template ngbNavContent>
+                <div class="row">
+                    <div class="col-12 mx-auto">
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead class="thead-dark">
+                                    <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
+                                        <th jhiSortBy="id">
+                                            id
+                                            <fa-icon [icon]="faSort" />
+                                        </th>
+                                        <th jhiSortBy="title">
+                                            {{ 'artemisApp.lecture.title' | artemisTranslate }}
+                                            <fa-icon [icon]="faSort" />
+                                        </th>
+                                        <th jhiSortBy="launchUrl">
+                                            {{ 'artemisApp.lti.lti13LaunchUrl' | artemisTranslate }}
+                                            <fa-icon [icon]="faSort" />
+                                        </th>
+                                        <th jhiSortBy="startDate">
+                                            {{ 'artemisApp.lecture.startDate' | artemisTranslate }}
+                                            <fa-icon [icon]="faSort" />
+                                        </th>
+                                        <th jhiSortBy="endDate">
+                                            {{ 'artemisApp.lecture.endDate' | artemisTranslate }}
+                                            <fa-icon [icon]="faSort" />
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @for (lecture of lectures; track lecture) {
+                                        <tr id="lecture-{{ lecture.id }}">
+                                            <td>{{ lecture.id ? lecture.id : '' }}</td>
+                                            <td>{{ lecture.title ? lecture.title : '' }}</td>
+                                            <td>
+                                                {{ getLectureLti13LaunchUrl(lecture) }}
+                                                <jhi-copy-icon-button [copyText]="getLectureLti13LaunchUrl(lecture)" />
+                                            </td>
+                                            <td>{{ lecture.startDate ? lecture.startDate.format('MMM DD YYYY, HH:mm:ss') : '' }}</td>
+                                            <td>{{ lecture.endDate ? lecture.endDate.format('MMM DD YYYY, HH:mm:ss') : '' }}</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </ng-template>
+        </ng-container>
     </nav>
     <div class="modal-body">
         <div [ngbNavOutlet]="nav" class="mt-2"></div>

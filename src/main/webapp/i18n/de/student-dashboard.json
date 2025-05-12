@@ -85,12 +85,13 @@
                 "createChannel": "Kanal erstellen",
                 "browseChannels": "Kanäle durchsuchen",
                 "createGroupChat": "Gruppenchat erstellen",
-                "createDirectChat": "Direkt-Chat erstellen",
+                "createDirectChat": "Direktnachricht erstellen",
                 "groupChats": "Gruppenchats",
                 "directMessages": "Direktnachrichten",
                 "filterConversationPlaceholder": "Konversationen filtern",
                 "setChannelAsRead": "Alle Kanäle als gelesen markieren",
-                "recents": "Kürzliches"
+                "recents": "Kürzliches",
+                "weekRange": "{{ start }} - {{ end }}"
             },
             "menu": {
                 "exercises": "Aufgaben",
