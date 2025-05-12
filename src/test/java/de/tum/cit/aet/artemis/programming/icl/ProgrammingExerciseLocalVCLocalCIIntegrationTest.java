@@ -464,28 +464,25 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, LOCAL_CI_WORKING_DIRECTORY + LOCAL_CI_RESULTS_DIRECTORY, templateBuildTestResults,
                 solutionBuildTestResults);
 
-        // Wait for build plans to be created and verify them
-        await().atMost(120, TimeUnit.SECONDS).pollInterval(5, TimeUnit.SECONDS).untilAsserted(() -> {
-            try {
-                // Refresh the exercise to get latest participation data
-                ProgrammingExercise refreshedExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(importedExercise.getId()).orElseThrow();
+        try {
+            // Refresh the exercise to get latest participation data
+            ProgrammingExercise refreshedExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(importedExercise.getId()).orElseThrow();
 
-                // Verify template build plan
-                TemplateProgrammingExerciseParticipation templateParticipation = templateProgrammingExerciseParticipationRepository
-                        .findByProgrammingExerciseId(refreshedExercise.getId()).orElseThrow();
+            // Verify template build plan
+            TemplateProgrammingExerciseParticipation templateParticipation = templateProgrammingExerciseParticipationRepository
+                    .findByProgrammingExerciseId(refreshedExercise.getId()).orElseThrow();
 
-                localVCLocalCITestService.testLatestSubmission(templateParticipation.getId(), null, 0, false);
+            localVCLocalCITestService.testLatestSubmission(templateParticipation.getId(), null, 0, false);
 
-                // Verify solution build plan
-                SolutionProgrammingExerciseParticipation solutionParticipation = solutionProgrammingExerciseParticipationRepository
-                        .findByProgrammingExerciseId(refreshedExercise.getId()).orElseThrow();
+            // Verify solution build plan
+            SolutionProgrammingExerciseParticipation solutionParticipation = solutionProgrammingExerciseParticipationRepository
+                    .findByProgrammingExerciseId(refreshedExercise.getId()).orElseThrow();
 
-                localVCLocalCITestService.testLatestSubmission(solutionParticipation.getId(), null, 13, false);
-            }
-            catch (Exception e) {
-                throw new AssertionError("Failed to verify build plans", e);
-            }
-        });
+            localVCLocalCITestService.testLatestSubmission(solutionParticipation.getId(), null, 13, false);
+        }
+        catch (Exception e) {
+            throw new AssertionError("Failed to verify build plans", e);
+        }
     }
 
     @Test
