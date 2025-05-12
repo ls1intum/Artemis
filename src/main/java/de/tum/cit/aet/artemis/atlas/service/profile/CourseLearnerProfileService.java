@@ -61,13 +61,14 @@ public class CourseLearnerProfileService {
 
         users.stream().filter(user -> user.getLearnerProfile() == null).forEach(learnerProfileService::createProfile);
 
-        Set<CourseLearnerProfile> courseProfiles = users.stream().map(user -> {
+        Set<CourseLearnerProfile> courseProfiles = users.stream().map(user -> courseLearnerProfileRepository.findByLoginAndCourse(user.getLogin(), course).orElseGet(() -> {
+
             var courseProfile = new CourseLearnerProfile();
             courseProfile.setCourse(course);
             courseProfile.setLearnerProfile(learnerProfileRepository.findByUserElseThrow(user));
 
             return courseProfile;
-        }).collect(Collectors.toSet());
+        })).collect(Collectors.toSet());
 
         courseLearnerProfileRepository.saveAll(courseProfiles);
     }
