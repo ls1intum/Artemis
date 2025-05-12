@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, ElementRef, OnInit, ViewChild, inject, input } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, Renderer2, inject, input } from '@angular/core';
 import { Exercise, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
@@ -33,6 +33,7 @@ export class ComplaintsStudentViewComponent implements OnInit {
     private serverDateService = inject(ArtemisServerDateService);
     private accountService = inject(AccountService);
     private courseService = inject(CourseManagementService);
+    private renderer = inject(Renderer2);
 
     readonly exercise = input.required<Exercise>();
     readonly participation = input.required<StudentParticipation>();
@@ -40,8 +41,6 @@ export class ComplaintsStudentViewComponent implements OnInit {
     readonly exam = input<Exam>();
     // flag to indicate exam test run. Default set to false.
     readonly testRun = input(false);
-
-    @ViewChild('complaintScrollpoint') complaintScrollpoint: ElementRef;
 
     submission: Submission;
     complaint: Complaint;
@@ -171,6 +170,6 @@ export class ComplaintsStudentViewComponent implements OnInit {
      * Function to scroll to the complaint form
      */
     private scrollToComplaint(): void {
-        this.complaintScrollpoint?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        this.renderer.selectRootElement('#complaintScrollpoint', true).scrollIntoView({ behavior: 'smooth', block: 'end' });
     }
 }

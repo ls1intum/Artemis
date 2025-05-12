@@ -168,11 +168,7 @@ describe('ComplaintsStudentViewComponent', () => {
 
             // Mock complaint scrollpoint
             const scrollIntoViewMock = jest.fn();
-            component.complaintScrollpoint = {
-                nativeElement: {
-                    scrollIntoView: scrollIntoViewMock,
-                },
-            } as ElementRef;
+            fixture.nativeElement.querySelector('#complaintScrollpoint').scrollIntoView = scrollIntoViewMock;
 
             const button = fixture.debugElement.nativeElement.querySelector('#complain');
             button.click();
@@ -264,11 +260,7 @@ describe('ComplaintsStudentViewComponent', () => {
 
             // Mock complaint scrollpoint
             const scrollIntoViewMock = jest.fn();
-            component.complaintScrollpoint = {
-                nativeElement: {
-                    scrollIntoView: scrollIntoViewMock,
-                },
-            } as ElementRef;
+            fixture.nativeElement.querySelector('#complaintScrollpoint').scrollIntoView = scrollIntoViewMock;
 
             const button = fixture.debugElement.nativeElement.querySelector('#complain');
             button.click();
@@ -292,11 +284,7 @@ describe('ComplaintsStudentViewComponent', () => {
 
             // Mock complaint scrollpoint
             const scrollIntoViewMock = jest.fn();
-            component.complaintScrollpoint = {
-                nativeElement: {
-                    scrollIntoView: scrollIntoViewMock,
-                },
-            } as ElementRef;
+            fixture.nativeElement.querySelector('#complaintScrollpoint').scrollIntoView = scrollIntoViewMock;
 
             const button = fixture.debugElement.nativeElement.querySelector('#more-feedback');
             button.click();
