@@ -527,5 +527,63 @@ examples.forEach((activeConversation) => {
             expect(component.pinnedPosts).toEqual(pinnedPostsStub);
             expect(pinnedCountSpy).toHaveBeenCalledWith(pinnedPostsStub.length);
         }));
+
+        it('should group posts correctly with consecutive messages from same author', () => {
+            const posts = [
+                { id: 1, creationDate: dayjs(), author: { id: 1 } } as Post,
+                { id: 2, creationDate: dayjs().add(1, 'minute'), author: { id: 1 } } as Post,
+                { id: 3, creationDate: dayjs().add(2, 'minutes'), author: { id: 1 } } as Post,
+            ];
+
+            component.posts = posts;
+            (component as any).groupPosts();
+
+            expect(component.groupedPosts).toHaveLength(1);
+            expect(component.groupedPosts[0].posts).toHaveLength(3);
+            expect(component.groupedPosts[0].posts[0].isConsecutive).toBeFalse();
+            expect(component.groupedPosts[0].posts[1].isConsecutive).toBeTrue();
+            expect(component.groupedPosts[0].posts[2].isConsecutive).toBeTrue();
+        });
+
+        it('should group posts correctly with different authors', () => {
+            const posts = [
+                { id: 1, creationDate: dayjs(), author: { id: 1 } } as Post,
+                { id: 2, creationDate: dayjs().add(1, 'minute'), author: { id: 2 } } as Post,
+                { id: 3, creationDate: dayjs().add(2, 'minutes'), author: { id: 1 } } as Post,
+            ];
+
+            component.posts = posts;
+            (component as any).groupPosts();
+
+            expect(component.groupedPosts).toHaveLength(3);
+            expect(component.groupedPosts[0].posts).toHaveLength(1);
+            expect(component.groupedPosts[1].posts).toHaveLength(1);
+            expect(component.groupedPosts[2].posts).toHaveLength(1);
+        });
+
+        it('should handle multiple message deletions correctly', () => {
+            // Initial posts
+            const initialPosts = [
+                { id: 1, creationDate: dayjs(), author: { id: 1 } } as Post,
+                { id: 2, creationDate: dayjs().add(1, 'minute'), author: { id: 1 } } as Post,
+                { id: 3, creationDate: dayjs().add(2, 'minutes'), author: { id: 2 } } as Post,
+                { id: 4, creationDate: dayjs().add(3, 'minutes'), author: { id: 2 } } as Post,
+            ];
+
+            component.posts = initialPosts;
+            (component as any).groupPosts();
+
+            // Delete posts 2 and 3
+            const postsAfterDeletion = [{ id: 1, creationDate: dayjs(), author: { id: 1 } } as Post, { id: 4, creationDate: dayjs().add(3, 'minutes'), author: { id: 2 } } as Post];
+
+            component.posts = postsAfterDeletion;
+            (component as any).groupPosts();
+
+            expect(component.groupedPosts).toHaveLength(2);
+            expect(component.groupedPosts[0].posts).toHaveLength(1);
+            expect(component.groupedPosts[1].posts).toHaveLength(1);
+            expect(component.groupedPosts[0].author?.id).toBe(1);
+            expect(component.groupedPosts[1].author?.id).toBe(2);
+        });
     });
 });

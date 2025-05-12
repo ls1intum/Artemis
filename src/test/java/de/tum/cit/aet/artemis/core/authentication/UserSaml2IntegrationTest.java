@@ -23,12 +23,12 @@ import de.tum.cit.aet.artemis.core.dto.vm.LoginVM;
 import de.tum.cit.aet.artemis.core.service.connectors.SAML2Service;
 import de.tum.cit.aet.artemis.core.service.user.PasswordService;
 import de.tum.cit.aet.artemis.core.web.open.PublicUserJwtResource;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalVcSamlTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalVCSamlTest;
 
 /**
  * Tests for {@link PublicUserJwtResource} and {@link SAML2Service}.
  */
-class UserSaml2IntegrationTest extends AbstractSpringIntegrationLocalVcSamlTest {
+class UserSaml2IntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
 
     private static final String STUDENT_NAME = "student_saml_test";
 
