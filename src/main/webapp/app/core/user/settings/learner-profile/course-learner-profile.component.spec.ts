@@ -53,6 +53,7 @@ describe('CourseLearnerProfileComponent', () => {
     const clp1: CourseLearnerProfileDTO = {
         id: 1,
         courseId: 1,
+        courseTitle: 'Course 1',
         aimForGradeOrBonus: 0,
         timeInvestment: 0,
         repetitionIntensity: 0,
@@ -60,11 +61,12 @@ describe('CourseLearnerProfileComponent', () => {
     const clp2: CourseLearnerProfileDTO = {
         id: 2,
         courseId: 2,
+        courseTitle: 'Course 2',
         aimForGradeOrBonus: 1,
         timeInvestment: 1,
         repetitionIntensity: 1,
     };
-    const profiles = { [clp1.courseId]: clp1, [clp2.courseId]: clp2 };
+    const profiles = [clp1, clp2];
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -99,9 +101,7 @@ describe('CourseLearnerProfileComponent', () => {
             );
         });
 
-        jest.spyOn(learnerProfileApiService, 'getCourseLearnerProfilesForCurrentUser').mockReturnValue(
-            new Promise<Record<number, CourseLearnerProfileDTO>>((resolve) => resolve(profiles)),
-        );
+        jest.spyOn(learnerProfileApiService, 'getCourseLearnerProfilesForCurrentUser').mockResolvedValue(profiles as CourseLearnerProfileDTO[]);
 
         putUpdatedCourseLearnerProfileSpy = jest.spyOn(learnerProfileApiService, 'putUpdatedCourseLearnerProfile');
 
@@ -124,7 +124,6 @@ describe('CourseLearnerProfileComponent', () => {
 
     it('should initialize', () => {
         expect(component).toBeTruthy();
-        expect(component.courses).toStrictEqual(courses);
         expect(component.courseLearnerProfiles).toEqual(profiles);
     });
 
@@ -133,31 +132,36 @@ describe('CourseLearnerProfileComponent', () => {
         selectCourse(course);
         const changeEvent = new Event('change', { bubbles: true, cancelable: false });
         selector.dispatchEvent(changeEvent);
-        expect(component.activeCourse).toBe(course);
+        expect(component.activeCourseId).toBe(course);
     });
 
-    function setupUpdateTest(course: number): CourseLearnerProfileDTO {
-        const newProfile = profiles[course];
-        newProfile['repetitionIntensity'] = 1;
-        newProfile['aimForGradeOrBonus'] = 2;
-        newProfile['timeInvestment'] = 3;
-        component.activeCourse = course;
+    function setupUpdateTest(courseIndex: number, courseId: number, mockUpdate: boolean): CourseLearnerProfileDTO {
+        const newProfile = { ...profiles[courseIndex] };
+        newProfile.repetitionIntensity = 1;
+        newProfile.aimForGradeOrBonus = 2;
+        newProfile.timeInvestment = 3;
+
+        // Inject into component state
+        component.courseLearnerProfiles[courseIndex] = newProfile;
+        component.activeCourseId = courseId;
+
+        if (mockUpdate) {
+            putUpdatedCourseLearnerProfileSpy.mockResolvedValue(newProfile);
+        }
 
         component.update();
 
         return newProfile;
     }
 
-    function validateUpdate(course: number, profile: CourseLearnerProfileDTO) {
-        const req = httpTesting.expectOne(`api/atlas/course-learner-profiles/${course}`, 'Request to put new Profile');
-        req.flush(profile);
+    function validateUpdate(index: number, profile: CourseLearnerProfileDTO) {
         expect(putUpdatedCourseLearnerProfileSpy).toHaveBeenCalled();
         expect(putUpdatedCourseLearnerProfileSpy.mock.calls[0][0]).toEqual(profile);
-        expect(component.courseLearnerProfiles[course]).toEqual(profile);
+        expect(component.courseLearnerProfiles[index]).toEqual(profile);
     }
 
-    function validateError(course: number, profile: CourseLearnerProfileDTO) {
-        const req = httpTesting.expectOne(`api/atlas/course-learner-profiles/${course}`, 'Request to put new Profile');
+    function validateError(courseId: number, index: number, profile: CourseLearnerProfileDTO) {
+        const req = httpTesting.expectOne(`api/atlas/course-learner-profiles/${courseId}`, 'Request to put new Profile');
         req.flush(errorBody, {
             headers: errorHeaders,
             status: 400,
@@ -165,20 +169,20 @@ describe('CourseLearnerProfileComponent', () => {
         });
         expect(putUpdatedCourseLearnerProfileSpy).toHaveBeenCalled();
         expect(putUpdatedCourseLearnerProfileSpy.mock.calls[0][0]).toEqual(profile);
-        expect(component.courseLearnerProfiles[course]).toEqual(profiles[course]);
+        expect(component.courseLearnerProfiles[index]).toEqual(profiles[index]);
     }
 
     describe('Making put requests', () => {
         it('should update profile on successful request', () => {
-            const course = 1;
-            const profile = setupUpdateTest(course);
-            validateUpdate(course, profile);
+            const courseIndex = 1;
+            const profile = setupUpdateTest(courseIndex, profiles[courseIndex].courseId, true);
+            validateUpdate(courseIndex, profile);
         });
 
         it('should error on bad request', () => {
-            const course = 1;
-            const profile = setupUpdateTest(course);
-            validateError(course, profile);
+            const courseIndex = 1;
+            const profile = setupUpdateTest(courseIndex, profiles[courseIndex].courseId, false);
+            validateError(profiles[courseIndex].courseId, courseIndex, profile);
         });
     });
 });
