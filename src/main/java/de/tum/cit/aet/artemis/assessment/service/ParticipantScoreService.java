@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.assessment.ResultListener;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.domain.ParticipantScore;
+import de.tum.cit.aet.artemis.assessment.dto.ExerciseAverageScoreDTO;
 import de.tum.cit.aet.artemis.assessment.dto.score.ScoreDTO;
 import de.tum.cit.aet.artemis.assessment.dto.score.StudentScoreSumDTO;
 import de.tum.cit.aet.artemis.assessment.dto.score.TeamScoreSumDTO;
@@ -214,8 +215,7 @@ public class ParticipantScoreService {
     }
 
     public double getAverageOfAverageScores(Set<Exercise> exercises) {
-        return participantScoreRepository.findAverageScoreForExercises(exercises).stream().mapToDouble(exerciseInfo -> (double) exerciseInfo.get("averageScore")).average()
-                .orElse(0.0);
+        return participantScoreRepository.findAverageScoreForExercises(exercises).stream().mapToDouble(ExerciseAverageScoreDTO::averageScore).average().orElse(0.0);
     }
 
     /**
