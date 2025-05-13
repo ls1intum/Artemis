@@ -60,9 +60,7 @@ public class ArtemisWebAuthnRegistrationFilter extends WebAuthnRegistrationFilte
         if (isWebAuthnRegistrationRequest(request) && response.getStatus() == HttpStatus.OK.value()) {
             User recipient = userRepository.getUser();
 
-            if (!recipient.isInternal()) {
-                mailSendingService.buildAndSendAsync(recipient, "email.notification.newPasskey.title", "mail/notification/newPasskeyEmail", new HashMap<>());
-            }
+            mailSendingService.buildAndSendAsync(recipient, "email.notification.newPasskey.title", "mail/notification/newPasskeyEmail", new HashMap<>());
         }
     }
 

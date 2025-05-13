@@ -2,12 +2,14 @@ package de.tum.cit.aet.artemis.core.security;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.net.URL;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.authentication.event.AuthenticationSuccessEvent;
@@ -27,6 +29,15 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 @Profile(PROFILE_CORE)
 @Component
 public class ArtemisAuthenticationEventListener implements ApplicationListener<AuthenticationSuccessEvent> {
+
+    @Value("${artemis.user-management.password-reset.links.en}")
+    private String passwordResetLinkEnUrl;
+
+    @Value("${artemis.user-management.password-reset.links.de}")
+    private String passwordResetLinkDeUrl;
+
+    @Value("${server.url}")
+    private URL artemisServerUrl;
 
     private static final Logger log = LoggerFactory.getLogger(ArtemisAuthenticationEventListener.class);
 
@@ -55,9 +66,24 @@ public class ArtemisAuthenticationEventListener implements ApplicationListener<A
             contextVariables.put("loginDate", now.format(DateTimeFormatter.ofPattern("dd.MM.yyyy")));
             contextVariables.put("loginTime", now.format(DateTimeFormatter.ofPattern("HH:mm:ss")));
 
-            if (!recipient.isInternal()) {
-                mailSendingService.buildAndSendAsync(recipient, "email.notification.login.title", "mail/notification/newLoginEmail", contextVariables);
+            String localeKey = recipient.getLangKey();
+            if (localeKey == null) {
+                localeKey = "en";
             }
+
+            if (recipient.isInternal()) {
+                contextVariables.put("resetLink", artemisServerUrl.toString() + "/account/password");
+            }
+            else {
+                if (localeKey.equals("de")) {
+                    contextVariables.put("resetLink", passwordResetLinkDeUrl);
+                }
+                else {
+                    contextVariables.put("resetLink", passwordResetLinkEnUrl);
+                }
+            }
+
+            mailSendingService.buildAndSendAsync(recipient, "email.notification.login.title", "mail/notification/newLoginEmail", contextVariables);
         }
         catch (EntityNotFoundException ignored) {
             log.error("User with login {} not found when trying to send newLoginEmail", authentication.getName());

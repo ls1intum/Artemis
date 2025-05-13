@@ -40,7 +40,7 @@ class ArtemisAuthenticationEventListenerTest {
     }
 
     @Test
-    void shouldSendEmailToNonInternalUserOnSuccessfulAuthentication() throws EntityNotFoundException {
+    void shouldSendEmailToUserOnSuccessfulAuthentication() throws EntityNotFoundException {
         String username = "testuser";
         Authentication authentication = new UsernamePasswordAuthenticationToken(username, "password");
         AuthenticationSuccessEvent event = new AuthenticationSuccessEvent(authentication);
@@ -54,23 +54,6 @@ class ArtemisAuthenticationEventListenerTest {
         listener.onApplicationEvent(event);
 
         verify(mailSendingService).buildAndSendAsync(eq(nonInternalUser), eq("email.notification.login.title"), eq("mail/notification/newLoginEmail"), any(Map.class));
-    }
-
-    @Test
-    void shouldNotSendEmailToInternalUserOnSuccessfulAuthentication() throws EntityNotFoundException {
-        String username = "internaluser";
-        Authentication authentication = new UsernamePasswordAuthenticationToken(username, "password");
-        AuthenticationSuccessEvent event = new AuthenticationSuccessEvent(authentication);
-
-        User internalUser = new User();
-        internalUser.setLogin(username);
-        internalUser.setInternal(true);
-
-        when(userRepository.getUserByLoginElseThrow(username)).thenReturn(internalUser);
-
-        listener.onApplicationEvent(event);
-
-        verify(mailSendingService, never()).buildAndSendAsync(any(User.class), anyString(), anyString(), any(Map.class));
     }
 
     @Test
