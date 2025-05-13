@@ -62,7 +62,7 @@ describe('GradingInstructionsDetailsComponent', () => {
             component.ngOnInit();
 
             // THEN
-            expect(component).toBeTruthy();
+            expect(component).toBeFalsy();
         }));
         it('should set the grading criteria based on the exercise', fakeAsync(() => {
             component.exercise.gradingCriteria = [gradingCriterion];
