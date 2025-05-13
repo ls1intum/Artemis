@@ -47,6 +47,8 @@ import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
  */
 public class QuizExerciseFactory {
 
+    public static final String DRAG_ITEM_PATH_PREFIX = "drag-and-drop/drag-items/";
+
     /**
      * Creates a quiz exercise with the given dates and adds it to the course.
      * The quiz consist of one multiple choice, one drag and drop, and one short answer question.
@@ -170,11 +172,11 @@ public class QuizExerciseFactory {
 
         var dragItem1 = new DragItem().text("D1");
         dragItem1.setTempID(generateTempId());
-        var dragItem2 = new DragItem().pictureFilePath("dragItemImage2.png");
+        var dragItem2 = new DragItem().pictureFilePath(DRAG_ITEM_PATH_PREFIX + "dragItemImage2.png");
         dragItem2.setTempID(generateTempId());
         var dragItem3 = new DragItem().text("D3");
         dragItem3.setTempID(generateTempId());
-        var dragItem4 = new DragItem().pictureFilePath("dragItemImage4.png");
+        var dragItem4 = new DragItem().pictureFilePath(DRAG_ITEM_PATH_PREFIX + "dragItemImage4.png");
         dragItem4.setTempID(generateTempId());
         dnd.addDragItem(dragItem1);
         assertThat(dragItem1.getQuestion()).isEqualTo(dnd);
@@ -478,7 +480,7 @@ public class QuizExerciseFactory {
         catch (IOException ex) {
             fail("Failed while copying test attachment files", ex);
         }
-        var dragItem5 = new DragItem().pictureFilePath("drag-and-drop/drag-items/10/drag_item.jpg");
+        var dragItem5 = new DragItem().pictureFilePath(DRAG_ITEM_PATH_PREFIX + "10/drag_item.jpg");
         dragItem4.setInvalid(true);
         dnd.addDragItem(dragItem1);
         assertThat(dragItem1.getQuestion()).isEqualTo(dnd);

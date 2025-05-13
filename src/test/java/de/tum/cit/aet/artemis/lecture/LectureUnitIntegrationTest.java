@@ -224,7 +224,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentTes
         request.postWithoutLocation("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + lecture1.getLectureUnits().getFirst().getId() + "/completion?completed=true",
                 null, HttpStatus.OK, null);
 
-        this.lecture1 = lectureRepository.findByIdWithAttachmentsAndPostsAndLectureUnitsAndCompetenciesAndCompletionsElseThrow(lecture1.getId());
+        this.lecture1 = lectureRepository.findByIdWithAttachmentsAndLectureUnitsAndCompetenciesAndCompletionsElseThrow(lecture1.getId());
         LectureUnit lectureUnit = this.lecture1.getLectureUnits().getFirst();
 
         assertThat(lectureUnit.getCompletedUsers()).isNotEmpty();
@@ -234,7 +234,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentTes
         request.postWithoutLocation("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + lecture1.getLectureUnits().getFirst().getId() + "/completion?completed=false",
                 null, HttpStatus.OK, null);
 
-        this.lecture1 = lectureRepository.findByIdWithAttachmentsAndPostsAndLectureUnitsAndCompetenciesAndCompletionsElseThrow(lecture1.getId());
+        this.lecture1 = lectureRepository.findByIdWithAttachmentsAndLectureUnitsAndCompetenciesAndCompletionsElseThrow(lecture1.getId());
         lectureUnit = this.lecture1.getLectureUnits().getFirst();
 
         assertThat(lectureUnit.getCompletedUsers()).isEmpty();

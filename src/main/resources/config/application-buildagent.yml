@@ -22,6 +22,7 @@ artemis:
       passkey:
         enabled: false
 
+    checked-out-repos-path: ./checked-out-repos # The directory to which repositories temporarily get cloned for the build job execution
     repo-clone-path: ./repos
     repo-download-clone-path: ./repos-download
     version-control:
@@ -87,7 +88,7 @@ spring:
 
 server:
     port: 8080
-    url: https://artemislocal.cit.tum.de
+    url: http://localhost # NOTE you need to override this
 
 # at the moment metrics are disabled for build agents
 management:

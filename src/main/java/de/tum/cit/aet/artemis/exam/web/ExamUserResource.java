@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
@@ -87,12 +88,12 @@ public class ExamUserResource {
         if (signatureFile != null) {
             String oldPathString = examUser.getSigningImagePath();
             Path basePath = FilePathService.getExamUserSignatureFilePath();
-            Path savePath = fileService.saveFile(signatureFile, basePath, false);
-            examUser.setSigningImagePath(FilePathService.publicPathForActualPathOrThrow(savePath, examUser.getId()).toString());
+            Path savePath = fileService.saveFile(signatureFile, basePath, FilePathType.EXAM_USER_SIGNATURE, false);
+            examUser.setSigningImagePath(FilePathService.externalUriForFileSystemPath(savePath, FilePathType.EXAM_USER_SIGNATURE, examUser.getId()).toString());
 
             if (oldPathString != null) {
                 // Only delete old file if saving the new one succeeded
-                Path oldPath = FilePathService.actualPathForPublicPath(URI.create(oldPathString));
+                Path oldPath = FilePathService.fileSystemPathForExternalUri(URI.create(oldPathString), FilePathType.EXAM_USER_SIGNATURE);
                 // Don't throw an exception if the file does not exist as then it's already deleted for some reason
                 fileService.schedulePathForDeletion(oldPath, 0);
             }
