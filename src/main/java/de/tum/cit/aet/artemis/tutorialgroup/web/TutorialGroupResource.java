@@ -26,7 +26,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
@@ -41,7 +40,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.TutorialGroupAssignedNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.TutorialGroupDeletedNotification;
@@ -586,15 +584,10 @@ public class TutorialGroupResource {
      */
     @GetMapping(value = "courses/{courseId}/tutorial-groups/export/json", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<String> exportTutorialGroupsToJSON(@PathVariable Long courseId, @RequestParam List<String> fields) {
+    public ResponseEntity<List<TutorialGroupService.TutorialGroupExportDTO>> exportTutorialGroupsToJSON(@PathVariable Long courseId, @RequestParam List<String> fields) {
         log.debug("REST request to export TutorialGroups to JSON for course: {}", courseId);
-        try {
-            String json = tutorialGroupService.exportTutorialGroupsToJSON(courseId, fields);
-            return ResponseEntity.ok().body(json);
-        }
-        catch (JsonProcessingException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to process JSON export");
-        }
+        var exportInformation = tutorialGroupService.exportTutorialGroupInformation(courseId, fields);
+        return ResponseEntity.ok().body(exportInformation);
     }
 
     /**

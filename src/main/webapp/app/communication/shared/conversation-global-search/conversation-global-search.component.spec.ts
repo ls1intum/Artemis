@@ -8,7 +8,7 @@ import { ButtonComponent } from 'app/shared/components/button/button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { ConversationDTO, ConversationType } from '../entities/conversation/conversation.model';
 import { User, UserPublicInfoDTO } from 'app/core/user/user.model';
@@ -217,6 +217,14 @@ describe('ConversationGlobalSearchComponent', () => {
         expect(component.showDropdown).toBeFalse();
     }));
 
+    it('should activate search when input is clicked', () => {
+        component.isSearchActive = false;
+
+        component.onSearchInputClick();
+
+        expect(component.isSearchActive).toBeTrue();
+    });
+
     it('should navigate dropdown with keyboard and select with enter', fakeAsync(() => {
         const selectOptionSpy = jest.spyOn(component, 'selectOption');
         component.fullSearchTerm = 'in:general';
@@ -290,6 +298,7 @@ describe('ConversationGlobalSearchComponent', () => {
 
     it('should close the dropdown when clicking outside the search input', fakeAsync(() => {
         component.showDropdown = true;
+        component.isSearchActive = true;
         fixture.detectChanges();
 
         const mockEvent = {
@@ -301,6 +310,33 @@ describe('ConversationGlobalSearchComponent', () => {
         fixture.detectChanges();
 
         expect(component.showDropdown).toBeFalse();
+        expect(component.isSearchActive).toBeFalse();
+    }));
+
+    it('should preselect a filter when onPreselectFilter is called', fakeAsync(() => {
+        const startFilteringSpy = jest.spyOn(component, 'startFiltering');
+        const focusSpy = jest.spyOn(component, 'focusInput');
+
+        component.onPreselectFilter(component.CONVERSATION_FILTER);
+        tick();
+
+        expect(component.fullSearchTerm).toBe('in:');
+        expect(component.searchMode).toBe(component.SearchMode.CONVERSATION);
+        expect(component.showDropdown).toBeTrue();
+        expect(startFilteringSpy).toHaveBeenCalled();
+        expect(focusSpy).toHaveBeenCalled();
+
+        startFilteringSpy.mockClear();
+        focusSpy.mockClear();
+
+        component.onPreselectFilter(component.USER_FILTER);
+        tick();
+
+        expect(component.fullSearchTerm).toBe('from:');
+        expect(component.searchMode).toBe(component.SearchMode.USER);
+        expect(component.showDropdown).toBeTrue();
+        expect(startFilteringSpy).toHaveBeenCalled();
+        expect(focusSpy).toHaveBeenCalled();
     }));
 
     it('should focus the input when Ctrl+K or Cmd+K is pressed', () => {
@@ -329,5 +365,20 @@ describe('ConversationGlobalSearchComponent', () => {
 
         expect(mockEventCtrl.preventDefault).toHaveBeenCalled();
         expect(focusInputSpy).toHaveBeenCalled();
+    });
+
+    it('should handle errors in filterUsers gracefully', fakeAsync(() => {
+        jest.spyOn(courseManagementService, 'searchUsers').mockReturnValue(throwError(() => new Error('Error')));
+        component.filterUsers('test');
+        tick();
+        fixture.detectChanges();
+
+        expect(component.filteredUsers).toEqual([]);
+        expect(component.userSearchStatus).toBe(component.UserSearchStatus.RESULTS);
+    }));
+
+    it('should not select a conversation when focusWithSelectedConversation is called with undefined', () => {
+        component.focusWithSelectedConversation(undefined);
+        expect(component.selectedConversations).toEqual([]);
     });
 });
