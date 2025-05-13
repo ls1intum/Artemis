@@ -55,7 +55,8 @@
 }
 
 .course-notification-preset-picker-eye-icon,
-.is-small-button:hover .course-notification-preset-picker-eye-icon {
+.is-small-button:hover .course-notification-preset-picker-eye-icon,
+.is-small-button.is-recently-selected .course-notification-preset-picker-eye-icon {
     margin-right: 0.25rem;
 
     transition: margin-right 0.2s 0.1s ease-in-out;
@@ -78,11 +79,16 @@
         max-width 0.2s 0.4s ease-in-out;
 }
 
-.is-small-button:hover .course-notification-preset-picker-text {
+.is-small-button:hover .course-notification-preset-picker-text,
+.is-small-button.is-recently-selected .course-notification-preset-picker-text {
     max-width: 10rem;
     opacity: 1;
 
     transition:
         opacity 0.2s 0.4s ease-in-out,
         max-width 0.2s 0.1s ease-in-out;
+}
+
+.is-small-button .dropdown-item {
+    min-width: 25rem;
 }

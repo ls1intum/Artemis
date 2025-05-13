@@ -59,6 +59,9 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { generateExampleTutorialGroupsConfiguration } from 'test/helpers/sample/tutorialgroup/tutorialGroupsConfigurationExampleModels';
 import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
+import { CourseNotificationSettingService } from 'app/communication/course-notification/course-notification-setting.service';
+import { CourseNotificationService } from 'app/communication/course-notification/course-notification.service';
+import { HttpTestingController } from '@angular/common/http/testing';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -146,6 +149,9 @@ describe('CourseOverviewComponent', () => {
     let courseSidebarService: CourseSidebarService;
     let profileService: ProfileService;
     let modalService: NgbModal;
+    let courseNotificationSettingService: CourseNotificationSettingService;
+    let courseNotificationService: CourseNotificationService;
+    let httpMock: HttpTestingController;
 
     let metisConversationService: MetisConversationService;
 
@@ -153,6 +159,23 @@ describe('CourseOverviewComponent', () => {
         id: 1,
         courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING,
     } as Course;
+
+    const mockCourseId = 123;
+
+    const mockNotificationSettingPresets: CourseNotificationSettingPreset[] = [
+        { typeId: 1, name: 'All Notifications', presetMap: { test: { push: true, email: true, webapp: true } } },
+        { typeId: 2, name: 'Important Only', presetMap: { test: { push: true, email: false, webapp: true } } },
+        { typeId: 3, name: 'Minimal', presetMap: { test: { push: false, email: false, webapp: true } } },
+    ];
+
+    const mockSettingInfo: CourseNotificationSettingInfo = {
+        selectedPreset: 1,
+        notificationTypeChannels: { test: { push: true, email: true, webapp: true } },
+    };
+
+    const mockNotificationInfo: CourseNotificationInfo = {
+        presets: mockNotificationSettingPresets,
+    };
 
     beforeEach(fakeAsync(() => {
         route = {
@@ -192,6 +215,7 @@ describe('CourseOverviewComponent', () => {
                 MockProvider(MetisConversationService),
                 MockProvider(CourseAccessStorageService),
                 MockProvider(NgbModal),
+                MockProvider(CourseNotificationSettingService),
                 { provide: Router, useValue: router },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: MetisConversationService, useClass: MockMetisConversationService },
@@ -225,6 +249,9 @@ describe('CourseOverviewComponent', () => {
                 metisConversationService = fixture.debugElement.injector.get(MetisConversationService);
                 jhiWebsocketServiceSubscribeSpy = jest.spyOn(jhiWebsocketService, 'subscribe');
                 jest.spyOn(teamService, 'teamAssignmentUpdates', 'get').mockResolvedValue(of(new TeamAssignmentPayload()));
+                courseNotificationSettingService = TestBed.inject(CourseNotificationSettingService);
+                courseNotificationService = TestBed.inject(CourseNotificationService);
+                httpMock = TestBed.inject(HttpTestingController);
                 // default for findOneForDashboardStub is to return the course
                 findOneForDashboardStub = jest.spyOn(courseService, 'findOneForDashboard').mockReturnValue(
                     of(
@@ -247,6 +274,9 @@ describe('CourseOverviewComponent', () => {
                     activeProfiles: [PROFILE_IRIS, PROFILE_LTI, PROFILE_PROD],
                     testServer: false,
                 } as unknown as ProfileInfo);
+                jest.spyOn(courseNotificationSettingService, 'getSettingInfo').mockReturnValue(of(mockSettingInfo));
+                jest.spyOn(courseNotificationService, 'getInfo').mockReturnValue(of(new HttpResponse({ body: mockNotificationInfo })));
+                jest.spyOn(courseNotificationSettingService, 'setSettingPreset').mockImplementation();
             });
     }));
 
@@ -764,4 +794,65 @@ describe('CourseOverviewComponent', () => {
             expect(component.manageViewLink()).toEqual(['/course-management', '123', 'course-statistics']);
         });
     });
+
+    it('should initialize course notification values when both settingInfo and info are available', fakeAsync(() => {
+        component.courseId.set(mockCourseId);
+        component.ngOnInit();
+        tick();
+
+        const selectableSettingPresets = (component as any).selectableSettingPresets;
+        const selectedSettingPreset = (component as any).selectedSettingPreset;
+
+        expect(selectableSettingPresets).toBeDefined();
+        expect(selectableSettingPresets).toEqual(mockNotificationSettingPresets);
+        expect(selectedSettingPreset).toBeDefined();
+        expect(selectedSettingPreset).toEqual(mockNotificationSettingPresets[0]);
+    }));
+
+    it('should select a new notification preset when presetSelected is called', fakeAsync(() => {
+        const setSettingPresetSpy = jest.spyOn(courseNotificationSettingService, 'setSettingPreset');
+
+        component.ngOnInit();
+        tick();
+
+        component.presetSelected(2);
+
+        const selectedSettingPreset = (component as any).selectedSettingPreset;
+
+        expect(selectedSettingPreset).toBeDefined();
+        expect(selectedSettingPreset).toEqual(mockNotificationSettingPresets[1]);
+        expect(setSettingPresetSpy).toHaveBeenCalledWith(1, 2, mockNotificationSettingPresets[0]);
+    }));
+
+    it('should set selectedSettingPreset to undefined when custom settings are selected', fakeAsync(() => {
+        component.ngOnInit();
+        tick();
+
+        component.presetSelected(0);
+
+        const selectedSettingPreset = (component as any).selectedSettingPreset;
+
+        expect(selectedSettingPreset).toBeUndefined();
+        expect(courseNotificationSettingService.setSettingPreset).toHaveBeenCalledWith(1, 0, mockNotificationSettingPresets[0]);
+    }));
+
+    it('should update notification settings when both services return data', fakeAsync(() => {
+        component.courseId.set(mockCourseId);
+        const getSettingInfoSpy = jest.spyOn(courseNotificationSettingService, 'getSettingInfo').mockImplementation(() => {
+            return of(undefined);
+        });
+
+        component.ngOnInit();
+        tick();
+
+        expect((component as any).selectableSettingPresets).toBeUndefined();
+
+        getSettingInfoSpy.mockReturnValue(of(mockSettingInfo));
+
+        (component as any).settingInfo = mockSettingInfo;
+        (component as any).initializeCourseNotificationValues();
+
+        expect((component as any).selectableSettingPresets).toBeDefined();
+        expect((component as any).selectedSettingPreset).toBeDefined();
+    }));
 });

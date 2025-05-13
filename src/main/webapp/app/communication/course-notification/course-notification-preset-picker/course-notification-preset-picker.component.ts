@@ -28,6 +28,8 @@ export class CourseNotificationPresetPickerComponent {
     protected readonly farEye = faEye;
     protected readonly faCheck = faCheck;
 
+    private recentlySelectedTimeout: NodeJS.Timeout;
+    protected isRecentlySelected: boolean = false;
     protected selectedPresetLangKey: string;
 
     constructor() {
@@ -45,6 +47,15 @@ export class CourseNotificationPresetPickerComponent {
      * @param presetTypeId - The type ID of the selected preset
      */
     protected presetSelected(presetTypeId: number) {
+        this.isRecentlySelected = true;
+        if (this.recentlySelectedTimeout) {
+            clearTimeout(this.recentlySelectedTimeout);
+        }
+
+        this.recentlySelectedTimeout = setTimeout(() => {
+            this.isRecentlySelected = false;
+        }, 5000);
+
         this.onPresetSelected.emit(presetTypeId);
     }
 }
