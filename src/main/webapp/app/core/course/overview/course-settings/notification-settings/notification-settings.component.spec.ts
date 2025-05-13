@@ -30,6 +30,7 @@ describe('NotificationSettingsComponent', () => {
 
     const mockPresets: CourseNotificationSettingPreset[] = [
         {
+            identifier: 'preset1',
             typeId: 1,
             presetMap: {
                 newPostNotification: {
@@ -40,6 +41,7 @@ describe('NotificationSettingsComponent', () => {
             },
         },
         {
+            identifier: 'preset2',
             typeId: 2,
             presetMap: {
                 newPostNotification: {

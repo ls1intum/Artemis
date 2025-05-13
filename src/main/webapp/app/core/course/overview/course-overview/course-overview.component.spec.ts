@@ -164,18 +164,19 @@ describe('CourseOverviewComponent', () => {
     const mockCourseId = 123;
 
     const mockNotificationSettingPresets: CourseNotificationSettingPreset[] = [
-        { typeId: 1, name: 'All Notifications', presetMap: { test: { push: true, email: true, webapp: true } } },
-        { typeId: 2, name: 'Important Only', presetMap: { test: { push: true, email: false, webapp: true } } },
-        { typeId: 3, name: 'Minimal', presetMap: { test: { push: false, email: false, webapp: true } } },
+        { typeId: 1, name: 'All Notifications', presetMap: { test: { PUSH: true, EMAIL: true, WEBAPP: true } } },
+        { typeId: 2, name: 'Important Only', presetMap: { test: { PUSH: true, EMAIL: false, WEBAPP: true } } },
+        { typeId: 3, name: 'Minimal', presetMap: { test: { PUSH: false, EMAIL: false, WEBAPP: true } } },
     ];
 
     const mockSettingInfo: CourseNotificationSettingInfo = {
         selectedPreset: 1,
-        notificationTypeChannels: { test: { push: true, email: true, webapp: true } },
+        notificationTypeChannels: { test: { PUSH: true, EMAIL: true, WEBAPP: true } },
     };
 
     const mockNotificationInfo: CourseNotificationInfo = {
         presets: mockNotificationSettingPresets,
+        notificationTypes: {},
     };
 
     beforeEach(fakeAsync(() => {
