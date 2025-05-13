@@ -163,9 +163,8 @@ public class LearningPathService {
         LearningPath lpToCreate = new LearningPath();
         lpToCreate.setUser(user);
         lpToCreate.setCourse(course);
-        lpToCreate.setCompetencies(new HashSet<>());
-        lpToCreate.getCompetencies().addAll(course.getCompetencies());
-        lpToCreate.getCompetencies().addAll(course.getPrerequisites());
+        lpToCreate.addCompetencies(course.getCompetencies());
+        lpToCreate.addCompetencies(course.getPrerequisites());
         var persistedLearningPath = learningPathRepository.save(lpToCreate);
         log.debug("Created LearningPath (id={}) for user (id={}) in course (id={})", persistedLearningPath.getId(), user.getId(), course.getId());
         updateLearningPathProgress(persistedLearningPath);

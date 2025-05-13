@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.domain.competency;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -84,7 +85,7 @@ public class LearningPath extends DomainObject {
         this.competencies.add(competency);
     }
 
-    public void addCompetencies(Set<CourseCompetency> competencies) {
+    public void addCompetencies(Collection<? extends CourseCompetency> competencies) {
         this.competencies.addAll(competencies);
     }
 

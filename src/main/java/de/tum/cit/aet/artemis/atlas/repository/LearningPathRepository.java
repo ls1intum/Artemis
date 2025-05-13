@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.atlas.repository;
 
-import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
@@ -11,7 +10,6 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
-import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.LearningPath;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Prerequisite;
 
@@ -87,10 +85,8 @@ public class LearningPathRepository {
     }
 
     public LearningPath addTransientCompetencies(LearningPath learningPath, Set<Competency> competencies, Set<Prerequisite> prerequisites) {
-        final var courseCompetencies = new HashSet<CourseCompetency>();
-        courseCompetencies.addAll(competencies);
-        courseCompetencies.addAll(prerequisites);
-        learningPath.setCompetencies(courseCompetencies);
+        learningPath.addCompetencies(competencies);
+        learningPath.addCompetencies(prerequisites);
         return learningPath;
     }
 
