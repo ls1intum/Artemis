@@ -454,9 +454,10 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
                     this.groupPosts();
                 }
             });
+        } else {
+            // No posts with forwarded messages
+            this.groupPosts();
         }
-        // Incrementally update the grouped posts.
-        this.groupPosts();
     }
 
     fetchNextPage() {
