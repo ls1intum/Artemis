@@ -73,7 +73,6 @@ public class VideoUnitResource {
         log.debug("REST request to get VideoUnit : {}", videoUnitId);
         var videoUnit = videoUnitRepository.findByIdWithCompetenciesElseThrow(videoUnitId);
         checkVideoUnitCourseAndLecture(videoUnit, lectureId);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, videoUnit.getLecture().getCourse(), null);
         return ResponseEntity.ok().body(videoUnit);
     }
 
