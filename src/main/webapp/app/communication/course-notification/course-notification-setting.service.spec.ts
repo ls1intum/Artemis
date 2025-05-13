@@ -185,7 +185,6 @@ describe('CourseNotificationSettingService', () => {
             };
 
             const mockPreset: CourseNotificationSettingPreset = {
-                id: 2,
                 name: 'Test Preset',
                 presetMap: {
                     newNotification: {
@@ -298,7 +297,6 @@ describe('CourseNotificationSettingService', () => {
             };
 
             const mockPreset: CourseNotificationSettingPreset = {
-                id: 2,
                 name: 'Test Preset',
                 presetMap: {
                     newNotification: {

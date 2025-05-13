@@ -61,7 +61,9 @@ import { generateExampleTutorialGroupsConfiguration } from 'test/helpers/sample/
 import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
 import { CourseNotificationSettingService } from 'app/communication/course-notification/course-notification-setting.service';
 import { CourseNotificationService } from 'app/communication/course-notification/course-notification.service';
-import { HttpTestingController } from '@angular/common/http/testing';
+import { CourseNotificationSettingPreset } from 'app/communication/shared/entities/course-notification/course-notification-setting-preset';
+import { CourseNotificationSettingInfo } from 'app/communication/shared/entities/course-notification/course-notification-setting-info';
+import { CourseNotificationInfo } from 'app/communication/shared/entities/course-notification/course-notification-info';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -151,7 +153,6 @@ describe('CourseOverviewComponent', () => {
     let modalService: NgbModal;
     let courseNotificationSettingService: CourseNotificationSettingService;
     let courseNotificationService: CourseNotificationService;
-    let httpMock: HttpTestingController;
 
     let metisConversationService: MetisConversationService;
 
@@ -251,7 +252,6 @@ describe('CourseOverviewComponent', () => {
                 jest.spyOn(teamService, 'teamAssignmentUpdates', 'get').mockResolvedValue(of(new TeamAssignmentPayload()));
                 courseNotificationSettingService = TestBed.inject(CourseNotificationSettingService);
                 courseNotificationService = TestBed.inject(CourseNotificationService);
-                httpMock = TestBed.inject(HttpTestingController);
                 // default for findOneForDashboardStub is to return the course
                 findOneForDashboardStub = jest.spyOn(courseService, 'findOneForDashboard').mockReturnValue(
                     of(
