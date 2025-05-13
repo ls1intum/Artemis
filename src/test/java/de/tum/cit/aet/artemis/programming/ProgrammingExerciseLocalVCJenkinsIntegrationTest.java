@@ -462,6 +462,12 @@ class ProgrammingExerciseLocalVCJenkinsIntegrationTest extends AbstractProgrammi
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void configureRepository_testBadRequestError() throws Exception {
+        programmingExerciseTestService.configureRepository_testBadRequestError();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void exportInstructorRepositories() throws Exception {
         programmingExerciseTestService.exportInstructorRepositories_shouldReturnFile();
         // we export three repositories (template, solution, tests) and for each repository the temp directory and the directory with the zip file should be deleted
