@@ -1,4 +1,4 @@
-import { Component, input } from '@angular/core';
+import { Component, input, signal } from '@angular/core';
 import { faCheck, faCopy } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CdkCopyToClipboard } from '@angular/cdk/clipboard';
@@ -17,16 +17,16 @@ export class CopyToClipboardButtonComponent {
 
     readonly valueToCopyToClipboard = input.required<string>();
 
-    wasCopied = false;
+    wasCopied = signal<boolean>(false);
 
     /**
      * set wasCopied for 3 seconds on success
      */
     onCopyFinished(successful: boolean) {
         if (successful) {
-            this.wasCopied = true;
+            this.wasCopied.set(true);
             setTimeout(() => {
-                this.wasCopied = false;
+                this.wasCopied.set(false);
             }, 3000);
         }
     }
