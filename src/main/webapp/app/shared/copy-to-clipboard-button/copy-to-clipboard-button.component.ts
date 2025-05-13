@@ -13,7 +13,7 @@ export class CopyToClipboardButtonComponent {
     protected readonly faCopy = faCopy;
     protected readonly faCheck = faCheck;
 
-    valueToCopyToClipboard = input<string>('');
+    readonly valueToCopyToClipboard = input.required<string>();
 
     wasCopied = false;
 
