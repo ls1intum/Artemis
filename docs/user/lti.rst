@@ -597,5 +597,4 @@ Resolution Steps:
     :alt: edX - Add Tool URL
 
 .. |course-management| image:: exercises/general/course-management.png
-.. |course_edit| image:: courses/customizable/buttons/course_edit.png
-...|course_settings_button| image:: courses/customizable/buttons/course_settings_button.png
+.. |course_settings_button| image:: courses/customizable/buttons/course_settings_button.png
