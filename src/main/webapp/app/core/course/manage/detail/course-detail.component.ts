@@ -23,6 +23,7 @@ import { CourseDetailDoughnutChartComponent } from './course-detail-doughnut-cha
 import { CourseDetailLineChartComponent } from './course-detail-line-chart.component';
 import { DetailOverviewListComponent } from 'app/shared/detail-overview-list/detail-overview-list.component';
 import { QuickActionsComponent } from 'app/core/course/manage/quick-actions/quick-actions.component';
+import { ControlCenterComponent } from 'app/core/course/manage/control-center/control-center.component';
 
 export enum DoughnutChartType {
     ASSESSMENT = 'ASSESSMENT',
@@ -39,7 +40,7 @@ export enum DoughnutChartType {
     selector: 'jhi-course-detail',
     templateUrl: './course-detail.component.html',
     styleUrls: ['./course-detail.component.scss'],
-    imports: [CourseDetailDoughnutChartComponent, CourseDetailLineChartComponent, DetailOverviewListComponent, QuickActionsComponent],
+    imports: [CourseDetailDoughnutChartComponent, CourseDetailLineChartComponent, DetailOverviewListComponent, QuickActionsComponent, ControlCenterComponent],
 })
 export class CourseDetailComponent implements OnInit, OnDestroy {
     private eventManager = inject(EventManager);
