@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.programming.icl;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY;
 import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_RESULTS_DIRECTORY;
-import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_WORKING_DIRECTORY;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.timeout;
@@ -172,9 +172,9 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         // participation).
         // Usually, specifying one doReturn() is enough to make the stub return the same object on every subsequent call.
         // However, in this case we have it return an InputStream, which will be consumed after returning it the first time, so we need to create two separate ones.
-        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, LOCAL_CI_WORKING_DIRECTORY + "/testing-dir/assignment/.git/refs/heads/[^/]+",
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir/assignment/.git/refs/heads/[^/]+",
                 Map.of("assignmentCommitHash", DUMMY_COMMIT_HASH), Map.of("assignmentCommitHash", DUMMY_COMMIT_HASH));
-        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, LOCAL_CI_WORKING_DIRECTORY + "/testing-dir/.git/refs/heads/[^/]+",
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir/.git/refs/heads/[^/]+",
                 Map.of("testsCommitHash", DUMMY_COMMIT_HASH), Map.of("testsCommitHash", DUMMY_COMMIT_HASH));
 
         dockerClientTestService.mockInspectImage(dockerClient);
@@ -183,8 +183,8 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         // Mock the results for the template repository build and for the solution repository build that will both be triggered as a result of creating the exercise.
         Map<String, String> templateBuildTestResults = dockerClientTestService.createMapFromTestResultsFolder(ALL_FAIL_TEST_RESULTS_PATH);
         Map<String, String> solutionBuildTestResults = dockerClientTestService.createMapFromTestResultsFolder(ALL_SUCCEED_TEST_RESULTS_PATH);
-        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, LOCAL_CI_WORKING_DIRECTORY + LOCAL_CI_RESULTS_DIRECTORY, templateBuildTestResults,
-                solutionBuildTestResults);
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + LOCAL_CI_RESULTS_DIRECTORY,
+                templateBuildTestResults, solutionBuildTestResults);
         newExercise.setChannelName("testchannelname-pe");
         aeolusRequestMockProvider.enableMockingOfRequests();
         aeolusRequestMockProvider.mockFailedGenerateBuildPlan(AeolusTarget.CLI);
@@ -267,9 +267,9 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         // participation).
         // Usually, specifying one doReturn() is enough to make the stub return the same object on every subsequent call.
         // However, in this case we have it return an InputStream, which will be consumed after returning it the first time, so we need to create two separate ones.
-        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, LOCAL_CI_WORKING_DIRECTORY + "/testing-dir/assignment/.git/refs/heads/[^/]+",
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir/assignment/.git/refs/heads/[^/]+",
                 Map.of("assignmentComitHash", DUMMY_COMMIT_HASH), Map.of("assignmentComitHash", DUMMY_COMMIT_HASH));
-        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, LOCAL_CI_WORKING_DIRECTORY + "/testing-dir/.git/refs/heads/[^/]+",
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir/.git/refs/heads/[^/]+",
                 Map.of("testsCommitHash", DUMMY_COMMIT_HASH), Map.of("testsCommitHash", DUMMY_COMMIT_HASH));
 
         dockerClientTestService.mockInspectImage(dockerClient);
@@ -278,8 +278,8 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         // Mock the results for the template repository build and for the solution repository build that will both be triggered as a result of creating the exercise.
         Map<String, String> templateBuildTestResults = dockerClientTestService.createMapFromTestResultsFolder(ALL_FAIL_TEST_RESULTS_PATH);
         Map<String, String> solutionBuildTestResults = dockerClientTestService.createMapFromTestResultsFolder(ALL_SUCCEED_TEST_RESULTS_PATH);
-        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, LOCAL_CI_WORKING_DIRECTORY + LOCAL_CI_RESULTS_DIRECTORY, templateBuildTestResults,
-                solutionBuildTestResults);
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + LOCAL_CI_RESULTS_DIRECTORY,
+                templateBuildTestResults, solutionBuildTestResults);
 
         ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", programmingExercise,
                 courseUtilService.addEmptyCourse());
