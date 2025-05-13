@@ -126,7 +126,7 @@ As an instructor to enable the Online Course setting in Artemis, follow the step
 
 #. As an instructor, locate and click on the |course-management| option.
 #. From the list of available courses, navigate to the course you wish to configure for LTI integration.
-#. You will find an |course_edit| button on the course overview page at the top right corner. Clicking this will allow you to modify various course settings.
+#. You will find an |course_settings_button| button at the bottom of the sidebar to the left of the course overview page. Clicking this will allow you to modify various course settings.
 #. As you scroll through the course settings, you will find an *Online Course* checkbox. This particular setting is essential for enabling LTI configurability.
 #. To finalize the process, check the *Online Course* checkbox. You are activating the LTI configuration settings for that specific course. Make sure to save any changes made.
 
@@ -362,7 +362,7 @@ Sharing access to a course
 To unlock the full potential of the LTI configuration and enable the Deep Linking Service for your online course, Artemis administrators must carefully choose an LTI platform and apply the following steps.
 
 #. As an admin user, head to the *Course Management* section and select your targeted online course to configure.
-#. Within the course management area, locate and click on the *LTI Configuration tab*.
+#. Within the course management area, locate and click on the *LTI Configuration tab* in the sidebar.
 #. Find and click the *Edit* button. This action will allow you to modify the LTI configuration settings for your course.
 #. In the *External Tool Settings* section, drop down the list to select the appropriate LTI platform configuration for your course.
 #. After selecting the desired configuration, hit Save to apply your changes.
