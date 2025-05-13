@@ -132,7 +132,7 @@ As an instructor to enable the Online Course setting in Artemis, follow the step
 
 .. figure:: lti/enable_onlinecourse.png
     :align: center
-    :width: 700
+    :width: 1000
     :alt: Enable Online Course
 
 With the Online Course setting enabled, you can now integrate Artemis with LMSs using the LTI 1.3 standard. The subsequent sections of this guide will provide detailed steps for achieving this integration.
@@ -163,7 +163,7 @@ To retrieve the Dynamic Registration URL from Artemis, follow the steps outlined
 
 .. figure:: lti/server_lti_configuration.png
     :align: center
-    :width: 700
+    :width: 1000
     :alt: Server LTI 1.3 Configuration
 
 The exact steps of using a registration URL to register Artemis as a tool are platform-dependent. We provide steps to configure Artemis into Moodle via Dynamic Registration URL in `Dynamically Register Artemis and Moodle`_.
@@ -182,7 +182,7 @@ Please note that Moodle admins also need admin privileges on the Artemis site.
 
     .. figure:: lti/moodle_site_administration.png
         :align: center
-        :width: 700
+        :width: 1000
         :alt: Moodle - Site Administration
 
 #. In the Manage Tools section, you will find the Tool URL field. Paste the Dynamic Registration URL provided into this field.
@@ -190,7 +190,7 @@ Please note that Moodle admins also need admin privileges on the Artemis site.
 
     .. figure:: lti/moodle_add_tool_url.png
         :align: center
-        :width: 700
+        :width: 1000
         :alt: Moodle - Site Administration
 
 #. If prompted, choose *Register as a new external tool*. The platform will only prompt you if another Artemis tool from the same domain is already configured.
@@ -232,7 +232,7 @@ Starting in the Artemis:
 
 .. figure:: lti/server_lti_config_service_urls.png
     :align: center
-    :width: 700
+    :width: 1000
     :alt: Server LTI 1.3 Configuration - Service URLs
 
 The exact setup steps for manually configuring are dependent on the platform. This guide provides steps for manually configuring Artemis into Moodle in the `Manually Register Artemis and Moodle`_ section and edX in the section `Manually Register Artemis and edX`_.
@@ -280,7 +280,7 @@ Now we are back on the Artemis again. Please follow the below steps to manually 
 
 .. figure:: lti/artemis_moodle_field_mapping.png
     :align: center
-    :width: 700
+    :width: 1000
     :alt: Artemis and Moodle Fields Mapping
 
 The registration process is now complete.
@@ -319,7 +319,7 @@ Now we are back on the Artemis. Please follow the below steps to manually config
 
 .. figure:: lti/edx_artemis_mapping.png
     :align: center
-    :width: 700
+    :width: 1000
     :alt: Edx LTI Consumer Settings
 
 Please follow below steps on edX to conclude registration process:
@@ -369,7 +369,7 @@ To unlock the full potential of the LTI configuration and enable the Deep Linkin
 
 .. figure:: lti/course_edit_lti_configuration.png
     :align: center
-    :width: 700
+    :width: 1000
     :alt: Edit Course-wise LTI Configuration
 
 Artemis user account provisioning
@@ -379,7 +379,7 @@ Instructors can decide to automatically create new user accounts for students wh
 
 .. figure:: lti/moodle_password_popup.png
     :align: center
-    :width: 700
+    :width: 1000
     :alt: Moodle - Password Pop-up
 
 However, if instructors prefer to restrict exercise and lecture participation to only those students who already have an existing Artemis account, they can adjust the settings by following the steps outlined below:
@@ -418,28 +418,28 @@ Deep Linking for Moodle
 
     .. figure:: lti/moodle_select_content.png
         :align: center
-        :width: 700
+        :width: 1000
         :alt: Moodle Deep Linking Select Course
 
 #. Moodle will show a table of linkable Artemis content
 
     .. figure:: lti/moodle_select_content_new.png
         :align: center
-        :width: 700
+        :width: 1000
         :alt: Moodle Deep Linking Select Content
 
 #. Select an item from the table, then click on *Link*.
 
     .. figure:: lti/moodle_select_content_link.png
         :align: center
-        :width: 400
+        :width: 500
         :alt: Moodle Deep Link Content
 
 #. (Optional) Select multiple exercises or lectures and select the "Activate exercise grouping" to create a custom content group. This allows students to navigate between the exercises or lectures of the group using a sidebar.
 
     .. figure:: lti/moodle_select_content_link_grouped.png
             :align: center
-            :width: 400
+            :width: 500
             :alt: Moodle Deep Linking Select Grouped Content
 
 
@@ -493,7 +493,7 @@ For exercises:
 
         .. figure:: lti/ltiexercises_list.png
             :align: center
-            :width: 700
+            :width: 1000
             :alt: LTI Exercise List
 
 For lectures:
@@ -502,7 +502,7 @@ For lectures:
 
         .. figure:: lti/lti_lectures_list.png
             :align: center
-            :width: 700
+            :width: 1000
             :alt: LTI Lecture List
 
 Link exercise or lectures to Moodle
@@ -515,14 +515,14 @@ With the LTI 1.3 Launch URL copied, you can now link the exercise or lecture in 
 
     .. figure:: lti/moodle_editmode.png
         :align: center
-        :width: 700
+        :width: 1000
         :alt: Moodle - Edit Course
 
 #. Click on the Add an activity or resource button, which includes a list of available activities and resources. From this list, select the External tool option.
 
     .. figure:: lti/moodle_add_external_tool.png
         :align: center
-        :width: 700
+        :width: 500
         :alt: Moodle - Add External Tool
 
 #. In the settings for the external tool, add an *Activity Name*.
@@ -531,7 +531,7 @@ With the LTI 1.3 Launch URL copied, you can now link the exercise or lecture in 
 
 .. figure:: lti/moodle_add_external_tool_page.png
     :align: center
-    :width: 700
+    :width: 1000
     :alt: Moodle - Add External Tool Page
 
 This video describes how to use manually link exercises from an Artemis course into a Moodle course:
@@ -555,7 +555,7 @@ Link exercise or lectures to edX
 
 .. figure:: lti/edx_add_exercise_link.png
     :align: center
-    :width: 700
+    :width: 1000
     :alt: edX - Add Tool URL
 
 This video describes how to use manually link exercises from an Artemis course into an edX course:
@@ -593,7 +593,7 @@ Resolution Steps:
 
 .. figure:: lti/edx_change_course_live.png
     :align: center
-    :width: 700
+    :width: 1000
     :alt: edX - Add Tool URL
 
 .. |course-management| image:: exercises/general/course-management.png
