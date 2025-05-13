@@ -103,6 +103,6 @@ public class LearningPath extends DomainObject {
 
     @Override
     public String toString() {
-        return "LearningPath{" + "id=" + getId() + ", user=" + user + ", course=" + course + ", competencies=" + competencies + ", startedByStudent=" + startedByStudent + "}";
+        return "LearningPath{" + "id=" + getId() + ", user=" + user + ", course=" + course + ", startedByStudent=" + startedByStudent + "}";
     }
 }
