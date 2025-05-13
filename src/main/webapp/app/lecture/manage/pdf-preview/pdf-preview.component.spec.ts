@@ -393,10 +393,12 @@ describe('PdfPreviewComponent', () => {
             component.pageOrder.set([{ slideId: 'slide1', initialIndex: 1, order: 1 } as any, { slideId: 'slide2', initialIndex: 2, order: 2 } as any]);
             component.hiddenPages.set({});
 
-            jest.spyOn(component, 'getFinalPageOrder').mockResolvedValue([
-                { slideId: 'slide1', initialIndex: 1, order: 1 } as any,
-                { slideId: 'slide2', initialIndex: 2, order: 2 } as any,
-            ]);
+            const finalPageOrder = [{ slideId: 'slide1', initialIndex: 1, order: 1 } as any, { slideId: 'slide2', initialIndex: 2, order: 2 } as any];
+
+            // Fix: Make sure getFinalPageOrder returns a Promise that resolves to the expected value
+            jest.spyOn(component, 'getFinalPageOrder').mockImplementation(() => {
+                return Promise.resolve(finalPageOrder);
+            });
 
             const appendSpy = jest.spyOn(FormData.prototype, 'append');
 
