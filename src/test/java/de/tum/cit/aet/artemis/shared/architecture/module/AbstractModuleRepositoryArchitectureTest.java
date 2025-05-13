@@ -291,7 +291,7 @@ public abstract class AbstractModuleRepositoryArchitectureTest extends AbstractA
                                     SimpleConditionEvent.violated(javaClass, "Test repository " + testClassName + " does not extend production repository " + productionClassName));
                         }
                     }
-                }).check(testClasses);
+                }).allowEmptyShould(true).check(testClasses);
     }
 
     /**

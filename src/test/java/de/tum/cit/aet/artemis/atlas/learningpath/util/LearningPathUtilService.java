@@ -8,8 +8,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
+import de.tum.cit.aet.artemis.atlas.repository.LearningPathRepository;
 import de.tum.cit.aet.artemis.atlas.service.learningpath.LearningPathService;
-import de.tum.cit.aet.artemis.atlas.test_repository.LearningPathTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
@@ -29,7 +29,7 @@ public class LearningPathUtilService {
     private LearningPathService learningPathService;
 
     @Autowired
-    private LearningPathTestRepository learningPathRepository;
+    private LearningPathRepository learningPathRepository;
 
     /**
      * Enable and generate learning paths for course.

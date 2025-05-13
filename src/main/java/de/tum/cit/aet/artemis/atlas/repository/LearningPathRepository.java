@@ -97,4 +97,12 @@ public class LearningPathRepository {
     public LearningPath findByIdElseThrow(long learningPathId) {
         return learningPathJpaRepository.findByIdElseThrow(learningPathId);
     }
+
+    public LearningPath findWithEagerCompetenciesByCourseIdAndUserIdElseThrow(long courseId, long userId) {
+        return learningPathJpaRepository.getValueElseThrow(findWithEagerCompetenciesByCourseIdAndUserId(courseId, userId));
+    }
+
+    public void deleteAll(Iterable<LearningPath> learningPaths) {
+        learningPathJpaRepository.deleteAll(learningPaths);
+    }
 }
