@@ -13,7 +13,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
-import { CopyToClipboardButtonComponent } from 'app/shared/copy-to-clipboard-button/copy-to-clipboard-button.component';
+import { CopyIconButtonComponent } from 'app/shared/components/copy-icon-button/copy-icon-button.component';
 
 @Component({
     selector: 'jhi-account-information',
@@ -28,7 +28,7 @@ import { CopyToClipboardButtonComponent } from 'app/shared/copy-to-clipboard-but
         FormsModule,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
-        CopyToClipboardButtonComponent,
+        CopyIconButtonComponent,
     ],
 })
 export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {

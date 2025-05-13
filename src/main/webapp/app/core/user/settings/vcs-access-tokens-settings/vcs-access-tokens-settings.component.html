@@ -30,7 +30,7 @@
                                 <tr>
                                     <td>***************</td>
                                     <td>
-                                        <jhi-copy-to-clipboard-button [valueToCopyToClipboard]="this.currentUser.vcsAccessToken ?? ''" />
+                                        <jhi-copy-icon-button [copyText]="currentUser.vcsAccessToken ?? ''" />
                                     </td>
                                     <td>{{ this.currentUser?.vcsAccessTokenExpiryDate | artemisDate }}</td>
                                     <td>

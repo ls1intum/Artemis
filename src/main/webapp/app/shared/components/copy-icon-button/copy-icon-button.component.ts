@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, input, signal } from '@angular/core';
 import { faCopy } from '@fortawesome/free-regular-svg-icons';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { CdkCopyToClipboard } from '@angular/cdk/clipboard';
@@ -11,20 +11,19 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     imports: [NgbTooltip, CdkCopyToClipboard, FaIconComponent, ArtemisTranslatePipe],
 })
 export class CopyIconButtonComponent {
-    @Input() copyText: string;
+    protected readonly faCopy = faCopy;
 
-    wasCopied = false;
+    copyText = input.required<string>();
 
-    // Icons
-    faCopy = faCopy;
+    wasCopied = signal<boolean>(false);
 
     /**
      * set wasCopied for 2 seconds
      */
     onCopyFinished = (): void => {
-        this.wasCopied = true;
+        this.wasCopied.set(true);
         setTimeout(() => {
-            this.wasCopied = false;
+            this.wasCopied.set(false);
         }, 2000);
     };
 }

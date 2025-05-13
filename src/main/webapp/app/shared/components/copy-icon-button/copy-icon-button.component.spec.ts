@@ -13,21 +13,20 @@ describe('JhiCopyIconButtonComponent', () => {
         TestBed.configureTestingModule({
             imports: [ClipboardModule, MockDirective(NgbCollapse), MockDirective(NgbTooltip)],
             declarations: [CopyIconButtonComponent, MockPipe(ArtemisTranslatePipe)],
-            providers: [],
         }).compileComponents();
 
         fixture = TestBed.createComponent(CopyIconButtonComponent);
         component = fixture.componentInstance;
+
+        fixture.componentRef.setInput('copyText', 'text');
     });
 
     it('should initialize', () => {
-        component.copyText = 'text';
         fixture.detectChanges();
         expect(CopyIconButtonComponent).not.toBeNull();
     });
 
     it('should not be hidden with text', () => {
-        component.copyText = 'text';
         fixture.detectChanges();
 
         const copyButton = fixture.debugElement.nativeElement.querySelector('#copyButton');
@@ -35,7 +34,7 @@ describe('JhiCopyIconButtonComponent', () => {
     });
 
     it('should be hidden if text is empty', () => {
-        component.copyText = '';
+        fixture.componentRef.setInput('copyText', '');
         fixture.detectChanges();
 
         const copyButton = fixture.debugElement.nativeElement.querySelector('#copyButton');
@@ -45,15 +44,14 @@ describe('JhiCopyIconButtonComponent', () => {
     it('should show it was copied on click', () => {
         jest.useFakeTimers();
 
-        component.copyText = 'text';
         fixture.detectChanges();
 
         const copyButton = fixture.debugElement.nativeElement.querySelector('#copyButton');
         copyButton.click();
 
-        expect(component.wasCopied).toBeTrue();
+        expect(component.wasCopied()).toBeTrue();
 
         jest.advanceTimersByTime(3000);
-        expect(component.wasCopied).toBeFalse();
+        expect(component.wasCopied()).toBeFalse();
     });
 });
