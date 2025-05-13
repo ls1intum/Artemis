@@ -3,11 +3,10 @@ import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { Subject, Subscription, tap } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import { faBan, faCopy, faEdit, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faEdit, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/button/button.component';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { CdkCopyToClipboard } from '@angular/cdk/clipboard';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -22,7 +21,6 @@ import { CopyToClipboardButtonComponent } from 'app/shared/copy-paste-button/cop
     styleUrls: ['../user-settings.scss'],
     imports: [
         TranslateDirective,
-        CdkCopyToClipboard,
         FaIconComponent,
         DeleteButtonDirective,
         ButtonComponent,
@@ -37,7 +35,6 @@ export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {
     protected readonly faEdit = faEdit;
     protected readonly faSave = faSave;
     protected readonly faTrash = faTrash;
-    protected readonly faCopy = faCopy;
     protected readonly faBan = faBan;
     protected readonly ButtonType = ButtonType;
     protected readonly ButtonSize = ButtonSize;
