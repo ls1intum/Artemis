@@ -325,6 +325,7 @@
         "resetProgrammingExercise": {
             "title": "Reset Programming Exercise"
         },
+        "copied": "Copied!",
         "validation": {
             "required": "This field is required.",
             "minlength": "This field is required to be at least {{ min }} characters.",

@@ -2,10 +2,12 @@ import { Component, input } from '@angular/core';
 import { faCheck, faCopy } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CdkCopyToClipboard } from '@angular/cdk/clipboard';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-copy-to-clipboard-button',
-    imports: [FaIconComponent, CdkCopyToClipboard],
+    imports: [FaIconComponent, CdkCopyToClipboard, ArtemisTranslatePipe, NgbTooltip],
     templateUrl: './copy-to-clipboard-button.component.html',
     styleUrl: './copy-to-clipboard-button.component.scss',
 })
