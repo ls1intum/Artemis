@@ -14,6 +14,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import { CopyToClipboardButtonComponent } from 'app/shared/copy-paste-button/copy-to-clipboard-button.component';
 
 @Component({
     selector: 'jhi-account-information',
@@ -29,6 +30,7 @@ import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-ti
         FormsModule,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
+        CopyToClipboardButtonComponent,
     ],
 })
 export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {
@@ -48,7 +50,6 @@ export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {
     private authStateSubscription: Subscription;
     expiryDate?: dayjs.Dayjs;
     validExpiryDate = false;
-    wasCopied = false;
     edit = false;
 
     private dialogErrorSource = new Subject<string>();
@@ -110,18 +111,6 @@ export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {
                 this.alertService.error('artemisApp.userSettings.vcsAccessTokensSettingsPage.addFailure');
             },
         });
-    }
-
-    /**
-     * set wasCopied for 3 seconds on success
-     */
-    onCopyFinished(successful: boolean) {
-        if (successful) {
-            this.wasCopied = true;
-            setTimeout(() => {
-                this.wasCopied = false;
-            }, 3000);
-        }
     }
 
     /**
