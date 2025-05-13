@@ -185,6 +185,8 @@ describe('CourseNotificationSettingService', () => {
             };
 
             const mockPreset: CourseNotificationSettingPreset = {
+                identifier: 'preset1',
+                typeId: 1,
                 presetMap: {
                     newNotification: {
                         [CourseNotificationChannel.PUSH]: true,
@@ -296,6 +298,8 @@ describe('CourseNotificationSettingService', () => {
             };
 
             const mockPreset: CourseNotificationSettingPreset = {
+                identifier: 'preset1',
+                typeId: 1,
                 presetMap: {
                     newNotification: {
                         [CourseNotificationChannel.PUSH]: true,
