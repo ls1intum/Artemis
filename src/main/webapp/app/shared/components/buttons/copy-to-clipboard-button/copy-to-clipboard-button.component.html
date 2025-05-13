@@ -3,12 +3,11 @@
         id="copyButton"
         class="btn btn-sm"
         type="button"
-        ngbTooltip="{{ 'global.generic.copy' | artemisTranslate }}"
         [cdkCopyToClipboard]="copyText()"
         (cdkCopyToClipboardCopied)="onCopyFinished()"
         [class.btn-success]="wasCopied()"
+        ngbTooltip="{{ 'global.generic.copy' | artemisTranslate }}"
     >
-        <fa-icon [icon]="faCopy" />
-        {{ wasCopied() ? ('global.generic.copied' | artemisTranslate) : '' }}
+        <fa-icon [icon]="wasCopied() ? faCheck : faCopy" />
     </button>
 }
