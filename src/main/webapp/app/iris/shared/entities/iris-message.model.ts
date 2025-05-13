@@ -9,6 +9,7 @@ import dayjs from 'dayjs/esm';
 export enum IrisSender {
     LLM = 'LLM',
     USER = 'USER',
+    ARTIFACT = 'ARTIFACT',
 }
 
 export class IrisAssistantMessage implements BaseEntity {
@@ -27,4 +28,11 @@ export class IrisUserMessage implements BaseEntity {
     messageDifferentiator?: number;
 }
 
-export type IrisMessage = IrisAssistantMessage | IrisUserMessage;
+export class IrisArtifactMessage implements BaseEntity {
+    id?: number;
+    content: IrisTextMessageContent[];
+    sentAt?: dayjs.Dayjs;
+    sender: IrisSender.ARTIFACT;
+}
+
+export type IrisMessage = IrisAssistantMessage | IrisUserMessage | IrisArtifactMessage;

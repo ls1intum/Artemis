@@ -136,9 +136,8 @@ describe('TutorSuggestionComponent', () => {
     it('should call requestSuggestion when sessionId emits in ngOnChanges', fakeAsync(() => {
         const requestTutorSuggestionSpy = jest.spyOn(chatService, 'requestTutorSuggestion').mockReturnValue(of());
         jest.spyOn(chatService, 'currentStages').mockReturnValue(of([]));
-        const mockMessages = [{ id: 2, sender: 'TUT_SUG' }] as IrisMessage[];
 
-        jest.spyOn(chatService, 'currentMessages').mockReturnValue(concat(of([]), of(mockMessages)));
+        jest.spyOn(chatService, 'currentMessages').mockReturnValue(concat(of([]), of([])));
         jest.spyOn(chatService, 'currentError').mockReturnValue(of());
         (chatService as any).sessionId$ = of(123);
         component['irisEnabled'] = true;
@@ -153,9 +152,7 @@ describe('TutorSuggestionComponent', () => {
         jest.spyOn(irisSettingsService, 'getCombinedCourseSettings').mockReturnValue(of(irisSettings));
         jest.spyOn(chatService, 'currentStages').mockReturnValue(of([]));
 
-        const mockMessages = [{ id: 2, sender: 'TUT_SUG' }] as IrisMessage[];
-
-        jest.spyOn(chatService, 'currentMessages').mockReturnValue(concat(of([]), of(mockMessages)));
+        jest.spyOn(chatService, 'currentMessages').mockReturnValue(concat(of([])));
         jest.spyOn(chatService, 'currentError').mockReturnValue(of());
         jest.spyOn(chatService, 'requestTutorSuggestion').mockReturnValue(of());
         (chatService as any).sessionId$ = of(123);
@@ -175,8 +172,8 @@ describe('TutorSuggestionComponent', () => {
         expect(tutorSuggestionUnsubSpy).toHaveBeenCalled();
     });
 
-    it('should update suggestion in fetchMessages if last message is from LLM', fakeAsync(() => {
-        const mockMessages = [{ id: 1, sender: 'USER' } as IrisMessage, { id: 2, sender: 'LLM' } as IrisMessage];
+    it('should update suggestion in fetchMessages if last message is an Artifact', fakeAsync(() => {
+        const mockMessages = [{ id: 1, sender: 'USER' } as IrisMessage, { id: 2, sender: 'ARTIFACT' } as IrisMessage];
         jest.spyOn(chatService, 'currentMessages').mockReturnValue(of(mockMessages));
         jest.spyOn(chatService, 'currentStages').mockReturnValue(of([]));
         jest.spyOn(chatService, 'currentError').mockReturnValue(of());
@@ -203,9 +200,8 @@ describe('TutorSuggestionComponent', () => {
 
         it('should request suggestion when second message emission contains LLM message', fakeAsync(() => {
             (chatService as any).sessionId$ = of(123);
-            const mockMessages = [{ id: 2, sender: 'TUT_SUG' }] as IrisMessage[];
 
-            jest.spyOn(chatService, 'currentMessages').mockReturnValue(concat(of([]), of(mockMessages)));
+            jest.spyOn(chatService, 'currentMessages').mockReturnValue(concat(of([]), of([])));
             const requestTutorSuggestionSpy = jest.spyOn(chatService, 'requestTutorSuggestion').mockReturnValue(of());
             component['requestSuggestion']();
             tick();
@@ -231,8 +227,7 @@ describe('TutorSuggestionComponent', () => {
             jest.spyOn(chatService, 'requestTutorSuggestion').mockReturnValue(of());
             const requestTutorSuggestionSpy = jest.spyOn(chatService, 'requestTutorSuggestion').mockReturnValue(of());
             (chatService as any).sessionId$ = of(123);
-            const mockMessages = [{ id: 2, sender: 'TUT_SUG' }] as IrisMessage[];
-            jest.spyOn(chatService, 'currentMessages').mockReturnValue(concat(of([]), of(mockMessages)));
+            jest.spyOn(chatService, 'currentMessages').mockReturnValue(concat(of([])));
             component.ngOnInit();
             tick();
             expect(requestTutorSuggestionSpy).not.toHaveBeenCalled();

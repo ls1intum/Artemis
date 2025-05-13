@@ -103,13 +103,14 @@ public class IrisMessageResource {
 
     @PostMapping("sessions/{sessionId}/tutor-suggestion")
     @EnforceAtLeastTutor
-    public ResponseEntity<Boolean> sendTutorSuggestionMessage(@PathVariable Long sessionId) {
+    public ResponseEntity<Boolean> sendTutorSuggestionMessage(@PathVariable Long sessionId) throws URISyntaxException {
         var session = irisSessionRepository.findByIdWithMessagesElseThrow(sessionId);
         irisSessionService.checkIsIrisActivated(session);
 
         irisSessionService.requestMessageFromIris(session);
 
-        return ResponseEntity.ok(true);
+        var uriString = "/api/iris/sessions/" + session.getId() + "/tutor-suggestion";
+        return ResponseEntity.created(new URI(uriString)).body(true);
     }
 
     /**
