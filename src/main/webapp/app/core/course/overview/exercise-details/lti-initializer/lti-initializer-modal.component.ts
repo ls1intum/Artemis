@@ -4,7 +4,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
-import { CopyToClipboardButtonComponent } from 'app/shared/components/copy-to-clipboard-button/copy-to-clipboard-button.component';
+import { CopyToClipboardButtonComponent } from 'app/shared/components/buttons/copy-to-clipboard-button/copy-to-clipboard-button.component';
 
 @Component({
     selector: 'jhi-lti-initializer-modal',

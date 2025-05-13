@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { CopyToClipboardButtonComponent } from 'app/shared/components/copy-to-clipboard-button/copy-to-clipboard-button.component';
+import { CopyToClipboardButtonComponent } from 'app/shared/components/buttons/copy-to-clipboard-button/copy-to-clipboard-button.component';
 import { ClipboardModule } from '@angular/cdk/clipboard';
 import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
