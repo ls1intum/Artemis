@@ -2,7 +2,7 @@ import { Component, effect, input, output } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faEye } from '@fortawesome/free-regular-svg-icons';
+import { faEye, faEyeSlash } from '@fortawesome/free-regular-svg-icons';
 import { faCheck } from '@fortawesome/free-solid-svg-icons';
 import { CourseNotificationSettingPreset } from 'app/communication/shared/entities/course-notification/course-notification-setting-preset';
 import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
@@ -26,6 +26,7 @@ export class CourseNotificationPresetPickerComponent {
 
     // Icons
     protected readonly farEye = faEye;
+    protected readonly farEyeSlash = faEyeSlash;
     protected readonly faCheck = faCheck;
 
     private recentlySelectedTimeout: NodeJS.Timeout;
