@@ -6,6 +6,7 @@ import { SidebarCardDirective } from 'app/shared/sidebar/directive/sidebar-card.
 import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
 import { NgbCollapseModule, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { ActivatedRoute, RouterModule } from '@angular/router';
@@ -31,6 +32,7 @@ describe('SidebarAccordionComponent', () => {
                 SearchFilterComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(SearchFilterComponent),
+                MockPipe(ArtemisDatePipe),
             ],
             providers: [
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
@@ -157,5 +159,11 @@ describe('SidebarAccordionComponent', () => {
         expect(component.totalUnreadMessagesPerGroup['past']).toBe(5);
         expect(component.totalUnreadMessagesPerGroup['future']).toBe(0);
         expect(component.totalUnreadMessagesPerGroup['noDate']).toBe(0);
+    });
+
+    it('should use the week grouping utility for grouping items', () => {
+        const result = component.getGroupedByWeek('current');
+        expect(result).toBeDefined();
+        expect(Array.isArray(result)).toBeTruthy();
     });
 });
