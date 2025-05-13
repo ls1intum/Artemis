@@ -4,12 +4,12 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
-import { CopyIconButtonComponent } from 'app/shared/components/copy-icon-button/copy-icon-button.component';
+import { CopyToClipboardButtonComponent } from 'app/shared/components/copy-to-clipboard-button/copy-to-clipboard-button.component';
 
 @Component({
     selector: 'jhi-lti-initializer-modal',
     templateUrl: './lti-initializer-modal.component.html',
-    imports: [TranslateDirective, FormsModule, CopyIconButtonComponent, RouterLink],
+    imports: [TranslateDirective, FormsModule, CopyToClipboardButtonComponent, RouterLink],
 })
 export class LtiInitializerModalComponent {
     private activeModal = inject(NgbActiveModal);

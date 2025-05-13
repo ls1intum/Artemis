@@ -12,7 +12,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbNav, NgbNavContent, NgbNavItem, NgbNavLink, NgbNavLinkBase, NgbNavOutlet, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { CopyIconButtonComponent } from 'app/shared/components/copy-icon-button/copy-icon-button.component';
+import { CopyToClipboardButtonComponent } from 'app/shared/components/copy-to-clipboard-button/copy-to-clipboard-button.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
@@ -34,7 +34,7 @@ import { Lecture } from 'app/lecture/shared/entities/lecture.model';
         NgbTooltip,
         NgbNavOutlet,
         ArtemisTranslatePipe,
-        CopyIconButtonComponent,
+        CopyToClipboardButtonComponent,
         HelpIconComponent,
         SortDirective,
         SortByDirective,

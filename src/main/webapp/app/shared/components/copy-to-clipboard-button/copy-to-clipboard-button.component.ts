@@ -6,11 +6,11 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
-    selector: 'jhi-copy-icon-button',
-    templateUrl: './copy-icon-button.component.html',
+    selector: 'jhi-copy-to-clipboard-button',
+    templateUrl: './copy-to-clipboard-button.component.html',
     imports: [NgbTooltip, CdkCopyToClipboard, FaIconComponent, ArtemisTranslatePipe],
 })
-export class CopyIconButtonComponent {
+export class CopyToClipboardButtonComponent {
     protected readonly faCopy = faCopy;
 
     copyText = input.required<string>();

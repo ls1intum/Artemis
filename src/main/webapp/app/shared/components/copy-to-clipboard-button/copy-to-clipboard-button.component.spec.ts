@@ -1,21 +1,21 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { CopyIconButtonComponent } from 'app/shared/components/copy-icon-button/copy-icon-button.component';
+import { CopyToClipboardButtonComponent } from 'app/shared/components/copy-to-clipboard-button/copy-to-clipboard-button.component';
 import { ClipboardModule } from '@angular/cdk/clipboard';
 import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 describe('JhiCopyIconButtonComponent', () => {
-    let component: CopyIconButtonComponent;
-    let fixture: ComponentFixture<CopyIconButtonComponent>;
+    let component: CopyToClipboardButtonComponent;
+    let fixture: ComponentFixture<CopyToClipboardButtonComponent>;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ClipboardModule, MockDirective(NgbCollapse), MockDirective(NgbTooltip)],
-            declarations: [CopyIconButtonComponent, MockPipe(ArtemisTranslatePipe)],
+            declarations: [CopyToClipboardButtonComponent, MockPipe(ArtemisTranslatePipe)],
         }).compileComponents();
 
-        fixture = TestBed.createComponent(CopyIconButtonComponent);
+        fixture = TestBed.createComponent(CopyToClipboardButtonComponent);
         component = fixture.componentInstance;
 
         fixture.componentRef.setInput('copyText', 'text');
@@ -23,7 +23,7 @@ describe('JhiCopyIconButtonComponent', () => {
 
     it('should initialize', () => {
         fixture.detectChanges();
-        expect(CopyIconButtonComponent).not.toBeNull();
+        expect(CopyToClipboardButtonComponent).not.toBeNull();
     });
 
     it('should not be hidden with text', () => {
