@@ -17,11 +17,9 @@ on:
     - '.editorconfig'
     - '.gitattributes'
     - 'artemis-server-cli'
-    - 'check_client_override_version_updates.sh'
-    - 'check_modules.sh'
+    - 'supporting_scripts/**'
     - 'CITATION.cff'
     - 'proxy.conf.mjs'
-    - 'update_version.sh'
   push:
     branches:
     - develop
@@ -43,11 +41,9 @@ on:
     - '.editorconfig'
     - '.gitattributes'
     - 'artemis-server-cli'
-    - 'check_client_override_version_updates.sh'
-    - 'check_modules.sh'
+    - 'supporting_scripts/**'
     - 'CITATION.cff'
     - 'proxy.conf.mjs'
-    - 'update_version.sh'
   release:
     types:
     - created

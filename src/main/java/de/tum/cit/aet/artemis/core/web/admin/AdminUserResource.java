@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.core.web.admin;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LDAP_OR_LDAP_ONLY;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -211,7 +212,7 @@ public class AdminUserResource {
      * @return the ResponseEntity with status 200 (OK) and with body the updated user
      */
     @PutMapping("users/{userId}/sync-ldap")
-    @Profile("ldap | ldap-only")
+    @Profile(PROFILE_LDAP_OR_LDAP_ONLY)
     public ResponseEntity<UserDTO> syncUserViaLdap(@PathVariable Long userId) {
         log.debug("REST request to update ldap information User : {}", userId);
 
