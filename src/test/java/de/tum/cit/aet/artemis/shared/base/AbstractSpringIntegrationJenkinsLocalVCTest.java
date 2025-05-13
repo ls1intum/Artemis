@@ -56,7 +56,7 @@ import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCService;
 @ResourceLock("AbstractSpringIntegrationJenkinsLocalVCTest")
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
 @ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_ARTEMIS, PROFILE_CORE, PROFILE_SCHEDULING, PROFILE_LOCALVC, PROFILE_JENKINS, PROFILE_ATHENA, PROFILE_LTI, PROFILE_AEOLUS,
-        PROFILE_APOLLON })
+        PROFILE_APOLLON, "local" })
 @TestPropertySource(properties = { "server.port=49153", "artemis.version-control.url=http://localhost:49153",
         "artemis.version-control.ssh-private-key-folder-path=${java.io.tmpdir}", "artemis.user-management.use-external=false",
         "artemis.user-management.course-enrollment.allowed-username-pattern=^(?!authorizationservicestudent2).*$",

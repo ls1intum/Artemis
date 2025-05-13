@@ -119,33 +119,29 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
         var irisSession = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisSession.class, HttpStatus.CREATED);
         var message = new IrisMessage();
         message.addContent(new IrisTextMessageContent("Test tutor suggestion request"));
-        message.setSender(IrisMessageSender.TUT_SUG);
+        message.setSender(IrisMessageSender.LLM);
         message.setSession(irisSession);
-        irisMessageService.saveMessage(message, irisSession, IrisMessageSender.TUT_SUG);
+        irisMessageService.saveMessage(message, irisSession, IrisMessageSender.LLM);
         var messages = irisMessageRepository.findAllBySessionId(irisSession.getId());
         assertThat(messages).hasSize(1);
         assertThat(messages.getFirst().getContent().getFirst().toString()).contains("Test tutor suggestion request");
-        assertThat(messages.getFirst().getSender()).isEqualTo(IrisMessageSender.TUT_SUG);
+        assertThat(messages.getFirst().getSender()).isEqualTo(IrisMessageSender.LLM);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testCreateTutorSuggestionShouldProcessMessageAndReturnResponse() throws Exception {
+    void testCreateTutorSuggestionShouldProcessRequestAndReturnResponse() throws Exception {
         var post = createPostInExerciseChat(exercise, TEST_PREFIX);
         var irisSession = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisSession.class, HttpStatus.CREATED);
-        var message = new IrisMessage();
-        message.addContent(new IrisTextMessageContent("Test tutor suggestion request"));
-        message.setSender(IrisMessageSender.TUT_SUG);
-        message.setSession(irisSession);
         irisRequestMockProvider.mockTutorSuggestionResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
 
             pipelineDone.set(true);
         });
 
-        var response = request.postWithResponseBody(irisSessionUrl(irisSession.getId()) + "/messages", message, IrisMessage.class, HttpStatus.CREATED);
+        var response = request.postWithResponseBody(irisSessionUrl(irisSession.getId()) + "/tutor-suggestion", true, Boolean.class, HttpStatus.CREATED);
         await().atMost(java.time.Duration.ofSeconds(5)).until(pipelineDone::get);
-        assertThat(response.getContent().getFirst().toString()).contains("Test tutor suggestion request");
+        assertThat(response.booleanValue()).isEqualTo(true);
     }
 
     @Test
@@ -159,16 +155,11 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testExecuteTutorSuggestionPipelineShouldSendStatusUpdates() throws Exception {
         var post = createPostInExerciseChat(exercise, TEST_PREFIX);
-        post.setCourse(course);
+        var conversation = post.getConversation();
+        conversation.setCourse(course);
         post = postRepository.saveAndFlush(post);
         var irisSession = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisTutorSuggestionSession.class, HttpStatus.CREATED);
         irisSession.setPostId(post.getId());
-
-        var message = new IrisMessage();
-        message.addContent(new IrisTextMessageContent("Initial message for tutor suggestion"));
-        message.setSender(IrisMessageSender.TUT_SUG);
-        message.setSession(irisSession);
-        irisMessageService.saveMessage(message, irisSession, IrisMessageSender.TUT_SUG);
 
         pipelineDone.set(false);
         Post finalPost = post;
@@ -180,18 +171,18 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
             pipelineDone.set(true);
         });
 
-        var response = request.postWithResponseBody(irisSessionUrl(irisSession.getId()) + "/messages", message, IrisMessage.class, HttpStatus.CREATED);
+        var response = request.postWithResponseBody(irisSessionUrl(irisSession.getId()) + "/tutor-suggestion", true, Boolean.class, HttpStatus.CREATED);
         await().atMost(java.time.Duration.ofSeconds(5)).until(pipelineDone::get);
 
-        assertThat(response.getContent().getFirst().toString()).contains("Initial message for tutor suggestion");
-        assertThat(response.getSender()).isEqualTo(IrisMessageSender.TUT_SUG);
+        assertThat(response.booleanValue()).isEqualTo(true);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testTutorSuggestionPipelineShouldIncludeAnswerPosts() throws Exception {
         var post = createPostInExerciseChat(exercise, TEST_PREFIX);
-        post.setCourse(course);
+        var conversation = post.getConversation();
+        conversation.setCourse(course);
         post = postRepository.save(post);
 
         // Add an answer post to the post
@@ -206,12 +197,6 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
         var irisSession = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisTutorSuggestionSession.class, HttpStatus.CREATED);
         irisSession.setPostId(post.getId());
 
-        var message = new IrisMessage();
-        message.addContent(new IrisTextMessageContent("Message with answer post"));
-        message.setSender(IrisMessageSender.TUT_SUG);
-        message.setSession(irisSession);
-        irisMessageService.saveMessage(message, irisSession, IrisMessageSender.TUT_SUG);
-
         pipelineDone.set(false);
         irisRequestMockProvider.mockTutorSuggestionResponse(dto -> {
             // Check that the answer posts are included in the DTO
@@ -219,10 +204,10 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
             pipelineDone.set(true);
         });
 
-        var response = request.postWithResponseBody(irisSessionUrl(irisSession.getId()) + "/messages", message, IrisMessage.class, HttpStatus.CREATED);
+        var response = request.postWithResponseBody(irisSessionUrl(irisSession.getId()) + "/tutor-suggestion", true, Boolean.class, HttpStatus.CREATED);
         await().atMost(java.time.Duration.ofSeconds(5)).until(pipelineDone::get);
 
-        assertThat(response.getContent().getFirst().toString()).contains("Message with answer post");
+        assertThat(response.booleanValue()).isEqualTo(true);
     }
 
     private static String tutorSuggestionUrl(long sessionId) {
@@ -255,7 +240,6 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
         post.setDisplayPriority(DisplayPriority.NONE);
         post.setConversation(chat);
         post.setContent("Test content");
-        post.setCourse(course);
         post = postRepository.save(post);
         return post;
     }

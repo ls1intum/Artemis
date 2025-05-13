@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.iris.service.IrisCompetencyGenerationService;
 import de.tum.cit.aet.artemis.iris.service.IrisConsistencyCheckService;
 import de.tum.cit.aet.artemis.iris.service.IrisRewritingService;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.TutorSuggestionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.lecture.PyrisLectureChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.textexercise.PyrisTextExerciseChatStatusUpdateDTO;
@@ -209,7 +210,7 @@ public class PyrisStatusUpdateService {
      * @param job          the job that is updated
      * @param statusUpdate the status update received
      */
-    public void handleStatusUpdate(TutorSuggestionJob job, PyrisChatStatusUpdateDTO statusUpdate) {
+    public void handleStatusUpdate(TutorSuggestionJob job, TutorSuggestionStatusUpdateDTO statusUpdate) {
         var updatedJob = irisTutorSuggestionSessionService.handleStatusUpdate(job, statusUpdate);
 
         removeJobIfTerminatedElseUpdate(statusUpdate.stages(), updatedJob);

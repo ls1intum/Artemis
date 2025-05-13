@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
@@ -87,24 +88,29 @@ public class IrisMessageResource {
     public ResponseEntity<IrisMessage> createMessage(@PathVariable Long sessionId, @RequestBody IrisMessage message) throws URISyntaxException {
         var session = irisSessionRepository.findByIdElseThrow(sessionId);
         irisSessionService.checkIsIrisActivated(session);
+        var user = userRepository.getUser();
+        irisSessionService.checkHasAccessToIrisSession(session, user);
+        irisSessionService.checkRateLimit(session, user);
 
-        // Messages by TUT_SUG are send by the tutor suggestion system, which is not the user
-        IrisMessage savedMessage;
-        if (message.getSender() == IrisMessageSender.TUT_SUG) {
-            savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.TUT_SUG);
-        }
-        else {
-            var user = userRepository.getUser();
-            irisSessionService.checkHasAccessToIrisSession(session, user);
-            irisSessionService.checkRateLimit(session, user);
-            savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.USER);
-        }
+        var savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.USER);
         savedMessage.setMessageDifferentiator(message.getMessageDifferentiator());
         irisSessionService.sendOverWebsocket(savedMessage, session);
         irisSessionService.requestMessageFromIris(session);
 
         var uriString = "/api/iris/sessions/" + session.getId() + "/messages/" + savedMessage.getId();
         return ResponseEntity.created(new URI(uriString)).body(savedMessage);
+    }
+
+    @PostMapping("sessions/{sessionId}/tutor-suggestion")
+    @EnforceAtLeastTutor
+    public ResponseEntity<Boolean> sendTutorSuggestionMessage(@PathVariable Long sessionId) throws URISyntaxException {
+        var session = irisSessionRepository.findByIdWithMessagesElseThrow(sessionId);
+        irisSessionService.checkIsIrisActivated(session);
+
+        irisSessionService.requestMessageFromIris(session);
+
+        var uriString = "/api/iris/sessions/" + session.getId() + "/tutor-suggestion";
+        return ResponseEntity.created(new URI(uriString)).body(true);
     }
 
     /**
