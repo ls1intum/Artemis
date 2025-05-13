@@ -16,6 +16,7 @@ export class CopyToClipboardButtonComponent {
     protected readonly faCheck = faCheck;
 
     copyText = input.required<string>();
+    class = input<string>('');
 
     wasCopied = signal<boolean>(false);
 
