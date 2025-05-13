@@ -66,8 +66,7 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
 
     public IrisTutorSuggestionSessionService(IrisSessionRepository irisSessionRepository, ObjectMapper objectMapper, IrisMessageService irisMessageService,
             IrisChatWebsocketService irisChatWebsocketService, LLMTokenUsageService llmTokenUsageService, IrisRateLimitService rateLimitService,
-            PyrisPipelineService pyrisPipelineService, AuthorizationCheckService authCheckService, IrisSettingsService irisSettingsService, PostRepository postRepository,
-            IrisMessageService irisMessageService1, LLMTokenUsageService llmTokenUsageService1) {
+            PyrisPipelineService pyrisPipelineService, AuthorizationCheckService authCheckService, IrisSettingsService irisSettingsService, PostRepository postRepository) {
         super(irisSessionRepository, objectMapper, irisMessageService, irisChatWebsocketService, llmTokenUsageService);
         this.irisSessionRepository = irisSessionRepository;
         this.irisChatWebsocketService = irisChatWebsocketService;
@@ -76,8 +75,8 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
         this.authCheckService = authCheckService;
         this.irisSettingsService = irisSettingsService;
         this.postRepository = postRepository;
-        this.irisMessageService = irisMessageService1;
-        this.llmTokenUsageService = llmTokenUsageService1;
+        this.irisMessageService = irisMessageService;
+        this.llmTokenUsageService = llmTokenUsageService;
     }
 
     @Override
