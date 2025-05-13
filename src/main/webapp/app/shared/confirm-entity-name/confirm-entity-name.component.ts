@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import {
     ControlValueAccessor,
     FormBuilder,
@@ -42,8 +42,11 @@ export class ConfirmEntityNameComponent implements OnInit, OnDestroy, ControlVal
     @Input()
     set entityName(entityName: string) {
         this.currentEntityName = entityName;
+        this.entityNameSignal.set(entityName);
         this.onValidatorChange?.();
     }
+
+    entityNameSignal = signal<string>('');
 
     get entityName(): string {
         return this.currentEntityName;
