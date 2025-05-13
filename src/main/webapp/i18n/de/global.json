@@ -325,7 +325,6 @@
         "resetProgrammingExercise": {
             "title": "Programmieraufgabe zurücksetzen"
         },
-        "copied": "Kopiert!",
         "validation": {
             "required": "Dieses Feld wird benötigt.",
             "minlength": "Dieses Feld muss mind. {{min}} Zeichen lang sein.",
