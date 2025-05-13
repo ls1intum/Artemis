@@ -19,6 +19,10 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
     imports: [FormsModule, TranslateDirective, WorkingTimeControlComponent, WorkingTimeChangeComponent, ConfirmEntityNameComponent, FaIconComponent],
 })
 export class ExamEditWorkingTimeDialogComponent {
+    protected readonly faBan = faBan;
+    protected readonly faSpinner = faSpinner;
+    protected readonly faCheck = faCheck;
+
     private activeModal = inject(NgbActiveModal);
     private examManagementService = inject(ExamManagementService);
 
@@ -26,11 +30,6 @@ export class ExamEditWorkingTimeDialogComponent {
     examChange = output<Exam>();
 
     isLoading: boolean;
-
-    // Icons
-    faBan = faBan;
-    faSpinner = faSpinner;
-    faCheck = faCheck;
 
     workingTimeSeconds = 0;
 
