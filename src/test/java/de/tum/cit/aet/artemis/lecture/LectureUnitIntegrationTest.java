@@ -250,9 +250,9 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentTes
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void setLectureUnitCompletion_withoutLecture_shouldReturnBadRequest() throws Exception {
+    void setLectureUnitCompletion_withoutLecture_shouldReturnForbidden() throws Exception {
         request.postWithoutLocation("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + this.textUnit3.getId() + "/completion?completed=true", null,
-                HttpStatus.BAD_REQUEST, null);
+                HttpStatus.FORBIDDEN, null);
     }
 
     @Test
