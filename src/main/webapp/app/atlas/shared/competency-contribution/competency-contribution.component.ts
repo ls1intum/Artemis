@@ -21,12 +21,11 @@ export class CompetencyContributionComponent {
     learningObjectId = input.required<number>();
     isExercise = input.required<boolean>();
 
-    atlasEnabled = false;
-
     private readonly courseCompetencyService = inject(CourseCompetencyService);
     private readonly alertService = inject(AlertService);
     private readonly profileService = inject(ProfileService);
 
+    atlasEnabled = false;
     competencies: CompetencyContributionCardDTO[] = [];
 
     constructor() {
