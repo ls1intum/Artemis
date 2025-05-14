@@ -24,7 +24,6 @@ import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.m
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { MockCourseManagementService } from 'test/helpers/mocks/service/mock-course-management.service';
-import { ElementRef } from '@angular/core';
 import { ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';

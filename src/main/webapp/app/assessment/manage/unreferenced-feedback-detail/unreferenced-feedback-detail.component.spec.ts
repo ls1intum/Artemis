@@ -42,21 +42,22 @@ describe('Unreferenced Feedback Detail Component', () => {
 
     it('should update feedback with SGI and emit to parent', () => {
         const instruction: GradingInstruction = { id: 1, credits: 2, feedback: 'test', gradingScale: 'good', instructionDescription: 'description of instruction', usageCount: 0 };
-        fixture.componentRef.setInput('feedback', {
+        const feedback = {
             id: 1,
             detailText: 'feedback1',
             credits: 1.5,
-        } as Feedback);
+        } as Feedback;
+        fixture.componentRef.setInput('feedback', feedback);
 
         jest.spyOn(sgiService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation(() => {
-            comp.feedback.gradingInstruction = instruction;
-            comp.feedback.credits = instruction.credits;
+            feedback.gradingInstruction = instruction;
+            feedback.credits = instruction.credits;
         });
 
         comp.updateFeedbackOnDrop(new Event(''));
 
-        expect(comp.feedback.gradingInstruction).toBe(instruction);
-        expect(comp.feedback.credits).toBe(instruction.credits);
+        expect(feedback.gradingInstruction).toBe(instruction);
+        expect(feedback.credits).toBe(instruction.credits);
     });
 
     it('should emit the assessment change after deletion', () => {
