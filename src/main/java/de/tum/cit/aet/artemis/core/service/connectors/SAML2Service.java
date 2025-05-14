@@ -60,6 +60,9 @@ public class SAML2Service {
     @Value("${info.saml2.enablePassword:#{null}}")
     private Optional<Boolean> saml2EnablePassword;
 
+    @Value("${info.saml2.syncUserData:#{null}}")
+    private Optional<Boolean> saml2syncUserData;
+
     private static final Logger log = LoggerFactory.getLogger(SAML2Service.class);
 
     private final UserCreationService userCreationService;
@@ -133,6 +136,29 @@ public class SAML2Service {
                 else {
                     log.error("User {} was created but could not be found in the database!", user.get());
                 }
+            }
+        }
+        else if (saml2syncUserData.isPresent() && Boolean.TRUE.equals(saml2syncUserData.get())) {
+            log.debug("SAML2 sync user data enabled and will be performed for user {}", user.get().getLogin());
+            // We assume that only the name of the user might change
+            String newFirstName = substituteAttributes(properties.getFirstNamePattern(), principal);
+            String newLastName = substituteAttributes(properties.getLastNamePattern(), principal);
+            String oldFirstName = user.get().getFirstName();
+            String oldLastName = user.get().getLastName();
+
+            boolean changed = false;
+            if (!oldFirstName.equals(newFirstName)) {
+                user.get().setFirstName(newFirstName);
+                changed = true;
+            }
+            if (!oldLastName.equals(newLastName)) {
+                user.get().setLastName(newLastName);
+                changed = true;
+            }
+
+            if (changed) {
+                log.info("SAML2 user's name changed ... before: {} {}, after: {} {}", oldFirstName, oldLastName, newFirstName, newLastName);
+                userRepository.save(user.get());
             }
         }
 
