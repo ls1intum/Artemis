@@ -145,8 +145,8 @@ export class IntervalGradingSystemComponent extends BaseGradingSystemComponent {
         const lower = gradeStep.lowerBoundPoints ?? 0;
         const upper = gradeStep.upperBoundPoints ?? 0;
         const raw = upper - lower;
-        const rounded = Math.round(raw * 1_000_000) / 1_000_000;
-        return rounded.toString();
+        const fixed = raw.toFixed(6);
+        return fixed.replace(/\.?0+$/, '');
     }
 
     deleteGradeStep(index: number): void {

@@ -94,7 +94,7 @@
                                         type="number"
                                         step="0.5"
                                         min="0.5"
-                                        (change)="setPointsInterval(i, +$any($event.target).value)"
+                                        (change)="setPointsInterval(i, $any($event.target).valueAsNumber)"
                                         required
                                     />
                                 </td>
