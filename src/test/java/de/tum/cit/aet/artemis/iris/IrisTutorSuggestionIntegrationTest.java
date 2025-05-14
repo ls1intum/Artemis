@@ -1,15 +1,20 @@
 package de.tum.cit.aet.artemis.iris;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ActiveProfiles;
 
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
@@ -31,8 +36,14 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisTutorSuggestionSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
+import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.TutorSuggestionStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState;
+import de.tum.cit.aet.artemis.iris.web.open.PublicPyrisStatusUpdateResource;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
+@ActiveProfiles(PROFILE_IRIS)
 class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
 
     private static final String TEST_PREFIX = "iristutorsuggestionintegration";
@@ -64,11 +75,17 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
     @Autowired
     private IrisMessageService irisMessageService;
 
+    @Autowired
+    private PublicPyrisStatusUpdateResource publicPyrisStatusUpdateResource;
+
     private ProgrammingExercise exercise;
 
     private Course course;
 
     private AtomicBoolean pipelineDone;
+
+    @Autowired
+    private PyrisJobService pyrisJobService;
 
     @BeforeEach
     void initTestCase() {
@@ -119,33 +136,29 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
         var irisSession = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisSession.class, HttpStatus.CREATED);
         var message = new IrisMessage();
         message.addContent(new IrisTextMessageContent("Test tutor suggestion request"));
-        message.setSender(IrisMessageSender.TUT_SUG);
+        message.setSender(IrisMessageSender.LLM);
         message.setSession(irisSession);
-        irisMessageService.saveMessage(message, irisSession, IrisMessageSender.TUT_SUG);
+        irisMessageService.saveMessage(message, irisSession, IrisMessageSender.LLM);
         var messages = irisMessageRepository.findAllBySessionId(irisSession.getId());
         assertThat(messages).hasSize(1);
         assertThat(messages.getFirst().getContent().getFirst().toString()).contains("Test tutor suggestion request");
-        assertThat(messages.getFirst().getSender()).isEqualTo(IrisMessageSender.TUT_SUG);
+        assertThat(messages.getFirst().getSender()).isEqualTo(IrisMessageSender.LLM);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testCreateTutorSuggestionShouldProcessMessageAndReturnResponse() throws Exception {
+    void testCreateTutorSuggestionShouldProcessRequestAndReturnResponse() throws Exception {
         var post = createPostInExerciseChat(exercise, TEST_PREFIX);
         var irisSession = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisSession.class, HttpStatus.CREATED);
-        var message = new IrisMessage();
-        message.addContent(new IrisTextMessageContent("Test tutor suggestion request"));
-        message.setSender(IrisMessageSender.TUT_SUG);
-        message.setSession(irisSession);
         irisRequestMockProvider.mockTutorSuggestionResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
 
             pipelineDone.set(true);
         });
 
-        var response = request.postWithResponseBody(irisSessionUrl(irisSession.getId()) + "/messages", message, IrisMessage.class, HttpStatus.CREATED);
+        var response = request.postWithResponseBody(irisSessionUrl(irisSession.getId()) + "/tutor-suggestion", true, Boolean.class, HttpStatus.CREATED);
         await().atMost(java.time.Duration.ofSeconds(5)).until(pipelineDone::get);
-        assertThat(response.getContent().getFirst().toString()).contains("Test tutor suggestion request");
+        assertThat(response.booleanValue()).isEqualTo(true);
     }
 
     @Test
@@ -159,16 +172,11 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testExecuteTutorSuggestionPipelineShouldSendStatusUpdates() throws Exception {
         var post = createPostInExerciseChat(exercise, TEST_PREFIX);
-        post.setCourse(course);
+        var conversation = post.getConversation();
+        conversation.setCourse(course);
         post = postRepository.saveAndFlush(post);
         var irisSession = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisTutorSuggestionSession.class, HttpStatus.CREATED);
         irisSession.setPostId(post.getId());
-
-        var message = new IrisMessage();
-        message.addContent(new IrisTextMessageContent("Initial message for tutor suggestion"));
-        message.setSender(IrisMessageSender.TUT_SUG);
-        message.setSession(irisSession);
-        irisMessageService.saveMessage(message, irisSession, IrisMessageSender.TUT_SUG);
 
         pipelineDone.set(false);
         Post finalPost = post;
@@ -180,18 +188,18 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
             pipelineDone.set(true);
         });
 
-        var response = request.postWithResponseBody(irisSessionUrl(irisSession.getId()) + "/messages", message, IrisMessage.class, HttpStatus.CREATED);
+        var response = request.postWithResponseBody(irisSessionUrl(irisSession.getId()) + "/tutor-suggestion", true, Boolean.class, HttpStatus.CREATED);
         await().atMost(java.time.Duration.ofSeconds(5)).until(pipelineDone::get);
 
-        assertThat(response.getContent().getFirst().toString()).contains("Initial message for tutor suggestion");
-        assertThat(response.getSender()).isEqualTo(IrisMessageSender.TUT_SUG);
+        assertThat(response.booleanValue()).isEqualTo(true);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testTutorSuggestionPipelineShouldIncludeAnswerPosts() throws Exception {
         var post = createPostInExerciseChat(exercise, TEST_PREFIX);
-        post.setCourse(course);
+        var conversation = post.getConversation();
+        conversation.setCourse(course);
         post = postRepository.save(post);
 
         // Add an answer post to the post
@@ -206,12 +214,6 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
         var irisSession = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisTutorSuggestionSession.class, HttpStatus.CREATED);
         irisSession.setPostId(post.getId());
 
-        var message = new IrisMessage();
-        message.addContent(new IrisTextMessageContent("Message with answer post"));
-        message.setSender(IrisMessageSender.TUT_SUG);
-        message.setSession(irisSession);
-        irisMessageService.saveMessage(message, irisSession, IrisMessageSender.TUT_SUG);
-
         pipelineDone.set(false);
         irisRequestMockProvider.mockTutorSuggestionResponse(dto -> {
             // Check that the answer posts are included in the DTO
@@ -219,10 +221,53 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
             pipelineDone.set(true);
         });
 
-        var response = request.postWithResponseBody(irisSessionUrl(irisSession.getId()) + "/messages", message, IrisMessage.class, HttpStatus.CREATED);
+        var response = request.postWithResponseBody(irisSessionUrl(irisSession.getId()) + "/tutor-suggestion", true, Boolean.class, HttpStatus.CREATED);
         await().atMost(java.time.Duration.ofSeconds(5)).until(pipelineDone::get);
 
-        assertThat(response.getContent().getFirst().toString()).contains("Message with answer post");
+        assertThat(response.booleanValue()).isEqualTo(true);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testTutorSuggestionStatusUpdateShouldBeHandled() throws Exception {
+        var post = createPostInExerciseChat(exercise, TEST_PREFIX);
+        var conversation = post.getConversation();
+        conversation.setCourse(course);
+        post = postRepository.save(post);
+
+        var irisSession = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisTutorSuggestionSession.class, HttpStatus.CREATED);
+        irisSession.setPostId(post.getId());
+
+        String token = pyrisJobService.addTutorSuggestionJob(post.getId(), course.getId(), irisSession.getId());
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Authorization", "Bearer " + token);
+        // Manually authenticate the job to verify token registration
+        var mockRequest = new org.springframework.mock.web.MockHttpServletRequest();
+        mockRequest.addHeader("Authorization", "Bearer " + token);
+        var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(mockRequest, de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob.class);
+        assertThat(job).isNotNull();
+        assertThat(job.jobId()).isEqualTo(token);
+        List<PyrisStageDTO> stages = List.of(new PyrisStageDTO("Test stage", 0, PyrisStageState.DONE, "Done"));
+        var statusUpdate = new TutorSuggestionStatusUpdateDTO("Test suggestion", "Test result", stages, null);
+        var mockRequestForStatusUpdate = new org.springframework.mock.web.MockHttpServletRequest();
+        mockRequestForStatusUpdate.addHeader("Authorization", "Bearer " + token);
+        publicPyrisStatusUpdateResource.setTutorSuggestionJobStatus(token, statusUpdate, mockRequestForStatusUpdate);
+
+        // Remove the job and assert that accessing it throws an exception
+        var requestAfterRemoval = new org.springframework.mock.web.MockHttpServletRequest();
+        requestAfterRemoval.addHeader("Authorization", "Bearer " + token);
+        assertThatThrownBy(
+                () -> pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(requestAfterRemoval, de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob.class))
+                .isInstanceOf(de.tum.cit.aet.artemis.core.exception.AccessForbiddenException.class).hasMessageContaining("No valid token provided");
+
+        // Check if the messages where saved
+        var messages = irisMessageRepository.findAllBySessionId(irisSession.getId());
+        assertThat(messages).hasSize(2);
+        assertThat(messages.getFirst().getContent().getFirst().toString()).contains("Test suggestion");
+        assertThat(messages.getFirst().getSender()).isEqualTo(IrisMessageSender.ARTIFACT);
+        assertThat(messages.get(1).getContent().getFirst().toString()).contains("Test result");
+        assertThat(messages.get(1).getSender()).isEqualTo(IrisMessageSender.LLM);
     }
 
     private static String tutorSuggestionUrl(long sessionId) {
@@ -255,7 +300,6 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
         post.setDisplayPriority(DisplayPriority.NONE);
         post.setConversation(chat);
         post.setContent("Test content");
-        post.setCourse(course);
         post = postRepository.save(post);
         return post;
     }

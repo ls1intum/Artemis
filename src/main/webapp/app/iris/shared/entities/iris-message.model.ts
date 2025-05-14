@@ -9,7 +9,7 @@ import dayjs from 'dayjs/esm';
 export enum IrisSender {
     LLM = 'LLM',
     USER = 'USER',
-    TUT_SUG = 'TUT_SUG',
+    ARTIFACT = 'ARTIFACT',
 }
 
 export class IrisAssistantMessage implements BaseEntity {
@@ -28,14 +28,11 @@ export class IrisUserMessage implements BaseEntity {
     messageDifferentiator?: number;
 }
 
-/**
- * This message type is used to send a request for a tutor suggestion to Iris.
- */
-export class IrisTutorSuggestionRequestMessage implements BaseEntity {
+export class IrisArtifactMessage implements BaseEntity {
     id?: number;
     content: IrisTextMessageContent[];
     sentAt?: dayjs.Dayjs;
-    sender: IrisSender.TUT_SUG;
+    sender: IrisSender.ARTIFACT;
 }
 
-export type IrisMessage = IrisAssistantMessage | IrisUserMessage | IrisTutorSuggestionRequestMessage;
+export type IrisMessage = IrisAssistantMessage | IrisUserMessage | IrisArtifactMessage;

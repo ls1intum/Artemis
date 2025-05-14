@@ -147,7 +147,7 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
 
         this.tutorSuggestionSubscription = waitForSessionAndMessages$.subscribe((messages) => {
             const lastMessage = messages[messages.length - 1];
-            const shouldRequest = messages.length === 0 || !(lastMessage?.sender === IrisSender.LLM);
+            const shouldRequest = messages.length === 0 || !(lastMessage?.sender === IrisSender.LLM || lastMessage?.sender === IrisSender.ARTIFACT);
             if (shouldRequest) {
                 this.chatService
                     .requestTutorSuggestion()
@@ -185,7 +185,7 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
     private fetchMessages(): void {
         this.messagesSubscription = this.chatService.currentMessages().subscribe((messages) => {
             if (messages.length !== this.messages?.length) {
-                this.suggestion = messages.findLast((m) => m.sender === IrisSender.LLM);
+                this.suggestion = messages.findLast((m) => m.sender === IrisSender.ARTIFACT);
             }
             this.messages = messages;
         });
