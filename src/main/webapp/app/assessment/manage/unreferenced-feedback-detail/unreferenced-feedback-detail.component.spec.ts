@@ -32,7 +32,7 @@ describe('Unreferenced Feedback Detail Component', () => {
         const resultId = 1;
         const exampleText = 'This is a long feedback text';
 
-        comp.feedback = { id: feedbackId, hasLongFeedbackText: true } as Feedback;
+        fixture.componentRef.setInput('feedback', { id: feedbackId, hasLongFeedbackText: true } as Feedback);
         fixture.componentRef.setInput('resultId', resultId);
         const getLongFeedbackTextSpy = jest.spyOn(feedbackService, 'getLongFeedbackText').mockResolvedValue(exampleText);
 
@@ -42,11 +42,11 @@ describe('Unreferenced Feedback Detail Component', () => {
 
     it('should update feedback with SGI and emit to parent', () => {
         const instruction: GradingInstruction = { id: 1, credits: 2, feedback: 'test', gradingScale: 'good', instructionDescription: 'description of instruction', usageCount: 0 };
-        comp.feedback = {
+        fixture.componentRef.setInput('feedback', {
             id: 1,
             detailText: 'feedback1',
             credits: 1.5,
-        } as Feedback;
+        } as Feedback);
 
         jest.spyOn(sgiService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation(() => {
             comp.feedback.gradingInstruction = instruction;
@@ -60,11 +60,11 @@ describe('Unreferenced Feedback Detail Component', () => {
     });
 
     it('should emit the assessment change after deletion', () => {
-        comp.feedback = {
+        fixture.componentRef.setInput('feedback', {
             id: 1,
             detailText: 'feedback1',
             credits: 1.5,
-        } as Feedback;
+        } as Feedback);
         const emitSpy = jest.spyOn(comp.onFeedbackDelete, 'emit');
         comp.delete();
 
@@ -72,13 +72,13 @@ describe('Unreferenced Feedback Detail Component', () => {
     });
 
     it('should mark automatic feedback and feedback suggestions as adapted when they are modified', () => {
-        comp.feedback = {
+        fixture.componentRef.setInput('feedback', {
             id: 1,
             type: FeedbackType.AUTOMATIC,
             text: 'FeedbackSuggestion:accepted:feedback1',
             detailText: 'feedback1',
             credits: 1.5,
-        } as Feedback;
+        } as Feedback);
         const emitSpy = jest.spyOn(comp.onFeedbackChange, 'emit');
         comp.emitChanges();
         expect(emitSpy).toHaveBeenCalledWith({
