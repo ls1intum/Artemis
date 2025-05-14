@@ -378,7 +378,7 @@ describe('AssessmentHeaderComponent', () => {
         const result = new Result();
         result.completionDate = dayjs();
         fixture.componentRef.setInput('result', result);
-        fixture.componentRef.setInput('canOverride', false);
+        fixture.componentRef.setInput('canOverride', true);
         fixture.componentRef.setInput('assessmentsAreValid', true);
         fixture.componentRef.setInput('submitBusy', false);
         fixture.detectChanges();
