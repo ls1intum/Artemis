@@ -30,7 +30,6 @@ import de.tum.cit.aet.artemis.core.util.AndroidApkKeyHashUtil;
 
 /**
  * Configurer for WebAuthn passkey authentication in Artemis.
- * This component encapsulates the passkey functionality and configuration.
  */
 @Component
 @Profile(Constants.PROFILE_CORE)
