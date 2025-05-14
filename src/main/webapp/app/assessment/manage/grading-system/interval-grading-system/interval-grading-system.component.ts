@@ -142,11 +142,11 @@ export class IntervalGradingSystemComponent extends BaseGradingSystemComponent {
     }
 
     getPointsInterval(gradeStep: GradeStep) {
-        if (gradeStep.upperBoundPoints == undefined || gradeStep.lowerBoundPoints == undefined) {
-            return '';
-        }
-        const raw = gradeStep.upperBoundPoints - gradeStep.lowerBoundPoints;
-        return raw.toFixed(6);
+        const lower = gradeStep.lowerBoundPoints ?? 0;
+        const upper = gradeStep.upperBoundPoints ?? 0;
+        const raw = upper - lower;
+        const rounded = Math.round(raw * 1_000_000) / 1_000_000;
+        return rounded.toString();
     }
 
     deleteGradeStep(index: number): void {
