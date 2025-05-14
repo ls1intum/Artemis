@@ -109,11 +109,9 @@ public class ArtemisPasskeyWebAuthnConfigurer {
 
             relyingPartyId = clientUrlToRegisterPasskey.getHost();
 
-            // Configure allowed origins
             allowedOrigins.add(clientUrlToRegisterPasskey.toString());
             allowedOrigins.add(clientUrlToAuthenticateWithPasskey.toString());
 
-            // Add Android APK key hashes if configured
             addAndroidApkKeyHashes();
 
             log.info("WebAuthn passkey authentication enabled with RP ID: {}", relyingPartyId);
