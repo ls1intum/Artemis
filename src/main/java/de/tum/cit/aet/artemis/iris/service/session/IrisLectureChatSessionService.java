@@ -32,7 +32,6 @@ import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.config.LectureApiNotPresentException;
-import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 
 @Service
 @Profile(PROFILE_IRIS)
@@ -56,13 +55,11 @@ public class IrisLectureChatSessionService implements IrisChatBasedFeatureInterf
 
     private final AuthorizationCheckService authCheckService;
 
-    private final LectureRepository lectureRepository;
-
     private final UserRepository userRepository;
 
     public IrisLectureChatSessionService(IrisSettingsService irisSettingsService, IrisSessionRepository irisSessionRepository, IrisRateLimitService rateLimitService,
             IrisMessageService irisMessageService, Optional<LectureRepositoryApi> lectureRepositoryApi, PyrisPipelineService pyrisPipelineService, PyrisJobService pyrisJobService,
-            IrisChatWebsocketService irisChatWebsocketService, AuthorizationCheckService authCheckService, LectureRepository lectureRepository, UserRepository userRepository) {
+            IrisChatWebsocketService irisChatWebsocketService, AuthorizationCheckService authCheckService, UserRepository userRepository) {
         this.irisSettingsService = irisSettingsService;
         this.irisSessionRepository = irisSessionRepository;
         this.irisRateLimitService = rateLimitService;
@@ -72,7 +69,6 @@ public class IrisLectureChatSessionService implements IrisChatBasedFeatureInterf
         this.pyrisJobService = pyrisJobService;
         this.irisChatWebsocketService = irisChatWebsocketService;
         this.authCheckService = authCheckService;
-        this.lectureRepository = lectureRepository;
         this.userRepository = userRepository;
     }
 
@@ -108,7 +104,7 @@ public class IrisLectureChatSessionService implements IrisChatBasedFeatureInterf
             throw new AccessForbiddenException("Iris Lecture chat Session", session.getId());
         }
 
-        var lecture = lectureRepository.findByIdElseThrow(session.getLectureId());
+        var lecture = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class)).findByIdElseThrow(session.getLectureId());
         authCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.STUDENT, lecture, user);
     }
 
@@ -156,7 +152,7 @@ public class IrisLectureChatSessionService implements IrisChatBasedFeatureInterf
 
     @Override
     public void checkIsFeatureActivatedFor(IrisLectureChatSession session) {
-        var lecture = lectureRepository.findByIdElseThrow(session.getLectureId());
+        var lecture = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class)).findByIdElseThrow(session.getLectureId());
         irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.LECTURE_CHAT, lecture.getCourse());
     }
 
