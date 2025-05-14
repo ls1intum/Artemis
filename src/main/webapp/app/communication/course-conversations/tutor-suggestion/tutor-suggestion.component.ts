@@ -3,7 +3,7 @@ import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iri
 import { Subscription, of } from 'rxjs';
 import { catchError, filter, skip, switchMap, take } from 'rxjs/operators';
 import { AsPipe } from 'app/shared/pipes/as.pipe';
-import { IrisTextMessageContent } from 'app/iris/shared/entities/iris-content-type.model';
+import { IrisMessageContentType, IrisTextMessageContent } from 'app/iris/shared/entities/iris-content-type.model';
 import { PROFILE_IRIS } from 'app/app.constants';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -20,6 +20,7 @@ import { FormsModule } from '@angular/forms';
 import { ButtonComponent, ButtonType } from 'app/shared/components/button/button.component';
 import { faPaperPlane } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
+import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 
 /**
  * Component to display the tutor suggestion in the chat
@@ -29,7 +30,7 @@ import dayjs from 'dayjs/esm';
     selector: 'jhi-tutor-suggestion',
     templateUrl: './tutor-suggestion.component.html',
     styleUrl: './tutor-suggestion.component.scss',
-    imports: [IrisLogoComponent, AsPipe, ChatStatusBarComponent, ArtemisTranslatePipe, FormsModule, ButtonComponent],
+    imports: [IrisLogoComponent, AsPipe, ChatStatusBarComponent, ArtemisTranslatePipe, FormsModule, ButtonComponent, HtmlForMarkdownPipe],
 })
 export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
     protected readonly IrisLogoSize = IrisLogoSize;
@@ -277,4 +278,6 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     protected readonly ButtonType = ButtonType;
+    protected readonly IrisSender = IrisSender;
+    protected readonly IrisMessageContentType = IrisMessageContentType;
 }

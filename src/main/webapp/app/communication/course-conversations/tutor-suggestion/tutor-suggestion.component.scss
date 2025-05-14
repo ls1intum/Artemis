@@ -21,6 +21,17 @@
     word-break: break-word;
 }
 
+.chat-field {
+    background-color: var(--iris-client-chat-input);
+    border-radius: var(--bs-border-radius-lg) var(--bs-border-radius-lg) var(--bs-border-radius-lg) var(--bs-border-radius-lg);
+}
+
+.messages {
+    max-height: 200px;
+    overflow-y: auto;
+    padding: 10px;
+}
+
 .chat-input {
     display: flex;
     align-items: center;
@@ -37,4 +48,33 @@
     font-size: 0.75rem;
     color: #888;
     margin-bottom: 2px;
+}
+
+.bubble-right {
+    background-color: var(--iris-my-chat-background);
+    padding: 8px 12px;
+    border-radius: 15px;
+    margin: 5px 0;
+    place-self: end;
+    float: right;
+    max-width: 75%;
+}
+
+.bubble-left {
+    background-color: var(--iris-client-chat-background);
+    padding: 8px 12px;
+    border-radius: 15px;
+    margin: 5px 0;
+    place-self: start;
+    max-width: 75%;
+}
+
+.messages {
+    display: flex;
+    flex-direction: column;
+}
+
+.message-container {
+    display: flex;
+    flex-direction: column;
 }
