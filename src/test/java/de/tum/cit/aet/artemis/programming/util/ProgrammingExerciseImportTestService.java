@@ -71,13 +71,13 @@ public class ProgrammingExerciseImportTestService {
         ZipEntry entry;
         while ((entry = zipInputStream.getNextEntry()) != null) {
             if (entry.getName().endsWith(".json")) {
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
                 byte[] buffer = new byte[1024];
-                int len;
-                while ((len = zipInputStream.read(buffer)) > 0) {
-                    baos.write(buffer, 0, len);
+                int bytesRead;
+                while ((bytesRead = zipInputStream.read(buffer)) > 0) {
+                    outputStream.write(buffer, 0, bytesRead);
                 }
-                detailsJsonString = baos.toString(StandardCharsets.UTF_8);
+                detailsJsonString = outputStream.toString(StandardCharsets.UTF_8);
                 break;
             }
         }
@@ -116,27 +116,27 @@ public class ProgrammingExerciseImportTestService {
      * @throws Exception if the zip file cannot be read
      */
     public int countOccurrencesInZip(ClassPathResource resource, String searchString) throws Exception {
-        int count = 0;
-        try (ZipInputStream zipIn = new ZipInputStream(new FileInputStream(resource.getFile()))) {
+        int occurrenceCount = 0;
+        try (ZipInputStream zipInputStream = new ZipInputStream(new FileInputStream(resource.getFile()))) {
             ZipEntry zipEntry;
-            while ((zipEntry = zipIn.getNextEntry()) != null) {
+            while ((zipEntry = zipInputStream.getNextEntry()) != null) {
                 if (!zipEntry.isDirectory() && zipEntry.getName().endsWith(".zip")) {
-                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                    byte[] buf = new byte[1024];
-                    int n;
-                    while ((n = zipIn.read(buf)) > 0) {
-                        baos.write(buf, 0, n);
+                    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                    byte[] buffer = new byte[1024];
+                    int bytesRead;
+                    while ((bytesRead = zipInputStream.read(buffer)) > 0) {
+                        outputStream.write(buffer, 0, bytesRead);
                     }
-                    String content = baos.toString(StandardCharsets.UTF_8);
-                    int idx = 0;
-                    while ((idx = content.indexOf(searchString, idx)) != -1) {
-                        count++;
-                        idx += searchString.length();
+                    String content = outputStream.toString(StandardCharsets.UTF_8);
+                    int currentPosition = 0;
+                    while ((currentPosition = content.indexOf(searchString, currentPosition)) != -1) {
+                        occurrenceCount++;
+                        currentPosition += searchString.length();
                     }
                 }
             }
         }
-        return count;
+        return occurrenceCount;
     }
 
     /**
@@ -148,7 +148,7 @@ public class ProgrammingExerciseImportTestService {
      * @throws IOException if the directory cannot be read
      */
     public int countOccurrencesInDirectory(Path path, String searchString) throws IOException {
-        int count = 0;
+        int occurrenceCount = 0;
         if (!Files.exists(path)) {
             throw new IOException("Directory does not exist");
         }
@@ -156,12 +156,12 @@ public class ProgrammingExerciseImportTestService {
         Files.walk(path).filter(Files::isRegularFile).forEach(files::add);
         for (Path filePath : files) {
             String content = new String(Files.readAllBytes(filePath), StandardCharsets.UTF_8);
-            int idx = 0;
-            while ((idx = content.indexOf(searchString, idx)) != -1) {
-                count++;
-                idx += searchString.length();
+            int currentPosition = 0;
+            while ((currentPosition = content.indexOf(searchString, currentPosition)) != -1) {
+                occurrenceCount++;
+                currentPosition += searchString.length();
             }
         }
-        return count;
+        return occurrenceCount;
     }
 }
