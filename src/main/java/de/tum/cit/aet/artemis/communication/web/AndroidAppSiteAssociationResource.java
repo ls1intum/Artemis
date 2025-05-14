@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
+import de.tum.cit.aet.artemis.core.service.ProfileService;
 
 /**
  * REST controller for the android assetlink.json
@@ -38,6 +39,12 @@ public class AndroidAppSiteAssociationResource {
 
     private static final Logger log = LoggerFactory.getLogger(AndroidAppSiteAssociationResource.class);
 
+    private final ProfileService profileService;
+
+    public AndroidAppSiteAssociationResource(ProfileService profileService) {
+        this.profileService = profileService;
+    }
+
     /**
      * Provides the assetlinks json content for the Android client deeplink link feature.
      * More information on the json content can be found <a href="https://developer.android.com/training/app-links/verify-android-applinks">here</a>
@@ -55,7 +62,7 @@ public class AndroidAppSiteAssociationResource {
         }
 
         List<String> fingerprints = new ArrayList<>(List.of(sha256CertFingerprintRelease));
-        if (sha256CertFingerprintDebug != null) {
+        if (sha256CertFingerprintDebug != null && !profileService.isProductionActive()) {
             fingerprints.add(sha256CertFingerprintDebug);
         }
         final AndroidAssetLinksStatement.AndroidTarget appTarget = new AndroidAssetLinksStatement.AndroidTarget("android_app", androidAppPackage, fingerprints);

@@ -26,6 +26,7 @@ import org.springframework.stereotype.Component;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
+import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.util.AndroidApkKeyHashUtil;
 
 /**
@@ -75,10 +76,12 @@ public class ArtemisPasskeyWebAuthnConfigurer {
 
     private final String relyingPartyName = "Artemis";
 
+    private final ProfileService profileService;
+
     public ArtemisPasskeyWebAuthnConfigurer(MappingJackson2HttpMessageConverter converter, JWTCookieService jwtCookieService, UserRepository userRepository,
             PublicKeyCredentialUserEntityRepository publicKeyCredentialUserEntityRepository, UserCredentialRepository userCredentialRepository,
             PublicKeyCredentialCreationOptionsRepository publicKeyCredentialCreationOptionsRepository,
-            PublicKeyCredentialRequestOptionsRepository publicKeyCredentialRequestOptionsRepository) {
+            PublicKeyCredentialRequestOptionsRepository publicKeyCredentialRequestOptionsRepository, ProfileService profileService) {
         this.converter = converter;
         this.jwtCookieService = jwtCookieService;
         this.userRepository = userRepository;
@@ -86,6 +89,7 @@ public class ArtemisPasskeyWebAuthnConfigurer {
         this.userCredentialRepository = userCredentialRepository;
         this.publicKeyCredentialCreationOptionsRepository = publicKeyCredentialCreationOptionsRepository;
         this.publicKeyCredentialRequestOptionsRepository = publicKeyCredentialRequestOptionsRepository;
+        this.profileService = profileService;
     }
 
     /**
@@ -112,7 +116,7 @@ public class ArtemisPasskeyWebAuthnConfigurer {
             allowedOrigins.add(clientUrlToRegisterPasskey.toString());
             allowedOrigins.add(clientUrlToAuthenticateWithPasskey.toString());
 
-            addAndroidApkKeyHashes();
+            addAndroidApkKeyHashesToAllowedOrigins();
 
             log.info("WebAuthn passkey authentication enabled with RP ID: {}", relyingPartyId);
             log.info("Allowed origins: {}", allowedOrigins);
@@ -125,17 +129,17 @@ public class ArtemisPasskeyWebAuthnConfigurer {
     /**
      * Adds Android APK key hashes to allowed origins if configured.
      */
-    private void addAndroidApkKeyHashes() {
+    private void addAndroidApkKeyHashesToAllowedOrigins() {
         if (androidSha256CertFingerprintRelease != null) {
             String hash = AndroidApkKeyHashUtil.getHashFromFingerprint(androidSha256CertFingerprintRelease);
             allowedOrigins.add(hash);
             log.info("Added Android release APK key hash: {}", hash);
         }
 
-        if (androidSha256CertFingerprintDebug != null) {
+        if (androidSha256CertFingerprintDebug != null && !profileService.isProductionActive()) {
             String hash = AndroidApkKeyHashUtil.getHashFromFingerprint(androidSha256CertFingerprintDebug);
             allowedOrigins.add(hash);
-            log.info("Added Android debug APK key hash: {}", hash);
+            log.warn("Added Android debug APK key hash: {}", hash);
         }
     }
 
