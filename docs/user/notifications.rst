@@ -55,7 +55,7 @@ For convenience, Artemis provides preset configurations that you can apply with 
 |notification-settings|
 
 Notification Types
-^^^^^^^^
+^^^^^^^^^^^^^^^^^^
 
 The table below shows all supported notification types and which channels they support:
 
@@ -210,8 +210,8 @@ For detailed information about the content sent with each notification, you can 
 .. |notification-settings| image:: notifications/notification-settings.png
     :width: 1000
 .. |notification-push| image:: notifications/notification-push.png
-    :width: 250
+    :width: 300
 .. |notification-general| image:: notifications/notification-general.png
-    :width: 500
+    :width: 400
 .. |notification-web| image:: notifications/notification-web.png
-    :width: 900
+    :width: 1200
