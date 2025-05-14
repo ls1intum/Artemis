@@ -101,6 +101,13 @@ public class IrisMessageResource {
         return ResponseEntity.created(new URI(uriString)).body(savedMessage);
     }
 
+    /**
+     * POST sessions/{sessionId}/tutor-suggestion: Send a new tutor suggestion request to the LLM
+     *
+     * @param sessionId of the session
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body true, or with status
+     * @throws URISyntaxException if the URI syntax is incorrect
+     */
     @PostMapping("sessions/{sessionId}/tutor-suggestion")
     @EnforceAtLeastTutor
     public ResponseEntity<Boolean> sendTutorSuggestionMessage(@PathVariable Long sessionId) throws URISyntaxException {

@@ -104,8 +104,8 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.pyrisDTOService = pyrisDTOService;
         this.postRepository = postRepository;
-        this.irisMessageService = irisMessageService1;
-        this.llmTokenUsageService = llmTokenUsageService1;
+        this.irisMessageService = irisMessageService;
+        this.llmTokenUsageService = llmTokenUsageService;
     }
 
     @Override

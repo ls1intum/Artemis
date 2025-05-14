@@ -242,7 +242,7 @@ describe('IrisChatService', () => {
             expect(res).toBeUndefined();
         });
 
-        expect(httpStub).toHaveBeenCalledWith(id, expect.anything());
+        expect(httpStub).toHaveBeenCalledWith(id);
         tick();
     }));
 

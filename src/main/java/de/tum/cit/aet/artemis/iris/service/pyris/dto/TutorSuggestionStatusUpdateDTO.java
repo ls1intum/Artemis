@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.iris.service.pyris.dto;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.cit.aet.artemis.core.domain.LLMRequest;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 
@@ -13,5 +15,6 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
  * @param stages     Stages of the pipeline
  * @param tokens     tokens used for the suggestion
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record TutorSuggestionStatusUpdateDTO(String suggestion, String result, List<PyrisStageDTO> stages, List<LLMRequest> tokens) {
 }
