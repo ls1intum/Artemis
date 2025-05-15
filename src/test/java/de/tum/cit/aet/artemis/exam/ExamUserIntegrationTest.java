@@ -156,7 +156,6 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
         });
     }
 
-    @Disabled // TODO hazelcast caching issue - see CacheConfiguration
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUploadExamUserImages() throws Exception {
