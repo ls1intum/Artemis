@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title th:text="#{email.buildAgent.SelfPaused.title}">Build Agent Self-Paused</title>
+    <th:block th:replace="~{mail/notification/fragments :: headMetaDataAndIconLink}"/>
+    <th:block th:replace="~{mail/notification/fragments :: css}"/>
+</head>
+    <body>
+        <th:block th:replace="~{mail/notification/fragments :: header}"/>
+        <div id="message-body">
+            <th:block>
+                <span th:text="#{email.greetings}">Dear </span>
+                <span class="bold-text" th:text="${recipient.getName()}">fullName</span>
+                <br>
+            </th:block>
+            <div class="notification-content">
+                <span th:text="#{email.buildAgent.SelfPaused.text1(
+                    ${parameters['buildAgentName']}
+                    )}">Build agent paused itself due to consecutive failed or timed out build jobs.
+                </span>
+            </div>
+            <th:block th:replace="~{mail/notification/fragments :: farewell}"/>
+        </div>
+    </body>
+</html>

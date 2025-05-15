@@ -393,14 +393,14 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
 
         await().until(() -> {
             var buildAgent = buildAgentInformation.get(hazelcastInstance.getCluster().getLocalMember().getAddress().toString());
-            return buildAgent != null && buildAgent.status() == BuildAgentInformation.BuildAgentStatus.PAUSED;
+            return buildAgent != null && buildAgent.status() == BuildAgentInformation.BuildAgentStatus.SELF_PAUSED;
         });
 
         // resume and wait for unpause not interfere with other tests
         resumeBuildAgentTopic.publish(buildAgentShortName);
         await().until(() -> {
             var buildAgent = buildAgentInformation.get(hazelcastInstance.getCluster().getLocalMember().getAddress().toString());
-            return buildAgent.status() != BuildAgentInformation.BuildAgentStatus.PAUSED;
+            return buildAgent.status() != BuildAgentInformation.BuildAgentStatus.SELF_PAUSED;
         });
     }
 }

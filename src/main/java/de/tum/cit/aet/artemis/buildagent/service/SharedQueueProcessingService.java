@@ -165,7 +165,7 @@ public class SharedQueueProcessingService {
 
         distributedDataAccessService.getPauseBuildAgentTopic().addMessageListener(message -> {
             if (buildAgentShortName.equals(message.getMessageObject())) {
-                pauseBuildAgent();
+                pauseBuildAgent(false);
             }
         });
 
@@ -359,7 +359,7 @@ public class SharedQueueProcessingService {
             // after processing a build job, remove it from the processing jobs
             distributedDataAccessService.getDistributedProcessingJobs().remove(buildJob.id());
             localProcessingJobs.decrementAndGet();
-            buildAgentInformationService.updateLocalBuildAgentInformationWithRecentJob(finishedJob, isPaused.get());
+            buildAgentInformationService.updateLocalBuildAgentInformationWithRecentJob(finishedJob, isPaused.get(), false);
 
             consecutiveBuildJobFailures.set(0);
 
@@ -413,11 +413,12 @@ public class SharedQueueProcessingService {
 
             distributedDataAccessService.getDistributedProcessingJobs().remove(buildJob.id());
             localProcessingJobs.decrementAndGet();
-            buildAgentInformationService.updateLocalBuildAgentInformationWithRecentJob(job, isPaused.get());
+            buildAgentInformationService.updateLocalBuildAgentInformationWithRecentJob(job, isPaused.get(), false);
 
             if (consecutiveBuildJobFailures.get() >= pauseAfterConsecutiveFailedJobs) {
                 log.error("Build agent has failed to process build jobs {} times in a row. Pausing build agent.", consecutiveBuildJobFailures.get());
-                pauseBuildAgent();
+                pauseBuildAgent(true);
+
             }
 
             checkAvailabilityAndProcessNextBuild();
@@ -425,7 +426,7 @@ public class SharedQueueProcessingService {
         });
     }
 
-    private void pauseBuildAgent() {
+    private void pauseBuildAgent(boolean dueToFailures) {
         if (isPaused.get()) {
             log.info("Build agent is already paused");
             return;
@@ -437,7 +438,7 @@ public class SharedQueueProcessingService {
 
             isPaused.set(true);
             removeListenerAndCancelScheduledFuture();
-            buildAgentInformationService.updateLocalBuildAgentInformation(isPaused.get());
+            buildAgentInformationService.updateLocalBuildAgentInformation(isPaused.get(), dueToFailures);
 
             log.info("Gracefully cancelling running build jobs");
             Set<String> runningBuildJobIds = buildJobManagementService.getRunningBuildJobIds();
