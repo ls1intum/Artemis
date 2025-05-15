@@ -54,23 +54,25 @@ public class JWTFilter extends GenericFilterBean {
         Date expirationDate = this.tokenProvider.getExpirationDate(jwtToken);
 
         long currentTime = System.currentTimeMillis();
-        long tokenValidityInSeconds = this.tokenProvider.getTokenValidity(false);
+        long tokenValidityInMilliseconds = Math.multiplyExact(this.tokenProvider.getTokenValidity(false), 1000);
         long remainingLifetime = expirationDate.getTime() - currentTime;
 
-        boolean isRemainingLifetimeBelowHalf = remainingLifetime < tokenValidityInSeconds / 2;
+        boolean isRemainingLifetimeBelowHalf = remainingLifetime < tokenValidityInMilliseconds / 2;
         // if (isRemainingLifetimeBelowHalf) {
-        long now = new Date().getTime();
-        long newTokenExpirationTime = Math.min(now + tokenValidityInSeconds, issuedAt.getTime() + this.tokenValidityInSecondsForPasskey);
-        long rotatedTokenDuration = Math.min(newTokenExpirationTime - now, this.tokenProvider.getTokenValidity(true));
+        long nowInMilliseconds = new Date().getTime();
+        long newTokenExpirationTimeInMilliseconds = Math.min(nowInMilliseconds + tokenValidityInMilliseconds,
+                issuedAt.getTime() + Math.multiplyExact(this.tokenValidityInSecondsForPasskey, 1000));
+        long rotatedTokenDurationInSeconds = Math.min(Math.multiplyExact(newTokenExpirationTimeInMilliseconds - nowInMilliseconds, 1000),
+                this.tokenProvider.getTokenValidity(true));
 
         UserDetails updatedUserDetails = userDetailsService.loadUserByUsername(authentication.getName());
         if (!updatedUserDetails.equals(authentication.getPrincipal())) {
             throw new NotAuthorizedException("User details have changed, cannot rotate token");
         }
 
-        String rotatedToken = this.tokenProvider.createToken(authentication, issuedAt, new Date(newTokenExpirationTime), this.tokenProvider.getTools(jwtToken));
+        String rotatedToken = this.tokenProvider.createToken(authentication, issuedAt, new Date(newTokenExpirationTimeInMilliseconds), this.tokenProvider.getTools(jwtToken));
 
-        ResponseCookie responseCookie = jwtCookieService.buildRotatedCookie(rotatedToken, rotatedTokenDuration);
+        ResponseCookie responseCookie = jwtCookieService.buildRotatedCookie(rotatedToken, rotatedTokenDurationInSeconds);
         response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
         // }
     }
