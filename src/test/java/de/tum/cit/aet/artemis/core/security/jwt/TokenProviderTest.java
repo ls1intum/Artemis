@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.core.security.jwt;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
@@ -16,6 +18,9 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.web.webauthn.api.Bytes;
+import org.springframework.security.web.webauthn.api.PublicKeyCredentialUserEntity;
+import org.springframework.security.web.webauthn.authentication.WebAuthnAuthentication;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.core.management.SecurityMetersService;
@@ -27,6 +32,8 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import tech.jhipster.config.JHipsterProperties;
 
 class TokenProviderTest {
+
+    private static final String TEST_PREFIX = "tokenprovider";
 
     private static final long ONE_MINUTE = 60000;
 
@@ -50,7 +57,6 @@ class TokenProviderTest {
         ReflectionTestUtils.setField(tokenProvider, "key", key);
         ReflectionTestUtils.setField(tokenProvider, "tokenValidityInMilliseconds", ONE_MINUTE);
         ReflectionTestUtils.setField(tokenProvider, "tokenValidityInMillisecondsForRememberMe", TEN_MINUTES);
-
     }
 
     @Test
@@ -152,10 +158,32 @@ class TokenProviderTest {
         assertThat(isAuthenticatedWithPasskey).isFalse();
     }
 
+    @Test
+    void testAuthenticatedWithPasskey_isTrueWhenAuthenticatedWithPasskey() {
+        Authentication authentication = createWebAuthnAuthentication();
+        String token = tokenProvider.createToken(authentication, false);
+
+        boolean isAuthenticatedWithPasskey = tokenProvider.getAuthenticatedWithPasskey(token);
+
+        assertThat(isAuthenticatedWithPasskey).isTrue();
+    }
+
     private Authentication createAuthentication() {
         Collection<GrantedAuthority> authorities = new ArrayList<>();
         authorities.add(new SimpleGrantedAuthority(Role.ANONYMOUS.getAuthority()));
         return new UsernamePasswordAuthenticationToken("anonymous", "anonymous", authorities);
+    }
+
+    private Authentication createWebAuthnAuthentication() {
+        Collection<GrantedAuthority> authorities = new ArrayList<>();
+        authorities.add(new SimpleGrantedAuthority(Role.ANONYMOUS.getAuthority()));
+
+        PublicKeyCredentialUserEntity principal = mock(PublicKeyCredentialUserEntity.class);
+        when(principal.getId()).thenReturn(new Bytes("anonymous".getBytes(StandardCharsets.UTF_8)));
+        when(principal.getName()).thenReturn("anonymous");
+        when(principal.getDisplayName()).thenReturn("Anonymous User");
+
+        return new WebAuthnAuthentication(principal, authorities);
     }
 
     private String createUnsupportedToken() {
