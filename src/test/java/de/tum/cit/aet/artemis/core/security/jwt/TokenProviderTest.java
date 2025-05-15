@@ -190,6 +190,15 @@ class TokenProviderTest {
         assertThat(actualTool).isNotNull().isEqualTo(expectedTool);
     }
 
+    @Test
+    void testGetTools_shouldNotFailIfNull() {
+        String token = Jwts.builder().claim("authenticatedWithPasskey", true).signWith(key, Jwts.SIG.HS512).compact();
+
+        ToolTokenType actualTool = tokenProvider.getTools(token);
+
+        assertThat(actualTool).isNull();
+    }
+
     private Authentication createAuthentication() {
         Collection<GrantedAuthority> authorities = new ArrayList<>();
         authorities.add(new SimpleGrantedAuthority(Role.ANONYMOUS.getAuthority()));

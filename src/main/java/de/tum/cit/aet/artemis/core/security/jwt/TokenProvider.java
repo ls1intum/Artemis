@@ -231,6 +231,11 @@ public class TokenProvider {
     public ToolTokenType getTools(String authToken) {
         Claims claims = parseClaims(authToken);
         String toolString = claims.get(TOOLS_KEY, String.class);
+
+        if (toolString == null) {
+            return null;
+        }
+
         return ToolTokenType.valueOf(toolString);
     }
 
