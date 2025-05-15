@@ -248,12 +248,10 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
 
         User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
-        pastCourse.getExercises().forEach(exercise -> {
-            exercise.getStudentParticipations().forEach(participation -> {
-                participation.setPresentationScore(100.0);
-                studentParticipationRepository.save(participation);
-            });
-        });
+        pastCourse.getExercises().forEach(exercise -> exercise.getStudentParticipations().forEach(participation -> {
+            participation.setPresentationScore(100.0);
+            studentParticipationRepository.save(participation);
+        }));
 
         CourseForDashboardDTO courseForDashboard = courseScoreCalculationService.getScoresAndParticipationResults(pastCourse, gradingScale, student.getId());
         assertThat(courseForDashboard.course()).isEqualTo(pastCourse);
