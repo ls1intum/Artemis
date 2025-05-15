@@ -157,19 +157,9 @@ public class TutorialGroupService {
         else {
             sessions = tutorialGroupSessionRepository.findAllByTutorialGroupId(tutorialGroup.getId());
         }
-        sessions.stream()
-                // 1) only sessions that have already ended
-                .filter(s -> s.getEnd().isBefore(ZonedDateTime.now()))
-                // 2) sort newest → oldest
-                .sorted(Comparator.comparing(TutorialGroupSession::getStart).reversed())
-                // 3) pick the last three scheduled slots (even if some are cancelled)
-                .limit(3)
-                // 4) drop cancelled ones
-                .filter(s -> TutorialGroupSessionStatus.ACTIVE.equals(s.getStatus()))
-                // 5) drop those without recorded attendance
-                .map(TutorialGroupSession::getAttendanceCount).filter(Objects::nonNull)
-                // 6) average whatever remains (could be 0,1,2 or 3 sessions)
-                .mapToInt(Integer::intValue).average()
+        sessions.stream().filter(s -> s.getEnd().isBefore(ZonedDateTime.now())).filter(s -> TutorialGroupSessionStatus.ACTIVE.equals(s.getStatus()))
+                .filter(s -> s.getAttendanceCount() != null).sorted(Comparator.comparing(TutorialGroupSession::getStart).reversed()).limit(3)
+                .mapToInt(TutorialGroupSession::getAttendanceCount).average()
                 .ifPresentOrElse(v -> tutorialGroup.setAverageAttendance((int) Math.round(v)), () -> tutorialGroup.setAverageAttendance(null));
     }
 
