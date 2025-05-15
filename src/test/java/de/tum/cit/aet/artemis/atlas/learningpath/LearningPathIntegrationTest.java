@@ -317,7 +317,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
         createCompetencyRESTCall();
 
         final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
-        var learningPath = learningPathRepository.findWithEagerCompetenciesByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
+        var learningPath = learningPathTestAuxRepository.findWithEagerCompetenciesByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
         assertThat(learningPath.getProgress()).as("contains no completed competency").isEqualTo(0);
     }
 
@@ -405,7 +405,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
             course = courseRepository.save(course);
             var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
             student = userTestRepository.findWithLearningPathsByIdElseThrow(student.getId());
-            learningPathRepository.deleteAll(student.getLearningPaths());
+            learningPathTestAuxRepository.deleteAll(student.getLearningPaths());
             request.get("/api/atlas/courses/" + course.getId() + "/learning-path/me", HttpStatus.NOT_FOUND, LearningPathDTO.class);
         }
     }

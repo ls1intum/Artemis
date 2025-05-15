@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.repository.LearningPathRepository;
 import de.tum.cit.aet.artemis.atlas.service.learningpath.LearningPathService;
+import de.tum.cit.aet.artemis.atlas.test_repository.LearningPathTestAuxRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
@@ -31,6 +32,9 @@ public class LearningPathUtilService {
     @Autowired
     private LearningPathRepository learningPathRepository;
 
+    @Autowired
+    private LearningPathTestAuxRepository learningPathTestAuxRepository;
+
     /**
      * Enable and generate learning paths for course.
      *
@@ -50,7 +54,7 @@ public class LearningPathUtilService {
      * @param user the user for which all learning paths should be deleted
      */
     public void deleteLearningPaths(User user) {
-        learningPathRepository.deleteAll(user.getLearningPaths());
+        learningPathTestAuxRepository.deleteAll(user.getLearningPaths());
     }
 
 }
