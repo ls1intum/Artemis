@@ -142,6 +142,16 @@ class TokenProviderTest {
         assertThat(validity).isEqualTo(ONE_MINUTE);
     }
 
+    @Test
+    void testAuthenticatedWithPasskey_isFalseWhenAuthenticatedWithPassword() {
+        Authentication authentication = createAuthentication();
+        String token = tokenProvider.createToken(authentication, false);
+
+        boolean isAuthenticatedWithPasskey = tokenProvider.getAuthenticatedWithPasskey(token);
+
+        assertThat(isAuthenticatedWithPasskey).isFalse();
+    }
+
     private Authentication createAuthentication() {
         Collection<GrantedAuthority> authorities = new ArrayList<>();
         authorities.add(new SimpleGrantedAuthority(Role.ANONYMOUS.getAuthority()));
