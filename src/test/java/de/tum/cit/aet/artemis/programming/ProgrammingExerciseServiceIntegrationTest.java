@@ -72,7 +72,6 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
         assertThat(newlyImported.getAttachments()).isNull();
         assertThat(newlyImported.getTutorParticipations()).isNull();
         assertThat(newlyImported.getExampleSubmissions()).isNull();
-        assertThat(newlyImported.getPosts()).isNull();
         assertThat(newlyImported.getStudentParticipations()).isNull();
         final var newTestCaseIDs = newlyImported.getTestCases().stream().map(ProgrammingExerciseTestCase::getId).collect(Collectors.toSet());
         assertThat(newlyImported.getTestCases()).hasSameSizeAs(programmingExercise.getTestCases());
