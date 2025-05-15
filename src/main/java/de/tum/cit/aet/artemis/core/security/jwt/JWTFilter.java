@@ -13,7 +13,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.ws.rs.NotAuthorizedException;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
@@ -41,14 +40,13 @@ public class JWTFilter extends GenericFilterBean {
 
     private final UserDetailsService userDetailsService;
 
-    // TODO add validation here (post construct)
-    @Value("${jhipster.security.authentication.jwt.token-validity-in-seconds-for-passkey}")
-    private long tokenValidityInSecondsForPasskey;
+    private final long tokenValidityInSecondsForPasskey;
 
-    public JWTFilter(TokenProvider tokenProvider, JWTCookieService jwtCookieService, UserDetailsService userDetailsService) {
+    public JWTFilter(TokenProvider tokenProvider, JWTCookieService jwtCookieService, UserDetailsService userDetailsService, long tokenValidityInSecondsForPasskey) {
         this.tokenProvider = tokenProvider;
         this.jwtCookieService = jwtCookieService;
         this.userDetailsService = userDetailsService;
+        this.tokenValidityInSecondsForPasskey = tokenValidityInSecondsForPasskey;
     }
 
     private void rotateTokenSilently(String jwtToken, Authentication authentication, HttpServletResponse response) throws NotAuthorizedException {
@@ -60,21 +58,21 @@ public class JWTFilter extends GenericFilterBean {
         long remainingLifetime = expirationDate.getTime() - currentTime;
 
         boolean isRemainingLifetimeBelowHalf = remainingLifetime < tokenValidityInSeconds / 2;
-        if (isRemainingLifetimeBelowHalf) {
-            long now = new Date().getTime();
-            long newTokenExpirationTime = Math.min(now + tokenValidityInSeconds, issuedAt.getTime() + this.tokenValidityInSecondsForPasskey);
-            long rotatedTokenDuration = newTokenExpirationTime - now;
+        // if (isRemainingLifetimeBelowHalf) {
+        long now = new Date().getTime();
+        long newTokenExpirationTime = Math.min(now + tokenValidityInSeconds, issuedAt.getTime() + this.tokenValidityInSecondsForPasskey);
+        long rotatedTokenDuration = Math.min(newTokenExpirationTime - now, this.tokenProvider.getTokenValidity(true));
 
-            UserDetails updatedUserDetails = userDetailsService.loadUserByUsername(authentication.getName());
-            if (!updatedUserDetails.equals(authentication.getPrincipal())) {
-                throw new NotAuthorizedException("User details have changed, cannot rotate token");
-            }
-
-            String rotatedToken = this.tokenProvider.createToken(authentication, issuedAt, new Date(newTokenExpirationTime), this.tokenProvider.getTools(jwtToken));
-
-            ResponseCookie responseCookie = jwtCookieService.buildRotatedCookie(rotatedToken, rotatedTokenDuration);
-            response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
+        UserDetails updatedUserDetails = userDetailsService.loadUserByUsername(authentication.getName());
+        if (!updatedUserDetails.equals(authentication.getPrincipal())) {
+            throw new NotAuthorizedException("User details have changed, cannot rotate token");
         }
+
+        String rotatedToken = this.tokenProvider.createToken(authentication, issuedAt, new Date(newTokenExpirationTime), this.tokenProvider.getTools(jwtToken));
+
+        ResponseCookie responseCookie = jwtCookieService.buildRotatedCookie(rotatedToken, rotatedTokenDuration);
+        response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
+        // }
     }
 
     @Override

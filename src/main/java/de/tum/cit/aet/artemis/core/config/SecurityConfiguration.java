@@ -93,6 +93,10 @@ public class SecurityConfiguration {
 
     private final DomainUserDetailsService userDetailsService;
 
+    // TODO add validation here (post construct)
+    @Value("${artemis.user-management.passkey.token-validity-in-seconds-for-passkey:15552000}")
+    private long tokenValidityInSecondsForPasskey;
+
     @Value("#{'${spring.prometheus.monitoringIp:127.0.0.1}'.split(',')}")
     private List<String> monitoringIpAddresses;
 
@@ -361,6 +365,6 @@ public class SecurityConfiguration {
      * @return JWTConfigurer configured with a token provider that generates and validates JWT tokens.
      */
     private JWTConfigurer securityConfigurerAdapter() {
-        return new JWTConfigurer(tokenProvider, jwtCookieService, userDetailsService);
+        return new JWTConfigurer(tokenProvider, jwtCookieService, userDetailsService, tokenValidityInSecondsForPasskey);
     }
 }
