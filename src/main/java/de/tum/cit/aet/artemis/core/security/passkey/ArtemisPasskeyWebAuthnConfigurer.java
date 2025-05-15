@@ -5,6 +5,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import jakarta.annotation.PostConstruct;
@@ -26,7 +27,7 @@ import org.springframework.stereotype.Component;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
-import de.tum.cit.aet.artemis.core.service.ProfileService;
+import de.tum.cit.aet.artemis.core.service.AndroidFingerprintService;
 import de.tum.cit.aet.artemis.core.util.AndroidApkKeyHashUtil;
 
 /**
@@ -52,11 +53,10 @@ public class ArtemisPasskeyWebAuthnConfigurer {
 
     private final PublicKeyCredentialRequestOptionsRepository publicKeyCredentialRequestOptionsRepository;
 
+    private final AndroidFingerprintService androidFingerprintService;
+
     @Value("${" + Constants.PASSKEY_ENABLED_PROPERTY_NAME + ":false}")
     private boolean passkeyEnabled;
-
-    @Value("${info.testServer:false}")
-    private boolean isTestServer;
 
     /**
      * We expect the server URL to equal the client URL
@@ -67,24 +67,16 @@ public class ArtemisPasskeyWebAuthnConfigurer {
     @Value("${client.port:${server.port}}")
     private String port;
 
-    @Value("${artemis.androidSha256CertFingerprints.release: #{null}}")
-    private String androidSha256CertFingerprintRelease;
-
-    @Value("${artemis.androidSha256CertFingerprints.debug: #{null}}")
-    private String androidSha256CertFingerprintDebug;
-
     private final Set<String> allowedOrigins = new HashSet<>();
 
     private String relyingPartyId;
 
     private final String relyingPartyName = "Artemis";
 
-    private final ProfileService profileService;
-
     public ArtemisPasskeyWebAuthnConfigurer(MappingJackson2HttpMessageConverter converter, JWTCookieService jwtCookieService, UserRepository userRepository,
             PublicKeyCredentialUserEntityRepository publicKeyCredentialUserEntityRepository, UserCredentialRepository userCredentialRepository,
             PublicKeyCredentialCreationOptionsRepository publicKeyCredentialCreationOptionsRepository,
-            PublicKeyCredentialRequestOptionsRepository publicKeyCredentialRequestOptionsRepository, ProfileService profileService) {
+            PublicKeyCredentialRequestOptionsRepository publicKeyCredentialRequestOptionsRepository, AndroidFingerprintService androidFingerprintService) {
         this.converter = converter;
         this.jwtCookieService = jwtCookieService;
         this.userRepository = userRepository;
@@ -92,7 +84,7 @@ public class ArtemisPasskeyWebAuthnConfigurer {
         this.userCredentialRepository = userCredentialRepository;
         this.publicKeyCredentialCreationOptionsRepository = publicKeyCredentialCreationOptionsRepository;
         this.publicKeyCredentialRequestOptionsRepository = publicKeyCredentialRequestOptionsRepository;
-        this.profileService = profileService;
+        this.androidFingerprintService = androidFingerprintService;
     }
 
     /**
@@ -133,18 +125,15 @@ public class ArtemisPasskeyWebAuthnConfigurer {
      * Adds Android APK key hashes to allowed origins if configured.
      */
     private void addAndroidApkKeyHashesToAllowedOrigins() {
-        if (androidSha256CertFingerprintRelease != null) {
-            String hash = AndroidApkKeyHashUtil.getHashFromFingerprint(androidSha256CertFingerprintRelease);
-            allowedOrigins.add(hash);
-            log.info("Added Android release APK key hash: {}", hash);
+        List<String> fingerprints = androidFingerprintService.getFingerprints();
+        if (fingerprints.isEmpty()) {
+            log.warn("No Android APK key hashes configured. Passkey authentication will not work for Android.");
+            return;
         }
 
-        boolean isDebugFingerprintAllowed = !profileService.isProductionActive() || isTestServer;
-        if (androidSha256CertFingerprintDebug != null && isDebugFingerprintAllowed) {
-            String hash = AndroidApkKeyHashUtil.getHashFromFingerprint(androidSha256CertFingerprintDebug);
-            allowedOrigins.add(hash);
-            log.warn("Added Android debug APK key hash: {}", hash);
-        }
+        List<String> keyHashes = fingerprints.stream().map(AndroidApkKeyHashUtil::getHashFromFingerprint).toList();
+
+        allowedOrigins.addAll(keyHashes);
     }
 
     /**
