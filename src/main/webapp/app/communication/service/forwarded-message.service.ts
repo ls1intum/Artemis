@@ -41,7 +41,7 @@ export class ForwardedMessageService {
         }
         const params = new HttpParams().set('postingIds', postingIds.join(',')).set('type', type.toString());
 
-        return this.http.get<{ id: number; messages: ForwardedMessageDTO[] }[]>(this.resourceUrl, { params, observe: 'response' }).pipe(
+        return this.http.get<ForwardedMessagesGroupDTO[]>(this.resourceUrl, { params, observe: 'response' }).pipe(
             catchError(() => {
                 return throwError(() => new Error('Failed to retrieve forwarded messages'));
             }),
