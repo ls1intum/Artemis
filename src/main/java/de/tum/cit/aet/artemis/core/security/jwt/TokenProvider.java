@@ -89,7 +89,7 @@ public class TokenProvider {
      * Gets the validity for the generated tokens.
      *
      * @param rememberMe Determines Token lifetime
-     * @return long The validity of the generated tokens
+     * @return long The validity of the generated tokens in milliseconds
      */
     public long getTokenValidity(boolean rememberMe) {
         return rememberMe ? this.tokenValidityInMillisecondsForRememberMe : this.tokenValidityInMilliseconds;
