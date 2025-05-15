@@ -45,10 +45,10 @@ import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.programming.domain.AeolusTarget;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 
-// TODO: rewrite this test to use LocalVc
+// TODO: rewrite this test to use LocalVC
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @Execution(ExecutionMode.SAME_THREAD)
-class ProgrammingExerciseLocalVcJenkinsIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVcTest {
+class ProgrammingExerciseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVCTest {
 
     private static final String TEST_PREFIX = "progexlocalvcjenkins";
 
@@ -283,8 +283,6 @@ class ProgrammingExerciseLocalVcJenkinsIntegrationTest extends AbstractProgrammi
         programmingExerciseTestService.importFromFile_missingRepository_BadRequest();
     }
 
-    // TODO: enable or remove the test
-    @Disabled
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
@@ -293,8 +291,6 @@ class ProgrammingExerciseLocalVcJenkinsIntegrationTest extends AbstractProgrammi
         programmingExerciseTestService.importFromFile_validJavaExercise_isSuccessfullyImported(scaEnabled);
     }
 
-    // TODO: enable or remove the test
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importExerciseFromFile_embeddedFiles_filesCopied() throws Exception {
@@ -302,8 +298,6 @@ class ProgrammingExerciseLocalVcJenkinsIntegrationTest extends AbstractProgrammi
         programmingExerciseTestService.importFromFile_embeddedFiles_embeddedFilesCopied();
     }
 
-    // TODO: enable or remove the test
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importExerciseFromFile_buildPlanPresent_buildPlanSet() throws Exception {
@@ -311,8 +305,6 @@ class ProgrammingExerciseLocalVcJenkinsIntegrationTest extends AbstractProgrammi
         programmingExerciseTestService.importFromFile_buildPlanPresent_buildPlanUsed();
     }
 
-    // TODO: enable or remove the test
-    @Disabled
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(value = ProgrammingLanguage.class, names = { "HASKELL", "PYTHON" }, mode = EnumSource.Mode.INCLUDE)

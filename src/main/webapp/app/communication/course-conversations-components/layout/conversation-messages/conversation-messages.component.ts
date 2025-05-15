@@ -21,7 +21,7 @@ import {
 } from '@angular/core';
 import { faCircleNotch, faEnvelope, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { Conversation, ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
-import { Subject, forkJoin, map, takeUntil } from 'rxjs';
+import { Observable, Subject, forkJoin, map, takeUntil } from 'rxjs';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { PageType, PostContextFilter, PostSortCriterion, SortDirection } from 'app/communication/metis.util';
@@ -43,7 +43,7 @@ import { NgClass } from '@angular/common';
 import { PostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { MessageInlineInputComponent } from 'app/communication/message/message-inline-input/message-inline-input.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ForwardedMessageDTO } from 'app/communication/shared/entities/forwarded-message.model';
+import { ForwardedMessageDTO, ForwardedMessagesGroupDTO } from 'app/communication/shared/entities/forwarded-message.model';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { Posting, PostingType } from 'app/communication/shared/entities/posting.model';
 import { canCreateNewMessageInConversation } from 'app/communication/conversations/conversation-permissions.utils';
@@ -288,148 +288,229 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     }
 
     private groupPosts(): void {
+        // If there are no posts, clear groupedPosts and exit.
         if (!this.posts || this.posts.length === 0) {
             this.groupedPosts = [];
             return;
         }
 
-        const sortedPosts = this.posts.sort((a, b) => {
+        // Sort posts by the creation date
+        const sortedPosts = [...this.posts].sort((a, b) => {
             return a.creationDate!.valueOf() - b.creationDate!.valueOf();
         });
 
-        const groups: PostGroup[] = [];
-        let currentGroup: PostGroup = {
-            author: sortedPosts[0].author,
-            posts: [{ ...sortedPosts[0], isConsecutive: false }],
-        };
+        // Compute new grouping based on current posts.
+        const computedGroups: PostGroup[] = [];
+        let currentGroup: PostGroup | undefined = undefined;
 
-        for (let i = 1; i < sortedPosts.length; i++) {
-            const currentPost = sortedPosts[i];
-            const lastPostInGroup = currentGroup.posts[currentGroup.posts.length - 1];
+        sortedPosts.forEach((post) => {
+            if (!currentGroup) {
+                // Start new group if none exists.
+                currentGroup = { author: post.author, posts: [{ ...post, isConsecutive: false }] };
+                return;
+            }
+
+            const lastPost = currentGroup.posts[currentGroup.posts.length - 1];
+            const currentDate = post.creationDate;
+            const lastDate = lastPost.creationDate;
 
             let timeDiff = Number.MAX_SAFE_INTEGER;
-            if (currentPost.creationDate && lastPostInGroup.creationDate) {
-                timeDiff = currentPost.creationDate.diff(lastPostInGroup.creationDate, 'minute');
+            if (currentDate && lastDate) {
+                timeDiff = currentDate.diff(lastDate, 'minute');
             }
 
-            if (currentPost.author?.id === currentGroup.author?.id && timeDiff < 5 && timeDiff >= 0) {
-                currentGroup.posts.push({ ...currentPost, isConsecutive: true }); // consecutive post
+            if (this.isAuthorEqual(currentGroup, { author: post.author, posts: [] }) && timeDiff < 5 && timeDiff >= 0) {
+                currentGroup.posts.push({ ...post, isConsecutive: true });
             } else {
-                groups.push(currentGroup);
-                currentGroup = {
-                    author: currentPost.author,
-                    posts: [{ ...currentPost, isConsecutive: false }],
-                };
+                computedGroups.push(currentGroup);
+                currentGroup = { author: post.author, posts: [{ ...post, isConsecutive: false }] };
             }
+        });
+        if (currentGroup) {
+            computedGroups.push(currentGroup);
         }
 
-        groups.push(currentGroup);
-
-        this.groupedPosts = groups;
-        this.cdr.detectChanges();
-    }
-
-    setPosts(): void {
-        if (this.content) {
-            this.previousScrollDistanceFromTop = this.content.nativeElement.scrollHeight - this.content.nativeElement.scrollTop;
-        }
-
-        this.applyPinnedMessageFilter();
-
-        this.posts = this.posts.slice().reverse();
-
-        const postIdsWithForwardedMessages = this.posts.filter((post) => post.hasForwardedMessages && post.id !== undefined).map((post) => post.id) as number[];
-
-        if (postIdsWithForwardedMessages.length > 0) {
-            this.metisService.getForwardedMessagesByIds(postIdsWithForwardedMessages, PostingType.POST)?.subscribe((response) => {
-                const forwardedMessagesGroups = response.body;
-
-                if (forwardedMessagesGroups) {
-                    const map = new Map<number, ForwardedMessageDTO[]>(forwardedMessagesGroups.map((group) => [group.id, group.messages]));
-
-                    const sourcePostIds: number[] = [];
-                    const sourceAnswerIds: number[] = [];
-
-                    map.forEach((messages) => {
-                        messages.forEach((message) => {
-                            if (message.sourceType?.toString() === 'POST' && message.sourceId) {
-                                sourcePostIds.push(message.sourceId);
-                            } else if (message.sourceType?.toString() === 'ANSWER' && message.sourceId) {
-                                sourceAnswerIds.push(message.sourceId);
-                            }
-                        });
-                    });
-
-                    const sourceRequests = [];
-                    if (sourcePostIds.length > 0) {
-                        sourceRequests.push(this.metisService.getSourcePostsByIds(sourcePostIds));
-                    }
-                    if (sourceAnswerIds.length > 0) {
-                        sourceRequests.push(this.metisService.getSourceAnswerPostsByIds(sourceAnswerIds));
-                    }
-
-                    if (sourceRequests.length > 0) {
-                        forkJoin(sourceRequests).subscribe((responses) => {
-                            let fetchedPosts: Post[] = [];
-                            let fetchedAnswerPosts: AnswerPost[] = [];
-
-                            responses.forEach((response) => {
-                                if (Array.isArray(response)) {
-                                    if (response.length > 0) {
-                                        if ((response[0] as Post).conversation !== undefined) {
-                                            fetchedPosts = response as Post[];
-                                        } else if ((response[0] as AnswerPost).resolvesPost !== undefined) {
-                                            fetchedAnswerPosts = response as AnswerPost[];
-                                        }
-                                    }
-                                }
-                            });
-
-                            const fetchedPostIds = new Set(fetchedPosts.map((post) => post.id));
-                            const fetchedAnswerPostIds = new Set(fetchedAnswerPosts.map((answerPost) => answerPost.id));
-
-                            this.posts = this.posts.map((post) => {
-                                const forwardedMessages = map.get(post.id!) || [];
-                                post.forwardedPosts = forwardedMessages
-                                    .filter((message) => message.sourceType?.toString() === 'POST')
-                                    .map((message) => {
-                                        if (message.sourceId && !fetchedPostIds.has(message.sourceId)) {
-                                            // A source post has not been found so it was most likely deleted.
-                                            // We return undefined to indicate a missing post and handle it later (see forwarded-message.component)
-                                            return undefined;
-                                        }
-                                        return fetchedPosts.find((fetchedPost) => fetchedPost.id === message.sourceId);
-                                    });
-
-                                post.forwardedAnswerPosts = forwardedMessages
-                                    .filter((message) => message.sourceType?.toString() === 'ANSWER')
-                                    .map((message) => {
-                                        if (message.sourceId && !fetchedAnswerPostIds.has(message.sourceId)) {
-                                            // A source post has not been found so it was most likely deleted.
-                                            // We return undefined to indicate a missing post and handle it later (see forwarded-message.component)
-                                            return undefined;
-                                        }
-                                        return fetchedAnswerPosts.find((fetchedAnswerPost) => fetchedAnswerPost.id === message.sourceId);
-                                    });
-                                return post;
-                            });
-
-                            this.groupPosts();
-                            this.cdr.markForCheck();
-                        });
-                    } else {
-                        // No source posts or answer posts to fetch
-                        this.groupPosts();
-                    }
+        // Update existing groups in place if possible.
+        if (this.groupedPosts.length === computedGroups.length) {
+            computedGroups.forEach((g, i) => {
+                if (this.groupedPosts[i].author?.id === g.author?.id) {
+                    // If the group belongs to the same author, update its posts array in place.
+                    this.groupedPosts[i].posts.splice(0, this.groupedPosts[i].posts.length, ...g.posts);
                 } else {
-                    // No forwarded messages found
-                    this.groupPosts();
+                    // If group identity has changed, replace the group.
+                    this.groupedPosts[i] = g;
                 }
             });
         } else {
-            // No posts with forwarded messages
-            this.groupPosts();
+            this.groupedPosts = computedGroups;
         }
+
+        // Trigger Angular change detection.
+        this.cdr.detectChanges();
+    }
+
+    private isAuthorEqual(groupA: PostGroup, groupB: PostGroup): boolean {
+        // Both groups are equal if neither has an author; otherwise, they are not
+        if (!groupA.author || !groupB.author) {
+            return !groupA.author && !groupB.author;
+        }
+        return groupA.author.id === groupB.author.id;
+    }
+
+    /**
+     * Sets and prepares the list of posts for display.
+     * Applies pinned message filters, loads forwarded messages and their sources, and groups posts for rendering.
+     */
+    setPosts(): void {
+        // Saves the current scroll position relative to the bottom.
+        if (this.content) {
+            this.previousScrollDistanceFromTop = this.content.nativeElement.scrollHeight - this.content.nativeElement.scrollTop;
+        }
+        this.applyPinnedMessageFilter();
+        this.reversePosts();
+
+        const postIds = this.getPostIdsWithForwardedMessages();
+
+        if (postIds.length === 0) {
+            this.groupPosts();
+            return;
+        }
+        // only fetch forwarded messages if there are any
+        this.fetchForwardedMessages(postIds);
+    }
+
+    private fetchForwardedMessages = (postIds: number[]) => {
+        this.metisService.getForwardedMessagesByIds(postIds, PostingType.POST)?.subscribe((response) => {
+            const forwardedMessagesGroups = response.body;
+
+            if (!forwardedMessagesGroups) {
+                this.groupPosts();
+                return;
+            }
+
+            const forwardedMessagesMap = this.mapForwardedMessages(forwardedMessagesGroups);
+            // collect post and answer post ids from the forwarded messages to be fetched
+            const { sourcePostIds, sourceAnswerIds } = this.collectSourceIds(forwardedMessagesMap);
+
+            const requests = this.buildSourceRequests(sourcePostIds, sourceAnswerIds);
+
+            if (requests.length === 0) {
+                this.groupPosts();
+                return;
+            }
+
+            // fetch the actual information and wait until all responses are received before grouping the posts
+            forkJoin(requests).subscribe((responses) => {
+                const { fetchedPosts, fetchedAnswerPosts } = this.extractFetchedSources(responses);
+
+                this.posts = this.attachForwardedMessages(this.posts, forwardedMessagesMap, fetchedPosts, fetchedAnswerPosts);
+
+                this.groupPosts();
+                this.cdr.markForCheck();
+            });
+        });
+    };
+
+    /**
+     * Reverses the posts array to maintain chronological order.
+     */
+    private reversePosts(): void {
+        this.posts = this.posts.slice().reverse();
+    }
+
+    /**
+     * Filters posts that contain forwarded messages and have a valid ID.
+     */
+    private getPostIdsWithForwardedMessages(): number[] {
+        return this.posts.filter((post) => post.hasForwardedMessages && post.id !== undefined).map((post) => post.id!) as number[];
+    }
+
+    /**
+     * Converts list of forwarded message groups to a map from post ID to message list.
+     */
+    private mapForwardedMessages(groups: ForwardedMessagesGroupDTO[]): Map<number, ForwardedMessageDTO[]> {
+        return new Map(groups.map((group) => [group.id!, group.messages!]));
+    }
+
+    /**
+     * Extracts all source post and answer post IDs from forwarded messages.
+     */
+    private collectSourceIds(map: Map<number, ForwardedMessageDTO[]>): { sourcePostIds: number[]; sourceAnswerIds: number[] } {
+        const sourcePostIds: number[] = [];
+        const sourceAnswerIds: number[] = [];
+
+        map.forEach((messages) => {
+            messages.forEach((message) => {
+                if (message.sourceType?.toString() === 'POST' && message.sourceId) {
+                    sourcePostIds.push(message.sourceId);
+                } else if (message.sourceType?.toString() === 'ANSWER' && message.sourceId) {
+                    sourceAnswerIds.push(message.sourceId);
+                }
+            });
+        });
+
+        return { sourcePostIds, sourceAnswerIds };
+    }
+
+    /**
+     * Builds requests to fetch the source posts and answer posts based on their IDs.
+     * Wraps observables to emit nothing if inputs are invalid or expected to return undefined.
+     */
+    private buildSourceRequests(sourcePostIds: number[], sourceAnswerIds: number[]): Observable<Posting[] | undefined>[] {
+        const requests: Observable<Posting[] | undefined>[] = [];
+
+        if (sourcePostIds.length > 0) {
+            requests.push(this.metisService.getSourcePostsByIds(sourcePostIds));
+        }
+
+        if (sourceAnswerIds.length > 0) {
+            requests.push(this.metisService.getSourceAnswerPostsByIds(sourceAnswerIds));
+        }
+
+        return requests;
+    }
+
+    /**
+     * Extracts fetched post and answer post arrays from forkJoin responses.
+     */
+    private extractFetchedSources(responses: (Posting[] | undefined)[]): { fetchedPosts: Post[]; fetchedAnswerPosts: AnswerPost[] } {
+        let fetchedPosts: Post[] = [];
+        let fetchedAnswerPosts: AnswerPost[] = [];
+
+        responses.forEach((response) => {
+            if (Array.isArray(response) && response.length > 0) {
+                const first = response[0];
+                if ((first as Post).conversation !== undefined) {
+                    fetchedPosts = response as Post[];
+                } else if ((first as AnswerPost).resolvesPost !== undefined) {
+                    fetchedAnswerPosts = response as AnswerPost[];
+                }
+            }
+        });
+
+        return { fetchedPosts, fetchedAnswerPosts };
+    }
+
+    /**
+     * Attaches forwarded posts and forwarded answer posts to their corresponding post.
+     */
+    private attachForwardedMessages(posts: Post[], messageMap: Map<number, ForwardedMessageDTO[]>, fetchedPosts: Post[], fetchedAnswerPosts: AnswerPost[]): Post[] {
+        const fetchedPostIds = new Set(fetchedPosts.map((post) => post.id));
+        const fetchedAnswerPostIds = new Set(fetchedAnswerPosts.map((answerPost) => answerPost.id));
+
+        return posts.map((post) => {
+            const forwardedMessages = messageMap.get(post.id!) || [];
+
+            post.forwardedPosts = forwardedMessages
+                .filter((m) => m.sourceType?.toString() === 'POST')
+                .map((m) => (m.sourceId && fetchedPostIds.has(m.sourceId) ? fetchedPosts.find((p) => p.id === m.sourceId) : undefined));
+
+            post.forwardedAnswerPosts = forwardedMessages
+                .filter((m) => m.sourceType?.toString() === 'ANSWER')
+                .map((m) => (m.sourceId && fetchedAnswerPostIds.has(m.sourceId) ? fetchedAnswerPosts.find((a) => a.id === m.sourceId) : undefined));
+
+            return post;
+        });
     }
 
     fetchNextPage() {
