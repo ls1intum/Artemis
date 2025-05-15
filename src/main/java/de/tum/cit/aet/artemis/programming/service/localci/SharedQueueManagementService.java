@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
@@ -68,7 +69,7 @@ public class SharedQueueManagementService {
     private int runningBuildJobCount;
 
     public SharedQueueManagementService(BuildJobRepository buildJobRepository, ProfileService profileService, DistributedDataAccessService distributedDataAccessService,
-            MailService mailService, UserService userService) {
+            MailService mailService, @Lazy UserService userService) {
         this.buildJobRepository = buildJobRepository;
         this.profileService = profileService;
         this.distributedDataAccessService = distributedDataAccessService;
