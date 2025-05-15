@@ -1,8 +1,10 @@
 package de.tum.cit.aet.artemis.atlas.test_repository;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Repository;
 
+import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.LearningPath;
 import de.tum.cit.aet.artemis.atlas.repository.LearningPathJpaRepository;
 import de.tum.cit.aet.artemis.atlas.repository.LearningPathRepository;
@@ -12,6 +14,7 @@ import de.tum.cit.aet.artemis.atlas.repository.LearningPathRepository;
  * It replaces our usual approach of moving queries that are only needed for testing purposes to a test repository. In this case this is not possible, due to different handling of
  * Class vs. Interface repositories by Spring.
  */
+@Conditional(AtlasEnabled.class)
 @Repository
 public class LearningPathTestAuxRepository {
 
