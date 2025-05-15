@@ -55,6 +55,9 @@ public class ArtemisPasskeyWebAuthnConfigurer {
     @Value("${" + Constants.PASSKEY_ENABLED_PROPERTY_NAME + ":false}")
     private boolean passkeyEnabled;
 
+    @Value("${info.testServer:false}")
+    private boolean isTestServer;
+
     /**
      * We expect the server URL to equal the client URL
      */
@@ -136,7 +139,8 @@ public class ArtemisPasskeyWebAuthnConfigurer {
             log.info("Added Android release APK key hash: {}", hash);
         }
 
-        if (androidSha256CertFingerprintDebug != null && !profileService.isProductionActive()) {
+        boolean isDebugFingerprintAllowed = !profileService.isProductionActive() || isTestServer;
+        if (androidSha256CertFingerprintDebug != null && isDebugFingerprintAllowed) {
             String hash = AndroidApkKeyHashUtil.getHashFromFingerprint(androidSha256CertFingerprintDebug);
             allowedOrigins.add(hash);
             log.warn("Added Android debug APK key hash: {}", hash);

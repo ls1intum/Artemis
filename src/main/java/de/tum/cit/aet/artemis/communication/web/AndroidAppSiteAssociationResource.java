@@ -25,6 +25,9 @@ import de.tum.cit.aet.artemis.core.service.ProfileService;
 @RequestMapping(".well-known/") // Intentionally not prefixed with "communication"
 public class AndroidAppSiteAssociationResource {
 
+    @Value("${info.testServer:false}")
+    private boolean isTestServer;
+
     @Value("${server.url}")
     private String artemisServerUrl;
 
@@ -62,7 +65,8 @@ public class AndroidAppSiteAssociationResource {
         }
 
         List<String> fingerprints = new ArrayList<>(List.of(sha256CertFingerprintRelease));
-        if (sha256CertFingerprintDebug != null && !profileService.isProductionActive()) {
+        boolean isDebugFingerprintAllowed = !profileService.isProductionActive() || isTestServer;
+        if (sha256CertFingerprintDebug != null && isDebugFingerprintAllowed) {
             fingerprints.add(sha256CertFingerprintDebug);
         }
         final AndroidAssetLinksStatement.AndroidTarget appTarget = new AndroidAssetLinksStatement.AndroidTarget("android_app", androidAppPackage, fingerprints);
