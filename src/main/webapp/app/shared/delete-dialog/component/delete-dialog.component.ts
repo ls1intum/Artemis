@@ -5,7 +5,7 @@ import { ActionType, EntitySummary } from 'app/shared/delete-dialog/delete-dialo
 import { Observable, Subscription } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';
 import { faBan, faCheck, faSpinner, faTimes, faTrash, faUndo } from '@fortawesome/free-solid-svg-icons';
-import { ButtonType } from 'app/shared/components/button/button.component';
+import { ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { FormsModule, NgForm } from '@angular/forms';
 import { TranslateDirective } from '../../language/translate.directive';
 import { ConfirmEntityNameComponent } from '../../confirm-entity-name/confirm-entity-name.component';
