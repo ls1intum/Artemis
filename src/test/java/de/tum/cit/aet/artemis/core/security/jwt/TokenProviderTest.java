@@ -25,6 +25,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.core.management.SecurityMetersService;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -176,6 +177,17 @@ class TokenProviderTest {
         Date result = tokenProvider.getIssuedAtDate(token);
 
         assertThat(result).isNotNull().isCloseTo(issuedAt, 1000);
+    }
+
+    @Test
+    void testGetTools() {
+        ToolTokenType expectedTool = ToolTokenType.SCORPIO;
+        String token = Jwts.builder().claim("tools", expectedTool.toString()) // Store as String
+                .signWith(key, Jwts.SIG.HS512).compact();
+
+        ToolTokenType actualTool = tokenProvider.getTools(token);
+
+        assertThat(actualTool).isNotNull().isEqualTo(expectedTool);
     }
 
     private Authentication createAuthentication() {

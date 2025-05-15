@@ -230,7 +230,8 @@ public class TokenProvider {
 
     public ToolTokenType getTools(String authToken) {
         Claims claims = parseClaims(authToken);
-        return claims.get(TOOLS_KEY, ToolTokenType.class);
+        String toolString = claims.get(TOOLS_KEY, String.class);
+        return ToolTokenType.valueOf(toolString);
     }
 
     /**
