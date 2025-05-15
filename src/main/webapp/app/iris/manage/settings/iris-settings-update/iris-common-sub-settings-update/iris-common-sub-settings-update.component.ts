@@ -223,7 +223,7 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
 
     get inheritDisabled() {
         if (this.parentSubSettings) {
-            return !this.parentSubSettings.enabled;
+            return !this.parentSubSettings.enabled && !(this.settingsType === 'course');
         }
         return false;
     }

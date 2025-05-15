@@ -1,4 +1,4 @@
-<div class="btn-group">
+<div class="btn-group" role="group" aria-label="Enable/Disable setting">
     <div
         class="btn"
         [ngClass]="{ 'btn-success selected': irisSubSettings?.enabled, 'btn-default': !irisSubSettings?.enabled }"
@@ -13,4 +13,5 @@
         (click)="setEnabled(false)"
         jhiTranslate="artemisApp.iris.settings.subSettings.enabled.off"
     ></div>
+    <a routerLink="iris-settings" class="btn btn-link" role="button" jhiTranslate="artemisApp.iris.controlCenter.advanced"> </a>
 </div>

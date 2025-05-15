@@ -106,7 +106,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
             this.getCourseDetailSections();
         });
         if (this.irisEnabled && this.course.isAtLeastInstructor) {
-            const irisSettings = await firstValueFrom(this.irisSettingsService.getGlobalSettings());
+            const irisSettings = await firstValueFrom(this.irisSettingsService.getUncombinedCourseSettings(this.course.id!));
             // TODO: Outdated, as we now have a bunch more sub settings
             this.irisChatEnabled = irisSettings?.irisChatSettings?.enabled ?? false;
         }
@@ -352,4 +352,6 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
             this.getCourseDetailSections();
         });
     }
+
+    protected readonly IrisSubSettingsType = IrisSubSettingsType;
 }

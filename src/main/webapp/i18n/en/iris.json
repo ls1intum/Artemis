@@ -127,6 +127,10 @@
                 "pyrisUnavailable": "Iris is currently unavailable.",
                 "pyrisError": "An error occurred while getting processing status from Iris.",
                 "transcriptionIngestionError": "Error while sending transcription"
+            },
+            "controlCenter": {
+                "advanced": "Advanced",
+                "tooltip": "By toggling you enable or disable ALL Iris features for this course. For a more granular control, please use the Iris settings by clicking Advanced."
             }
         }
     }

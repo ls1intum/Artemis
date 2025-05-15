@@ -7,11 +7,12 @@ import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settin
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgClass } from '@angular/common';
+import { RouterLink } from '@angular/router';
 
 @Component({
     selector: 'jhi-iris-enabled',
     templateUrl: './iris-enabled.component.html',
-    imports: [TranslateDirective, NgClass],
+    imports: [TranslateDirective, NgClass, RouterLink],
 })
 export class IrisEnabledComponent implements OnInit {
     private irisSettingsService = inject(IrisSettingsService);
@@ -40,7 +41,7 @@ export class IrisEnabledComponent implements OnInit {
     }
 
     setEnabled(enabled: boolean) {
-        if (!this.disabled && this.irisSubSettings) {
+        if (!this.disabled && this.irisSubSettings && this.irisSubSettingsType != IrisSubSettingsType.ALL) {
             this.irisSubSettings.enabled = enabled;
             if (this.exercise) {
                 this.irisSettingsService.setExerciseSettings(this.exercise.id!, this.irisSettings!).subscribe((response) => {
@@ -53,6 +54,53 @@ export class IrisEnabledComponent implements OnInit {
                     this.setSubSettings();
                 });
             }
+        } else if (!this.disabled && this.irisSubSettingsType == IrisSubSettingsType.ALL && this.irisSettings && this.course) {
+            // If the subsettings type is ALL, we need to set all subsettings to the same value
+
+            if (!this.irisSettings.irisChatSettings) {
+                this.irisSettings.irisChatSettings = { enabled, type: IrisSubSettingsType.CHAT };
+            } else {
+                this.irisSettings.irisChatSettings.enabled = enabled;
+            }
+
+            if (!this.irisSettings.irisTextExerciseChatSettings) {
+                this.irisSettings.irisTextExerciseChatSettings = { type: IrisSubSettingsType.TEXT_EXERCISE_CHAT, enabled };
+            } else {
+                this.irisSettings.irisTextExerciseChatSettings.enabled = enabled;
+            }
+
+            if (!this.irisSettings.irisCourseChatSettings) {
+                this.irisSettings.irisCourseChatSettings = { type: IrisSubSettingsType.COURSE_CHAT, enabled };
+            } else {
+                this.irisSettings.irisCourseChatSettings.enabled = enabled;
+            }
+
+            if (!this.irisSettings.irisCompetencyGenerationSettings) {
+                this.irisSettings.irisCompetencyGenerationSettings = { type: IrisSubSettingsType.COMPETENCY_GENERATION, enabled };
+            } else {
+                this.irisSettings.irisCompetencyGenerationSettings.enabled = enabled;
+            }
+            if (!this.irisSettings.irisLectureChatSettings) {
+                this.irisSettings.irisLectureChatSettings = { type: IrisSubSettingsType.LECTURE, enabled };
+            } else {
+                this.irisSettings.irisLectureChatSettings.enabled = enabled;
+            }
+            if (!this.irisSettings.irisFaqIngestionSettings) {
+                this.irisSettings.irisFaqIngestionSettings = { type: IrisSubSettingsType.FAQ_INGESTION, enabled, autoIngestOnFaqCreation: false };
+            } else {
+                this.irisSettings.irisFaqIngestionSettings.enabled = enabled;
+            }
+
+            if (!this.irisSettings.irisLectureIngestionSettings) {
+                this.irisSettings.irisLectureIngestionSettings = { type: IrisSubSettingsType.LECTURE_INGESTION, enabled, autoIngestOnLectureAttachmentUpload: false };
+            } else {
+                this.irisSettings.irisLectureIngestionSettings.enabled = enabled;
+            }
+
+            this.irisSettingsService.setCourseSettings(this.course.id!, this.irisSettings!).subscribe((response) => {
+                this.irisSettings = response.body ?? this.irisSettings;
+                this.setSubSettings();
+            });
         }
     }
 
@@ -60,6 +108,17 @@ export class IrisEnabledComponent implements OnInit {
         switch (this.irisSubSettingsType) {
             case IrisSubSettingsType.CHAT:
                 this.irisSubSettings = this.irisSettings?.irisChatSettings;
+                break;
+            case IrisSubSettingsType.ALL:
+                this.irisSubSettings = this.irisSettings?.irisChatSettings ? { ...this.irisSettings.irisChatSettings } : { type: IrisSubSettingsType.CHAT, enabled: false };
+
+                this.irisSubSettings.enabled = [
+                    this.irisSettings?.irisChatSettings?.enabled,
+                    this.irisSettings?.irisTextExerciseChatSettings?.enabled,
+                    this.irisSettings?.irisCourseChatSettings?.enabled,
+                    this.irisSettings?.irisCompetencyGenerationSettings?.enabled,
+                    this.irisSettings?.irisLectureIngestionSettings?.enabled,
+                ].some((settingEnabled) => settingEnabled === true);
                 break;
             case IrisSubSettingsType.TEXT_EXERCISE_CHAT:
                 this.irisSubSettings = this.irisSettings?.irisTextExerciseChatSettings;

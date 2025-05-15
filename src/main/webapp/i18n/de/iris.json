@@ -128,6 +128,10 @@
                 "pyrisError": "Ein Fehler ist bei der Kommunikation mit Iris aufgetreten.",
                 "transcriptionIngestionError": "Fehler beim Senden einer Vorlesungstranskription"
             }
+        },
+        "controlCenter": {
+            "advanced": "Weitere Einstellungen",
+            "tooltip": "Durch das Umschalten, aktivierst/deaktivierst du ALLE Iris Features für diesen Kurs. Für eine granularere Kontrolle, nutze bitte die Iris Einstellungen, indem du auf Weitere Einstellungen klickst."
         }
     }
 }

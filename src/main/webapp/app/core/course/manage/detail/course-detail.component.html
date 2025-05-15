@@ -1,8 +1,9 @@
 <div class="row justify-content-center">
     @if (course) {
-        <div class="d-flex gap-3">
-            <jhi-quick-actions [course]="course" />
-            <jhi-control-center />
+        <div class="d-flex flex-column flex-md-row p-2">
+            <jhi-quick-actions [course]="course" class="mb-n3 mb-md-0 me-md-3" />
+
+            <jhi-control-center [course]="course" [irisEnabled]="irisEnabled" />
         </div>
         <div class="col-12">
             <div class="row">
