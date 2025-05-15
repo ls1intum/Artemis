@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -161,11 +162,11 @@ public class SAML2Service {
         String oldLastName = user.getLastName();
 
         boolean changed = false;
-        if (!oldFirstName.equals(newFirstName)) {
+        if (!Objects.equals(oldFirstName, newFirstName)) {
             user.setFirstName(newFirstName);
             changed = true;
         }
-        if (!oldLastName.equals(newLastName)) {
+        if (!Objects.equals(oldLastName, newLastName)) {
             user.setLastName(newLastName);
             changed = true;
         }
