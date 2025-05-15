@@ -168,6 +168,16 @@ class TokenProviderTest {
         assertThat(isAuthenticatedWithPasskey).isTrue();
     }
 
+    @Test
+    void testGetIssuedAtDate() {
+        Date issuedAt = new Date();
+        String token = Jwts.builder().issuedAt(issuedAt).signWith(key, Jwts.SIG.HS512).compact();
+
+        Date result = tokenProvider.getIssuedAtDate(token);
+
+        assertThat(result).isNotNull().isCloseTo(issuedAt, 1000);
+    }
+
     private Authentication createAuthentication() {
         Collection<GrantedAuthority> authorities = new ArrayList<>();
         authorities.add(new SimpleGrantedAuthority(Role.ANONYMOUS.getAuthority()));
