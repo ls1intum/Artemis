@@ -18,7 +18,7 @@ import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warni
 import { onError } from 'app/shared/util/global.utils';
 import { EditType, SaveExerciseCommand } from 'app/exercise/util/exercise.utils';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
-import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { switchMap, tap } from 'rxjs/operators';
 import { scrollToTopOfPage } from 'app/shared/util/utils';

@@ -12,7 +12,7 @@ import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/ent
 import { ExpandableSectionComponent } from '../expandable-section/expandable-section.component';
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/manage/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
-import { ButtonComponent } from 'app/shared/components/button/button.component';
+import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { SecureLinkDirective } from 'app/assessment/manage/secure-link.directive';
