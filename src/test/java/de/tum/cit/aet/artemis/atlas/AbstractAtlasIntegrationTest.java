@@ -16,15 +16,15 @@ import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseLearnerProfileRepository;
 import de.tum.cit.aet.artemis.atlas.repository.KnowledgeAreaRepository;
-import de.tum.cit.aet.artemis.atlas.repository.LearningPathRepository;
 import de.tum.cit.aet.artemis.atlas.repository.ScienceSettingRepository;
 import de.tum.cit.aet.artemis.atlas.repository.SourceRepository;
 import de.tum.cit.aet.artemis.atlas.repository.StandardizedCompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
+import de.tum.cit.aet.artemis.atlas.service.learningpath.LearningPathRepositoryService;
 import de.tum.cit.aet.artemis.atlas.test_repository.CompetencyExerciseLinkTestRepository;
 import de.tum.cit.aet.artemis.atlas.test_repository.CompetencyLectureUnitLinkTestRepository;
 import de.tum.cit.aet.artemis.atlas.test_repository.CompetencyProgressTestRepository;
-import de.tum.cit.aet.artemis.atlas.test_repository.LearningPathTestAuxRepository;
+import de.tum.cit.aet.artemis.atlas.test_repository.LearningPathTestRepository;
 import de.tum.cit.aet.artemis.atlas.test_repository.PrerequisiteTestRepository;
 import de.tum.cit.aet.artemis.atlas.test_repository.ScienceEventTestRepository;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
@@ -70,10 +70,7 @@ public abstract class AbstractAtlasIntegrationTest extends AbstractSpringIntegra
     protected SourceRepository sourceRepository;
 
     @Autowired
-    protected LearningPathRepository learningPathRepository;
-
-    @Autowired
-    protected LearningPathTestAuxRepository learningPathTestAuxRepository;
+    protected LearningPathTestRepository learningPathRepository;
 
     @Autowired
     protected ScienceSettingRepository scienceSettingRepository;
@@ -130,6 +127,9 @@ public abstract class AbstractAtlasIntegrationTest extends AbstractSpringIntegra
 
     @Autowired
     protected FeatureToggleService featureToggleService;
+
+    @Autowired
+    protected LearningPathRepositoryService learningPathRepositoryService;
 
     // External Services
     @Autowired

@@ -24,7 +24,6 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
-import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -64,15 +63,12 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
     protected GroupNotificationScheduleService groupNotificationScheduleService;
 
     @MockitoSpyBean
-    protected CompetencyProgressService competencyProgressService;
-
-    @MockitoSpyBean
     protected CompetencyProgressApi competencyProgressApi;
 
     @AfterEach
     @Override
     protected void resetSpyBeans() {
-        Mockito.reset(oAuth2JWKSService, ltiPlatformConfigurationRepository, competencyProgressService, competencyProgressApi);
+        Mockito.reset(oAuth2JWKSService, ltiPlatformConfigurationRepository, competencyProgressApi);
         super.resetSpyBeans();
     }
 

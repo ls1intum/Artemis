@@ -80,7 +80,7 @@ import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.competency.util.PrerequisiteUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Prerequisite;
-import de.tum.cit.aet.artemis.atlas.repository.LearningPathRepository;
+import de.tum.cit.aet.artemis.atlas.test_repository.LearningPathTestRepository;
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
 import de.tum.cit.aet.artemis.communication.domain.DefaultChannelType;
 import de.tum.cit.aet.artemis.communication.dto.ChannelDTO;
@@ -299,7 +299,7 @@ public class CourseTestService {
     private TeamUtilService teamUtilService;
 
     @Autowired
-    private LearningPathRepository learningPathRepository;
+    private LearningPathTestRepository learningPathRepository;
 
     @Autowired
     private ParticipantScoreScheduleService participantScoreScheduleService;

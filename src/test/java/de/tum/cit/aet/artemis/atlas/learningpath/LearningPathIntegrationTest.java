@@ -300,7 +300,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
         final var newCompetency = restCall.apply(this);
 
         final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
-        final var learningPathOptional = learningPathRepository.findWithEagerCompetenciesByCourseIdAndUserId(course.getId(), student.getId());
+        final var learningPathOptional = learningPathRepositoryService.findWithEagerCompetenciesByCourseIdAndUserId(course.getId(), student.getId());
         assertThat(learningPathOptional).isPresent();
         assertThat(learningPathOptional.get().getCompetencies()).as("should contain new competency").contains(newCompetency);
         assertThat(learningPathOptional.get().getCompetencies().size()).as("should not remove old competencies").isEqualTo(competencies.length + 1);
@@ -317,7 +317,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
         createCompetencyRESTCall();
 
         final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
-        var learningPath = learningPathTestAuxRepository.findWithEagerCompetenciesByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
+        var learningPath = learningPathRepositoryService.findWithEagerCompetenciesByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
         assertThat(learningPath.getProgress()).as("contains no completed competency").isEqualTo(0);
     }
 
@@ -405,7 +405,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
             course = courseRepository.save(course);
             var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
             student = userTestRepository.findWithLearningPathsByIdElseThrow(student.getId());
-            learningPathTestAuxRepository.deleteAll(student.getLearningPaths());
+            learningPathRepository.deleteAll(student.getLearningPaths());
             request.get("/api/atlas/courses/" + course.getId() + "/learning-path/me", HttpStatus.NOT_FOUND, LearningPathDTO.class);
         }
     }

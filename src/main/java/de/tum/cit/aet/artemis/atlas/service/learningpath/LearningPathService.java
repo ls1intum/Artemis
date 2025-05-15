@@ -75,6 +75,8 @@ public class LearningPathService {
 
     private final LearningPathRepository learningPathRepository;
 
+    private final LearningPathRepositoryService learningPathRepositoryService;
+
     private final CompetencyProgressRepository competencyProgressRepository;
 
     private final LearningPathNavigationService learningPathNavigationService;
@@ -93,13 +95,14 @@ public class LearningPathService {
 
     private final CourseLearnerProfileService courseLearnerProfileService;
 
-    public LearningPathService(UserRepository userRepository, LearningPathRepository learningPathRepository, CompetencyProgressRepository competencyProgressRepository,
-            LearningPathNavigationService learningPathNavigationService, CourseRepository courseRepository, CompetencyRepository competencyRepository,
-            CompetencyRelationRepository competencyRelationRepository, Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi,
+    public LearningPathService(UserRepository userRepository, LearningPathRepository learningPathRepository, LearningPathRepositoryService learningPathRepositoryService,
+            CompetencyProgressRepository competencyProgressRepository, LearningPathNavigationService learningPathNavigationService, CourseRepository courseRepository,
+            CompetencyRepository competencyRepository, CompetencyRelationRepository competencyRelationRepository, Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi,
             StudentParticipationRepository studentParticipationRepository, CourseCompetencyRepository courseCompetencyRepository,
             CourseLearnerProfileService courseLearnerProfileService) {
         this.userRepository = userRepository;
         this.learningPathRepository = learningPathRepository;
+        this.learningPathRepositoryService = learningPathRepositoryService;
         this.competencyProgressRepository = competencyProgressRepository;
         this.learningPathNavigationService = learningPathNavigationService;
         this.courseRepository = courseRepository;
@@ -193,7 +196,7 @@ public class LearningPathService {
      * @param userId   id of the user the learning path is linked to
      */
     public void updateLearningPathProgress(long courseId, long userId) {
-        final var learningPath = learningPathRepository.findWithEagerCompetenciesByCourseIdAndUserId(courseId, userId);
+        final var learningPath = learningPathRepositoryService.findWithEagerCompetenciesByCourseIdAndUserId(courseId, userId);
         learningPath.ifPresent(this::updateLearningPathProgress);
     }
 
@@ -374,12 +377,12 @@ public class LearningPathService {
      * @return the learning path with fetched data
      */
     public LearningPath findWithCompetenciesAndReleasedLearningObjectsAndCompletedUsersAndLearnerProfileById(long learningPathId) {
-        Optional<LearningPath> optionalLearningPath = learningPathRepository.findWithCompetenciesAndLectureUnitsAndExercisesAndLearnerProfileById(learningPathId);
+        Optional<LearningPath> optionalLearningPath = learningPathRepositoryService.findWithCompetenciesAndLectureUnitsAndExercisesAndLearnerProfileById(learningPathId);
         LearningPath learningPath;
         if (optionalLearningPath.isEmpty()) {
             LearningPath learningPathWithCourse = learningPathRepository.findWithEagerCourseByIdElseThrow(learningPathId);
             courseLearnerProfileService.createCourseLearnerProfile(learningPathWithCourse.getCourse(), learningPathWithCourse.getUser());
-            learningPath = learningPathRepository.findWithCompetenciesAndLectureUnitsAndExercisesAndLearnerProfileByIdElseThrow(learningPathId);
+            learningPath = learningPathRepositoryService.findWithCompetenciesAndLectureUnitsAndExercisesAndLearnerProfileByIdElseThrow(learningPathId);
         }
         else {
             learningPath = optionalLearningPath.get();
