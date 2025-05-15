@@ -139,27 +139,7 @@ public class SAML2Service {
             }
         }
         else if (saml2syncUserData.isPresent() && Boolean.TRUE.equals(saml2syncUserData.get())) {
-            log.debug("SAML2 sync user data enabled and will be performed for user {}", user.get().getLogin());
-            // We assume that only the name of the user might change
-            String newFirstName = substituteAttributes(properties.getFirstNamePattern(), principal);
-            String newLastName = substituteAttributes(properties.getLastNamePattern(), principal);
-            String oldFirstName = user.get().getFirstName();
-            String oldLastName = user.get().getLastName();
-
-            boolean changed = false;
-            if (!oldFirstName.equals(newFirstName)) {
-                user.get().setFirstName(newFirstName);
-                changed = true;
-            }
-            if (!oldLastName.equals(newLastName)) {
-                user.get().setLastName(newLastName);
-                changed = true;
-            }
-
-            if (changed) {
-                log.info("SAML2 user's name changed ... before: {} {}, after: {} {}", oldFirstName, oldLastName, newFirstName, newLastName);
-                userRepository.save(user.get());
-            }
+            syncUserDataFromSaml2(principal, user.get());
         }
 
         if (!user.get().getActivated()) {
@@ -170,6 +150,30 @@ public class SAML2Service {
         auth = new UsernamePasswordAuthenticationToken(user.get().getLogin(), user.get().getPassword(), toGrantedAuthorities(user.get().getAuthorities()));
         auditEventRepository.add(new AuditEvent(Instant.now(), user.get().getLogin(), "SAML2_AUTHENTICATION_SUCCESS", details));
         return auth;
+    }
+
+    private void syncUserDataFromSaml2(Saml2AuthenticatedPrincipal principal, User user) {
+        log.debug("SAML2 sync user data enabled and will be performed for user {}", user.getLogin());
+        // We assume that only the name of the user might change
+        String newFirstName = substituteAttributes(properties.getFirstNamePattern(), principal);
+        String newLastName = substituteAttributes(properties.getLastNamePattern(), principal);
+        String oldFirstName = user.getFirstName();
+        String oldLastName = user.getLastName();
+
+        boolean changed = false;
+        if (!oldFirstName.equals(newFirstName)) {
+            user.setFirstName(newFirstName);
+            changed = true;
+        }
+        if (!oldLastName.equals(newLastName)) {
+            user.setLastName(newLastName);
+            changed = true;
+        }
+
+        if (changed) {
+            log.info("SAML2 user's name changed ... before: {} {}, after: {} {}", oldFirstName, oldLastName, newFirstName, newLastName);
+            userRepository.save(user);
+        }
     }
 
     private User createUser(String username, final Saml2AuthenticatedPrincipal principal) {
