@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.core.util;
 
-import org.apache.commons.lang.time.DurationFormatUtils;
+import org.apache.commons.lang3.time.DurationFormatUtils;
 
 public class TimeLogUtil {
 

@@ -148,6 +148,8 @@ configurations.configureEach {
     exclude group: "org.jgrapht", module: "jgrapht-core"
     exclude group: "org.apfloat", module: "apfloat"
 
+    exclude group: "commons-configuration", module: "commons-configuration"
+
     // only support one csv parser org.apache.commons:commons-csv
 //    exclude group: "com.opencsv", module: "opencsv"
 }
