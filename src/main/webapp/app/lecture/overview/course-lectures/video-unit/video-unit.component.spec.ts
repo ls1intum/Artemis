@@ -13,6 +13,7 @@ import { MockComponent, MockProvider } from 'ng-mocks';
 import { CompetencyContributionComponent } from 'app/atlas/shared/competency-contribution/competency-contribution.component';
 import { CompetencyContributionCardDTO } from 'app/atlas/shared/entities/competency.model';
 import { of } from 'rxjs';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 describe('VideoUnitComponent', () => {
     let scienceService: ScienceService;
@@ -39,6 +40,7 @@ describe('VideoUnitComponent', () => {
                 { provide: SafeResourceUrlPipe, useClass: SafeResourceUrlPipe },
                 { provide: ScienceService, useClass: MockScienceService },
                 MockProvider(CourseCompetencyService),
+                MockProvider(ProfileService),
             ],
         }).compileComponents();
 

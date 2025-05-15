@@ -18,7 +18,7 @@ import { NonProgrammingExerciseDetailCommonActionsComponent } from 'app/exercise
 import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
 import { StatisticsService } from 'app/shared/statistics-graph/service/statistics.service';
 import { ExerciseDetailStatisticsComponent } from 'app/exercise/statistics/exercise-detail-statistic/exercise-detail-statistics.component';
-import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { DetailOverviewListComponent } from 'app/shared/detail-overview-list/detail-overview-list.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
