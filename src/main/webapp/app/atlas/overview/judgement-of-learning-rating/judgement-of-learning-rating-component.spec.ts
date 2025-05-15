@@ -91,7 +91,7 @@ describe('JudgementOfLearningRatingComponent', () => {
         component.courseId = 1;
 
         const newRating = 4;
-        const event = { oldValue: 3, newValue: newRating, starRating: {} as StarRatingComponent };
+        const event = { oldValue: 3, newValue: newRating };
         jest.spyOn(courseCompetencyService, 'setJudgementOfLearning').mockReturnValue(of(new HttpResponse<void>({ status: 200 })));
         const emitSpy = jest.spyOn(component.ratingChange, 'emit');
 
@@ -106,7 +106,7 @@ describe('JudgementOfLearningRatingComponent', () => {
         component.courseId = 1;
 
         const newRating = 4;
-        const event = { oldValue: 3, newValue: newRating, starRating: {} as StarRatingComponent };
+        const event = { oldValue: 3, newValue: newRating };
         jest.spyOn(courseCompetencyService, 'setJudgementOfLearning').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
         const errorSpy = jest.spyOn(alertService, 'error');
 
