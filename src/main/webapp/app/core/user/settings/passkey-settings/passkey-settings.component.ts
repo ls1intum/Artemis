@@ -12,7 +12,7 @@ import { PasskeySettingsApiService } from 'app/core/user/settings/passkey-settin
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ActionType, EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
-import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/button/button.component';
+import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { CustomMaxLengthDirective } from 'app/shared/validators/custom-max-length-validator/custom-max-length-validator.directive';

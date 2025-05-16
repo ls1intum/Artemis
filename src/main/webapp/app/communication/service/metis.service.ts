@@ -23,7 +23,7 @@ import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/communication/s
 import { Conversation, ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { getAsGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { getAsOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
-import { ForwardedMessage, ForwardedMessageDTO } from 'app/communication/shared/entities/forwarded-message.model';
+import { ForwardedMessage, ForwardedMessagesGroupDTO } from 'app/communication/shared/entities/forwarded-message.model';
 import { MetisPostDTO } from 'app/communication/shared/entities/metis-post-dto.model';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { Posting, PostingType, SavedPostStatus } from 'app/communication/shared/entities/posting.model';
@@ -831,7 +831,7 @@ export class MetisService implements OnDestroy {
      * @param type - The type of messages to retrieve ('post' or 'answer').
      * @returns An observable containing a list of objects where each object includes an ID and its corresponding messages (as DTOs), wrapped in an HttpResponse, or undefined if the IDs are invalid.
      */
-    getForwardedMessagesByIds(postingIds: number[], type: PostingType): Observable<HttpResponse<{ id: number; messages: ForwardedMessageDTO[] }[]>> | undefined {
+    getForwardedMessagesByIds(postingIds: number[], type: PostingType): Observable<HttpResponse<ForwardedMessagesGroupDTO[]>> | undefined {
         if (postingIds && postingIds.length > 0) {
             return this.forwardedMessageService.getForwardedMessages(postingIds, type);
         } else {

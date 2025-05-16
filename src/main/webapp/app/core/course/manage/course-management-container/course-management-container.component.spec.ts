@@ -13,7 +13,7 @@ import dayjs from 'dayjs/esm';
 
 import { CourseSidebarComponent } from 'app/core/course/shared/course-sidebar/course-sidebar.component';
 import { CourseTitleBarComponent } from 'app/core/course/shared/course-title-bar/course-title-bar.component';
-import { CourseExamArchiveButtonComponent } from 'app/shared/components/course-exam-archive-button/course-exam-archive-button.component';
+import { CourseExamArchiveButtonComponent } from 'app/shared/components/buttons/course-exam-archive-button/course-exam-archive-button.component';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

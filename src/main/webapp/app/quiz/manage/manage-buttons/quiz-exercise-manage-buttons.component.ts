@@ -9,10 +9,10 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { faClipboardCheck, faEye, faFileExport, faListAlt, faSignal, faTable, faTrash, faUndo, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { Subject } from 'rxjs';
-import { ButtonSize, ButtonType } from 'app/shared/components/button/button.component';
+import { ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ButtonComponent } from 'app/shared/components/button/button.component';
+import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 
 @Component({

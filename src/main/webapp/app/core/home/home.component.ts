@@ -19,7 +19,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { WebauthnService } from 'app/core/user/settings/passkey-settings/webauthn.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { WebauthnApiService } from 'app/core/user/settings/passkey-settings/webauthn-api.service';
-import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/button/button.component';
+import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { getCredentialWithGracefullyHandlingAuthenticatorIssues } from 'app/core/user/settings/passkey-settings/util/credential.util';
 import { InvalidCredentialError } from 'app/core/user/settings/passkey-settings/entities/invalid-credential-error';
 import { EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, SetupPasskeyModalComponent } from 'app/core/course/overview/setup-passkey-modal/setup-passkey-modal.component';

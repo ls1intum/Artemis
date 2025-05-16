@@ -2,7 +2,7 @@ import { Component, Input } from '@angular/core';
 import type { ProgrammingRepositoryButtonsDetail } from 'app/shared/detail-overview-list/detail.model';
 import { NoDataComponent } from 'app/shared/components/no-data/no-data-component';
 import { RouterModule } from '@angular/router';
-import { CodeButtonComponent } from 'app/shared/components/code-button/code-button.component';
+import { CodeButtonComponent } from 'app/shared/components/buttons/code-button/code-button.component';
 import { ProgrammingExerciseInstructorRepoDownloadComponent } from 'app/programming/shared/actions/instructor-repo-download/programming-exercise-instructor-repo-download.component';
 
 @Component({
