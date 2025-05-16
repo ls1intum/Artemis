@@ -28,7 +28,7 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { FullscreenComponent } from 'app/modeling/shared/fullscreen/fullscreen.component';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
-import { IrisCourseSettings, IrisGlobalSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
+import { IrisCourseSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
 
 describe('Course Management Detail Component', () => {
     let component: CourseDetailComponent;

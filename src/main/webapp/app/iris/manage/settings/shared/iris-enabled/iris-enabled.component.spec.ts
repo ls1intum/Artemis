@@ -182,4 +182,25 @@ describe('IrisEnabledComponent', () => {
         expect(comp.irisSettings!.irisLectureIngestionSettings?.enabled).toBeTrue();
         expect(comp.someButNotAllSettingsEnabled).toBeFalse();
     });
+
+    it('should set irisSubSettings.enabled to true and someButNotAllSettingsEnabled to true when some but not all sub-settings are enabled', async () => {
+        jest.spyOn(irisSettingsService, 'getUncombinedCourseSettings').mockReturnValue(
+            of({
+                irisChatSettings: { type: IrisSubSettingsType.CHAT, enabled: true },
+                irisTextExerciseChatSettings: { type: IrisSubSettingsType.TEXT_EXERCISE_CHAT, enabled: false },
+                irisCourseChatSettings: { type: IrisSubSettingsType.COURSE_CHAT, enabled: true },
+                irisCompetencyGenerationSettings: { type: IrisSubSettingsType.COMPETENCY_GENERATION, enabled: false },
+                irisLectureChatSettings: { type: IrisSubSettingsType.LECTURE, enabled: false },
+                irisFaqIngestionSettings: { type: IrisSubSettingsType.FAQ_INGESTION, enabled: false, autoIngestOnFaqCreation: false },
+                irisLectureIngestionSettings: { type: IrisSubSettingsType.LECTURE_INGESTION, enabled: false, autoIngestOnLectureAttachmentUpload: false },
+            } as IrisCourseSettings),
+        );
+        componentRef.setInput('course', course);
+        componentRef.setInput('irisSubSettingsType', IrisSubSettingsType.ALL);
+        fixture.detectChanges();
+        comp.setSubSettings();
+
+        expect(comp.irisSubSettings?.enabled).toBeTrue();
+        expect(comp.someButNotAllSettingsEnabled).toBeTrue();
+    });
 });

@@ -30,7 +30,7 @@ export class IrisEnabledComponent implements OnInit {
 
     irisSettings?: IrisSettings;
     irisSubSettings?: IrisSubSettings;
-    someButNotAllSettingsEnabled: boolean;
+    someButNotAllSettingsEnabled = false;
 
     ngOnInit(): void {
         if (this.exercise()) {
@@ -145,10 +145,18 @@ export class IrisEnabledComponent implements OnInit {
         const courseChatSettings = this.irisSettings?.irisCourseChatSettings;
         const competencyGenerationSettings = this.irisSettings?.irisCompetencyGenerationSettings;
         const lectureIngestionSettings = this.irisSettings?.irisLectureIngestionSettings;
+        const faqIngestionSettings = this.irisSettings?.irisFaqIngestionSettings;
+        const lectureSettings = this.irisSettings?.irisLectureChatSettings;
         this.irisSubSettings = chatSettings ? { ...chatSettings } : { type: IrisSubSettingsType.CHAT, enabled: false };
 
         const allSubSettingsEnabled =
-            chatSettings?.enabled && textExerciseChatSettings?.enabled && courseChatSettings?.enabled && competencyGenerationSettings?.enabled && lectureIngestionSettings?.enabled;
+            chatSettings?.enabled &&
+            textExerciseChatSettings?.enabled &&
+            courseChatSettings?.enabled &&
+            competencyGenerationSettings?.enabled &&
+            lectureIngestionSettings?.enabled &&
+            faqIngestionSettings?.enabled &&
+            lectureSettings?.enabled;
 
         const anySubSettingEnabled = [
             chatSettings?.enabled,
@@ -156,6 +164,8 @@ export class IrisEnabledComponent implements OnInit {
             courseChatSettings?.enabled,
             competencyGenerationSettings?.enabled,
             lectureIngestionSettings?.enabled,
+            faqIngestionSettings?.enabled,
+            lectureSettings?.enabled,
         ].some((settingEnabled) => settingEnabled === true);
 
         this.someButNotAllSettingsEnabled = anySubSettingEnabled && !allSubSettingsEnabled;
