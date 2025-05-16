@@ -198,7 +198,6 @@ describe('IrisEnabledComponent', () => {
         componentRef.setInput('course', course);
         componentRef.setInput('irisSubSettingsType', IrisSubSettingsType.ALL);
         fixture.detectChanges();
-        comp.setSubSettings();
 
         expect(comp.irisSubSettings?.enabled).toBeTrue();
         expect(comp.someButNotAllSettingsEnabled).toBeTrue();
