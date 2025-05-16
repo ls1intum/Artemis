@@ -47,7 +47,7 @@ describe('ControlCenterComponent', () => {
         expect(irisEnabledComponent).toBeTruthy();
         expect(irisEnabledComponent.componentInstance.course).toEqual(course);
         expect(irisEnabledComponent.componentInstance.irisSubSettingsType).toEqual(IrisSubSettingsType.ALL);
-        expect(irisEnabledComponent.componentInstance.showPartialEnabled).toBeTrue();
+        expect(irisEnabledComponent.componentInstance.showCustomButton).toBeTrue();
     });
 
     it('should display the robot icon', () => {
