@@ -11,7 +11,6 @@ import { By } from '@angular/platform-browser';
 import { ComponentRef } from '@angular/core';
 
 describe('ControlCenterComponent', () => {
-    let component: ControlCenterComponent;
     let componentRef: ComponentRef<ControlCenterComponent>;
     let fixture: ComponentFixture<ControlCenterComponent>;
     let course: Course;
@@ -25,15 +24,10 @@ describe('ControlCenterComponent', () => {
         }).compileComponents();
 
         fixture = TestBed.createComponent(ControlCenterComponent);
-        component = fixture.componentInstance;
         componentRef = fixture.componentRef;
         componentRef.setInput('course', course);
         componentRef.setInput('irisEnabled', true);
         fixture.detectChanges();
-    });
-
-    it('should create', () => {
-        expect(component).toBeTruthy();
     });
 
     it('should display the control center card when iris is enabled and the user is at least an instructor', () => {

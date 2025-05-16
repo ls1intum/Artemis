@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, input } from '@angular/core';
 import { IrisSubSettings, IrisSubSettingsType } from 'app/iris/shared/entities/settings/iris-sub-settings.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { IrisSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
@@ -15,29 +15,31 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
     selector: 'jhi-iris-enabled',
     templateUrl: './iris-enabled.component.html',
     imports: [TranslateDirective, NgClass, RouterLink, FaIconComponent],
+    standalone: true,
 })
 export class IrisEnabledComponent implements OnInit {
-    private irisSettingsService = inject(IrisSettingsService);
     protected readonly faArrowRight = faArrowRight;
-    @Input() exercise?: Exercise;
-    @Input() course?: Course;
-    @Input() lecture?: Lecture;
-    @Input() irisSubSettingsType: IrisSubSettingsType;
-    @Input() disabled? = false;
-    @Input() showPartialEnabled = false;
+    private irisSettingsService = inject(IrisSettingsService);
+
+    exercise = input<Exercise | undefined>();
+    course = input<Course | undefined>();
+    lecture = input<Lecture | undefined>();
+    irisSubSettingsType = input.required<IrisSubSettingsType>();
+    disabled = input<boolean>(false);
+    showCustomButton = input<boolean>(false);
 
     irisSettings?: IrisSettings;
     irisSubSettings?: IrisSubSettings;
     someButNotAllSettingsEnabled: boolean;
 
     ngOnInit(): void {
-        if (this.exercise) {
-            this.irisSettingsService.getUncombinedExerciseSettings(this.exercise.id!).subscribe((settings) => {
+        if (this.exercise()) {
+            this.irisSettingsService.getUncombinedExerciseSettings(this.exercise()!.id!).subscribe((settings) => {
                 this.irisSettings = settings;
                 this.setSubSettings();
             });
-        } else if (this.course) {
-            this.irisSettingsService.getUncombinedCourseSettings(this.course.id!).subscribe((settings) => {
+        } else if (this.course()) {
+            this.irisSettingsService.getUncombinedCourseSettings(this.course()!.id!).subscribe((settings) => {
                 this.irisSettings = settings;
                 this.setSubSettings();
             });
@@ -45,20 +47,20 @@ export class IrisEnabledComponent implements OnInit {
     }
 
     setEnabled(enabled: boolean) {
-        if (!this.disabled && this.irisSubSettings && this.irisSubSettingsType != IrisSubSettingsType.ALL) {
+        if (!this.disabled() && this.irisSubSettings && this.irisSubSettingsType() != IrisSubSettingsType.ALL) {
             this.irisSubSettings.enabled = enabled;
-            if (this.exercise) {
-                this.irisSettingsService.setExerciseSettings(this.exercise.id!, this.irisSettings!).subscribe((response) => {
+            if (this.exercise()) {
+                this.irisSettingsService.setExerciseSettings(this.exercise()!.id!, this.irisSettings!).subscribe((response) => {
                     this.irisSettings = response.body ?? this.irisSettings;
                     this.setSubSettings();
                 });
-            } else if (this.course) {
-                this.irisSettingsService.setCourseSettings(this.course.id!, this.irisSettings!).subscribe((response) => {
+            } else if (this.course()) {
+                this.irisSettingsService.setCourseSettings(this.course()!.id!, this.irisSettings!).subscribe((response) => {
                     this.irisSettings = response.body ?? this.irisSettings;
                     this.setSubSettings();
                 });
             }
-        } else if (!this.disabled && this.irisSubSettingsType == IrisSubSettingsType.ALL && this.irisSettings && this.course) {
+        } else if (!this.disabled() && this.irisSubSettingsType() == IrisSubSettingsType.ALL && this.irisSettings && this.course()) {
             // If the subsettings type is ALL, we need to set all subsettings to the same value
 
             if (!this.irisSettings.irisChatSettings) {
@@ -101,7 +103,7 @@ export class IrisEnabledComponent implements OnInit {
                 this.irisSettings.irisLectureIngestionSettings.enabled = enabled;
             }
 
-            this.irisSettingsService.setCourseSettings(this.course.id!, this.irisSettings!).subscribe((response) => {
+            this.irisSettingsService.setCourseSettings(this.course()!.id!, this.irisSettings!).subscribe((response) => {
                 this.irisSettings = response.body ?? this.irisSettings;
                 this.setSubSettings();
             });
@@ -109,13 +111,12 @@ export class IrisEnabledComponent implements OnInit {
     }
 
     private setSubSettings() {
-        switch (this.irisSubSettingsType) {
+        switch (this.irisSubSettingsType()) {
             case IrisSubSettingsType.CHAT:
                 this.irisSubSettings = this.irisSettings?.irisChatSettings;
                 break;
             case IrisSubSettingsType.ALL:
                 this.handleSubSettingsTypeAll();
-
                 break;
             case IrisSubSettingsType.TEXT_EXERCISE_CHAT:
                 this.irisSubSettings = this.irisSettings?.irisTextExerciseChatSettings;

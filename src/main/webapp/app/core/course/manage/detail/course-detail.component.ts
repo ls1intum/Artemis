@@ -15,13 +15,12 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { DetailOverviewSection, DetailType } from 'app/shared/detail-overview-list/detail-overview-list.component';
+import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from 'app/shared/detail-overview-list/detail-overview-list.component';
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { IrisSubSettingsType } from 'app/iris/shared/entities/settings/iris-sub-settings.model';
 import { Detail } from 'app/shared/detail-overview-list/detail.model';
 import { CourseDetailDoughnutChartComponent } from './course-detail-doughnut-chart.component';
 import { CourseDetailLineChartComponent } from './course-detail-line-chart.component';
-import { DetailOverviewListComponent } from 'app/shared/detail-overview-list/detail-overview-list.component';
 import { QuickActionsComponent } from 'app/core/course/manage/quick-actions/quick-actions.component';
 import { ControlCenterComponent } from 'app/core/course/manage/control-center/control-center.component';
 
@@ -185,22 +184,9 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         return athenaDetails;
     }
 
-    getIrisDetails(): Detail[] {
-        const irisDetails: Detail[] = [];
-        if (this.irisEnabled && this.irisChatEnabled) {
-            irisDetails.push({
-                type: DetailType.ProgrammingIrisEnabled,
-                title: 'artemisApp.iris.settings.subSettings.enabled.chat',
-                data: { course: this.course, disabled: !this.isAdmin, subSettingsType: IrisSubSettingsType.CHAT },
-            });
-        }
-        return irisDetails;
-    }
-
     getModeDetailSection(): DetailOverviewSection {
         const complaintsDetails = this.getComplaintsDetails();
         const athenaDetails = this.getAthenaDetails();
-        const irisDetails = this.getIrisDetails();
 
         const details: Detail[] = [
             { type: DetailType.Text, title: 'artemisApp.course.maxPoints.title', data: { text: this.course.maxPoints } },
@@ -221,7 +207,6 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
             },
             ...complaintsDetails,
             ...athenaDetails,
-            ...irisDetails,
         ];
 
         // inserting optional details in reversed order, so that no index calculation is needed
