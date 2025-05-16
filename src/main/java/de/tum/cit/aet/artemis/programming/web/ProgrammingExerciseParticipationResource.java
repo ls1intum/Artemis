@@ -322,8 +322,10 @@ public class ProgrammingExerciseParticipationResource {
         }
 
         programmingExerciseParticipationService.resetRepository(participation.getVcsRepositoryUri(), sourceURL);
-        continuousIntegrationTriggerService.ifPresentOrElse((triggerService) -> triggerService.triggerBuild(participation, true), () -> log.warn(
-                "Cannot trigger build because neither the Jenkins nor the LocalCI profile are active. This seems like a misconfiguration if you want to use programming exercises"));
+        continuousIntegrationTriggerService
+                .orElseThrow(() -> new UnsupportedOperationException(
+                        "Cannot trigger build because neither the Jenkins nor the LocalCI profile are active. This is a misconfiguration if you want to use programming exercises"))
+                .triggerBuild(participation, true);
 
         return ResponseEntity.ok().build();
     }
