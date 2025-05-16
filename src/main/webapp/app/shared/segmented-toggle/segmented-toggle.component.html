@@ -1,0 +1,7 @@
+<div class="segmented-toggle">
+    @for (option of options; track option.value) {
+        <button [class.active]="selected === option.value" (click)="select(option.value)" class="toggle-button">
+            {{ option.label }}
+        </button>
+    }
+</div>

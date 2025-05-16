@@ -1,0 +1,32 @@
+.segmented-toggle {
+    display: flex;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    overflow: hidden;
+    background: white;
+    font-family: inherit;
+
+    .toggle-button {
+        flex: 1;
+        padding: 0.5rem 1rem;
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-weight: 500;
+        transition: background-color 0.2s ease;
+        border-right: 1px solid #ccc;
+
+        &:last-child {
+            border-right: none;
+        }
+
+        &.active {
+            background-color: #ffe082; // highlight color like your 2nd screenshot
+            color: #000;
+        }
+
+        &:hover:not(.active) {
+            background-color: #f5f5f5;
+        }
+    }
+}
