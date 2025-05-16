@@ -8,23 +8,27 @@ import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgClass } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-iris-enabled',
     templateUrl: './iris-enabled.component.html',
-    imports: [TranslateDirective, NgClass, RouterLink],
+    imports: [TranslateDirective, NgClass, RouterLink, FaIconComponent],
 })
 export class IrisEnabledComponent implements OnInit {
     private irisSettingsService = inject(IrisSettingsService);
-
+    protected readonly faArrowRight = faArrowRight;
     @Input() exercise?: Exercise;
     @Input() course?: Course;
     @Input() lecture?: Lecture;
     @Input() irisSubSettingsType: IrisSubSettingsType;
     @Input() disabled? = false;
+    @Input() showPartialEnabled = false;
 
     irisSettings?: IrisSettings;
     irisSubSettings?: IrisSubSettings;
+    someButNotAllSettingsEnabled: boolean;
 
     ngOnInit(): void {
         if (this.exercise) {
@@ -110,15 +114,8 @@ export class IrisEnabledComponent implements OnInit {
                 this.irisSubSettings = this.irisSettings?.irisChatSettings;
                 break;
             case IrisSubSettingsType.ALL:
-                this.irisSubSettings = this.irisSettings?.irisChatSettings ? { ...this.irisSettings.irisChatSettings } : { type: IrisSubSettingsType.CHAT, enabled: false };
+                this.handleSubSettingsTypeAll();
 
-                this.irisSubSettings.enabled = [
-                    this.irisSettings?.irisChatSettings?.enabled,
-                    this.irisSettings?.irisTextExerciseChatSettings?.enabled,
-                    this.irisSettings?.irisCourseChatSettings?.enabled,
-                    this.irisSettings?.irisCompetencyGenerationSettings?.enabled,
-                    this.irisSettings?.irisLectureIngestionSettings?.enabled,
-                ].some((settingEnabled) => settingEnabled === true);
                 break;
             case IrisSubSettingsType.TEXT_EXERCISE_CHAT:
                 this.irisSubSettings = this.irisSettings?.irisTextExerciseChatSettings;
@@ -133,5 +130,28 @@ export class IrisEnabledComponent implements OnInit {
                 this.irisSubSettings = this.irisSettings?.irisLectureIngestionSettings;
                 break;
         }
+    }
+
+    private handleSubSettingsTypeAll() {
+        const chatSettings = this.irisSettings?.irisChatSettings;
+        const textExerciseChatSettings = this.irisSettings?.irisTextExerciseChatSettings;
+        const courseChatSettings = this.irisSettings?.irisCourseChatSettings;
+        const competencyGenerationSettings = this.irisSettings?.irisCompetencyGenerationSettings;
+        const lectureIngestionSettings = this.irisSettings?.irisLectureIngestionSettings;
+        this.irisSubSettings = chatSettings ? { ...chatSettings } : { type: IrisSubSettingsType.CHAT, enabled: false };
+
+        const allSubSettingsEnabled =
+            chatSettings?.enabled && textExerciseChatSettings?.enabled && courseChatSettings?.enabled && competencyGenerationSettings?.enabled && lectureIngestionSettings?.enabled;
+
+        const anySubSettingEnabled = [
+            chatSettings?.enabled,
+            textExerciseChatSettings?.enabled,
+            courseChatSettings?.enabled,
+            competencyGenerationSettings?.enabled,
+            lectureIngestionSettings?.enabled,
+        ].some((settingEnabled) => settingEnabled === true);
+
+        this.someButNotAllSettingsEnabled = anySubSettingEnabled && !allSubSettingsEnabled;
+        this.irisSubSettings.enabled = anySubSettingEnabled;
     }
 }

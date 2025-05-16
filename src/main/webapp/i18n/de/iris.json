@@ -78,6 +78,7 @@
                     "enabled": {
                         "on": "Aktiviert",
                         "off": "Deaktiviert",
+                        "custom": "Benutzerdefiniert",
                         "chat": "Iris Chat"
                     },
                     "disabled": {
@@ -130,8 +131,7 @@
             }
         },
         "controlCenter": {
-            "advanced": "Weitere Einstellungen",
-            "tooltip": "Durch das Umschalten, aktivierst/deaktivierst du ALLE Iris Features für diesen Kurs. Für eine granularere Kontrolle, nutze bitte die Iris Einstellungen, indem du auf Weitere Einstellungen klickst."
+            "tooltip": "Durch das Umschalten, aktivierst/deaktivierst du ALLE Iris Features für diesen Kurs. Für eine granularere Kontrolle, nutze bitte die Iris Einstellungen, indem du auf Benutzerdefiniert klickst."
         }
     }
 }
