@@ -39,6 +39,11 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
 
     private static final String TEST_PREFIX = "jwtfilterintegrationtest";
 
+    /**
+     * This can be any endpoint where the JWT filter is applied.
+     */
+    private static final String ENDPOINT_TO_TEST = "/api/core/public/account";
+
     @Value("${jhipster.security.authentication.jwt.token-validity-in-seconds}")
     private long TOKEN_VALIDITY_IN_SECONDS;
 
@@ -103,8 +108,7 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
         HttpHeaders headers = new HttpHeaders();
         headers.add(HttpHeaders.COOKIE, JWTFilter.JWT_COOKIE_NAME + "=" + jwt);
 
-        MvcResult res = mvc
-                .perform(MockMvcRequestBuilders.get(new URI("/api/core/public/account")).params(params).headers(headers).cookie(new Cookie(JWTFilter.JWT_COOKIE_NAME, jwt)))
+        MvcResult res = mvc.perform(MockMvcRequestBuilders.get(new URI(ENDPOINT_TO_TEST)).params(params).headers(headers).cookie(new Cookie(JWTFilter.JWT_COOKIE_NAME, jwt)))
                 .andExpect(status().is(HttpStatus.OK.value())).andReturn();
 
         MockHttpServletResponse response = res.getResponse();
