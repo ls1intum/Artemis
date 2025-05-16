@@ -98,6 +98,13 @@ public class IrisLectureChatSessionService implements IrisChatBasedFeatureInterf
                 stages -> irisChatWebsocketService.sendMessage(session, null, stages));
     }
 
+    /**
+     * Checks if the user has access to the Iris session.
+     * A user has access if they have access to the lecture and the session belongs to them.
+     *
+     * @param user    The user to check
+     * @param session The session to check
+     */
     @Override
     public void checkHasAccessTo(User user, IrisLectureChatSession session) {
         if (session.getUserId() != user.getId()) {

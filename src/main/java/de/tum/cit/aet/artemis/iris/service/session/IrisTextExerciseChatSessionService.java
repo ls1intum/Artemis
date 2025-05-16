@@ -144,6 +144,13 @@ public class IrisTextExerciseChatSessionService implements IrisChatBasedFeatureI
         return job;
     }
 
+    /**
+     * Checks if the user has access to the Iris session.
+     * A user has access if they have access to the exercise and the session belongs to them.
+     *
+     * @param user    The user to check
+     * @param session The session to check
+     */
     @Override
     public void checkHasAccessTo(User user, IrisTextExerciseChatSession session) {
         // TODO: This check is probably unnecessary since we are fetching the sessions from the database with the user ID already

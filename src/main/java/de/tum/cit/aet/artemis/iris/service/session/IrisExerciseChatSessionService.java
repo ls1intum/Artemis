@@ -120,7 +120,6 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
     /**
      * Checks if the user has access to the Iris session.
      * A user has access if they have access to the exercise and the session belongs to them.
-     * If the user is null, the user is fetched from the database.
      *
      * @param user    The user to check
      * @param session The session to check
