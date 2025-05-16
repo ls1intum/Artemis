@@ -39,8 +39,8 @@ public record FinishedBuildJobDTO(String id, String name, String buildAgentAddre
             SubmissionDTO submissionDTO = result.getSubmission() == null ? null : SubmissionDTO.of(result.getSubmission(), false, null, null);
 
             return new ResultDTO(result.getId(), result.getCompletionDate(), result.isSuccessful(), result.getScore(), result.isRated(),
-                    ParticipationDTO.of(result.getParticipation()), submissionDTO, result.getAssessmentType(), result.getTestCaseCount(), result.getPassedTestCaseCount(),
-                    result.getCodeIssueCount());
+                    ParticipationDTO.of(result.getSubmission().getParticipation()), submissionDTO, result.getAssessmentType(), result.getTestCaseCount(),
+                    result.getPassedTestCaseCount(), result.getCodeIssueCount());
         }
     }
 

@@ -48,8 +48,8 @@ export class RatingListComponent implements OnInit {
     }
 
     openResult(rating: Rating) {
-        const participation = rating.result?.participation;
-        const exercise = rating.result?.participation?.exercise;
+        const participation = rating.result?.submission?.participation;
+        const exercise = rating.result?.submission?.participation?.exercise;
 
         if (participation && exercise) {
             if (exercise.type === ExerciseType.PROGRAMMING) {

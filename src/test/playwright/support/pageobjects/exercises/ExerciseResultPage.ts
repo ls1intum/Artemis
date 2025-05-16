@@ -30,8 +30,12 @@ export class ExerciseResultPage {
     }
 
     async clickOpenExercise(exerciseId: number) {
-        const responsePromise = this.page.waitForResponse(`${BASE_API}/assessment/results/*/rating`);
         await this.page.locator(`#open-exercise-${exerciseId}`).click();
+    }
+
+    async clickOpenExerciseAndAwaitRatingResponse(exerciseId: number) {
+        const responsePromise = this.page.waitForResponse(`${BASE_API}/assessment/results/*/rating`);
+        await this.clickOpenExercise(exerciseId);
         await responsePromise;
     }
 

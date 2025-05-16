@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.exercise.domain.ExerciseType.QUIZ;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -36,6 +35,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
+import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 
 /**
  * A QuizExercise contains multiple quiz quizQuestions, which can be either multiple choice, drag and drop or short answer. Artemis supports live quizzes with a start and end time
@@ -324,13 +324,15 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
     }
 
     @Override
-    public Set<Result> filterResultsForStudents(Collection<Result> results) {
+    public void filterResultsForStudents(Participation participation) {
         if (shouldFilterForStudents()) {
-            // results are never relevant before quiz has ended => return null
-            return null;
-        }
-        else {
-            return new HashSet<>(results);
+            // results are never relevant before quiz has ended => clear all results
+            participation.getSubmissions().forEach(submission -> {
+                List<Result> results = submission.getResults();
+                if (results != null) {
+                    results.clear();
+                }
+            });
         }
     }
 

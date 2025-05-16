@@ -17,7 +17,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -49,6 +48,7 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizPointStatistic;
@@ -429,14 +429,8 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         for (Exercise exercise : course.getExercises()) {
             // For programming exercises we add a manual result, to check whether the manual result will be displayed before the assessment due date
             if (exercise instanceof ProgrammingExercise) {
-                participationUtilService.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusHours(1L),
-                        exercise.getStudentParticipations().iterator().next());
+                addResultToSubmissionAndParticipation(exercise);
             }
-
-            var results = resultRepository.findLatestResultsForParticipation(exercise.getStudentParticipations().iterator().next().getId(), PageRequest.of(0, 20));
-            // Note: this loads results linked to a participation over a submission, therefore there is only 1 result
-            assertThat(results).hasSize(1);
-
             ExerciseDetailsDTO exerciseWithDetails = request.get("/api/exercise/exercises/" + exercise.getId() + "/details", HttpStatus.OK, ExerciseDetailsDTO.class);
             for (StudentParticipation participation : exerciseWithDetails.exercise().getStudentParticipations()) {
                 // Programming exercises should only have one automatic result
@@ -461,15 +455,8 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             int resultSize = 1;
             var participation = exercise.getStudentParticipations().iterator().next();
             if (exercise instanceof ProgrammingExercise) {
-                var submission = participation.getSubmissions().iterator().next();
-                var result = participationUtilService.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusHours(1L), participation);
-                result.setSubmission(submission);
-                resultRepository.save(result);
-                resultSize = 2;
+                addResultToSubmissionAndParticipation(exercise);
             }
-
-            var results = resultRepository.findLatestResultsForParticipation(participation.getId(), PageRequest.of(0, 20));
-            assertThat(results).hasSize(resultSize);
 
             ExerciseDetailsDTO exerciseWithDetails = request.get("/api/exercise/exercises/" + exercise.getId() + "/details", HttpStatus.OK, ExerciseDetailsDTO.class);
             for (var studentParticipation : exerciseWithDetails.exercise().getStudentParticipations()) {
@@ -485,6 +472,12 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 }
             }
         }
+    }
+
+    private void addResultToSubmissionAndParticipation(Exercise exercise) {
+        var participation = exercise.getStudentParticipations().iterator().next();
+        var submission = participationUtilService.addSubmission(participation, new ProgrammingSubmission());
+        participationUtilService.addResultToSubmission(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusHours(1L), submission);
     }
 
     @Test
@@ -508,8 +501,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         for (Exercise exercise : course.getExercises()) {
             // For programming exercises we add a manual result, to check whether the manual result will be displayed before the assessment due date
             if (exercise instanceof ProgrammingExercise) {
-                exercise.getStudentParticipations().iterator().next().setResults(Set.of(participationUtilService.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC,
-                        ZonedDateTime.now().minusHours(1L), exercise.getStudentParticipations().iterator().next())));
+                addResultToSubmissionAndParticipation(exercise);
             }
             exerciseService.filterExerciseForCourseDashboard(exercise, Set.copyOf(exercise.getStudentParticipations()), true);
 
@@ -536,11 +528,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         for (Exercise exercise : course.getExercises()) {
             // For programming exercises we add a manual result, to check whether this is correctly displayed after the assessment due date
             if (exercise instanceof ProgrammingExercise) {
-                Result result = participationUtilService.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusHours(1L),
-                        exercise.getStudentParticipations().iterator().next());
-                exercise.getStudentParticipations().iterator().next().setResults(Set.of(result));
-                exercise.getStudentParticipations().iterator().next().getSubmissions().iterator().next().setResults(new ArrayList<>());
-                exercise.getStudentParticipations().iterator().next().getSubmissions().iterator().next().addResult(result);
+                addResultToSubmissionAndParticipation(exercise);
             }
             exerciseService.filterExerciseForCourseDashboard(exercise, Set.copyOf(exercise.getStudentParticipations()), true);
             // All exercises have one result

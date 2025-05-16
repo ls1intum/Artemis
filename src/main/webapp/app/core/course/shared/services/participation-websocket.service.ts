@@ -10,6 +10,7 @@ import { WebsocketService } from 'app/shared/service/websocket.service';
 import dayjs from 'dayjs/esm';
 import { cloneDeep } from 'lodash-es';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 
 const PERSONAL_PARTICIPATION_TOPIC = `/user/topic/newResults`;
 const EXERCISE_PARTICIPATION_TOPIC = (exerciseId: number) => `/topic/exercise/${exerciseId}/newResults`;
@@ -73,11 +74,11 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      * @param result
      */
     private notifyResultSubscribers = (result: Result) => {
-        const resultObservable = this.resultObservables.get(result.participation!.id!);
+        const resultObservable = this.resultObservables.get(result.submission!.participation!.id!);
         // TODO: We never convert the date strings of the result (e.g. completionDate) to a Dayjs object
         //  this could be an issue in some parts of app when a formatted date is needed.
         if (!resultObservable) {
-            this.resultObservables.set(result.participation!.id!, new BehaviorSubject(result));
+            this.resultObservables.set(result.submission!.participation!.id!, new BehaviorSubject(result));
         } else {
             resultObservable.next(result);
         }
@@ -88,14 +89,14 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      * @param result
      */
     private addResultToParticipation = (result: Result) => {
-        const cachedParticipation = this.cachedParticipations.get(result.participation!.id!);
+        const cachedParticipation = this.cachedParticipations.get(result.submission!.participation!.id!);
         if (cachedParticipation) {
             // update the results with the new received one by filtering the old result
-            const updatedResults = [...(cachedParticipation.results || [])].filter((r) => r.id !== result.id);
+            const updatedResults = [...getAllResultsOfAllSubmissions(cachedParticipation.submissions)].filter((r) => r.id !== result.id);
             updatedResults.push(result);
             // create a clone
-            this.cachedParticipations.set(result.participation!.id!, { ...cachedParticipation, results: updatedResults } as StudentParticipation);
-            return of(this.cachedParticipations.get(result.participation!.id!));
+            this.cachedParticipations.set(result.submission!.participation!.id!, { ...cachedParticipation, results: updatedResults } as StudentParticipation);
+            return of(this.cachedParticipations.get(result.submission!.participation!.id!));
         }
         return of();
     };

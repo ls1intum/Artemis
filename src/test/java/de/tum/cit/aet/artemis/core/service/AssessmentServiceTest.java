@@ -174,7 +174,6 @@ class AssessmentServiceTest extends AbstractSpringIntegrationIndependentTest {
         var result = new Result();
         result.setSubmission(submissionWithoutResult);
         result.setFeedbacks(feedbacks);
-        result.setParticipation(submissionWithoutResult.getParticipation());
         submissionWithoutResult.addResult(result);
 
         resultRepository.submitResult(result, exercise);
@@ -196,7 +195,6 @@ class AssessmentServiceTest extends AbstractSpringIntegrationIndependentTest {
         var result = new Result();
         result.setSubmission(submissionWithoutResult);
         result.setFeedbacks(feedbacks);
-        result.setParticipation(submissionWithoutResult.getParticipation());
         submissionWithoutResult.addResult(result);
 
         resultRepository.submitResult(result, exercise);
@@ -218,7 +216,6 @@ class AssessmentServiceTest extends AbstractSpringIntegrationIndependentTest {
         var result = new Result();
         result.setSubmission(submissionWithoutResult);
         result.setFeedbacks(feedbacks);
-        result.setParticipation(submissionWithoutResult.getParticipation());
         submissionWithoutResult.addResult(result);
 
         resultRepository.submitResult(result, exercise);
@@ -242,14 +239,13 @@ class AssessmentServiceTest extends AbstractSpringIntegrationIndependentTest {
         var result = new Result();
         result.setSubmission(submissionWithoutResult);
         result.setFeedbacks(feedbacks);
-        result.setParticipation(submissionWithoutResult.getParticipation());
         submissionWithoutResult.addResult(result);
 
         if (isDueDateIndividual) {
             // participation has exact same individual due date as submission time, submission should still be rated
-            Participation participation = result.getParticipation();
+            Participation participation = result.getSubmission().getParticipation();
             participation.setIndividualDueDate(submissionWithoutResult.getSubmissionDate());
-            result.setParticipation(participationRepository.save(participation));
+            participationRepository.save(participation);
 
             // exercise due date itself should be before the submission time
             exercise.setDueDate(submissionWithoutResult.getSubmissionDate().minusHours(1));
@@ -279,7 +275,6 @@ class AssessmentServiceTest extends AbstractSpringIntegrationIndependentTest {
         var result = new Result();
         result.setSubmission(submissionWithoutResult);
         result.setFeedbacks(feedbacks);
-        result.setParticipation(submissionWithoutResult.getParticipation());
         submissionWithoutResult.addResult(result);
 
         resultRepository.submitResult(result, exercise);
@@ -301,7 +296,6 @@ class AssessmentServiceTest extends AbstractSpringIntegrationIndependentTest {
         var result = new Result();
         result.setSubmission(submissionWithoutResult);
         result.setFeedbacks(feedbacks);
-        result.setParticipation(submissionWithoutResult.getParticipation());
         submissionWithoutResult.addResult(result);
 
         resultRepository.submitResult(result, exercise);

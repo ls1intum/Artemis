@@ -10,7 +10,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import jakarta.annotation.Nullable;
@@ -42,6 +41,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
+import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
@@ -597,15 +597,22 @@ public class ProgrammingExercise extends Exercise {
     }
 
     /**
-     * Get all results of a student participation which are rated or unrated
+     * Filters results in all submissions of a student participation, removing any that don't meet the criteria.
+     * <p>
+     * Results are kept only if they:
+     * - have a completed assessment, AND
+     * - are either automatic OR the assessment due date has passed.
      *
-     * @param results existing results
-     * @return all results which are completed and are either automatic or manually assessed
+     * @param participation the participation containing submissions to filter
      */
     @Override
-    public Set<Result> filterResultsForStudents(Collection<Result> results) {
-        return results.stream().filter(result -> result.isAssessmentComplete() && (result.isAutomatic() || ExerciseDateService.isAfterAssessmentDueDate(this)))
-                .collect(Collectors.toSet());
+    public void filterResultsForStudents(Participation participation) {
+        participation.getSubmissions().forEach(submission -> {
+            List<Result> results = submission.getResults();
+            if (results != null && !results.isEmpty()) {
+                results.removeIf(result -> !(result.isAssessmentComplete() && (result.isAutomatic() || ExerciseDateService.isAfterAssessmentDueDate(this))));
+            }
+        });
     }
 
     /**

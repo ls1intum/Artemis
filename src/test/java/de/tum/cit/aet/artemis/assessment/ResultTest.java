@@ -19,7 +19,7 @@ import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
-import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
@@ -61,7 +61,12 @@ class ResultTest extends AbstractSpringIntegrationIndependentTest {
 
         course = courseUtilService.addEmptyCourse();
         course.setAccuracyOfScores(1);
-        result.setParticipation(new StudentParticipation().exercise(new TextExercise().course(course)));
+        var exercise = new TextExercise().course(course);
+        ProgrammingExerciseStudentParticipation participation = new ProgrammingExerciseStudentParticipation();
+        participation.setExercise(exercise);
+        var submission = ParticipationFactory.generateProgrammingSubmission(true);
+        submission.setParticipation(participation);
+        result.setSubmission(submission);
     }
 
     @Test
@@ -136,11 +141,12 @@ class ResultTest extends AbstractSpringIntegrationIndependentTest {
 
         ProgrammingExerciseStudentParticipation participation = new ProgrammingExerciseStudentParticipation();
         participation.setExercise(exercise);
-        result.setParticipation(participation);
+        var submission = ParticipationFactory.generateProgrammingSubmission(true);
+        submission.setParticipation(participation);
+        result.setSubmission(submission);
         result.setFeedbacks(new ArrayList<>(List.of(tst1, tst2)));
 
         result.filterSensitiveFeedbacks(true);
-
         assertThat(result.getFeedbacks()).hasSize(2).allMatch(feedback -> feedback.getTestCase().getTestName() == null);
     }
 
@@ -152,7 +158,6 @@ class ResultTest extends AbstractSpringIntegrationIndependentTest {
 
         ProgrammingExerciseStudentParticipation participation = new ProgrammingExerciseStudentParticipation();
         participation.setExercise(exercise);
-        result.setParticipation(participation);
 
         Feedback tst1 = new Feedback().positive(true).type(FeedbackType.AUTOMATIC).testCase(tests.getFirst());
         Feedback tst2 = new Feedback().positive(false).type(FeedbackType.AUTOMATIC).testCase(tests.get(1)).detailText("This is wrong.");

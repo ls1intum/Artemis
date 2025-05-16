@@ -22,6 +22,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ResultService } from 'app/exercise/result/result.service';
 import { hasParticipationChanged } from 'app/exercise/participation/participation.utils';
 import { Annotation } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
+import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 
 @Component({
     selector: 'jhi-code-editor-build-output',
@@ -89,8 +90,8 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
             this.setupResultWebsocket();
         }
         // If the participation changes and it has results, fetch the result details to decide if the build log should be shown
-        if (participationChange && this.participation?.results?.length) {
-            const latestResult = findLatestResult(this.participation.results);
+        if (participationChange && getAllResultsOfAllSubmissions(this.participation?.submissions).length) {
+            const latestResult = findLatestResult(getAllResultsOfAllSubmissions(this.participation.submissions));
             of(latestResult)
                 .pipe(
                     switchMap((result) => (result && !result.feedbacks ? this.loadAndAttachResultDetails(this.participation, result) : of(result))),

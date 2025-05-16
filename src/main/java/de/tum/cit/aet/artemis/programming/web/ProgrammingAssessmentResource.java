@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Comparator;
 
-import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -92,12 +91,8 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         Result result = programmingAssessmentService.updateAssessmentAfterComplaint(programmingSubmission.getLatestResult(), programmingExercise, assessmentUpdate);
         // make sure the submission is reconnected with the result to prevent problems when the object is used for other calls in the client
         result.setSubmission(programmingSubmission);
-        // remove circular dependencies if the results of the participation are there
-        if (result.getParticipation() != null && Hibernate.isInitialized(result.getParticipation().getResults()) && result.getParticipation().getResults() != null) {
-            result.getParticipation().setResults(null);
-        }
 
-        if (result.getParticipation() != null && result.getParticipation() instanceof StudentParticipation studentParticipation
+        if (result.getSubmission().getParticipation() != null && result.getSubmission().getParticipation() instanceof StudentParticipation studentParticipation
                 && !authCheckService.isAtLeastInstructorForExercise(programmingExercise, user)) {
             studentParticipation.filterSensitiveInformation();
         }
@@ -145,8 +140,6 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         // load assessor
         existingManualResult = resultRepository.findWithBidirectionalSubmissionAndFeedbackAndAssessorAndAssessmentNoteAndTeamStudentsByIdElseThrow(existingManualResult.getId());
 
-        // make sure that the participation and submission cannot be manipulated on the client side
-        newManualResult.setParticipation(participation);
         newManualResult.setSubmission(existingManualResult.getSubmission());
 
         var programmingExercise = (ProgrammingExercise) participation.getExercise();
@@ -183,7 +176,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         newManualResult = programmingAssessmentService.saveAndSubmitManualAssessment(participation, newManualResult, existingManualResult, user, submit);
         // remove information about the student for tutors to ensure double-blind assessment
         if (!isAtLeastInstructor) {
-            newManualResult.getParticipation().filterSensitiveInformation();
+            newManualResult.getSubmission().getParticipation().filterSensitiveInformation();
         }
 
         return ResponseEntity.ok(newManualResult);
