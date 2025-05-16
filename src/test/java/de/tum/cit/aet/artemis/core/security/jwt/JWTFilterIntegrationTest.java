@@ -16,6 +16,7 @@ import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
@@ -23,7 +24,6 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.webauthn.api.Bytes;
 import org.springframework.security.web.webauthn.api.PublicKeyCredentialUserEntity;
 import org.springframework.security.web.webauthn.authentication.WebAuthnAuthentication;
@@ -39,33 +39,35 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
 
     private static final String TEST_PREFIX = "jwtfilterintegrationtest";
 
-    private static final long TOKEN_VALIDITY_IN_MILLISECONDS = 60000; // 60 seconds
+    @Value("${jhipster.security.authentication.jwt.token-validity-in-seconds}")
+    private long TOKEN_VALIDITY_IN_SECONDS;
 
-    private static final long TOKEN_VALIDITY_REMEMBER_ME_IN_MILLISECONDS = 120000; // 120 seconds
+    @Value("${jhipster.security.authentication.jwt.token-validity-in-seconds-for-remember-me}")
+    private long TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS;
+
+    @Value("${artemis.user-management.passkey.token-validity-in-seconds-for-passkey}")
+    private long TOKEN_VALIDITY_IN_SECONDS_FOR_PASSKEY;
 
     @Autowired
     private MockMvc mvc;
 
-    // @Autowired
-    // private RequestPostProcessor requestPostProcessor;
-
     @Autowired
     private TokenProvider tokenProvider;
 
-    @Autowired
-    private JWTCookieService jwtCookieService;
-
-    @Autowired
-    private UserDetailsService userDetailsService;
-
-    private JWTFilter jwtFilter;
-
     @BeforeEach
     void setup() {
-        // ReflectionTestUtils.setField(tokenProvider, "tokenValidityInMilliseconds", TOKEN_VALIDITY_IN_MILLISECONDS);
-        // ReflectionTestUtils.setField(tokenProvider, "tokenValidityInMillisecondsForRememberMe", TOKEN_VALIDITY_REMEMBER_ME_IN_MILLISECONDS);
-
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
+    }
+
+    /**
+     * TODO this should be a validation on server startup
+     */
+    @Test
+    void verifyTokenValidityIsConfiguredProperly() {
+        assertThat(TOKEN_VALIDITY_IN_SECONDS).isGreaterThan(60);
+        assertThat(TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS).isGreaterThan(TOKEN_VALIDITY_IN_SECONDS);
+        assertThat(TOKEN_VALIDITY_IN_SECONDS_FOR_PASSKEY).isGreaterThan(0);
+        assertThat(TOKEN_VALIDITY_IN_SECONDS_FOR_PASSKEY).isGreaterThan(TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS);
     }
 
     // TODO make sure this method is shared instead
@@ -90,8 +92,9 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
     void testRotateTokenSilently_ShouldRotateToken() throws Exception {
         Authentication authentication = createWebAuthnAuthentication();
 
-        Date issuedAt = new Date(System.currentTimeMillis() - 31000); // 31 seconds in the past
-        Date expiration = new Date(issuedAt.getTime() + TOKEN_VALIDITY_IN_MILLISECONDS);
+        long moreThanHalfOfTokenValidityPassed = (long) (TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 0.6 * 1000);
+        Date issuedAt = new Date(System.currentTimeMillis() - moreThanHalfOfTokenValidityPassed);
+        Date expiration = new Date(issuedAt.getTime() + TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 1000);
 
         String jwt = tokenProvider.createToken(authentication, issuedAt, expiration, null, true);
         assertThat(tokenProvider.getAuthenticatedWithPasskey(jwt)).isTrue();
@@ -114,7 +117,7 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
         assertThat(setCookieHeader).contains(JWTFilter.JWT_COOKIE_NAME);
         assertThat(updatedCookie.getName()).isEqualTo(JWTFilter.JWT_COOKIE_NAME);
         assertThat(updatedCookie.getPath()).isEqualTo("/"); // TODO does that make sense?
-        assertThat(updatedCookie.getMaxAge().getSeconds()).isEqualTo(2592000); // 30 days, TODO we would expect 60 seconds here instead
+        assertThat(updatedCookie.getMaxAge().getSeconds()).isEqualTo(TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS);
         assertThat(updatedCookie.isSecure()).isTrue();
         assertThat(updatedCookie.isHttpOnly()).isTrue();
         assertThat(updatedCookie.getSameSite()).isEqualTo("Lax");
@@ -125,9 +128,10 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
         assertThat(tokenProvider.getAuthentication(updatedJwt).getPrincipal()).isEqualTo(tokenProvider.getAuthentication(jwt).getPrincipal());
         assertThat(tokenProvider.getAuthentication(updatedJwt).getAuthorities()).isEqualTo(authentication.getAuthorities());
         assertThat(tokenProvider.getAuthenticatedWithPasskey(updatedJwt)).isTrue();
-        assertThat(tokenProvider.getIssuedAtDate(updatedJwt)).isCloseTo(issuedAt, 1000);
-        assertThat(tokenProvider.getExpirationDate(updatedJwt)).isAfter(expiration);
-        // assertThat(tokenProvider.getExpirationDate(updatedJwt)).isBefore(new Date(issuedAt.getTime() + TOKEN_VALIDITY_IN_MILLISECONDS * 2)); // TODO use the 30 days instead
+        assertThat(tokenProvider.getIssuedAtDate(updatedJwt)).isCloseTo(issuedAt, 1000); // should not have changed
+        // IMPORTANT! The expiration date of the rotated token must be in the future, but not too far in the future
+        assertThat(tokenProvider.getExpirationDate(updatedJwt)).isAfter(new Date(System.currentTimeMillis() + (long) (0.9 * TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 1000)));
+        assertThat(tokenProvider.getExpirationDate(updatedJwt)).isBefore(new Date(System.currentTimeMillis() + TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 1000));
     }
 
     public static class CookieParser {
