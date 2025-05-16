@@ -17,7 +17,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.GenericFilterBean;
@@ -59,19 +58,21 @@ public class JWTFilter extends GenericFilterBean {
 
         boolean isRemainingLifetimeBelowHalf = remainingLifetime < tokenValidityInMilliseconds / 2;
         if (isRemainingLifetimeBelowHalf) {
-            long nowInMilliseconds = new Date().getTime();
+            long nowInMilliseconds = System.currentTimeMillis();
             long newTokenExpirationTimeInMilliseconds = Math.min(nowInMilliseconds + tokenValidityInMilliseconds,
                     issuedAt.getTime() + Math.multiplyExact(this.tokenValidityInSecondsForPasskey, 1000));
-            long rotatedTokenDurationInMilliseconds = Math.min(newTokenExpirationTimeInMilliseconds - nowInMilliseconds, this.tokenProvider.getTokenValidity(true));
+            long rotatedTokenDurationInMilliseconds = newTokenExpirationTimeInMilliseconds - nowInMilliseconds;
 
-            UserDetails updatedUserDetails = userDetailsService.loadUserByUsername(authentication.getName());
-            if (!updatedUserDetails.equals(authentication.getPrincipal())) {
-                throw new NotAuthorizedException("User details have changed, cannot rotate token");
-            }
+            // TODO verify that we want to have this check here
+            // UserDetails updatedUserDetails = userDetailsService.loadUserByUsername(authentication.getName());
+            // if (!updatedUserDetails.equals(authentication.getPrincipal())) {
+            // throw new NotAuthorizedException("User details have changed, cannot rotate token");
+            // }
 
             String rotatedToken = this.tokenProvider.createToken(authentication, issuedAt, new Date(newTokenExpirationTimeInMilliseconds), this.tokenProvider.getTools(jwtToken));
 
             ResponseCookie responseCookie = jwtCookieService.buildRotatedCookie(rotatedToken, rotatedTokenDurationInMilliseconds);
+
             response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
         }
     }
@@ -118,6 +119,7 @@ public class JWTFilter extends GenericFilterBean {
             return null;
         }
 
+        // TODO move the token rotation to this place as we can differentiate between bearer and cookie
         if (cookie != null && authHeader != null) {
             // Single Method Enforcement: Only one method of authentication is allowed
             throw new IllegalArgumentException("Multiple authentication methods detected: Both JWT cookie and Bearer token are present");
