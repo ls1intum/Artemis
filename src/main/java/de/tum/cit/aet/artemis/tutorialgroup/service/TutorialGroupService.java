@@ -5,7 +5,11 @@ import static jakarta.persistence.Persistence.getPersistenceUtil;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.time.LocalTime;
+import java.time.YearMonth;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -21,6 +25,7 @@ import java.util.stream.Collectors;
 
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
+import jakarta.ws.rs.BadRequestException;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
@@ -30,6 +35,7 @@ import org.springframework.util.StringUtils;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.calendar.dto.CalendarEventDTO;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.DeregisteredFromTutorialGroupNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.RegisteredToTutorialGroupNotification;
 import de.tum.cit.aet.artemis.communication.service.CourseNotificationService;
@@ -41,6 +47,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
@@ -65,6 +72,8 @@ public class TutorialGroupService {
 
     private final UserRepository userRepository;
 
+    private final CourseRepository courseRepository;
+
     private final AuthorizationCheckService authorizationCheckService;
 
     private final TutorialGroupRepository tutorialGroupRepository;
@@ -78,10 +87,11 @@ public class TutorialGroupService {
     private final CourseNotificationService courseNotificationService;
 
     public TutorialGroupService(SingleUserNotificationService singleUserNotificationService, TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository,
-            TutorialGroupRepository tutorialGroupRepository, UserRepository userRepository, AuthorizationCheckService authorizationCheckService,
+            CourseRepository courseRepository, TutorialGroupRepository tutorialGroupRepository, UserRepository userRepository, AuthorizationCheckService authorizationCheckService,
             TutorialGroupSessionRepository tutorialGroupSessionRepository, TutorialGroupChannelManagementService tutorialGroupChannelManagementService,
             ConversationDTOService conversationDTOService, CourseNotificationService courseNotificationService) {
         this.tutorialGroupRegistrationRepository = tutorialGroupRegistrationRepository;
+        this.courseRepository = courseRepository;
         this.tutorialGroupRepository = tutorialGroupRepository;
         this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
@@ -916,5 +926,55 @@ public class TutorialGroupService {
             }
         }
         return students;
+    }
+
+    public Set<CalendarEventDTO> getTutorialEventsForUserFallingIntoMonthsOrElseThrough(User user, List<String> monthKeys) {
+        // validate monthKeys
+        Set<YearMonth> months = validateMonthKeys(monthKeys);
+
+        // get participated tutorialGroupIds of active courses the user is part of
+        ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
+        Set<Long> participatedTutorialGroupIds = tutorialGroupRepository.findParticipatedTutorialGroupIdsFromActiveCourses(user.getId(), user.getGroups(), now);
+        if (participatedTutorialGroupIds.isEmpty())
+            return Set.of();
+
+        // get active TutorialGroupSessions of the TutorialGroups (caching will be implemented here later avoiding this call most of the time)
+        Set<TutorialGroupSession> activeSessionsFromParticipatedGroups = tutorialGroupSessionRepository
+                .findAllActiveByTutorialGroupIdsWithGroupAndCourseAndAssistant(participatedTutorialGroupIds);
+
+        var filteredSessions = monthKeys.isEmpty() ? filterForSessionsFallingIntoMonths(activeSessionsFromParticipatedGroups, months)
+                : activeSessionsFromParticipatedGroups.stream();
+
+        // convert the TutorialGroupSessions into CalendarEventDTOs
+        return activeSessionsFromParticipatedGroups.stream().map(CalendarEventDTO::new).collect(Collectors.toSet());
+    }
+
+    private Set<TutorialGroupSession> filterForSessionsFallingIntoMonths(Set<TutorialGroupSession> sessions, Set<YearMonth> months) {
+        return sessions.stream().filter(session -> months.stream().anyMatch(month -> areMonthAndSessionOverlapping(month, session))).collect(Collectors.toSet());
+    }
+
+    private boolean areMonthAndSessionOverlapping(YearMonth month, TutorialGroupSession tutorialGroupSession) {
+        // TODO: check whether sessionStart and sessionEnd can be null (currently it is assumed not)
+        ZonedDateTime sessionStart = tutorialGroupSession.getStart();
+        ZonedDateTime sessionEnd = tutorialGroupSession.getEnd();
+        ZonedDateTime monthStart = ZonedDateTime.of(month.atDay(1), LocalTime.MIDNIGHT, ZoneOffset.UTC);
+        ZonedDateTime monthEnd = ZonedDateTime.of(month.atEndOfMonth(), LocalTime.of(23, 59, 59, 999_000_000), ZoneOffset.UTC);
+
+        var sessionStartFallsIntoMonth = firstIsBeforeOrEqualSecond(monthStart, sessionStart) && firstIsBeforeOrEqualSecond(sessionStart, monthEnd);
+        var sessionEndFallsIntoMonth = firstIsBeforeOrEqualSecond(monthStart, sessionEnd) && firstIsBeforeOrEqualSecond(sessionEnd, monthEnd);
+        return sessionStartFallsIntoMonth || sessionEndFallsIntoMonth;
+    }
+
+    private boolean firstIsBeforeOrEqualSecond(ZonedDateTime first, ZonedDateTime second) {
+        return first.isBefore(second) || first.isEqual(second);
+    }
+
+    private Set<YearMonth> validateMonthKeys(List<String> monthKeys) {
+        try {
+            return monthKeys.stream().map(YearMonth::parse).collect(Collectors.toSet());
+        }
+        catch (DateTimeParseException exception) {
+            throw new BadRequestException("Invalid monthKey format. Expected format: YYYY-MM.");
+        }
     }
 }
