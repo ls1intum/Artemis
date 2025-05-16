@@ -7,16 +7,17 @@ import { TranslateService } from '@ngx-translate/core';
 import { LearnerProfileApiService } from 'app/learner-profile/service/learner-profile-api.service';
 import { CourseLearnerProfileDTO } from 'app/learner-profile/shared/entities/learner-profile.model';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
-import { DoubleSliderComponent } from 'app/shared/double-slider/double-slider.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
+import { SegmentedToggleComponent } from 'app/shared/segmented-toggle/segmented-toggle.component';
+import { COURSE_LEARNER_PROFILE_OPTIONS } from './learner-profile-options';
 
 @Component({
     selector: 'jhi-course-learner-profile',
     templateUrl: './course-learner-profile.component.html',
     styleUrls: ['./course-learner-profile.component.scss'],
-    imports: [DoubleSliderComponent, TranslateDirective, NgClass, ArtemisTranslatePipe, FaIconComponent, HelpIconComponent],
+    imports: [TranslateDirective, NgClass, ArtemisTranslatePipe, FaIconComponent, HelpIconComponent, SegmentedToggleComponent],
 })
 export class CourseLearnerProfileComponent implements OnInit {
     private alertService = inject(AlertService);
@@ -42,13 +43,19 @@ export class CourseLearnerProfileComponent implements OnInit {
 
     disabled = true;
     editing = false;
-    aimForGradeOrBonus = signal<number>(1);
-    timeInvestment = signal<number>(1);
-    repetitionIntensity = signal<number>(1);
 
-    initialAimForGradeOrBonus = 1;
-    initialTimeInvestment = 1;
-    initialRepetitionIntensity = 1;
+    // Use the shared options for all toggles
+    protected aimForGradeOrBonusOptions = COURSE_LEARNER_PROFILE_OPTIONS;
+    protected timeInvestmentOptions = COURSE_LEARNER_PROFILE_OPTIONS;
+    protected repetitionIntensityOptions = COURSE_LEARNER_PROFILE_OPTIONS;
+
+    aimForGradeOrBonus = signal<string>('1');
+    timeInvestment = signal<string>('1');
+    repetitionIntensity = signal<string>('1');
+
+    initialAimForGradeOrBonus = '1';
+    initialTimeInvestment = '1';
+    initialRepetitionIntensity = '1';
 
     async ngOnInit() {
         await this.loadProfiles();
@@ -75,13 +82,13 @@ export class CourseLearnerProfileComponent implements OnInit {
 
     updateProfileValues(courseLearnerProfile: CourseLearnerProfileDTO) {
         // Update displayed values to new course
-        this.initialAimForGradeOrBonus = courseLearnerProfile.aimForGradeOrBonus;
-        this.initialTimeInvestment = courseLearnerProfile.timeInvestment;
-        this.initialRepetitionIntensity = courseLearnerProfile.repetitionIntensity;
+        this.initialAimForGradeOrBonus = courseLearnerProfile.aimForGradeOrBonus.toString();
+        this.initialTimeInvestment = courseLearnerProfile.timeInvestment.toString();
+        this.initialRepetitionIntensity = courseLearnerProfile.repetitionIntensity.toString();
         // update signals
-        this.aimForGradeOrBonus.set(courseLearnerProfile.aimForGradeOrBonus);
-        this.timeInvestment.set(courseLearnerProfile.timeInvestment);
-        this.repetitionIntensity.set(courseLearnerProfile.repetitionIntensity);
+        this.aimForGradeOrBonus.set(courseLearnerProfile.aimForGradeOrBonus.toString());
+        this.timeInvestment.set(courseLearnerProfile.timeInvestment.toString());
+        this.repetitionIntensity.set(courseLearnerProfile.repetitionIntensity.toString());
     }
 
     getCourseLearnerProfile(courseId: number): CourseLearnerProfileDTO | undefined {
@@ -97,9 +104,9 @@ export class CourseLearnerProfileComponent implements OnInit {
         if (!courseLearnerProfile) {
             return;
         }
-        courseLearnerProfile.aimForGradeOrBonus = this.aimForGradeOrBonus();
-        courseLearnerProfile.timeInvestment = this.timeInvestment();
-        courseLearnerProfile.repetitionIntensity = this.repetitionIntensity();
+        courseLearnerProfile.aimForGradeOrBonus = Number(this.aimForGradeOrBonus());
+        courseLearnerProfile.timeInvestment = Number(this.timeInvestment());
+        courseLearnerProfile.repetitionIntensity = Number(this.repetitionIntensity());
 
         // Try to update profile
         this.learnerProfileAPIService.putUpdatedCourseLearnerProfile(courseLearnerProfile).then(

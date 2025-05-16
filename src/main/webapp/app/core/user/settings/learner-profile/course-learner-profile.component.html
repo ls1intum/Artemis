@@ -30,34 +30,16 @@
 <div [ngClass]="{ 'd-none': disabled }">
     <div class="row row-cols-2 gx-5 align-items-end">
         <div class="col">
-            <jhi-double-slider
-                [title]="translateService.instant('artemisApp.learnerProfile.courseLearnerProfile.aimForGradeOrBonus')"
-                [min]="MIN_PROFILE_VALUE"
-                [max]="MAX_PROFILE_VALUE"
-                [initialValue]="initialAimForGradeOrBonus"
-                [(currentValue)]="aimForGradeOrBonus"
-                (currentValueChange)="this.editing = true"
-            />
+            <h4 class="mb-3">{{ translateService.instant('artemisApp.learnerProfile.courseLearnerProfile.aimForGradeOrBonus') }}</h4>
+            <jhi-segmented-toggle [options]="aimForGradeOrBonusOptions" [(selected)]="aimForGradeOrBonus" (selectedChange)="editing = true" />
         </div>
         <div class="col">
-            <jhi-double-slider
-                [title]="translateService.instant('artemisApp.learnerProfile.courseLearnerProfile.timeInvestment')"
-                [min]="MIN_PROFILE_VALUE"
-                [max]="MAX_PROFILE_VALUE"
-                [initialValue]="initialTimeInvestment"
-                [(currentValue)]="timeInvestment"
-                (currentValueChange)="this.editing = true"
-            />
+            <h4 class="mb-3">{{ translateService.instant('artemisApp.learnerProfile.courseLearnerProfile.timeInvestment') }}</h4>
+            <jhi-segmented-toggle [options]="timeInvestmentOptions" [(selected)]="timeInvestment" (selectedChange)="editing = true" />
         </div>
-        <div class="col align-items-end">
-            <jhi-double-slider
-                [title]="translateService.instant('artemisApp.learnerProfile.courseLearnerProfile.repetitionIntensity')"
-                [min]="MIN_PROFILE_VALUE"
-                [max]="MAX_PROFILE_VALUE"
-                [initialValue]="initialRepetitionIntensity"
-                [(currentValue)]="repetitionIntensity"
-                (currentValueChange)="this.editing = true"
-            />
+        <div class="col">
+            <h4 class="mb-3">{{ translateService.instant('artemisApp.learnerProfile.courseLearnerProfile.repetitionIntensity') }}</h4>
+            <jhi-segmented-toggle [options]="repetitionIntensityOptions" [(selected)]="repetitionIntensity" (selectedChange)="editing = true" />
         </div>
     </div>
 </div>
