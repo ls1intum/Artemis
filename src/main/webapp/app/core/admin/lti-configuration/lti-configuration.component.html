@@ -13,7 +13,7 @@
                 </dt>
                 <dd>
                     <span>{{ getDynamicRegistrationUrl() }}</span>
-                    <jhi-copy-icon-button [copyText]="getDynamicRegistrationUrl()" />
+                    <jhi-copy-to-clipboard-button [copyText]="getDynamicRegistrationUrl()" />
                 </dd>
                 <dt style="display: flex; align-items: center; justify-content: space-between; width: 100%">
                     <div class="modal-header" style="margin-bottom: 20px">
@@ -134,35 +134,35 @@
                 </dt>
                 <dd>
                     <span>{{ getDeepLinkingUrl() }}</span>
-                    <jhi-copy-icon-button [copyText]="getDeepLinkingUrl()" />
+                    <jhi-copy-to-clipboard-button [copyText]="getDeepLinkingUrl()" />
                 </dd>
                 <dt>
                     <span jhiTranslate="artemisApp.lti.toolUrl"></span>
                 </dt>
                 <dd>
                     <span>{{ getToolUrl() }}</span>
-                    <jhi-copy-icon-button [copyText]="getToolUrl()" />
+                    <jhi-copy-to-clipboard-button [copyText]="getToolUrl()" />
                 </dd>
                 <dt>
                     <span jhiTranslate="artemisApp.lti.keysetUrl"></span>
                 </dt>
                 <dd>
                     <span>{{ getKeysetUrl() }}</span>
-                    <jhi-copy-icon-button [copyText]="getKeysetUrl()" />
+                    <jhi-copy-to-clipboard-button [copyText]="getKeysetUrl()" />
                 </dd>
                 <dt>
                     <span jhiTranslate="artemisApp.lti.initiateLoginUrl"></span>
                 </dt>
                 <dd>
                     <span>{{ getInitiateLoginUrl() }}</span>
-                    <jhi-copy-icon-button [copyText]="getInitiateLoginUrl()" />
+                    <jhi-copy-to-clipboard-button [copyText]="getInitiateLoginUrl()" />
                 </dd>
                 <dt>
                     <span jhiTranslate="artemisApp.lti.redirectUri"></span>
                 </dt>
                 <dd>
                     <span>{{ getRedirectUri() }}</span>
-                    <jhi-copy-icon-button [copyText]="getRedirectUri()" />
+                    <jhi-copy-to-clipboard-button [copyText]="getRedirectUri()" />
                 </dd>
             </ng-template>
         </ng-container>

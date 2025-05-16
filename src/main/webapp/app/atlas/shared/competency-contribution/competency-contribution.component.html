@@ -1,4 +1,4 @@
-@if (this.competencies.length) {
+@if (this.atlasEnabled && this.competencies.length) {
     <div class="mt-4 mb-2">
         <h5 [jhiTranslate]="'artemisApp.competency.competencyContribution.title'"></h5>
         @if (this.competencies.length > 3) {
