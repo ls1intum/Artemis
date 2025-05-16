@@ -62,52 +62,58 @@ export class IrisEnabledComponent implements OnInit {
             }
         } else if (!this.disabled() && this.irisSubSettingsType() == IrisSubSettingsType.ALL && this.irisSettings && this.course()) {
             // If the subsettings type is ALL, we need to set all subsettings to the same value
-
-            if (!this.irisSettings.irisChatSettings) {
-                this.irisSettings.irisChatSettings = { enabled, type: IrisSubSettingsType.CHAT };
-            } else {
-                this.irisSettings.irisChatSettings.enabled = enabled;
-            }
-
-            if (!this.irisSettings.irisTextExerciseChatSettings) {
-                this.irisSettings.irisTextExerciseChatSettings = { type: IrisSubSettingsType.TEXT_EXERCISE_CHAT, enabled };
-            } else {
-                this.irisSettings.irisTextExerciseChatSettings.enabled = enabled;
-            }
-
-            if (!this.irisSettings.irisCourseChatSettings) {
-                this.irisSettings.irisCourseChatSettings = { type: IrisSubSettingsType.COURSE_CHAT, enabled };
-            } else {
-                this.irisSettings.irisCourseChatSettings.enabled = enabled;
-            }
-
-            if (!this.irisSettings.irisCompetencyGenerationSettings) {
-                this.irisSettings.irisCompetencyGenerationSettings = { type: IrisSubSettingsType.COMPETENCY_GENERATION, enabled };
-            } else {
-                this.irisSettings.irisCompetencyGenerationSettings.enabled = enabled;
-            }
-            if (!this.irisSettings.irisLectureChatSettings) {
-                this.irisSettings.irisLectureChatSettings = { type: IrisSubSettingsType.LECTURE, enabled };
-            } else {
-                this.irisSettings.irisLectureChatSettings.enabled = enabled;
-            }
-            if (!this.irisSettings.irisFaqIngestionSettings) {
-                this.irisSettings.irisFaqIngestionSettings = { type: IrisSubSettingsType.FAQ_INGESTION, enabled, autoIngestOnFaqCreation: false };
-            } else {
-                this.irisSettings.irisFaqIngestionSettings.enabled = enabled;
-            }
-
-            if (!this.irisSettings.irisLectureIngestionSettings) {
-                this.irisSettings.irisLectureIngestionSettings = { type: IrisSubSettingsType.LECTURE_INGESTION, enabled, autoIngestOnLectureAttachmentUpload: false };
-            } else {
-                this.irisSettings.irisLectureIngestionSettings.enabled = enabled;
-            }
-
-            this.irisSettingsService.setCourseSettings(this.course()!.id!, this.irisSettings!).subscribe((response) => {
-                this.irisSettings = response.body ?? this.irisSettings;
-                this.setSubSettings();
-            });
+            this.toggleEnabledStateForAllSubSettings(enabled);
         }
+    }
+
+    private toggleEnabledStateForAllSubSettings(enabled: boolean) {
+        if (!this.irisSettings) {
+            return;
+        }
+        if (!this.irisSettings.irisChatSettings) {
+            this.irisSettings.irisChatSettings = { enabled, type: IrisSubSettingsType.CHAT };
+        } else {
+            this.irisSettings.irisChatSettings.enabled = enabled;
+        }
+
+        if (!this.irisSettings.irisTextExerciseChatSettings) {
+            this.irisSettings.irisTextExerciseChatSettings = { type: IrisSubSettingsType.TEXT_EXERCISE_CHAT, enabled };
+        } else {
+            this.irisSettings.irisTextExerciseChatSettings.enabled = enabled;
+        }
+
+        if (!this.irisSettings.irisCourseChatSettings) {
+            this.irisSettings.irisCourseChatSettings = { type: IrisSubSettingsType.COURSE_CHAT, enabled };
+        } else {
+            this.irisSettings.irisCourseChatSettings.enabled = enabled;
+        }
+
+        if (!this.irisSettings.irisCompetencyGenerationSettings) {
+            this.irisSettings.irisCompetencyGenerationSettings = { type: IrisSubSettingsType.COMPETENCY_GENERATION, enabled };
+        } else {
+            this.irisSettings.irisCompetencyGenerationSettings.enabled = enabled;
+        }
+        if (!this.irisSettings.irisLectureChatSettings) {
+            this.irisSettings.irisLectureChatSettings = { type: IrisSubSettingsType.LECTURE, enabled };
+        } else {
+            this.irisSettings.irisLectureChatSettings.enabled = enabled;
+        }
+        if (!this.irisSettings.irisFaqIngestionSettings) {
+            this.irisSettings.irisFaqIngestionSettings = { type: IrisSubSettingsType.FAQ_INGESTION, enabled, autoIngestOnFaqCreation: false };
+        } else {
+            this.irisSettings.irisFaqIngestionSettings.enabled = enabled;
+        }
+
+        if (!this.irisSettings.irisLectureIngestionSettings) {
+            this.irisSettings.irisLectureIngestionSettings = { type: IrisSubSettingsType.LECTURE_INGESTION, enabled, autoIngestOnLectureAttachmentUpload: false };
+        } else {
+            this.irisSettings.irisLectureIngestionSettings.enabled = enabled;
+        }
+
+        this.irisSettingsService.setCourseSettings(this.course()!.id!, this.irisSettings!).subscribe((response) => {
+            this.irisSettings = response.body ?? this.irisSettings;
+            this.setSubSettings();
+        });
     }
 
     private setSubSettings() {
