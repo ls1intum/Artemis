@@ -25,7 +25,6 @@ export class IrisEnabledComponent implements OnInit {
     course = input<Course | undefined>();
     lecture = input<Lecture | undefined>();
     irisSubSettingsType = input.required<IrisSubSettingsType>();
-    disabled = input<boolean>(false);
     showCustomButton = input<boolean>(false);
 
     irisSettings?: IrisSettings;
@@ -47,7 +46,7 @@ export class IrisEnabledComponent implements OnInit {
     }
 
     setEnabled(enabled: boolean) {
-        if (!this.disabled() && this.irisSubSettings && this.irisSubSettingsType() != IrisSubSettingsType.ALL) {
+        if (this.irisSubSettings && this.irisSubSettingsType() != IrisSubSettingsType.ALL) {
             this.irisSubSettings.enabled = enabled;
             if (this.exercise()) {
                 this.irisSettingsService.setExerciseSettings(this.exercise()!.id!, this.irisSettings!).subscribe((response) => {
@@ -60,7 +59,7 @@ export class IrisEnabledComponent implements OnInit {
                     this.setSubSettings();
                 });
             }
-        } else if (!this.disabled() && this.irisSubSettingsType() == IrisSubSettingsType.ALL && this.irisSettings && this.course()) {
+        } else if (this.irisSubSettingsType() == IrisSubSettingsType.ALL && this.irisSettings && this.course()) {
             // If the subsettings type is ALL, we need to set all subsettings to the same value
             this.toggleEnabledStateForAllSubSettings(enabled);
         }
@@ -140,35 +139,20 @@ export class IrisEnabledComponent implements OnInit {
     }
 
     private handleSubSettingsTypeAll() {
-        const chatSettings = this.irisSettings?.irisChatSettings;
-        const textExerciseChatSettings = this.irisSettings?.irisTextExerciseChatSettings;
-        const courseChatSettings = this.irisSettings?.irisCourseChatSettings;
-        const competencyGenerationSettings = this.irisSettings?.irisCompetencyGenerationSettings;
-        const lectureIngestionSettings = this.irisSettings?.irisLectureIngestionSettings;
-        const faqIngestionSettings = this.irisSettings?.irisFaqIngestionSettings;
-        const lectureSettings = this.irisSettings?.irisLectureChatSettings;
-        this.irisSubSettings = chatSettings ? { ...chatSettings } : { type: IrisSubSettingsType.CHAT, enabled: false };
+        const subSettings = [
+            this.irisSettings?.irisChatSettings,
+            this.irisSettings?.irisTextExerciseChatSettings,
+            this.irisSettings?.irisCourseChatSettings,
+            this.irisSettings?.irisCompetencyGenerationSettings,
+            this.irisSettings?.irisLectureIngestionSettings,
+            this.irisSettings?.irisFaqIngestionSettings,
+            this.irisSettings?.irisLectureChatSettings,
+        ];
 
-        const allSubSettingsEnabled =
-            chatSettings?.enabled &&
-            textExerciseChatSettings?.enabled &&
-            courseChatSettings?.enabled &&
-            competencyGenerationSettings?.enabled &&
-            lectureIngestionSettings?.enabled &&
-            faqIngestionSettings?.enabled &&
-            lectureSettings?.enabled;
+        const allEnabled = subSettings.every((settings) => settings?.enabled);
+        const anyEnabled = subSettings.some((settings) => settings?.enabled);
 
-        const anySubSettingEnabled = [
-            chatSettings?.enabled,
-            textExerciseChatSettings?.enabled,
-            courseChatSettings?.enabled,
-            competencyGenerationSettings?.enabled,
-            lectureIngestionSettings?.enabled,
-            faqIngestionSettings?.enabled,
-            lectureSettings?.enabled,
-        ].some((settingEnabled) => settingEnabled === true);
-
-        this.someButNotAllSettingsEnabled = anySubSettingEnabled && !allSubSettingsEnabled;
-        this.irisSubSettings.enabled = anySubSettingEnabled;
+        this.irisSubSettings = { type: IrisSubSettingsType.ALL, enabled: anyEnabled };
+        this.someButNotAllSettingsEnabled = anyEnabled && !allEnabled;
     }
 }

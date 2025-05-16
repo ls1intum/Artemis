@@ -2,17 +2,11 @@
     <div
         class="btn"
         [ngClass]="{ 'btn-success selected': irisSubSettings?.enabled && !someButNotAllSettingsEnabled, 'btn-default': !irisSubSettings?.enabled || someButNotAllSettingsEnabled }"
-        [class.disabled]="disabled()"
         (click)="setEnabled(true)"
         jhiTranslate="artemisApp.iris.settings.subSettings.enabled.on"
     ></div>
     @if (showCustomButton()) {
-        <div
-            routerLink="iris-settings"
-            class="btn"
-            [ngClass]="{ 'btn-warning selected': someButNotAllSettingsEnabled, 'btn-default': !someButNotAllSettingsEnabled }"
-            [class.disabled]="disabled()"
-        >
+        <div routerLink="iris-settings" class="btn" [ngClass]="{ 'btn-warning selected': someButNotAllSettingsEnabled, 'btn-default': !someButNotAllSettingsEnabled }">
             <span jhiTranslate="artemisApp.iris.settings.subSettings.enabled.custom"></span>
             <fa-icon [icon]="faArrowRight" class="ms-1" />
         </div>
@@ -23,7 +17,6 @@
             'btn-danger selected': !irisSubSettings?.enabled && !someButNotAllSettingsEnabled,
             'btn-default': irisSubSettings?.enabled || someButNotAllSettingsEnabled,
         }"
-        [class.disabled]="disabled()"
         (click)="setEnabled(false)"
         jhiTranslate="artemisApp.iris.settings.subSettings.enabled.off"
     ></div>

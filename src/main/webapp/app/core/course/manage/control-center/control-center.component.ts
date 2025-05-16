@@ -7,10 +7,11 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { faRobot } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { CardWrapperComponent } from 'app/shared/card-wrapper/card-wrapper.component';
 
 @Component({
     selector: 'jhi-control-center',
-    imports: [FormsModule, IrisEnabledComponent, TranslateDirective, HelpIconComponent, FaIconComponent],
+    imports: [FormsModule, IrisEnabledComponent, TranslateDirective, HelpIconComponent, FaIconComponent, CardWrapperComponent],
     templateUrl: './control-center.component.html',
     styleUrl: './control-center.component.scss',
 })

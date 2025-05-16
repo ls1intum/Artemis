@@ -42,6 +42,22 @@ export enum DoughnutChartType {
     imports: [CourseDetailDoughnutChartComponent, CourseDetailLineChartComponent, DetailOverviewListComponent, QuickActionsComponent, ControlCenterComponent],
 })
 export class CourseDetailComponent implements OnInit, OnDestroy {
+    protected readonly DoughnutChartType = DoughnutChartType;
+    protected readonly FeatureToggle = FeatureToggle;
+    protected readonly IrisSubSettingsType = IrisSubSettingsType;
+
+    protected readonly faTimes = faTimes;
+    protected readonly faEye = faEye;
+    protected readonly faWrench = faWrench;
+    protected readonly faTable = faTable;
+    protected readonly faFlag = faFlag;
+    protected readonly faListAlt = faListAlt;
+    protected readonly faChartBar = faChartBar;
+    protected readonly faClipboard = faClipboard;
+    protected readonly faGraduationCap = faGraduationCap;
+    protected readonly faChalkboardUser = faChalkboardUser;
+    protected readonly faQuestion = faQuestion;
+
     private eventManager = inject(EventManager);
     private courseManagementService = inject(CourseManagementService);
     private organizationService = inject(OrganizationManagementService);
@@ -51,9 +67,6 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     private accountService = inject(AccountService);
     private irisSettingsService = inject(IrisSettingsService);
     private markdownService = inject(ArtemisMarkdownService);
-
-    readonly DoughnutChartType = DoughnutChartType;
-    readonly FeatureToggle = FeatureToggle;
 
     courseDTO: CourseManagementDetailViewDto;
     activeStudents?: number[];
@@ -72,19 +85,6 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
 
     private eventSubscriber: Subscription;
     paramSub: Subscription;
-
-    // Icons
-    protected readonly faTimes = faTimes;
-    protected readonly faEye = faEye;
-    protected readonly faWrench = faWrench;
-    protected readonly faTable = faTable;
-    protected readonly faFlag = faFlag;
-    protected readonly faListAlt = faListAlt;
-    protected readonly faChartBar = faChartBar;
-    protected readonly faClipboard = faClipboard;
-    protected readonly faGraduationCap = faGraduationCap;
-    protected readonly faChalkboardUser = faChalkboardUser;
-    protected readonly faQuestion = faQuestion;
 
     /**
      * On init load the course information and subscribe to listen for changes in courses.
@@ -337,6 +337,4 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
             this.getCourseDetailSections();
         });
     }
-
-    protected readonly IrisSubSettingsType = IrisSubSettingsType;
 }
