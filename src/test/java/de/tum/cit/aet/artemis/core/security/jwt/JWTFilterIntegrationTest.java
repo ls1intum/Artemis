@@ -29,8 +29,6 @@ import org.springframework.security.web.webauthn.api.PublicKeyCredentialUserEnti
 import org.springframework.security.web.webauthn.authentication.WebAuthnAuthentication;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.test.web.servlet.ResultActions;
-import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.LinkedMultiValueMap;
 
@@ -85,17 +83,6 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
         return new WebAuthnAuthentication(principal, authorities);
     }
 
-    public ResultActions performMvcRequest(MockHttpServletRequestBuilder requestBuilder) throws Exception {
-        return mvc.perform(addRequestPostProcessorIfAvailable(requestBuilder));
-    }
-
-    private MockHttpServletRequestBuilder addRequestPostProcessorIfAvailable(MockHttpServletRequestBuilder request) {
-        // if (requestPostProcessor != null) {
-        // return request.with(requestPostProcessor);
-        // }
-        return request;
-    }
-
     /**
      * We want to rotate a passkey-created token silently if it is used after 50% of its lifetime
      */
@@ -113,8 +100,8 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
         HttpHeaders headers = new HttpHeaders();
         headers.add(HttpHeaders.COOKIE, JWTFilter.JWT_COOKIE_NAME + "=" + jwt);
 
-        MvcResult res = performMvcRequest(
-                MockMvcRequestBuilders.get(new URI("/api/core/public/account")).params(params).headers(headers).cookie(new Cookie(JWTFilter.JWT_COOKIE_NAME, jwt)))
+        MvcResult res = mvc
+                .perform(MockMvcRequestBuilders.get(new URI("/api/core/public/account")).params(params).headers(headers).cookie(new Cookie(JWTFilter.JWT_COOKIE_NAME, jwt)))
                 .andExpect(status().is(HttpStatus.OK.value())).andReturn();
 
         MockHttpServletResponse response = res.getResponse();
