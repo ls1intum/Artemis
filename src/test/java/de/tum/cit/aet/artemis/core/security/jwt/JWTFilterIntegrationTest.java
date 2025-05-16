@@ -125,13 +125,14 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
         assertThat(updatedCookie.isHttpOnly()).isTrue();
         assertThat(updatedCookie.getSameSite()).isEqualTo("Lax");
 
+        // values should not have changed except for the expiration date
         String updatedJwt = updatedCookie.getValue();
         assertThat(updatedJwt).isNotEmpty();
         assertThat(updatedJwt).isNotEqualTo(jwt);
         assertThat(tokenProvider.getAuthentication(updatedJwt).getPrincipal()).isEqualTo(tokenProvider.getAuthentication(jwt).getPrincipal());
         assertThat(tokenProvider.getAuthentication(updatedJwt).getAuthorities()).isEqualTo(authentication.getAuthorities());
         assertThat(tokenProvider.getAuthenticatedWithPasskey(updatedJwt)).isTrue();
-        assertThat(tokenProvider.getIssuedAtDate(updatedJwt)).isCloseTo(issuedAt, 1000); // should not have changed
+        assertThat(tokenProvider.getIssuedAtDate(updatedJwt)).isCloseTo(issuedAt, 1000); // should not have changed, tolerance due to formatting
         // IMPORTANT! The expiration date of the rotated token must be in the future, but not too far in the future
         assertThat(tokenProvider.getExpirationDate(updatedJwt)).isAfter(new Date(System.currentTimeMillis() + (long) (0.9 * TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 1000)));
         assertThat(tokenProvider.getExpirationDate(updatedJwt)).isBefore(new Date(System.currentTimeMillis() + TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 1000));
