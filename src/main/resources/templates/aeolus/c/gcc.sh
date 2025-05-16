@@ -11,6 +11,7 @@ setup_the_build_environment () {
   # ------------------------------
 
   # Updating ${studentParentWorkingDirectoryName} and test-reports ownership...
+  sudo chown artemis_user:artemis_user .
   sudo chown artemis_user:artemis_user ${studentParentWorkingDirectoryName}/ -R
   mkdir test-reports
   chown artemis_user:artemis_user test-reports/ -R
