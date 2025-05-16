@@ -389,7 +389,6 @@ public class SharedQueueManagementService {
         @Override
         public void entryUpdated(com.hazelcast.core.EntryEvent<String, BuildAgentInformation> event) {
             log.debug("Build agent updated: {}", event.getValue());
-            log.debug("Old Build agent value: {}", event.getOldValue());
             updateBuildAgentCapacity();
 
             BuildAgentInformation oldValue = event.getOldValue();
