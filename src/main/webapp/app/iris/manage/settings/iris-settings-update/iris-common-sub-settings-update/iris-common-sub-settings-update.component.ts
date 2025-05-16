@@ -223,7 +223,8 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
 
     get inheritDisabled() {
         if (this.parentSubSettings) {
-            return !this.parentSubSettings.enabled && !(this.settingsType === 'course');
+            // for the course, the parent are global settings, and we don't want to inherit disabled from them anymore
+            return !this.parentSubSettings.enabled && this.settingsType !== IrisSettingsType.COURSE;
         }
         return false;
     }
