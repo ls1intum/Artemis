@@ -117,7 +117,7 @@ public class SharedQueueProcessingService {
     @Value("${artemis.continuous-integration.build-agent.display-name:}")
     private String buildAgentDisplayName;
 
-    @Value("${artemis.continuous-integration.pause-after-consecutive-failed-jobs:100}")
+    @Value("${artemis.continuous-integration.pause-after-consecutive-failed-jobs:5}")
     private int pauseAfterConsecutiveFailedJobs;
 
     public SharedQueueProcessingService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, BuildAgentConfiguration buildAgentConfiguration,
