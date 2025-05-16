@@ -8,7 +8,7 @@ import { Bonus, BonusExample, BonusStrategy } from 'app/assessment/shared/entiti
 import { catchError, finalize, tap } from 'rxjs/operators';
 import { faExclamationTriangle, faPlus, faQuestionCircle, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { GradeStep, GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
-import { ButtonSize } from 'app/shared/components/button/button.component';
+import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
 import { Subject, forkJoin, of } from 'rxjs';
 import { SearchTermPageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
 import { GradeEditMode } from 'app/assessment/manage/grading-system/base-grading-system/base-grading-system.component';
