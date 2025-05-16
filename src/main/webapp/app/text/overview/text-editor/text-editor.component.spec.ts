@@ -16,7 +16,7 @@ import { TextEditorComponent } from 'app/text/overview/text-editor/text-editor.c
 import { textEditorRoute } from 'app/text/overview/text-editor.route';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { ButtonComponent } from 'app/shared/components/button/button.component';
+import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ComplaintsFormComponent } from 'app/assessment/overview/complaint-form/complaints-form.component';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
