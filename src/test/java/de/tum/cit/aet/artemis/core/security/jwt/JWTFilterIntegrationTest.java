@@ -89,7 +89,7 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
      * We want to rotate a passkey-created token silently if it has used after 50% of its lifetime
      */
     @Test
-    void testRotateTokenSilently_shouldRotateToken() throws Exception {
+    void testRotateTokenSilently_shouldRotateToken_ifMoreThanHalfOfLifetimeUsed() throws Exception {
         Authentication authentication = createWebAuthnAuthentication();
 
         long moreThanHalfOfTokenValidityPassed = (long) (TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 0.6 * 1000);
@@ -137,7 +137,7 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
      * We DO NOT want to rotate a passkey-created token silently if it has used LESS THAN 50% of its lifetime
      */
     @Test
-    void testRotateTokenSilently_shouldNotRotateToken() throws Exception {
+    void testRotateTokenSilently_shouldNotRotateToken_ifLessThanHalfOfLifetimeUsed() throws Exception {
         Authentication authentication = createWebAuthnAuthentication();
 
         long lessThanHalfOfTokenValidityPassed = (long) (TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 0.4 * 1000);
