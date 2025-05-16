@@ -133,6 +133,10 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
         assertThat(tokenProvider.getExpirationDate(updatedJwt)).isBefore(new Date(System.currentTimeMillis() + TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 1000));
     }
 
+    // TODO should not extend time beyond max passkey token lifetime
+
+    // TODO should not rotate token if it comes from a bearer token (only from a cookie)
+
     /**
      * We DO NOT want to rotate a passkey-created token silently if it has used LESS THAN 50% of its lifetime
      */
