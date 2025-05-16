@@ -29,7 +29,7 @@ import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { FullscreenComponent } from 'app/modeling/shared/fullscreen/fullscreen.component';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
-import { ButtonComponent } from 'app/shared/components/button/button.component';
+import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';

@@ -151,7 +151,7 @@ import de.tum.cit.aet.artemis.programming.util.GitUtilService.MockFileRepository
 
 /**
  * Note: this class should be independent of the actual VCS and CIS and contains common test logic for scenarios:
- * 1) Jenkins + LocalVc
+ * 1) Jenkins + LocalVC
  * The local CI + local VC systems require a different setup as there are no requests to external systems and only minimal mocking is necessary.
  */
 @Service

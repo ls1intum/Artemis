@@ -1,12 +1,12 @@
 import { Component, Input, inject } from '@angular/core';
-import { ButtonSize, ButtonType } from 'app/shared/components/button/button.component';
+import { ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
 import { AlertService } from 'app/shared/service/alert.service';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
 import { catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
-import { ButtonComponent } from 'app/shared/components/button/button.component';
+import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 

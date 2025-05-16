@@ -195,7 +195,7 @@ public class ProgrammingTriggerService {
         var index = 0;
         for (var participation : participations) {
             // Execute requests in batches when using an external build system.
-            if (!profileService.isLocalCiActive() && index > 0 && index % externalSystemRequestBatchSize == 0) {
+            if (!profileService.isLocalCIActive() && index > 0 && index % externalSystemRequestBatchSize == 0) {
                 try {
                     log.info("Sleep for {}s during triggerBuild", externalSystemRequestBatchWaitingTime / 1000);
                     Thread.sleep(externalSystemRequestBatchWaitingTime);

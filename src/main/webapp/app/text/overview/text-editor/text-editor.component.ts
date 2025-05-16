@@ -18,7 +18,7 @@ import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
-import { ButtonComponent, ButtonType } from 'app/shared/components/button/button.component';
+import { ButtonComponent, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { StringCountService } from 'app/text/overview/service/string-count.service';

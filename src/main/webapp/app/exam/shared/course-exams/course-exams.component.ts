@@ -100,7 +100,6 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
         this.courseUpdatesSubscription = this.courseStorageService.subscribeToCourseUpdates(this.courseId).subscribe((course: Course) => {
             this.course = course;
             this.updateExams();
-            this.prepareSidebarData();
         });
 
         this.studentExamTestExamUpdateSubscription = this.examParticipationService
@@ -123,7 +122,6 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
             // The Map is ued to store the boolean value, if the attempt-List for one Exam has been expanded or collapsed
             this.expandAttemptsMap = new Map(this.course.exams.filter((exam) => exam.testExam && this.isVisible(exam)).map((exam) => [exam.id!, false]));
             this.updateExams();
-            this.prepareSidebarData();
         }
 
         // If no exam is selected navigate to the last selected or upcoming Exam

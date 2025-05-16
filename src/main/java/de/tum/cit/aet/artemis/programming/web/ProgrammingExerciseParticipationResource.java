@@ -59,6 +59,7 @@ import de.tum.cit.aet.artemis.programming.repository.VcsAccessLogRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
+import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.programming.service.localci.SharedQueueManagementService;
 
 @Profile(PROFILE_CORE)
@@ -86,6 +87,8 @@ public class ProgrammingExerciseParticipationResource {
 
     private final ParticipationAuthorizationCheckService participationAuthCheckService;
 
+    private final ContinuousIntegrationTriggerService continuousIntegrationTriggerService;
+
     private final ResultService resultService;
 
     private final RepositoryService repositoryService;
@@ -107,7 +110,8 @@ public class ProgrammingExerciseParticipationResource {
             ProgrammingSubmissionService submissionService, ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
             ResultService resultService, ParticipationAuthorizationCheckService participationAuthCheckService, RepositoryService repositoryService,
             Optional<StudentExamApi> studentExamApi, Optional<VcsAccessLogRepository> vcsAccessLogRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
-            Optional<SharedQueueManagementService> sharedQueueManagementService, Optional<ExamApi> examApi, ParticipationService participationService) {
+            Optional<SharedQueueManagementService> sharedQueueManagementService, Optional<ExamApi> examApi, ParticipationService participationService,
+            ContinuousIntegrationTriggerService continuousIntegrationTriggerService) {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -124,6 +128,7 @@ public class ProgrammingExerciseParticipationResource {
         this.sharedQueueManagementService = sharedQueueManagementService;
         this.examApi = examApi;
         this.participationService = participationService;
+        this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
     }
 
     /**
@@ -324,6 +329,7 @@ public class ProgrammingExerciseParticipationResource {
         }
 
         programmingExerciseParticipationService.resetRepository(participation.getVcsRepositoryUri(), sourceURL);
+        continuousIntegrationTriggerService.triggerBuild(participation, true);
 
         return ResponseEntity.ok().build();
     }
@@ -544,4 +550,5 @@ public class ProgrammingExerciseParticipationResource {
         }
         return false;
     }
+
 }

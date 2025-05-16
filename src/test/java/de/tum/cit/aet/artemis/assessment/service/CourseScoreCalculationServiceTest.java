@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.assessment.dto.MaxAndReachablePointsDTO;
 import de.tum.cit.aet.artemis.assessment.dto.score.StudentScoresDTO;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
+import de.tum.cit.aet.artemis.assessment.repository.StudentScoreRepository;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.assessment.util.GradingScaleFactory;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -72,8 +73,12 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
 
     private Course course;
 
+    @Autowired
+    private StudentScoreRepository studentScoreRepository;
+
     @BeforeEach
     void init() {
+        studentScoreRepository.deleteAll();
         userUtilService.addUsers(TEST_PREFIX, 2, 2, 0, 1);
         course = courseUtilService.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(TEST_PREFIX, false);
     }
@@ -164,9 +169,9 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         StudentScoresDTO studentScoresDTO = courseScoreCalculationService.calculateCourseScoreForStudent(course, null, student.getId(), studentParticipations,
                 new MaxAndReachablePointsDTO(25.0, 5.0, 0.0), List.of());
         if (withDueDate) {
-            assertThat(studentScoresDTO.absoluteScore()).isEqualTo(2.1);
-            assertThat(studentScoresDTO.relativeScore()).isEqualTo(8.4);
-            assertThat(studentScoresDTO.currentRelativeScore()).isEqualTo(42.0);
+            assertThat(studentScoresDTO.absoluteScore()).isEqualTo(6.6);
+            assertThat(studentScoresDTO.relativeScore()).isEqualTo(26.4);
+            assertThat(studentScoresDTO.currentRelativeScore()).isEqualTo(132.0);
         }
         else {
             assertThat(studentScoresDTO.absoluteScore()).isEqualTo(4.6);
@@ -253,12 +258,10 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
 
         User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
-        pastCourse.getExercises().forEach(exercise -> {
-            exercise.getStudentParticipations().forEach(participation -> {
-                participation.setPresentationScore(100.0);
-                studentParticipationRepository.save(participation);
-            });
-        });
+        pastCourse.getExercises().forEach(exercise -> exercise.getStudentParticipations().forEach(participation -> {
+            participation.setPresentationScore(100.0);
+            studentParticipationRepository.save(participation);
+        }));
 
         CourseForDashboardDTO courseForDashboard = courseScoreCalculationService.getScoresAndParticipationResults(pastCourse, gradingScale, student.getId());
         assertThat(courseForDashboard.course()).isEqualTo(pastCourse);

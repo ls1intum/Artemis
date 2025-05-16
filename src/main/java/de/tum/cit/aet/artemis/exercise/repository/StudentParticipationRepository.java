@@ -445,19 +445,6 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             """)
     List<StudentParticipation> findAllWithTeamStudentsByExerciseIdAndTeamStudentId(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
 
-    @Query("""
-            SELECT DISTINCT p
-            FROM StudentParticipation p
-                LEFT JOIN FETCH p.submissions s
-                LEFT JOIN FETCH s.results r
-                LEFT JOIN FETCH p.team t
-                LEFT JOIN FETCH t.students
-            WHERE p.exercise.id = :exerciseId
-                AND p.team.id = :teamId
-                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
-            """)
-    List<StudentParticipation> findByExerciseIdAndTeamIdWithEagerResultsAndLegalSubmissionsAndTeamStudents(@Param("exerciseId") long exerciseId, @Param("teamId") long teamId);
-
     // NOTE: we should not fetch too elements here so we leave out feedback and test cases, otherwise the query will be very slow
     @Query("""
             SELECT DISTINCT p

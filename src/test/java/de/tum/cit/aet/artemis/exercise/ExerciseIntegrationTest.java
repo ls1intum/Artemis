@@ -452,20 +452,23 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Course course = courseUtilService.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(TEST_PREFIX, true);
         for (Exercise exercise : course.getExercises()) {
             // For programming exercises we add a manual result, to check whether this is correctly displayed after the assessment due date
+            int resultSize = 1;
+            var participation = exercise.getStudentParticipations().iterator().next();
             if (exercise instanceof ProgrammingExercise) {
                 addResultToSubmissionAndParticipation(exercise);
             }
+
             ExerciseDetailsDTO exerciseWithDetails = request.get("/api/exercise/exercises/" + exercise.getId() + "/details", HttpStatus.OK, ExerciseDetailsDTO.class);
-            for (StudentParticipation participation : exerciseWithDetails.exercise().getStudentParticipations()) {
+            for (var studentParticipation : exerciseWithDetails.exercise().getStudentParticipations()) {
                 // Programming exercises should now how two results and the latest one is the manual result.
                 if (exercise instanceof ProgrammingExercise) {
-                    assertThat(participation.getResults()).hasSize(2);
-                    assertThat(participation.getResults().stream().sorted(Comparator.comparing(Result::getId).reversed()).iterator().next().getAssessmentType())
+                    assertThat(studentParticipation.getResults()).hasSize(resultSize);
+                    assertThat(studentParticipation.getResults().stream().sorted(Comparator.comparing(Result::getId).reversed()).iterator().next().getAssessmentType())
                             .isEqualTo(AssessmentType.SEMI_AUTOMATIC);
                 }
                 else {
                     // All other exercises have only one visible result now
-                    assertThat(participation.getResults()).hasSize(1);
+                    assertThat(studentParticipation.getResults()).hasSize(1);
                 }
             }
         }

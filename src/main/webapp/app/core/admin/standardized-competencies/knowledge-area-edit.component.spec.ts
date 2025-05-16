@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
 import { KnowledgeAreaEditComponent } from 'app/core/admin/standardized-competencies/knowledge-area-edit.component';
-import { ButtonComponent } from 'app/shared/components/button/button.component';
+import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { TaxonomySelectComponent } from 'app/atlas/manage/taxonomy-select/taxonomy-select.component';

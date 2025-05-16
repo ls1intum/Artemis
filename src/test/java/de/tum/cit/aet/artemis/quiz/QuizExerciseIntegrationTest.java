@@ -1247,8 +1247,8 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         QuizExercise quizExercise = quizExerciseUtilService.createQuiz(now.plusHours(2), null, QuizMode.SYNCHRONIZED);
         quizExercise.setIsOpenForPractice(true);
         quizExerciseService.handleDndQuizFileCreation(quizExercise,
-                List.of(new MockMultipartFile("files", "dragItemImage2.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes()),
-                        new MockMultipartFile("files", "dragItemImage4.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes())));
+                List.of(new MockMultipartFile("files", "drag-and-drop/drag-items/dragItemImage2.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes()),
+                        new MockMultipartFile("files", "drag-and-drop/drag-items/dragItemImage4.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes())));
         quizExerciseService.save(quizExercise);
 
         QuizExercise changedQuiz = quizExerciseTestRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
@@ -1277,8 +1277,8 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         ZonedDateTime now = ZonedDateTime.now();
         QuizExercise quizExercise = quizExerciseUtilService.createQuiz(now.plusHours(2), null, QuizMode.SYNCHRONIZED);
         quizExerciseService.handleDndQuizFileCreation(quizExercise,
-                List.of(new MockMultipartFile("files", "dragItemImage2.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes()),
-                        new MockMultipartFile("files", "dragItemImage4.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes())));
+                List.of(new MockMultipartFile("files", "drag-and-drop/drag-items/dragItemImage2.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes()),
+                        new MockMultipartFile("files", "drag-and-drop/drag-items/dragItemImage4.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes())));
         quizExerciseService.save(quizExercise);
 
         Course course = courseUtilService.addEmptyCourse();
@@ -1297,8 +1297,8 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         ExerciseGroup exerciseGroup = examUtilService.createAndSaveActiveExerciseGroup(true);
         QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().plusHours(2), null, QuizMode.SYNCHRONIZED);
         quizExerciseService.handleDndQuizFileCreation(quizExercise,
-                List.of(new MockMultipartFile("files", "dragItemImage2.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes()),
-                        new MockMultipartFile("files", "dragItemImage4.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes())));
+                List.of(new MockMultipartFile("files", "drag-and-drop/drag-items/dragItemImage2.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes()),
+                        new MockMultipartFile("files", "drag-and-drop/drag-items/dragItemImage4.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes())));
         quizExerciseService.save(quizExercise);
         quizExerciseUtilService.emptyOutQuizExercise(quizExercise);
         quizExercise.setExerciseGroup(exerciseGroup);
@@ -1333,8 +1333,8 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         quizExercise.setExerciseGroup(null);
         Course course = courseUtilService.addEmptyCourse();
         quizExerciseService.handleDndQuizFileCreation(quizExercise,
-                List.of(new MockMultipartFile("files", "dragItemImage2.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes()),
-                        new MockMultipartFile("files", "dragItemImage4.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes())));
+                List.of(new MockMultipartFile("files", "drag-and-drop/drag-items/dragItemImage2.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes()),
+                        new MockMultipartFile("files", "drag-and-drop/drag-items/dragItemImage4.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes())));
         quizExerciseService.save(quizExercise);
         quizExercise.setCourse(course);
 
@@ -1366,8 +1366,8 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         ExerciseGroup exerciseGroup = examUtilService.createAndSaveActiveExerciseGroup(true);
         QuizExercise quizExercise = QuizExerciseFactory.createQuizForExam(exerciseGroup);
         quizExerciseService.handleDndQuizFileCreation(quizExercise,
-                List.of(new MockMultipartFile("files", "dragItemImage2.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes()),
-                        new MockMultipartFile("files", "dragItemImage4.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes())));
+                List.of(new MockMultipartFile("files", "drag-and-drop/drag-items/dragItemImage2.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes()),
+                        new MockMultipartFile("files", "drag-and-drop/drag-items/dragItemImage4.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes())));
         quizExerciseService.save(quizExercise);
 
         QuizExercise importedExercise = importQuizExerciseWithFiles(quizExercise, quizExercise.getId(), List.of(), HttpStatus.CREATED);
@@ -1394,8 +1394,8 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void testImportQuizExercise_team_modeChange() throws Exception {
         QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().plusHours(2), null, QuizMode.SYNCHRONIZED);
         quizExerciseService.handleDndQuizFileCreation(quizExercise,
-                List.of(new MockMultipartFile("files", "dragItemImage2.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes()),
-                        new MockMultipartFile("files", "dragItemImage4.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes())));
+                List.of(new MockMultipartFile("files", "drag-and-drop/drag-items/dragItemImage2.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes()),
+                        new MockMultipartFile("files", "drag-and-drop/drag-items/dragItemImage4.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes())));
         quizExerciseService.save(quizExercise);
 
         QuizExercise changedQuiz = quizExerciseTestRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
@@ -1435,8 +1435,8 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         quizExercise.setTeamAssignmentConfig(teamAssignmentConfig);
 
         quizExerciseService.handleDndQuizFileCreation(quizExercise,
-                List.of(new MockMultipartFile("files", "dragItemImage2.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes()),
-                        new MockMultipartFile("files", "dragItemImage4.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes())));
+                List.of(new MockMultipartFile("files", "drag-and-drop/drag-items/dragItemImage2.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes()),
+                        new MockMultipartFile("files", "drag-and-drop/drag-items/dragItemImage4.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes())));
 
         quizExercise = quizExerciseService.save(quizExercise);
         var team = new Team();
@@ -1470,8 +1470,8 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void testImportQuizExerciseChangeQuizMode() throws Exception {
         QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().plusHours(2), null, QuizMode.SYNCHRONIZED);
         quizExerciseService.handleDndQuizFileCreation(quizExercise,
-                List.of(new MockMultipartFile("files", "dragItemImage2.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes()),
-                        new MockMultipartFile("files", "dragItemImage4.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes())));
+                List.of(new MockMultipartFile("files", "drag-and-drop/drag-items/dragItemImage2.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes()),
+                        new MockMultipartFile("files", "drag-and-drop/drag-items/dragItemImage4.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes())));
         quizExerciseService.save(quizExercise);
 
         QuizExercise changedQuiz = quizExerciseTestRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());

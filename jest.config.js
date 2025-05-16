@@ -53,6 +53,8 @@ const esModules = [
     'ngx-webstorage',
     'rxjs/operators',
     'trigram-utils',
+    'primeng',
+    '@primeuix'
 ].join('|');
 
 const {
@@ -91,10 +93,10 @@ module.exports = {
     coverageThreshold: {
         global: {
             // TODO: in the future, the following values should increase to at least 90%
-            statements: 88.95,
-            branches: 75.1,
-            functions: 82.9,
-            lines: 89.01,
+            statements: 89.15,
+            branches: 75.25,
+            functions: 83.02,
+            lines: 89.22,
         },
     },
     coverageReporters: ['clover', 'json', 'lcov', 'text-summary'],
@@ -127,7 +129,7 @@ module.exports = {
         '@src/(.*)': '<rootDir>/src/src/$1',
         '@state/(.*)': '<rootDir>/src/app/state/$1',
         '^lodash-es$': 'lodash',
-        '\\.css$': '<rootDir>/stub.js',
+        '\\.css$': '<rootDir>/src/test/javascript/spec/stub.js',
         '^monaco-editor$': '<rootDir>/node_modules/monaco-editor/esm/vs/editor/editor.api.js',
     },
 };
