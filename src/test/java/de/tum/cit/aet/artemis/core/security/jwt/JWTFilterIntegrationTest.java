@@ -86,10 +86,10 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
     }
 
     /**
-     * We want to rotate a passkey-created token silently if it is used after 50% of its lifetime
+     * We want to rotate a passkey-created token silently if it has used after 50% of its lifetime
      */
     @Test
-    void testRotateTokenSilently_ShouldRotateToken() throws Exception {
+    void testRotateTokenSilently_shouldRotateToken() throws Exception {
         Authentication authentication = createWebAuthnAuthentication();
 
         long moreThanHalfOfTokenValidityPassed = (long) (TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 0.6 * 1000);
@@ -109,7 +109,6 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
 
         MockHttpServletResponse response = res.getResponse();
         assertThat(response).isNotNull();
-
         String setCookieHeader = response.getHeader(HttpHeaders.SET_COOKIE);
         assertThat(setCookieHeader).isNotNull();
         ResponseCookie updatedCookie = CookieParser.parseSetCookieHeader(setCookieHeader);
@@ -132,6 +131,34 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
         // IMPORTANT! The expiration date of the rotated token must be in the future, but not too far in the future
         assertThat(tokenProvider.getExpirationDate(updatedJwt)).isAfter(new Date(System.currentTimeMillis() + (long) (0.9 * TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 1000)));
         assertThat(tokenProvider.getExpirationDate(updatedJwt)).isBefore(new Date(System.currentTimeMillis() + TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 1000));
+    }
+
+    /**
+     * We DO NOT want to rotate a passkey-created token silently if it has used LESS THAN 50% of its lifetime
+     */
+    @Test
+    void testRotateTokenSilently_shouldNotRotateToken() throws Exception {
+        Authentication authentication = createWebAuthnAuthentication();
+
+        long lessThanHalfOfTokenValidityPassed = (long) (TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 0.4 * 1000);
+        Date issuedAt = new Date(System.currentTimeMillis() - lessThanHalfOfTokenValidityPassed);
+        Date expiration = new Date(issuedAt.getTime() + TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 1000);
+
+        String jwt = tokenProvider.createToken(authentication, issuedAt, expiration, null, true);
+        assertThat(tokenProvider.getAuthenticatedWithPasskey(jwt)).isTrue();
+
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.COOKIE, JWTFilter.JWT_COOKIE_NAME + "=" + jwt);
+
+        MvcResult res = mvc
+                .perform(MockMvcRequestBuilders.get(new URI("/api/core/public/account")).params(params).headers(headers).cookie(new Cookie(JWTFilter.JWT_COOKIE_NAME, jwt)))
+                .andExpect(status().is(HttpStatus.OK.value())).andReturn();
+
+        MockHttpServletResponse response = res.getResponse();
+        assertThat(response).isNotNull();
+        String setCookieHeader = response.getHeader(HttpHeaders.SET_COOKIE);
+        assertThat(setCookieHeader).isNull();
     }
 
     public static class CookieParser {
