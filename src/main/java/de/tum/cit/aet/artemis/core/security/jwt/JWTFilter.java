@@ -69,7 +69,8 @@ public class JWTFilter extends GenericFilterBean {
             // throw new NotAuthorizedException("User details have changed, cannot rotate token");
             // }
 
-            String rotatedToken = this.tokenProvider.createToken(authentication, issuedAt, new Date(newTokenExpirationTimeInMilliseconds), this.tokenProvider.getTools(jwtToken));
+            String rotatedToken = this.tokenProvider.createToken(authentication, issuedAt, new Date(newTokenExpirationTimeInMilliseconds), this.tokenProvider.getTools(jwtToken),
+                    true);
 
             ResponseCookie responseCookie = jwtCookieService.buildRotatedCookie(rotatedToken, rotatedTokenDurationInMilliseconds);
 

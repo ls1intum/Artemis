@@ -116,26 +116,27 @@ public class TokenProvider {
      */
     public String createToken(Authentication authentication, long duration, @Nullable ToolTokenType tool) {
         long validity = System.currentTimeMillis() + duration;
-        return createToken(authentication, null, new Date(validity), tool);
+        return createToken(authentication, null, new Date(validity), tool, null);
     }
 
     /**
      * Create JWT Token a fully populated <code>Authentication</code> object.
      *
-     * @param authentication Authentication Object
-     * @param issuedAt       Date when the token was issued, if null set to now
-     * @param expiration     Date when the token expires
-     * @param tool           tool this token is used for. If null, it's a general access token
+     * @param authentication           Authentication Object
+     * @param issuedAt                 Date when the token was issued, if null set to now
+     * @param expiration               Date when the token expires
+     * @param tool                     tool this token is used for. If null, it's a general access token
+     * @param authenticatedWithPasskey can be manually set to true if the token was created with a passkey but for performance reasons, no actual WebAuthnAuthentication was created
      * @return JWT Token
      */
-    public String createToken(Authentication authentication, @Nullable Date issuedAt, Date expiration, @Nullable ToolTokenType tool) {
+    public String createToken(Authentication authentication, @Nullable Date issuedAt, Date expiration, @Nullable ToolTokenType tool, @Nullable Boolean authenticatedWithPasskey) {
         String authorities = authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.joining(","));
 
         // @formatter:off
         JwtBuilder jwtBuilder = Jwts.builder()
             .subject(authentication.getName())
             .claim(AUTHORITIES_KEY, authorities)
-            .claim(AUTHENTICATED_WITH_PASSKEY_KEY, authentication instanceof WebAuthnAuthentication)
+            .claim(AUTHENTICATED_WITH_PASSKEY_KEY, authentication instanceof WebAuthnAuthentication || (authenticatedWithPasskey != null && authenticatedWithPasskey))
             .issuedAt(issuedAt != null ? issuedAt : new Date());
         // @formatter:on
 
