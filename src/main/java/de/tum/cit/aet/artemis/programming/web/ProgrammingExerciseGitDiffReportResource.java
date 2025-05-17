@@ -92,36 +92,6 @@ public class ProgrammingExerciseGitDiffReportResource {
     }
 
     /**
-     * GET exercises/:exerciseId/submissions/:submissionId1/diff-report/:submissionId2 : Get the diff report for two submissions of a programming exercise.
-     * The current user needs to have at least instructor access to the exercise to fetch the diff report for the submissions.
-     *
-     * @param exerciseId    the id of the exercise the two submissions belong to
-     * @param submissionId1 the id of the first (older) submission
-     * @param submissionId2 the id of the second (newer) submission
-     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with the diff report as body
-     * @throws IOException if errors occur while accessing the file system
-     */
-    @GetMapping("programming-exercises/{exerciseId}/submissions/{submissionId1}/diff-report/{submissionId2}")
-    @EnforceAtLeastInstructor
-    // TODO: change this and return the file contents to the client so the monaco editor can display the diff in the web browser
-    public ResponseEntity<ProgrammingExerciseGitDiffReportDTO> getGitDiffReportForSubmissions(@PathVariable long exerciseId, @PathVariable long submissionId1,
-            @PathVariable long submissionId2) throws IOException {
-        log.debug("REST request to get a ProgrammingExerciseGitDiffReport for submission {} and submission {} of exercise {}", submissionId1, submissionId2, exerciseId);
-        var exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
-        var submission1 = submissionRepository.findById(submissionId1).orElseThrow();
-        var submission2 = submissionRepository.findById(submissionId2).orElseThrow();
-        // If either of the two submissions does not belong to the exercise, throw an exception because we do not want to support this for now and while the git diff calucation
-        // would support that,
-        // it would lead to confusing results displayed in the client because the client interface hasn't been designed for this use case.
-        if (!submission1.getParticipation().getExercise().getId().equals(exerciseId) || !submission2.getParticipation().getExercise().getId().equals(exerciseId)) {
-            throw new IllegalArgumentException("The submissions do not belong to the exercise");
-        }
-        var report = gitDiffReportService.generateReportForSubmissions(submission1, submission2);
-        return ResponseEntity.ok(new ProgrammingExerciseGitDiffReportDTO(report));
-    }
-
-    /**
      * GET exercises/:exerciseId/submissions/:submissionId/diff-report-with-template : Get the diff report for a submission of a programming exercise with the template of the
      * exercise.
      * The current user needs to have at least instructor access to the exercise to fetch the diff report with the template.

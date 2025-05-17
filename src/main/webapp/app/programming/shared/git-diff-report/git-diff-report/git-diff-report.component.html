@@ -12,7 +12,7 @@
                 }
             } @else {
                 {{
-                    (diffForTemplateAndSolution() || !report().participationIdForLeftCommit
+                    (diffForTemplateAndSolution() || !participationId()
                         ? 'artemisApp.programmingExercise.diffReport.template'
                         : 'artemisApp.programmingExercise.diffReport.previousSubmission'
                     ) | artemisTranslate
@@ -52,8 +52,9 @@
             />
             <jhi-git-diff-line-stat
                 class="mt-1 fw-bold"
-                [addedLineCount]="addedLineCount()"
-                [removedLineCount]="removedLineCount()"
+                [hidden]="!allDiffsReady()"
+                [addedLineCount]="totalAddedLines()"
+                [removedLineCount]="totalRemovedLines()"
                 ngbTooltip="{{
                     (diffForTemplateAndSolution()
                         ? 'artemisApp.programmingExercise.diffReport.lineStatTooltipFullReport'
@@ -70,10 +71,10 @@
             <jhi-git-diff-file-panel
                 [allowSplitView]="allowSplitView()"
                 [diffForTemplateAndSolution]="diffForTemplateAndSolution()"
-                [diffEntries]="diffInformation.entries"
                 [originalFileContent]="diffInformation.templateFileContent"
                 [modifiedFileContent]="diffInformation.solutionFileContent"
-                (onDiffReady)="onDiffReady(diffInformation.path, $event)"
+                [path]="diffInformation.path"
+                (onDiffReady)="onDiffReady(diffInformation.path, $event.ready, $event.lineChange)"
             />
         </div>
     }

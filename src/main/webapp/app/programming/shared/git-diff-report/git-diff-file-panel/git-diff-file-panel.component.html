@@ -1,7 +1,7 @@
 <div ngbAccordion [destroyOnHide]="false" class="git-diff-file-panel">
     <div ngbAccordionItem #fileDiffPanel="ngbAccordionItem" [collapsed]="false">
         <div ngbAccordionHeader class="d-flex align-items-center justify-content-between">
-            <jhi-git-diff-file-panel-title [modifiedFilePath]="modifiedFilePath()" [originalFilePath]="originalFilePath()" />
+            <jhi-git-diff-file-panel-title [title]="path()" />
             <div>
                 <jhi-git-diff-line-stat
                     [addedLineCount]="addedLineCount()"
@@ -22,13 +22,10 @@
             <div ngbAccordionBody>
                 <jhi-git-diff-file
                     [allowSplitView]="allowSplitView()"
-                    [diffForTemplateAndSolution]="diffForTemplateAndSolution()"
-                    [diffEntries]="diffEntries()"
                     [originalFileContent]="originalFileContent()"
-                    [originalFilePath]="originalFilePath()"
+                    [path]="path()"
                     [modifiedFileContent]="modifiedFileContent()"
-                    [modifiedFilePath]="modifiedFilePath()"
-                    (onDiffReady)="onDiffReady.emit($event)"
+                    (onDiffReady)="handleDiffReady($event)"
                 />
             </div>
         </div>

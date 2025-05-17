@@ -1,6 +1,4 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { ProgrammingExerciseGitDiffReport } from 'app/programming/shared/entities/programming-exercise-git-diff-report.model';
-import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { Subscription, throwError } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
@@ -18,11 +16,9 @@ import { RepositoryType } from 'app/programming/shared/code-editor/model/code-ed
     imports: [GitDiffReportComponent, ArtemisDatePipe, ArtemisTranslatePipe],
 })
 export class CommitDetailsViewComponent implements OnDestroy, OnInit {
-    private programmingExerciseService = inject(ProgrammingExerciseService);
     private programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
     private route = inject(ActivatedRoute);
 
-    report: ProgrammingExerciseGitDiffReport;
     exerciseId: number;
     repositoryId?: number; // acts as both participationId (USER repositories) and repositoryId (AUXILIARY repositories), undefined for TEMPLATE, SOLUTION and TEST
     commitHash: string;
@@ -105,37 +101,11 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
                 }),
             )
             .subscribe({
-                next: () => this.getDiffReport(),
+                next: () => this.fetchParticipationRepoFiles(),
                 error: () => {
                     this.errorWhileFetching = true;
                 },
             });
-    }
-
-    /**
-     * Gets the diff report for the current and previous commit or the template commit and an empty file.
-     * @private
-     */
-    private getDiffReport() {
-        this.repoFilesSubscription = this.programmingExerciseService
-            .getDiffReportForCommits(this.exerciseId, this.repositoryId, this.previousCommit.hash!, this.currentCommit.hash!, this.repositoryType)
-            .subscribe((report) => {
-                this.handleNewReport(report!);
-            });
-    }
-
-    /**
-     * Handles the new report and sets the report, the left and right commit hash and the participation ids for the left and right commit.
-     * @param report the new report
-     * @private
-     */
-    private handleNewReport(report: ProgrammingExerciseGitDiffReport) {
-        this.report = report;
-        this.report.leftCommitHash = this.previousCommit.hash;
-        this.report.rightCommitHash = this.currentCommit.hash;
-        this.report.participationIdForLeftCommit = this.repositoryId;
-        this.report.participationIdForRightCommit = this.repositoryId;
-        this.fetchParticipationRepoFiles();
     }
 
     /**
@@ -150,8 +120,8 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
             this.participationRepoFilesAtLeftCommitSubscription = this.programmingExerciseParticipationService
                 .getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView(
                     this.exerciseId,
-                    this.report.participationIdForLeftCommit!,
-                    this.report.leftCommitHash!,
+                    this.repositoryId,
+                    this.previousCommit.hash!,
                     this.repositoryType,
                 )
                 .subscribe({
@@ -174,8 +144,8 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
         this.participationRepoFilesAtRightCommitSubscription = this.programmingExerciseParticipationService
             .getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView(
                 this.exerciseId,
-                this.report.participationIdForRightCommit!,
-                this.report.rightCommitHash!,
+                this.repositoryId,
+                this.currentCommit.hash!,
                 this.repositoryType,
             )
             .subscribe({

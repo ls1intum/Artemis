@@ -125,7 +125,6 @@ describe('CommitDetailsViewComponent', () => {
         jest.spyOn(programmingExerciseParticipationService, 'retrieveCommitHistoryForTemplateSolutionOrTests').mockReturnValue(
             throwErrorWhenRetrievingCommitHistory ? errorObservable : of(mockTemplateCommits),
         );
-        jest.spyOn(programmingExerciseService, 'getDiffReportForCommits').mockReturnValue(of(mockDiffReportForCommits));
 
         fixture.detectChanges();
     }

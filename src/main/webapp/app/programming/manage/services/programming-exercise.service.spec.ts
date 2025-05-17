@@ -320,20 +320,6 @@ describe('ProgrammingExercise Service', () => {
         tick();
     }));
 
-    it('should make GET request to retrieve diff between commits for CommitDetailsView', fakeAsync(() => {
-        const exerciseId = 1;
-        const participationId = 2;
-        const commitId = '2';
-        const commitId2 = '3';
-        const repositoryType = 'TEMPLATE';
-        const expected = { id: 1, entries: [new ProgrammingExerciseGitDiffEntry()] } as unknown as ProgrammingExerciseGitDiffReport;
-        service.getDiffReportForCommits(exerciseId, participationId, commitId, commitId2, repositoryType).subscribe((resp) => expect(resp).toEqual(expected));
-        const url = `${resourceUrl}/${exerciseId}/commits/${commitId}/diff-report/${commitId2}?repositoryType=${repositoryType}&participationId=${participationId}`;
-        const req = httpMock.expectOne({ method: 'GET', url });
-        req.flush(expected);
-        tick();
-    }));
-
     it('should generate Structure Oracle', fakeAsync(() => {
         const exerciseId = 1;
         const expectedResult = 'oracle-structure';

@@ -541,38 +541,6 @@ export class ProgrammingExerciseService {
     }
 
     /**
-     * Gets the git-diff report of a programming exercise for two specific commits.
-     * The user needs to have access to the participation to access this endpoint.
-     * @param exerciseId The id of a programming exercise
-     * @param participationId The id of a participation
-     * @param olderCommitHash The hash of the older commit
-     * @param newerCommitHash The hash of the newer commit
-     * @param repositoryType The type of the repository (optional)
-     */
-    getDiffReportForCommits(
-        exerciseId: number,
-        participationId: number | undefined,
-        olderCommitHash: string,
-        newerCommitHash: string,
-        repositoryType?: string,
-    ): Observable<ProgrammingExerciseGitDiffReport | undefined> {
-        const params: { repositoryType?: string; participationId?: number } = {};
-        if (repositoryType !== undefined) {
-            params.repositoryType = repositoryType;
-        }
-        if (participationId !== undefined && !isNaN(participationId)) {
-            params.participationId = participationId;
-        }
-
-        return this.http
-            .get<ProgrammingExerciseGitDiffReport>(`${this.resourceUrl}/${exerciseId}/commits/${olderCommitHash}/diff-report/${newerCommitHash}`, {
-                observe: 'response',
-                params: params,
-            })
-            .pipe(map((res: HttpResponse<ProgrammingExerciseGitDiffReport>) => res.body ?? undefined));
-    }
-
-    /**
      * Gets all files from the last solution participation repository
      */
     getSolutionRepositoryTestFilesWithContent(exerciseId: number): Observable<Map<string, string> | undefined> {
