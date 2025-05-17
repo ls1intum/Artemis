@@ -116,7 +116,7 @@
                 <ngx-datatable-column prop="" [minWidth]="60" [width]="80" [maxWidth]="100">
                     <ng-template ngx-datatable-header-template />
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <img [id]="value?.id" class="img-fluid" [src]="value?.studentImagePath ? value?.studentImagePath : missingImage" />
+                        <img [id]="value?.id" class="img-fluid" [src]="value?.studentImagePath ? addPublicFilePrefix(value?.studentImagePath) : missingImage" />
                     </ng-template>
                 </ngx-datatable-column>
                 <ngx-datatable-column prop="" [minWidth]="150" [width]="150">
