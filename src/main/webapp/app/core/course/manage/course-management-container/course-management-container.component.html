@@ -31,14 +31,14 @@
             >
                 @if (course()) {
                     <jhi-course-title-bar [hasSidebar]="hasSidebar()" [isSidebarCollapsed]="isSidebarCollapsed()" [pageTitle]="pageTitle()" (toggleSidebar)="toggleSidebar()">
-                        <div student-view-button>
+                        <div id="student-view-button">
                             <a class="btn btn-sm btn-outline-secondary" [routerLink]="studentViewLink()" jhiTranslate="artemisApp.courseOverview.studentView"></a>
                         </div>
-
-                        <!-- Controls for settings page -->
-                        @if (course()?.isAtLeastInstructor && isSettingsPage()) {
-                            <div>
+                        <div class="controls">
+                            @if (course()?.isAtLeastInstructor && isSettingsPage()) {
                                 <jhi-course-exam-archive-button [archiveMode]="'Course'" [course]="course()!" class="archive-button" />
+                            }
+                            @if (isSettingsPage()) {
                                 <button
                                     id="delete-course"
                                     *jhiHasAnyAuthority="'ROLE_ADMIN'"
@@ -53,8 +53,8 @@
                                     [dialogError]="dialogError$"
                                     style="margin-right: 0 !important"
                                 ></button>
-                            </div>
-                        }
+                            }
+                        </div>
                     </jhi-course-title-bar>
 
                     <div
