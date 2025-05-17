@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.iris.domain.session;
 
-import java.util.Optional;
-
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 
@@ -40,6 +38,6 @@ public class IrisTutorSuggestionSession extends IrisChatSession {
 
     @Override
     public String toString() {
-        return "IrisTutorSuggestionSession{" + "user=" + Optional.ofNullable(getUser()).map(User::getLogin).orElse("null") + "," + "postId=" + postId + '}';
+        return "IrisTutorSuggestionSession{" + "userId=" + getUserId() + "," + "postId=" + postId + '}';
     }
 }

@@ -246,15 +246,18 @@ public class PyrisPipelineService {
             variant,
             eventVariant,
             pyrisJobService.addTutorSuggestionJob(post.getId(), course.getId(), session.getId()),
-            executionDto -> new PyrisTutorSuggestionPipelineExecutionDTO(
-                new PyrisCourseDTO(course),
-                Optional.empty(),
-                new PyrisPostDTO(post),
-                pyrisDTOService.toPyrisMessageDTOList(session.getMessages()),
-                new PyrisUserDTO(session.getUser()),
-                executionDto.settings(),
-                executionDto.initialStages()
-            ),
+            executionDto -> {
+                var user = userRepository.findByIdElseThrow(session.getUserId());
+                return new PyrisTutorSuggestionPipelineExecutionDTO(
+                    new PyrisCourseDTO(course),
+                    Optional.empty(),
+                    new PyrisPostDTO(post),
+                    pyrisDTOService.toPyrisMessageDTOList(session.getMessages()),
+                    new PyrisUserDTO(user),
+                    executionDto.settings(),
+                    executionDto.initialStages()
+                );
+            },
             stages -> irisChatWebsocketService.sendStatusUpdate(session, stages)
         );
         // @formatter:on
