@@ -107,7 +107,7 @@ describe('GenerateCompetenciesComponent', () => {
         const courseManagementService = TestBed.inject(CourseManagementService);
         const getCourseSpy = jest.spyOn(courseManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
 
-        comp.ngOnInit();
+        comp.initialize();
         tick();
 
         expect(getCourseSpy).toHaveBeenCalledOnce();
