@@ -553,7 +553,7 @@ public class IrisSubSettingsService {
      * @return Combined customInstructions field.
      */
     private <T extends IrisSubSettings> String getCombinedCustomInstructions(List<IrisSettings> settingsList, Function<IrisSettings, T> subSettingsFunction) {
-        // Reverse stream to prioritize more specific settings (exercise > course > global)
+        // Use most specific non-blank customInstructions
         return settingsList.stream().filter(Objects::nonNull).map(subSettingsFunction).filter(Objects::nonNull).map(this::getCustomInstructionsFromSubSettings)
                 .filter(instructions -> instructions != null && !instructions.isBlank()).reduce((first, second) -> second) // Take the last non-empty value (most specific)
                 .orElse(null);
