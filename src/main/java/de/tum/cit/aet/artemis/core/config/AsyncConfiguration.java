@@ -12,6 +12,7 @@ import org.springframework.aop.interceptor.SimpleAsyncUncaughtExceptionHandler;
 import org.springframework.boot.autoconfigure.task.TaskExecutionProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.AsyncConfigurer;
 import org.springframework.scheduling.annotation.EnableAsync;
@@ -22,6 +23,7 @@ import tech.jhipster.async.ExceptionHandlingAsyncTaskExecutor;
 
 @Profile({ PROFILE_CORE, PROFILE_BUILDAGENT })
 @Configuration
+@Lazy
 @EnableAsync(proxyTargetClass = true)
 @EnableScheduling
 public class AsyncConfiguration implements AsyncConfigurer {
@@ -36,6 +38,7 @@ public class AsyncConfiguration implements AsyncConfigurer {
 
     @Override
     @Bean(name = "taskExecutor")
+    @Lazy
     public Executor getAsyncExecutor() {
         log.debug("Creating Async Task Executor");
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();

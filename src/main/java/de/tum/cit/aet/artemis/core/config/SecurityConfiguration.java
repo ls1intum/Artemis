@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.http.converter.HttpMessageConverter;
@@ -169,6 +170,7 @@ public class SecurityConfiguration {
      * @return The {@link AuthenticationManager} to use for authenticating users.
      */
     @Bean
+    @Lazy
     public AuthenticationManager authenticationManager(HttpSecurity http, UserDetailsService userDetailsService, Optional<AuthenticationProvider> remoteUserAuthenticationProvider)
             throws Exception {
         var builder = http.getSharedObject(AuthenticationManagerBuilder.class);
@@ -184,11 +186,13 @@ public class SecurityConfiguration {
 
     // NOTE: this replaces the old @Import annotation above the class because it does not work with Spring Boot 3.3 and Spring Security 6.3 any more
     @Bean
+    @Lazy
     public SecurityProblemSupport securityProblemSupport(@Qualifier("handlerExceptionResolver") HandlerExceptionResolver resolver) {
         return new SecurityProblemSupport(resolver);
     }
 
     @Bean
+    @Lazy
     public PasswordEncoder passwordEncoder() {
         return this.passwordService.getPasswordEncoder();
     }
@@ -206,6 +210,7 @@ public class SecurityConfiguration {
      *         in securing methods based on security expressions.
      */
     @Bean
+    @Lazy
     public DefaultMethodSecurityExpressionHandler methodExpressionHandler() {
         DefaultMethodSecurityExpressionHandler expressionHandler = new DefaultMethodSecurityExpressionHandler();
         expressionHandler.setRoleHierarchy(roleHierarchy());
@@ -226,6 +231,7 @@ public class SecurityConfiguration {
      *         Spring Security framework to evaluate permissions across the application.
      */
     @Bean
+    @Lazy
     public RoleHierarchy roleHierarchy() {
         return RoleHierarchyImpl.fromHierarchy("ROLE_ADMIN > ROLE_INSTRUCTOR > ROLE_EDITOR > ROLE_TA > ROLE_USER > ROLE_ANONYMOUS");
     }
@@ -251,6 +257,7 @@ public class SecurityConfiguration {
      * @throws Exception If an error occurs during the configuration process.
      */
     @Bean
+    @Lazy
     public SecurityFilterChain securityFilterChain(HttpSecurity http, SecurityProblemSupport securityProblemSupport) throws Exception {
         // @formatter:off
         http

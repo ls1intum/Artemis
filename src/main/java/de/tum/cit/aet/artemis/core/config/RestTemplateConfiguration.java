@@ -44,18 +44,21 @@ public class RestTemplateConfiguration {
     private static final int VERY_SHORT_READ_TIMEOUT = 1000;
 
     @Bean
+    @Lazy
     @Profile(PROFILE_JENKINS)
     public RestTemplate jenkinsRestTemplate(JenkinsAuthorizationInterceptor jenkinsInterceptor) {
         return initializeRestTemplateWithInterceptors(jenkinsInterceptor, createRestTemplate());
     }
 
     @Bean
+    @Lazy
     @Profile(PROFILE_ATHENA)
     public RestTemplate athenaRestTemplate(AthenaAuthorizationInterceptor athenaAuthorizationInterceptor) {
         return initializeRestTemplateWithInterceptors(athenaAuthorizationInterceptor, createRestTemplate());
     }
 
     @Bean
+    @Lazy
     @Profile(PROFILE_APOLLON)
     public RestTemplate apollonRestTemplate() {
         return createRestTemplate();
@@ -67,12 +70,14 @@ public class RestTemplateConfiguration {
      * @return a RestTemplate with short timeouts
      */
     @Bean
+    @Lazy
     @Profile("aeolus | localci")
     public RestTemplate aeolusRestTemplate() {
         return createRestTemplate();
     }
 
     @Bean
+    @Lazy
     @Profile(PROFILE_IRIS)
     public RestTemplate pyrisRestTemplate(PyrisAuthorizationInterceptor pyrisAuthorizationInterceptor) {
         return initializeRestTemplateWithInterceptors(pyrisAuthorizationInterceptor, createRestTemplate());
@@ -82,24 +87,28 @@ public class RestTemplateConfiguration {
     // it is recommended to keep the timeout settings constant per rest template
 
     @Bean
+    @Lazy
     @Profile(PROFILE_JENKINS)
     public RestTemplate shortTimeoutJenkinsRestTemplate(JenkinsAuthorizationInterceptor jenkinsInterceptor) {
         return initializeRestTemplateWithInterceptors(jenkinsInterceptor, createShortTimeoutRestTemplate());
     }
 
     @Bean
+    @Lazy
     @Profile(PROFILE_ATHENA)
     public RestTemplate shortTimeoutAthenaRestTemplate(AthenaAuthorizationInterceptor athenaAuthorizationInterceptor) {
         return initializeRestTemplateWithInterceptors(athenaAuthorizationInterceptor, createShortTimeoutRestTemplate());
     }
 
     @Bean
+    @Lazy
     @Profile(PROFILE_APOLLON)
     public RestTemplate shortTimeoutApollonRestTemplate() {
         return createShortTimeoutRestTemplate();
     }
 
     @Bean
+    @Lazy
     public RestTemplate shortTimeoutHermesRestTemplate() {
         return createShortTimeoutRestTemplate();
     }
@@ -107,12 +116,14 @@ public class RestTemplateConfiguration {
     // Note: for certain requests, e.g. the Athena submission selection, we would like to have even shorter timeouts.
     // Therefore, we need additional rest templates. It is recommended to keep the timeout settings constant per rest template.
     @Bean
+    @Lazy
     @Profile(PROFILE_ATHENA)
     public RestTemplate veryShortTimeoutAthenaRestTemplate(AthenaAuthorizationInterceptor athenaAuthorizationInterceptor) {
         return initializeRestTemplateWithInterceptors(athenaAuthorizationInterceptor, createVeryShortTimeoutRestTemplate());
     }
 
     @Bean
+    @Lazy
     @Profile(PROFILE_IRIS)
     public RestTemplate shortTimeoutPyrisRestTemplate(PyrisAuthorizationInterceptor pyrisAuthorizationInterceptor) {
         return initializeRestTemplateWithInterceptors(pyrisAuthorizationInterceptor, createShortTimeoutRestTemplate());
@@ -124,6 +135,7 @@ public class RestTemplateConfiguration {
      * @return a RestTemplate with short timeouts
      */
     @Bean
+    @Lazy
     @Profile("aeolus | localci")
     public RestTemplate shortTimeoutAeolusRestTemplate() {
         return createShortTimeoutRestTemplate();
@@ -152,6 +164,7 @@ public class RestTemplateConfiguration {
     }
 
     @Bean
+    @Lazy
     @Primary
     public RestTemplate restTemplate() {
         return createRestTemplate();

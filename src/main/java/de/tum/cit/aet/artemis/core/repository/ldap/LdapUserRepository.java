@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.core.repository.ldap;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LDAP_OR_LDAP_ONLY;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LDAP;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -11,7 +11,7 @@ import de.tum.cit.aet.artemis.core.service.ldap.LdapUserDto;
 
 @Lazy
 @Repository
-@Profile(PROFILE_LDAP_OR_LDAP_ONLY)
+@Profile(PROFILE_LDAP)
 public interface LdapUserRepository extends LdapRepository<LdapUserDto> {
 
 }

@@ -24,11 +24,13 @@ public class JacksonConfiguration {
      * @return the corresponding Jackson module.
      */
     @Bean
+    @Lazy
     public JavaTimeModule javaTimeModule() {
         return new JavaTimeModule();
     }
 
     @Bean
+    @Lazy
     public Jdk8Module jdk8TimeModule() {
         return new Jdk8Module();
     }
@@ -37,6 +39,7 @@ public class JacksonConfiguration {
      * Support for Hibernate types in Jackson.
      */
     @Bean
+    @Lazy
     public Hibernate6Module hibernate6Module() {
         return new Hibernate6Module();
     }
@@ -45,11 +48,13 @@ public class JacksonConfiguration {
      * Module for serialization/deserialization of ConstraintViolationProblem.
      */
     @Bean
+    @Lazy
     public ConstraintViolationProblemModule constraintViolationProblemModule() {
         return new ConstraintViolationProblemModule();
     }
 
     @Bean
+    @Lazy
     public ProblemModule problemModule() {
         return new ProblemModule().withStackTraces(false);
     }

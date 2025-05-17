@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.core.service.ldap;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LDAP_OR_LDAP_ONLY;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LDAP;
 import static de.tum.cit.aet.artemis.core.config.Constants.TUM_LDAP_EMAILS;
 import static de.tum.cit.aet.artemis.core.config.Constants.TUM_LDAP_MAIN_EMAIL;
 import static de.tum.cit.aet.artemis.core.config.Constants.TUM_LDAP_MATRIKEL_NUMBER;
@@ -25,7 +25,7 @@ import de.tum.cit.aet.artemis.core.repository.ldap.LdapUserRepository;
 
 @Lazy
 @Service
-@Profile(PROFILE_LDAP_OR_LDAP_ONLY)
+@Profile(PROFILE_LDAP)
 public class LdapUserService {
 
     private static final Logger log = LoggerFactory.getLogger(LdapUserService.class);

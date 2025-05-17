@@ -21,6 +21,7 @@ import org.springframework.boot.web.servlet.ServletContextInitializer;
 import org.springframework.boot.web.servlet.server.ConfigurableServletWebServerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
@@ -40,6 +41,7 @@ import tech.jhipster.config.JHipsterProperties;
  */
 @Profile(PROFILE_CORE)
 @Configuration
+@Lazy
 public class WebConfigurer implements ServletContextInitializer, WebServerFactoryCustomizer<WebServerFactory>, WebMvcConfigurer {
 
     private static final Logger log = LoggerFactory.getLogger(WebConfigurer.class);
@@ -121,6 +123,7 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
      * @return register the cors filter bean
      */
     @Bean
+    @Lazy
     public CorsFilter corsFilter() {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = jHipsterProperties.getCors();

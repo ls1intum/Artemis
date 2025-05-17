@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 
@@ -38,6 +39,7 @@ import de.tum.cit.aet.artemis.core.exception.LocalCIException;
  * This includes a Docker client and an executor service that manages the queue of build jobs.
  */
 @Configuration
+@Lazy
 @Profile(PROFILE_BUILDAGENT)
 public class BuildAgentConfiguration {
 

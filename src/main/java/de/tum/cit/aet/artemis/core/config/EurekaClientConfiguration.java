@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.util.Collections;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,12 +54,13 @@ public class EurekaClientConfiguration {
      * @see EurekaClientHttpRequestFactorySupplier
      */
     @Bean
+    @Lazy
     public RestClientDiscoveryClientOptionalArgs restClientDiscoveryClientOptionalArgs(TlsProperties tlsProperties, ObjectProvider<RestClient.Builder> restClientBuilderProvider)
             throws GeneralSecurityException, IOException {
         log.debug("Using RestClient for the Eureka client.");
         // The Eureka DiscoveryClientOptionalArgsConfiguration invokes a private method setupTLS.
         // This code is taken from that method.
-        var supplier = new DefaultEurekaClientHttpRequestFactorySupplier(new RestClientTimeoutProperties());
+        var supplier = new DefaultEurekaClientHttpRequestFactorySupplier(new RestClientTimeoutProperties(), Collections.emptySet());
         var args = new RestClientDiscoveryClientOptionalArgs(supplier, () -> restClientBuilderProvider.getIfAvailable(RestClient::builder));
         if (tlsProperties.isEnabled()) {
             SSLContextFactory factory = new SSLContextFactory(tlsProperties);
@@ -68,6 +70,7 @@ public class EurekaClientConfiguration {
     }
 
     @Bean
+    @Lazy
     public RestClientTransportClientFactories restClientTransportClientFactories(RestClientDiscoveryClientOptionalArgs optionalArgs) {
         return new RestClientTransportClientFactories(optionalArgs);
     }

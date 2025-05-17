@@ -62,6 +62,7 @@ public class LiquibaseConfiguration {
      * @return the configured spring liquibase object
      */
     @Bean
+    @Lazy
     public SpringLiquibase liquibase(@LiquibaseDataSource ObjectProvider<DataSource> liquibaseDataSource, LiquibaseProperties liquibaseProperties,
             ObjectProvider<DataSource> dataSourceObjectProvider, DataSourceProperties dataSourceProperties) {
 

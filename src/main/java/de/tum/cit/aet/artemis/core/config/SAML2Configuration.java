@@ -45,11 +45,13 @@ public class SAML2Configuration {
      * @return the RelyingPartyRegistrationRepository used by SAML2 configuration.
      */
     @Bean
+    @Lazy
     RelyingPartyRegistrationResolver relyingPartyRegistrationResolver(RelyingPartyRegistrationRepository registrations) {
         return new DefaultRelyingPartyRegistrationResolver(registrations);
     }
 
     @Bean
+    @Lazy
     FilterRegistrationBean<Saml2MetadataFilter> metadata(RelyingPartyRegistrationResolver registrations) {
         Saml2MetadataFilter metadata = new Saml2MetadataFilter(registrations, new OpenSaml5MetadataResolver());
         FilterRegistrationBean<Saml2MetadataFilter> filter = new FilterRegistrationBean<>(metadata);
@@ -66,6 +68,7 @@ public class SAML2Configuration {
      * @throws Exception Thrown in case Spring detects an issue with the security configuration.
      */
     @Bean
+    @Lazy
     @Order(1)
     protected SecurityFilterChain saml2FilterChain(final HttpSecurity http) throws Exception {
         // @formatter:off

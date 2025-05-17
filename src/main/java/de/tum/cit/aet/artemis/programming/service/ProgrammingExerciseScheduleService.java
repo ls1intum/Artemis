@@ -32,7 +32,6 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
-import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationService;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
@@ -74,8 +73,6 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
     private final ProgrammingExerciseGradingService programmingExerciseGradingService;
 
-    private final GroupNotificationService groupNotificationService;
-
     private final GitService gitService;
 
     private final TaskScheduler scheduler;
@@ -85,9 +82,8 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     public ProgrammingExerciseScheduleService(ScheduleService scheduleService, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, ResultRepository resultRepository, ParticipationRepository participationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseParticipationRepository, ProgrammingTriggerService programmingTriggerService,
-            ProgrammingExerciseGradingService programmingExerciseGradingService, GroupNotificationService groupNotificationService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, GitService gitService, @Qualifier("taskScheduler") TaskScheduler scheduler,
-            ProfileService profileService) {
+            ProgrammingExerciseGradingService programmingExerciseGradingService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
+            GitService gitService, @Qualifier("taskScheduler") TaskScheduler scheduler, ProfileService profileService) {
         this.scheduleService = scheduleService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
@@ -95,7 +91,6 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         this.participationRepository = participationRepository;
         this.programmingExerciseParticipationRepository = programmingExerciseParticipationRepository;
         this.programmingTriggerService = programmingTriggerService;
-        this.groupNotificationService = groupNotificationService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.programmingExerciseGradingService = programmingExerciseGradingService;
         this.gitService = gitService;

@@ -8,6 +8,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.USERNAME_MIN_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.USER_EMAIL_DOMAIN_AFTER_SOFT_DELETE;
 import static de.tum.cit.aet.artemis.core.config.Constants.USER_FIRST_NAME_AFTER_SOFT_DELETE;
 import static de.tum.cit.aet.artemis.core.config.Constants.USER_LAST_NAME_AFTER_SOFT_DELETE;
+import static de.tum.cit.aet.artemis.core.config.StartupDelayConfig.DEFAULT_DELAY_SEC;
 import static de.tum.cit.aet.artemis.core.domain.Authority.ADMIN_AUTHORITY;
 import static de.tum.cit.aet.artemis.core.security.Role.ADMIN;
 import static de.tum.cit.aet.artemis.core.security.Role.STUDENT;
@@ -29,12 +30,14 @@ import jakarta.annotation.Nullable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -123,12 +126,14 @@ public class UserService {
 
     private final UserCourseNotificationStatusService userCourseNotificationStatusService;
 
+    private final TaskScheduler scheduler;
+
     public UserService(UserCreationService userCreationService, UserRepository userRepository, AuthorityService authorityService, AuthorityRepository authorityRepository,
             CacheManager cacheManager, Optional<LdapUserService> ldapUserService, PasswordService passwordService,
             Optional<CIUserManagementService> optionalCIUserManagementService, InstanceMessageSendService instanceMessageSendService, FileService fileService,
             Optional<ScienceEventApi> scienceEventApi, ParticipationVcsAccessTokenService participationVCSAccessTokenService, Optional<LearnerProfileApi> learnerProfileApi,
             SavedPostRepository savedPostRepository, UserSshPublicKeyService userSshPublicKeyService, CourseNotificationSettingService courseNotificationSettingService,
-            UserCourseNotificationStatusService userCourseNotificationStatusService) {
+            UserCourseNotificationStatusService userCourseNotificationStatusService, @Qualifier("taskScheduler") TaskScheduler scheduler) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
         this.authorityService = authorityService;
@@ -146,6 +151,7 @@ public class UserService {
         this.userSshPublicKeyService = userSshPublicKeyService;
         this.courseNotificationSettingService = courseNotificationSettingService;
         this.userCourseNotificationStatusService = userCourseNotificationStatusService;
+        this.scheduler = scheduler;
     }
 
     /**
@@ -153,7 +159,10 @@ public class UserService {
      */
     @EventListener(ApplicationReadyEvent.class)
     public void applicationReady() {
+        scheduler.schedule(this::scheduleAdminUserCreationOrUpdate, Instant.now().plusSeconds(DEFAULT_DELAY_SEC));
+    }
 
+    private void scheduleAdminUserCreationOrUpdate() {
         try {
             if (artemisInternalAdminUsername.isPresent() && artemisInternalAdminPassword.isPresent()) {
                 // authenticate so that db queries are possible

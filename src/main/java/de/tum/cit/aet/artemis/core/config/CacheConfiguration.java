@@ -122,6 +122,7 @@ public class CacheConfiguration {
     }
 
     @Bean
+    @Lazy
     public CacheManager cacheManager(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
         log.debug("Starting HazelcastCacheManager");
         return new HazelcastCacheManager(hazelcastInstance);
@@ -178,6 +179,7 @@ public class CacheConfiguration {
      * @return the created HazelcastInstance
      */
     @Bean(name = "hazelcastInstance")
+    @Lazy
     public HazelcastInstance hazelcastInstance(JHipsterProperties jHipsterProperties) {
         // ========================= TESTING ONLY =========================
         if (env.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST)) && !env.acceptsProfiles(Profiles.of(PROFILE_TEST_INDEPENDENT))) {
@@ -347,6 +349,7 @@ public class CacheConfiguration {
     }
 
     @Bean
+    @Lazy
     public KeyGenerator keyGenerator() {
         return new PrefixedKeyGenerator(this.gitProperties, this.buildProperties);
     }

@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
@@ -71,6 +72,7 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 
 @Profile(PROFILE_CORE)
 @Configuration
+@Lazy
 // See https://stackoverflow.com/a/34337731/3802758
 public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConfiguration {
 
@@ -203,6 +205,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
      * @return initialize the handshake interceptor stores the remote IP address before handshake
      */
     @Bean
+    @Lazy
     public HandshakeInterceptor httpSessionHandshakeInterceptor() {
         return new HandshakeInterceptor() {
 

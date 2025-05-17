@@ -8,12 +8,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.web.servlet.ServletRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 
 /**
  * Configuration of the JGit Servlet that handles fetch and push requests for local Version Control.
  */
 @Configuration
+@Lazy
 @Profile(PROFILE_LOCALVC)
 public class JGitServletConfiguration {
 
@@ -29,6 +31,7 @@ public class JGitServletConfiguration {
      * @return GitServlet (Git server implementation by JGit) configured with a repository resolver and filters for fetch and push requests.
      */
     @Bean
+    @Lazy
     public ServletRegistrationBean<GitServlet> jgitServlet() {
         log.info("Registering ArtemisGitServlet for handling fetch and push requests to [Artemis URL]/git/[Project Key]/[Repository Slug].git");
         return new ServletRegistrationBean<>(artemisGitServlet, "/git/*");

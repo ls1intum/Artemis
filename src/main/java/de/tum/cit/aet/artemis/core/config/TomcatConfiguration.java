@@ -8,6 +8,7 @@ import org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactor
 import org.springframework.boot.web.server.WebServerFactoryCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 
 @Profile(PROFILE_CORE)
@@ -20,6 +21,7 @@ public class TomcatConfiguration {
      * @return the WebServerFactoryCustomizer with the customized options to improve the performance
      */
     @Bean
+    @Lazy
     public WebServerFactoryCustomizer<TomcatServletWebServerFactory> servletContainerCustomizer() {
         return (TomcatServletWebServerFactory container) -> container.addContextCustomizers((Context context) -> {
 
