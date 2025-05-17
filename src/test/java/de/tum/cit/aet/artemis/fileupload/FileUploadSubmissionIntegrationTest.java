@@ -155,8 +155,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
         }
         else {
             if (filename.length() < 5) {
-                actualFilePath = FilePathConverter.buildFileUploadSubmissionPath(releasedFileUploadExercise.getId(), returnedSubmission.getId())
-                        .resolve(Path.of("file" + filename));
+                actualFilePath = FileUploadSubmission.buildFilePath(releasedFileUploadExercise.getId(), returnedSubmission.getId()).resolve(Path.of("file" + filename));
             }
             else if (filename.contains("\\")) {
                 actualFilePath = FilePathConverter.buildFileUploadSubmissionPath(releasedFileUploadExercise.getId(), returnedSubmission.getId()).resolve("file.png");

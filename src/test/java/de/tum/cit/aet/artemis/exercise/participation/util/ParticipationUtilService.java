@@ -18,6 +18,7 @@ import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -81,6 +82,7 @@ import de.tum.cit.aet.artemis.text.test_repository.TextSubmissionTestRepository;
 /**
  * Service responsible for initializing the database with specific testdata related to participations, submissions and results.
  */
+@Lazy
 @Service
 @Profile(SPRING_PROFILE_TEST)
 public class ParticipationUtilService {

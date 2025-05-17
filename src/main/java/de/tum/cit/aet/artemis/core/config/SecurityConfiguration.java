@@ -5,10 +5,9 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.util.List;
 import java.util.Optional;
 
-import jakarta.annotation.PostConstruct;
-
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -80,8 +79,8 @@ public class SecurityConfiguration {
      *
      * @throws IllegalStateException if the server URL configuration is invalid
      */
-    @PostConstruct
-    public void validatePasskeyJwtValidityConfiguration() {
+    @EventListener(ApplicationReadyEvent.class)
+    public void validatePasskeyAllowedOriginConfiguration() {
         if (passkeyEnabled) {
             if (tokenValidityInSecondsForPasskey <= 0) {
                 throw new IllegalStateException("Token validity in seconds for passkey must be greater than 0 when passkey authentication is enabled.");
