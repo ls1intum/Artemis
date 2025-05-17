@@ -96,6 +96,10 @@ export class SidebarAccordionComponent implements OnChanges, OnInit, OnDestroy {
         }
     }
 
+    private shouldCountUnreadMessages(item: SidebarCardElement): boolean {
+        return !!item.conversation?.unreadMessagesCount && item.conversation?.isMuted === false;
+    }
+
     calculateUnreadMessagesOfGroup(): void {
         if (!this.groupedData) {
             this.totalUnreadMessagesPerGroup = {};
@@ -104,7 +108,7 @@ export class SidebarAccordionComponent implements OnChanges, OnInit, OnDestroy {
 
         Object.keys(this.groupedData).forEach((groupKey) => {
             this.totalUnreadMessagesPerGroup[groupKey] = this.groupedData[groupKey].entityData
-                .filter((item: SidebarCardElement) => item.conversation?.unreadMessagesCount)
+                .filter((item: SidebarCardElement) => this.shouldCountUnreadMessages(item))
                 .reduce((sum, item) => sum + (item.conversation?.unreadMessagesCount || 0), 0);
         });
     }

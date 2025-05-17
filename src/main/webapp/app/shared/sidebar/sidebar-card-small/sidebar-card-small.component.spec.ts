@@ -96,4 +96,28 @@ describe('SidebarCardSmallComponent', () => {
         const navigationArray = router.navigate.mock.calls[1][0];
         expect(navigationArray).toStrictEqual(['', 'testId']);
     });
+
+    it('should not have border-primary for muted conversations with unread', () => {
+        component.sidebarItem = {
+            title: 'testTitle',
+            id: 'testId',
+            size: 'S',
+            conversation: { hasUnreadMessage: true, isMuted: true },
+        };
+        fixture.detectChanges();
+        const card = fixture.nativeElement.querySelector('#test-sidebar-card-small');
+        expect(card.classList.contains('border-primary')).toBeFalse();
+    });
+
+    it('should have border-primary for non-muted conversations with unread', () => {
+        component.sidebarItem = {
+            title: 'testTitle',
+            id: 'testId',
+            size: 'S',
+            conversation: { hasUnreadMessage: true, isMuted: false },
+        };
+        fixture.detectChanges();
+        const card = fixture.nativeElement.querySelector('#test-sidebar-card-small');
+        expect(card.classList.contains('border-primary')).toBeTrue();
+    });
 });

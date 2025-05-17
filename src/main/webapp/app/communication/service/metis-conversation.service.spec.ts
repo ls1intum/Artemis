@@ -540,4 +540,26 @@ describe('MetisConversationService', () => {
             expect(errorSpy).not.toHaveBeenCalled();
         });
     });
+
+    it('should set hasUnreadMessages to true only if there are unread messages in non-muted conversations', () => {
+        // All unread in muted conversations
+        (metisConversationService as any).conversationsOfUser = [
+            { unreadMessagesCount: 2, isMuted: true },
+            { unreadMessagesCount: 0, isMuted: false },
+        ];
+        (metisConversationService as any).hasUnreadMessagesCheck();
+        metisConversationService.hasUnreadMessages$.subscribe((hasUnread) => {
+            expect(hasUnread).toBeFalse();
+        });
+
+        // Unread in non-muted conversation
+        (metisConversationService as any).conversationsOfUser = [
+            { unreadMessagesCount: 2, isMuted: false },
+            { unreadMessagesCount: 0, isMuted: true },
+        ];
+        (metisConversationService as any).hasUnreadMessagesCheck();
+        metisConversationService.hasUnreadMessages$.subscribe((hasUnread) => {
+            expect(hasUnread).toBeTrue();
+        });
+    });
 });
