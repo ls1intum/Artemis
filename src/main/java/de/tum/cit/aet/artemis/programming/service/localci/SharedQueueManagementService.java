@@ -399,7 +399,7 @@ public class SharedQueueManagementService {
 
                 Optional<User> admin = userService.findInternalAdminUser();
                 if (admin.isEmpty()) {
-                    log.warn("No internal admin user found. Cannot send email to admin about successful creation of data exports.");
+                    log.warn("No internal admin user found. Cannot notify admin about self pausing build agent.");
                     return;
                 }
                 mailService.sendBuildAgentSelfPausedEmailToAdmin(admin.get(), newValue.buildAgent().name());
