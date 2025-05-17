@@ -1,6 +1,10 @@
 <div class="row justify-content-center">
     @if (course) {
-        <jhi-quick-actions [course]="course" />
+        <div class="d-flex flex-column flex-md-row p-2">
+            <jhi-quick-actions [course]="course" class="mb-md-0 me-md-3" style="min-height: 13rem" />
+
+            <jhi-control-center [course]="course" [irisEnabled]="irisEnabled" style="min-height: 13rem" />
+        </div>
         <div class="col-12">
             <div class="row">
                 <div class="col-xxl-4">

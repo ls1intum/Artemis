@@ -8,6 +8,7 @@ export enum IrisSubSettingsType {
     LECTURE = 'lecture-chat',
     COMPETENCY_GENERATION = 'competency-generation',
     FAQ_INGESTION = 'faq-ingestion',
+    ALL = 'all',
 }
 
 export enum IrisEventType {

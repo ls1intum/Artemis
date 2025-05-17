@@ -78,6 +78,7 @@
                     "enabled": {
                         "on": "Aktiviert",
                         "off": "Deaktiviert",
+                        "custom": "Benutzerdefiniert",
                         "chat": "Iris Chat"
                     },
                     "disabled": {
@@ -128,6 +129,9 @@
                 "pyrisError": "Ein Fehler ist bei der Kommunikation mit Iris aufgetreten.",
                 "transcriptionIngestionError": "Fehler beim Senden einer Vorlesungstranskription"
             }
+        },
+        "controlCenter": {
+            "tooltip": "Durch das Umschalten, aktivierst/deaktivierst du ALLE Iris Features für diesen Kurs. Für eine granularere Kontrolle, nutze bitte die Iris Einstellungen, indem du auf Benutzerdefiniert klickst."
         }
     }
 }

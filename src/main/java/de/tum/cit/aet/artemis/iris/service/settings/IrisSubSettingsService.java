@@ -21,6 +21,7 @@ import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseChatSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisExerciseSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisFaqIngestionSubSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisGlobalSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisLectureChatSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisLectureIngestionSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSettings;
@@ -459,7 +460,8 @@ public class IrisSubSettingsService {
                 return false;
             }
             var settings = subSettingsFunction.apply(irisSettings);
-            if (settings == null || !settings.isEnabled()) {
+            // enabled/disabled should no longer be toggled using global settings
+            if (settings == null || (!settings.isEnabled() && !(irisSettings instanceof IrisGlobalSettings))) {
                 return false;
             }
         }
