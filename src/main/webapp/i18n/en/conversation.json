@@ -170,7 +170,12 @@
                     "editName": "Edit name",
                     "moreInfo": "More info",
                     "createdBy": "Created by",
-                    "createdOn": "Created on"
+                    "createdOn": "Created on",
+                    "notification": "Notification",
+                    "notificationsEnabledDescription": "You will receive push notifications and web notifications for new messages in this conversation.",
+                    "notificationsMutedDescription": "You will not receive notifications for new messages unless you are mentioned.",
+                    "muteChannel": "Mute Channel",
+                    "unmuteChannel": "Unmute Channel"
                 }
             },
             "addUsers": {

@@ -170,7 +170,12 @@
                     "editName": "Namen bearbeiten",
                     "moreInfo": "Mehr Info",
                     "createdBy": "Erstellt von",
-                    "createdOn": "Erstellt am"
+                    "createdOn": "Erstellt am",
+                    "notification": "Benachrichtigungen",
+                    "notificationsEnabledDescription": "Sie erhalten Push-Benachrichtigungen und Web-Benachrichtigungen für neue Nachrichten in dieser Unterhaltung.",
+                    "notificationsMutedDescription": "Sie erhalten keine Benachrichtigungen für neue Nachrichten, wenn Sie nicht erwähnt werden.",
+                    "muteChannel": "Kanal stummschalten",
+                    "unmuteChannel": "Stummschaltung des Kanals aufheben"
                 }
             },
             "addUsers": {

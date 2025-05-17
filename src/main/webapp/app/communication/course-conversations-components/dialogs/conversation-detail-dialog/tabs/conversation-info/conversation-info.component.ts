@@ -9,7 +9,7 @@ import {
     GenericUpdateTextPropertyDialogComponent,
     GenericUpdateTextPropertyTranslationKeys,
 } from 'app/communication/course-conversations-components/generic-update-text-property-dialog/generic-update-text-property-dialog.component';
-import { EMPTY, Subject, from, map, takeUntil } from 'rxjs';
+import { EMPTY, Subject, debounceTime, distinctUntilChanged, from, map, takeUntil } from 'rxjs';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -23,15 +23,21 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { canChangeChannelProperties, canChangeGroupChatProperties } from 'app/communication/conversations/conversation-permissions.utils';
 import { ChannelService } from 'app/communication/conversations/service/channel.service';
 import { GroupChatService } from 'app/communication/conversations/service/group-chat.service';
+import { ConversationService } from 'app/communication/conversations/service/conversation.service';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faVolumeUp, faVolumeXmark } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-conversation-info',
     templateUrl: './conversation-info.component.html',
     styleUrls: ['./conversation-info.component.scss'],
-    imports: [TranslateDirective, ArtemisDatePipe, ArtemisTranslatePipe],
+    imports: [TranslateDirective, ArtemisDatePipe, ArtemisTranslatePipe, CommonModule, FormsModule, FaIconComponent],
 })
 export class ConversationInfoComponent implements OnInit, OnDestroy {
     private ngUnsubscribe = new Subject<void>();
+    private mute$ = new Subject<boolean>();
 
     isGroupChat = isGroupChatDTO;
     isChannel = isChannelDTO;
@@ -56,8 +62,13 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
     private groupChatService = inject(GroupChatService);
     private modalService = inject(NgbModal);
     private alertService = inject(AlertService);
+    private conversationService = inject(ConversationService);
 
     readOnlyMode = false;
+
+    // Icons
+    faVolumeUp = faVolumeUp;
+    faVolumeXmark = faVolumeXmark;
 
     ngOnInit(): void {
         if (this.activeConversation()) {
@@ -65,6 +76,8 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
                 this.readOnlyMode = !!getAsChannelDTO(this.activeConversation())?.isArchived;
             }
         }
+
+        this.updateConversationIsMuted();
     }
 
     ngOnDestroy() {
@@ -219,6 +232,29 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
                     }
                 },
             });
+    }
+
+    onMuteClicked(event: MouseEvent) {
+        event.stopPropagation();
+        this.mute$.next(!this.activeConversation()!.isMuted);
+    }
+
+    private updateConversationIsMuted() {
+        this.mute$.pipe(debounceTime(100), distinctUntilChanged(), takeUntil(this.ngUnsubscribe)).subscribe((isMuted) => {
+            const courseId = this.course()?.id;
+            const conversationId = this.activeConversation()?.id;
+
+            if (!courseId || !conversationId) return;
+
+            this.conversationService.updateIsMuted(courseId, conversationId, isMuted).subscribe({
+                next: () => {
+                    this.activeConversation()!.isMuted = isMuted;
+                    this.onChangePerformed();
+                    this.changesPerformed.emit();
+                },
+                error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+            });
+        });
     }
 
     protected readonly ConversationDTO = ConversationDTO;
