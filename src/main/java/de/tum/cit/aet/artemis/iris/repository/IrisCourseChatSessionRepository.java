@@ -37,8 +37,8 @@ public interface IrisCourseChatSessionRepository extends ArtemisJpaRepository<Ir
     @Query("""
             SELECT s
                 FROM IrisCourseChatSession s
-                WHERE s.course.id = :courseId
-                    AND s.user.id = :userId
+                WHERE s.courseId = :courseId
+                    AND s.userId = :userId
                 ORDER BY s.creationDate DESC
             """)
     List<IrisCourseChatSession> findByCourseIdAndUserId(@Param("courseId") long courseId, @Param("userId") long userId);
@@ -46,8 +46,8 @@ public interface IrisCourseChatSessionRepository extends ArtemisJpaRepository<Ir
     @Query("""
             SELECT s
             FROM IrisCourseChatSession s
-            WHERE s.course.id = :courseId
-                AND s.user.id = :userId
+            WHERE s.courseId = :courseId
+                AND s.userId = :userId
             ORDER BY s.creationDate DESC
             """)
     List<IrisCourseChatSession> findSessionsByCourseIdAndUserId(@Param("courseId") long courseId, @Param("userId") long userId, Pageable pageable);
