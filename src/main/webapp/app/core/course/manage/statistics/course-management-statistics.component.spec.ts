@@ -12,7 +12,7 @@ import { StatisticsService } from 'app/shared/statistics-graph/service/statistic
 import { of } from 'rxjs';
 import { StatisticsAverageScoreGraphComponent } from 'app/shared/statistics-graph/average-score-graph/statistics-average-score-graph.component';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';

@@ -226,7 +226,7 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
         course = courseRepository.findByIdElseThrow(course.getId());
 
         var courseSettings = new IrisCourseSettings();
-        courseSettings.setCourse(course);
+        courseSettings.setCourseId(course.getId());
         courseSettings.setIrisChatSettings(new IrisChatSubSettings());
         courseSettings.getIrisChatSettings().setEnabled(true);
         courseSettings.getIrisChatSettings().setSelectedVariant(null);
@@ -428,7 +428,7 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
         programmingExercise = programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId());
 
         var exerciseSettings = new IrisExerciseSettings();
-        exerciseSettings.setExercise(programmingExercise);
+        exerciseSettings.setExerciseId(programmingExercise.getId());
         exerciseSettings.setIrisChatSettings(new IrisChatSubSettings());
         exerciseSettings.getIrisChatSettings().setEnabled(true);
         exerciseSettings.getIrisChatSettings().setSelectedVariant(null);
@@ -448,7 +448,7 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
         course = courseRepository.findByIdElseThrow(course.getId());
 
         var courseSettings = new IrisCourseSettings();
-        courseSettings.setCourse(course);
+        courseSettings.setCourseId(course.getId());
         courseSettings.setIrisChatSettings(new IrisChatSubSettings());
         courseSettings.getIrisChatSettings().setEnabled(true);
         courseSettings.getIrisChatSettings().setSelectedVariant(null);
@@ -460,7 +460,7 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
         programmingExercise = programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId());
 
         var exerciseSettings = new IrisExerciseSettings();
-        exerciseSettings.setExercise(programmingExercise);
+        exerciseSettings.setExerciseId(programmingExercise.getId());
         exerciseSettings.setIrisChatSettings(new IrisChatSubSettings());
         exerciseSettings.getIrisChatSettings().setEnabled(true);
         exerciseSettings.getIrisChatSettings().setSelectedVariant(null);

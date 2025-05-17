@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.iris.service.session;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -188,7 +187,7 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
     public void checkHasAccessTo(User user, IrisTutorSuggestionSession irisSession) {
         var post = postRepository.findPostOrMessagePostByIdElseThrow(irisSession.getPostId());
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, post.getCoursePostingBelongsTo(), user);
-        if (!Objects.equals(irisSession.getUser(), user)) {
+        if (irisSession.getUserId() != user.getId()) {
             throw new AccessForbiddenException("Iris Session", irisSession.getId());
         }
     }
@@ -258,7 +257,7 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
                 var messageId = savedSuggestion != null ? savedSuggestion.getId() : savedMessage.getId();
                 // generated message is first sent and generated trace is saved
                 var llmTokenUsageTrace = llmTokenUsageService.saveLLMTokenUsage(statusUpdate.tokens(), LLMServiceType.IRIS, builder -> {
-                    builder.withIrisMessageID(messageId).withUser(session.getUser().getId());
+                    builder.withIrisMessageID(messageId).withUser(session.getUserId());
                     this.setLLMTokenUsageParameters(builder, session);
                     return builder;
                 });
@@ -270,7 +269,7 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
                 Optional.ofNullable(job.traceId()).flatMap(llmTokenUsageService::findLLMTokenUsageTraceById)
                         .ifPresentOrElse(trace -> llmTokenUsageService.appendRequestsToTrace(statusUpdate.tokens(), trace), () -> {
                             var llmTokenUsage = llmTokenUsageService.saveLLMTokenUsage(statusUpdate.tokens(), LLMServiceType.IRIS, builder -> {
-                                builder.withUser(session.getUser().getId());
+                                builder.withUser(session.getUserId());
                                 this.setLLMTokenUsageParameters(builder, session);
                                 return builder;
                             });
