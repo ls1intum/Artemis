@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.service.connectors.ldap;
+package de.tum.cit.aet.artemis.core.ldap;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LDAP;
 
@@ -26,8 +26,6 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.ArtemisAuthenticationProvider;
 import de.tum.cit.aet.artemis.core.security.ArtemisAuthenticationProviderImpl;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
-import de.tum.cit.aet.artemis.core.service.ldap.LdapUserDto;
-import de.tum.cit.aet.artemis.core.service.ldap.LdapUserService;
 import de.tum.cit.aet.artemis.core.service.user.AuthorityService;
 import de.tum.cit.aet.artemis.core.service.user.PasswordService;
 import de.tum.cit.aet.artemis.core.service.user.UserCreationService;
@@ -37,7 +35,7 @@ import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 @Lazy
 @Profile(PROFILE_LDAP)
 @Primary
-@ComponentScan("de.tum.cit.aet.artemis.*")
+@ComponentScan("de.tum.cit.aet.artemis.core.ldap.*")
 public class LdapAuthenticationProvider extends ArtemisAuthenticationProviderImpl implements ArtemisAuthenticationProvider {
 
     private static final Logger log = LoggerFactory.getLogger(LdapAuthenticationProvider.class);

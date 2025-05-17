@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.service.ldap;
+package de.tum.cit.aet.artemis.core.ldap;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LDAP;
 import static de.tum.cit.aet.artemis.core.config.Constants.TUM_LDAP_EMAILS;
@@ -21,7 +21,6 @@ import org.springframework.ldap.query.SearchScope;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.repository.ldap.LdapUserRepository;
 
 @Lazy
 @Service

@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.plagiarism.api;
 import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
@@ -17,6 +18,7 @@ import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismPostService;
 
 @Conditional(PlagiarismEnabled.class)
 @Controller
+@Lazy
 public class PlagiarismPostApi extends AbstractPlagiarismApi {
 
     private final PlagiarismPostService plagiarismPostService;
