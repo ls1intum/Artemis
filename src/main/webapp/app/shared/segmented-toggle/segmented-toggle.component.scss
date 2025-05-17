@@ -1,10 +1,11 @@
 .segmented-toggle {
     display: flex;
-    border: 1px solid #ccc;
+    border: 1px solid ButtonBorder;
     border-radius: 8px;
     overflow: hidden;
-    background: white;
+    background: ButtonFace;
     font-family: inherit;
+    color: ButtonText;
 
     .toggle-button {
         flex: 1;
@@ -14,19 +15,20 @@
         cursor: pointer;
         font-weight: 500;
         transition: background-color 0.2s ease;
-        border-right: 1px solid #ccc;
+        border-right: 1px solid ButtonBorder;
+        color: ButtonText;
 
         &:last-child {
             border-right: none;
         }
 
         &.active {
-            background-color: #ffe082;
-            color: #000;
+            background-color: Highlight;
+            color: HighlightText;
         }
 
         &:hover:not(.active) {
-            background-color: #f5f5f5;
+            background-color: ButtonHoverFace;
         }
     }
 }
