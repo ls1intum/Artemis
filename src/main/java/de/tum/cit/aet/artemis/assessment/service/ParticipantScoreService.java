@@ -59,9 +59,9 @@ public class ParticipantScoreService {
 
     private final ParticipantScoreRepository participantScoreRepository;
 
-    public ParticipantScoreService(UserRepository userRepository, StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository,
-            GradingScaleService gradingScaleService, PresentationPointsCalculationService presentationPointsCalculationService, TeamRepository teamRepository,
-            ParticipantScoreRepository participantScoreRepository) {
+    public ParticipantScoreService(@Lazy UserRepository userRepository, @Lazy StudentScoreRepository studentScoreRepository, @Lazy TeamScoreRepository teamScoreRepository,
+            @Lazy GradingScaleService gradingScaleService, @Lazy PresentationPointsCalculationService presentationPointsCalculationService, @Lazy TeamRepository teamRepository,
+            @Lazy ParticipantScoreRepository participantScoreRepository) {
         this.userRepository = userRepository;
         this.studentScoreRepository = studentScoreRepository;
         this.teamScoreRepository = teamScoreRepository;

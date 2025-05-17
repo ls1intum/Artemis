@@ -47,7 +47,8 @@ public class CustomAuditEventRepository implements AuditEventRepository {
 
     private static final Logger log = LoggerFactory.getLogger(CustomAuditEventRepository.class);
 
-    public CustomAuditEventRepository(Environment environment, PersistenceAuditEventRepository persistenceAuditEventRepository, AuditEventConverter auditEventConverter) {
+    public CustomAuditEventRepository(Environment environment, @Lazy PersistenceAuditEventRepository persistenceAuditEventRepository,
+            @Lazy AuditEventConverter auditEventConverter) {
         this.persistenceAuditEventRepository = persistenceAuditEventRepository;
         this.auditEventConverter = auditEventConverter;
         this.isSaml2Active = Set.of(environment.getActiveProfiles()).contains(Constants.PROFILE_SAML2);

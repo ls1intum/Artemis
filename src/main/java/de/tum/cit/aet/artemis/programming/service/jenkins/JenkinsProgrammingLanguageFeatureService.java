@@ -45,7 +45,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeatureServ
 @Profile(PROFILE_JENKINS)
 public class JenkinsProgrammingLanguageFeatureService extends ProgrammingLanguageFeatureService {
 
-    protected JenkinsProgrammingLanguageFeatureService(LicenseService licenseService) {
+    protected JenkinsProgrammingLanguageFeatureService(@Lazy LicenseService licenseService) {
         super(licenseService);
     }
 

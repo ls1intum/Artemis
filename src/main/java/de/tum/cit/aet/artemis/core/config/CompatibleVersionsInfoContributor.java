@@ -15,7 +15,7 @@ public class CompatibleVersionsInfoContributor implements InfoContributor {
 
     private final ArtemisCompatibleVersionsConfiguration versionsConfiguration;
 
-    public CompatibleVersionsInfoContributor(ArtemisCompatibleVersionsConfiguration versionsConfiguration) {
+    public CompatibleVersionsInfoContributor(@Lazy ArtemisCompatibleVersionsConfiguration versionsConfiguration) {
         this.versionsConfiguration = versionsConfiguration;
     }
 

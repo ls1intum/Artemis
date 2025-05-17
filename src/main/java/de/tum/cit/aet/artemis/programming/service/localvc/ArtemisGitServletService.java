@@ -28,7 +28,7 @@ public class ArtemisGitServletService extends GitServlet {
      *
      * @param localVCServletService the service for authenticating and authorizing users and retrieving the repository from disk
      */
-    public ArtemisGitServletService(LocalVCServletService localVCServletService) {
+    public ArtemisGitServletService(@Lazy LocalVCServletService localVCServletService) {
         this.localVCServletService = localVCServletService;
     }
 

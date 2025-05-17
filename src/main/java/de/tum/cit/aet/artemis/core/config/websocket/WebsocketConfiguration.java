@@ -108,7 +108,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
     public WebsocketConfiguration(MappingJackson2HttpMessageConverter springMvcJacksonConverter, TaskScheduler messageBrokerTaskScheduler, TokenProvider tokenProvider,
             StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authorizationCheckService, ExerciseRepository exerciseRepository,
-            Optional<ExamRepositoryApi> examRepositoryApi) {
+            @Lazy Optional<ExamRepositoryApi> examRepositoryApi) {
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
         this.messageBrokerTaskScheduler = messageBrokerTaskScheduler;
         this.tokenProvider = tokenProvider;

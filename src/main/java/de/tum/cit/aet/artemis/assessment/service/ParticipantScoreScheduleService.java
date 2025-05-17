@@ -99,9 +99,9 @@ public class ParticipantScoreScheduleService {
      */
     private final AtomicBoolean isRunning = new AtomicBoolean(false);
 
-    public ParticipantScoreScheduleService(@Qualifier("taskScheduler") TaskScheduler scheduler, Optional<CompetencyProgressApi> competencyProgressApi,
-            ParticipantScoreRepository participantScoreRepository, StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository,
-            ExerciseRepository exerciseRepository, ResultRepository resultRepository, UserRepository userRepository, TeamRepository teamRepository) {
+    public ParticipantScoreScheduleService(@Qualifier("taskScheduler") TaskScheduler scheduler, @Lazy Optional<CompetencyProgressApi> competencyProgressApi,
+            @Lazy ParticipantScoreRepository participantScoreRepository, @Lazy StudentScoreRepository studentScoreRepository, @Lazy TeamScoreRepository teamScoreRepository,
+            @Lazy ExerciseRepository exerciseRepository, @Lazy ResultRepository resultRepository, @Lazy UserRepository userRepository, @Lazy TeamRepository teamRepository) {
         this.scheduler = scheduler;
         this.competencyProgressApi = competencyProgressApi;
         this.participantScoreRepository = participantScoreRepository;

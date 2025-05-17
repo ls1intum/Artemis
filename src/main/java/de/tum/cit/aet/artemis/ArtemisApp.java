@@ -20,7 +20,6 @@ import org.springframework.context.event.EventListener;
 import org.springframework.core.env.Environment;
 
 import de.tum.cit.aet.artemis.core.config.ArtemisCompatibleVersionsConfiguration;
-import de.tum.cit.aet.artemis.core.config.EagerBeanLogger;
 import de.tum.cit.aet.artemis.core.config.LicenseConfiguration;
 import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
 import de.tum.cit.aet.artemis.core.config.TheiaConfiguration;
@@ -59,6 +58,8 @@ public class ArtemisApp {
 
     private final Environment env;
 
+    public static final long appStart = System.currentTimeMillis();
+
     public ArtemisApp(Environment env) {
         this.env = env;
     }
@@ -81,7 +82,6 @@ public class ArtemisApp {
      */
     public static void main(String[] args) {
         SpringApplication app = new SpringApplication(ArtemisApp.class);
-        app.addInitializers(new EagerBeanLogger());
         DefaultProfileUtil.addDefaultProfile(app);
         var context = app.run(args);
         Environment env = context.getEnvironment();

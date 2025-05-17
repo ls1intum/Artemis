@@ -30,7 +30,7 @@ public class LocalCIInfoContributor implements InfoContributor {
 
     private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
 
-    public LocalCIInfoContributor(ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
+    public LocalCIInfoContributor(@Lazy ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
     }
 

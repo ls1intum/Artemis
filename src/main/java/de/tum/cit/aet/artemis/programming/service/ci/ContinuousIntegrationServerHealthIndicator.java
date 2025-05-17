@@ -17,7 +17,7 @@ public class ContinuousIntegrationServerHealthIndicator implements HealthIndicat
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
-    public ContinuousIntegrationServerHealthIndicator(Optional<ContinuousIntegrationService> continuousIntegrationService) {
+    public ContinuousIntegrationServerHealthIndicator(@Lazy Optional<ContinuousIntegrationService> continuousIntegrationService) {
         this.continuousIntegrationService = continuousIntegrationService;
     }
 

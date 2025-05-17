@@ -45,8 +45,8 @@ public class LocalCIService implements ContinuousIntegrationService {
 
     private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
-    public LocalCIService(BuildScriptProviderService buildScriptProviderService, AeolusTemplateService aeolusTemplateService,
-            DistributedDataAccessService distributedDataAccessService, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
+    public LocalCIService(@Lazy BuildScriptProviderService buildScriptProviderService, @Lazy AeolusTemplateService aeolusTemplateService,
+            @Lazy DistributedDataAccessService distributedDataAccessService, @Lazy ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
         this.buildScriptProviderService = buildScriptProviderService;
         this.aeolusTemplateService = aeolusTemplateService;
         this.distributedDataAccessService = distributedDataAccessService;

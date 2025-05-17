@@ -15,7 +15,7 @@ public class FeatureToggleInfoContributor implements InfoContributor {
 
     private final FeatureToggleService featureToggleService;
 
-    public FeatureToggleInfoContributor(FeatureToggleService featureToggleService) {
+    public FeatureToggleInfoContributor(@Lazy FeatureToggleService featureToggleService) {
         this.featureToggleService = featureToggleService;
     }
 

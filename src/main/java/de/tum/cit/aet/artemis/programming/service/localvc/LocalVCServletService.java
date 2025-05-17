@@ -82,6 +82,8 @@ import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 // TODO: we should rename this because its used in the context of https and ssh git operations
 public class LocalVCServletService {
 
+    // TODO: this class has too many responsibilities, we should split it up
+
     private static final Logger log = LoggerFactory.getLogger(LocalVCServletService.class);
 
     private final AuthenticationManager authenticationManager;

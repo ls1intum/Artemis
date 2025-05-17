@@ -9,14 +9,16 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
+import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismApi;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCGitBranchService;
-import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 
 /**
  * Service for managing programming exercise repositories and participations
@@ -32,9 +34,11 @@ public class RepositoryParticipationService {
 
     private final UserRepository userRepository;
 
-    private final RepositoryAccessService repositoryAccessService;
+    private final AuthorizationCheckService authorizationCheckService;
 
     private final Optional<LocalVCGitBranchService> localVCGitBranchService;
+
+    private final Optional<PlagiarismApi> plagiarismApi;
 
     /**
      * Constructor for the RepositoryParticipationService.
@@ -44,12 +48,13 @@ public class RepositoryParticipationService {
      * @param userRepository          the user repository
      */
     public RepositoryParticipationService(ParticipationRepository participationRepository, GitService gitService, UserRepository userRepository,
-            RepositoryAccessService repositoryAccessService, Optional<LocalVCGitBranchService> localVCGitBranchService) {
+            AuthorizationCheckService authorizationCheckService, Optional<LocalVCGitBranchService> localVCGitBranchService, Optional<PlagiarismApi> plagiarismApi) {
         this.participationRepository = participationRepository;
         this.gitService = gitService;
         this.userRepository = userRepository;
-        this.repositoryAccessService = repositoryAccessService;
+        this.authorizationCheckService = authorizationCheckService;
         this.localVCGitBranchService = localVCGitBranchService;
+        this.plagiarismApi = plagiarismApi;
     }
 
     /**
@@ -67,9 +72,28 @@ public class RepositoryParticipationService {
             throw new IllegalArgumentException("Participation is not a programming exercise participation");
         }
 
-        repositoryAccessService.checkHasAccessToPlagiarismSubmission(programmingParticipation, userRepository.getUserWithGroupsAndAuthorities(), RepositoryActionType.READ);
+        checkHasAccessToPlagiarismSubmission(programmingParticipation, userRepository.getUserWithGroupsAndAuthorities());
 
         return getRepositoryFromGitService(true, programmingParticipation);
+    }
+
+    /**
+     * Checks if the user has access to the plagiarism submission of the given programming participation.
+     *
+     * @param programmingParticipation The participation for which the plagiarism submission should be accessed.
+     * @param user                     The user who wants to access the plagiarism submission.
+     * @throws AccessForbiddenException If the user is not allowed to access the plagiarism submission.
+     */
+    private void checkHasAccessToPlagiarismSubmission(ProgrammingExerciseParticipation programmingParticipation, User user) throws AccessForbiddenException {
+        boolean isAtLeastTeachingAssistant = authorizationCheckService
+                .isAtLeastTeachingAssistantInCourse(programmingParticipation.getProgrammingExercise().getCourseViaExerciseGroupOrCourseMember(), user);
+        if (isAtLeastTeachingAssistant) {
+            return;
+        }
+        if (plagiarismApi.isEmpty() || plagiarismApi.get().hasAccessToSubmission(programmingParticipation.getId(), user.getLogin(), (Participation) programmingParticipation)) {
+            return;
+        }
+        throw new AccessForbiddenException("You are not allowed to access the plagiarism result of this programming exercise.");
     }
 
     /**

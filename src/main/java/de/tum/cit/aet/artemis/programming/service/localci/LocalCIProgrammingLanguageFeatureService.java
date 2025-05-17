@@ -52,7 +52,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeatureServ
 @Profile(PROFILE_LOCALCI)
 public class LocalCIProgrammingLanguageFeatureService extends ProgrammingLanguageFeatureService {
 
-    protected LocalCIProgrammingLanguageFeatureService(LicenseService licenseService) {
+    protected LocalCIProgrammingLanguageFeatureService(@Lazy LicenseService licenseService) {
         super(licenseService);
     }
 

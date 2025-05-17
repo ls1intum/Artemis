@@ -2,8 +2,6 @@ package de.tum.cit.aet.artemis.programming.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.util.Optional;
-
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -11,11 +9,9 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckService;
-import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismApi;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -29,17 +25,14 @@ import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 @Service
 public class RepositoryAccessService {
 
-    private final Optional<PlagiarismApi> plagiarismApi;
-
     private final AuthorizationCheckService authorizationCheckService;
 
     private final ExerciseDateService exerciseDateService;
 
     private final ParticipationAuthorizationCheckService participationAuthorizationCheckService;
 
-    public RepositoryAccessService(Optional<PlagiarismApi> plagiarismApi, AuthorizationCheckService authorizationCheckService, ExerciseDateService exerciseDateService,
+    public RepositoryAccessService(AuthorizationCheckService authorizationCheckService, ExerciseDateService exerciseDateService,
             ParticipationAuthorizationCheckService participationAuthorizationCheckService) {
-        this.plagiarismApi = plagiarismApi;
         this.authorizationCheckService = authorizationCheckService;
         this.exerciseDateService = exerciseDateService;
         this.participationAuthorizationCheckService = participationAuthorizationCheckService;
@@ -153,28 +146,4 @@ public class RepositoryAccessService {
             }
         }
     }
-
-    /**
-     * Checks if the user has access to the plagiarism submission of the given programming participation.
-     *
-     * @param programmingParticipation The participation for which the plagiarism submission should be accessed.
-     * @param user                     The user who wants to access the plagiarism submission.
-     * @param repositoryActionType     The type of action that the user wants to perform on the plagiarism submission (i.e. READ, WRITE or RESET).
-     * @throws AccessForbiddenException If the user is not allowed to access the plagiarism submission.
-     */
-    public void checkHasAccessToPlagiarismSubmission(ProgrammingExerciseParticipation programmingParticipation, User user, RepositoryActionType repositoryActionType)
-            throws AccessForbiddenException {
-        if (repositoryActionType == RepositoryActionType.READ) {
-            boolean isAtLeastTeachingAssistant = authorizationCheckService
-                    .isAtLeastTeachingAssistantInCourse(programmingParticipation.getProgrammingExercise().getCourseViaExerciseGroupOrCourseMember(), user);
-            if (isAtLeastTeachingAssistant) {
-                return;
-            }
-            if (plagiarismApi.isEmpty() || plagiarismApi.get().hasAccessToSubmission(programmingParticipation.getId(), user.getLogin(), (Participation) programmingParticipation)) {
-                return;
-            }
-        }
-        throw new AccessForbiddenException("You are not allowed to access the plagiarism result of this programming exercise.");
-    }
-
 }

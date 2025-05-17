@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.info.Info;
 import org.springframework.boot.actuate.info.InfoContributor;
+import org.springframework.context.annotation.Lazy;
 
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
@@ -25,7 +26,7 @@ public abstract class ProgrammingLanguageFeatureService implements InfoContribut
 
     private final Map<ProgrammingLanguage, ProgrammingLanguageFeature> programmingLanguageFeatures;
 
-    protected ProgrammingLanguageFeatureService(LicenseService licenseService) {
+    protected ProgrammingLanguageFeatureService(@Lazy LicenseService licenseService) {
         this.licenseService = licenseService;
         this.programmingLanguageFeatures = getEnabledFeatures();
     }
