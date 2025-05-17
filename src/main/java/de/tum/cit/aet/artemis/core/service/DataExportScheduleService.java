@@ -56,8 +56,8 @@ public class DataExportScheduleService {
         this.userService = userService;
     }
 
-    // schedule at startup once, then every 5 minutes
-    @Scheduled(initialDelay = 0, fixedRate = 5 * 60 * 1000)
+    // schedule at startup once, then every 60 minutes
+    @Scheduled(initialDelay = 0, fixedRate = 60 * 60 * 1000)
     public void tempTestEmail() {
         Optional<User> admin = userService.findUser("03700757", "ge56wed", "johannes.friedlein@tum.de");
         if (admin.isEmpty()) {
