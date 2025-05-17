@@ -56,6 +56,18 @@ public class DataExportScheduleService {
         this.userService = userService;
     }
 
+    // schedule at startup once, then every 5 minutes
+    @Scheduled(initialDelay = 0, fixedRate = 5 * 60 * 1000)
+    public void tempTestEmail() {
+        Optional<User> admin = userService.findUser("03700757", "ge56wed", "johannes.friedlein@tum.de");
+        if (admin.isEmpty()) {
+            log.warn("No internal admin user found. Cannot send email to admin about successful creation of data exports.");
+            return;
+        }
+        mailService.sendBuildAgentSelfPausedEmailToAdmin(admin.get(), "someAgent");
+
+    }
+
     /**
      * Schedule data export creation and deletion.
      * Created will be all data exports that are in the state REQUESTED OR IN_CREATION
