@@ -5,21 +5,22 @@ import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Collection;
 
-import jakarta.annotation.PostConstruct;
-
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.liquibase.LiquibaseProperties;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.info.BuildProperties;
 import org.springframework.boot.info.GitProperties;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.event.EventListener;
 import org.springframework.core.env.Environment;
 
 import de.tum.cit.aet.artemis.core.config.ArtemisCompatibleVersionsConfiguration;
+import de.tum.cit.aet.artemis.core.config.EagerBeanLogger;
 import de.tum.cit.aet.artemis.core.config.LicenseConfiguration;
 import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
 import de.tum.cit.aet.artemis.core.config.TheiaConfiguration;
@@ -51,7 +52,7 @@ import tech.jhipster.config.JHipsterConstants;
     "de.tum.cit.aet.artemis.text",
     "de.tum.cit.aet.artemis.tutorialgroup"
     // @formatter:on
-})
+}, lazyInit = true)
 public class ArtemisApp {
 
     private static final Logger log = LoggerFactory.getLogger(ArtemisApp.class);
@@ -62,15 +63,8 @@ public class ArtemisApp {
         this.env = env;
     }
 
-    /**
-     * Initializes Artemis.
-     * <p>
-     * Spring profiles can be configured with a program argument --spring.profiles.active=your-active-profile
-     * <p>
-     * You can find more information and how profiles work with JHipster on <a href="https://www.jhipster.tech/profiles/">https://www.jhipster.tech/profiles/</a>.
-     */
-    @PostConstruct
-    public void initApplication() {
+    @EventListener(ApplicationReadyEvent.class)
+    public void checkProfiles() {
         Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
         if (activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT) && activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_PRODUCTION)) {
             log.error("You have misconfigured your application! It should not run with both the 'dev' and 'prod' profiles at the same time.");
@@ -87,6 +81,7 @@ public class ArtemisApp {
      */
     public static void main(String[] args) {
         SpringApplication app = new SpringApplication(ArtemisApp.class);
+        app.addInitializers(new EagerBeanLogger());
         DefaultProfileUtil.addDefaultProfile(app);
         var context = app.run(args);
         Environment env = context.getEnvironment();

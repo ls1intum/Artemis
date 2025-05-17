@@ -30,7 +30,6 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.user.UserCreationService;
-import de.tum.cit.aet.artemis.core.service.user.UserService;
 import de.tum.cit.aet.artemis.lti.api.LtiApi;
 import tech.jhipster.web.util.PaginationUtil;
 
@@ -62,17 +61,14 @@ public class UserResource {
 
     private static final Logger log = LoggerFactory.getLogger(UserResource.class);
 
-    private final UserService userService;
-
     private final UserCreationService userCreationService;
 
     private final Optional<LtiApi> ltiApi;
 
     private final UserRepository userRepository;
 
-    public UserResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService, Optional<LtiApi> ltiApi) {
+    public UserResource(UserRepository userRepository, UserCreationService userCreationService, Optional<LtiApi> ltiApi) {
         this.userRepository = userRepository;
-        this.userService = userService;
         this.ltiApi = ltiApi;
         this.userCreationService = userCreationService;
     }

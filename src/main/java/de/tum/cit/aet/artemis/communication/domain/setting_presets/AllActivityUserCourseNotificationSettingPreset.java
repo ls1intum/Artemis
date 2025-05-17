@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.communication.domain.setting_presets;
 
+import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.Map;
 
 import de.tum.cit.aet.artemis.communication.annotations.CourseNotificationSettingPreset;
@@ -34,55 +36,40 @@ import de.tum.cit.aet.artemis.communication.domain.course_notifications.Tutorial
 public class AllActivityUserCourseNotificationSettingPreset extends UserCourseNotificationSettingPreset {
 
     public AllActivityUserCourseNotificationSettingPreset() {
-        presetMap = Map.ofEntries(
-                Map.entry(NewPostNotification.class, Map.of(NotificationChannelOption.EMAIL, false, NotificationChannelOption.WEBAPP, true, NotificationChannelOption.PUSH, true)),
-                Map.entry(NewAnswerNotification.class,
-                        Map.of(NotificationChannelOption.EMAIL, false, NotificationChannelOption.WEBAPP, true, NotificationChannelOption.PUSH, true)),
-                Map.entry(NewMentionNotification.class,
-                        Map.of(NotificationChannelOption.EMAIL, true, NotificationChannelOption.WEBAPP, true, NotificationChannelOption.PUSH, true)),
-                Map.entry(NewAnnouncementNotification.class,
-                        Map.of(NotificationChannelOption.EMAIL, true, NotificationChannelOption.WEBAPP, true, NotificationChannelOption.PUSH, true)),
-                Map.entry(NewExerciseNotification.class,
-                        Map.of(NotificationChannelOption.EMAIL, true, NotificationChannelOption.WEBAPP, true, NotificationChannelOption.PUSH, true)),
-                Map.entry(ExerciseOpenForPracticeNotification.class,
-                        Map.of(NotificationChannelOption.EMAIL, true, NotificationChannelOption.WEBAPP, true, NotificationChannelOption.PUSH, true)),
-                Map.entry(ExerciseAssessedNotification.class,
-                        Map.of(NotificationChannelOption.EMAIL, true, NotificationChannelOption.WEBAPP, true, NotificationChannelOption.PUSH, true)),
-                Map.entry(ExerciseUpdatedNotification.class,
-                        Map.of(NotificationChannelOption.EMAIL, false, NotificationChannelOption.WEBAPP, true, NotificationChannelOption.PUSH, true)),
-                Map.entry(QuizExerciseStartedNotification.class,
-                        Map.of(NotificationChannelOption.EMAIL, false, NotificationChannelOption.WEBAPP, true, NotificationChannelOption.PUSH, true)),
-                Map.entry(AttachmentChangedNotification.class,
-                        Map.of(NotificationChannelOption.EMAIL, false, NotificationChannelOption.WEBAPP, true, NotificationChannelOption.PUSH, true)),
-                Map.entry(NewManualFeedbackRequestNotification.class,
-                        Map.of(NotificationChannelOption.EMAIL, false, NotificationChannelOption.WEBAPP, true, NotificationChannelOption.PUSH, true)),
-                Map.entry(ChannelDeletedNotification.class,
-                        Map.of(NotificationChannelOption.EMAIL, false, NotificationChannelOption.WEBAPP, true, NotificationChannelOption.PUSH, true)),
-                Map.entry(AddedToChannelNotification.class,
-                        Map.of(NotificationChannelOption.EMAIL, false, NotificationChannelOption.WEBAPP, true, NotificationChannelOption.PUSH, true)),
-                Map.entry(RemovedFromChannelNotification.class,
-                        Map.of(NotificationChannelOption.EMAIL, false, NotificationChannelOption.WEBAPP, true, NotificationChannelOption.PUSH, true)),
-                Map.entry(DuplicateTestCaseNotification.class,
-                        Map.of(NotificationChannelOption.EMAIL, true, NotificationChannelOption.WEBAPP, true, NotificationChannelOption.PUSH, true)),
-                Map.entry(NewCpcPlagiarismCaseNotification.class,
-                        Map.of(NotificationChannelOption.EMAIL, true, NotificationChannelOption.WEBAPP, true, NotificationChannelOption.PUSH, true)),
-                Map.entry(NewPlagiarismCaseNotification.class,
-                        Map.of(NotificationChannelOption.EMAIL, true, NotificationChannelOption.WEBAPP, true, NotificationChannelOption.PUSH, true)),
-                Map.entry(ProgrammingBuildRunUpdateNotification.class,
-                        Map.of(NotificationChannelOption.EMAIL, false, NotificationChannelOption.WEBAPP, true, NotificationChannelOption.PUSH, true)),
-                Map.entry(ProgrammingTestCasesChangedNotification.class,
-                        Map.of(NotificationChannelOption.EMAIL, false, NotificationChannelOption.WEBAPP, true, NotificationChannelOption.PUSH, true)),
-                Map.entry(PlagiarismCaseVerdictNotification.class,
-                        Map.of(NotificationChannelOption.EMAIL, true, NotificationChannelOption.WEBAPP, true, NotificationChannelOption.PUSH, true)),
-                Map.entry(TutorialGroupAssignedNotification.class,
-                        Map.of(NotificationChannelOption.EMAIL, true, NotificationChannelOption.WEBAPP, true, NotificationChannelOption.PUSH, true)),
-                Map.entry(TutorialGroupUnassignedNotification.class,
-                        Map.of(NotificationChannelOption.EMAIL, true, NotificationChannelOption.WEBAPP, true, NotificationChannelOption.PUSH, true)),
-                Map.entry(RegisteredToTutorialGroupNotification.class,
-                        Map.of(NotificationChannelOption.EMAIL, true, NotificationChannelOption.WEBAPP, true, NotificationChannelOption.PUSH, true)),
-                Map.entry(DeregisteredFromTutorialGroupNotification.class,
-                        Map.of(NotificationChannelOption.EMAIL, true, NotificationChannelOption.WEBAPP, true, NotificationChannelOption.PUSH, true)),
-                Map.entry(TutorialGroupDeletedNotification.class,
-                        Map.of(NotificationChannelOption.EMAIL, true, NotificationChannelOption.WEBAPP, true, NotificationChannelOption.PUSH, true)));
+        presetMap = new HashMap<>();
+
+        presetMap.put(NewPostNotification.class, createChannels(false, true, true));
+        presetMap.put(NewAnswerNotification.class, createChannels(false, true, true));
+        presetMap.put(NewMentionNotification.class, createChannels(true, true, true));
+        presetMap.put(NewAnnouncementNotification.class, createChannels(true, true, true));
+        presetMap.put(NewExerciseNotification.class, createChannels(true, true, true));
+        presetMap.put(ExerciseOpenForPracticeNotification.class, createChannels(true, true, true));
+        presetMap.put(ExerciseAssessedNotification.class, createChannels(true, true, true));
+        presetMap.put(ExerciseUpdatedNotification.class, createChannels(false, true, true));
+        presetMap.put(QuizExerciseStartedNotification.class, createChannels(false, true, true));
+        presetMap.put(AttachmentChangedNotification.class, createChannels(false, true, true));
+        presetMap.put(NewManualFeedbackRequestNotification.class, createChannels(false, true, true));
+        presetMap.put(ChannelDeletedNotification.class, createChannels(false, true, true));
+        presetMap.put(AddedToChannelNotification.class, createChannels(false, true, true));
+        presetMap.put(RemovedFromChannelNotification.class, createChannels(false, true, true));
+        presetMap.put(DuplicateTestCaseNotification.class, createChannels(true, true, true));
+        presetMap.put(NewCpcPlagiarismCaseNotification.class, createChannels(true, true, true));
+        presetMap.put(NewPlagiarismCaseNotification.class, createChannels(true, true, true));
+        presetMap.put(ProgrammingBuildRunUpdateNotification.class, createChannels(false, true, true));
+        presetMap.put(ProgrammingTestCasesChangedNotification.class, createChannels(false, true, true));
+        presetMap.put(PlagiarismCaseVerdictNotification.class, createChannels(true, true, true));
+        presetMap.put(TutorialGroupAssignedNotification.class, createChannels(true, true, true));
+        presetMap.put(TutorialGroupUnassignedNotification.class, createChannels(true, true, true));
+        presetMap.put(RegisteredToTutorialGroupNotification.class, createChannels(true, true, true));
+        presetMap.put(DeregisteredFromTutorialGroupNotification.class, createChannels(true, true, true));
+        presetMap.put(TutorialGroupDeletedNotification.class, createChannels(true, true, true));
+    }
+
+    private Map<NotificationChannelOption, Boolean> createChannels(boolean email, boolean webapp, boolean push) {
+        Map<NotificationChannelOption, Boolean> channelMap = new EnumMap<>(NotificationChannelOption.class);
+        channelMap.put(NotificationChannelOption.EMAIL, email);
+        channelMap.put(NotificationChannelOption.WEBAPP, webapp);
+        channelMap.put(NotificationChannelOption.PUSH, push);
+        return channelMap;
     }
 }

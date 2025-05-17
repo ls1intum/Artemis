@@ -748,14 +748,6 @@ public class FileResource {
         }
     }
 
-    private Path getResponsePathFromPublicPath(@NotNull Path publicPath) {
-        // fail-safe to raise awareness if the public path is not correct (should not happen)
-        if (publicPath.startsWith(ARTEMIS_FILE_PATH_PREFIX)) {
-            throw new IllegalArgumentException("The public path should not contain the Artemis file path prefix");
-        }
-        return Path.of(ARTEMIS_FILE_PATH_PREFIX, publicPath.toString());
-    }
-
     private String getResponsePathFromPublicPathString(@NotNull String publicPath) {
         // fail-safe to raise awareness if the public path is not correct (should not happen)
         if (publicPath.startsWith(ARTEMIS_FILE_PATH_PREFIX)) {
