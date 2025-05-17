@@ -58,53 +58,13 @@ Test Accounts can be seen on the `Artemis Test Server Confluence Page`_.
 GitHub Deployment
 -----------------
 
-1. In your Pull Request on GitHub, scroll all the way down to the build status.
+`Helios <https://helios.aet.cit.tum.de/>`_ is now the official tool used to manage test server and production deployments.
 
-    .. figure:: testservers/pr-build-status.png
-        :alt: GitHub Actions UI: Build status
+For instructions, please refer to the official documentation: `Helios User Guide <https://ls1intum.github.io/Helios/user_guide/deployments/testserver/>`_
 
-2. Wait for the GitHub Docker build to complete successfully
+.. note::
 
-    .. figure:: testservers/github/docker-build-complete.png
-            :alt: GitHub Actions UI: Waiting for build to complete successfully
-
-3. Check if the test server you want to deploy to is unused. For that, do the following:
-
-    a) Scroll to the testing steps in the PR description
-
-    b) Look at the badges to see which testservers are currently locked
-
-        .. figure:: testservers/github/testserver-status.png
-                :alt: GitHub Actions UI: Check Testserver status
-
-    c) If the testserver you want to deploy to is green, you can continue
-
-4. Add the deployment label for your test server
-
-    .. figure:: testservers/github/deployment-label.png
-            :alt: GitHub Actions UI: Add deployment label for test server
-
-    Note: If you try to deploy to a locked server, you will receive an error message (and you waste your time while waiting for it, so just check beforehand like explained above).
-
-    .. figure:: testservers/github/deploy-error-message.png
-        :alt: GitHub Actions UI: Deployment error message
-
-5. Wait for GitHub to replace your label with the lock label of the test server
-
-    .. figure:: testservers/github/lock-label.png
-        :alt: GitHub Actions UI: Deployment label is replaced by lock label
-
-6. Next to the deployment message in the PR history, GitHub offers a handy button that will forward you to the test server right away. Click it to reach the test server with your PR deployed.
-
-    .. figure:: testservers/github/testserver-forward.png
-        :alt: GitHub Actions UI: Forwarding to test server
-
-7. Perform your testing
-
-8. As soon as you're done with this PR (even if you want to test more PRs), remove the lock label to make the test server available to other PRs.
-
-    .. figure:: testservers/github/remove-lock-label.png
-        :alt: GitHub Actions UI: Remove lock label
+   If the above link is unavailable, go to the `Helios documentation homepage <https://ls1intum.github.io/Helios/>`_ and navigate to **User Guide → Helios User Guide**.
 
 Bamboo Deployment
 -----------------
