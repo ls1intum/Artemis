@@ -1,6 +1,6 @@
 @if (course) {
-    <ng-template #exercisesTitleBar>
-        <div left-content class="d-flex align-items-center">
+    <ng-template titleBarTitle>
+        <div class="d-flex align-items-center">
             <h5 class="mb-0">
                 <span>
                     {{ 'artemisApp.course.exercises' | artemisTranslate }}
@@ -9,14 +9,13 @@
             </h5>
             <jhi-documentation-button [type]="documentationType" />
         </div>
-
-        <div primary-actions>
-            <button id="toggleSearchButton" class="btn btn-primary btn-sm" type="button" (click)="toggleSearch()">
-                {{ 'artemisApp.course.exercise.search.toggleButton.' + showSearch | artemisTranslate }}
-            </button>
-        </div>
     </ng-template>
 
+    <ng-template titleBarActions>
+        <button id="toggleSearchButton" class="btn btn-primary btn-sm" type="button" (click)="toggleSearch()">
+            {{ 'artemisApp.course.exercise.search.toggleButton.' + showSearch | artemisTranslate }}
+        </button>
+    </ng-template>
     @if (showSearch) {
         <jhi-course-management-exercises-search (exerciseFilter)="exerciseFilter = $event" />
     }

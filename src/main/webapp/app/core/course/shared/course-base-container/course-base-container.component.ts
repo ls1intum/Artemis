@@ -108,7 +108,7 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     protected leftVcSubscription?: Subscription;
 
     @ViewChild('controlsViewContainer', { read: ViewContainerRef }) controlsViewContainer: ViewContainerRef;
-    @ViewChild('leftContentViewContainer', { read: ViewContainerRef }) leftContentViewContainer: ViewContainerRef;
+    @ViewChild('leftContent', { read: ViewContainerRef }) leftContentViewContainer: ViewContainerRef;
     @ViewChildren('controlsViewContainer') controlsViewContainerAsList: QueryList<ViewContainerRef>;
     @ViewChildren('leftContentViewContainer') leftContentViewContainerAsList: QueryList<ViewContainerRef>;
 

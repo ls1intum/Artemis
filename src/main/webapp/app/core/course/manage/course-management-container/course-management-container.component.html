@@ -34,10 +34,6 @@
                         <div student-view-button>
                             <a class="btn btn-sm btn-outline-secondary" [routerLink]="studentViewLink()" jhiTranslate="artemisApp.courseOverview.studentView"></a>
                         </div>
-                        <ng-container left-content #leftContentViewContainer />
-
-                        <!-- Primary action controls (typically rendered by the active component) -->
-                        <ng-container primary-actions #controlsViewContainer />
 
                         <!-- Controls for settings page -->
                         @if (course()?.isAtLeastInstructor && isSettingsPage()) {

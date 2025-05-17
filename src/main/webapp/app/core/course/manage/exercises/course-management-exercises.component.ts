@@ -1,10 +1,9 @@
-import { AfterViewInit, Component, OnInit, TemplateRef, ViewChild, inject } from '@angular/core';
+import { Component, OnInit, TemplateRef, inject } from '@angular/core';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ActivatedRoute } from '@angular/router';
 import { ExerciseFilter } from 'app/exercise/shared/entities/exercise/exercise-filter.model';
-import { DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
+import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { CourseManagementExercisesSearchComponent } from '../exercises-search/course-management-exercises-search.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseExerciseCardComponent } from '../course-exercise-card/course-exercise-card.component';
@@ -19,8 +18,8 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_TEXT } from 'app/app.constants';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { BarControlConfiguration } from 'app/shared/tab-bar/tab-bar';
-import { Subject } from 'rxjs';
+import { CourseTitleBarTitleDirective } from 'app/core/course/shared/directives/course-title-bar-title.directive';
+import { CourseTitleBarActionsDirective } from 'app/core/course/shared/directives/course-title-bar-actions.directive';
 
 @Component({
     selector: 'jhi-course-management-exercises',
@@ -38,24 +37,17 @@ import { Subject } from 'rxjs';
         TextExerciseComponent,
         FileUploadExerciseComponent,
         ArtemisTranslatePipe,
+        CourseTitleBarTitleDirective,
+        CourseTitleBarActionsDirective,
     ],
 })
-export class CourseManagementExercisesComponent implements OnInit, AfterViewInit {
+export class CourseManagementExercisesComponent implements OnInit {
     protected readonly ExerciseType = ExerciseType;
     protected readonly documentationType: DocumentationType = 'Exercise';
     protected readonly FeatureToggle = FeatureToggle;
 
-    // Reference to the title bar template to be projected in the parent component
-    @ViewChild('exercisesTitleBar') titleBarTemplate: TemplateRef<any>;
-
-    // Define the control configuration with a subject
-    public readonly controlConfiguration: BarControlConfiguration = {
-        subject: new Subject<TemplateRef<any>>(),
-    };
-
-    // Event emitter to notify when controls are ready to be rendered
-    public readonly controlsRendered = new Subject<void>();
-
+    titleTitleTpl?: TemplateRef<any>;
+    actionButtonsTpl?: TemplateRef<any>;
     course: Course;
     showSearch = false;
     quizExercisesCount = 0;
@@ -88,15 +80,6 @@ export class CourseManagementExercisesComponent implements OnInit, AfterViewInit
         this.textExerciseEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_TEXT);
         this.exerciseFilter = new ExerciseFilter('');
     }
-
-    ngAfterViewInit(): void {
-        // Send the title bar template to the parent component
-        if (this.titleBarTemplate) {
-            this.controlConfiguration.subject!.next(this.titleBarTemplate);
-            this.controlsRendered.next();
-        }
-    }
-
     /**
      * Toggles the search bar
      */
