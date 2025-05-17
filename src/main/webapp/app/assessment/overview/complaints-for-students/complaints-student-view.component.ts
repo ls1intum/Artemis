@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, ElementRef, Input, OnInit, ViewChild, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, Renderer2, inject, input } from '@angular/core';
 import { Exercise, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
@@ -33,15 +33,14 @@ export class ComplaintsStudentViewComponent implements OnInit {
     private serverDateService = inject(ArtemisServerDateService);
     private accountService = inject(AccountService);
     private courseService = inject(CourseManagementService);
+    private renderer = inject(Renderer2);
 
-    @Input() exercise: Exercise;
-    @Input() participation: StudentParticipation;
-    @Input() result?: Result;
-    @Input() exam: Exam;
+    readonly exercise = input.required<Exercise>();
+    readonly participation = input.required<StudentParticipation>();
+    readonly result = input<Result>();
+    readonly exam = input<Exam>();
     // flag to indicate exam test run. Default set to false.
-    @Input() testRun = false;
-
-    @ViewChild('complaintScrollpoint') complaintScrollpoint: ElementRef;
+    readonly testRun = input(false);
 
     submission: Submission;
     complaint: Complaint;
@@ -61,32 +60,32 @@ export class ComplaintsStudentViewComponent implements OnInit {
     // Icons
     faInfoCircle = faInfoCircle;
 
-    /**
-     * Loads the number of allowed complaints and feedback requests
-     */
     ngOnInit(): void {
-        this.course = getCourseFromExercise(this.exercise);
-        this.isExamMode = this.exam != undefined;
-        if (this.participation && this.result?.completionDate) {
+        this.course = getCourseFromExercise(this.exercise());
+        this.isExamMode = this.exam() != undefined;
+        const participation = this.participation();
+        const result = this.result();
+        if (participation && result?.completionDate) {
             // Make sure results and participation are connected
-            this.result.participation = this.participation;
+            result.participation = participation;
 
-            if (this.participation.submissions && this.participation.submissions.length > 0) {
-                this.submission = this.participation.submissions.sort((a, b) => b.id! - a.id!)[0];
+            if (participation.submissions && participation.submissions.length > 0) {
+                this.submission = participation.submissions.sort((a, b) => b.id! - a.id!)[0];
             }
             // for course exercises we track the number of allowed complaints
             if (this.course?.complaintsEnabled) {
-                this.courseService.getNumberOfAllowedComplaintsInCourse(this.course!.id!, this.exercise.teamMode).subscribe((allowedComplaints: number) => {
+                this.courseService.getNumberOfAllowedComplaintsInCourse(this.course!.id!, this.exercise().teamMode).subscribe((allowedComplaints: number) => {
                     this.remainingNumberOfComplaints = allowedComplaints;
                 });
             }
             this.loadPotentialComplaint();
             this.accountService.identity().then((user) => {
                 if (user?.id) {
-                    if (this.participation?.student) {
-                        this.isCorrectUserToFileAction = this.participation.student.id === user.id;
-                    } else if (this.participation.team?.students) {
-                        this.isCorrectUserToFileAction = !!this.participation.team.students.find((student) => student.id === user.id);
+                    const participationValue = this.participation();
+                    if (participationValue?.student) {
+                        this.isCorrectUserToFileAction = participationValue.student.id === user.id;
+                    } else if (participationValue.team?.students) {
+                        this.isCorrectUserToFileAction = !!participationValue.team.students.find((student) => student.id === user.id);
                     }
                 }
             });
@@ -126,7 +125,7 @@ export class ComplaintsStudentViewComponent implements OnInit {
     private isTimeOfComplaintValid(): boolean {
         if (!this.isExamMode) {
             if (this.course?.maxComplaintTimeDays) {
-                const dueDate = ComplaintService.getIndividualComplaintDueDate(this.exercise, this.course.maxComplaintTimeDays, this.result, this.participation);
+                const dueDate = ComplaintService.getIndividualComplaintDueDate(this.exercise(), this.course.maxComplaintTimeDays, this.result(), this.participation());
                 return !!dueDate && dayjs().isBefore(dueDate);
             }
             return false;
@@ -139,7 +138,7 @@ export class ComplaintsStudentViewComponent implements OnInit {
      */
     private isTimeOfFeedbackRequestValid(): boolean {
         if (!this.isExamMode && this.course?.maxRequestMoreFeedbackTimeDays) {
-            const dueDate = ComplaintService.getIndividualComplaintDueDate(this.exercise, this.course.maxRequestMoreFeedbackTimeDays, this.result, this.participation);
+            const dueDate = ComplaintService.getIndividualComplaintDueDate(this.exercise(), this.course.maxRequestMoreFeedbackTimeDays, this.result(), this.participation());
             return !!dueDate && dayjs().isBefore(dueDate);
         }
         return false;
@@ -150,10 +149,10 @@ export class ComplaintsStudentViewComponent implements OnInit {
      * These are only allowed if they are submitted within the student review period.
      */
     private isWithinExamReviewPeriod(): boolean {
-        if (this.testRun) {
+        if (this.testRun()) {
             return true;
-        } else if (this.exam.examStudentReviewStart && this.exam.examStudentReviewEnd) {
-            return this.serverDateService.now().isBetween(dayjs(this.exam.examStudentReviewStart), dayjs(this.exam.examStudentReviewEnd));
+        } else if (this.exam()?.examStudentReviewStart && this.exam()?.examStudentReviewEnd) {
+            return this.serverDateService.now().isBetween(dayjs(this.exam()?.examStudentReviewStart), dayjs(this.exam()?.examStudentReviewEnd));
         }
         return false;
     }
@@ -171,6 +170,6 @@ export class ComplaintsStudentViewComponent implements OnInit {
      * Function to scroll to the complaint form
      */
     private scrollToComplaint(): void {
-        this.complaintScrollpoint?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        this.renderer.selectRootElement('#complaintScrollpoint', true).scrollIntoView({ behavior: 'smooth', block: 'end' });
     }
 }
