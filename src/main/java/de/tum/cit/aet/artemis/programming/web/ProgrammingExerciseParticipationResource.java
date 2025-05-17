@@ -87,8 +87,6 @@ public class ProgrammingExerciseParticipationResource {
 
     private final ParticipationAuthorizationCheckService participationAuthCheckService;
 
-    private final ContinuousIntegrationTriggerService continuousIntegrationTriggerService;
-
     private final ResultService resultService;
 
     private final RepositoryService repositoryService;
@@ -103,13 +101,15 @@ public class ProgrammingExerciseParticipationResource {
 
     private final Optional<ExamApi> examApi;
 
+    private final Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService;
+
     public ProgrammingExerciseParticipationResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ResultRepository resultRepository,
             ParticipationRepository participationRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             ProgrammingSubmissionService submissionService, ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
             ResultService resultService, ParticipationAuthorizationCheckService participationAuthCheckService, RepositoryService repositoryService,
             Optional<StudentExamApi> studentExamApi, Optional<VcsAccessLogRepository> vcsAccessLogRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
             Optional<SharedQueueManagementService> sharedQueueManagementService, Optional<ExamApi> examApi,
-            ContinuousIntegrationTriggerService continuousIntegrationTriggerService) {
+            Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService) {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -322,7 +322,10 @@ public class ProgrammingExerciseParticipationResource {
         }
 
         programmingExerciseParticipationService.resetRepository(participation.getVcsRepositoryUri(), sourceURL);
-        continuousIntegrationTriggerService.triggerBuild(participation, true);
+        continuousIntegrationTriggerService
+                .orElseThrow(() -> new UnsupportedOperationException(
+                        "Cannot trigger build because neither the Jenkins nor the LocalCI profile are active. This is a misconfiguration if you want to use programming exercises"))
+                .triggerBuild(participation, true);
 
         return ResponseEntity.ok().build();
     }

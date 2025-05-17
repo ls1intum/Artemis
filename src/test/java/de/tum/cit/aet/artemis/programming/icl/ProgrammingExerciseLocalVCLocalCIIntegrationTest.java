@@ -8,7 +8,6 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.Optional;
@@ -394,7 +393,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
 
         String repoClonePath = System.getProperty("artemis.repo-clone-path", "repos");
         String projectKey = importResult.parsedExercise().getProjectKey();
-        Path exercisePath = Paths.get(repoClonePath, projectKey);
+        Path exercisePath = Path.of(repoClonePath, projectKey);
         int newTitleCount = programmingExerciseImportTestService.countOccurrencesInDirectory(exercisePath, newTitle);
         int oldTitleCount = programmingExerciseImportTestService.countOccurrencesInDirectory(exercisePath, oldTitle);
 
