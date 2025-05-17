@@ -87,7 +87,7 @@
                     "customInstructions": {
                         "title": "Benutzerdefinierte Anweisungen",
                         "description": "Benutzerdefinierte Anweisungen, die der KI beim Generieren von Antworten zur Verfügung gestellt werden.",
-                        "placeholder": "Geben Sie benutzerdefinierte Anweisungen für die KI ein (maximal 2048 Zeichen)"
+                        "placeholder": "Gib benutzerdefinierte Anweisungen für die KI ein (maximal 2048 Zeichen)"
                     }
                 },
                 "title": {
