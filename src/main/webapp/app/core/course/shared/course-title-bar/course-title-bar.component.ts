@@ -1,4 +1,4 @@
-import { Component, input, output } from '@angular/core';
+import { Component, computed, contentChild, input, output } from '@angular/core';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { facSidebar } from 'app/shared/icons/icons';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -16,13 +16,14 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     imports: [NgClass, NgStyle, NgbTooltip, FaIconComponent, TranslateDirective],
 })
 export class CourseTitleBarComponent {
+    protected readonly facSidebar = facSidebar;
+    protected readonly faChevronRight = faChevronRight;
     hasSidebar = input(false);
     isSidebarCollapsed = input(false);
     pageTitle = input('');
     isExamStarted = input(false);
 
     toggleSidebar = output<void>();
-
-    facSidebar = facSidebar;
-    faChevronRight = faChevronRight;
+    leftContentRef = contentChild('leftContent');
+    readonly hasLeftContentProjection = computed(() => !!this.leftContentRef());
 }

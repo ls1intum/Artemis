@@ -97,13 +97,20 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     checkedForUnreadMessages = signal<boolean>(false);
 
     protected controlsEmbeddedView?: EmbeddedViewRef<any>;
+    protected leftContentEmbeddedView?: EmbeddedViewRef<any>;
     controls = signal<TemplateRef<any> | undefined>(undefined);
+    leftContent = signal<TemplateRef<any> | undefined>(undefined);
     public controlConfiguration = signal<BarControlConfiguration | undefined>(undefined);
+    public leftContentConfiguration = signal<BarControlConfiguration | undefined>(undefined);
     protected controlsSubscription?: Subscription;
+    protected leftContentSubscription?: Subscription;
     protected vcSubscription?: Subscription;
+    protected leftVcSubscription?: Subscription;
 
     @ViewChild('controlsViewContainer', { read: ViewContainerRef }) controlsViewContainer: ViewContainerRef;
+    @ViewChild('leftContentViewContainer', { read: ViewContainerRef }) leftContentViewContainer: ViewContainerRef;
     @ViewChildren('controlsViewContainer') controlsViewContainerAsList: QueryList<ViewContainerRef>;
+    @ViewChildren('leftContentViewContainer') leftContentViewContainerAsList: QueryList<ViewContainerRef>;
 
     protected readonly FeatureToggle = FeatureToggle;
     protected readonly CachingStrategy = CachingStrategy;
@@ -179,16 +186,26 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     abstract switchCourse(course: Course): void;
 
     ngAfterViewInit() {
+        // Handle controls view container
         if (this.controlsViewContainer) {
             this.tryRenderControls();
         } else {
             this.vcSubscription = this.controlsViewContainerAsList.changes.subscribe(() => this.tryRenderControls());
         }
+
+        // Handle left content view container
+        if (this.leftContentViewContainer) {
+            this.tryRenderLeftContent();
+        } else {
+            this.leftVcSubscription = this.leftContentViewContainerAsList.changes.subscribe(() => this.tryRenderLeftContent());
+        }
     }
 
     ngOnDestroy() {
         this.controlsSubscription?.unsubscribe();
+        this.leftContentSubscription?.unsubscribe();
         this.vcSubscription?.unsubscribe();
+        this.leftVcSubscription?.unsubscribe();
         this.subscription?.unsubscribe();
         this.closeSidebarEventSubscription?.unsubscribe();
         this.openSidebarEventSubscription?.unsubscribe();
@@ -232,6 +249,7 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
         this.hasSidebar.set(this.getHasSidebar());
         this.setupConversationService();
 
+        // Handle primary actions controls
         if (componentRef.controlConfiguration) {
             const provider = componentRef;
             this.controlConfiguration.set(provider.controlConfiguration);
@@ -241,6 +259,19 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
                 this.tryRenderControls();
                 await firstValueFrom(provider.controlsRendered);
                 this.tryRenderControls();
+            });
+        }
+
+        // Handle left content controls
+        if (componentRef.leftContentConfiguration) {
+            const provider = componentRef;
+            this.leftContentConfiguration.set(provider.leftContentConfiguration);
+
+            this.leftContentSubscription = provider.leftContentConfiguration?.subject?.subscribe(async (leftContent: TemplateRef<any>) => {
+                this.leftContent.set(leftContent);
+                this.tryRenderLeftContent();
+                await firstValueFrom(provider.controlsRendered);
+                this.tryRenderLeftContent();
             });
         }
 
@@ -255,9 +286,13 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
      */
     onSubRouteDeactivate() {
         this.removeCurrentControlsView();
+        this.removeCurrentLeftContentView();
         this.controls.set(undefined);
+        this.leftContent.set(undefined);
         this.controlConfiguration.set(undefined);
+        this.leftContentConfiguration.set(undefined);
         this.controlsSubscription?.unsubscribe();
+        this.leftContentSubscription?.unsubscribe();
         this.changeDetectorRef.detectChanges();
     }
 
@@ -266,14 +301,34 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
         this.controlsEmbeddedView?.destroy();
     }
 
+    private removeCurrentLeftContentView() {
+        this.leftContentEmbeddedView?.detach();
+        this.leftContentEmbeddedView?.destroy();
+    }
+
     /**
      * Mounts the controls as specified by the currently mounted sub-route component to the ng-container in the top bar
      */
     tryRenderControls() {
+        // eslint-disable-next-line no-undef
+        console.log('tryRenderControls');
         if (this.controlConfiguration() && this.controls() && this.controlsViewContainer) {
             this.removeCurrentControlsView();
             this.controlsEmbeddedView = this.controlsViewContainer.createEmbeddedView(this.controls()!);
             this.controlsEmbeddedView.detectChanges();
+        }
+    }
+
+    /**
+     * Mounts the left content as specified by the currently mounted sub-route component to the ng-container in the top bar
+     */
+    tryRenderLeftContent() {
+        // eslint-disable-next-line no-undef
+        console.log('tryRenderLeftContent');
+        if (this.leftContentConfiguration() && this.leftContent() && this.leftContentViewContainer) {
+            this.removeCurrentLeftContentView();
+            this.leftContentEmbeddedView = this.leftContentViewContainer.createEmbeddedView(this.leftContent()!);
+            this.leftContentEmbeddedView.detectChanges();
         }
     }
 

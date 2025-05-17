@@ -31,14 +31,18 @@
             >
                 @if (course()) {
                     <jhi-course-title-bar [hasSidebar]="hasSidebar()" [isSidebarCollapsed]="isSidebarCollapsed()" [pageTitle]="pageTitle()" (toggleSidebar)="toggleSidebar()">
-                        <div id="student-view-button">
+                        <div student-view-button>
                             <a class="btn btn-sm btn-outline-secondary" [routerLink]="studentViewLink()" jhiTranslate="artemisApp.courseOverview.studentView"></a>
                         </div>
-                        <div class="controls">
-                            @if (course()?.isAtLeastInstructor && isSettingsPage()) {
+                        <ng-container left-content #leftContentViewContainer />
+
+                        <!-- Primary action controls (typically rendered by the active component) -->
+                        <ng-container primary-actions #controlsViewContainer />
+
+                        <!-- Controls for settings page -->
+                        @if (course()?.isAtLeastInstructor && isSettingsPage()) {
+                            <div>
                                 <jhi-course-exam-archive-button [archiveMode]="'Course'" [course]="course()!" class="archive-button" />
-                            }
-                            @if (isSettingsPage()) {
                                 <button
                                     id="delete-course"
                                     *jhiHasAnyAuthority="'ROLE_ADMIN'"
@@ -53,8 +57,8 @@
                                     [dialogError]="dialogError$"
                                     style="margin-right: 0 !important"
                                 ></button>
-                            }
-                        </div>
+                            </div>
+                        }
                     </jhi-course-title-bar>
 
                     <div

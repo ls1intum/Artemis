@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { AfterViewInit, Component, OnInit, TemplateRef, ViewChild, inject } from '@angular/core';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ActivatedRoute } from '@angular/router';
 import { ExerciseFilter } from 'app/exercise/shared/entities/exercise/exercise-filter.model';
@@ -19,6 +19,8 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_TEXT } from 'app/app.constants';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { BarControlConfiguration } from 'app/shared/tab-bar/tab-bar';
+import { Subject } from 'rxjs';
 
 @Component({
     selector: 'jhi-course-management-exercises',
@@ -38,10 +40,21 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
         ArtemisTranslatePipe,
     ],
 })
-export class CourseManagementExercisesComponent implements OnInit {
+export class CourseManagementExercisesComponent implements OnInit, AfterViewInit {
     protected readonly ExerciseType = ExerciseType;
     protected readonly documentationType: DocumentationType = 'Exercise';
     protected readonly FeatureToggle = FeatureToggle;
+
+    // Reference to the title bar template to be projected in the parent component
+    @ViewChild('exercisesTitleBar') titleBarTemplate: TemplateRef<any>;
+
+    // Define the control configuration with a subject
+    public readonly controlConfiguration: BarControlConfiguration = {
+        subject: new Subject<TemplateRef<any>>(),
+    };
+
+    // Event emitter to notify when controls are ready to be rendered
+    public readonly controlsRendered = new Subject<void>();
 
     course: Course;
     showSearch = false;
@@ -74,6 +87,14 @@ export class CourseManagementExercisesComponent implements OnInit {
 
         this.textExerciseEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_TEXT);
         this.exerciseFilter = new ExerciseFilter('');
+    }
+
+    ngAfterViewInit(): void {
+        // Send the title bar template to the parent component
+        if (this.titleBarTemplate) {
+            this.controlConfiguration.subject!.next(this.titleBarTemplate);
+            this.controlsRendered.next();
+        }
     }
 
     /**

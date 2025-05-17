@@ -25,9 +25,23 @@
             </button>
         }
 
-        <div class="align-self-center h5 mb-0" [jhiTranslate]="pageTitle()"></div>
+        <div class="align-self-center">
+            <!-- Slot for left-side content, typically the title -->
+            <ng-content select="[left-content]" />
+
+            <!-- Default title if no custom left content is provided -->
+            @if (!hasLeftContentProjection()) {
+                <div class="h5 mb-0" [jhiTranslate]="pageTitle()"></div>
+            }
+        </div>
     </div>
-    <div class="d-flex gap-2">
+    <div class="d-flex gap-2 align-items-center">
+        <!-- Primary actions slot - for main component actions -->
+        <ng-content select="[primary-actions]" />
+
+        <!-- Controls slot remains for backward compatibility -->
+        <!-- Student view button is kept -->
+        <ng-content select="[student-view-button]" />
         <ng-content />
     </div>
 </div>
