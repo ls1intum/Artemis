@@ -217,11 +217,33 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
         assertThat(tokenProvider.getExpirationDate(updatedJwt)).isBefore(new Date(System.currentTimeMillis() + expectedRemainingLifetimeInMilliseconds));
     }
 
+    // @Test
+    // void shouldNotRotateAnExpiredToken() {
+    // Authentication authentication = createWebAuthnAuthentication();
+    //
+    // Date issuedAt = new Date(System.currentTimeMillis() - (long) (TOKEN_VALIDITY_IN_SECONDS_FOR_PASSKEY * 1.1 * 1000));
+    // Date expiration = new Date(issuedAt.getTime() + TOKEN_VALIDITY_IN_SECONDS_FOR_PASSKEY * 1000);
+    //
+    // String jwt = tokenProvider.createToken(authentication, issuedAt, expiration, null, true);
+    // assertThat(tokenProvider.getAuthenticatedWithPasskey(jwt)).isTrue();
+    //
+    // LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+    // HttpHeaders headers = new HttpHeaders();
+    // headers.add(HttpHeaders.COOKIE, JWTFilter.JWT_COOKIE_NAME + "=" + jwt);
+    //
+    // assertThrows(io.jsonwebtoken.ExpiredJwtException.class, () -> {
+    // mvc.perform(MockMvcRequestBuilders.get(new URI(ENDPOINT_TO_TEST))
+    // .params(params)
+    // .headers(headers)
+    // .cookie(new Cookie(JWTFilter.JWT_COOKIE_NAME, jwt)))
+    // .andExpect(status().is(HttpStatus.OK.value()))
+    // .andReturn();
+    // });
+    // }
+
     // TODO should not rotate token if it comes from a bearer token (only from a cookie)
 
     // TODO should not rotate token if it is not a passkey token
-
-    // TODO should not extend an expired token
 
     /**
      * We DO NOT want to rotate a passkey-created token silently if it has used LESS THAN 50% of its lifetime
