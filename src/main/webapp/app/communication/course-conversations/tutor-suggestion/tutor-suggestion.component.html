@@ -33,13 +33,17 @@
                             @if (message.sender === IrisSender.USER) {
                                 @if (message.content[0].type === IrisMessageContentType.TEXT) {
                                     <div class="bubble-right">
-                                        <span [innerHTML]="(message.content[0] | as: IrisTextMessageContent).textContent! | htmlForMarkdown"></span>
+                                        @for (line of (message.content[0] | as: IrisTextMessageContent).textContent.split('\n'); track line) {
+                                            <div [innerHTML]="line"></div>
+                                        }
                                     </div>
                                 }
                             } @else if (message.sender === IrisSender.LLM) {
                                 @if (message.content[0].type === IrisMessageContentType.TEXT) {
                                     <div class="bubble-left">
-                                        <span [innerHTML]="(message.content[0] | as: IrisTextMessageContent).textContent! | htmlForMarkdown"></span>
+                                        @for (line of (message.content[0] | as: IrisTextMessageContent).textContent.split('\n'); track line) {
+                                            <div [innerHTML]="line"></div>
+                                        }
                                     </div>
                                 }
                             }

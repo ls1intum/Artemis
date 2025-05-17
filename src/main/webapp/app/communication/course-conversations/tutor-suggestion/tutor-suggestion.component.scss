@@ -54,23 +54,47 @@
     margin-bottom: 2px;
 }
 
-.bubble-right {
-    background-color: var(--iris-my-chat-background);
-    padding: 8px 12px;
-    border-radius: 15px;
-    margin: 5px 0;
-    place-self: end;
-    float: right;
-    max-width: 75%;
+.bubble-left {
+    --r: 13px;
+    --t: 10px;
+    --_d: 0%;
+    border-left: var(--t) solid #0000;
+    background-color: var(--iris-client-chat-background);
+    margin-right: var(--t);
+    place-self: start;
+    max-width: 100%;
+    margin-bottom: 10px;
+    color: var(--bs-body-color);
+    padding: 10px;
+    -webkit-mask:
+        radial-gradient(var(--t) at var(--_d) 0, #0000 98%, #000 102%) var(--_d) 100% / calc(100% - var(--r)) var(--t) no-repeat,
+        conic-gradient(at var(--r) var(--r), #000 75%, #0000 0) calc(var(--r) / -2) calc(var(--r) / -2) padding-box,
+        radial-gradient(50% 50%, #000 98%, #0000 101%) 0 0 / var(--r) var(--r) space padding-box;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
 }
 
-.bubble-left {
-    background-color: var(--iris-client-chat-background);
-    padding: 8px 12px;
-    border-radius: 15px;
-    margin: 5px 0;
-    place-self: start;
-    max-width: 75%;
+.bubble-right {
+    --r: 13px;
+    --t: 10px;
+    --_d: 100%;
+    border-right: var(--t) solid #0000;
+    margin-left: var(--t);
+    place-self: end;
+    float: right;
+    background-color: var(--iris-my-chat-background);
+    max-width: 100%;
+    margin-bottom: 10px;
+    color: var(--bs-body-color);
+    padding: 10px;
+    -webkit-mask:
+        radial-gradient(var(--t) at var(--_d) 0, #0000 98%, #000 102%) var(--_d) 100% / calc(100% - var(--r)) var(--t) no-repeat,
+        conic-gradient(at var(--r) var(--r), #000 75%, #0000 0) calc(var(--r) / -2) calc(var(--r) / -2) padding-box,
+        radial-gradient(50% 50%, #000 98%, #0000 101%) 0 0 / var(--r) var(--r) space padding-box;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
 }
 
 .message-container {
