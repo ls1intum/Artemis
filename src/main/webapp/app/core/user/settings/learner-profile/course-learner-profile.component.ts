@@ -1,8 +1,6 @@
 import { NgClass } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faSave } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { LearnerProfileApiService } from 'app/learner-profile/service/learner-profile-api.service';
 import { CourseLearnerProfileDTO } from 'app/learner-profile/shared/entities/learner-profile.model';
@@ -17,7 +15,7 @@ import { COURSE_LEARNER_PROFILE_OPTIONS } from './learner-profile-options';
     selector: 'jhi-course-learner-profile',
     templateUrl: './course-learner-profile.component.html',
     styleUrls: ['./course-learner-profile.component.scss'],
-    imports: [TranslateDirective, NgClass, ArtemisTranslatePipe, FaIconComponent, HelpIconComponent, SegmentedToggleComponent],
+    imports: [TranslateDirective, NgClass, ArtemisTranslatePipe, HelpIconComponent, SegmentedToggleComponent],
 })
 export class CourseLearnerProfileComponent implements OnInit {
     private alertService = inject(AlertService);
@@ -36,13 +34,10 @@ export class CourseLearnerProfileComponent implements OnInit {
      */
     MAX_PROFILE_VALUE = 5;
 
-    faSave = faSave;
-
     courseLearnerProfiles: CourseLearnerProfileDTO[] = []; // initialize empty array to avoid undefined error
     activeCourseId: number;
 
     disabled = true;
-    editing = false;
 
     // Use the shared options for all toggles
     protected aimForGradeOrBonusOptions = COURSE_LEARNER_PROFILE_OPTIONS;
@@ -63,7 +58,6 @@ export class CourseLearnerProfileComponent implements OnInit {
 
     courseChanged(event: Event) {
         const courseId: string = (<HTMLSelectElement>event.target).value;
-        this.editing = false;
 
         // courseId of -1 represents no course selected
         if (courseId !== '-1') {
@@ -99,7 +93,7 @@ export class CourseLearnerProfileComponent implements OnInit {
         });
     }
 
-    update() {
+    onToggleChange() {
         const courseLearnerProfile = this.getCourseLearnerProfile(this.activeCourseId);
         if (!courseLearnerProfile) {
             return;
@@ -115,8 +109,6 @@ export class CourseLearnerProfileComponent implements OnInit {
                 const index = this.courseLearnerProfiles.findIndex((profile) => profile.id === courseLearnerProfile.id);
                 this.courseLearnerProfiles[index] = courseLearnerProfile;
                 this.updateProfileValues(courseLearnerProfile);
-
-                this.editing = false;
 
                 this.alertService.addAlert({
                     type: AlertType.SUCCESS,

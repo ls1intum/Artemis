@@ -1,11 +1,5 @@
 <div class="d-flex justify-content-between">
     <h2 jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.title"></h2>
-    @if (editing) {
-        <button type="button" class="btn btn-primary" id="apply-changes-button" (click)="update()">
-            <fa-icon class="ng" [icon]="faSave" />
-            {{ 'artemisApp.userSettings.saveChanges' | artemisTranslate }}
-        </button>
-    }
 </div>
 <hr />
 <div class="row align-items-center">
@@ -22,17 +16,17 @@
         <div class="col">
             <div class="title">{{ translateService.instant('artemisApp.learnerProfile.courseLearnerProfile.aimForGradeOrBonus.label') }}</div>
             <div class="description">{{ translateService.instant('artemisApp.learnerProfile.courseLearnerProfile.aimForGradeOrBonus.description') }}</div>
-            <jhi-segmented-toggle [options]="aimForGradeOrBonusOptions" [(selected)]="aimForGradeOrBonus" (selectedChange)="editing = true" />
+            <jhi-segmented-toggle [options]="aimForGradeOrBonusOptions" [(selected)]="aimForGradeOrBonus" (selectedChange)="onToggleChange()" />
         </div>
         <div class="col">
             <div class="title">{{ translateService.instant('artemisApp.learnerProfile.courseLearnerProfile.timeInvestment.label') }}</div>
             <div class="description">{{ translateService.instant('artemisApp.learnerProfile.courseLearnerProfile.timeInvestment.description') }}</div>
-            <jhi-segmented-toggle [options]="timeInvestmentOptions" [(selected)]="timeInvestment" (selectedChange)="editing = true" />
+            <jhi-segmented-toggle [options]="timeInvestmentOptions" [(selected)]="timeInvestment" (selectedChange)="onToggleChange()" />
         </div>
         <div class="col">
             <div class="title">{{ translateService.instant('artemisApp.learnerProfile.courseLearnerProfile.repetitionIntensity.label') }}</div>
             <div class="description">{{ translateService.instant('artemisApp.learnerProfile.courseLearnerProfile.repetitionIntensity.description') }}</div>
-            <jhi-segmented-toggle [options]="repetitionIntensityOptions" [(selected)]="repetitionIntensity" (selectedChange)="editing = true" />
+            <jhi-segmented-toggle [options]="repetitionIntensityOptions" [(selected)]="repetitionIntensity" (selectedChange)="onToggleChange()" />
         </div>
     </div>
 </div>
