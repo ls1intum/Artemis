@@ -76,6 +76,46 @@
                     </div>
                 </div>
             }
+            <!-- Notification -->
+            <div id="notification-section" class="col-12 info-section">
+                <div>
+                    <h6 jhiTranslate="artemisApp.dialogs.conversationDetail.infoTab.notification"></h6>
+                </div>
+
+                <p class="text-muted small mb-2">
+                    {{
+                        activeConversation()?.isMuted
+                            ? ('artemisApp.dialogs.conversationDetail.infoTab.notificationsMutedDescription' | artemisTranslate)
+                            : ('artemisApp.dialogs.conversationDetail.infoTab.notificationsEnabledDescription' | artemisTranslate)
+                    }}
+                </p>
+
+                <ul>
+                    <li>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center gap-2">
+                                <fa-icon [icon]="activeConversation()?.isMuted ? faVolumeUp : faVolumeXmark" class="me-1" />
+                                <span>
+                                    {{
+                                        activeConversation()?.isMuted
+                                            ? ('artemisApp.dialogs.conversationDetail.infoTab.unmuteChannel' | artemisTranslate)
+                                            : ('artemisApp.dialogs.conversationDetail.infoTab.muteChannel' | artemisTranslate)
+                                    }}
+                                </span>
+                            </div>
+                            <button
+                                class="btn btn-outline-secondary btn-sm"
+                                (click)="onMuteClicked($event)"
+                                [jhiTranslate]="
+                                    activeConversation()?.isMuted
+                                        ? 'artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.unmute'
+                                        : 'artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.mute'
+                                "
+                            ></button>
+                        </div>
+                    </li>
+                </ul>
+            </div>
             <!-- More Info -->
             <div id="moreinfo-section" class="col-12 info-section">
                 <div>
