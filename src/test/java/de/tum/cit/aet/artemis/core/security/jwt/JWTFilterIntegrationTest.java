@@ -166,14 +166,16 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
         Authentication authentication = createWebAuthnAuthentication();
 
         long nowInMilliseconds = System.currentTimeMillis();
-        long lessThanHalfOfTokenValidityLeftInMilliseconds = (long) (TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 0.4 * 1000);
-        Date expiration = new Date(nowInMilliseconds + lessThanHalfOfTokenValidityLeftInMilliseconds);
-
-        long lessPasskeyLifetimeThanTokenRememberMeLifetime = expiration.getTime() - TOKEN_VALIDITY_IN_SECONDS_FOR_PASSKEY * 1000;
-        Date issuedAt = new Date(lessPasskeyLifetimeThanTokenRememberMeLifetime + (TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 1000 - lessThanHalfOfTokenValidityLeftInMilliseconds));
+        Date issuedAt = new Date(nowInMilliseconds - (long) (TOKEN_VALIDITY_IN_SECONDS_FOR_PASSKEY * 0.9 * 1000));
+        Date expiration = new Date(nowInMilliseconds + (long) (TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 0.4 * 1000));
 
         long tokenLifetimeAlreadyUsedUpInMilliseconds = nowInMilliseconds - issuedAt.getTime();
         long expectedRemainingLifetimeInMilliseconds = TOKEN_VALIDITY_IN_SECONDS_FOR_PASSKEY * 1000 - tokenLifetimeAlreadyUsedUpInMilliseconds;
+        // if this is not the case, the test does not make sense - might happen if TOKEN_VALIDITY_IN_SECONDS_FOR_PASSKEY or TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS is adjusted
+        // -> adjust issuedAt and expiration accordingly in that case (no full-time for TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS left, last rotated token before passkey token lifetime
+        // is reached)
+        assertThat(expectedRemainingLifetimeInMilliseconds).isLessThan(TOKEN_VALIDITY_IN_SECONDS_FOR_PASSKEY * 1000);
+        assertThat(expectedRemainingLifetimeInMilliseconds).isLessThan(TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 1000);
 
         String jwt = tokenProvider.createToken(authentication, issuedAt, expiration, null, true);
         assertThat(tokenProvider.getAuthenticatedWithPasskey(jwt)).isTrue();
@@ -196,7 +198,8 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
         assertThat(updatedCookie.getPath()).isEqualTo("/"); // TODO does that make sense?
         assertThat(updatedCookie.getMaxAge().getSeconds()).isLessThan(TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS);
         assertThat(updatedCookie.getMaxAge().getSeconds()).isLessThan(TOKEN_VALIDITY_IN_SECONDS_FOR_PASSKEY);
-        assertThat(updatedCookie.getMaxAge().getSeconds()).isCloseTo(expectedRemainingLifetimeInMilliseconds / 1000, Offset.offset(15L)); // allow a 15-second deviation
+        // allow a 15-second deviation -> can be increased in case the runners are even slower (magnitue of seconds does not matter here)
+        assertThat(updatedCookie.getMaxAge().getSeconds()).isCloseTo(expectedRemainingLifetimeInMilliseconds / 1000, Offset.offset(15L));
         assertThat(updatedCookie.isSecure()).isTrue();
         assertThat(updatedCookie.isHttpOnly()).isTrue();
         assertThat(updatedCookie.getSameSite()).isEqualTo("Lax");
@@ -210,9 +213,6 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
         assertThat(tokenProvider.getAuthenticatedWithPasskey(updatedJwt)).isTrue();
         assertThat(tokenProvider.getIssuedAtDate(updatedJwt)).isCloseTo(issuedAt, 1000); // should not have changed, tolerance due to formatting
         // IMPORTANT! The expiration date of the rotated token must be in the future but must not exceed the maximum passkey token lifetime
-        assertThat(expectedRemainingLifetimeInMilliseconds).isLessThan(TOKEN_VALIDITY_IN_SECONDS_FOR_PASSKEY * 1000);
-        assertThat(expectedRemainingLifetimeInMilliseconds).isLessThan(TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 1000); // the test does not make sense if we still have the full
-                                                                                                                      // token lifetime left
         assertThat(tokenProvider.getExpirationDate(updatedJwt)).isAfter(new Date(System.currentTimeMillis() + (long) (expectedRemainingLifetimeInMilliseconds * 0.9)));
         assertThat(tokenProvider.getExpirationDate(updatedJwt)).isBefore(new Date(System.currentTimeMillis() + expectedRemainingLifetimeInMilliseconds));
     }
