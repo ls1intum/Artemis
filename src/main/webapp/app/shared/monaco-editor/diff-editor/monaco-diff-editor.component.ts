@@ -116,12 +116,12 @@ export class MonacoDiffEditorComponent implements OnDestroy {
      * @param modified The content of the modified file, if available.
      * @param fileName The name of the file, if available. The name is used to determine the syntax highlighting of the right editor.
      */
-    setFileContents(original?: string, modified?: string, fileName?: string): void {
+    setFileContents(original?: string, modified?: string, originalFileName?: string, modifiedFileName?: string): void {
         // Reset ready state and clear line changes when loading new content
         this.onReadyForDisplayChange.emit({ready: false, lineChange: {addedLineCount: 0, removedLineCount: 0}});
         
-        const originalModelUri = monaco.Uri.parse(`inmemory://model/original-${this._editor.getId()}/${fileName ?? 'left'}`);
-        const modifiedFileUri = monaco.Uri.parse(`inmemory://model/modified-${this._editor.getId()}/${fileName ?? 'right'}`);
+        const originalModelUri = monaco.Uri.parse(`inmemory://model/original-${this._editor.getId()}/${originalFileName ?? 'left'}`);
+        const modifiedFileUri = monaco.Uri.parse(`inmemory://model/modified-${this._editor.getId()}/${modifiedFileName ?? 'right'}`);
         const originalModel = monaco.editor.getModel(originalModelUri) ?? monaco.editor.createModel(original ?? '', undefined, originalModelUri);
         const modifiedModel = monaco.editor.getModel(modifiedFileUri) ?? monaco.editor.createModel(modified ?? '', undefined, modifiedFileUri);
 

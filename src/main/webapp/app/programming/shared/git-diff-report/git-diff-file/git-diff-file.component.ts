@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, ViewEncapsulation, computed, effect, input, output, viewChild } from '@angular/core';
 import { MonacoDiffEditorComponent } from 'app/shared/monaco-editor/diff-editor/monaco-diff-editor.component';
-import { LineChange } from 'app/programming/shared/git-diff-report/model/git-diff.model';
+import { DiffInformation, LineChange } from 'app/programming/shared/git-diff-report/model/git-diff.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
@@ -12,16 +12,14 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 })
 export class GitDiffFileComponent {
     readonly monacoDiffEditor = viewChild.required(MonacoDiffEditorComponent);
-    readonly originalFileContent = input<string>();
-    readonly modifiedFileContent = input<string>();
+    readonly diffInformation = input.required<DiffInformation>();
     readonly allowSplitView = input<boolean>(true);
-    readonly path = input<string>();
     readonly onDiffReady = output<{ready: boolean; lineChange: LineChange}>();
-    readonly fileUnchanged = computed(() => this.originalFileContent() === this.modifiedFileContent());
+    readonly fileUnchanged = computed(() => this.diffInformation().templateFileContent === this.diffInformation().solutionFileContent);
 
     constructor() {
         effect(() => {
-            this.monacoDiffEditor().setFileContents(this.originalFileContent(), this.modifiedFileContent(), this.path());
+            this.monacoDiffEditor().setFileContents(this.diffInformation().templateFileContent, this.diffInformation().solutionFileContent, this.diffInformation().oldPath, this.diffInformation().path);
         });
     }
 }

@@ -1,6 +1,6 @@
 import { NgClass } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
-import { FileStatus } from 'app/programming/shared/git-diff-report/model/git-diff.model';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { DiffInformation, FileStatus } from 'app/programming/shared/git-diff-report/model/git-diff.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
@@ -11,12 +11,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     imports: [TranslateDirective, NgClass],
 })
 export class GitDiffFilePanelTitleComponent {
-    readonly originalFilePath = input<string>();
-    readonly modifiedFilePath = input<string>();
-    readonly fileStatus = input<FileStatus>();
-    readonly title = input<string>();
-
-    readonly titleAndFileStatus = computed(() => {this.title, this.fileStatus});
+    readonly diffInformation = input.required<DiffInformation>();
 
     protected readonly FileStatus = FileStatus;
 }

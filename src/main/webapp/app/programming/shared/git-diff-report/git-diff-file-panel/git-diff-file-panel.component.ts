@@ -7,7 +7,7 @@ import { GitDiffFileComponent } from 'app/programming/shared/git-diff-report/git
 import { NgbAccordionModule, NgbCollapse, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { LineChange } from 'app/programming/shared/git-diff-report/model/git-diff.model';
+import { DiffInformation, LineChange } from 'app/programming/shared/git-diff-report/model/git-diff.model';
 
 @Component({
     selector: 'jhi-git-diff-file-panel',
@@ -30,11 +30,9 @@ export class GitDiffFilePanelComponent {
     protected readonly faAngleUp = faAngleUp;
     protected readonly faAngleDown = faAngleDown;
 
-    readonly originalFileContent = input<string>();
-    readonly modifiedFileContent = input<string>();
     readonly diffForTemplateAndSolution = input<boolean>(true);
     readonly allowSplitView = input<boolean>(true);
-    readonly path = input<string>();
+    readonly diffInformation = input.required<DiffInformation>();
     readonly onDiffReady = output<{ready: boolean; lineChange: LineChange}>();
 
     private readonly lineChange = signal<LineChange>({ addedLineCount: 0, removedLineCount: 0 });

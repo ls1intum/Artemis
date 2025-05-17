@@ -71,9 +71,7 @@
             <jhi-git-diff-file-panel
                 [allowSplitView]="allowSplitView()"
                 [diffForTemplateAndSolution]="diffForTemplateAndSolution()"
-                [originalFileContent]="diffInformation.templateFileContent"
-                [modifiedFileContent]="diffInformation.solutionFileContent"
-                [path]="diffInformation.path"
+                [diffInformation]="diffInformation"
                 (onDiffReady)="onDiffReady(diffInformation.path, $event.ready, $event.lineChange)"
             />
         </div>

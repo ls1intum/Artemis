@@ -5,6 +5,7 @@ export enum FileStatus {
     CREATED = 'created',
     DELETED = 'deleted',
     UNCHANGED = 'unchanged',
+    RENAMED = 'renamed',
 }
 
 /**
@@ -20,7 +21,9 @@ export interface LineChange {
  * Interface representing the diff information for a file.
  */
 export interface DiffInformation {
+    title: string;
     path: string;
+    oldPath?: string;
     templateFileContent?: string;
     solutionFileContent?: string;
     diffReady: boolean;
