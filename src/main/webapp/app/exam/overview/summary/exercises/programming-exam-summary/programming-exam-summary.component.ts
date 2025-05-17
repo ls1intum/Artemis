@@ -12,7 +12,7 @@ import { ExerciseCacheService } from 'app/exercise/services/exercise-cache.servi
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Router } from '@angular/router';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { CodeButtonComponent } from 'app/shared/components/code-button/code-button.component';
+import { CodeButtonComponent } from 'app/shared/components/buttons/code-button/code-button.component';
 import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';

@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExamSummaryComponent } from 'app/exam/overview/summary/exercises/programming-exam-summary/programming-exam-summary.component';
-import { CodeButtonComponent } from 'app/shared/components/code-button/code-button.component';
+import { CodeButtonComponent } from 'app/shared/components/buttons/code-button/code-button.component';
 import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
