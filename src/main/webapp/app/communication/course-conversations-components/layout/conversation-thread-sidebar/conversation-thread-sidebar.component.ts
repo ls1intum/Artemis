@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, Output, ViewChild, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, Output, ViewChild, input, viewChild } from '@angular/core';
 import interact from 'interactjs';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { faArrowLeft, faChevronLeft, faCompress, faExpand, faGripLinesVertical, faXmark } from '@fortawesome/free-solid-svg-icons';
@@ -12,12 +12,14 @@ import { MessageReplyInlineInputComponent } from 'app/communication/message/mess
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { NgClass } from '@angular/common';
 import { PostComponent } from 'app/communication/post/post.component';
+import { TutorSuggestionComponent } from 'app/communication/course-conversations/tutor-suggestion/tutor-suggestion.component';
+import { Course } from 'app/core/course/shared/entities/course.model';
 
 @Component({
     selector: 'jhi-conversation-thread-sidebar',
     templateUrl: './conversation-thread-sidebar.component.html',
     styleUrls: ['./conversation-thread-sidebar.component.scss'],
-    imports: [FaIconComponent, TranslateDirective, NgbTooltip, PostComponent, MessageReplyInlineInputComponent, ArtemisTranslatePipe, NgClass],
+    imports: [FaIconComponent, TranslateDirective, NgbTooltip, PostComponent, MessageReplyInlineInputComponent, ArtemisTranslatePipe, NgClass, TutorSuggestionComponent],
 })
 export class ConversationThreadSidebarComponent implements AfterViewInit {
     @ViewChild('scrollBody', { static: false }) scrollBody?: ElementRef<HTMLDivElement>;
@@ -36,6 +38,8 @@ export class ConversationThreadSidebarComponent implements AfterViewInit {
         this.post = activePost;
         this.createdAnswerPost = this.createEmptyAnswerPost();
     }
+
+    course = input<Course>();
 
     @Output()
     closePostThread = new EventEmitter<void>();
@@ -73,7 +77,6 @@ export class ConversationThreadSidebarComponent implements AfterViewInit {
         this.isExpanded = !this.isExpanded;
         this.expandTooltip()?.close();
     }
-
     /**
      * makes message thread section expandable by configuring 'interact'
      */

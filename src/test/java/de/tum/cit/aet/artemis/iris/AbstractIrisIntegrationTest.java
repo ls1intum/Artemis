@@ -65,6 +65,7 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
         activateSubSettings(globalSettings.getIrisCompetencyGenerationSettings());
         activateSubSettings(globalSettings.getIrisLectureChatSettings());
         activateSubSettings(globalSettings.getIrisFaqIngestionSettings());
+        activateSubSettings(globalSettings.getIrisTutorSuggestionSettings());
         irisSettingsRepository.save(globalSettings);
     }
 
@@ -89,6 +90,7 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
         activateSubSettings(courseSettings.getIrisCompetencyGenerationSettings());
         activateSubSettings(courseSettings.getIrisLectureIngestionSettings());
         activateSubSettings(courseSettings.getIrisFaqIngestionSettings());
+        activateSubSettings(courseSettings.getIrisTutorSuggestionSettings());
 
         irisSettingsRepository.save(courseSettings);
     }
