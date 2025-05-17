@@ -24,6 +24,9 @@ import { defaultSecondLayerDialogOptions } from 'app/communication/course-conver
 import { input } from '@angular/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ConversationInfoComponent } from 'app/communication/course-conversations-components/dialogs/conversation-detail-dialog/tabs/conversation-info/conversation-info.component';
+import { ConversationService } from 'app/communication/conversations/service/conversation.service';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { TranslateModule, TranslateStore } from '@ngx-translate/core';
 
 const examples: ConversationDTO[] = [generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({} as ChannelDTO)];
 
@@ -36,6 +39,7 @@ examples.forEach((activeConversation) => {
         const canChangeGroupChatProperties = jest.fn();
         let updateChannelSpy: jest.SpyInstance;
         let updateGroupChatSpy: jest.SpyInstance;
+        let updateIsMutedSpy: jest.SpyInstance;
         const exampleUpdatedGroupChat = generateExampleGroupChatDTO({ name: 'updated' });
         const exampleUpdatedChannel = generateExampleChannelDTO({
             name: 'updated',
@@ -45,8 +49,16 @@ examples.forEach((activeConversation) => {
 
         beforeEach(waitForAsync(() => {
             TestBed.configureTestingModule({
+                imports: [HttpClientTestingModule, TranslateModule.forRoot()],
                 declarations: [ConversationInfoComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe), MockDirective(TranslateDirective)],
-                providers: [MockProvider(ChannelService), MockProvider(GroupChatService), MockProvider(NgbModal), MockProvider(AlertService)],
+                providers: [
+                    MockProvider(ChannelService),
+                    MockProvider(GroupChatService),
+                    MockProvider(NgbModal),
+                    MockProvider(AlertService),
+                    MockProvider(ConversationService),
+                    TranslateStore,
+                ],
             }).compileComponents();
         }));
 
@@ -65,10 +77,13 @@ examples.forEach((activeConversation) => {
 
             const channelService = TestBed.inject(ChannelService);
             const groupChatService = TestBed.inject(GroupChatService);
+            const conversationService = TestBed.inject(ConversationService);
             updateChannelSpy = jest.spyOn(channelService, 'update');
             updateChannelSpy.mockReturnValue(of(new HttpResponse({ body: exampleUpdatedChannel })));
             updateGroupChatSpy = jest.spyOn(groupChatService, 'update');
             updateGroupChatSpy.mockReturnValue(of(new HttpResponse({ body: exampleUpdatedGroupChat })));
+            updateIsMutedSpy = jest.spyOn(conversationService, 'updateIsMuted');
+            updateIsMutedSpy.mockReturnValue(of(new HttpResponse({ body: undefined })));
         });
 
         afterEach(() => {
@@ -153,6 +168,31 @@ examples.forEach((activeConversation) => {
                     regexPattern: undefined,
                 });
             }
+        }));
+
+        it('should show notification section for all conversation types', () => {
+            checkThatSectionExistsInTemplate('notification');
+        });
+
+        it('should toggle mute status when button is clicked', fakeAsync(() => {
+            const muteButton = fixture.nativeElement.querySelector('#notification-section button');
+
+            activeConversation.isMuted = false;
+            fixture.detectChanges();
+
+            // Click mute button
+            muteButton.click();
+            tick(100);
+
+            expect(updateIsMutedSpy).toHaveBeenCalledWith(course.id, activeConversation.id, true);
+            expect(activeConversation.isMuted).toBeTrue();
+
+            // Click unmute button
+            muteButton.click();
+            tick(100);
+
+            expect(updateIsMutedSpy).toHaveBeenCalledWith(course.id, activeConversation.id, false);
+            expect(activeConversation.isMuted).toBeFalse();
         }));
 
         function checkThatActionButtonOfSectionExistsInTemplate(sectionName: string) {
