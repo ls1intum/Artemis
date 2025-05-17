@@ -20,11 +20,13 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisExerciseChatSession;
@@ -76,11 +78,16 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
 
     private final SubmissionRepository submissionRepository;
 
+    private final ExerciseRepository exerciseRepository;
+
+    private final UserRepository userRepository;
+
     public IrisExerciseChatSessionService(IrisMessageService irisMessageService, LLMTokenUsageService llmTokenUsageService, IrisSettingsService irisSettingsService,
             IrisChatWebsocketService irisChatWebsocketService, AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             IrisRateLimitService rateLimitService, PyrisPipelineService pyrisPipelineService, ProgrammingExerciseRepository programmingExerciseRepository,
-            ObjectMapper objectMapper, IrisExerciseChatSessionRepository irisExerciseChatSessionRepository, SubmissionRepository submissionRepository) {
+            ObjectMapper objectMapper, IrisExerciseChatSessionRepository irisExerciseChatSessionRepository, SubmissionRepository submissionRepository,
+            ExerciseRepository exerciseRepository, UserRepository userRepository) {
         super(irisSessionRepository, objectMapper, irisMessageService, irisChatWebsocketService, llmTokenUsageService);
         this.irisSettingsService = irisSettingsService;
         this.irisChatWebsocketService = irisChatWebsocketService;
@@ -93,6 +100,8 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.irisExerciseChatSessionRepository = irisExerciseChatSessionRepository;
         this.submissionRepository = submissionRepository;
+        this.exerciseRepository = exerciseRepository;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -111,15 +120,15 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
     /**
      * Checks if the user has access to the Iris session.
      * A user has access if they have access to the exercise and the session belongs to them.
-     * If the user is null, the user is fetched from the database.
      *
      * @param user    The user to check
      * @param session The session to check
      */
     @Override
     public void checkHasAccessTo(User user, IrisExerciseChatSession session) {
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, session.getExercise(), user);
-        if (!Objects.equals(session.getUser(), user)) {
+        var exercise = exerciseRepository.findByIdElseThrow(session.getExerciseId());
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
+        if (!Objects.equals(session.getUserId(), user.getId())) {
             throw new AccessForbiddenException("Iris Session", session.getId());
         }
     }
@@ -131,7 +140,8 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
      */
     @Override
     public void checkIsFeatureActivatedFor(IrisExerciseChatSession session) {
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.CHAT, session.getExercise());
+        var exercise = exerciseRepository.findByIdElseThrow(session.getExerciseId());
+        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.CHAT, exercise);
     }
 
     @Override
@@ -163,15 +173,17 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
      * @param event   The event to trigger on Pyris side
      */
     public void requestAndHandleResponse(IrisExerciseChatSession session, Optional<String> event) {
-        var chatSession = (IrisExerciseChatSession) irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
-        if (chatSession.getExercise().isExamExercise()) {
+        var exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(session.getExerciseId());
+        if (exercise.isExamExercise()) {
             throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
         }
-        var exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(chatSession.getExercise().getId());
-        var latestSubmission = getLatestSubmissionIfExists(exercise, chatSession.getUser());
 
-        var variant = irisSettingsService.getCombinedIrisSettingsFor(session.getExercise(), false).irisChatSettings().selectedVariant();
+        var user = userRepository.findByIdElseThrow(session.getUserId());
+        var latestSubmission = getLatestSubmissionIfExists(exercise, user);
 
+        var variant = irisSettingsService.getCombinedIrisSettingsFor(exercise, false).irisChatSettings().selectedVariant();
+
+        var chatSession = (IrisExerciseChatSession) irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
         pyrisPipelineService.executeExerciseChatPipeline(variant, latestSubmission, exercise, chatSession, event);
     }
 
@@ -361,7 +373,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
 
     @Override
     protected void setLLMTokenUsageParameters(LLMTokenUsageService.LLMTokenUsageBuilder builder, IrisExerciseChatSession session) {
-        var exercise = session.getExercise();
+        var exercise = exerciseRepository.findByIdElseThrow(session.getExerciseId());
         builder.withCourse(exercise.getCourseViaExerciseGroupOrCourseMember().getId()).withExercise(exercise.getId());
     }
 

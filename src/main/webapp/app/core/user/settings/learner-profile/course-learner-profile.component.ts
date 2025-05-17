@@ -1,4 +1,4 @@
-import { KeyValuePipe, NgClass } from '@angular/common';
+import { NgClass } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -16,7 +16,7 @@ import { AlertService, AlertType } from 'app/shared/service/alert.service';
     selector: 'jhi-course-learner-profile',
     templateUrl: './course-learner-profile.component.html',
     styleUrls: ['./course-learner-profile.component.scss'],
-    imports: [DoubleSliderComponent, TranslateDirective, NgClass, ArtemisTranslatePipe, FaIconComponent, HelpIconComponent, KeyValuePipe],
+    imports: [DoubleSliderComponent, TranslateDirective, NgClass, ArtemisTranslatePipe, FaIconComponent, HelpIconComponent],
 })
 export class CourseLearnerProfileComponent implements OnInit {
     private alertService = inject(AlertService);

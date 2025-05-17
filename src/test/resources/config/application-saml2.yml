@@ -49,3 +49,5 @@ info.saml2.buttonLabel: 'SAML2 Login'
 # services such as Jenkins. This allows the users to use password-based Git workflows.
 # Enabled the password reset function in Artemis.
 info.saml2.enablePassword: true
+# Enable the name sync via SAML2
+info.saml2.syncUserData: true
