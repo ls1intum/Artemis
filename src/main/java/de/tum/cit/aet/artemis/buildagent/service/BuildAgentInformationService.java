@@ -98,14 +98,15 @@ public class BuildAgentInformationService {
                 : buildAgentConfiguration.getThreadPoolSize();
         boolean hasJobs = numberOfCurrentBuildJobs > 0;
         BuildAgentInformation.BuildAgentStatus status;
+        BuildAgentInformation agent = distributedDataAccessService.getDistributedBuildAgentInformation().get(memberAddress);
         if (isPaused) {
-            status = isPausedDueToFailures ? BuildAgentInformation.BuildAgentStatus.SELF_PAUSED : BuildAgentInformation.BuildAgentStatus.PAUSED;
+            // don't overwrite SELF_PAUSED with PAUSED status
+            status = isPausedDueToFailures || agent.status() == BuildAgentInformation.BuildAgentStatus.SELF_PAUSED ? BuildAgentInformation.BuildAgentStatus.SELF_PAUSED
+                    : BuildAgentInformation.BuildAgentStatus.PAUSED;
         }
         else {
             status = hasJobs ? BuildAgentInformation.BuildAgentStatus.ACTIVE : BuildAgentInformation.BuildAgentStatus.IDLE;
         }
-        BuildAgentInformation agent = distributedDataAccessService.getDistributedBuildAgentInformation().get(memberAddress);
-
         String publicSshKey = buildAgentSSHKeyService.getPublicKeyAsString();
 
         BuildAgentDTO agentInfo = new BuildAgentDTO(buildAgentShortName, memberAddress, buildAgentDisplayName);
