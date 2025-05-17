@@ -7,6 +7,7 @@ import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.ArtemisApp;
+import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 
 @Component
 public class BeanInstantiationLogger implements BeanPostProcessor {
@@ -16,8 +17,8 @@ public class BeanInstantiationLogger implements BeanPostProcessor {
     @Override
     public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
         String className = bean.getClass().getName();
-        if (className.startsWith("de.tum.cit.aet.artemis")) {
-            log.debug("Instantiated at {} ms: {} - {}", System.currentTimeMillis() - ArtemisApp.appStart, beanName, className);
+        if (log.isDebugEnabled() && className.startsWith("de.tum.cit.aet.artemis")) {
+            log.debug("Instantiated at {}: {} - {}", TimeLogUtil.formatDurationFrom(ArtemisApp.appStart), beanName, className);
         }
         return bean;
     }
