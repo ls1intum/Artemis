@@ -364,8 +364,8 @@ public class SharedQueueProcessingService {
             consecutiveBuildJobFailures.set(0);
 
             // process next build job if node is available
-            checkAvailabilityAndProcessNextBuild();
             pauseBuildAgent(true);
+            checkAvailabilityAndProcessNextBuild();
         });
 
         futureResult.exceptionally(ex -> {
