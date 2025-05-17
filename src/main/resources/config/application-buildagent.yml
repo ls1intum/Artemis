@@ -51,6 +51,7 @@ artemis:
             cleanup-schedule-minutes: 60 # How often the cleanup job is executed
         # After pausing the build agent, the build agent will wait for this amount of seconds before cancelling all running builds on the build agent. Builds will be added back to the queue.
         pause-grace-period-seconds: 60
+        pause-after-consecutive-failed-jobs: 100 # The number of consecutive failed jobs after which the build agent will be paused. This is used to prevent the build agent to keep polling jobs from the queue if it is not able to process them.
         # This specifies the options that are shown to the instructor when creating a new programming exercise. Max value also defines the max timeout for the build.
         # This values should be the same specified in application-localci.yml
         build-timeout-seconds:
