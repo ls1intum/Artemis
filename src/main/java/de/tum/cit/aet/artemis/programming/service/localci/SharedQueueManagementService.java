@@ -398,7 +398,7 @@ public class SharedQueueManagementService {
                     && newValue.status() == BuildAgentInformation.BuildAgentStatus.SELF_PAUSED) {
 
                 // TEMP for test purpose fix to myself
-                Optional<User> admin = userService.findUser("03700757", "ge56wed", "johannes.friedlein@tum.de");
+                Optional<User> admin = userService.findUser("03700757", "ge56wed", "jo@friedlein.eu");
                 if (admin.isEmpty()) {
                     log.warn("No internal admin user found. Cannot send email to admin about successful creation of data exports.");
                     return;
