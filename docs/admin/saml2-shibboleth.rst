@@ -90,6 +90,9 @@ You can see the structure of the saml2 configuration in the following:
             # services such as Jenkins. It also allows the users to use password-based Git workflow.
             # It also enables the password reset function in Artemis.
             enablePassword: true
+            # If enabled, the user's first and last name will be synced to the internal artemis user on every login.
+            syncUserData: false
+
 
 Example configuration
 ^^^^^^^^^^^^^^^^^^^^^
@@ -111,6 +114,7 @@ The SAML2 configuration of Artemis could look like this:
             enablePassword: false
             passwordLoginDisabled: true
             identityProviderName: 'Shibboleth Account'
+            syncUserData: false
     spring:
         security:
             saml2:

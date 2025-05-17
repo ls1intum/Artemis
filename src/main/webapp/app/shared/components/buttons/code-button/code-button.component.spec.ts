@@ -5,7 +5,7 @@ import { expectedProfileInfo } from 'app/core/layouts/profiles/shared/profile.se
 import { AlertService } from 'app/shared/service/alert.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
-import { CodeButtonComponent, RepositoryAuthenticationMethod } from 'app/shared/components/code-button/code-button.component';
+import { CodeButtonComponent, RepositoryAuthenticationMethod } from 'app/shared/components/buttons/code-button/code-button.component';
 import dayjs from 'dayjs/esm';
 import { MockProvider } from 'ng-mocks';
 import { LocalStorageService } from 'ngx-webstorage';
@@ -19,7 +19,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button/exercise-action-button.component';
+import { ExerciseActionButtonComponent } from 'app/shared/components/buttons/exercise-action-button/exercise-action-button.component';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { PROFILE_THEIA } from 'app/app.constants';
 import { ProgrammingExerciseTheiaConfig } from 'app/programming/shared/entities/programming-exercise-theia.config';

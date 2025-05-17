@@ -19,7 +19,7 @@ import { Subject, of, throwError } from 'rxjs';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { LectureImportComponent } from 'app/lecture/manage/lecture-import/lecture-import.component';
-import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';

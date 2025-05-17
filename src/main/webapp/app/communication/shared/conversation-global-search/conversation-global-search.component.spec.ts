@@ -4,7 +4,7 @@ import { ConversationGlobalSearchComponent } from './conversation-global-search.
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ButtonComponent } from 'app/shared/components/button/button.component';
+import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
