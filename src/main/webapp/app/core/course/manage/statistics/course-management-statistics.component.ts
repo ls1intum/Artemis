@@ -11,12 +11,22 @@ import { DocumentationButtonComponent } from 'app/shared/components/buttons/docu
 import { StatisticsAverageScoreGraphComponent } from 'app/shared/statistics-graph/average-score-graph/statistics-average-score-graph.component';
 import { StatisticsGraphComponent } from 'app/shared/statistics-graph/statistics-graph.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { CourseTitleBarTitleDirective } from 'app/core/course/shared/directives/course-title-bar-title.directive';
+import { CourseTitleBarTitleComponent } from 'app/core/course/shared/course-title-bar-title/course-title-bar-title.component';
 
 @Component({
     selector: 'jhi-course-management-statistics',
     templateUrl: './course-management-statistics.component.html',
     styleUrls: ['./course-management-statistics.component.scss'],
-    imports: [TranslateDirective, DocumentationButtonComponent, StatisticsAverageScoreGraphComponent, StatisticsGraphComponent, ArtemisTranslatePipe],
+    imports: [
+        TranslateDirective,
+        DocumentationButtonComponent,
+        StatisticsAverageScoreGraphComponent,
+        StatisticsGraphComponent,
+        ArtemisTranslatePipe,
+        CourseTitleBarTitleDirective,
+        CourseTitleBarTitleComponent,
+    ],
 })
 export class CourseManagementStatisticsComponent implements OnInit {
     private service = inject(StatisticsService);
