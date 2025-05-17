@@ -21,6 +21,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
+import org.springframework.security.web.webauthn.authentication.WebAuthnAuthentication;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -28,6 +29,7 @@ import de.tum.cit.aet.artemis.core.management.SecurityMetersService;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.UnsupportedJwtException;
@@ -43,6 +45,10 @@ public class TokenProvider {
     private static final Logger log = LoggerFactory.getLogger(TokenProvider.class);
 
     private static final String AUTHORITIES_KEY = "auth";
+
+    private static final String AUTHENTICATED_WITH_PASSKEY_KEY = "authenticatedWithPasskey";
+
+    private static final String TOOLS_KEY = "tools";
 
     private SecretKey key;
 
@@ -83,7 +89,7 @@ public class TokenProvider {
      * Gets the validity for the generated tokens.
      *
      * @param rememberMe Determines Token lifetime
-     * @return long The validity of the generated tokens
+     * @return long The validity of the generated tokens in milliseconds
      */
     public long getTokenValidity(boolean rememberMe) {
         return rememberMe ? this.tokenValidityInMillisecondsForRememberMe : this.tokenValidityInMilliseconds;
@@ -104,20 +110,41 @@ public class TokenProvider {
      * Create JWT Token a fully populated <code>Authentication</code> object.
      *
      * @param authentication Authentication Object
-     * @param duration       the Token lifetime in milli seconds
+     * @param duration       the Token lifetime in milliseconds
      * @param tool           tool this token is used for. If null, it's a general access token
      * @return JWT Token
      */
     public String createToken(Authentication authentication, long duration, @Nullable ToolTokenType tool) {
+        long validity = System.currentTimeMillis() + duration;
+        return createToken(authentication, null, new Date(validity), tool, null);
+    }
+
+    /**
+     * Create JWT Token a fully populated <code>Authentication</code> object.
+     *
+     * @param authentication           Authentication Object
+     * @param issuedAt                 Date when the token was issued, if null set to now
+     * @param expiration               Date when the token expires
+     * @param tool                     tool this token is used for. If null, it's a general access token
+     * @param authenticatedWithPasskey can be manually set to true if the token was created with a passkey but for performance reasons, no actual WebAuthnAuthentication was created
+     * @return JWT Token
+     */
+    public String createToken(Authentication authentication, @Nullable Date issuedAt, Date expiration, @Nullable ToolTokenType tool, @Nullable Boolean authenticatedWithPasskey) {
         String authorities = authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.joining(","));
 
-        var validity = System.currentTimeMillis() + duration;
-        var jwtBuilder = Jwts.builder().subject(authentication.getName()).claim(AUTHORITIES_KEY, authorities);
+        // @formatter:off
+        JwtBuilder jwtBuilder = Jwts.builder()
+            .subject(authentication.getName())
+            .claim(AUTHORITIES_KEY, authorities)
+            .claim(AUTHENTICATED_WITH_PASSKEY_KEY, authentication instanceof WebAuthnAuthentication || (authenticatedWithPasskey != null && authenticatedWithPasskey))
+            .issuedAt(issuedAt != null ? issuedAt : new Date());
+        // @formatter:on
+
         if (tool != null) {
-            jwtBuilder.claim("tools", tool);
+            jwtBuilder.claim(TOOLS_KEY, tool);
         }
 
-        return jwtBuilder.signWith(key, Jwts.SIG.HS512).expiration(new Date(validity)).compact();
+        return jwtBuilder.signWith(key, Jwts.SIG.HS512).expiration(expiration).compact();
     }
 
     /**
@@ -196,5 +223,27 @@ public class TokenProvider {
 
     public Date getExpirationDate(String authToken) {
         return parseClaims(authToken).getExpiration();
+    }
+
+    public Date getIssuedAtDate(String authToken) {
+        return parseClaims(authToken).getIssuedAt();
+    }
+
+    public ToolTokenType getTools(String authToken) {
+        Claims claims = parseClaims(authToken);
+        String toolString = claims.get(TOOLS_KEY, String.class);
+
+        if (toolString == null) {
+            return null;
+        }
+
+        return ToolTokenType.valueOf(toolString);
+    }
+
+    /**
+     * True if the user authenticated with a passkey
+     */
+    public boolean getAuthenticatedWithPasskey(String authToken) {
+        return parseClaims(authToken).get(AUTHENTICATED_WITH_PASSKEY_KEY, Boolean.class);
     }
 }

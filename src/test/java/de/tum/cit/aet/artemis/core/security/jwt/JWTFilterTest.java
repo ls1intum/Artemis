@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.core.security.jwt;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 import java.util.Collections;
 
@@ -15,6 +16,7 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.core.management.SecurityMetersService;
@@ -25,6 +27,8 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import tech.jhipster.config.JHipsterProperties;
 
 class JWTFilterTest {
+
+    private static final long TOKEN_VALIDITY_IN_MILLISECONDS = 60000; // 60 seconds
 
     private TokenProvider tokenProvider;
 
@@ -40,9 +44,12 @@ class JWTFilterTest {
 
         tokenProvider = new TokenProvider(jHipsterProperties, securityMetersService);
         ReflectionTestUtils.setField(tokenProvider, "key", Keys.hmacShaKeyFor(Decoders.BASE64.decode(base64Secret)));
+        ReflectionTestUtils.setField(tokenProvider, "tokenValidityInMilliseconds", TOKEN_VALIDITY_IN_MILLISECONDS);
 
-        ReflectionTestUtils.setField(tokenProvider, "tokenValidityInMilliseconds", 60000);
-        jwtFilter = new JWTFilter(tokenProvider);
+        JWTCookieService jwtCookieService = mock(JWTCookieService.class);
+        UserDetailsService userDetailsService = mock(UserDetailsService.class);
+
+        jwtFilter = new JWTFilter(tokenProvider, jwtCookieService, userDetailsService, 15552000);
         SecurityContextHolder.getContext().setAuthentication(null);
     }
 
