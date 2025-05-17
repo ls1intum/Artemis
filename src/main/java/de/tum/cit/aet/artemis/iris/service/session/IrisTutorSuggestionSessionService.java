@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.iris.service.session;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -19,6 +18,7 @@ import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
@@ -86,11 +86,13 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
 
     private final LLMTokenUsageService llmTokenUsageService;
 
+    private final UserRepository userRepository;
+
     public IrisTutorSuggestionSessionService(IrisSessionRepository irisSessionRepository, ObjectMapper objectMapper, IrisMessageService irisMessageService,
             IrisChatWebsocketService irisChatWebsocketService, LLMTokenUsageService llmTokenUsageService, IrisRateLimitService rateLimitService,
             PyrisPipelineService pyrisPipelineService, AuthorizationCheckService authCheckService, IrisSettingsService irisSettingsService,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
-            ProgrammingSubmissionRepository programmingSubmissionRepository, PyrisDTOService pyrisDTOService, PostRepository postRepository) {
+            ProgrammingSubmissionRepository programmingSubmissionRepository, PyrisDTOService pyrisDTOService, PostRepository postRepository, UserRepository userRepository) {
         super(irisSessionRepository, objectMapper, irisMessageService, irisChatWebsocketService, llmTokenUsageService);
         this.irisSessionRepository = irisSessionRepository;
         this.irisChatWebsocketService = irisChatWebsocketService;
@@ -105,6 +107,7 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
         this.postRepository = postRepository;
         this.irisMessageService = irisMessageService;
         this.llmTokenUsageService = llmTokenUsageService;
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -160,7 +163,8 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
                 switch (exercise.getExerciseType()) {
                     case PROGRAMMING -> {
                         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
-                        var latestSubmission = getLatestSubmissionIfExists(programmingExercise, chatSession.getUser());
+                        var user = userRepository.findByIdElseThrow(session.getUserId());
+                        var latestSubmission = getLatestSubmissionIfExists(programmingExercise, user);
                         PyrisSubmissionDTO pyrisSubmissionDTO = latestSubmission.map(pyrisDTOService::toPyrisSubmissionDTO).orElse(null);
                         PyrisProgrammingExerciseDTO pyrisProgrammingExerciseDTO = pyrisDTOService.toPyrisProgrammingExerciseDTO(programmingExercise);
                         if (pyrisSubmissionDTO != null) {
@@ -188,7 +192,7 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
     public void checkHasAccessTo(User user, IrisTutorSuggestionSession irisSession) {
         var post = postRepository.findPostOrMessagePostByIdElseThrow(irisSession.getPostId());
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, post.getCoursePostingBelongsTo(), user);
-        if (!Objects.equals(irisSession.getUser(), user)) {
+        if (irisSession.getUserId() != user.getId()) {
             throw new AccessForbiddenException("Iris Session", irisSession.getId());
         }
     }
@@ -258,7 +262,7 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
                 var messageId = savedSuggestion != null ? savedSuggestion.getId() : savedMessage.getId();
                 // generated message is first sent and generated trace is saved
                 var llmTokenUsageTrace = llmTokenUsageService.saveLLMTokenUsage(statusUpdate.tokens(), LLMServiceType.IRIS, builder -> {
-                    builder.withIrisMessageID(messageId).withUser(session.getUser().getId());
+                    builder.withIrisMessageID(messageId).withUser(session.getUserId());
                     this.setLLMTokenUsageParameters(builder, session);
                     return builder;
                 });
@@ -270,7 +274,7 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
                 Optional.ofNullable(job.traceId()).flatMap(llmTokenUsageService::findLLMTokenUsageTraceById)
                         .ifPresentOrElse(trace -> llmTokenUsageService.appendRequestsToTrace(statusUpdate.tokens(), trace), () -> {
                             var llmTokenUsage = llmTokenUsageService.saveLLMTokenUsage(statusUpdate.tokens(), LLMServiceType.IRIS, builder -> {
-                                builder.withUser(session.getUser().getId());
+                                builder.withUser(session.getUserId());
                                 this.setLLMTokenUsageParameters(builder, session);
                                 return builder;
                             });

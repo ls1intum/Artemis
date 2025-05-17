@@ -16,7 +16,7 @@ import { GradingSystemService } from 'app/assessment/manage/grading-system/gradi
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/shared/tab-bar/tab-bar';
 import { ChartCategoryFilter } from 'app/shared/chart/chart-category-filter';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
-import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { ScoreType } from 'app/shared/constants/score-type.constants';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
@@ -26,7 +26,7 @@ import { Subject, Subscription } from 'rxjs';
 import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { ExerciseScoresChartComponent } from 'app/core/course/overview/visualizations/exercise-scores-chart/exercise-scores-chart.component';
 import { KeyValuePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';

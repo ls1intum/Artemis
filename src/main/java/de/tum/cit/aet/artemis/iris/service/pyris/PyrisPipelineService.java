@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.atlas.dto.CompetencyJolDTO;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
@@ -76,12 +77,14 @@ public class PyrisPipelineService {
 
     private final Optional<LearningMetricsApi> learningMetricsApi;
 
+    private final UserRepository userRepository;
+
     @Value("${server.url}")
     private String artemisBaseUrl;
 
     public PyrisPipelineService(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, PyrisDTOService pyrisDTOService,
             IrisChatWebsocketService irisChatWebsocketService, CourseRepository courseRepository, Optional<LearningMetricsApi> learningMetricsApi,
-            StudentParticipationRepository studentParticipationRepository) {
+            StudentParticipationRepository studentParticipationRepository, UserRepository userRepository) {
         this.pyrisConnectorService = pyrisConnectorService;
         this.pyrisJobService = pyrisJobService;
         this.pyrisDTOService = pyrisDTOService;
@@ -89,6 +92,7 @@ public class PyrisPipelineService {
         this.courseRepository = courseRepository;
         this.learningMetricsApi = learningMetricsApi;
         this.studentParticipationRepository = studentParticipationRepository;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -164,12 +168,13 @@ public class PyrisPipelineService {
                 pyrisJobService.addExerciseChatJob(exercise.getCourseViaExerciseGroupOrCourseMember().getId(), exercise.getId(), session.getId()),
                 executionDto -> {
                     var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+                    var user = userRepository.findByIdElseThrow(session.getUserId());
                     return new PyrisExerciseChatPipelineExecutionDTO(
                             latestSubmission.map(pyrisDTOService::toPyrisSubmissionDTO).orElse(null),
                             pyrisDTOService.toPyrisProgrammingExerciseDTO(exercise),
                             new PyrisCourseDTO(course),
                             pyrisDTOService.toPyrisMessageDTOList(session.getMessages()),
-                            new PyrisUserDTO(session.getUser()),
+                            new PyrisUserDTO(user),
                             executionDto.settings(),
                             executionDto.initialStages()
                     );
@@ -194,8 +199,8 @@ public class PyrisPipelineService {
      * @param <U>           the type of the DTO
      */
     private <T, U> void executeCourseChatPipeline(String variant, IrisCourseChatSession session, T eventObject, Class<U> eventDtoClass, Optional<String> eventVariant) {
-        var courseId = session.getCourse().getId();
-        var studentId = session.getUser().getId();
+        var courseId = session.getCourseId();
+        var studentId = session.getUserId();
         var api = learningMetricsApi.orElseThrow(() -> new AtlasNotPresentException(LearningMetricsApi.class));
 
         // @formatter:off
@@ -205,12 +210,13 @@ public class PyrisPipelineService {
             eventVariant,
             pyrisJobService.addCourseChatJob(courseId, session.getId()), executionDto -> {
                 var fullCourse = loadCourseWithParticipationOfStudent(courseId, studentId);
+                var user = userRepository.findByIdElseThrow(studentId);
                 return new PyrisCourseChatPipelineExecutionDTO<>(
                     PyrisExtendedCourseDTO.of(fullCourse),
-                    api.getStudentCourseMetrics(session.getUser().getId(), courseId),
+                    api.getStudentCourseMetrics(studentId, courseId),
                     generateEventPayloadFromObjectType(eventDtoClass, eventObject), // get the event payload DTO
                     pyrisDTOService.toPyrisMessageDTOList(session.getMessages()),
-                    new PyrisUserDTO(session.getUser()),
+                    new PyrisUserDTO(user),
                     executionDto.settings(), // flatten the execution dto here
                     executionDto.initialStages()
                 );
@@ -241,18 +247,21 @@ public class PyrisPipelineService {
             variant,
             eventVariant,
             pyrisJobService.addTutorSuggestionJob(post.getId(), course.getId(), session.getId()),
-            executionDto -> new PyrisTutorSuggestionPipelineExecutionDTO(
-                new PyrisCourseDTO(course),
+            executionDto -> {
+                var user = userRepository.findByIdElseThrow(session.getUserId());
+                return new PyrisTutorSuggestionPipelineExecutionDTO(
+                    new PyrisCourseDTO(course),
                 new PyrisPostDTO(post),
                 pyrisDTOService.toPyrisMessageDTOList(session.getMessages()),
-                new PyrisUserDTO(session.getUser()),
+                    new PyrisUserDTO(user),
                 executionDto.settings(),
                 executionDto.initialStages(),
                 textExerciseDTOOptional,
                 submissionDTO,
                 exerciseDTO,
                 lectureIdOptional
-            ),
+                );
+            },
             stages -> irisChatWebsocketService.sendStatusUpdate(session, stages)
         );
         // @formatter:on

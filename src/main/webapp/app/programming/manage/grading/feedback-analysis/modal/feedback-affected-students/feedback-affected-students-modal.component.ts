@@ -4,7 +4,7 @@ import { FeedbackAffectedStudentDTO, FeedbackAnalysisService, FeedbackDetail } f
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/shared/service/alert.service';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { CodeButtonComponent } from 'app/shared/components/code-button/code-button.component';
+import { CodeButtonComponent } from 'app/shared/components/buttons/code-button/code-button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
