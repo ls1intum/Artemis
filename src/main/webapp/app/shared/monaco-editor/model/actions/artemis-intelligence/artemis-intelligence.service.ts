@@ -36,10 +36,10 @@ export class ArtemisIntelligenceService {
      * @param courseId The ID of the course to which the rewritten text belongs.
      * @return Observable that emits the rewritten text when available.
      */
-    rewrite(toBeRewritten: string, rewritingVariant: RewritingVariant, courseId: number): Observable<RewriteResult> {
+    rewrite(toBeRewritten: string | undefined, rewritingVariant: RewritingVariant, courseId: number): Observable<RewriteResult> {
         this.isLoadingRewrite.set(true);
 
-        return new Observable<{ result: string; inconsistencies: string[]; suggestions: string[]; improvement: string }>((observer) => {
+        return new Observable<{ result: string | undefined; inconsistencies: string[]; suggestions: string[]; improvement: string }>((observer) => {
             this.http
                 .post(`${this.resourceUrl}/courses/${courseId}/rewrite-text`, {
                     toBeRewritten: toBeRewritten,
@@ -54,9 +54,9 @@ export class ArtemisIntelligenceService {
                             next: (update: any) => {
                                 if (update.result || update.inconsistencies || update.improvement) {
                                     observer.next({
-                                        result: update.result || '',
-                                        inconsistencies: update.inconsistencies || '',
-                                        suggestions: update.suggestions || '',
+                                        result: update.result || undefined,
+                                        inconsistencies: update.inconsistencies || [],
+                                        suggestions: update.suggestions || [],
                                         improvement: update.improvement || '',
                                     });
                                     observer.complete();

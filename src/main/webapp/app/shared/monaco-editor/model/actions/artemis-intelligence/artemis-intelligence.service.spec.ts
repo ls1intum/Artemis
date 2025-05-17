@@ -4,10 +4,10 @@ import { provideHttpClient } from '@angular/common/http';
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import RewritingVariant from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-variant';
-import { AlertService } from '../../../../service/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { WebsocketService } from '../../../../service/websocket.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
 
 describe('ArtemisIntelligenceService', () => {
     let httpMock: HttpTestingController;
