@@ -15,7 +15,7 @@ import org.apache.commons.io.FileUtils;
 import org.springframework.util.ResourceUtils;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.service.FilePathService;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseFactory;
@@ -475,7 +475,7 @@ public class QuizExerciseFactory {
         dragItem4.setTempID(generateTempId());
         try {
             FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/attachment/placeholder.jpg"),
-                    FilePathService.getDragItemFilePath().resolve("10").resolve("drag_item.jpg").toFile());
+                    FilePathConverter.getDragItemFilePath().resolve("10").resolve("drag_item.jpg").toFile());
         }
         catch (IOException ex) {
             fail("Failed while copying test attachment files", ex);

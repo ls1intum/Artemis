@@ -11,11 +11,12 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import jakarta.validation.constraints.NotNull;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
@@ -87,8 +88,7 @@ public class BuildAgentConfiguration {
      *
      * @return The HostConfig bean.
      */
-    @Bean
-    // TODO: reconsider if a bean is necessary here, this could also be created after application startup with @EventListener(ApplicationReadyEvent.class) to speed up the startup
+    @NotNull
     public HostConfig hostConfig() {
         long cpuCount = 0;
         long cpuPeriod = 100000L;

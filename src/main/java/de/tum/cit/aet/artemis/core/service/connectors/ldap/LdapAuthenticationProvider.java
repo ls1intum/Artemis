@@ -10,6 +10,7 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -33,6 +34,7 @@ import de.tum.cit.aet.artemis.core.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 
 @Component
+@Lazy
 @Profile(PROFILE_LDAP_ONLY)
 @Primary
 @ComponentScan("de.tum.cit.aet.artemis.*")

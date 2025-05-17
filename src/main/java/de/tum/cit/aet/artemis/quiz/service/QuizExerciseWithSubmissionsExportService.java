@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.stereotype.Service;
@@ -17,9 +18,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.service.ArchivalReportEntry;
-import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.export.DataExportQuizExerciseCreationService;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
@@ -29,6 +30,7 @@ import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
  */
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class QuizExerciseWithSubmissionsExportService {
 
@@ -73,11 +75,11 @@ public class QuizExerciseWithSubmissionsExportService {
             if (quizQuestion instanceof DragAndDropQuestion dragAndDropQuestion) {
                 if (dragAndDropQuestion.getBackgroundFilePath() != null) {
                     imagesToExport
-                            .add(FilePathService.fileSystemPathForExternalUri(URI.create(dragAndDropQuestion.getBackgroundFilePath()), FilePathType.DRAG_AND_DROP_BACKGROUND));
+                            .add(FilePathConverter.fileSystemPathForExternalUri(URI.create(dragAndDropQuestion.getBackgroundFilePath()), FilePathType.DRAG_AND_DROP_BACKGROUND));
                 }
                 for (var dragItem : dragAndDropQuestion.getDragItems()) {
                     if (dragItem.getPictureFilePath() != null) {
-                        imagesToExport.add(FilePathService.fileSystemPathForExternalUri(URI.create(dragItem.getPictureFilePath()), FilePathType.DRAG_ITEM));
+                        imagesToExport.add(FilePathConverter.fileSystemPathForExternalUri(URI.create(dragItem.getPictureFilePath()), FilePathType.DRAG_ITEM));
 
                     }
                 }

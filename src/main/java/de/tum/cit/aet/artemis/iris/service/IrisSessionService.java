@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 import jakarta.annotation.Nullable;
 import jakarta.ws.rs.BadRequestException;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -28,6 +29,7 @@ import de.tum.cit.aet.artemis.iris.service.session.IrisTextExerciseChatSessionSe
 /**
  * Service for managing Iris sessions.
  */
+@Lazy
 @Service
 @Profile(PROFILE_IRIS)
 public class IrisSessionService {

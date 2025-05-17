@@ -11,6 +11,7 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.function.Function;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -40,6 +41,7 @@ import de.tum.cit.aet.artemis.iris.dto.IrisCombinedTextExerciseChatSubSettingsDT
  * This server provides methods to update and combine sub settings objects.
  * See {@link IrisSettingsService} for more information about handling {@link IrisSettings}.
  */
+@Lazy
 @Service
 @Profile(PROFILE_IRIS)
 public class IrisSubSettingsService {

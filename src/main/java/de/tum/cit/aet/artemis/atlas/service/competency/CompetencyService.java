@@ -7,6 +7,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
@@ -36,6 +37,7 @@ import de.tum.cit.aet.artemis.lecture.domain.Lecture;
  * Service for managing competencies.
  */
 @Conditional(AtlasEnabled.class)
+@Lazy
 @Service
 public class CompetencyService extends CourseCompetencyService {
 

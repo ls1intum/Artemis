@@ -14,19 +14,21 @@ import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
-import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 
+@Lazy
 @Service
 @Profile(PROFILE_CORE)
 public class AttachmentService {
@@ -69,7 +71,7 @@ public class AttachmentService {
 
         try {
             String originalPdfPath = attachment.getLink();
-            Path pdfPath = FilePathService.fileSystemPathForExternalUri(URI.create(originalPdfPath), FilePathType.ATTACHMENT_UNIT);
+            Path pdfPath = FilePathConverter.fileSystemPathForExternalUri(URI.create(originalPdfPath), FilePathType.ATTACHMENT_UNIT);
 
             byte[] studentVersionPdf = generateStudentVersionPdf(pdfPath.toFile(), hiddenSlides);
 
@@ -90,8 +92,8 @@ public class AttachmentService {
         if (attachment.getStudentVersion() != null) {
             try {
                 URI oldStudentVersionPath = URI.create(attachment.getStudentVersion());
-                fileService.schedulePathForDeletion(FilePathService.fileSystemPathForExternalUri(oldStudentVersionPath, FilePathType.STUDENT_VERSION_SLIDES), 0);
-                fileService.evictCacheForPath(FilePathService.fileSystemPathForExternalUri(oldStudentVersionPath, FilePathType.STUDENT_VERSION_SLIDES));
+                fileService.schedulePathForDeletion(FilePathConverter.fileSystemPathForExternalUri(oldStudentVersionPath, FilePathType.STUDENT_VERSION_SLIDES), 0);
+                fileService.evictCacheForPath(FilePathConverter.fileSystemPathForExternalUri(oldStudentVersionPath, FilePathType.STUDENT_VERSION_SLIDES));
             }
             catch (Exception e) {
                 throw new InternalServerErrorException("Failed to delete student version file: " + e.getMessage());
@@ -133,7 +135,7 @@ public class AttachmentService {
         }
 
         // Create the student version directory if it doesn't exist
-        Path basePath = FilePathService.getAttachmentUnitFileSystemPath().resolve(attachmentUnitId.toString()).resolve("student");
+        Path basePath = FilePathConverter.getAttachmentUnitFileSystemPath().resolve(attachmentUnitId.toString()).resolve("student");
         Files.createDirectories(basePath);
 
         String sanitizedName = fileService.checkAndSanitizeFilename(attachment.getName());
@@ -142,6 +144,6 @@ public class AttachmentService {
 
         FileUtils.writeByteArrayToFile(savePath.toFile(), pdfData);
 
-        attachment.setStudentVersion(FilePathService.externalUriForFileSystemPath(savePath, FilePathType.STUDENT_VERSION_SLIDES, attachmentUnitId).toString());
+        attachment.setStudentVersion(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.STUDENT_VERSION_SLIDES, attachmentUnitId).toString());
     }
 }

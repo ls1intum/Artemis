@@ -20,6 +20,7 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -65,9 +66,9 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.En
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.CourseService;
-import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
@@ -96,6 +97,7 @@ import de.tum.cit.aet.artemis.quiz.service.QuizSubmissionService;
  * REST controller for managing QuizExercise.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @RestController
 @RequestMapping("api/quiz/")
 public class QuizExerciseResource {
@@ -693,7 +695,7 @@ public class QuizExerciseResource {
 
     private Path convertToActualPath(String pathString, FilePathType filePathType) {
         try {
-            return FilePathService.fileSystemPathForExternalUri(URI.create(pathString), filePathType);
+            return FilePathConverter.fileSystemPathForExternalUri(URI.create(pathString), filePathType);
         }
         catch (FilePathParsingException e) {
             log.warn("Could not find file {} for deletion", pathString);

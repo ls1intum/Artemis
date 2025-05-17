@@ -39,7 +39,7 @@ management:
             probes:
                 enabled: true
         jhimetrics:
-            enabled: true
+            access: read_only
     metrics:
         enable:
             http: true

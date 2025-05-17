@@ -51,6 +51,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
@@ -65,8 +66,10 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.FilePathParsingException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.util.CommonsMultipartFile;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class FileService implements DisposableBean {
 
@@ -166,7 +169,7 @@ public class FileService implements DisposableBean {
         validateExtension(filename, markdown);
 
         final String filenamePrefix = markdown ? "Markdown_" : "Temp_";
-        final Path path = markdown ? FilePathService.getMarkdownFilePath() : FilePathService.getTempFilePath();
+        final Path path = markdown ? FilePathConverter.getMarkdownFilePath() : FilePathConverter.getTempFilePath();
 
         String generatedFilename = generateFilename(filenamePrefix, filename, keepFilename);
         Path filePath = path.resolve(generatedFilename);
@@ -192,7 +195,7 @@ public class FileService implements DisposableBean {
         validateExtension(sanitizedOriginalFilename, true);
 
         final String filenamePrefix = "Markdown_";
-        final Path path = FilePathService.getMarkdownFilePathForConversation(courseId, conversationId);
+        final Path path = FilePathConverter.getMarkdownFilePathForConversation(courseId, conversationId);
 
         String fileName = generateFilename(filenamePrefix, sanitizedOriginalFilename, false);
         Path filePath = path.resolve(fileName);
@@ -1013,7 +1016,7 @@ public class FileService implements DisposableBean {
     public MultipartFile convertByteArrayToMultipart(String filename, String extension, byte[] streamByteArray) {
         try {
             String cleanFilename = sanitizeFilename(filename);
-            Path tempPath = FilePathService.getTempFilePath().resolve(cleanFilename + extension);
+            Path tempPath = FilePathConverter.getTempFilePath().resolve(cleanFilename + extension);
             FileUtils.writeByteArrayToFile(tempPath.toFile(), streamByteArray);
             File outputFile = tempPath.toFile();
             FileItem fileItem = new DiskFileItem(cleanFilename, Files.probeContentType(tempPath), false, outputFile.getName(), (int) outputFile.length(),

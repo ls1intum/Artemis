@@ -7,12 +7,14 @@ import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
-import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import com.hazelcast.core.HazelcastInstance;
@@ -33,6 +35,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.TranscriptionIngestionWebho
  * The class also handles generating job ID tokens and validating tokens from request headers based ont these tokens.
  * It uses Hazelcast to store the jobs in a distributed map.
  */
+@Lazy
 @Service
 @Profile(PROFILE_IRIS)
 public class PyrisJobService {
@@ -61,7 +64,7 @@ public class PyrisJobService {
      * Initializes the PyrisJobService by configuring the Hazelcast map for Pyris jobs.
      * Sets the time-to-live for the map entries to the specified jobTimeout value.
      */
-    @PostConstruct
+    @EventListener(ApplicationReadyEvent.class)
     public void init() {
         var mapConfig = hazelcastInstance.getConfig().getMapConfig("pyris-job-map");
         mapConfig.setTimeToLiveSeconds(jobTimeout);

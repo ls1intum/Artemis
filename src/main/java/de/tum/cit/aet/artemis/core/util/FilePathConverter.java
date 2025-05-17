@@ -1,6 +1,4 @@
-package de.tum.cit.aet.artemis.core.service;
-
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+package de.tum.cit.aet.artemis.core.util;
 
 import java.net.URI;
 import java.nio.file.Path;
@@ -8,32 +6,22 @@ import java.nio.file.Path;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Service;
-
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.exception.FilePathParsingException;
-import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
+import de.tum.cit.aet.artemis.core.service.FileService;
 
 /**
- * Service for generating and parsing file system paths and public URIs for different file types in Artemis.
+ * Converter for generating and parsing file system paths and public URIs for different file types in Artemis.
  * <p>
- * This service provides static methods to convert between internal file system paths and public URIs,
+ * This converter provides static methods to convert between internal file system paths and public URIs,
  * as well as to generate base paths for various file storage locations (e.g., attachments, profile pictures, uploads).
  * The mapping is based on the {@link FilePathType} and the entity IDs associated with the files.
  * </p>
  */
-@Profile(PROFILE_CORE)
-@Service
-public class FilePathService {
+public class FilePathConverter {
 
-    // Note: We use this static field as a kind of constant. In Spring, we cannot inject a value into a constant field, so we have to use this work-around.
-    // This is also documented here: https://www.baeldung.com/spring-inject-static-field
-    // We can not use a normal service here, as some classes (in the domain package) require this service (or depend on another service that depend on this service), were we cannot
-    // use auto-injection
-    // TODO: Rework this behavior be removing the dependencies to services (like FileService) from the domain package
+    // TODO: we should convert this to a Path and use Path.resolve() below
     private static String fileUploadPath;
 
     /**
@@ -42,9 +30,8 @@ public class FilePathService {
      *
      * @param fileUploadPath the base path for file uploads
      */
-    @Value("${artemis.file-upload-path}")
-    public void setFileUploadPathStatic(@NotNull String fileUploadPath) {
-        FilePathService.fileUploadPath = fileUploadPath;
+    public static void setFileUploadPathStatic(@NotNull String fileUploadPath) {
+        FilePathConverter.fileUploadPath = fileUploadPath;
     }
 
     /**
@@ -293,7 +280,7 @@ public class FilePathService {
             String expectedSubmissionId = path.getName(3).toString();
             Long exerciseId = Long.parseLong(expectedExerciseId);
             Long submissionId = Long.parseLong(expectedSubmissionId);
-            return FileUploadSubmission.buildFilePath(exerciseId, submissionId).resolve(filename);
+            return buildFilePath(exerciseId, submissionId).resolve(filename);
         }
         catch (IllegalArgumentException e) {
             throw new FilePathParsingException("External URI does not contain correct exerciseId or submissionId: " + externalUri, e);
@@ -395,5 +382,16 @@ public class FilePathService {
         catch (IllegalArgumentException e) {
             throw new FilePathParsingException("Unexpected String in upload file path. Exercise ID should be present here: " + path, e);
         }
+    }
+
+    /**
+     * Builds file path for file upload submission.
+     *
+     * @param exerciseId   the id of the exercise
+     * @param submissionId the id of the submission
+     * @return path where submission for file upload exercise is stored
+     */
+    public static Path buildFilePath(Long exerciseId, Long submissionId) {
+        return getFileUploadExercisesFilePath().resolve(exerciseId.toString()).resolve(submissionId.toString());
     }
 }

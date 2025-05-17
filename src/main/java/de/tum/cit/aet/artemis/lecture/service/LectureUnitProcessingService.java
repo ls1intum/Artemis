@@ -24,13 +24,14 @@ import org.apache.pdfbox.pdmodel.PDDocumentInformation;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
-import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
@@ -40,6 +41,7 @@ import de.tum.cit.aet.artemis.lecture.dto.LectureUnitSplitInformationDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class LectureUnitProcessingService {
 
@@ -223,7 +225,7 @@ public class LectureUnitProcessingService {
     public String saveTempFileForProcessing(long lectureId, MultipartFile file, int minutesUntilDeletion) throws IOException {
         String prefix = "Temp_" + lectureId + "_";
         String sanitisedFilename = fileService.checkAndSanitizeFilename(file.getOriginalFilename());
-        Path filePath = FilePathService.getTempFilePath().resolve(fileService.generateFilename(prefix, sanitisedFilename, false));
+        Path filePath = FilePathConverter.getTempFilePath().resolve(fileService.generateFilename(prefix, sanitisedFilename, false));
         FileUtils.copyInputStreamToFile(file.getInputStream(), filePath.toFile());
         fileService.schedulePathForDeletion(filePath, minutesUntilDeletion);
         return filePath.getFileName().toString().substring(prefix.length());
@@ -238,7 +240,7 @@ public class LectureUnitProcessingService {
      */
     public Path getPathForTempFilename(long lectureId, String filename) {
         String fullFilename = "Temp_" + lectureId + "_" + FileService.sanitizeFilename(filename);
-        return FilePathService.getTempFilePath().resolve(fullFilename);
+        return FilePathConverter.getTempFilePath().resolve(fullFilename);
     }
 
     /**

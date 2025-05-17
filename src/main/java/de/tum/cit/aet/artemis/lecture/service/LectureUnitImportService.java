@@ -10,12 +10,13 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.FilePathType;
-import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
@@ -29,6 +30,7 @@ import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class LectureUnitImportService {
 
@@ -158,18 +160,18 @@ public class LectureUnitImportService {
         Path newPath;
         FilePathType filePathType;
         if (importedAttachment.getLink().contains("/attachment-unit/")) {
-            oldPath = FilePathService.fileSystemPathForExternalUri(URI.create(importedAttachment.getLink()), FilePathType.ATTACHMENT_UNIT);
-            newPath = FilePathService.getAttachmentUnitFileSystemPath().resolve(entityId.toString());
+            oldPath = FilePathConverter.fileSystemPathForExternalUri(URI.create(importedAttachment.getLink()), FilePathType.ATTACHMENT_UNIT);
+            newPath = FilePathConverter.getAttachmentUnitFileSystemPath().resolve(entityId.toString());
             filePathType = FilePathType.ATTACHMENT_UNIT;
         }
         else {
-            oldPath = FilePathService.fileSystemPathForExternalUri(URI.create(importedAttachment.getLink()), FilePathType.LECTURE_ATTACHMENT);
-            newPath = FilePathService.getLectureAttachmentFileSystemPath().resolve(entityId.toString());
+            oldPath = FilePathConverter.fileSystemPathForExternalUri(URI.create(importedAttachment.getLink()), FilePathType.LECTURE_ATTACHMENT);
+            newPath = FilePathConverter.getLectureAttachmentFileSystemPath().resolve(entityId.toString());
             filePathType = FilePathType.LECTURE_ATTACHMENT;
         }
         log.debug("Copying attachment file from {} to {}", oldPath, newPath);
         Path savePath = fileService.copyExistingFileToTarget(oldPath, newPath, filePathType);
-        attachment.setLink(FilePathService.externalUriForFileSystemPath(savePath, filePathType, entityId).toString());
+        attachment.setLink(FilePathConverter.externalUriForFileSystemPath(savePath, filePathType, entityId).toString());
         return attachment;
     }
 }

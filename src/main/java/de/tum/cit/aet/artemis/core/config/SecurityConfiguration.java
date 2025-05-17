@@ -11,13 +11,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.annotation.PostConstruct;
-
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
@@ -125,7 +125,7 @@ public class SecurityConfiguration {
      *
      * @throws IllegalStateException if the server URL configuration is invalid
      */
-    @PostConstruct
+    @EventListener(ApplicationReadyEvent.class)
     public void validatePasskeyAllowedOriginConfiguration() {
         if (passkeyEnabled) {
             try {

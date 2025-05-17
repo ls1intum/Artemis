@@ -61,6 +61,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
@@ -81,7 +82,6 @@ import de.tum.cit.aet.artemis.core.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.core.exception.GitException;
 import de.tum.cit.aet.artemis.core.exception.VersionControlException;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.export.CourseExamExportService;
 import de.tum.cit.aet.artemis.core.service.user.PasswordService;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
@@ -89,6 +89,7 @@ import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserFactory;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.core.util.TestConstants;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -154,6 +155,7 @@ import de.tum.cit.aet.artemis.programming.util.GitUtilService.MockFileRepository
  * 1) Jenkins + LocalVC
  * The local CI + local VC systems require a different setup as there are no requests to external systems and only minimal mocking is necessary.
  */
+@Lazy
 @Service
 @Profile(SPRING_PROFILE_TEST)
 public class ProgrammingExerciseTestService {
@@ -597,8 +599,8 @@ public class ProgrammingExerciseTestService {
     public void importFromFile_embeddedFiles_embeddedFilesCopied() throws Exception {
         String embeddedFileName1 = "Markdown_2023-05-06T16-17-46-410_ad323711.jpg";
         String embeddedFileName2 = "Markdown_2023-05-06T16-17-46-822_b921f475.jpg";
-        Path fileSystemPathEmbeddedFile1 = FilePathService.getMarkdownFilePath().resolve(embeddedFileName1);
-        Path fileSystemPathEmbeddedFile2 = FilePathService.getMarkdownFilePath().resolve(embeddedFileName2);
+        Path fileSystemPathEmbeddedFile1 = FilePathConverter.getMarkdownFilePath().resolve(embeddedFileName1);
+        Path fileSystemPathEmbeddedFile2 = FilePathConverter.getMarkdownFilePath().resolve(embeddedFileName2);
         // clean up to make sure the test doesn't pass because it has passed previously
         if (Files.exists(fileSystemPathEmbeddedFile1)) {
             Files.delete(fileSystemPathEmbeddedFile1);
@@ -614,7 +616,7 @@ public class ProgrammingExerciseTestService {
 
         request.postWithMultipartFile("/api/programming/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise, "programmingExercise", file,
                 ProgrammingExercise.class, HttpStatus.OK);
-        assertThat(FilePathService.getMarkdownFilePath()).isDirectoryContaining(path -> embeddedFileName1.equals(path.getFileName().toString()))
+        assertThat(FilePathConverter.getMarkdownFilePath()).isDirectoryContaining(path -> embeddedFileName1.equals(path.getFileName().toString()))
                 .isDirectoryContaining(path -> embeddedFileName2.equals(path.getFileName().toString()));
 
     }
@@ -1563,8 +1565,8 @@ public class ProgrammingExerciseTestService {
         String embeddedFileName1 = "Markdown_2023-05-06T16-17-46-410_ad323711.jpg";
         String embeddedFileName2 = "Markdown_2023-05-06T16-17-46-822_b921f475.jpg";
         // delete the files to not only make a test pass because a previous test run succeeded
-        Path embeddedFilePath1 = FilePathService.getMarkdownFilePath().resolve(embeddedFileName1);
-        Path embeddedFilePath2 = FilePathService.getMarkdownFilePath().resolve(embeddedFileName2);
+        Path embeddedFilePath1 = FilePathConverter.getMarkdownFilePath().resolve(embeddedFileName1);
+        Path embeddedFilePath2 = FilePathConverter.getMarkdownFilePath().resolve(embeddedFileName2);
         if (Files.exists(embeddedFilePath1)) {
             Files.delete(embeddedFilePath1);
         }
@@ -1754,9 +1756,9 @@ public class ProgrammingExerciseTestService {
                 """, embeddedFileName1, embeddedFileName2));
         if (saveEmbeddedFiles) {
             FileUtils.copyToFile(new ClassPathResource("test-data/repository-export/" + embeddedFileName1).getInputStream(),
-                    FilePathService.getMarkdownFilePath().resolve(embeddedFileName1).toFile());
+                    FilePathConverter.getMarkdownFilePath().resolve(embeddedFileName1).toFile());
             FileUtils.copyToFile(new ClassPathResource("test-data/repository-export/" + embeddedFileName2).getInputStream(),
-                    FilePathService.getMarkdownFilePath().resolve(embeddedFileName2).toFile());
+                    FilePathConverter.getMarkdownFilePath().resolve(embeddedFileName2).toFile());
         }
         exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
         exercise = programmingExerciseRepository.save(exercise);
