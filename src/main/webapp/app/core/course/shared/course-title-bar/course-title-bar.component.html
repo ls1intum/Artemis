@@ -26,9 +26,8 @@
         }
 
         <div class="align-self-center">
-            <!-- 1) projected title from routed child? 2) fallback -->
-            @if (customTitleTpl) {
-                <ng-container *ngTemplateOutlet="customTitleTpl" />
+            @if (customTitleTpl()) {
+                <ng-container *ngTemplateOutlet="customTitleTpl()!" />
             } @else {
                 <div class="h5 mb-0" [jhiTranslate]="pageTitle()"></div>
             }
@@ -36,15 +35,9 @@
     </div>
 
     <div class="d-flex gap-2 align-items-center">
-        <!-- 1) projected actions from routed child? -->
-        @if (customActionsTpl) {
-            <ng-container *ngTemplateOutlet="customActionsTpl" />
+        @if (customActionsTpl()) {
+            <ng-container *ngTemplateOutlet="customActionsTpl()!" />
         }
-
-        <!-- keep student‐view button slot if you still use it -->
-        <ng-content select="[student-view-button]" />
-
-        <!-- any other generic projected content -->
         <ng-content />
     </div>
 </div>

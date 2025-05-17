@@ -1,4 +1,4 @@
-import { Component, TemplateRef, ViewContainerRef, computed, contentChild, inject, input, output } from '@angular/core';
+import { Component, Signal, TemplateRef, computed, inject, input, output } from '@angular/core';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { facSidebar } from 'app/shared/icons/icons';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -25,15 +25,8 @@ export class CourseTitleBarComponent {
     isExamStarted = input(false);
 
     toggleSidebar = output<void>();
-    protected readonly leftContentVcr = contentChild<ViewContainerRef>('[leftContent]');
 
-    courseTitleBarService = inject(CourseTitleBarService);
-    readonly hasLeftContentProjection = computed(() => !!this.leftContentVcr());
-
-    get customTitleTpl(): TemplateRef<any> | undefined {
-        return this.courseTitleBarService.titleTpl();
-    }
-    get customActionsTpl(): TemplateRef<any> | undefined {
-        return this.courseTitleBarService.actionsTpl();
-    }
+    private courseTitleBarService = inject(CourseTitleBarService);
+    readonly customTitleTpl: Signal<TemplateRef<any> | undefined> = computed(() => this.courseTitleBarService.titleTpl());
+    readonly customActionsTpl: Signal<TemplateRef<any> | undefined> = computed(() => this.courseTitleBarService.actionsTpl());
 }
