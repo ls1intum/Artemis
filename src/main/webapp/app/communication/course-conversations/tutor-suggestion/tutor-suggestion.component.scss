@@ -30,6 +30,10 @@
     max-height: 200px;
     overflow-y: auto;
     padding: 10px;
+    display: flex;
+    flex-direction: column;
+    scrollbar-width: thin;
+    scrollbar-color: var(--bs-border-color) transparent;
 }
 
 .chat-input {
@@ -67,11 +71,6 @@
     margin: 5px 0;
     place-self: start;
     max-width: 75%;
-}
-
-.messages {
-    display: flex;
-    flex-direction: column;
 }
 
 .message-container {

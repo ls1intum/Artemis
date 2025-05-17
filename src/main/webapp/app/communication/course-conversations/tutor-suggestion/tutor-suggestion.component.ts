@@ -17,10 +17,10 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FormsModule } from '@angular/forms';
-import { ButtonComponent, ButtonType } from 'app/shared/components/button/button.component';
 import { faPaperPlane } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { ButtonComponent, ButtonType } from 'app/shared/components/buttons/button/button.component';
 
 /**
  * Component to display the tutor suggestion in the chat
@@ -41,6 +41,9 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
     private irisSettingsService = inject(IrisSettingsService);
     private accountService = inject(AccountService);
 
+    @ViewChild('messageTextarea') messageTextarea: ElementRef<HTMLTextAreaElement>;
+    @ViewChild('messagesElement') messagesElement: ElementRef<HTMLElement>;
+
     messagesSubscription: Subscription;
     irisSettingsSubscription: Subscription;
     tutorSuggestionSubscription: Subscription;
@@ -57,7 +60,6 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
     isAtLeastTutor = false;
 
     newMessageTextContent = '';
-    @ViewChild('messageTextarea') messageTextarea: ElementRef<HTMLTextAreaElement>;
     faPaperPlane = faPaperPlane;
 
     post = input<Post>();
@@ -167,6 +169,7 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
      * Sends a message to Iris to provide a new suggestion based on the current context
      */
     sendMessageToIris(): void {
+        this.scrollToBottom('smooth');
         const message = this.newMessageTextContent;
         this.newMessageTextContent = '';
         this.chatService
@@ -187,6 +190,9 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
         this.messagesSubscription = this.chatService.currentMessages().subscribe((messages) => {
             if (messages.length !== this.messages?.length) {
                 this.suggestion = messages.findLast((m) => m.sender === IrisSender.ARTIFACT);
+                if (messages.last()?.sender === IrisSender.LLM) {
+                    this.scrollToBottom('smooth');
+                }
             }
             this.messages = messages;
         });
@@ -275,6 +281,20 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
                 return parsedDate.format('DD/MM/YYYY');
             }
         }
+    }
+
+    /**
+     * Scrolls the chat body to the bottom.
+     * @param behavior - The scroll behavior.
+     */
+    scrollToBottom(behavior: ScrollBehavior) {
+        setTimeout(() => {
+            const messagesElement: HTMLElement = this.messagesElement.nativeElement;
+            messagesElement.scrollTo({
+                top: messagesElement.scrollHeight,
+                behavior: behavior,
+            });
+        });
     }
 
     protected readonly ButtonType = ButtonType;

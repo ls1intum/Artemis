@@ -231,7 +231,7 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
         IrisMessage savedMessage;
         IrisMessage savedSuggestion;
         if (statusUpdate.suggestion() != null || statusUpdate.result() != null) {
-            if (statusUpdate.suggestion() != null) {
+            if (statusUpdate.suggestion() != null && !statusUpdate.suggestion().isEmpty()) {
                 var suggestion = new IrisMessage();
                 suggestion.addContent(new IrisTextMessageContent(statusUpdate.suggestion()));
                 savedSuggestion = irisMessageService.saveMessage(suggestion, session, IrisMessageSender.ARTIFACT);
@@ -240,7 +240,7 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
             else {
                 savedSuggestion = null;
             }
-            if (statusUpdate.result() != null) {
+            if (statusUpdate.result() != null && !statusUpdate.result().isEmpty()) {
                 var message = new IrisMessage();
                 message.addContent(new IrisTextMessageContent(statusUpdate.result()));
                 savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);

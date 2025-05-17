@@ -27,7 +27,7 @@
             }
             <jhi-chat-status-bar [stages]="stages" />
             <div class="chat-field">
-                <div class="messages">
+                <div class="messages" #messagesElement>
                     @for (message of messages; track message) {
                         <div class="message-container">
                             @if (message.sender === IrisSender.USER) {
