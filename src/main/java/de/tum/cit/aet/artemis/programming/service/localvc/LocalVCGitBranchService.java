@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.programming.service.localvc;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -22,7 +22,7 @@ import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
 
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_LOCALVC)
 @Lazy
 @Service
 public class LocalVCGitBranchService {

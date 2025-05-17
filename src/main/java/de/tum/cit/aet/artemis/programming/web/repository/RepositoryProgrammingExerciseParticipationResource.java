@@ -87,14 +87,14 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
     private final RepositoryParticipationService repositoryParticipationService;
 
-    private final Optional<LocalVCGitBranchService> localVCGitBranchService;
+    private final LocalVCGitBranchService localVCGitBranchService;
 
     public RepositoryProgrammingExerciseParticipationResource(ProfileService profileService, UserRepository userRepository, AuthorizationCheckService authCheckService,
             ParticipationAuthorizationCheckService participationAuthCheckService, GitService gitService, RepositoryService repositoryService,
             ProgrammingExerciseParticipationService participationService, ProgrammingExerciseRepository programmingExerciseRepository,
             ParticipationRepository participationRepository, BuildLogEntryService buildLogService, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            SubmissionPolicyRepository submissionPolicyRepository, RepositoryAccessService repositoryAccessService, Optional<LocalVCServletService> localVCServletService,
-            RepositoryParticipationService repositoryParticipationService, Optional<LocalVCGitBranchService> localVCGitBranchService) {
+            SubmissionPolicyRepository submissionPolicyRepository, RepositoryAccessService repositoryAccessService, LocalVCServletService localVCServletService,
+            RepositoryParticipationService repositoryParticipationService, LocalVCGitBranchService localVCGitBranchService) {
         super(profileService, userRepository, authCheckService, gitService, repositoryService, programmingExerciseRepository, repositoryAccessService, localVCServletService);
         this.participationAuthCheckService = participationAuthCheckService;
         this.participationService = participationService;
@@ -177,11 +177,11 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             throw new IllegalArgumentException();
         }
         else if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
-            return localVCGitBranchService.orElseThrow().getOrRetrieveBranchOfParticipation(studentParticipation);
+            return localVCGitBranchService.getOrRetrieveBranchOfParticipation(studentParticipation);
         }
         else {
             ProgrammingExercise programmingExercise = programmingExerciseRepository.getProgrammingExerciseFromParticipation(programmingParticipation);
-            return localVCGitBranchService.orElseThrow().getOrRetrieveBranchOfExercise(programmingExercise);
+            return localVCGitBranchService.getOrRetrieveBranchOfExercise(programmingExercise);
         }
     }
 

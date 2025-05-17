@@ -229,6 +229,7 @@ spring:
         allow-bean-definition-overriding: false
         allow-circular-references: false
         lazy-initialization: true # reduce startup time
+        log-startup-info: false
     task:
         execution:
             thread-name-prefix: artemis-task-

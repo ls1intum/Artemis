@@ -79,7 +79,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingSubmissionService.class);
 
-    private final Optional<LocalVCGitBranchService> localVCGitBranchService;
+    private final LocalVCGitBranchService localVCGitBranchService;
 
     @Value("${artemis.git.name}")
     private String artemisGitName;
@@ -119,7 +119,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ComplaintRepository complaintRepository,
             ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService, ParticipationAuthorizationCheckService participationAuthCheckService,
             FeedbackService feedbackService, SubmissionPolicyRepository submissionPolicyRepository, Optional<AthenaApi> athenaApi,
-            Optional<LocalVCGitBranchService> localVCGitBranchService) {
+            LocalVCGitBranchService localVCGitBranchService) {
         super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository, examDateApi,
                 exerciseDateService, courseRepository, participationRepository, complaintRepository, feedbackService, athenaApi);
         this.programmingSubmissionRepository = programmingSubmissionRepository;
@@ -156,7 +156,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         log.info("processNewProgrammingSubmission invoked due to the commit {} by {} with {} in branch {}", commit.commitHash(), commit.authorName(), commit.authorEmail(),
                 commit.branch());
 
-        String branch = localVCGitBranchService.orElseThrow().getOrRetrieveBranchOfParticipation(participation);
+        String branch = localVCGitBranchService.getOrRetrieveBranchOfParticipation(participation);
         if (commit.branch() != null && !commit.branch().equalsIgnoreCase(branch)) {
             // if the commit was made in a branch different from the default, ignore this
             throw new VersionControlException(

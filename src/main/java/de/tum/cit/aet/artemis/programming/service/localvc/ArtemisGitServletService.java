@@ -5,6 +5,9 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 import org.eclipse.jgit.http.server.GitServlet;
 import org.eclipse.jgit.transport.ReceivePack;
 import org.eclipse.jgit.transport.UploadPack;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -21,16 +24,12 @@ import de.tum.cit.aet.artemis.core.domain.User;
 @Service
 public class ArtemisGitServletService extends GitServlet {
 
-    private final LocalVCServletService localVCServletService;
+    private static final Logger log = LoggerFactory.getLogger(ArtemisGitServletService.class);
 
-    /**
-     * Constructor for ArtemisGitServlet.
-     *
-     * @param localVCServletService the service for authenticating and authorizing users and retrieving the repository from disk
-     */
-    public ArtemisGitServletService(@Lazy LocalVCServletService localVCServletService) {
-        this.localVCServletService = localVCServletService;
-    }
+    // NOTE: we use @Autowired here to make sure that injection is done lazily to avoid slow startup times
+    @Autowired // ok
+    @Lazy
+    private LocalVCServletService localVCServletService;
 
     /**
      * Initialize the ArtemisGitServlet by setting the repository resolver and adding filters for fetch and push requests.
@@ -45,6 +44,7 @@ public class ArtemisGitServletService extends GitServlet {
     @EventListener(ApplicationReadyEvent.class)
     @Override
     public void init() {
+        log.info("Initializing ArtemisGitServlet for handling fetch and push requests to [Artemis URL]/git/[Project Key]/[Repository Slug].git");
         this.setRepositoryResolver((request, name) -> {
             // request – the current request, may be used to inspect session state including cookies or user authentication.
             // name – name of the repository, as parsed out of the URL (everything after /git/).

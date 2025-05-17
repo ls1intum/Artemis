@@ -71,11 +71,11 @@ public abstract class RepositoryResource {
 
     protected final RepositoryAccessService repositoryAccessService;
 
-    private final Optional<LocalVCServletService> localVCServletService;
+    private final LocalVCServletService localVCServletService;
 
     public RepositoryResource(ProfileService profileService, UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService,
             RepositoryService repositoryService, ProgrammingExerciseRepository programmingExerciseRepository, RepositoryAccessService repositoryAccessService,
-            Optional<LocalVCServletService> localVCServletService) {
+            LocalVCServletService localVCServletService) {
         this.profileService = profileService;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
@@ -283,8 +283,8 @@ public abstract class RepositoryResource {
             // Trigger a build, and process the result. Only implemented for local CI.
             // For Jenkins, webhooks were added when creating the repository,
             // that notify the CI system when the commit happens and thus trigger the build.
-            if (profileService.isLocalVCorCIActive()) {
-                localVCServletService.orElseThrow().processNewPush(null, repository, Optional.empty(), Optional.empty(), vcsAccessLog);
+            if (profileService.isLocalCIActive()) {
+                localVCServletService.processNewPush(null, repository, Optional.empty(), Optional.empty(), vcsAccessLog);
             }
             return new ResponseEntity<>(HttpStatus.OK);
         });

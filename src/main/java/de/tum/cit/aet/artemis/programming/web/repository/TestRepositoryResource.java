@@ -5,7 +5,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.security.Principal;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -58,11 +57,11 @@ import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCServletService;
 @RequestMapping("api/programming/")
 public class TestRepositoryResource extends RepositoryResource {
 
-    private final Optional<LocalVCGitBranchService> localVCGitBranchService;
+    private final LocalVCGitBranchService localVCGitBranchService;
 
     public TestRepositoryResource(ProfileService profileService, UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService,
             RepositoryService repositoryService, ProgrammingExerciseRepository programmingExerciseRepository, RepositoryAccessService repositoryAccessService,
-            Optional<LocalVCServletService> localVCServletService, Optional<LocalVCGitBranchService> localVCGitBranchService) {
+            LocalVCServletService localVCServletService, LocalVCGitBranchService localVCGitBranchService) {
         super(profileService, userRepository, authCheckService, gitService, repositoryService, programmingExerciseRepository, repositoryAccessService, localVCServletService);
         this.localVCGitBranchService = localVCGitBranchService;
     }
@@ -97,7 +96,7 @@ public class TestRepositoryResource extends RepositoryResource {
     @Override
     String getOrRetrieveBranchOfDomainObject(Long exerciseId) {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        return localVCGitBranchService.orElseThrow().getOrRetrieveBranchOfExercise(exercise);
+        return localVCGitBranchService.getOrRetrieveBranchOfExercise(exercise);
     }
 
     @Override

@@ -108,17 +108,12 @@ public class LocalVCServletService {
 
     private final ProgrammingTriggerService programmingTriggerService;
 
-    // TODO As soon as only LocalVC is supported, this Optional can be removed
-    private final Optional<VcsAccessLogService> vcsAccessLogService;
-
-    private static URL localVCBaseUrl;
+    private final VcsAccessLogService vcsAccessLogService;
 
     private final ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository;
 
     @Value("${artemis.version-control.url}")
-    public void setLocalVCBaseUrl(URL localVCBaseUrl) {
-        LocalVCServletService.localVCBaseUrl = localVCBaseUrl;
-    }
+    private URL localVCBaseUrl;
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
     private String localVCBasePath;
@@ -139,14 +134,15 @@ public class LocalVCServletService {
     // Cache the retrieved repositories for quicker access.
     // The resolveRepository method is called multiple times per request.
     // Key: repositoryPath --> Value: Repository
-    private final Map<String, Repository> repositories = new HashMap<>();
+    private final Map<String, Repository> cachedRepositories = new HashMap<>();
 
-    public LocalVCServletService(AuthenticationManager authenticationManager, UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            RepositoryAccessService repositoryAccessService, AuthorizationCheckService authorizationCheckService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, AuxiliaryRepositoryService auxiliaryRepositoryService,
-            ContinuousIntegrationTriggerService ciTriggerService, ProgrammingSubmissionService programmingSubmissionService,
-            ProgrammingMessagingService programmingMessagingService, ProgrammingTriggerService programmingTriggerService,
-            ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository, Optional<VcsAccessLogService> vcsAccessLogService) {
+    public LocalVCServletService(@Lazy AuthenticationManager authenticationManager, @Lazy UserRepository userRepository,
+            @Lazy ProgrammingExerciseRepository programmingExerciseRepository, @Lazy RepositoryAccessService repositoryAccessService,
+            @Lazy AuthorizationCheckService authorizationCheckService, @Lazy ProgrammingExerciseParticipationService programmingExerciseParticipationService,
+            @Lazy AuxiliaryRepositoryService auxiliaryRepositoryService, @Lazy ContinuousIntegrationTriggerService ciTriggerService,
+            @Lazy ProgrammingSubmissionService programmingSubmissionService, @Lazy ProgrammingMessagingService programmingMessagingService,
+            @Lazy ProgrammingTriggerService programmingTriggerService, @Lazy ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository,
+            @Lazy VcsAccessLogService vcsAccessLogService) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -182,9 +178,9 @@ public class LocalVCServletService {
             throw new RepositoryNotFoundException(repositoryPath);
         }
 
-        if (repositories.containsKey(repositoryPath)) {
+        if (cachedRepositories.containsKey(repositoryPath)) {
             log.debug("Retrieving cached local repository {}", repositoryPath);
-            Repository repository = repositories.get(repositoryPath);
+            Repository repository = cachedRepositories.get(repositoryPath);
             repository.incrementOpen();
             log.debug("Resolving repository for repository {} took {}", repositoryPath, TimeLogUtil.formatDurationFrom(timeNanoStart));
             return repository;
@@ -195,7 +191,7 @@ public class LocalVCServletService {
                 // Enable pushing without credentials, authentication is handled by the LocalVCPushFilter.
                 repository.getConfig().setBoolean("http", null, "receivepack", true);
 
-                this.repositories.put(repositoryPath, repository);
+                this.cachedRepositories.put(repositoryPath, repository);
                 repository.incrementOpen();
                 log.debug("Resolving repository for repository {} took {}", repositoryPath, TimeLogUtil.formatDurationFrom(timeNanoStart));
                 return repository;
@@ -284,7 +280,7 @@ public class LocalVCServletService {
 
             String commitHash = null;
             try {
-                commitHash = getLatestCommitHash(repositories.get(localVCRepositoryUri.getRelativeRepositoryPath().toString()));
+                commitHash = getLatestCommitHash(cachedRepositories.get(localVCRepositoryUri.getRelativeRepositoryPath().toString()));
             }
             catch (GitAPIException e) {
                 log.warn("Failed to obtain commit hash for repository {}. Error: {}", localVCRepositoryUri.getRelativeRepositoryPath().toString(), e.getMessage());
@@ -292,7 +288,7 @@ public class LocalVCServletService {
 
             String finalCommitHash = commitHash;
             RepositoryActionType finalRepositoryAction = repositoryAction == RepositoryActionType.WRITE ? RepositoryActionType.PUSH : RepositoryActionType.PULL;
-            vcsAccessLogService.ifPresent(service -> service.saveAccessLog(user, participation, finalRepositoryAction, authenticationMechanism, finalCommitHash, ipAddress));
+            vcsAccessLogService.saveAccessLog(user, participation, finalRepositoryAction, authenticationMechanism, finalCommitHash, ipAddress);
         }
     }
 
@@ -714,11 +710,10 @@ public class LocalVCServletService {
             String finalCommitHash = commitHash;
             if (vcsAccessLog.isPresent()) {
                 vcsAccessLog.get().setCommitHash(finalCommitHash);
-                vcsAccessLogService.ifPresent(service -> service.saveVcsAccesslog(vcsAccessLog.get()));
+                vcsAccessLogService.saveVcsAccesslog(vcsAccessLog.get());
             }
             else {
-                var finalParticipation = participation;
-                vcsAccessLogService.ifPresent(service -> service.updateCommitHash(finalParticipation, finalCommitHash));
+                vcsAccessLogService.updateCommitHash(participation, finalCommitHash);
             }
         }
         catch (GitAPIException | IOException e) {
@@ -747,7 +742,7 @@ public class LocalVCServletService {
         return exercise;
     }
 
-    private static LocalVCRepositoryUri getLocalVCRepositoryUri(Path repositoryFolderPath) {
+    private LocalVCRepositoryUri getLocalVCRepositoryUri(Path repositoryFolderPath) {
         try {
             return new LocalVCRepositoryUri(repositoryFolderPath, localVCBaseUrl);
         }
@@ -913,7 +908,7 @@ public class LocalVCServletService {
             LocalVCRepositoryUri localVCRepositoryUri = parseRepositoryUri(request);
             RepositoryActionType repositoryActionType = getRepositoryActionReadType(clientOffered);
 
-            vcsAccessLogService.ifPresent(service -> service.updateRepositoryActionType(localVCRepositoryUri, repositoryActionType));
+            vcsAccessLogService.updateRepositoryActionType(localVCRepositoryUri, repositoryActionType);
         }
         catch (Exception ignored) {
         }
@@ -938,7 +933,7 @@ public class LocalVCServletService {
             var accessLog = session.getAttribute(SshConstants.VCS_ACCESS_LOG_KEY);
             RepositoryActionType repositoryActionType = getRepositoryActionReadType(clientOffered);
             accessLog.setRepositoryActionType(repositoryActionType);
-            vcsAccessLogService.ifPresent(service -> service.saveVcsAccesslog(accessLog));
+            vcsAccessLogService.saveVcsAccesslog(accessLog);
         }
         catch (Exception ignored) {
         }
@@ -962,7 +957,7 @@ public class LocalVCServletService {
             var participation = programmingExerciseParticipationService.fetchParticipationWithSubmissionsByRepository(localVCRepositoryUri.getRepositoryTypeOrUserName(),
                     localVCRepositoryUri.toString(), null);
             var ipAddress = servletRequest.getRemoteAddr();
-            vcsAccessLogService.ifPresent(service -> service.saveAccessLog(user, participation, RepositoryActionType.CLONE_FAIL, mechanism, "", ipAddress));
+            vcsAccessLogService.saveAccessLog(user, participation, RepositoryActionType.CLONE_FAIL, mechanism, "", ipAddress);
         }
         catch (LocalVCAuthException | EntityNotFoundException ignored) {
             // Caught when: 1) no user, or 2) no participation was found. In both cases it does not make sense to write a log
@@ -978,7 +973,7 @@ public class LocalVCServletService {
      * @param clientOffered the number of objects offered to the client in the operation.
      * @return the {@link RepositoryActionType} based on the number of objects offered (clone if 0, pull if greater than 0).
      */
-    private RepositoryActionType getRepositoryActionReadType(int clientOffered) {
+    private static RepositoryActionType getRepositoryActionReadType(int clientOffered) {
         return clientOffered == 0 ? RepositoryActionType.CLONE : RepositoryActionType.PULL;
     }
 

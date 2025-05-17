@@ -58,6 +58,7 @@ public class NotificationScheduleService {
 
     @EventListener(ApplicationReadyEvent.class)
     public void applicationReady() {
+        // TODO: we should move scheduled startup tasks into one single class to avoid complex instantiations
         // schedule the task after the application has started to avoid delaying the start of the application
         scheduler.schedule(this::scheduleRunningNotificationProcessesOnStartup, Instant.now().plusSeconds(NOTIFICATION_SCHEDULE_DELAY_SEC));
     }
