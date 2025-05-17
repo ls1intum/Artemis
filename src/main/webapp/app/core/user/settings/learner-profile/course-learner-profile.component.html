@@ -9,17 +9,7 @@
 </div>
 <hr />
 <div class="row align-items-center">
-    <div class="col">
-        <span jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.description"></span><br />
-        <div class="d-flex align-items-center my-2">
-            <span class="dot background-color ms-1 me-2"></span>
-            <span jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.initialState"></span>
-            <jhi-help-icon class="ps-1" text="artemisApp.learnerProfile.initialValueHint" />
-            <span class="dot bg-primary ms-3 me-2"></span>
-            <span jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.currentState"></span>
-            <jhi-help-icon class="ps-1" text="artemisApp.learnerProfile.currentValueHint" />
-        </div>
-    </div>
+    <div class="col"><span jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.description"></span><br /></div>
     <select class="form-select col-auto w-auto" (change)="courseChanged($event)">
         <option value="-1" jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.selectCourse" selected></option>
         @for (courseLearnerProfile of courseLearnerProfiles; track courseLearnerProfile.courseId) {
@@ -30,15 +20,18 @@
 <div [ngClass]="{ 'd-none': disabled }">
     <div class="row row-cols-2 gx-5 align-items-end">
         <div class="col">
-            <h4 class="mb-3">{{ translateService.instant('artemisApp.learnerProfile.courseLearnerProfile.aimForGradeOrBonus') }}</h4>
+            <div class="title">{{ translateService.instant('artemisApp.learnerProfile.courseLearnerProfile.aimForGradeOrBonus.label') }}</div>
+            <div class="description">{{ translateService.instant('artemisApp.learnerProfile.courseLearnerProfile.aimForGradeOrBonus.description') }}</div>
             <jhi-segmented-toggle [options]="aimForGradeOrBonusOptions" [(selected)]="aimForGradeOrBonus" (selectedChange)="editing = true" />
         </div>
         <div class="col">
-            <h4 class="mb-3">{{ translateService.instant('artemisApp.learnerProfile.courseLearnerProfile.timeInvestment') }}</h4>
+            <div class="title">{{ translateService.instant('artemisApp.learnerProfile.courseLearnerProfile.timeInvestment.label') }}</div>
+            <div class="description">{{ translateService.instant('artemisApp.learnerProfile.courseLearnerProfile.timeInvestment.description') }}</div>
             <jhi-segmented-toggle [options]="timeInvestmentOptions" [(selected)]="timeInvestment" (selectedChange)="editing = true" />
         </div>
         <div class="col">
-            <h4 class="mb-3">{{ translateService.instant('artemisApp.learnerProfile.courseLearnerProfile.repetitionIntensity') }}</h4>
+            <div class="title">{{ translateService.instant('artemisApp.learnerProfile.courseLearnerProfile.repetitionIntensity.label') }}</div>
+            <div class="description">{{ translateService.instant('artemisApp.learnerProfile.courseLearnerProfile.repetitionIntensity.description') }}</div>
             <jhi-segmented-toggle [options]="repetitionIntensityOptions" [(selected)]="repetitionIntensity" (selectedChange)="editing = true" />
         </div>
     </div>

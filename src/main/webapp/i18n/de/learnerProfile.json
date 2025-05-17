@@ -6,12 +6,21 @@
             "courseLearnerProfile": {
                 "title": "Kurs-Lernprofil",
                 "selectCourse": "Kurs auswählen...",
-                "description": "Hier kannst du dein kursspezifisches Lernprofil einsehen und aktualisieren.",
+                "description": "Hier kannst du dein kursspezifisches Lernprofil einsehen und aktualisieren. Diese Einstellungen werden verwendet, um deinen Lernfortschritt zu berechnen und deine Lernerfahrung zu personalisieren.",
                 "initialState": "Ursprünglicher Zustand",
                 "currentState": "Aktueller Zustand",
-                "aimForGradeOrBonus": "Note oder zusätzliches Wissen fokussieren",
-                "timeInvestment": "Zeitaufwand",
-                "repetitionIntensity": "Wiederholungsintensität",
+                "aimForGradeOrBonus": {
+                    "label": "Note oder zusätzliches Wissen fokussieren",
+                    "description": "Wähle die Option, die deinem Ziel für diesen Kurs am besten entspricht."
+                },
+                "timeInvestment": {
+                    "label": "Zeitaufwand",
+                    "description": "Wähle, wie viel Zeit du für diesen Kurs bereit bist zu investieren."
+                },
+                "repetitionIntensity": {
+                    "label": "Wiederholungsintensität",
+                    "description": "Wähle, wie viel du bereit bist, den Kursinhalt zu wiederholen."
+                },
                 "profileSaved": "Lernprofil gespeichert"
             }
         }
