@@ -548,6 +548,7 @@ public class IrisSubSettingsService {
      * @return The customInstructions or null if not applicable
      */
     private String getCustomInstructionsFromSubSettings(IrisSubSettings subSettings) {
+        // TODO: Introduce intermediary abstract class for all chat settings types
         if (subSettings instanceof IrisChatSubSettings settings) {
             return settings.getCustomInstructions();
         }
