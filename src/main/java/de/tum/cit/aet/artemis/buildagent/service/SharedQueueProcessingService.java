@@ -418,7 +418,7 @@ public class SharedQueueProcessingService {
             if (consecutiveBuildJobFailures.get() >= pauseAfterConsecutiveFailedJobs) {
                 log.error("Build agent has failed to process build jobs {} times in a row. Pausing build agent.", consecutiveBuildJobFailures.get());
                 pauseBuildAgent(true);
-
+                return null;
             }
 
             checkAvailabilityAndProcessNextBuild();
