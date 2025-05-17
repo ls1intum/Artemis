@@ -9,6 +9,7 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 
 import jakarta.servlet.http.Cookie;
@@ -22,6 +23,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -243,8 +245,6 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
 
     // TODO should not rotate token if it comes from a bearer token (only from a cookie)
 
-    // TODO should not rotate token if it is not a passkey token
-
     /**
      * We DO NOT want to rotate a passkey-created token silently if it has used LESS THAN 50% of its lifetime
      */
@@ -258,6 +258,32 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
 
         String jwt = tokenProvider.createToken(authentication, issuedAt, expiration, null, true);
         assertThat(tokenProvider.getAuthenticatedWithPasskey(jwt)).isTrue();
+
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.COOKIE, JWTFilter.JWT_COOKIE_NAME + "=" + jwt);
+
+        MvcResult res = mvc
+                .perform(MockMvcRequestBuilders.get(new URI("/api/core/public/account")).params(params).headers(headers).cookie(new Cookie(JWTFilter.JWT_COOKIE_NAME, jwt)))
+                .andExpect(status().is(HttpStatus.OK.value())).andReturn();
+
+        MockHttpServletResponse response = res.getResponse();
+        assertThat(response).isNotNull();
+        String setCookieHeader = response.getHeader(HttpHeaders.SET_COOKIE);
+        assertThat(setCookieHeader).isNull();
+    }
+
+    @Test
+    void testRotateTokenSilently_shouldNotRotateToken_ifTokenWasNotCreatedFromPasskey() throws Exception {
+        Authentication authentication = new UsernamePasswordAuthenticationToken(TEST_PREFIX + "student1", TEST_PREFIX + "student1",
+                Collections.singletonList(new SimpleGrantedAuthority(Role.STUDENT.getAuthority())));
+
+        long lessThanHalfOfTokenValidityPassed = (long) (TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 0.4 * 1000);
+        Date issuedAt = new Date(System.currentTimeMillis() - lessThanHalfOfTokenValidityPassed);
+        Date expiration = new Date(issuedAt.getTime() + TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 1000);
+
+        String jwt = tokenProvider.createToken(authentication, issuedAt, expiration, null, null);
+        assertThat(tokenProvider.getAuthenticatedWithPasskey(jwt)).isFalse();
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         HttpHeaders headers = new HttpHeaders();
