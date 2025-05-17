@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.iris.domain.settings;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.IRIS_CUSTOM_INSTRUCTIONS_MAX_LENGTH;
+
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -37,7 +39,7 @@ public class IrisChatSubSettings extends IrisSubSettings {
     private SortedSet<String> disabledProactiveEvents = new TreeSet<>();
 
     @Nullable
-    @Column(name = "custom_instructions", length = 2048)
+    @Column(name = "custom_instructions", length = IRIS_CUSTOM_INSTRUCTIONS_MAX_LENGTH)
     private String customInstructions;
 
     @Nullable

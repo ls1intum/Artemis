@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.iris.service.settings;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.IRIS_CUSTOM_INSTRUCTIONS_MAX_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
 import java.util.ArrayList;
@@ -14,6 +15,7 @@ import java.util.function.Function;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisChatSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCompetencyGenerationSubSettings;
@@ -97,7 +99,7 @@ public class IrisSubSettingsService {
         currentSettings.setAllowedVariants(selectAllowedVariants(currentSettings.getAllowedVariants(), newSettings.getAllowedVariants()));
         currentSettings.setSelectedVariant(validateSelectedVariant(currentSettings.getSelectedVariant(), newSettings.getSelectedVariant(), currentSettings.getAllowedVariants(),
                 parentSettings != null ? parentSettings.allowedVariants() : null));
-        currentSettings.setCustomInstructions(newSettings.getCustomInstructions());
+        currentSettings.setCustomInstructions(validateCustomInstructions(newSettings.getCustomInstructions()));
         return currentSettings;
     }
 
@@ -135,7 +137,7 @@ public class IrisSubSettingsService {
         currentSettings.setAllowedVariants(selectAllowedVariants(currentSettings.getAllowedVariants(), newSettings.getAllowedVariants()));
         currentSettings.setSelectedVariant(validateSelectedVariant(currentSettings.getSelectedVariant(), newSettings.getSelectedVariant(), currentSettings.getAllowedVariants(),
                 parentSettings != null ? parentSettings.allowedVariants() : null));
-        currentSettings.setCustomInstructions(newSettings.getCustomInstructions());
+        currentSettings.setCustomInstructions(validateCustomInstructions(newSettings.getCustomInstructions()));
         return currentSettings;
     }
 
@@ -167,7 +169,7 @@ public class IrisSubSettingsService {
         currentSettings.setAllowedVariants(selectAllowedVariants(currentSettings.getAllowedVariants(), newSettings.getAllowedVariants()));
         currentSettings.setSelectedVariant(validateSelectedVariant(currentSettings.getSelectedVariant(), newSettings.getSelectedVariant(), currentSettings.getAllowedVariants(),
                 parentSettings != null ? parentSettings.allowedVariants() : null));
-        currentSettings.setCustomInstructions(newSettings.getCustomInstructions());
+        currentSettings.setCustomInstructions(validateCustomInstructions(newSettings.getCustomInstructions()));
         return currentSettings;
     }
 
@@ -229,7 +231,7 @@ public class IrisSubSettingsService {
             currentSettings.setEnabled(newSettings.isEnabled());
         }
 
-        currentSettings.setCustomInstructions(newSettings.getCustomInstructions());
+        currentSettings.setCustomInstructions(validateCustomInstructions(newSettings.getCustomInstructions()));
 
         return currentSettings;
     }
@@ -333,6 +335,22 @@ public class IrisSubSettingsService {
         }
 
         return selectedVariant;
+    }
+
+    /**
+     * Validates the custom instructions length of a sub settings object.
+     *
+     * @param customInstructions The custom instructions of the updated settings.
+     * @return The validated custom instructions.
+     */
+    private String validateCustomInstructions(String customInstructions) {
+        if (customInstructions == null || customInstructions.isBlank()) {
+            return null;
+        }
+        if (customInstructions.length() > IRIS_CUSTOM_INSTRUCTIONS_MAX_LENGTH) {
+            throw new BadRequestAlertException("Custom instructions are too long", "IrisSettings", "customInstructionsTooLong");
+        }
+        return customInstructions;
     }
 
     /**
