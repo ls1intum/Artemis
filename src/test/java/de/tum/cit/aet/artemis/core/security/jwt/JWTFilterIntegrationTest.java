@@ -13,6 +13,7 @@ import java.util.Date;
 
 import jakarta.servlet.http.Cookie;
 
+import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +36,22 @@ import org.springframework.util.LinkedMultiValueMap;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
+/**
+ * <p>
+ * <strong>Integration test</strong> for the {@link JWTFilter} token rotation mechanism.
+ * </p>
+ *
+ * <p>
+ * <em>Note:</em> We assume that the following conditions hold:
+ * </p>
+ * <ul>
+ * <li>{@link JWTFilterIntegrationTest#TOKEN_VALIDITY_IN_SECONDS} &lt; {@link JWTFilterIntegrationTest#TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS}</li>
+ * <li>{@link JWTFilterIntegrationTest#TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS} &lt; {@link JWTFilterIntegrationTest#TOKEN_VALIDITY_IN_SECONDS_FOR_PASSKEY}</li>
+ * </ul>
+ * <p>
+ * If this does not hold, some calculations might break.
+ * </p>
+ */
 public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "jwtfilterintegrationtest";
@@ -44,13 +61,13 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
      */
     private static final String ENDPOINT_TO_TEST = "/api/core/public/account";
 
-    @Value("${jhipster.security.authentication.jwt.token-validity-in-seconds}")
+    @Value("${jhipster.security.authentication.jwt.token-validity-in-seconds}") // 86400 when tests where written
     private long TOKEN_VALIDITY_IN_SECONDS;
 
-    @Value("${jhipster.security.authentication.jwt.token-validity-in-seconds-for-remember-me}")
+    @Value("${jhipster.security.authentication.jwt.token-validity-in-seconds-for-remember-me}") // 2592000 when tests where written
     private long TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS;
 
-    @Value("${artemis.user-management.passkey.token-validity-in-seconds-for-passkey}")
+    @Value("${artemis.user-management.passkey.token-validity-in-seconds-for-passkey}") // 1555200 when tests where written
     private long TOKEN_VALIDITY_IN_SECONDS_FOR_PASSKEY;
 
     @Autowired
@@ -91,7 +108,10 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
     }
 
     /**
+     * <p>
      * We want to rotate a passkey-created token silently if it has used after 50% of its lifetime
+     * </p>
+     * Ensures that the token is rotated properly without changing authentication data or the issuedAt date
      */
     @Test
     void testRotateTokenSilently_shouldRotateToken_ifMoreThanHalfOfLifetimeUsed() throws Exception {
@@ -138,9 +158,70 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
         assertThat(tokenProvider.getExpirationDate(updatedJwt)).isBefore(new Date(System.currentTimeMillis() + TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 1000));
     }
 
-    // TODO should not extend time beyond max passkey token lifetime
+    /**
+     * We shall never extend the token lifetime beyond the maximum passkey token lifetime
+     */
+    @Test
+    void testRotateTokenSilently_shouldRotateToken_butConsiderMaxPasskeyTokenLifetime() throws Exception {
+        Authentication authentication = createWebAuthnAuthentication();
+
+        long nowInMilliseconds = System.currentTimeMillis();
+        long lessThanHalfOfTokenValidityLeftInMilliseconds = (long) (TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 0.4 * 1000);
+        Date expiration = new Date(nowInMilliseconds + lessThanHalfOfTokenValidityLeftInMilliseconds);
+
+        long lessPasskeyLifetimeThanTokenRememberMeLifetime = expiration.getTime() - TOKEN_VALIDITY_IN_SECONDS_FOR_PASSKEY * 1000;
+        Date issuedAt = new Date(lessPasskeyLifetimeThanTokenRememberMeLifetime + (TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 1000 - lessThanHalfOfTokenValidityLeftInMilliseconds));
+
+        long tokenLifetimeAlreadyUsedUpInMilliseconds = nowInMilliseconds - issuedAt.getTime();
+        long expectedRemainingLifetimeInMilliseconds = TOKEN_VALIDITY_IN_SECONDS_FOR_PASSKEY * 1000 - tokenLifetimeAlreadyUsedUpInMilliseconds;
+
+        String jwt = tokenProvider.createToken(authentication, issuedAt, expiration, null, true);
+        assertThat(tokenProvider.getAuthenticatedWithPasskey(jwt)).isTrue();
+
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.COOKIE, JWTFilter.JWT_COOKIE_NAME + "=" + jwt);
+
+        MvcResult res = mvc.perform(MockMvcRequestBuilders.get(new URI(ENDPOINT_TO_TEST)).params(params).headers(headers).cookie(new Cookie(JWTFilter.JWT_COOKIE_NAME, jwt)))
+                .andExpect(status().is(HttpStatus.OK.value())).andReturn();
+
+        MockHttpServletResponse response = res.getResponse();
+        assertThat(response).isNotNull();
+        String setCookieHeader = response.getHeader(HttpHeaders.SET_COOKIE);
+        assertThat(setCookieHeader).isNotNull();
+        ResponseCookie updatedCookie = CookieParser.parseSetCookieHeader(setCookieHeader);
+
+        assertThat(setCookieHeader).contains(JWTFilter.JWT_COOKIE_NAME);
+        assertThat(updatedCookie.getName()).isEqualTo(JWTFilter.JWT_COOKIE_NAME);
+        assertThat(updatedCookie.getPath()).isEqualTo("/"); // TODO does that make sense?
+        assertThat(updatedCookie.getMaxAge().getSeconds()).isLessThan(TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS);
+        assertThat(updatedCookie.getMaxAge().getSeconds()).isLessThan(TOKEN_VALIDITY_IN_SECONDS_FOR_PASSKEY);
+        assertThat(updatedCookie.getMaxAge().getSeconds()).isCloseTo(expectedRemainingLifetimeInMilliseconds / 1000, Offset.offset(15L)); // allow a 15-second deviation
+        assertThat(updatedCookie.isSecure()).isTrue();
+        assertThat(updatedCookie.isHttpOnly()).isTrue();
+        assertThat(updatedCookie.getSameSite()).isEqualTo("Lax");
+
+        // values should not have changed except for the expiration date
+        String updatedJwt = updatedCookie.getValue();
+        assertThat(updatedJwt).isNotEmpty();
+        assertThat(updatedJwt).isNotEqualTo(jwt);
+        assertThat(tokenProvider.getAuthentication(updatedJwt).getPrincipal()).isEqualTo(tokenProvider.getAuthentication(jwt).getPrincipal());
+        assertThat(tokenProvider.getAuthentication(updatedJwt).getAuthorities()).isEqualTo(authentication.getAuthorities());
+        assertThat(tokenProvider.getAuthenticatedWithPasskey(updatedJwt)).isTrue();
+        assertThat(tokenProvider.getIssuedAtDate(updatedJwt)).isCloseTo(issuedAt, 1000); // should not have changed, tolerance due to formatting
+        // IMPORTANT! The expiration date of the rotated token must be in the future but must not exceed the maximum passkey token lifetime
+        assertThat(expectedRemainingLifetimeInMilliseconds).isLessThan(TOKEN_VALIDITY_IN_SECONDS_FOR_PASSKEY * 1000);
+        assertThat(expectedRemainingLifetimeInMilliseconds).isLessThan(TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 1000); // the test does not make sense if we still have the full
+                                                                                                                      // token lifetime left
+        assertThat(tokenProvider.getExpirationDate(updatedJwt)).isAfter(new Date(System.currentTimeMillis() + (long) (expectedRemainingLifetimeInMilliseconds * 0.9)));
+        assertThat(tokenProvider.getExpirationDate(updatedJwt)).isBefore(new Date(System.currentTimeMillis() + expectedRemainingLifetimeInMilliseconds));
+    }
 
     // TODO should not rotate token if it comes from a bearer token (only from a cookie)
+
+    // TODO should not rotate token if it is not a passkey token
+
+    // TODO should not extend an expired token
 
     /**
      * We DO NOT want to rotate a passkey-created token silently if it has used LESS THAN 50% of its lifetime
