@@ -7,6 +7,7 @@ import {
     faChartColumn,
     faCog,
     faComments,
+    faDumbbell,
     faFlag,
     faGraduationCap,
     faList,
@@ -80,7 +81,15 @@ export class CourseSidebarItemService {
             hidden: false,
         };
 
-        return [...items, exercisesItem, statisticsItem];
+        const practiceItem: SidebarItem = {
+            routerLink: 'practice',
+            icon: faDumbbell,
+            title: 'Practice',
+            translation: 'artemisApp.courseOverview.menu.practice',
+            hidden: false,
+        };
+
+        return [...items, exercisesItem, statisticsItem, practiceItem];
     }
 
     getExamsItem(courseId?: number): SidebarItem {
