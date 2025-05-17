@@ -33,6 +33,10 @@ public class IrisTextExerciseChatSubSettings extends IrisSubSettings {
     private SortedSet<String> enabledForCategories = new TreeSet<>();
 
     @Nullable
+    @Column(name = "custom_instructions", length = 2048)
+    private String customInstructions;
+
+    @Nullable
     public Integer getRateLimit() {
         return rateLimit;
     }
@@ -57,5 +61,14 @@ public class IrisTextExerciseChatSubSettings extends IrisSubSettings {
 
     public void setEnabledForCategories(@Nullable SortedSet<String> enabledForCategories) {
         this.enabledForCategories = enabledForCategories;
+    }
+
+    @Nullable
+    public String getCustomInstructions() {
+        return customInstructions;
+    }
+
+    public void setCustomInstructions(@Nullable String customInstructions) {
+        this.customInstructions = customInstructions;
     }
 }

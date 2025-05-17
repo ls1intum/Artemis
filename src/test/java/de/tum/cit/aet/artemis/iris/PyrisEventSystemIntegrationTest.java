@@ -194,8 +194,8 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
 
         await().atMost(2, TimeUnit.SECONDS).until(() -> pipelineDone.get());
 
-        verify(pyrisPipelineService, times(1)).executeExerciseChatPipeline(eq("default"), eq(Optional.ofNullable((ProgrammingSubmission) result.getSubmission())), eq(exercise),
-                eq(irisSession), eq(Optional.of("progress_stalled")));
+        verify(pyrisPipelineService, times(1)).executeExerciseChatPipeline(eq("default"), any(), eq(Optional.ofNullable((ProgrammingSubmission) result.getSubmission())),
+                eq(exercise), eq(irisSession), eq(Optional.of("progress_stalled")));
     }
 
     @Test
@@ -215,7 +215,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
 
         await().atMost(2, TimeUnit.SECONDS).until(() -> pipelineDone.get());
 
-        await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> verify(pyrisPipelineService, times(1)).executeExerciseChatPipeline(eq("default"),
+        await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> verify(pyrisPipelineService, times(1)).executeExerciseChatPipeline(eq("default"), any(),
                 eq(Optional.ofNullable((ProgrammingSubmission) result.getSubmission())), eq(exercise), eq(irisSession), eq(Optional.of("build_failed"))));
     }
 
@@ -233,7 +233,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
         await().atMost(2, TimeUnit.SECONDS).until(() -> pipelineDone.get());
 
         verify(irisCourseChatSessionService, times(1)).onJudgementOfLearningSet(any(CompetencyJol.class));
-        verify(pyrisPipelineService, times(1)).executeCourseChatPipeline(eq("default"), eq(irisSession), any(CompetencyJol.class));
+        verify(pyrisPipelineService, times(1)).executeCourseChatPipeline(eq("default"), any(), eq(irisSession), any(CompetencyJol.class));
     }
 
     @Test
@@ -287,7 +287,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
 
         await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
             verify(irisExerciseChatSessionService, times(2)).onNewResult(any(Result.class));
-            verify(pyrisPipelineService, never()).executeExerciseChatPipeline(any(), any(), any(), any(), any());
+            verify(pyrisPipelineService, never()).executeExerciseChatPipeline(any(), any(), any(), any(), any(), any());
         });
     }
 
@@ -302,7 +302,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
         pyrisEventService.trigger(new NewResultEvent(result));
 
         verify(irisExerciseChatSessionService, timeout(2000).times(1)).onNewResult(any(Result.class));
-        verify(pyrisPipelineService, after(2000).never()).executeExerciseChatPipeline(any(), any(), any(), any(), any());
+        verify(pyrisPipelineService, after(2000).never()).executeExerciseChatPipeline(any(), any(), any(), any(), any(), any());
     }
 
     @Test
@@ -317,7 +317,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
         pyrisEventService.trigger(new NewResultEvent(result));
 
         verify(irisExerciseChatSessionService, timeout(2000).times(1)).onNewResult(result);
-        verify(pyrisPipelineService, after(2000).never()).executeExerciseChatPipeline(any(), any(), any(), any(), any());
+        verify(pyrisPipelineService, after(2000).never()).executeExerciseChatPipeline(any(), any(), any(), any(), any(), any());
     }
 
     @Test
@@ -344,6 +344,114 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
 
         assertThatExceptionOfType(PyrisEventProcessingException.class).isThrownBy(() -> irisExerciseChatSessionService.onNewResult(result))
                 .withMessageStartingWith("Progress stalled event is not supported for team participations");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCustomInstructionsPassedToPipeline() {
+        // Set custom instructions in the exercise settings
+        var settings = irisSettingsRepository.findExerciseSettings(exercise.getId()).orElseThrow();
+        String testCustomInstructions = "Test custom instructions for the AI model";
+        settings.getIrisChatSettings().setCustomInstructions(testCustomInstructions);
+        irisSettingsRepository.save(settings);
+
+        var irisSession = irisExerciseChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+
+        // Create a failing submissions for the student to trigger the build failed event
+        var result = createFailingSubmission(studentParticipation);
+
+        irisRequestMockProvider.mockBuildFailedRunResponse((dto) -> {
+            assertThat(dto.settings().authenticationToken()).isNotNull();
+            // Verify the custom instructions were passed to the DTO
+            assertThat(dto.customInstructions()).isEqualTo(testCustomInstructions);
+            pipelineDone.set(true);
+        });
+
+        pyrisEventService.trigger(new NewResultEvent(result));
+
+        await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> verify(irisExerciseChatSessionService, times(1)).onBuildFailure(eq(result)));
+
+        await().atMost(2, TimeUnit.SECONDS).until(() -> pipelineDone.get());
+
+        // Verify the custom instructions were passed to the pipeline service
+        await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> verify(pyrisPipelineService, times(1)).executeExerciseChatPipeline(eq("default"), eq(testCustomInstructions),
+                eq(Optional.ofNullable((ProgrammingSubmission) result.getSubmission())), eq(exercise), eq(irisSession), eq(Optional.of("build_failed"))));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCustomInstructionsPassedToCourseChatPipeline() {
+        // Set custom instructions in the course settings
+        var courseSettings = irisSettingsRepository.findCourseSettings(course.getId()).orElseThrow();
+        String testCourseCustomInstructions = "Test course custom instructions for the AI model";
+        courseSettings.getIrisCourseChatSettings().setCustomInstructions(testCourseCustomInstructions);
+        irisSettingsRepository.save(courseSettings);
+
+        var irisSession = irisCourseChatSessionService.createSession(course, userUtilService.getUserByLogin(TEST_PREFIX + "student1"), false);
+
+        // Create a JoL event
+        var jolValue = 3;
+        irisRequestMockProvider.mockJolEventRunResponse((dto) -> {
+            assertThat(dto.settings().authenticationToken()).isNotNull();
+            // Verify the custom instructions were passed to the DTO
+            assertThat(dto.customInstructions()).isEqualTo(testCourseCustomInstructions);
+            pipelineDone.set(true);
+        });
+
+        // Set JoL to trigger the event
+        competencyJolService.setJudgementOfLearning(competency.getId(), userUtilService.getUserByLogin(TEST_PREFIX + "student1").getId(), (short) jolValue);
+
+        await().atMost(2, TimeUnit.SECONDS).until(() -> pipelineDone.get());
+
+        // Verify the custom instructions were passed to the pipeline service
+        verify(irisCourseChatSessionService, times(1)).onJudgementOfLearningSet(any(CompetencyJol.class));
+        verify(pyrisPipelineService, times(1)).executeCourseChatPipeline(eq("default"), eq(testCourseCustomInstructions), eq(irisSession), any(CompetencyJol.class));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCustomInstructionsPassedToExerciseEventPipeline() {
+        // Set custom instructions for exercise chat event
+        var settings = irisSettingsRepository.findExerciseSettings(exercise.getId()).orElseThrow();
+        String testCustomInstructions = "Custom instructions for exercise event";
+        settings.getIrisChatSettings().setCustomInstructions(testCustomInstructions);
+        irisSettingsRepository.save(settings);
+
+        // Create session and trigger build failed event
+        var irisSession = irisExerciseChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        var result = createFailingSubmission(studentParticipation);
+        irisRequestMockProvider.mockBuildFailedRunResponse(dto -> {
+            assertThat(dto.customInstructions()).isEqualTo(testCustomInstructions);
+            pipelineDone.set(true);
+        });
+
+        pyrisEventService.trigger(new NewResultEvent(result));
+        await().atMost(2, TimeUnit.SECONDS).until(() -> pipelineDone.get());
+
+        verify(pyrisPipelineService, times(1)).executeExerciseChatPipeline(eq("default"), eq(testCustomInstructions),
+                eq(Optional.ofNullable((ProgrammingSubmission) result.getSubmission())), eq(exercise), eq(irisSession), eq(Optional.of("build_failed")));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCustomInstructionsPassedToCourseEventPipeline() {
+        // Set custom instructions for course chat event
+        var courseSettings = irisSettingsRepository.findCourseSettings(course.getId()).orElseThrow();
+        String testCourseCustomInstructions = "Custom instructions for course event";
+        courseSettings.getIrisCourseChatSettings().setCustomInstructions(testCourseCustomInstructions);
+        irisSettingsRepository.save(courseSettings);
+
+        // Create session and trigger Jol event
+        var irisSession = irisCourseChatSessionService.createSession(course, userUtilService.getUserByLogin(TEST_PREFIX + "student1"), false);
+        irisRequestMockProvider.mockJolEventRunResponse(dto -> {
+            assertThat(dto.customInstructions()).isEqualTo(testCourseCustomInstructions);
+            pipelineDone.set(true);
+        });
+        competencyJolService.setJudgementOfLearning(competency.getId(), userUtilService.getUserByLogin(TEST_PREFIX + "student1").getId(), (short) 3);
+
+        await().atMost(2, TimeUnit.SECONDS).until(() -> pipelineDone.get());
+
+        verify(pyrisPipelineService, times(1)).executeCourseChatPipeline(eq("default"), eq(testCourseCustomInstructions), eq(irisSession), any(CompetencyJol.class));
     }
 
 }
