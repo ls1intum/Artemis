@@ -147,6 +147,7 @@ configurations.configureEach {
     // JPlag depends on those, but they are not really needed
     exclude group: "org.jgrapht", module: "jgrapht-core"
     exclude group: "org.apfloat", module: "apfloat"
+    exclude group: "xom", module: "xom"
 
     exclude group: "commons-configuration", module: "commons-configuration"
 
@@ -285,6 +286,9 @@ dependencies {
     // Required for several dependencies
     implementation "org.apache.commons:commons-text:1.13.1"
     implementation "org.apache.commons:commons-math3:3.6.1"
+    implementation "org.apache.commons:commons-lang3:3.17.0"
+    // required by eureka, but actually superseded by commons-lang3 above
+    implementation "commons-lang:commons-lang:2.6"
 
     implementation("org.liquibase:liquibase-core:${liquibase_version}") {
         exclude group: 'com.opencsv', module: 'opencsv'
