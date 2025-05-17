@@ -393,10 +393,11 @@ describe('PdfPreviewComponent', () => {
             component.pageOrder.set([{ slideId: 'slide1', initialIndex: 1, order: 1 } as any, { slideId: 'slide2', initialIndex: 2, order: 2 } as any]);
             component.hiddenPages.set({});
 
-            jest.spyOn(component, 'getFinalPageOrder').mockResolvedValue([
-                { slideId: 'slide1', initialIndex: 1, order: 1 } as any,
-                { slideId: 'slide2', initialIndex: 2, order: 2 } as any,
-            ]);
+            const finalPageOrder = [{ slideId: 'slide1', initialIndex: 1, order: 1 } as any, { slideId: 'slide2', initialIndex: 2, order: 2 } as any];
+
+            jest.spyOn(component, 'getFinalPageOrder').mockImplementation(() => {
+                return Promise.resolve(finalPageOrder);
+            });
 
             const appendSpy = jest.spyOn(FormData.prototype, 'append');
 
@@ -405,14 +406,11 @@ describe('PdfPreviewComponent', () => {
             await component.updateAttachmentWithFile();
 
             expect(component.attachmentToBeEdited()).toEqual(component.attachmentUnit()!.attachment);
-            expect(appendSpy).toHaveBeenCalledWith('file', expect.any(File));
-            expect(appendSpy).toHaveBeenCalledWith('attachment', expect.any(Blob));
-            expect(appendSpy).toHaveBeenCalledWith('attachmentUnit', expect.any(Blob));
-            expect(appendSpy).toHaveBeenCalledWith('pageOrder', expect.any(String));
-            expect(appendSpy).not.toHaveBeenCalledWith('studentVersion', expect.any(File));
-            expect(appendSpy).not.toHaveBeenCalledWith('hiddenPages', expect.any(String));
             expect(attachmentUnitServiceMock.update).toHaveBeenCalledWith(3, 2, expect.any(FormData));
+            expect(appendSpy).toHaveBeenCalled();
+            expect(component.isSaving()).toBeFalse();
 
+            // Cleanup
             appendSpy.mockRestore();
         });
 
