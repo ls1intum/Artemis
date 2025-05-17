@@ -14,8 +14,13 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.LearningPath;
+import de.tum.cit.aet.artemis.atlas.service.learningpath.LearningPathRepositoryService;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 
+/**
+ * Spring Data JPA repository for the {@link LearningPath} entity.
+ * Important: For fetching a learning path with its competencies, use the {@link LearningPathRepositoryService} instead of this repository.
+ */
 @Conditional(AtlasEnabled.class)
 @Repository
 public interface LearningPathRepository extends ArtemisJpaRepository<LearningPath, Long> {
@@ -33,21 +38,11 @@ public interface LearningPathRepository extends ArtemisJpaRepository<LearningPat
         return getValueElseThrow(findWithEagerUserById(learningPathId), learningPathId);
     }
 
-    @EntityGraph(type = LOAD, attributePaths = { "competencies" })
-    Optional<LearningPath> findWithEagerCompetenciesByCourseIdAndUserId(long courseId, long userId);
-
     @EntityGraph(type = LOAD, attributePaths = { "course" })
     Optional<LearningPath> findWithEagerCourseById(long learningPathId);
 
     default LearningPath findWithEagerCourseByIdElseThrow(long learningPathId) {
         return getValueElseThrow(findWithEagerCourseById(learningPathId), learningPathId);
-    }
-
-    @EntityGraph(type = LOAD, attributePaths = { "course", "competencies" })
-    Optional<LearningPath> findWithEagerCourseAndCompetenciesById(long learningPathId);
-
-    default LearningPath findWithEagerCourseAndCompetenciesByIdElseThrow(long learningPathId) {
-        return getValueElseThrow(findWithEagerCourseAndCompetenciesById(learningPathId), learningPathId);
     }
 
     @Query("""
@@ -73,20 +68,11 @@ public interface LearningPathRepository extends ArtemisJpaRepository<LearningPat
     @Query("""
             SELECT l
             FROM LearningPath l
-            LEFT JOIN FETCH l.competencies c
-            LEFT JOIN FETCH c.lectureUnitLinks lul
-            LEFT JOIN FETCH lul.lectureUnit
-            LEFT JOIN FETCH c.exerciseLinks el
-            LEFT JOIN FETCH el.exercise
             LEFT JOIN FETCH l.user u
             LEFT JOIN FETCH u.learnerProfile lp
             LEFT JOIN FETCH lp.courseLearnerProfiles clp
             WHERE l.id = :learningPathId
                 AND clp.course.id = l.course.id
             """)
-    Optional<LearningPath> findWithCompetenciesAndLectureUnitsAndExercisesAndLearnerProfileById(@Param("learningPathId") long learningPathId);
-
-    default LearningPath findWithCompetenciesAndLectureUnitsAndExercisesAndLearnerProfileByIdElseThrow(long learningPathId) {
-        return getValueElseThrow(findWithCompetenciesAndLectureUnitsAndExercisesAndLearnerProfileById(learningPathId), learningPathId);
-    }
+    Optional<LearningPath> findWithUserAndLearnerProfileById(@Param("learningPathId") long learningPathId);
 }
