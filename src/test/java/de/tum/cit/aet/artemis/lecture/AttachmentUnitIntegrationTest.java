@@ -456,9 +456,13 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationIndependent
         await().untilAsserted(() -> assertThat(slideRepository.findAllByAttachmentUnitId(persistedAttachmentUnit.getId())).hasSize(SLIDE_COUNT));
 
         // Create a hiddenPages JSON with past dates
-        // Format: ZonedDateTime string representation
-        String pastDate = ZonedDateTime.now().minusDays(1).toString();
-        String hiddenPagesJson = "[{\"page\": 1, \"date\": \"" + pastDate + "\"}]";
+        // @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX")
+        ZonedDateTime pastDateTime = ZonedDateTime.now().minusDays(1);
+        java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+        String pastDate = pastDateTime.format(formatter);
+
+        // The HiddenPageInfoDTO expects slideId as a String
+        String hiddenPagesJson = "[{\"slideId\": \"1\", \"date\": \"" + pastDate + "\"}]";
 
         // Create multipart request parts
         var attachmentUnitPart = new MockMultipartFile("attachmentUnit", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(persistedAttachmentUnit).getBytes());
@@ -473,8 +477,10 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationIndependent
         request.performMvcRequest(builder).andExpect(status().isBadRequest());
 
         // Now create a valid future date
-        String futureDate = ZonedDateTime.now().plusDays(1).toString();
-        String validHiddenPagesJson = "[{\"page\": 1, \"date\": \"" + futureDate + "\"}]";
+        ZonedDateTime futureDateTime = ZonedDateTime.now().plusDays(1);
+        String futureDate = futureDateTime.format(formatter);
+
+        String validHiddenPagesJson = "[{\"slideId\": \"1\", \"date\": \"" + futureDate + "\"}]";
 
         // Create new multipart request parts with valid dates
         var validHiddenPagesPart = new MockMultipartFile("hiddenPages", "", MediaType.APPLICATION_JSON_VALUE, validHiddenPagesJson.getBytes());
