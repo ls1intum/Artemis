@@ -91,7 +91,6 @@ public class SecurityConfiguration {
 
     private final PublicKeyCredentialRequestOptionsRepository publicKeyCredentialRequestOptionsRepository;
 
-    // TODO add validation here (post construct)
     @Value("${artemis.user-management.passkey.token-validity-in-seconds-for-passkey:15552000}")
     private long tokenValidityInSecondsForPasskey;
 
@@ -138,6 +137,10 @@ public class SecurityConfiguration {
             }
             catch (URISyntaxException | MalformedURLException e) {
                 throw new IllegalStateException("Invalid server URL configuration for WebAuthn: " + e.getMessage(), e);
+            }
+
+            if (tokenValidityInSecondsForPasskey <= 0) {
+                throw new IllegalStateException("Token validity in seconds for passkey must be greater than 0 when passkey authentication is enabled.");
             }
         }
     }
