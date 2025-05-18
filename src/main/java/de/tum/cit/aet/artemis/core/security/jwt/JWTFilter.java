@@ -51,23 +51,23 @@ public class JWTFilter extends GenericFilterBean {
      * <h5>Rolling Token Mechanism</h5>
      * <ul>
      * <li><b>Maximum Lifetime:</b> The token's maximum lifetime is configurable via the property
-     * <code>artemis.user-management.passkey.token-validity-in-seconds-for-passkey</code>.</li>
+     * {@code artemis.user-management.passkey.token-validity-in-seconds-for-passkey}.</li>
      * <li><b>Token Renewal:</b> The token is renewed if its remaining lifetime is below 50% of its validity period,
      * but only up to the maximum lifetime (default: 180 days). The lifetime of a renewed token is capped at
-     * <code>jhipster.security.authentication.jwt.token-validity-in-seconds-for-remember-me</code> (default: 30 days).</li>
+     * {@code jhipster.security.authentication.jwt.token-validity-in-seconds-for-remember-me} (default: 30 days).</li>
      * <li><b>IssuedAt (iat) Timestamp:</b> The original "issued at" timestamp remains unchanged during renewal.</li>
      * <li><b>Automatic Logout:</b> Users who are inactive for the duration of
-     * <code>jhipster.security.authentication.jwt.token-validity-in-seconds-for-remember-me</code>
+     * {@code jhipster.security.authentication.jwt.token-validity-in-seconds-for-remember-me}
      * (default: 30 days) are automatically logged out.</li>
      * <li><b>Extended Login:</b> Active users can remain logged in for up to the duration of
-     * <code>artemis.user-management.passkey.token-validity-in-seconds-for-passkey</code>.</li>
+     * {@code artemis.user-management.passkey.token-validity-in-seconds-for-passkey}.</li>
      * <li><b>Security:</b> The mechanism relies on secure cookie storage and HTTPS. Note that no token revocation
      * mechanism is implemented.</li>
      * </ul>
      *
      * @param jwtToken       The current JWT token to be evaluated for renewal.
-     * @param authentication The authentication object associated with the token.
-     * @param response       The HTTP response where the renewed token will be added as a cookie.
+     * @param authentication The {@link org.springframework.security.core.Authentication} object associated with the token.
+     * @param response       The {@link jakarta.servlet.http.HttpServletResponse} where the renewed token will be added as a cookie.
      * @throws NotAuthorizedException If the token cannot be renewed due to validation or other issues.
      */
     private void rotateTokenSilently(String jwtToken, Authentication authentication, HttpServletResponse response) throws NotAuthorizedException {
