@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.core.config;
 
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_DEVELOPMENT;
+
 import java.util.ArrayDeque;
 import java.util.Deque;
 
@@ -7,8 +9,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.InstantiationAwareBeanPostProcessor;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
+@Profile(SPRING_PROFILE_DEVELOPMENT)
 @Component
 public class BeanInstantiationTracer implements InstantiationAwareBeanPostProcessor {
 
@@ -23,7 +27,7 @@ public class BeanInstantiationTracer implements InstantiationAwareBeanPostProces
         if (beanClass.getName().startsWith(BASE_PACKAGE)) {
             Deque<String> stack = beanCallStack.get();
             String parent = stack.peek();
-            log.debug("Instantiating: {} <- triggered by {}", beanName, (parent != null ? parent : "root context"));
+            log.info("Instantiating: {} <- triggered by {}", beanName, (parent != null ? parent : "root context"));
             stack.push(beanName);
         }
         return null; // let Spring continue with normal instantiation

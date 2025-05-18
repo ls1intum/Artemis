@@ -101,6 +101,7 @@ public class ParticipationTeamWebsocketService {
      */
     @EventListener(ApplicationReadyEvent.class)
     public void init() {
+        // TODO: lazy init of hazelcast instance in the getter
         // participationId-username -> timestamp
         this.lastTypingTracker = hazelcastInstance.getMap("lastTypingTracker");
         // participationId-username -> timestamp
