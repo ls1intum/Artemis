@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.quiz.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.net.MalformedURLException;
 import java.time.ZonedDateTime;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -76,7 +77,7 @@ public class QuizParticipationResource {
      */
     @PostMapping("quiz-exercises/{exerciseId}/start-participation")
     @EnforceAtLeastStudentInExercise
-    public ResponseEntity<StudentQuizParticipationDTO> startParticipation(@PathVariable Long exerciseId) {
+    public ResponseEntity<StudentQuizParticipationDTO> startParticipation(@PathVariable Long exerciseId) throws MalformedURLException {
         log.debug("REST request to start quiz exercise participation : {}", exerciseId);
         QuizExercise exercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(exerciseId);
 

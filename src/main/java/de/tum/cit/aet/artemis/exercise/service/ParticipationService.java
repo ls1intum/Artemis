@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.exercise.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -15,6 +17,7 @@ import java.util.stream.Collectors;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -54,6 +57,8 @@ import de.tum.cit.aet.artemis.programming.service.UriService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.programming.service.localci.SharedQueueManagementService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCGitBranchService;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryInitializer;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 
@@ -68,6 +73,9 @@ public class ParticipationService {
 
     @Value("${artemis.version-control.default-branch:main}")
     protected String defaultBranch;
+
+    @Autowired
+    private URL localVCBaseUrl;
 
     private final GitService gitService;
 
@@ -107,13 +115,16 @@ public class ParticipationService {
 
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
+    private final LocalVCRepositoryInitializer localVCRepositoryInitializer;
+
     public ParticipationService(GitService gitService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
             Optional<LocalVCGitBranchService> localVCGitBranchService, BuildLogEntryService buildLogEntryService, ParticipationRepository participationRepository,
             StudentParticipationRepository studentParticipationRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, SubmissionRepository submissionRepository, TeamRepository teamRepository, UriService uriService,
             ResultService resultService, ParticipantScoreRepository participantScoreRepository, StudentScoreRepository studentScoreRepository,
             TeamScoreRepository teamScoreRepository, Optional<SharedQueueManagementService> localCISharedBuildJobQueueService,
-            ParticipationVcsAccessTokenService participationVCSAccessTokenService, Optional<CompetencyProgressApi> competencyProgressApi) {
+            ParticipationVcsAccessTokenService participationVCSAccessTokenService, Optional<CompetencyProgressApi> competencyProgressApi, URL localVCBaseUrl,
+            LocalVCRepositoryInitializer localVCRepositoryInitializer) {
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
@@ -133,6 +144,9 @@ public class ParticipationService {
         this.localCISharedBuildJobQueueService = localCISharedBuildJobQueueService;
         this.participationVCSAccessTokenService = participationVCSAccessTokenService;
         this.competencyProgressApi = competencyProgressApi;
+        this.localVCRepositoryInitializer = localVCRepositoryInitializer;
+        this.localVCBaseUrl = localVCBaseUrl;
+
     }
 
     /**
@@ -153,7 +167,7 @@ public class ParticipationService {
      * @param createInitialSubmission whether an initial empty submission should be created for non-programming exercises such as text, modeling, quiz, or file-upload
      * @return the `StudentParticipation` connecting the given exercise and participant
      */
-    public StudentParticipation startExercise(Exercise exercise, Participant participant, boolean createInitialSubmission) {
+    public StudentParticipation startExercise(Exercise exercise, Participant participant, boolean createInitialSubmission) throws MalformedURLException {
 
         StudentParticipation participation;
         Optional<StudentParticipation> optionalStudentParticipation = Optional.empty();
@@ -259,7 +273,7 @@ public class ParticipationService {
      */
     private StudentParticipation startProgrammingExercise(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation) {
         // Step 1a) create the student repository (based on the template repository)
-        participation = copyRepository(exercise, exercise.getVcsTemplateRepositoryUri(), participation);
+        participation = copyRepositoryWithOneCommit(exercise, exercise.getVcsTemplateRepositoryUri(), participation);
 
         return startProgrammingParticipation(participation);
     }
@@ -466,6 +480,42 @@ public class ParticipationService {
             participation.setInitializationState(InitializationState.REPO_COPIED);
 
             return programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
+        }
+        else {
+            return participation;
+        }
+    }
+
+    private ProgrammingExerciseStudentParticipation copyRepositoryWithOneCommit(ProgrammingExercise programmingExercise, VcsRepositoryUri sourceURL,
+            ProgrammingExerciseStudentParticipation participation) {
+        // only execute this step if it has not yet been completed yet or if the repository uri is missing for some reason
+        if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_COPIED) || participation.getVcsRepositoryUri() == null) {
+            final var projectKey = programmingExercise.getProjectKey();
+            final var repoName = participation.addPracticePrefixIfTestRun(participation.getParticipantIdentifier());
+
+            // Build the student repo URI from projectKey and repoName, using localVCBaseUrl injected as a URL
+            LocalVCRepositoryUri studentRepoUri = new LocalVCRepositoryUri(projectKey, repoName, localVCBaseUrl);
+
+            try {
+                // Create single commit student repo by copying working tree from template bare repo
+                localVCRepositoryInitializer.createSingleCommitStudentRepo(sourceURL, studentRepoUri);
+            }
+            catch (Exception e) {
+                log.error("Error while creating single commit student repo", e);
+                throw new RuntimeException("Failed to create single commit student repository", e);
+            }
+
+            VcsRepositoryUri newRepoUri = studentRepoUri;
+            // Add user info if participant is a student (not team)
+            if (participation.getStudent().isPresent()) {
+                newRepoUri = newRepoUri.withUser(participation.getParticipantIdentifier());
+            }
+
+            participation.setRepositoryUri(newRepoUri.toString());
+            participation.setBranch(defaultBranch);
+            participation.setInitializationState(InitializationState.REPO_COPIED);
+            return programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
+
         }
         else {
             return participation;

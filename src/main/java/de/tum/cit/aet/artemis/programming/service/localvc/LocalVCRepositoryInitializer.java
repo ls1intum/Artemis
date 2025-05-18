@@ -1,72 +1,108 @@
-package de.tum.cit.aet.artemis.exercise.service;
+package de.tum.cit.aet.artemis.programming.service.localvc;
+
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 import org.apache.commons.io.FileUtils;
-import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.transport.URIish;
-import org.eclipse.jgit.transport.RefSpec;
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.file.StandardCopyOption;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+
+import de.tum.cit.aet.artemis.programming.domain.Repository;
+import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
+import de.tum.cit.aet.artemis.programming.service.GitService;
 
 @Service
 public class LocalVCRepositoryInitializer {
 
-    public void createSingleCommitStudentRepo(Path templateBareRepoPath, Path studentBareRepoPath, String defaultBranch) throws Exception {
-        // 1. Prepare a working tree by checking out the template bare repo
-        Path workingTreeDir = Files.createTempDirectory("template-working-tree");
+    private static final Logger log = LoggerFactory.getLogger(LocalVCRepositoryInitializer.class);
 
-        try (Git tempGit = Git.cloneRepository()
-            .setURI(templateBareRepoPath.toUri().toString())
-            .setDirectory(workingTreeDir.toFile())
-            .setBare(false)
-            .setBranch(defaultBranch)
-            .call()) {
+    @Value("${artemis.version-control.local-vcs-repo-path}")
+    private String localVCBasePath;
 
-            // 2. Prepare a working directory for the new student repo (separate from the bare repo)
-            Path studentWorkingDir = Files.createTempDirectory("student-working-copy");
+    @Value("${artemis.version-control.default-branch:main}")
+    private String defaultBranch;
 
-            // 3. Copy the template's working tree files into the student working dir (excluding .git)
-            Files.walk(workingTreeDir)
-                .filter(path -> !path.toString().contains(".git"))
-                .forEach(source -> {
-                    try {
-                        Path target = studentWorkingDir.resolve(workingTreeDir.relativize(source));
-                        if (Files.isDirectory(source)) {
-                            Files.createDirectories(target);
-                        } else {
-                            Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
-                        }
-                    } catch (IOException e) {
-                        throw new UncheckedIOException(e);
-                    }
-                });
+    private final GitService gitService;
 
-            // 4. Initialize Git repo in student working dir
-            try (Git git = Git.init().setDirectory(studentWorkingDir.toFile()).call()) {
-                git.add().addFilepattern(".").call();
-                git.commit()
-                    .setMessage("Initial import without history")
-                    .setAuthor("Artemis", "noreply@artemis.local")
-                    .call();
+    public LocalVCRepositoryInitializer(GitService gitService) {
+        this.gitService = gitService;
+    }
 
-                // 5. Set up and push to the student’s actual bare repo
-                git.remoteAdd()
-                    .setName("origin")
-                    .setUri(new URIish("file://" + studentBareRepoPath.toAbsolutePath()))
-                    .call();
+    /**
+     * Create a new student repo initialized with a single commit from the template bare repo.
+     *
+     * @param templateUri URI of the template repo (bare repo)
+     * @param studentUri  URI of the student repo (bare repo)
+     * @throws Exception on any failure
+     */
+    public void createSingleCommitStudentRepo(VcsRepositoryUri templateUri, VcsRepositoryUri studentUri) throws Exception {
+        try (Repository templateRepo = gitService.getBareRepository(templateUri); Repository studentRepo = gitService.getBareRepository(studentUri)) {
 
-                git.push()
-                    .setRemote("origin")
-                    .setRefSpecs(new RefSpec(defaultBranch + ":" + defaultBranch))
-                    .call();
+            Path studentBareRepoPath = studentRepo.getDirectory().toPath();
+
+            Path tempTemplateWorkingDir = Files.createTempDirectory("localvc-template-working-");
+            Path tempStudentWorkingDir = Files.createTempDirectory("localvc-student-working-");
+
+            try {
+                // Clone the bare template repository to a non-bare temporary directory
+                Repository tempTemplateRepository = gitService.getOrCheckoutRepository(templateUri, tempTemplateWorkingDir.toString(), false);
+
+                // Copy all files except the .git folder from the template working dir to student working dir
+                copyFilesExcludingGit(tempTemplateWorkingDir, tempStudentWorkingDir);
+
+                // Ensure the bare student repo path exists
+                if (!Files.exists(studentBareRepoPath)) {
+                    Files.createDirectories(studentBareRepoPath);
+                }
+
+                // Initialize the bare student repository at the target location
+                gitService.initBareRepository(studentUri);
+
+                try (Repository tempStudentRepo = gitService.initRepository(tempStudentWorkingDir)) {
+                    gitService.setDefaultBranch(tempStudentRepo, defaultBranch);
+                    gitService.stageAllChanges(tempStudentRepo);
+                    gitService.commit(tempStudentRepo, "Initial import without history");
+                    gitService.addRemote(tempStudentRepo, "origin", studentBareRepoPath.toUri().toString());
+                    gitService.push(tempStudentRepo, "origin", defaultBranch, true);
+                }
+
+                // Cleanup temporary student working directory
+                FileUtils.deleteDirectory(tempStudentWorkingDir.toFile());
             }
-        } finally {
-            FileUtils.deleteDirectory(workingTreeDir.toFile());
-            // Optional: delete studentWorkingDir too, after verifying push
+            finally {
+                FileUtils.deleteDirectory(tempTemplateWorkingDir.toFile());
+            }
+        }
+    }
+
+    public void copyFilesExcludingGit(Path sourceDir, Path targetDir) throws IOException {
+        // List all files/directories in sourceDir except ".git"
+        try (var stream = Files.list(sourceDir)) {
+            stream.forEach(sourcePath -> {
+                try {
+                    if (sourcePath.getFileName().toString().equals(".git")) {
+                        // Skip .git directory
+                        return;
+                    }
+
+                    Path targetPath = targetDir.resolve(sourcePath.getFileName());
+                    if (Files.isDirectory(sourcePath)) {
+                        // Recursively copy directories
+                        Files.createDirectories(targetPath);
+                        copyFilesExcludingGit(sourcePath, targetPath);
+                    }
+                    else {
+                        // Copy file
+                        Files.copy(sourcePath, targetPath);
+                    }
+                }
+                catch (IOException e) {
+                    throw new RuntimeException("Error copying files", e);
+                }
+            });
         }
     }
 }

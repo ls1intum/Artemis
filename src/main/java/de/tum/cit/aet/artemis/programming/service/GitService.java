@@ -62,6 +62,7 @@ import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.filter.CommitTimeRevFilter;
 import org.eclipse.jgit.revwalk.filter.RevFilter;
 import org.eclipse.jgit.transport.CredentialsProvider;
+import org.eclipse.jgit.transport.RefSpec;
 import org.eclipse.jgit.transport.RemoteConfig;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
@@ -1268,6 +1269,56 @@ public class GitService extends AbstractGitService {
     public boolean repositoryAlreadyExists(VcsRepositoryUri repoUri) {
         Path localPath = getDefaultLocalPathOfRepo(repoUri);
         return Files.exists(localPath);
+    }
+
+    public Repository initBareRepository(VcsRepositoryUri repoUri) throws IOException {
+        Path repoPath = new LocalVCRepositoryUri(repoUri.toString()).getLocalRepositoryPath(localVCBasePath);
+
+        Files.createDirectories(repoPath);
+
+        try (Git git = Git.init().setBare(true).setDirectory(repoPath.toFile()).call()) {
+            return new Repository(repoPath.toString(), repoUri);
+        }
+        catch (GitAPIException e) {
+            throw new IOException("Failed to initialize bare repository", e);
+        }
+    }
+
+    public Repository initRepository(Path workingDir) throws IOException {
+        // Make sure the directory exists
+        Files.createDirectories(workingDir);
+
+        try (Git git = Git.init().setDirectory(workingDir.toFile()).setBare(false).call()) {
+            // Return Artemis Repository wrapping the non-bare repo folder using String path constructor
+            return new Repository(workingDir.toString(), null);
+        }
+        catch (GitAPIException e) {
+            throw new IOException("Failed to initialize repository", e);
+        }
+    }
+
+    public void setDefaultBranch(Repository repository, String defaultBranch) throws IOException {
+        RefUpdate headUpdate = repository.getRefDatabase().newUpdate(Constants.HEAD, false);
+        headUpdate.setForceUpdate(true);
+        headUpdate.link("refs/heads/" + defaultBranch);
+    }
+
+    public void addRemote(Repository repo, String remoteName, String remoteUri) throws GitAPIException, URISyntaxException {
+        try (Git git = new Git(repo)) {
+            git.remoteAdd().setName(remoteName).setUri(new URIish(remoteUri)).call();
+        }
+    }
+
+    public void push(Repository repo, String remote, String branch, boolean force) throws GitAPIException {
+        try (Git git = new Git(repo)) {
+            PushCommand pushCommand = git.push().setRemote(remote).setRefSpecs(new RefSpec(branch + ":" + branch));
+
+            if (force) {
+                pushCommand.setForce(true);
+            }
+
+            pushCommand.call();
+        }
     }
 
     /**
