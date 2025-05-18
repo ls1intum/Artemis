@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisChatSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCompetencyGenerationSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseChatSubSettings;
@@ -75,14 +76,18 @@ public class IrisSettingsService {
 
     private final Optional<TextRepositoryApi> textRepositoryApi;
 
+    private final ExerciseRepository exerciseRepository;
+
     public IrisSettingsService(IrisSettingsRepository irisSettingsRepository, IrisSubSettingsService irisSubSettingsService, AuthorizationCheckService authCheckService,
-            ProgrammingExerciseRepository programmingExerciseRepository, ObjectMapper objectMapper, Optional<TextRepositoryApi> textRepositoryApi) {
+            ProgrammingExerciseRepository programmingExerciseRepository, ObjectMapper objectMapper, Optional<TextRepositoryApi> textRepositoryApi,
+            ExerciseRepository exerciseRepository) {
         this.irisSettingsRepository = irisSettingsRepository;
         this.irisSubSettingsService = irisSubSettingsService;
         this.authCheckService = authCheckService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.objectMapper = objectMapper;
         this.textRepositoryApi = textRepositoryApi;
+        this.exerciseRepository = exerciseRepository;
     }
 
     /**
@@ -217,10 +222,10 @@ public class IrisSettingsService {
         if (settings instanceof IrisGlobalSettings) {
             throw new BadRequestAlertException("You can not create new global settings", "IrisSettings", "notGlobal");
         }
-        if (settings instanceof IrisCourseSettings courseSettings && irisSettingsRepository.findCourseSettings(courseSettings.getCourse().getId()).isPresent()) {
+        if (settings instanceof IrisCourseSettings courseSettings && irisSettingsRepository.findCourseSettings(courseSettings.getCourseId()).isPresent()) {
             throw new ConflictException("Iris settings for this course already exist", "IrisSettings", "alreadyExists");
         }
-        if (settings instanceof IrisExerciseSettings exerciseSettings && irisSettingsRepository.findExerciseSettings(exerciseSettings.getExercise().getId()).isPresent()) {
+        if (settings instanceof IrisExerciseSettings exerciseSettings && irisSettingsRepository.findExerciseSettings(exerciseSettings.getExerciseId()).isPresent()) {
             throw new ConflictException("Iris settings for this exercise already exist", "IrisSettings", "alreadyExists");
         }
         return irisSettingsRepository.save(settings);
@@ -374,14 +379,14 @@ public class IrisSettingsService {
         var newEnabledForCategoriesExerciseChat = existingSettings.getIrisChatSettings() == null ? new TreeSet<String>()
                 : existingSettings.getIrisChatSettings().getEnabledForCategories();
         if (!oldEnabledForCategoriesExerciseChat.equals(newEnabledForCategoriesExerciseChat)) {
-            programmingExerciseRepository.findAllWithCategoriesByCourseId(existingSettings.getCourse().getId())
+            programmingExerciseRepository.findAllWithCategoriesByCourseId(existingSettings.getCourseId())
                     .forEach(exercise -> setEnabledForExerciseByCategories(exercise, oldEnabledForCategoriesExerciseChat, newEnabledForCategoriesExerciseChat));
         }
 
         var newEnabledForCategoriesTextExerciseChat = existingSettings.getIrisTextExerciseChatSettings() == null ? new TreeSet<String>()
                 : existingSettings.getIrisTextExerciseChatSettings().getEnabledForCategories();
         if (!Objects.equals(oldEnabledForCategoriesTextExerciseChat, newEnabledForCategoriesTextExerciseChat)) {
-            textRepositoryApi.ifPresent(api -> api.findAllWithCategoriesByCourseId(existingSettings.getCourse().getId())
+            textRepositoryApi.ifPresent(api -> api.findAllWithCategoriesByCourseId(existingSettings.getCourseId())
                     .forEach(exercise -> setEnabledForExerciseByCategories(exercise, oldEnabledForCategoriesTextExerciseChat, newEnabledForCategoriesTextExerciseChat)));
         }
 
@@ -497,7 +502,8 @@ public class IrisSettingsService {
      * @return The updated exercise Iris settings
      */
     private IrisExerciseSettings updateExerciseSettings(IrisExerciseSettings existingSettings, IrisExerciseSettings settingsUpdate) {
-        var parentSettings = getCombinedIrisSettingsFor(existingSettings.getExercise().getCourseViaExerciseGroupOrCourseMember(), false);
+        var exercise = exerciseRepository.findByIdElseThrow(existingSettings.getExerciseId());
+        var parentSettings = getCombinedIrisSettingsFor(exercise.getCourseViaExerciseGroupOrCourseMember(), false);
         // @formatter:off
         existingSettings.setIrisChatSettings(irisSubSettingsService.update(
             existingSettings.getIrisChatSettings(),
@@ -721,7 +727,7 @@ public class IrisSettingsService {
      */
     public IrisCourseSettings getDefaultSettingsFor(Course course) {
         var settings = new IrisCourseSettings();
-        settings.setCourse(course);
+        settings.setCourseId(course.getId());
         settings.setIrisChatSettings(new IrisChatSubSettings());
         settings.setIrisLectureChatSettings(new IrisLectureChatSubSettings());
         settings.setIrisTextExerciseChatSettings(new IrisTextExerciseChatSubSettings());
@@ -741,7 +747,7 @@ public class IrisSettingsService {
      */
     public IrisExerciseSettings getDefaultSettingsFor(Exercise exercise) {
         var settings = new IrisExerciseSettings();
-        settings.setExercise(exercise);
+        settings.setExerciseId(exercise.getId());
         settings.setIrisChatSettings(new IrisChatSubSettings());
         settings.setIrisTextExerciseChatSettings(new IrisTextExerciseChatSubSettings());
 

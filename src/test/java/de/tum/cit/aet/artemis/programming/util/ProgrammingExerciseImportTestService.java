@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -117,7 +116,7 @@ public class ProgrammingExerciseImportTestService {
      */
     public int countOccurrencesInZip(ClassPathResource resource, String searchString) throws Exception {
         int occurrenceCount = 0;
-        try (ZipInputStream zipInputStream = new ZipInputStream(new FileInputStream(resource.getFile()))) {
+        try (ZipInputStream zipInputStream = new ZipInputStream(Files.newInputStream(resource.getFile().toPath()))) {
             ZipEntry zipEntry;
             while ((zipEntry = zipInputStream.getNextEntry()) != null) {
                 if (!zipEntry.isDirectory() && zipEntry.getName().endsWith(".zip")) {
