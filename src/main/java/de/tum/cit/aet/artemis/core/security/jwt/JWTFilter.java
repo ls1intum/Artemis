@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.security.jwt;
 
 import java.io.IOException;
 import java.util.Date;
+import java.util.Objects;
 
 import jakarta.annotation.Nullable;
 import jakarta.servlet.FilterChain;
@@ -83,8 +84,11 @@ public class JWTFilter extends GenericFilterBean {
         HttpServletRequest httpServletRequest = (HttpServletRequest) servletRequest;
         HttpServletResponse httpServletResponse = (HttpServletResponse) servletResponse;
         String jwtToken;
+        String source;
         try {
-            jwtToken = extractValidJwt(httpServletRequest, this.tokenProvider);
+            JwtWithSource jwtWithSource = Objects.requireNonNull(extractValidJwt(httpServletRequest, this.tokenProvider));
+            jwtToken = jwtWithSource.jwt();
+            source = jwtWithSource.source();
         }
         catch (IllegalArgumentException e) {
             httpServletResponse.sendError(HttpServletResponse.SC_BAD_REQUEST);
@@ -94,7 +98,7 @@ public class JWTFilter extends GenericFilterBean {
         if (jwtToken != null) {
             Authentication authentication = this.tokenProvider.getAuthentication(jwtToken);
 
-            if (this.tokenProvider.getAuthenticatedWithPasskey(jwtToken)) {
+            if (source.equals("cookie") && this.tokenProvider.getAuthenticatedWithPasskey(jwtToken)) {
                 rotateTokenSilently(jwtToken, authentication, httpServletResponse);
             }
 
@@ -112,7 +116,7 @@ public class JWTFilter extends GenericFilterBean {
      * @return the valid jwt or null if not found or invalid
      */
     @Nullable
-    public static String extractValidJwt(HttpServletRequest httpServletRequest, TokenProvider tokenProvider) {
+    public static JwtWithSource extractValidJwt(HttpServletRequest httpServletRequest, TokenProvider tokenProvider) {
         var cookie = WebUtils.getCookie(httpServletRequest, JWT_COOKIE_NAME);
         var authHeader = httpServletRequest.getHeader(AUTHORIZATION_HEADER);
 
@@ -133,7 +137,7 @@ public class JWTFilter extends GenericFilterBean {
             return null;
         }
 
-        return jwtToken;
+        return new JwtWithSource(jwtToken, source);
     }
 
     /**

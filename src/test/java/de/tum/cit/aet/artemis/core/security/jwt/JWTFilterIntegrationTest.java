@@ -236,7 +236,7 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
     // }
 
     @Test
-    void testRotateTokenSilently_shouldNotRotateToken_ifSuppliedByJwt() throws Exception {
+    void testRotateTokenSilently_shouldNotRotateToken_ifSuppliedByBearerToken() throws Exception {
         Authentication authentication = createWebAuthnAuthentication();
 
         long moreThanHalfOfTokenValidityPassed = (long) (TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 0.6 * 1000);

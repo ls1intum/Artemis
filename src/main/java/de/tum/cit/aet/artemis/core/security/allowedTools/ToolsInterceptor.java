@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.Objects;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -30,7 +31,7 @@ public class ToolsInterceptor implements HandlerInterceptor {
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         String jwtToken;
         try {
-            jwtToken = JWTFilter.extractValidJwt(request, tokenProvider);
+            jwtToken = Objects.requireNonNull(JWTFilter.extractValidJwt(request, tokenProvider)).jwt();
         }
         catch (IllegalArgumentException e) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST);
