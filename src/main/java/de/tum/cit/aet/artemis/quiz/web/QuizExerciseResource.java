@@ -81,6 +81,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizAction;
 import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
+import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.dto.QuizBatchJoinDTO;
 import de.tum.cit.aet.artemis.quiz.repository.QuizBatchRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
@@ -808,6 +809,12 @@ public class QuizExerciseResource {
 
         return ResponseEntity.created(new URI("/api/quiz/quiz-exercises/" + newQuizExercise.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newQuizExercise.getId().toString())).body(newQuizExercise);
+    }
+
+    @GetMapping("quiz/courses/{courseId}/practice-quiz")
+    public ResponseEntity<Set<QuizQuestion>> getQuizQuestionsForPractice(@PathVariable long courseId) {
+        Set<QuizQuestion> quizQuestions = quizExerciseRepository.findAllQuizQuestionsByCourseId(courseId);
+        return ResponseEntity.ok(quizQuestions);
     }
 
     private void setQuizBatches(User user, QuizExercise quizExercise) {
