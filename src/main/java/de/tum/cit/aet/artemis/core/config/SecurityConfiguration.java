@@ -91,8 +91,6 @@ public class SecurityConfiguration {
 
     private final PublicKeyCredentialRequestOptionsRepository publicKeyCredentialRequestOptionsRepository;
 
-    private final DomainUserDetailsService userDetailsService;
-
     // TODO add validation here (post construct)
     @Value("${artemis.user-management.passkey.token-validity-in-seconds-for-passkey:15552000}")
     private long tokenValidityInSecondsForPasskey;
@@ -162,7 +160,6 @@ public class SecurityConfiguration {
         this.tokenProvider = tokenProvider;
         this.userCredentialRepository = userCredentialRepository;
         this.userRepository = userRepository;
-        this.userDetailsService = userDetailsService;
     }
 
     /**
@@ -365,6 +362,6 @@ public class SecurityConfiguration {
      * @return JWTConfigurer configured with a token provider that generates and validates JWT tokens.
      */
     private JWTConfigurer securityConfigurerAdapter() {
-        return new JWTConfigurer(tokenProvider, jwtCookieService, userDetailsService, tokenValidityInSecondsForPasskey);
+        return new JWTConfigurer(tokenProvider, jwtCookieService, tokenValidityInSecondsForPasskey);
     }
 }

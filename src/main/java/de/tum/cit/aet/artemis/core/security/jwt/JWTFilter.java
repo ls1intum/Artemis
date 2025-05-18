@@ -18,7 +18,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.GenericFilterBean;
 import org.springframework.web.util.WebUtils;
@@ -38,14 +37,11 @@ public class JWTFilter extends GenericFilterBean {
 
     private final JWTCookieService jwtCookieService;
 
-    private final UserDetailsService userDetailsService;
-
     private final long tokenValidityInSecondsForPasskey;
 
-    public JWTFilter(TokenProvider tokenProvider, JWTCookieService jwtCookieService, UserDetailsService userDetailsService, long tokenValidityInSecondsForPasskey) {
+    public JWTFilter(TokenProvider tokenProvider, JWTCookieService jwtCookieService, long tokenValidityInSecondsForPasskey) {
         this.tokenProvider = tokenProvider;
         this.jwtCookieService = jwtCookieService;
-        this.userDetailsService = userDetailsService;
         this.tokenValidityInSecondsForPasskey = tokenValidityInSecondsForPasskey;
     }
 
@@ -63,12 +59,6 @@ public class JWTFilter extends GenericFilterBean {
             long newTokenExpirationTimeInMilliseconds = Math.min(nowInMilliseconds + tokenValidityInMilliseconds,
                     issuedAt.getTime() + Math.multiplyExact(this.tokenValidityInSecondsForPasskey, 1000));
             long rotatedTokenDurationInMilliseconds = newTokenExpirationTimeInMilliseconds - nowInMilliseconds;
-
-            // TODO verify that we want to have this check here
-            // UserDetails updatedUserDetails = userDetailsService.loadUserByUsername(authentication.getName());
-            // if (!updatedUserDetails.equals(authentication.getPrincipal())) {
-            // throw new NotAuthorizedException("User details have changed, cannot rotate token");
-            // }
 
             String rotatedToken = this.tokenProvider.createToken(authentication, issuedAt, new Date(newTokenExpirationTimeInMilliseconds), this.tokenProvider.getTools(jwtToken),
                     true);
@@ -173,9 +163,9 @@ public class JWTFilter extends GenericFilterBean {
     /**
      * Checks if the jwt is valid
      *
-     * @param tokenProvider the Artemis token provider used to generate and validate jwt's
-     * @param jwtToken      the jwt token which should be validated
-     * @param source        the source of the jwt token
+     * @param tokenProvider used to generate and validate jwt's
+     * @param jwtToken      which should be validated
+     * @param source        of the jwt token
      * @return true if the jwt is valid, false if missing or invalid
      */
     private static boolean isJwtValid(TokenProvider tokenProvider, @Nullable String jwtToken, @Nullable String source) {
