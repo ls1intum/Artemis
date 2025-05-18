@@ -36,7 +36,7 @@ describe('CompetencySearchComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(WrapperComponent);
                 component = fixture.componentInstance;
-                competencySearchComponent = getComponentInstanceFromFixture(fixture, 'jhi-competency-search') as CompetencySearchComponent;
+                competencySearchComponent = getComponentInstanceFromFixture(fixture, CompetencySearchComponent);
 
                 component.search = {
                     title: '',

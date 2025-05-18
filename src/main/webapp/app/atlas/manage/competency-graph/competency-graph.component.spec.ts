@@ -54,7 +54,7 @@ describe('CompetencyGraphComponent', () => {
 
         fixture = TestBed.createComponent(WrapperComponent);
         component = fixture.componentInstance;
-        graphComponent = getComponentInstanceFromFixture(fixture, 'jhi-competency-graph') as CompetencyGraphComponent;
+        graphComponent = getComponentInstanceFromFixture(fixture, CompetencyGraphComponent);
 
         component.competencyGraph = competencyGraph;
 

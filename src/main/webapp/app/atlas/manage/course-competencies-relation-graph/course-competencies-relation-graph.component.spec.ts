@@ -87,7 +87,7 @@ describe('CourseCompetenciesRelationGraphComponent', () => {
 
         fixture = TestBed.createComponent(WrapperComponent);
         component = fixture.componentInstance;
-        courseCompetenciesRelationGraphComponent = getComponentInstanceFromFixture(fixture, 'jhi-course-competencies-relation-graph') as CourseCompetenciesRelationGraphComponent;
+        courseCompetenciesRelationGraphComponent = getComponentInstanceFromFixture(fixture, CourseCompetenciesRelationGraphComponent);
 
         component.courseCompetencies = courseCompetencies;
         component.relations = relations;

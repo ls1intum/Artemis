@@ -36,7 +36,7 @@ describe('CompetencyNodeComponent', () => {
 
         fixture = TestBed.createComponent(WrapperComponent);
         component = fixture.componentInstance;
-        competencyNodeComponent = getComponentInstanceFromFixture(fixture, 'jhi-learning-path-competency-node') as CompetencyNodeComponent;
+        competencyNodeComponent = getComponentInstanceFromFixture(fixture, CompetencyNodeComponent);
 
         component.competencyNode = competencyNode;
 

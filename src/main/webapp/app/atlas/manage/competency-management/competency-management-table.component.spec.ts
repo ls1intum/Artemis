@@ -69,7 +69,7 @@ describe('CompetencyManagementTableComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(WrappedComponent);
                 component = fixture.componentInstance;
-                competencyManagementTableComponent = getComponentInstanceFromFixture(fixture, 'jhi-competency-management-table') as CompetencyManagementTableComponent;
+                competencyManagementTableComponent = getComponentInstanceFromFixture(fixture, CompetencyManagementTableComponent);
 
                 competencyService = TestBed.inject(CompetencyService);
                 prerequisiteService = TestBed.inject(PrerequisiteService);

@@ -62,7 +62,7 @@ describe('CompetencyFormComponent', () => {
         });
         fixture = TestBed.createComponent(WrappedComponent);
         component = fixture.componentInstance;
-        competencyFormComponent = getComponentInstanceFromFixture(fixture, 'jhi-competency-form') as CompetencyFormComponent;
+        competencyFormComponent = getComponentInstanceFromFixture(fixture, CompetencyFormComponent);
 
         translateService = TestBed.inject(TranslateService);
 

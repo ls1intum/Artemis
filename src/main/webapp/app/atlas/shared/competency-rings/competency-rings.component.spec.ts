@@ -35,7 +35,7 @@ describe('CompetencyRings', () => {
             .then(() => {
                 fixture = TestBed.createComponent(WrapperComponent);
                 component = fixture.componentInstance;
-                competencyRingsComponent = getComponentInstanceFromFixture(fixture, 'jhi-competency-rings') as CompetencyRingsComponent;
+                competencyRingsComponent = getComponentInstanceFromFixture(fixture, CompetencyRingsComponent);
 
                 component.progress = 110;
                 component.mastery = -10;

@@ -93,7 +93,7 @@ describe('CourseCompetencyRelationFormComponent', () => {
 
         fixture = TestBed.createComponent(WrapperComponent);
         component = fixture.componentInstance;
-        courseCompetencyRelationFormComponent = getComponentInstanceFromFixture(fixture, 'jhi-course-competency-relation-form') as CourseCompetencyRelationFormComponent;
+        courseCompetencyRelationFormComponent = getComponentInstanceFromFixture(fixture, CourseCompetencyRelationFormComponent);
 
         component.courseId = courseId;
         component.courseCompetencies = courseCompetencies;
