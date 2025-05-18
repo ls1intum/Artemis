@@ -13,7 +13,7 @@ import { QuizExercisePagingService } from 'app/quiz/manage/service/quiz-exercise
 import { ExerciseImportComponent } from 'app/exercise/import/exercise-import.component';
 import { PagingService } from 'app/exercise/services/paging.service';
 import { TextExercisePagingService } from 'app/text/manage/text-exercise/service/text-exercise-paging.service';
-import { ButtonComponent } from 'app/shared/components/button/button.component';
+import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ExerciseCourseTitlePipe } from 'app/shared/pipes/exercise-course-title.pipe';
 import { SortService } from 'app/shared/service/sort.service';

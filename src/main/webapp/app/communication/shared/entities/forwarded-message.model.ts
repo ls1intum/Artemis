@@ -12,6 +12,11 @@ export interface ForwardedMessageDTO {
     content?: string;
 }
 
+export interface ForwardedMessagesGroupDTO {
+    id?: number;
+    messages: ForwardedMessageDTO[];
+}
+
 export class ForwardedMessage implements BaseEntity {
     public id?: number;
     public sourceId?: number;
