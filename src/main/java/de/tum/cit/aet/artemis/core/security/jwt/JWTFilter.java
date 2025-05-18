@@ -46,27 +46,29 @@ public class JWTFilter extends GenericFilterBean {
     }
 
     /**
-     * Renews the JWT token if its remaining lifetime is below 50% of its validity period.
+     * Renews the JWT token if its remaining lifetime is less than 50% of its total validity period.
      *
-     * <h5>Rolling Token Mechanism</h3>
+     * <h5>Rolling Token Mechanism</h5>
      * <ul>
-     * <li><b>Maximum Lifetime:</b> Configurable via
+     * <li><b>Maximum Lifetime:</b> The token's maximum lifetime is configurable via the property
      * <code>artemis.user-management.passkey.token-validity-in-seconds-for-passkey</code>.</li>
-     * <li><b>Token Renewal:</b> Renewed if the remaining lifetime is below 50%, up to the maximum lifetime (default 180 days). The lifetime has a maximum of
-     * <code>jhipster.security.authentication.jwt.token-validity-in-seconds-for-remember-me</code> (default 30 days).</li>
-     * <li><b>IssuedAt (iat) Timestamp:</b> Remains unchanged during renewal.</li>
-     * <li><b>Automatic Logout:</b> Users inactive for
+     * <li><b>Token Renewal:</b> The token is renewed if its remaining lifetime is below 50% of its validity period,
+     * but only up to the maximum lifetime (default: 180 days). The lifetime of a renewed token is capped at
+     * <code>jhipster.security.authentication.jwt.token-validity-in-seconds-for-remember-me</code> (default: 30 days).</li>
+     * <li><b>IssuedAt (iat) Timestamp:</b> The original "issued at" timestamp remains unchanged during renewal.</li>
+     * <li><b>Automatic Logout:</b> Users who are inactive for the duration of
      * <code>jhipster.security.authentication.jwt.token-validity-in-seconds-for-remember-me</code>
-     * (default: 30 days) are logged out.</li>
-     * <li><b>Extended Login:</b> Active users remain logged in for up to
+     * (default: 30 days) are automatically logged out.</li>
+     * <li><b>Extended Login:</b> Active users can remain logged in for up to the duration of
      * <code>artemis.user-management.passkey.token-validity-in-seconds-for-passkey</code>.</li>
-     * <li><b>Security:</b> Relies on secure cookie storage and HTTPS. No token revocation mechanism is in place.</li>
+     * <li><b>Security:</b> The mechanism relies on secure cookie storage and HTTPS. Note that no token revocation
+     * mechanism is implemented.</li>
      * </ul>
      *
-     * @param jwtToken       The current JWT token.
+     * @param jwtToken       The current JWT token to be evaluated for renewal.
      * @param authentication The authentication object associated with the token.
-     * @param response       The HTTP response to add the renewed token as a cookie.
-     * @throws NotAuthorizedException If the token cannot be renewed.
+     * @param response       The HTTP response where the renewed token will be added as a cookie.
+     * @throws NotAuthorizedException If the token cannot be renewed due to validation or other issues.
      */
     private void rotateTokenSilently(String jwtToken, Authentication authentication, HttpServletResponse response) throws NotAuthorizedException {
         Date issuedAt = this.tokenProvider.getIssuedAtDate(jwtToken);
