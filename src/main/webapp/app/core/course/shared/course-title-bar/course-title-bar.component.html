@@ -26,8 +26,8 @@
         }
 
         <div class="align-self-center">
-            @if (customTitleTpl()) {
-                <ng-container *ngTemplateOutlet="customTitleTpl()!" />
+            @if (customTitleTemplate()) {
+                <ng-container *ngTemplateOutlet="customTitleTemplate()!" />
             } @else {
                 <div class="h5 mb-0" [jhiTranslate]="pageTitle()"></div>
             }
@@ -35,8 +35,8 @@
     </div>
 
     <div class="d-flex gap-2 align-items-center">
-        @if (customActionsTpl()) {
-            <ng-container *ngTemplateOutlet="customActionsTpl()!" />
+        @if (customActionsTemplate()) {
+            <ng-container *ngTemplateOutlet="customActionsTemplate()!" />
         }
         <ng-content />
     </div>
