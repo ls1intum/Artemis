@@ -673,13 +673,13 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
                 null, HttpStatus.FORBIDDEN);
     }
 
-    @Disabled // TODO enable
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void checkResetRepository_participationLocked_forbidden() throws Exception {
         ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = participationUtilService
                 .addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
-        // TODO: make sure to activate one condition in which the participation would be locked, see ParticipationAuthorizationService#isLocked
+        programmingExerciseStudentParticipation.setIndividualDueDate(ZonedDateTime.now().minusDays(1));
+        studentParticipationRepository.save(programmingExerciseStudentParticipation);
 
         request.put("/api/programming/programming-exercise-participations/" + programmingExerciseStudentParticipation.getId() + "/reset-repository", null, HttpStatus.FORBIDDEN);
     }
