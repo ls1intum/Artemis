@@ -2,7 +2,9 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { CardWrapperComponent } from './card-wrapper.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { MockDirective } from 'ng-mocks';
+import { MockJhiTranslateDirective } from 'test/helpers/mocks/directive/mock-jhi-translate-directive.directive';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('CardWrapperComponent', () => {
     let component: CardWrapperComponent;
@@ -10,7 +12,17 @@ describe('CardWrapperComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [CardWrapperComponent, MockDirective(TranslateDirective)],
+            imports: [CardWrapperComponent],
+            providers: [
+                {
+                    provide: TranslateDirective,
+                    useClass: MockJhiTranslateDirective,
+                },
+                {
+                    provide: TranslateService,
+                    useClass: MockTranslateService,
+                },
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(CardWrapperComponent);
@@ -26,7 +38,7 @@ describe('CardWrapperComponent', () => {
 
         const cardHeaderElement = fixture.debugElement.query(By.css('.card-header'));
         expect(cardHeaderElement).toBeTruthy();
-        const titleH5Element = cardHeaderElement.query(By.css('h5'));
+        const titleH5Element = fixture.debugElement.query(By.css('h5'));
         expect(titleH5Element).toBeTruthy();
         expect(titleH5Element.nativeElement.textContent).toBe('test.title.key');
     });
