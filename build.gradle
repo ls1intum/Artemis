@@ -342,6 +342,9 @@ dependencies {
     implementation "org.springframework.security:spring-security-messaging:${spring_security_version}"
     implementation "org.springframework.security:spring-security-ldap:${spring_security_version}"
 
+    // Helios push-based status updates
+    implementation "io.github.egekocabas:helios-status-spring-starter:${helios_status_version}"
+
     constraints {
         implementation "org.opensaml:opensaml-core:${opensaml_version}"
         implementation "org.opensaml:opensaml-saml-api:${opensaml_version}"
