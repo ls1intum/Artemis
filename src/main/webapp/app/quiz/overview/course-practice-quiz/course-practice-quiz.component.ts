@@ -1,5 +1,5 @@
 import { Component, Input, OnInit, inject } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import { CoursePracticeQuizService } from 'app/quiz/overview/course-practice-quiz/course-practice-quiz.service';
 import { MultipleChoiceQuestionComponent } from 'app/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
@@ -23,6 +23,7 @@ export class CoursePracticeQuizComponent implements OnInit {
     readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
 
     private route = inject(ActivatedRoute);
+    private router = inject(Router);
     private quizService = inject(CoursePracticeQuizService);
 
     courseId: number;
@@ -56,5 +57,9 @@ export class CoursePracticeQuizComponent implements OnInit {
 
     get currentQuestion(): QuizQuestion {
         return this.questions[this.currentIndex];
+    }
+
+    navigateToPractice(): void {
+        this.router.navigate(['courses', this.courseId, 'practice']);
     }
 }
