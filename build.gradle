@@ -279,6 +279,7 @@ dependencies {
     runtimeOnly "com.hazelcast:hazelcast-hibernate53:5.2.0"
 
     implementation "org.hibernate.orm:hibernate-core:${hibernate_version}"
+    implementation "org.hibernate.orm:hibernate-envers:${hibernate_version}"
 
     // Required for jdbc connection pooling to databases
     implementation "com.zaxxer:HikariCP:6.3.0"
@@ -396,7 +397,8 @@ dependencies {
     implementation("net.bytebuddy:byte-buddy-agent") { version {        strictly byte_buddy_version } }
     annotationProcessor("net.bytebuddy:byte-buddy-agent") { version {   strictly byte_buddy_version } }
 
-    annotationProcessor "org.hibernate:hibernate-jpamodelgen:${hibernate_version}"
+    annotationProcessor "org.hibernate.orm:hibernate-jpamodelgen:${hibernate_version}"
+    annotationProcessor "org.hibernate.orm:hibernate-core:${hibernate_version}"
     annotationProcessor "org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}"
     annotationProcessor "org.springframework.boot:spring-boot-configuration-processor:${spring_boot_version}"
 
