@@ -365,3 +365,14 @@ eureka:
             git-version: ${git.commit.id.describe:}
             git-commit: ${git.commit.id.abbrev:}
             git-branch: ${git.branch:}
+
+# Helios configuration
+helios:
+  status:
+    enabled: true
+    environment-name: ${HELIOS_ENVIRONMENT_NAME:}
+    endpoints:
+        - url: https://helios.aet.cit.tum.de/api/environments/status
+          secretKey: ${HELIOS_PROD_SECRET_KEY:}
+        - url: https://helios-staging.aet.cit.tum.de/api/environments/status
+          secretKey: ${HELIOS_STAGING_SECRET_KEY:}
