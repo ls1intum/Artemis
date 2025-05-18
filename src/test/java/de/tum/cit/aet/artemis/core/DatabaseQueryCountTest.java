@@ -13,7 +13,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.CoursesForDashboardDTO;
-import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
@@ -34,9 +33,6 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private LectureUtilService lectureUtilService;
-
-    @Autowired
-    private FeatureToggleService featureToggleService;
 
     private static final int NUMBER_OF_TUTORS = 1;
 

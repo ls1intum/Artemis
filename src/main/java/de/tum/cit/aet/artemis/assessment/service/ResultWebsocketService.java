@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.assessment.web;
+package de.tum.cit.aet.artemis.assessment.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.EXERCISE_TOPIC_ROOT;
 import static de.tum.cit.aet.artemis.core.config.Constants.NEW_RESULT_TOPIC;

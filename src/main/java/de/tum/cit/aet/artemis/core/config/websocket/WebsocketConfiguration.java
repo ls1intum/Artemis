@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.core.config.websocket;
 
-import static de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService.getExerciseIdFromNonPersonalExerciseResultDestination;
-import static de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService.isNonPersonalExerciseResultDestination;
+import static de.tum.cit.aet.artemis.assessment.service.ResultWebsocketService.getExerciseIdFromNonPersonalExerciseResultDestination;
+import static de.tum.cit.aet.artemis.assessment.service.ResultWebsocketService.isNonPersonalExerciseResultDestination;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.exercise.web.ParticipationTeamWebsocketService.getParticipationIdFromDestination;
 import static de.tum.cit.aet.artemis.exercise.web.ParticipationTeamWebsocketService.isParticipationTeamDestination;

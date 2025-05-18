@@ -7,7 +7,6 @@ import org.eclipse.jgit.transport.ReceivePack;
 import org.eclipse.jgit.transport.UploadPack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -26,10 +25,16 @@ public class ArtemisGitServletService extends GitServlet {
 
     private static final Logger log = LoggerFactory.getLogger(ArtemisGitServletService.class);
 
-    // NOTE: we use @Autowired here to make sure that injection is done lazily to avoid slow startup times
-    @Autowired // ok
-    @Lazy
-    private LocalVCServletService localVCServletService;
+    private final LocalVCServletService localVCServletService;
+
+    /**
+     * Constructor for ArtemisGitServlet.
+     *
+     * @param localVCServletService the service for authenticating and authorizing users and retrieving the repository from disk
+     */
+    public ArtemisGitServletService(LocalVCServletService localVCServletService) {
+        this.localVCServletService = localVCServletService;
+    }
 
     /**
      * Initialize the ArtemisGitServlet by setting the repository resolver and adding filters for fetch and push requests.

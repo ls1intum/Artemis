@@ -35,6 +35,7 @@ import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.lang.ConditionEvents;
 import com.tngtech.archunit.lang.SimpleConditionEvent;
 
+import de.tum.cit.aet.artemis.core.ldap.LdapUserRepository;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.core.repository.base.RepositoryImpl;
 import de.tum.cit.aet.artemis.shared.architecture.AbstractArchitectureTest;
@@ -61,8 +62,10 @@ public abstract class AbstractModuleRepositoryArchitectureTest extends AbstractA
     void shouldBeInRepositoryPackage() {
         ArchRule rule = classesOfThisModuleThat().areAnnotatedWith(Repository.class).should().resideInAPackage("..repository..")
                 .because("repositories should be in the package 'repository'.");
+        final var exceptions = new Class[] { LdapUserRepository.class };
         // allow empty should since some modules do not have repositories
-        rule.allowEmptyShould(true).check(productionClasses);
+        final var classes = classesExcept(productionClasses, exceptions);
+        rule.allowEmptyShould(true).check(classes);
     }
 
     @Test

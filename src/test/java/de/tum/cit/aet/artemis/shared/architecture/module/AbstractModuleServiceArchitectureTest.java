@@ -15,14 +15,11 @@ import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.lang.ConditionEvents;
 
-import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
 import de.tum.cit.aet.artemis.core.config.migration.MigrationService;
+import de.tum.cit.aet.artemis.core.ldap.LdapUserService;
 import de.tum.cit.aet.artemis.core.management.SecurityMetersService;
 import de.tum.cit.aet.artemis.core.security.DomainUserDetailsService;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
-import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
-import de.tum.cit.aet.artemis.programming.service.GitDiffReportParserService;
-import de.tum.cit.aet.artemis.programming.service.localci.LocalCIWebsocketMessagingService;
 import de.tum.cit.aet.artemis.shared.architecture.AbstractArchitectureTest;
 
 public abstract class AbstractModuleServiceArchitectureTest extends AbstractArchitectureTest implements ModuleArchitectureTest {
@@ -37,8 +34,7 @@ public abstract class AbstractModuleServiceArchitectureTest extends AbstractArch
     @Test
     void shouldBeInServicePackage() {
         ArchRule rule = classesOfThisModuleThat().areAnnotatedWith(Service.class).should().resideInAPackage("..service..").because("services should be in the package 'service'.");
-        final var exceptions = new Class[] { MigrationService.class, SecurityMetersService.class, DomainUserDetailsService.class, OAuth2JWKSService.class, JWTCookieService.class,
-                GitDiffReportParserService.class, ResultWebsocketService.class, LocalCIWebsocketMessagingService.class };
+        final var exceptions = new Class[] { MigrationService.class, SecurityMetersService.class, DomainUserDetailsService.class, JWTCookieService.class, LdapUserService.class };
         final var classes = classesExcept(productionClasses, exceptions);
         rule.check(classes);
     }

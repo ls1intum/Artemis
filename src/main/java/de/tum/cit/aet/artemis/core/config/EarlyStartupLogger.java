@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.core.config;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
@@ -10,6 +12,7 @@ import org.springframework.boot.info.BuildProperties;
 import org.springframework.boot.info.GitProperties;
 import org.springframework.boot.web.context.WebServerInitializedEvent;
 import org.springframework.context.ApplicationListener;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
@@ -17,6 +20,7 @@ import de.tum.cit.aet.artemis.ArtemisApp;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 
 @Component
+@Profile(PROFILE_CORE)
 public class EarlyStartupLogger implements ApplicationListener<WebServerInitializedEvent> {
 
     private static final Logger log = LoggerFactory.getLogger(EarlyStartupLogger.class);
