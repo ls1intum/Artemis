@@ -10,6 +10,6 @@ export class CoursePracticeQuizService {
     private http = inject(HttpClient);
 
     getQuizQuestions(courseId: number): Observable<QuizQuestion[]> {
-        return this.http.get<QuizQuestion[]>('api/quiz/courses/{courseId}/practice-quiz');
+        return this.http.get<QuizQuestion[]>('api/quiz/courses/{courseId}/quiz');
     }
 }
