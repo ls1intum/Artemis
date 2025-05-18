@@ -113,7 +113,7 @@ public class ProgrammingExerciseGradingService {
 
     private final FeedbackService feedbackService;
 
-    private final LocalVCGitBranchService localVCGitBranchService;
+    private final Optional<LocalVCGitBranchService> localVCGitBranchService;
 
     public ProgrammingExerciseGradingService(StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
             Optional<ContinuousIntegrationResultService> continuousIntegrationResultService, ProgrammingExerciseTestCaseRepository testCaseRepository,
@@ -122,7 +122,7 @@ public class ProgrammingExerciseGradingService {
             AuditEventRepository auditEventRepository, GroupNotificationService groupNotificationService, ResultService resultService, ExerciseDateService exerciseDateService,
             SubmissionPolicyService submissionPolicyService, ProgrammingExerciseRepository programmingExerciseRepository, BuildLogEntryService buildLogService,
             StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository, ProgrammingExerciseFeedbackCreationService feedbackCreationService,
-            FeedbackService feedbackService, LocalVCGitBranchService localVCGitBranchService) {
+            FeedbackService feedbackService, Optional<LocalVCGitBranchService> localVCGitBranchService) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.continuousIntegrationResultService = continuousIntegrationResultService;
         this.resultRepository = resultRepository;
@@ -220,10 +220,10 @@ public class ProgrammingExerciseGradingService {
         if (!ObjectUtils.isEmpty(branchName)) {
             String participationDefaultBranch = null;
             if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
-                participationDefaultBranch = localVCGitBranchService.getOrRetrieveBranchOfParticipation(studentParticipation);
+                participationDefaultBranch = localVCGitBranchService.orElseThrow().getOrRetrieveBranchOfParticipation(studentParticipation);
             }
             if (StringUtils.isEmpty(participationDefaultBranch)) {
-                participationDefaultBranch = localVCGitBranchService.getOrRetrieveBranchOfExercise(participation.getProgrammingExercise());
+                participationDefaultBranch = localVCGitBranchService.orElseThrow().getOrRetrieveBranchOfExercise(participation.getProgrammingExercise());
             }
 
             if (!Objects.equals(branchName, participationDefaultBranch)) {

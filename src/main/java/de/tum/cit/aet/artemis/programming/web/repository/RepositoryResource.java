@@ -33,7 +33,6 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.programming.domain.File;
 import de.tum.cit.aet.artemis.programming.domain.FileType;
@@ -57,10 +56,6 @@ public abstract class RepositoryResource {
 
     protected final Logger log = LoggerFactory.getLogger(getClass());
 
-    private final ProfileService profileService;
-
-    protected final AuthorizationCheckService authCheckService;
-
     protected final GitService gitService;
 
     protected final UserRepository userRepository;
@@ -71,14 +66,16 @@ public abstract class RepositoryResource {
 
     protected final RepositoryAccessService repositoryAccessService;
 
-    private final LocalVCServletService localVCServletService;
+    private final ProfileService profileService;
 
-    public RepositoryResource(ProfileService profileService, UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService,
-            RepositoryService repositoryService, ProgrammingExerciseRepository programmingExerciseRepository, RepositoryAccessService repositoryAccessService,
-            LocalVCServletService localVCServletService) {
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+    private final Optional<LocalVCServletService> localVCServletService;
+
+    public RepositoryResource(ProfileService profileService, UserRepository userRepository, GitService gitService, RepositoryService repositoryService,
+            ProgrammingExerciseRepository programmingExerciseRepository, RepositoryAccessService repositoryAccessService,
+            @SuppressWarnings("OptionalUsedAsFieldOrParameterType") Optional<LocalVCServletService> localVCServletService) {
         this.profileService = profileService;
         this.userRepository = userRepository;
-        this.authCheckService = authCheckService;
         this.gitService = gitService;
         this.repositoryService = repositoryService;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -284,7 +281,7 @@ public abstract class RepositoryResource {
             // For Jenkins, webhooks were added when creating the repository,
             // that notify the CI system when the commit happens and thus trigger the build.
             if (profileService.isLocalCIActive()) {
-                localVCServletService.processNewPush(null, repository, Optional.empty(), Optional.empty(), vcsAccessLog);
+                localVCServletService.orElseThrow().processNewPush(null, repository, Optional.empty(), Optional.empty(), vcsAccessLog);
             }
             return new ResponseEntity<>(HttpStatus.OK);
         });

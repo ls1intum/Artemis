@@ -13,12 +13,10 @@ import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.EventListener;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
@@ -126,7 +124,6 @@ public class SecurityConfiguration {
      *
      * @throws IllegalStateException if the server URL configuration is invalid
      */
-    @EventListener(ApplicationReadyEvent.class)
     public void validatePasskeyAllowedOriginConfiguration() {
         if (passkeyEnabled) {
             try {
@@ -323,6 +320,7 @@ public class SecurityConfiguration {
             //.httpBasic(Customizer.withDefaults());
 
         if (passkeyEnabled) {
+            validatePasskeyAllowedOriginConfiguration();
             WebAuthnConfigurer<HttpSecurity> webAuthnConfigurer = new ArtemisWebAuthnConfigurer<>(
                 converter,
                 jwtCookieService,

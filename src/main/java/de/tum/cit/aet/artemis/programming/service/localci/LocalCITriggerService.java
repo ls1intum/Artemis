@@ -85,7 +85,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     private final LocalCIProgrammingLanguageFeatureService programmingLanguageFeatureService;
 
-    private final LocalVCGitBranchService localVCGitBranchService;
+    private final Optional<LocalVCGitBranchService> localVCGitBranchService;
 
     private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
@@ -110,7 +110,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     public LocalCITriggerService(DistributedDataAccessService distributedDataAccessService, AeolusTemplateService aeolusTemplateService,
             ProgrammingLanguageConfiguration programmingLanguageConfiguration, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
-            LocalCIProgrammingLanguageFeatureService programmingLanguageFeatureService, LocalVCGitBranchService localVCGitBranchService,
+            LocalCIProgrammingLanguageFeatureService programmingLanguageFeatureService, Optional<LocalVCGitBranchService> localVCGitBranchService,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             LocalCIBuildConfigurationService localCIBuildConfigurationService, GitService gitService, ExerciseDateService exerciseDateService,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, BuildScriptProviderService buildScriptProviderService,
@@ -298,7 +298,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
             ProgrammingExerciseBuildConfig buildConfig) {
         String branch;
         try {
-            branch = localVCGitBranchService.getOrRetrieveBranchOfParticipation(participation);
+            branch = localVCGitBranchService.orElseThrow().getOrRetrieveBranchOfParticipation(participation);
         }
         catch (LocalVCInternalException e) {
             throw new LocalCIException("Error while getting branch of participation", e);

@@ -36,7 +36,7 @@ public class RepositoryParticipationService {
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    private final LocalVCGitBranchService localVCGitBranchService;
+    private final Optional<LocalVCGitBranchService> localVCGitBranchService;
 
     private final Optional<PlagiarismApi> plagiarismApi;
 
@@ -48,7 +48,7 @@ public class RepositoryParticipationService {
      * @param userRepository          the user repository
      */
     public RepositoryParticipationService(ParticipationRepository participationRepository, GitService gitService, UserRepository userRepository,
-            AuthorizationCheckService authorizationCheckService, LocalVCGitBranchService localVCGitBranchService, Optional<PlagiarismApi> plagiarismApi) {
+            AuthorizationCheckService authorizationCheckService, Optional<LocalVCGitBranchService> localVCGitBranchService, Optional<PlagiarismApi> plagiarismApi) {
         this.participationRepository = participationRepository;
         this.gitService = gitService;
         this.userRepository = userRepository;
@@ -113,7 +113,7 @@ public class RepositoryParticipationService {
             return gitService.getOrCheckoutRepository(repositoryUri, pullOnGet);
         }
         else {
-            String branch = localVCGitBranchService.getOrRetrieveBranchOfParticipation(programmingParticipation);
+            String branch = localVCGitBranchService.orElseThrow().getOrRetrieveBranchOfParticipation(programmingParticipation);
             return gitService.getOrCheckoutRepository(repositoryUri, pullOnGet, branch);
         }
     }
