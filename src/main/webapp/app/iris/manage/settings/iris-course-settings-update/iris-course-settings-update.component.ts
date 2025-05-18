@@ -4,11 +4,13 @@ import { IrisSettingsType } from 'app/iris/shared/entities/settings/iris-setting
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { IrisSettingsUpdateComponent } from 'app/iris/manage/settings/iris-settings-update/iris-settings-update.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { CourseTitleBarTitleComponent } from 'app/core/course/shared/course-title-bar-title/course-title-bar-title.component';
+import { CourseTitleBarTitleDirective } from 'app/core/course/shared/directives/course-title-bar-title.directive';
 
 @Component({
     selector: 'jhi-iris-course-settings-update',
     templateUrl: './iris-course-settings-update.component.html',
-    imports: [TranslateDirective, IrisSettingsUpdateComponent],
+    imports: [TranslateDirective, IrisSettingsUpdateComponent, CourseTitleBarTitleComponent, CourseTitleBarTitleDirective],
 })
 export class IrisCourseSettingsUpdateComponent implements OnInit, ComponentCanDeactivate {
     private route = inject(ActivatedRoute);
