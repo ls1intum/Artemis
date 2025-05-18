@@ -82,7 +82,10 @@
         "uuid": "11.1.0",
         "webstomp-client": "1.2.6",
         "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz",
-        "zone.js": "0.15.0"
+        "zone.js": "0.15.0",
+
+        "@apollon2/library": "file:../Apollon2/library/"
+
     },
     "overrides": {
         "@babel/runtime": "7.27.1",

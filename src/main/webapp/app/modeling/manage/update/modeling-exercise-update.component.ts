@@ -20,8 +20,8 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
 import { onError } from 'app/shared/util/global.utils';
 import { EditType, SaveExerciseCommand } from 'app/exercise/util/exercise.utils';
-import { UMLDiagramType, UMLModel } from '@ls1intum/apollon';
-import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
+import { UMLDiagramType, UMLModel } from '@apollon2/library';
+import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor-2/modeling-editor.component';
 import { AlertService } from 'app/shared/service/alert.service';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
@@ -225,7 +225,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     }
 
     async calculateFormSectionStatus() {
-        await this.modelingEditor?.apollonEditor?.nextRender;
+        // await this.modelingEditor?.apollonEditor?.nextRender;
         this.formSectionStatus = [
             {
                 title: 'artemisApp.exercise.sections.general',
@@ -237,7 +237,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
                 title: 'artemisApp.exercise.sections.solution',
                 valid: Boolean(this.isExamMode || (!this.modelingExercise.exampleSolutionPublicationDateError && this.solutionPublicationDateField?.dateInput.valid)),
                 empty:
-                    isEmpty(this.modelingEditor?.getCurrentModel()?.elements) ||
+                    isEmpty(this.modelingEditor?.getCurrentModel()?.nodes) ||
                     (!this.isExamMode && !this.modelingExercise.exampleSolutionPublicationDate) ||
                     !this.modelingExercise.exampleSolutionExplanation,
             },
