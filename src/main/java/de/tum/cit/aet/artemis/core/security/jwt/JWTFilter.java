@@ -45,6 +45,29 @@ public class JWTFilter extends GenericFilterBean {
         this.tokenValidityInSecondsForPasskey = tokenValidityInSecondsForPasskey;
     }
 
+    /**
+     * <p>
+     * Renews the JWT token if its remaining lifetime is below 50% of its validity period.
+     * </p>
+     *
+     * <h3>Rolling Token Mechanism</h3>
+     * <ul>
+     * <li><b>Maximum Lifetime:</b> Configurable via <code>artemis.user-management.passkey.token-validity-in-seconds-for-passkey</code>.</li>
+     * <li><b>Token Renewal:</b> Renewed if the remaining lifetime is below 50%, extending validity up to a maximum of 180 days (default).</li>
+     * <li><b>IssuedAt (iat) Timestamp:</b> Remains unchanged during renewal.</li>
+     * <li><b>Automatic Logout:</b> Users inactive for <code>jhipster.security.authentication.jwt.token-validity-in-seconds-for-remember-me</code> (default: 30 days) are logged
+     * out.</li>
+     * <li><b>Extended Login:</b> Active users (at least every 50% of token lifetime <code>jhipster.security.authentication.jwt.token-validity-in-seconds-for-remember-me</code>,
+     * default active every 15 days) remain logged in for up to <code>artemis.user-management.passkey.token-validity-in-seconds-for-passkey</code>.</li>
+     * <li><b>Security:</b> Relies on secure cookie storage and HTTPS. No token revocation mechanism is in place. No Check for changes in Roles on renewal
+     * (would not affect rules lesser than Admin, as they are checked on course level in the resources)</li>
+     * </ul>
+     *
+     * @param jwtToken       the current JWT token
+     * @param authentication the authentication object associated with the token
+     * @param response       the HTTP response to add the renewed token as a cookie
+     * @throws NotAuthorizedException if the token cannot be renewed
+     */
     private void rotateTokenSilently(String jwtToken, Authentication authentication, HttpServletResponse response) throws NotAuthorizedException {
         Date issuedAt = this.tokenProvider.getIssuedAtDate(jwtToken);
         Date expirationDate = this.tokenProvider.getExpirationDate(jwtToken);
