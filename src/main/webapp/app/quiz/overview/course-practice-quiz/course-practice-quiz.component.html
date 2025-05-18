@@ -1,1 +1,12 @@
-<p>course-practice-quiz works!</p>
+<div>
+    @if (currentQuestion.type === MULTIPLE_CHOICE) {
+        <jhi-multiple-choice-question [question]="currentQuestion" [selectedAnswerOptions]="selectedAnswerOptions.get(currentQuestion.id!) || []" />
+    }
+    @if (currentQuestion.type === SHORT_ANSWER) {
+        <jhi-short-answer-question [question]="currentQuestion" [submittedTexts]="shortAnswerSubmittedTexts.get(currentQuestion.id!) || []" />
+    }
+    @if (currentQuestion.type === DRAG_AND_DROP) {
+        <jhi-drag-and-drop-question [question]="currentQuestion" [mappings]="dragAndDropMappings.get(currentQuestion.id!) || []" />
+    }
+    <button (click)="nextQuestion()">Next Question</button>
+</div>

@@ -9,7 +9,7 @@ import { QuizQuestion } from 'app/quiz/shared/entities/quiz-question.model';
 export class CoursePracticeQuizService {
     private http = inject(HttpClient);
 
-    getQuizQuestions(): Observable<QuizQuestion[]> {
+    getQuizQuestions(courseId: number): Observable<QuizQuestion[]> {
         return this.http.get<QuizQuestion[]>('api/quiz/courses/{courseId}/practice-quiz');
     }
 }
