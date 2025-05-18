@@ -14,7 +14,7 @@ import { ASC, DESC, ITEMS_PER_PAGE, SORT } from 'app/shared/constants/pagination
 import { faEye, faFilter, faPlus, faSort, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { LocalStorageService } from 'ngx-webstorage';
 import { NgbHighlight, NgbModal, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
-import { ButtonSize, ButtonType } from 'app/shared/components/button/button.component';
+import { ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AdminUserService } from 'app/core/user/shared/admin-user.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

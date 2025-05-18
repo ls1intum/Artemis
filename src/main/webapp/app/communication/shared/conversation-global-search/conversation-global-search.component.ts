@@ -13,7 +13,7 @@ import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-pict
 import { addPublicFilePrefix } from 'app/app.constants';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
-import { ButtonComponent, ButtonType } from 'app/shared/components/button/button.component';
+import { ButtonComponent, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AccountService } from 'app/core/auth/account.service';
 

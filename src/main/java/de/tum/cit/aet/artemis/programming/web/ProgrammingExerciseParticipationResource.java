@@ -59,6 +59,7 @@ import de.tum.cit.aet.artemis.programming.repository.VcsAccessLogRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
+import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.programming.service.localci.SharedQueueManagementService;
 
 @Profile(PROFILE_CORE)
@@ -100,12 +101,15 @@ public class ProgrammingExerciseParticipationResource {
 
     private final Optional<ExamApi> examApi;
 
+    private final Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService;
+
     public ProgrammingExerciseParticipationResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ResultRepository resultRepository,
             ParticipationRepository participationRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             ProgrammingSubmissionService submissionService, ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
             ResultService resultService, ParticipationAuthorizationCheckService participationAuthCheckService, RepositoryService repositoryService,
             Optional<StudentExamApi> studentExamApi, Optional<VcsAccessLogRepository> vcsAccessLogRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
-            Optional<SharedQueueManagementService> sharedQueueManagementService, Optional<ExamApi> examApi) {
+            Optional<SharedQueueManagementService> sharedQueueManagementService, Optional<ExamApi> examApi,
+            Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService) {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -121,6 +125,7 @@ public class ProgrammingExerciseParticipationResource {
         this.vcsAccessLogRepository = vcsAccessLogRepository;
         this.sharedQueueManagementService = sharedQueueManagementService;
         this.examApi = examApi;
+        this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
     }
 
     /**
@@ -317,6 +322,10 @@ public class ProgrammingExerciseParticipationResource {
         }
 
         programmingExerciseParticipationService.resetRepository(participation.getVcsRepositoryUri(), sourceURL);
+        continuousIntegrationTriggerService
+                .orElseThrow(() -> new UnsupportedOperationException(
+                        "Cannot trigger build because neither the Jenkins nor the LocalCI profile are active. This is a misconfiguration if you want to use programming exercises"))
+                .triggerBuild(participation, true);
 
         return ResponseEntity.ok().build();
     }

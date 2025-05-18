@@ -90,6 +90,26 @@ import { FileService } from 'app/shared/service/file.service';
     ],
 })
 export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, AfterViewInit, QuizQuestionEdit {
+    protected readonly faBan = faBan;
+    protected readonly faPlus = faPlus;
+    protected readonly faTrash = faTrash;
+    protected readonly faUndo = faUndo;
+    protected readonly faFont = faFont;
+    protected readonly faEye = faEye;
+    protected readonly faChevronUp = faChevronUp;
+    protected readonly faChevronDown = faChevronDown;
+    protected readonly faPencilAlt = faPencilAlt;
+    protected readonly faBars = faBars;
+    protected readonly faUnlink = faUnlink;
+    protected readonly faCopy = faCopy;
+    protected readonly farFileImage = faFileImage;
+    protected readonly faAngleRight = faAngleRight;
+    protected readonly faAngleDown = faAngleDown;
+    protected readonly faUpload = faUpload;
+    protected readonly faScissors = faScissors;
+
+    readonly MAX_POINTS = MAX_QUIZ_QUESTION_POINTS;
+
     private dragAndDropQuestionUtil = inject(DragAndDropQuestionUtil);
     private modalService = inject(NgbModal);
     private changeDetector = inject(ChangeDetectorRef);
@@ -143,27 +163,6 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
     explanationAction = new QuizExplanationAction();
 
     dragAndDropDomainActions = [this.explanationAction, this.hintAction];
-
-    // Icons
-    faBan = faBan;
-    faPlus = faPlus;
-    faTrash = faTrash;
-    faUndo = faUndo;
-    faFont = faFont;
-    faEye = faEye;
-    faChevronUp = faChevronUp;
-    faChevronDown = faChevronDown;
-    faPencilAlt = faPencilAlt;
-    faBars = faBars;
-    faUnlink = faUnlink;
-    faCopy = faCopy;
-    farFileImage = faFileImage;
-    faAngleRight = faAngleRight;
-    faAngleDown = faAngleDown;
-    faUpload = faUpload;
-    faScissors = faScissors;
-
-    readonly MAX_POINTS = MAX_QUIZ_QUESTION_POINTS;
 
     /**
      * Actions when initializing component.

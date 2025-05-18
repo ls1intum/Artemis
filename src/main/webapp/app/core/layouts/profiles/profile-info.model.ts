@@ -146,7 +146,6 @@ export class ProfileInfo {
     public externalPasswordResetLinkMap: { [key: string]: string };
     public features: ActiveFeatureToggles;
     public git: Git;
-    public imprint: string;
     public java: Java;
     public needsToAcceptTerms?: boolean;
     public operatorAdminName: string;
