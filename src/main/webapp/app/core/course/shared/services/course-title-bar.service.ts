@@ -2,16 +2,16 @@ import { Injectable, Signal, TemplateRef, signal } from '@angular/core';
 
 @Injectable({ providedIn: 'root' })
 export class CourseTitleBarService {
-    private _titleTpl = signal<TemplateRef<any> | undefined>(undefined);
-    private _actionsTpl = signal<TemplateRef<any> | undefined>(undefined);
+    private _titleTemplate = signal<TemplateRef<any> | undefined>(undefined);
+    private _actionsTemplate = signal<TemplateRef<any> | undefined>(undefined);
 
-    readonly titleTpl: Signal<TemplateRef<any> | undefined> = this._titleTpl;
-    readonly actionsTpl: Signal<TemplateRef<any> | undefined> = this._actionsTpl;
+    readonly titleTemplate: Signal<TemplateRef<any> | undefined> = this._titleTemplate;
+    readonly actionsTemplate: Signal<TemplateRef<any> | undefined> = this._actionsTemplate;
 
-    setTitleTpl(tpl: TemplateRef<any> | undefined) {
-        this._titleTpl.set(tpl);
+    setTitleTemplate(template: TemplateRef<any> | undefined) {
+        this._titleTemplate.set(template);
     }
-    setActionsTpl(tpl: TemplateRef<any> | undefined) {
-        this._actionsTpl.set(tpl);
+    setActionsTemplate(template: TemplateRef<any> | undefined) {
+        this._actionsTemplate.set(template);
     }
 }

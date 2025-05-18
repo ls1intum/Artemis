@@ -10,13 +10,13 @@ export class CourseTitleBarTitleDirective implements OnDestroy {
     private courseTitleBarService: CourseTitleBarService = inject(CourseTitleBarService);
 
     constructor() {
-        this.courseTitleBarService.setTitleTpl(this.templateRef);
+        this.courseTitleBarService.setTitleTemplate(this.templateRef);
     }
 
     ngOnDestroy() {
         // Only clear the template if it's the one currently set by this directive instance
-        if (this.courseTitleBarService.titleTpl() === this.templateRef) {
-            this.courseTitleBarService.setTitleTpl(undefined);
+        if (this.courseTitleBarService.titleTemplate() === this.templateRef) {
+            this.courseTitleBarService.setTitleTemplate(undefined);
         }
     }
 }
