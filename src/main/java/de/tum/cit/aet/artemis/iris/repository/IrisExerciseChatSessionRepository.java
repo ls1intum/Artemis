@@ -38,8 +38,8 @@ public interface IrisExerciseChatSessionRepository extends ArtemisJpaRepository<
     @Query("""
             SELECT s
                 FROM IrisExerciseChatSession s
-                WHERE s.exercise.id = :exerciseId
-                    AND s.user.id = :userId
+                WHERE s.exerciseId = :exerciseId
+                    AND s.userId = :userId
                 ORDER BY s.creationDate DESC
             """)
     List<IrisExerciseChatSession> findByExerciseIdAndUserId(@Param("exerciseId") Long exerciseId, @Param("userId") Long userId);
@@ -47,8 +47,8 @@ public interface IrisExerciseChatSessionRepository extends ArtemisJpaRepository<
     @Query("""
             SELECT s
             FROM IrisExerciseChatSession s
-            WHERE s.exercise.id = :exerciseId
-                AND s.user.id = :userId
+            WHERE s.exerciseId = :exerciseId
+                AND s.userId = :userId
             ORDER BY s.creationDate DESC
             """)
     List<IrisExerciseChatSession> findSessionsByExerciseIdAndUserId(@Param("exerciseId") Long exerciseId, @Param("userId") Long userId, Pageable pageable);
