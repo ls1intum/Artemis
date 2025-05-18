@@ -3,7 +3,6 @@ import { CourseTitleBarService } from 'app/core/course/shared/services/course-ti
 
 @Directive({
     selector: '[titleBarActions]',
-    standalone: true,
 })
 export class CourseTitleBarActionsDirective implements OnDestroy {
     private templateRef: TemplateRef<any> = inject(TemplateRef);
