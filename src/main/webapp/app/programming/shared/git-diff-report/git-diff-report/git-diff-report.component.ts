@@ -72,7 +72,7 @@ export class GitDiffReportComponent {
      */
     onDiffReady(path: string, ready: boolean, lineChange: LineChange) {
         const diffInformation = [...this.diffInformationForPaths()];
-        const index = diffInformation.findIndex((info) => info.path === path);
+        const index = diffInformation.findIndex((info) => info.modifiedPath === path);
         
         if (index !== -1) {
             diffInformation[index].diffReady = ready;

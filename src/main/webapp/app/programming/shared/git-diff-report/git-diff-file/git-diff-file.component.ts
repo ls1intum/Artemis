@@ -15,11 +15,11 @@ export class GitDiffFileComponent {
     readonly diffInformation = input.required<DiffInformation>();
     readonly allowSplitView = input<boolean>(true);
     readonly onDiffReady = output<{ready: boolean; lineChange: LineChange}>();
-    readonly fileUnchanged = computed(() => this.diffInformation().templateFileContent === this.diffInformation().solutionFileContent);
+    readonly fileUnchanged = computed(() => this.diffInformation().originalFileContent === this.diffInformation().modifiedFileContent);
 
     constructor() {
         effect(() => {
-            this.monacoDiffEditor().setFileContents(this.diffInformation().templateFileContent, this.diffInformation().solutionFileContent, this.diffInformation().oldPath, this.diffInformation().path);
+            this.monacoDiffEditor().setFileContents(this.diffInformation().originalFileContent, this.diffInformation().modifiedFileContent, this.diffInformation().originalPath, this.diffInformation().modifiedPath);
         });
     }
 }

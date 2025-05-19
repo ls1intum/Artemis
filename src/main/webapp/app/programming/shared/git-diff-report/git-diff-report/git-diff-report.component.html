@@ -72,7 +72,7 @@
                 [allowSplitView]="allowSplitView()"
                 [diffForTemplateAndSolution]="diffForTemplateAndSolution()"
                 [diffInformation]="diffInformation"
-                (onDiffReady)="onDiffReady(diffInformation.path, $event.ready, $event.lineChange)"
+                (onDiffReady)="onDiffReady(diffInformation.modifiedPath, $event.ready, $event.lineChange)"
             />
         </div>
     }

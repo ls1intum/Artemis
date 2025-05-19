@@ -23,10 +23,10 @@ export interface MonacoEditorDiffText {
  */
 export interface DiffInformation {
     title: string;
-    path: string;
-    oldPath: string;
-    templateFileContent?: string;
-    solutionFileContent?: string;
+    modifiedPath: string;
+    originalPath: string;
+    modifiedFileContent?: string;
+    originalFileContent?: string;
     diffReady: boolean;
     fileStatus: FileStatus;
     lineChange?: LineChange;
@@ -78,11 +78,12 @@ export function processRepositoryDiff(
     };
 
     diffInformation.forEach((diffInformation) => {
-        const path = diffInformation.path;        
-        const templateContent = templateFileContentByPath.get(path) || '';
-        const solutionContent = solutionFileContentByPath.get(path) || '';
+        const modifiedPath = diffInformation.modifiedPath;        
+        const originalPath = diffInformation.originalPath;
+        const modifiedFileContent = templateFileContentByPath.get(modifiedPath) || '';
+        const originalFileContent = solutionFileContentByPath.get(originalPath) || '';
         
-        const lineChange = computeDiffsMonaco(templateContent, solutionContent);
+        const lineChange = computeDiffsMonaco(modifiedFileContent, originalFileContent);
         
         diffInformation.lineChange = lineChange;
         repositoryDiffInformation.totalLineChange.addedLineCount += lineChange.addedLineCount;
@@ -108,31 +109,40 @@ export function getDiffInformation(templateFileContentByPath: Map<string, string
     let diffInformation: DiffInformation[] = paths
         .filter(ig.createFilter())
         .filter((path) => {
-            const templateContent = templateFileContentByPath.get(path);
-            const solutionContent = solutionFileContentByPath.get(path);
-            return path && (templateContent !== solutionContent || (templateContent === undefined) !== (solutionContent === undefined));
+            const modifiedContent = templateFileContentByPath.get(path);
+            const originalContent = solutionFileContentByPath.get(path);
+            return path && (modifiedContent !== originalContent || (modifiedContent === undefined) !== (originalContent === undefined));
         })
         .map((path) => {
-            const templateFileContent = templateFileContentByPath.get(path);
-            const solutionFileContent = solutionFileContentByPath.get(path);
+            const modifiedFileContent = templateFileContentByPath.get(path);
+            const originalFileContent = solutionFileContentByPath.get(path);
 
+            let originalPath: string;
+            let modifiedPath: string;
             let fileStatus: FileStatus;
-            if (!templateFileContent && solutionFileContent) {
+            
+            if (!modifiedFileContent && originalFileContent) {
                 created.push(path);
                 fileStatus = FileStatus.CREATED;
-            } else if (templateFileContent && !solutionFileContent) {
+                originalPath = '';
+                modifiedPath = path;
+            } else if (modifiedFileContent && !originalFileContent) {
                 deleted.push(path);
                 fileStatus = FileStatus.DELETED;
+                originalPath = path;
+                modifiedPath = '';
             } else {
                 fileStatus = FileStatus.UNCHANGED;
+                originalPath = path;
+                modifiedPath = path;
             }
 
             return ({
                 title: path,
-                path: path,
-                oldPath: '',
-                templateFileContent: templateFileContentByPath.get(path),
-                solutionFileContent: solutionFileContentByPath.get(path),
+                modifiedPath: modifiedPath,
+                originalPath: originalPath,
+                modifiedFileContent: modifiedFileContent,
+                originalFileContent: originalFileContent,
                 diffReady: false,
                 fileStatus: fileStatus,
             });
@@ -164,29 +174,29 @@ function computeDiffsMonaco(templateFileContent: string, solutionFileContent: st
  */
 export function mergeRenamedFiles(diffInformation: DiffInformation[], created?: string[], deleted?: string[]): DiffInformation[] {
     if (!created || !deleted) {
-        created = diffInformation.filter((info) => info.fileStatus === FileStatus.CREATED).map((info) => info.path);
-        deleted = diffInformation.filter((info) => info.fileStatus === FileStatus.DELETED).map((info) => info.path);
+        created = diffInformation.filter((info) => info.fileStatus === FileStatus.CREATED).map((info) => info.modifiedPath);
+        deleted = diffInformation.filter((info) => info.fileStatus === FileStatus.DELETED).map((info) => info.originalPath);
     }
 
     const toRemove = new Set<string>();
     for (const createdPath of created) {
-        const createdFileContent = diffInformation.find((info) => info.path === createdPath)?.solutionFileContent;
+        const createdFileContent = diffInformation.find((info) => info.modifiedPath === createdPath)?.originalFileContent;
         for (const deletedPath of deleted) {
-            const deletedFileContent = diffInformation.find((info) => info.path === deletedPath)?.templateFileContent;
+            const deletedFileContent = diffInformation.find((info) => info.originalPath === deletedPath)?.modifiedFileContent;
             //TODO: Use a similarity check instead of a string equality
             if (createdFileContent === deletedFileContent) {
-                const createdIndex = diffInformation.findIndex((info) => info.path === createdPath);
-                const deletedIndex = diffInformation.findIndex((info) => info.path === deletedPath);
+                const createdIndex = diffInformation.findIndex((info) => info.modifiedPath === createdPath);
+                const deletedIndex = diffInformation.findIndex((info) => info.originalPath === deletedPath);
                 if (createdIndex !== -1 && deletedIndex !== -1) {
                     // Merge into a single RENAMED entry using old/new fields
                     diffInformation[createdIndex] = {
                         title: `${deletedPath} → ${createdPath}`,
                         diffReady: false,
                         fileStatus: FileStatus.RENAMED,
-                        path: createdPath,
-                        oldPath: deletedPath || '',
-                        templateFileContent: deletedFileContent || '',
-                        solutionFileContent: createdFileContent || '',
+                        modifiedPath: createdPath,
+                        originalPath: deletedPath,
+                        modifiedFileContent: createdFileContent || '',
+                        originalFileContent: deletedFileContent || '',
                     };
                     toRemove.add(deletedPath);
                 }
@@ -194,5 +204,5 @@ export function mergeRenamedFiles(diffInformation: DiffInformation[], created?: 
         }
     }
     // Remove deleted entries that have been merged into a RENAMED file (oldPath is deleted)
-    return diffInformation.filter((info) => !toRemove.has(info.path));
+    return diffInformation.filter((info) => !toRemove.has(info.originalPath));
 }
