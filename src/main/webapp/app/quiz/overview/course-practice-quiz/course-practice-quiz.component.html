@@ -1,17 +1,25 @@
 <div>
     @if (currentQuestion) {
         @if (currentQuestion.type === MULTIPLE_CHOICE) {
-            <jhi-multiple-choice-question [question]="currentQuestion" [selectedAnswerOptions]="selectedAnswerOptions.get(currentQuestion.id!)! || []" />
+            <jhi-multiple-choice-question
+                [question]="currentQuestion"
+                [selectedAnswerOptions]="selectedAnswerOptions.get(currentQuestion.id!)! || []"
+                [questionIndex]="currentIndex + 1"
+            />
         }
         @if (currentQuestion.type === SHORT_ANSWER) {
-            <jhi-short-answer-question [question]="currentQuestion" [submittedTexts]="shortAnswerSubmittedTexts.get(currentQuestion.id!)! || []" />
+            <jhi-short-answer-question
+                [question]="currentQuestion"
+                [submittedTexts]="shortAnswerSubmittedTexts.get(currentQuestion.id!)! || []"
+                [questionIndex]="currentIndex + 1"
+            />
         }
         @if (currentQuestion.type === DRAG_AND_DROP) {
-            <jhi-drag-and-drop-question [question]="currentQuestion" [mappings]="dragAndDropMappings.get(currentQuestion.id!)! || []" />
+            <jhi-drag-and-drop-question [question]="currentQuestion" [mappings]="dragAndDropMappings.get(currentQuestion.id!)! || []" [questionIndex]="currentIndex + 1" />
         }
-        <button (click)="nextQuestion()">Next Question</button>
+        <jhi-button class="ms-2" [title]="'submit'" />
+        <jhi-button class="ms-2" (onClick)="nextQuestion()" [title]="'next question'" />
     } @else {
         <div>keine Fragen vorhanden</div>
     }
-    <button (click)="navigateToPractice()">Practice</button>
 </div>

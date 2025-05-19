@@ -1,9 +1,10 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 
 @Component({
     selector: 'jhi-course-practice',
-    imports: [],
+    imports: [ButtonComponent],
     templateUrl: './course-practice.component.html',
     styleUrl: './course-practice.component.scss',
 })

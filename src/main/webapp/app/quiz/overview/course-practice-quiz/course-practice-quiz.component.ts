@@ -8,10 +8,11 @@ import { DragAndDropQuestionComponent } from 'app/quiz/shared/questions/drag-and
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
 import { ShortAnswerSubmittedText } from 'app/quiz/shared/entities/short-answer-submitted-text.model';
+import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 
 @Component({
     selector: 'jhi-course-practice-quiz',
-    imports: [MultipleChoiceQuestionComponent, ShortAnswerQuestionComponent, DragAndDropQuestionComponent],
+    imports: [MultipleChoiceQuestionComponent, ShortAnswerQuestionComponent, DragAndDropQuestionComponent, ButtonComponent],
     templateUrl: './course-practice-quiz.component.html',
     styleUrl: './course-practice-quiz.component.scss',
 })
@@ -46,7 +47,9 @@ export class CoursePracticeQuizComponent implements OnInit {
     }
 
     nextQuestion(): void {
-        if (!this.isLastQuestion) {
+        if (this.isLastQuestion) {
+            this.navigateToPractice();
+        } else {
             this.currentIndex++;
         }
     }
