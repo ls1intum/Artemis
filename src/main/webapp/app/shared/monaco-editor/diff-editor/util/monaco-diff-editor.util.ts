@@ -67,10 +67,10 @@ export function convertMonacoLineChanges(monacoLineChanges: monaco.editor.ILineC
 }
 
 export function processRepositoryDiff(
-    templateFileContentByPath: Map<string, string>,
-    solutionFileContentByPath: Map<string, string>,
+    originalFileContentByPath: Map<string, string>,
+    modifiedFileContentByPath: Map<string, string>,
 ): RepositoryDiffInformation {
-    const diffInformation = getDiffInformation(templateFileContentByPath, solutionFileContentByPath);
+    const diffInformation = getDiffInformation(originalFileContentByPath, modifiedFileContentByPath);
 
     const repositoryDiffInformation: RepositoryDiffInformation = {
         diffInformations: diffInformation,
@@ -80,10 +80,10 @@ export function processRepositoryDiff(
     diffInformation.forEach((diffInformation) => {
         const modifiedPath = diffInformation.modifiedPath;        
         const originalPath = diffInformation.originalPath;
-        const modifiedFileContent = templateFileContentByPath.get(modifiedPath) || '';
-        const originalFileContent = solutionFileContentByPath.get(originalPath) || '';
+        const originalFileContent = originalFileContentByPath.get(originalPath) || '';
+        const modifiedFileContent = modifiedFileContentByPath.get(modifiedPath) || '';
         
-        const lineChange = computeDiffsMonaco(modifiedFileContent, originalFileContent);
+        const lineChange = computeDiffsMonaco(originalFileContent, modifiedFileContent);
         
         diffInformation.lineChange = lineChange;
         repositoryDiffInformation.totalLineChange.addedLineCount += lineChange.addedLineCount;
@@ -96,41 +96,41 @@ export function processRepositoryDiff(
 /**
  * Gets the diff information for a given template and solution file content.
  * It also handles renamed files and ignores .gitignore patterns.
- * @param templateFileContentByPath The template file content by path
- * @param solutionFileContentByPath The solution file content by path
+ * @param originalFileContentByPath The template file content by path
+ * @param modifiedFileContentByPath The solution file content by path
  * @returns The diff information
  */
-export function getDiffInformation(templateFileContentByPath: Map<string, string>, solutionFileContentByPath: Map<string, string>): DiffInformation[] {
-    const paths = [...new Set([...templateFileContentByPath.keys(), ...solutionFileContentByPath.keys()])];
+export function getDiffInformation(originalFileContentByPath: Map<string, string>, modifiedFileContentByPath: Map<string, string>): DiffInformation[] {
+    const paths = [...new Set([...originalFileContentByPath.keys(), ...modifiedFileContentByPath.keys()])];
     const created: string[] = [];
     const deleted: string[] = [];
-    const ig = ignore().add(solutionFileContentByPath.get('.gitignore') || '');
+    const ig = ignore().add(modifiedFileContentByPath.get('.gitignore') || '');
 
     let diffInformation: DiffInformation[] = paths
         .filter(ig.createFilter())
         .filter((path) => {
-            const originalContent = templateFileContentByPath.get(path);
-            const modifiedContent = solutionFileContentByPath.get(path);
+            const originalContent = originalFileContentByPath.get(path);
+            const modifiedContent = modifiedFileContentByPath.get(path);
             return path && (modifiedContent !== originalContent || (modifiedContent === undefined) !== (originalContent === undefined));
         })
         .map((path) => {
-            const originalFileContent = templateFileContentByPath.get(path);
-            const modifiedFileContent = solutionFileContentByPath.get(path);
+            const originalFileContent = originalFileContentByPath.get(path);
+            const modifiedFileContent = modifiedFileContentByPath.get(path);
 
             let originalPath: string;
             let modifiedPath: string;
             let fileStatus: FileStatus;
             
             if (!modifiedFileContent && originalFileContent) {
-                created.push(path);
-                fileStatus = FileStatus.CREATED;
-                originalPath = '';
-                modifiedPath = path;
-            } else if (modifiedFileContent && !originalFileContent) {
                 deleted.push(path);
                 fileStatus = FileStatus.DELETED;
                 originalPath = path;
                 modifiedPath = '';
+            } else if (modifiedFileContent && !originalFileContent) {
+                created.push(path);
+                fileStatus = FileStatus.CREATED;
+                originalPath = '';
+                modifiedPath = path;
             } else {
                 fileStatus = FileStatus.UNCHANGED;
                 originalPath = path;
@@ -153,7 +153,7 @@ export function getDiffInformation(templateFileContentByPath: Map<string, string
     return diffInformation;
 }
 
-function computeDiffsMonaco(templateFileContent: string, solutionFileContent: string): LineChange {
+function computeDiffsMonaco(originalFileContent: string, modifiedFileContent: string): LineChange {
     const options: DiffOpts = {
         shouldPostProcessCharChanges: true,
         shouldComputeCharChanges: true,
@@ -161,7 +161,7 @@ function computeDiffsMonaco(templateFileContent: string, solutionFileContent: st
         shouldMakePrettyDiff: true,
         maxComputationTime: 1000,
     }
-    return convertMonacoLineChanges(diff(templateFileContent.split('\n'), solutionFileContent.split('\n'), options));
+    return convertMonacoLineChanges(diff(originalFileContent.split('\n'), modifiedFileContent.split('\n'), options));
 }
 
 /**
@@ -180,9 +180,9 @@ export function mergeRenamedFiles(diffInformation: DiffInformation[], created?: 
 
     const toRemove = new Set<string>();
     for (const createdPath of created) {
-        const createdFileContent = diffInformation.find((info) => info.modifiedPath === createdPath)?.originalFileContent;
+        const createdFileContent = diffInformation.find((info) => info.modifiedPath === createdPath)?.modifiedFileContent;
         for (const deletedPath of deleted) {
-            const deletedFileContent = diffInformation.find((info) => info.originalPath === deletedPath)?.modifiedFileContent;
+            const deletedFileContent = diffInformation.find((info) => info.originalPath === deletedPath)?.originalFileContent;
             //TODO: Use a similarity check instead of a string equality
             if (createdFileContent === deletedFileContent) {
                 const createdIndex = diffInformation.findIndex((info) => info.modifiedPath === createdPath);
