@@ -161,11 +161,11 @@ class IrisChatTokenTrackingIntegrationTest extends AbstractIrisIntegrationTest {
         irisMessageRepository.save(irisMessage);
         var tokens = getMockLLMCosts();
         LLMTokenUsageTrace tokenUsageTrace = llmTokenUsageService.saveLLMTokenUsage(tokens, LLMServiceType.IRIS,
-                builder -> builder.withIrisMessageID(irisMessage.getId()).withExercise(exercise.getId()).withUser(irisSession.getUser().getId()).withCourse(course.getId()));
+                builder -> builder.withIrisMessageID(irisMessage.getId()).withExercise(exercise.getId()).withUser(irisSession.getUserId()).withCourse(course.getId()));
         assertThat(tokenUsageTrace.getServiceType()).isEqualTo(LLMServiceType.IRIS);
         assertThat(tokenUsageTrace.getIrisMessageId()).isEqualTo(irisMessage.getId());
         assertThat(tokenUsageTrace.getExerciseId()).isEqualTo(exercise.getId());
-        assertThat(tokenUsageTrace.getUserId()).isEqualTo(irisSession.getUser().getId());
+        assertThat(tokenUsageTrace.getUserId()).isEqualTo(irisSession.getUserId());
         assertThat(tokenUsageTrace.getCourseId()).isEqualTo(course.getId());
     }
 
