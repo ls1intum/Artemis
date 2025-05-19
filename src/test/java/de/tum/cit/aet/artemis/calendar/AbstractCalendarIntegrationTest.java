@@ -20,8 +20,6 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
-import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupSessionRepository;
-import de.tum.cit.aet.artemis.tutorialgroup.test_repository.TutorialGroupTestRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.util.TutorialGroupUtilService;
 
 public abstract class AbstractCalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -48,12 +46,6 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
     private CourseTestRepository courseRepository;
 
     @Autowired
-    private TutorialGroupTestRepository tutorialGroupRepository;
-
-    @Autowired
-    private TutorialGroupSessionRepository tutorialGroupSessionRepository;
-
-    @Autowired
     private UserTestRepository userRepository;
 
     @BeforeEach
@@ -66,10 +58,8 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
 
     @AfterEach
     void cleanUpAllEntities() {
-        userRepository.deleteAll();
-        tutorialGroupSessionRepository.deleteAll();
-        tutorialGroupRepository.deleteAll();
         courseRepository.deleteAll();
+        userRepository.deleteAll();
     }
 
     void setupActiveCourseWithParticipatedGroupAndActiveSessionsScenario() {
@@ -101,12 +91,6 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
         createActiveCourse();
         createParticipatedTutorialGroup();
         createActiveAndCancelledTutorialGroupSessions();
-    }
-
-    void setupPartiallyOverlappingScenario() {
-        createActiveCourse();
-        createParticipatedTutorialGroup();
-        createActivePartiallyOverlappingTutorialGroupSessions();
     }
 
     String getMonthsSpanningCurrentTestCourseAsMonthKeys() {

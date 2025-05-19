@@ -52,7 +52,6 @@ public class CalendarResource {
         // get tutorialEventDTOs for requested months
         var calendarEventDTOs = tutorialGroupApi.getTutorialEventsForUserFallingIntoMonthsOrElseThrough(user, monthKeys, timeZone);
 
-        // TODO: treat edge case where events can overlap several days
         // group tutorialEventDTOs by day
         Map<ZonedDateTime, List<CalendarEventDTO>> eventDTOsByDay = calendarEventDTOs.stream().collect(Collectors.groupingBy(dto -> dto.start().truncatedTo(ChronoUnit.DAYS)));
 

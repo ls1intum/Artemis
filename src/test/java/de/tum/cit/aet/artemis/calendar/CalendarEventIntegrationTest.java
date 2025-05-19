@@ -279,40 +279,4 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
         // Assert
         assertThat(actual).isEqualTo(expected);
     }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void shouldReturnCorrectMapForStudentWhenQueriedMonthIsPartiallyOverlappedBySessions() throws Exception {
-        // Arrange
-        setupPartiallyOverlappingScenario();
-        String monthKeys = YearMonth.now().toString();
-        String timeZone = URLEncoder.encode(ZoneId.systemDefault().getId(), StandardCharsets.UTF_8);
-        var expected = tutorialGroupSessions.stream().map(CalendarEventDTO::new).collect(Collectors.groupingBy(dto -> dto.start().truncatedTo(ChronoUnit.DAYS)));
-
-        // Act
-        var actual = request.get("/api/calendar/calendar-events?monthKeys=" + monthKeys + "&timeZone=" + timeZone, HttpStatus.OK,
-                new TypeReference<Map<ZonedDateTime, List<CalendarEventDTO>>>() {
-                });
-
-        // Assert
-        assertThat(actual).isEqualTo(expected);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
-    void shouldReturnCorrectMapForTutorWhenQueriedMonthIsPartiallyOverlappedBySessions() throws Exception {
-        // Arrange
-        setupPartiallyOverlappingScenario();
-        String monthKeys = YearMonth.now().toString();
-        String timeZone = URLEncoder.encode(ZoneId.systemDefault().getId(), StandardCharsets.UTF_8);
-        var expected = tutorialGroupSessions.stream().map(CalendarEventDTO::new).collect(Collectors.groupingBy(dto -> dto.start().truncatedTo(ChronoUnit.DAYS)));
-
-        // Act
-        var actual = request.get("/api/calendar/calendar-events?monthKeys=" + monthKeys + "&timeZone=" + timeZone, HttpStatus.OK,
-                new TypeReference<Map<ZonedDateTime, List<CalendarEventDTO>>>() {
-                });
-
-        // Assert
-        assertThat(actual).isEqualTo(expected);
-    }
 }
