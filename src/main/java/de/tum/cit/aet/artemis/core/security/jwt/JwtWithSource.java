@@ -1,4 +1,6 @@
 package de.tum.cit.aet.artemis.core.security.jwt;
 
-public record JwtWithSource(String jwt, String source) {
+import jakarta.validation.constraints.NotNull;
+
+public record JwtWithSource(@NotNull String jwt, @NotNull String source) {
 }
