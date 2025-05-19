@@ -51,6 +51,9 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
     @Value("${artemis.continuous-integration.build-agent.short-name}")
     private String buildAgentShortName;
 
+    @Value("${artemis.continuous-integration.pause-after-consecutive-failed-jobs}")
+    private int pauseAfterConsecutiveFailures;
+
     private IQueue<BuildJobQueueItem> buildJobQueue;
 
     private IMap<String, BuildJobQueueItem> processingJobs;
@@ -385,11 +388,11 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
         when(dockerClient.startContainerCmd(anyString())).thenReturn(startContainerCmd);
         when(startContainerCmd.exec()).thenThrow(new RuntimeException("Container start failed"));
 
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < pauseAfterConsecutiveFailures; i++) {
             buildJobQueue.add(createBaseBuildJobQueueItemForTrigger());
         }
 
-        await().until(() -> resultQueue.size() >= 5);
+        await().until(() -> resultQueue.size() >= pauseAfterConsecutiveFailures);
 
         await().until(() -> {
             var buildAgent = buildAgentInformation.get(hazelcastInstance.getCluster().getLocalMember().getAddress().toString());
