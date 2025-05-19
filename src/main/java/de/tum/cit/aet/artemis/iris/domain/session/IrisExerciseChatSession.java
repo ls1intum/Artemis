@@ -1,10 +1,7 @@
 package de.tum.cit.aet.artemis.iris.domain.session;
 
-import java.util.Optional;
-
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
-import jakarta.persistence.ManyToOne;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -21,28 +18,22 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class IrisExerciseChatSession extends IrisChatSession {
 
-    @ManyToOne
     @JsonIgnore
-    private Exercise exercise;
+    private long exerciseId;
 
     public IrisExerciseChatSession() {
     }
 
     public IrisExerciseChatSession(Exercise exercise, User user) {
         super(user);
-        this.exercise = exercise;
+        this.exerciseId = exercise.getId();
     }
 
-    public Exercise getExercise() {
-        return exercise;
+    public long getExerciseId() {
+        return exerciseId;
     }
 
-    public void setExercise(Exercise exercise) {
-        this.exercise = exercise;
-    }
-
-    @Override
-    public String toString() {
-        return "IrisExerciseChatSession{" + "user=" + Optional.ofNullable(getUser()).map(User::getLogin).orElse("null") + "," + "exercise=" + exercise + '}';
+    public void setExerciseId(long exerciseId) {
+        this.exerciseId = exerciseId;
     }
 }
