@@ -30,10 +30,10 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 @Component
 public class ArtemisAuthenticationEventListener implements ApplicationListener<AuthenticationSuccessEvent> {
 
-    @Value("${artemis.user-management.password-reset.links.en}")
+    @Value("${artemis.user-management.password-reset.links.en:https://artemis.tum.de/account/reset/request}")
     private String passwordResetLinkEnUrl;
 
-    @Value("${artemis.user-management.password-reset.links.de}")
+    @Value("${artemis.user-management.password-reset.links.de:https://artemis.tum.de/account/reset/request}")
     private String passwordResetLinkDeUrl;
 
     @Value("${server.url}")
