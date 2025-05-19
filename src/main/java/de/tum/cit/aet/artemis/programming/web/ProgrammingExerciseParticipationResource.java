@@ -42,7 +42,6 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckService;
-import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -101,8 +100,6 @@ public class ProgrammingExerciseParticipationResource {
 
     private final Optional<ExamApi> examApi;
 
-    private final ParticipationService participationService;
-
     private final Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService;
 
     public ProgrammingExerciseParticipationResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ResultRepository resultRepository,
@@ -110,7 +107,7 @@ public class ProgrammingExerciseParticipationResource {
             ProgrammingSubmissionService submissionService, ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
             ResultService resultService, ParticipationAuthorizationCheckService participationAuthCheckService, RepositoryService repositoryService,
             Optional<StudentExamApi> studentExamApi, Optional<VcsAccessLogRepository> vcsAccessLogRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
-            Optional<SharedQueueManagementService> sharedQueueManagementService, Optional<ExamApi> examApi, ParticipationService participationService, Optional<ExamApi> examApi,
+            Optional<SharedQueueManagementService> sharedQueueManagementService, Optional<ExamApi> examApi,
             Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService) {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.participationRepository = participationRepository;
@@ -127,7 +124,6 @@ public class ProgrammingExerciseParticipationResource {
         this.vcsAccessLogRepository = vcsAccessLogRepository;
         this.sharedQueueManagementService = sharedQueueManagementService;
         this.examApi = examApi;
-        this.participationService = participationService;
         this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
     }
 
