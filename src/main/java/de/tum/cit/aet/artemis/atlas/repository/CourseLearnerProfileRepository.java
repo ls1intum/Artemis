@@ -36,13 +36,6 @@ public interface CourseLearnerProfileRepository extends ArtemisJpaRepository<Cou
     @Query("""
             SELECT clp
             FROM CourseLearnerProfile clp
-            WHERE clp.learnerProfile.user.login = :login
-            """)
-    Set<CourseLearnerProfile> findAllByLogin(@Param("login") String login);
-
-    @Query("""
-            SELECT clp
-            FROM CourseLearnerProfile clp
             LEFT JOIN FETCH clp.course
             WHERE clp.learnerProfile.user.login = :login
                         AND (clp.course.startDate IS NULL OR clp.course.startDate <= :now)
