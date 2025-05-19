@@ -1,16 +1,14 @@
-// course-title-bar-title.directive.spec.ts
 import { Component, TemplateRef, viewChild } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseTitleBarTitleDirective } from './course-title-bar-title.directive';
 import { CourseTitleBarService } from 'app/core/course/shared/services/course-title-bar.service';
-import { CourseTitleBarActionsDirective } from 'app/core/course/shared/directives/course-title-bar-actions.directive';
 
 @Component({
     template: `<ng-template titleBarTitle>Test Title</ng-template>`,
     imports: [CourseTitleBarTitleDirective],
 })
 class TestHostComponent {
-    directive = viewChild.required(CourseTitleBarActionsDirective);
+    directive = viewChild.required(CourseTitleBarTitleDirective);
     tpl = viewChild.required(TemplateRef<any>);
 }
 
