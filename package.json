@@ -65,6 +65,7 @@
         "markdown-it-github-alerts": "0.3.0",
         "markdown-it-highlightjs": "4.2.0",
         "mobile-drag-drop": "3.0.0-rc.0",
+        "monaco-diff": "^1.2.1",
         "monaco-editor": "0.52.2",
         "ngx-infinite-scroll": "19.0.0",
         "ngx-webstorage": "19.0.1",

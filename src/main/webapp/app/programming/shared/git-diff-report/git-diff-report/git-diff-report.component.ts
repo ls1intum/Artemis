@@ -8,8 +8,7 @@ import { captureException } from '@sentry/angular';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { DiffInformation, FileStatus, LineChange } from 'app/programming/shared/git-diff-report/model/git-diff.model';
-import ignore from 'ignore';
+import { DiffInformation, getDiffInformation, LineChange } from 'app/shared/monaco-editor/diff-editor/util/monaco-diff-editor.util';
 
 @Component({
     selector: 'jhi-git-diff-report',
@@ -60,82 +59,9 @@ export class GitDiffReportComponent {
 
     constructor() {
         effect(() => {
-            untracked(() => {
-                // Extract .gitignore content from the solution repository
-                const ig = ignore().add(this.solutionFileContentByPath().get('.gitignore') || '');
-                const created: string[] = [];
-                const deleted: string[] = [];
-                let diffInformation: DiffInformation[] = this.filePaths().filter(ig.createFilter()) //Ignoring .gitignore patterns
-                .filter((path) => {
-                            const templateContent = this.templateFileContentByPath().get(path);
-                            const solutionContent = this.solutionFileContentByPath().get(path);
-                            return path && (templateContent !== solutionContent || (templateContent === undefined) !== (solutionContent === undefined));
-                        })
-                        .map((path) => {
-                            const templateFileContent = this.templateFileContentByPath().get(path);
-                            const solutionFileContent = this.solutionFileContentByPath().get(path);	
-
-                            let fileStatus: FileStatus;
-                            if (!templateFileContent && solutionFileContent) {
-                                created.push(path);
-                                fileStatus = FileStatus.CREATED;
-                            } else if (templateFileContent && !solutionFileContent) {
-                                deleted.push(path);
-                                fileStatus = FileStatus.DELETED;
-                            } else {
-                                fileStatus = FileStatus.UNCHANGED;
-                            }
-                            
-                            return { 
-                                title: path,
-                                path, 
-                                oldPath: '',
-                                templateFileContent, 
-                                solutionFileContent, 
-                                diffReady: false, 
-                                fileStatus
-                            };
-                        });
-                
-                // Identify renamed files and merge them into a single entry with RENAMED status
-                diffInformation = this.mergeRenamedFiles(diffInformation, created, deleted);
-
-                this.diffInformationForPaths.set(diffInformation);
-            });
+            untracked(() => this.diffInformationForPaths.set(getDiffInformation(this.templateFileContentByPath(), this.solutionFileContentByPath())));
         });
-    }
-
-    private mergeRenamedFiles(diffInformation: DiffInformation[], created: string[], deleted: string[]): DiffInformation[] {
-        const toRemove = new Set<string>();
-        for (const createdPath of created) {
-            const createdFileContent = this.solutionFileContentByPath().get(createdPath);
-            for (const deletedPath of deleted) {
-                const deletedFileContent = this.templateFileContentByPath().get(deletedPath);
-                if (createdFileContent === deletedFileContent) {
-                    // Find the created and deleted entries
-                    const createdIndex = diffInformation.findIndex(info => info.path === createdPath);
-                    const deletedIndex = diffInformation.findIndex(info => info.path === deletedPath);
-                    if (createdIndex !== -1 && deletedIndex !== -1) {
-                        // Merge into a single RENAMED entry using old/new fields
-                        diffInformation[createdIndex] = {
-                            title: `${deletedPath} → ${createdPath}`,
-                            diffReady: false,
-                            fileStatus: FileStatus.RENAMED,
-                            path: createdPath,
-                            oldPath: deletedPath || '',
-                            templateFileContent: deletedFileContent || '',
-                            solutionFileContent: createdFileContent || '',
-                        };
-                        toRemove.add(deletedPath);
-                    }
-                }
-            }
-        }
-        // Remove deleted entries that have been merged
-        return diffInformation.filter(info => !toRemove.has(info.path));
-    }
-
-    
+    }    
 
     /**
      * Records that the diff editor for a file has changed its "ready" state.

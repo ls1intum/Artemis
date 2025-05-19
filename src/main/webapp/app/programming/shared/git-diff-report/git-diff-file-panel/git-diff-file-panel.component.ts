@@ -7,7 +7,7 @@ import { GitDiffFileComponent } from 'app/programming/shared/git-diff-report/git
 import { NgbAccordionModule, NgbCollapse, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { DiffInformation, LineChange } from 'app/programming/shared/git-diff-report/model/git-diff.model';
+import { DiffInformation, LineChange } from 'app/shared/monaco-editor/diff-editor/util/monaco-diff-editor.util';
 
 @Component({
     selector: 'jhi-git-diff-file-panel',
