@@ -8,9 +8,9 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
-import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
-import { MockAttachmentVideoUnitsService } from '../../../helpers/mocks/service/mock-attachment-video-units.service';
-import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
+import { MockAttachmentVideoUnitsService } from 'test/helpers/mocks/service/mock-attachment-video-units.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
@@ -78,7 +78,10 @@ describe('AttachmentVideoUnitsComponent', () => {
             providers: [
                 MockProvider(AlertService),
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: AttachmentVideoUnitService, useClass: MockAttachmentVideoUnitsService },
+                {
+                    provide: AttachmentVideoUnitService,
+                    useClass: MockAttachmentVideoUnitsService,
+                },
                 {
                     provide: ActivatedRoute,
                     useValue: {
@@ -113,7 +116,12 @@ describe('AttachmentVideoUnitsComponent', () => {
 
     beforeEach(() => {
         jest.spyOn(TestBed.inject(Router), 'getCurrentNavigation').mockReturnValue({
-            extras: { state: { file: new File([''], 'testFile.pdf', { type: 'application/pdf' }), fileName: 'testFile' } },
+            extras: {
+                state: {
+                    file: new File([''], 'testFile.pdf', { type: 'application/pdf' }),
+                    fileName: 'testFile',
+                },
+            },
         } as any);
 
         attachmentVideoUnitsComponentFixture = TestBed.createComponent(AttachmentVideoUnitsComponent);
@@ -136,7 +144,11 @@ describe('AttachmentVideoUnitsComponent', () => {
     });
 
     it('should create attachment units', fakeAsync(() => {
-        const lectureUnitInformation: LectureUnitInformationDTO = { units: units, numberOfPages: numberOfPages, removeSlidesCommaSeparatedKeyPhrases: '' };
+        const lectureUnitInformation: LectureUnitInformationDTO = {
+            units: units,
+            numberOfPages: numberOfPages,
+            removeSlidesCommaSeparatedKeyPhrases: '',
+        };
         const filename = 'filename-on-server';
         attachmentVideoUnitsComponent.filename = filename;
 

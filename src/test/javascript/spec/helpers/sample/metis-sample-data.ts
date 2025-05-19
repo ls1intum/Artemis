@@ -9,7 +9,7 @@ import dayjs from 'dayjs/esm';
 import { Attachment } from 'app/lecture/shared/entities/attachment.model';
 import { ConversationParticipant } from 'app/communication/shared/entities/conversation/conversation-participant.model';
 import { Conversation, ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
-import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentUnit.model';
+import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { Slide } from 'app/lecture/shared/entities/lecture-unit/slide.model';
 import { Channel, ChannelDTO, ChannelSubType } from 'app/communication/shared/entities/conversation/channel.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';

@@ -7,11 +7,11 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { CompetencySelectionComponent } from 'app/shared/competency-selection/competency-selection.component';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 
 describe('AttachmentVideoUnitFormComponent', () => {
     let attachmentVideoUnitFormComponentFixture: ComponentFixture<AttachmentVideoUnitFormComponent>;
@@ -45,7 +45,9 @@ describe('AttachmentVideoUnitFormComponent', () => {
     });
 
     it('should correctly set form values in edit mode', () => {
-        const fakeFile = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
+        const fakeFile = new File([''], 'Test-File.pdf', {
+            type: 'application/pdf',
+        });
 
         attachmentVideoUnitFormComponentFixture.componentRef.setInput('isEditMode', true);
         const formData: AttachmentVideoUnitFormData = {
@@ -87,7 +89,9 @@ describe('AttachmentVideoUnitFormComponent', () => {
         attachmentVideoUnitFormComponent.versionControl!.setValue(exampleVersion);
         const exampleUpdateNotificationText = 'updated';
         attachmentVideoUnitFormComponent.updateNotificationTextControl!.setValue(exampleUpdateNotificationText);
-        const fakeFile = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
+        const fakeFile = new File([''], 'Test-File.pdf', {
+            type: 'application/pdf',
+        });
         attachmentVideoUnitFormComponent.file = fakeFile;
         const exampleFileName = 'lorem Ipsum';
         attachmentVideoUnitFormComponent.fileName.set(exampleFileName);
@@ -135,7 +139,9 @@ describe('AttachmentVideoUnitFormComponent', () => {
         attachmentVideoUnitFormComponent.versionControl!.setValue(exampleVersion);
         const exampleUpdateNotificationText = 'updated';
         attachmentVideoUnitFormComponent.updateNotificationTextControl!.setValue(exampleUpdateNotificationText);
-        const fakeFile = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
+        const fakeFile = new File([''], 'Test-File.pdf', {
+            type: 'application/pdf',
+        });
         attachmentVideoUnitFormComponent.file = fakeFile;
         attachmentVideoUnitFormComponent.fileName.set('lorem Ipsum');
 
@@ -162,12 +168,17 @@ describe('AttachmentVideoUnitFormComponent', () => {
     });
 
     it('should disable submit button for too big file', () => {
-        const fakeFile = new File([''], 'Test-File.pdf', { type: 'application/pdf', lastModified: Date.now() });
+        const fakeFile = new File([''], 'Test-File.pdf', {
+            type: 'application/pdf',
+            lastModified: Date.now(),
+        });
 
         // Set file size to exceed the maximum file size
         Object.defineProperty(fakeFile, 'size', { value: MAX_FILE_SIZE + 1 });
 
-        attachmentVideoUnitFormComponent.onFileChange({ target: { files: [fakeFile] } as unknown as EventTarget } as Event);
+        attachmentVideoUnitFormComponent.onFileChange({
+            target: { files: [fakeFile] } as unknown as EventTarget,
+        } as Event);
         attachmentVideoUnitFormComponentFixture.detectChanges();
 
         const submitButton = attachmentVideoUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
@@ -270,7 +281,9 @@ describe('AttachmentVideoUnitFormComponent', () => {
         const exampleUpdateNotificationText = 'updated';
         attachmentVideoUnitFormComponent.updateNotificationTextControl!.setValue(exampleUpdateNotificationText);
         // Set file and fileName
-        const fakeFile = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
+        const fakeFile = new File([''], 'Test-File.pdf', {
+            type: 'application/pdf',
+        });
         attachmentVideoUnitFormComponent.file = fakeFile;
         const exampleFileName = 'lorem Ipsum';
         attachmentVideoUnitFormComponent.fileName.set(exampleFileName);

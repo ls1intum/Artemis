@@ -1747,7 +1747,7 @@ describe('PdfPreviewComponent', () => {
         });
 
         it('should successfully update the student version of an attachment unit', fakeAsync(() => {
-            component.attachmentUnit.set({
+            component.attachmentVideoUnit.set({
                 id: 2,
                 name: 'Chapter 1',
                 lecture: { id: 3 },
@@ -1772,7 +1772,7 @@ describe('PdfPreviewComponent', () => {
         }));
 
         it('should handle errors when updating the student version fails', fakeAsync(() => {
-            component.attachmentUnit.set({
+            component.attachmentVideoUnit.set({
                 id: 2,
                 name: 'Chapter 1',
                 lecture: { id: 3 },
@@ -1802,7 +1802,7 @@ describe('PdfPreviewComponent', () => {
             const mockDate = dayjs('2024-05-15');
 
             component.attachment.set(undefined);
-            component.attachmentUnit.set({
+            component.attachmentVideoUnit.set({
                 id: 2,
                 name: 'Chapter 1',
                 lecture: { id: 3 },
@@ -1845,7 +1845,7 @@ describe('PdfPreviewComponent', () => {
 
         it('should not update student version when no hidden pages exist', async () => {
             component.attachment.set(undefined);
-            component.attachmentUnit.set({
+            component.attachmentVideoUnit.set({
                 id: 2,
                 name: 'Chapter 1',
                 lecture: { id: 3 },
@@ -1878,7 +1878,7 @@ describe('PdfPreviewComponent', () => {
         });
 
         it('should create a student version file with the correct name', async () => {
-            component.attachmentUnit.set({
+            component.attachmentVideoUnit.set({
                 id: 2,
                 name: 'TestUnit',
                 lecture: { id: 3 },

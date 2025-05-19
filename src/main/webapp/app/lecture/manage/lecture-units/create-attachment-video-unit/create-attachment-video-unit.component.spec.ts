@@ -19,7 +19,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { ProfileService } from '../../../../core/layouts/profiles/shared/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
 describe('CreateAttachmentVideoUnitComponent', () => {
@@ -80,7 +80,9 @@ describe('CreateAttachmentVideoUnitComponent', () => {
         const router: Router = TestBed.inject(Router);
         const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
 
-        const fakeFile = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
+        const fakeFile = new File([''], 'Test-File.pdf', {
+            type: 'application/pdf',
+        });
 
         const attachmentVideoUnitFormData: AttachmentVideoUnitFormData = {
             formProperties: {

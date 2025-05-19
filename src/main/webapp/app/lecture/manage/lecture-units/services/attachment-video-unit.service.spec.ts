@@ -205,7 +205,9 @@ describe('AttachmentVideoUnitService', () => {
         it('should retrieve a file as Blob for a given course and attachment unit ID', () => {
             const courseId = 5;
             const attachmentVideoUnitId = 10;
-            const expectedBlob = new Blob(['example data'], { type: 'application/pdf' });
+            const expectedBlob = new Blob(['example data'], {
+                type: 'application/pdf',
+            });
 
             service.getAttachmentFile(courseId, attachmentVideoUnitId).subscribe((response) => {
                 expect(response).toEqual(expectedBlob);
