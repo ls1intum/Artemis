@@ -203,7 +203,7 @@ describe('PdfPreviewComponent', () => {
 
             routeMock.data = of({
                 course: { id: 1, name: 'Example Course' },
-                attachmentUnit: mockAttachmentUnit,
+                attachmentVideoUnit: mockAttachmentUnit,
             });
 
             component.ngOnInit();
@@ -239,7 +239,7 @@ describe('PdfPreviewComponent', () => {
         it('should handle errors and trigger alert when loading an attachment unit file fails', fakeAsync(() => {
             routeMock.data = of({
                 course: { id: 1, name: 'Example Course' },
-                attachmentUnit: {
+                attachmentVideoUnit: {
                     id: 1,
                     name: 'Chapter 1',
                     lecture: { id: 1 },
@@ -407,7 +407,7 @@ describe('PdfPreviewComponent', () => {
             expect(component.attachmentToBeEdited()).toEqual(component.attachmentVideoUnit()!.attachment);
             expect(appendSpy).toHaveBeenCalledWith('file', expect.any(File));
             expect(appendSpy).toHaveBeenCalledWith('attachment', expect.any(Blob));
-            expect(appendSpy).toHaveBeenCalledWith('attachmentUnit', expect.any(Blob));
+            expect(appendSpy).toHaveBeenCalledWith('attachmentVideoUnit', expect.any(Blob));
             expect(appendSpy).toHaveBeenCalledWith('pageOrder', expect.any(String));
             expect(appendSpy).not.toHaveBeenCalledWith('studentVersion', expect.any(File));
             expect(appendSpy).not.toHaveBeenCalledWith('hiddenPages', expect.any(String));
