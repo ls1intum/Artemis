@@ -13,6 +13,9 @@ import org.slf4j.LoggerFactory;
 
 import com.vdurmont.semver4j.Semver;
 
+import de.tum.cit.aet.helios.HeliosClient;
+import de.tum.cit.aet.helios.status.LifecycleState;
+
 /**
  * Represents a migration path that defines the necessary steps for database migration before
  * updating to a new major version. This class is pivotal in ensuring that administrators install
@@ -93,9 +96,12 @@ public class DatabaseMigration {
 
     private String previousVersionString;
 
-    public DatabaseMigration(String currentVersionString, DataSource dataSource) {
+    private final HeliosClient heliosClient;
+
+    public DatabaseMigration(String currentVersionString, DataSource dataSource, HeliosClient heliosClient) {
         this.currentVersionString = currentVersionString;
         this.dataSource = dataSource;
+        this.heliosClient = heliosClient;
 
         // Initialize migration paths here in the correct order
         migrationPaths.add(new MigrationPath("5.12.9")); // required for migration to 6.0.0 until 7.0.0
@@ -120,6 +126,7 @@ public class DatabaseMigration {
 
         if (previousVersionString == null) {
             log.info("Migration path check: Not necessary");
+            heliosClient.pushStatusUpdate(LifecycleState.DB_MIGRATION_STARTED);
             return;
         }
 
@@ -129,6 +136,7 @@ public class DatabaseMigration {
             if (currentVersion.isGreaterThanOrEqualTo(path.upgradeVersion) && currentVersion.isLowerThan(path.nextUpgradeVersion)) {
                 if (previousVersion.isLowerThan(path.requiredVersion)) {
                     log.error(path.errorMessage);
+                    heliosClient.pushStatusUpdate(LifecycleState.DB_MIGRATION_FAILED);
                     System.exit(15);
                 }
                 else if (previousVersion.isEqualTo(path.requiredVersion)) {
@@ -138,6 +146,8 @@ public class DatabaseMigration {
                 }
             }
         }
+
+        heliosClient.pushStatusUpdate(LifecycleState.DB_MIGRATION_STARTED);
     }
 
     /**
@@ -234,6 +244,7 @@ public class DatabaseMigration {
         }
         catch (SQLException e) {
             log.error("Cannot update checksum for initial schema migration: {}", e.getMessage());
+            heliosClient.pushStatusUpdate(LifecycleState.DB_MIGRATION_FAILED);
             System.exit(11);
         }
     }
@@ -262,6 +273,7 @@ public class DatabaseMigration {
         }
         catch (Exception e) {
             log.error("Cannot connect to the database {} (This typically indicates that the database is not running or there are permission issues", e.getMessage());
+            heliosClient.pushStatusUpdate(LifecycleState.DB_MIGRATION_FAILED);
             System.exit(10);
         }
         return null;
