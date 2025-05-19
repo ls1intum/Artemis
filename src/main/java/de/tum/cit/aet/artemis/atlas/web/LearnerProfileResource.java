@@ -23,10 +23,13 @@ import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.profile.CourseLearnerProfile;
 import de.tum.cit.aet.artemis.atlas.dto.CourseLearnerProfileDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CourseLearnerProfileRepository;
+import de.tum.cit.aet.artemis.atlas.service.profile.CourseLearnerProfileService;
+import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.service.CourseService;
 
 @Conditional(AtlasEnabled.class)
 @RestController
@@ -39,9 +42,16 @@ public class LearnerProfileResource {
 
     private final CourseLearnerProfileRepository courseLearnerProfileRepository;
 
-    public LearnerProfileResource(UserRepository userRepository, CourseLearnerProfileRepository courseLearnerProfileRepository) {
+    private final CourseService courseService;
+
+    private final CourseLearnerProfileService courseLearnerProfileService;
+
+    public LearnerProfileResource(UserRepository userRepository, CourseLearnerProfileRepository courseLearnerProfileRepository, CourseService courseService,
+            CourseLearnerProfileService courseLearnerProfileService) {
         this.userRepository = userRepository;
         this.courseLearnerProfileRepository = courseLearnerProfileRepository;
+        this.courseService = courseService;
+        this.courseLearnerProfileService = courseLearnerProfileService;
     }
 
     /**
@@ -56,13 +66,25 @@ public class LearnerProfileResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get all CourseLearnerProfiles of user {}", user.getLogin());
         var now = ZonedDateTime.now();
-        Set<CourseLearnerProfileDTO> courseLearnerProfiles = courseLearnerProfileRepository.findAllByLoginWithCourse(user.getLogin()).stream()
+        Set<CourseLearnerProfile> courseLearnerProfiles = courseLearnerProfileRepository.findAllByLoginWithCourse(user.getLogin()).stream()
                 // Check if course is active
                 .filter(profile -> profile.getCourse().getEndDate() == null || profile.getCourse().getEndDate().isAfter(now))
                 .filter(profile -> profile.getCourse().getStartDate() == null || profile.getCourse().getStartDate().isBefore(now))
                 // Check if user is student in course
-                .filter(profile -> user.getGroups().contains(profile.getCourse().getStudentGroupName())).map(CourseLearnerProfileDTO::of).collect(Collectors.toSet());
-        return ResponseEntity.ok(courseLearnerProfiles);
+                .filter(profile -> user.getGroups().contains(profile.getCourse().getStudentGroupName())).collect(Collectors.toSet());
+
+        Set<Course> coursesWithLearningPaths = courseService.findAllActiveForUser(user).stream().filter(Course::getLearningPathsEnabled).collect(Collectors.toSet());
+
+        // This is needed, as there is no method that is executed everytime a user is added to a new course
+        Set<CourseLearnerProfile> newProfiles = coursesWithLearningPaths.stream()
+                .filter(course -> courseLearnerProfiles.stream().map(CourseLearnerProfile::getCourse).noneMatch(existingCourse -> existingCourse.equals(course)))
+                .map(course -> courseLearnerProfileService.createCourseLearnerProfile(course, user)).collect(Collectors.toSet());
+
+        courseLearnerProfiles.addAll(newProfiles);
+
+        Set<CourseLearnerProfileDTO> returnSet = courseLearnerProfiles.stream().map(CourseLearnerProfileDTO::of).collect(Collectors.toSet());
+
+        return ResponseEntity.ok(returnSet);
     }
 
     /**

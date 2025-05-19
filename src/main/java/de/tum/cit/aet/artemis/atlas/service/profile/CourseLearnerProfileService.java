@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.service.profile;
 
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -36,7 +37,7 @@ public class CourseLearnerProfileService {
      * @param course the course for which the profile is created
      * @param user   the user for which the profile is created
      */
-    public void createCourseLearnerProfile(Course course, User user) {
+    public CourseLearnerProfile createCourseLearnerProfile(Course course, User user) {
 
         if (user.getLearnerProfile() == null) {
             learnerProfileService.createProfile(user);
@@ -53,7 +54,7 @@ public class CourseLearnerProfileService {
         var learnerProfile = learnerProfileRepository.findByUserElseThrow(user);
         courseProfile.setLearnerProfile(learnerProfile);
 
-        courseLearnerProfileRepository.save(courseProfile);
+        return courseLearnerProfileRepository.save(courseProfile);
     }
 
     /**
@@ -62,7 +63,7 @@ public class CourseLearnerProfileService {
      * @param course the course for which the profiles are created
      * @param users  the users for which the profiles are created with eagerly loaded learner profiles
      */
-    public void createCourseLearnerProfiles(Course course, Set<User> users) {
+    public List<CourseLearnerProfile> createCourseLearnerProfiles(Course course, Set<User> users) {
 
         users.stream().filter(user -> user.getLearnerProfile() == null).forEach(learnerProfileService::createProfile);
 
@@ -80,7 +81,7 @@ public class CourseLearnerProfileService {
             return courseProfile;
         })).collect(Collectors.toSet());
 
-        courseLearnerProfileRepository.saveAll(courseProfiles);
+        return courseLearnerProfileRepository.saveAll(courseProfiles);
     }
 
     /**
