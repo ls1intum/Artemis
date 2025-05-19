@@ -1,9 +1,9 @@
 import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { ButtonSize, ButtonType } from 'app/shared/components/button/button.component';
+import { ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { CsvExportOptions, ExportModalComponent } from 'app/shared/export/modal/export-modal.component';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { ButtonComponent } from '../../components/button/button.component';
+import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 
 @Component({
     selector: 'jhi-csv-export-button',
