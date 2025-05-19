@@ -77,6 +77,33 @@ public class TutorialGroupUtilService {
     }
 
     /**
+     * Creates and saves a TutorialGroupSession for the TutorialGroup with the given ID,
+     * allowing customization of the session status and status explanation.
+     *
+     * @param tutorialGroupId   The ID of the TutorialGroup
+     * @param start             The start date and time of the TutorialGroupSession
+     * @param end               The end date and time of the TutorialGroupSession
+     * @param attendanceCount   The attendance count of the TutorialGroupSession (can be null)
+     * @param status            The status of the TutorialGroupSession (e.g., ACTIVE, CANCELLED)
+     * @param statusExplanation An explanation for the session's status, used especially if cancelled
+     * @return The created TutorialGroupSession
+     */
+    public TutorialGroupSession createIndividualTutorialGroupSession(Long tutorialGroupId, ZonedDateTime start, ZonedDateTime end, Integer attendanceCount,
+            TutorialGroupSessionStatus status, String statusExplanation) {
+        var tutorialGroup = tutorialGroupRepository.findByIdElseThrow(tutorialGroupId);
+
+        TutorialGroupSession tutorialGroupSession = new TutorialGroupSession();
+        tutorialGroupSession.setStart(start);
+        tutorialGroupSession.setEnd(end);
+        tutorialGroupSession.setTutorialGroup(tutorialGroup);
+        tutorialGroupSession.setLocation("LoremIpsum");
+        tutorialGroupSession.setStatus(status);
+        tutorialGroupSession.setStatusExplanation(status == TutorialGroupSessionStatus.CANCELLED ? statusExplanation : null);
+        tutorialGroupSession.setAttendanceCount(attendanceCount);
+        return tutorialGroupSessionRepository.save(tutorialGroupSession);
+    }
+
+    /**
      * Creates and saves a TutorialGroupFreePeriod for the TutorialGroupsConfiguration with the given ID.
      *
      * @param tutorialGroupsConfigurationId The ID of the TutorialGroupsConfiguration

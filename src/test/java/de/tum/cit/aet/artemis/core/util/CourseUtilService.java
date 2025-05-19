@@ -206,6 +206,18 @@ public class CourseUtilService {
     }
 
     /**
+     * Creates and saves a course with the given startDate and endDate.
+     *
+     * @param startDate The date on which the course should start
+     * @param endDate   The date on which the course should end
+     * @return The created course.
+     */
+    public Course createCourseWithStartDateAndEndDate(ZonedDateTime startDate, ZonedDateTime endDate) {
+        Course course = CourseFactory.generateCourse(null, startDate, endDate, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        return courseRepo.save(course);
+    }
+
+    /**
      * Creates and saves a course with the given id and user prefix.
      *
      * @param userPrefix The prefix of the course user groups.

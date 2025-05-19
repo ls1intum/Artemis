@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.time.LocalTime;
 import java.time.YearMonth;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeParseException;
@@ -928,12 +929,15 @@ public class TutorialGroupService {
         return students;
     }
 
-    public Set<CalendarEventDTO> getTutorialEventsForUserFallingIntoMonthsOrElseThrough(User user, List<String> monthKeys) {
-        // validate monthKeys
+    public Set<CalendarEventDTO> getTutorialEventsForUserFallingIntoMonthsOrElseThrough(User user, List<String> monthKeys, String timeZone) {
+        // validate monthKeys or through
         Set<YearMonth> months = validateMonthKeys(monthKeys);
 
+        // validate time zone or through
+        ZoneId clientZone = validateTimeZone(timeZone);
+
         // get participated tutorialGroupIds of active courses the user is part of
-        ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
+        ZonedDateTime now = ZonedDateTime.now(clientZone).withZoneSameInstant(ZoneOffset.UTC);
         Set<Long> participatedTutorialGroupIds = tutorialGroupRepository.findParticipatedTutorialGroupIdsFromActiveCourses(user.getId(), user.getGroups(), now);
         if (participatedTutorialGroupIds.isEmpty())
             return Set.of();
@@ -942,23 +946,24 @@ public class TutorialGroupService {
         Set<TutorialGroupSession> activeSessionsFromParticipatedGroups = tutorialGroupSessionRepository
                 .findAllActiveByTutorialGroupIdsWithGroupAndCourseAndAssistant(participatedTutorialGroupIds);
 
-        var filteredSessions = monthKeys.isEmpty() ? filterForSessionsFallingIntoMonths(activeSessionsFromParticipatedGroups, months)
-                : activeSessionsFromParticipatedGroups.stream();
+        // filter for sessions overlapping at least one month if monthKeys present
+        Set<TutorialGroupSession> filteredSessions = monthKeys.isEmpty() ? activeSessionsFromParticipatedGroups
+                : filterForSessionsOverlappingMonths(activeSessionsFromParticipatedGroups, months, clientZone);
 
         // convert the TutorialGroupSessions into CalendarEventDTOs
-        return activeSessionsFromParticipatedGroups.stream().map(CalendarEventDTO::new).collect(Collectors.toSet());
+        return filteredSessions.stream().map(CalendarEventDTO::new).collect(Collectors.toSet());
     }
 
-    private Set<TutorialGroupSession> filterForSessionsFallingIntoMonths(Set<TutorialGroupSession> sessions, Set<YearMonth> months) {
-        return sessions.stream().filter(session -> months.stream().anyMatch(month -> areMonthAndSessionOverlapping(month, session))).collect(Collectors.toSet());
+    private Set<TutorialGroupSession> filterForSessionsOverlappingMonths(Set<TutorialGroupSession> sessions, Set<YearMonth> months, ZoneId clientZone) {
+        return sessions.stream().filter(session -> months.stream().anyMatch(month -> areMonthAndSessionOverlapping(month, session, clientZone))).collect(Collectors.toSet());
     }
 
-    private boolean areMonthAndSessionOverlapping(YearMonth month, TutorialGroupSession tutorialGroupSession) {
+    private boolean areMonthAndSessionOverlapping(YearMonth month, TutorialGroupSession tutorialGroupSession, ZoneId clientZone) {
         // TODO: check whether sessionStart and sessionEnd can be null (currently it is assumed not)
         ZonedDateTime sessionStart = tutorialGroupSession.getStart();
         ZonedDateTime sessionEnd = tutorialGroupSession.getEnd();
-        ZonedDateTime monthStart = ZonedDateTime.of(month.atDay(1), LocalTime.MIDNIGHT, ZoneOffset.UTC);
-        ZonedDateTime monthEnd = ZonedDateTime.of(month.atEndOfMonth(), LocalTime.of(23, 59, 59, 999_000_000), ZoneOffset.UTC);
+        ZonedDateTime monthStart = ZonedDateTime.of(month.atDay(1), LocalTime.MIDNIGHT, clientZone).withZoneSameInstant(ZoneOffset.UTC);
+        ZonedDateTime monthEnd = ZonedDateTime.of(month.atEndOfMonth(), LocalTime.of(23, 59, 59, 999_000_000), clientZone).withZoneSameInstant(ZoneOffset.UTC);
 
         var sessionStartFallsIntoMonth = firstIsBeforeOrEqualSecond(monthStart, sessionStart) && firstIsBeforeOrEqualSecond(sessionStart, monthEnd);
         var sessionEndFallsIntoMonth = firstIsBeforeOrEqualSecond(monthStart, sessionEnd) && firstIsBeforeOrEqualSecond(sessionEnd, monthEnd);
@@ -975,6 +980,15 @@ public class TutorialGroupService {
         }
         catch (DateTimeParseException exception) {
             throw new BadRequestException("Invalid monthKey format. Expected format: YYYY-MM.");
+        }
+    }
+
+    private ZoneId validateTimeZone(String timeZone) {
+        try {
+            return ZoneId.of(timeZone);
+        }
+        catch (DateTimeParseException exception) {
+            throw new BadRequestException("Invalid time zone format. Expected IANA time zone ID.");
         }
     }
 }

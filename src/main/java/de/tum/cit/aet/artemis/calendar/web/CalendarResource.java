@@ -40,20 +40,21 @@ public class CalendarResource {
     /**
      * GET /calendar-events : gets the calendar-events relevant to the user falling into the requested month
      *
-     * @param monthKeys - a ISO 8601 formatted string representing a month
-     * @return ResponseEntity with status 200 (OK) and body containing a map of calendar-events keyed by day
+     * @param monthKeys an ISO 8601 formatted string representing a month
+     * @param timeZone  the clients time zone as IANA time zone ID
+     * @return ResponseEntity with status 200 (OK) and body containing a map of calendar-events keyed by day (all timestamps in UTC format)
      */
     @GetMapping("calendar-events")
-    public ResponseEntity<Map<ZonedDateTime, List<CalendarEventDTO>>> getCalendarEventsOfMonths(@RequestParam List<String> monthKeys) {
+    public ResponseEntity<Map<ZonedDateTime, List<CalendarEventDTO>>> getCalendarEventsOfMonths(@RequestParam List<String> monthKeys, @RequestParam String timeZone) {
         log.debug("REST request to get calendar events falling into: {}", monthKeys);
         var user = userRepository.getUserWithGroupsAndAuthorities();
 
         // get tutorialEventDTOs for requested months
-        var calendarEventDTOs = tutorialGroupService.getTutorialEventsForUserFallingIntoMonthsOrElseThrough(user, monthKeys);
+        var calendarEventDTOs = tutorialGroupService.getTutorialEventsForUserFallingIntoMonthsOrElseThrough(user, monthKeys, timeZone);
 
+        // TODO: treat edge case where events can overlap several days
         // group tutorialEventDTOs by day
-        Map<ZonedDateTime, List<CalendarEventDTO>> eventDTOsByDay = calendarEventDTOs.stream()
-                .collect(Collectors.groupingBy(eventDTO -> eventDTO.start().truncatedTo(ChronoUnit.DAYS)));
+        Map<ZonedDateTime, List<CalendarEventDTO>> eventDTOsByDay = calendarEventDTOs.stream().collect(Collectors.groupingBy(dto -> dto.start().truncatedTo(ChronoUnit.DAYS)));
 
         return ResponseEntity.ok(eventDTOsByDay);
     }
