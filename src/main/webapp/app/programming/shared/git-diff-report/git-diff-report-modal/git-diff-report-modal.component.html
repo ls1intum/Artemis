@@ -7,12 +7,12 @@
         <button type="button" class="btn-close" aria-label="Close" (click)="close()"></button>
     </div>
     <div class="modal-body">
-        @if (leftCommitFileContentByPath() && rightCommitFileContentByPath()) {
+        @if (templateFileContentByPath() && solutionFileContentByPath()) {
             <div class="row mb-2">
                 <jhi-git-diff-report
                     [diffForTemplateAndSolution]="diffForTemplateAndSolution()"
-                    [templateFileContentByPath]="leftCommitFileContentByPath()!"
-                    [solutionFileContentByPath]="rightCommitFileContentByPath()!"
+                    [templateFileContentByPath]="templateFileContentByPath()"
+                    [solutionFileContentByPath]="solutionFileContentByPath()"
                 />
             </div>
         } @else {

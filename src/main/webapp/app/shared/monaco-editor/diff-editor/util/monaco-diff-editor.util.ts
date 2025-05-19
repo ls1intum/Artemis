@@ -11,14 +11,6 @@ export interface LineChange {
 }
 
 /**
- * Interface for text content from the diff editor
- */
-export interface MonacoEditorDiffText {
-    original: string;
-    modified: string;
-}
-
-/**
  * Interface for diff information about a file
  */
 export interface DiffInformation {
@@ -41,10 +33,10 @@ export interface RepositoryDiffInformation {
  * Enum for file status in diff view
  */
 export enum FileStatus {
-    CREATED = 'CREATED',
-    DELETED = 'DELETED',
-    RENAMED = 'RENAMED',
-    UNCHANGED = 'UNCHANGED',
+    CREATED = 'created',
+    DELETED = 'deleted',
+    RENAMED = 'renamed',
+    UNCHANGED = 'unchanged',
 }
 
 /**
@@ -59,8 +51,16 @@ export function convertMonacoLineChanges(monacoLineChanges: monaco.editor.ILineC
     }
 
     for (const change of monacoLineChanges) {
-        lineChange.addedLineCount += change.modifiedEndLineNumber - change.modifiedStartLineNumber + 1;
-        lineChange.removedLineCount += change.originalEndLineNumber - change.originalStartLineNumber + 1;
+        const addedLines = change.modifiedEndLineNumber >= change.modifiedStartLineNumber
+            ? change.modifiedEndLineNumber - change.modifiedStartLineNumber + 1
+            : 0;
+            
+        const removedLines = change.originalEndLineNumber >= change.originalStartLineNumber
+            ? change.originalEndLineNumber - change.originalStartLineNumber + 1
+            : 0;
+            
+        lineChange.addedLineCount += addedLines;
+        lineChange.removedLineCount += removedLines;
     }
 
     return lineChange;

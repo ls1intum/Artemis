@@ -3,7 +3,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { SafeHtml } from '@angular/platform-browser';
 import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
 import { ExerciseDetailStatisticsComponent } from 'app/exercise/statistics/exercise-detail-statistic/exercise-detail-statistics.component';
-import { Subject, Subscription, of } from 'rxjs';
+import { Subject, Subscription, of, forkJoin, Observable } from 'rxjs';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
@@ -53,7 +53,6 @@ import { Detail } from 'app/shared/detail-overview-list/detail.model';
 import { Competency } from 'app/atlas/shared/entities/competency.model';
 import { AeolusService } from 'app/programming/shared/services/aeolus.service';
 import { catchError, mergeMap, tap } from 'rxjs/operators';
-import { ProgrammingExerciseGitDiffReport } from 'app/programming/shared/entities/programming-exercise-git-diff-report.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
@@ -66,6 +65,7 @@ import { RepositoryType } from '../../shared/code-editor/model/code-editor.model
 import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
 import { ConsistencyCheckComponent } from 'app/programming/manage/consistency-check/consistency-check.component';
 import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
+import { processRepositoryDiff, RepositoryDiffInformation } from 'app/shared/monaco-editor/diff-editor/util/monaco-diff-editor.util';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -137,6 +137,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     programmingExercise: ProgrammingExercise;
     programmingExerciseBuildConfig?: ProgrammingExerciseBuildConfig;
+    repositoryDiffInformation: RepositoryDiffInformation;
+    templateFileContentByPath: Map<string, string>;
+    solutionFileContentByPath: Map<string, string>;
     competencies: Competency[];
     isExamExercise: boolean;
     supportsAuxiliaryRepositories: boolean;
@@ -154,9 +157,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     plagiarismEnabled = false;
 
     isAdmin = false;
-    addedLineCount: number;
-    removedLineCount: number;
-    isLoadingDiffReport: boolean;
     isBuildPlanEditable = false;
 
     plagiarismCheckSupported = false; // default value
@@ -237,14 +237,12 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     tap((submissionPolicy) => {
                         this.programmingExercise.submissionPolicy = submissionPolicy;
                     }),
-                    mergeMap(() => this.programmingExerciseService.getDiffReport(exerciseId)),
+                    mergeMap(() => this.fetchRepositoryFiles()),
                     catchError(() => {
-                        this.alertService.error('artemisApp.programmingExercise.diffReportError');
-                        return of(undefined);
+                        this.alertService.error('artemisApp.programmingExercise.repositoryFilesError');
+                        return of({ templateFiles: undefined, solutionFiles: undefined });
                     }),
-                    tap((gitDiffReport) => {
-                        this.processGitDiffReport(gitDiffReport);
-                    }),
+                    tap(({ templateFiles, solutionFiles }) => { this.handleDiff(templateFiles, solutionFiles); }),
                 )
                 // split pipe to keep type checks
                 .subscribe({
@@ -466,16 +464,14 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         type: ProgrammingExerciseParticipationType.SOLUTION,
                     },
                 },
-                this.addedLineCount !== undefined &&
-                    this.removedLineCount !== undefined && {
+                this.repositoryDiffInformation && this.templateFileContentByPath && this.solutionFileContentByPath && {
                         type: DetailType.ProgrammingDiffReport,
                         title: 'artemisApp.programmingExercise.diffReport.title',
                         titleHelpText: 'artemisApp.programmingExercise.diffReport.detailedTooltip',
                         data: {
-                            addedLineCount: this.addedLineCount,
-                            removedLineCount: this.removedLineCount,
-                            isLoadingDiffReport: this.isLoadingDiffReport,
-                            gitDiffReport: exercise.gitDiffReport,
+                            repositoryDiffInformation: this.repositoryDiffInformation,
+                            templateFileContentByPath: this.templateFileContentByPath,
+                            solutionFileContentByPath: this.solutionFileContentByPath,
                         },
                     },
                 !!exercise.buildConfig?.buildScript &&
@@ -605,7 +601,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     onParticipationChange(): void {
-        this.loadGitDiffReport();
+        this.fetchRepositoryFiles().subscribe(({ templateFiles, solutionFiles }) => {
+            this.handleDiff(templateFiles, solutionFiles);
+        });
     }
 
     combineTemplateCommits() {
@@ -705,43 +703,20 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         return link;
     }
 
-    /**
-     * Calculates the added and removed lines of the diff
-     * @param gitDiffReport
-     * @returns whether the report has changed compared to the last run
-     */
-    private processGitDiffReport(gitDiffReport: ProgrammingExerciseGitDiffReport | undefined): boolean {
-        const isGitDiffReportUpdated =
-            gitDiffReport &&
-            (this.programmingExercise.gitDiffReport?.templateRepositoryCommitHash !== gitDiffReport.templateRepositoryCommitHash ||
-                this.programmingExercise.gitDiffReport?.solutionRepositoryCommitHash !== gitDiffReport.solutionRepositoryCommitHash);
-        if (!isGitDiffReportUpdated) {
-            return false;
-        }
-
-        this.programmingExercise.gitDiffReport = gitDiffReport;
-        gitDiffReport.programmingExercise = this.programmingExercise;
-        const calculateLineCount = (
-            entries: {
-                lineCount?: number;
-                previousLineCount?: number;
-            }[] = [],
-            key: 'lineCount' | 'previousLineCount',
-        ) => entries.map((entry) => entry[key] ?? 0).reduce((sum, count) => sum + count, 0);
-        this.addedLineCount = calculateLineCount(gitDiffReport.entries, 'lineCount');
-        this.removedLineCount = calculateLineCount(gitDiffReport.entries, 'previousLineCount');
-
-        return true;
+    fetchRepositoryFiles(): Observable<{ templateFiles: Map<string, string> | undefined, solutionFiles: Map<string, string> | undefined }> {
+        return forkJoin({
+            templateFiles: this.programmingExerciseService.getTemplateRepositoryTestFilesWithContent(this.programmingExercise.id!),
+            solutionFiles: this.programmingExerciseService.getSolutionRepositoryTestFilesWithContent(this.programmingExercise.id!),
+        });
     }
 
-    loadGitDiffReport() {
-        this.programmingExerciseService.getDiffReport(this.programmingExercise.id!).subscribe({
-            next: (gitDiffReport) => {
-                this.processGitDiffReport(gitDiffReport);
-            },
-            error: () => {
-                this.alertService.error('artemisApp.programmingExercise.diffReportError');
-            },
-        });
+    handleDiff(templateFiles: Map<string, string> | undefined, solutionFiles: Map<string, string> | undefined) {
+        if (!templateFiles || !solutionFiles) {
+            return;
+        }
+        this.templateFileContentByPath = templateFiles;
+        this.solutionFileContentByPath = solutionFiles;
+        //TODO: Add version check to avoid recomputing the diff if the files have not changed
+        this.repositoryDiffInformation = processRepositoryDiff(templateFiles, solutionFiles);
     }
 }
