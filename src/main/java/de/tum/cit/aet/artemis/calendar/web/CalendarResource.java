@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.calendar.dto.CalendarEventDTO;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupService;
+import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupApi;
 
 @Profile(PROFILE_CORE)
 @RestController
@@ -30,11 +30,11 @@ public class CalendarResource {
 
     private final UserRepository userRepository;
 
-    private final TutorialGroupService tutorialGroupService;
+    private final TutorialGroupApi tutorialGroupApi;
 
-    public CalendarResource(UserRepository userRepository, TutorialGroupService tutorialGroupService) {
+    public CalendarResource(UserRepository userRepository, TutorialGroupApi tutorialGroupApi) {
         this.userRepository = userRepository;
-        this.tutorialGroupService = tutorialGroupService;
+        this.tutorialGroupApi = tutorialGroupApi;
     }
 
     /**
@@ -50,7 +50,7 @@ public class CalendarResource {
         var user = userRepository.getUserWithGroupsAndAuthorities();
 
         // get tutorialEventDTOs for requested months
-        var calendarEventDTOs = tutorialGroupService.getTutorialEventsForUserFallingIntoMonthsOrElseThrough(user, monthKeys, timeZone);
+        var calendarEventDTOs = tutorialGroupApi.getTutorialEventsForUserFallingIntoMonthsOrElseThrough(user, monthKeys, timeZone);
 
         // TODO: treat edge case where events can overlap several days
         // group tutorialEventDTOs by day

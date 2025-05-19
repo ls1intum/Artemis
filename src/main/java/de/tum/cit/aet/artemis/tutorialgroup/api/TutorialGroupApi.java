@@ -1,10 +1,12 @@
 package de.tum.cit.aet.artemis.tutorialgroup.api;
 
+import java.util.List;
 import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Controller;
 
+import de.tum.cit.aet.artemis.calendar.dto.CalendarEventDTO;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
@@ -39,5 +41,9 @@ public class TutorialGroupApi extends AbstractTutorialGroupApi {
 
     public void deleteById(Long id) {
         tutorialGroupRepository.deleteById(id);
+    }
+
+    public Set<CalendarEventDTO> getTutorialEventsForUserFallingIntoMonthsOrElseThrough(User user, List<String> monthKeys, String timeZone) {
+        return tutorialGroupService.getTutorialEventsForUserFallingIntoMonthsOrElseThrough(user, monthKeys, timeZone);
     }
 }
