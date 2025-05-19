@@ -38,8 +38,8 @@ public interface CourseLearnerProfileRepository extends ArtemisJpaRepository<Cou
             FROM CourseLearnerProfile clp
             LEFT JOIN FETCH clp.course
             WHERE clp.learnerProfile.user.login = :login
-                        AND (clp.course.startDate IS NULL OR clp.course.startDate <= :now)
-                        AND (clp.course.endDate IS NULL OR clp.course.endDate >= :now)
+                        AND (clp.course.startDate <= :now OR clp.course.startDate IS NULL)
+                        AND (clp.course.endDate >= :now OR clp.course.endDate IS NULL)
             """)
     Set<CourseLearnerProfile> findAllByLoginAndCourseActive(@Param("login") String login, @Param("now") ZonedDateTime now);
 
