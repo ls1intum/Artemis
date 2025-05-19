@@ -679,7 +679,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = participationUtilService
                 .addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
         programmingExerciseStudentParticipation.setIndividualDueDate(ZonedDateTime.now().minusDays(1));
-        studentParticipationRepository.save(programmingExerciseStudentParticipation);
+        programmingExerciseStudentParticipation = studentParticipationRepository.save(programmingExerciseStudentParticipation);
 
         request.put("/api/programming/programming-exercise-participations/" + programmingExerciseStudentParticipation.getId() + "/reset-repository", null, HttpStatus.FORBIDDEN);
     }
