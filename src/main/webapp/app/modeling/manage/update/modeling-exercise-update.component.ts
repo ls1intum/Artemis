@@ -44,6 +44,7 @@ import { loadCourseExerciseCategories } from 'app/exercise/course-exercises/cour
 import { FormSectionStatus, FormStatusBarComponent } from 'app/shared/form/form-status-bar/form-status-bar.component';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { FormFooterComponent } from 'app/shared/form/form-footer/form-footer.component';
+import { NewDiagramEditorComponent } from 'app/modeling/manage/update/newApollonEditor.component';
 
 @Component({
     selector: 'jhi-modeling-exercise-update',
@@ -51,6 +52,7 @@ import { FormFooterComponent } from 'app/shared/form/form-footer/form-footer.com
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         FormsModule,
+        NewDiagramEditorComponent,
         TranslateDirective,
         DocumentationButtonComponent,
         FormStatusBarComponent,
@@ -231,8 +233,15 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
                 title: 'artemisApp.exercise.sections.general',
                 valid: Boolean(this.exerciseTitleChannelNameComponent?.titleChannelNameComponent.formValid),
             },
-            { title: 'artemisApp.exercise.sections.mode', valid: Boolean(this.teamConfigFormGroupComponent?.formValid) },
-            { title: 'artemisApp.exercise.sections.problem', valid: true, empty: !this.modelingExercise.problemStatement },
+            {
+                title: 'artemisApp.exercise.sections.mode',
+                valid: Boolean(this.teamConfigFormGroupComponent?.formValid),
+            },
+            {
+                title: 'artemisApp.exercise.sections.problem',
+                valid: true,
+                empty: !this.modelingExercise.problemStatement,
+            },
             {
                 title: 'artemisApp.exercise.sections.solution',
                 valid: Boolean(this.isExamMode || (!this.modelingExercise.exampleSolutionPublicationDateError && this.solutionPublicationDateField?.dateInput.valid)),

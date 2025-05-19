@@ -14,6 +14,9 @@
         <p>Hallooo</p>
         <h3 jhiTranslate="artemisApp.exercise.sections.general" id="artemisApp.exercise.sections.general"></h3>
         <jhi-exercise-title-channel-name [exercise]="modelingExercise" [course]="modelingExercise.course" [isExamMode]="isExamMode" [isImport]="isImport" />
+
+        <diagram-wrapper />
+
         @if (!isExamMode) {
             <div class="form-group position-relative">
                 <label class="form-control-label" jhiTranslate="artemisApp.exercise.categories"></label>
@@ -218,6 +221,7 @@
                 </div>
             </div>
         </div>
+        <p>helloooo</p>
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="artemisApp.modelingExercise.diagramType" for="field_diagramType"></label>
             <select
