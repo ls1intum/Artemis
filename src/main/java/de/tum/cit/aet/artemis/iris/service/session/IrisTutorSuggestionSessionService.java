@@ -101,10 +101,11 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
      * @param event   Optional event to pass to the Pyris pipeline
      */
     public void requestAndHandleResponse(IrisTutorSuggestionSession session, Optional<String> event) {
-        var chatSession = (IrisTutorSuggestionSession) irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
-
-        var variant = "default";
         var post = postRepository.findPostOrMessagePostByIdElseThrow(session.getPostId());
+        var course = post.getCoursePostingBelongsTo();
+        var variant = irisSettingsService.getCombinedIrisSettingsFor(course, false).irisChatSettings().selectedVariant();
+
+        var chatSession = (IrisTutorSuggestionSession) irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
 
         pyrisPipelineService.executeTutorSuggestionPipeline(variant, chatSession, event, post);
     }
