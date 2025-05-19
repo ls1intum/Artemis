@@ -505,17 +505,6 @@ export class ProgrammingExerciseService {
     }
 
     /**
-     * Gets the git-diff report of a programming exercise
-     *
-     * @param exerciseId The id of a programming exercise
-     */
-    getDiffReport(exerciseId: number): Observable<ProgrammingExerciseGitDiffReport | undefined> {
-        return this.http
-            .get<ProgrammingExerciseGitDiffReport>(`${this.resourceUrl}/${exerciseId}/diff-report`, { observe: 'response' })
-            .pipe(map((res: HttpResponse<ProgrammingExerciseGitDiffReport>) => res.body ?? undefined));
-    }
-
-    /**
      * Gets the git-diff report of a programming exercise for two specific submissions
      * The user needs to have at least the 'instructor' authority to access this endpoint.
      * @param exerciseId The id of a programming exercise

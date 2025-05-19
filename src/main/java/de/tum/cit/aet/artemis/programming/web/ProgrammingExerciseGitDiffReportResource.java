@@ -73,25 +73,6 @@ public class ProgrammingExerciseGitDiffReportResource {
     }
 
     /**
-     * {@code GET exercises/:exerciseId/diff-report} : Get the diff report for a programming exercise.
-     *
-     * @param exerciseId the exerciseId of the exercise
-     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the diff report
-     */
-    @GetMapping("programming-exercises/{exerciseId}/diff-report")
-    @EnforceAtLeastTutor
-    public ResponseEntity<ProgrammingExerciseGitDiffReport> getGitDiffReport(@PathVariable Long exerciseId) {
-        log.debug("REST request to get a ProgrammingExerciseGitDiffReport for exercise {}", exerciseId);
-
-        var exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
-
-        var report = gitDiffReportService.getOrCreateReportOfExercise(exercise);
-
-        return ResponseEntity.ok(report);
-    }
-
-    /**
      * GET exercises/:exerciseId/submissions/:submissionId/diff-report-with-template : Get the diff report for a submission of a programming exercise with the template of the
      * exercise.
      * The current user needs to have at least instructor access to the exercise to fetch the diff report with the template.
