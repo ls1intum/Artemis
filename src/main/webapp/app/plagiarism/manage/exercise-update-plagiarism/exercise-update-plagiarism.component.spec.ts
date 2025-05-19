@@ -1,15 +1,27 @@
 import { DEFAULT_PLAGIARISM_DETECTION_CONFIG, Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { TestBed } from '@angular/core/testing';
+import { ComponentFixture } from '@angular/core/testing';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { Subject } from 'rxjs';
-import { ExerciseUpdatePlagiarismComponent } from 'app/plagiarism/manage/exercise-update-plagiarism/exercise-update-plagiarism.component';
+import { ExerciseUpdatePlagiarismComponent } from './exercise-update-plagiarism.component';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('Exercise Update Plagiarism Component', () => {
     let comp: ExerciseUpdatePlagiarismComponent;
+    let fixture: ComponentFixture<ExerciseUpdatePlagiarismComponent>;
 
     beforeEach(() => {
-        comp = new ExerciseUpdatePlagiarismComponent();
+        TestBed.configureTestingModule({
+            imports: [ExerciseUpdatePlagiarismComponent, FontAwesomeTestingModule],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+        }).compileComponents();
 
-        comp.exercise = new ProgrammingExercise(undefined, undefined);
+        fixture = TestBed.createComponent(ExerciseUpdatePlagiarismComponent);
+        comp = fixture.componentInstance;
+
+        fixture.componentRef.setInput('exercise', new ProgrammingExercise(undefined, undefined));
     });
 
     it('should use provided plagiarism checks config', () => {
@@ -20,6 +32,7 @@ describe('Exercise Update Plagiarism Component', () => {
             minimumScore: 2,
             minimumSize: 3,
         };
+
         comp.exercise.plagiarismDetectionConfig = plagiarismDetectionConfig;
 
         comp.ngOnInit();
@@ -32,46 +45,56 @@ describe('Exercise Update Plagiarism Component', () => {
 
         comp.ngOnInit();
 
-        expect(comp.exercise.plagiarismDetectionConfig).toEqual(DEFAULT_PLAGIARISM_DETECTION_CONFIG);
+        expect(comp.exercise().plagiarismDetectionConfig).toEqual(DEFAULT_PLAGIARISM_DETECTION_CONFIG);
     });
 
     it('should set minimumSizeTooltip on init', () => {
-        comp.exercise = { type: ExerciseType.PROGRAMMING } as Exercise;
-        comp.ngOnInit();
+        fixture.componentRef.setInput('exercise', { type: ExerciseType.PROGRAMMING } as Exercise);
+        fixture.detectChanges();
         expect(comp.minimumSizeTooltip).toBe('artemisApp.plagiarism.minimumSizeTooltipProgrammingExercise');
     });
 
     it('should set default plagiarism detection config on init if not set', () => {
-        comp.exercise = { type: ExerciseType.PROGRAMMING } as Exercise;
-        comp.ngOnInit();
-        expect(comp.exercise.plagiarismDetectionConfig).toEqual(DEFAULT_PLAGIARISM_DETECTION_CONFIG);
+        fixture.componentRef.setInput('exercise', { type: ExerciseType.PROGRAMMING } as Exercise);
+        fixture.detectChanges();
+        expect(comp.exercise().plagiarismDetectionConfig).toEqual(DEFAULT_PLAGIARISM_DETECTION_CONFIG);
     });
 
     it('should enable cpc', () => {
-        comp.exercise = {
-            plagiarismDetectionConfig: { continuousPlagiarismControlEnabled: false, continuousPlagiarismControlPostDueDateChecksEnabled: false },
-        } as Exercise;
+        fixture.componentRef.setInput('exercise', {
+            plagiarismDetectionConfig: {
+                continuousPlagiarismControlEnabled: false,
+                continuousPlagiarismControlPostDueDateChecksEnabled: false,
+            },
+        } as Exercise);
+        fixture.detectChanges();
         comp.toggleCPCEnabled();
-        expect(comp.exercise.plagiarismDetectionConfig!.continuousPlagiarismControlEnabled).toBeTrue();
-        expect(comp.exercise.plagiarismDetectionConfig!.continuousPlagiarismControlPostDueDateChecksEnabled).toBeTrue();
+        expect(comp.exercise().plagiarismDetectionConfig!.continuousPlagiarismControlEnabled).toBeTrue();
+        expect(comp.exercise().plagiarismDetectionConfig!.continuousPlagiarismControlPostDueDateChecksEnabled).toBeTrue();
     });
 
     it('should disable cpc', () => {
-        comp.exercise = {
-            plagiarismDetectionConfig: { continuousPlagiarismControlEnabled: true, continuousPlagiarismControlPostDueDateChecksEnabled: true },
-        } as Exercise;
+        fixture.componentRef.setInput('exercise', {
+            plagiarismDetectionConfig: {
+                continuousPlagiarismControlEnabled: true,
+                continuousPlagiarismControlPostDueDateChecksEnabled: true,
+            },
+        } as Exercise);
+        fixture.detectChanges();
         comp.toggleCPCEnabled();
-        expect(comp.exercise.plagiarismDetectionConfig!.continuousPlagiarismControlEnabled).toBeFalse();
-        expect(comp.exercise.plagiarismDetectionConfig!.continuousPlagiarismControlPostDueDateChecksEnabled).toBeFalse();
+        expect(comp.exercise().plagiarismDetectionConfig!.continuousPlagiarismControlEnabled).toBeFalse();
+        expect(comp.exercise().plagiarismDetectionConfig!.continuousPlagiarismControlPostDueDateChecksEnabled).toBeFalse();
     });
 
     it('should get correct minimumSizeTooltip for programming exercises', () => {
-        comp.exercise = { type: ExerciseType.PROGRAMMING } as Exercise;
+        fixture.componentRef.setInput('exercise', { type: ExerciseType.PROGRAMMING } as Exercise);
+        fixture.detectChanges();
         expect(comp.getMinimumSizeTooltip()).toBe('artemisApp.plagiarism.minimumSizeTooltipProgrammingExercise');
     });
 
     it('should get correct minimumSizeTooltip for text exercises', () => {
-        comp.exercise = { type: ExerciseType.TEXT } as Exercise;
+        fixture.componentRef.setInput('exercise', { type: ExerciseType.TEXT } as Exercise);
+        fixture.detectChanges();
         expect(comp.getMinimumSizeTooltip()).toBe('artemisApp.plagiarism.minimumSizeTooltipTextExercise');
     });
 
@@ -79,27 +102,36 @@ describe('Exercise Update Plagiarism Component', () => {
         const inputFieldNames = ['fieldCPCEnabled', 'fieldThreshhold', 'fieldResponsePeriod', 'fieldMinScore', 'fieldMinSize'];
         const calculateValidSpy = jest.spyOn(comp, 'calculateFormValid');
         const formValidChangesSpy = jest.spyOn(comp.formValidChanges, 'next');
-        comp.exercise = comp.exercise = {
-            plagiarismDetectionConfig: { continuousPlagiarismControlEnabled: false, continuousPlagiarismControlPostDueDateChecksEnabled: true },
-        } as Exercise;
+        fixture.componentRef.setInput('exercise', {
+            plagiarismDetectionConfig: {
+                continuousPlagiarismControlEnabled: false,
+                continuousPlagiarismControlPostDueDateChecksEnabled: true,
+            },
+        } as Exercise);
 
-        // initialize
         for (const fieldName of inputFieldNames) {
-            (comp as any)[fieldName] = { valueChanges: new Subject(), valid: false };
+            (comp as any)[fieldName] = () => ({ valueChanges: new Subject<boolean>(), valid: false }) as unknown as NgModel;
+
+            const stub = {
+                valueChanges: new Subject<boolean>(),
+                valid: false,
+            } as unknown as NgModel;
+
+            (comp as any)[fieldName] = () => stub;
         }
         comp.ngAfterViewInit();
         for (const fieldName of inputFieldNames) {
-            expect(((comp as any)[fieldName].valueChanges! as Subject<boolean>).observed).toBeTrue();
+            expect(((comp as any)[fieldName]().valueChanges! as Subject<boolean>).observed).toBeTrue();
         }
 
-        (comp.fieldCPCEnabled!.valueChanges! as Subject<boolean>).next(false);
+        (comp.fieldCPCEnabled()!.valueChanges! as Subject<boolean>).next(false);
         expect(calculateValidSpy).toHaveBeenCalledOnce();
         expect(comp.formValid).toBeTrue();
 
         // @ts-ignore
-        comp.fieldCPCEnabled!.valid = true;
-        comp.exercise.plagiarismDetectionConfig!.continuousPlagiarismControlEnabled = true;
-        (comp.fieldCPCEnabled!.valueChanges! as Subject<boolean>).next(true);
+        comp.fieldCPCEnabled()!.valid = true;
+        comp.exercise().plagiarismDetectionConfig!.continuousPlagiarismControlEnabled = true;
+        (comp.fieldCPCEnabled()!.valueChanges! as Subject<boolean>).next(true);
 
         expect(calculateValidSpy).toHaveBeenCalledTimes(2);
         expect(comp.formValid).toBeFalse();
@@ -107,7 +139,7 @@ describe('Exercise Update Plagiarism Component', () => {
 
         comp.ngOnDestroy();
         for (const fieldName of inputFieldNames) {
-            expect(((comp as any)[fieldName].valueChanges! as Subject<boolean>).observed).toBeFalse();
+            expect(((comp as any)[fieldName]().valueChanges! as Subject<boolean>).observed).toBeFalse();
         }
     });
 });
