@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.repository;
 
+import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.Set;
 
@@ -44,8 +45,10 @@ public interface CourseLearnerProfileRepository extends ArtemisJpaRepository<Cou
             FROM CourseLearnerProfile clp
             LEFT JOIN FETCH clp.course
             WHERE clp.learnerProfile.user.login = :login
+                        AND (clp.course.startDate IS NULL OR clp.course.startDate <= :now)
+                        AND (clp.course.endDate IS NULL OR clp.course.endDate >= :now)
             """)
-    Set<CourseLearnerProfile> findAllByLoginWithCourse(@Param("login") String login);
+    Set<CourseLearnerProfile> findAllByLoginAndCourseActive(@Param("login") String login, @Param("now") ZonedDateTime now);
 
     @Query("""
                 SELECT clp

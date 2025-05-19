@@ -66,14 +66,10 @@ public class LearnerProfileResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get all CourseLearnerProfiles of user {}", user.getLogin());
         var now = ZonedDateTime.now();
-        Set<CourseLearnerProfile> courseLearnerProfiles = courseLearnerProfileRepository.findAllByLoginWithCourse(user.getLogin()).stream()
-                // Check if course is active
-                .filter(profile -> profile.getCourse().getEndDate() == null || profile.getCourse().getEndDate().isAfter(now))
-                .filter(profile -> profile.getCourse().getStartDate() == null || profile.getCourse().getStartDate().isBefore(now))
-                // Check if user is student in course
+        Set<CourseLearnerProfile> courseLearnerProfiles = courseLearnerProfileRepository.findAllByLoginAndCourseActive(user.getLogin(), ZonedDateTime.now()).stream()
                 .filter(profile -> user.getGroups().contains(profile.getCourse().getStudentGroupName())).collect(Collectors.toSet());
 
-        Set<Course> coursesWithLearningPaths = courseService.findAllActiveForUser(user).stream().filter(Course::getLearningPathsEnabled).collect(Collectors.toSet());
+        Set<Course> coursesWithLearningPaths = courseService.findAllActiveForUserAndLearningPathsEnabled(user);
 
         // This is needed, as there is no method that is executed everytime a user is added to a new course
         Set<CourseLearnerProfile> newProfiles = coursesWithLearningPaths.stream()
