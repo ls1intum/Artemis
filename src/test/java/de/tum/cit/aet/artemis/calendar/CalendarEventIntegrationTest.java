@@ -22,7 +22,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import de.tum.cit.aet.artemis.calendar.dto.CalendarEventDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
 
-public class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
+class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
