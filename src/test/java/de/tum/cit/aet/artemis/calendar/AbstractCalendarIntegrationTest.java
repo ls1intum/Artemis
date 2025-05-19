@@ -66,10 +66,10 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
 
     @AfterEach
     void cleanUpAllEntities() {
-        courseRepository.deleteAll();
-        tutorialGroupRepository.deleteAll();
-        tutorialGroupSessionRepository.deleteAll();
         userRepository.deleteAll();
+        tutorialGroupSessionRepository.deleteAll();
+        tutorialGroupRepository.deleteAll();
+        courseRepository.deleteAll();
     }
 
     void setupActiveCourseWithParticipatedGroupAndActiveSessionsScenario() {
