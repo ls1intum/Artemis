@@ -26,17 +26,17 @@ import de.tum.cit.aet.artemis.tutorialgroup.util.TutorialGroupUtilService;
 
 public abstract class AbstractCalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
-    protected static final String TEST_PREFIX = "calendarevent";
+    static final String TEST_PREFIX = "calendarevent";
 
-    protected Course course;
+    Course course;
 
-    protected TutorialGroup tutorialGroup;
+    TutorialGroup tutorialGroup;
 
-    protected List<TutorialGroupSession> tutorialGroupSessions;
+    List<TutorialGroupSession> tutorialGroupSessions;
 
-    protected User student;
+    User student;
 
-    protected User tutor;
+    User tutor;
 
     @Autowired
     private CourseUtilService courseUtilService;
@@ -57,7 +57,7 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
     private UserTestRepository userRepository;
 
     @BeforeEach
-    public void setupUsers() {
+    void setupUsers() {
         userUtilService.addStudent("tumuser", TEST_PREFIX + "student");
         userUtilService.addTeachingAssistant("tutor", TEST_PREFIX + "tutor");
         student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
@@ -65,51 +65,51 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
     }
 
     @AfterEach
-    public void cleanUpAllEntities() {
+    void cleanUpAllEntities() {
         courseRepository.deleteAll();
         tutorialGroupRepository.deleteAll();
         tutorialGroupSessionRepository.deleteAll();
         userRepository.deleteAll();
     }
 
-    protected void setupActiveCourseWithParticipatedGroupAndActiveSessionsScenario() {
+    void setupActiveCourseWithParticipatedGroupAndActiveSessionsScenario() {
         createActiveCourse();
         createParticipatedTutorialGroup();
         createActiveTutorialGroupSessions(this.course);
     }
 
-    protected void setupUserNotPartOfAnyCourseScenario() {
+    void setupUserNotPartOfAnyCourseScenario() {
         createActiveCourse();
         createUsersNotPartOfCourse();
         createParticipatedTutorialGroup();
         createActiveTutorialGroupSessions(this.course);
     }
 
-    protected void setupOnlyNonActiveCourseScenario() {
+    void setupOnlyNonActiveCourseScenario() {
         createNonActiveCourse();
         createParticipatedTutorialGroup();
         createActiveTutorialGroupSessions(this.course);
     }
 
-    protected void setupActiveCourseWithoutParticipatedTutorialGroupScenario() {
+    void setupActiveCourseWithoutParticipatedTutorialGroupScenario() {
         createActiveCourse();
         createNonParticipatedTutorialGroup();
         createActiveTutorialGroupSessions(this.course);
     }
 
-    protected void setupActiveCourseWithParticipatedGroupAndActiveAndCancelledSessionsScenario() {
+    void setupActiveCourseWithParticipatedGroupAndActiveAndCancelledSessionsScenario() {
         createActiveCourse();
         createParticipatedTutorialGroup();
         createActiveAndCancelledTutorialGroupSessions();
     }
 
-    protected void setupPartiallyOverlappingScenario() {
+    void setupPartiallyOverlappingScenario() {
         createActiveCourse();
         createParticipatedTutorialGroup();
         createActivePartiallyOverlappingTutorialGroupSessions();
     }
 
-    protected String getMonthsSpanningCurrentTestCourseAsMonthKeys() {
+    String getMonthsSpanningCurrentTestCourseAsMonthKeys() {
         YearMonth startMonth = YearMonth.from(course.getStartDate());
         YearMonth endMonth = YearMonth.from(course.getEndDate());
         List<String> monthStrings = new LinkedList<>();
