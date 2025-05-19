@@ -19,7 +19,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FormsModule } from '@angular/forms';
 import { faPaperPlane } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ButtonComponent, ButtonType } from 'app/shared/components/buttons/button/button.component';
 
 /**
@@ -30,7 +29,7 @@ import { ButtonComponent, ButtonType } from 'app/shared/components/buttons/butto
     selector: 'jhi-tutor-suggestion',
     templateUrl: './tutor-suggestion.component.html',
     styleUrl: './tutor-suggestion.component.scss',
-    imports: [IrisLogoComponent, AsPipe, ChatStatusBarComponent, ArtemisTranslatePipe, FormsModule, ButtonComponent, HtmlForMarkdownPipe],
+    imports: [IrisLogoComponent, AsPipe, ChatStatusBarComponent, ArtemisTranslatePipe, FormsModule, ButtonComponent],
 })
 export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
     protected readonly IrisLogoSize = IrisLogoSize;
