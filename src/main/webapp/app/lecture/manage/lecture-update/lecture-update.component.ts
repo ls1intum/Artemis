@@ -8,7 +8,7 @@ import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
-import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { faBan, faPuzzlePiece, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER, ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE } from 'app/shared/constants/file-extensions.constants';
 import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
@@ -21,7 +21,7 @@ import { LectureAttachmentsComponent } from 'app/lecture/manage/lecture-attachme
 import { LectureUpdateUnitsComponent } from 'app/lecture/manage/lecture-units/lecture-units.component';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
