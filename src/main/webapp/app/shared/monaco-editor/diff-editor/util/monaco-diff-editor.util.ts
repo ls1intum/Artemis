@@ -109,13 +109,13 @@ export function getDiffInformation(templateFileContentByPath: Map<string, string
     let diffInformation: DiffInformation[] = paths
         .filter(ig.createFilter())
         .filter((path) => {
-            const modifiedContent = templateFileContentByPath.get(path);
-            const originalContent = solutionFileContentByPath.get(path);
+            const originalContent = templateFileContentByPath.get(path);
+            const modifiedContent = solutionFileContentByPath.get(path);
             return path && (modifiedContent !== originalContent || (modifiedContent === undefined) !== (originalContent === undefined));
         })
         .map((path) => {
-            const modifiedFileContent = templateFileContentByPath.get(path);
-            const originalFileContent = solutionFileContentByPath.get(path);
+            const originalFileContent = templateFileContentByPath.get(path);
+            const modifiedFileContent = solutionFileContentByPath.get(path);
 
             let originalPath: string;
             let modifiedPath: string;
