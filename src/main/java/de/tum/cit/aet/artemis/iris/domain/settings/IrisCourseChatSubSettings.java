@@ -25,7 +25,7 @@ public class IrisCourseChatSubSettings extends IrisSubSettings {
     private Integer rateLimitTimeframeHours;
 
     @Nullable
-    @Column(name = "custom_instructions", length = 2048)
+    @Column(name = "custom_instructions", length = IRIS_CUSTOM_INSTRUCTIONS_MAX_LENGTH)
     private String customInstructions;
 
     @Nullable
