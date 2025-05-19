@@ -1,22 +1,16 @@
 .segmented-toggle {
     display: flex;
     border: 1px solid ButtonBorder;
-    border-radius: 8px;
     overflow: hidden;
-    background: ButtonFace;
-    font-family: inherit;
-    color: ButtonText;
 
     .toggle-button {
         flex: 1;
         padding: 0.5rem 1rem;
-        background: none;
         border: none;
         cursor: pointer;
         font-weight: 500;
         transition: background-color 0.2s ease;
         border-right: 1px solid ButtonBorder;
-        color: ButtonText;
 
         &:last-child {
             border-right: none;
