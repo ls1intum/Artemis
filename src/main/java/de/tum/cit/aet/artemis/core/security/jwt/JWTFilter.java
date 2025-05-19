@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.core.security.jwt;
 
 import java.io.IOException;
 import java.util.Date;
-import java.util.Objects;
 
 import jakarta.annotation.Nullable;
 import jakarta.servlet.FilterChain;
@@ -104,14 +103,16 @@ public class JWTFilter extends GenericFilterBean {
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
         HttpServletRequest httpServletRequest = (HttpServletRequest) servletRequest;
         HttpServletResponse httpServletResponse = (HttpServletResponse) servletResponse;
-        String jwtToken;
-        String source;
+        String jwtToken = null;
+        String source = null;
         try {
-            JwtWithSource jwtWithSource = Objects.requireNonNull(extractValidJwt(httpServletRequest, this.tokenProvider));
-            jwtToken = jwtWithSource.jwt();
-            source = jwtWithSource.source();
+            JwtWithSource jwtWithSource = extractValidJwt(httpServletRequest, this.tokenProvider);
+            if (jwtWithSource != null) {
+                jwtToken = jwtWithSource.jwt();
+                source = jwtWithSource.source();
+            }
         }
-        catch (IllegalArgumentException | NullPointerException e) {
+        catch (IllegalArgumentException e) {
             httpServletResponse.sendError(HttpServletResponse.SC_BAD_REQUEST);
             return;
         }

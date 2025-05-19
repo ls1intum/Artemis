@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
-import java.util.Objects;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -15,6 +14,7 @@ import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 import de.tum.cit.aet.artemis.core.security.jwt.JWTFilter;
+import de.tum.cit.aet.artemis.core.security.jwt.JwtWithSource;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 
 @Profile(PROFILE_CORE)
@@ -29,11 +29,14 @@ public class ToolsInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-        String jwtToken;
+        String jwtToken = null;
         try {
-            jwtToken = Objects.requireNonNull(JWTFilter.extractValidJwt(request, tokenProvider)).jwt();
+            JwtWithSource jwtWithSource = JWTFilter.extractValidJwt(request, tokenProvider);
+            if (jwtWithSource != null) {
+                jwtToken = jwtWithSource.jwt();
+            }
         }
-        catch (IllegalArgumentException | NullPointerException e) {
+        catch (IllegalArgumentException e) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST);
             return false;
         }
