@@ -20,6 +20,8 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
+import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupSessionRepository;
+import de.tum.cit.aet.artemis.tutorialgroup.test_repository.TutorialGroupTestRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.util.TutorialGroupUtilService;
 
 public abstract class AbstractCalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -43,6 +45,12 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
     private TutorialGroupUtilService tutorialGroupUtilService;
 
     @Autowired
+    private TutorialGroupSessionRepository tutorialGroupSessionRepository;
+
+    @Autowired
+    private TutorialGroupTestRepository tutorialGroupRepository;
+
+    @Autowired
     private CourseTestRepository courseRepository;
 
     @Autowired
@@ -58,8 +66,17 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
 
     @AfterEach
     void cleanUpAllEntities() {
+        tutorialGroupSessionRepository.deleteAll();
+        tutorialGroupSessionRepository.flush();
+
+        tutorialGroupRepository.deleteAll();
+        tutorialGroupRepository.flush();
+
         courseRepository.deleteAll();
+        courseRepository.flush();
+
         userRepository.deleteAll();
+        userRepository.flush();
     }
 
     void setupActiveCourseWithParticipatedGroupAndActiveSessionsScenario() {
@@ -147,18 +164,6 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
         ZonedDateTime firstSessionStart = courseStart.plusWeeks(1).withHour(12).withMinute(0).withSecond(0).withNano(0);
         ZonedDateTime firstSessionEnd = firstSessionStart.plusHours(2);
         tutorialGroupSessions = createWeeklyTutorialGroupSessions(tutorialGroup.getId(), firstSessionStart, firstSessionEnd, 12, 2);
-    }
-
-    private void createActivePartiallyOverlappingTutorialGroupSessions() {
-        ZonedDateTime endOverlappingEnd = course.getStartDate().plusMonths(1);
-        ZonedDateTime endOverlappingStart = endOverlappingEnd.minusDays(1);
-        TutorialGroupSession endOverlappingSession = tutorialGroupUtilService.createIndividualTutorialGroupSession(tutorialGroup.getId(), endOverlappingStart, endOverlappingEnd,
-                null, TutorialGroupSessionStatus.ACTIVE, null);
-        ZonedDateTime startOverlappingEnd = course.getStartDate().plusMonths(2);
-        ZonedDateTime startOverlappingStart = startOverlappingEnd.minusDays(1);
-        TutorialGroupSession startOverlappingSession = tutorialGroupUtilService.createIndividualTutorialGroupSession(tutorialGroup.getId(), startOverlappingStart,
-                startOverlappingEnd, null, TutorialGroupSessionStatus.ACTIVE, null);
-        tutorialGroupSessions = List.of(endOverlappingSession, startOverlappingSession);
     }
 
     private List<TutorialGroupSession> createWeeklyTutorialGroupSessions(Long tutorialGroupId, ZonedDateTime firstSessionStart, ZonedDateTime firstSessionEnd, int repetitionCount,

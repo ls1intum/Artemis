@@ -999,7 +999,7 @@ public class TutorialGroupService {
         try {
             return ZoneId.of(timeZone);
         }
-        catch (DateTimeParseException exception) {
+        catch (Exception exception) {
             throw new BadRequestException("Invalid time zone format. Expected IANA time zone ID.");
         }
     }
