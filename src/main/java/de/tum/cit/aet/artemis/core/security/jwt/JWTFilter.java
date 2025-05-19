@@ -111,7 +111,7 @@ public class JWTFilter extends GenericFilterBean {
             jwtToken = jwtWithSource.jwt();
             source = jwtWithSource.source();
         }
-        catch (IllegalArgumentException e) {
+        catch (IllegalArgumentException | NullPointerException e) {
             httpServletResponse.sendError(HttpServletResponse.SC_BAD_REQUEST);
             return;
         }

@@ -83,11 +83,8 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
     }
 
-    /**
-     * TODO this should be a validation on server startup
-     */
     @Test
-    void verifyTokenValidityIsConfiguredProperly() {
+    void testConfigurationContainsReasonableValues() {
         assertThat(TOKEN_VALIDITY_IN_SECONDS).isGreaterThan(60);
         assertThat(TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS).isGreaterThan(TOKEN_VALIDITY_IN_SECONDS);
         assertThat(TOKEN_VALIDITY_IN_SECONDS_FOR_PASSKEY).isGreaterThan(0);
@@ -211,29 +208,27 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
         assertThat(tokenProvider.getExpirationDate(updatedJwt)).isBefore(new Date(System.currentTimeMillis() + expectedRemainingLifetimeInMilliseconds));
     }
 
-    // @Test
-    // void shouldNotRotateAnExpiredToken() {
-    // Authentication authentication = createWebAuthnAuthentication();
-    //
-    // Date issuedAt = new Date(System.currentTimeMillis() - (long) (TOKEN_VALIDITY_IN_SECONDS_FOR_PASSKEY * 1.1 * 1000));
-    // Date expiration = new Date(issuedAt.getTime() + TOKEN_VALIDITY_IN_SECONDS_FOR_PASSKEY * 1000);
-    //
-    // String jwt = tokenProvider.createToken(authentication, issuedAt, expiration, null, true);
-    // assertThat(tokenProvider.getAuthenticatedWithPasskey(jwt)).isTrue();
-    //
-    // LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-    // HttpHeaders headers = new HttpHeaders();
-    // headers.add(HttpHeaders.COOKIE, JWTFilter.JWT_COOKIE_NAME + "=" + jwt);
-    //
-    // assertThrows(io.jsonwebtoken.ExpiredJwtException.class, () -> {
-    // mvc.perform(MockMvcRequestBuilders.get(new URI(ENDPOINT_TO_TEST))
-    // .params(params)
-    // .headers(headers)
-    // .cookie(new Cookie(JWTFilter.JWT_COOKIE_NAME, jwt)))
-    // .andExpect(status().is(HttpStatus.OK.value()))
-    // .andReturn();
-    // });
-    // }
+    @Test
+    void shouldNotRotateAnExpiredToken() throws Exception {
+        Authentication authentication = createWebAuthnAuthentication();
+
+        long remainingValidityTimeOfTokenInMilliseconds = 1000;
+        Date issuedAt = new Date(System.currentTimeMillis() - (TOKEN_VALIDITY_IN_SECONDS_FOR_PASSKEY * 1000) + remainingValidityTimeOfTokenInMilliseconds);
+        Date expiration = new Date(issuedAt.getTime() + TOKEN_VALIDITY_IN_SECONDS_FOR_PASSKEY * 1000 + remainingValidityTimeOfTokenInMilliseconds);
+
+        String jwt = tokenProvider.createToken(authentication, issuedAt, expiration, null, true);
+        assertThat(tokenProvider.getAuthenticatedWithPasskey(jwt)).isTrue();
+
+        Thread.sleep(remainingValidityTimeOfTokenInMilliseconds + 1000);
+
+        MvcResult res = mvc.perform(MockMvcRequestBuilders.get(new URI(ENDPOINT_TO_TEST)).cookie(new Cookie(JWTFilter.JWT_COOKIE_NAME, jwt)))
+                .andExpect(status().is(HttpStatus.BAD_REQUEST.value())).andReturn();
+
+        MockHttpServletResponse response = res.getResponse();
+        assertThat(response).isNotNull();
+        String setCookieHeader = response.getHeader(HttpHeaders.SET_COOKIE);
+        assertThat(setCookieHeader).isNull();
+    }
 
     @Test
     void testRotateTokenSilently_shouldNotRotateToken_ifSuppliedByBearerToken() throws Exception {
