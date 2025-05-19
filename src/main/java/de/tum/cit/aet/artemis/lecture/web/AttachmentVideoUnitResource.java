@@ -318,17 +318,17 @@ public class AttachmentVideoUnitResource {
     /**
      * PUT lectures/:lectureId/attachment-units/:attachmentUnitId/student-version : Updates the student version file for an existing attachment unit
      *
-     * @param lectureId          the id of the lecture to which the attachment unit belongs
-     * @param attachmentUnitId   the id of the attachment unit to update
-     * @param studentVersionFile the file containing the student version of the attachment
+     * @param lectureId             the id of the lecture to which the attachment unit belongs
+     * @param attachmentVideoUnitId the id of the attachment unit to update
+     * @param studentVersionFile    the file containing the student version of the attachment
      * @return the ResponseEntity with status 200 (OK) and with body the updated attachmentUnit
      */
-    @PutMapping("lectures/{lectureId}/attachment-units/{attachmentUnitId}/student-version")
-    @EnforceAtLeastEditorInLectureUnit(resourceIdFieldName = "attachmentUnitId")
-    public ResponseEntity<AttachmentVideoUnit> updateAttachmentUnitStudentVersion(@PathVariable Long lectureId, @PathVariable Long attachmentUnitId,
+    @PutMapping("lectures/{lectureId}/attachment-video-units/{attachmentVideoUnitId}/student-version")
+    @EnforceAtLeastEditorInLectureUnit(resourceIdFieldName = "attachmentVideoUnitId")
+    public ResponseEntity<AttachmentVideoUnit> updateAttachmentUnitStudentVersion(@PathVariable Long lectureId, @PathVariable Long attachmentVideoUnitId,
             @RequestParam("studentVersion") MultipartFile studentVersionFile) {
 
-        AttachmentVideoUnit existingAttachmentUnit = attachmentVideoUnitRepository.findWithSlidesAndCompetenciesByIdElseThrow(attachmentUnitId);
+        AttachmentVideoUnit existingAttachmentUnit = attachmentVideoUnitRepository.findWithSlidesAndCompetenciesByIdElseThrow(attachmentVideoUnitId);
         checkAttachmentVideoUnitCourseAndLecture(existingAttachmentUnit, lectureId);
         Attachment attachment = existingAttachmentUnit.getAttachment();
 
@@ -337,8 +337,8 @@ public class AttachmentVideoUnitResource {
             return ResponseEntity.ok(existingAttachmentUnit);
         }
         catch (Exception e) {
-            log.error("Could not set the Student Version of the Attachment Unit", e);
-            throw new InternalServerErrorException("Could not set the Student Version of the Attachment Unit");
+            log.error("Could not set the Student Version of the Attachment Video Unit", e);
+            throw new InternalServerErrorException("Could not set the Student Version of the Attachment Video Unit");
         }
     }
 

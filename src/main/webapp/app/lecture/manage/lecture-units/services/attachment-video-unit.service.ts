@@ -82,12 +82,12 @@ export class AttachmentVideoUnitService {
     /**
      * Update only the student version of an attachment unit's attachment
      * @param lectureId the id of the lecture
-     * @param attachmentUnitId the id of the attachment unit
+     * @param attachmentVideoUnitId the id of the attachment video unit
      * @param formData the FormData containing only the student version file
      */
-    updateStudentVersion(lectureId: number, attachmentUnitId: number, formData: FormData): Observable<EntityResponseType> {
+    updateStudentVersion(lectureId: number, attachmentVideoUnitId: number, formData: FormData): Observable<EntityResponseType> {
         return this.httpClient
-            .put<AttachmentVideoUnit>(`${this.resourceURL}/lectures/${lectureId}/attachment-units/${attachmentUnitId}/student-version`, formData, {
+            .put<AttachmentVideoUnit>(`${this.resourceURL}/lectures/${lectureId}/attachment-video-units/${attachmentVideoUnitId}/student-version`, formData, {
                 headers: { 'ngsw-bypass': 'true' },
                 observe: 'response',
             })
