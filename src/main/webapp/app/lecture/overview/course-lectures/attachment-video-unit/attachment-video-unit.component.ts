@@ -24,6 +24,8 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
 import { FileService } from 'app/shared/service/file.service';
+import { ScienceService } from 'app/shared/science/science.service';
+import { ScienceEventType } from 'app/shared/science/science.model';
 
 @Component({
     selector: 'jhi-attachment-video-unit',
@@ -35,6 +37,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     protected readonly faDownload = faDownload;
 
     private readonly fileService = inject(FileService);
+    private readonly scienceService = inject(ScienceService);
 
     private readonly videoUrlAllowList = [
         // TUM-Live. Example: 'https://live.rbg.tum.de/w/test/26?video_only=1'
@@ -71,7 +74,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
      * If it is not the student view, it always downloads the original version
      */
     handleDownload() {
-        this.logEvent();
+        this.scienceService.logEvent(ScienceEventType.LECTURE__OPEN_UNIT, this.lectureUnit().id);
 
         // Determine the link based on the availability of a student version
         const link = addPublicFilePrefix(this.lectureUnit().attachment!.studentVersion || this.fileService.createStudentLink(this.lectureUnit().attachment!.link!));
@@ -83,7 +86,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     }
 
     handleOriginalVersion() {
-        this.logEvent();
+        this.scienceService.logEvent(ScienceEventType.LECTURE__OPEN_UNIT, this.lectureUnit().id);
 
         const link = addPublicFilePrefix(this.lectureUnit().attachment!.link!);
 

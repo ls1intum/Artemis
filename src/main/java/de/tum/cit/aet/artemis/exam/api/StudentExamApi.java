@@ -38,12 +38,16 @@ public class StudentExamApi extends AbstractExamApi {
         return studentExamRepository.findAllWithExercisesByExamId(examId);
     }
 
-    public Optional<StudentExam> findByExamIdAndParticipationId(long examId, long userId) {
-        return studentExamRepository.findByExamIdAndParticipationId(examId, userId);
+    public Optional<StudentExam> findByExamIdAndParticipationId(long examId, long participationId) {
+        return studentExamRepository.findByExamIdAndParticipationId(examId, participationId);
     }
 
     public Optional<Boolean> isSubmitted(long examId, long userId) {
         return studentExamRepository.isSubmitted(examId, userId);
+    }
+
+    public Optional<Boolean> isSubmitted(long participationId) {
+        return studentExamRepository.isSubmitted(participationId);
     }
 
     public void save(StudentExam studentExam) {
@@ -57,5 +61,9 @@ public class StudentExamApi extends AbstractExamApi {
     public Map<Course, List<StudentExam>> findStudentExamsByCourseForUserId(long userId) {
         return studentExamRepository.findAllWithExercisesSubmissionPolicyParticipationsSubmissionsResultsAndFeedbacksByUserId(userId).stream()
                 .collect(Collectors.groupingBy(studentExam -> studentExam.getExam().getCourse()));
+    }
+
+    public Optional<StudentExam> findByExamIdAndUserId(Long examId, Long userId) {
+        return studentExamRepository.findByExamIdAndUserId(examId, userId);
     }
 }

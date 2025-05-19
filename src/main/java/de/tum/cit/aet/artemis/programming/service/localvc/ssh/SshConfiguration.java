@@ -66,7 +66,8 @@ public class SshConfiguration {
         }
         else {
             // this is a simple solution for development, the host key will be generated during the first ssh operation in case it does not exist
-            sshd.setKeyPairProvider(new SimpleGeneratorHostKeyProvider(Path.of("tmp", "hostkey.ser")));
+
+            sshd.setKeyPairProvider(new SimpleGeneratorHostKeyProvider(Path.of("local", "tmp", "hostkey.ser")));
         }
         sshd.setCommandFactory(
                 sshGitCommandFactoryService.withGitLocationResolver(sshGitLocationResolverService).withExecutorServiceProvider(() -> ThreadUtils.newFixedThreadPool("git-ssh", 8)));

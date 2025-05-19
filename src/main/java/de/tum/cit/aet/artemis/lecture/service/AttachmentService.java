@@ -17,6 +17,7 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
@@ -68,7 +69,7 @@ public class AttachmentService {
 
         try {
             String originalPdfPath = attachment.getLink();
-            Path pdfPath = FilePathService.actualPathForPublicPath(URI.create(originalPdfPath));
+            Path pdfPath = FilePathService.fileSystemPathForExternalUri(URI.create(originalPdfPath), FilePathType.ATTACHMENT_UNIT);
 
             byte[] studentVersionPdf = generateStudentVersionPdf(pdfPath.toFile(), hiddenSlides);
 
@@ -89,8 +90,8 @@ public class AttachmentService {
         if (attachment.getStudentVersion() != null) {
             try {
                 URI oldStudentVersionPath = URI.create(attachment.getStudentVersion());
-                fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(oldStudentVersionPath), 0);
-                fileService.evictCacheForPath(FilePathService.actualPathForPublicPathOrThrow(oldStudentVersionPath));
+                fileService.schedulePathForDeletion(FilePathService.fileSystemPathForExternalUri(oldStudentVersionPath, FilePathType.STUDENT_VERSION_SLIDES), 0);
+                fileService.evictCacheForPath(FilePathService.fileSystemPathForExternalUri(oldStudentVersionPath, FilePathType.STUDENT_VERSION_SLIDES));
             }
             catch (Exception e) {
                 throw new InternalServerErrorException("Failed to delete student version file: " + e.getMessage());
@@ -120,19 +121,19 @@ public class AttachmentService {
      * Handles the student version file of an attachment, updates its reference in the database,
      * and deletes the old version if it exists.
      *
-     * @param pdfData          The PDF data as byte array
-     * @param attachment       The existing attachment
-     * @param attachmentUnitId The id of the attachment unit
+     * @param pdfData               The PDF data as byte array
+     * @param attachment            The existing attachment
+     * @param attachmentVideoUnitId The id of the attachment video unit
      * @throws IOException If there's an error handling the file
      */
-    private void handleStudentVersionFile(byte[] pdfData, Attachment attachment, Long attachmentUnitId) throws IOException {
+    private void handleStudentVersionFile(byte[] pdfData, Attachment attachment, Long attachmentVideoUnitId) throws IOException {
         // Delete the old student version if it exists
         if (attachment.getStudentVersion() != null) {
             deleteStudentVersionFile(attachment);
         }
 
         // Create the student version directory if it doesn't exist
-        Path basePath = FilePathService.getAttachmentVideoUnitFilePath().resolve(attachmentUnitId.toString()).resolve("student");
+        Path basePath = FilePathService.getAttachmentVideoUnitFileSystemPath().resolve(attachmentVideoUnitId.toString()).resolve("student");
         Files.createDirectories(basePath);
 
         String sanitizedName = fileService.checkAndSanitizeFilename(attachment.getName());
@@ -141,6 +142,6 @@ public class AttachmentService {
 
         FileUtils.writeByteArrayToFile(savePath.toFile(), pdfData);
 
-        attachment.setStudentVersion(FilePathService.publicPathForActualPath(savePath, attachmentUnitId).toString());
+        attachment.setStudentVersion(FilePathService.externalUriForFileSystemPath(savePath, FilePathType.STUDENT_VERSION_SLIDES, attachmentVideoUnitId).toString());
     }
 }

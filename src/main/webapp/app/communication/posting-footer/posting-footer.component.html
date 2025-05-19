@@ -11,7 +11,7 @@
             <hr class="m-0" />
         </div>
     </div>
-    <div class="list-answer-post ms-4">
+    <div class="list-answer-post" [ngClass]="{ 'ms-4': !isThreadSidebar() }">
         @for (group of groupedAnswerPosts; track trackGroupByFn($index, group)) {
             @for (answerPost of group.posts; track trackPostByFn($index, answerPost)) {
                 <jhi-answer-post
@@ -31,7 +31,7 @@
         }
     </div>
 }
-<div class="new-reply-inline-input ms-4 my-3">
+<div class="new-reply-inline-input" [ngClass]="{ 'ms-4 my-3': !isCommunicationPage() && showAnswers() }">
     <!-- rendered during the first reply to a post -->
     <ng-container #createEditAnswerPostContainer />
     <jhi-answer-post-create-edit-modal

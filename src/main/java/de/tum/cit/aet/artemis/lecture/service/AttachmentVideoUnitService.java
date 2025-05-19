@@ -18,6 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
+import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
@@ -190,9 +191,9 @@ public class AttachmentVideoUnitService {
      */
     private void handleFile(MultipartFile file, Attachment attachment, boolean keepFilename, Long attachmentVideoUnitId) {
         if (file != null && !file.isEmpty()) {
-            Path basePath = FilePathService.getAttachmentVideoUnitFilePath().resolve(attachmentVideoUnitId.toString());
-            Path savePath = fileService.saveFile(file, basePath, keepFilename);
-            attachment.setLink(FilePathService.publicPathForActualPathOrThrow(savePath, attachmentVideoUnitId).toString());
+            Path basePath = FilePathService.getAttachmentVideoUnitFileSystemPath().resolve(attachmentVideoUnitId.toString());
+            Path savePath = fileService.saveFile(file, basePath, FilePathType.ATTACHMENT_UNIT, keepFilename);
+            attachment.setLink(FilePathService.externalUriForFileSystemPath(savePath, FilePathType.ATTACHMENT_UNIT, attachmentVideoUnitId).toString());
             attachment.setUploadDate(ZonedDateTime.now());
         }
     }
@@ -210,14 +211,16 @@ public class AttachmentVideoUnitService {
             // Delete the old student version
             if (attachment.getStudentVersion() != null) {
                 URI oldStudentVersionPath = URI.create(attachment.getStudentVersion());
-                fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(oldStudentVersionPath), 0);
-                this.fileService.evictCacheForPath(FilePathService.actualPathForPublicPathOrThrow(oldStudentVersionPath));
+                Path localPath = FilePathService.fileSystemPathForExternalUri(oldStudentVersionPath, FilePathType.STUDENT_VERSION_SLIDES);
+
+                fileService.schedulePathForDeletion(localPath, 0);
+                this.fileService.evictCacheForPath(localPath);
             }
 
             // Update student version of attachment
-            Path basePath = FilePathService.getAttachmentVideoUnitFilePath().resolve(attachmentVideoUnitId.toString());
-            Path savePath = fileService.saveFile(studentVersionFile, basePath.resolve("student"), true);
-            attachment.setStudentVersion(FilePathService.publicPathForActualPath(savePath, attachmentVideoUnitId).toString());
+            Path basePath = FilePathService.getAttachmentVideoUnitFileSystemPath().resolve(attachmentVideoUnitId.toString());
+            Path savePath = fileService.saveFile(studentVersionFile, basePath.resolve("student"), FilePathType.STUDENT_VERSION_SLIDES, true);
+            attachment.setStudentVersion(FilePathService.externalUriForFileSystemPath(savePath, FilePathType.STUDENT_VERSION_SLIDES, attachmentVideoUnitId).toString());
             attachmentRepository.save(attachment);
         }
     }
@@ -230,7 +233,8 @@ public class AttachmentVideoUnitService {
      */
     private void evictCache(MultipartFile file, AttachmentVideoUnit attachmentVideoUnit) {
         if (file != null && !file.isEmpty()) {
-            this.fileService.evictCacheForPath(FilePathService.actualPathForPublicPathOrThrow(URI.create(attachmentVideoUnit.getAttachment().getLink())));
+            this.fileService
+                    .evictCacheForPath(FilePathService.fileSystemPathForExternalUri(URI.create(attachmentVideoUnit.getAttachment().getLink()), FilePathType.ATTACHMENT_UNIT));
         }
     }
 
@@ -242,6 +246,5 @@ public class AttachmentVideoUnitService {
     public void prepareAttachmentVideoUnitForClient(AttachmentVideoUnit attachmentVideoUnit) {
         attachmentVideoUnit.getLecture().setLectureUnits(null);
         attachmentVideoUnit.getLecture().setAttachments(null);
-        attachmentVideoUnit.getLecture().setPosts(null);
     }
 }

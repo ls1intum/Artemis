@@ -3,24 +3,27 @@ package de.tum.cit.aet.artemis.communication.domain.notification;
 import java.time.ZonedDateTime;
 
 import jakarta.persistence.Column;
-import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.communication.domain.SystemNotificationType;
-import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
 
 /**
  * A SystemNotification.
  */
 @Entity
-@DiscriminatorValue("S")
+@Table(name = "system_notification")
+@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class SystemNotification extends Notification {
+public class SystemNotification extends DomainObject {
 
     @Column(name = "title")
     private String title;
@@ -30,9 +33,6 @@ public class SystemNotification extends Notification {
 
     @Column(name = "notification_date")
     private ZonedDateTime notificationDate;
-
-    @ManyToOne
-    private User author;
 
     @Column(name = "expire_date")
     private ZonedDateTime expireDate;
@@ -79,14 +79,6 @@ public class SystemNotification extends Notification {
 
     public void setNotificationDate(ZonedDateTime notificationDate) {
         this.notificationDate = notificationDate;
-    }
-
-    public User getAuthor() {
-        return author;
-    }
-
-    public void setAuthor(User user) {
-        this.author = user;
     }
 
     @Override

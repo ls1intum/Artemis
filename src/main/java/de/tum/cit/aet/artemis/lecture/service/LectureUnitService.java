@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.atlas.api.CompetencyRelationApi;
 import de.tum.cit.aet.artemis.atlas.api.CourseCompetencyApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
+import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
@@ -160,7 +161,8 @@ public class LectureUnitService {
         LectureUnit lectureUnitToDelete = lectureUnitRepository.findByIdWithCompetenciesAndSlidesElseThrow(lectureUnit.getId());
 
         if (lectureUnitToDelete instanceof AttachmentVideoUnit attachmentVideoUnit) {
-            fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(URI.create((attachmentVideoUnit.getAttachment().getLink()))), 5);
+            fileService.schedulePathForDeletion(
+                    FilePathService.fileSystemPathForExternalUri(URI.create((attachmentVideoUnit.getAttachment().getLink())), FilePathType.ATTACHMENT_UNIT), 5);
         }
 
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureUnitToDelete.getLecture().getId());
@@ -187,17 +189,6 @@ public class LectureUnitService {
         lectureUnitLinks.forEach(link -> link.setCompetency(competency));
         competency.setLectureUnitLinks(lectureUnitLinks);
         courseCompetencyApi.get().save(competency);
-    }
-
-    /**
-     * Removes competency from all lecture units.
-     *
-     * @param lectureUnitLinks set of lecture unit links
-     * @param competency       competency to remove
-     */
-    public void removeCompetency(Set<CompetencyLectureUnitLink> lectureUnitLinks, CourseCompetency competency) {
-        competencyRelationApi.ifPresent(api -> api.deleteAllLectureUnitLinks(lectureUnitLinks));
-        competency.getLectureUnitLinks().removeAll(lectureUnitLinks);
     }
 
     /**

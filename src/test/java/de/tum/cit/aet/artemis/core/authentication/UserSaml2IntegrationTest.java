@@ -23,12 +23,12 @@ import de.tum.cit.aet.artemis.core.dto.vm.LoginVM;
 import de.tum.cit.aet.artemis.core.service.connectors.SAML2Service;
 import de.tum.cit.aet.artemis.core.service.user.PasswordService;
 import de.tum.cit.aet.artemis.core.web.open.PublicUserJwtResource;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalVcSamlTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalVCSamlTest;
 
 /**
  * Tests for {@link PublicUserJwtResource} and {@link SAML2Service}.
  */
-class UserSaml2IntegrationTest extends AbstractSpringIntegrationLocalVcSamlTest {
+class UserSaml2IntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
 
     private static final String STUDENT_NAME = "student_saml_test";
 
@@ -139,6 +139,33 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationLocalVcSamlTest 
     }
 
     /**
+     * This test checks whether the user details are updated (first and last name) based on the SAML2 authentication.
+     *
+     * @throws Exception if something went wrong.
+     */
+    @Test
+    void testSaml2UpdateUserData() throws Exception {
+        assertStudentNotExists();
+
+        // Other mail than in #createPrincipal for identification of user
+        String identifyingEmail = STUDENT_NAME + "@other.domain.invalid";
+
+        // Create User
+        createUser(identifyingEmail);
+        assertStudentExists();
+
+        authenticate(createPrincipal(STUDENT_REGISTRATION_NUMBER));
+        assertStudentExists();
+        assertThat(userUtilService.getUserByLogin(STUDENT_NAME).getFirstName()).isEqualTo("FirstName");
+        assertThat(userUtilService.getUserByLogin(STUDENT_NAME).getLastName()).isEqualTo("LastName");
+
+        // Use updated data for login
+        authenticate(createPrincipal(STUDENT_REGISTRATION_NUMBER, "NewFirstName", "NewLastName"));
+        assertThat(userUtilService.getUserByLogin(STUDENT_NAME).getFirstName()).isEqualTo("NewFirstName");
+        assertThat(userUtilService.getUserByLogin(STUDENT_NAME).getLastName()).isEqualTo("NewLastName");
+    }
+
+    /**
      * This test checks the successful login of an existing user via username and password (after creation via SAML2).
      *
      * @throws Exception if something went wrong.
@@ -217,10 +244,14 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationLocalVcSamlTest 
     }
 
     private Saml2AuthenticatedPrincipal createPrincipal(String registrationNumber) {
+        return createPrincipal(registrationNumber, "FirstName", "LastName");
+    }
+
+    private Saml2AuthenticatedPrincipal createPrincipal(String registrationNumber, String firstName, String lastName) {
         Map<String, List<Object>> attributes = new HashMap<>();
         attributes.put("uid", List.of(STUDENT_NAME));
-        attributes.put("first_name", List.of("FirstName"));
-        attributes.put("last_name", List.of("LastName"));
+        attributes.put("first_name", List.of(firstName));
+        attributes.put("last_name", List.of(lastName));
         attributes.put("email", List.of(STUDENT_NAME + "@invalid"));
         attributes.put("registration_number", List.of(registrationNumber));
 

@@ -11,7 +11,7 @@ import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ButtonType } from 'app/shared/components/button/button.component';
+import { ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { ConfirmEntityNameComponent } from 'app/shared/confirm-entity-name/confirm-entity-name.component';
 
 describe('DeleteDialogComponent', () => {

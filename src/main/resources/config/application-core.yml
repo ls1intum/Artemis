@@ -7,6 +7,12 @@ artemis:
         enabled: true
     text:
         enabled: true
+    tutorialgroup:
+        enabled: true
+    user-management:
+        passkey:
+            enabled: false # used by Constants.PASSKEY_ENABLED_PROPERTY_NAME
+            ask-users-to-setup: true # if true, users who have not set up a passkey will be asked to do so
 
 spring:
     liquibase:

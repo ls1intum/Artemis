@@ -16,11 +16,11 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
 
-import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationJenkinsLocalVcTest;
+import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationJenkinsLocalVCTest;
 import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobPermission;
 import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobPermissionsUtils;
 
-class JenkinsJobPermissionServiceTest extends AbstractProgrammingIntegrationJenkinsLocalVcTest {
+class JenkinsJobPermissionServiceTest extends AbstractProgrammingIntegrationJenkinsLocalVCTest {
 
     private static final String TEST_PREFIX = "jenkinsjobpermservice";
 

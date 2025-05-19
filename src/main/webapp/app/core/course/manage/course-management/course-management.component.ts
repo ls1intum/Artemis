@@ -8,15 +8,16 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { CourseManagementOverviewStatisticsDto } from 'app/core/course/manage/overview/course-management-overview-statistics-dto.model';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { faAngleDown, faAngleUp, faPlus } from '@fortawesome/free-solid-svg-icons';
-import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CourseManagementCardComponent } from '../overview/course-management-card.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CourseAccessStorageService } from 'app/core/course/shared/services/course-access-storage.service';
+import { addPublicFilePrefix } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-course',
@@ -87,6 +88,9 @@ export class CourseManagementComponent implements OnInit, OnDestroy {
                 this.courseSemesters = this.getUniqueSemesterNamesSorted(this.courses);
                 this.sortCoursesIntoSemesters();
 
+                // Set the course icons for each course
+                this.setCourseIcons();
+
                 // First fetch important data like title for each exercise
                 this.fetchExercises();
 
@@ -134,6 +138,15 @@ export class CourseManagementComponent implements OnInit, OnDestroy {
                     return semesterA.slice(0, 2) === 'WS' ? -1 : 1;
                 })
         );
+    }
+
+    /**
+     * Sets the public course icon path for the specific course (by prepending the REST-path prefix).
+     */
+    private setCourseIcons(): void {
+        this.courses.forEach((course) => {
+            course.courseIconPath = addPublicFilePrefix(course.courseIcon);
+        });
     }
 
     /**

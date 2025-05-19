@@ -29,8 +29,6 @@ import de.tum.cit.aet.artemis.communication.repository.CourseNotificationParamet
 import de.tum.cit.aet.artemis.communication.repository.CourseNotificationRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.service.feature.Feature;
-import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 
 /**
  * Service that handles all course notification logic. Whenever you want to create a new notification use this service
@@ -52,20 +50,17 @@ public class CourseNotificationService {
 
     private final UserCourseNotificationStatusService userCourseNotificationStatusService;
 
-    private final FeatureToggleService featureToggleService;
-
     private final Map<NotificationChannelOption, CourseNotificationBroadcastService> serviceMap;
 
     public CourseNotificationService(CourseNotificationRegistryService courseNotificationRegistryService, CourseNotificationSettingService courseNotificationSettingService,
             CourseNotificationRepository courseNotificationRepository, CourseNotificationParameterRepository courseNotificationParameterRepository,
-            UserCourseNotificationStatusService userCourseNotificationStatusService, FeatureToggleService featureToggleService, CourseNotificationWebappService webappService,
-            CourseNotificationPushService pushService, CourseNotificationEmailService emailService) {
+            UserCourseNotificationStatusService userCourseNotificationStatusService, CourseNotificationWebappService webappService, CourseNotificationPushService pushService,
+            CourseNotificationEmailService emailService) {
         this.courseNotificationRegistryService = courseNotificationRegistryService;
         this.courseNotificationSettingService = courseNotificationSettingService;
         this.courseNotificationRepository = courseNotificationRepository;
         this.courseNotificationParameterRepository = courseNotificationParameterRepository;
         this.userCourseNotificationStatusService = userCourseNotificationStatusService;
-        this.featureToggleService = featureToggleService;
         this.serviceMap = Map.of(NotificationChannelOption.WEBAPP, webappService, NotificationChannelOption.PUSH, pushService, NotificationChannelOption.EMAIL, emailService);
     }
 
@@ -77,10 +72,6 @@ public class CourseNotificationService {
      * @param recipients         list of recipients. Will be filtered by user settings.
      */
     public void sendCourseNotification(CourseNotification courseNotification, List<User> recipients) {
-        if (!featureToggleService.isFeatureEnabled(Feature.CourseSpecificNotifications)) {
-            return;
-        }
-
         var supportedChannels = courseNotification.getSupportedChannels();
         var setOfNotifiedUsers = new HashSet<User>();
 

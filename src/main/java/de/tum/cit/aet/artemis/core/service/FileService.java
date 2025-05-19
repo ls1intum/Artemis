@@ -59,6 +59,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ibm.icu.text.CharsetDetector;
 
+import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.domain.FilePathInformation;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.FilePathParsingException;
@@ -207,14 +208,15 @@ public class FileService implements DisposableBean {
      *
      * @param file         the file to save
      * @param basePath     the base path to save the file to
+     * @param filePathType the type of the file path
      * @param keepFilename whether to keep the original filename or not
      * @return the path where the file was saved
      */
     @NotNull
-    public Path saveFile(MultipartFile file, Path basePath, boolean keepFilename) {
+    public Path saveFile(MultipartFile file, Path basePath, FilePathType filePathType, boolean keepFilename) {
         String sanitizedFilename = checkAndSanitizeFilename(file.getOriginalFilename());
         validateExtension(sanitizedFilename, false);
-        String generatedFilename = generateFilename(generateTargetFilenameBase(basePath), sanitizedFilename, keepFilename);
+        String generatedFilename = generateFilename(generateTargetFilenameBase(filePathType), sanitizedFilename, keepFilename);
         Path savePath = basePath.resolve(generatedFilename);
         return saveFile(file, savePath);
     }
@@ -295,13 +297,14 @@ public class FileService implements DisposableBean {
      *
      * @param oldFilePath  the old file path
      * @param targetFolder the folder that a file should be copied to
+     * @param filePathType the type of the file path
      * @return the resulting file path or null on error
      */
-    public Path copyExistingFileToTarget(Path oldFilePath, Path targetFolder) {
+    public Path copyExistingFileToTarget(Path oldFilePath, Path targetFolder, FilePathType filePathType) {
         if (oldFilePath != null && !pathContains(oldFilePath, Path.of(("files/temp")))) {
             String filename = oldFilePath.getFileName().toString();
             try {
-                Path target = targetFolder.resolve(generateFilename(generateTargetFilenameBase(targetFolder), filename, false));
+                Path target = targetFolder.resolve(generateFilename(generateTargetFilenameBase(filePathType), filename, false));
                 FileUtils.copyFile(oldFilePath.toFile(), target.toFile());
                 log.debug("Moved File from {} to {}", oldFilePath, target);
                 return target;
@@ -333,40 +336,40 @@ public class FileService implements DisposableBean {
     }
 
     /**
-     * Generates a prefix for the filename based on the target folder
+     * Sanitizes a file path by checking for invalid characters or path traversal.
      *
-     * @param targetFolder the target folder
+     * @param filePath the file path to sanitize
+     * @throws IllegalArgumentException if the file path is invalid
+     */
+    public static void sanitizeFilePathByCheckingForInvalidCharactersElseThrow(String filePath) {
+        URI uriToCheck = URI.create(filePath);
+        URI normalizedPath = uriToCheck.normalize();
+        if (!uriToCheck.equals(normalizedPath)) {
+            throw new IllegalArgumentException("Path is not valid!");
+        }
+    }
+
+    /**
+     * Generates a prefix for the filename based on the file path type
+     *
+     * @param filePathType the type of the file path
      * @return the prefix ending with an underscore character as a separator
      */
-    public String generateTargetFilenameBase(Path targetFolder) {
-        if (targetFolder.equals(FilePathService.getDragAndDropBackgroundFilePath())) {
-            return "DragAndDropBackground_";
-        }
-        if (targetFolder.equals(FilePathService.getDragItemFilePath())) {
-            return "DragItem_";
-        }
-        if (targetFolder.equals(FilePathService.getCourseIconFilePath())) {
-            return "CourseIcon_";
-        }
-        if (pathContains(targetFolder, FilePathService.getProfilePictureFilePath())) {
-            return "ProfilePicture_";
-        }
-        if (targetFolder.equals(FilePathService.getExamUserSignatureFilePath())) {
-            return "ExamUserSignature_";
-        }
-        if (targetFolder.equals(FilePathService.getStudentImageFilePath())) {
-            return "ExamUserImage_";
-        }
-        if (pathContains(targetFolder, FilePathService.getLectureAttachmentFilePath())) {
-            return "LectureAttachment_";
-        }
-        if (pathContains(targetFolder, FilePathService.getAttachmentVideoUnitFilePath())) {
-            return "AttachmentUnit_";
-        }
-        if (pathContains(targetFolder, FilePathService.getAttachmentVideoUnitFilePath()) && pathContains(targetFolder, Path.of("/slide"))) {
-            return "AttachmentUnitSlide_";
-        }
-        return "Unspecified_";
+    @NotNull
+    public String generateTargetFilenameBase(@NotNull FilePathType filePathType) {
+        return switch (filePathType) {
+            case DRAG_AND_DROP_BACKGROUND -> "DragAndDropBackground_";
+            case DRAG_ITEM -> "DragItem_";
+            case COURSE_ICON -> "CourseIcon_";
+            case PROFILE_PICTURE -> "ProfilePicture_";
+            case EXAM_USER_SIGNATURE -> "ExamUserSignature_";
+            case EXAM_USER_IMAGE -> "ExamUserImage_";
+            case LECTURE_ATTACHMENT -> "LectureAttachment_";
+            case ATTACHMENT_UNIT -> "AttachmentUnit_";
+            case SLIDE -> "AttachmentUnitSlide_";
+            case STUDENT_VERSION_SLIDES -> "StudentVersionSlides_";
+            default -> "Unspecified_";
+        };
     }
 
     private boolean pathContains(Path path, Path subPath) {

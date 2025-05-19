@@ -31,7 +31,6 @@ import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
-import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 
 @Profile(PROFILE_CORE)
@@ -209,19 +208,5 @@ public class LectureService {
      */
     public void deleteLectureTranscriptionInPyris(LectureTranscription existingLectureTranscription) {
         irisLectureApi.ifPresent(webhookService -> webhookService.deleteLectureTranscription(existingLectureTranscription));
-    }
-
-    /**
-     * Filters the slides of all attachment units in a given lecture to exclude slides where `hidden` is not null.
-     *
-     * @param lectureWithAttachmentUnits the lecture containing attachment units
-     */
-    public void filterHiddenPagesOfAttachmentUnits(Lecture lectureWithAttachmentUnits) {
-        for (LectureUnit unit : lectureWithAttachmentUnits.getLectureUnits()) {
-            if (unit instanceof AttachmentVideoUnit attachmentVideoUnit) {
-                List<Slide> filteredSlides = attachmentVideoUnit.getSlides().stream().filter(slide -> slide.getHidden() == null).toList();
-                attachmentVideoUnit.setSlides(filteredSlides);
-            }
-        }
     }
 }

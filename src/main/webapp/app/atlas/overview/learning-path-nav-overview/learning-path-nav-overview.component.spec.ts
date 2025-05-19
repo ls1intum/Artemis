@@ -10,6 +10,8 @@ import { By } from '@angular/platform-browser';
 import { LearningPathCompetencyDTO } from 'app/atlas/shared/entities/learning-path.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
+import { MockProvider } from 'ng-mocks';
+import { ScienceService } from 'app/shared/science/science.service';
 
 describe('LearningPathNavOverviewComponent', () => {
     let component: LearningPathNavOverviewComponent;
@@ -30,6 +32,7 @@ describe('LearningPathNavOverviewComponent', () => {
                     useClass: MockTranslateService,
                 },
                 { provide: AlertService, useClass: MockAlertService },
+                MockProvider(ScienceService),
             ],
         })
             .overrideComponent(LearningPathNavOverviewComponent, {

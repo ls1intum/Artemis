@@ -12,7 +12,6 @@ import { AlertOverlayComponent } from 'app/core/alert/alert-overlay.component';
 import { CdkScrollable } from '@angular/cdk/scrolling';
 import { CourseNotificationPopupOverlayComponent } from 'app/communication/course-notification/course-notification-popup-overlay/course-notification-popup-overlay.component';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { PageRibbonComponent } from 'app/core/layouts/profiles/page-ribbon.component';
 import { FooterComponent } from 'app/core/layouts/footer/footer.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -21,19 +20,11 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
     selector: 'jhi-app',
     templateUrl: './app.component.html',
     styleUrls: ['./app.component.scss'],
-    imports: [
-        AlertOverlayComponent,
-        CdkScrollable,
-        NgClass,
-        NgStyle,
-        PageRibbonComponent,
-        RouterOutlet,
-        FooterComponent,
-        CourseNotificationPopupOverlayComponent,
-        FeatureToggleHideDirective,
-    ],
+    imports: [AlertOverlayComponent, CdkScrollable, NgClass, NgStyle, PageRibbonComponent, RouterOutlet, FooterComponent, CourseNotificationPopupOverlayComponent],
 })
 export class AppComponent implements OnInit, OnDestroy {
+    protected readonly FeatureToggle = FeatureToggle;
+
     private jhiLanguageHelper = inject(JhiLanguageHelper);
     private router = inject(Router);
     private profileService = inject(ProfileService);
@@ -87,8 +78,8 @@ export class AppComponent implements OnInit, OnDestroy {
                 In the case where we do not want to show the skeleton, we also want to set the background to transparent
                 such that the mobile native applications can display their background in the web view.
 
-                However, as the default background attribute is defined in the body html tag it is outside of Angular's reach.
-                We set the background ourselves by adding the transparent-background css class on the body element, thus
+                However, as the default background attribute is defined in the body HTML tag, it is outside Angular's reach.
+                We set the background ourselves by adding the transparent-background CSS class on the body element, thus
                 overwriting the default background. We cannot do this in any other way, as Angular cannot modify the body
                 itself.
                  */
@@ -97,7 +88,7 @@ export class AppComponent implements OnInit, OnDestroy {
                     // If we already show the skeleton but do not want to show the skeleton anymore, we need to remove the background
                     this.renderer.addClass(this.document.body, 'transparent-background');
                 } else if (shouldShowSkeletonNow && !this.showSkeleton) {
-                    // If we want to show the skeleton but weren't showing it previously we need to remove the class to show the skeleton again
+                    // If we want to show the skeleton but weren't showing it previously, we need to remove the class to show the skeleton again
                     this.renderer.removeClass(this.document.body, 'transparent-background');
                 }
                 // Do now show skeleton when the url links to a problem statement which is displayed on the native clients
@@ -150,6 +141,4 @@ export class AppComponent implements OnInit, OnDestroy {
         this.courseOverviewSubscription?.unsubscribe();
         this.ltiSubscription?.unsubscribe();
     }
-
-    protected readonly FeatureToggle = FeatureToggle;
 }

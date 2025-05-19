@@ -38,8 +38,6 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.service.feature.Feature;
-import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.user.util.UserFactory;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
@@ -82,9 +80,6 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
-
-    @Autowired
-    private FeatureToggleService featureToggleService;
 
     @Autowired
     private CourseNotificationTestRepository courseNotificationRepository;
@@ -1014,12 +1009,10 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         User instructor1 = userTestRepository.getUser();
         request.postWithoutLocation("/api/communication/courses/" + exampleCourseId + "/channels/mark-as-read", null, HttpStatus.OK, null);
         List<Channel> updatedChannels = channelRepository.findChannelsByCourseId(exampleCourseId);
-        updatedChannels.forEach(channel -> {
-            await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
-                var participant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channel.getId(), instructor1.getId());
-                assertThat(participant).isPresent().get().extracting(ConversationParticipant::getUnreadMessagesCount).isEqualTo(0L);
-            });
-        });
+        updatedChannels.forEach(channel -> await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
+            var participant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channel.getId(), instructor1.getId());
+            assertThat(participant).isPresent().get().extracting(ConversationParticipant::getUnreadMessagesCount).isEqualTo(0L);
+        }));
 
     }
 
@@ -1047,8 +1040,6 @@ class ChannelIntegrationTest extends AbstractConversationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldSendNotificationWhenUserIsRegisteredAndFeatureEnabled() throws Exception {
-        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
-
         var channel = createChannel(true, TEST_PREFIX + "notification");
 
         userUtilService.changeUser(testPrefix + "instructor1");
@@ -1065,14 +1056,11 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         });
 
         conversationRepository.deleteById(channel.getId());
-        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldSendNotificationWhenUserIsRemovedAndFeatureEnabled() throws Exception {
-        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
-
         var channel = createChannel(true, TEST_PREFIX + "notification");
         addUsersToConversation(channel.getId(), "student1", "student2");
 
@@ -1090,14 +1078,11 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         });
 
         conversationRepository.deleteById(channel.getId());
-        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldSentNotificationWhenChannelIsAndFeatureEnabled() throws Exception {
-        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
-
         var channel = createChannel(true, TEST_PREFIX + "notification");
         addUsersToConversation(channel.getId(), "student1", "student2");
 
@@ -1111,8 +1096,6 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
             assertThat(hasChannelDeletedNotification).isTrue();
         });
-
-        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
     }
 
     private void testArchivalChangeWorks(ChannelDTO channel, boolean isPublicChannel, boolean shouldArchive) throws Exception {

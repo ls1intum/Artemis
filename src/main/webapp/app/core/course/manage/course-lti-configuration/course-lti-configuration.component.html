@@ -49,42 +49,42 @@
                     </dt>
                     <dd>
                         <span>{{ onlineCourseConfiguration?.ltiPlatformConfiguration?.customName }}</span>
-                        <jhi-copy-icon-button [copyText]="onlineCourseConfiguration?.ltiPlatformConfiguration?.customName ?? ''" />
+                        <jhi-copy-to-clipboard-button [copyText]="onlineCourseConfiguration?.ltiPlatformConfiguration?.customName ?? ''" />
                     </dd>
                     <dt>
                         <span jhiTranslate="artemisApp.lti.registrationId"></span>
                     </dt>
                     <dd>
                         <span>{{ onlineCourseConfiguration?.ltiPlatformConfiguration?.registrationId }}</span>
-                        <jhi-copy-icon-button [copyText]="onlineCourseConfiguration?.ltiPlatformConfiguration?.registrationId ?? ''" />
+                        <jhi-copy-to-clipboard-button [copyText]="onlineCourseConfiguration?.ltiPlatformConfiguration?.registrationId ?? ''" />
                     </dd>
                     <dt>
                         <span jhiTranslate="artemisApp.lti.clientId"></span>
                     </dt>
                     <dd>
                         <span>{{ onlineCourseConfiguration?.ltiPlatformConfiguration?.clientId }}</span>
-                        <jhi-copy-icon-button [copyText]="onlineCourseConfiguration?.ltiPlatformConfiguration?.clientId ?? ''" />
+                        <jhi-copy-to-clipboard-button [copyText]="onlineCourseConfiguration?.ltiPlatformConfiguration?.clientId ?? ''" />
                     </dd>
                     <dt>
                         <span jhiTranslate="artemisApp.lti.authorizationUri"></span>
                     </dt>
                     <dd>
                         <span>{{ onlineCourseConfiguration?.ltiPlatformConfiguration?.authorizationUri }}</span>
-                        <jhi-copy-icon-button [copyText]="onlineCourseConfiguration?.ltiPlatformConfiguration?.authorizationUri ?? ''" />
+                        <jhi-copy-to-clipboard-button [copyText]="onlineCourseConfiguration?.ltiPlatformConfiguration?.authorizationUri ?? ''" />
                     </dd>
                     <dt>
                         <span jhiTranslate="artemisApp.lti.tokenUri"></span>
                     </dt>
                     <dd>
                         <span>{{ onlineCourseConfiguration?.ltiPlatformConfiguration?.tokenUri }}</span>
-                        <jhi-copy-icon-button [copyText]="onlineCourseConfiguration?.ltiPlatformConfiguration?.tokenUri ?? ''" />
+                        <jhi-copy-to-clipboard-button [copyText]="onlineCourseConfiguration?.ltiPlatformConfiguration?.tokenUri ?? ''" />
                     </dd>
                     <dt>
                         <span jhiTranslate="artemisApp.lti.jwkSetUri"></span>
                     </dt>
                     <dd>
                         <span>{{ onlineCourseConfiguration?.ltiPlatformConfiguration?.jwkSetUri }}</span>
-                        <jhi-copy-icon-button [copyText]="onlineCourseConfiguration?.ltiPlatformConfiguration?.jwkSetUri ?? ''" />
+                        <jhi-copy-to-clipboard-button [copyText]="onlineCourseConfiguration?.ltiPlatformConfiguration?.jwkSetUri ?? ''" />
                     </dd>
                 </div>
                 <div>
@@ -178,11 +178,62 @@
                                             <td>{{ exercise.title ? exercise.title : '' }}</td>
                                             <td>
                                                 {{ getExerciseLti13LaunchUrl(exercise) }}
-                                                <jhi-copy-icon-button [copyText]="getExerciseLti13LaunchUrl(exercise)" />
+                                                <jhi-copy-to-clipboard-button [copyText]="getExerciseLti13LaunchUrl(exercise)" />
                                             </td>
                                             <td>{{ exercise.releaseDate ? exercise.releaseDate.format('MMM DD YYYY, HH:mm:ss') : '' }}</td>
                                             <td>{{ exercise.dueDate ? exercise.dueDate.format('MMM DD YYYY, HH:mm:ss') : '' }}</td>
                                             <td>{{ exercise.assessmentDueDate ? exercise.assessmentDueDate.format('MMM DD YYYY, HH:mm:ss') : '' }}</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </ng-template>
+        </ng-container>
+        <ng-container ngbNavItem [ngbNavItem]="3">
+            <a ngbNavLink jhiTranslate="artemisApp.lti.lectures"></a>
+            <ng-template ngbNavContent>
+                <div class="row">
+                    <div class="col-12 mx-auto">
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead class="thead-dark">
+                                    <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
+                                        <th jhiSortBy="id">
+                                            id
+                                            <fa-icon [icon]="faSort" />
+                                        </th>
+                                        <th jhiSortBy="title">
+                                            {{ 'artemisApp.lecture.title' | artemisTranslate }}
+                                            <fa-icon [icon]="faSort" />
+                                        </th>
+                                        <th jhiSortBy="launchUrl">
+                                            {{ 'artemisApp.lti.lti13LaunchUrl' | artemisTranslate }}
+                                            <fa-icon [icon]="faSort" />
+                                        </th>
+                                        <th jhiSortBy="startDate">
+                                            {{ 'artemisApp.lecture.startDate' | artemisTranslate }}
+                                            <fa-icon [icon]="faSort" />
+                                        </th>
+                                        <th jhiSortBy="endDate">
+                                            {{ 'artemisApp.lecture.endDate' | artemisTranslate }}
+                                            <fa-icon [icon]="faSort" />
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @for (lecture of lectures; track lecture) {
+                                        <tr id="lecture-{{ lecture.id }}">
+                                            <td>{{ lecture.id ? lecture.id : '' }}</td>
+                                            <td>{{ lecture.title ? lecture.title : '' }}</td>
+                                            <td>
+                                                {{ getLectureLti13LaunchUrl(lecture) }}
+                                                <jhi-copy-to-clipboard-button [copyText]="getLectureLti13LaunchUrl(lecture)" />
+                                            </td>
+                                            <td>{{ lecture.startDate ? lecture.startDate.format('MMM DD YYYY, HH:mm:ss') : '' }}</td>
+                                            <td>{{ lecture.endDate ? lecture.endDate.format('MMM DD YYYY, HH:mm:ss') : '' }}</td>
                                         </tr>
                                     }
                                 </tbody>

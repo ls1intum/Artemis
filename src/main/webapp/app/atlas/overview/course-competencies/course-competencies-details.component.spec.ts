@@ -37,6 +37,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { FireworksComponent } from 'app/atlas/overview/fireworks/fireworks.component';
+import { ScienceService } from 'app/shared/science/science.service';
 
 describe('CourseCompetenciesDetails', () => {
     let fixture: ComponentFixture<CourseCompetenciesDetailsComponent>;
@@ -86,6 +87,7 @@ describe('CourseCompetenciesDetails', () => {
                 { provide: Router, useValue: MockRouter },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
+                MockProvider(ScienceService),
             ],
             schemas: [],
         })

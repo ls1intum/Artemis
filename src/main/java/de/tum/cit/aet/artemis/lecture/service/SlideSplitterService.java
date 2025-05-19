@@ -33,6 +33,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
@@ -57,15 +58,14 @@ public class SlideSplitterService {
 
     private final SlideRepository slideRepository;
 
-    // TODO: currently disabled because of a misconfiguration
-    // private final SlideUnhideService slideUnhideService;
+    private final SlideUnhideService slideUnhideService;
 
     private final ExerciseRepository exerciseRepository;
 
-    public SlideSplitterService(FileService fileService, SlideRepository slideRepository/* , SlideUnhideService slideUnhideService */, ExerciseRepository exerciseRepository) {
+    public SlideSplitterService(FileService fileService, SlideRepository slideRepository, SlideUnhideService slideUnhideService, ExerciseRepository exerciseRepository) {
         this.fileService = fileService;
         this.slideRepository = slideRepository;
-        // this.slideUnhideService = slideUnhideService;
+        this.slideUnhideService = slideUnhideService;
         this.exerciseRepository = exerciseRepository;
     }
 
@@ -76,7 +76,7 @@ public class SlideSplitterService {
      */
     @Async
     public void splitAttachmentVideoUnitIntoSingleSlides(AttachmentVideoUnit attachmentVideoUnit) {
-        Path attachmentPath = FilePathService.actualPathForPublicPath(URI.create(attachmentVideoUnit.getAttachment().getLink()));
+        Path attachmentPath = FilePathService.fileSystemPathForExternalUri(URI.create(attachmentVideoUnit.getAttachment().getLink()), FilePathType.ATTACHMENT_UNIT);
         File file = attachmentPath.toFile();
         try (PDDocument document = Loader.loadPDF(file)) {
             String pdfFilename = file.getName();
@@ -97,11 +97,11 @@ public class SlideSplitterService {
      */
     @Async
     public void splitAttachmentVideoUnitIntoSingleSlides(AttachmentVideoUnit attachmentVideoUnit, String hiddenPages, String pageOrder) {
-        Path attachmentPath = FilePathService.actualPathForPublicPath(URI.create(attachmentVideoUnit.getAttachment().getLink()));
+        Path attachmentPath = FilePathService.fileSystemPathForExternalUri(URI.create(attachmentVideoUnit.getAttachment().getLink()), FilePathType.ATTACHMENT_UNIT);
         File file = attachmentPath.toFile();
         try (PDDocument document = Loader.loadPDF(file)) {
             String pdfFilename = file.getName();
-            splitAttachmentUnitIntoSingleSlides(document, attachmentVideoUnit, pdfFilename, hiddenPages, pageOrder);
+            splitAttachmentVideoUnitIntoSingleSlides(document, attachmentVideoUnit, pdfFilename, hiddenPages, pageOrder);
         }
         catch (IOException e) {
             log.error("Error while splitting Attachment Unit {} into single slides", attachmentVideoUnit.getId(), e);
@@ -130,11 +130,11 @@ public class SlideSplitterService {
                 int slideNumber = page + 1;
                 String filename = fileNameWithOutExt + "_" + attachmentVideoUnit.getId() + "_Slide_" + slideNumber + ".png";
                 MultipartFile slideFile = fileService.convertByteArrayToMultipart(filename, ".png", imageInByte);
-                Path savePath = fileService.saveFile(slideFile, FilePathService.getAttachmentVideoUnitFilePath().resolve(attachmentVideoUnit.getId().toString()).resolve("slide")
-                        .resolve(String.valueOf(slideNumber)).resolve(filename));
+                Path savePath = fileService.saveFile(slideFile, FilePathService.getAttachmentVideoUnitFileSystemPath().resolve(attachmentVideoUnit.getId().toString())
+                        .resolve("slide").resolve(String.valueOf(slideNumber)).resolve(filename));
 
                 Slide slideEntity = new Slide();
-                slideEntity.setSlideImagePath(FilePathService.publicPathForActualPathOrThrow(savePath, (long) slideNumber).toString());
+                slideEntity.setSlideImagePath(FilePathService.externalUriForFileSystemPath(savePath, FilePathType.SLIDE, (long) slideNumber).toString());
                 slideEntity.setSlideNumber(slideNumber);
                 slideEntity.setAttachmentVideoUnit(attachmentVideoUnit);
                 slideRepository.save(slideEntity);
@@ -149,13 +149,13 @@ public class SlideSplitterService {
     /**
      * Splits an Attachment Unit file into single slides and saves them as PNG files or updates existing slides.
      *
-     * @param attachmentUnit The attachment unit to which the slides belong.
-     * @param document       The PDF document that is already loaded.
-     * @param pdfFilename    The name of the PDF file.
-     * @param hiddenPages    The hidden pages information.
-     * @param pageOrder      The order of pages in the PDF.
+     * @param attachmentVideoUnit The attachment unit to which the slides belong.
+     * @param document            The PDF document that is already loaded.
+     * @param pdfFilename         The name of the PDF file.
+     * @param hiddenPages         The hidden pages information.
+     * @param pageOrder           The order of pages in the PDF.
      */
-    public void splitAttachmentUnitIntoSingleSlides(PDDocument document, AttachmentVideoUnit attachmentVideoUnit, String pdfFilename, String hiddenPages, String pageOrder) {
+    public void splitAttachmentVideoUnitIntoSingleSlides(PDDocument document, AttachmentVideoUnit attachmentVideoUnit, String pdfFilename, String hiddenPages, String pageOrder) {
         log.debug("Processing slides for Attachment Unit with hidden pages {}", attachmentVideoUnit.getAttachment().getName());
 
         try {
@@ -269,10 +269,10 @@ public class SlideSplitterService {
             byte[] imageInByte = bufferedImageToByteArray(bufferedImage, "png");
             String filename = fileNameWithOutExt + "_" + attachmentVideoUnit.getId() + "_Slide_" + order + ".png";
             MultipartFile slideFile = fileService.convertByteArrayToMultipart(filename, ".png", imageInByte);
-            Path savePath = fileService.saveFile(slideFile, FilePathService.getAttachmentVideoUnitFilePath().resolve(attachmentVideoUnit.getId().toString()).resolve("slide")
+            Path savePath = fileService.saveFile(slideFile, FilePathService.getAttachmentVideoUnitFileSystemPath().resolve(attachmentVideoUnit.getId().toString()).resolve("slide")
                     .resolve(String.valueOf(order)).resolve(filename));
 
-            slideEntity.setSlideImagePath(FilePathService.publicPathForActualPath(savePath, (long) order).toString());
+            slideEntity.setSlideImagePath(FilePathService.externalUriForFileSystemPath(savePath, FilePathType.SLIDE, (long) order).toString());
         }
     }
 
@@ -282,7 +282,7 @@ public class SlideSplitterService {
     private void updateExistingSlideImage(Slide slideEntity, String fileNameWithOutExt, AttachmentVideoUnit attachmentVideoUnit, int order) {
         String oldPath = slideEntity.getSlideImagePath();
         if (oldPath != null && !oldPath.isEmpty()) {
-            Path originalPath = FilePathService.actualPathForPublicPath(URI.create(oldPath));
+            Path originalPath = FilePathService.fileSystemPathForExternalUri(URI.create(oldPath), FilePathType.SLIDE);
             String newFilename = fileNameWithOutExt + "_" + attachmentVideoUnit.getId() + "_Slide_" + order + ".png";
 
             try {
@@ -292,10 +292,10 @@ public class SlideSplitterService {
                     byte[] imageInByte = bufferedImageToByteArray(image, "png");
 
                     MultipartFile slideFile = fileService.convertByteArrayToMultipart(newFilename, ".png", imageInByte);
-                    Path savePath = fileService.saveFile(slideFile, FilePathService.getAttachmentVideoUnitFilePath().resolve(attachmentVideoUnit.getId().toString())
+                    Path savePath = fileService.saveFile(slideFile, FilePathService.getAttachmentVideoUnitFileSystemPath().resolve(attachmentVideoUnit.getId().toString())
                             .resolve("slide").resolve(String.valueOf(order)).resolve(newFilename));
 
-                    slideEntity.setSlideImagePath(FilePathService.publicPathForActualPath(savePath, (long) order).toString());
+                    slideEntity.setSlideImagePath(FilePathService.externalUriForFileSystemPath(savePath, FilePathType.SLIDE, (long) order).toString());
                     existingFile.delete();
                 }
                 else {
@@ -315,9 +315,8 @@ public class SlideSplitterService {
      */
     private void scheduleUnhideIfNeeded(Slide savedSlide, ZonedDateTime previousHiddenValue, ZonedDateTime newHiddenValue) {
         if (!Objects.equals(previousHiddenValue, newHiddenValue)) {
-            // TODO: currently disabled because of a misconfiguration
-            // slideUnhideService.handleSlideHiddenUpdate(savedSlide);
-            // log.debug("Scheduled unhiding for slide ID {} at time {}", savedSlide.getId(), newHiddenValue);
+            slideUnhideService.handleSlideHiddenUpdate(savedSlide);
+            log.debug("Scheduled unhiding for slide ID {} at time {}", savedSlide.getId(), newHiddenValue);
         }
     }
 

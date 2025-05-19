@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
@@ -146,17 +147,22 @@ public class LectureUnitImportService {
         attachment.setVersion(importedAttachment.getVersion());
         attachment.setAttachmentType(importedAttachment.getAttachmentType());
 
-        Path oldPath = FilePathService.actualPathForPublicPathOrThrow(URI.create(importedAttachment.getLink()));
+        Path oldPath;
         Path newPath;
-        if (oldPath.toString().contains("/attachment-unit/")) {
-            newPath = FilePathService.getAttachmentVideoUnitFilePath().resolve(entityId.toString());
+        FilePathType filePathType;
+        if (importedAttachment.getLink().contains("/attachment-unit/")) {
+            oldPath = FilePathService.fileSystemPathForExternalUri(URI.create(importedAttachment.getLink()), FilePathType.ATTACHMENT_UNIT);
+            newPath = FilePathService.getAttachmentVideoUnitFileSystemPath().resolve(entityId.toString());
+            filePathType = FilePathType.ATTACHMENT_UNIT;
         }
         else {
-            newPath = FilePathService.getLectureAttachmentFilePath().resolve(entityId.toString());
+            oldPath = FilePathService.fileSystemPathForExternalUri(URI.create(importedAttachment.getLink()), FilePathType.LECTURE_ATTACHMENT);
+            newPath = FilePathService.getLectureAttachmentFileSystemPath().resolve(entityId.toString());
+            filePathType = FilePathType.LECTURE_ATTACHMENT;
         }
         log.debug("Copying attachment file from {} to {}", oldPath, newPath);
-        Path savePath = fileService.copyExistingFileToTarget(oldPath, newPath);
-        attachment.setLink(FilePathService.publicPathForActualPathOrThrow(savePath, entityId).toString());
+        Path savePath = fileService.copyExistingFileToTarget(oldPath, newPath, filePathType);
+        attachment.setLink(FilePathService.externalUriForFileSystemPath(savePath, filePathType, entityId).toString());
         return attachment;
     }
 }

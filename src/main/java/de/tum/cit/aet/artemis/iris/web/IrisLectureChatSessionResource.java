@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
@@ -25,8 +26,9 @@ import de.tum.cit.aet.artemis.iris.repository.IrisLectureChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisLectureChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
+import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
+import de.tum.cit.aet.artemis.lecture.config.LectureApiNotPresentException;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
-import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 
 @Profile(PROFILE_IRIS)
 @RestController
@@ -40,7 +42,7 @@ public class IrisLectureChatSessionResource {
 
     private final IrisSettingsService irisSettingsService;
 
-    private final LectureRepository lectureRepository;
+    private final Optional<LectureRepositoryApi> lectureRepositoryApi;
 
     private final IrisLectureChatSessionService irisLectureChatSessionService;
 
@@ -49,12 +51,12 @@ public class IrisLectureChatSessionResource {
     private final AuthorizationCheckService authorizationCheckService;
 
     protected IrisLectureChatSessionResource(UserRepository userRepository, IrisSessionService irisSessionService, IrisSettingsService irisSettingsService,
-            LectureRepository lectureRepository, IrisLectureChatSessionService irisLectureChatSessionService, IrisLectureChatSessionRepository irisLectureChatSessionRepository,
-            AuthorizationCheckService authorizationCheckService) {
+            Optional<LectureRepositoryApi> lectureRepositoryApi, IrisLectureChatSessionService irisLectureChatSessionService,
+            IrisLectureChatSessionRepository irisLectureChatSessionRepository, AuthorizationCheckService authorizationCheckService) {
         this.userRepository = userRepository;
         this.irisSessionService = irisSessionService;
         this.irisSettingsService = irisSettingsService;
-        this.lectureRepository = lectureRepository;
+        this.lectureRepositoryApi = lectureRepositoryApi;
         this.irisLectureChatSessionService = irisLectureChatSessionService;
         this.irisLectureChatSessionRepository = irisLectureChatSessionRepository;
         this.authorizationCheckService = authorizationCheckService;
@@ -68,7 +70,9 @@ public class IrisLectureChatSessionResource {
      */
     @PostMapping("{lectureId}/sessions/current")
     public ResponseEntity<IrisLectureChatSession> getCurrentSessionOrCreateIfNotExists(@PathVariable Long lectureId) throws URISyntaxException {
-        var lecture = lectureRepository.findByIdElseThrow(lectureId);
+        LectureRepositoryApi api = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class));
+
+        var lecture = api.findByIdElseThrow(lectureId);
         validateLecture(lecture);
 
         var user = userRepository.getUserWithGroupsAndAuthorities();
@@ -96,7 +100,8 @@ public class IrisLectureChatSessionResource {
      */
     @PostMapping("{lectureId}/sessions")
     public ResponseEntity<IrisLectureChatSession> createSessionForLecture(@PathVariable Long lectureId) throws URISyntaxException {
-        var lecture = lectureRepository.findByIdElseThrow(lectureId);
+        LectureRepositoryApi api = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class));
+        var lecture = api.findByIdElseThrow(lectureId);
         validateLecture(lecture);
 
         var user = userRepository.getUserWithGroupsAndAuthorities();
@@ -119,7 +124,8 @@ public class IrisLectureChatSessionResource {
      */
     @GetMapping("{lectureId}/sessions")
     public ResponseEntity<List<IrisLectureChatSession>> getAllSessions(@PathVariable Long lectureId) {
-        var lecture = lectureRepository.findByIdElseThrow(lectureId);
+        LectureRepositoryApi api = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class));
+        var lecture = api.findByIdElseThrow(lectureId);
         validateLecture(lecture);
 
         var user = userRepository.getUserWithGroupsAndAuthorities();

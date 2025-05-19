@@ -7,7 +7,9 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -28,6 +30,7 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
@@ -37,6 +40,7 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastEditorInLectureUnit;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
@@ -99,13 +103,11 @@ public class AttachmentVideoUnitResource {
      * @return the ResponseEntity with status 200 (OK) and with body the attachment unit, or with status 404 (Not Found)
      */
     @GetMapping("lectures/{lectureId}/attachment-video-units/{attachmentVideoUnitId}")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInLectureUnit(resourceIdFieldName = "attachmentVideoUnitId")
     public ResponseEntity<AttachmentVideoUnit> getAttachmentVideoUnit(@PathVariable Long attachmentVideoUnitId, @PathVariable Long lectureId) {
         log.debug("REST request to get AttachmentVideoUnit : {}", attachmentVideoUnitId);
         AttachmentVideoUnit attachmentVideoUnit = attachmentVideoUnitRepository.findWithSlidesAndCompetenciesByIdElseThrow(attachmentVideoUnitId);
-        System.out.println(attachmentVideoUnit.getSlides());
         checkAttachmentVideoUnitCourseAndLecture(attachmentVideoUnit, lectureId);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, attachmentVideoUnit.getLecture().getCourse(), null);
 
         return ResponseEntity.ok().body(attachmentVideoUnit);
     }
@@ -125,15 +127,18 @@ public class AttachmentVideoUnitResource {
      * @return the ResponseEntity with status 200 (OK) and with body the updated attachmentVideoUnit
      */
     @PutMapping(value = "lectures/{lectureId}/attachment-video-units/{attachmentVideoUnitId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @EnforceAtLeastEditor
-    public ResponseEntity<AttachmentVideoUnit> updateAttachmentUnit(@PathVariable Long lectureId, @PathVariable Long attachmentVideoUnitId,
+    @EnforceAtLeastEditorInLectureUnit(resourceIdFieldName = "attachmentVideoUnitId")
+    public ResponseEntity<AttachmentVideoUnit> updateAttachmentVideoUnit(@PathVariable Long lectureId, @PathVariable Long attachmentVideoUnitId,
             @RequestPart AttachmentVideoUnit attachmentVideoUnit, @RequestPart Attachment attachment, @RequestPart(required = false) MultipartFile file,
             @RequestPart(required = false) String hiddenPages, @RequestPart(required = false) String pageOrder, @RequestParam(defaultValue = "false") boolean keepFilename,
             @RequestParam(value = "notificationText", required = false) String notificationText) {
         log.debug("REST request to update an attachment unit : {}", attachmentVideoUnit);
         AttachmentVideoUnit existingAttachmentVideoUnit = attachmentVideoUnitRepository.findWithSlidesAndCompetenciesByIdElseThrow(attachmentVideoUnitId);
         checkAttachmentVideoUnitCourseAndLecture(existingAttachmentVideoUnit, lectureId);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, existingAttachmentVideoUnit.getLecture().getCourse(), null);
+
+        if (!validateHiddenSlidesDates(hiddenPages)) {
+            throw new BadRequestAlertException("Hidden slide dates cannot be in the past", ENTITY_NAME, "invalidHiddenDates");
+        }
 
         AttachmentVideoUnit savedAttachmentVideoUnit = attachmentVideoUnitService.updateAttachmentVideoUnit(existingAttachmentVideoUnit, attachmentVideoUnit, attachment, file,
                 keepFilename, hiddenPages, pageOrder);
@@ -319,13 +324,12 @@ public class AttachmentVideoUnitResource {
      * @return the ResponseEntity with status 200 (OK) and with body the updated attachmentUnit
      */
     @PutMapping("lectures/{lectureId}/attachment-units/{attachmentUnitId}/student-version")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInLectureUnit(resourceIdFieldName = "attachmentUnitId")
     public ResponseEntity<AttachmentVideoUnit> updateAttachmentUnitStudentVersion(@PathVariable Long lectureId, @PathVariable Long attachmentUnitId,
             @RequestParam("studentVersion") MultipartFile studentVersionFile) {
 
         AttachmentVideoUnit existingAttachmentUnit = attachmentVideoUnitRepository.findWithSlidesAndCompetenciesByIdElseThrow(attachmentUnitId);
         checkAttachmentVideoUnitCourseAndLecture(existingAttachmentUnit, lectureId);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, existingAttachmentUnit.getLecture().getCourse(), null);
         Attachment attachment = existingAttachmentUnit.getAttachment();
 
         try {
@@ -377,6 +381,36 @@ public class AttachmentVideoUnitResource {
         }
         if (!filePath.toString().endsWith(".pdf")) {
             throw new BadRequestAlertException("The file must be a pdf", ENTITY_NAME, "wrongFileType");
+        }
+    }
+
+    /**
+     * Validates that all hidden slide dates are not in the past
+     */
+    private boolean validateHiddenSlidesDates(String hiddenPagesJson) {
+        if (hiddenPagesJson == null || hiddenPagesJson.isEmpty()) {
+            return true;
+        }
+
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            List<Map<String, Object>> hiddenPagesList = objectMapper.readValue(hiddenPagesJson, new TypeReference<>() {
+            });
+            ZonedDateTime now = ZonedDateTime.now();
+
+            for (Map<String, Object> page : hiddenPagesList) {
+                String dateStr = (String) page.get("date");
+                ZonedDateTime date = ZonedDateTime.parse(dateStr);
+
+                if (date.isBefore(now)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        catch (Exception e) {
+            log.error("Error validating hidden slide dates", e);
+            return false;
         }
     }
 }
