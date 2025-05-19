@@ -36,6 +36,7 @@ public class CourseLearnerProfileService {
      *
      * @param course the course for which the profile is created
      * @param user   the user for which the profile is created
+     * @return Saved CourseLearnerProfile
      */
     public CourseLearnerProfile createCourseLearnerProfile(Course course, User user) {
 
@@ -62,6 +63,7 @@ public class CourseLearnerProfileService {
      *
      * @param course the course for which the profiles are created
      * @param users  the users for which the profiles are created with eagerly loaded learner profiles
+     * @return A List of saved CourseLearnerProfiles
      */
     public List<CourseLearnerProfile> createCourseLearnerProfiles(Course course, Set<User> users) {
 
