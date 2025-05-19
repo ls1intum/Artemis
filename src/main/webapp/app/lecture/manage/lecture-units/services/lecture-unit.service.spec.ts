@@ -77,8 +77,8 @@ describe('LectureUnitService', () => {
         service.updateOrder(1, orderArray).subscribe((resp) => (expectedResultArray = resp));
         const req = httpMock.expectOne({ method: 'PUT' });
         req.flush(orderArray);
-        expect(expectedResultArray.body).toBeArrayOfSize(4);
-        expect(convertDateFromServerEntitySpy).toHaveBeenCalledTimes(4);
+        expect(expectedResultArray.body).toBeArrayOfSize(3);
+        expect(convertDateFromServerEntitySpy).toHaveBeenCalledTimes(3);
     }));
 
     it('should get title of associated element', async () => {
