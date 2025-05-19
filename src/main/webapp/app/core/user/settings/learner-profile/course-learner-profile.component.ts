@@ -11,6 +11,11 @@ import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { SegmentedToggleComponent } from 'app/shared/segmented-toggle/segmented-toggle.component';
 import { COURSE_LEARNER_PROFILE_OPTIONS } from 'app/learner-profile/shared/entities/learner-profile-options.model';
 
+/**
+ * Component for managing course-specific learner profiles.
+ * This component allows users to view and modify their learning preferences for specific courses,
+ * including their aim for grades/bonus, time investment, and repetition intensity.
+ */
 @Component({
     selector: 'jhi-course-learner-profile',
     templateUrl: './course-learner-profile.component.html',
@@ -22,28 +27,48 @@ export class CourseLearnerProfileComponent implements OnInit {
     private readonly learnerProfileAPIService = inject(LearnerProfileApiService);
     protected readonly translateService = inject(TranslateService);
 
-    courseLearnerProfiles: CourseLearnerProfileDTO[] = [];
+    /** Signal containing the list of course learner profiles for the current user */
+    protected readonly courseLearnerProfiles = signal<CourseLearnerProfileDTO[]>([]);
+
+    /** Currently selected course ID, null if no course is selected */
     activeCourseId: number | null = null;
 
+    /** Flag indicating whether the profile editing is disabled */
     disabled = true;
 
-    // Use the shared options for all toggles
-    protected readonly aimForGradeOrBonusOptions = COURSE_LEARNER_PROFILE_OPTIONS;
-    protected readonly timeInvestmentOptions = COURSE_LEARNER_PROFILE_OPTIONS;
-    protected readonly repetitionIntensityOptions = COURSE_LEARNER_PROFILE_OPTIONS;
+    /**
+     * Options mapped from shared options with translated labels.
+     */
+    protected readonly aimForGradeOrBonusOptions = COURSE_LEARNER_PROFILE_OPTIONS.map((option) => ({
+        label: this.translateService.instant(option.translationKey),
+        value: option.level,
+    }));
+    protected readonly timeInvestmentOptions = COURSE_LEARNER_PROFILE_OPTIONS.map((option) => ({
+        label: this.translateService.instant(option.translationKey),
+        value: option.level,
+    }));
+    protected readonly repetitionIntensityOptions = COURSE_LEARNER_PROFILE_OPTIONS.map((option) => ({
+        label: this.translateService.instant(option.translationKey),
+        value: option.level,
+    }));
 
-    aimForGradeOrBonus = signal<string>('1');
-    timeInvestment = signal<string>('1');
-    repetitionIntensity = signal<string>('1');
+    /** Default value for profile settings */
+    private readonly defaultProfileValue = CourseLearnerProfileDTO.MIN_VALUE.toString();
 
-    initialAimForGradeOrBonus = '1';
-    initialTimeInvestment = '1';
-    initialRepetitionIntensity = '1';
+    /** Signals for course learner profile settings */
+    aimForGradeOrBonus = signal<string>(this.defaultProfileValue);
+    timeInvestment = signal<string>(this.defaultProfileValue);
+    repetitionIntensity = signal<string>(this.defaultProfileValue);
 
     async ngOnInit(): Promise<void> {
         await this.loadProfiles();
     }
 
+    /**
+     * Handles course selection change event.
+     * Updates the active course and loads its profile if a course is selected.
+     * @param event - The change event from the course selection dropdown
+     */
     courseChanged(event: Event): void {
         const select = event.target as HTMLSelectElement;
         const courseId = select.value;
@@ -56,8 +81,15 @@ export class CourseLearnerProfileComponent implements OnInit {
 
         this.activeCourseId = Number(courseId);
         this.disabled = false;
+        this.loadProfileForCourse(this.activeCourseId);
+    }
 
-        const courseLearnerProfile = this.getCourseLearnerProfile(this.activeCourseId);
+    /**
+     * Loads the learner profile for a specific course.
+     * @param courseId - The ID of the course to load the profile for
+     */
+    private loadProfileForCourse(courseId: number): void {
+        const courseLearnerProfile = this.getCourseLearnerProfile(courseId);
         if (!courseLearnerProfile) {
             return;
         }
@@ -65,28 +97,49 @@ export class CourseLearnerProfileComponent implements OnInit {
         this.updateProfileValues(courseLearnerProfile);
     }
 
+    /**
+     * Updates the profile values in the component's signals.
+     * @param courseLearnerProfile - The course learner profile containing the values to update
+     */
     private updateProfileValues(courseLearnerProfile: CourseLearnerProfileDTO): void {
-        // Update displayed values to new course
-        this.initialAimForGradeOrBonus = courseLearnerProfile.aimForGradeOrBonus.toString();
-        this.initialTimeInvestment = courseLearnerProfile.timeInvestment.toString();
-        this.initialRepetitionIntensity = courseLearnerProfile.repetitionIntensity.toString();
-
-        // update signals
         this.aimForGradeOrBonus.set(courseLearnerProfile.aimForGradeOrBonus.toString());
         this.timeInvestment.set(courseLearnerProfile.timeInvestment.toString());
         this.repetitionIntensity.set(courseLearnerProfile.repetitionIntensity.toString());
     }
 
+    /**
+     * Retrieves the learner profile for a specific course.
+     * @param courseId - The ID of the course to get the profile for
+     * @returns The course learner profile or undefined if not found
+     */
     private getCourseLearnerProfile(courseId: number): CourseLearnerProfileDTO | undefined {
-        return this.courseLearnerProfiles.find((profile) => profile.courseId === courseId);
+        return this.courseLearnerProfiles().find((profile) => profile.courseId === courseId);
     }
 
+    /**
+     * Loads all course learner profiles for the current user.
+     * Handles any errors that occur during the loading process.
+     */
+    private async loadProfiles(): Promise<void> {
+        try {
+            const profiles = await this.learnerProfileAPIService.getCourseLearnerProfilesForCurrentUser();
+            this.courseLearnerProfiles.set(profiles);
+        } catch (error) {
+            this.handleError(error);
+        }
+    }
+
+    /**
+     * Handles changes to any of the profile toggles.
+     * Validates and saves the updated profile if valid.
+     */
     async onToggleChange(): Promise<void> {
         if (!this.activeCourseId) return;
 
         const courseLearnerProfile = this.getCourseLearnerProfile(this.activeCourseId);
         if (!courseLearnerProfile) return;
 
+        // Create a new CourseLearnerProfileDTO object with the updated values
         const updatedProfile = new CourseLearnerProfileDTO();
         Object.assign(updatedProfile, {
             ...courseLearnerProfile,
@@ -104,12 +157,13 @@ export class CourseLearnerProfileComponent implements OnInit {
             return;
         }
 
+        // Save the updated profile
         try {
             const savedProfile = await this.learnerProfileAPIService.putUpdatedCourseLearnerProfile(updatedProfile);
 
-            // Update the profiles array
-            const index = this.courseLearnerProfiles.findIndex((profile) => profile.id === savedProfile.id);
-            this.courseLearnerProfiles[index] = savedProfile;
+            // Update the profiles array using signal's update method
+            this.courseLearnerProfiles.update((profiles) => profiles.map((profile) => (profile.id === savedProfile.id ? savedProfile : profile)));
+
             this.updateProfileValues(savedProfile);
 
             this.alertService.addAlert({
@@ -122,6 +176,11 @@ export class CourseLearnerProfileComponent implements OnInit {
         }
     }
 
+    /**
+     * Handles errors that occur during API calls or other operations.
+     * Displays appropriate error messages to the user.
+     * @param error - The error that occurred
+     */
     private handleError(error: unknown): void {
         let errorMessage: string;
 
@@ -136,13 +195,5 @@ export class CourseLearnerProfileComponent implements OnInit {
             message: errorMessage,
             disableTranslation: true,
         });
-    }
-
-    private async loadProfiles(): Promise<void> {
-        try {
-            this.courseLearnerProfiles = await this.learnerProfileAPIService.getCourseLearnerProfilesForCurrentUser();
-        } catch (error) {
-            this.handleError(error);
-        }
     }
 }
