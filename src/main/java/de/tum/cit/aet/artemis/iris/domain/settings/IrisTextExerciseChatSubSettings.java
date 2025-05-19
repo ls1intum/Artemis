@@ -33,7 +33,7 @@ public class IrisTextExerciseChatSubSettings extends IrisSubSettings {
     private SortedSet<String> enabledForCategories = new TreeSet<>();
 
     @Nullable
-    @Column(name = "custom_instructions", length = 2048)
+    @Column(name = "custom_instructions", length = IRIS_CUSTOM_INSTRUCTIONS_MAX_LENGTH)
     private String customInstructions;
 
     @Nullable
