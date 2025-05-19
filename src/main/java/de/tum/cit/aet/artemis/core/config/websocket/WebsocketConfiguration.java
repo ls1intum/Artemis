@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
@@ -213,9 +214,9 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                 if (request instanceof ServletServerHttpRequest servletRequest) {
                     try {
                         attributes.put(IP_ADDRESS, servletRequest.getRemoteAddress());
-                        return JWTFilter.extractValidJwt(servletRequest.getServletRequest(), tokenProvider) != null;
+                        return Objects.requireNonNull(JWTFilter.extractValidJwt(servletRequest.getServletRequest(), tokenProvider)).jwt() != null;
                     }
-                    catch (IllegalArgumentException e) {
+                    catch (IllegalArgumentException | NullPointerException e) {
                         response.setStatusCode(HttpStatusCode.valueOf(400));
                         return false;
                     }

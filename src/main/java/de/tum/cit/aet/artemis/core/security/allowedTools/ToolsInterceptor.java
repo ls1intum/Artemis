@@ -33,7 +33,7 @@ public class ToolsInterceptor implements HandlerInterceptor {
         try {
             jwtToken = Objects.requireNonNull(JWTFilter.extractValidJwt(request, tokenProvider)).jwt();
         }
-        catch (IllegalArgumentException e) {
+        catch (IllegalArgumentException | NullPointerException e) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST);
             return false;
         }

@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.core.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.Duration;
-import java.util.Objects;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -51,8 +50,7 @@ public class TokenResource {
     @EnforceAtLeastStudent
     public ResponseEntity<String> convertCookieToToolToken(@RequestParam(name = "tool", required = true) ToolTokenType tool,
             @RequestParam(name = "as-cookie", defaultValue = "false") boolean asCookie, HttpServletRequest request, HttpServletResponse response) {
-        // remaining time in milliseconds
-        String jwtToken = Objects.requireNonNull(JWTFilter.extractValidJwt(request, tokenProvider)).jwt();
+        String jwtToken = JWTFilter.extractValidJwt(request, tokenProvider).jwt();
         if (jwtToken == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }

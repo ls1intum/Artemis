@@ -145,7 +145,6 @@ public class JWTFilter extends GenericFilterBean {
             return null;
         }
 
-        // TODO move the token rotation to this place as we can differentiate between bearer and cookie
         if (cookie != null && authHeader != null) {
             // Single Method Enforcement: Only one method of authentication is allowed
             throw new IllegalArgumentException("Multiple authentication methods detected: Both JWT cookie and Bearer token are present");
