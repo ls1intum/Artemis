@@ -65,7 +65,6 @@ public class LearnerProfileResource {
     public ResponseEntity<Set<CourseLearnerProfileDTO>> getCourseLearnerProfiles() {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get all CourseLearnerProfiles of user {}", user.getLogin());
-        var now = ZonedDateTime.now();
         Set<CourseLearnerProfile> courseLearnerProfiles = courseLearnerProfileRepository.findAllByLoginAndCourseActive(user.getLogin(), ZonedDateTime.now()).stream()
                 .filter(profile -> user.getGroups().contains(profile.getCourse().getStudentGroupName())).collect(Collectors.toSet());
 
