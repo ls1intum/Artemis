@@ -1,7 +1,7 @@
-<div class="segmented-toggle">
+<div class="btn-group">
     @for (option of options; track option.value) {
-        <button [class.active]="selected === option.value" (click)="select(option.value)" class="toggle-button">
+        <div class="btn" [ngClass]="{ 'btn-primary selected': selected === option.value, 'btn-default': selected !== option.value }" (click)="select(option.value)">
             {{ option.label }}
-        </button>
+        </div>
     }
 </div>

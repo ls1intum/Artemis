@@ -6,7 +6,6 @@ import { NgClass } from '@angular/common';
     standalone: true,
     imports: [NgClass],
     templateUrl: './segmented-toggle.component.html',
-    styleUrl: './segmented-toggle.component.scss',
 })
 export class SegmentedToggleComponent {
     @Input() options: { label: string; value: any }[] = [];

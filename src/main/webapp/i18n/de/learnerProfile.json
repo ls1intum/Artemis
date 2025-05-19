@@ -21,7 +21,14 @@
                     "label": "Wiederholungsintensität",
                     "description": "Wähle, wie viel du bereit bist, den Kursinhalt zu wiederholen."
                 },
-                "profileSaved": "Lernprofil gespeichert"
+                "profileSaved": "Lernprofil gespeichert",
+                "level": {
+                    "veryLow": "Sehr niedrig",
+                    "low": "Niedrig",
+                    "medium": "Mittel",
+                    "high": "Hoch",
+                    "veryHigh": "Sehr hoch"
+                }
             }
         }
     }

@@ -21,7 +21,14 @@
                     "label": "Repetition Intensity",
                     "description": "Choose how much you are willing to repeat the course content."
                 },
-                "profileSaved": "Learner profile saved"
+                "profileSaved": "Learner profile saved",
+                "level": {
+                    "veryLow": "Very Low",
+                    "low": "Low",
+                    "medium": "Medium",
+                    "high": "High",
+                    "veryHigh": "Very High"
+                }
             }
         }
     }
