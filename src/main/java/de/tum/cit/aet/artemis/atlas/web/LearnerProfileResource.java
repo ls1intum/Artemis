@@ -45,10 +45,10 @@ public class LearnerProfileResource {
     }
 
     /**
-     * GET course-learner-profiles : get a Map of a {@link de.tum.cit.aet.artemis.core.domain.Course} id
+     * GET course-learner-profiles : get a Set of a {@link de.tum.cit.aet.artemis.core.domain.Course} id
      * to the corresponding {@link CourseLearnerProfile} of the logged-in user.
      *
-     * @return The ResponseEntity with status 200 (OK) and with the body containing a map of DTOs, which contains per course profile data.
+     * @return The ResponseEntity with status 200 (OK) and with the body containing a set of DTOs, which contains per course profile data.
      */
     @GetMapping("course-learner-profiles")
     @EnforceAtLeastStudent
@@ -66,7 +66,7 @@ public class LearnerProfileResource {
     }
 
     /**
-     * Validates that fields are within {@link #MIN_PROFILE_VALUE} and {@link #MAX_PROFILE_VALUE}.
+     * Validates that fields are within {@link CourseLearnerProfile#MIN_PROFILE_VALUE} and {@link CourseLearnerProfile#MAX_PROFILE_VALUE}.
      *
      * @param value     Value of the field
      * @param fieldName Field name
