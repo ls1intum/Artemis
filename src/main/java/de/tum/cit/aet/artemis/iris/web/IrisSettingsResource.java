@@ -139,8 +139,7 @@ public class IrisSettingsResource {
     @PutMapping("courses/{courseId}/raw-iris-settings")
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<IrisCourseSettings> updateCourseSettings(@PathVariable Long courseId, @RequestBody IrisCourseSettings settings) {
-        var course = courseRepository.findByIdElseThrow(courseId);
-        settings.setCourse(course);
+        settings.setCourseId(courseId);
         var updatedSettings = irisSettingsService.saveIrisSettings(settings);
         return ResponseEntity.ok(updatedSettings);
     }
@@ -156,8 +155,7 @@ public class IrisSettingsResource {
     @PutMapping("exercises/{exerciseId}/raw-iris-settings")
     @EnforceAtLeastInstructorInExercise
     public ResponseEntity<IrisExerciseSettings> updateExerciseSettings(@PathVariable Long exerciseId, @RequestBody IrisExerciseSettings settings) {
-        var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        settings.setExercise(exercise);
+        settings.setExerciseId(exerciseId);
         var updatedSettings = irisSettingsService.saveIrisSettings(settings);
         return ResponseEntity.ok(updatedSettings);
     }

@@ -315,9 +315,6 @@ public class SecurityConfiguration {
             )
             // Applies additional configurations defined in a custom security configurer adapter.
             .with(securityConfigurerAdapter(), configurer -> configurer.configure(http));
-            // FIXME: Enable HTTP Basic authentication so that people can authenticate using username and password against the server's REST API
-            //  PROBLEM: This currently would break LocalVC cloning via http based on the LocalVCServletService
-            //.httpBasic(Customizer.withDefaults());
 
         if (passkeyEnabled) {
             WebAuthnConfigurer<HttpSecurity> webAuthnConfigurer = new ArtemisWebAuthnConfigurer<>(
