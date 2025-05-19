@@ -100,9 +100,8 @@ public class BuildAgentInformationService {
         BuildAgentInformation.BuildAgentStatus status;
         BuildAgentInformation agent = distributedDataAccessService.getDistributedBuildAgentInformation().get(memberAddress);
         if (isPaused) {
-            // don't overwrite SELF_PAUSED with PAUSED status
-            status = isPausedDueToFailures || agent.status() == BuildAgentInformation.BuildAgentStatus.SELF_PAUSED ? BuildAgentInformation.BuildAgentStatus.SELF_PAUSED
-                    : BuildAgentInformation.BuildAgentStatus.PAUSED;
+            boolean isAlreadySelfPaused = agent != null && agent.status() == BuildAgentInformation.BuildAgentStatus.SELF_PAUSED;
+            status = (isPausedDueToFailures || isAlreadySelfPaused) ? BuildAgentInformation.BuildAgentStatus.SELF_PAUSED : BuildAgentInformation.BuildAgentStatus.PAUSED;
         }
         else {
             status = hasJobs ? BuildAgentInformation.BuildAgentStatus.ACTIVE : BuildAgentInformation.BuildAgentStatus.IDLE;
