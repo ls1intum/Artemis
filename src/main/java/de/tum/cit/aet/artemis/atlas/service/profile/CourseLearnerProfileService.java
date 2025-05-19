@@ -45,6 +45,11 @@ public class CourseLearnerProfileService {
         var courseProfile = new CourseLearnerProfile();
         courseProfile.setCourse(course);
 
+        // Initialize values in the middle of Likert scale
+        courseProfile.setAimForGradeOrBonus(3);
+        courseProfile.setRepetitionIntensity(3);
+        courseProfile.setTimeInvestment(3);
+
         var learnerProfile = learnerProfileRepository.findByUserElseThrow(user);
         courseProfile.setLearnerProfile(learnerProfile);
 
@@ -66,6 +71,11 @@ public class CourseLearnerProfileService {
             var courseProfile = new CourseLearnerProfile();
             courseProfile.setCourse(course);
             courseProfile.setLearnerProfile(learnerProfileRepository.findByUserElseThrow(user));
+
+            // Initialize values in the middle of Likert scale
+            courseProfile.setAimForGradeOrBonus(3);
+            courseProfile.setRepetitionIntensity(3);
+            courseProfile.setTimeInvestment(3);
 
             return courseProfile;
         })).collect(Collectors.toSet());
