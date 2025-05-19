@@ -48,7 +48,6 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
@@ -73,8 +72,6 @@ public class TutorialGroupService {
 
     private final UserRepository userRepository;
 
-    private final CourseRepository courseRepository;
-
     private final AuthorizationCheckService authorizationCheckService;
 
     private final TutorialGroupRepository tutorialGroupRepository;
@@ -88,11 +85,10 @@ public class TutorialGroupService {
     private final CourseNotificationService courseNotificationService;
 
     public TutorialGroupService(SingleUserNotificationService singleUserNotificationService, TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository,
-            CourseRepository courseRepository, TutorialGroupRepository tutorialGroupRepository, UserRepository userRepository, AuthorizationCheckService authorizationCheckService,
+            TutorialGroupRepository tutorialGroupRepository, UserRepository userRepository, AuthorizationCheckService authorizationCheckService,
             TutorialGroupSessionRepository tutorialGroupSessionRepository, TutorialGroupChannelManagementService tutorialGroupChannelManagementService,
             ConversationDTOService conversationDTOService, CourseNotificationService courseNotificationService) {
         this.tutorialGroupRegistrationRepository = tutorialGroupRegistrationRepository;
-        this.courseRepository = courseRepository;
         this.tutorialGroupRepository = tutorialGroupRepository;
         this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
@@ -929,24 +925,40 @@ public class TutorialGroupService {
         return students;
     }
 
+    /**
+     * Retrieves {@code TutorialGroupSession}s as {@code CalendarEventDTO}s fulfilling the following criteria:
+     *
+     * <ol>
+     * <li>User is registered for the course of the tutorial group of the session</li>
+     * <li>The course of the tutorial group of the session is active</li>
+     * <li>User participates in the tutorial group of the session (either as student or tutor)</li>
+     * <li>The session overlaps with at least one {@code monthKey}, if any are given</li>
+     * </ol>
+     *
+     * @param user      the user for which the DTOs should be retrieved
+     * @param monthKeys a list of ISO 8601 formatted strings representing months
+     * @param timeZone  the client's time zone as IANA time zone ID
+     * @return a set of {@code CalendarEventDTO}s representing {@code TutorialGroupSession}s relevant for user
+     */
     public Set<CalendarEventDTO> getTutorialEventsForUserFallingIntoMonthsOrElseThrough(User user, List<String> monthKeys, String timeZone) {
-        // validate monthKeys or through
+        // validate monthKeys or through BadRequestException
         Set<YearMonth> months = validateMonthKeys(monthKeys);
 
-        // validate time zone or through
+        // validate time zone or through BadRequestException
         ZoneId clientZone = validateTimeZone(timeZone);
 
-        // get participated tutorialGroupIds of active courses the user is part of
+        // get IDs of TutorialGroups that the user is part of and that are related to an active Course the user is registered for
         ZonedDateTime now = ZonedDateTime.now(clientZone).withZoneSameInstant(ZoneOffset.UTC);
-        Set<Long> participatedTutorialGroupIds = tutorialGroupRepository.findParticipatedTutorialGroupIdsFromActiveCourses(user.getId(), user.getGroups(), now);
-        if (participatedTutorialGroupIds.isEmpty())
+        Set<Long> participatedTutorialGroupIds = tutorialGroupRepository.findTutorialGroupIdsWhereUserParticipatesFromActiveCourses(user.getId(), user.getGroups(), now);
+        if (participatedTutorialGroupIds.isEmpty()) {
             return Set.of();
+        }
 
-        // get active TutorialGroupSessions of the TutorialGroups (caching will be implemented here later avoiding this call most of the time)
+        // get active TutorialGroupSessions of the TutorialGroup (caching will be implemented here later avoiding this call most of the time)
         Set<TutorialGroupSession> activeSessionsFromParticipatedGroups = tutorialGroupSessionRepository
                 .findAllActiveByTutorialGroupIdsWithGroupAndCourseAndAssistant(participatedTutorialGroupIds);
 
-        // filter for sessions overlapping at least one month if monthKeys present
+        // filter for TutorialGroupSessions overlapping at least one month if monthKeys given
         Set<TutorialGroupSession> filteredSessions = monthKeys.isEmpty() ? activeSessionsFromParticipatedGroups
                 : filterForSessionsOverlappingMonths(activeSessionsFromParticipatedGroups, months, clientZone);
 

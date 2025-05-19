@@ -169,5 +169,6 @@ public interface TutorialGroupRepository extends ArtemisJpaRepository<TutorialGr
                     )
                     AND (s.id = :userId OR ta.id = :userId)
             """)
-    Set<Long> findParticipatedTutorialGroupIdsFromActiveCourses(@Param("userId") Long userId, @Param("userGroups") Set<String> userGroups, @Param("now") ZonedDateTime now);
+    Set<Long> findTutorialGroupIdsWhereUserParticipatesFromActiveCourses(@Param("userId") Long userId, @Param("userGroups") Set<String> userGroups,
+            @Param("now") ZonedDateTime now);
 }

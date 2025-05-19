@@ -40,7 +40,7 @@ public class CalendarResource {
     /**
      * GET /calendar-events : gets the calendar-events relevant to the user falling into the requested month
      *
-     * @param monthKeys an ISO 8601 formatted string representing a month
+     * @param monthKeys a list of ISO 8601 formatted strings representing months
      * @param timeZone  the clients time zone as IANA time zone ID
      * @return ResponseEntity with status 200 (OK) and body containing a map of calendar-events keyed by day (all timestamps in UTC format)
      */
