@@ -4,7 +4,7 @@ import { UpdatingResultComponent } from 'app/exercise/result/updating-result/upd
 import { Observable, Subscription } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
-import { ButtonSize } from 'app/shared/components/button/button.component';
+import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
 import { ExerciseType, IncludedInOverallScore, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Feedback, FeedbackType, checkSubsequentFeedbackInAssessment } from 'app/assessment/shared/entities/feedback.model';

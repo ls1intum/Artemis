@@ -468,19 +468,14 @@ public final class Constants {
     public static final int PUSH_NOTIFICATION_VERSION = 1;
 
     /**
-     * The directory in the docker container in which the build script is executed
-     */
-    public static final String LOCAL_CI_WORKING_DIRECTORY = "/var/tmp";
-
-    /**
      * The directory in the docker container in which the results can be found
      */
     public static final String LOCAL_CI_RESULTS_DIRECTORY = "/results";
 
     /**
-     * The directory to which repositories temporarily get cloned for the build job execution
+     * The directory in the docker container in which the build script is executed
      */
-    public static final String CHECKED_OUT_REPOS_TEMP_DIR = "checked-out-repos";
+    public static final String LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY = "/var/tmp";
 
     /**
      * Minimum score for a result to be considered successful and shown in green

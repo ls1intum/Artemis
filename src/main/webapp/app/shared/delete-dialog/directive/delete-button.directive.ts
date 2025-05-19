@@ -3,7 +3,7 @@ import { Directive, ElementRef, EventEmitter, HostListener, Input, OnInit, Outpu
 import { TranslateService } from '@ngx-translate/core';
 import { ActionType, DeleteDialogData, EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
 import { Observable } from 'rxjs';
-import { ButtonSize, ButtonType } from 'app/shared/components/button/button.component';
+import { ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
 
 @Directive({ selector: '[jhiDeleteButton]' })
 export class DeleteButtonDirective implements OnInit {
