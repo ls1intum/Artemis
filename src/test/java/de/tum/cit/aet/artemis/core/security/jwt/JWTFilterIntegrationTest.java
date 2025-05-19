@@ -209,7 +209,7 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
     }
 
     @Test
-    void shouldNotRotateAnExpiredToken() throws Exception {
+    void testRotateTokenSilently_shouldNotRotateAnExpiredToken() throws Exception {
         Authentication authentication = createWebAuthnAuthentication();
 
         long remainingValidityTimeOfTokenInMilliseconds = 1000;
