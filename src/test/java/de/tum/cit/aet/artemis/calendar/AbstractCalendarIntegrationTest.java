@@ -57,7 +57,7 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
     private UserTestRepository userRepository;
 
     @BeforeEach
-    void setupUsers() {
+    void createUsers() {
         userUtilService.addStudent("tumuser", TEST_PREFIX + "student");
         userUtilService.addTeachingAssistant("tutor", TEST_PREFIX + "tutor");
         student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
@@ -65,17 +65,15 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
     }
 
     @AfterEach
-    void cleanUpAllEntities() {
-        tutorialGroupSessionRepository.deleteAll();
+    void cleanUp() {
+        tutorialGroupSessionRepository.deleteAll(tutorialGroupSessions);
         tutorialGroupSessionRepository.flush();
-
-        tutorialGroupRepository.deleteAll();
+        tutorialGroupRepository.deleteById(tutorialGroup.getId());
         tutorialGroupRepository.flush();
-
-        courseRepository.deleteAll();
+        courseRepository.deleteById(course.getId());
         courseRepository.flush();
-
-        userRepository.deleteAll();
+        userRepository.deleteById(student.getId());
+        userRepository.deleteById(tutor.getId());
         userRepository.flush();
     }
 
