@@ -115,14 +115,7 @@ describe('IrisEnabledComponent', () => {
 
         comp.setEnabled(true);
 
-        expect(setSettingsSpy).toHaveBeenCalledOnce();
-        expect(comp.irisSettings.irisChatSettings?.enabled).toBeTrue();
-        expect(comp.irisSettings.irisTextExerciseChatSettings?.enabled).toBeTrue();
-        expect(comp.irisSettings.irisCourseChatSettings?.enabled).toBeTrue();
-        expect(comp.irisSettings.irisCompetencyGenerationSettings?.enabled).toBeTrue();
-        expect(comp.irisSettings.irisLectureChatSettings?.enabled).toBeTrue();
-        expect(comp.irisSettings.irisFaqIngestionSettings?.enabled).toBeTrue();
-        expect(comp.irisSettings.irisLectureIngestionSettings?.enabled).toBeTrue();
+        assertIrisSubSettings(setSettingsSpy, true);
     });
 
     it('should set all subsettings to disabled when IrisSubSettingsType is ALL and setEnabled is called with false', async () => {
@@ -143,17 +136,20 @@ describe('IrisEnabledComponent', () => {
         fixture.detectChanges();
 
         comp.setEnabled(false);
-
-        expect(setSettingsSpy).toHaveBeenCalledOnce();
-        expect(comp.irisSettings.irisChatSettings?.enabled).toBeFalse();
-        expect(comp.irisSettings.irisTextExerciseChatSettings?.enabled).toBeFalse();
-        expect(comp.irisSettings.irisCourseChatSettings?.enabled).toBeFalse();
-        expect(comp.irisSettings.irisCompetencyGenerationSettings?.enabled).toBeFalse();
-        expect(comp.irisSettings.irisLectureChatSettings?.enabled).toBeFalse();
-        expect(comp.irisSettings.irisFaqIngestionSettings?.enabled).toBeFalse();
-        expect(comp.irisSettings.irisLectureIngestionSettings?.enabled).toBeFalse();
-        expect(comp.someButNotAllSettingsEnabled).toBeFalse();
+        assertIrisSubSettings(setSettingsSpy, false);
     });
+
+    function assertIrisSubSettings(setSettingsSpy: jest.SpyInstance, expectedStatus: boolean) {
+        expect(setSettingsSpy).toHaveBeenCalledOnce();
+        expect(comp.irisSettings!.irisChatSettings?.enabled).toBe(expectedStatus);
+        expect(comp.irisSettings!.irisTextExerciseChatSettings?.enabled).toBe(expectedStatus);
+        expect(comp.irisSettings!.irisCourseChatSettings?.enabled).toBe(expectedStatus);
+        expect(comp.irisSettings!.irisCompetencyGenerationSettings?.enabled).toBe(expectedStatus);
+        expect(comp.irisSettings!.irisLectureChatSettings?.enabled).toBe(expectedStatus);
+        expect(comp.irisSettings!.irisFaqIngestionSettings?.enabled).toBe(expectedStatus);
+        expect(comp.irisSettings!.irisLectureIngestionSettings?.enabled).toBe(expectedStatus);
+        expect(comp.someButNotAllSettingsEnabled).toBeFalse();
+    }
 
     it('should create new subsettings if they do not exist when IrisSubSettingsType is ALL and setEnabled is called', async () => {
         const setSettingsSpy = jest.spyOn(irisSettingsService, 'setCourseSettings').mockReturnValue(of(new HttpResponse({ body: null as any as IrisSettings })));
@@ -164,23 +160,7 @@ describe('IrisEnabledComponent', () => {
         fixture.detectChanges();
 
         comp.setEnabled(true);
-
-        expect(setSettingsSpy).toHaveBeenCalledOnce();
-        expect(comp.irisSettings!.irisChatSettings).toBeDefined();
-        expect(comp.irisSettings!.irisTextExerciseChatSettings).toBeDefined();
-        expect(comp.irisSettings!.irisCourseChatSettings).toBeDefined();
-        expect(comp.irisSettings!.irisCompetencyGenerationSettings).toBeDefined();
-        expect(comp.irisSettings!.irisLectureChatSettings).toBeDefined();
-        expect(comp.irisSettings!.irisFaqIngestionSettings).toBeDefined();
-        expect(comp.irisSettings!.irisLectureIngestionSettings).toBeDefined();
-        expect(comp.irisSettings!.irisChatSettings?.enabled).toBeTrue();
-        expect(comp.irisSettings!.irisTextExerciseChatSettings?.enabled).toBeTrue();
-        expect(comp.irisSettings!.irisCourseChatSettings?.enabled).toBeTrue();
-        expect(comp.irisSettings!.irisCompetencyGenerationSettings?.enabled).toBeTrue();
-        expect(comp.irisSettings!.irisLectureChatSettings?.enabled).toBeTrue();
-        expect(comp.irisSettings!.irisFaqIngestionSettings?.enabled).toBeTrue();
-        expect(comp.irisSettings!.irisLectureIngestionSettings?.enabled).toBeTrue();
-        expect(comp.someButNotAllSettingsEnabled).toBeFalse();
+        assertIrisSubSettings(setSettingsSpy, true);
     });
 
     it('should set irisSubSettings.enabled to true and someButNotAllSettingsEnabled to true when some but not all sub-settings are enabled', async () => {
