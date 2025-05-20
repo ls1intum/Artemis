@@ -87,14 +87,16 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
     Set<QuizExercise> findAllWithCompetenciesByTitleAndCourseId(@Param("title") String title, @Param("courseId") long courseId);
 
     /**
-     * Finds all quiz question from a course
+     * Finds all quiz question from a course that are open for practice.
      *
      * @param courseId of the course
+     * @return a set of quiz questions
      */
     @Query("""
             SELECT q
             FROM QuizQuestion q
-            WHERE q.exercise.course.id = :courseId
+            JOIN QuizExercise e ON q.exercise.id = e.id
+            WHERE q.exercise.course.id = :courseId AND e.isOpenForPractice = true
             """)
     Set<QuizQuestion> findAllQuizQuestionsByCourseId(@Param("courseId") Long courseId);
 

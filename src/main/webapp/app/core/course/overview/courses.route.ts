@@ -336,7 +336,7 @@ export const routes: Routes = [
                 loadComponent: () => import('app/core/course/overview/course-practice/course-practice.component').then((m) => m.CoursePracticeComponent),
                 data: {
                     authorities: [Authority.USER],
-                    pageTitle: 'artemisApp.courseOverview.menu.practice',
+                    pageTitle: 'overview.practice',
                     hasSidebar: false,
                     showRefreshButton: true,
                 },
@@ -346,7 +346,7 @@ export const routes: Routes = [
                 loadComponent: () => import('app/quiz/overview/course-practice-quiz/course-practice-quiz.component').then((m) => m.CoursePracticeQuizComponent),
                 data: {
                     authorities: [Authority.USER],
-                    pageTitle: 'artemisApp.courseOverview.menu.practice',
+                    pageTitle: 'overview.practice',
                 },
             },
             {

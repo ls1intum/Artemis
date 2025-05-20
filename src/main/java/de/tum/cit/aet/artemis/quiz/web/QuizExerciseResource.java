@@ -811,6 +811,12 @@ public class QuizExerciseResource {
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newQuizExercise.getId().toString())).body(newQuizExercise);
     }
 
+    /**
+     * Search for all quiz questions by courseId that are released for practice
+     *
+     * @param courseId the id of the course to search for quiz questions
+     * @return a set of quiz questions that are released for practice
+     */
     @GetMapping("courses/{courseId}/quiz")
     public ResponseEntity<Set<QuizQuestion>> getQuizQuestionsForPractice(@PathVariable Long courseId) {
         Set<QuizQuestion> quizQuestions = quizExerciseRepository.findAllQuizQuestionsByCourseId(courseId);

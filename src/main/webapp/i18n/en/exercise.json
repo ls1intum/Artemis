@@ -158,6 +158,8 @@
                     "emptyError": "{{ exercise }}: No results found"
                 }
             },
+            "nextQuestion": "Next Question",
+            "submit": "Submit",
             "refresh": "Refresh",
             "course": "Course",
             "type": "Type",

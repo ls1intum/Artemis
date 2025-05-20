@@ -17,8 +17,8 @@
         @if (currentQuestion.type === DRAG_AND_DROP) {
             <jhi-drag-and-drop-question [question]="currentQuestion" [mappings]="dragAndDropMappings.get(currentQuestion.id!)! || []" [questionIndex]="currentIndex + 1" />
         }
-        <jhi-button class="ms-2" [title]="'submit'" />
-        <jhi-button class="ms-2" (onClick)="nextQuestion()" [title]="'next question'" />
+        <jhi-button class="ms-2" [title]="'artemisApp.exercise.submit'" />
+        <jhi-button class="ms-2" (onClick)="nextQuestion()" [title]="'artemisApp.exercise.nextQuestion'" />
     } @else {
         <div>keine Fragen vorhanden</div>
     }
