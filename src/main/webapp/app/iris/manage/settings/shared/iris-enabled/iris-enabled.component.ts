@@ -63,11 +63,11 @@ export class IrisEnabledComponent implements OnInit {
             }
         } else if (this.irisSubSettingsType() == IrisSubSettingsType.ALL && this.irisSettings && this.course()) {
             // If the subsettings type is ALL, we need to set all subsettings to the same value
-            this.toggleEnabledStateForAllSubSettings(enabled);
+            this.toggleEnabledStateForAllCourseSubSettings(enabled);
         }
     }
 
-    private toggleEnabledStateForAllSubSettings(enabled: boolean) {
+    private toggleEnabledStateForAllCourseSubSettings(enabled: boolean) {
         if (!this.irisSettings) {
             return;
         }

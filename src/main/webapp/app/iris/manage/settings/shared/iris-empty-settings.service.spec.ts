@@ -6,9 +6,11 @@ import {
     IrisChatSubSettings,
     IrisCompetencyGenerationSubSettings,
     IrisCourseChatSubSettings,
+    IrisFaqIngestionSubSettings,
     IrisLectureChatSubSettings,
     IrisLectureIngestionSubSettings,
     IrisTextExerciseChatSubSettings,
+    IrisTutorSuggestionSubSettings,
 } from 'app/iris/shared/entities/settings/iris-sub-settings.model';
 
 describe('IrisEmptySettingsService', () => {
@@ -31,6 +33,8 @@ describe('IrisEmptySettingsService', () => {
             expect(result!.irisCourseChatSettings).toBeInstanceOf(IrisCourseChatSubSettings);
             expect(result!.irisLectureIngestionSettings).toBeInstanceOf(IrisLectureIngestionSubSettings);
             expect(result!.irisCompetencyGenerationSettings).toBeInstanceOf(IrisCompetencyGenerationSubSettings);
+            expect(result!.irisFaqIngestionSettings).toBeInstanceOf(IrisFaqIngestionSubSettings);
+            expect(result!.irisTutorSuggestionSettings).toBeInstanceOf(IrisTutorSuggestionSubSettings);
         });
 
         it('should preserve existing sub-settings and only create missing ones', () => {
@@ -59,6 +63,8 @@ describe('IrisEmptySettingsService', () => {
             expect(result!.irisLectureChatSettings).toBeInstanceOf(IrisLectureChatSubSettings);
             expect(result!.irisCourseChatSettings).toBeInstanceOf(IrisCourseChatSubSettings);
             expect(result!.irisCompetencyGenerationSettings).toBeInstanceOf(IrisCompetencyGenerationSubSettings);
+            expect(result!.irisFaqIngestionSettings).toBeInstanceOf(IrisFaqIngestionSubSettings);
+            expect(result!.irisTutorSuggestionSettings).toBeInstanceOf(IrisTutorSuggestionSubSettings);
         });
     });
 });
