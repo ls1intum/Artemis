@@ -120,7 +120,7 @@ public class TokenProvider {
     }
 
     /**
-     * Create JWT Token a fully populated <code>Authentication</code> object.
+     * Create JWT Token a fully populated {@link Authentication} object.
      *
      * @param authentication           Authentication Object
      * @param issuedAt                 Date when the token was issued, if null set to now
