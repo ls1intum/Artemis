@@ -330,7 +330,7 @@ public class ExerciseResource {
             throw new AccessForbiddenException();
         }
 
-        List<StudentParticipation> participations = participationService.findByExerciseAndStudentId(exercise, user.getId());
+        List<StudentParticipation> participations = participationService.findByExerciseAndStudentIdWithSubmissionsAndResults(exercise, user.getId());
         // normally we only have one participation here (only in case of practice mode, there could be two)
         exercise.setStudentParticipations(new HashSet<>());
         for (StudentParticipation participation : participations) {

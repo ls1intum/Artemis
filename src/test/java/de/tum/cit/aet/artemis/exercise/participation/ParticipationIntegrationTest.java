@@ -1537,7 +1537,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var actualParticipation = request.get("/api/exercise/exercises/" + exercise.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
         assertThat(actualParticipation).isEqualTo(participation);
 
-        var participations = participationService.findByExerciseAndStudentId(exercise, student.getId());
+        var participations = participationService.findByExerciseAndStudentIdWithSubmissionsAndResults(exercise, student.getId());
         assertThat(participations).hasSize(1);
         assertThat(participations.getFirst().getId()).isEqualTo(participation.getId());
     }
