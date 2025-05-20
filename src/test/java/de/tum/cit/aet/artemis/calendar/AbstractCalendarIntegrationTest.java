@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.calendar;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.time.YearMonth;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -43,9 +41,9 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
 
     static final String NOT_TUTOR_LOGIN = TEST_PREFIX + "nottutor1";
 
-    static final String URL_WITHOUT_QUERY_PARAMETERS = "/api/calendar/calendar-events";
+    private static final String URL_WITHOUT_QUERY_PARAMETERS = "/api/calendar/calendar-events";
 
-    static final String CURRENT_TIMEZONE = URLEncoder.encode(ZoneId.systemDefault().getId(), StandardCharsets.UTF_8);
+    static final String TEST_TIMEZONE = "Europe/Berlin";
 
     static final TypeReference<Map<ZonedDateTime, List<CalendarEventDTO>>> GET_EVENTS_RETURN_TYPE = new TypeReference<Map<ZonedDateTime, List<CalendarEventDTO>>>() {
     };
@@ -89,39 +87,35 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
     @AfterEach
     void cleanUp() {
         tutorialGroupSessionRepository.deleteAll(tutorialGroupSessions);
-        tutorialGroupSessionRepository.flush();
         tutorialGroupRepository.deleteById(tutorialGroup.getId());
-        tutorialGroupRepository.flush();
         courseRepository.deleteById(course.getId());
-        courseRepository.flush();
         userRepository.deleteById(student.getId());
         userRepository.deleteById(tutor.getId());
-        userRepository.flush();
     }
 
     void setupActiveCourseWithParticipatedGroupAndActiveSessionsScenario() {
         createActiveCourse();
         createParticipatedTutorialGroup();
-        createActiveTutorialGroupSessions(this.course);
+        createActiveTutorialGroupSessions();
     }
 
     void setupUserNotPartOfAnyCourseScenario() {
         createActiveCourse();
         createUsersNotPartOfCourse();
         createParticipatedTutorialGroup();
-        createActiveTutorialGroupSessions(this.course);
+        createActiveTutorialGroupSessions();
     }
 
     void setupOnlyNonActiveCourseScenario() {
         createNonActiveCourse();
         createParticipatedTutorialGroup();
-        createActiveTutorialGroupSessions(this.course);
+        createActiveTutorialGroupSessions();
     }
 
     void setupActiveCourseWithoutParticipatedTutorialGroupScenario() {
         createActiveCourse();
         createNonParticipatedTutorialGroup();
-        createActiveTutorialGroupSessions(this.course);
+        createActiveTutorialGroupSessions();
     }
 
     void setupActiveCourseWithParticipatedGroupAndActiveAndCancelledSessionsScenario() {
@@ -143,18 +137,20 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
     }
 
     String assembleURL(String monthKeys) {
-        return URL_WITHOUT_QUERY_PARAMETERS + "?monthKeys=" + monthKeys + "&timeZone=" + CURRENT_TIMEZONE;
+        return URL_WITHOUT_QUERY_PARAMETERS + "?monthKeys=" + monthKeys + "&timeZone=" + TEST_TIMEZONE;
     }
 
     private void createNonActiveCourse() {
-        ZonedDateTime now = ZonedDateTime.now().withDayOfMonth(1);
+        ZoneId testZone = ZoneId.of(TEST_TIMEZONE);
+        ZonedDateTime now = ZonedDateTime.now(testZone).withDayOfMonth(1);
         ZonedDateTime courseStart = now.minusMonths(6);
         ZonedDateTime courseEnd = now.minusMonths(2);
         course = courseUtilService.createCourseWithStartDateAndEndDate(courseStart, courseEnd);
     }
 
     private void createActiveCourse() {
-        ZonedDateTime now = ZonedDateTime.now().withDayOfMonth(1);
+        ZoneId testZone = ZoneId.of(TEST_TIMEZONE);
+        ZonedDateTime now = ZonedDateTime.now(testZone).withDayOfMonth(1);
         ZonedDateTime courseStart = now.minusMonths(1);
         ZonedDateTime courseEnd = now.plusMonths(3);
         course = courseUtilService.createCourseWithStartDateAndEndDate(courseStart, courseEnd);
@@ -176,15 +172,17 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
         tutorialGroup = tutorialGroupUtilService.createTutorialGroup(course.getId(), "Test Tutorial Group", "", 10, false, "Garching", "English", otherTutor, new HashSet<>());
     }
 
-    private void createActiveTutorialGroupSessions(Course course) {
-        ZonedDateTime courseStart = course.getStartDate();
+    private void createActiveTutorialGroupSessions() {
+        ZoneId testZone = ZoneId.of(TEST_TIMEZONE);
+        ZonedDateTime courseStart = course.getStartDate().withZoneSameInstant(testZone);
         ZonedDateTime firstSessionStart = courseStart.plusWeeks(1).withHour(12).withMinute(0).withSecond(0).withNano(0);
         ZonedDateTime firstSessionEnd = firstSessionStart.plusHours(2);
         tutorialGroupSessions = createWeeklyTutorialGroupSessions(tutorialGroup.getId(), firstSessionStart, firstSessionEnd, 12, 0);
     }
 
     private void createActiveAndCancelledTutorialGroupSessions() {
-        ZonedDateTime courseStart = course.getStartDate();
+        ZoneId testZone = ZoneId.of(TEST_TIMEZONE);
+        ZonedDateTime courseStart = course.getStartDate().withZoneSameInstant(testZone);
         ZonedDateTime firstSessionStart = courseStart.plusWeeks(1).withHour(12).withMinute(0).withSecond(0).withNano(0);
         ZonedDateTime firstSessionEnd = firstSessionStart.plusHours(2);
         tutorialGroupSessions = createWeeklyTutorialGroupSessions(tutorialGroup.getId(), firstSessionStart, firstSessionEnd, 12, 2);

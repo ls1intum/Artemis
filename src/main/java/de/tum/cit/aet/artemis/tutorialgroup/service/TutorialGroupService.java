@@ -942,29 +942,23 @@ public class TutorialGroupService {
      * @throws BadRequestException if the monthKeys or the timeZone are formatted incorrectly.
      */
     public Set<CalendarEventDTO> getTutorialEventsForUserFallingIntoMonthsOrElseThrough(User user, List<String> monthKeys, String timeZone) {
-        // validate monthKeys or through BadRequestException
-        Set<YearMonth> months = validateMonthKeys(monthKeys);
+        Set<YearMonth> months = deserializeMonthKeysOrElseThrough(monthKeys);
 
-        // validate time zone or through BadRequestException
-        ZoneId clientZone = validateTimeZone(timeZone);
+        ZoneId clientTimeZone = deserializeTimeZoneOrElseThrough(timeZone);
 
-        // get IDs of TutorialGroups that the user is part of and that are related to an active Course the user is registered for
-        ZonedDateTime now = ZonedDateTime.now(clientZone).withZoneSameInstant(ZoneOffset.UTC);
+        ZonedDateTime now = ZonedDateTime.now(clientTimeZone).withZoneSameInstant(ZoneOffset.UTC);
         Set<Long> participatedTutorialGroupIds = tutorialGroupRepository.findTutorialGroupIdsWhereUserParticipatesFromActiveCourses(user.getId(), user.getGroups(), now);
         if (participatedTutorialGroupIds.isEmpty()) {
             return Set.of();
         }
 
-        // get active TutorialGroupSessions of the TutorialGroup (caching will be implemented here later avoiding this call most of the time)
         Set<TutorialGroupSession> activeSessionsFromParticipatedGroups = tutorialGroupSessionRepository
                 .findAllActiveByTutorialGroupIdsWithGroupAndCourseAndAssistant(participatedTutorialGroupIds);
 
-        // filter for TutorialGroupSessions overlapping at least one month if monthKeys given
-        Set<TutorialGroupSession> filteredSessions = monthKeys.isEmpty() ? activeSessionsFromParticipatedGroups
-                : filterForSessionsOverlappingMonths(activeSessionsFromParticipatedGroups, months, clientZone);
+        Set<TutorialGroupSession> sessionsOverlappingMonthKeys = monthKeys.isEmpty() ? activeSessionsFromParticipatedGroups
+                : filterForSessionsOverlappingMonths(activeSessionsFromParticipatedGroups, months, clientTimeZone);
 
-        // convert the TutorialGroupSessions into CalendarEventDTOs
-        return filteredSessions.stream().map(CalendarEventDTO::new).collect(Collectors.toSet());
+        return sessionsOverlappingMonthKeys.stream().map(CalendarEventDTO::new).collect(Collectors.toSet());
     }
 
     private Set<TutorialGroupSession> filterForSessionsOverlappingMonths(Set<TutorialGroupSession> sessions, Set<YearMonth> months, ZoneId clientZone) {
@@ -986,7 +980,7 @@ public class TutorialGroupService {
         return first.isBefore(second) || first.isEqual(second);
     }
 
-    private Set<YearMonth> validateMonthKeys(List<String> monthKeys) {
+    private Set<YearMonth> deserializeMonthKeysOrElseThrough(List<String> monthKeys) {
         try {
             return monthKeys.stream().map(YearMonth::parse).collect(Collectors.toSet());
         }
@@ -995,7 +989,7 @@ public class TutorialGroupService {
         }
     }
 
-    private ZoneId validateTimeZone(String timeZone) {
+    private ZoneId deserializeTimeZoneOrElseThrough(String timeZone) {
         try {
             return ZoneId.of(timeZone);
         }
