@@ -1,5 +1,4 @@
 import { Component, input } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { IrisEnabledComponent } from 'app/iris/manage/settings/shared/iris-enabled/iris-enabled.component';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { IrisSubSettingsType } from 'app/iris/shared/entities/settings/iris-sub-settings.model';
@@ -11,7 +10,7 @@ import { CardWrapperComponent } from 'app/shared/card-wrapper/card-wrapper.compo
 
 @Component({
     selector: 'jhi-control-center',
-    imports: [FormsModule, IrisEnabledComponent, TranslateDirective, HelpIconComponent, FaIconComponent, CardWrapperComponent],
+    imports: [IrisEnabledComponent, TranslateDirective, HelpIconComponent, FaIconComponent, CardWrapperComponent],
     templateUrl: './control-center.component.html',
 })
 export class ControlCenterComponent {

@@ -9,6 +9,8 @@ import { IrisEnabledComponent } from 'app/iris/manage/settings/shared/iris-enabl
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
 import { ComponentRef } from '@angular/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('ControlCenterComponent', () => {
     let componentRef: ComponentRef<ControlCenterComponent>;
@@ -21,6 +23,7 @@ describe('ControlCenterComponent', () => {
         await TestBed.configureTestingModule({
             imports: [MockDirective(TranslateDirective)],
             declarations: [ControlCenterComponent, MockComponent(HelpIconComponent), MockComponent(FaIconComponent), MockComponent(IrisEnabledComponent)],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ControlCenterComponent);
