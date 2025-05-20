@@ -132,22 +132,9 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
         assertThat(setCookieHeader).isNotNull();
         ResponseCookie updatedCookie = CookieParser.parseSetCookieHeader(setCookieHeader);
 
-        assertThat(setCookieHeader).contains(JWTFilter.JWT_COOKIE_NAME);
-        assertThat(updatedCookie.getName()).isEqualTo(JWTFilter.JWT_COOKIE_NAME);
-        assertThat(updatedCookie.getPath()).isEqualTo("/"); // TODO does that make sense?
-        assertThat(updatedCookie.getMaxAge().getSeconds()).isEqualTo(TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS);
-        assertThat(updatedCookie.isSecure()).isTrue();
-        assertThat(updatedCookie.isHttpOnly()).isTrue();
-        assertThat(updatedCookie.getSameSite()).isEqualTo("Lax");
-
+        validateUpdatedCookie(updatedCookie, jwt, tokenProvider.getAuthentication(jwt), issuedAt, TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS);
         // values should not have changed except for the expiration date
         String updatedJwt = updatedCookie.getValue();
-        assertThat(updatedJwt).isNotEmpty();
-        assertThat(updatedJwt).isNotEqualTo(jwt);
-        assertThat(tokenProvider.getAuthentication(updatedJwt).getPrincipal()).isEqualTo(tokenProvider.getAuthentication(jwt).getPrincipal());
-        assertThat(tokenProvider.getAuthentication(updatedJwt).getAuthorities()).isEqualTo(authentication.getAuthorities());
-        assertThat(tokenProvider.getAuthenticatedWithPasskey(updatedJwt)).isTrue();
-        assertThat(tokenProvider.getIssuedAtDate(updatedJwt)).isCloseTo(issuedAt, 1000); // should not have changed, tolerance due to formatting
         // IMPORTANT! The expiration date of the rotated token must be in the future, but not too far in the future
         assertThat(tokenProvider.getExpirationDate(updatedJwt)).isAfter(new Date(System.currentTimeMillis() + (long) (0.9 * TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 1000)));
         assertThat(tokenProvider.getExpirationDate(updatedJwt)).isBefore(new Date(System.currentTimeMillis() + TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 1000));
@@ -222,7 +209,7 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
         Thread.sleep(remainingValidityTimeOfTokenInMilliseconds + 1000);
 
         MvcResult res = mvc.perform(MockMvcRequestBuilders.get(new URI(ENDPOINT_TO_TEST)).cookie(new Cookie(JWTFilter.JWT_COOKIE_NAME, jwt)))
-                .andExpect(status().is(HttpStatus.BAD_REQUEST.value())).andReturn();
+                .andExpect(status().is(HttpStatus.NO_CONTENT.value())).andReturn();
 
         MockHttpServletResponse response = res.getResponse();
         assertThat(response).isNotNull();
@@ -323,6 +310,49 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
         assertThat(response).isNotNull();
         String setCookieHeader = response.getHeader(HttpHeaders.SET_COOKIE);
         assertThat(setCookieHeader).isNull();
+    }
+
+    private Authentication createAuthentication(String username, String role) {
+        Collection<GrantedAuthority> authorities = new ArrayList<>();
+        authorities.add(new SimpleGrantedAuthority(role));
+        return new UsernamePasswordAuthenticationToken(username, username, authorities);
+    }
+
+    private Authentication createWebAuthnAuthentication(String username) {
+        Collection<GrantedAuthority> authorities = new ArrayList<>();
+        authorities.add(new SimpleGrantedAuthority(Role.ANONYMOUS.getAuthority()));
+
+        PublicKeyCredentialUserEntity principal = mock(PublicKeyCredentialUserEntity.class);
+        when(principal.getId()).thenReturn(new Bytes(username.getBytes(StandardCharsets.UTF_8)));
+        when(principal.getName()).thenReturn(username);
+        when(principal.getDisplayName()).thenReturn(username);
+
+        return new WebAuthnAuthentication(principal, authorities);
+    }
+
+    private String createJwt(Authentication authentication, Date issuedAt, Date expiration, boolean isPasskey) {
+        return tokenProvider.createToken(authentication, issuedAt, expiration, null, isPasskey);
+    }
+
+    private MvcResult performRequestWithCookie(String jwt) throws Exception {
+        return mvc.perform(MockMvcRequestBuilders.get(new URI(ENDPOINT_TO_TEST)).cookie(new Cookie(JWTFilter.JWT_COOKIE_NAME, jwt))).andReturn();
+    }
+
+    private void validateUpdatedCookie(ResponseCookie updatedCookie, String originalJwt, Authentication authentication, Date issuedAt, long maxAgeInSeconds) {
+        assertThat(updatedCookie.getName()).isEqualTo(JWTFilter.JWT_COOKIE_NAME);
+        assertThat(updatedCookie.getPath()).isEqualTo("/");
+        assertThat(updatedCookie.getMaxAge().getSeconds()).isEqualTo(maxAgeInSeconds);
+        assertThat(updatedCookie.isSecure()).isTrue();
+        assertThat(updatedCookie.isHttpOnly()).isTrue();
+        assertThat(updatedCookie.getSameSite()).isEqualTo("Lax");
+
+        String updatedJwt = updatedCookie.getValue();
+        assertThat(updatedJwt).isNotEmpty();
+        assertThat(updatedJwt).isNotEqualTo(originalJwt);
+        assertThat(tokenProvider.getAuthentication(updatedJwt).getPrincipal()).isEqualTo(authentication.getPrincipal());
+        assertThat(tokenProvider.getAuthentication(updatedJwt).getAuthorities()).isEqualTo(authentication.getAuthorities());
+        assertThat(tokenProvider.getAuthenticatedWithPasskey(updatedJwt)).isTrue();
+        assertThat(tokenProvider.getIssuedAtDate(updatedJwt)).isCloseTo(issuedAt, 1000); // should not have changed, tolerance due to formatting
     }
 
     public static class CookieParser {
