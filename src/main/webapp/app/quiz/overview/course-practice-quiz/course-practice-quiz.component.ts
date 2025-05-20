@@ -40,12 +40,19 @@ export class CoursePracticeQuizComponent implements OnInit {
         });
     }
 
+    /**
+     * loads the quiz questions for the given course
+     * @param courseId
+     */
     loadQuestions(courseId: number): void {
         this.quizService.getQuizQuestions(courseId).subscribe((questions) => {
             this.questions = questions;
         });
     }
 
+    /**
+     * increments the current question index or navigates to the course practice page if the last question is reached
+     */
     nextQuestion(): void {
         if (this.isLastQuestion) {
             this.navigateToPractice();
@@ -54,14 +61,23 @@ export class CoursePracticeQuizComponent implements OnInit {
         }
     }
 
+    /**
+     * checks if the current question is the last question
+     */
     get isLastQuestion(): boolean {
         return this.currentIndex === this.questions.length - 1;
     }
 
+    /**
+     * gets the current question
+     */
     get currentQuestion(): QuizQuestion {
         return this.questions[this.currentIndex];
     }
 
+    /**
+     * navigates to the course practice page
+     */
     navigateToPractice(): void {
         this.router.navigate(['courses', this.courseId, 'practice']);
     }

@@ -158,6 +158,7 @@
                     "emptyError": "{{ exercise }}: Keine Ergebnisse gefunden"
                 }
             },
+            "startPractice": "Übung starten",
             "nextQuestion": "Nächste Frage",
             "submit": "Einreichen",
             "refresh": "Aktualisieren",
