@@ -210,7 +210,7 @@ For detailed information about the content sent with each notification, you can 
 .. |notification-settings| image:: notifications/notification-settings.png
     :width: 1000
 .. |notification-push| image:: notifications/notification-push.png
-    :width: 300
+    :width: 250
 .. |notification-general| image:: notifications/notification-general.png
     :width: 400
 .. |notification-web| image:: notifications/notification-web.png
