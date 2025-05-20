@@ -10,6 +10,7 @@ import { NgClass } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { IrisEmptySettingsService } from 'app/iris/manage/settings/shared/iris-empty-settings.service';
 
 @Component({
     selector: 'jhi-iris-enabled',
@@ -20,6 +21,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 export class IrisEnabledComponent implements OnInit {
     protected readonly faArrowRight = faArrowRight;
     private irisSettingsService = inject(IrisSettingsService);
+    private irisEmptySettingsService = inject(IrisEmptySettingsService);
 
     exercise = input<Exercise | undefined>();
     course = input<Course | undefined>();
@@ -69,26 +71,15 @@ export class IrisEnabledComponent implements OnInit {
         if (!this.irisSettings) {
             return;
         }
-        if (
-            !this.irisSettings.irisChatSettings ||
-            !this.irisSettings.irisTextExerciseChatSettings ||
-            !this.irisSettings.irisCourseChatSettings ||
-            !this.irisSettings.irisCompetencyGenerationSettings ||
-            !this.irisSettings.irisLectureChatSettings ||
-            !this.irisSettings.irisLectureIngestionSettings ||
-            !this.irisSettings.irisFaqIngestionSettings ||
-            !this.irisSettings.irisTutorSuggestionSettings
-        ) {
-            return;
-        }
-        this.irisSettings.irisChatSettings.enabled = enabled;
-        this.irisSettings.irisTextExerciseChatSettings.enabled = enabled;
-        this.irisSettings.irisCourseChatSettings.enabled = enabled;
-        this.irisSettings.irisCompetencyGenerationSettings.enabled = enabled;
-        this.irisSettings.irisLectureChatSettings.enabled = enabled;
-        this.irisSettings.irisFaqIngestionSettings.enabled = enabled;
-        this.irisSettings.irisLectureIngestionSettings.enabled = enabled;
-        this.irisSettings.irisTutorSuggestionSettings.enabled = enabled;
+        this.irisSettings = this.irisEmptySettingsService.fillEmptyIrisSubSettings(this.irisSettings);
+        this.irisSettings!.irisChatSettings!.enabled = enabled;
+        this.irisSettings!.irisTextExerciseChatSettings!.enabled = enabled;
+        this.irisSettings!.irisCourseChatSettings!.enabled = enabled;
+        this.irisSettings!.irisCompetencyGenerationSettings!.enabled = enabled;
+        this.irisSettings!.irisLectureChatSettings!.enabled = enabled;
+        this.irisSettings!.irisFaqIngestionSettings!.enabled = enabled;
+        this.irisSettings!.irisLectureIngestionSettings!.enabled = enabled;
+        this.irisSettings!.irisTutorSuggestionSettings!.enabled = enabled;
 
         this.irisSettingsService.setCourseSettings(this.course()!.id!, this.irisSettings!).subscribe((response) => {
             this.irisSettings = response.body ?? this.irisSettings;

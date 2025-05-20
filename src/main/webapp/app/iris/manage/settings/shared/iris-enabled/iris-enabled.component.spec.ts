@@ -128,6 +128,7 @@ describe('IrisEnabledComponent', () => {
         expect(comp.irisSettings!.irisLectureChatSettings?.enabled).toBe(expectedStatus);
         expect(comp.irisSettings!.irisFaqIngestionSettings?.enabled).toBe(expectedStatus);
         expect(comp.irisSettings!.irisLectureIngestionSettings?.enabled).toBe(expectedStatus);
+        expect(comp.irisSettings!.irisTutorSuggestionSettings?.enabled).toBe(expectedStatus);
         expect(comp.someButNotAllSettingsEnabled).toBeFalse();
     }
 
