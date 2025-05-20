@@ -9,7 +9,7 @@ import { IrisEnabledComponent } from 'app/iris/manage/settings/shared/iris-enabl
 import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { IrisSubSettingsType } from 'app/iris/shared/entities/settings/iris-sub-settings.model';
+import { IrisChatSubSettings, IrisSubSettingsType } from 'app/iris/shared/entities/settings/iris-sub-settings.model';
 import { provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { ComponentRef } from '@angular/core';
@@ -98,19 +98,9 @@ describe('IrisEnabledComponent', () => {
     });
     it('should set all subsettings to enabled when IrisSubSettingsType is ALL and setEnabled is called with true', async () => {
         const setSettingsSpy = jest.spyOn(irisSettingsService, 'setCourseSettings').mockReturnValue(of(new HttpResponse({ body: null as any as IrisSettings })));
-        jest.spyOn(irisSettingsService, 'getUncombinedCourseSettings').mockReturnValue(of({} as IrisCourseSettings));
+        jest.spyOn(irisSettingsService, 'getUncombinedCourseSettings').mockReturnValue(of(mockSettings()));
         componentRef.setInput('course', course);
         componentRef.setInput('irisSubSettingsType', IrisSubSettingsType.ALL);
-        comp.irisSettings = {
-            ...irisSettings,
-            irisChatSettings: { type: IrisSubSettingsType.CHAT, enabled: false },
-            irisTextExerciseChatSettings: { type: IrisSubSettingsType.TEXT_EXERCISE_CHAT, enabled: false },
-            irisCourseChatSettings: { type: IrisSubSettingsType.COURSE_CHAT, enabled: false },
-            irisCompetencyGenerationSettings: { type: IrisSubSettingsType.COMPETENCY_GENERATION, enabled: false },
-            irisLectureChatSettings: { type: IrisSubSettingsType.LECTURE, enabled: false },
-            irisFaqIngestionSettings: { type: IrisSubSettingsType.FAQ_INGESTION, enabled: false, autoIngestOnFaqCreation: false },
-            irisLectureIngestionSettings: { type: IrisSubSettingsType.LECTURE_INGESTION, enabled: false, autoIngestOnLectureAttachmentUpload: false },
-        };
         fixture.detectChanges();
 
         comp.setEnabled(true);
@@ -120,19 +110,9 @@ describe('IrisEnabledComponent', () => {
 
     it('should set all subsettings to disabled when IrisSubSettingsType is ALL and setEnabled is called with false', async () => {
         const setSettingsSpy = jest.spyOn(irisSettingsService, 'setCourseSettings').mockReturnValue(of(new HttpResponse({ body: null as any as IrisSettings })));
-        jest.spyOn(irisSettingsService, 'getUncombinedCourseSettings').mockReturnValue(of({} as IrisCourseSettings));
+        jest.spyOn(irisSettingsService, 'getUncombinedCourseSettings').mockReturnValue(of(mockSettings()));
         componentRef.setInput('course', course);
         componentRef.setInput('irisSubSettingsType', IrisSubSettingsType.ALL);
-        comp.irisSettings = {
-            ...irisSettings,
-            irisChatSettings: { type: IrisSubSettingsType.CHAT, enabled: true },
-            irisTextExerciseChatSettings: { type: IrisSubSettingsType.TEXT_EXERCISE_CHAT, enabled: true },
-            irisCourseChatSettings: { type: IrisSubSettingsType.COURSE_CHAT, enabled: true },
-            irisCompetencyGenerationSettings: { type: IrisSubSettingsType.COMPETENCY_GENERATION, enabled: true },
-            irisLectureChatSettings: { type: IrisSubSettingsType.LECTURE, enabled: true },
-            irisFaqIngestionSettings: { type: IrisSubSettingsType.FAQ_INGESTION, enabled: true, autoIngestOnFaqCreation: false },
-            irisLectureIngestionSettings: { type: IrisSubSettingsType.LECTURE_INGESTION, enabled: true, autoIngestOnLectureAttachmentUpload: false },
-        };
         fixture.detectChanges();
 
         comp.setEnabled(false);
@@ -153,7 +133,7 @@ describe('IrisEnabledComponent', () => {
 
     it('should create new subsettings if they do not exist when IrisSubSettingsType is ALL and setEnabled is called', async () => {
         const setSettingsSpy = jest.spyOn(irisSettingsService, 'setCourseSettings').mockReturnValue(of(new HttpResponse({ body: null as any as IrisSettings })));
-        jest.spyOn(irisSettingsService, 'getUncombinedCourseSettings').mockReturnValue(of({} as IrisCourseSettings));
+        jest.spyOn(irisSettingsService, 'getUncombinedCourseSettings').mockReturnValue(of(mockSettings()));
         componentRef.setInput('course', course);
         componentRef.setInput('irisSubSettingsType', IrisSubSettingsType.ALL);
         comp.irisSettings = { type: IrisSettingsType.COURSE };

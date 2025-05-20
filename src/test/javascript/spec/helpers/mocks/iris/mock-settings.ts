@@ -3,6 +3,7 @@ import {
     IrisChatSubSettings,
     IrisCompetencyGenerationSubSettings,
     IrisCourseChatSubSettings,
+    IrisFaqIngestionSubSettings,
     IrisLectureChatSubSettings,
     IrisLectureIngestionSubSettings,
     IrisTextExerciseChatSubSettings,
@@ -32,6 +33,11 @@ export function mockSettings() {
     mockIrisLectureSettings.id = 42;
     mockIrisLectureSettings.enabled = true;
 
+    const mockFaqIngestionSettings = new IrisFaqIngestionSubSettings();
+    mockFaqIngestionSettings.id = 8;
+    mockFaqIngestionSettings.enabled = true;
+    mockFaqIngestionSettings.autoIngestOnFaqCreation = true;
+
     const irisSettings = new IrisGlobalSettings();
     irisSettings.id = 1;
     irisSettings.irisChatSettings = mockChatSettings;
@@ -40,6 +46,7 @@ export function mockSettings() {
     irisSettings.irisCompetencyGenerationSettings = mockCompetencyGenerationSettings;
     irisSettings.irisLectureIngestionSettings = mockLectureIngestionSettings;
     irisSettings.irisLectureChatSettings = mockIrisLectureSettings;
+    irisSettings.irisFaqIngestionSettings = mockFaqIngestionSettings;
     return irisSettings;
 }
 
