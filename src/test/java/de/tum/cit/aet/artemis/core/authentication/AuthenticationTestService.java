@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import org.springframework.context.annotation.Profile;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.web.webauthn.api.Bytes;
@@ -26,7 +26,7 @@ import de.tum.cit.aet.artemis.core.security.Role;
 @Profile(SPRING_PROFILE_TEST)
 public class AuthenticationTestService {
 
-    public Authentication createWebAuthnAuthentication(String username) {
+    public WebAuthnAuthentication createWebAuthnAuthentication(String username) {
         Collection<GrantedAuthority> authorities = new ArrayList<>();
         authorities.add(new SimpleGrantedAuthority(Role.ANONYMOUS.getAuthority()));
 
@@ -36,6 +36,12 @@ public class AuthenticationTestService {
         when(principal.getDisplayName()).thenReturn(username);
 
         return new WebAuthnAuthentication(principal, authorities);
+    }
+
+    public UsernamePasswordAuthenticationToken createUsernamePasswordAuthentication(String username) {
+        Collection<GrantedAuthority> authorities = new ArrayList<>();
+        authorities.add(new SimpleGrantedAuthority(Role.ANONYMOUS.getAuthority()));
+        return new UsernamePasswordAuthenticationToken(username, username, authorities);
     }
 
 }

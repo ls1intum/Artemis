@@ -4,23 +4,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
 
 import javax.crypto.SecretKey;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.core.authentication.AuthenticationTestService;
 import de.tum.cit.aet.artemis.core.management.SecurityMetersService;
-import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
@@ -38,7 +32,7 @@ class TokenProviderTest {
 
     private TokenProvider tokenProvider;
 
-    private AuthenticationTestService authenticationTestService = new AuthenticationTestService();
+    private final AuthenticationTestService authenticationTestService = new AuthenticationTestService();
 
     @BeforeEach
     void setup() {
@@ -65,7 +59,7 @@ class TokenProviderTest {
 
     @Test
     void testReturnFalseWhenJWTisMalformed() {
-        Authentication authentication = createAuthentication();
+        Authentication authentication = this.authenticationTestService.createUsernamePasswordAuthentication("anonymous");
         String token = tokenProvider.createToken(authentication, false);
         String invalidToken = token.substring(1);
         boolean isTokenValid = tokenProvider.validateTokenForAuthority(invalidToken, null);
@@ -77,7 +71,7 @@ class TokenProviderTest {
     void testReturnFalseWhenJWTisExpired() {
         ReflectionTestUtils.setField(tokenProvider, "tokenValidityInMilliseconds", -ONE_MINUTE);
 
-        Authentication authentication = createAuthentication();
+        Authentication authentication = this.authenticationTestService.createUsernamePasswordAuthentication("anonymous");
         String token = tokenProvider.createToken(authentication, false);
 
         boolean isTokenValid = tokenProvider.validateTokenForAuthority(token, null);
@@ -147,7 +141,7 @@ class TokenProviderTest {
 
     @Test
     void testAuthenticatedWithPasskey_isFalseWhenAuthenticatedWithPassword() {
-        Authentication authentication = createAuthentication();
+        Authentication authentication = this.authenticationTestService.createUsernamePasswordAuthentication("anonymous");
         String token = tokenProvider.createToken(authentication, false);
 
         boolean isAuthenticatedWithPasskey = tokenProvider.getAuthenticatedWithPasskey(token);
@@ -193,12 +187,6 @@ class TokenProviderTest {
         ToolTokenType actualTool = tokenProvider.getTools(token);
 
         assertThat(actualTool).isNull();
-    }
-
-    private Authentication createAuthentication() {
-        Collection<GrantedAuthority> authorities = new ArrayList<>();
-        authorities.add(new SimpleGrantedAuthority(Role.ANONYMOUS.getAuthority()));
-        return new UsernamePasswordAuthenticationToken("anonymous", "anonymous", authorities);
     }
 
     private String createUnsupportedToken() {
