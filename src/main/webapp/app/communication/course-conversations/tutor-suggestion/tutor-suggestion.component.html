@@ -2,7 +2,6 @@
     <div class="iris-suggestion">
         <div class="iris-headline">
             <jhi-iris-logo [size]="IrisLogoSize.TEXT" />
-            <h5>Iris Suggestion:</h5>
         </div>
         <div class="iris-suggestion-field">
             @if (suggestion) {
@@ -13,16 +12,21 @@
                         }
                     </div>
                 }
+                <jhi-chat-status-bar [stages]="stages" />
             } @else {
-                @if (error) {
-                    <div class="iris-suggestion-text">
-                        {{ error }}
-                    </div>
+                @if (irisIsActive) {
+                    @if (error) {
+                        <div class="iris-suggestion-text">
+                            {{ error }}
+                        </div>
+                    } @else {
+                        <div class="iris-suggestion-text" jhiTranslate="artemisApp.iris.tutorSuggestion.loading"></div>
+                    }
+                    <jhi-chat-status-bar [stages]="stages" />
                 } @else {
-                    <div class="iris-suggestion-text">Loading suggestion...</div>
+                    <div class="iris-suggestion-text" jhiTranslate="artemisApp.iris.tutorSuggestion.noIris"></div>
                 }
             }
-            <jhi-chat-status-bar [stages]="stages" />
         </div>
     </div>
 }
