@@ -9,6 +9,7 @@ import java.util.Date;
 import javax.crypto.SecretKey;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.core.Authentication;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -142,26 +143,6 @@ class TokenProviderTest {
     }
 
     @Test
-    void testAuthenticatedWithPasskey_isFalseWhenAuthenticatedWithPassword() {
-        Authentication authentication = this.authenticationTestService.createUsernamePasswordAuthentication(USER_NAME);
-        String token = tokenProvider.createToken(authentication, false);
-
-        boolean isAuthenticatedWithPasskey = tokenProvider.getAuthenticatedWithPasskey(token);
-
-        assertThat(isAuthenticatedWithPasskey).isFalse();
-    }
-
-    @Test
-    void testAuthenticatedWithPasskey_isTrueWhenAuthenticatedWithPasskey() {
-        Authentication authentication = authenticationTestService.createWebAuthnAuthentication(USER_NAME);
-        String token = tokenProvider.createToken(authentication, false);
-
-        boolean isAuthenticatedWithPasskey = tokenProvider.getAuthenticatedWithPasskey(token);
-
-        assertThat(isAuthenticatedWithPasskey).isTrue();
-    }
-
-    @Test
     void testGetIssuedAtDate() {
         Date issuedAt = new Date();
         String token = Jwts.builder().issuedAt(issuedAt).signWith(key, Jwts.SIG.HS512).compact();
@@ -171,24 +152,54 @@ class TokenProviderTest {
         assertThat(result).isNotNull().isCloseTo(issuedAt, 1000);
     }
 
-    @Test
-    void testGetTools() {
-        ToolTokenType expectedTool = ToolTokenType.SCORPIO;
-        String token = Jwts.builder().claim("tools", expectedTool.toString()) // Store as String
-                .signWith(key, Jwts.SIG.HS512).compact();
+    @Nested
+    class GetToolsTests {
 
-        ToolTokenType actualTool = tokenProvider.getTools(token);
+        @Test
+        void shouldBeRetrievedSuccessfully() {
+            ToolTokenType expectedTool = ToolTokenType.SCORPIO;
+            String token = Jwts.builder().claim("tools", expectedTool.toString()) // Store as String
+                    .signWith(key, Jwts.SIG.HS512).compact();
 
-        assertThat(actualTool).isNotNull().isEqualTo(expectedTool);
+            ToolTokenType actualTool = tokenProvider.getTools(token);
+
+            assertThat(actualTool).isNotNull().isEqualTo(expectedTool);
+        }
+
+        @Test
+        void shouldNotFailIfNull() {
+            String token = Jwts.builder().claim("authenticatedWithPasskey", true).signWith(key, Jwts.SIG.HS512).compact();
+
+            ToolTokenType actualTool = tokenProvider.getTools(token);
+
+            assertThat(actualTool).isNull();
+        }
+
     }
 
-    @Test
-    void testGetTools_shouldNotFailIfNull() {
-        String token = Jwts.builder().claim("authenticatedWithPasskey", true).signWith(key, Jwts.SIG.HS512).compact();
+    @Nested
+    class AuthenticatedWithPasskeyTests {
 
-        ToolTokenType actualTool = tokenProvider.getTools(token);
+        @Test
+        void shouldBeFalseWhenAuthenticatedWithPassword() {
+            Authentication authentication = authenticationTestService.createUsernamePasswordAuthentication(USER_NAME);
+            String token = tokenProvider.createToken(authentication, false);
 
-        assertThat(actualTool).isNull();
+            boolean isAuthenticatedWithPasskey = tokenProvider.getAuthenticatedWithPasskey(token);
+
+            assertThat(isAuthenticatedWithPasskey).isFalse();
+        }
+
+        @Test
+        void shoulbBeTrueWhenAuthenticatedWithPasskey() {
+            Authentication authentication = authenticationTestService.createWebAuthnAuthentication(USER_NAME);
+            String token = tokenProvider.createToken(authentication, false);
+
+            boolean isAuthenticatedWithPasskey = tokenProvider.getAuthenticatedWithPasskey(token);
+
+            assertThat(isAuthenticatedWithPasskey).isTrue();
+        }
+
     }
 
     private String createUnsupportedToken() {
