@@ -14,9 +14,7 @@ export class GitDiffReportModalComponent {
 
     private readonly activeModal = inject(NgbActiveModal);
 
-    readonly repositoryDiffInformation = input<RepositoryDiffInformation>();
-    readonly templateFileContentByPath = input<Map<string, string>>(new Map<string, string>());
-    readonly solutionFileContentByPath = input<Map<string, string>>(new Map<string, string>());
+    readonly repositoryDiffInformation = input.required<RepositoryDiffInformation>();
 
     readonly diffForTemplateAndSolution = input<boolean>(true);
 

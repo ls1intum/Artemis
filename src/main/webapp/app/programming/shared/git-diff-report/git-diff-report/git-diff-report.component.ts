@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, effect, input, signal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
 import { faSpinner, faTableColumns } from '@fortawesome/free-solid-svg-icons';
 import { ButtonComponent, ButtonSize, ButtonType, TooltipPlacement } from 'app/shared/components/buttons/button/button.component';
 import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat/git-diff-line-stat.component';
@@ -8,7 +8,7 @@ import { captureException } from '@sentry/angular';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { DiffInformation, getDiffInformation, LineChange } from 'app/shared/monaco-editor/diff-editor/util/monaco-diff-editor.util';
+import { RepositoryDiffInformation } from 'app/shared/monaco-editor/diff-editor/util/monaco-diff-editor.util';
 
 @Component({
     selector: 'jhi-git-diff-report',
@@ -23,58 +23,37 @@ export class GitDiffReportComponent {
     protected readonly ButtonType = ButtonType;
     protected readonly TooltipPlacement = TooltipPlacement;
 
-    readonly templateFileContentByPath = input.required<Map<string, string>>();
-    readonly solutionFileContentByPath = input.required<Map<string, string>>();
+    readonly repositoryDiffInformation = input.required<RepositoryDiffInformation>();
     readonly diffForTemplateAndSolution = input<boolean>(true);
     readonly diffForTemplateAndEmptyRepository = input<boolean>(false);
     readonly isRepositoryView = input<boolean>(false);
 
-    readonly filePaths = computed(() => {
-        return [...new Set([...this.templateFileContentByPath().keys(), ...this.solutionFileContentByPath().keys()])].sort();
-    });
-
-    readonly diffInformationForPaths = signal<DiffInformation[]>([]);
-    readonly nothingToDisplay = computed(() => this.diffInformationForPaths().length === 0);
+    readonly nothingToDisplay = computed(() => this.repositoryDiffInformation().diffInformations.length === 0);
     readonly leftCommitHash = input<string>();
     readonly rightCommitHash = input<string>();
     readonly participationId = input<number>();
-    readonly allDiffsReady = computed(() => Object.values(this.diffInformationForPaths()).every((info) => info.diffReady));
+    readonly allDiffsReady = signal<boolean>(false);
     readonly allowSplitView = signal<boolean>(true);
-
-    readonly totalAddedLines = computed(() => this.diffInformationForPaths().reduce((sum, info) => sum + (info.lineChange?.addedLineCount || 0), 0));
-    readonly totalRemovedLines = computed(() => this.diffInformationForPaths().reduce((sum, info) => sum + (info.lineChange?.removedLineCount || 0), 0));
 
     readonly leftCommit = computed(() => this.leftCommitHash()?.substring(0, 10));
     readonly rightCommit = computed(() => this.rightCommitHash()?.substring(0, 10));
-
-    constructor() {
-        effect(() => {
-            untracked(() => this.diffInformationForPaths.set(getDiffInformation(this.templateFileContentByPath(), this.solutionFileContentByPath())));
-        });
-    }
 
     /**
      * Records that the diff editor for a file has changed its "ready" state.
      * If all paths have reported that they are ready, {@link allDiffsReady} will be set to true.
      * @param path The path of the file whose diff this event refers to.
      * @param ready Whether the diff is ready to be displayed or not.
-     * @param lineChange Line change information from the diff editor.
      */
-    onDiffReady(path: string, ready: boolean, lineChange: LineChange) {
-        const diffInformation = [...this.diffInformationForPaths()];
+    onDiffReady(path: string, ready: boolean) {
+        const diffInformation = this.repositoryDiffInformation().diffInformations;
         const index = diffInformation.findIndex((info) => info.modifiedPath === path);
 
         if (index !== -1) {
             diffInformation[index].diffReady = ready;
-
-            // Update line change information if available
-            if (ready && lineChange) {
-                diffInformation[index].lineChange = lineChange;
-            }
-
-            this.diffInformationForPaths.set(diffInformation);
         } else {
             captureException(`Received diff ready event for unknown path: ${path}`);
         }
+
+        this.allDiffsReady.set(diffInformation.every((info) => info.diffReady));
     }
 }

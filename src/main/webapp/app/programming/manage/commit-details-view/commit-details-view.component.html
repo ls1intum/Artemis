@@ -21,14 +21,13 @@
     </div>
     <br />
 
-    @if (leftCommitFileContentByPath && rightCommitFileContentByPath) {
+    @if (repositoryDiffInformation) {
         <jhi-git-diff-report
+            [repositoryDiffInformation]="repositoryDiffInformation"
             [diffForTemplateAndSolution]="false"
             [leftCommitHash]="previousCommit.hash"
             [rightCommitHash]="currentCommit.hash"
             [participationId]="repositoryId"
-            [templateFileContentByPath]="leftCommitFileContentByPath"
-            [solutionFileContentByPath]="rightCommitFileContentByPath"
             [isRepositoryView]="true"
             [diffForTemplateAndEmptyRepository]="isTemplate"
         />

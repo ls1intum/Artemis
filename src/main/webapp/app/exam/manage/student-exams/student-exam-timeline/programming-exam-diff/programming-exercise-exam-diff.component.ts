@@ -150,10 +150,11 @@ export class ProgrammingExerciseExamDiffComponent extends ExamSubmissionComponen
      * Shows the git-diff in a modal.
      */
     showGitDiff(): void {
+        if (!this.cachedDiffInformation().has(this.calculateMapKey())) {
+            return;
+        }
         const modalRef = this.modalService.open(GitDiffReportModalComponent, { windowClass: GitDiffReportModalComponent.WINDOW_CLASS });
-        modalRef.componentInstance.repositoryDiffInformation = signal(this.cachedDiffInformation());
-        modalRef.componentInstance.templateFileContentByPath = signal(this.cachedRepositoryFiles.get(this.leftKey));
-        modalRef.componentInstance.solutionFileContentByPath = signal(this.cachedRepositoryFiles.get(this.rightKey));
+        modalRef.componentInstance.repositoryDiffInformation = signal(this.cachedDiffInformation().get(this.calculateMapKey())!);
         modalRef.componentInstance.diffForTemplateAndSolution = signal(false);
         this.cachedRepositoryFilesService.getCachedRepositoryFilesObservable().subscribe((cachedRepositoryFiles) => {
             this.cachedRepositoryFiles = cachedRepositoryFiles;

@@ -7,13 +7,9 @@
         <button type="button" class="btn-close" aria-label="Close" (click)="close()"></button>
     </div>
     <div class="modal-body">
-        @if (templateFileContentByPath() && solutionFileContentByPath()) {
+        @if (repositoryDiffInformation()) {
             <div class="row mb-2">
-                <jhi-git-diff-report
-                    [diffForTemplateAndSolution]="diffForTemplateAndSolution()"
-                    [templateFileContentByPath]="templateFileContentByPath()"
-                    [solutionFileContentByPath]="solutionFileContentByPath()"
-                />
+                <jhi-git-diff-report [repositoryDiffInformation]="repositoryDiffInformation()" [diffForTemplateAndSolution]="diffForTemplateAndSolution()" />
             </div>
         } @else {
             @if (!errorWhileFetchingRepos()) {

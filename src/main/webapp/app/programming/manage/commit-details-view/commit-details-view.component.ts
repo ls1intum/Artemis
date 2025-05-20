@@ -9,7 +9,7 @@ import { GitDiffReportComponent } from 'app/programming/shared/git-diff-report/g
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
-
+import { RepositoryDiffInformation, processRepositoryDiff } from 'app/shared/monaco-editor/diff-editor/util/monaco-diff-editor.util';
 @Component({
     selector: 'jhi-commit-details-view',
     templateUrl: './commit-details-view.component.html',
@@ -27,6 +27,7 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
     errorWhileFetching = false;
     leftCommitFileContentByPath: Map<string, string>;
     rightCommitFileContentByPath: Map<string, string>;
+    repositoryDiffInformation: RepositoryDiffInformation;
     commits: CommitInfo[] = [];
     currentCommit: CommitInfo;
     previousCommit: CommitInfo;
@@ -141,6 +142,7 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
             .subscribe({
                 next: (filesWithContent: Map<string, string>) => {
                     this.rightCommitFileContentByPath = filesWithContent;
+                    this.repositoryDiffInformation = processRepositoryDiff(this.leftCommitFileContentByPath, this.rightCommitFileContentByPath);
                 },
                 error: () => {
                     this.errorWhileFetching = true;
