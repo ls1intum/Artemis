@@ -35,7 +35,7 @@ Push Notifications
 
 Artemis can send push notifications to the native Artemis iOS and Android apps.
 
-These notifications are encrypted and delivered through the Hermes service (https://hermes.artemis.cit.tum.de/).
+These notifications are encrypted and delivered through the Hermes service (https://hermes.artemis.cit.tum.de).
 Users must explicitly opt in through their mobile application to receive push notifications and can deactivate them at any time.
 
 |notification-push|
