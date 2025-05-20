@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.exercise.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.net.MalformedURLException;
-import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -17,7 +16,6 @@ import java.util.stream.Collectors;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -57,8 +55,7 @@ import de.tum.cit.aet.artemis.programming.service.UriService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.programming.service.localci.SharedQueueManagementService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCGitBranchService;
-import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryInitializer;
-import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCVersionControlService;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 
@@ -73,9 +70,6 @@ public class ParticipationService {
 
     @Value("${artemis.version-control.default-branch:main}")
     protected String defaultBranch;
-
-    @Autowired
-    private URL localVCBaseUrl;
 
     private final GitService gitService;
 
@@ -115,7 +109,7 @@ public class ParticipationService {
 
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
-    private final LocalVCRepositoryInitializer localVCRepositoryInitializer;
+    private final LocalVCVersionControlService localVCVersionControlService;
 
     public ParticipationService(GitService gitService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
             Optional<LocalVCGitBranchService> localVCGitBranchService, BuildLogEntryService buildLogEntryService, ParticipationRepository participationRepository,
@@ -123,8 +117,8 @@ public class ParticipationService {
             ProgrammingExerciseRepository programmingExerciseRepository, SubmissionRepository submissionRepository, TeamRepository teamRepository, UriService uriService,
             ResultService resultService, ParticipantScoreRepository participantScoreRepository, StudentScoreRepository studentScoreRepository,
             TeamScoreRepository teamScoreRepository, Optional<SharedQueueManagementService> localCISharedBuildJobQueueService,
-            ParticipationVcsAccessTokenService participationVCSAccessTokenService, Optional<CompetencyProgressApi> competencyProgressApi, URL localVCBaseUrl,
-            LocalVCRepositoryInitializer localVCRepositoryInitializer) {
+            ParticipationVcsAccessTokenService participationVCSAccessTokenService, Optional<CompetencyProgressApi> competencyProgressApi,
+            LocalVCVersionControlService localVCVersionControlService) {
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
@@ -144,9 +138,7 @@ public class ParticipationService {
         this.localCISharedBuildJobQueueService = localCISharedBuildJobQueueService;
         this.participationVCSAccessTokenService = participationVCSAccessTokenService;
         this.competencyProgressApi = competencyProgressApi;
-        this.localVCRepositoryInitializer = localVCRepositoryInitializer;
-        this.localVCBaseUrl = localVCBaseUrl;
-
+        this.localVCVersionControlService = localVCVersionControlService;
     }
 
     /**
@@ -491,14 +483,12 @@ public class ParticipationService {
         // only execute this step if it has not yet been completed yet or if the repository uri is missing for some reason
         if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_COPIED) || participation.getVcsRepositoryUri() == null) {
             final var projectKey = programmingExercise.getProjectKey();
-            final var repoName = participation.addPracticePrefixIfTestRun(participation.getParticipantIdentifier());
-
-            // Build the student repo URI from projectKey and repoName, using localVCBaseUrl injected as a URL
-            LocalVCRepositoryUri studentRepoUri = new LocalVCRepositoryUri(projectKey, repoName, localVCBaseUrl);
+            final var targetRepositoryName = participation.addPracticePrefixIfTestRun(participation.getParticipantIdentifier());
+            final VcsRepositoryUri studentRepoUri = localVCVersionControlService.buildStudentRepoPath(projectKey, targetRepositoryName, participation.getAttempt());
 
             try {
                 // Create single commit student repo by copying working tree from template bare repo
-                localVCRepositoryInitializer.createSingleCommitStudentRepo(sourceURL, studentRepoUri);
+                localVCVersionControlService.createSingleCommitStudentRepo(sourceURL, studentRepoUri);
             }
             catch (Exception e) {
                 log.error("Error while creating single commit student repo", e);

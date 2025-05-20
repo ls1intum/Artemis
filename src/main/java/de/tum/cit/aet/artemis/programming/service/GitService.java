@@ -62,7 +62,6 @@ import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.filter.CommitTimeRevFilter;
 import org.eclipse.jgit.revwalk.filter.RevFilter;
 import org.eclipse.jgit.transport.CredentialsProvider;
-import org.eclipse.jgit.transport.RefSpec;
 import org.eclipse.jgit.transport.RemoteConfig;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
@@ -1271,54 +1270,73 @@ public class GitService extends AbstractGitService {
         return Files.exists(localPath);
     }
 
-    public Repository initBareRepository(VcsRepositoryUri repoUri) throws IOException {
-        Path repoPath = new LocalVCRepositoryUri(repoUri.toString()).getLocalRepositoryPath(localVCBasePath);
-
-        Files.createDirectories(repoPath);
-
-        try (Git git = Git.init().setBare(true).setDirectory(repoPath.toFile()).call()) {
-            return new Repository(repoPath.toString(), repoUri);
-        }
-        catch (GitAPIException e) {
-            throw new IOException("Failed to initialize bare repository", e);
-        }
+    public Repository createBareRepository(Path repositoryPath) throws IOException {
+        // Create the bare repository
+        String repoDir = repositoryPath.toFile().getAbsolutePath();
+        Repository newRepo = new Repository(repoDir, null);
+        newRepo.create(true);  // 'true' means create the .git folder if it doesn't exist
+        return newRepo;
     }
 
-    public Repository initRepository(Path workingDir) throws IOException {
-        // Make sure the directory exists
-        Files.createDirectories(workingDir);
-
-        try (Git git = Git.init().setDirectory(workingDir.toFile()).setBare(false).call()) {
-            // Return Artemis Repository wrapping the non-bare repo folder using String path constructor
-            return new Repository(workingDir.toString(), null);
-        }
-        catch (GitAPIException e) {
-            throw new IOException("Failed to initialize repository", e);
-        }
-    }
-
-    public void setDefaultBranch(Repository repository, String defaultBranch) throws IOException {
-        RefUpdate headUpdate = repository.getRefDatabase().newUpdate(Constants.HEAD, false);
-        headUpdate.setForceUpdate(true);
-        headUpdate.link("refs/heads/" + defaultBranch);
-    }
-
-    public void addRemote(Repository repo, String remoteName, String remoteUri) throws GitAPIException, URISyntaxException {
-        try (Git git = new Git(repo)) {
-            git.remoteAdd().setName(remoteName).setUri(new URIish(remoteUri)).call();
-        }
-    }
-
-    public void push(Repository repo, String remote, String branch, boolean force) throws GitAPIException {
-        try (Git git = new Git(repo)) {
-            PushCommand pushCommand = git.push().setRemote(remote).setRefSpecs(new RefSpec(branch + ":" + branch));
-
-            if (force) {
-                pushCommand.setForce(true);
+    public void copyFilesExcludingGit(Path sourceDir, Path targetDir) throws IOException {
+        Files.walk(sourceDir).filter(path -> !path.toString().contains(File.separator + ".git" + File.separator)).forEach(sourcePath -> {
+            try {
+                Path relative = sourceDir.relativize(sourcePath);
+                Path targetPath = targetDir.resolve(relative);
+                if (Files.isDirectory(sourcePath)) {
+                    if (!Files.exists(targetPath)) {
+                        Files.createDirectories(targetPath);
+                    }
+                }
+                else {
+                    Files.copy(sourcePath, targetPath);
+                }
             }
+            catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        System.out.println("Files copied successfully from " + sourceDir + " to " + targetDir);
+    }
 
-            pushCommand.call();
+    public void commitCopiedFilesIntoRepo(Repository bareRepo, Path sourceFilesDir) throws IOException, GitAPIException {
+        // 1. Create temp working directory
+        Path tempWorkingDir = Files.createTempDirectory("temp-working-copy");
+
+        try {
+            // 2. Clone bare repo into temp working directory (non-bare)
+            try (Git git = Git.cloneRepository().setURI(bareRepo.getDirectory().toURI().toString()).setDirectory(tempWorkingDir.toFile()).setBare(false).call()) {
+
+                // 3. Copy all files from sourceFilesDir into tempWorkingDir, excluding .git
+                copyFilesExcludingGit(sourceFilesDir, tempWorkingDir);
+
+                // 4. Stage all changes
+                git.add().addFilepattern(".").call();
+
+                // 5. Commit staged files
+                git.commit().setMessage("Initial import without history").call();
+
+                // 6. Push commit back to bare repo
+                git.push().call();
+            }
         }
+        finally {
+            // Cleanup temp working directory recursively
+            FileUtils.deleteDirectory(tempWorkingDir.toFile());
+        }
+    }
+
+    /**
+     * Clones a bare repository to a temporary non-bare working copy.
+     *
+     * @param sourceRepoUri URI of the source bare repository
+     * @param targetDir     Directory where the non-bare repository will be cloned
+     * @param isBare        Boolean flag indicating whether to clone as a bare repository
+     * @throws GitAPIException if the cloning operation fails
+     */
+    public void cloneRepository(String sourceRepoUri, String targetDir, boolean isBare) throws GitAPIException {
+        // Clone the bare repository into a non-bare working directory
+        Git.cloneRepository().setURI(sourceRepoUri).setDirectory(new File(targetDir, null)).setBare(isBare).call();
     }
 
     /**
