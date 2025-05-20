@@ -509,7 +509,6 @@ public class IrisSubSettingsService {
                 return false;
             }
             var settings = subSettingsFunction.apply(irisSettings);
-            // enabled/disabled should no longer be toggled using global settings
             if (settings == null || !settings.isEnabled()) {
                 return false;
             }
