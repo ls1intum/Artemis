@@ -2,8 +2,8 @@ package de.tum.cit.aet.artemis.programming.service.localvc;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.lib.RepositoryBuilder;
@@ -74,7 +74,7 @@ public class LocalVCGitBranchService {
      */
     @Deprecated(forRemoval = true, since = "8.0")
     public static String getDefaultBranch(String repositoryPath) {
-        try (Repository repository = new RepositoryBuilder().setGitDir(new File(repositoryPath)).build()) {
+        try (Repository repository = new RepositoryBuilder().setGitDir(Path.of(repositoryPath).toFile()).build()) {
 
             String defaultBranchName = repository.getBranch();
             if (defaultBranchName == null) {

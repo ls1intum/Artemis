@@ -115,24 +115,12 @@ describe('IrisCommonSubSettingsUpdateComponent Component', () => {
         expect(comp.isSettingsSwitchDisabled).toBeTrue();
     });
 
-    it('ignores enabled from the global settings', () => {
+    it('prevents enabling settings if the parent chat settings disabled', () => {
         comp.subSettings = baseSettings();
         comp.parentSubSettings = baseSettings();
         comp.parentSubSettings.enabled = false;
         comp.isAdmin = true;
         comp.settingsType = IrisSettingsType.COURSE;
-        comp.availableVariants = mockVariants();
-        fixture.detectChanges();
-
-        expect(comp.inheritDisabled).toBeFalse();
-        expect(comp.isSettingsSwitchDisabled).toBeFalse();
-    });
-    it('prevents enabling settings if the parent chat settings disabled and the parent are not global settings', () => {
-        comp.subSettings = baseSettings();
-        comp.parentSubSettings = baseSettings();
-        comp.parentSubSettings.enabled = false;
-        comp.isAdmin = true;
-        comp.settingsType = IrisSettingsType.EXERCISE;
         comp.availableVariants = mockVariants();
         fixture.detectChanges();
 
