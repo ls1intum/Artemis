@@ -243,6 +243,7 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
                 this.tryRenderControls();
             });
         }
+
         this.handleComponentActivation(componentRef);
 
         // Since we change the pageTitle + might be pulling data upwards during a render cycle, we need to re-run change detection
@@ -264,6 +265,7 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
         this.controlsEmbeddedView?.detach();
         this.controlsEmbeddedView?.destroy();
     }
+
     /**
      * Mounts the controls as specified by the currently mounted sub-route component to the ng-container in the top bar
      */
@@ -274,6 +276,7 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
             this.controlsEmbeddedView.detectChanges();
         }
     }
+
     setupConversationService() {
         const currentCourse = this.course();
         if (!currentCourse || (!isMessagingEnabled(currentCourse) && !isCommunicationEnabled(currentCourse))) {

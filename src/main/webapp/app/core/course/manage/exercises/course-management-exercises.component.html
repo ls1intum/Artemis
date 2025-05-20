@@ -1,5 +1,5 @@
 @if (course) {
-    <ng-template titleBarTitle>
+    <div *titleBarTitle>
         <div class="d-flex align-items-center">
             <h5 class="mb-0">
                 <span>
@@ -9,13 +9,13 @@
             </h5>
             <jhi-documentation-button [type]="documentationType" />
         </div>
-    </ng-template>
+    </div>
 
-    <ng-template titleBarActions>
+    <div *titleBarActions>
         <button id="toggleSearchButton" class="btn btn-primary btn-sm" type="button" (click)="toggleSearch()">
             {{ 'artemisApp.course.exercise.search.toggleButton.' + showSearch | artemisTranslate }}
         </button>
-    </ng-template>
+    </div>
     @if (showSearch) {
         <jhi-course-management-exercises-search (exerciseFilter)="exerciseFilter = $event" />
     }

@@ -4,7 +4,7 @@ import { CourseTitleBarActionsDirective } from './course-title-bar-actions.direc
 import { CourseTitleBarService } from 'app/core/course/shared/services/course-title-bar.service';
 
 @Component({
-    template: `<ng-template titleBarActions>Test Actions</ng-template>`,
+    template: `<div *titleBarActions>Test Actions</div>`,
     imports: [CourseTitleBarActionsDirective],
 })
 class TestHostComponent {
@@ -39,6 +39,7 @@ describe('CourseTitleBarActionsDirective', () => {
         fixture.detectChanges();
         expect(mockService.setActionsTemplate).toHaveBeenCalledWith(host.tpl());
     });
+
     it('does not clear the service template on destroy when it differs', () => {
         fixture.detectChanges();
         const otherTpl = {} as TemplateRef<any>;

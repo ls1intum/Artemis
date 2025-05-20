@@ -5,7 +5,7 @@
             <jhi-documentation-button [type]="documentationType" />
         </div>
         @if (course.isAtLeastInstructor) {
-            <ng-template titleBarActions class="ms-auto text-truncate justify-content-end">
+            <div *titleBarActions class="ms-auto text-truncate justify-content-end">
                 <a class="btn btn-sm btn-primary me-1" (click)="openImportModal()">
                     <fa-icon [icon]="faFileImport" />
                     <span jhiTranslate="artemisApp.examManagement.importExam"></span>
@@ -14,7 +14,7 @@
                     <fa-icon [icon]="faPlus" />
                     <span jhiTranslate="artemisApp.examManagement.createExam"></span>
                 </a>
-            </ng-template>
+            </div>
         }
         <div class="row"></div>
         <br />

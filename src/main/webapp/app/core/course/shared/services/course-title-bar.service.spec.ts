@@ -17,45 +17,49 @@ describe('CourseTitleBarService', () => {
         expect(service.actionsTemplate()).toBeUndefined();
     });
 
-    it('should set and get the titleTemplate signal', () => {
-        const fakeTpl = {} as TemplateRef<any>;
+    describe('titleTemplate', () => {
+        it('should set and get the titleTemplate signal', () => {
+            const fakeTpl = {} as TemplateRef<any>;
 
-        service.setTitleTemplate(fakeTpl);
-        expect(service.titleTemplate()).toBe(fakeTpl);
+            service.setTitleTemplate(fakeTpl);
+            expect(service.titleTemplate()).toBe(fakeTpl);
 
-        service.setTitleTemplate(undefined);
-        expect(service.titleTemplate()).toBeUndefined();
+            service.setTitleTemplate(undefined);
+            expect(service.titleTemplate()).toBeUndefined();
+        });
+
+        it('should overwrite an existing titleTemplate when setTitleTemplate is called again', () => {
+            const firstTpl = {} as TemplateRef<any>;
+            const secondTpl = {} as TemplateRef<any>;
+
+            service.setTitleTemplate(firstTpl);
+            expect(service.titleTemplate()).toBe(firstTpl);
+
+            service.setTitleTemplate(secondTpl);
+            expect(service.titleTemplate()).toBe(secondTpl);
+        });
     });
 
-    it('should set and get the actionsTemplate signal', () => {
-        const fakeTpl = {} as TemplateRef<any>;
+    describe('actionsTemplate', () => {
+        it('should set and get the actionsTemplate signal', () => {
+            const fakeTpl = {} as TemplateRef<any>;
 
-        service.setActionsTemplate(fakeTpl);
-        expect(service.actionsTemplate()).toBe(fakeTpl);
+            service.setActionsTemplate(fakeTpl);
+            expect(service.actionsTemplate()).toBe(fakeTpl);
 
-        service.setActionsTemplate(undefined);
-        expect(service.actionsTemplate()).toBeUndefined();
-    });
+            service.setActionsTemplate(undefined);
+            expect(service.actionsTemplate()).toBeUndefined();
+        });
 
-    it('should overwrite an existing titleTemplate when setTitleTemplate is called again', () => {
-        const firstTpl = {} as TemplateRef<any>;
-        const secondTpl = {} as TemplateRef<any>;
+        it('should overwrite an existing actionsTemplate when setActionsTemplate is called again', () => {
+            const firstTpl = {} as TemplateRef<any>;
+            const secondTpl = {} as TemplateRef<any>;
 
-        service.setTitleTemplate(firstTpl);
-        expect(service.titleTemplate()).toBe(firstTpl);
+            service.setActionsTemplate(firstTpl);
+            expect(service.actionsTemplate()).toBe(firstTpl);
 
-        service.setTitleTemplate(secondTpl);
-        expect(service.titleTemplate()).toBe(secondTpl);
-    });
-
-    it('should overwrite an existing actionsTemplate when setActionsTemplate is called again', () => {
-        const firstTpl = {} as TemplateRef<any>;
-        const secondTpl = {} as TemplateRef<any>;
-
-        service.setActionsTemplate(firstTpl);
-        expect(service.actionsTemplate()).toBe(firstTpl);
-
-        service.setActionsTemplate(secondTpl);
-        expect(service.actionsTemplate()).toBe(secondTpl);
+            service.setActionsTemplate(secondTpl);
+            expect(service.actionsTemplate()).toBe(secondTpl);
+        });
     });
 });

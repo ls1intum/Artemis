@@ -4,8 +4,8 @@ import { facSidebar } from 'app/shared/icons/icons';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NgClass, NgStyle, NgTemplateOutlet } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseTitleBarService } from 'app/core/course/shared/services/course-title-bar.service';
+import { CourseTitleBarTitleComponent } from 'app/core/course/shared/course-title-bar-title/course-title-bar-title.component';
 
 /**
  * Shared title bar component used by both course overview and course management components
@@ -14,7 +14,7 @@ import { CourseTitleBarService } from 'app/core/course/shared/services/course-ti
     selector: 'jhi-course-title-bar',
     templateUrl: './course-title-bar.component.html',
     styleUrls: ['./course-title-bar.component.scss'],
-    imports: [NgClass, NgStyle, NgbTooltip, FaIconComponent, TranslateDirective, NgTemplateOutlet],
+    imports: [NgClass, NgStyle, NgbTooltip, FaIconComponent, NgTemplateOutlet, CourseTitleBarTitleComponent],
 })
 export class CourseTitleBarComponent {
     protected readonly facSidebar = facSidebar;

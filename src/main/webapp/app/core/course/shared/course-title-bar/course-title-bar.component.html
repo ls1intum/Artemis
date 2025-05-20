@@ -29,7 +29,7 @@
             @if (customTitleTemplate()) {
                 <ng-container *ngTemplateOutlet="customTitleTemplate()!" />
             } @else {
-                <div class="h5 mb-0" [jhiTranslate]="pageTitle()"></div>
+                <jhi-course-title-bar-title [title]="pageTitle()" />
             }
         </div>
     </div>

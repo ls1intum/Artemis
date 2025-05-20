@@ -4,7 +4,7 @@ import { CourseTitleBarTitleDirective } from './course-title-bar-title.directive
 import { CourseTitleBarService } from 'app/core/course/shared/services/course-title-bar.service';
 
 @Component({
-    template: `<ng-template titleBarTitle>Test Title</ng-template>`,
+    template: `<div *titleBarTitle>Test Title</div>`,
     imports: [CourseTitleBarTitleDirective],
 })
 class TestHostComponent {
@@ -34,6 +34,7 @@ describe('CourseTitleBarTitleDirective', () => {
         fixture = TestBed.createComponent(TestHostComponent);
         host = fixture.componentInstance;
     });
+
     it('registers its template with the service on init', () => {
         fixture.detectChanges();
         expect(mockService.setTitleTemplate).toHaveBeenCalledWith(host.tpl());

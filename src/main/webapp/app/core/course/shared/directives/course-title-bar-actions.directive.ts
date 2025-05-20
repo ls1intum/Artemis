@@ -13,8 +13,8 @@ export class CourseTitleBarActionsDirective implements OnDestroy {
     }
 
     ngOnDestroy() {
-        // Only clear the template if it's the one currently set by this directive instance
-        if (this.courseTitleBarService.actionsTemplate() === this.templateRef) {
+        const isTemplateOfCurrentDirectiveInstance = this.courseTitleBarService.actionsTemplate() === this.templateRef;
+        if (isTemplateOfCurrentDirectiveInstance) {
             this.courseTitleBarService.setActionsTemplate(undefined);
         }
     }
