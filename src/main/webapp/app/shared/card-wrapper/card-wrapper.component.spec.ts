@@ -7,7 +7,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('CardWrapperComponent', () => {
-    let component: CardWrapperComponent;
     let fixture: ComponentFixture<CardWrapperComponent>;
 
     beforeEach(async () => {
@@ -26,7 +25,6 @@ describe('CardWrapperComponent', () => {
         }).compileComponents();
 
         fixture = TestBed.createComponent(CardWrapperComponent);
-        component = fixture.componentInstance;
         fixture.componentRef.setInput('title', 'test.title');
         fixture.detectChanges();
     });

@@ -13,7 +13,6 @@ import { CardWrapperComponent } from 'app/shared/card-wrapper/card-wrapper.compo
     selector: 'jhi-control-center',
     imports: [FormsModule, IrisEnabledComponent, TranslateDirective, HelpIconComponent, FaIconComponent, CardWrapperComponent],
     templateUrl: './control-center.component.html',
-    styleUrl: './control-center.component.scss',
 })
 export class ControlCenterComponent {
     protected readonly IrisSubSettingsType = IrisSubSettingsType;

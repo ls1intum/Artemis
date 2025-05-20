@@ -4,7 +4,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 @Component({
     selector: 'jhi-card-wrapper',
     templateUrl: './card-wrapper.component.html',
-    styleUrls: ['./card-wrapper.component.scss'],
     imports: [TranslateDirective],
 })
 export class CardWrapperComponent {
