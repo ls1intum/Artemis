@@ -168,10 +168,7 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
         validateUpdatedCookie(updatedCookie, jwt, tokenProvider.getAuthentication(jwt), issuedAt, expectedRemainingLifetimeInMilliseconds / 1000);
         assertThat(updatedCookie.getMaxAge().getSeconds()).isLessThan(TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS);
         assertThat(updatedCookie.getMaxAge().getSeconds()).isLessThan(TOKEN_VALIDITY_IN_SECONDS_FOR_PASSKEY);
-        // allow a 15-second deviation -> can be increased in case the runners are even slower (the magnitude of seconds does not matter here)
-        // assertThat(updatedCookie.getMaxAge().getSeconds()).isCloseTo(, Offset.offset(15L));
 
-        // values should not have changed except for the expiration date
         String updatedJwt = updatedCookie.getValue();
         // IMPORTANT! The expiration date of the rotated token must be in the future but must not exceed the maximum passkey token lifetime
         assertThat(tokenProvider.getExpirationDate(updatedJwt)).isAfter(new Date(System.currentTimeMillis() + (long) (expectedRemainingLifetimeInMilliseconds * 0.9)));
@@ -312,10 +309,11 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
         return response;
     }
 
-    private void validateUpdatedCookie(ResponseCookie updatedCookie, String originalJwt, Authentication authentication, Date issuedAt, long maxAgeInSeconds) {
+    private void validateUpdatedCookie(ResponseCookie updatedCookie, String originalJwt, Authentication expectedAuthentication, Date expectedIssuedAt,
+            long expectedMaxAgeInSeconds) {
         assertThat(updatedCookie.getName()).isEqualTo(JWTFilter.JWT_COOKIE_NAME);
         assertThat(updatedCookie.getPath()).isEqualTo("/");
-        assertThat(updatedCookie.getMaxAge().getSeconds()).isCloseTo(maxAgeInSeconds, Offset.offset(15L)); // prevents that the test is flaky on slow runners
+        assertThat(updatedCookie.getMaxAge().getSeconds()).isCloseTo(expectedMaxAgeInSeconds, Offset.offset(15L)); // prevents that the test is flaky on slow runners
         assertThat(updatedCookie.isSecure()).isTrue();
         assertThat(updatedCookie.isHttpOnly()).isTrue();
         assertThat(updatedCookie.getSameSite()).isEqualTo("Lax");
@@ -323,10 +321,10 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
         String updatedJwt = updatedCookie.getValue();
         assertThat(updatedJwt).isNotEmpty();
         assertThat(updatedJwt).isNotEqualTo(originalJwt);
-        assertThat(tokenProvider.getAuthentication(updatedJwt).getPrincipal()).isEqualTo(authentication.getPrincipal());
-        assertThat(tokenProvider.getAuthentication(updatedJwt).getAuthorities()).isEqualTo(authentication.getAuthorities());
+        assertThat(tokenProvider.getAuthentication(updatedJwt).getPrincipal()).isEqualTo(expectedAuthentication.getPrincipal());
+        assertThat(tokenProvider.getAuthentication(updatedJwt).getAuthorities()).isEqualTo(expectedAuthentication.getAuthorities());
         assertThat(tokenProvider.getAuthenticatedWithPasskey(updatedJwt)).isTrue();
-        assertThat(tokenProvider.getIssuedAtDate(updatedJwt)).isCloseTo(issuedAt, 1000); // should not have changed, tolerance due to formatting
+        assertThat(tokenProvider.getIssuedAtDate(updatedJwt)).isCloseTo(expectedIssuedAt, 1000); // should not have changed, tolerance due to formatting
     }
 
     public static class CookieParser {
