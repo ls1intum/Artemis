@@ -36,11 +36,10 @@ public interface IrisTextExerciseChatSessionRepository extends ArtemisJpaReposit
      * @return A list of text exercise chat sessions sorted by creation date in descending order.
      */
     @Query("""
-
             SELECT s
                 FROM IrisTextExerciseChatSession s
-                WHERE s.exercise.id = :exerciseId
-                    AND s.user.id = :userId
+                WHERE s.exerciseId = :exerciseId
+                    AND s.userId = :userId
                 ORDER BY s.creationDate DESC
             """)
     List<IrisTextExerciseChatSession> findByExerciseIdAndUserId(@Param("exerciseId") Long exerciseId, @Param("userId") Long userId);
@@ -48,8 +47,8 @@ public interface IrisTextExerciseChatSessionRepository extends ArtemisJpaReposit
     @Query("""
             SELECT s
             FROM IrisTextExerciseChatSession s
-            WHERE s.exercise.id = :exerciseId
-                AND s.user.id = :userId
+            WHERE s.exerciseId = :exerciseId
+                AND s.userId = :userId
             ORDER BY s.creationDate DESC
             """)
     List<IrisTextExerciseChatSession> findSessionsByExerciseIdAndUserId(@Param("exerciseId") Long exerciseId, @Param("userId") Long userId, Pageable pageable);

@@ -28,7 +28,7 @@ import { PageType, PostContextFilter, PostSortCriterion, SortDirection } from 'a
 import { MetisService } from 'app/communication/service/metis.service';
 import { Channel, getAsChannelDTO, isChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { GroupChat, isGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
-import { ButtonType } from 'app/shared/components/button/button.component';
+import { ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { OneToOneChat, isOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
@@ -42,7 +42,6 @@ import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
 import { NgClass } from '@angular/common';
 import { PostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { MessageInlineInputComponent } from 'app/communication/message/message-inline-input/message-inline-input.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ForwardedMessageDTO, ForwardedMessagesGroupDTO } from 'app/communication/shared/entities/forwarded-message.model';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { Posting, PostingType } from 'app/communication/shared/entities/posting.model';
@@ -58,16 +57,7 @@ interface PostGroup {
     templateUrl: './conversation-messages.component.html',
     styleUrls: ['./conversation-messages.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [
-        FaIconComponent,
-        TranslateDirective,
-        InfiniteScrollDirective,
-        NgClass,
-        PostingThreadComponent,
-        PostCreateEditModalComponent,
-        MessageInlineInputComponent,
-        ArtemisTranslatePipe,
-    ],
+    imports: [FaIconComponent, TranslateDirective, InfiniteScrollDirective, NgClass, PostingThreadComponent, PostCreateEditModalComponent, MessageInlineInputComponent],
 })
 export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnDestroy, OnChanges {
     metisService = inject(MetisService);

@@ -14,6 +14,7 @@ import {
 import { Subscription } from 'rxjs';
 import { NgClass } from '@angular/common';
 import { TranslateDirective } from '../language/translate.directive';
+import { CopyToClipboardButtonComponent } from 'app/shared/components/buttons/copy-to-clipboard-button/copy-to-clipboard-button.component';
 
 @Component({
     selector: 'jhi-confirm-entity-name',
@@ -31,7 +32,7 @@ import { TranslateDirective } from '../language/translate.directive';
             useExisting: ConfirmEntityNameComponent,
         },
     ],
-    imports: [NgClass, TranslateDirective, FormsModule, ReactiveFormsModule],
+    imports: [NgClass, TranslateDirective, FormsModule, ReactiveFormsModule, CopyToClipboardButtonComponent],
 })
 export class ConfirmEntityNameComponent implements OnInit, OnDestroy, ControlValueAccessor, Validator {
     private fb = inject(FormBuilder);
