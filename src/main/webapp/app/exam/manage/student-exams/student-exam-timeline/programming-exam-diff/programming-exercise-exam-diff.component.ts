@@ -118,26 +118,24 @@ export class ProgrammingExerciseExamDiffComponent extends ExamSubmissionComponen
     }
 
     fetchRepositoryFilesAtRightCommit(): Observable<Map<string, string> | undefined> {
-        return this.programmingExerciseParticipationService
-            .getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView(
-                this.exercise().id!,
-                this.currentSubmission()?.participation?.id!,
-                this.currentSubmission()?.commitHash!,
-                RepositoryType.USER,
-            );
+        return this.programmingExerciseParticipationService.getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView(
+            this.exercise().id!,
+            this.currentSubmission()?.participation?.id!,
+            this.currentSubmission()?.commitHash!,
+            RepositoryType.USER,
+        );
     }
 
     fetchRepositoryFilesAtLeftCommit(): Observable<Map<string, string> | undefined> {
         if (this.isLeftTemplate) {
             return this.programmingExerciseService.getTemplateRepositoryTestFilesWithContent(this.exercise().id!);
         } else {
-            return this.programmingExerciseParticipationService
-                .getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView(
-                    this.exercise().id!,
-                    this.previousSubmission()?.participation?.id!,
-                    this.previousSubmission()?.commitHash!,
-                    RepositoryType.USER,
-                )
+            return this.programmingExerciseParticipationService.getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView(
+                this.exercise().id!,
+                this.previousSubmission()?.participation?.id!,
+                this.previousSubmission()?.commitHash!,
+                RepositoryType.USER,
+            );
         }
     }
 

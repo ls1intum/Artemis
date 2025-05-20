@@ -41,18 +41,8 @@ export class GitDiffReportComponent {
     readonly allDiffsReady = computed(() => Object.values(this.diffInformationForPaths()).every((info) => info.diffReady));
     readonly allowSplitView = signal<boolean>(true);
 
-    readonly totalAddedLines = computed(() => 
-        this.diffInformationForPaths().reduce(
-            (sum, info) => sum + (info.lineChange?.addedLineCount || 0), 
-            0
-        )
-    );
-    readonly totalRemovedLines = computed(() => 
-        this.diffInformationForPaths().reduce(
-            (sum, info) => sum + (info.lineChange?.removedLineCount || 0), 
-            0
-        )
-    );
+    readonly totalAddedLines = computed(() => this.diffInformationForPaths().reduce((sum, info) => sum + (info.lineChange?.addedLineCount || 0), 0));
+    readonly totalRemovedLines = computed(() => this.diffInformationForPaths().reduce((sum, info) => sum + (info.lineChange?.removedLineCount || 0), 0));
 
     readonly leftCommit = computed(() => this.leftCommitHash()?.substring(0, 10));
     readonly rightCommit = computed(() => this.rightCommitHash()?.substring(0, 10));
@@ -61,7 +51,7 @@ export class GitDiffReportComponent {
         effect(() => {
             untracked(() => this.diffInformationForPaths.set(getDiffInformation(this.templateFileContentByPath(), this.solutionFileContentByPath())));
         });
-    }    
+    }
 
     /**
      * Records that the diff editor for a file has changed its "ready" state.
@@ -73,15 +63,15 @@ export class GitDiffReportComponent {
     onDiffReady(path: string, ready: boolean, lineChange: LineChange) {
         const diffInformation = [...this.diffInformationForPaths()];
         const index = diffInformation.findIndex((info) => info.modifiedPath === path);
-        
+
         if (index !== -1) {
             diffInformation[index].diffReady = ready;
-            
+
             // Update line change information if available
             if (ready && lineChange) {
                 diffInformation[index].lineChange = lineChange;
             }
-            
+
             this.diffInformationForPaths.set(diffInformation);
         } else {
             captureException(`Received diff ready event for unknown path: ${path}`);

@@ -16,8 +16,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseGitDiffEntry;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import jakarta.validation.constraints.NotNull;
 
 import org.eclipse.jgit.api.Git;
@@ -57,9 +55,11 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCheckState;
 import de.tum.cit.aet.artemis.plagiarism.domain.text.TextPlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.service.cache.PlagiarismCacheService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseGitDiffEntry;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
+import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.GitDiffReportParserService;
 import de.tum.cit.aet.artemis.programming.service.GitService;
@@ -372,8 +372,8 @@ public class ProgrammingPlagiarismDetectionService {
             return true;
         }
 
-        var diffToTemplate = this.calculateNumberOfDiffLinesBetweenRepos(repo.getRemoteRepositoryUri(), repo.getLocalPath(),
-                templateRepo.get().getRemoteRepositoryUri(), templateRepo.get().getLocalPath());
+        var diffToTemplate = this.calculateNumberOfDiffLinesBetweenRepos(repo.getRemoteRepositoryUri(), repo.getLocalPath(), templateRepo.get().getRemoteRepositoryUri(),
+                templateRepo.get().getLocalPath());
         return diffToTemplate >= minimumSize;
     }
 

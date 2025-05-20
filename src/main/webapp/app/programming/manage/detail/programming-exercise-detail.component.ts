@@ -242,7 +242,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         this.alertService.error('artemisApp.programmingExercise.repositoryFilesError');
                         return of({ templateFiles: undefined, solutionFiles: undefined });
                     }),
-                    tap(({ templateFiles, solutionFiles }) => { this.handleDiff(templateFiles, solutionFiles); }),
+                    tap(({ templateFiles, solutionFiles }) => {
+                        this.handleDiff(templateFiles, solutionFiles);
+                    }),
                 )
                 // split pipe to keep type checks
                 .subscribe({
@@ -464,7 +466,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         type: ProgrammingExerciseParticipationType.SOLUTION,
                     },
                 },
-                this.repositoryDiffInformation && this.templateFileContentByPath && this.solutionFileContentByPath && {
+                this.repositoryDiffInformation &&
+                    this.templateFileContentByPath &&
+                    this.solutionFileContentByPath && {
                         type: DetailType.ProgrammingDiffReport,
                         title: 'artemisApp.programmingExercise.diffReport.title',
                         titleHelpText: 'artemisApp.programmingExercise.diffReport.detailedTooltip',
@@ -703,7 +707,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         return link;
     }
 
-    fetchRepositoryFiles(): Observable<{ templateFiles: Map<string, string> | undefined, solutionFiles: Map<string, string> | undefined }> {
+    fetchRepositoryFiles(): Observable<{ templateFiles: Map<string, string> | undefined; solutionFiles: Map<string, string> | undefined }> {
         return forkJoin({
             templateFiles: this.programmingExerciseService.getTemplateRepositoryTestFilesWithContent(this.programmingExercise.id!),
             solutionFiles: this.programmingExerciseService.getSolutionRepositoryTestFilesWithContent(this.programmingExercise.id!),

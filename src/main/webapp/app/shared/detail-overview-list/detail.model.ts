@@ -120,7 +120,7 @@ export interface ProgrammingTestStatusDetail extends DetailBase {
 }
 export interface ProgrammingDiffReportDetail extends DetailBase {
     type: DetailType.ProgrammingDiffReport;
-    data: { 
+    data: {
         repositoryDiffInformation?: RepositoryDiffInformation;
         templateFileContentByPath: Map<string, string>;
         solutionFileContentByPath: Map<string, string>;

@@ -33,14 +33,14 @@ export class GitDiffFilePanelComponent {
     readonly diffForTemplateAndSolution = input<boolean>(true);
     readonly allowSplitView = input<boolean>(true);
     readonly diffInformation = input.required<DiffInformation>();
-    readonly onDiffReady = output<{ready: boolean; lineChange: LineChange}>();
+    readonly onDiffReady = output<{ ready: boolean; lineChange: LineChange }>();
 
     private readonly lineChange = signal<LineChange>({ addedLineCount: 0, removedLineCount: 0 });
 
     readonly addedLineCount = computed(() => this.lineChange().addedLineCount);
     readonly removedLineCount = computed(() => this.lineChange().removedLineCount);
 
-    handleDiffReady(event: {ready: boolean; lineChange: LineChange}): void {
+    handleDiffReady(event: { ready: boolean; lineChange: LineChange }): void {
         if (event.ready && event.lineChange) {
             this.lineChange.set(event.lineChange);
         }

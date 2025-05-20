@@ -502,7 +502,7 @@ export class ProgrammingExerciseService {
         this.exerciseService.sendExerciseTitleToTitleService(exerciseRes?.body ?? undefined);
         return exerciseRes;
     }
-    
+
     /**
      * Gets all files from the last solution participation repository
      */

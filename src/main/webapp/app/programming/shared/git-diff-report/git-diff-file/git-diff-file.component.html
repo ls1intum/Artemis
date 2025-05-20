@@ -5,8 +5,9 @@
         </div>
     }
     <!-- The editor is only hidden, not removed, as we still want it to report its readiness. -->
-    <jhi-monaco-diff-editor 
-        [hidden]="fileUnchanged()" 
-        [allowSplitView]="allowSplitView()" 
-        (onReadyForDisplayChange)="onDiffReady.emit({ready: $event.ready, lineChange: $event.lineChange})" />
+    <jhi-monaco-diff-editor
+        [hidden]="fileUnchanged()"
+        [allowSplitView]="allowSplitView()"
+        (onReadyForDisplayChange)="onDiffReady.emit({ ready: $event.ready, lineChange: $event.lineChange })"
+    />
 </div>

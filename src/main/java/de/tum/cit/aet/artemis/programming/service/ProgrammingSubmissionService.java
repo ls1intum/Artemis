@@ -59,8 +59,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
-import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -110,9 +108,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
             StudentParticipationRepository studentParticipationRepository, FeedbackRepository feedbackRepository, Optional<ExamDateApi> examDateApi,
             ExerciseDateService exerciseDateService, CourseRepository courseRepository, ParticipationRepository participationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ComplaintRepository complaintRepository,
-            ParticipationAuthorizationCheckService participationAuthCheckService,
-            FeedbackService feedbackService, SubmissionPolicyRepository submissionPolicyRepository, Optional<AthenaApi> athenaApi,
-            Optional<LocalVCGitBranchService> localVCGitBranchService) {
+            ParticipationAuthorizationCheckService participationAuthCheckService, FeedbackService feedbackService, SubmissionPolicyRepository submissionPolicyRepository,
+            Optional<AthenaApi> athenaApi, Optional<LocalVCGitBranchService> localVCGitBranchService) {
         super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository, examDateApi,
                 exerciseDateService, courseRepository, participationRepository, complaintRepository, feedbackService, athenaApi);
         this.programmingSubmissionRepository = programmingSubmissionRepository;

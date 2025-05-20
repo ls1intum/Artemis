@@ -51,14 +51,10 @@ export function convertMonacoLineChanges(monacoLineChanges: monaco.editor.ILineC
     }
 
     for (const change of monacoLineChanges) {
-        const addedLines = change.modifiedEndLineNumber >= change.modifiedStartLineNumber
-            ? change.modifiedEndLineNumber - change.modifiedStartLineNumber + 1
-            : 0;
-            
-        const removedLines = change.originalEndLineNumber >= change.originalStartLineNumber
-            ? change.originalEndLineNumber - change.originalStartLineNumber + 1
-            : 0;
-            
+        const addedLines = change.modifiedEndLineNumber >= change.modifiedStartLineNumber ? change.modifiedEndLineNumber - change.modifiedStartLineNumber + 1 : 0;
+
+        const removedLines = change.originalEndLineNumber >= change.originalStartLineNumber ? change.originalEndLineNumber - change.originalStartLineNumber + 1 : 0;
+
         lineChange.addedLineCount += addedLines;
         lineChange.removedLineCount += removedLines;
     }
@@ -66,10 +62,7 @@ export function convertMonacoLineChanges(monacoLineChanges: monaco.editor.ILineC
     return lineChange;
 }
 
-export function processRepositoryDiff(
-    originalFileContentByPath: Map<string, string>,
-    modifiedFileContentByPath: Map<string, string>,
-): RepositoryDiffInformation {
+export function processRepositoryDiff(originalFileContentByPath: Map<string, string>, modifiedFileContentByPath: Map<string, string>): RepositoryDiffInformation {
     const diffInformation = getDiffInformation(originalFileContentByPath, modifiedFileContentByPath);
 
     const repositoryDiffInformation: RepositoryDiffInformation = {
@@ -78,13 +71,13 @@ export function processRepositoryDiff(
     };
 
     diffInformation.forEach((diffInformation) => {
-        const modifiedPath = diffInformation.modifiedPath;        
+        const modifiedPath = diffInformation.modifiedPath;
         const originalPath = diffInformation.originalPath;
         const originalFileContent = originalFileContentByPath.get(originalPath) || '';
         const modifiedFileContent = modifiedFileContentByPath.get(modifiedPath) || '';
-        
+
         const lineChange = computeDiffsMonaco(originalFileContent, modifiedFileContent);
-        
+
         diffInformation.lineChange = lineChange;
         repositoryDiffInformation.totalLineChange.addedLineCount += lineChange.addedLineCount;
         repositoryDiffInformation.totalLineChange.removedLineCount += lineChange.removedLineCount;
@@ -120,7 +113,7 @@ export function getDiffInformation(originalFileContentByPath: Map<string, string
             let originalPath: string;
             let modifiedPath: string;
             let fileStatus: FileStatus;
-            
+
             if (!modifiedFileContent && originalFileContent) {
                 deleted.push(path);
                 fileStatus = FileStatus.DELETED;
@@ -137,7 +130,7 @@ export function getDiffInformation(originalFileContentByPath: Map<string, string
                 modifiedPath = path;
             }
 
-            return ({
+            return {
                 title: path,
                 modifiedPath: modifiedPath,
                 originalPath: originalPath,
@@ -145,7 +138,7 @@ export function getDiffInformation(originalFileContentByPath: Map<string, string
                 originalFileContent: originalFileContent,
                 diffReady: false,
                 fileStatus: fileStatus,
-            });
+            };
         });
 
     diffInformation = mergeRenamedFiles(diffInformation, created, deleted);
@@ -160,7 +153,7 @@ function computeDiffsMonaco(originalFileContent: string, modifiedFileContent: st
         shouldIgnoreTrimWhitespace: true,
         shouldMakePrettyDiff: true,
         maxComputationTime: 1000,
-    }
+    };
     return convertMonacoLineChanges(diff(originalFileContent.split('\n'), modifiedFileContent.split('\n'), options));
 }
 

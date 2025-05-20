@@ -20,11 +20,7 @@
         </div>
         <div ngbAccordionCollapse>
             <div ngbAccordionBody>
-                <jhi-git-diff-file
-                    [allowSplitView]="allowSplitView()"
-                    [diffInformation]="diffInformation()"
-                    (onDiffReady)="handleDiffReady($event)"
-                />
+                <jhi-git-diff-file [allowSplitView]="allowSplitView()" [diffInformation]="diffInformation()" (onDiffReady)="handleDiffReady($event)" />
             </div>
         </div>
     </div>

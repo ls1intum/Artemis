@@ -118,12 +118,7 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
             this.fetchParticipationRepoFilesAtRightCommit();
         } else {
             this.participationRepoFilesAtLeftCommitSubscription = this.programmingExerciseParticipationService
-                .getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView(
-                    this.exerciseId,
-                    this.repositoryId,
-                    this.previousCommit.hash!,
-                    this.repositoryType,
-                )
+                .getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView(this.exerciseId, this.repositoryId, this.previousCommit.hash!, this.repositoryType)
                 .subscribe({
                     next: (filesWithContent: Map<string, string>) => {
                         this.leftCommitFileContentByPath = filesWithContent;
@@ -142,12 +137,7 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
      */
     private fetchParticipationRepoFilesAtRightCommit() {
         this.participationRepoFilesAtRightCommitSubscription = this.programmingExerciseParticipationService
-            .getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView(
-                this.exerciseId,
-                this.repositoryId,
-                this.currentCommit.hash!,
-                this.repositoryType,
-            )
+            .getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView(this.exerciseId, this.repositoryId, this.currentCommit.hash!, this.repositoryType)
             .subscribe({
                 next: (filesWithContent: Map<string, string>) => {
                     this.rightCommitFileContentByPath = filesWithContent;
