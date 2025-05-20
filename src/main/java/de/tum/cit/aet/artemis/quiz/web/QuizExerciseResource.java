@@ -818,7 +818,9 @@ public class QuizExerciseResource {
      * @return a set of quiz questions that are released for practice
      */
     @GetMapping("courses/{courseId}/quiz")
+    @EnforceAtLeastStudent
     public ResponseEntity<Set<QuizQuestion>> getQuizQuestionsForPractice(@PathVariable Long courseId) {
+        log.info("REST request to get quiz questions for course with id : {}", courseId);
         Set<QuizQuestion> quizQuestions = quizExerciseRepository.findAllQuizQuestionsByCourseId(courseId);
         return ResponseEntity.ok(quizQuestions);
     }

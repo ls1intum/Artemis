@@ -80,16 +80,17 @@ export class CourseSidebarItemService {
             translation: 'artemisApp.courseOverview.menu.statistics',
             hidden: false,
         };
+        return [...items, exercisesItem, statisticsItem];
+    }
 
-        const practiceItem: SidebarItem = {
+    getPracticeItem(): SidebarItem {
+        return {
             routerLink: 'practice',
             icon: faDumbbell,
             title: 'Practice',
             translation: 'overview.practice',
             hidden: false,
         };
-
-        return [...items, exercisesItem, statisticsItem, practiceItem];
     }
 
     getExamsItem(courseId?: number): SidebarItem {

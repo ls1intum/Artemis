@@ -1,5 +1,6 @@
-import { Component, Input, OnInit, inject } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Subscription, combineLatest, of } from 'rxjs';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import { CoursePracticeQuizService } from 'app/quiz/overview/course-practice-quiz/course-practice-quiz.service';
 import { MultipleChoiceQuestionComponent } from 'app/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
@@ -16,7 +17,7 @@ import { ButtonComponent } from 'app/shared/components/buttons/button/button.com
     templateUrl: './course-practice-quiz.component.html',
     styleUrl: './course-practice-quiz.component.scss',
 })
-export class CoursePracticeQuizComponent implements OnInit {
+export class CoursePracticeQuizComponent implements OnInit, OnDestroy {
     @Input() questions: QuizQuestion[] = [];
 
     readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
@@ -26,6 +27,7 @@ export class CoursePracticeQuizComponent implements OnInit {
     private route = inject(ActivatedRoute);
     private router = inject(Router);
     private quizService = inject(CoursePracticeQuizService);
+    private subscription: Subscription;
 
     courseId: number;
     currentIndex = 0;
@@ -34,10 +36,16 @@ export class CoursePracticeQuizComponent implements OnInit {
     shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
 
     ngOnInit(): void {
-        this.route.parent?.params.subscribe((params) => {
+        this.subscription = combineLatest([this.route.parent?.params ?? of({ courseId: undefined })]).subscribe(([params]) => {
             this.courseId = params['courseId'];
             this.loadQuestions(this.courseId);
         });
+    }
+
+    ngOnDestroy(): void {
+        if (this.subscription) {
+            this.subscription.unsubscribe();
+        }
     }
 
     /**
@@ -72,6 +80,9 @@ export class CoursePracticeQuizComponent implements OnInit {
      * gets the current question
      */
     get currentQuestion(): QuizQuestion {
+        if (this.questions.length === 0 || this.currentIndex < 0 || this.currentIndex >= this.questions.length) {
+            throw new Error('No questions available or invalid question index');
+        }
         return this.questions[this.currentIndex];
     }
 
