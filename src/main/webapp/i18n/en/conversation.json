@@ -172,10 +172,11 @@
                     "createdBy": "Created by",
                     "createdOn": "Created on",
                     "notification": "Notification",
-                    "notificationsEnabledDescription": "You will receive push notifications and web notifications for new messages in this conversation.",
-                    "notificationsMutedDescription": "You will not receive notifications for new messages unless you are mentioned.",
+                    "notificationsEnabledDescription": "You will receive notifications for new messages in this conversation.",
+                    "notificationsMutedDescription": "You will not receive notifications for new messages in this conversation.",
                     "muteChannel": "Mute Channel",
-                    "unmuteChannel": "Unmute Channel"
+                    "unmuteChannel": "Unmute Channel",
+                    "notificationsDisabled": "Course-wide notifications are disabled."
                 }
             },
             "addUsers": {

@@ -28,6 +28,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faVolumeUp, faVolumeXmark } from '@fortawesome/free-solid-svg-icons';
+import { CourseNotificationSettingService } from 'app/communication/course-notification/course-notification-setting.service';
+import { CourseNotificationSettingInfo } from 'app/communication/shared/entities/course-notification/course-notification-setting-info';
 
 @Component({
     selector: 'jhi-conversation-info',
@@ -63,8 +65,11 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
     private modalService = inject(NgbModal);
     private alertService = inject(AlertService);
     private conversationService = inject(ConversationService);
+    private courseNotificationSettingService = inject(CourseNotificationSettingService);
 
     readOnlyMode = false;
+    notificationSettings?: CourseNotificationSettingInfo;
+    isNotificationsEnabled = false;
 
     // Icons
     faVolumeUp = faVolumeUp;
@@ -76,7 +81,7 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
                 this.readOnlyMode = !!getAsChannelDTO(this.activeConversation())?.isArchived;
             }
         }
-
+        this.loadNotificationSettings();
         this.updateConversationIsMuted();
     }
 
@@ -234,9 +239,9 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
             });
     }
 
-    onMuteClicked(event: MouseEvent) {
-        event.stopPropagation();
-        this.mute$.next(!this.activeConversation()!.isMuted);
+    onMuteToggle(): void {
+        const currentMuted = this.activeConversation()?.isMuted ?? false;
+        this.mute$.next(!currentMuted);
     }
 
     private updateConversationIsMuted() {
@@ -255,6 +260,35 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             });
         });
+    }
+
+    private loadNotificationSettings() {
+        const courseId = this.course()?.id;
+        if (!courseId) {
+            return;
+        }
+
+        this.courseNotificationSettingService.getSettingInfo(courseId).subscribe({
+            next: (response) => {
+                if (response.body) {
+                    this.notificationSettings = response.body;
+                    this.checkNotificationStatus();
+                }
+            },
+            error: (error: HttpErrorResponse) => onError(this.alertService, error),
+        });
+    }
+
+    private checkNotificationStatus() {
+        if (!this.notificationSettings?.notificationTypeChannels) {
+            return;
+        }
+
+        // Check if any notification channel is enabled for conversation messages
+        const conversationSettings = this.notificationSettings.notificationTypeChannels['conversationMessage'];
+        if (conversationSettings) {
+            this.isNotificationsEnabled = Object.values(conversationSettings).some((enabled) => enabled);
+        }
     }
 
     protected readonly ConversationDTO = ConversationDTO;

@@ -84,9 +84,11 @@
 
                 <p class="text-muted small mb-2">
                     {{
-                        activeConversation()?.isMuted
-                            ? ('artemisApp.dialogs.conversationDetail.infoTab.notificationsMutedDescription' | artemisTranslate)
-                            : ('artemisApp.dialogs.conversationDetail.infoTab.notificationsEnabledDescription' | artemisTranslate)
+                        !isNotificationsEnabled
+                            ? ('artemisApp.dialogs.conversationDetail.infoTab.notificationsDisabled' | artemisTranslate)
+                            : activeConversation()?.isMuted
+                              ? ('artemisApp.dialogs.conversationDetail.infoTab.notificationsMutedDescription' | artemisTranslate)
+                              : ('artemisApp.dialogs.conversationDetail.infoTab.notificationsEnabledDescription' | artemisTranslate)
                     }}
                 </p>
 
@@ -94,7 +96,7 @@
                     <li>
                         <div class="d-flex justify-content-between align-items-center">
                             <div class="d-flex align-items-center gap-2">
-                                <fa-icon [icon]="activeConversation()?.isMuted ? faVolumeUp : faVolumeXmark" class="me-1" />
+                                <fa-icon [icon]="activeConversation()?.isMuted ? faVolumeXmark : faVolumeUp" class="me-1" />
                                 <span>
                                     {{
                                         activeConversation()?.isMuted
@@ -103,15 +105,16 @@
                                     }}
                                 </span>
                             </div>
-                            <button
-                                class="btn btn-outline-secondary btn-sm"
-                                (click)="onMuteClicked($event)"
-                                [jhiTranslate]="
-                                    activeConversation()?.isMuted
-                                        ? 'artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.unmute'
-                                        : 'artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.mute'
-                                "
-                            ></button>
+                            <div class="form-check form-switch d-flex flex-column align-items-center">
+                                <input
+                                    id="muteSwitch"
+                                    class="form-check-input m-0"
+                                    type="checkbox"
+                                    role="switch"
+                                    [checked]="!activeConversation()?.isMuted"
+                                    (change)="onMuteToggle()"
+                                />
+                            </div>
                         </div>
                     </li>
                 </ul>
