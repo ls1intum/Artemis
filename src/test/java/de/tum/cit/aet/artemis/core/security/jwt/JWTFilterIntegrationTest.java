@@ -26,6 +26,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.core.authentication.AuthenticationTestService;
+import de.tum.cit.aet.artemis.core.util.CookieParserTestUtil;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 /**
@@ -114,7 +115,7 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
 
                 String setCookieHeader = response.getHeader(HttpHeaders.SET_COOKIE);
                 assertThat(setCookieHeader).isNotNull();
-                ResponseCookie updatedCookie = CookieParser.parseSetCookieHeader(setCookieHeader);
+                ResponseCookie updatedCookie = CookieParserTestUtil.parseSetCookieHeader(setCookieHeader);
 
                 validateUpdatedCookie(updatedCookie, jwt, tokenProvider.getAuthentication(jwt), issuedAt, TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS);
                 String updatedJwt = updatedCookie.getValue();
@@ -151,7 +152,7 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
 
                 String setCookieHeader = response.getHeader(HttpHeaders.SET_COOKIE);
                 assertThat(setCookieHeader).isNotNull();
-                ResponseCookie updatedCookie = CookieParser.parseSetCookieHeader(setCookieHeader);
+                ResponseCookie updatedCookie = CookieParserTestUtil.parseSetCookieHeader(setCookieHeader);
 
                 validateUpdatedCookie(updatedCookie, jwt, tokenProvider.getAuthentication(jwt), issuedAt, expectedRemainingLifetimeInMilliseconds / 1000);
                 assertThat(updatedCookie.getMaxAge().getSeconds()).isLessThan(TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS);
@@ -307,50 +308,4 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
         assertThat(tokenProvider.getIssuedAtDate(updatedJwt)).isCloseTo(expectedIssuedAt, 1000); // should not have changed, tolerance due to formatting
     }
 
-    public static class CookieParser {
-
-        public static ResponseCookie parseSetCookieHeader(String setCookieHeader) {
-            String[] parts = setCookieHeader.split(";");
-            String[] nameValue = parts[0].trim().split("=", 2);
-            String name = nameValue[0];
-            String value = nameValue.length > 1 ? nameValue[1] : "";
-
-            ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from(name, value);
-
-            for (int i = 1; i < parts.length; i++) {
-                String[] attr = parts[i].trim().split("=", 2);
-                String key = attr[0].trim().toLowerCase();
-                String val = attr.length > 1 ? attr[1].trim() : "";
-
-                switch (key) {
-                    case "path":
-                        builder.path(val);
-                        break;
-                    case "max-age":
-                        builder.maxAge(Long.parseLong(val));
-                        break;
-                    case "expires":
-                        // ResponseCookie does not directly support `Expires`, prefer Max-Age
-                        break;
-                    case "domain":
-                        builder.domain(val);
-                        break;
-                    case "secure":
-                        builder.secure(true);
-                        break;
-                    case "httponly":
-                        builder.httpOnly(true);
-                        break;
-                    case "samesite":
-                        builder.sameSite(val);
-                        break;
-                    default:
-                        // Unknown attribute
-                        break;
-                }
-            }
-
-            return builder.build();
-        }
-    }
 }
