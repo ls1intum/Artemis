@@ -1,5 +1,5 @@
 import { Component, Input, OnInit, inject } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import { CoursePracticeQuizService } from 'app/quiz/overview/course-practice-quiz/course-practice-quiz.service';
 import { MultipleChoiceQuestionComponent } from 'app/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
@@ -8,10 +8,11 @@ import { DragAndDropQuestionComponent } from 'app/quiz/shared/questions/drag-and
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
 import { ShortAnswerSubmittedText } from 'app/quiz/shared/entities/short-answer-submitted-text.model';
+import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 
 @Component({
     selector: 'jhi-course-practice-quiz',
-    imports: [MultipleChoiceQuestionComponent, ShortAnswerQuestionComponent, DragAndDropQuestionComponent],
+    imports: [MultipleChoiceQuestionComponent, ShortAnswerQuestionComponent, DragAndDropQuestionComponent, ButtonComponent],
     templateUrl: './course-practice-quiz.component.html',
     styleUrl: './course-practice-quiz.component.scss',
 })
@@ -23,6 +24,7 @@ export class CoursePracticeQuizComponent implements OnInit {
     readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
 
     private route = inject(ActivatedRoute);
+    private router = inject(Router);
     private quizService = inject(CoursePracticeQuizService);
 
     courseId: number;
@@ -45,7 +47,9 @@ export class CoursePracticeQuizComponent implements OnInit {
     }
 
     nextQuestion(): void {
-        if (!this.isLastQuestion) {
+        if (this.isLastQuestion) {
+            this.navigateToPractice();
+        } else {
             this.currentIndex++;
         }
     }
@@ -56,5 +60,9 @@ export class CoursePracticeQuizComponent implements OnInit {
 
     get currentQuestion(): QuizQuestion {
         return this.questions[this.currentIndex];
+    }
+
+    navigateToPractice(): void {
+        this.router.navigate(['courses', this.courseId, 'practice']);
     }
 }

@@ -812,7 +812,7 @@ public class QuizExerciseResource {
     }
 
     @GetMapping("courses/{courseId}/quiz")
-    public ResponseEntity<Set<QuizQuestion>> getQuizQuestionsForPractice(@PathVariable long courseId) {
+    public ResponseEntity<Set<QuizQuestion>> getQuizQuestionsForPractice(@PathVariable Long courseId) {
         Set<QuizQuestion> quizQuestions = quizExerciseRepository.findAllQuizQuestionsByCourseId(courseId);
         return ResponseEntity.ok(quizQuestions);
     }
