@@ -10,6 +10,7 @@ import jakarta.servlet.http.Cookie;
 
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -85,172 +86,177 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
         assertThat(TOKEN_VALIDITY_IN_SECONDS_FOR_PASSKEY).isGreaterThan(TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS);
     }
 
-    /**
-     * <p>
-     * We want to rotate a passkey-created token silently if it has used after 50% of its lifetime
-     * </p>
-     * Ensures that the token is rotated properly without changing authentication data or the issuedAt date
-     */
-    @Test
-    void testRotateTokenSilently_shouldRotateToken_ifMoreThanHalfOfLifetimeUsed() throws Exception {
-        Authentication authentication = authenticationTestService.createWebAuthnAuthentication(USER_NAME);
+    @Nested
+    class TokenRotationTests {
 
-        long moreThanHalfOfTokenValidityPassed = (long) (TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 0.6 * 1000);
-        Date issuedAt = new Date(System.currentTimeMillis() - moreThanHalfOfTokenValidityPassed);
-        Date expiration = new Date(issuedAt.getTime() + TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 1000);
+        /**
+         * <p>
+         * We want to rotate a passkey-created token silently if it has used after 50% of its lifetime
+         * </p>
+         * Ensures that the token is rotated properly without changing authentication data or the issuedAt date
+         */
+        @Test
+        void shouldRotateToken_ifMoreThanHalfOfLifetimeUsed() throws Exception {
+            Authentication authentication = authenticationTestService.createWebAuthnAuthentication(USER_NAME);
 
-        String jwt = tokenProvider.createToken(authentication, issuedAt, expiration, null, true);
-        assertThat(tokenProvider.getAuthenticatedWithPasskey(jwt)).isTrue();
+            long moreThanHalfOfTokenValidityPassed = (long) (TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 0.6 * 1000);
+            Date issuedAt = new Date(System.currentTimeMillis() - moreThanHalfOfTokenValidityPassed);
+            Date expiration = new Date(issuedAt.getTime() + TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 1000);
 
-        MockHttpServletResponse response = performRequest(jwt, false);
+            String jwt = tokenProvider.createToken(authentication, issuedAt, expiration, null, true);
+            assertThat(tokenProvider.getAuthenticatedWithPasskey(jwt)).isTrue();
 
-        String setCookieHeader = response.getHeader(HttpHeaders.SET_COOKIE);
-        assertThat(setCookieHeader).isNotNull();
-        ResponseCookie updatedCookie = CookieParser.parseSetCookieHeader(setCookieHeader);
+            MockHttpServletResponse response = performRequest(jwt, false);
 
-        validateUpdatedCookie(updatedCookie, jwt, tokenProvider.getAuthentication(jwt), issuedAt, TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS);
-        String updatedJwt = updatedCookie.getValue();
-        // IMPORTANT! The expiration date of the rotated token must be in the future, but not too far in the future
-        assertThat(tokenProvider.getExpirationDate(updatedJwt)).isAfter(new Date(System.currentTimeMillis() + (long) (0.9 * TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 1000)));
-        assertThat(tokenProvider.getExpirationDate(updatedJwt)).isBefore(new Date(System.currentTimeMillis() + TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 1000));
-    }
+            String setCookieHeader = response.getHeader(HttpHeaders.SET_COOKIE);
+            assertThat(setCookieHeader).isNotNull();
+            ResponseCookie updatedCookie = CookieParser.parseSetCookieHeader(setCookieHeader);
 
-    /**
-     * We shall never extend the token lifetime beyond the maximum passkey token lifetime
-     */
-    @Test
-    void testRotateTokenSilently_shouldRotateToken_butConsiderMaxPasskeyTokenLifetime() throws Exception {
-        Authentication authentication = authenticationTestService.createWebAuthnAuthentication(USER_NAME);
+            validateUpdatedCookie(updatedCookie, jwt, tokenProvider.getAuthentication(jwt), issuedAt, TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS);
+            String updatedJwt = updatedCookie.getValue();
+            // IMPORTANT! The expiration date of the rotated token must be in the future, but not too far in the future
+            assertThat(tokenProvider.getExpirationDate(updatedJwt)).isAfter(new Date(System.currentTimeMillis() + (long) (0.9 * TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 1000)));
+            assertThat(tokenProvider.getExpirationDate(updatedJwt)).isBefore(new Date(System.currentTimeMillis() + TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 1000));
+        }
 
-        long nowInMilliseconds = System.currentTimeMillis();
-        Date issuedAt = new Date(nowInMilliseconds - (long) (TOKEN_VALIDITY_IN_SECONDS_FOR_PASSKEY * 0.9 * 1000));
-        Date expiration = new Date(nowInMilliseconds + (long) (TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 0.4 * 1000));
+        /**
+         * We shall never extend the token lifetime beyond the maximum passkey token lifetime
+         */
+        @Test
+        void shouldRotateToken_butConsiderMaxPasskeyTokenLifetime() throws Exception {
+            Authentication authentication = authenticationTestService.createWebAuthnAuthentication(USER_NAME);
 
-        long tokenLifetimeAlreadyUsedUpInMilliseconds = nowInMilliseconds - issuedAt.getTime();
-        long expectedRemainingLifetimeInMilliseconds = TOKEN_VALIDITY_IN_SECONDS_FOR_PASSKEY * 1000 - tokenLifetimeAlreadyUsedUpInMilliseconds;
-        // if this is not the case, the test does not make sense - might happen if TOKEN_VALIDITY_IN_SECONDS_FOR_PASSKEY or TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS is adjusted
-        // -> adjust issuedAt and expiration accordingly in that case (no full-time for TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS left, last rotated token before passkey token lifetime
-        // is reached)
-        assertThat(expectedRemainingLifetimeInMilliseconds).isLessThan(TOKEN_VALIDITY_IN_SECONDS_FOR_PASSKEY * 1000);
-        assertThat(expectedRemainingLifetimeInMilliseconds).isLessThan(TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 1000);
+            long nowInMilliseconds = System.currentTimeMillis();
+            Date issuedAt = new Date(nowInMilliseconds - (long) (TOKEN_VALIDITY_IN_SECONDS_FOR_PASSKEY * 0.9 * 1000));
+            Date expiration = new Date(nowInMilliseconds + (long) (TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 0.4 * 1000));
 
-        String jwt = tokenProvider.createToken(authentication, issuedAt, expiration, null, true);
-        assertThat(tokenProvider.getAuthenticatedWithPasskey(jwt)).isTrue();
+            long tokenLifetimeAlreadyUsedUpInMilliseconds = nowInMilliseconds - issuedAt.getTime();
+            long expectedRemainingLifetimeInMilliseconds = TOKEN_VALIDITY_IN_SECONDS_FOR_PASSKEY * 1000 - tokenLifetimeAlreadyUsedUpInMilliseconds;
+            // if this is not the case, the test does not make sense - might happen if TOKEN_VALIDITY_IN_SECONDS_FOR_PASSKEY or TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS is adjusted
+            // -> adjust issuedAt and expiration accordingly in that case (no full-time for TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS left, last rotated token before passkey token
+            // lifetime
+            // is reached)
+            assertThat(expectedRemainingLifetimeInMilliseconds).isLessThan(TOKEN_VALIDITY_IN_SECONDS_FOR_PASSKEY * 1000);
+            assertThat(expectedRemainingLifetimeInMilliseconds).isLessThan(TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 1000);
 
-        MockHttpServletResponse response = performRequest(jwt, false);
+            String jwt = tokenProvider.createToken(authentication, issuedAt, expiration, null, true);
+            assertThat(tokenProvider.getAuthenticatedWithPasskey(jwt)).isTrue();
 
-        String setCookieHeader = response.getHeader(HttpHeaders.SET_COOKIE);
-        assertThat(setCookieHeader).isNotNull();
-        ResponseCookie updatedCookie = CookieParser.parseSetCookieHeader(setCookieHeader);
+            MockHttpServletResponse response = performRequest(jwt, false);
 
-        validateUpdatedCookie(updatedCookie, jwt, tokenProvider.getAuthentication(jwt), issuedAt, expectedRemainingLifetimeInMilliseconds / 1000);
-        assertThat(updatedCookie.getMaxAge().getSeconds()).isLessThan(TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS);
-        assertThat(updatedCookie.getMaxAge().getSeconds()).isLessThan(TOKEN_VALIDITY_IN_SECONDS_FOR_PASSKEY);
+            String setCookieHeader = response.getHeader(HttpHeaders.SET_COOKIE);
+            assertThat(setCookieHeader).isNotNull();
+            ResponseCookie updatedCookie = CookieParser.parseSetCookieHeader(setCookieHeader);
 
-        String updatedJwt = updatedCookie.getValue();
-        // IMPORTANT! The expiration date of the rotated token must be in the future but must not exceed the maximum passkey token lifetime
-        assertThat(tokenProvider.getExpirationDate(updatedJwt)).isAfter(new Date(System.currentTimeMillis() + (long) (expectedRemainingLifetimeInMilliseconds * 0.9)));
-        assertThat(tokenProvider.getExpirationDate(updatedJwt)).isBefore(new Date(System.currentTimeMillis() + expectedRemainingLifetimeInMilliseconds));
-    }
+            validateUpdatedCookie(updatedCookie, jwt, tokenProvider.getAuthentication(jwt), issuedAt, expectedRemainingLifetimeInMilliseconds / 1000);
+            assertThat(updatedCookie.getMaxAge().getSeconds()).isLessThan(TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS);
+            assertThat(updatedCookie.getMaxAge().getSeconds()).isLessThan(TOKEN_VALIDITY_IN_SECONDS_FOR_PASSKEY);
 
-    @Test
-    void testRotateTokenSilently_shouldNotRotateAnExpiredToken() throws Exception {
-        Authentication authentication = authenticationTestService.createWebAuthnAuthentication(USER_NAME);
+            String updatedJwt = updatedCookie.getValue();
+            // IMPORTANT! The expiration date of the rotated token must be in the future but must not exceed the maximum passkey token lifetime
+            assertThat(tokenProvider.getExpirationDate(updatedJwt)).isAfter(new Date(System.currentTimeMillis() + (long) (expectedRemainingLifetimeInMilliseconds * 0.9)));
+            assertThat(tokenProvider.getExpirationDate(updatedJwt)).isBefore(new Date(System.currentTimeMillis() + expectedRemainingLifetimeInMilliseconds));
+        }
 
-        long remainingValidityTimeOfTokenInMilliseconds = 1000;
-        Date issuedAt = new Date(System.currentTimeMillis() - (TOKEN_VALIDITY_IN_SECONDS_FOR_PASSKEY * 1000) + remainingValidityTimeOfTokenInMilliseconds);
-        Date expiration = new Date(issuedAt.getTime() + TOKEN_VALIDITY_IN_SECONDS_FOR_PASSKEY * 1000 + remainingValidityTimeOfTokenInMilliseconds);
+        @Test
+        void shouldNotRotateAnExpiredToken() throws Exception {
+            Authentication authentication = authenticationTestService.createWebAuthnAuthentication(USER_NAME);
 
-        String jwt = tokenProvider.createToken(authentication, issuedAt, expiration, null, true);
-        assertThat(tokenProvider.getAuthenticatedWithPasskey(jwt)).isTrue();
+            long remainingValidityTimeOfTokenInMilliseconds = 1000;
+            Date issuedAt = new Date(System.currentTimeMillis() - (TOKEN_VALIDITY_IN_SECONDS_FOR_PASSKEY * 1000) + remainingValidityTimeOfTokenInMilliseconds);
+            Date expiration = new Date(issuedAt.getTime() + TOKEN_VALIDITY_IN_SECONDS_FOR_PASSKEY * 1000 + remainingValidityTimeOfTokenInMilliseconds);
 
-        Thread.sleep(remainingValidityTimeOfTokenInMilliseconds + 1000);
+            String jwt = tokenProvider.createToken(authentication, issuedAt, expiration, null, true);
+            assertThat(tokenProvider.getAuthenticatedWithPasskey(jwt)).isTrue();
 
-        MockHttpServletResponse response = performRequest(jwt, false);
+            Thread.sleep(remainingValidityTimeOfTokenInMilliseconds + 1000);
 
-        String setCookieHeader = response.getHeader(HttpHeaders.SET_COOKIE);
-        assertThat(setCookieHeader).isNull();
-    }
+            MockHttpServletResponse response = performRequest(jwt, false);
 
-    @Test
-    void testRotateTokenSilently_shouldNotRotateToken_ifSuppliedByBearerToken() throws Exception {
-        Authentication authentication = authenticationTestService.createWebAuthnAuthentication(USER_NAME);
+            String setCookieHeader = response.getHeader(HttpHeaders.SET_COOKIE);
+            assertThat(setCookieHeader).isNull();
+        }
 
-        long moreThanHalfOfTokenValidityPassed = (long) (TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 0.6 * 1000);
-        Date issuedAt = new Date(System.currentTimeMillis() - moreThanHalfOfTokenValidityPassed);
-        Date expiration = new Date(issuedAt.getTime() + TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 1000);
+        @Test
+        void shouldNotRotateToken_ifSuppliedByBearerToken() throws Exception {
+            Authentication authentication = authenticationTestService.createWebAuthnAuthentication(USER_NAME);
 
-        String jwt = tokenProvider.createToken(authentication, issuedAt, expiration, null, true);
-        assertThat(tokenProvider.getAuthenticatedWithPasskey(jwt)).isTrue();
+            long moreThanHalfOfTokenValidityPassed = (long) (TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 0.6 * 1000);
+            Date issuedAt = new Date(System.currentTimeMillis() - moreThanHalfOfTokenValidityPassed);
+            Date expiration = new Date(issuedAt.getTime() + TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 1000);
 
-        MockHttpServletResponse response = performRequest(jwt, true);
+            String jwt = tokenProvider.createToken(authentication, issuedAt, expiration, null, true);
+            assertThat(tokenProvider.getAuthenticatedWithPasskey(jwt)).isTrue();
 
-        String setCookieHeader = response.getHeader(HttpHeaders.SET_COOKIE);
-        assertThat(setCookieHeader).isNull();
-    }
+            MockHttpServletResponse response = performRequest(jwt, true);
 
-    /**
-     * Ensure that the check cannot be bypassed by also passing the bearer token as Cookie; we do not want to rotate bearer tokens
-     */
-    @Test
-    void testRotateTokenSilently_shouldNotRotateToken_ifSuppliedByBearerTokenAndCookie() throws Exception {
-        Authentication authentication = authenticationTestService.createWebAuthnAuthentication(USER_NAME);
+            String setCookieHeader = response.getHeader(HttpHeaders.SET_COOKIE);
+            assertThat(setCookieHeader).isNull();
+        }
 
-        long moreThanHalfOfTokenValidityPassed = (long) (TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 0.6 * 1000);
-        Date issuedAt = new Date(System.currentTimeMillis() - moreThanHalfOfTokenValidityPassed);
-        Date expiration = new Date(issuedAt.getTime() + TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 1000);
+        /**
+         * Ensure that the check cannot be bypassed by also passing the bearer token as Cookie; we do not want to rotate bearer tokens
+         */
+        @Test
+        void shouldNotRotateToken_ifSuppliedByBearerTokenAndCookie() throws Exception {
+            Authentication authentication = authenticationTestService.createWebAuthnAuthentication(USER_NAME);
 
-        String jwt = tokenProvider.createToken(authentication, issuedAt, expiration, null, true);
-        assertThat(tokenProvider.getAuthenticatedWithPasskey(jwt)).isTrue();
+            long moreThanHalfOfTokenValidityPassed = (long) (TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 0.6 * 1000);
+            Date issuedAt = new Date(System.currentTimeMillis() - moreThanHalfOfTokenValidityPassed);
+            Date expiration = new Date(issuedAt.getTime() + TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 1000);
 
-        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        HttpHeaders headers = new HttpHeaders();
-        headers.add(HttpHeaders.AUTHORIZATION, "Bearer " + jwt);
+            String jwt = tokenProvider.createToken(authentication, issuedAt, expiration, null, true);
+            assertThat(tokenProvider.getAuthenticatedWithPasskey(jwt)).isTrue();
 
-        MvcResult res = mvc.perform(MockMvcRequestBuilders.get(new URI(ENDPOINT_TO_TEST)).params(params).headers(headers).cookie(new Cookie(JWTFilter.JWT_COOKIE_NAME, jwt)))
-                .andExpect(status().is(HttpStatus.BAD_REQUEST.value())).andReturn();
+            LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+            HttpHeaders headers = new HttpHeaders();
+            headers.add(HttpHeaders.AUTHORIZATION, "Bearer " + jwt);
 
-        MockHttpServletResponse response = res.getResponse();
-        assertThat(response).isNotNull();
-        String setCookieHeader = response.getHeader(HttpHeaders.SET_COOKIE);
-        assertThat(setCookieHeader).isNull();
-    }
+            MvcResult res = mvc.perform(MockMvcRequestBuilders.get(new URI(ENDPOINT_TO_TEST)).params(params).headers(headers).cookie(new Cookie(JWTFilter.JWT_COOKIE_NAME, jwt)))
+                    .andExpect(status().is(HttpStatus.BAD_REQUEST.value())).andReturn();
 
-    /**
-     * We DO NOT want to rotate a passkey-created token silently if it has used LESS THAN 50% of its lifetime
-     */
-    @Test
-    void testRotateTokenSilently_shouldNotRotateToken_ifLessThanHalfOfLifetimeUsed() throws Exception {
-        Authentication authentication = authenticationTestService.createWebAuthnAuthentication(USER_NAME);
+            MockHttpServletResponse response = res.getResponse();
+            assertThat(response).isNotNull();
+            String setCookieHeader = response.getHeader(HttpHeaders.SET_COOKIE);
+            assertThat(setCookieHeader).isNull();
+        }
 
-        long lessThanHalfOfTokenValidityPassed = (long) (TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 0.4 * 1000);
-        Date issuedAt = new Date(System.currentTimeMillis() - lessThanHalfOfTokenValidityPassed);
-        Date expiration = new Date(issuedAt.getTime() + TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 1000);
+        /**
+         * We DO NOT want to rotate a passkey-created token silently if it has used LESS THAN 50% of its lifetime
+         */
+        @Test
+        void shouldNotRotateToken_ifLessThanHalfOfLifetimeUsed() throws Exception {
+            Authentication authentication = authenticationTestService.createWebAuthnAuthentication(USER_NAME);
 
-        String jwt = tokenProvider.createToken(authentication, issuedAt, expiration, null, true);
-        assertThat(tokenProvider.getAuthenticatedWithPasskey(jwt)).isTrue();
+            long lessThanHalfOfTokenValidityPassed = (long) (TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 0.4 * 1000);
+            Date issuedAt = new Date(System.currentTimeMillis() - lessThanHalfOfTokenValidityPassed);
+            Date expiration = new Date(issuedAt.getTime() + TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 1000);
 
-        MockHttpServletResponse response = performRequest(jwt, false);
+            String jwt = tokenProvider.createToken(authentication, issuedAt, expiration, null, true);
+            assertThat(tokenProvider.getAuthenticatedWithPasskey(jwt)).isTrue();
 
-        String setCookieHeader = response.getHeader(HttpHeaders.SET_COOKIE);
-        assertThat(setCookieHeader).isNull();
-    }
+            MockHttpServletResponse response = performRequest(jwt, false);
 
-    @Test
-    void testRotateTokenSilently_shouldNotRotateToken_ifTokenWasNotCreatedFromPasskey() throws Exception {
-        Authentication authentication = this.authenticationTestService.createUsernamePasswordAuthentication(USER_NAME);
+            String setCookieHeader = response.getHeader(HttpHeaders.SET_COOKIE);
+            assertThat(setCookieHeader).isNull();
+        }
 
-        long lessThanHalfOfTokenValidityPassed = (long) (TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 0.4 * 1000);
-        Date issuedAt = new Date(System.currentTimeMillis() - lessThanHalfOfTokenValidityPassed);
-        Date expiration = new Date(issuedAt.getTime() + TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 1000);
+        @Test
+        void shouldNotRotateToken_ifTokenWasNotCreatedFromPasskey() throws Exception {
+            Authentication authentication = authenticationTestService.createUsernamePasswordAuthentication(USER_NAME);
 
-        String jwt = tokenProvider.createToken(authentication, issuedAt, expiration, null, null);
-        assertThat(tokenProvider.getAuthenticatedWithPasskey(jwt)).isFalse();
+            long lessThanHalfOfTokenValidityPassed = (long) (TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 0.4 * 1000);
+            Date issuedAt = new Date(System.currentTimeMillis() - lessThanHalfOfTokenValidityPassed);
+            Date expiration = new Date(issuedAt.getTime() + TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 1000);
 
-        MockHttpServletResponse response = performRequest(jwt, false);
+            String jwt = tokenProvider.createToken(authentication, issuedAt, expiration, null, null);
+            assertThat(tokenProvider.getAuthenticatedWithPasskey(jwt)).isFalse();
 
-        String setCookieHeader = response.getHeader(HttpHeaders.SET_COOKIE);
-        assertThat(setCookieHeader).isNull();
+            MockHttpServletResponse response = performRequest(jwt, false);
+
+            String setCookieHeader = response.getHeader(HttpHeaders.SET_COOKIE);
+            assertThat(setCookieHeader).isNull();
+        }
     }
 
     private MockHttpServletResponse performRequest(String jwt, boolean useBearerToken) throws Exception {
