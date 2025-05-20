@@ -173,6 +173,13 @@ describe('TutorSuggestionComponent', () => {
             tick();
             expect(component['irisEnabled']).toBeTrue();
         }));
+
+        it('should set irisEnabled to false if feature toggle is disabled', fakeAsync(() => {
+            jest.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(false));
+            fixture.detectChanges();
+            tick();
+            expect(component['irisEnabled']).toBeFalse();
+        }));
     });
 
     it('should call requestSuggestion when sessionId emits in ngOnChanges', fakeAsync(() => {
@@ -188,6 +195,15 @@ describe('TutorSuggestionComponent', () => {
         component.ngOnChanges();
         tick();
         expect(requestTutorSuggestionSpy).toHaveBeenCalled();
+    }));
+
+    it('should not call requestSuggestion if iris is active but no sessionId', fakeAsync(() => {
+        (chatService as any).sessionId$ = of(undefined);
+        jest.spyOn(irisStatusService, 'getActiveStatus').mockReturnValue(of(true));
+        const requestSuggestionSpy = jest.spyOn(component as any, 'requestSuggestion');
+        (component as any).subscribeToIrisActivation();
+        tick();
+        expect(requestSuggestionSpy).not.toHaveBeenCalled();
     }));
 
     it('should unsubscribe from all services on destroy', () => {
