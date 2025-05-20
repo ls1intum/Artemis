@@ -10,7 +10,7 @@ public final class DockerUtil {
     }
 
     public static boolean isDockerConnectionRefused(Throwable ex) {
-        var cause = ex.getCause();
+        Throwable cause = ex.getCause();
         return cause instanceof ConnectException && cause.getMessage().contains("Connection refused");
     }
 
