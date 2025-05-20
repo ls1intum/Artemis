@@ -20,6 +20,7 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.core.Authentication;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.LinkedMultiValueMap;
 
@@ -101,7 +102,7 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
         String jwt = tokenProvider.createToken(authentication, issuedAt, expiration, null, true);
         assertThat(tokenProvider.getAuthenticatedWithPasskey(jwt)).isTrue();
 
-        MockHttpServletResponse response = performRequestWithCookie(jwt);
+        MockHttpServletResponse response = performRequest(jwt, false);
 
         String setCookieHeader = response.getHeader(HttpHeaders.SET_COOKIE);
         assertThat(setCookieHeader).isNotNull();
@@ -136,7 +137,7 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
         String jwt = tokenProvider.createToken(authentication, issuedAt, expiration, null, true);
         assertThat(tokenProvider.getAuthenticatedWithPasskey(jwt)).isTrue();
 
-        MockHttpServletResponse response = performRequestWithCookie(jwt);
+        MockHttpServletResponse response = performRequest(jwt, false);
 
         String setCookieHeader = response.getHeader(HttpHeaders.SET_COOKIE);
         assertThat(setCookieHeader).isNotNull();
@@ -165,7 +166,7 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
 
         Thread.sleep(remainingValidityTimeOfTokenInMilliseconds + 1000);
 
-        MockHttpServletResponse response = performRequestWithCookie(jwt);
+        MockHttpServletResponse response = performRequest(jwt, false);
 
         String setCookieHeader = response.getHeader(HttpHeaders.SET_COOKIE);
         assertThat(setCookieHeader).isNull();
@@ -182,15 +183,8 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
         String jwt = tokenProvider.createToken(authentication, issuedAt, expiration, null, true);
         assertThat(tokenProvider.getAuthenticatedWithPasskey(jwt)).isTrue();
 
-        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        HttpHeaders headers = new HttpHeaders();
-        headers.add(HttpHeaders.AUTHORIZATION, "Bearer " + jwt);
+        MockHttpServletResponse response = performRequest(jwt, true);
 
-        MvcResult res = mvc.perform(MockMvcRequestBuilders.get(new URI(ENDPOINT_TO_TEST)).params(params).headers(headers)).andExpect(status().is(HttpStatus.OK.value()))
-                .andReturn();
-
-        MockHttpServletResponse response = res.getResponse();
-        assertThat(response).isNotNull();
         String setCookieHeader = response.getHeader(HttpHeaders.SET_COOKIE);
         assertThat(setCookieHeader).isNull();
     }
@@ -236,7 +230,7 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
         String jwt = tokenProvider.createToken(authentication, issuedAt, expiration, null, true);
         assertThat(tokenProvider.getAuthenticatedWithPasskey(jwt)).isTrue();
 
-        MockHttpServletResponse response = performRequestWithCookie(jwt);
+        MockHttpServletResponse response = performRequest(jwt, false);
 
         String setCookieHeader = response.getHeader(HttpHeaders.SET_COOKIE);
         assertThat(setCookieHeader).isNull();
@@ -253,17 +247,23 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
         String jwt = tokenProvider.createToken(authentication, issuedAt, expiration, null, null);
         assertThat(tokenProvider.getAuthenticatedWithPasskey(jwt)).isFalse();
 
-        MockHttpServletResponse response = performRequestWithCookie(jwt);
+        MockHttpServletResponse response = performRequest(jwt, false);
 
         String setCookieHeader = response.getHeader(HttpHeaders.SET_COOKIE);
         assertThat(setCookieHeader).isNull();
     }
 
-    private MockHttpServletResponse performRequestWithCookie(String jwt) throws Exception {
-        MvcResult res = mvc.perform(MockMvcRequestBuilders.get(new URI(ENDPOINT_TO_TEST)).cookie(new Cookie(JWTFilter.JWT_COOKIE_NAME, jwt))).andReturn();
+    private MockHttpServletResponse performRequest(String jwt, boolean useBearerToken) throws Exception {
+        MockHttpServletRequestBuilder requestBuilder = MockMvcRequestBuilders.get(new URI(ENDPOINT_TO_TEST));
+        if (useBearerToken) {
+            requestBuilder.header(HttpHeaders.AUTHORIZATION, "Bearer " + jwt);
+        }
+        else {
+            requestBuilder.cookie(new Cookie(JWTFilter.JWT_COOKIE_NAME, jwt));
+        }
+        MvcResult res = mvc.perform(requestBuilder).andReturn();
         MockHttpServletResponse response = res.getResponse();
         assertThat(response).isNotNull();
-
         return response;
     }
 
