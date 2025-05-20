@@ -216,7 +216,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                         attributes.put(IP_ADDRESS, servletRequest.getRemoteAddress());
 
                         JwtWithSource jwtWithSource = JWTFilter.extractValidJwt(servletRequest.getServletRequest(), tokenProvider);
-                        return jwtWithSource != null && jwtWithSource.jwt() != null;
+                        return jwtWithSource != null;
                     }
                     catch (IllegalArgumentException e) {
                         response.setStatusCode(HttpStatusCode.valueOf(400));
