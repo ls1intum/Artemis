@@ -14,11 +14,13 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 
 describe('IrisGlobalSettingsUpdateComponent Component', () => {
     let comp: IrisGlobalSettingsUpdateComponent;
     let fixture: ComponentFixture<IrisGlobalSettingsUpdateComponent>;
     let irisSettingsService: IrisSettingsService;
+    let featureToggleService: FeatureToggleService;
     let getSettingsSpy: jest.SpyInstance;
 
     beforeEach(() => {
@@ -26,6 +28,7 @@ describe('IrisGlobalSettingsUpdateComponent Component', () => {
             declarations: [IrisGlobalSettingsUpdateComponent, IrisSettingsUpdateComponent, MockComponent(IrisCommonSubSettingsUpdateComponent), MockComponent(ButtonComponent)],
             providers: [
                 MockProvider(IrisSettingsService),
+                MockProvider(FeatureToggleService),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
             ],
@@ -33,6 +36,8 @@ describe('IrisGlobalSettingsUpdateComponent Component', () => {
             .compileComponents()
             .then(() => {
                 irisSettingsService = TestBed.inject(IrisSettingsService);
+                featureToggleService = TestBed.inject(FeatureToggleService);
+                jest.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
 
                 // Setup
                 const irisSettings = mockSettings();
