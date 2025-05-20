@@ -1,16 +1,23 @@
 package de.tum.cit.aet.artemis.calendar;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.YearMonth;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+
+import de.tum.cit.aet.artemis.calendar.dto.CalendarEventDTO;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
@@ -27,6 +34,21 @@ import de.tum.cit.aet.artemis.tutorialgroup.util.TutorialGroupUtilService;
 public abstract class AbstractCalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     static final String TEST_PREFIX = "calendarevent";
+
+    static final String STUDENT_LOGIN = TEST_PREFIX + "student1";
+
+    static final String TUTOR_LOGIN = TEST_PREFIX + "tutor1";
+
+    static final String NOT_STUDENT_LOGIN = TEST_PREFIX + "notstudent1";
+
+    static final String NOT_TUTOR_LOGIN = TEST_PREFIX + "nottutor1";
+
+    static final String URL_WITHOUT_QUERY_PARAMETERS = "/api/calendar/calendar-events";
+
+    static final String CURRENT_TIMEZONE = URLEncoder.encode(ZoneId.systemDefault().getId(), StandardCharsets.UTF_8);
+
+    static final TypeReference<Map<ZonedDateTime, List<CalendarEventDTO>>> GET_EVENTS_RETURN_TYPE = new TypeReference<Map<ZonedDateTime, List<CalendarEventDTO>>>() {
+    };
 
     Course course;
 
@@ -60,8 +82,8 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
     void createUsers() {
         userUtilService.addStudent("tumuser", TEST_PREFIX + "student");
         userUtilService.addTeachingAssistant("tutor", TEST_PREFIX + "tutor");
-        student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
+        student = userUtilService.getUserByLogin(STUDENT_LOGIN);
+        tutor = userUtilService.getUserByLogin(TUTOR_LOGIN);
     }
 
     @AfterEach
@@ -118,6 +140,10 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
             current = current.plusMonths(1);
         }
         return String.join(",", monthStrings);
+    }
+
+    String assembleURL(String monthKeys) {
+        return URL_WITHOUT_QUERY_PARAMETERS + "?monthKeys=" + monthKeys + "&timeZone=" + CURRENT_TIMEZONE;
     }
 
     private void createNonActiveCourse() {

@@ -971,14 +971,13 @@ public class TutorialGroupService {
     }
 
     private boolean areMonthAndSessionOverlapping(YearMonth month, TutorialGroupSession tutorialGroupSession, ZoneId clientZone) {
-        // TODO: check whether sessionStart and sessionEnd can be null (currently it is assumed not)
         ZonedDateTime sessionStart = tutorialGroupSession.getStart();
         ZonedDateTime sessionEnd = tutorialGroupSession.getEnd();
         ZonedDateTime monthStart = ZonedDateTime.of(month.atDay(1), LocalTime.MIDNIGHT, clientZone).withZoneSameInstant(ZoneOffset.UTC);
         ZonedDateTime monthEnd = ZonedDateTime.of(month.atEndOfMonth(), LocalTime.of(23, 59, 59, 999_000_000), clientZone).withZoneSameInstant(ZoneOffset.UTC);
 
-        var sessionStartFallsIntoMonth = firstIsBeforeOrEqualSecond(monthStart, sessionStart) && firstIsBeforeOrEqualSecond(sessionStart, monthEnd);
-        var sessionEndFallsIntoMonth = firstIsBeforeOrEqualSecond(monthStart, sessionEnd) && firstIsBeforeOrEqualSecond(sessionEnd, monthEnd);
+        boolean sessionStartFallsIntoMonth = firstIsBeforeOrEqualSecond(monthStart, sessionStart) && firstIsBeforeOrEqualSecond(sessionStart, monthEnd);
+        boolean sessionEndFallsIntoMonth = firstIsBeforeOrEqualSecond(monthStart, sessionEnd) && firstIsBeforeOrEqualSecond(sessionEnd, monthEnd);
         return sessionStartFallsIntoMonth || sessionEndFallsIntoMonth;
     }
 
