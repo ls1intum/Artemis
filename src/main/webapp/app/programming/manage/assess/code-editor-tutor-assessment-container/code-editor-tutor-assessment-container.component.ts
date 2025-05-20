@@ -604,7 +604,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     private handleSaveOrSubmitSuccessWithAlert(response: HttpResponse<Result>, translationKey: string): void {
-        this.participation.submissions!.last()!.results![0] = this.manualResult = response.body!;
+        this.submission!.results![0] = this.manualResult = response.body!;
         this.alertService.closeAll();
         this.alertService.success(translationKey);
         this.saveBusy = this.submitBusy = false;
