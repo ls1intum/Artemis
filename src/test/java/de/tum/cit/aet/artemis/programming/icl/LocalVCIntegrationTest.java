@@ -31,6 +31,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 
@@ -332,6 +333,7 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     }
 
     void customBranchTestHelper(boolean allowBranching, String regex, boolean shouldSucceed) throws Exception {
+        programmingExercise.setBuildConfig(new ProgrammingExerciseBuildConfig());
         programmingExercise.getBuildConfig().setAllowBranching(allowBranching);
         programmingExercise.getBuildConfig().setBranchRegex(regex);
         programmingExerciseRepository.save(programmingExercise);
