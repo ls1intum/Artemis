@@ -6,6 +6,7 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import jakarta.ws.rs.BadRequestException;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.calendar.dto.CalendarEventDTO;
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupApi;
@@ -52,10 +54,10 @@ public class CalendarResource {
     @EnforceAtLeastStudent
     public ResponseEntity<Map<ZonedDateTime, List<CalendarEventDTO>>> getCalendarEventsOfMonths(@RequestParam List<String> monthKeys, @RequestParam String timeZone) {
         log.debug("REST request to get calendar events falling into: {}", monthKeys);
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // get tutorialEventDTOs for requested months
-        var calendarEventDTOs = tutorialGroupApi.getTutorialEventsForUserFallingIntoMonthsOrElseThrough(user, monthKeys, timeZone);
+        Set<CalendarEventDTO> calendarEventDTOs = tutorialGroupApi.getTutorialEventsForUserFallingIntoMonthsOrElseThrough(user, monthKeys, timeZone);
 
         // group tutorialEventDTOs by day
         Map<ZonedDateTime, List<CalendarEventDTO>> eventDTOsByDay = calendarEventDTOs.stream().collect(Collectors.groupingBy(dto -> dto.start().truncatedTo(ChronoUnit.DAYS)));
