@@ -171,25 +171,14 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
         assertThat(setCookieHeader).isNotNull();
         ResponseCookie updatedCookie = CookieParser.parseSetCookieHeader(setCookieHeader);
 
-        assertThat(setCookieHeader).contains(JWTFilter.JWT_COOKIE_NAME);
-        assertThat(updatedCookie.getName()).isEqualTo(JWTFilter.JWT_COOKIE_NAME);
-        assertThat(updatedCookie.getPath()).isEqualTo("/"); // TODO does that make sense?
+        validateUpdatedCookie(updatedCookie, jwt, tokenProvider.getAuthentication(jwt), issuedAt, expectedRemainingLifetimeInMilliseconds / 1000);
         assertThat(updatedCookie.getMaxAge().getSeconds()).isLessThan(TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS);
         assertThat(updatedCookie.getMaxAge().getSeconds()).isLessThan(TOKEN_VALIDITY_IN_SECONDS_FOR_PASSKEY);
         // allow a 15-second deviation -> can be increased in case the runners are even slower (magnitue of seconds does not matter here)
-        assertThat(updatedCookie.getMaxAge().getSeconds()).isCloseTo(expectedRemainingLifetimeInMilliseconds / 1000, Offset.offset(15L));
-        assertThat(updatedCookie.isSecure()).isTrue();
-        assertThat(updatedCookie.isHttpOnly()).isTrue();
-        assertThat(updatedCookie.getSameSite()).isEqualTo("Lax");
+        // assertThat(updatedCookie.getMaxAge().getSeconds()).isCloseTo(, Offset.offset(15L));
 
         // values should not have changed except for the expiration date
         String updatedJwt = updatedCookie.getValue();
-        assertThat(updatedJwt).isNotEmpty();
-        assertThat(updatedJwt).isNotEqualTo(jwt);
-        assertThat(tokenProvider.getAuthentication(updatedJwt).getPrincipal()).isEqualTo(tokenProvider.getAuthentication(jwt).getPrincipal());
-        assertThat(tokenProvider.getAuthentication(updatedJwt).getAuthorities()).isEqualTo(authentication.getAuthorities());
-        assertThat(tokenProvider.getAuthenticatedWithPasskey(updatedJwt)).isTrue();
-        assertThat(tokenProvider.getIssuedAtDate(updatedJwt)).isCloseTo(issuedAt, 1000); // should not have changed, tolerance due to formatting
         // IMPORTANT! The expiration date of the rotated token must be in the future but must not exceed the maximum passkey token lifetime
         assertThat(tokenProvider.getExpirationDate(updatedJwt)).isAfter(new Date(System.currentTimeMillis() + (long) (expectedRemainingLifetimeInMilliseconds * 0.9)));
         assertThat(tokenProvider.getExpirationDate(updatedJwt)).isBefore(new Date(System.currentTimeMillis() + expectedRemainingLifetimeInMilliseconds));
@@ -341,7 +330,7 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
     private void validateUpdatedCookie(ResponseCookie updatedCookie, String originalJwt, Authentication authentication, Date issuedAt, long maxAgeInSeconds) {
         assertThat(updatedCookie.getName()).isEqualTo(JWTFilter.JWT_COOKIE_NAME);
         assertThat(updatedCookie.getPath()).isEqualTo("/");
-        assertThat(updatedCookie.getMaxAge().getSeconds()).isEqualTo(maxAgeInSeconds);
+        assertThat(updatedCookie.getMaxAge().getSeconds()).isCloseTo(maxAgeInSeconds, Offset.offset(15L)); // prevents that the test is flaky on slow runners
         assertThat(updatedCookie.isSecure()).isTrue();
         assertThat(updatedCookie.isHttpOnly()).isTrue();
         assertThat(updatedCookie.getSameSite()).isEqualTo("Lax");
