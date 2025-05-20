@@ -76,7 +76,8 @@ export class IrisEnabledComponent implements OnInit {
             !this.irisSettings.irisCompetencyGenerationSettings ||
             !this.irisSettings.irisLectureChatSettings ||
             !this.irisSettings.irisLectureIngestionSettings ||
-            !this.irisSettings.irisFaqIngestionSettings
+            !this.irisSettings.irisFaqIngestionSettings ||
+            !this.irisSettings.irisTutorSuggestionSettings
         ) {
             return;
         }
@@ -87,6 +88,7 @@ export class IrisEnabledComponent implements OnInit {
         this.irisSettings.irisLectureChatSettings.enabled = enabled;
         this.irisSettings.irisFaqIngestionSettings.enabled = enabled;
         this.irisSettings.irisLectureIngestionSettings.enabled = enabled;
+        this.irisSettings.irisTutorSuggestionSettings.enabled = enabled;
 
         this.irisSettingsService.setCourseSettings(this.course()!.id!, this.irisSettings!).subscribe((response) => {
             this.irisSettings = response.body ?? this.irisSettings;
@@ -126,6 +128,7 @@ export class IrisEnabledComponent implements OnInit {
             this.irisSettings?.irisLectureIngestionSettings,
             this.irisSettings?.irisFaqIngestionSettings,
             this.irisSettings?.irisLectureChatSettings,
+            this.irisSettings?.irisTutorSuggestionSettings,
         ];
 
         const allEnabled = subSettings.every((settings) => settings?.enabled);
