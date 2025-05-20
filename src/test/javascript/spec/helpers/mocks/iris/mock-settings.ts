@@ -7,6 +7,7 @@ import {
     IrisLectureChatSubSettings,
     IrisLectureIngestionSubSettings,
     IrisTextExerciseChatSubSettings,
+    IrisTutorSuggestionSubSettings,
 } from 'app/iris/shared/entities/settings/iris-sub-settings.model';
 import { IrisGlobalSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
 
@@ -33,6 +34,10 @@ export function mockSettings() {
     mockIrisLectureSettings.id = 42;
     mockIrisLectureSettings.enabled = true;
 
+    const mockIrisTutorSuggestionSettings = new IrisTutorSuggestionSubSettings();
+    mockIrisTutorSuggestionSettings.id = 99;
+    mockIrisTutorSuggestionSettings.enabled = true;
+
     const mockFaqIngestionSettings = new IrisFaqIngestionSubSettings();
     mockFaqIngestionSettings.id = 8;
     mockFaqIngestionSettings.enabled = true;
@@ -46,6 +51,7 @@ export function mockSettings() {
     irisSettings.irisCompetencyGenerationSettings = mockCompetencyGenerationSettings;
     irisSettings.irisLectureIngestionSettings = mockLectureIngestionSettings;
     irisSettings.irisLectureChatSettings = mockIrisLectureSettings;
+    irisSettings.irisTutorSuggestionSettings = mockIrisTutorSuggestionSettings;
     irisSettings.irisFaqIngestionSettings = mockFaqIngestionSettings;
     return irisSettings;
 }

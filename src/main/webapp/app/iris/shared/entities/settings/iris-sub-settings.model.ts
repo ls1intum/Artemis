@@ -8,7 +8,7 @@ export enum IrisSubSettingsType {
     LECTURE = 'lecture-chat',
     COMPETENCY_GENERATION = 'competency-generation',
     FAQ_INGESTION = 'faq-ingestion',
-    ALL = 'all',
+    TUTOR_SUGGESTION = 'tutor-suggestion',
 }
 
 export enum IrisEventType {
@@ -62,4 +62,8 @@ export class IrisFaqIngestionSubSettings extends IrisSubSettings {
 
 export class IrisCompetencyGenerationSubSettings extends IrisSubSettings {
     type = IrisSubSettingsType.COMPETENCY_GENERATION;
+}
+
+export class IrisTutorSuggestionSubSettings extends IrisSubSettings {
+    type = IrisSubSettingsType.TUTOR_SUGGESTION;
 }
