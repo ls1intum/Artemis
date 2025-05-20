@@ -276,7 +276,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         exerciseRepository.save(testExercise);
 
         // Arrange
-        ZonedDateTime hiddenDate = ZonedDateTime.now().plusDays(2);
+        ZonedDateTime hiddenDate = ZonedDateTime.now().plusDays(1);
         String hiddenPages = "[{\"slideId\":\"1\",\"date\":\"" + ZonedDateTime.now().plusDays(1) + "\",\"exerciseId" + "\":" + testExercise.getId() + "}]";
 
         String pageOrder = "[{\"slideId\":\"1\",\"order\":1}]";

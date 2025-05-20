@@ -82,5 +82,5 @@ public interface SlideRepository extends ArtemisJpaRepository<Slide, Long> {
             WHERE s.attachmentVideoUnit.id IN :attachmentVideoUnitIds
                 AND (s.hidden IS NULL OR s.hidden < CURRENT_TIMESTAMP())
             """)
-    Set<SlideDTO> findVisibleSlidesByAttachmentUnits(@Param("attachmentUnitIds") Set<Long> attachmentVideoUnitIds);
+    Set<SlideDTO> findVisibleSlidesByAttachmentVideoUnits(@Param("attachmentVideoUnitIds") Set<Long> attachmentVideoUnitIds);
 }

@@ -223,10 +223,10 @@ public class LectureResource {
                 .filter(lectureUnit -> lectureUnit instanceof AttachmentVideoUnit).map(DomainObject::getId).collect(Collectors.toSet());
 
         // Load slides separately to avoid too large data exchange
-        Set<SlideDTO> slides = slideRepository.findVisibleSlidesByAttachmentUnits(attachmentVideoUnitIds);
+        Set<SlideDTO> slides = slideRepository.findVisibleSlidesByAttachmentVideoUnits(attachmentVideoUnitIds);
 
         // Group slides by attachment unit id to combine them into the DTOs
-        Map<Long, List<SlideDTO>> slidesByAttachmentVideoUnitId = slides.stream().collect(Collectors.groupingBy(SlideDTO::attachmentUnitId));
+        Map<Long, List<SlideDTO>> slidesByAttachmentVideoUnitId = slides.stream().collect(Collectors.groupingBy(SlideDTO::attachmentVideoUnitId));
         // Convert visible lectures to DTOs (filtering active attachments) and add non hidden slides to the DTOs
         List<LectureDTO> lectureDTOs = lectures.stream().map(LectureDTO::from).sorted(Comparator.comparingLong(LectureDTO::id)).toList();
 
