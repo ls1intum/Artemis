@@ -34,8 +34,6 @@ import tech.jhipster.config.JHipsterProperties;
 
 class TokenProviderTest {
 
-    private static final String TEST_PREFIX = "tokenprovider";
-
     private static final long ONE_MINUTE = 60000;
 
     private static final long TEN_MINUTES = 600000;
