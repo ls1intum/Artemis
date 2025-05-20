@@ -34,7 +34,7 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
  * <strong>Integration test</strong> for the {@link JWTFilter}.
  * </p>
  */
-public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "jwtfilterintegrationtest";
 
