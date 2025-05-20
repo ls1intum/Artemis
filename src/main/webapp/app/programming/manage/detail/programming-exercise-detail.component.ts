@@ -41,9 +41,9 @@ import {
     faUsers,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
-import { ButtonSize } from 'app/shared/components/button/button.component';
+import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
 import { ProgrammingLanguageFeatureService } from 'app/programming/shared/services/programming-language-feature/programming-language-feature.service';
-import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { MODULE_FEATURE_PLAGIARISM, PROFILE_IRIS, PROFILE_LOCALCI } from 'app/app.constants';
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from 'app/shared/detail-overview-list/detail-overview-list.component';

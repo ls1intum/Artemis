@@ -34,7 +34,7 @@ public interface IrisMessageRepository extends ArtemisJpaRepository<IrisMessage,
             SELECT COUNT(DISTINCT m)
             FROM IrisMessage m
                 JOIN TREAT (m.session AS IrisChatSession) s
-            WHERE s.user.id = :userId
+            WHERE s.userId = :userId
                 AND m.sender = de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender.LLM
                 AND m.sentAt BETWEEN :start AND :end
             """)

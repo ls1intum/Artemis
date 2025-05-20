@@ -21,7 +21,7 @@ import { faClipboard, faDownload, faSort, faSpinner } from '@fortawesome/free-so
 import { CsvExportRowBuilder } from 'app/shared/export/row-builder/csv-export-row-builder';
 import { mean, median, standardDeviation } from 'simple-statistics';
 import { CsvExportOptions } from 'app/shared/export/modal/export-modal.component';
-import { ButtonSize } from 'app/shared/components/button/button.component';
+import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
 import * as XLSX from 'xlsx';
 import { MODULE_FEATURE_PLAGIARISM, VERSION } from 'app/app.constants';
 import { ExcelExportRowBuilder } from 'app/shared/export/row-builder/excel-export-row-builder';

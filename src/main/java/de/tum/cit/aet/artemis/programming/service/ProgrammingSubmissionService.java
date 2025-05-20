@@ -104,8 +104,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
     private final SubmissionPolicyRepository submissionPolicyRepository;
 
     public ProgrammingSubmissionService(ProgrammingSubmissionRepository programmingSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            SubmissionRepository submissionRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
-            ResultRepository resultRepository,
+            SubmissionRepository submissionRepository, UserRepository userRepository, AuthorizationCheckService authCheckService, ResultRepository resultRepository,
             Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, ParticipationService participationService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, Optional<ExamSubmissionApi> examSubmissionApi, GitService gitService,
             StudentParticipationRepository studentParticipationRepository, FeedbackRepository feedbackRepository, Optional<ExamDateApi> examDateApi,
