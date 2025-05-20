@@ -1,0 +1,28 @@
+@if (irisEnabled) {
+    <div class="iris-suggestion">
+        <div class="iris-headline">
+            <jhi-iris-logo [size]="IrisLogoSize.TEXT" />
+            <h5>Iris Suggestion:</h5>
+        </div>
+        <div class="iris-suggestion-field">
+            @if (suggestion) {
+                @for (content of suggestion?.content; track content.id) {
+                    <div>
+                        @for (line of (content | as: IrisTextMessageContent).textContent.split('\n'); track line) {
+                            <div [innerHTML]="line" class="iris-suggestion-text"></div>
+                        }
+                    </div>
+                }
+            } @else {
+                @if (error) {
+                    <div class="iris-suggestion-text">
+                        {{ error }}
+                    </div>
+                } @else {
+                    <div class="iris-suggestion-text">Loading suggestion...</div>
+                }
+            }
+            <jhi-chat-status-bar [stages]="stages" />
+        </div>
+    </div>
+}
