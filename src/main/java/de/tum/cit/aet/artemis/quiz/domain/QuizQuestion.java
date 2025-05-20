@@ -21,6 +21,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
@@ -221,6 +222,11 @@ public abstract class QuizQuestion extends DomainObject {
     public Boolean isValid() {
         // check title and score
         return getTitle() != null && !getTitle().isEmpty() && Double.compare(getPoints(), 0.0) > 0;
+    }
+
+    @JsonProperty("exerciseId")
+    public Long getExerciseId() {
+        return exercise != null ? exercise.getId() : null;
     }
 
     /**

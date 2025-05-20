@@ -3,21 +3,35 @@
         @if (currentQuestion.type === MULTIPLE_CHOICE) {
             <jhi-multiple-choice-question
                 [question]="currentQuestion"
-                [selectedAnswerOptions]="selectedAnswerOptions.get(currentQuestion.id!)! || []"
+                [selectedAnswerOptions]="selectedAnswerOptions.get(currentQuestion.id!)!"
+                (selectedAnswerOptionsChange)="selectedAnswerOptions.set(currentQuestion.id!, $event)"
                 [questionIndex]="currentIndex + 1"
+                [showResult]="showingResult"
+                [submittedResult]="result"
+                [score]="questionScores[currentQuestion.id!]"
             />
         }
         @if (currentQuestion.type === SHORT_ANSWER) {
             <jhi-short-answer-question
                 [question]="currentQuestion"
-                [submittedTexts]="shortAnswerSubmittedTexts.get(currentQuestion.id!)! || []"
+                [submittedTexts]="shortAnswerSubmittedTexts.get(currentQuestion.id!)!"
+                (submittedTextsChange)="shortAnswerSubmittedTexts.set(currentQuestion.id!, $event)"
                 [questionIndex]="currentIndex + 1"
+                [showResult]="showingResult"
+                [score]="questionScores[currentQuestion.id!]"
             />
         }
         @if (currentQuestion.type === DRAG_AND_DROP) {
-            <jhi-drag-and-drop-question [question]="currentQuestion" [mappings]="dragAndDropMappings.get(currentQuestion.id!)! || []" [questionIndex]="currentIndex + 1" />
+            <jhi-drag-and-drop-question
+                [question]="currentQuestion"
+                [mappings]="dragAndDropMappings.get(currentQuestion.id!)!"
+                (mappingsChange)="dragAndDropMappings.set(currentQuestion.id!, $event)"
+                [questionIndex]="currentIndex + 1"
+                [showResult]="showingResult"
+                [score]="questionScores[currentQuestion.id!]"
+            />
         }
-        <jhi-button class="ms-2" [title]="'artemisApp.exercise.submit'" />
+        <jhi-button class="ms-2" (onClick)="onSubmit()" [title]="'artemisApp.exercise.submit'" />
         <jhi-button class="ms-2" (onClick)="nextQuestion()" [title]="'artemisApp.exercise.nextQuestion'" />
     }
 </div>
