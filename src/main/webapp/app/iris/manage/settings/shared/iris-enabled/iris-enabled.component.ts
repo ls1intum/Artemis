@@ -70,45 +70,24 @@ export class IrisEnabledComponent implements OnInit {
         if (!this.irisSettings) {
             return;
         }
-        if (!this.irisSettings.irisChatSettings) {
-            this.irisSettings.irisChatSettings = { enabled, type: IrisSubSettingsType.CHAT };
-        } else {
-            this.irisSettings.irisChatSettings.enabled = enabled;
+        if (
+            !this.irisSettings.irisChatSettings ||
+            !this.irisSettings.irisTextExerciseChatSettings ||
+            !this.irisSettings.irisCourseChatSettings ||
+            !this.irisSettings.irisCompetencyGenerationSettings ||
+            !this.irisSettings.irisLectureChatSettings ||
+            !this.irisSettings.irisLectureIngestionSettings ||
+            !this.irisSettings.irisFaqIngestionSettings
+        ) {
+            return;
         }
-
-        if (!this.irisSettings.irisTextExerciseChatSettings) {
-            this.irisSettings.irisTextExerciseChatSettings = { type: IrisSubSettingsType.TEXT_EXERCISE_CHAT, enabled };
-        } else {
-            this.irisSettings.irisTextExerciseChatSettings.enabled = enabled;
-        }
-
-        if (!this.irisSettings.irisCourseChatSettings) {
-            this.irisSettings.irisCourseChatSettings = { type: IrisSubSettingsType.COURSE_CHAT, enabled };
-        } else {
-            this.irisSettings.irisCourseChatSettings.enabled = enabled;
-        }
-
-        if (!this.irisSettings.irisCompetencyGenerationSettings) {
-            this.irisSettings.irisCompetencyGenerationSettings = { type: IrisSubSettingsType.COMPETENCY_GENERATION, enabled };
-        } else {
-            this.irisSettings.irisCompetencyGenerationSettings.enabled = enabled;
-        }
-        if (!this.irisSettings.irisLectureChatSettings) {
-            this.irisSettings.irisLectureChatSettings = { type: IrisSubSettingsType.LECTURE, enabled };
-        } else {
-            this.irisSettings.irisLectureChatSettings.enabled = enabled;
-        }
-        if (!this.irisSettings.irisFaqIngestionSettings) {
-            this.irisSettings.irisFaqIngestionSettings = { type: IrisSubSettingsType.FAQ_INGESTION, enabled, autoIngestOnFaqCreation: false };
-        } else {
-            this.irisSettings.irisFaqIngestionSettings.enabled = enabled;
-        }
-
-        if (!this.irisSettings.irisLectureIngestionSettings) {
-            this.irisSettings.irisLectureIngestionSettings = { type: IrisSubSettingsType.LECTURE_INGESTION, enabled, autoIngestOnLectureAttachmentUpload: false };
-        } else {
-            this.irisSettings.irisLectureIngestionSettings.enabled = enabled;
-        }
+        this.irisSettings.irisChatSettings.enabled = enabled;
+        this.irisSettings.irisTextExerciseChatSettings.enabled = enabled;
+        this.irisSettings.irisCourseChatSettings.enabled = enabled;
+        this.irisSettings.irisCompetencyGenerationSettings.enabled = enabled;
+        this.irisSettings.irisLectureChatSettings.enabled = enabled;
+        this.irisSettings.irisFaqIngestionSettings.enabled = enabled;
+        this.irisSettings.irisLectureIngestionSettings.enabled = enabled;
 
         this.irisSettingsService.setCourseSettings(this.course()!.id!, this.irisSettings!).subscribe((response) => {
             this.irisSettings = response.body ?? this.irisSettings;
