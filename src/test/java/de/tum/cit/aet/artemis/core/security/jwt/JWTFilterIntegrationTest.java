@@ -30,18 +30,7 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
 
 /**
  * <p>
- * <strong>Integration test</strong> for the {@link JWTFilter} token rotation mechanism.
- * </p>
- *
- * <p>
- * <em>Note:</em> We assume that the following conditions hold:
- * </p>
- * <ul>
- * <li>{@link JWTFilterIntegrationTest#TOKEN_VALIDITY_IN_SECONDS} &lt; {@link JWTFilterIntegrationTest#TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS}</li>
- * <li>{@link JWTFilterIntegrationTest#TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS} &lt; {@link JWTFilterIntegrationTest#TOKEN_VALIDITY_IN_SECONDS_FOR_PASSKEY}</li>
- * </ul>
- * <p>
- * If this does not hold, some calculations might break.
+ * <strong>Integration test</strong> for the {@link JWTFilter}.
  * </p>
  */
 public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -78,16 +67,28 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
     }
 
-    @Test
-    void testConfigurationContainsReasonableValues() {
-        assertThat(TOKEN_VALIDITY_IN_SECONDS).isGreaterThan(60);
-        assertThat(TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS).isGreaterThan(TOKEN_VALIDITY_IN_SECONDS);
-        assertThat(TOKEN_VALIDITY_IN_SECONDS_FOR_PASSKEY).isGreaterThan(0);
-        assertThat(TOKEN_VALIDITY_IN_SECONDS_FOR_PASSKEY).isGreaterThan(TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS);
-    }
-
+    /**
+     * <p>
+     * <em>Note:</em> We assume that the following conditions hold:
+     * </p>
+     * <ul>
+     * <li>{@link JWTFilterIntegrationTest#TOKEN_VALIDITY_IN_SECONDS} &lt; {@link JWTFilterIntegrationTest#TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS}</li>
+     * <li>{@link JWTFilterIntegrationTest#TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS} &lt; {@link JWTFilterIntegrationTest#TOKEN_VALIDITY_IN_SECONDS_FOR_PASSKEY}</li>
+     * </ul>
+     * <p>
+     * If this does not hold, some calculations might break.
+     * </p>
+     */
     @Nested
     class TokenRotationTests {
+
+        @Test
+        void testConfigurationContainsReasonableValues() {
+            assertThat(TOKEN_VALIDITY_IN_SECONDS).isGreaterThan(60);
+            assertThat(TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS).isGreaterThan(TOKEN_VALIDITY_IN_SECONDS);
+            assertThat(TOKEN_VALIDITY_IN_SECONDS_FOR_PASSKEY).isGreaterThan(0);
+            assertThat(TOKEN_VALIDITY_IN_SECONDS_FOR_PASSKEY).isGreaterThan(TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS);
+        }
 
         @Nested
         class ShouldRotateTests {

@@ -20,7 +20,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.core.security.Role;
 
 /**
- * This service helps to generate authentication objects.
+ * This service helps to generate {@link org.springframework.security.core.Authentication} objects.
  */
 @Service
 @Profile(SPRING_PROFILE_TEST)
