@@ -85,7 +85,7 @@ export class CourseSidebarItemService {
             routerLink: 'practice',
             icon: faDumbbell,
             title: 'Practice',
-            translation: 'artemisApp.courseOverview.menu.practice',
+            translation: 'overview.practice',
             hidden: false,
         };
 
