@@ -28,6 +28,8 @@ class TokenProviderTest {
 
     private static final long TEN_MINUTES = 600000;
 
+    private static final String USER_NAME = "anonymous";
+
     private SecretKey key;
 
     private TokenProvider tokenProvider;
@@ -59,7 +61,7 @@ class TokenProviderTest {
 
     @Test
     void testReturnFalseWhenJWTisMalformed() {
-        Authentication authentication = this.authenticationTestService.createUsernamePasswordAuthentication("anonymous");
+        Authentication authentication = this.authenticationTestService.createUsernamePasswordAuthentication(USER_NAME);
         String token = tokenProvider.createToken(authentication, false);
         String invalidToken = token.substring(1);
         boolean isTokenValid = tokenProvider.validateTokenForAuthority(invalidToken, null);
@@ -71,7 +73,7 @@ class TokenProviderTest {
     void testReturnFalseWhenJWTisExpired() {
         ReflectionTestUtils.setField(tokenProvider, "tokenValidityInMilliseconds", -ONE_MINUTE);
 
-        Authentication authentication = this.authenticationTestService.createUsernamePasswordAuthentication("anonymous");
+        Authentication authentication = this.authenticationTestService.createUsernamePasswordAuthentication(USER_NAME);
         String token = tokenProvider.createToken(authentication, false);
 
         boolean isTokenValid = tokenProvider.validateTokenForAuthority(token, null);
@@ -141,7 +143,7 @@ class TokenProviderTest {
 
     @Test
     void testAuthenticatedWithPasskey_isFalseWhenAuthenticatedWithPassword() {
-        Authentication authentication = this.authenticationTestService.createUsernamePasswordAuthentication("anonymous");
+        Authentication authentication = this.authenticationTestService.createUsernamePasswordAuthentication(USER_NAME);
         String token = tokenProvider.createToken(authentication, false);
 
         boolean isAuthenticatedWithPasskey = tokenProvider.getAuthenticatedWithPasskey(token);
@@ -151,7 +153,7 @@ class TokenProviderTest {
 
     @Test
     void testAuthenticatedWithPasskey_isTrueWhenAuthenticatedWithPasskey() {
-        Authentication authentication = authenticationTestService.createWebAuthnAuthentication("anonymous user");
+        Authentication authentication = authenticationTestService.createWebAuthnAuthentication(USER_NAME);
         String token = tokenProvider.createToken(authentication, false);
 
         boolean isAuthenticatedWithPasskey = tokenProvider.getAuthenticatedWithPasskey(token);
@@ -196,6 +198,6 @@ class TokenProviderTest {
     private String createTokenWithDifferentSignature() {
         SecretKey otherKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode("Xfd54a45s65fds737b9aafcb3412e07ed99b267f33413274720ddbb7f6c5e64e9f14075f2d7ed041592f0b7657baf8"));
 
-        return Jwts.builder().subject("anonymous").signWith(otherKey, Jwts.SIG.HS512).expiration(new Date(new Date().getTime() + ONE_MINUTE)).compact();
+        return Jwts.builder().subject(USER_NAME).signWith(otherKey, Jwts.SIG.HS512).expiration(new Date(new Date().getTime() + ONE_MINUTE)).compact();
     }
 }
