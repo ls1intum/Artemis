@@ -32,6 +32,8 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { Router } from '@angular/router';
 import { ActivatedRoute } from '@angular/router';
 import { MockActivatedRouteWithSubjects } from 'test/helpers/mocks/activated-route/mock-activated-route-with-subjects';
+import { throwError } from 'rxjs';
+import * as globalUtils from 'app/shared/util/global.utils';
 
 const examples: ConversationDTO[] = [generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({} as ChannelDTO)];
 
@@ -212,6 +214,31 @@ examples.forEach((activeConversation) => {
             fixture.detectChanges();
             const link = fixture.nativeElement.querySelector('#notification-section a');
             expect(link).toBeTruthy();
+        });
+
+        it('should handle errors when toggling mute state', fakeAsync(() => {
+            updateIsMutedSpy.mockReturnValue(throwError(() => new Error('Test error')));
+            const onErrorSpy = jest.spyOn(globalUtils, 'onError');
+            component.onMuteToggle();
+            tick(100);
+            expect(onErrorSpy).toHaveBeenCalled();
+        }));
+
+        it('should show enabled notification message', () => {
+            component['notificationSettings'] = {
+                selectedPreset: 1,
+                notificationTypeChannels: {
+                    conversationMessage: { WEBAPP: true, EMAIL: false, PUSH: false },
+                    conversationMention: { WEBAPP: false, EMAIL: false, PUSH: false },
+                },
+            } as any;
+            activeConversation.isMuted = false;
+            component['checkNotificationStatus']();
+            fixture.detectChanges();
+
+            expect(component.isNotificationsEnabled).toBeTruthy();
+            const desc = fixture.nativeElement.querySelector('#notification-section .text-muted');
+            expect(desc).toBeTruthy();
         });
 
         function checkThatActionButtonOfSectionExistsInTemplate(sectionName: string) {
