@@ -7,7 +7,7 @@ import { SortDirective } from '../../../shared/sort/directive/sort.directive';
 import { SortByDirective } from '../../../shared/sort/directive/sort-by.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbHighlight, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
-import { ButtonComponent } from '../../../shared/components/button/button.component';
+import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { LecturePagingService } from 'app/lecture/manage/services/lecture-paging.service';
 
 const tableColumns: Column<Lecture>[] = [
