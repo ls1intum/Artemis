@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.core.security.DomainUserDetailsService;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.filter.SpaWebFilter;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTConfigurer;
+import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 import de.tum.cit.aet.artemis.core.security.passkey.ArtemisPasskeyWebAuthnConfigurer;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
@@ -56,6 +57,8 @@ public class SecurityConfiguration {
     private final Optional<CustomLti13Configurer> customLti13Configurer;
 
     private final ArtemisPasskeyWebAuthnConfigurer passkeyWebAuthnConfigurer;
+
+    private final JWTCookieService jwtCookieService;
 
     private final PasswordService passwordService;
 
@@ -87,13 +90,14 @@ public class SecurityConfiguration {
     }
 
     public SecurityConfiguration(CorsFilter corsFilter, Optional<CustomLti13Configurer> customLti13Configurer, ArtemisPasskeyWebAuthnConfigurer passkeyWebAuthnConfigurer,
-            PasswordService passwordService, ProfileService profileService, TokenProvider tokenProvider) {
+            PasswordService passwordService, ProfileService profileService, TokenProvider tokenProvider, JWTCookieService jwtCookieService) {
         this.corsFilter = corsFilter;
         this.customLti13Configurer = customLti13Configurer;
         this.passkeyWebAuthnConfigurer = passkeyWebAuthnConfigurer;
         this.passwordService = passwordService;
         this.profileService = profileService;
         this.tokenProvider = tokenProvider;
+        this.jwtCookieService = jwtCookieService;
     }
 
     /**
