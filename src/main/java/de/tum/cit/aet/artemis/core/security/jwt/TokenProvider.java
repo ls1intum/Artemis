@@ -244,6 +244,7 @@ public class TokenProvider {
      * True if the user authenticated with a passkey
      */
     public boolean getAuthenticatedWithPasskey(String authToken) {
-        return parseClaims(authToken).get(AUTHENTICATED_WITH_PASSKEY_KEY, Boolean.class);
+        Boolean passkeyClaim = parseClaims(authToken).get(AUTHENTICATED_WITH_PASSKEY_KEY, Boolean.class);
+        return Boolean.TRUE.equals(passkeyClaim);
     }
 }

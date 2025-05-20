@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.core.util;
 
+import java.time.Duration;
+
 import org.springframework.http.ResponseCookie;
 
 public class CookieParserTestUtil {
@@ -22,7 +24,7 @@ public class CookieParserTestUtil {
                     builder.path(val);
                     break;
                 case "max-age":
-                    builder.maxAge(Long.parseLong(val));
+                    builder.maxAge(Duration.ofSeconds(Long.parseLong(val)));
                     break;
                 case "expires":
                     // ResponseCookie does not directly support `Expires`, prefer Max-Age

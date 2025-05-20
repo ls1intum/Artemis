@@ -120,7 +120,7 @@ public class JWTFilter extends GenericFilterBean {
         if (jwtToken != null) {
             Authentication authentication = this.tokenProvider.getAuthentication(jwtToken);
 
-            if (source.equals("cookie") && this.tokenProvider.getAuthenticatedWithPasskey(jwtToken)) {
+            if (source.equals("cookie") && this.tokenProvider.getAuthenticatedWithPasskey(jwtToken) && authentication != null) {
                 rotateTokenSilently(jwtToken, authentication, httpServletResponse);
             }
 
