@@ -157,10 +157,21 @@ public class TutorialGroupService {
         else {
             sessions = tutorialGroupSessionRepository.findAllByTutorialGroupId(tutorialGroup.getId());
         }
-        sessions.stream().filter(s -> s.getEnd().isBefore(ZonedDateTime.now())).filter(s -> TutorialGroupSessionStatus.ACTIVE.equals(s.getStatus()))
-                .filter(s -> s.getAttendanceCount() != null).sorted(Comparator.comparing(TutorialGroupSession::getStart).reversed()).limit(3)
-                .mapToInt(TutorialGroupSession::getAttendanceCount).average()
-                .ifPresentOrElse(v -> tutorialGroup.setAverageAttendance((int) Math.round(v)), () -> tutorialGroup.setAverageAttendance(null));
+        //@formatter:off
+        sessions.stream()
+            .filter(tutorialGroupSession -> tutorialGroupSession.getEnd().isBefore(ZonedDateTime.now()))
+            .filter(tutorialGroupSession -> TutorialGroupSessionStatus.ACTIVE.equals(tutorialGroupSession.getStatus()))
+            .sorted(Comparator.comparing(TutorialGroupSession::getStart).reversed())
+            .limit(3)
+            .map(tutorialGroupSession -> Optional.ofNullable(tutorialGroupSession.getAttendanceCount()))
+            .flatMap(Optional::stream)
+            .mapToInt(attendance -> attendance)
+            .average()
+            .ifPresentOrElse(
+                value -> tutorialGroup.setAverageAttendance((int) Math.round(value)),
+                () -> tutorialGroup.setAverageAttendance(null)
+            );
+        //@formatter:on
     }
 
     /**
