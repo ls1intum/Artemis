@@ -130,7 +130,6 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
         ResponseCookie updatedCookie = CookieParser.parseSetCookieHeader(setCookieHeader);
 
         validateUpdatedCookie(updatedCookie, jwt, tokenProvider.getAuthentication(jwt), issuedAt, TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS);
-        // values should not have changed except for the expiration date
         String updatedJwt = updatedCookie.getValue();
         // IMPORTANT! The expiration date of the rotated token must be in the future, but not too far in the future
         assertThat(tokenProvider.getExpirationDate(updatedJwt)).isAfter(new Date(System.currentTimeMillis() + (long) (0.9 * TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 1000)));
@@ -309,6 +308,9 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
         return response;
     }
 
+    /**
+     * Except for the maxAge and expiration (the expiration is not checked within this helper method), the updated cookie should be identical to the original one
+     */
     private void validateUpdatedCookie(ResponseCookie updatedCookie, String originalJwt, Authentication expectedAuthentication, Date expectedIssuedAt,
             long expectedMaxAgeInSeconds) {
         assertThat(updatedCookie.getName()).isEqualTo(JWTFilter.JWT_COOKIE_NAME);
