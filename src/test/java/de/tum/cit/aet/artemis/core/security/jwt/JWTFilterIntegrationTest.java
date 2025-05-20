@@ -123,10 +123,8 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
         String jwt = tokenProvider.createToken(authentication, issuedAt, expiration, null, true);
         assertThat(tokenProvider.getAuthenticatedWithPasskey(jwt)).isTrue();
 
-        MvcResult res = performRequestWithCookie(jwt);
+        MockHttpServletResponse response = performRequestWithCookie(jwt);
 
-        MockHttpServletResponse response = res.getResponse();
-        assertThat(response).isNotNull();
         String setCookieHeader = response.getHeader(HttpHeaders.SET_COOKIE);
         assertThat(setCookieHeader).isNotNull();
         ResponseCookie updatedCookie = CookieParser.parseSetCookieHeader(setCookieHeader);
@@ -161,10 +159,8 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
         String jwt = tokenProvider.createToken(authentication, issuedAt, expiration, null, true);
         assertThat(tokenProvider.getAuthenticatedWithPasskey(jwt)).isTrue();
 
-        MvcResult res = performRequestWithCookie(jwt);
+        MockHttpServletResponse response = performRequestWithCookie(jwt);
 
-        MockHttpServletResponse response = res.getResponse();
-        assertThat(response).isNotNull();
         String setCookieHeader = response.getHeader(HttpHeaders.SET_COOKIE);
         assertThat(setCookieHeader).isNotNull();
         ResponseCookie updatedCookie = CookieParser.parseSetCookieHeader(setCookieHeader);
@@ -172,7 +168,7 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
         validateUpdatedCookie(updatedCookie, jwt, tokenProvider.getAuthentication(jwt), issuedAt, expectedRemainingLifetimeInMilliseconds / 1000);
         assertThat(updatedCookie.getMaxAge().getSeconds()).isLessThan(TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS);
         assertThat(updatedCookie.getMaxAge().getSeconds()).isLessThan(TOKEN_VALIDITY_IN_SECONDS_FOR_PASSKEY);
-        // allow a 15-second deviation -> can be increased in case the runners are even slower (magnitue of seconds does not matter here)
+        // allow a 15-second deviation -> can be increased in case the runners are even slower (the magnitude of seconds does not matter here)
         // assertThat(updatedCookie.getMaxAge().getSeconds()).isCloseTo(, Offset.offset(15L));
 
         // values should not have changed except for the expiration date
@@ -195,10 +191,8 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
 
         Thread.sleep(remainingValidityTimeOfTokenInMilliseconds + 1000);
 
-        MvcResult res = performRequestWithCookie(jwt);
+        MockHttpServletResponse response = performRequestWithCookie(jwt);
 
-        MockHttpServletResponse response = res.getResponse();
-        assertThat(response).isNotNull();
         String setCookieHeader = response.getHeader(HttpHeaders.SET_COOKIE);
         assertThat(setCookieHeader).isNull();
     }
@@ -268,10 +262,8 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
         String jwt = tokenProvider.createToken(authentication, issuedAt, expiration, null, true);
         assertThat(tokenProvider.getAuthenticatedWithPasskey(jwt)).isTrue();
 
-        MvcResult res = performRequestWithCookie(jwt);
+        MockHttpServletResponse response = performRequestWithCookie(jwt);
 
-        MockHttpServletResponse response = res.getResponse();
-        assertThat(response).isNotNull();
         String setCookieHeader = response.getHeader(HttpHeaders.SET_COOKIE);
         assertThat(setCookieHeader).isNull();
     }
@@ -288,10 +280,8 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
         String jwt = tokenProvider.createToken(authentication, issuedAt, expiration, null, null);
         assertThat(tokenProvider.getAuthenticatedWithPasskey(jwt)).isFalse();
 
-        MvcResult res = performRequestWithCookie(jwt);
+        MockHttpServletResponse response = performRequestWithCookie(jwt);
 
-        MockHttpServletResponse response = res.getResponse();
-        assertThat(response).isNotNull();
         String setCookieHeader = response.getHeader(HttpHeaders.SET_COOKIE);
         assertThat(setCookieHeader).isNull();
     }
@@ -314,8 +304,12 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
         return new WebAuthnAuthentication(principal, authorities);
     }
 
-    private MvcResult performRequestWithCookie(String jwt) throws Exception {
-        return mvc.perform(MockMvcRequestBuilders.get(new URI(ENDPOINT_TO_TEST)).cookie(new Cookie(JWTFilter.JWT_COOKIE_NAME, jwt))).andReturn();
+    private MockHttpServletResponse performRequestWithCookie(String jwt) throws Exception {
+        MvcResult res = mvc.perform(MockMvcRequestBuilders.get(new URI(ENDPOINT_TO_TEST)).cookie(new Cookie(JWTFilter.JWT_COOKIE_NAME, jwt))).andReturn();
+        MockHttpServletResponse response = res.getResponse();
+        assertThat(response).isNotNull();
+
+        return response;
     }
 
     private void validateUpdatedCookie(ResponseCookie updatedCookie, String originalJwt, Authentication authentication, Date issuedAt, long maxAgeInSeconds) {
