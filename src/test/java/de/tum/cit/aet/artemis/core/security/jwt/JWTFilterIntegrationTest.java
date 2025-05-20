@@ -25,7 +25,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.LinkedMultiValueMap;
 
-import de.tum.cit.aet.artemis.core.authentication.AuthenticationTestService;
+import de.tum.cit.aet.artemis.core.authentication.AuthenticationFactory;
 import de.tum.cit.aet.artemis.core.util.CookieParserTestUtil;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -59,9 +59,6 @@ class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndependentTest 
 
     @Autowired
     private TokenProvider tokenProvider;
-
-    @Autowired
-    private AuthenticationTestService authenticationTestService;
 
     @BeforeEach
     void setup() {
@@ -102,7 +99,7 @@ class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndependentTest 
              */
             @Test
             void testMoreThanHalfOfLifetimeUsed() throws Exception {
-                Authentication authentication = authenticationTestService.createWebAuthnAuthentication(USER_NAME);
+                Authentication authentication = AuthenticationFactory.createWebAuthnAuthentication(USER_NAME);
 
                 long moreThanHalfOfTokenValidityPassed = (long) (TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 0.6 * 1000);
                 Date issuedAt = new Date(System.currentTimeMillis() - moreThanHalfOfTokenValidityPassed);
@@ -129,7 +126,7 @@ class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndependentTest 
              */
             @Test
             void testConsidersMaxPasskeyTokenLifetime() throws Exception {
-                Authentication authentication = authenticationTestService.createWebAuthnAuthentication(USER_NAME);
+                Authentication authentication = AuthenticationFactory.createWebAuthnAuthentication(USER_NAME);
 
                 long nowInMilliseconds = System.currentTimeMillis();
                 Date issuedAt = new Date(nowInMilliseconds - (long) (TOKEN_VALIDITY_IN_SECONDS_FOR_PASSKEY * 0.9 * 1000));
@@ -171,7 +168,7 @@ class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndependentTest 
 
             @Test
             void testExpiredToken() throws Exception {
-                Authentication authentication = authenticationTestService.createWebAuthnAuthentication(USER_NAME);
+                Authentication authentication = AuthenticationFactory.createWebAuthnAuthentication(USER_NAME);
 
                 long remainingValidityTimeOfTokenInMilliseconds = 1000;
                 Date issuedAt = new Date(System.currentTimeMillis() - (TOKEN_VALIDITY_IN_SECONDS_FOR_PASSKEY * 1000) + remainingValidityTimeOfTokenInMilliseconds);
@@ -190,7 +187,7 @@ class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndependentTest 
 
             @Test
             void testSuppliedByBearerToken() throws Exception {
-                Authentication authentication = authenticationTestService.createWebAuthnAuthentication(USER_NAME);
+                Authentication authentication = AuthenticationFactory.createWebAuthnAuthentication(USER_NAME);
 
                 long moreThanHalfOfTokenValidityPassed = (long) (TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 0.6 * 1000);
                 Date issuedAt = new Date(System.currentTimeMillis() - moreThanHalfOfTokenValidityPassed);
@@ -210,7 +207,7 @@ class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndependentTest 
              */
             @Test
             void testSuppliedByBearerTokenAndCookie() throws Exception {
-                Authentication authentication = authenticationTestService.createWebAuthnAuthentication(USER_NAME);
+                Authentication authentication = AuthenticationFactory.createWebAuthnAuthentication(USER_NAME);
 
                 long moreThanHalfOfTokenValidityPassed = (long) (TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 0.6 * 1000);
                 Date issuedAt = new Date(System.currentTimeMillis() - moreThanHalfOfTokenValidityPassed);
@@ -238,7 +235,7 @@ class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndependentTest 
              */
             @Test
             void testLessThanHalfOfLifetimeUsed() throws Exception {
-                Authentication authentication = authenticationTestService.createWebAuthnAuthentication(USER_NAME);
+                Authentication authentication = AuthenticationFactory.createWebAuthnAuthentication(USER_NAME);
 
                 long lessThanHalfOfTokenValidityPassed = (long) (TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 0.4 * 1000);
                 Date issuedAt = new Date(System.currentTimeMillis() - lessThanHalfOfTokenValidityPassed);
@@ -255,7 +252,7 @@ class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndependentTest 
 
             @Test
             void testTokenWasNotCreatedFromPasskey() throws Exception {
-                Authentication authentication = authenticationTestService.createUsernamePasswordAuthentication(USER_NAME);
+                Authentication authentication = AuthenticationFactory.createUsernamePasswordAuthentication(USER_NAME);
 
                 long lessThanHalfOfTokenValidityPassed = (long) (TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 0.4 * 1000);
                 Date issuedAt = new Date(System.currentTimeMillis() - lessThanHalfOfTokenValidityPassed);

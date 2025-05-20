@@ -2,31 +2,26 @@ package de.tum.cit.aet.artemis.core.authentication;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import org.springframework.context.annotation.Profile;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.web.webauthn.api.Bytes;
 import org.springframework.security.web.webauthn.api.PublicKeyCredentialUserEntity;
 import org.springframework.security.web.webauthn.authentication.WebAuthnAuthentication;
-import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.security.Role;
 
 /**
- * This service helps to generate {@link org.springframework.security.core.Authentication} objects.
+ * Factory for creating {@link org.springframework.security.core.Authentication} objects.
  */
-@Service
-@Profile(SPRING_PROFILE_TEST)
-public class AuthenticationTestService {
+public class AuthenticationFactory {
 
-    public WebAuthnAuthentication createWebAuthnAuthentication(String username) {
+    public static WebAuthnAuthentication createWebAuthnAuthentication(String username) {
         Collection<GrantedAuthority> authorities = new ArrayList<>();
         authorities.add(new SimpleGrantedAuthority(Role.ANONYMOUS.getAuthority()));
 
@@ -38,7 +33,7 @@ public class AuthenticationTestService {
         return new WebAuthnAuthentication(principal, authorities);
     }
 
-    public UsernamePasswordAuthenticationToken createUsernamePasswordAuthentication(String username) {
+    public static UsernamePasswordAuthenticationToken createUsernamePasswordAuthentication(String username) {
         Collection<GrantedAuthority> authorities = new ArrayList<>();
         authorities.add(new SimpleGrantedAuthority(Role.ANONYMOUS.getAuthority()));
         return new UsernamePasswordAuthenticationToken(username, username, authorities);

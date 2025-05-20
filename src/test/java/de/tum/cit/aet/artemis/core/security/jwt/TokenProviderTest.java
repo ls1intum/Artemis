@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.security.core.Authentication;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import de.tum.cit.aet.artemis.core.authentication.AuthenticationTestService;
+import de.tum.cit.aet.artemis.core.authentication.AuthenticationFactory;
 import de.tum.cit.aet.artemis.core.management.SecurityMetersService;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import io.jsonwebtoken.Jwts;
@@ -34,8 +34,6 @@ class TokenProviderTest {
     private SecretKey key;
 
     private TokenProvider tokenProvider;
-
-    private final AuthenticationTestService authenticationTestService = new AuthenticationTestService();
 
     @BeforeEach
     void setup() {
@@ -62,7 +60,7 @@ class TokenProviderTest {
 
     @Test
     void testReturnFalseWhenJWTisMalformed() {
-        Authentication authentication = this.authenticationTestService.createUsernamePasswordAuthentication(USER_NAME);
+        Authentication authentication = AuthenticationFactory.createUsernamePasswordAuthentication(USER_NAME);
         String token = tokenProvider.createToken(authentication, false);
         String invalidToken = token.substring(1);
         boolean isTokenValid = tokenProvider.validateTokenForAuthority(invalidToken, null);
@@ -74,7 +72,7 @@ class TokenProviderTest {
     void testReturnFalseWhenJWTisExpired() {
         ReflectionTestUtils.setField(tokenProvider, "tokenValidityInMilliseconds", -ONE_MINUTE);
 
-        Authentication authentication = this.authenticationTestService.createUsernamePasswordAuthentication(USER_NAME);
+        Authentication authentication = AuthenticationFactory.createUsernamePasswordAuthentication(USER_NAME);
         String token = tokenProvider.createToken(authentication, false);
 
         boolean isTokenValid = tokenProvider.validateTokenForAuthority(token, null);
@@ -182,7 +180,7 @@ class TokenProviderTest {
 
         @Test
         void shouldBeFalseWhenAuthenticatedWithPassword() {
-            Authentication authentication = authenticationTestService.createUsernamePasswordAuthentication(USER_NAME);
+            Authentication authentication = AuthenticationFactory.createUsernamePasswordAuthentication(USER_NAME);
             String token = tokenProvider.createToken(authentication, false);
 
             boolean isAuthenticatedWithPasskey = tokenProvider.getAuthenticatedWithPasskey(token);
@@ -192,7 +190,7 @@ class TokenProviderTest {
 
         @Test
         void shoulbBeTrueWhenAuthenticatedWithPasskey() {
-            Authentication authentication = authenticationTestService.createWebAuthnAuthentication(USER_NAME);
+            Authentication authentication = AuthenticationFactory.createWebAuthnAuthentication(USER_NAME);
             String token = tokenProvider.createToken(authentication, false);
 
             boolean isAuthenticatedWithPasskey = tokenProvider.getAuthenticatedWithPasskey(token);

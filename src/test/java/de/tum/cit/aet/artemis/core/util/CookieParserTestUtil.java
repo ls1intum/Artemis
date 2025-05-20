@@ -6,6 +6,10 @@ import org.springframework.http.ResponseCookie;
 
 public class CookieParserTestUtil {
 
+    private CookieParserTestUtil() {
+        // Utility class, no instantiation
+    }
+
     public static ResponseCookie parseSetCookieHeader(String setCookieHeader) {
         String[] parts = setCookieHeader.split(";");
         String[] nameValue = parts[0].trim().split("=", 2);

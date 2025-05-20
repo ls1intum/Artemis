@@ -229,6 +229,10 @@ public class TokenProvider {
         return parseClaims(authToken).getIssuedAt();
     }
 
+    /**
+     * @param authToken of which the tools should be extracted
+     * @return {@link ToolTokenType} if the token contains a tool, null otherwise
+     */
     public ToolTokenType getTools(String authToken) {
         Claims claims = parseClaims(authToken);
         String toolString = claims.get(TOOLS_KEY, String.class);
@@ -241,7 +245,8 @@ public class TokenProvider {
     }
 
     /**
-     * True if the user authenticated with a passkey
+     * @param authToken of which the authentication type on login should be extracted
+     * @return True if the user authenticated with a passkey
      */
     public boolean getAuthenticatedWithPasskey(String authToken) {
         Boolean passkeyClaim = parseClaims(authToken).get(AUTHENTICATED_WITH_PASSKEY_KEY, Boolean.class);
