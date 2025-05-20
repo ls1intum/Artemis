@@ -176,7 +176,9 @@
                     "notificationsMutedDescription": "You will not receive notifications for new messages in this conversation.",
                     "muteChannel": "Mute Channel",
                     "unmuteChannel": "Unmute Channel",
-                    "notificationsDisabled": "Course-wide notifications are disabled."
+                    "notificationsDisabled": "Course-wide notifications are disabled.",
+                    "seeSettingsPrefix": " See ",
+                    "seeSettingsLink": "notification settings."
                 }
             },
             "addUsers": {

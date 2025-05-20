@@ -30,12 +30,13 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faVolumeUp, faVolumeXmark } from '@fortawesome/free-solid-svg-icons';
 import { CourseNotificationSettingService } from 'app/communication/course-notification/course-notification-setting.service';
 import { CourseNotificationSettingInfo } from 'app/communication/shared/entities/course-notification/course-notification-setting-info';
+import { RouterLink } from '@angular/router';
 
 @Component({
     selector: 'jhi-conversation-info',
     templateUrl: './conversation-info.component.html',
     styleUrls: ['./conversation-info.component.scss'],
-    imports: [TranslateDirective, ArtemisDatePipe, ArtemisTranslatePipe, CommonModule, FormsModule, FaIconComponent],
+    imports: [TranslateDirective, ArtemisDatePipe, ArtemisTranslatePipe, CommonModule, FormsModule, FaIconComponent, RouterLink],
 })
 export class ConversationInfoComponent implements OnInit, OnDestroy {
     private ngUnsubscribe = new Subject<void>();
@@ -280,15 +281,7 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
     }
 
     private checkNotificationStatus() {
-        if (!this.notificationSettings?.notificationTypeChannels) {
-            return;
-        }
-
-        // Check if any notification channel is enabled for conversation messages
-        const conversationSettings = this.notificationSettings.notificationTypeChannels['conversationMessage'];
-        if (conversationSettings) {
-            this.isNotificationsEnabled = Object.values(conversationSettings).some((enabled) => enabled);
-        }
+        this.isNotificationsEnabled = this.notificationSettings?.selectedPreset !== 3;
     }
 
     protected readonly ConversationDTO = ConversationDTO;

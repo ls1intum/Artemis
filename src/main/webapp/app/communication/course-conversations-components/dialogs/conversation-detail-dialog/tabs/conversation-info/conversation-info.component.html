@@ -90,6 +90,10 @@
                               ? ('artemisApp.dialogs.conversationDetail.infoTab.notificationsMutedDescription' | artemisTranslate)
                               : ('artemisApp.dialogs.conversationDetail.infoTab.notificationsEnabledDescription' | artemisTranslate)
                     }}
+                    {{ 'artemisApp.dialogs.conversationDetail.infoTab.seeSettingsPrefix' | artemisTranslate }}
+                    <a [routerLink]="['/courses', course()?.id, 'settings']" class="ms-1" target="_blank">
+                        {{ 'artemisApp.dialogs.conversationDetail.infoTab.seeSettingsLink' | artemisTranslate }}
+                    </a>
                 </p>
 
                 <ul>
