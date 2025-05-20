@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import jakarta.ws.rs.BadRequestException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -44,6 +46,7 @@ public class CalendarResource {
      * @param monthKeys a list of ISO 8601 formatted strings representing months
      * @param timeZone  the clients time zone as IANA time zone ID
      * @return ResponseEntity with status 200 (OK) and body containing a map of calendar-events keyed by day (all timestamps in UTC format)
+     * @throws BadRequestException {@code 400 (Bad Request)} if the monthKeys or the timeZone are formatted incorrectly.
      */
     @GetMapping("calendar-events")
     @EnforceAtLeastStudent

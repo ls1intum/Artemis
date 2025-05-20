@@ -939,6 +939,7 @@ public class TutorialGroupService {
      * @param monthKeys a list of ISO 8601 formatted strings representing months
      * @param timeZone  the client's time zone as IANA time zone ID
      * @return a set of {@code CalendarEventDTO}s representing {@code TutorialGroupSession}s relevant for user
+     * @throws BadRequestException if the monthKeys or the timeZone are formatted incorrectly.
      */
     public Set<CalendarEventDTO> getTutorialEventsForUserFallingIntoMonthsOrElseThrough(User user, List<String> monthKeys, String timeZone) {
         // validate monthKeys or through BadRequestException
