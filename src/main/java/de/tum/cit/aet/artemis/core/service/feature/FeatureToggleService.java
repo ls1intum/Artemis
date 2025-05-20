@@ -73,6 +73,10 @@ public class FeatureToggleService {
         if (!features.containsKey(Feature.Science)) {
             features.put(Feature.Science, scienceEnabledOnStart);
         }
+
+        if (!features.containsKey(Feature.TutorSuggestions)) {
+            features.put(Feature.TutorSuggestions, false);
+        }
     }
 
     /**
