@@ -16,6 +16,7 @@ import {
     IrisLectureChatSubSettings,
     IrisLectureIngestionSubSettings,
     IrisTextExerciseChatSubSettings,
+    IrisTutorSuggestionSubSettings,
 } from 'app/iris/shared/entities/settings/iris-sub-settings.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
@@ -133,6 +134,9 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
         }
         if (!this.irisSettings.irisFaqIngestionSettings) {
             this.irisSettings.irisFaqIngestionSettings = new IrisFaqIngestionSubSettings();
+        }
+        if (!this.irisSettings.irisTutorSuggestionSettings) {
+            this.irisSettings.irisTutorSuggestionSettings = new IrisTutorSuggestionSubSettings();
         }
     }
 
