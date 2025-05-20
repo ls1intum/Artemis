@@ -123,8 +123,7 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
         String jwt = tokenProvider.createToken(authentication, issuedAt, expiration, null, true);
         assertThat(tokenProvider.getAuthenticatedWithPasskey(jwt)).isTrue();
 
-        MvcResult res = mvc.perform(MockMvcRequestBuilders.get(new URI(ENDPOINT_TO_TEST)).cookie(new Cookie(JWTFilter.JWT_COOKIE_NAME, jwt)))
-                .andExpect(status().is(HttpStatus.OK.value())).andReturn();
+        MvcResult res = performRequestWithCookie(jwt);
 
         MockHttpServletResponse response = res.getResponse();
         assertThat(response).isNotNull();
@@ -162,8 +161,7 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
         String jwt = tokenProvider.createToken(authentication, issuedAt, expiration, null, true);
         assertThat(tokenProvider.getAuthenticatedWithPasskey(jwt)).isTrue();
 
-        MvcResult res = mvc.perform(MockMvcRequestBuilders.get(new URI(ENDPOINT_TO_TEST)).cookie(new Cookie(JWTFilter.JWT_COOKIE_NAME, jwt)))
-                .andExpect(status().is(HttpStatus.OK.value())).andReturn();
+        MvcResult res = performRequestWithCookie(jwt);
 
         MockHttpServletResponse response = res.getResponse();
         assertThat(response).isNotNull();
@@ -197,8 +195,7 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
 
         Thread.sleep(remainingValidityTimeOfTokenInMilliseconds + 1000);
 
-        MvcResult res = mvc.perform(MockMvcRequestBuilders.get(new URI(ENDPOINT_TO_TEST)).cookie(new Cookie(JWTFilter.JWT_COOKIE_NAME, jwt)))
-                .andExpect(status().is(HttpStatus.NO_CONTENT.value())).andReturn();
+        MvcResult res = performRequestWithCookie(jwt);
 
         MockHttpServletResponse response = res.getResponse();
         assertThat(response).isNotNull();
@@ -271,8 +268,7 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
         String jwt = tokenProvider.createToken(authentication, issuedAt, expiration, null, true);
         assertThat(tokenProvider.getAuthenticatedWithPasskey(jwt)).isTrue();
 
-        MvcResult res = mvc.perform(MockMvcRequestBuilders.get(new URI(ENDPOINT_TO_TEST)).cookie(new Cookie(JWTFilter.JWT_COOKIE_NAME, jwt)))
-                .andExpect(status().is(HttpStatus.OK.value())).andReturn();
+        MvcResult res = performRequestWithCookie(jwt);
 
         MockHttpServletResponse response = res.getResponse();
         assertThat(response).isNotNull();
@@ -292,8 +288,7 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
         String jwt = tokenProvider.createToken(authentication, issuedAt, expiration, null, null);
         assertThat(tokenProvider.getAuthenticatedWithPasskey(jwt)).isFalse();
 
-        MvcResult res = mvc.perform(MockMvcRequestBuilders.get(new URI(ENDPOINT_TO_TEST)).cookie(new Cookie(JWTFilter.JWT_COOKIE_NAME, jwt)))
-                .andExpect(status().is(HttpStatus.OK.value())).andReturn();
+        MvcResult res = performRequestWithCookie(jwt);
 
         MockHttpServletResponse response = res.getResponse();
         assertThat(response).isNotNull();
@@ -317,10 +312,6 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
         when(principal.getDisplayName()).thenReturn(username);
 
         return new WebAuthnAuthentication(principal, authorities);
-    }
-
-    private String createJwt(Authentication authentication, Date issuedAt, Date expiration, boolean isPasskey) {
-        return tokenProvider.createToken(authentication, issuedAt, expiration, null, isPasskey);
     }
 
     private MvcResult performRequestWithCookie(String jwt) throws Exception {
