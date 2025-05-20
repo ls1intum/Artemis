@@ -4,9 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 
 import jakarta.servlet.http.Cookie;
@@ -20,17 +17,13 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.mock.web.MockHttpServletResponse;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.core.authentication.AuthenticationTestService;
-import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 /**
@@ -251,8 +244,7 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
 
     @Test
     void testRotateTokenSilently_shouldNotRotateToken_ifTokenWasNotCreatedFromPasskey() throws Exception {
-        Authentication authentication = new UsernamePasswordAuthenticationToken(TEST_PREFIX + "student1", TEST_PREFIX + "student1",
-                Collections.singletonList(new SimpleGrantedAuthority(Role.STUDENT.getAuthority())));
+        Authentication authentication = this.authenticationTestService.createUsernamePasswordAuthentication(USER_NAME);
 
         long lessThanHalfOfTokenValidityPassed = (long) (TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 0.4 * 1000);
         Date issuedAt = new Date(System.currentTimeMillis() - lessThanHalfOfTokenValidityPassed);
@@ -265,12 +257,6 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
 
         String setCookieHeader = response.getHeader(HttpHeaders.SET_COOKIE);
         assertThat(setCookieHeader).isNull();
-    }
-
-    private Authentication createAuthentication(String username, String role) {
-        Collection<GrantedAuthority> authorities = new ArrayList<>();
-        authorities.add(new SimpleGrantedAuthority(role));
-        return new UsernamePasswordAuthenticationToken(username, username, authorities);
     }
 
     private MockHttpServletResponse performRequestWithCookie(String jwt) throws Exception {
