@@ -4,7 +4,7 @@ import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settin
 import { HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';
-import { ButtonType } from 'app/shared/components/button/button.component';
+import { ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { faRotate, faSave } from '@fortawesome/free-solid-svg-icons';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { cloneDeep, isEqual } from 'lodash-es';
@@ -16,9 +16,10 @@ import {
     IrisLectureChatSubSettings,
     IrisLectureIngestionSubSettings,
     IrisTextExerciseChatSubSettings,
+    IrisTutorSuggestionSubSettings,
 } from 'app/iris/shared/entities/settings/iris-sub-settings.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { ButtonComponent } from 'app/shared/components/button/button.component';
+import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { IrisCommonSubSettingsUpdateComponent } from './iris-common-sub-settings-update/iris-common-sub-settings-update.component';
 import { FormsModule } from '@angular/forms';
@@ -133,6 +134,9 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
         }
         if (!this.irisSettings.irisFaqIngestionSettings) {
             this.irisSettings.irisFaqIngestionSettings = new IrisFaqIngestionSubSettings();
+        }
+        if (!this.irisSettings.irisTutorSuggestionSettings) {
+            this.irisSettings.irisTutorSuggestionSettings = new IrisTutorSuggestionSubSettings();
         }
     }
 

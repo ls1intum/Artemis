@@ -15,7 +15,7 @@ import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbNav, NgbNavContent, NgbNavItem, NgbNavLink, NgbNavLinkBase, NgbNavOutlet, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
-import { CopyIconButtonComponent } from 'app/shared/components/copy-icon-button/copy-icon-button.component';
+import { CopyToClipboardButtonComponent } from 'app/shared/components/buttons/copy-to-clipboard-button/copy-to-clipboard-button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
@@ -34,7 +34,7 @@ import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
         NgbNavLinkBase,
         NgbNavContent,
         HelpIconComponent,
-        CopyIconButtonComponent,
+        CopyToClipboardButtonComponent,
         RouterLink,
         FaIconComponent,
         SortDirective,

@@ -27,7 +27,7 @@ import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-
 import { declareExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { mean, median, standardDeviation } from 'simple-statistics';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
-import { ButtonSize } from 'app/shared/components/button/button.component';
+import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
 import { faCheckCircle, faDownload, faExclamationTriangle, faSort, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { CsvExportRowBuilder } from 'app/shared/export/row-builder/csv-export-row-builder';

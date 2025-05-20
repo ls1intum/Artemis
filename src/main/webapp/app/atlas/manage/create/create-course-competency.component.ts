@@ -6,7 +6,7 @@ import { finalize, switchMap, take } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
-import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 
 @Component({
     template: '',

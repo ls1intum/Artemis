@@ -3,7 +3,7 @@ import { IrisSettingsUpdateComponent } from 'app/iris/manage/settings/iris-setti
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { BehaviorSubject, of } from 'rxjs';
-import { ButtonComponent } from 'app/shared/components/button/button.component';
+import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { IrisCommonSubSettingsUpdateComponent } from 'app/iris/manage/settings/iris-settings-update/iris-common-sub-settings-update/iris-common-sub-settings-update.component';
 import { mockEmptySettings, mockSettings } from 'test/helpers/mocks/iris/mock-settings';
 import { ActivatedRoute, Params, provideRouter } from '@angular/router';
@@ -71,7 +71,7 @@ describe('IrisCourseSettingsUpdateComponent Component', () => {
         expect(getSettingsSpy).toHaveBeenCalledWith(1);
         expect(getParentSettingsSpy).toHaveBeenCalledOnce();
 
-        expect(fixture.debugElement.queryAll(By.directive(IrisCommonSubSettingsUpdateComponent))).toHaveLength(7);
+        expect(fixture.debugElement.queryAll(By.directive(IrisCommonSubSettingsUpdateComponent))).toHaveLength(8);
     });
 
     it('Can deactivate correctly', () => {
