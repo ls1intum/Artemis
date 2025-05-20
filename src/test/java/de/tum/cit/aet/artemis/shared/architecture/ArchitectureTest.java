@@ -293,7 +293,8 @@ class ArchitectureTest extends AbstractArchitectureTest {
     @Test
     void testNoRestControllersImported() {
         final var exceptions = new String[] { "AccountResourceIntegrationTest", "AndroidAppSiteAssociationResourceTest", "AppleAppSiteAssociationResourceTest",
-                "AbstractModuleResourceArchitectureTest", "CommunicationResourceArchitectureTest", "PlagiarismApiArchitectureTest", "LtiApiArchitectureTest" };
+                "AbstractModuleResourceArchitectureTest", "CommunicationResourceArchitectureTest", "PlagiarismApiArchitectureTest", "LtiApiArchitectureTest",
+                "IrisTutorSuggestionIntegrationTest" };
         final var classes = classesExcept(allClasses, exceptions);
         classes().should(IMPORT_RESTCONTROLLER).check(classes);
     }
@@ -451,13 +452,12 @@ class ArchitectureTest extends AbstractArchitectureTest {
     }
 
     private DescribedPredicate<JavaClass> classWithSchedulingProfile() {
-        return new DescribedPredicate<JavaClass>("have scheduling profile") {
+        return new DescribedPredicate<>("have scheduling profile") {
 
             @Override
             public boolean test(JavaClass javaClass) {
                 var profiles = getProfiles(javaClass);
-                for (int i = 0; i < profiles.length; i++) {
-                    String profile = profiles[i];
+                for (String profile : profiles) {
                     if (profile.contains("scheduling") && !profile.contains("!scheduling")) {
                         return true;
                     }

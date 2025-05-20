@@ -21,11 +21,11 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.w3c.dom.Document;
 
 import de.tum.cit.aet.artemis.core.exception.JenkinsException;
-import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationJenkinsLocalVcTest;
+import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationJenkinsLocalVCTest;
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsXmlFileUtils;
 import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobService;
 
-class JenkinsJobServiceTest extends AbstractProgrammingIntegrationJenkinsLocalVcTest {
+class JenkinsJobServiceTest extends AbstractProgrammingIntegrationJenkinsLocalVCTest {
 
     private static final String TEST_PREFIX = "jenkinsjobservicetest";
 

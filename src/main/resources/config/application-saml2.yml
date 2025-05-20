@@ -63,3 +63,5 @@ info.saml2:
     # external services (e.g. Jenkins). This allows the users to use password-based Git workflows.
     # Enables the password reset function in Artemis.
     enablePassword: true
+    # If enabled, the user's first and last name will be synced to the internal artemis user on every login.
+    syncUserData: false
