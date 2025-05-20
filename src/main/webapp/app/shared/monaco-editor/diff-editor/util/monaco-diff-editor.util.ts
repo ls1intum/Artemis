@@ -106,6 +106,7 @@ export function getDiffInformation(originalFileContentByPath: Map<string, string
             const modifiedContent = modifiedFileContentByPath.get(path);
             return path && (modifiedContent !== originalContent || (modifiedContent === undefined) !== (originalContent === undefined));
         })
+        .sort((a, b) => a.localeCompare(b))
         .map((path) => {
             const originalFileContent = originalFileContentByPath.get(path);
             const modifiedFileContent = modifiedFileContentByPath.get(path);
@@ -147,6 +148,19 @@ export function getDiffInformation(originalFileContentByPath: Map<string, string
 }
 
 function computeDiffsMonaco(originalFileContent: string, modifiedFileContent: string): LineChange {
+    // Handle special cases for created or deleted files
+    if (!originalFileContent && modifiedFileContent) {
+        // File is newly created - count only added lines, no deleted lines
+        const modifiedFileContentLines = modifiedFileContent.split('\n').filter((line) => line.trim() !== '');
+        return { addedLineCount: modifiedFileContentLines.length, removedLineCount: 0 };
+    } else if (originalFileContent && !modifiedFileContent) {
+        // File is deleted - count only removed lines, no added lines
+        const originalFileContentLines = originalFileContent.split('\n').filter((line) => line.trim() !== '');
+        return { addedLineCount: 0, removedLineCount: originalFileContentLines.length };
+    }
+
+    const originalFileContentLines = originalFileContent.split('\n').filter((line) => line.trim() !== '');
+    const modifiedFileContentLines = modifiedFileContent.split('\n').filter((line) => line.trim() !== '');
     const options: DiffOpts = {
         shouldPostProcessCharChanges: true,
         shouldComputeCharChanges: true,
@@ -154,7 +168,7 @@ function computeDiffsMonaco(originalFileContent: string, modifiedFileContent: st
         shouldMakePrettyDiff: true,
         maxComputationTime: 1000,
     };
-    return convertMonacoLineChanges(diff(originalFileContent.split('\n'), modifiedFileContent.split('\n'), options));
+    return convertMonacoLineChanges(diff(originalFileContentLines, modifiedFileContentLines, options));
 }
 
 /**
