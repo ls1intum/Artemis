@@ -163,14 +163,14 @@ class FilePathServiceTest {
     void testFileSystemPathForExternalUriInvalidAttachmentVideoUnit() {
         assertThatExceptionOfType(FilePathParsingException.class)
                 .isThrownBy(() -> FilePathService.fileSystemPathForExternalUri(URI.create("attachments/attachment-unit/file.pdf"), FilePathType.ATTACHMENT_UNIT))
-                .withMessageContaining("attachmentUnitId");
+                .withMessageContaining("attachmentVideoUnitId");
     }
 
     @Test
     void testFileSystemPathForExternalUriInvalidSlide() {
         assertThatExceptionOfType(FilePathParsingException.class)
                 .isThrownBy(() -> FilePathService.fileSystemPathForExternalUri(URI.create("attachments/attachment-unit/4/slide/slide.jpg"), FilePathType.SLIDE))
-                .withMessageContaining("attachmentUnitId or slideId");
+                .withMessageContaining("attachmentVideoUnitId or slideId");
     }
 
     @Test
@@ -194,7 +194,7 @@ class FilePathServiceTest {
         assertThatExceptionOfType(FilePathParsingException.class).isThrownBy(() -> {
             // id is arbitrary here, since the path is invalid
             FilePathService.externalUriForFileSystemPath(invalidPath, FilePathType.SLIDE, 1L);
-        }).withMessageContaining("AttachmentUnit ID should be present here");
+        }).withMessageContaining("AttachmentVideoUnit ID should be present here");
     }
 
     @Test
@@ -203,7 +203,7 @@ class FilePathServiceTest {
         Path invalidPath = Path.of("attachments", "attachment-unit", "student", "notes.pdf");
         assertThatExceptionOfType(FilePathParsingException.class).isThrownBy(() -> {
             FilePathService.fileSystemPathForExternalUri((invalidPath.toUri()), FilePathType.STUDENT_VERSION_SLIDES);
-        }).withMessageContaining("attachmentUnitId");
+        }).withMessageContaining("attachmentVideoUnitId");
     }
 
     @Test

@@ -207,10 +207,10 @@ public class FilePathService {
     /**
      * Generates the path for an attachment video unit file based on the provided path and filename.
      *
-     * @param path     the path to the attachment unit
+     * @param path     the path to the attachment video unit
      * @param filename the name of the file
      * @throws FilePathParsingException if the path cannot be parsed correctly
-     * @return the path to the attachment unit file
+     * @return the path to the attachment video unit file
      */
     @NotNull
     private static Path getAttachmentVideoUnitFileSystemPath(@NotNull Path path, @NotNull String filename) {
