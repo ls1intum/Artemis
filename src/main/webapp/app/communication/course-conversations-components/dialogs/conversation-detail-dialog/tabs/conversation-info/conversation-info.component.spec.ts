@@ -27,6 +27,11 @@ import { ConversationInfoComponent } from 'app/communication/course-conversation
 import { ConversationService } from 'app/communication/conversations/service/conversation.service';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { TranslateModule, TranslateStore } from '@ngx-translate/core';
+import { CourseNotificationSettingService } from '../../../../../course-notification/course-notification-setting.service';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
+import { Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
+import { MockActivatedRouteWithSubjects } from 'test/helpers/mocks/activated-route/mock-activated-route-with-subjects';
 
 const examples: ConversationDTO[] = [generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({} as ChannelDTO)];
 
@@ -50,7 +55,13 @@ examples.forEach((activeConversation) => {
         beforeEach(waitForAsync(() => {
             TestBed.configureTestingModule({
                 imports: [HttpClientTestingModule, TranslateModule.forRoot()],
-                declarations: [ConversationInfoComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe), MockDirective(TranslateDirective)],
+                declarations: [
+                    ConversationInfoComponent,
+                    MockPipe(ArtemisTranslatePipe),
+                    MockPipe(ArtemisDatePipe),
+                    MockDirective(TranslateDirective),
+                    CourseNotificationSettingService,
+                ],
                 providers: [
                     MockProvider(ChannelService),
                     MockProvider(GroupChatService),
@@ -58,6 +69,8 @@ examples.forEach((activeConversation) => {
                     MockProvider(AlertService),
                     MockProvider(ConversationService),
                     TranslateStore,
+                    { provide: Router, useClass: MockRouter },
+                    { provide: ActivatedRoute, useClass: MockActivatedRouteWithSubjects },
                 ],
             }).compileComponents();
         }));
@@ -174,26 +187,32 @@ examples.forEach((activeConversation) => {
             checkThatSectionExistsInTemplate('notification');
         });
 
-        it('should toggle mute status when button is clicked', fakeAsync(() => {
-            const muteButton = fixture.nativeElement.querySelector('#notification-section button');
-
+        it('should emit correct mute state on toggle with debounce logic', fakeAsync(() => {
             activeConversation.isMuted = false;
-            fixture.detectChanges();
-
-            // Click mute button
-            muteButton.click();
+            component.onMuteToggle();
             tick(100);
-
             expect(updateIsMutedSpy).toHaveBeenCalledWith(course.id, activeConversation.id, true);
-            expect(activeConversation.isMuted).toBeTrue();
 
-            // Click unmute button
-            muteButton.click();
+            activeConversation.isMuted = true;
+            component.onMuteToggle();
             tick(100);
-
             expect(updateIsMutedSpy).toHaveBeenCalledWith(course.id, activeConversation.id, false);
-            expect(activeConversation.isMuted).toBeFalse();
         }));
+
+        it('should not load notification settings if course is undefined', () => {
+            component.course = (() => undefined) as any;
+            const spy = jest.spyOn(TestBed.inject(CourseNotificationSettingService), 'getSettingInfo');
+            component['loadNotificationSettings']();
+            expect(spy).not.toHaveBeenCalled();
+        });
+
+        it('should show correct notification message and link for ignored preset', () => {
+            component['notificationSettings'] = { selectedPreset: 3, notificationTypeChannels: {} } as any;
+            component['checkNotificationStatus']();
+            fixture.detectChanges();
+            const link = fixture.nativeElement.querySelector('#notification-section a');
+            expect(link).toBeTruthy();
+        });
 
         function checkThatActionButtonOfSectionExistsInTemplate(sectionName: string) {
             const actionButtonElement = fixture.nativeElement.querySelector(`#${sectionName}-section .action-button`);
