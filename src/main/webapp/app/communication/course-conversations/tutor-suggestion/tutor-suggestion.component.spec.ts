@@ -9,6 +9,9 @@ import { IrisMessage } from 'app/iris/shared/entities/iris-message.model';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { mockSettings } from 'test/helpers/mocks/iris/mock-settings';
 import { AccountService } from 'app/core/auth/account.service';
+import { IrisStatusService } from 'app/iris/overview/services/iris-status.service';
+import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('TutorSuggestionComponent', () => {
     let component: TutorSuggestionComponent;
@@ -18,13 +21,27 @@ describe('TutorSuggestionComponent', () => {
     let profileService: ProfileService;
     let chatService: IrisChatService;
     let accountService: AccountService;
+    let featureToggleService: FeatureToggleService;
+    let irisStatusService: IrisStatusService;
+    let translateService: TranslateService;
     const irisSettings = mockSettings();
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [TutorSuggestionComponent],
-            providers: [MockProvider(IrisChatService), MockProvider(IrisSettingsService), MockProvider(ProfileService), MockProvider(AccountService)],
+            providers: [
+                MockProvider(IrisChatService),
+                MockProvider(IrisSettingsService),
+                MockProvider(ProfileService),
+                MockProvider(AccountService),
+                MockProvider(IrisStatusService),
+                MockProvider(FeatureToggleService),
+                MockProvider(TranslateService),
+            ],
         }).compileComponents();
+
+        irisStatusService = TestBed.inject(IrisStatusService);
+        jest.spyOn(irisStatusService, 'getActiveStatus').mockReturnValue(of(true));
 
         fixture = TestBed.createComponent(TutorSuggestionComponent);
         component = fixture.componentInstance;
@@ -34,6 +51,15 @@ describe('TutorSuggestionComponent', () => {
         profileService = TestBed.inject(ProfileService);
         chatService = TestBed.inject(IrisChatService);
         accountService = TestBed.inject(AccountService);
+        featureToggleService = TestBed.inject(FeatureToggleService);
+        translateService = TestBed.inject(TranslateService);
+
+        jest.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
+        jest.spyOn(translateService, 'get').mockReturnValue(of(''));
+        (translateService as any).onLangChange = of({ lang: 'en', translations: {} });
+        jest.spyOn(translateService, 'stream').mockReturnValue(of(''));
+        (translateService as any).onTranslationChange = of({ lang: 'en', translations: {} });
+        (translateService as any).onDefaultLangChange = of({ lang: 'en', translations: {} });
 
         componentRef.setInput('post', { id: 1 } as any);
         componentRef.setInput('course', { id: 1 } as any);
@@ -44,8 +70,12 @@ describe('TutorSuggestionComponent', () => {
         jest.spyOn(irisSettingsService, 'getCombinedCourseSettings').mockReturnValue(of(irisSettings));
         jest.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
         const switchToSpy = jest.spyOn(chatService, 'switchTo').mockReturnValue(undefined);
+        const getFeatureToggleSpy = jest.spyOn(featureToggleService, 'getFeatureToggleActive');
+        const getActiveStatusSpy = jest.spyOn(irisStatusService, 'getActiveStatus');
         fixture.detectChanges();
         expect(switchToSpy).toHaveBeenCalledWith(ChatServiceMode.TUTOR_SUGGESTION, 1);
+        expect(getFeatureToggleSpy).toHaveBeenCalledWith(FeatureToggle.TutorSuggestions);
+        expect(getActiveStatusSpy).toHaveBeenCalled();
     });
 
     it('should initialize properly in ngOnInit and load settings', fakeAsync(() => {
@@ -53,6 +83,8 @@ describe('TutorSuggestionComponent', () => {
         const getCourseSettingsSpy = jest.spyOn(irisSettingsService, 'getCombinedCourseSettings').mockReturnValue(of(irisSettings));
         const profileServiceMock = jest.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
         const switchToSpy = jest.spyOn(chatService, 'switchTo').mockReturnValue(undefined);
+        jest.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
+        jest.spyOn(irisStatusService, 'getActiveStatus').mockReturnValue(of(true));
         fixture.detectChanges();
         tick();
         expect(profileServiceMock).toHaveBeenCalledOnce();
@@ -63,6 +95,8 @@ describe('TutorSuggestionComponent', () => {
     describe('should set irisEnabled to', () => {
         it('false if Iris profile is not enabled', fakeAsync(() => {
             jest.spyOn(profileService, 'isProfileActive').mockReturnValue(false);
+            jest.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
+            jest.spyOn(irisStatusService, 'getActiveStatus').mockReturnValue(of(true));
 
             fixture = TestBed.createComponent(TutorSuggestionComponent);
             component = fixture.componentInstance;
@@ -79,6 +113,8 @@ describe('TutorSuggestionComponent', () => {
 
         it('false if settings are not available', fakeAsync(() => {
             jest.spyOn(irisSettingsService, 'getCombinedCourseSettings').mockReturnValue(of(undefined));
+            jest.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
+            jest.spyOn(irisStatusService, 'getActiveStatus').mockReturnValue(of(true));
 
             fixture = TestBed.createComponent(TutorSuggestionComponent);
             component = fixture.componentInstance;
@@ -95,6 +131,8 @@ describe('TutorSuggestionComponent', () => {
 
         it('false if course id is not available', fakeAsync(() => {
             componentRef.setInput('course', null);
+            jest.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
+            jest.spyOn(irisStatusService, 'getActiveStatus').mockReturnValue(of(true));
 
             fixture = TestBed.createComponent(TutorSuggestionComponent);
             component = fixture.componentInstance;
@@ -110,6 +148,8 @@ describe('TutorSuggestionComponent', () => {
 
         it('false if post id is not available', fakeAsync(() => {
             componentRef.setInput('post', null);
+            jest.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
+            jest.spyOn(irisStatusService, 'getActiveStatus').mockReturnValue(of(true));
 
             fixture = TestBed.createComponent(TutorSuggestionComponent);
             component = fixture.componentInstance;
@@ -127,6 +167,8 @@ describe('TutorSuggestionComponent', () => {
             jest.spyOn(accountService, 'isAtLeastTutorInCourse').mockReturnValue(true);
             jest.spyOn(irisSettingsService, 'getCombinedCourseSettings').mockReturnValue(of(irisSettings));
             jest.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
+            jest.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
+            jest.spyOn(irisStatusService, 'getActiveStatus').mockReturnValue(of(true));
             fixture.detectChanges();
             tick();
             expect(component['irisEnabled']).toBeTrue();
@@ -141,6 +183,8 @@ describe('TutorSuggestionComponent', () => {
         jest.spyOn(chatService, 'currentError').mockReturnValue(of());
         (chatService as any).sessionId$ = of(123);
         component['irisEnabled'] = true;
+        jest.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
+        jest.spyOn(irisStatusService, 'getActiveStatus').mockReturnValue(of(true));
         component.ngOnChanges();
         tick();
         expect(requestTutorSuggestionSpy).toHaveBeenCalled();

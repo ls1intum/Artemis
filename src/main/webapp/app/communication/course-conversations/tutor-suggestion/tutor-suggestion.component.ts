@@ -17,6 +17,7 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { IrisStatusService } from 'app/iris/overview/services/iris-status.service';
+import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 
 /**
  * Component to display the tutor suggestion in the chat
@@ -37,6 +38,7 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
     private irisSettingsService = inject(IrisSettingsService);
     private accountService = inject(AccountService);
     private statusService = inject(IrisStatusService);
+    private featureToggleService = inject(FeatureToggleService);
 
     irisActive$ = this.statusService.getActiveStatus().pipe(shareReplay(1));
 
@@ -48,6 +50,7 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
     stagesSubscription: Subscription;
     errorSubscription: Subscription;
     irisActivationSubscription: Subscription;
+    featureToggleSubscription: Subscription;
 
     messages: IrisMessage[];
     suggestion: IrisMessage | undefined;
@@ -62,26 +65,32 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
     course = input<Course>();
 
     ngOnInit(): void {
-        this.subscribeToIrisActivation();
+        this.featureToggleSubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.TutorSuggestions).subscribe((active) => {
+            if (active) {
+                this.subscribeToIrisActivation();
 
-        if (!this.profileService.isProfileActive(PROFILE_IRIS)) {
-            return;
-        }
-        const course = this.course();
-        const post = this.post();
-        this.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(course);
-        if (!this.isAtLeastTutor || post?.resolved) {
-            return;
-        }
-        if (course?.id && post) {
-            this.irisSettingsSubscription = this.irisSettingsService.getCombinedCourseSettings(course.id).subscribe((settings) => {
-                this.irisEnabled = !!settings?.irisTutorSuggestionSettings?.enabled;
-                if (this.irisEnabled) {
-                    this.chatService.switchTo(ChatServiceMode.TUTOR_SUGGESTION, post.id);
-                    this.fetchMessages();
+                if (!this.profileService.isProfileActive(PROFILE_IRIS)) {
+                    return;
                 }
-            });
-        }
+                const course = this.course();
+                const post = this.post();
+                this.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(course);
+                if (!this.isAtLeastTutor || post?.resolved) {
+                    return;
+                }
+                if (course?.id && post) {
+                    this.irisSettingsSubscription = this.irisSettingsService.getCombinedCourseSettings(course.id).subscribe((settings) => {
+                        this.irisEnabled = !!settings?.irisTutorSuggestionSettings?.enabled;
+                        if (this.irisEnabled) {
+                            this.chatService.switchTo(ChatServiceMode.TUTOR_SUGGESTION, post.id);
+                            this.fetchMessages();
+                        }
+                    });
+                }
+            } else {
+                this.irisEnabled = false;
+            }
+        });
     }
 
     ngOnChanges(): void {
@@ -104,6 +113,7 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
         this.stagesSubscription?.unsubscribe();
         this.errorSubscription?.unsubscribe();
         this.irisActivationSubscription?.unsubscribe();
+        this.featureToggleSubscription?.unsubscribe();
     }
 
     /**
