@@ -1,12 +1,9 @@
 package de.tum.cit.aet.artemis.core.security.jwt;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -27,14 +24,12 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.web.webauthn.api.Bytes;
-import org.springframework.security.web.webauthn.api.PublicKeyCredentialUserEntity;
-import org.springframework.security.web.webauthn.authentication.WebAuthnAuthentication;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.LinkedMultiValueMap;
 
+import de.tum.cit.aet.artemis.core.authentication.AuthenticationTestService;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -58,6 +53,8 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
 
     private static final String TEST_PREFIX = "jwtfilterintegrationtest";
 
+    private static final String USER_NAME = TEST_PREFIX + "student1";
+
     /**
      * This can be any endpoint where the JWT filter is applied.
      */
@@ -78,6 +75,9 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
     @Autowired
     private TokenProvider tokenProvider;
 
+    @Autowired
+    private AuthenticationTestService authenticationTestService;
+
     @BeforeEach
     void setup() {
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
@@ -91,21 +91,6 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
         assertThat(TOKEN_VALIDITY_IN_SECONDS_FOR_PASSKEY).isGreaterThan(TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS);
     }
 
-    // TODO make sure this method is shared instead
-    private Authentication createWebAuthnAuthentication() {
-        Collection<GrantedAuthority> authorities = new ArrayList<>();
-        authorities.add(new SimpleGrantedAuthority(Role.ANONYMOUS.getAuthority()));
-
-        String testUserName = TEST_PREFIX + "student1";
-
-        PublicKeyCredentialUserEntity principal = mock(PublicKeyCredentialUserEntity.class);
-        when(principal.getId()).thenReturn(new Bytes(testUserName.getBytes(StandardCharsets.UTF_8)));
-        when(principal.getName()).thenReturn(testUserName);
-        when(principal.getDisplayName()).thenReturn(testUserName);
-
-        return new WebAuthnAuthentication(principal, authorities);
-    }
-
     /**
      * <p>
      * We want to rotate a passkey-created token silently if it has used after 50% of its lifetime
@@ -114,7 +99,7 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
      */
     @Test
     void testRotateTokenSilently_shouldRotateToken_ifMoreThanHalfOfLifetimeUsed() throws Exception {
-        Authentication authentication = createWebAuthnAuthentication();
+        Authentication authentication = authenticationTestService.createWebAuthnAuthentication(USER_NAME);
 
         long moreThanHalfOfTokenValidityPassed = (long) (TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 0.6 * 1000);
         Date issuedAt = new Date(System.currentTimeMillis() - moreThanHalfOfTokenValidityPassed);
@@ -141,7 +126,7 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
      */
     @Test
     void testRotateTokenSilently_shouldRotateToken_butConsiderMaxPasskeyTokenLifetime() throws Exception {
-        Authentication authentication = createWebAuthnAuthentication();
+        Authentication authentication = authenticationTestService.createWebAuthnAuthentication(USER_NAME);
 
         long nowInMilliseconds = System.currentTimeMillis();
         Date issuedAt = new Date(nowInMilliseconds - (long) (TOKEN_VALIDITY_IN_SECONDS_FOR_PASSKEY * 0.9 * 1000));
@@ -176,7 +161,7 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
 
     @Test
     void testRotateTokenSilently_shouldNotRotateAnExpiredToken() throws Exception {
-        Authentication authentication = createWebAuthnAuthentication();
+        Authentication authentication = authenticationTestService.createWebAuthnAuthentication(USER_NAME);
 
         long remainingValidityTimeOfTokenInMilliseconds = 1000;
         Date issuedAt = new Date(System.currentTimeMillis() - (TOKEN_VALIDITY_IN_SECONDS_FOR_PASSKEY * 1000) + remainingValidityTimeOfTokenInMilliseconds);
@@ -195,7 +180,7 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
 
     @Test
     void testRotateTokenSilently_shouldNotRotateToken_ifSuppliedByBearerToken() throws Exception {
-        Authentication authentication = createWebAuthnAuthentication();
+        Authentication authentication = authenticationTestService.createWebAuthnAuthentication(USER_NAME);
 
         long moreThanHalfOfTokenValidityPassed = (long) (TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 0.6 * 1000);
         Date issuedAt = new Date(System.currentTimeMillis() - moreThanHalfOfTokenValidityPassed);
@@ -222,7 +207,7 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
      */
     @Test
     void testRotateTokenSilently_shouldNotRotateToken_ifSuppliedByBearerTokenAndCookie() throws Exception {
-        Authentication authentication = createWebAuthnAuthentication();
+        Authentication authentication = authenticationTestService.createWebAuthnAuthentication(USER_NAME);
 
         long moreThanHalfOfTokenValidityPassed = (long) (TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 0.6 * 1000);
         Date issuedAt = new Date(System.currentTimeMillis() - moreThanHalfOfTokenValidityPassed);
@@ -249,7 +234,7 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
      */
     @Test
     void testRotateTokenSilently_shouldNotRotateToken_ifLessThanHalfOfLifetimeUsed() throws Exception {
-        Authentication authentication = createWebAuthnAuthentication();
+        Authentication authentication = authenticationTestService.createWebAuthnAuthentication(USER_NAME);
 
         long lessThanHalfOfTokenValidityPassed = (long) (TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 0.4 * 1000);
         Date issuedAt = new Date(System.currentTimeMillis() - lessThanHalfOfTokenValidityPassed);
@@ -286,18 +271,6 @@ public class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndepende
         Collection<GrantedAuthority> authorities = new ArrayList<>();
         authorities.add(new SimpleGrantedAuthority(role));
         return new UsernamePasswordAuthenticationToken(username, username, authorities);
-    }
-
-    private Authentication createWebAuthnAuthentication(String username) {
-        Collection<GrantedAuthority> authorities = new ArrayList<>();
-        authorities.add(new SimpleGrantedAuthority(Role.ANONYMOUS.getAuthority()));
-
-        PublicKeyCredentialUserEntity principal = mock(PublicKeyCredentialUserEntity.class);
-        when(principal.getId()).thenReturn(new Bytes(username.getBytes(StandardCharsets.UTF_8)));
-        when(principal.getName()).thenReturn(username);
-        when(principal.getDisplayName()).thenReturn(username);
-
-        return new WebAuthnAuthentication(principal, authorities);
     }
 
     private MockHttpServletResponse performRequestWithCookie(String jwt) throws Exception {
