@@ -141,10 +141,10 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
         var session = (IrisTutorSuggestionSession) irisSessionRepository.findByIdWithMessagesAndContents(job.sessionId());
         IrisMessage savedMessage;
         IrisMessage savedSuggestion;
-        if (statusUpdate.suggestion() != null || statusUpdate.result() != null) {
-            if (statusUpdate.suggestion() != null) {
+        if (statusUpdate.artifact() != null || statusUpdate.result() != null) {
+            if (statusUpdate.artifact() != null) {
                 var suggestion = new IrisMessage();
-                suggestion.addContent(new IrisTextMessageContent(statusUpdate.suggestion()));
+                suggestion.addContent(new IrisTextMessageContent(statusUpdate.artifact()));
                 savedSuggestion = irisMessageService.saveMessage(suggestion, session, IrisMessageSender.ARTIFACT);
                 irisChatWebsocketService.sendMessage(session, savedSuggestion, statusUpdate.stages());
             }
