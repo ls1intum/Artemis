@@ -151,30 +151,6 @@ public class ProgrammingExerciseGitDiffReportService {
     }
 
     /**
-     * Creates a new ProgrammingExerciseGitDiffReport for a submission with the template repository.
-     *
-     * @param exercise   The exercise for which the report should be created
-     * @param submission The submission for which the report should be created
-     * @return The report with the changes between the submission and the template
-     * @throws GitAPIException If an error occurs while accessing the git repository
-     * @throws IOException     If an error occurs while accessing the file system
-     */
-    public ProgrammingExerciseGitDiffReport createDiffReportForSubmissionWithTemplate(ProgrammingExercise exercise, ProgrammingSubmission submission)
-            throws GitAPIException, IOException {
-        var templateParticipation = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId()).orElseThrow();
-        var vcsRepositoryUri = ((ProgrammingExerciseParticipation) submission.getParticipation()).getVcsRepositoryUri();
-
-        Repository templateRepo = prepareRepository(templateParticipation.getVcsRepositoryUri());
-        Repository submissionRepository = gitService.checkoutRepositoryAtCommit(vcsRepositoryUri, submission.getCommitHash(), false);
-
-        var oldTreeParser = new FileTreeIterator(templateRepo);
-        var newTreeParser = new FileTreeIterator(submissionRepository);
-        var report = createDiffReport(templateRepo, oldTreeParser, newTreeParser);
-        gitService.switchBackToDefaultBranchHead(submissionRepository);
-        return report;
-    }
-
-    /**
      * Calculates git diff between two repositories and returns the cumulative number of diff lines.
      *
      * @param urlRepoA       url of the first repo to compare

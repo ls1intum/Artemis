@@ -13,7 +13,6 @@ import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/en
 import { TextPlagiarismResult } from 'app/plagiarism/shared/entities/text/TextPlagiarismResult';
 import { PlagiarismOptions } from 'app/plagiarism/shared/entities/PlagiarismOptions';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
-import { ProgrammingExerciseGitDiffReport } from 'app/programming/shared/entities/programming-exercise-git-diff-report.model';
 import { convertDateFromClient, convertDateFromServer } from 'app/shared/util/date.utils';
 import { SortService } from 'app/shared/service/sort.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -503,32 +502,7 @@ export class ProgrammingExerciseService {
         this.exerciseService.sendExerciseTitleToTitleService(exerciseRes?.body ?? undefined);
         return exerciseRes;
     }
-
-    /**
-     * Gets the git-diff report of a programming exercise for two specific submissions
-     * The user needs to have at least the 'instructor' authority to access this endpoint.
-     * @param exerciseId The id of a programming exercise
-     * @param olderSubmissionId The id of the older submission
-     * @param newerSubmissionId The id of the newer submission
-     */
-    getDiffReportForSubmissions(exerciseId: number, olderSubmissionId: number, newerSubmissionId: number): Observable<ProgrammingExerciseGitDiffReport | undefined> {
-        return this.http
-            .get<ProgrammingExerciseGitDiffReport>(`${this.resourceUrl}/${exerciseId}/submissions/${olderSubmissionId}/diff-report/${newerSubmissionId}`, { observe: 'response' })
-            .pipe(map((res: HttpResponse<ProgrammingExerciseGitDiffReport>) => res.body ?? undefined));
-    }
-
-    /**
-     * Gets the git-diff report of a programming exercise for a specific submission with the template
-     * The user needs to have at least the 'instructor' authority to access this endpoint.
-     * @param exerciseId The id of a programming exercise
-     * @param submissionId The id of a submission
-     */
-    getDiffReportForSubmissionWithTemplate(exerciseId: number, submissionId: number): Observable<ProgrammingExerciseGitDiffReport | undefined> {
-        return this.http
-            .get<ProgrammingExerciseGitDiffReport>(`${this.resourceUrl}/${exerciseId}/submissions/${submissionId}/diff-report-with-template`, { observe: 'response' })
-            .pipe(map((res: HttpResponse<ProgrammingExerciseGitDiffReport>) => res.body ?? undefined));
-    }
-
+    
     /**
      * Gets all files from the last solution participation repository
      */

@@ -19,7 +19,6 @@ export class GitDiffReportModalComponent {
     readonly solutionFileContentByPath = input<Map<string, string>>(new Map<string, string>());
 
     readonly diffForTemplateAndSolution = input<boolean>(true);
-    readonly cachedRepositoryFiles = input<Map<string, Map<string, string>>>(new Map<string, Map<string, string>>());
 
     readonly errorWhileFetchingRepos = signal<boolean>(false);
 
