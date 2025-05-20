@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.plagiarism.service;
 
 import static de.tum.cit.aet.artemis.plagiarism.service.PlagiarismService.filterParticipationMinimumScore;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -15,9 +16,13 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseGitDiffEntry;
+import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import jakarta.validation.constraints.NotNull;
 
+import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.treewalk.FileTreeIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -56,9 +61,9 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipatio
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.service.GitDiffReportParserService;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseExportService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGitDiffReportService;
 import de.tum.cit.aet.artemis.programming.service.UriService;
 
 @Conditional(PlagiarismEnabled.class)
@@ -90,12 +95,12 @@ public class ProgrammingPlagiarismDetectionService {
 
     private final UriService uriService;
 
-    private final ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService;
+    private final GitDiffReportParserService gitDiffReportParserService;
 
     public ProgrammingPlagiarismDetectionService(FileService fileService, ProgrammingExerciseRepository programmingExerciseRepository, PlagiarismService plagiarismService,
             GitService gitService, StudentParticipationRepository studentParticipationRepository, ProgrammingExerciseExportService programmingExerciseExportService,
             PlagiarismWebsocketService plagiarismWebsocketService, PlagiarismCacheService plagiarismCacheService, UriService uriService,
-            ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService) {
+            GitDiffReportParserService gitDiffReportParserService) {
         this.fileService = fileService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.plagiarismService = plagiarismService;
@@ -105,7 +110,7 @@ public class ProgrammingPlagiarismDetectionService {
         this.plagiarismWebsocketService = plagiarismWebsocketService;
         this.plagiarismCacheService = plagiarismCacheService;
         this.uriService = uriService;
-        this.programmingExerciseGitDiffReportService = programmingExerciseGitDiffReportService;
+        this.gitDiffReportParserService = gitDiffReportParserService;
     }
 
     /**
@@ -367,7 +372,7 @@ public class ProgrammingPlagiarismDetectionService {
             return true;
         }
 
-        var diffToTemplate = programmingExerciseGitDiffReportService.calculateNumberOfDiffLinesBetweenRepos(repo.getRemoteRepositoryUri(), repo.getLocalPath(),
+        var diffToTemplate = this.calculateNumberOfDiffLinesBetweenRepos(repo.getRemoteRepositoryUri(), repo.getLocalPath(),
                 templateRepo.get().getRemoteRepositoryUri(), templateRepo.get().getLocalPath());
         return diffToTemplate >= minimumSize;
     }
@@ -406,5 +411,32 @@ public class ProgrammingPlagiarismDetectionService {
         });
 
         return downloadedRepositories;
+    }
+
+    /**
+     * Calculates git diff between two repositories and returns the cumulative number of diff lines.
+     *
+     * @param urlRepoA       url of the first repo to compare
+     * @param localPathRepoA local path to the checked out instance of the first repo to compare
+     * @param urlRepoB       url of the second repo to compare
+     * @param localPathRepoB local path to the checked out instance of the second repo to compare
+     * @return cumulative number of lines in the git diff of given repositories
+     */
+    public int calculateNumberOfDiffLinesBetweenRepos(VcsRepositoryUri urlRepoA, Path localPathRepoA, VcsRepositoryUri urlRepoB, Path localPathRepoB) {
+        var repoA = gitService.getExistingCheckedOutRepositoryByLocalPath(localPathRepoA, urlRepoA);
+        var repoB = gitService.getExistingCheckedOutRepositoryByLocalPath(localPathRepoB, urlRepoB);
+
+        var treeParserRepoA = new FileTreeIterator(repoA);
+        var treeParserRepoB = new FileTreeIterator(repoB);
+
+        try (var diffOutputStream = new ByteArrayOutputStream(); var git = Git.wrap(repoB)) {
+            git.diff().setOldTree(treeParserRepoB).setNewTree(treeParserRepoA).setOutputStream(diffOutputStream).call();
+            var diff = diffOutputStream.toString();
+            return gitDiffReportParserService.extractDiffEntries(diff, true, false).stream().mapToInt(ProgrammingExerciseGitDiffEntry::getLineCount).sum();
+        }
+        catch (IOException | GitAPIException e) {
+            log.error("Error calculating number of diff lines between repositories: urlRepoA={}, urlRepoB={}.", urlRepoA, urlRepoB, e);
+            return Integer.MAX_VALUE;
+        }
     }
 }
