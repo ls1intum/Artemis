@@ -9,6 +9,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 })
 export class CardWrapperComponent {
     title = input.required<string>();
-    maxWidth = input<string>('35rem');
+    maxWidth = input<string>('50rem');
     minHeight = input<string>('91%');
 }
