@@ -67,11 +67,11 @@ public class JWTCookieService {
     /**
      * Builds the cookie containing the jwt for a login
      *
-     * @param rotatedJwtToken with the updated values
-     * @param duration        of the cookie in milliseconds and the jwt
+     * @param rotatedJwtToken        with the updated values
+     * @param durationInMilliseconds of the cookie in milliseconds and the jwt
      */
-    public ResponseCookie buildRotatedCookie(String rotatedJwtToken, long duration) {
-        return buildJWTCookie(rotatedJwtToken, Duration.of(duration, ChronoUnit.MILLIS));
+    public ResponseCookie buildRotatedCookie(String rotatedJwtToken, long durationInMilliseconds) {
+        return buildJWTCookie(rotatedJwtToken, Duration.of(durationInMilliseconds, ChronoUnit.MILLIS));
     }
 
     /**
