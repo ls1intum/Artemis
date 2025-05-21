@@ -20,4 +20,9 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 public interface LectureTranscriptionRepository extends ArtemisJpaRepository<LectureTranscription, Long> {
 
     Optional<LectureTranscription> findByLectureUnit_Id(Long lectureUnitId);
+
+    Optional<LectureTranscription> findByJobId(String jobId);
+
+    void flush();
+
 }

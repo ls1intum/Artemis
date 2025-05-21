@@ -10,7 +10,6 @@ import jakarta.validation.Valid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -124,30 +123,23 @@ public class LectureTranscriptionResource {
      */
 
     @PostMapping("{lectureId}/lecture-unit/{lectureUnitId}/nebula-transcriber")
-    @EnforceAtLeastInstructor
-    public ResponseEntity<?> startNebulaTranscriptionAndSave(@PathVariable Long lectureId, @PathVariable Long lectureUnitId, @RequestBody NebulaTranscriptionRequestDTO request) {
+    public ResponseEntity<?> startNebulaTranscriptionAndSave(@PathVariable Long lectureId, @PathVariable Long lectureUnitId,
+            @RequestBody @Valid NebulaTranscriptionRequestDTO request) {
         try {
-            // Call Nebula and get the transcription
-            LectureTranscriptionDTO transcriptionDTO = nebulaRestClient.post().uri(nebulaBaseUrl + "/start-transcribe").header("Content-Type", "application/json")
-                    .header("Authorization", nebulaSecretToken).body(request).retrieve().body(LectureTranscriptionDTO.class);
+            RestClient nebulaRestClient = restClientBuilder.baseUrl(nebulaBaseUrl).build();
 
-            if (transcriptionDTO.segments().isEmpty()) {
-                log.error("Nebula returned empty transcription for Lecture ID: {}, Lecture Unit ID: {}", lectureId, lectureUnitId);
-                return ResponseEntity.status(500).body("Empty transcription result from Nebula.");
-            }
+            NebulaTranscriptionInitResponseDTO response = nebulaRestClient.post().uri("/transcribe/start").header("Content-Type", "application/json")
+                    .header("Authorization", nebulaSecretToken).body(request).retrieve().body(NebulaTranscriptionInitResponseDTO.class);
 
-            // Save transcription immediately
-            LectureTranscription savedTranscription = lectureTranscriptionService.saveTranscription(lectureId, lectureUnitId, transcriptionDTO);
-            LectureTranscriptionDTO dto = new LectureTranscriptionDTO(savedTranscription.getLectureUnit().getId(), savedTranscription.getLanguage(),
-                    savedTranscription.getSegments());
-            log.info("Transcription successfully saved for Lecture ID: {}, Lecture Unit ID: {}", lectureId, lectureUnitId);
+            lectureTranscriptionService.createEmptyTranscription(lectureId, lectureUnitId, response.transcriptionId());
 
-            return ResponseEntity.ok(dto);
+            log.info("✅ Transcription started for Lecture ID {}, Unit ID {}, Job ID: {}", lectureId, lectureUnitId, response.transcriptionId());
+            return ResponseEntity.ok("Transcription started. Job ID: " + response.transcriptionId());
 
         }
         catch (Exception e) {
-            log.error("Error during Nebula transcription for Lecture ID: {}, Lecture Unit ID: {}", lectureId, lectureUnitId, e);
-            return ResponseEntity.internalServerError().body("An error occurred during transcription.");
+            log.error("❌ Error initiating transcription for Lecture ID: {}, Unit ID: {} → {}", lectureId, lectureUnitId, e.getMessage(), e);
+            return ResponseEntity.internalServerError().body("Failed to start transcription.");
         }
     }
 
