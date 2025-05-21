@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.exercise.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static java.time.ZonedDateTime.now;
 
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
@@ -222,7 +221,7 @@ public class ParticipationResource {
     @PostMapping("exercises/{exerciseId}/participations")
     @EnforceAtLeastStudentInExercise
     @AllowedTools(ToolTokenType.SCORPIO)
-    public ResponseEntity<Participation> startParticipation(@PathVariable Long exerciseId) throws URISyntaxException, MalformedURLException {
+    public ResponseEntity<Participation> startParticipation(@PathVariable Long exerciseId) throws URISyntaxException {
         log.debug("REST request to start Exercise : {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();

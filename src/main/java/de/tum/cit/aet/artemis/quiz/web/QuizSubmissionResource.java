@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.quiz.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.net.MalformedURLException;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
@@ -127,7 +126,7 @@ public class QuizSubmissionResource {
      */
     @PostMapping("exercises/{exerciseId}/submissions/practice")
     @EnforceAtLeastStudentInExercise
-    public ResponseEntity<Result> submitForPractice(@PathVariable Long exerciseId, @Valid @RequestBody QuizSubmission quizSubmission) throws MalformedURLException {
+    public ResponseEntity<Result> submitForPractice(@PathVariable Long exerciseId, @Valid @RequestBody QuizSubmission quizSubmission) {
         log.debug("REST request to submit QuizSubmission for practice : {}", quizSubmission);
 
         // recreate pointers back to submission in each submitted answer
