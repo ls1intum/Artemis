@@ -47,7 +47,7 @@ describe('CardWrapperComponent', () => {
 
         const cardElement = fixture.debugElement.query(By.css('.card'));
         expect(cardElement.nativeElement.style.maxWidth).toBe('50rem');
-        expect(cardElement.nativeElement.style.minHeight).toBe('91%');
+        expect(cardElement.nativeElement.style.minHeight).toBe('90%');
     });
 
     it('should apply provided maxWidth style', () => {
