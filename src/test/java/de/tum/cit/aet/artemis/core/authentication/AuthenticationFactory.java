@@ -21,6 +21,10 @@ import de.tum.cit.aet.artemis.core.security.Role;
  */
 public class AuthenticationFactory {
 
+    private AuthenticationFactory() {
+        // Prevent instantiation of this utility class
+    }
+
     public static WebAuthnAuthentication createWebAuthnAuthentication(String username) {
         Collection<GrantedAuthority> authorities = new ArrayList<>();
         authorities.add(new SimpleGrantedAuthority(Role.ANONYMOUS.getAuthority()));
