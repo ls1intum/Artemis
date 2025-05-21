@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ThreadLocalRandom;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -95,8 +96,8 @@ class IrisExerciseChatSessionIntegrationTest extends AbstractIrisIntegrationTest
     void createSession() throws Exception {
         var irisSession = request.postWithResponseBody(exerciseChatUrl(exercise.getId()), null, IrisExerciseChatSession.class, HttpStatus.CREATED);
         var actualIrisSession = irisExerciseChatSessionRepository.findByIdElseThrow(irisSession.getId());
-        assertThat(actualIrisSession.getUser()).isEqualTo(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
-        assertThat(exercise).isEqualTo(actualIrisSession.getExercise());
+        assertThat(actualIrisSession.getUserId()).isEqualTo(userUtilService.getUserByLogin(TEST_PREFIX + "student1").getId());
+        assertThat(exercise.getId()).isEqualTo(actualIrisSession.getExerciseId());
     }
 
     @Test
@@ -151,7 +152,7 @@ class IrisExerciseChatSessionIntegrationTest extends AbstractIrisIntegrationTest
         // Set the URL request parameters to prevent an internal server error which is irrelevant for this test
         var url = "/api/programming/programming-exercises/" + exercise.getId() + "?deleteStudentReposBuildPlans=false&deleteBaseReposBuildPlans=false";
         request.delete(url, HttpStatus.OK);
-        assertThat(irisExerciseChatSessionRepository.findById(irisSession.getId())).isEmpty();
+        assertThat(irisExerciseChatSessionRepository.findAll().stream().anyMatch(s -> Objects.equals(s.getId(), irisSession.getId()))).isFalse();
     }
 
     @Test
@@ -169,7 +170,7 @@ class IrisExerciseChatSessionIntegrationTest extends AbstractIrisIntegrationTest
         // Set the URL request parameters to prevent an internal server error which is irrelevant for this test
         var url = "/api/programming/programming-exercises/" + exercise.getId() + "?deleteStudentReposBuildPlans=false&deleteBaseReposBuildPlans=false";
         request.delete(url, HttpStatus.OK);
-        assertThat(irisExerciseChatSessionRepository.findById(irisSession.getId())).isEmpty();
+        assertThat(irisExerciseChatSessionRepository.findAll().stream().anyMatch(s -> Objects.equals(s.getId(), irisSession.getId()))).isFalse();
         assertThat(irisMessageRepository.findAllBySessionId(irisSession.getId())).isEmpty();
     }
 
@@ -188,7 +189,7 @@ class IrisExerciseChatSessionIntegrationTest extends AbstractIrisIntegrationTest
         // Set the URL request parameters to prevent an internal server error which is irrelevant for this test
         var url = "/api/programming/programming-exercises/" + exercise.getId() + "?deleteStudentReposBuildPlans=false&deleteBaseReposBuildPlans=false";
         request.delete(url, HttpStatus.OK);
-        assertThat(irisExerciseChatSessionRepository.findById(irisSession.getId())).isEmpty();
+        assertThat(irisExerciseChatSessionRepository.findAll().stream().anyMatch(s -> Objects.equals(s.getId(), irisSession.getId()))).isFalse();
         assertThat(irisMessageRepository.findAllBySessionId(irisSession.getId())).isEmpty();
     }
 
