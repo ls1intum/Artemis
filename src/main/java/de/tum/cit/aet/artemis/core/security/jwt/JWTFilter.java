@@ -76,6 +76,11 @@ public class JWTFilter extends GenericFilterBean {
      * @throws NotAuthorizedException If the token cannot be renewed due to validation or other issues.
      */
     private void rotateTokenSilently(String jwtToken, Authentication authentication, HttpServletResponse response) throws NotAuthorizedException {
+        boolean isARefreshableToken = this.tokenProvider.getAuthenticationMethod(jwtToken).equals(AuthenticationMethod.PASSKEY);
+        if (!isARefreshableToken) {
+            return;
+        }
+
         Date issuedAt = this.tokenProvider.getIssuedAtDate(jwtToken);
         Date expirationDate = this.tokenProvider.getExpirationDate(jwtToken);
 
@@ -120,7 +125,8 @@ public class JWTFilter extends GenericFilterBean {
         if (jwtToken != null) {
             Authentication authentication = this.tokenProvider.getAuthentication(jwtToken);
 
-            if (source.equals("cookie") && this.tokenProvider.getAuthenticationMethod(jwtToken).equals(AuthenticationMethod.PASSKEY) && authentication != null) {
+            boolean isConsideredASecureToken = source.equals("cookie") && this.tokenProvider.getTools(jwtToken) == null;
+            if (isConsideredASecureToken && authentication != null) {
                 rotateTokenSilently(jwtToken, authentication, httpServletResponse);
             }
 

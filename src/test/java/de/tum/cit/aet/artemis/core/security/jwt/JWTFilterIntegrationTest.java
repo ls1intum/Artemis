@@ -26,6 +26,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.core.authentication.AuthenticationFactory;
+import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.util.CookieParserTestUtil;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -260,6 +261,27 @@ class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndependentTest 
 
                 String jwt = tokenProvider.createToken(authentication, issuedAt, expiration, null, null);
                 assertThat(tokenProvider.getAuthenticationMethod(jwt)).isEqualTo(AuthenticationMethod.PASSWORD);
+
+                MockHttpServletResponse response = performRequest(jwt, false);
+
+                String setCookieHeader = response.getHeader(HttpHeaders.SET_COOKIE);
+                assertThat(setCookieHeader).isNull();
+            }
+
+            /**
+             * Except for setting a {@link ToolTokenType} this test should be similar to a test that rotates the token (e.g.
+             * {@link ShouldRotateTests#testMoreThanHalfOfLifetimeUsed}
+             */
+            @Test
+            void testToolTokenCannotBeRefreshed() throws Exception {
+                Authentication authentication = AuthenticationFactory.createWebAuthnAuthentication(USER_NAME);
+
+                long moreThanHalfOfTokenValidityPassed = (long) (TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 0.6 * 1000);
+                Date issuedAt = new Date(System.currentTimeMillis() - moreThanHalfOfTokenValidityPassed);
+                Date expiration = new Date(issuedAt.getTime() + TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 1000);
+
+                String jwt = tokenProvider.createToken(authentication, issuedAt, expiration, ToolTokenType.SCORPIO, true);
+                assertThat(tokenProvider.getAuthenticationMethod(jwt)).isEqualTo(AuthenticationMethod.PASSKEY);
 
                 MockHttpServletResponse response = performRequest(jwt, false);
 
