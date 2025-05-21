@@ -43,11 +43,11 @@ describe('IrisStatusService', () => {
         let isActive: boolean;
         service.getActiveStatus().subscribe((active) => {
             isActive = active;
-            expect(isActive).toBeTrue();
+            expect(isActive).toBeFalse();
         });
         const req = httpMock.expectOne('api/iris/status');
         expect(req.request.method).toBe('GET');
-        req.flush({ active: true, rateLimitInfo: { currentMessageCount: 100, rateLimit: 50, rateLimitTimeframeHours: 0 } });
+        req.flush({ active: false, rateLimitInfo: { currentMessageCount: 100, rateLimit: 50, rateLimitTimeframeHours: 0 } });
         tick();
     }));
 
