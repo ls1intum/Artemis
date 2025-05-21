@@ -44,7 +44,7 @@ export class PostingContentPartComponent implements OnInit, OnChanges {
     hasClickedUserReference = false;
 
     // Only allow certain html tags and attributes
-    allowedHtmlTags: string[] = ['a', 'b', 'br', 'blockquote', 'code', 'del', 'em', 'i', 'ins', 'mark', 'p', 'pre', 'small', 's', 'span', 'strong', 'sub', 'sup'];
+    allowedHtmlTags: string[] = ['a', 'b', 'br', 'blockquote', 'code', 'del', 'em', 'i', 'ins', 'li', 'mark', 'p', 'pre', 'small', 's', 'span', 'strong', 'sub', 'sup', 'ul', 'ol'];
     allowedHtmlAttributes: string[] = ['href'];
 
     // icons
@@ -83,13 +83,13 @@ export class PostingContentPartComponent implements OnInit, OnChanges {
         if (this.postingContentPart()?.contentBeforeReference) {
             this.processedContentBeforeReference = this.escapeNumberedList(this.postingContentPart()?.contentBeforeReference || '');
             this.processedContentBeforeReference = this.escapeUnorderedList(this.processedContentBeforeReference);
-            this.processedContentBeforeReference = this.processedContentBeforeReference.replace(/\n{2,}/g, '\n\u200B\n');
+            this.processedContentBeforeReference = this.processedContentBeforeReference.replace(/\n{2,}/g, '\n\u200B');
         }
 
         if (this.postingContentPart()?.contentAfterReference) {
             this.processedContentAfterReference = this.escapeNumberedList(this.postingContentPart()?.contentAfterReference || '');
             this.processedContentAfterReference = this.escapeUnorderedList(this.processedContentAfterReference);
-            this.processedContentAfterReference = this.processedContentBeforeReference.replace(/\n{2,}/g, '\n\u200B\n');
+            this.processedContentAfterReference = this.processedContentBeforeReference.replace(/\n{2,}/g, '\n\u200B');
         }
     }
 
