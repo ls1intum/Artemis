@@ -1,8 +1,8 @@
-import { Component, DoCheck, Input, OnInit, inject } from '@angular/core';
+import { Component, DoCheck, Input, OnDestroy, OnInit, inject } from '@angular/core';
 import { IrisSettings, IrisSettingsType } from 'app/iris/shared/entities/settings/iris-settings.model';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ButtonComponent, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { faRotate, faSave } from '@fortawesome/free-solid-svg-icons';
@@ -13,6 +13,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { IrisCommonSubSettingsUpdateComponent } from './iris-common-sub-settings-update/iris-common-sub-settings-update.component';
 import { FormsModule } from '@angular/forms';
 import { captureException } from '@sentry/angular';
+import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { IrisEmptySettingsService } from 'app/iris/manage/settings/shared/iris-empty-settings.service';
 
 @Component({
@@ -20,9 +21,10 @@ import { IrisEmptySettingsService } from 'app/iris/manage/settings/shared/iris-e
     templateUrl: './iris-settings-update.component.html',
     imports: [ButtonComponent, TranslateDirective, IrisCommonSubSettingsUpdateComponent, FormsModule],
 })
-export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCanDeactivate {
+export class IrisSettingsUpdateComponent implements OnInit, OnDestroy, DoCheck, ComponentCanDeactivate {
     private irisSettingsService = inject(IrisSettingsService);
     private alertService = inject(AlertService);
+    private featureToggleService = inject(FeatureToggleService);
     private irisEmptySettingService = inject(IrisEmptySettingsService);
 
     @Input()
@@ -38,6 +40,9 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
 
     public autoLectureIngestion = false;
     public autoFaqIngestion = false;
+
+    featureToggleSubscription?: Subscription;
+    tutorSuggestionFeatureEnabled = false;
 
     // Status bools
     isLoading = false;
@@ -64,6 +69,13 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
 
     ngOnInit(): void {
         this.loadIrisSettings();
+        this.featureToggleSubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.TutorSuggestions).subscribe((active) => {
+            this.tutorSuggestionFeatureEnabled = active;
+        });
+    }
+
+    ngOnDestroy(): void {
+        this.featureToggleSubscription?.unsubscribe();
     }
 
     ngDoCheck(): void {
