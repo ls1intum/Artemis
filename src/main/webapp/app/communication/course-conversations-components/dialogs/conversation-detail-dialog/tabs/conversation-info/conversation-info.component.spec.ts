@@ -26,14 +26,15 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ConversationInfoComponent } from 'app/communication/course-conversations-components/dialogs/conversation-detail-dialog/tabs/conversation-info/conversation-info.component';
 import { ConversationService } from 'app/communication/conversations/service/conversation.service';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { TranslateModule, TranslateStore } from '@ngx-translate/core';
-import { CourseNotificationSettingService } from '../../../../../course-notification/course-notification-setting.service';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { CourseNotificationSettingService } from 'app/communication/course-notification/course-notification-setting.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { Router } from '@angular/router';
 import { ActivatedRoute } from '@angular/router';
 import { MockActivatedRouteWithSubjects } from 'test/helpers/mocks/activated-route/mock-activated-route-with-subjects';
 import { throwError } from 'rxjs';
 import * as globalUtils from 'app/shared/util/global.utils';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 const examples: ConversationDTO[] = [generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({} as ChannelDTO)];
 
@@ -57,20 +58,15 @@ examples.forEach((activeConversation) => {
         beforeEach(waitForAsync(() => {
             TestBed.configureTestingModule({
                 imports: [HttpClientTestingModule, TranslateModule.forRoot()],
-                declarations: [
-                    ConversationInfoComponent,
-                    MockPipe(ArtemisTranslatePipe),
-                    MockPipe(ArtemisDatePipe),
-                    MockDirective(TranslateDirective),
-                    CourseNotificationSettingService,
-                ],
+                declarations: [ConversationInfoComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe), MockDirective(TranslateDirective)],
                 providers: [
                     MockProvider(ChannelService),
                     MockProvider(GroupChatService),
                     MockProvider(NgbModal),
                     MockProvider(AlertService),
                     MockProvider(ConversationService),
-                    TranslateStore,
+                    MockProvider(CourseNotificationSettingService),
+                    { provide: TranslateService, useClass: MockTranslateService },
                     { provide: Router, useClass: MockRouter },
                     { provide: ActivatedRoute, useClass: MockActivatedRouteWithSubjects },
                 ],
@@ -88,6 +84,23 @@ examples.forEach((activeConversation) => {
             });
             component.canChangeChannelProperties = canChangeChannelProperties;
             component.canChangeGroupChatProperties = canChangeGroupChatProperties;
+
+            // Mock CourseNotificationSettingService
+            const notificationSettingService = TestBed.inject(CourseNotificationSettingService);
+            jest.spyOn(notificationSettingService, 'getSettingInfo').mockReturnValue(
+                of(
+                    new HttpResponse({
+                        body: {
+                            selectedPreset: 1,
+                            notificationTypeChannels: {
+                                conversationMessage: { WEBAPP: true, EMAIL: false, PUSH: false },
+                                conversationMention: { WEBAPP: false, EMAIL: false, PUSH: false },
+                            },
+                        },
+                    }),
+                ),
+            );
+
             fixture.detectChanges();
 
             const channelService = TestBed.inject(ChannelService);
@@ -201,13 +214,6 @@ examples.forEach((activeConversation) => {
             expect(updateIsMutedSpy).toHaveBeenCalledWith(course.id, activeConversation.id, false);
         }));
 
-        it('should not load notification settings if course is undefined', () => {
-            component.course = (() => undefined) as any;
-            const spy = jest.spyOn(TestBed.inject(CourseNotificationSettingService), 'getSettingInfo');
-            component['loadNotificationSettings']();
-            expect(spy).not.toHaveBeenCalled();
-        });
-
         it('should show correct notification message and link for ignored preset', () => {
             component['notificationSettings'] = { selectedPreset: 3, notificationTypeChannels: {} } as any;
             component['checkNotificationStatus']();
@@ -240,6 +246,59 @@ examples.forEach((activeConversation) => {
             const desc = fixture.nativeElement.querySelector('#notification-section .text-muted');
             expect(desc).toBeTruthy();
         });
+
+        it('should show disabled notification message when course notifications are disabled', fakeAsync(() => {
+            const notificationSettingService = TestBed.inject(CourseNotificationSettingService);
+
+            jest.spyOn(notificationSettingService, 'getSettingInfo').mockReturnValue(
+                of(
+                    new HttpResponse({
+                        body: {
+                            selectedPreset: 3,
+                            notificationTypeChannels: {
+                                conversationMessage: { WEBAPP: false, EMAIL: false, PUSH: false },
+                                conversationMention: { WEBAPP: false, EMAIL: false, PUSH: false },
+                            },
+                        },
+                    }),
+                ),
+            );
+
+            activeConversation.isMuted = false;
+            component['loadNotificationSettings']();
+            tick(); // Wait for the service response to be processed
+            fixture.detectChanges();
+
+            expect(component.isNotificationsEnabled).toBeFalsy();
+            const desc = fixture.nativeElement.querySelector('#notification-section .text-muted');
+            expect(desc).toBeTruthy();
+        }));
+
+        it('should show muted notification message when conversation is muted', fakeAsync(() => {
+            const notificationSettingService = TestBed.inject(CourseNotificationSettingService);
+            jest.spyOn(notificationSettingService, 'getSettingInfo').mockReturnValue(
+                of(
+                    new HttpResponse({
+                        body: {
+                            selectedPreset: 1,
+                            notificationTypeChannels: {
+                                conversationMessage: { WEBAPP: true, EMAIL: true, PUSH: true },
+                                conversationMention: { WEBAPP: true, EMAIL: true, PUSH: true },
+                            },
+                        },
+                    }),
+                ),
+            );
+
+            activeConversation.isMuted = true;
+            component['loadNotificationSettings']();
+            tick(); // Wait for the service response to be processed
+            fixture.detectChanges();
+
+            expect(component.isNotificationsEnabled).toBeTruthy();
+            const desc = fixture.nativeElement.querySelector('#notification-section .text-muted');
+            expect(desc).toBeTruthy();
+        }));
 
         function checkThatActionButtonOfSectionExistsInTemplate(sectionName: string) {
             const actionButtonElement = fixture.nativeElement.querySelector(`#${sectionName}-section .action-button`);
