@@ -76,12 +76,12 @@ describe('IrisEnabledComponent', () => {
         componentRef.setInput('exercise', exercise);
         componentRef.setInput('irisSubSettingsType', IrisSubSettingsType.CHAT);
         comp.irisSettings = irisSettings;
-        comp.irisSubSettings = irisSettings.irisChatSettings;
+        comp.irisSubSettings.set(irisSettings.irisChatSettings);
 
         comp.setEnabled(true);
         expect(setSettingsSpy).toHaveBeenCalledOnce();
         await Promise.resolve();
-        expect(comp.irisSubSettings?.enabled).toBeTrue();
+        expect(comp.irisSubSettings()?.enabled).toBeTrue();
     });
 
     it('should set course enabled', async () => {
@@ -89,12 +89,12 @@ describe('IrisEnabledComponent', () => {
         componentRef.setInput('course', course);
         comp.irisSettings = irisSettings;
         componentRef.setInput('irisSubSettingsType', IrisSubSettingsType.CHAT);
-        comp.irisSubSettings = irisSettings.irisChatSettings;
+        comp.irisSubSettings.set(irisSettings.irisChatSettings);
 
         comp.setEnabled(true);
         expect(setSettingsSpy).toHaveBeenCalledOnce();
         await Promise.resolve();
-        expect(comp.irisSubSettings?.enabled).toBeTrue();
+        expect(comp.irisSubSettings()?.enabled).toBeTrue();
     });
     it('should set all subsettings to enabled when IrisSubSettingsType is ALL and setEnabled is called with true', async () => {
         const setSettingsSpy = jest.spyOn(irisSettingsService, 'setCourseSettings').mockReturnValue(of(new HttpResponse({ body: null as any as IrisSettings })));
@@ -129,7 +129,7 @@ describe('IrisEnabledComponent', () => {
         expect(comp.irisSettings!.irisFaqIngestionSettings?.enabled).toBe(expectedStatus);
         expect(comp.irisSettings!.irisLectureIngestionSettings?.enabled).toBe(expectedStatus);
         expect(comp.irisSettings!.irisTutorSuggestionSettings?.enabled).toBe(expectedStatus);
-        expect(comp.someButNotAllSettingsEnabled).toBeFalse();
+        expect(comp.someButNotAllSettingsEnabled()).toBeFalse();
     }
 
     it('should create new subsettings if they do not exist when IrisSubSettingsType is ALL and setEnabled is called', async () => {
@@ -160,7 +160,7 @@ describe('IrisEnabledComponent', () => {
         componentRef.setInput('irisSubSettingsType', IrisSubSettingsType.ALL);
         fixture.detectChanges();
 
-        expect(comp.irisSubSettings?.enabled).toBeTrue();
-        expect(comp.someButNotAllSettingsEnabled).toBeTrue();
+        expect(comp.irisSubSettings()?.enabled).toBeTrue();
+        expect(comp.someButNotAllSettingsEnabled()).toBeTrue();
     });
 });
