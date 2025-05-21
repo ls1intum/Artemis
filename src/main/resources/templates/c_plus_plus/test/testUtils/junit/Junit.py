@@ -26,6 +26,14 @@ class Junit:
             if element.text:
                 element.text = self.strip_ansi_codes(element.text)
 
+        root: Et.Element = Et.Element("testsuites")
+        root.append(suiteXml)
+        root.extend(self.additionalSuites)
+        tree: Et.ElementTree = Et.ElementTree(root)
+        self.createOutputPath(outputPath)
+        tree.write(outputPath, xml_declaration=True)
+        chmod(outputPath, 0o644)
+
     @staticmethod
     def strip_ansi_codes(text):
         """Entferne ANSI-Farbcodes aus dem Text"""
