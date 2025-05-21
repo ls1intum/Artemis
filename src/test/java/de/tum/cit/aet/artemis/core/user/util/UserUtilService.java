@@ -410,7 +410,7 @@ public class UserUtilService {
         User instructor = createOrReuseExistingUser(instructorName, UserFactory.USER_PASSWORD);
         String[] groups = new String[] { instructorGroup, "testgroup" };
         instructor.setGroups(Set.of(groups));
-        instructor.setAuthorities(tutorAuthorities);
+        instructor.setAuthorities(instructorAuthorities);
         instructor = userTestRepository.save(instructor);
         assertThat(instructor.getId()).as("Instructor has been created").isNotNull();
     }
@@ -425,7 +425,7 @@ public class UserUtilService {
         User editor = createOrReuseExistingUser(editorName, UserFactory.USER_PASSWORD);
         String[] groups = new String[] { editorGroup, "testgroup" };
         editor.setGroups(Set.of(groups));
-        editor.setAuthorities(tutorAuthorities);
+        editor.setAuthorities(editorAuthorities);
         editor = userTestRepository.save(editor);
         assertThat(editor.getId()).as("Editor has been created").isNotNull();
     }
