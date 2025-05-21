@@ -83,11 +83,13 @@ export class PostingContentPartComponent implements OnInit, OnChanges {
         if (this.postingContentPart()?.contentBeforeReference) {
             this.processedContentBeforeReference = this.escapeNumberedList(this.postingContentPart()?.contentBeforeReference || '');
             this.processedContentBeforeReference = this.escapeUnorderedList(this.processedContentBeforeReference);
+            this.processedContentBeforeReference = this.processedContentBeforeReference.replace(/\n{2,}/g, '\n\u200B\n');
         }
 
         if (this.postingContentPart()?.contentAfterReference) {
             this.processedContentAfterReference = this.escapeNumberedList(this.postingContentPart()?.contentAfterReference || '');
             this.processedContentAfterReference = this.escapeUnorderedList(this.processedContentAfterReference);
+            this.processedContentAfterReference = this.processedContentBeforeReference.replace(/\n{2,}/g, '\n\u200B\n');
         }
     }
 
