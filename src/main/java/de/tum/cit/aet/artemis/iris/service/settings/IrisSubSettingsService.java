@@ -152,7 +152,7 @@ public class IrisSubSettingsService {
             currentSettings = new IrisCourseChatSubSettings();
         }
 
-        if (settingsType == IrisSettingsType.COURSE || settingsType == IrisSettingsType.GLOBAL) {
+        if (isCourseOrGlobalSettings(settingsType)) {
             currentSettings.setEnabled(newSettings.isEnabled());
 
             if (authCheckService.isAdmin()) {
@@ -166,6 +166,10 @@ public class IrisSubSettingsService {
         }
 
         return currentSettings;
+    }
+
+    private static boolean isCourseOrGlobalSettings(IrisSettingsType settingsType) {
+        return settingsType == IrisSettingsType.COURSE || settingsType == IrisSettingsType.GLOBAL;
     }
 
     /**
@@ -191,7 +195,7 @@ public class IrisSubSettingsService {
             currentSettings = new IrisLectureIngestionSubSettings();
         }
 
-        if (settingsType == IrisSettingsType.COURSE || settingsType == IrisSettingsType.GLOBAL) {
+        if (isCourseOrGlobalSettings(settingsType)) {
             currentSettings.setEnabled(newSettings.isEnabled());
             currentSettings.setAutoIngestOnLectureAttachmentUpload(newSettings.getAutoIngestOnLectureAttachmentUpload());
         }
@@ -222,7 +226,7 @@ public class IrisSubSettingsService {
             currentSettings = new IrisLectureChatSubSettings();
         }
 
-        if (settingsType == IrisSettingsType.COURSE || settingsType == IrisSettingsType.GLOBAL) {
+        if (isCourseOrGlobalSettings(settingsType)) {
             currentSettings.setEnabled(newSettings.isEnabled());
             if (authCheckService.isAdmin()) {
                 currentSettings.setRateLimit(newSettings.getRateLimit());
@@ -259,7 +263,7 @@ public class IrisSubSettingsService {
             currentSettings = new IrisFaqIngestionSubSettings();
         }
 
-        if (settingsType == IrisSettingsType.COURSE || settingsType == IrisSettingsType.GLOBAL) {
+        if (isCourseOrGlobalSettings(settingsType)) {
             currentSettings.setEnabled(newSettings.isEnabled());
             currentSettings.setAutoIngestOnFaqCreation(newSettings.getAutoIngestOnFaqCreation());
         }
@@ -292,7 +296,7 @@ public class IrisSubSettingsService {
             currentSettings = new IrisCompetencyGenerationSubSettings();
         }
 
-        if (settingsType == IrisSettingsType.COURSE || settingsType == IrisSettingsType.GLOBAL) {
+        if (isCourseOrGlobalSettings(settingsType)) {
             currentSettings.setEnabled(newSettings.isEnabled());
             currentSettings.setAllowedVariants(selectAllowedVariants(currentSettings.getAllowedVariants(), newSettings.getAllowedVariants()));
             currentSettings.setSelectedVariant(validateSelectedVariant(currentSettings.getSelectedVariant(), newSettings.getSelectedVariant(), currentSettings.getAllowedVariants(),
@@ -327,7 +331,7 @@ public class IrisSubSettingsService {
             currentSettings = new IrisTutorSuggestionSubSettings();
         }
 
-        if (settingsType == IrisSettingsType.COURSE || settingsType == IrisSettingsType.GLOBAL) {
+        if (isCourseOrGlobalSettings(settingsType)) {
             currentSettings.setEnabled(newSettings.isEnabled());
             currentSettings.setAllowedVariants(selectAllowedVariants(currentSettings.getAllowedVariants(), newSettings.getAllowedVariants()));
             currentSettings.setSelectedVariant(validateSelectedVariant(currentSettings.getSelectedVariant(), newSettings.getSelectedVariant(), currentSettings.getAllowedVariants(),
@@ -422,10 +426,10 @@ public class IrisSubSettingsService {
      * @return Combined lecture chat settings.
      */
     public IrisCombinedLectureChatSubSettingsDTO combineLectureChatSettings(ArrayList<IrisSettings> settingsList, boolean minimal) {
-        var enabled = getCombinedEnabled(settingsList, IrisSettings::getIrisLectureChatSettings);
-        var rateLimit = getCombinedRateLimit(settingsList);
-        var allowedVariants = !minimal ? getCombinedAllowedVariants(settingsList, IrisSettings::getIrisLectureChatSettings) : null;
-        var selectedVariant = !minimal ? getCombinedSelectedVariant(settingsList, IrisSettings::getIrisLectureChatSettings) : null;
+        boolean enabled = getCombinedEnabled(settingsList, IrisSettings::getIrisLectureChatSettings);
+        Integer rateLimit = getCombinedRateLimit(settingsList);
+        SortedSet<String> allowedVariants = !minimal ? getCombinedAllowedVariants(settingsList, IrisSettings::getIrisLectureChatSettings) : null;
+        String selectedVariant = !minimal ? getCombinedSelectedVariant(settingsList, IrisSettings::getIrisLectureChatSettings) : null;
         return new IrisCombinedLectureChatSubSettingsDTO(enabled, rateLimit, null, allowedVariants, selectedVariant);
     }
 
