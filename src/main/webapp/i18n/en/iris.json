@@ -41,6 +41,7 @@
                         "autoIngest": "Send FAQs To Iris Automatically"
                     },
                     "competencyGenerationSettings": "Competency Generation Settings",
+                    "tutorSuggestionSettings": "Tutor Suggestion Settings",
                     "proactivityBuildFailedEventEnabled": {
                         "label": "Monitor submission build failures",
                         "tooltip": "When enabled, Iris will proactively send help messages if a submission build fails."
@@ -102,6 +103,10 @@
             },
             "chat": {
                 "helpOffer": "How can I help you today?"
+            },
+            "tutorSuggestion": {
+                "loading": "Loading suggestions...",
+                "noIris": "Iris is currently unavailable."
             },
             "chatBubble": {
                 "seeFull": "See full message"
