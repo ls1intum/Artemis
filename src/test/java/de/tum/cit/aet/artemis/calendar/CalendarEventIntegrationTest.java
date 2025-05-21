@@ -66,7 +66,7 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
     @Test
     @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
     void shouldReturnEmptyMapForStudentWhenUserOnlyPartOfNonActiveCourse() throws Exception {
-        setupOnlyNonActiveCourseScenario();
+        setupNonActiveCourseScenario();
 
         String monthKeys = YearMonth.now().toString();
         String URL = assembleURL(monthKeys);
@@ -78,7 +78,7 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
     @Test
     @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
     void shouldReturnEmptyMapForTutorWhenUserOnlyPartOfNonActiveCourse() throws Exception {
-        setupOnlyNonActiveCourseScenario();
+        setupNonActiveCourseScenario();
 
         String monthKeys = YearMonth.now().toString();
         String URL = assembleURL(monthKeys);

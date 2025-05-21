@@ -24,7 +24,6 @@ import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
-import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupSessionRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.test_repository.TutorialGroupTestRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.util.TutorialGroupUtilService;
@@ -94,34 +93,41 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
     }
 
     void setupActiveCourseWithParticipatedGroupAndActiveSessionsScenario() {
-        createActiveCourse();
-        createParticipatedTutorialGroup();
-        createActiveTutorialGroupSessions();
+        course = courseUtilService.createActiveCourseInTimezone(ZoneId.of(TEST_TIMEZONE), 1, 3);
+        tutorialGroup = tutorialGroupUtilService.createTutorialGroup(course.getId(), "Test Tutorial Group", "", 10, false, "Garching", "English", tutor,
+                new HashSet<>(Set.of(student)));
+        tutorialGroupSessions = tutorialGroupUtilService.createActiveTutorialGroupSessions(tutorialGroup, course, 12);
     }
 
     void setupUserNotPartOfAnyCourseScenario() {
-        createActiveCourse();
-        createUsersNotPartOfCourse();
-        createParticipatedTutorialGroup();
-        createActiveTutorialGroupSessions();
+        course = courseUtilService.createActiveCourseInTimezone(ZoneId.of(TEST_TIMEZONE), 1, 3);
+        userUtilService.addStudent("notstudent", TEST_PREFIX + "notstudent");
+        userUtilService.addTeachingAssistant("nottutor", TEST_PREFIX + "nottutor");
+        tutorialGroup = tutorialGroupUtilService.createTutorialGroup(course.getId(), "Test Tutorial Group", "", 10, false, "Garching", "English", tutor,
+                new HashSet<>(Set.of(student)));
+        tutorialGroupSessions = tutorialGroupUtilService.createActiveTutorialGroupSessions(tutorialGroup, course, 12);
     }
 
-    void setupOnlyNonActiveCourseScenario() {
-        createNonActiveCourse();
-        createParticipatedTutorialGroup();
-        createActiveTutorialGroupSessions();
+    void setupNonActiveCourseScenario() {
+        course = courseUtilService.createNonActiveCourseInTimezone(ZoneId.of(TEST_TIMEZONE), 6, 2);
+        tutorialGroup = tutorialGroupUtilService.createTutorialGroup(course.getId(), "Test Tutorial Group", "", 10, false, "Garching", "English", tutor,
+                new HashSet<>(Set.of(student)));
+        tutorialGroupSessions = tutorialGroupUtilService.createActiveTutorialGroupSessions(tutorialGroup, course, 12);
     }
 
     void setupActiveCourseWithoutParticipatedTutorialGroupScenario() {
-        createActiveCourse();
-        createNonParticipatedTutorialGroup();
-        createActiveTutorialGroupSessions();
+        course = courseUtilService.createActiveCourseInTimezone(ZoneId.of(TEST_TIMEZONE), 1, 3);
+        userUtilService.addTeachingAssistant("tutor", TEST_PREFIX + "othertutor");
+        User otherTutor = userRepository.getUserByLoginElseThrow(TEST_PREFIX + "othertutor");
+        tutorialGroup = tutorialGroupUtilService.createTutorialGroup(course.getId(), "Test Tutorial Group", "", 10, false, "Garching", "English", otherTutor, new HashSet<>());
+        tutorialGroupSessions = tutorialGroupUtilService.createActiveTutorialGroupSessions(tutorialGroup, course, 12);
     }
 
     void setupActiveCourseWithParticipatedGroupAndActiveAndCancelledSessionsScenario() {
-        createActiveCourse();
-        createParticipatedTutorialGroup();
-        createActiveAndCancelledTutorialGroupSessions();
+        course = courseUtilService.createActiveCourseInTimezone(ZoneId.of(TEST_TIMEZONE), 1, 3);
+        tutorialGroup = tutorialGroupUtilService.createTutorialGroup(course.getId(), "Test Tutorial Group", "", 10, false, "Garching", "English", tutor,
+                new HashSet<>(Set.of(student)));
+        tutorialGroupSessions = tutorialGroupUtilService.createActiveAndCancelledTutorialGroupSessions(tutorialGroup, course, 12, 2);
     }
 
     String getMonthsSpanningCurrentTestCourseAsMonthKeys() {
@@ -138,69 +144,5 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
 
     String assembleURL(String monthKeys) {
         return URL_WITHOUT_QUERY_PARAMETERS + "?monthKeys=" + monthKeys + "&timeZone=" + TEST_TIMEZONE;
-    }
-
-    private void createNonActiveCourse() {
-        ZoneId testZone = ZoneId.of(TEST_TIMEZONE);
-        ZonedDateTime now = ZonedDateTime.now(testZone).withDayOfMonth(1);
-        ZonedDateTime courseStart = now.minusMonths(6);
-        ZonedDateTime courseEnd = now.minusMonths(2);
-        course = courseUtilService.createCourseWithStartDateAndEndDate(courseStart, courseEnd);
-    }
-
-    private void createActiveCourse() {
-        ZoneId testZone = ZoneId.of(TEST_TIMEZONE);
-        ZonedDateTime now = ZonedDateTime.now(testZone).withDayOfMonth(1);
-        ZonedDateTime courseStart = now.minusMonths(1);
-        ZonedDateTime courseEnd = now.plusMonths(3);
-        course = courseUtilService.createCourseWithStartDateAndEndDate(courseStart, courseEnd);
-    }
-
-    private void createUsersNotPartOfCourse() {
-        userUtilService.addStudent("notstudent", TEST_PREFIX + "notstudent");
-        userUtilService.addTeachingAssistant("nottutor", TEST_PREFIX + "nottutor");
-    }
-
-    private void createParticipatedTutorialGroup() {
-        tutorialGroup = tutorialGroupUtilService.createTutorialGroup(course.getId(), "Test Tutorial Group", "", 10, false, "Garching", "English", tutor,
-                new HashSet<>(Set.of(student)));
-    }
-
-    private void createNonParticipatedTutorialGroup() {
-        userUtilService.addTeachingAssistant("tutor", TEST_PREFIX + "othertutor");
-        User otherTutor = userRepository.getUserByLoginElseThrow(TEST_PREFIX + "othertutor");
-        tutorialGroup = tutorialGroupUtilService.createTutorialGroup(course.getId(), "Test Tutorial Group", "", 10, false, "Garching", "English", otherTutor, new HashSet<>());
-    }
-
-    private void createActiveTutorialGroupSessions() {
-        ZoneId testZone = ZoneId.of(TEST_TIMEZONE);
-        ZonedDateTime courseStart = course.getStartDate().withZoneSameInstant(testZone);
-        ZonedDateTime firstSessionStart = courseStart.plusWeeks(1).withHour(12).withMinute(0).withSecond(0).withNano(0);
-        ZonedDateTime firstSessionEnd = firstSessionStart.plusHours(2);
-        tutorialGroupSessions = createWeeklyTutorialGroupSessions(tutorialGroup.getId(), firstSessionStart, firstSessionEnd, 12, 0);
-    }
-
-    private void createActiveAndCancelledTutorialGroupSessions() {
-        ZoneId testZone = ZoneId.of(TEST_TIMEZONE);
-        ZonedDateTime courseStart = course.getStartDate().withZoneSameInstant(testZone);
-        ZonedDateTime firstSessionStart = courseStart.plusWeeks(1).withHour(12).withMinute(0).withSecond(0).withNano(0);
-        ZonedDateTime firstSessionEnd = firstSessionStart.plusHours(2);
-        tutorialGroupSessions = createWeeklyTutorialGroupSessions(tutorialGroup.getId(), firstSessionStart, firstSessionEnd, 12, 2);
-    }
-
-    private List<TutorialGroupSession> createWeeklyTutorialGroupSessions(Long tutorialGroupId, ZonedDateTime firstSessionStart, ZonedDateTime firstSessionEnd, int repetitionCount,
-            int numberOfCancelledSessions) {
-        List<TutorialGroupSession> sessions = new LinkedList<>();
-        for (int i = 0; i < repetitionCount; i++) {
-            ZonedDateTime sessionStart = firstSessionStart.plusWeeks(i);
-            ZonedDateTime sessionEnd = firstSessionEnd.plusWeeks(i);
-
-            boolean shouldCancel = i < numberOfCancelledSessions;
-            TutorialGroupSession session = tutorialGroupUtilService.createIndividualTutorialGroupSession(tutorialGroupId, sessionStart, sessionEnd, null,
-                    shouldCancel ? TutorialGroupSessionStatus.CANCELLED : TutorialGroupSessionStatus.ACTIVE, shouldCancel ? "Cancelled for test purposes" : null);
-
-            sessions.add(session);
-        }
-        return sessions;
     }
 }
