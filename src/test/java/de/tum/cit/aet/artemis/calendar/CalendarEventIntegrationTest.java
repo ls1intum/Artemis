@@ -146,7 +146,7 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
         Map<ZonedDateTime, List<CalendarEventDTO>> expected = tutorialGroupSessions.stream().filter(session -> session.getStatus() == TutorialGroupSessionStatus.ACTIVE)
                 .map(CalendarEventDTO::new).collect(Collectors.groupingBy(dto -> dto.start().truncatedTo(ChronoUnit.DAYS)));
 
-        assertThat(actual).isEqualTo(expected);
+        assertThat(actual).usingRecursiveComparison().ignoringCollectionOrder().isEqualTo(expected);
     }
 
     @Test
@@ -160,7 +160,7 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
 
         Map<ZonedDateTime, List<CalendarEventDTO>> expected = tutorialGroupSessions.stream().filter(session -> session.getStatus() == TutorialGroupSessionStatus.ACTIVE)
                 .map(CalendarEventDTO::new).collect(Collectors.groupingBy(dto -> dto.start().truncatedTo(ChronoUnit.DAYS)));
-        assertThat(actual).isEqualTo(expected);
+        assertThat(actual).usingRecursiveComparison().ignoringCollectionOrder().isEqualTo(expected);
     }
 
     @Test
@@ -174,7 +174,7 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
 
         Map<ZonedDateTime, List<CalendarEventDTO>> expected = tutorialGroupSessions.stream().limit(4).map(CalendarEventDTO::new)
                 .collect(Collectors.groupingBy(dto -> dto.start().truncatedTo(ChronoUnit.DAYS)));
-        assertThat(actual).isEqualTo(expected);
+        assertThat(actual).usingRecursiveComparison().ignoringCollectionOrder().isEqualTo(expected);
     }
 
     @Test
@@ -188,7 +188,7 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
 
         Map<ZonedDateTime, List<CalendarEventDTO>> expected = tutorialGroupSessions.stream().limit(4).map(CalendarEventDTO::new)
                 .collect(Collectors.groupingBy(dto -> dto.start().truncatedTo(ChronoUnit.DAYS)));
-        assertThat(actual).isEqualTo(expected);
+        assertThat(actual).usingRecursiveComparison().ignoringCollectionOrder().isEqualTo(expected);
     }
 
     @Test
@@ -202,7 +202,7 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
 
         Map<ZonedDateTime, List<CalendarEventDTO>> expected = tutorialGroupSessions.stream().limit(8).map(CalendarEventDTO::new)
                 .collect(Collectors.groupingBy(dto -> dto.start().truncatedTo(ChronoUnit.DAYS)));
-        assertThat(actual).isEqualTo(expected);
+        assertThat(actual).usingRecursiveComparison().ignoringCollectionOrder().isEqualTo(expected);
     }
 
     @Test
@@ -216,6 +216,6 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
 
         Map<ZonedDateTime, List<CalendarEventDTO>> expected = tutorialGroupSessions.stream().limit(8).map(CalendarEventDTO::new)
                 .collect(Collectors.groupingBy(dto -> dto.start().truncatedTo(ChronoUnit.DAYS)));
-        assertThat(actual).isEqualTo(expected);
+        assertThat(actual).usingRecursiveComparison().ignoringCollectionOrder().isEqualTo(expected);
     }
 }

@@ -33,13 +33,13 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
 
     static final String TEST_PREFIX = "calendarevent";
 
-    static final String STUDENT_LOGIN = TEST_PREFIX + "student1";
+    static final String STUDENT_LOGIN = TEST_PREFIX + "student";
 
-    static final String TUTOR_LOGIN = TEST_PREFIX + "tutor1";
+    static final String TUTOR_LOGIN = TEST_PREFIX + "tutor";
 
-    static final String NOT_STUDENT_LOGIN = TEST_PREFIX + "notstudent1";
+    static final String NOT_STUDENT_LOGIN = TEST_PREFIX + "notstudent";
 
-    static final String NOT_TUTOR_LOGIN = TEST_PREFIX + "nottutor1";
+    static final String NOT_TUTOR_LOGIN = TEST_PREFIX + "nottutor";
 
     private static final String URL_WITHOUT_QUERY_PARAMETERS = "/api/calendar/calendar-events";
 
@@ -168,7 +168,7 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
 
     private void createNonParticipatedTutorialGroup() {
         userUtilService.addTeachingAssistant("tutor", TEST_PREFIX + "othertutor");
-        User otherTutor = userRepository.getUserByLoginElseThrow(TEST_PREFIX + "othertutor1");
+        User otherTutor = userRepository.getUserByLoginElseThrow(TEST_PREFIX + "othertutor");
         tutorialGroup = tutorialGroupUtilService.createTutorialGroup(course.getId(), "Test Tutorial Group", "", 10, false, "Garching", "English", otherTutor, new HashSet<>());
     }
 
