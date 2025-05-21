@@ -4,10 +4,11 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { QuizQuestion, QuizQuestionType } from '../../shared/entities/quiz-question.model';
 import { MultipleChoiceQuestion } from '../../shared/entities/multiple-choice-question.model';
 import { AnswerOption } from '../../shared/entities/answer-option.model';
-import { CoursePracticeQuizService } from './course-practice-quiz.service';
+import { CoursePracticeQuizService } from '../service/course-practice-quiz.service';
 import { MockBuilder } from 'ng-mocks';
 import { of } from 'rxjs';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateModule } from '@ngx-translate/core';
 
 const question1: QuizQuestion = {
@@ -43,14 +44,17 @@ describe('CoursePracticeQuizComponent', () => {
     beforeEach(async () => {
         await MockBuilder(CoursePracticeQuizComponent)
             .keep(Router)
-            .keep(HttpClientTestingModule)
             .keep(TranslateModule)
-            .provide({
-                provide: ActivatedRoute,
-                useValue: {
-                    parent: { params: of({ courseId: 1 }) },
+            .provide([
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                {
+                    provide: ActivatedRoute,
+                    useValue: {
+                        parent: { params: of({ courseId: 1 }) },
+                    },
                 },
-            });
+            ]);
 
         fixture = TestBed.createComponent(CoursePracticeQuizComponent);
         component = fixture.componentInstance;

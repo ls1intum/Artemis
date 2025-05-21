@@ -2,7 +2,7 @@ import { Component, Input, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription, combineLatest, of } from 'rxjs';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
-import { CoursePracticeQuizService } from 'app/quiz/overview/course-practice-quiz/course-practice-quiz.service';
+import { CoursePracticeQuizService } from 'app/quiz/overview/service/course-practice-quiz.service';
 import { MultipleChoiceQuestionComponent } from 'app/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
 import { ShortAnswerQuestionComponent } from 'app/quiz/shared/questions/short-answer-question/short-answer-question.component';
 import { DragAndDropQuestionComponent } from 'app/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
