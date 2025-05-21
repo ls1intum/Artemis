@@ -1,6 +1,7 @@
 from os import chmod, makedirs, path
 from typing import Tuple, List
 from xml.etree import ElementTree as Et
+import re
 
 from testUtils.junit.TestSuite import TestSuite
 
@@ -16,14 +17,20 @@ class Junit:
 
     def toXml(self, outputPath: str) -> None:
         suiteXml: Et.Element = self.suite.toXml()
-        root: Et.Element = Et.Element("testsuites")
-        root.append(suiteXml)
-        root.extend(self.additionalSuites)
-        tree: Et.ElementTree = Et.ElementTree(root)
-        self.createOutputPath(outputPath)
-        tree.write(outputPath, xml_declaration=True)
-        # Ensure nobody can edit our results:
-        chmod(outputPath, 0o644)
+
+        # ANSI-Farbcodes aus den Attributen und Texten entfernen
+        for element in suiteXml.iter():
+            for key, value in element.attrib.items():
+                if isinstance(value, str):
+                    element.attrib[key] = self.strip_ansi_codes(value)
+            if element.text:
+                element.text = self.strip_ansi_codes(element.text)
+
+    @staticmethod
+    def strip_ansi_codes(text):
+        """Entferne ANSI-Farbcodes aus dem Text"""
+        ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+        return ansi_escape.sub('', text)
 
     @staticmethod
     def createOutputPath(outputPath: str) -> None:
