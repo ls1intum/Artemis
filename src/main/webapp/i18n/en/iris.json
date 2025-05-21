@@ -131,7 +131,7 @@
                 "transcriptionIngestionError": "Error while sending transcription"
             },
             "controlCenter": {
-                "tooltip": "By toggling you enable or disable ALL Iris features for this course. For a more granular control, please use the Iris settings by clicking on Custom."
+                "tooltip": "By toggling you enable or disable ALL Iris features for this course. For a more precise control, please use the Iris settings by clicking on Custom."
             }
         }
     }

@@ -131,7 +131,7 @@
                 "transcriptionIngestionError": "Fehler beim Senden einer Vorlesungstranskription"
             },
             "controlCenter": {
-                "tooltip": "Durch das Umschalten aktivierst oder deaktivierst du ALLE Iris Features für diesen Kurs. Für eine granularere Kontrolle nutze bitte die Iris Einstellungen, indem du auf Benutzerdefiniert klickst."
+                "tooltip": "Durch das Umschalten aktivierst oder deaktivierst du ALLE Iris Features für diesen Kurs. Für eine gezieltere Kontrolle nutze bitte die Iris Einstellungen, indem du auf Benutzerdefinierst klickst."
             }
         }
     }

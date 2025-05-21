@@ -78,9 +78,7 @@ public class IrisSubSettingsService {
         if (currentSettings == null) {
             currentSettings = new IrisChatSubSettings();
         }
-        if (settingsType == IrisSettingsType.EXERCISE || authCheckService.isAdmin()) {
-            currentSettings.setEnabled(newSettings.isEnabled());
-        }
+        currentSettings.setEnabled(newSettings.isEnabled());
         if (settingsType == IrisSettingsType.COURSE) {
             var enabledForCategories = newSettings.getEnabledForCategories();
             currentSettings.setEnabledForCategories(enabledForCategories);
@@ -122,7 +120,7 @@ public class IrisSubSettingsService {
         if (currentSettings == null) {
             currentSettings = new IrisTextExerciseChatSubSettings();
         }
-        if (settingsType == IrisSettingsType.EXERCISE || authCheckService.isAdmin()) {
+        if (settingsType == IrisSettingsType.EXERCISE) {
             currentSettings.setEnabled(newSettings.isEnabled());
         }
         if (settingsType == IrisSettingsType.COURSE) {
@@ -159,8 +157,8 @@ public class IrisSubSettingsService {
         if (currentSettings == null) {
             currentSettings = new IrisCourseChatSubSettings();
         }
+        currentSettings.setEnabled(newSettings.isEnabled());
         if (authCheckService.isAdmin()) {
-            currentSettings.setEnabled(newSettings.isEnabled());
             currentSettings.setRateLimit(newSettings.getRateLimit());
             currentSettings.setRateLimitTimeframeHours(newSettings.getRateLimitTimeframeHours());
         }
@@ -193,8 +191,11 @@ public class IrisSubSettingsService {
             currentSettings = new IrisLectureIngestionSubSettings();
         }
 
-        if (authCheckService.isAdmin() && (settingsType == IrisSettingsType.COURSE || settingsType == IrisSettingsType.GLOBAL)) {
+        if (settingsType == IrisSettingsType.COURSE || settingsType == IrisSettingsType.GLOBAL) {
             currentSettings.setEnabled(newSettings.isEnabled());
+        }
+
+        if (authCheckService.isAdmin() && (settingsType == IrisSettingsType.COURSE || settingsType == IrisSettingsType.GLOBAL)) {
             currentSettings.setAutoIngestOnLectureAttachmentUpload(newSettings.getAutoIngestOnLectureAttachmentUpload());
         }
 
@@ -224,7 +225,7 @@ public class IrisSubSettingsService {
             currentSettings = new IrisLectureChatSubSettings();
         }
 
-        if (authCheckService.isAdmin() && (settingsType == IrisSettingsType.COURSE || settingsType == IrisSettingsType.GLOBAL)) {
+        if (settingsType == IrisSettingsType.COURSE || settingsType == IrisSettingsType.GLOBAL) {
             currentSettings.setEnabled(newSettings.isEnabled());
         }
 
@@ -254,8 +255,11 @@ public class IrisSubSettingsService {
             currentSettings = new IrisFaqIngestionSubSettings();
         }
 
-        if (authCheckService.isAdmin() && (settingsType == IrisSettingsType.COURSE || settingsType == IrisSettingsType.GLOBAL)) {
+        if (settingsType == IrisSettingsType.COURSE || settingsType == IrisSettingsType.GLOBAL) {
             currentSettings.setEnabled(newSettings.isEnabled());
+        }
+
+        if (authCheckService.isAdmin() && (settingsType == IrisSettingsType.COURSE || settingsType == IrisSettingsType.GLOBAL)) {
             currentSettings.setAutoIngestOnFaqCreation(newSettings.getAutoIngestOnFaqCreation());
         }
 
@@ -286,8 +290,9 @@ public class IrisSubSettingsService {
         if (currentSettings == null) {
             currentSettings = new IrisCompetencyGenerationSubSettings();
         }
+
+        currentSettings.setEnabled(newSettings.isEnabled());
         if (authCheckService.isAdmin()) {
-            currentSettings.setEnabled(newSettings.isEnabled());
             currentSettings.setAllowedVariants(selectAllowedVariants(currentSettings.getAllowedVariants(), newSettings.getAllowedVariants()));
         }
         currentSettings.setSelectedVariant(validateSelectedVariant(currentSettings.getSelectedVariant(), newSettings.getSelectedVariant(), currentSettings.getAllowedVariants(),
@@ -319,8 +324,9 @@ public class IrisSubSettingsService {
         if (currentSettings == null) {
             currentSettings = new IrisTutorSuggestionSubSettings();
         }
+
+        currentSettings.setEnabled(newSettings.isEnabled());
         if (authCheckService.isAdmin()) {
-            currentSettings.setEnabled(newSettings.isEnabled());
             currentSettings.setAllowedVariants(selectAllowedVariants(currentSettings.getAllowedVariants(), newSettings.getAllowedVariants()));
         }
         currentSettings.setSelectedVariant(validateSelectedVariant(currentSettings.getSelectedVariant(), newSettings.getSelectedVariant(), currentSettings.getAllowedVariants(),

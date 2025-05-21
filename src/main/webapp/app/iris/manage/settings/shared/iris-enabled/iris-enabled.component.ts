@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, input } from '@angular/core';
+import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
 import { IrisSubSettings, IrisSubSettingsType } from 'app/iris/shared/entities/settings/iris-sub-settings.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { IrisSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
@@ -30,8 +30,11 @@ export class IrisEnabledComponent implements OnInit {
     showCustomButton = input<boolean>(false);
 
     irisSettings?: IrisSettings;
-    irisSubSettings?: IrisSubSettings;
-    someButNotAllSettingsEnabled = false;
+    irisSubSettings = signal<IrisSubSettings | undefined>(undefined);
+    someButNotAllSettingsEnabled = signal(false);
+
+    readonly enabledHighlighted = computed(() => this.irisSubSettings()?.enabled && !this.someButNotAllSettingsEnabled());
+    readonly disabledHighlighted = computed(() => !this.irisSubSettings()?.enabled && !this.someButNotAllSettingsEnabled());
 
     ngOnInit(): void {
         if (this.exercise()) {
@@ -48,8 +51,8 @@ export class IrisEnabledComponent implements OnInit {
     }
 
     setEnabled(enabled: boolean) {
-        if (this.irisSubSettings && this.irisSubSettingsType() != IrisSubSettingsType.ALL) {
-            this.irisSubSettings.enabled = enabled;
+        if (this.irisSubSettings() && this.irisSubSettingsType() != IrisSubSettingsType.ALL) {
+            this.irisSubSettings()!.enabled = enabled;
             if (this.exercise()) {
                 this.irisSettingsService.setExerciseSettings(this.exercise()!.id!, this.irisSettings!).subscribe((response) => {
                     this.irisSettings = response.body ?? this.irisSettings;
@@ -90,22 +93,22 @@ export class IrisEnabledComponent implements OnInit {
     private setSubSettings() {
         switch (this.irisSubSettingsType()) {
             case IrisSubSettingsType.CHAT:
-                this.irisSubSettings = this.irisSettings?.irisChatSettings;
+                this.irisSubSettings.set(this.irisSettings?.irisChatSettings);
                 break;
             case IrisSubSettingsType.ALL:
                 this.handleSubSettingsTypeAll();
                 break;
             case IrisSubSettingsType.TEXT_EXERCISE_CHAT:
-                this.irisSubSettings = this.irisSettings?.irisTextExerciseChatSettings;
+                this.irisSubSettings.set(this.irisSettings?.irisTextExerciseChatSettings);
                 break;
             case IrisSubSettingsType.COURSE_CHAT:
-                this.irisSubSettings = this.irisSettings?.irisCourseChatSettings;
+                this.irisSubSettings.set(this.irisSettings?.irisCourseChatSettings);
                 break;
             case IrisSubSettingsType.COMPETENCY_GENERATION:
-                this.irisSubSettings = this.irisSettings?.irisCompetencyGenerationSettings;
+                this.irisSubSettings.set(this.irisSettings?.irisCompetencyGenerationSettings);
                 break;
             case IrisSubSettingsType.LECTURE_INGESTION:
-                this.irisSubSettings = this.irisSettings?.irisLectureIngestionSettings;
+                this.irisSubSettings.set(this.irisSettings?.irisLectureIngestionSettings);
                 break;
         }
     }
@@ -125,7 +128,7 @@ export class IrisEnabledComponent implements OnInit {
         const allEnabled = subSettings.every((settings) => settings?.enabled);
         const anyEnabled = subSettings.some((settings) => settings?.enabled);
 
-        this.irisSubSettings = { type: IrisSubSettingsType.ALL, enabled: anyEnabled };
-        this.someButNotAllSettingsEnabled = anyEnabled && !allEnabled;
+        this.irisSubSettings.set({ type: IrisSubSettingsType.ALL, enabled: anyEnabled });
+        this.someButNotAllSettingsEnabled.set(anyEnabled && !allEnabled);
     }
 }
