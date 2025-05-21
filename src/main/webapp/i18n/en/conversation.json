@@ -177,7 +177,7 @@
                     "muteChannel": "Mute Channel",
                     "unmuteChannel": "Unmute Channel",
                     "notificationsDisabled": "Course-wide notifications are disabled.",
-                    "seeSettingsPrefix": " See ",
+                    "seeSettingsPrefix": " See",
                     "seeSettingsLink": "notification settings."
                 }
             },

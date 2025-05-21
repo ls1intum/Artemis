@@ -177,7 +177,7 @@
                     "muteChannel": "Kanal stummschalten",
                     "unmuteChannel": "Stummschaltung des Kanals aufheben",
                     "notificationsDisabled": "Kursweite Benachrichtigungen sind deaktiviert.",
-                    "seeSettingsPrefix": " Siehe ",
+                    "seeSettingsPrefix": " Siehe",
                     "seeSettingsLink": "Benachrichtigungseinstellungen."
                 }
             },
