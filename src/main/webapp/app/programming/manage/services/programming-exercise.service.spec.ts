@@ -16,8 +16,6 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/solution-programming-exercise-participation.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
-import { ProgrammingExerciseGitDiffReport } from 'app/programming/shared/entities/programming-exercise-git-diff-report.model';
-import { ProgrammingExerciseGitDiffEntry } from 'app/programming/shared/entities/programming-exercise-git-diff-entry.model';
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
 import { provideHttpClient } from '@angular/common/http';
 import { RepositoryType } from '../../shared/code-editor/model/code-editor.model';
@@ -297,29 +295,6 @@ describe('ProgrammingExercise Service', () => {
         tick();
     }));
 
-    it('should make GET request to retrieve diff between submission and template', fakeAsync(() => {
-        const exerciseId = 1;
-        const submissionId = 2;
-        const expected = { id: 1, entries: [] } as unknown as ProgrammingExerciseGitDiffReport;
-        service.getDiffReportForSubmissionWithTemplate(exerciseId, submissionId).subscribe((resp) => expect(resp).toEqual(expected));
-        const url = `${resourceUrl}/${exerciseId}/submissions/${submissionId}/diff-report-with-template`;
-        const req = httpMock.expectOne({ method: 'GET', url });
-        req.flush(expected);
-        tick();
-    }));
-
-    it('should make GET request to retrieve diff between submissions', fakeAsync(() => {
-        const exerciseId = 1;
-        const submissionId = 2;
-        const submissionId2 = 3;
-        const expected = { id: 1, entries: [new ProgrammingExerciseGitDiffEntry()] } as unknown as ProgrammingExerciseGitDiffReport;
-        service.getDiffReportForSubmissions(exerciseId, submissionId, submissionId2).subscribe((resp) => expect(resp).toEqual(expected));
-        const url = `${resourceUrl}/${exerciseId}/submissions/${submissionId}/diff-report/${submissionId2}`;
-        const req = httpMock.expectOne({ method: 'GET', url });
-        req.flush(expected);
-        tick();
-    }));
-
     it('should generate Structure Oracle', fakeAsync(() => {
         const exerciseId = 1;
         const expectedResult = 'oracle-structure';
@@ -398,7 +373,6 @@ describe('ProgrammingExercise Service', () => {
         { uri: 'check-plagiarism', method: 'checkPlagiarism' },
         { uri: 'plagiarism-result', method: 'getLatestPlagiarismResult' },
         { uri: 'test-case-state', method: 'getProgrammingExerciseTestCaseState' },
-        { uri: 'diff-report', method: 'getDiffReport' },
     ])('should call correct exercise endpoint', (test) =>
         fakeAsync(() => {
             const exerciseId = 1;

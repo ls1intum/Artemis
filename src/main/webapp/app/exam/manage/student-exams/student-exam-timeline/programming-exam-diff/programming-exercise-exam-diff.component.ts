@@ -20,7 +20,7 @@ import { ButtonComponent } from 'app/shared/components/buttons/button/button.com
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
-import { processRepositoryDiff, RepositoryDiffInformation } from 'app/shared/monaco-editor/diff-editor/util/monaco-diff-editor.util';
+import { RepositoryDiffInformation, processRepositoryDiff } from 'app/shared/monaco-editor/diff-editor/util/monaco-diff-editor.util';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -66,6 +66,10 @@ export class ProgrammingExerciseExamDiffComponent extends ExamSubmissionComponen
 
     ngOnInit() {
         // we subscribe to the exercise id because this allows us to avoid reloading the diff report every time the user switches between submission timestamps
+        this.cachedRepositoryFilesService.getCachedRepositoryFilesObservable().subscribe((cachedRepositoryFiles) => {
+            this.cachedRepositoryFiles = cachedRepositoryFiles;
+        });
+
         this.exerciseIdSubscription = this.exerciseIdSubject()
             .pipe(debounceTime(200))
             .subscribe(() => {
@@ -156,9 +160,6 @@ export class ProgrammingExerciseExamDiffComponent extends ExamSubmissionComponen
         const modalRef = this.modalService.open(GitDiffReportModalComponent, { windowClass: GitDiffReportModalComponent.WINDOW_CLASS });
         modalRef.componentInstance.repositoryDiffInformation = signal(this.cachedDiffInformation().get(this.calculateMapKey())!);
         modalRef.componentInstance.diffForTemplateAndSolution = signal(false);
-        this.cachedRepositoryFilesService.getCachedRepositoryFilesObservable().subscribe((cachedRepositoryFiles) => {
-            this.cachedRepositoryFiles = cachedRepositoryFiles;
-        });
     }
 
     private calculateMapKey() {

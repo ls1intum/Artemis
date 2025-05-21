@@ -10,7 +10,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { GitDiffReportModalComponent } from 'app/programming/shared/git-diff-report/git-diff-report-modal/git-diff-report-modal.component';
-import { ProgrammingExerciseGitDiffEntry } from 'app/programming/shared/entities/programming-exercise-git-diff-entry.model';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { CachedRepositoryFilesService } from 'app/programming/manage/services/cached-repository-files.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -21,27 +20,41 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { input } from '@angular/core';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-
+import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
+import { MockProgrammingExerciseParticipationService } from 'test/helpers/mocks/service/mock-programming-exercise-participation.service';
+import { MockProgrammingExerciseService } from 'test/helpers/mocks/service/mock-programming-exercise.service';
+import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model.ts';
+import { RepositoryDiffInformation } from 'app/shared/monaco-editor/diff-editor/util/monaco-diff-editor.util';
 describe('ProgrammingExerciseExamDiffComponent', () => {
     let component: ProgrammingExerciseExamDiffComponent;
     let fixture: ComponentFixture<ProgrammingExerciseExamDiffComponent>;
     let programmingExerciseService: ProgrammingExerciseService;
+    let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
     let cachedRepositoryFilesService: CachedRepositoryFilesService;
     let modal: NgbModal;
-    const report = {
-        id: 1,
-        entries: [
+
+    const mockDiffInformation = {
+        diffInformations: [
             {
-                previousFilePath: 'abc',
-                previousStartLine: 1,
-                previousLineCount: 1,
-                lineCount: 3,
-                startLine: 2,
-                filePath: 'abc',
-                id: 1,
-            } as ProgrammingExerciseGitDiffEntry,
+                originalFileContent: 'testing line differences',
+                modifiedFileContent: 'testing line diff\nnew line',
+                originalPath: 'Example.java',
+                modifiedPath: 'Example.java',
+                diffReady: false,
+                fileStatus: 'unchanged',
+                lineChange: {
+                    addedLineCount: 2,
+                    removedLineCount: 1,
+                },
+                title: 'Example.java',
+            },
         ],
-    } as ProgrammingExerciseGitDiffReport;
+        totalLineChange: {
+            addedLineCount: 2,
+            removedLineCount: 1,
+        },
+    } as unknown as RepositoryDiffInformation;
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             declarations: [ProgrammingExerciseExamDiffComponent, MockComponent(CommitsInfoComponent), MockPipe(ArtemisTranslatePipe), MockComponent(IncludedInScoreBadgeComponent)],
@@ -49,6 +62,8 @@ describe('ProgrammingExerciseExamDiffComponent', () => {
                 { provide: NgbModal, useValue: new MockNgbModalService() },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
+                { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -56,77 +71,84 @@ describe('ProgrammingExerciseExamDiffComponent', () => {
         fixture = TestBed.createComponent(ProgrammingExerciseExamDiffComponent);
         component = fixture.componentInstance;
         programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
+        programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
         modal = TestBed.inject(NgbModal);
         cachedRepositoryFilesService = TestBed.inject(CachedRepositoryFilesService);
-        const exercise = { id: 3, title: 'prog' } as ProgrammingExercise;
+        //cachedRepositoryFilesService.emitCachedRepositoryFiles(new Map<string, Map<string, string>>());
+        const exercise = { id: 3, title: 'programming exercise' } as ProgrammingExercise;
         const studentParticipation = {} as StudentParticipation;
         component.exercise.set(exercise);
         component.studentParticipation.set(studentParticipation);
         fixture.detectChanges();
     });
 
-    it('should call getDiffReportForSubmissions when loading diff report if previous submission is defined', () => {
-        const diffForSubmissionsSpy = jest.spyOn(programmingExerciseService, 'getDiffReportForSubmissions').mockReturnValue(of(report));
-        const diffForSubmissionWithTemplateSpy = jest.spyOn(programmingExerciseService, 'getDiffReportForSubmissionWithTemplate').mockReturnValue(
-            of({
-                id: 2,
-            } as ProgrammingExerciseGitDiffReport),
-        );
-        const previousSubmission = { id: 1 };
-        const currentSubmission = { id: 2 };
+    it('should call getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView when fetching repository if previous submission is defined', () => {
+        const getRepositoryFilesSpy = jest
+            .spyOn(programmingExerciseParticipationService, 'getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView')
+            .mockReturnValueOnce(of(new Map([[mockDiffInformation.diffInformations[0].originalPath, mockDiffInformation.diffInformations[0].originalFileContent]])))
+            .mockReturnValueOnce(of(new Map([[mockDiffInformation.diffInformations[0].modifiedPath, mockDiffInformation.diffInformations[0].modifiedFileContent]])));
+        const getTemplateRepositorySpy = jest.spyOn(programmingExerciseService, 'getTemplateRepositoryTestFilesWithContent');
+        const previousSubmission = { commitHash: 'abc', participation: { id: 1 } };
+        const currentSubmission = { commitHash: 'def', participation: { id: 2 } };
         component.previousSubmission.update(() => previousSubmission);
         component.currentSubmission.update(() => currentSubmission);
-        component.loadGitDiffReport();
-        expect(diffForSubmissionsSpy).toHaveBeenCalledExactlyOnceWith(3, 1, 2);
-        expect(diffForSubmissionWithTemplateSpy).not.toHaveBeenCalled();
-        expect(component.addedLineCount).toBe(3);
-        expect(component.removedLineCount).toBe(1);
+        component.fetchRepositoriesAndProcessDiff();
+        expect(getRepositoryFilesSpy).toHaveBeenCalledTimes(2);
+        expect(getRepositoryFilesSpy).toHaveBeenNthCalledWith(1, 3, 1, 'abc', RepositoryType.USER);
+        expect(getRepositoryFilesSpy).toHaveBeenNthCalledWith(2, 3, 2, 'def', RepositoryType.USER);
+        expect(getTemplateRepositorySpy).not.toHaveBeenCalled();
+        expect(component.diffInformation().totalLineChange.addedLineCount).toBe(mockDiffInformation.totalLineChange.addedLineCount);
+        expect(component.diffInformation().totalLineChange.removedLineCount).toBe(mockDiffInformation.totalLineChange.removedLineCount);
     });
 
-    it('should call getDiffReportForSubmissionWithTemplate when loading diff report if previous submission is undefined', () => {
-        const diffForSubmissionsSpy = jest.spyOn(programmingExerciseService, 'getDiffReportForSubmissions').mockReturnValue(of({ id: 1 } as ProgrammingExerciseGitDiffReport));
-        const diffForSubmissionWithTemplateSpy = jest
-            .spyOn(programmingExerciseService, 'getDiffReportForSubmissionWithTemplate')
-            .mockReturnValue(of({ id: 2 } as ProgrammingExerciseGitDiffReport));
+    it('should call getTemplateRepositoryTestFilesWithContent when loading diff report if previous submission is undefined', () => {
+        const getRepositoryFilesSpy = jest
+            .spyOn(programmingExerciseParticipationService, 'getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView')
+            .mockReturnValue(of(new Map<string, string>()));
+        const getTemplateRepositorySpy = jest.spyOn(programmingExerciseService, 'getTemplateRepositoryTestFilesWithContent').mockReturnValue(of(new Map<string, string>()));
         component.previousSubmission.update(() => undefined);
-        const currentSubmission = { id: 2 };
+        const currentSubmission = { commitHash: 'def', participation: { id: 2 } };
         component.currentSubmission.update(() => currentSubmission);
-        const exercise = { id: 3 } as ProgrammingExercise;
-        component.exercise.update(() => exercise);
-        component.loadGitDiffReport();
-        expect(diffForSubmissionWithTemplateSpy).toHaveBeenCalledOnce();
-        expect(diffForSubmissionsSpy).not.toHaveBeenCalled();
+        component.fetchRepositoriesAndProcessDiff();
+        expect(getRepositoryFilesSpy).toHaveBeenCalledExactlyOnceWith(3, 2, 'def', RepositoryType.USER);
+        expect(getTemplateRepositorySpy).toHaveBeenCalledExactlyOnceWith(3);
     });
 
     it('should open the modal when showGitDiff is called', () => {
         const modalServiceSpy = jest.spyOn(modal, 'open');
         const exercise = { id: 1 } as ProgrammingExercise;
         component.exercise.update(() => exercise);
+
+        // Set up cached diff information
+        const previousSubmission = { id: 1, commitHash: 'abc' };
+        const currentSubmission = { id: 2, commitHash: 'def' };
+        component.previousSubmission.update(() => previousSubmission);
+        component.currentSubmission.update(() => currentSubmission);
+
+        const cachedDiffInfo = new Map<string, any>();
+        const key = JSON.stringify([previousSubmission.id, currentSubmission.id]);
+        cachedDiffInfo.set(key, { someDiffInfo: 'test' });
+        TestBed.runInInjectionContext(() => {
+            component.cachedDiffInformation = input(cachedDiffInfo);
+        });
+        component.fetchRepositoriesAndProcessDiff();
         component.showGitDiff();
-        expect(modalServiceSpy).toHaveBeenCalledExactlyOnceWith(GitDiffReportModalComponent, { windowClass: GitDiffReportModalComponent.WINDOW_CLASS });
+        expect(modalServiceSpy).toHaveBeenCalledWith(GitDiffReportModalComponent, { windowClass: GitDiffReportModalComponent.WINDOW_CLASS });
     });
 
-    it('should use reports from cache if available', fakeAsync(() => {
-        const diffForSubmissionsSpy = jest.spyOn(programmingExerciseService, 'getDiffReportForSubmissions');
-        const diffForSubmissionWithTemplateSpy = jest.spyOn(programmingExerciseService, 'getDiffReportForSubmissionWithTemplate');
-        const previousSubmission = { id: 1 };
+    it('should use diffInformation from cache if available', fakeAsync(() => {
+        const getRepositoryFilesSpy = jest.spyOn(programmingExerciseParticipationService, 'getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView');
+        const getTemplateRepositorySpy = jest.spyOn(programmingExerciseService, 'getTemplateRepositoryTestFilesWithContent');
+        const previousSubmission = { id: 1, commitHash: 'abc' };
         component.previousSubmission.update(() => previousSubmission);
-        const currentSubmission = { id: 2 };
+        const currentSubmission = { id: 2, commitHash: 'def' };
         component.currentSubmission.update(() => currentSubmission);
         const exercise = { id: 3 } as ProgrammingExercise;
         component.exercise.update(() => exercise);
-        const cachedDiffReports = new Map<string, ProgrammingExerciseGitDiffReport>();
-        const expectedReport = {
-            id: 1,
-            leftCommitHash: 'abc',
-            rightCommitHash: 'def',
-            participationIdForLeftCommit: 1,
-            participationIdForRightCommit: 2,
-            programmingExercise: component.exercise,
-        } as unknown as ProgrammingExerciseGitDiffReport;
-        cachedDiffReports.set(JSON.stringify([1, 2]), expectedReport);
+        const cachedDiffInformation = new Map<string, RepositoryDiffInformation>();
+        cachedDiffInformation.set(JSON.stringify([1, 2]), mockDiffInformation);
         TestBed.runInInjectionContext(() => {
-            component.cachedDiffReports = input(cachedDiffReports);
+            component.cachedDiffInformation = input(cachedDiffInformation);
         });
         component.ngOnInit();
         component.exerciseIdSubject.update((subject) => {
@@ -135,16 +157,19 @@ describe('ProgrammingExerciseExamDiffComponent', () => {
         });
         // tick 200 is needed because the observable uses debounceTime(200)
         tick(200);
-        expect(component.exercise().gitDiffReport).toEqual(expectedReport);
-        expect(diffForSubmissionWithTemplateSpy).not.toHaveBeenCalled();
-        expect(diffForSubmissionsSpy).not.toHaveBeenCalled();
+        expect(component.diffInformation()).toEqual(mockDiffInformation);
+        expect(getRepositoryFilesSpy).not.toHaveBeenCalled();
+        expect(getTemplateRepositorySpy).not.toHaveBeenCalled();
     }));
 
     it('should load report if not in cache', fakeAsync(() => {
-        const diffForSubmissionsSpy = jest.spyOn(programmingExerciseService, 'getDiffReportForSubmissions').mockReturnValue(of(report));
-        const previousSubmission = { id: 1 };
+        const getRepositoryFilesSpy = jest
+            .spyOn(programmingExerciseParticipationService, 'getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView')
+            .mockReturnValueOnce(of(new Map([[mockDiffInformation.diffInformations[0].originalPath, mockDiffInformation.diffInformations[0].originalFileContent]])))
+            .mockReturnValueOnce(of(new Map([[mockDiffInformation.diffInformations[0].modifiedPath, mockDiffInformation.diffInformations[0].modifiedFileContent]])));
+        const previousSubmission = { id: 1, commitHash: 'abc', participation: { id: 1 } };
         component.previousSubmission.update(() => previousSubmission);
-        const currentSubmission = { id: 2 };
+        const currentSubmission = { id: 2, commitHash: 'def', participation: { id: 2 } };
         component.currentSubmission.update(() => currentSubmission);
         const exercise = { id: 3 } as ProgrammingExercise;
         component.exercise.update(() => exercise);
@@ -159,15 +184,17 @@ describe('ProgrammingExerciseExamDiffComponent', () => {
         });
         // tick 200 is needed because the observable uses debounceTime(200)
         tick(200);
-        expect(component.exercise().gitDiffReport).toEqual(report);
-        expect(diffForSubmissionsSpy).toHaveBeenCalledExactlyOnceWith(3, 1, 2);
+        expect(component.diffInformation()).toEqual(mockDiffInformation);
+        expect(getRepositoryFilesSpy).toHaveBeenCalledTimes(2);
+        expect(getRepositoryFilesSpy).toHaveBeenNthCalledWith(1, 3, 1, 'abc', RepositoryType.USER);
+        expect(getRepositoryFilesSpy).toHaveBeenNthCalledWith(2, 3, 2, 'def', RepositoryType.USER);
     }));
 
     it('should subscribe to CachedRepositoryFilesChange event', () => {
         const cachedFiles = new Map<string, Map<string, string>>();
         cachedFiles.set('abc', new Map<string, string>());
         const cachedRepositoryFilesServiceSpy = jest.spyOn(cachedRepositoryFilesService, 'getCachedRepositoryFilesObservable').mockReturnValue(of(cachedFiles));
-        component.showGitDiff();
+        component.ngOnInit();
         expect(cachedRepositoryFilesServiceSpy).toHaveBeenCalled();
         expect(component.cachedRepositoryFiles).toEqual(cachedFiles);
     });

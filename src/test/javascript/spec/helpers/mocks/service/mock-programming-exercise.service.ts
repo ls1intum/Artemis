@@ -23,4 +23,6 @@ export class MockProgrammingExerciseService {
     delete = (programmingExerciseId: number, deleteStudentReposBuildPlans: boolean, deleteBaseReposBuildPlans: boolean) => of({});
     generateStructureOracle = (exerciseId: number) => of({});
     getCheckoutDirectoriesForProgrammingLanguage = (programmingLanguage: ProgrammingLanguage, checkoutSolution: boolean) => of();
+    getTemplateRepositoryTestFilesWithContent = (exerciseId: number) => of(new Map<string, string>());
+    getSolutionRepositoryTestFilesWithContent = (exerciseId: number) => of(new Map<string, string>());
 }

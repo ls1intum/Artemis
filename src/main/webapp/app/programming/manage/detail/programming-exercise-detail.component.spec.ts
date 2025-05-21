@@ -26,12 +26,11 @@ import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/en
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ProgrammingLanguageFeatureService } from 'app/programming/shared/services/programming-language-feature/programming-language-feature.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { ProgrammingExerciseGitDiffReport } from 'app/programming/shared/entities/programming-exercise-git-diff-report.model';
 import { SubmissionPolicyService } from 'app/programming/manage/services/submission-policy.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProfileInfo, ProgrammingLanguageFeature } from 'app/core/layouts/profiles/profile-info.model';
 import { MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
-
+import { RepositoryDiffInformation } from 'app/exam/shared/entities/repository-diff-information.model';
 describe('ProgrammingExerciseDetailComponent', () => {
     let comp: ProgrammingExerciseDetailComponent;
     let fixture: ComponentFixture<ProgrammingExerciseDetailComponent>;
@@ -42,9 +41,10 @@ describe('ProgrammingExerciseDetailComponent', () => {
     let submissionPolicyService: SubmissionPolicyService;
     let programmingLanguageFeatureService: ProgrammingLanguageFeatureService;
     let statisticsServiceStub: jest.SpyInstance;
-    let gitDiffReportStub: jest.SpyInstance;
     let submissionPolicyServiceStub: jest.SpyInstance;
     let findWithTemplateAndSolutionParticipationStub: jest.SpyInstance;
+    let getTemplateRepositoryFilesStub: jest.SpyInstance;
+    let getSolutionRepositoryFilesStub: jest.SpyInstance;
     let router: Router;
 
     const mockProgrammingExercise = {
@@ -57,6 +57,28 @@ describe('ProgrammingExerciseDetailComponent', () => {
             id: 2,
         } as SolutionProgrammingExerciseParticipation,
     } as ProgrammingExercise;
+
+    const mockDiffInformation = {
+        diffInformations: [
+            {
+                originalFileContent: 'testing line differences',
+                modifiedFileContent: 'testing line diff\nnew line',
+                originalPath: 'Example.java',
+                modifiedPath: 'Example.java',
+                diffReady: false,
+                fileStatus: 'unchanged',
+                lineChange: {
+                    addedLineCount: 2,
+                    removedLineCount: 1,
+                },
+                title: 'Example.java',
+            },
+        ],
+        totalLineChange: {
+            addedLineCount: 2,
+            removedLineCount: 1,
+        },
+    } as unknown as RepositoryDiffInformation;
 
     const exerciseStatistics = {
         averageScoreOfExercise: 50,
@@ -71,21 +93,6 @@ describe('ProgrammingExerciseDetailComponent', () => {
         numberOfResolvedPosts: 2,
         resolvedPostsInPercent: 50,
     } as ExerciseManagementStatisticsDto;
-
-    const gitDiffReport = {
-        templateRepositoryCommitHash: 'x1',
-        solutionRepositoryCommitHash: 'x2',
-        entries: [
-            {
-                previousFilePath: '/src/test.java',
-                filePath: '/src/test.java',
-                previousStartLine: 1,
-                startLine: 1,
-                previousLineCount: 2,
-                lineCount: 2,
-            },
-        ],
-    } as ProgrammingExerciseGitDiffReport;
 
     const profileInfo = {
         activeProfiles: [],
@@ -126,7 +133,12 @@ describe('ProgrammingExerciseDetailComponent', () => {
         findWithTemplateAndSolutionParticipationStub = jest
             .spyOn(exerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults')
             .mockReturnValue(of(new HttpResponse<ProgrammingExercise>({ body: mockProgrammingExercise })));
-        gitDiffReportStub = jest.spyOn(exerciseService, 'getDiffReport').mockReturnValue(of(gitDiffReport));
+        getTemplateRepositoryFilesStub = jest
+            .spyOn(exerciseService, 'getTemplateRepositoryTestFilesWithContent')
+            .mockReturnValueOnce(of(new Map([[mockDiffInformation.diffInformations[0].originalPath, mockDiffInformation.diffInformations[0].originalFileContent]])));
+        getSolutionRepositoryFilesStub = jest
+            .spyOn(exerciseService, 'getSolutionRepositoryTestFilesWithContent')
+            .mockReturnValueOnce(of(new Map([[mockDiffInformation.diffInformations[0].modifiedPath, mockDiffInformation.diffInformations[0].modifiedFileContent]])));
         submissionPolicyServiceStub = jest.spyOn(submissionPolicyService, 'getSubmissionPolicyOfProgrammingExercise').mockReturnValue(of(undefined));
 
         jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
@@ -140,14 +152,15 @@ describe('ProgrammingExerciseDetailComponent', () => {
     });
 
     it('should reload on participation change', fakeAsync(() => {
-        const loadDiffSpy = jest.spyOn(comp, 'loadGitDiffReport');
+        const fetchRepositoryFilesSpy = jest.spyOn(comp, 'fetchRepositoryFiles');
         jest.spyOn(exerciseService, 'getLatestResult').mockReturnValue({ successful: true });
         comp.programmingExercise = mockProgrammingExercise;
         comp.programmingExerciseBuildConfig = mockProgrammingExercise.buildConfig;
         comp.onParticipationChange();
         tick();
-        expect(loadDiffSpy).toHaveBeenCalledOnce();
-        expect(gitDiffReportStub).toHaveBeenCalledOnce();
+        expect(fetchRepositoryFilesSpy).toHaveBeenCalledOnce();
+        expect(getTemplateRepositoryFilesStub).toHaveBeenCalledOnce();
+        expect(getSolutionRepositoryFilesStub).toHaveBeenCalledOnce();
     }));
 
     describe('onInit for course exercise', () => {
@@ -166,7 +179,8 @@ describe('ProgrammingExerciseDetailComponent', () => {
             // THEN
             expect(findWithTemplateAndSolutionParticipationStub).toHaveBeenCalledOnce();
             expect(submissionPolicyServiceStub).toHaveBeenCalledOnce();
-            expect(gitDiffReportStub).toHaveBeenCalledOnce();
+            expect(getTemplateRepositoryFilesStub).toHaveBeenCalledOnce();
+            expect(getSolutionRepositoryFilesStub).toHaveBeenCalledOnce();
             expect(statisticsServiceStub).toHaveBeenCalledOnce();
             await Promise.resolve();
             expect(comp.programmingExercise).toEqual(mockProgrammingExercise);
@@ -174,8 +188,8 @@ describe('ProgrammingExerciseDetailComponent', () => {
             expect(comp.doughnutStats.participationsInPercent).toBe(100);
             expect(comp.doughnutStats.resolvedPostsInPercent).toBe(50);
             expect(comp.doughnutStats.absoluteAveragePoints).toBe(5);
-            expect(comp.programmingExercise.gitDiffReport).toBeDefined();
-            expect(comp.programmingExercise.gitDiffReport?.entries).toHaveLength(1);
+            expect(comp.repositoryDiffInformation).toBeDefined();
+            expect(comp.repositoryDiffInformation.diffInformations).toHaveLength(1);
         });
 
         it.each([true, false])(
@@ -192,9 +206,10 @@ describe('ProgrammingExerciseDetailComponent', () => {
             },
         );
 
-        it('should create detail sections after getDiffReport error', fakeAsync(() => {
+        it('should create detail sections after repositoryFilesError', fakeAsync(() => {
             const errorSpy = jest.spyOn(alertService, 'error');
-            gitDiffReportStub.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+            getTemplateRepositoryFilesStub.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+            getSolutionRepositoryFilesStub.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
 
             comp.ngOnInit();
             tick();
@@ -228,12 +243,13 @@ describe('ProgrammingExerciseDetailComponent', () => {
             await Promise.resolve();
             expect(findWithTemplateAndSolutionParticipationStub).toHaveBeenCalledOnce();
             expect(statisticsServiceStub).toHaveBeenCalledOnce();
-            expect(gitDiffReportStub).toHaveBeenCalledOnce();
+            expect(getTemplateRepositoryFilesStub).toHaveBeenCalledOnce();
+            expect(getSolutionRepositoryFilesStub).toHaveBeenCalledOnce();
             await Promise.resolve();
             expect(comp.programmingExercise).toEqual(mockProgrammingExercise);
             expect(comp.isExamExercise).toBeTrue();
-            expect(comp.programmingExercise.gitDiffReport).toBeDefined();
-            expect(comp.programmingExercise.gitDiffReport?.entries).toHaveLength(1);
+            expect(comp.repositoryDiffInformation).toBeDefined();
+            expect(comp.repositoryDiffInformation.diffInformations).toHaveLength(1);
         }));
     });
 
