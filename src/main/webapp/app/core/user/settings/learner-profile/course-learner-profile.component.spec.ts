@@ -50,22 +50,21 @@ describe('CourseLearnerProfileComponent', () => {
     };
     const courses = [course1, course2];
 
-    const clp1: CourseLearnerProfileDTO = {
-        id: 1,
-        courseId: 1,
-        courseTitle: 'Course 1',
-        aimForGradeOrBonus: 0,
-        timeInvestment: 0,
-        repetitionIntensity: 0,
-    };
-    const clp2: CourseLearnerProfileDTO = {
-        id: 2,
-        courseId: 2,
-        courseTitle: 'Course 2',
-        aimForGradeOrBonus: 1,
-        timeInvestment: 1,
-        repetitionIntensity: 1,
-    };
+    const clp1 = new CourseLearnerProfileDTO();
+    clp1.id = 1;
+    clp1.courseId = 1;
+    clp1.courseTitle = 'Course 1';
+    clp1.aimForGradeOrBonus = 0;
+    clp1.timeInvestment = 0;
+    clp1.repetitionIntensity = 0;
+
+    const clp2 = new CourseLearnerProfileDTO();
+    clp2.id = 2;
+    clp2.courseId = 2;
+    clp2.courseTitle = 'Course 2';
+    clp2.aimForGradeOrBonus = 1;
+    clp2.timeInvestment = 1;
+    clp2.repetitionIntensity = 1;
     const profiles = [clp1, clp2];
 
     beforeEach(async () => {
@@ -136,20 +135,23 @@ describe('CourseLearnerProfileComponent', () => {
     });
 
     function setupUpdateTest(courseIndex: number, courseId: number, mockUpdate: boolean): CourseLearnerProfileDTO {
-        const newProfile = { ...profiles[courseIndex] };
+        const newProfile = new CourseLearnerProfileDTO();
+        Object.assign(newProfile, { ...profiles[courseIndex] });
         newProfile.repetitionIntensity = 1;
         newProfile.aimForGradeOrBonus = 2;
         newProfile.timeInvestment = 3;
 
         // Inject into component state
-        component.courseLearnerProfiles[courseIndex] = newProfile;
+        const currentProfiles = component.courseLearnerProfiles();
+        currentProfiles[courseIndex] = newProfile;
+        component.courseLearnerProfiles.set(currentProfiles);
         component.activeCourseId = courseId;
 
         if (mockUpdate) {
             putUpdatedCourseLearnerProfileSpy.mockResolvedValue(newProfile);
         }
 
-        component.update();
+        component.onToggleChange();
 
         return newProfile;
     }

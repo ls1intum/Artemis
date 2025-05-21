@@ -4,9 +4,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { LearnerProfileApiService } from 'app/learner-profile/service/learner-profile-api.service';
 import { CourseLearnerProfileDTO } from 'app/learner-profile/shared/entities/learner-profile.model';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { SegmentedToggleComponent } from 'app/shared/segmented-toggle/segmented-toggle.component';
 import { COURSE_LEARNER_PROFILE_OPTIONS } from 'app/learner-profile/shared/entities/learner-profile-options.model';
@@ -20,7 +18,7 @@ import { COURSE_LEARNER_PROFILE_OPTIONS } from 'app/learner-profile/shared/entit
     selector: 'jhi-course-learner-profile',
     templateUrl: './course-learner-profile.component.html',
     styleUrls: ['./course-learner-profile.component.scss'],
-    imports: [TranslateDirective, NgClass, ArtemisTranslatePipe, HelpIconComponent, SegmentedToggleComponent],
+    imports: [TranslateDirective, NgClass, SegmentedToggleComponent],
 })
 export class CourseLearnerProfileComponent implements OnInit {
     private readonly alertService = inject(AlertService);
