@@ -1,21 +1,21 @@
 @if (course) {
     <div>
-        <div class="d-flex flex-wrap align-items-center">
-            <h4 id="course-page-heading" jhiTranslate="artemisApp.examManagement.title"></h4>
+        <div *titleBarTitle class="d-flex align-items-center">
+            <jhi-course-title-bar-title id="course-page-heading" title="artemisApp.exam.overview.realExamsHeading" />
             <jhi-documentation-button [type]="documentationType" />
-            @if (course.isAtLeastInstructor) {
-                <div class="ms-auto text-truncate justify-content-end">
-                    <a class="btn btn-primary me-1" (click)="openImportModal()">
-                        <fa-icon [icon]="faFileImport" />
-                        <span jhiTranslate="artemisApp.examManagement.importExam"></span>
-                    </a>
-                    <a class="btn btn-primary jh-create-entity create-exam" id="create-exam" [routerLink]="['new']">
-                        <fa-icon [icon]="faPlus" />
-                        <span jhiTranslate="artemisApp.examManagement.createExam"></span>
-                    </a>
-                </div>
-            }
         </div>
+        @if (course.isAtLeastInstructor) {
+            <div *titleBarActions class="ms-auto text-truncate justify-content-end">
+                <a class="btn btn-sm btn-primary me-1" (click)="openImportModal()">
+                    <fa-icon [icon]="faFileImport" />
+                    <span jhiTranslate="artemisApp.examManagement.importExam"></span>
+                </a>
+                <a class="btn btn-primary btn-sm jh-create-entity create-exam" id="create-exam" [routerLink]="['new']">
+                    <fa-icon [icon]="faPlus" />
+                    <span jhiTranslate="artemisApp.examManagement.createExam"></span>
+                </a>
+            </div>
+        }
         <div class="row"></div>
         <br />
         @if (exams) {

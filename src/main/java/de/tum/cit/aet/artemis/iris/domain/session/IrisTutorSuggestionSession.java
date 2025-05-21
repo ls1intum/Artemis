@@ -40,4 +40,9 @@ public class IrisTutorSuggestionSession extends IrisChatSession {
     public String toString() {
         return "IrisTutorSuggestionSession{" + "userId=" + getUserId() + "," + "postId=" + postId + '}';
     }
+
+    @Override
+    public boolean shouldAcceptExternalLLMUsage() {
+        return false;
+    }
 }

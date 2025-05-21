@@ -229,16 +229,16 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
     public TrackedSessionBasedPyrisJob handleStatusUpdate(TrackedSessionBasedPyrisJob job, TutorSuggestionStatusUpdateDTO statusUpdate) {
         var session = (IrisTutorSuggestionSession) irisSessionRepository.findByIdWithMessagesAndContents(job.sessionId());
         IrisMessage savedMessage;
-        IrisMessage savedSuggestion;
-        if (statusUpdate.suggestion() != null || statusUpdate.result() != null) {
-            if (statusUpdate.suggestion() != null) {
-                var suggestion = new IrisMessage();
-                suggestion.addContent(new IrisTextMessageContent(statusUpdate.suggestion()));
-                savedSuggestion = irisMessageService.saveMessage(suggestion, session, IrisMessageSender.ARTIFACT);
-                irisChatWebsocketService.sendMessage(session, savedSuggestion, statusUpdate.stages());
+        IrisMessage savedArtifact;
+        if (statusUpdate.artifact() != null || statusUpdate.result() != null) {
+            if (statusUpdate.artifact() != null) {
+                var artifact = new IrisMessage();
+                artifact.addContent(new IrisTextMessageContent(statusUpdate.artifact()));
+                savedArtifact = irisMessageService.saveMessage(artifact, session, IrisMessageSender.ARTIFACT);
+                irisChatWebsocketService.sendMessage(session, savedArtifact, statusUpdate.stages());
             }
             else {
-                savedSuggestion = null;
+                savedArtifact = null;
             }
             if (statusUpdate.result() != null) {
                 var message = new IrisMessage();
@@ -252,14 +252,14 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
         }
         else {
             savedMessage = null;
-            savedSuggestion = null;
+            savedArtifact = null;
             irisChatWebsocketService.sendStatusUpdate(session, statusUpdate.stages(), null, statusUpdate.tokens());
         }
 
         AtomicReference<TrackedSessionBasedPyrisJob> updatedJob = new AtomicReference<>(job);
         if (statusUpdate.tokens() != null && !statusUpdate.tokens().isEmpty()) {
-            if (savedMessage != null || savedSuggestion != null) {
-                var messageId = savedSuggestion != null ? savedSuggestion.getId() : savedMessage.getId();
+            if (savedMessage != null || savedArtifact != null) {
+                var messageId = savedArtifact != null ? savedArtifact.getId() : savedMessage.getId();
                 // generated message is first sent and generated trace is saved
                 var llmTokenUsageTrace = llmTokenUsageService.saveLLMTokenUsage(statusUpdate.tokens(), LLMServiceType.IRIS, builder -> {
                     builder.withIrisMessageID(messageId).withUser(session.getUserId());
