@@ -9,7 +9,7 @@ import { CourseLearnerProfileDTO } from 'app/learner-profile/shared/entities/lea
 import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/shared/service/alert.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
@@ -19,23 +19,12 @@ describe('CourseLearnerProfileComponent', () => {
     let fixture: ComponentFixture<CourseLearnerProfileComponent>;
     let component: CourseLearnerProfileComponent;
     let selector: HTMLSelectElement;
-    let httpTesting: HttpTestingController;
 
     let courseManagementService: CourseManagementService;
     let learnerProfileApiService: LearnerProfileApiService;
 
     let putUpdatedCourseLearnerProfileSpy: jest.SpyInstance;
 
-    const errorBody = {
-        entityName: 'courseLearnerProfile',
-        errorKey: 'courseLearnerProfileNotFound',
-        type: 'https://www.jhipster.tech/problem/problem-with-message',
-        title: 'CourseLearnerProfile not found.',
-        status: 400,
-        skipAlert: true,
-        message: 'error.courseLearnerProfileNotFound',
-        params: 'courseLearnerProfile',
-    };
     const errorHeaders = {
         'x-artemisapp-error': 'error.courseLearnerProfileNotFound',
         'x-artemisapp-params': 'courseLearnerProfile',
@@ -81,7 +70,6 @@ describe('CourseLearnerProfileComponent', () => {
         learnerProfileApiService = TestBed.inject(LearnerProfileApiService);
 
         courseManagementService = TestBed.inject(CourseManagementService);
-        httpTesting = TestBed.inject(HttpTestingController);
 
         fixture = TestBed.createComponent(CourseLearnerProfileComponent);
         component = fixture.componentInstance;
@@ -147,9 +135,9 @@ describe('CourseLearnerProfileComponent', () => {
         component.disabled = false;
 
         // Set the profile values in the component's signals
-        component.aimForGradeOrBonus.set(newProfile.aimForGradeOrBonus.toString());
-        component.timeInvestment.set(newProfile.timeInvestment.toString());
-        component.repetitionIntensity.set(newProfile.repetitionIntensity.toString());
+        component.aimForGradeOrBonus.set(newProfile.aimForGradeOrBonus);
+        component.timeInvestment.set(newProfile.timeInvestment);
+        component.repetitionIntensity.set(newProfile.repetitionIntensity);
 
         // Update the profile in the component's state
         const updatedProfiles = [...profiles];
