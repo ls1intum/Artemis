@@ -1,6 +1,4 @@
 import * as monaco from 'monaco-editor';
-import ignore from 'ignore';
-import { diff, DiffOpts } from 'monaco-diff';
 
 /**
  * Interface for line change information from the diff editor
@@ -62,6 +60,12 @@ export function convertMonacoLineChanges(monacoLineChanges: monaco.editor.ILineC
     return lineChange;
 }
 
+/**
+ * Processes the repository diff information
+ * @param originalFileContentByPath The original file content by path
+ * @param modifiedFileContentByPath The modified file content by path
+ * @returns The repository diff information
+ */
 export function processRepositoryDiff(originalFileContentByPath: Map<string, string>, modifiedFileContentByPath: Map<string, string>): RepositoryDiffInformation {
     const diffInformation = getDiffInformation(originalFileContentByPath, modifiedFileContentByPath);
 
@@ -93,14 +97,12 @@ export function processRepositoryDiff(originalFileContentByPath: Map<string, str
  * @param modifiedFileContentByPath The solution file content by path
  * @returns The diff information
  */
-export function getDiffInformation(originalFileContentByPath: Map<string, string>, modifiedFileContentByPath: Map<string, string>): DiffInformation[] {
+function getDiffInformation(originalFileContentByPath: Map<string, string>, modifiedFileContentByPath: Map<string, string>): DiffInformation[] {
     const paths = [...new Set([...originalFileContentByPath.keys(), ...modifiedFileContentByPath.keys()])];
     const created: string[] = [];
     const deleted: string[] = [];
-    const ig = ignore().add(modifiedFileContentByPath.get('.gitignore') || '');
 
     let diffInformation: DiffInformation[] = paths
-        .filter(ig.createFilter())
         .filter((path) => {
             const originalContent = originalFileContentByPath.get(path);
             const modifiedContent = modifiedFileContentByPath.get(path);
@@ -147,6 +149,60 @@ export function getDiffInformation(originalFileContentByPath: Map<string, string
     return diffInformation;
 }
 
+/**
+ * Calculates line changes between two arrays of lines
+ * @param originalLines Array of original lines
+ * @param modifiedLines Array of modified lines
+ * @returns LineChange object containing added and removed line counts
+ */
+function linesDiff(original: string[], modified: string[]): { type: string; line: number; content: string }[] {
+    const diffs: { type: string; line: number; content: string }[] = [];
+    const oLen = original.length;
+    const mLen = modified.length;
+    const dp = Array.from({ length: oLen + 1 }, () => Array(mLen + 1).fill(0));
+
+    // Build LCS matrix
+    for (let i = 1; i <= oLen; i++) {
+        for (let j = 1; j <= mLen; j++) {
+            if (original[i - 1] === modified[j - 1]) {
+                dp[i][j] = dp[i - 1][j - 1] + 1;
+            } else {
+                dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
+            }
+        }
+    }
+
+    // Backtrack to find differences
+    let i = oLen;
+    let j = mLen;
+    while (i > 0 && j > 0) {
+        if (original[i - 1] === modified[j - 1]) {
+            i--;
+            j--;
+        } else if (dp[i - 1][j] >= dp[i][j - 1]) {
+            diffs.unshift({ type: 'removed', line: i - 1, content: original[i - 1] });
+            i--;
+        } else {
+            diffs.unshift({ type: 'added', line: j - 1, content: modified[j - 1] });
+            j--;
+        }
+    }
+
+    // Remaining lines in original
+    while (i > 0) {
+        diffs.unshift({ type: 'removed', line: i - 1, content: original[i - 1] });
+        i--;
+    }
+
+    // Remaining lines in modified
+    while (j > 0) {
+        diffs.unshift({ type: 'added', line: j - 1, content: modified[j - 1] });
+        j--;
+    }
+
+    return diffs;
+}
+
 function computeDiffsMonaco(originalFileContent: string, modifiedFileContent: string): LineChange {
     // Handle special cases for created or deleted files
     if (!originalFileContent && modifiedFileContent) {
@@ -161,14 +217,27 @@ function computeDiffsMonaco(originalFileContent: string, modifiedFileContent: st
 
     const originalFileContentLines = originalFileContent.split('\n').filter((line) => line.trim() !== '');
     const modifiedFileContentLines = modifiedFileContent.split('\n').filter((line) => line.trim() !== '');
-    const options: DiffOpts = {
-        shouldPostProcessCharChanges: true,
-        shouldComputeCharChanges: true,
-        shouldIgnoreTrimWhitespace: true,
-        shouldMakePrettyDiff: true,
-        maxComputationTime: 1000,
-    };
-    return convertMonacoLineChanges(diff(originalFileContentLines, modifiedFileContentLines, options));
+
+    return countLineChanges(linesDiff(originalFileContentLines, modifiedFileContentLines));
+}
+
+/**
+ * Counts the line changes between two arrays of lines
+ * @param diffs The diffs between the two arrays of lines
+ * @returns The line change object containing added and removed line counts
+ */
+function countLineChanges(diffs: { type: string; line: number; content: string }[]): LineChange {
+    const lineChange: LineChange = { addedLineCount: 0, removedLineCount: 0 };
+
+    for (const diff of diffs) {
+        if (diff.type === 'added') {
+            lineChange.addedLineCount++;
+        } else if (diff.type === 'removed') {
+            lineChange.removedLineCount++;
+        }
+    }
+
+    return lineChange;
 }
 
 /**
@@ -179,7 +248,7 @@ function computeDiffsMonaco(originalFileContent: string, modifiedFileContent: st
  * @param deleted The deleted files
  * @returns The merged diff information
  */
-export function mergeRenamedFiles(diffInformation: DiffInformation[], created?: string[], deleted?: string[]): DiffInformation[] {
+function mergeRenamedFiles(diffInformation: DiffInformation[], created?: string[], deleted?: string[]): DiffInformation[] {
     if (!created || !deleted) {
         created = diffInformation.filter((info) => info.fileStatus === FileStatus.CREATED).map((info) => info.modifiedPath);
         deleted = diffInformation.filter((info) => info.fileStatus === FileStatus.DELETED).map((info) => info.originalPath);
