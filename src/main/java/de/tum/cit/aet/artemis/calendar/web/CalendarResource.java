@@ -55,13 +55,8 @@ public class CalendarResource {
     public ResponseEntity<Map<ZonedDateTime, List<CalendarEventDTO>>> getCalendarEventsOfMonths(@RequestParam List<String> monthKeys, @RequestParam String timeZone) {
         log.debug("REST request to get calendar events falling into: {}", monthKeys);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-
-        // get tutorialEventDTOs for requested months
         Set<CalendarEventDTO> calendarEventDTOs = tutorialGroupApi.getTutorialEventsForUserFallingIntoMonthsOrElseThrough(user, monthKeys, timeZone);
-
-        // group tutorialEventDTOs by day
         Map<ZonedDateTime, List<CalendarEventDTO>> eventDTOsByDay = calendarEventDTOs.stream().collect(Collectors.groupingBy(dto -> dto.start().truncatedTo(ChronoUnit.DAYS)));
-
         return ResponseEntity.ok(eventDTOsByDay);
     }
 }
