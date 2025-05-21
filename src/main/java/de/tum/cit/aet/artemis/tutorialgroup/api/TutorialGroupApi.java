@@ -44,6 +44,6 @@ public class TutorialGroupApi extends AbstractTutorialGroupApi {
     }
 
     public Set<CalendarEventDTO> getTutorialEventsForUserFallingIntoMonthsOrElseThrough(User user, List<String> monthKeys, String timeZone) {
-        return tutorialGroupService.getTutorialEventsForUserFallingIntoMonthsOrElseThrough(user, monthKeys, timeZone);
+        return tutorialGroupService.getTutorialEventsForUserFallingIntoMonthsOrElseThrow(user, monthKeys, timeZone);
     }
 }

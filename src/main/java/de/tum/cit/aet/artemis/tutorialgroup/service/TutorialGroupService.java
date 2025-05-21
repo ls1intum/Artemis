@@ -939,7 +939,7 @@ public class TutorialGroupService {
      * @return a set of {@code CalendarEventDTO}s representing {@code TutorialGroupSession}s relevant for user
      * @throws BadRequestException if the monthKeys or the timeZone are formatted incorrectly.
      */
-    public Set<CalendarEventDTO> getTutorialEventsForUserFallingIntoMonthsOrElseThrough(User user, List<String> monthKeys, String timeZone) {
+    public Set<CalendarEventDTO> getTutorialEventsForUserFallingIntoMonthsOrElseThrow(User user, List<String> monthKeys, String timeZone) {
         Set<YearMonth> months = deserializeMonthKeysOrElseThrough(monthKeys);
 
         ZoneId clientTimeZone = deserializeTimeZoneOrElseThrough(timeZone);
