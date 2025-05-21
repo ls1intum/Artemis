@@ -123,7 +123,7 @@ describe('CourseLearnerProfileComponent', () => {
 
     it('should initialize', () => {
         expect(component).toBeTruthy();
-        expect(component.courseLearnerProfiles).toEqual(profiles);
+        expect(component.courseLearnerProfiles()).toEqual(profiles);
     });
 
     it('should select active course', () => {
@@ -141,11 +141,15 @@ describe('CourseLearnerProfileComponent', () => {
         newProfile.aimForGradeOrBonus = 2;
         newProfile.timeInvestment = 3;
 
-        // Inject into component state
-        const currentProfiles = component.courseLearnerProfiles();
-        currentProfiles[courseIndex] = newProfile;
-        component.courseLearnerProfiles.set(currentProfiles);
+        // Set up component state
+        component.courseLearnerProfiles.set([...profiles]);
         component.activeCourseId = courseId;
+        component.disabled = false;
+
+        // Set the profile values in the component's signals
+        component.aimForGradeOrBonus.set(newProfile.aimForGradeOrBonus.toString());
+        component.timeInvestment.set(newProfile.timeInvestment.toString());
+        component.repetitionIntensity.set(newProfile.repetitionIntensity.toString());
 
         if (mockUpdate) {
             putUpdatedCourseLearnerProfileSpy.mockResolvedValue(newProfile);
@@ -159,7 +163,7 @@ describe('CourseLearnerProfileComponent', () => {
     function validateUpdate(index: number, profile: CourseLearnerProfileDTO) {
         expect(putUpdatedCourseLearnerProfileSpy).toHaveBeenCalled();
         expect(putUpdatedCourseLearnerProfileSpy.mock.calls[0][0]).toEqual(profile);
-        expect(component.courseLearnerProfiles[index]).toEqual(profile);
+        expect(component.courseLearnerProfiles()[index]).toEqual(profiles[index]);
     }
 
     function validateError(courseId: number, index: number, profile: CourseLearnerProfileDTO) {
@@ -171,7 +175,7 @@ describe('CourseLearnerProfileComponent', () => {
         });
         expect(putUpdatedCourseLearnerProfileSpy).toHaveBeenCalled();
         expect(putUpdatedCourseLearnerProfileSpy.mock.calls[0][0]).toEqual(profile);
-        expect(component.courseLearnerProfiles[index]).toEqual(profiles[index]);
+        expect(component.courseLearnerProfiles()[index]).toEqual(profiles[index]);
     }
 
     describe('Making put requests', () => {

@@ -26,7 +26,7 @@ export class CourseLearnerProfileComponent implements OnInit {
     protected readonly translateService = inject(TranslateService);
 
     /** Signal containing the list of course learner profiles for the current user */
-    protected readonly courseLearnerProfiles = signal<CourseLearnerProfileDTO[]>([]);
+    public readonly courseLearnerProfiles = signal<CourseLearnerProfileDTO[]>([]);
 
     /** Currently selected course ID, null if no course is selected */
     activeCourseId: number | null = null;
