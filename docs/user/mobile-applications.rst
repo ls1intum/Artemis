@@ -51,7 +51,7 @@ The Android application supports the following features:
 Installation
 ^^^^^^^^^^^^
 
-The Android application is available on the `Google PlayStore<https://play.google.com/store/apps/details?id=de.tum.cit.aet.artemis&hl=gsw>`_.
+The Android application is available on the `Google PlayStore <https://play.google.com/store/apps/details?id=de.tum.cit.aet.artemis&hl=gsw>`_.
 
 Server Selection
 ^^^^^^^^^^^^^^^^
