@@ -2,7 +2,6 @@
     <div>
         <div class="d-flex align-items-center justify-content-between flex-wrap mb-2">
             <h4>
-                {{ course.title }}
                 <small
                     jhiTranslate="artemisApp.instructorDashboard.exerciseResultSummery"
                     [translateValues]="{ exercisesLength: exercisesOfCourseThatAreIncludedInScoreCalculation.length, studentsLength: students.length }"
@@ -10,7 +9,7 @@
                 >
             </h4>
             @if (course?.isAtLeastInstructor) {
-                <a [routerLink]="['/course-management', course.id, 'grading-system']" class="btn btn-info btn-md">
+                <a *titleBarActions [routerLink]="['/course-management', course.id, 'grading-system']" class="btn btn-info btn-sm">
                     <fa-icon [icon]="faClipboard" /> <span jhiTranslate="artemisApp.course.gradingSystem"></span>
                 </a>
             }
