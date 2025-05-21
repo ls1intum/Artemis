@@ -73,6 +73,9 @@ export class CoursePracticeQuizComponent implements OnInit, OnDestroy {
      * checks if the current question is the last question
      */
     get isLastQuestion(): boolean {
+        if (this.questions.length === 0) {
+            return true;
+        }
         return this.currentIndex === this.questions.length - 1;
     }
 
