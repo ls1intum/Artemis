@@ -87,11 +87,7 @@ public class IrisSubSettingsService {
             currentSettings.setRateLimit(newSettings.getRateLimit());
             currentSettings.setRateLimitTimeframeHours(newSettings.getRateLimitTimeframeHours());
         }
-        if (authCheckService.isAdmin() && settingsType == IrisSettingsType.GLOBAL) {
-            currentSettings.setDisabledProactiveEvents(newSettings.getDisabledProactiveEvents());
-
-        }
-        else if (settingsType == IrisSettingsType.COURSE || settingsType == IrisSettingsType.EXERCISE) {
+        if (settingsType == IrisSettingsType.COURSE || settingsType == IrisSettingsType.EXERCISE || authCheckService.isAdmin()) {
             currentSettings.setDisabledProactiveEvents(newSettings.getDisabledProactiveEvents());
         }
         currentSettings.setAllowedVariants(selectAllowedVariants(currentSettings.getAllowedVariants(), newSettings.getAllowedVariants()));
@@ -120,9 +116,7 @@ public class IrisSubSettingsService {
         if (currentSettings == null) {
             currentSettings = new IrisTextExerciseChatSubSettings();
         }
-        if (settingsType == IrisSettingsType.EXERCISE) {
-            currentSettings.setEnabled(newSettings.isEnabled());
-        }
+        currentSettings.setEnabled(newSettings.isEnabled());
         if (settingsType == IrisSettingsType.COURSE) {
             var enabledForCategories = newSettings.getEnabledForCategories();
             currentSettings.setEnabledForCategories(enabledForCategories);
@@ -157,14 +151,20 @@ public class IrisSubSettingsService {
         if (currentSettings == null) {
             currentSettings = new IrisCourseChatSubSettings();
         }
-        currentSettings.setEnabled(newSettings.isEnabled());
-        if (authCheckService.isAdmin()) {
-            currentSettings.setRateLimit(newSettings.getRateLimit());
-            currentSettings.setRateLimitTimeframeHours(newSettings.getRateLimitTimeframeHours());
+
+        if (settingsType == IrisSettingsType.COURSE || settingsType == IrisSettingsType.GLOBAL) {
+            currentSettings.setEnabled(newSettings.isEnabled());
+
+            if (authCheckService.isAdmin()) {
+                currentSettings.setRateLimit(newSettings.getRateLimit());
+                currentSettings.setRateLimitTimeframeHours(newSettings.getRateLimitTimeframeHours());
+            }
+
+            currentSettings.setAllowedVariants(selectAllowedVariants(currentSettings.getAllowedVariants(), newSettings.getAllowedVariants()));
+            currentSettings.setSelectedVariant(validateSelectedVariant(currentSettings.getSelectedVariant(), newSettings.getSelectedVariant(), currentSettings.getAllowedVariants(),
+                    parentSettings != null ? parentSettings.allowedVariants() : null));
         }
-        currentSettings.setAllowedVariants(selectAllowedVariants(currentSettings.getAllowedVariants(), newSettings.getAllowedVariants()));
-        currentSettings.setSelectedVariant(validateSelectedVariant(currentSettings.getSelectedVariant(), newSettings.getSelectedVariant(), currentSettings.getAllowedVariants(),
-                parentSettings != null ? parentSettings.allowedVariants() : null));
+
         return currentSettings;
     }
 
@@ -193,9 +193,6 @@ public class IrisSubSettingsService {
 
         if (settingsType == IrisSettingsType.COURSE || settingsType == IrisSettingsType.GLOBAL) {
             currentSettings.setEnabled(newSettings.isEnabled());
-        }
-
-        if (authCheckService.isAdmin() && (settingsType == IrisSettingsType.COURSE || settingsType == IrisSettingsType.GLOBAL)) {
             currentSettings.setAutoIngestOnLectureAttachmentUpload(newSettings.getAutoIngestOnLectureAttachmentUpload());
         }
 
@@ -227,6 +224,13 @@ public class IrisSubSettingsService {
 
         if (settingsType == IrisSettingsType.COURSE || settingsType == IrisSettingsType.GLOBAL) {
             currentSettings.setEnabled(newSettings.isEnabled());
+            if (authCheckService.isAdmin()) {
+                currentSettings.setRateLimit(newSettings.getRateLimit());
+                currentSettings.setRateLimitTimeframeHours(newSettings.getRateLimitTimeframeHours());
+            }
+            currentSettings.setAllowedVariants(selectAllowedVariants(currentSettings.getAllowedVariants(), newSettings.getAllowedVariants()));
+            currentSettings.setSelectedVariant(validateSelectedVariant(currentSettings.getSelectedVariant(), newSettings.getSelectedVariant(), currentSettings.getAllowedVariants(),
+                    parentSettings != null ? parentSettings.allowedVariants() : null));
         }
 
         return currentSettings;
@@ -257,9 +261,6 @@ public class IrisSubSettingsService {
 
         if (settingsType == IrisSettingsType.COURSE || settingsType == IrisSettingsType.GLOBAL) {
             currentSettings.setEnabled(newSettings.isEnabled());
-        }
-
-        if (authCheckService.isAdmin() && (settingsType == IrisSettingsType.COURSE || settingsType == IrisSettingsType.GLOBAL)) {
             currentSettings.setAutoIngestOnFaqCreation(newSettings.getAutoIngestOnFaqCreation());
         }
 
@@ -291,12 +292,13 @@ public class IrisSubSettingsService {
             currentSettings = new IrisCompetencyGenerationSubSettings();
         }
 
-        currentSettings.setEnabled(newSettings.isEnabled());
-        if (authCheckService.isAdmin()) {
+        if (settingsType == IrisSettingsType.COURSE || settingsType == IrisSettingsType.GLOBAL) {
+            currentSettings.setEnabled(newSettings.isEnabled());
             currentSettings.setAllowedVariants(selectAllowedVariants(currentSettings.getAllowedVariants(), newSettings.getAllowedVariants()));
+            currentSettings.setSelectedVariant(validateSelectedVariant(currentSettings.getSelectedVariant(), newSettings.getSelectedVariant(), currentSettings.getAllowedVariants(),
+                    parentSettings != null ? parentSettings.allowedVariants() : null));
         }
-        currentSettings.setSelectedVariant(validateSelectedVariant(currentSettings.getSelectedVariant(), newSettings.getSelectedVariant(), currentSettings.getAllowedVariants(),
-                parentSettings != null ? parentSettings.allowedVariants() : null));
+
         return currentSettings;
     }
 
@@ -325,12 +327,13 @@ public class IrisSubSettingsService {
             currentSettings = new IrisTutorSuggestionSubSettings();
         }
 
-        currentSettings.setEnabled(newSettings.isEnabled());
-        if (authCheckService.isAdmin()) {
+        if (settingsType == IrisSettingsType.COURSE || settingsType == IrisSettingsType.GLOBAL) {
+            currentSettings.setEnabled(newSettings.isEnabled());
             currentSettings.setAllowedVariants(selectAllowedVariants(currentSettings.getAllowedVariants(), newSettings.getAllowedVariants()));
+            currentSettings.setSelectedVariant(validateSelectedVariant(currentSettings.getSelectedVariant(), newSettings.getSelectedVariant(), currentSettings.getAllowedVariants(),
+                    parentSettings != null ? parentSettings.allowedVariants() : null));
         }
-        currentSettings.setSelectedVariant(validateSelectedVariant(currentSettings.getSelectedVariant(), newSettings.getSelectedVariant(), currentSettings.getAllowedVariants(),
-                parentSettings != null ? parentSettings.allowedVariants() : null));
+
         return currentSettings;
     }
 
@@ -421,7 +424,9 @@ public class IrisSubSettingsService {
     public IrisCombinedLectureChatSubSettingsDTO combineLectureChatSettings(ArrayList<IrisSettings> settingsList, boolean minimal) {
         var enabled = getCombinedEnabled(settingsList, IrisSettings::getIrisLectureChatSettings);
         var rateLimit = getCombinedRateLimit(settingsList);
-        return new IrisCombinedLectureChatSubSettingsDTO(enabled, rateLimit, null);
+        var allowedVariants = !minimal ? getCombinedAllowedVariants(settingsList, IrisSettings::getIrisLectureChatSettings) : null;
+        var selectedVariant = !minimal ? getCombinedSelectedVariant(settingsList, IrisSettings::getIrisLectureChatSettings) : null;
+        return new IrisCombinedLectureChatSubSettingsDTO(enabled, rateLimit, null, allowedVariants, selectedVariant);
     }
 
     /**
