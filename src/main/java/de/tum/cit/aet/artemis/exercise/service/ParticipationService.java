@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.exercise.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.net.MalformedURLException;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -29,6 +28,7 @@ import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.exception.GitException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -159,7 +159,7 @@ public class ParticipationService {
      * @param createInitialSubmission whether an initial empty submission should be created for non-programming exercises such as text, modeling, quiz, or file-upload
      * @return the `StudentParticipation` connecting the given exercise and participant
      */
-    public StudentParticipation startExercise(Exercise exercise, Participant participant, boolean createInitialSubmission) throws MalformedURLException {
+    public StudentParticipation startExercise(Exercise exercise, Participant participant, boolean createInitialSubmission) {
 
         StudentParticipation participation;
         Optional<StudentParticipation> optionalStudentParticipation = Optional.empty();
@@ -265,7 +265,7 @@ public class ParticipationService {
      */
     private StudentParticipation startProgrammingExercise(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation) {
         // Step 1a) create the student repository (based on the template repository)
-        participation = copyRepositoryWithOneCommit(exercise, exercise.getVcsTemplateRepositoryUri(), participation);
+        participation = createStudentRepositoryWithSingleCommit(exercise, exercise.getVcsTemplateRepositoryUri(), participation);
 
         return startProgrammingParticipation(participation);
     }
@@ -478,34 +478,49 @@ public class ParticipationService {
         }
     }
 
-    private ProgrammingExerciseStudentParticipation copyRepositoryWithOneCommit(ProgrammingExercise programmingExercise, VcsRepositoryUri sourceURL,
+    /**
+     * Creates a student repository with a single commit containing the current state of the template repository.
+     * This method avoids copying the entire commit history from the template repository.
+     *
+     * @param programmingExercise the programming exercise
+     * @param sourceURL           the URI of the template repository
+     * @param participation       the participation to set up with the new repository
+     * @return the updated participation with repository URI set
+     */
+    private ProgrammingExerciseStudentParticipation createStudentRepositoryWithSingleCommit(ProgrammingExercise programmingExercise, VcsRepositoryUri sourceURL,
             ProgrammingExerciseStudentParticipation participation) {
         // only execute this step if it has not yet been completed yet or if the repository uri is missing for some reason
         if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_COPIED) || participation.getVcsRepositoryUri() == null) {
-            final var projectKey = programmingExercise.getProjectKey();
-            final var targetRepositoryName = participation.addPracticePrefixIfTestRun(participation.getParticipantIdentifier());
-            final VcsRepositoryUri studentRepoUri = localVCVersionControlService.buildStudentRepoPath(projectKey, targetRepositoryName, participation.getAttempt());
-
             try {
-                // Create single commit student repo by copying working tree from template bare repo
-                localVCVersionControlService.createSingleCommitStudentRepo(sourceURL, studentRepoUri);
+                final var projectKey = programmingExercise.getProjectKey();
+                final var targetRepositoryName = participation.addPracticePrefixIfTestRun(participation.getParticipantIdentifier());
+                VcsRepositoryUri studentRepoUri = localVCVersionControlService.buildStudentRepoPath(projectKey, targetRepositoryName, participation.getAttempt());
+
+                try {
+                    // Create single commit student repo by copying working tree from template bare repo
+                    localVCVersionControlService.createSingleCommitStudentRepo(sourceURL, studentRepoUri);
+                }
+                catch (Exception e) {
+                    log.error("Error while creating single commit student repo", e);
+                    throw new RuntimeException("Failed to create single commit student repository", e);
+                }
+
+                // Update the participation with the new repository URI
+                VcsRepositoryUri newRepoUri = studentRepoUri;
+                if (participation.getStudent().isPresent()) {
+                    newRepoUri = newRepoUri.withUser(participation.getParticipantIdentifier());
+                }
+
+                participation.setRepositoryUri(newRepoUri.toString());
+                participation.setBranch(defaultBranch);
+                participation.setInitializationState(InitializationState.REPO_COPIED);
+
+                return programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
             }
             catch (Exception e) {
-                log.error("Error while creating single commit student repo", e);
-                throw new RuntimeException("Failed to create single commit student repository", e);
+                log.error("Error while creating single commit student repository", e);
+                throw new GitException("Failed to create single-commit student repository", e);
             }
-
-            VcsRepositoryUri newRepoUri = studentRepoUri;
-            // Add user info if participant is a student (not team)
-            if (participation.getStudent().isPresent()) {
-                newRepoUri = newRepoUri.withUser(participation.getParticipantIdentifier());
-            }
-
-            participation.setRepositoryUri(newRepoUri.toString());
-            participation.setBranch(defaultBranch);
-            participation.setInitializationState(InitializationState.REPO_COPIED);
-            return programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
-
         }
         else {
             return participation;

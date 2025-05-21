@@ -1296,7 +1296,6 @@ public class GitService extends AbstractGitService {
                 throw new RuntimeException(e);
             }
         });
-        System.out.println("Files copied successfully from " + sourceDir + " to " + targetDir);
     }
 
     public void commitCopiedFilesIntoRepo(Repository bareRepo, Path sourceFilesDir) throws IOException, GitAPIException {
@@ -1306,18 +1305,19 @@ public class GitService extends AbstractGitService {
         try {
             // 2. Clone bare repo into temp working directory (non-bare)
             try (Git git = Git.cloneRepository().setURI(bareRepo.getDirectory().toURI().toString()).setDirectory(tempWorkingDir.toFile()).setBare(false).call()) {
-
-                // 3. Copy all files from sourceFilesDir into tempWorkingDir, excluding .git
-                copyFilesExcludingGit(sourceFilesDir, tempWorkingDir);
-
-                // 4. Stage all changes
-                git.add().addFilepattern(".").call();
-
-                // 5. Commit staged files
-                git.commit().setMessage("Initial import without history").call();
-
-                // 6. Push commit back to bare repo
-                git.push().call();
+                try {
+                    // 3. Copy all files from sourceFilesDir into tempWorkingDir, excluding .git
+                    copyFilesExcludingGit(sourceFilesDir, tempWorkingDir);
+                    // 4. Stage all changes
+                    git.add().addFilepattern(".").call();
+                    // 5. Commit staged files
+                    GitService.commit(git).setMessage("Initial import without history").call();
+                    // 6. Push commit back to bare repo with authentication if needed
+                    pushCommand(git).setForce(true).call();
+                }
+                finally {
+                    git.close();
+                }
             }
         }
         finally {
