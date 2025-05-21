@@ -22,6 +22,7 @@
                     "description": "Choose how much you are willing to repeat the course content."
                 },
                 "profileSaved": "Learner profile saved",
+                "invalidRange": "Values must be between 1 and 5",
                 "level": {
                     "veryLow": "Very Low",
                     "low": "Low",

@@ -22,6 +22,7 @@
                     "description": "Wähle, wie viel du bereit bist, den Kursinhalt zu wiederholen."
                 },
                 "profileSaved": "Lernprofil gespeichert",
+                "invalidRange": "Werte müssen zwischen 1 und 5 liegen",
                 "level": {
                     "veryLow": "Sehr niedrig",
                     "low": "Niedrig",
