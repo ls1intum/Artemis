@@ -17,8 +17,8 @@ import { GroupChatDTO, isGroupChatDTO } from 'app/communication/shared/entities/
 import { isOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { channelRegex } from 'app/communication/course-conversations-components/dialogs/channels-create-dialog/channel-form/channel-form.component';
-import { HttpResponse } from '@angular/common/http';
-import { of } from 'rxjs';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { of, throwError } from 'rxjs';
 import { GenericUpdateTextPropertyDialogComponent } from 'app/communication/course-conversations-components/generic-update-text-property-dialog/generic-update-text-property-dialog.component';
 import { defaultSecondLayerDialogOptions } from 'app/communication/course-conversations-components/other/conversation.util';
 import { input } from '@angular/core';
@@ -32,7 +32,6 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { Router } from '@angular/router';
 import { ActivatedRoute } from '@angular/router';
 import { MockActivatedRouteWithSubjects } from 'test/helpers/mocks/activated-route/mock-activated-route-with-subjects';
-import { throwError } from 'rxjs';
 import * as globalUtils from 'app/shared/util/global.utils';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
@@ -298,6 +297,24 @@ examples.forEach((activeConversation) => {
             expect(component.isNotificationsEnabled).toBeTruthy();
             const desc = fixture.nativeElement.querySelector('#notification-section .text-muted');
             expect(desc).toBeTruthy();
+        }));
+
+        it('should show error if loadNotificationSettings fails', fakeAsync(() => {
+            const error = new HttpErrorResponse({
+                status: 400,
+            });
+            const notificationSettingService = TestBed.inject(CourseNotificationSettingService);
+            const alertService = TestBed.inject(AlertService);
+            const translateService = TestBed.inject(TranslateService);
+
+            jest.spyOn(notificationSettingService, 'getSettingInfo').mockReturnValue(throwError(() => error));
+            jest.spyOn(alertService, 'error');
+            jest.spyOn(translateService, 'instant').mockReturnValue('error.http.400');
+
+            component['loadNotificationSettings']();
+            tick();
+
+            expect(alertService.error).toHaveBeenCalledWith('error.http.400');
         }));
 
         function checkThatActionButtonOfSectionExistsInTemplate(sectionName: string) {
