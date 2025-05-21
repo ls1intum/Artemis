@@ -106,7 +106,7 @@ class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndependentTest 
                 Date expiration = new Date(issuedAt.getTime() + TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 1000);
 
                 String jwt = tokenProvider.createToken(authentication, issuedAt, expiration, null, true);
-                assertThat(tokenProvider.getAuthenticatedWithPasskey(jwt)).isTrue();
+                assertThat(tokenProvider.getAuthenticationMethod(jwt)).isEqualTo(AuthenticationMethod.PASSKEY);
 
                 MockHttpServletResponse response = performRequest(jwt, false);
 
@@ -143,7 +143,7 @@ class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndependentTest 
                 assertThat(expectedRemainingLifetimeInMilliseconds).isLessThan(TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 1000);
 
                 String jwt = tokenProvider.createToken(authentication, issuedAt, expiration, null, true);
-                assertThat(tokenProvider.getAuthenticatedWithPasskey(jwt)).isTrue();
+                assertThat(tokenProvider.getAuthenticationMethod(jwt)).isEqualTo(AuthenticationMethod.PASSKEY);
 
                 MockHttpServletResponse response = performRequest(jwt, false);
 
@@ -175,7 +175,7 @@ class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndependentTest 
                 Date expiration = new Date(issuedAt.getTime() + TOKEN_VALIDITY_IN_SECONDS_FOR_PASSKEY * 1000 + remainingValidityTimeOfTokenInMilliseconds);
 
                 String jwt = tokenProvider.createToken(authentication, issuedAt, expiration, null, true);
-                assertThat(tokenProvider.getAuthenticatedWithPasskey(jwt)).isTrue();
+                assertThat(tokenProvider.getAuthenticationMethod(jwt)).isEqualTo(AuthenticationMethod.PASSKEY);
 
                 Thread.sleep(remainingValidityTimeOfTokenInMilliseconds + 1000);
 
@@ -194,7 +194,7 @@ class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndependentTest 
                 Date expiration = new Date(issuedAt.getTime() + TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 1000);
 
                 String jwt = tokenProvider.createToken(authentication, issuedAt, expiration, null, true);
-                assertThat(tokenProvider.getAuthenticatedWithPasskey(jwt)).isTrue();
+                assertThat(tokenProvider.getAuthenticationMethod(jwt)).isEqualTo(AuthenticationMethod.PASSKEY);
 
                 MockHttpServletResponse response = performRequest(jwt, true);
 
@@ -214,7 +214,7 @@ class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndependentTest 
                 Date expiration = new Date(issuedAt.getTime() + TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 1000);
 
                 String jwt = tokenProvider.createToken(authentication, issuedAt, expiration, null, true);
-                assertThat(tokenProvider.getAuthenticatedWithPasskey(jwt)).isTrue();
+                assertThat(tokenProvider.getAuthenticationMethod(jwt)).isEqualTo(AuthenticationMethod.PASSKEY);
 
                 LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
                 HttpHeaders headers = new HttpHeaders();
@@ -242,7 +242,7 @@ class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndependentTest 
                 Date expiration = new Date(issuedAt.getTime() + TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 1000);
 
                 String jwt = tokenProvider.createToken(authentication, issuedAt, expiration, null, true);
-                assertThat(tokenProvider.getAuthenticatedWithPasskey(jwt)).isTrue();
+                assertThat(tokenProvider.getAuthenticationMethod(jwt)).isEqualTo(AuthenticationMethod.PASSKEY);
 
                 MockHttpServletResponse response = performRequest(jwt, false);
 
@@ -259,7 +259,7 @@ class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndependentTest 
                 Date expiration = new Date(issuedAt.getTime() + TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 1000);
 
                 String jwt = tokenProvider.createToken(authentication, issuedAt, expiration, null, null);
-                assertThat(tokenProvider.getAuthenticatedWithPasskey(jwt)).isFalse();
+                assertThat(tokenProvider.getAuthenticationMethod(jwt)).isEqualTo(AuthenticationMethod.PASSWORD);
 
                 MockHttpServletResponse response = performRequest(jwt, false);
 
@@ -301,7 +301,7 @@ class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndependentTest 
         assertThat(updatedJwt).isNotEqualTo(originalJwt);
         assertThat(tokenProvider.getAuthentication(updatedJwt).getPrincipal()).isEqualTo(expectedAuthentication.getPrincipal());
         assertThat(tokenProvider.getAuthentication(updatedJwt).getAuthorities()).isEqualTo(expectedAuthentication.getAuthorities());
-        assertThat(tokenProvider.getAuthenticatedWithPasskey(updatedJwt)).isTrue();
+        assertThat(tokenProvider.getAuthenticationMethod(updatedJwt)).isEqualTo(AuthenticationMethod.PASSKEY);
         assertThat(tokenProvider.getIssuedAtDate(updatedJwt)).isCloseTo(expectedIssuedAt, 1000); // should not have changed, tolerance due to formatting
     }
 

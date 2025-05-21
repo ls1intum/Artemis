@@ -21,7 +21,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
-import org.springframework.security.web.webauthn.authentication.WebAuthnAuthentication;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -46,7 +45,7 @@ public class TokenProvider {
 
     private static final String AUTHORITIES_KEY = "auth";
 
-    private static final String AUTHENTICATED_WITH_PASSKEY_KEY = "authenticatedWithPasskey";
+    private static final String AUTHENTICATION_METHOD = "auth-method";
 
     private static final String TOOLS_KEY = "tools";
 
@@ -132,11 +131,16 @@ public class TokenProvider {
     public String createToken(Authentication authentication, @Nullable Date issuedAt, Date expiration, @Nullable ToolTokenType tool, @Nullable Boolean authenticatedWithPasskey) {
         String authorities = authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.joining(","));
 
+        AuthenticationMethod authenticationMethod = AuthenticationMethod.fromAuthentication(authentication);
+        if (authenticatedWithPasskey != null && authenticatedWithPasskey) {
+            authenticationMethod = AuthenticationMethod.PASSKEY;
+        }
+
         // @formatter:off
         JwtBuilder jwtBuilder = Jwts.builder()
             .subject(authentication.getName())
             .claim(AUTHORITIES_KEY, authorities)
-            .claim(AUTHENTICATED_WITH_PASSKEY_KEY, authentication instanceof WebAuthnAuthentication || (authenticatedWithPasskey != null && authenticatedWithPasskey))
+            .claim(AUTHENTICATION_METHOD, authenticationMethod)
             .issuedAt(issuedAt != null ? issuedAt : new Date());
         // @formatter:on
 
@@ -246,10 +250,16 @@ public class TokenProvider {
 
     /**
      * @param authToken of which the authentication type on login should be extracted
-     * @return True if the user authenticated with a passkey
+     * @return {@link AuthenticationMethod} that was used to create the token
      */
-    public boolean getAuthenticatedWithPasskey(String authToken) {
-        Boolean passkeyClaim = parseClaims(authToken).get(AUTHENTICATED_WITH_PASSKEY_KEY, Boolean.class);
-        return Boolean.TRUE.equals(passkeyClaim);
+    public AuthenticationMethod getAuthenticationMethod(String authToken) {
+        try {
+            String method = parseClaims(authToken).get(AUTHENTICATION_METHOD, String.class);
+            return method != null ? AuthenticationMethod.fromMethod(method) : null;
+        }
+        catch (UnsupportedJwtException | IllegalArgumentException e) {
+            log.warn("Failed to parse authentication method from token: {}", e.getMessage());
+            return null;
+        }
     }
 }

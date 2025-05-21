@@ -8,8 +8,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.AuthenticatedPrincipal;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.saml2.provider.service.authentication.Saml2Authentication;
 import org.springframework.security.web.webauthn.api.Bytes;
 import org.springframework.security.web.webauthn.api.PublicKeyCredentialUserEntity;
 import org.springframework.security.web.webauthn.authentication.WebAuthnAuthentication;
@@ -43,4 +45,11 @@ public class AuthenticationFactory {
         return new UsernamePasswordAuthenticationToken(username, username, authorities);
     }
 
+    public static Saml2Authentication createSaml2Authentication(String username) {
+        AuthenticatedPrincipal principal = () -> username;
+
+        Collection<GrantedAuthority> authorities = new ArrayList<>();
+        authorities.add(new SimpleGrantedAuthority(Role.ANONYMOUS.getAuthority()));
+        return new Saml2Authentication(principal, username, authorities);
+    }
 }

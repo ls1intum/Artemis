@@ -156,8 +156,7 @@ class TokenProviderTest {
         @Test
         void shouldBeRetrievedSuccessfully() {
             ToolTokenType expectedTool = ToolTokenType.SCORPIO;
-            String token = Jwts.builder().claim("tools", expectedTool.toString()) // Store as String
-                    .signWith(key, Jwts.SIG.HS512).compact();
+            String token = Jwts.builder().claim("tools", expectedTool.toString()).signWith(key, Jwts.SIG.HS512).compact();
 
             ToolTokenType actualTool = tokenProvider.getTools(token);
 
@@ -166,7 +165,7 @@ class TokenProviderTest {
 
         @Test
         void shouldNotFailIfNull() {
-            String token = Jwts.builder().claim("authenticatedWithPasskey", true).signWith(key, Jwts.SIG.HS512).compact();
+            String token = Jwts.builder().claim("someDummyClaim", true).signWith(key, Jwts.SIG.HS512).compact();
 
             ToolTokenType actualTool = tokenProvider.getTools(token);
 
@@ -176,26 +175,61 @@ class TokenProviderTest {
     }
 
     @Nested
-    class AuthenticatedWithPasskeyTests {
+    class GetAuthenticationMethodTests {
 
         @Test
-        void shouldBeFalseWhenAuthenticatedWithPassword() {
-            Authentication authentication = AuthenticationFactory.createUsernamePasswordAuthentication(USER_NAME);
-            String token = tokenProvider.createToken(authentication, false);
+        void shouldBeRetrievedSuccessfully() {
+            AuthenticationMethod expectedMethod = AuthenticationMethod.PASSKEY;
+            String token = Jwts.builder().claim("auth-method", expectedMethod.toString()).signWith(key, Jwts.SIG.HS512).compact();
 
-            boolean isAuthenticatedWithPasskey = tokenProvider.getAuthenticatedWithPasskey(token);
+            AuthenticationMethod actualMethod = tokenProvider.getAuthenticationMethod(token);
 
-            assertThat(isAuthenticatedWithPasskey).isFalse();
+            assertThat(actualMethod).isNotNull().isEqualTo(expectedMethod);
         }
 
         @Test
-        void shoulbBeTrueWhenAuthenticatedWithPasskey() {
+        void shouldNotFailIfNull() {
+            AuthenticationMethod expectedMethod = null;
+            String token = Jwts.builder().claim("auth-method", null).signWith(key, Jwts.SIG.HS512).compact();
+
+            AuthenticationMethod actualMethod = tokenProvider.getAuthenticationMethod(token);
+
+            assertThat(actualMethod).isNull();
+        }
+
+    }
+
+    @Nested
+    class AuthenticationMethodTests {
+
+        @Test
+        void shouldSetPasswordMethod() {
+            Authentication authentication = AuthenticationFactory.createUsernamePasswordAuthentication(USER_NAME);
+            String token = tokenProvider.createToken(authentication, false);
+
+            AuthenticationMethod authenticationMethod = tokenProvider.getAuthenticationMethod(token);
+
+            assertThat(authenticationMethod).isEqualTo(AuthenticationMethod.PASSWORD);
+        }
+
+        @Test
+        void shouldSetPasskeyMethod() {
             Authentication authentication = AuthenticationFactory.createWebAuthnAuthentication(USER_NAME);
             String token = tokenProvider.createToken(authentication, false);
 
-            boolean isAuthenticatedWithPasskey = tokenProvider.getAuthenticatedWithPasskey(token);
+            AuthenticationMethod authenticationMethod = tokenProvider.getAuthenticationMethod(token);
 
-            assertThat(isAuthenticatedWithPasskey).isTrue();
+            assertThat(authenticationMethod).isEqualTo(AuthenticationMethod.PASSKEY);
+        }
+
+        @Test
+        void shouldSetSaml2Method() {
+            Authentication authentication = AuthenticationFactory.createSaml2Authentication(USER_NAME);
+            String token = tokenProvider.createToken(authentication, false);
+
+            AuthenticationMethod authenticationMethod = tokenProvider.getAuthenticationMethod(token);
+
+            assertThat(authenticationMethod).isEqualTo(AuthenticationMethod.SAML2);
         }
 
     }
