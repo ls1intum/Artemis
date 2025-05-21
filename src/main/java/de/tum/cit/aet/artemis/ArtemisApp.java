@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.core.config.ArtemisCompatibleVersionsConfiguration
 import de.tum.cit.aet.artemis.core.config.LicenseConfiguration;
 import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
 import de.tum.cit.aet.artemis.core.config.TheiaConfiguration;
+import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import tech.jhipster.config.DefaultProfileUtil;
 import tech.jhipster.config.JHipsterConstants;
 
@@ -33,6 +34,8 @@ public class ArtemisApp {
     private static final Logger log = LoggerFactory.getLogger(ArtemisApp.class);
 
     private final Environment env;
+
+    public static final long appStart = System.nanoTime();
 
     public ArtemisApp(Environment env) {
         this.env = env;
@@ -95,15 +98,17 @@ public class ArtemisApp {
 
                 ----------------------------------------------------------
                 \t'{}' is running! Access URLs:
-                \tLocal:      {}://localhost:{}{}
-                \tExternal:   {}://{}:{}{}
-                \tProfiles:   {}
-                \tVersion:    {}
-                \tGit Commit: {}
-                \tGit Branch: {}
+                \tLocal:        {}://localhost:{}{}
+                \tExternal:     {}://{}:{}{}
+                \tProfiles:     {}
+                \tVersion:      {}
+                \tGit Commit:   {}
+                \tGit Branch:   {}
+                \tFull startup: {}
                 ----------------------------------------------------------
 
                 """, env.getProperty("spring.application.name"), protocol, serverPort, contextPath, protocol, hostAddress, serverPort, contextPath,
-                env.getActiveProfiles().length == 0 ? env.getDefaultProfiles() : env.getActiveProfiles(), version, gitCommitId, gitBranch);
+                env.getActiveProfiles().length == 0 ? env.getDefaultProfiles() : env.getActiveProfiles(), version, gitCommitId, gitBranch,
+                TimeLogUtil.formatDurationFrom(appStart));
     }
 }
