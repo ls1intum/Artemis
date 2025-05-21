@@ -37,8 +37,13 @@ class Junit:
     @staticmethod
     def strip_ansi_codes(text):
         """Entferne ANSI-Farbcodes aus dem Text"""
-        ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
-        return ansi_escape.sub('', text)
+        ansi_escape_pattern = re.compile(
+            r'(?:\x1B|\x9B)'  # ESC or CSI
+            r'[\[\]()#;?]*'  # Intermediate bytes
+            r'(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?'  # Parameter bytes
+            r'[0-9A-ORZcf-nqry=><~]')  # Final byte
+
+        return ansi_escape_pattern.sub('', text)
 
     @staticmethod
     def createOutputPath(outputPath: str) -> None:
