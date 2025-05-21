@@ -78,7 +78,7 @@ export class WeekGroupingUtil {
 
         // Only apply weekly grouping to exercises and default type
         if ((storageId !== 'exercise' && storageId !== 'lecture') || !!searchValue || filtered.length <= MIN_ITEMS_TO_GROUP_BY_WEEK) {
-            return [{ isNoDate: false, items: filtered, showDateHeader: false }];
+            return [{ isNoDate: true, items: filtered, showDateHeader: false }];
         }
 
         // Group items by week
