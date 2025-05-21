@@ -67,6 +67,75 @@ export class CoursePracticeQuizComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * increments the current question index or navigates to the course practice page if the last question is reached
+     */
+    nextQuestion(): void {
+        if (this.isLastQuestion) {
+            this.navigateToPractice();
+        } else {
+            this.currentIndex++;
+            this.currentQuestion = this.questions[this.currentIndex];
+            this.initQuestion(this.currentQuestion);
+        }
+    }
+
+    /**
+     * checks if the current question is the last question
+     */
+    get isLastQuestion(): boolean {
+        return this.currentIndex === this.questions.length - 1;
+    }
+
+    /**
+     * loads the quiz questions for the given course
+     * @param courseId
+     */
+    loadQuestions(courseId: number): void {
+        this.quizService.getQuizQuestions(courseId).subscribe((questions) => {
+            this.startQuiz(questions);
+        });
+    }
+
+    /**
+     * Initializes the quiz with the given questions
+     * @param questions
+     */
+    startQuiz(questions: QuizQuestion[]): void {
+        this.questions = questions;
+        this.currentIndex = 0;
+        this.currentQuestion = this.questions[this.currentIndex];
+        this.initQuestion(this.currentQuestion);
+    }
+
+    /**
+     * loads the quiz question
+     * @param question
+     */
+    initQuestion(question: QuizQuestion): void {
+        this.selectedAnswerOptions = new Map<number, AnswerOption[]>();
+        this.dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
+        this.shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
+        this.showingResult = false;
+        this.submission = new QuizSubmission();
+        if (question) {
+            switch (question.type) {
+                case QuizQuestionType.MULTIPLE_CHOICE:
+                    // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
+                    this.selectedAnswerOptions.set(question.id!, []);
+                    break;
+                case QuizQuestionType.DRAG_AND_DROP:
+                    // add the array of mappings to the dictionary (add an empty array, if there is no submittedAnswer for this question)
+                    this.dragAndDropMappings.set(question.id!, []);
+                    break;
+                case QuizQuestionType.SHORT_ANSWER:
+                    // add the array of submitted texts to the dictionary (add an empty array, if there is no submittedAnswer for this question)
+                    this.shortAnswerSubmittedTexts.set(question.id!, []);
+                    break;
+            }
+        }
+    }
+
     applySelection() {
         this.submission.submittedAnswers = [];
         const questionId = this.currentQuestion.id!;
@@ -113,6 +182,27 @@ export class CoursePracticeQuizComponent implements OnInit, OnDestroy {
             },
             error: (error: HttpErrorResponse) => this.onSubmitError(error),
         });
+    }
+
+    onSubmitSuccess(result: Result) {
+        this.isSubmitting = false;
+        this.submission = result.submission as QuizSubmission;
+        this.applySubmission();
+        this.showResult(result);
+    }
+
+    /**
+     * Callback function for handling error when submitting
+     * @param error
+     */
+    onSubmitError(error: HttpErrorResponse) {
+        const errorMessage = 'Submitting the quiz was not possible. ' + error.headers?.get('X-artemisApp-message') || error.message;
+        this.alertService.addAlert({
+            type: AlertType.DANGER,
+            message: errorMessage,
+            disableTranslation: true,
+        });
+        this.isSubmitting = false;
     }
 
     /**
@@ -173,96 +263,6 @@ export class CoursePracticeQuizComponent implements OnInit, OnDestroy {
                 this.questionScores[submittedAnswer.quizQuestion!.id!] = round(submittedAnswer.scoreInPoints!);
             }, this);
         }
-    }
-
-    onSubmitSuccess(result: Result) {
-        this.isSubmitting = false;
-        this.submission = result.submission as QuizSubmission;
-        this.applySubmission();
-        this.showResult(result);
-    }
-
-    /**
-     * Callback function for handling error when submitting
-     * @param error
-     */
-    onSubmitError(error: HttpErrorResponse) {
-        const errorMessage = 'Submitting the quiz was not possible. ' + error.headers?.get('X-artemisApp-message') || error.message;
-        this.alertService.addAlert({
-            type: AlertType.DANGER,
-            message: errorMessage,
-            disableTranslation: true,
-        });
-        this.isSubmitting = false;
-    }
-
-    /**
-     * loads the quiz question
-     * @param question
-     */
-    initQuestion(question: QuizQuestion): void {
-        this.selectedAnswerOptions = new Map<number, AnswerOption[]>();
-        this.dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
-        this.shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
-        this.showingResult = false;
-        this.submission = new QuizSubmission();
-        if (question) {
-            switch (question.type) {
-                case QuizQuestionType.MULTIPLE_CHOICE:
-                    // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                    this.selectedAnswerOptions.set(question.id!, []);
-                    break;
-                case QuizQuestionType.DRAG_AND_DROP:
-                    // add the array of mappings to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                    this.dragAndDropMappings.set(question.id!, []);
-                    break;
-                case QuizQuestionType.SHORT_ANSWER:
-                    // add the array of submitted texts to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                    this.shortAnswerSubmittedTexts.set(question.id!, []);
-                    break;
-            }
-        }
-    }
-
-    /**
-     * loads the quiz questions for the given course
-     * @param courseId
-     */
-    loadQuestions(courseId: number): void {
-        this.quizService.getQuizQuestions(courseId).subscribe((questions) => {
-            this.startQuiz(questions);
-        });
-    }
-
-    /**
-     * Initializes the quiz with the given questions
-     * @param questions
-     */
-    startQuiz(questions: QuizQuestion[]): void {
-        this.questions = questions;
-        this.currentIndex = 0;
-        this.currentQuestion = this.questions[this.currentIndex];
-        this.initQuestion(this.currentQuestion);
-    }
-
-    /**
-     * increments the current question index or navigates to the course practice page if the last question is reached
-     */
-    nextQuestion(): void {
-        if (this.isLastQuestion) {
-            this.navigateToPractice();
-        } else {
-            this.currentIndex++;
-            this.currentQuestion = this.questions[this.currentIndex];
-            this.initQuestion(this.currentQuestion);
-        }
-    }
-
-    /**
-     * checks if the current question is the last question
-     */
-    get isLastQuestion(): boolean {
-        return this.currentIndex === this.questions.length - 1;
     }
 
     /**
