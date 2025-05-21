@@ -51,12 +51,12 @@ export class CourseLearnerProfileComponent implements OnInit {
     }));
 
     /** Default value for profile settings */
-    private readonly defaultProfileValue = CourseLearnerProfileDTO.MIN_VALUE.toString();
+    private readonly defaultProfileValue = CourseLearnerProfileDTO.MIN_VALUE;
 
     /** Signals for course learner profile settings */
-    aimForGradeOrBonus = signal<string>(this.defaultProfileValue);
-    timeInvestment = signal<string>(this.defaultProfileValue);
-    repetitionIntensity = signal<string>(this.defaultProfileValue);
+    aimForGradeOrBonus = signal<number>(this.defaultProfileValue);
+    timeInvestment = signal<number>(this.defaultProfileValue);
+    repetitionIntensity = signal<number>(this.defaultProfileValue);
 
     async ngOnInit(): Promise<void> {
         await this.loadProfiles();
@@ -100,9 +100,9 @@ export class CourseLearnerProfileComponent implements OnInit {
      * @param courseLearnerProfile - The course learner profile containing the values to update
      */
     private updateProfileValues(courseLearnerProfile: CourseLearnerProfileDTO): void {
-        this.aimForGradeOrBonus.set(courseLearnerProfile.aimForGradeOrBonus.toString());
-        this.timeInvestment.set(courseLearnerProfile.timeInvestment.toString());
-        this.repetitionIntensity.set(courseLearnerProfile.repetitionIntensity.toString());
+        this.aimForGradeOrBonus.set(courseLearnerProfile.aimForGradeOrBonus);
+        this.timeInvestment.set(courseLearnerProfile.timeInvestment);
+        this.repetitionIntensity.set(courseLearnerProfile.repetitionIntensity);
     }
 
     /**
@@ -141,9 +141,9 @@ export class CourseLearnerProfileComponent implements OnInit {
         const updatedProfile = new CourseLearnerProfileDTO();
         Object.assign(updatedProfile, {
             ...courseLearnerProfile,
-            aimForGradeOrBonus: Number(this.aimForGradeOrBonus()),
-            timeInvestment: Number(this.timeInvestment()),
-            repetitionIntensity: Number(this.repetitionIntensity()),
+            aimForGradeOrBonus: this.aimForGradeOrBonus(),
+            timeInvestment: this.timeInvestment(),
+            repetitionIntensity: this.repetitionIntensity(),
         });
 
         if (!updatedProfile.isValid()) {

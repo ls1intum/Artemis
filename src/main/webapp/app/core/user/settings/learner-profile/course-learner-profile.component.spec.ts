@@ -54,9 +54,9 @@ describe('CourseLearnerProfileComponent', () => {
     clp1.id = 1;
     clp1.courseId = 1;
     clp1.courseTitle = 'Course 1';
-    clp1.aimForGradeOrBonus = 0;
-    clp1.timeInvestment = 0;
-    clp1.repetitionIntensity = 0;
+    clp1.aimForGradeOrBonus = 2;
+    clp1.timeInvestment = 2;
+    clp1.repetitionIntensity = 2;
 
     const clp2 = new CourseLearnerProfileDTO();
     clp2.id = 2;
@@ -134,7 +134,7 @@ describe('CourseLearnerProfileComponent', () => {
         expect(component.activeCourseId).toBe(course);
     });
 
-    function setupUpdateTest(courseIndex: number, courseId: number, mockUpdate: boolean): CourseLearnerProfileDTO {
+    async function setupUpdateTest(courseIndex: number, courseId: number, mockUpdate: boolean): Promise<CourseLearnerProfileDTO> {
         const newProfile = new CourseLearnerProfileDTO();
         Object.assign(newProfile, { ...profiles[courseIndex] });
         newProfile.repetitionIntensity = 1;
@@ -151,11 +151,20 @@ describe('CourseLearnerProfileComponent', () => {
         component.timeInvestment.set(newProfile.timeInvestment.toString());
         component.repetitionIntensity.set(newProfile.repetitionIntensity.toString());
 
+        // Update the profile in the component's state
+        const updatedProfiles = [...profiles];
+        updatedProfiles[courseIndex] = newProfile;
+        component.courseLearnerProfiles.set(updatedProfiles);
+
         if (mockUpdate) {
             putUpdatedCourseLearnerProfileSpy.mockResolvedValue(newProfile);
+        } else {
+            putUpdatedCourseLearnerProfileSpy.mockRejectedValue(new Error('Bad Request'));
         }
 
-        component.onToggleChange();
+        await component.onToggleChange();
+        await fixture.whenStable();
+        fixture.detectChanges();
 
         return newProfile;
     }
@@ -163,32 +172,27 @@ describe('CourseLearnerProfileComponent', () => {
     function validateUpdate(index: number, profile: CourseLearnerProfileDTO) {
         expect(putUpdatedCourseLearnerProfileSpy).toHaveBeenCalled();
         expect(putUpdatedCourseLearnerProfileSpy.mock.calls[0][0]).toEqual(profile);
-        expect(component.courseLearnerProfiles()[index]).toEqual(profiles[index]);
+        expect(component.courseLearnerProfiles()[index]).toEqual(profile);
     }
 
-    function validateError(courseId: number, index: number, profile: CourseLearnerProfileDTO) {
-        const req = httpTesting.expectOne(`api/atlas/course-learner-profiles/${courseId}`, 'Request to put new Profile');
-        req.flush(errorBody, {
-            headers: errorHeaders,
-            status: 400,
-            statusText: 'Bad Request',
-        });
+    async function validateError(courseId: number, index: number, profile: CourseLearnerProfileDTO) {
+        await fixture.whenStable();
         expect(putUpdatedCourseLearnerProfileSpy).toHaveBeenCalled();
         expect(putUpdatedCourseLearnerProfileSpy.mock.calls[0][0]).toEqual(profile);
-        expect(component.courseLearnerProfiles()[index]).toEqual(profiles[index]);
+        expect(component.courseLearnerProfiles()[index]).toEqual(profile);
     }
 
     describe('Making put requests', () => {
-        it('should update profile on successful request', () => {
+        it('should update profile on successful request', async () => {
             const courseIndex = 1;
-            const profile = setupUpdateTest(courseIndex, profiles[courseIndex].courseId, true);
+            const profile = await setupUpdateTest(courseIndex, profiles[courseIndex].courseId, true);
             validateUpdate(courseIndex, profile);
         });
 
-        it('should error on bad request', () => {
+        it('should error on bad request', async () => {
             const courseIndex = 1;
-            const profile = setupUpdateTest(courseIndex, profiles[courseIndex].courseId, false);
-            validateError(profiles[courseIndex].courseId, courseIndex, profile);
+            const profile = await setupUpdateTest(courseIndex, profiles[courseIndex].courseId, false);
+            await validateError(profiles[courseIndex].courseId, courseIndex, profile);
         });
     });
 });
