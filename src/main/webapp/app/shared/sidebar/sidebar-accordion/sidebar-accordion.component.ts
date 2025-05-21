@@ -115,6 +115,6 @@ export class SidebarAccordionComponent implements OnChanges, OnInit, OnDestroy {
     }
 
     getGroupedByWeek(groupKey: string): WeekGroup[] {
-        return WeekGroupingUtil.getGroupedByWeek(this.groupedData[groupKey].entityData, groupKey, this.searchValue);
+        return WeekGroupingUtil.getGroupedByWeek(this.groupedData[groupKey].entityData, this.storageId, this.searchValue);
     }
 }
