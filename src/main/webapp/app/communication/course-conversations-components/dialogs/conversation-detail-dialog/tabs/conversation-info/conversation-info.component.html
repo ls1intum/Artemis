@@ -83,13 +83,13 @@
                 </div>
 
                 <p class="text-muted small mb-2">
-                    {{
-                        !isNotificationsEnabled
-                            ? ('artemisApp.dialogs.conversationDetail.infoTab.notificationsDisabled' | artemisTranslate)
-                            : activeConversation()?.isMuted
-                              ? ('artemisApp.dialogs.conversationDetail.infoTab.notificationsMutedDescription' | artemisTranslate)
-                              : ('artemisApp.dialogs.conversationDetail.infoTab.notificationsEnabledDescription' | artemisTranslate)
-                    }}
+                    @if (!isNotificationsEnabled) {
+                        <span jhiTranslate="artemisApp.dialogs.conversationDetail.infoTab.notificationsDisabled"></span>
+                    } @else if (activeConversation()?.isMuted) {
+                        <span jhiTranslate="artemisApp.dialogs.conversationDetail.infoTab.notificationsMutedDescription"></span>
+                    } @else {
+                        <span jhiTranslate="artemisApp.dialogs.conversationDetail.infoTab.notificationsEnabledDescription"></span>
+                    }
                     {{ 'artemisApp.dialogs.conversationDetail.infoTab.seeSettingsPrefix' | artemisTranslate }}
                     <a [routerLink]="['/courses', course()?.id, 'settings']" class="ms-1" target="_blank">
                         {{ 'artemisApp.dialogs.conversationDetail.infoTab.seeSettingsLink' | artemisTranslate }}
