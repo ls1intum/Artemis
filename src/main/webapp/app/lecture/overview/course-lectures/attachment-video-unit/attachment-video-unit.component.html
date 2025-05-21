@@ -38,8 +38,11 @@
         </div>
     }
 
-    @if (!!videoUrl()) {
+    @if (!!lectureUnit().attachment && !!videoUrl()) {
         <hr />
+    }
+
+    @if (!!videoUrl()) {
         <div class="video-player-container">
             <div class="ratio ratio-16x9">
                 <iframe id="videoFrame" class="rounded" [src]="videoUrl() | safeResourceUrl" allow="fullscreen"></iframe>

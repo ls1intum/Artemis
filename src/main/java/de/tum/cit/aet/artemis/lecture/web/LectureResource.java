@@ -418,7 +418,6 @@ public class LectureResource {
             case null -> false;
             case ExerciseUnit exerciseUnit -> exerciseUnit.getExercise() != null && authCheckService.isAllowedToSeeLectureUnit(lectureUnit, user)
                     && exercisesWithAllInformationNeeded.contains(exerciseUnit.getExercise());
-            case AttachmentVideoUnit attachmentVideoUnit -> attachmentVideoUnit.getAttachment() != null && authCheckService.isAllowedToSeeLectureUnit(lectureUnit, user);
             default -> authCheckService.isAllowedToSeeLectureUnit(lectureUnit, user);
         }).peek(lectureUnit -> {
             lectureUnit.setCompleted(lectureUnit.isCompletedFor(user));

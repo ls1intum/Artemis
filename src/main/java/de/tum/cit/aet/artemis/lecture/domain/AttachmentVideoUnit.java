@@ -36,16 +36,6 @@ public class AttachmentVideoUnit extends LectureUnit {
     @OrderBy("slideNumber ASC")
     private List<Slide> slides = new ArrayList<>();
 
-    @Override
-    public boolean isVisibleToStudents() {
-        if (attachment == null) {
-            return true;
-        }
-        else {
-            return attachment.isVisibleToStudents();
-        }
-    }
-
     public String getDescription() {
         return description;
     }
