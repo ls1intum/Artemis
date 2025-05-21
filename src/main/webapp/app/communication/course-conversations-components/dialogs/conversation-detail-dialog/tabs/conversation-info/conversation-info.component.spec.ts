@@ -317,6 +317,75 @@ examples.forEach((activeConversation) => {
             expect(alertService.error).toHaveBeenCalledWith('error.http.400');
         }));
 
+        it('should handle error when updating group chat', fakeAsync(() => {
+            if (isGroupChatDTO(activeConversation)) {
+                const error = new HttpErrorResponse({
+                    status: 400,
+                });
+                const groupChatService = TestBed.inject(GroupChatService);
+                const alertService = TestBed.inject(AlertService);
+                const translateService = TestBed.inject(TranslateService);
+
+                jest.spyOn(groupChatService, 'update').mockReturnValue(throwError(() => error));
+                jest.spyOn(alertService, 'error');
+                jest.spyOn(translateService, 'instant').mockReturnValue('error.http.400');
+
+                component['updateGroupChat'](activeConversation, 'name', 'new name');
+                tick();
+
+                expect(alertService.error).toHaveBeenCalledWith('error.http.400');
+            }
+        }));
+
+        it('should not update group chat when course ID is not available', () => {
+            if (isGroupChatDTO(activeConversation)) {
+                const groupChatService = TestBed.inject(GroupChatService);
+                const updateSpy = jest.spyOn(groupChatService, 'update');
+
+                TestBed.runInInjectionContext(() => {
+                    component.course = input<Course>({} as Course);
+                });
+                component['updateGroupChat'](activeConversation, 'name', 'new name');
+
+                expect(updateSpy).not.toHaveBeenCalled();
+            }
+        });
+
+        it('should not update channel when course ID is not available', () => {
+            if (isChannelDTO(activeConversation)) {
+                const channelService = TestBed.inject(ChannelService);
+                const updateSpy = jest.spyOn(channelService, 'update');
+
+                TestBed.runInInjectionContext(() => {
+                    component.course = input<Course>({} as Course);
+                });
+                component['updateChannel'](activeConversation, 'name', 'new name');
+
+                expect(updateSpy).not.toHaveBeenCalled();
+            }
+        });
+
+        it('should handle error when updating channel', fakeAsync(() => {
+            if (isChannelDTO(activeConversation)) {
+                const error = new HttpErrorResponse({
+                    status: 400,
+                    error: { skipAlert: true },
+                });
+                const channelService = TestBed.inject(ChannelService);
+                const alertService = TestBed.inject(AlertService);
+                const translateService = TestBed.inject(TranslateService);
+
+                jest.spyOn(channelService, 'update').mockReturnValue(throwError(() => error));
+                jest.spyOn(alertService, 'error');
+                jest.spyOn(translateService, 'instant').mockReturnValue('error.http.400');
+
+                component['updateChannel'](activeConversation, 'name', 'new name');
+                tick();
+
+                expect(alertService.error).toHaveBeenCalledWith('error.http.400');
+            }
+        }));
+
         function checkThatActionButtonOfSectionExistsInTemplate(sectionName: string) {
             const actionButtonElement = fixture.nativeElement.querySelector(`#${sectionName}-section .action-button`);
             expect(actionButtonElement).toBeTruthy();
