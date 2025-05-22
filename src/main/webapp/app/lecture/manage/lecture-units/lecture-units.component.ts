@@ -161,12 +161,12 @@ export class LectureUpdateUnitsComponent implements OnInit {
     }
 
     createEditAttachmentVideoUnit(attachmentVideoUnitFormData: AttachmentVideoUnitFormData): void {
-        if (!attachmentVideoUnitFormData?.formProperties?.name || !attachmentVideoUnitFormData?.fileProperties?.file || !attachmentVideoUnitFormData?.fileProperties?.fileName) {
-            return;
-        }
-
         const { description, name, releaseDate, videoSource, updateNotificationText, competencyLinks } = attachmentVideoUnitFormData.formProperties;
         const { file, fileName } = attachmentVideoUnitFormData.fileProperties;
+
+        if (!name || (!(file && fileName) && !videoSource)) {
+            return;
+        }
 
         this.currentlyProcessedAttachmentVideoUnit = this.isEditingLectureUnit ? this.currentlyProcessedAttachmentVideoUnit : new AttachmentVideoUnit();
         const attachmentToCreateOrEdit = this.isEditingLectureUnit ? this.currentlyProcessedAttachmentVideoUnit.attachment! : new Attachment();
@@ -188,6 +188,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
             attachmentToCreateOrEdit.name = name;
         }
         if (releaseDate) {
+            this.currentlyProcessedAttachmentVideoUnit.releaseDate = releaseDate;
             attachmentToCreateOrEdit.releaseDate = releaseDate;
         }
         attachmentToCreateOrEdit.attachmentType = AttachmentType.FILE;
@@ -204,8 +205,10 @@ export class LectureUpdateUnitsComponent implements OnInit {
         this.currentlyProcessedAttachmentVideoUnit.competencyLinks = competencyLinks;
 
         const formData = new FormData();
-        formData.append('file', file, fileName);
-        formData.append('attachment', objectToJsonBlob(attachmentToCreateOrEdit));
+        if (!!file && !!fileName) {
+            formData.append('file', file, fileName);
+            formData.append('attachment', objectToJsonBlob(attachmentToCreateOrEdit));
+        }
         formData.append('attachmentVideoUnit', objectToJsonBlob(this.currentlyProcessedAttachmentVideoUnit));
 
         (this.isEditingLectureUnit
