@@ -226,10 +226,10 @@ public class FileResource {
         var fileUpload = fileUploadService.findByPath(publicPath);
 
         if (fileUpload.isPresent()) {
-            return buildFileResponse(serverFilePath, filename, Optional.ofNullable(fileUpload.get().getFilename()), FilePathType.MARKDOWN, true);
+            return buildFileResponse(serverFilePath, filename, Optional.ofNullable(fileUpload.get().getFilename()), true);
         }
 
-        return buildFileResponse(serverFilePath, filename, FilePathType.MARKDOWN, true);
+        return buildFileResponse(serverFilePath, filename, true);
     }
 
     /**
@@ -243,7 +243,7 @@ public class FileResource {
     public ResponseEntity<byte[]> getMarkdownFile(@PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
         sanitizeFilenameElseThrow(filename);
-        return buildFileResponse(FilePathService.getMarkdownFilePath(), filename, FilePathType.MARKDOWN, false);
+        return buildFileResponse(FilePathService.getMarkdownFilePath(), filename, false);
     }
 
     /**
@@ -352,9 +352,8 @@ public class FileResource {
         if (!usersOfTheSubmission.contains(requestingUser) && !authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             throw new AccessForbiddenException();
         }
-        FilePathType type = FilePathType.FILE_UPLOAD_SUBMISSION;
 
-        return buildFileResponse(getActualPathFromPublicPathString(submission.getFilePath(), type), type, false);
+        return buildFileResponse(getActualPathFromPublicPathString(submission.getFilePath(), FilePathType.FILE_UPLOAD_SUBMISSION), false);
     }
 
     /**
@@ -415,8 +414,7 @@ public class FileResource {
         ExamUser examUser = api.findWithExamById(examUserId).orElseThrow();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, examUser.getExam().getCourse(), null);
 
-        FilePathType type = FilePathType.EXAM_USER_SIGNATURE;
-        return buildFileResponse(getActualPathFromPublicPathString(examUser.getSigningImagePath(), type), type, false);
+        return buildFileResponse(getActualPathFromPublicPathString(examUser.getSigningImagePath(), FilePathType.EXAM_USER_SIGNATURE), false);
     }
 
     /**
@@ -434,8 +432,7 @@ public class FileResource {
         ExamUser examUser = api.findWithExamById(examUserId).orElseThrow();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, examUser.getExam().getCourse(), null);
 
-        FilePathType type = FilePathType.EXAM_USER_IMAGE;
-        return buildFileResponse(getActualPathFromPublicPathString(examUser.getStudentImagePath(), type), type, true);
+        return buildFileResponse(getActualPathFromPublicPathString(examUser.getStudentImagePath(), FilePathType.EXAM_USER_IMAGE), true);
     }
 
     /**
@@ -462,8 +459,7 @@ public class FileResource {
         // check if the user is authorized to access the requested attachment unit
         checkAttachmentAuthorizationOrThrow(course, attachment);
 
-        FilePathType type = FilePathType.LECTURE_ATTACHMENT;
-        return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink(), type), Optional.of(attachmentName), type);
+        return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.LECTURE_ATTACHMENT), Optional.of(attachmentName));
     }
 
     /**
@@ -531,8 +527,8 @@ public class FileResource {
 
         // check if the user is authorized to access the requested attachment unit
         checkAttachmentAuthorizationOrThrow(course, attachment);
-        FilePathType type = FilePathType.ATTACHMENT_UNIT;
-        return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink(), type), Optional.of(attachment.getName() + "." + getExtension(attachment.getLink())), type);
+        return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.ATTACHMENT_UNIT),
+                Optional.of(attachment.getName() + "." + getExtension(attachment.getLink())));
     }
 
     /**
@@ -553,8 +549,7 @@ public class FileResource {
         Attachment attachment = attachmentUnit.getAttachment();
         checkAttachmentUnitExistsInCourseOrThrow(course, attachmentUnit);
 
-        FilePathType type = FilePathType.ATTACHMENT_UNIT;
-        return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink(), type), type, false);
+        return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.ATTACHMENT_UNIT), false);
     }
 
     /**
@@ -574,8 +569,7 @@ public class FileResource {
         Course course = courseRepository.findByIdElseThrow(courseId);
         checkAttachmentExistsInCourseOrThrow(course, attachment);
 
-        FilePathType type = FilePathType.LECTURE_ATTACHMENT;
-        return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink(), type), type, false);
+        return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.LECTURE_ATTACHMENT), false);
     }
 
     /**
@@ -611,8 +605,7 @@ public class FileResource {
         Matcher matcher = pattern.matcher(directoryPath);
 
         if (matcher.matches()) {
-            FilePathType type = FilePathType.SLIDE;
-            return buildFileResponse(getActualPathFromPublicPathString(slide.getSlideImagePath(), type), type, false);
+            return buildFileResponse(getActualPathFromPublicPathString(slide.getSlideImagePath(), FilePathType.SLIDE), false);
         }
         else {
             throw new EntityNotFoundException("Slide", slideNumber);
@@ -644,8 +637,7 @@ public class FileResource {
         Matcher matcher = pattern.matcher(directoryPath);
 
         if (matcher.matches()) {
-            FilePathType type = FilePathType.SLIDE;
-            return buildFileResponse(getActualPathFromPublicPathString(slide.getSlideImagePath(), type), type, false);
+            return buildFileResponse(getActualPathFromPublicPathString(slide.getSlideImagePath(), FilePathType.SLIDE), false);
         }
         else {
             throw new EntityNotFoundException("Slide", slideId);
@@ -672,26 +664,23 @@ public class FileResource {
         // check if hidden link is available in the attachment
         String studentVersion = attachment.getStudentVersion();
         if (studentVersion == null) {
-            FilePathType type = FilePathType.ATTACHMENT_UNIT;
-            return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink(), type), type, false);
+            return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.ATTACHMENT_UNIT), false);
         }
 
         String fileName = studentVersion.substring(studentVersion.lastIndexOf("/") + 1);
 
-        return buildFileResponse(FilePathService.getAttachmentUnitFileSystemPath().resolve(Path.of(attachmentUnit.getId().toString(), "student")), fileName,
-                FilePathType.STUDENT_VERSION_SLIDES, false);
+        return buildFileResponse(FilePathService.getAttachmentUnitFileSystemPath().resolve(Path.of(attachmentUnit.getId().toString(), "student")), fileName, false);
     }
 
     /**
      * Builds the response with headers, body and content type for specified path containing the file name
      *
      * @param path  to the file including the file name
-     * @param type  the type of the file path
      * @param cache true if the response should contain a header that allows caching; false otherwise
      * @return response entity
      */
-    private ResponseEntity<byte[]> buildFileResponse(Path path, FilePathType type, boolean cache) {
-        return buildFileResponse(path.getParent(), path.getFileName().toString(), Optional.empty(), type, cache);
+    private ResponseEntity<byte[]> buildFileResponse(Path path, boolean cache) {
+        return buildFileResponse(path.getParent(), path.getFileName().toString(), Optional.empty(), cache);
     }
 
     /**
@@ -699,12 +688,11 @@ public class FileResource {
      *
      * @param path     to the file including the file name
      * @param filename the name of the file
-     * @param type     the type of the file path
      * @param cache    true if the response should contain a header that allows caching; false otherwise
      * @return response entity
      */
-    private ResponseEntity<byte[]> buildFileResponse(Path path, String filename, FilePathType type, boolean cache) {
-        return buildFileResponse(path, filename, Optional.empty(), type, cache);
+    private ResponseEntity<byte[]> buildFileResponse(Path path, String filename, boolean cache) {
+        return buildFileResponse(path, filename, Optional.empty(), cache);
     }
 
     /**
@@ -712,11 +700,10 @@ public class FileResource {
      *
      * @param path            to the file
      * @param replaceFilename replaces the downloaded file's name, if provided
-     * @param type            the type of the file path
      * @return response entity
      */
-    private ResponseEntity<byte[]> buildFileResponse(Path path, Optional<String> replaceFilename, FilePathType type) {
-        return buildFileResponse(path.getParent(), path.getFileName().toString(), replaceFilename, type, false);
+    private ResponseEntity<byte[]> buildFileResponse(Path path, Optional<String> replaceFilename) {
+        return buildFileResponse(path.getParent(), path.getFileName().toString(), replaceFilename, false);
     }
 
     /**
@@ -725,11 +712,10 @@ public class FileResource {
      * @param path            to the file
      * @param filename        the name of the file
      * @param replaceFilename replaces the downloaded file's name, if provided
-     * @param type            the type of the file path
      * @param cache           true if the response should contain a header that allows caching; false otherwise
      * @return response entity
      */
-    private ResponseEntity<byte[]> buildFileResponse(Path path, String filename, Optional<String> replaceFilename, FilePathType type, boolean cache) {
+    private ResponseEntity<byte[]> buildFileResponse(Path path, String filename, Optional<String> replaceFilename, boolean cache) {
         try {
             Path actualPath = path.resolve(filename);
             byte[] file = fileService.getFileForPath(actualPath);
@@ -745,11 +731,6 @@ public class FileResource {
                     ? "attachment"
                     : "inline";
             String headerFilename = FileService.sanitizeFilename(replaceFilename.orElse(filename));
-            String prefix = fileService.generateTargetFilenameBase(type);
-            // the stored filename contains potentially a prefix and a timestamp. The user doesn't need that and it should be removed
-            headerFilename = headerFilename.replace(prefix, "");
-            headerFilename = headerFilename.replaceFirst("^[^_]*_", "");
-
             headers.setContentDisposition(ContentDisposition.builder(contentType).filename(headerFilename).build());
 
             var response = ResponseEntity.ok().headers(headers).contentType(getMediaTypeFromFilename(filename)).header("filename", filename);

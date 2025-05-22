@@ -168,7 +168,6 @@ public class FilePathService {
         String filename = path.getFileName().toString();
 
         return switch (filePathType) {
-            case MARKDOWN -> getMarkdownFilePath().resolve(filename);
             case TEMPORARY -> getTempFilePath().resolve(filename);
             case DRAG_AND_DROP_BACKGROUND -> getDragAndDropBackgroundFilePath().resolve(filename);
             case DRAG_ITEM -> getDragItemFilePath().resolve(filename);
@@ -327,7 +326,6 @@ public class FilePathService {
 
         return switch (filePathType) {
             case TEMPORARY -> URI.create(FileService.DEFAULT_FILE_SUBPATH + filename);
-            case MARKDOWN -> URI.create("markdown/" + filename);
             case DRAG_AND_DROP_BACKGROUND -> URI.create("drag-and-drop/backgrounds/" + id + "/" + filename);
             case DRAG_ITEM -> URI.create("drag-and-drop/drag-items/" + id + "/" + filename);
             case COURSE_ICON -> URI.create("course/icons/" + id + "/" + filename);

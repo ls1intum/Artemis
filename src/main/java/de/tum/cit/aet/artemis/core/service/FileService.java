@@ -362,7 +362,6 @@ public class FileService implements DisposableBean {
             case DRAG_ITEM -> "DragItem_";
             case COURSE_ICON -> "CourseIcon_";
             case PROFILE_PICTURE -> "ProfilePicture_";
-            case MARKDOWN -> "Markdown_";
             case EXAM_USER_SIGNATURE -> "ExamUserSignature_";
             case EXAM_USER_IMAGE -> "ExamUserImage_";
             case LECTURE_ATTACHMENT -> "LectureAttachment_";
