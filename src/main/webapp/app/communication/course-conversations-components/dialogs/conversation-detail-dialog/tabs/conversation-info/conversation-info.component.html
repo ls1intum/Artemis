@@ -100,14 +100,8 @@
                     <li>
                         <div class="d-flex justify-content-between align-items-center">
                             <div class="d-flex align-items-center gap-2">
-                                <fa-icon [icon]="activeConversation()?.isMuted ? faVolumeUp : faVolumeXmark" class="me-1" />
-                                <span>
-                                    {{
-                                        activeConversation()?.isMuted
-                                            ? ('artemisApp.dialogs.conversationDetail.infoTab.unmuteChannel' | artemisTranslate)
-                                            : ('artemisApp.dialogs.conversationDetail.infoTab.muteChannel' | artemisTranslate)
-                                    }}
-                                </span>
+                                <fa-icon [icon]="faVolumeXmark" class="me-1" />
+                                <span jhiTranslate="artemisApp.dialogs.conversationDetail.infoTab.muteChannel"></span>
                             </div>
                             <div class="form-check form-switch d-flex flex-column align-items-center">
                                 <input
@@ -115,7 +109,7 @@
                                     class="form-check-input m-0"
                                     type="checkbox"
                                     role="switch"
-                                    [checked]="!activeConversation()?.isMuted"
+                                    [checked]="activeConversation()?.isMuted"
                                     (change)="onMuteToggle()"
                                 />
                             </div>

@@ -244,6 +244,9 @@ examples.forEach((activeConversation) => {
             expect(component.isNotificationsEnabled).toBeTruthy();
             const desc = fixture.nativeElement.querySelector('#notification-section .text-muted');
             expect(desc).toBeTruthy();
+
+            const toggle = fixture.nativeElement.querySelector('#muteSwitch') as HTMLInputElement;
+            expect(toggle.checked).toBeFalse();
         });
 
         it('should show disabled notification message when course notifications are disabled', fakeAsync(() => {
@@ -297,6 +300,9 @@ examples.forEach((activeConversation) => {
             expect(component.isNotificationsEnabled).toBeTruthy();
             const desc = fixture.nativeElement.querySelector('#notification-section .text-muted');
             expect(desc).toBeTruthy();
+
+            const toggle = fixture.nativeElement.querySelector('#muteSwitch') as HTMLInputElement;
+            expect(toggle.checked).toBeTrue();
         }));
 
         it('should show error if loadNotificationSettings fails', fakeAsync(() => {

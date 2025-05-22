@@ -175,7 +175,6 @@
                     "notificationsEnabledDescription": "Du wirst Benachrichtigungen für neue Nachrichten in dieser Konversation erhalten.",
                     "notificationsMutedDescription": "Du wirst keine Benachrichtigungen für neue Nachrichten in dieser Konversation erhalten.",
                     "muteChannel": "Kanal stummschalten",
-                    "unmuteChannel": "Stummschaltung des Kanals aufheben",
                     "notificationsDisabled": "Kursweite Benachrichtigungen sind deaktiviert.",
                     "seeSettingsPrefix": " Siehe",
                     "seeSettingsLink": "Benachrichtigungseinstellungen."
