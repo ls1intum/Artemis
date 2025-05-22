@@ -27,6 +27,11 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 export const ABORT_ERROR_MESSAGE = 'Aborting previous request';
 
+/**
+ * This occurs if a user clicks the "login with passkey" button but then cancel the login process.
+ */
+const USER_CANCELLED_LOGIN_WITH_PASSKEY_ERROR = 'NotAllowedError';
+
 @Component({
     selector: 'jhi-home',
     templateUrl: './home.component.html',
@@ -138,9 +143,17 @@ export class HomeComponent implements OnInit, AfterViewChecked {
         if (window.PublicKeyCredential && PublicKeyCredential.isConditionalMediationAvailable) {
             const isCMA = await PublicKeyCredential.isConditionalMediationAvailable();
             if (isCMA) {
-                this.loginWithPasskey(true);
+                await this.makePasskeyAutocompleteAvailable();
             }
         }
+    }
+
+    /**
+     * Ensures that passkey autocomplete functionality is available by initiating a credential request
+     * with conditional mediation. This is required to enable the browser's passkey autocomplete feature.
+     */
+    async makePasskeyAutocompleteAvailable() {
+        await this.loginWithPasskey(true);
     }
 
     async loginWithPasskey(isConditional: boolean = false) {
@@ -163,9 +176,13 @@ export class HomeComponent implements OnInit, AfterViewChecked {
         } catch (error) {
             if (error instanceof InvalidCredentialError) {
                 this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.invalidCredential');
-            } else if (error.name === 'NotAllowedError') {
+            } else if (error.name === USER_CANCELLED_LOGIN_WITH_PASSKEY_ERROR) {
                 // eslint-disable-next-line no-undef
-                console.warn('Operation not allowed or timed out.');
+                console.warn('Operation not allowed or timed out: login with passkey was aborted manually by the user');
+                // We should only be here because the user aborted the passkey login process after using the login with passkey button (not the autocomplete)
+                // We therefore had to abort the getCredential request with conditional mediation, required for the passkey autocomplete
+                // To make the autocomplete available again, we need to call makePasskeyAutocompleteAvailable again
+                this.makePasskeyAutocompleteAvailable();
                 return;
             } else if (error === ABORT_ERROR_MESSAGE) {
                 // eslint-disable-next-line no-undef
