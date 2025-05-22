@@ -1,31 +1,45 @@
 .video-wrapper {
     display: flex;
-    flex-direction: row;
-    align-items: flex-start;
     gap: 16px;
     width: 100%;
+    padding: 8px;
+    box-sizing: border-box;
+    align-items: flex-start;
 }
 
 .video-column {
     flex: 2;
-    width: 70%;
+    position: relative;
+    aspect-ratio: 16 / 9;
+    background: #000; // fallback
 }
 
-.video-element {
-    width: 100%;
-    max-height: 500px;
+/* This ensures the Video.js player fills the container */
+.video-js {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100% !important;
+    height: 100% !important;
     border-radius: 8px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
 }
 
+/* Video.js controls fix */
+.video-js .vjs-control-bar {
+    bottom: 0 !important;
+    top: auto !important;
+}
+
+/* Transcript */
 .transcript-column {
     flex: 1;
-    max-width: 30%;
     max-height: 500px;
     overflow-y: auto;
-    padding-right: 8px;
+    padding-left: 16px;
     border-left: 1px solid #ddd;
 }
+
 .transcript-title {
     font-size: 1.2em;
     font-weight: bold;
@@ -49,7 +63,7 @@
     }
 
     &.active {
-        background-color: #dbeafe; // light blue
+        background-color: #dbeafe;
         font-weight: 600;
     }
 }

@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, ElementRef, Input, OnDestroy, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import Hls from 'hls.js';
+import videojs from 'video.js';
 
 @Component({
     selector: 'jhi-video-player',
@@ -10,42 +10,43 @@ import Hls from 'hls.js';
     styleUrls: ['./video-player.component.scss'],
 })
 export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
-    @ViewChild('videoRef') videoRef?: ElementRef<HTMLVideoElement>;
+    @ViewChild('videoRef', { static: false }) videoRef?: ElementRef<HTMLVideoElement>;
 
     @Input() videoUrl!: string;
     @Input() transcriptSegments: any[] = [];
 
-    useIframe = false;
+    player: any;
     currentSegmentIndex = -1;
-    hls?: Hls;
 
     ngAfterViewInit(): void {
-        if (!this.videoUrl) return;
+        if (!this.videoRef || !this.videoUrl) return;
 
-        if (Hls.isSupported() && this.videoRef) {
-            this.hls = new Hls();
-            this.hls.loadSource(this.videoUrl);
-            this.hls.attachMedia(this.videoRef.nativeElement);
-        } else if (this.videoRef) {
-            this.videoRef.nativeElement.src = this.videoUrl;
-        }
+        this.player = videojs(this.videoRef.nativeElement, {
+            controls: true,
+            preload: 'auto',
+            sources: [
+                {
+                    src: this.videoUrl,
+                    type: 'application/x-mpegURL',
+                },
+            ],
+        });
 
-        this.videoRef?.nativeElement.addEventListener('timeupdate', () => {
-            const time = this.videoRef?.nativeElement.currentTime || 0;
-            this.updateCurrentSegment(time);
+        this.player.on('timeupdate', () => {
+            const currentTime = this.player.currentTime();
+            this.updateCurrentSegment(currentTime);
         });
     }
 
     seekTo(seconds: number): void {
-        if (this.videoRef) {
-            this.videoRef.nativeElement.currentTime = seconds;
-            this.videoRef.nativeElement.play();
-        }
+        this.player?.currentTime(seconds);
+        this.player?.play();
     }
 
     updateCurrentSegment(currentTime: number): void {
         const margin = 0.3;
         const index = this.transcriptSegments.findIndex((s) => currentTime >= s.startTime - margin && currentTime <= s.endTime + margin);
+
         if (index !== -1 && index !== this.currentSegmentIndex) {
             this.currentSegmentIndex = index;
             const el = document.getElementById(`segment-${this.transcriptSegments[index].startTime}`);
@@ -54,6 +55,6 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
     }
 
     ngOnDestroy(): void {
-        this.hls?.destroy();
+        this.player?.dispose();
     }
 }

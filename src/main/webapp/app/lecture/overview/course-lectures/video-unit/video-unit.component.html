@@ -11,6 +11,8 @@
         <jhi-video-player [videoUrl]="videoUrl()!" [transcriptSegments]="transcriptSegments()" />
     } @else if (videoUrl()) {
         <iframe width="100%" height="450" [src]="videoUrl() | safeResourceUrl" frameborder="0" allowfullscreen></iframe>
+    } @else {
+        <div class="alert alert-warning">No valid video URL provided.</div>
     }
 
     {{ lectureUnit().description }}
