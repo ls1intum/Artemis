@@ -999,7 +999,7 @@ public class TutorialGroupService {
         return first.isBefore(second) || first.isEqual(second);
     }
 
-    private Set<YearMonth> deserializeMonthKeysOrElseThrough(List<String> monthKeys) {
+    private Set<YearMonth> deserializeMonthKeysOrElseThrow(List<String> monthKeys) {
         try {
             return monthKeys.stream().map(YearMonth::parse).collect(Collectors.toSet());
         }
@@ -1008,7 +1008,7 @@ public class TutorialGroupService {
         }
     }
 
-    private ZoneId deserializeTimeZoneOrElseThrough(String timeZone) {
+    private ZoneId deserializeTimeZoneOrElseThrow(String timeZone) {
         try {
             return ZoneId.of(timeZone);
         }
