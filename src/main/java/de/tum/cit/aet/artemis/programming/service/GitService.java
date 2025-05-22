@@ -1326,17 +1326,8 @@ public class GitService extends AbstractGitService {
         }
     }
 
-    /**
-     * Clones a bare repository to a temporary non-bare working copy.
-     *
-     * @param sourceRepoUri URI of the source bare repository
-     * @param targetDir     Directory where the non-bare repository will be cloned
-     * @param isBare        Boolean flag indicating whether to clone as a bare repository
-     * @throws GitAPIException if the cloning operation fails
-     */
-    public void cloneRepository(String sourceRepoUri, String targetDir, boolean isBare) throws GitAPIException {
-        // Clone the bare repository into a non-bare working directory
-        Git.cloneRepository().setURI(sourceRepoUri).setDirectory(new File(targetDir, null)).setBare(isBare).call();
+    public void cloneRepository(String sourceRepoUri, Path targetDir, boolean isBare) throws GitAPIException {
+        Git.cloneRepository().setURI(sourceRepoUri).setDirectory(targetDir.toFile()).setBare(isBare).call();
     }
 
     /**

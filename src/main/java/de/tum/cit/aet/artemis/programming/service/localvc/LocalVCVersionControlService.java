@@ -34,58 +34,43 @@ public class LocalVCVersionControlService {
         this.versionControlService = versionControlService;
     }
 
-    /**
-     * Create a new student repo initialized with a single commit from the template bare repo.
-     *
-     * @param templateUri URI of the template repo (bare repo)
-     * @throws Exception on any failure
-     */
     public void createSingleCommitStudentRepo(VcsRepositoryUri templateUri, VcsRepositoryUri studentUri) throws Exception {
-        try (Repository templateRepo = gitService.getBareRepository(templateUri)) {
-            log.info("Resolved bare repo path from templateUri: {}", templateUri);
+        log.info("Creating student repository from template: {} to target: {}", templateUri, studentUri);
 
-            // Ensure student URI is a file URI
-            URI studentRepoURI = studentUri.getURI();
-            if (!"file".equals(studentRepoURI.getScheme())) {
-                throw new IllegalArgumentException("Student URI must be a file URI");
+        // Create temporary directories
+        Path tempTemplateWorkingDir = Files.createTempDirectory("localvc-template-working-");
+        Path tempStudentWorkingDir = Files.createTempDirectory("localvc-student-working-");
+
+        // 这里假设 studentUri 是本地文件路径，比如 file:///... 或者绝对路径
+        URI targetURI = studentUri.getURI();
+        Path targetPath;
+        if (targetURI != null && "file".equalsIgnoreCase(targetURI.getScheme())) {
+            targetPath = Paths.get(targetURI);
+        }
+        else {
+            throw new IllegalArgumentException("Student repository target must be a local file path (file://...)");
+        }
+
+        try {
+            // Step 1: Clone source bare repo to temp working directory
+            gitService.cloneRepository(templateUri.getURI().toString(), tempTemplateWorkingDir, false);
+            // Step 2: Copy files from working copy (excluding .git) to student working dir
+            log.debug("Copying files from template to student working directory: {}", tempStudentWorkingDir);
+            gitService.copyFilesExcludingGit(tempTemplateWorkingDir, tempStudentWorkingDir);
+            // Step 3: Create target bare repository directly at final location
+            log.debug("Creating bare repository at target location: {}", targetPath);
+            try (Repository newRepo = gitService.createBareRepository(targetPath)) {
+                // Step 4: Commit copied files into new repo
+                log.debug("Committing copied files into target repository");
+                gitService.commitCopiedFilesIntoRepo(newRepo, tempStudentWorkingDir);
+                log.info("Successfully created student repository at: {}", studentUri);
             }
-            Path studentBareRepoPath = Paths.get(studentRepoURI);
-
-            // Create a temporary working directory for cloning the template repo (non-bare)
-            Path tempTemplateWorkingDir = Files.createTempDirectory("localvc-template-working-");
-            // Create another temporary working directory for staging the student repo files (non-bare)
-            Path tempStudentWorkingDir = Files.createTempDirectory("localvc-student-working-");
-
-            try {
-                log.debug("Cloning template repo to temporary working directory: {}", tempTemplateWorkingDir);
-                gitService.cloneRepository(templateRepo.getDirectory().toURI().toString(), tempTemplateWorkingDir.toString(), false);
-
-                log.debug("Copying files from template to student working directory: {}", tempStudentWorkingDir);
-                gitService.copyFilesExcludingGit(tempTemplateWorkingDir, tempStudentWorkingDir);
-
-                // Ensure parent directory exists
-                Files.createDirectories(studentBareRepoPath.getParent());
-                log.debug("Creating new bare student repository at: {}", studentBareRepoPath);
-                Repository newStudentBareRepo = gitService.createBareRepository(studentBareRepoPath);
-
-                log.debug("Committing copied files into new student repo");
-                gitService.commitCopiedFilesIntoRepo(newStudentBareRepo, tempStudentWorkingDir);
-
-                log.info("Successfully created single-commit student repository at: {}", studentBareRepoPath);
-            }
-            catch (IOException e) {
-                log.error("Failed to create single-commit student repository", e);
-                // Clean up the created repository if it exists
-                try {
-                    if (Files.exists(studentBareRepoPath)) {
-                        FileUtils.deleteDirectory(studentBareRepoPath.toFile());
-                    }
-                }
-                catch (IOException cleanupEx) {
-                    log.warn("Failed to clean up student repository after error", cleanupEx);
-                }
-                throw new GitException("Failed to create single-commit student repository", e);
-            }
+        }
+        catch (Exception e) {
+            log.error("Failed to create student repository", e);
+            throw new GitException("Failed to create single-commit student repository", e);
+        }
+        finally {
             try {
                 FileUtils.deleteDirectory(tempTemplateWorkingDir.toFile());
                 FileUtils.deleteDirectory(tempStudentWorkingDir.toFile());
@@ -111,6 +96,9 @@ public class LocalVCVersionControlService {
             targetProjectKeyLowerCase = targetProjectKeyLowerCase + attempt;
         }
         final String targetRepoSlug = targetProjectKeyLowerCase + "-" + targetRepositoryName;
-        return versionControlService.getCloneRepositoryUri(targetProjectKey, targetRepoSlug);
+        String baseDir = "/var/git/repos";
+        String repoName = targetRepoSlug + ".git";
+        String fullRepoPath = baseDir + "/" + repoName;
+        return new LocalVCRepositoryUri(fullRepoPath);
     }
 }
