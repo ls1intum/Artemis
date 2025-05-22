@@ -79,6 +79,9 @@ describe('HomeComponent', () => {
         webauthnService = TestBed.inject(WebauthnService);
         webauthnApiService = TestBed.inject(WebauthnApiService);
         alertService = TestBed.inject(AlertService);
+
+        jest.spyOn(console, 'error').mockImplementation(() => {});
+
         fixture.detectChanges();
     });
 
@@ -218,5 +221,21 @@ describe('HomeComponent', () => {
         await component.loginWithPasskey();
 
         expect(handleLoginSuccessSpy).toHaveBeenCalled();
+    });
+
+    it('should handle invalid credential error', async () => {
+        jest.spyOn(webauthnService, 'getCredential').mockRejectedValue(new InvalidCredentialError());
+        const alertSpy = jest.spyOn(alertService, 'addErrorAlert');
+
+        await expect(component.loginWithPasskey()).rejects.toThrow(Error);
+        expect(alertSpy).toHaveBeenCalledWith('artemisApp.userSettings.passkeySettingsPage.error.invalidCredential');
+    });
+
+    it('should handle generic login error', async () => {
+        jest.spyOn(webauthnService, 'getCredential').mockRejectedValue(new Error('Login failed'));
+        const alertSpy = jest.spyOn(alertService, 'addErrorAlert');
+
+        await expect(component.loginWithPasskey()).rejects.toThrow('Login failed');
+        expect(alertSpy).toHaveBeenCalledWith('artemisApp.userSettings.passkeySettingsPage.error.login');
     });
 });

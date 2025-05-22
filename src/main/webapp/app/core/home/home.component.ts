@@ -223,7 +223,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
             return true;
         }
 
-        throw false;
+        return false;
     }
 
     /**
