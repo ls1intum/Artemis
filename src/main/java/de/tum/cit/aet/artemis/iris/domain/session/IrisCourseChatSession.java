@@ -36,4 +36,9 @@ public class IrisCourseChatSession extends IrisChatSession {
     public void setCourseId(long courseId) {
         this.courseId = courseId;
     }
+
+    @Override
+    public boolean shouldAcceptExternalLLMUsage() {
+        return true;
+    }
 }
