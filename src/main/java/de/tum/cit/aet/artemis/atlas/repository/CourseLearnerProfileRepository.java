@@ -4,6 +4,7 @@ import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.Set;
 
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -15,6 +16,7 @@ import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.profile.CourseLearnerProfile;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 
 @Conditional(AtlasEnabled.class)
@@ -58,4 +60,9 @@ public interface CourseLearnerProfileRepository extends ArtemisJpaRepository<Cou
                 AND clp.id = :courseLearnerProfileId
             """)
     Optional<CourseLearnerProfile> findByLoginAndId(@Param("login") String login, @Param("courseLearnerProfileId") long courseLearnerProfileId);
+
+
+    default CourseLearnerProfile findByLoginAndCourseElseThrow(String login, Course course) throws EntityNotFoundException {
+        return getValueElseThrow(findByLoginAndCourse(login, course));
+    }
 }
