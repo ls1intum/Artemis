@@ -175,8 +175,12 @@ public class Exam extends DomainObject {
         return title;
     }
 
-    public void setTitle(String title) {
-        this.title = title != null ? title.strip() : null;
+    public void setTitle(String title) throws IllegalArgumentException {
+        if (title == null) {
+            throw new IllegalArgumentException("Title cannot be null");
+        }
+
+        this.title = title.strip();
     }
 
     public boolean isTestExam() {

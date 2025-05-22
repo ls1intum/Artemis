@@ -1246,6 +1246,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
     }
 
     private void testGetExamTitle() throws Exception {
+        // Test for regular titles
         Exam exam = ExamFactory.generateExam(course1);
         exam.setTitle("Test Exam");
         exam = examRepository.save(exam);
@@ -1253,12 +1254,110 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
         final var title = request.get("/api/exam/exams/" + exam.getId() + "/title", HttpStatus.OK, String.class);
 
         assertThat(title).isEqualTo(exam.getTitle());
+
+        // Test for exams with titles with leading & trailing whitespaces
+        examRepository.delete(exam);
+        exam = ExamFactory.generateExam(course1);
+
+        exam.setTitle(" \n\t Test Exam title    ");
+        exam = examRepository.save(exam);
+
+        final var title2 = request.get("/api/exam/exams/" + exam.getId() + "/title", HttpStatus.OK, String.class);
+
+        assertThat(title2).isEqualTo("Test Exam title");
+
+        // Test for exams with a null title
+        examRepository.delete(exam);
+        exam = ExamFactory.generateExam(course1);
+
+        // copy to effectively final variable
+        final Exam finalExam = exam;
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> finalExam.setTitle(null));
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "user1", roles = "USER")
     void testGetExamTitleForNonExistingExam() throws Exception {
         request.get("/api/exam/exams/123124123123/title", HttpStatus.NOT_FOUND, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "user1", roles = "USER")
+    void testGetExamExaminerAsUser() throws Exception {
+        testGetExamExaminer(HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetExamExaminerAsTeachingAssistant() throws Exception {
+        testGetExamExaminer(HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetExamExaminerAsInstructor() throws Exception {
+        testGetExamExaminer(HttpStatus.OK);
+    }
+
+    private void testGetExamExaminer(HttpStatus httpStatus) throws Exception {
+        final var examinerName = "Prof. Dr. Stephan Krusche";
+        Exam exam = ExamFactory.generateExam(course1);
+        exam.setExaminer(examinerName);
+        assertThat(exam.getExaminer()).isEqualTo(examinerName);
+        exam = examRepository.save(exam);
+
+        final Exam requestedExam = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId(), httpStatus, Exam.class);
+
+        if (httpStatus == HttpStatus.OK) {
+            assertThat(requestedExam.getExaminer()).isEqualTo(examinerName);
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetExamCorrectionRounds() throws Exception {
+        record CorrectionRoundsEntry(Integer correctionRounds, int actualCorrectionRounds) {
+        }
+
+        List<CorrectionRoundsEntry> plannedCorrectionRoundsToActualCorrectionRounds = List.of(new CorrectionRoundsEntry(0, 0), new CorrectionRoundsEntry(1, 1),
+                new CorrectionRoundsEntry(2, 2), new CorrectionRoundsEntry(3, 3), new CorrectionRoundsEntry(4, 4), new CorrectionRoundsEntry(5, 5),
+                new CorrectionRoundsEntry(null, 1));
+
+        for (var entry : plannedCorrectionRoundsToActualCorrectionRounds) {
+
+            Exam exam = ExamFactory.generateExam(course1);
+            exam.setNumberOfCorrectionRoundsInExam(entry.correctionRounds);
+            assertThat(exam.getNumberOfCorrectionRoundsInExam()).isEqualTo(entry.actualCorrectionRounds);
+            exam = examRepository.save(exam);
+
+            final Exam requestedExam = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK, Exam.class);
+            assertThat(requestedExam.getNumberOfCorrectionRoundsInExam()).isEqualTo(entry.actualCorrectionRounds);
+
+            examRepository.delete(exam);
+        }
+
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateExamCorrectionRounds() throws Exception {
+        // Correction round <= 0
+        final Exam examA = ExamFactory.generateExam(course1);
+        examA.setNumberOfCorrectionRoundsInExam(1);
+        assertThat(examA.getNumberOfCorrectionRoundsInExam()).isEqualTo(1);
+        URI createdExamURI = request.post("/api/exam/courses/" + course1.getId() + "/exams", examA, HttpStatus.CREATED);
+        Exam receivedExam = request.get(String.valueOf(createdExamURI), HttpStatus.OK, Exam.class);
+        // TODO
+
+        // Correction round >= 2
+        final Exam examB = ExamFactory.generateExam(course1);
+        examB.setNumberOfCorrectionRoundsInExam(3);
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exam-import", examB, HttpStatus.BAD_REQUEST, null);
+
+        // Correction round != 0 for test exam
+        final Exam examC = ExamFactory.generateTestExam(course1);
+        examC.setNumberOfCorrectionRoundsInExam(1);
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exam-import", examC, HttpStatus.BAD_REQUEST, null);
     }
 
     @Test
