@@ -10,12 +10,11 @@ export class WebauthnService {
     private authAbortController = new AbortController();
 
     /**
-     * Retrieves a credential from the client, according to the options provided by the server.
-     *
-     * @param isConditional true if credential shall be requested with mediation conditional
-     * @returns the credential or undefined if no credential was selected
+     * To support passkey autocomplete, we need to have a pending getCredential request with conditional mediation.
+     * If we tried to use the "Sign in with Passkey" button, without aborting the pending conditional request,
+     * we would get an error as we cannot have multiple credential requests at the same time.
      */
-    async getCredential(isConditional: boolean): Promise<PublicKeyCredential | undefined> {
+    private ensureAtMostOneCredentialRequestIsActive() {
         try {
             this.authAbortController.abort(ABORT_ERROR_MESSAGE);
         } catch (error) {
@@ -24,8 +23,17 @@ export class WebauthnService {
                 throw error;
             }
         }
-
         this.authAbortController = new AbortController();
+    }
+
+    /**
+     * Retrieves a credential from the client, according to the options provided by the server.
+     *
+     * @param isConditional true if credential shall be requested with mediation conditional
+     * @returns the credential or undefined if no credential was selected
+     */
+    async getCredential(isConditional: boolean): Promise<PublicKeyCredential | undefined> {
+        this.ensureAtMostOneCredentialRequestIsActive();
 
         const publicKeyCredentialOptions = await this.webauthnApiService.getAuthenticationOptions();
 
