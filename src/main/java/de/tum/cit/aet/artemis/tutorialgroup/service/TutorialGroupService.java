@@ -940,9 +940,9 @@ public class TutorialGroupService {
      * @throws BadRequestException if the monthKeys or the timeZone are formatted incorrectly.
      */
     public Set<CalendarEventDTO> getTutorialEventsForUserFallingIntoMonthsOrElseThrow(User user, List<String> monthKeys, String timeZone) {
-        Set<YearMonth> months = deserializeMonthKeysOrElseThrough(monthKeys);
+        Set<YearMonth> months = deserializeMonthKeysOrElseThrow(monthKeys);
 
-        ZoneId clientTimeZone = deserializeTimeZoneOrElseThrough(timeZone);
+        ZoneId clientTimeZone = deserializeTimeZoneOrElseThrow(timeZone);
 
         ZonedDateTime now = ZonedDateTime.now(clientTimeZone).withZoneSameInstant(ZoneOffset.UTC);
         Set<Long> participatedTutorialGroupIds = tutorialGroupRepository.findTutorialGroupIdsWhereUserParticipatesFromActiveCourses(user.getId(), user.getGroups(), now);
