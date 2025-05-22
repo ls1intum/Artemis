@@ -5,7 +5,6 @@ import { MockComponent, MockPipe } from 'ng-mocks';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { of } from 'rxjs';
-import { ProgrammingExerciseGitDiffReport } from 'app/programming/shared/entities/programming-exercise-git-diff-report.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
@@ -85,8 +84,8 @@ describe('ProgrammingExerciseExamDiffComponent', () => {
     it('should call getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView when fetching repository if previous submission is defined', () => {
         const getRepositoryFilesSpy = jest
             .spyOn(programmingExerciseParticipationService, 'getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView')
-            .mockReturnValueOnce(of(new Map([[mockDiffInformation.diffInformations[0].originalPath, mockDiffInformation.diffInformations[0].originalFileContent]])))
-            .mockReturnValueOnce(of(new Map([[mockDiffInformation.diffInformations[0].modifiedPath, mockDiffInformation.diffInformations[0].modifiedFileContent]])));
+            .mockReturnValueOnce(of(new Map([[mockDiffInformation.diffInformations[0].originalPath, mockDiffInformation.diffInformations[0].originalFileContent || '']])))
+            .mockReturnValueOnce(of(new Map([[mockDiffInformation.diffInformations[0].modifiedPath, mockDiffInformation.diffInformations[0].modifiedFileContent || '']])));
         const getTemplateRepositorySpy = jest.spyOn(programmingExerciseService, 'getTemplateRepositoryTestFilesWithContent');
         const previousSubmission = { commitHash: 'abc', participation: { id: 1 } };
         const currentSubmission = { commitHash: 'def', participation: { id: 2 } };
@@ -165,8 +164,8 @@ describe('ProgrammingExerciseExamDiffComponent', () => {
     it('should load report if not in cache', fakeAsync(() => {
         const getRepositoryFilesSpy = jest
             .spyOn(programmingExerciseParticipationService, 'getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView')
-            .mockReturnValueOnce(of(new Map([[mockDiffInformation.diffInformations[0].originalPath, mockDiffInformation.diffInformations[0].originalFileContent]])))
-            .mockReturnValueOnce(of(new Map([[mockDiffInformation.diffInformations[0].modifiedPath, mockDiffInformation.diffInformations[0].modifiedFileContent]])));
+            .mockReturnValueOnce(of(new Map([[mockDiffInformation.diffInformations[0].originalPath, mockDiffInformation.diffInformations[0].originalFileContent || '']])))
+            .mockReturnValueOnce(of(new Map([[mockDiffInformation.diffInformations[0].modifiedPath, mockDiffInformation.diffInformations[0].modifiedFileContent || '']])));
         const previousSubmission = { id: 1, commitHash: 'abc', participation: { id: 1 } };
         component.previousSubmission.update(() => previousSubmission);
         const currentSubmission = { id: 2, commitHash: 'def', participation: { id: 2 } };

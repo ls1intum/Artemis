@@ -16,7 +16,7 @@ import { ProgrammingExerciseGitDiffReport } from 'app/programming/shared/entitie
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { GitDiffReportComponent } from 'app/programming/shared/git-diff-report/git-diff-report/git-diff-report.component';
-import { FileStatus, RepositoryDiffInformation } from 'app/programming/shared/utils/diff.utils';
+import { DiffInformation, FileStatus, RepositoryDiffInformation } from 'app/programming/shared/utils/diff.utils';
 
 describe('CommitDetailsViewComponent', () => {
     let component: CommitDetailsViewComponent;
@@ -87,7 +87,7 @@ describe('CommitDetailsViewComponent', () => {
                 modifiedFileContent: 'some\ncontent\nhere',
                 originalFileContent: 'some\nother\ncontent',
                 diffReady: true,
-                fileStatus: FileStatus.MODIFIED,
+                fileStatus: FileStatus.UNCHANGED,
                 lineChange: { addedLineCount: 1, removedLineCount: 0 },
             },
             {
@@ -115,10 +115,14 @@ describe('CommitDetailsViewComponent', () => {
     };
 
     const mockLeftCommitFileContentByPath: Map<string, string> = new Map<string, string>(
-        mockRepositoryDiffInformation.diffInformations.map((diff: { originalPath: string; originalFileContent: string }) => [diff.originalPath, diff.originalFileContent]),
+        mockRepositoryDiffInformation.diffInformations
+            .filter((diff: DiffInformation) => diff.originalPath && diff.originalFileContent)
+            .map((diff: DiffInformation) => [diff.originalPath!, diff.originalFileContent!] as [string, string]),
     );
     const mockRightCommitFileContentByPath: Map<string, string> = new Map<string, string>(
-        mockRepositoryDiffInformation.diffInformations.map((diff: { modifiedPath: string; modifiedFileContent: string }) => [diff.modifiedPath, diff.modifiedFileContent]),
+        mockRepositoryDiffInformation.diffInformations
+            .filter((diff: DiffInformation) => diff.modifiedPath && diff.modifiedFileContent)
+            .map((diff: DiffInformation) => [diff.modifiedPath!, diff.modifiedFileContent!] as [string, string]),
     );
 
     beforeEach(async () => {
@@ -150,9 +154,10 @@ describe('CommitDetailsViewComponent', () => {
 
         jest.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithAllResults').mockReturnValue(of(mockParticipation));
 
-        jest.spyOn(programmingExerciseService, 'getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView')
-            .mockReturnValue(of(mockLeftCommitFileContentByPath))
-            .mockReturnValue(of(mockRightCommitFileContentByPath));
+        const getParticipationRepositoryFilesSpy = jest.spyOn(programmingExerciseService, 'getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView' as any);
+        getParticipationRepositoryFilesSpy.mockReturnValue(of(mockLeftCommitFileContentByPath));
+        getParticipationRepositoryFilesSpy.mockReturnValue(of(mockRightCommitFileContentByPath));
+
         const errorObservable = throwError(() => new Error('Error'));
         jest.spyOn(programmingExerciseParticipationService, 'retrieveCommitHistoryForParticipation').mockReturnValue(
             throwErrorWhenRetrievingCommitHistory ? errorObservable : of(mockCommits),
@@ -250,7 +255,7 @@ describe('CommitDetailsViewComponent', () => {
         // Trigger ngOnInit
         component.ngOnInit();
 
-        expect(component.report).toEqual(mockDiffReportForCommits);
+        expect((component as any).report).toEqual(mockDiffReportForCommits);
 
         // Trigger ngOnDestroy
         component.ngOnDestroy();
