@@ -453,9 +453,9 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         for (Exercise exercise : course.getExercises()) {
             // For programming exercises we add a manual result, to check whether this is correctly displayed after the assessment due date
             int resultSize = 1;
-            var participation = exercise.getStudentParticipations().iterator().next();
             if (exercise instanceof ProgrammingExercise) {
                 addResultToSubmissionAndParticipation(exercise);
+                resultSize = 2;
             }
 
             ExerciseDetailsDTO exerciseWithDetails = request.get("/api/exercise/exercises/" + exercise.getId() + "/details", HttpStatus.OK, ExerciseDetailsDTO.class);
