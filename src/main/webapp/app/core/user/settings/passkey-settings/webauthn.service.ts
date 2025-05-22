@@ -9,6 +9,12 @@ export class WebauthnService {
 
     private authAbortController = new AbortController();
 
+    /**
+     * Retrieves a credential from the client, according to the options provided by the server.
+     *
+     * @param isConditional true if credential shall be requested with mediation conditional
+     * @returns the credential or undefined if no credential was selected
+     */
     async getCredential(isConditional: boolean): Promise<PublicKeyCredential | undefined> {
         try {
             this.authAbortController.abort(ABORT_ERROR_MESSAGE);
