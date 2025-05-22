@@ -182,25 +182,13 @@ export class HomeComponent implements OnInit, AfterViewChecked {
             await this.webauthnApiService.loginWithPasskey(credential);
             this.handleLoginSuccess();
         } catch (error) {
+            const shouldFailErrorSilently = this.isPasskeyAutocompleteError(error);
+            if (shouldFailErrorSilently) {
+                return;
+            }
+
             if (error instanceof InvalidCredentialError) {
                 this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.invalidCredential');
-            } else if (error.name === USER_CANCELLED_LOGIN_WITH_PASSKEY_ERROR) {
-                // The user manually aborted the passkey login process after clicking the "Sign in with passkey" button.
-                // This required aborting the `getCredential` request with conditional mediation, which is necessary for enabling passkey autocomplete.
-                // To restore passkey autocomplete functionality, re-invoke `makePasskeyAutocompleteAvailable`.
-                // eslint-disable-next-line no-undef
-                console.warn('Operation not allowed or timed out: login with passkey was aborted manually by the user');
-                this.makePasskeyAutocompleteAvailable();
-                return;
-            } else if (error === ABORT_ERROR_MESSAGE) {
-                // eslint-disable-next-line no-undef
-                console.warn(ABORT_ERROR_MESSAGE);
-                return;
-            } else if (error.name === 'OperationError' && error.message === 'A request is already pending.') {
-                // This error occurs after logging out in connection with makePasskeyAutocompleteAvailable, we want to fail silently in that case
-                // eslint-disable-next-line no-undef
-                console.warn('A request is already pending.');
-                return;
             } else {
                 this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.login');
             }
@@ -208,6 +196,35 @@ export class HomeComponent implements OnInit, AfterViewChecked {
             console.error(error);
             throw error;
         }
+    }
+
+    /**
+     * Checks if the error is related to passkey autocomplete and makes sure to reEnable it if necessary.
+     *
+     * @param error that occurred during the passkey login process.
+     * @return true if the error is an expected error related to making passkey autocomplete available
+     */
+    private isPasskeyAutocompleteError(error: Error | string): boolean {
+        if (error instanceof Error && error.name === USER_CANCELLED_LOGIN_WITH_PASSKEY_ERROR) {
+            // The user manually aborted the passkey login process after clicking the "Sign in with passkey" button.
+            // This required aborting the `getCredential` request with conditional mediation, which is necessary for enabling passkey autocomplete.
+            // To restore passkey autocomplete functionality, re-invoke `makePasskeyAutocompleteAvailable`.
+            // eslint-disable-next-line no-undef
+            console.warn('Operation not allowed or timed out: login with passkey was aborted manually by the user');
+            this.makePasskeyAutocompleteAvailable();
+            return true;
+        } else if (error === ABORT_ERROR_MESSAGE) {
+            // eslint-disable-next-line no-undef
+            console.warn(ABORT_ERROR_MESSAGE);
+            return true;
+        } else if (error instanceof Error && error.name === 'OperationError' && error.message === 'A request is already pending.') {
+            // This error occurs after logging out in connection with makePasskeyAutocompleteAvailable, we want to fail silently in that case
+            // eslint-disable-next-line no-undef
+            console.warn('A request is already pending.');
+            return true;
+        }
+
+        throw false;
     }
 
     /**
