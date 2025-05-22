@@ -14,6 +14,7 @@ import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 import de.tum.cit.aet.artemis.core.security.jwt.JWTFilter;
+import de.tum.cit.aet.artemis.core.security.jwt.JwtWithSource;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 
 @Profile(PROFILE_CORE)
@@ -28,9 +29,12 @@ public class ToolsInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-        String jwtToken;
+        String jwtToken = null;
         try {
-            jwtToken = JWTFilter.extractValidJwt(request, tokenProvider);
+            JwtWithSource jwtWithSource = JWTFilter.extractValidJwt(request, tokenProvider);
+            if (jwtWithSource != null) {
+                jwtToken = jwtWithSource.jwt();
+            }
         }
         catch (IllegalArgumentException e) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST);
