@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.security.jwt;
 
 import java.io.IOException;
 import java.util.Date;
+import java.util.Objects;
 
 import jakarta.annotation.Nullable;
 import jakarta.servlet.FilterChain;
@@ -52,11 +53,9 @@ public class JWTFilter extends GenericFilterBean {
      * <b>Configurable values:</b>
      * </p>
      * <ul>
-     * <li>{@code artemis.user-management.passkey.token-validity-in-seconds-for-passkey}:
-     * Caps the maximum lifetime of a renewed token, limiting how long an infrequently used
+     * <li>{@code artemis.user-management.passkey.token-validity-in-seconds-for-passkey}: Caps the maximum lifetime of a renewed token, limiting how long an infrequently used
      * token can remain valid.</li>
-     * <li>{@code jhipster.security.authentication.jwt.token-validity-in-seconds-for-remember-me}:
-     * Determines the expiration time for authentication tokens.</li>
+     * <li>{@code jhipster.security.authentication.jwt.token-validity-in-seconds-for-remember-me}: Determines the expiration time for authentication tokens.</li>
      * </ul>
      *
      * <p>
@@ -69,41 +68,58 @@ public class JWTFilter extends GenericFilterBean {
      * </p>
      *
      * @param jwtToken       The current JWT token to evaluate for renewal.
-     * @param authentication The {@link org.springframework.security.core.Authentication} object
-     *                           associated with the token.
-     * @param response       The {@link jakarta.servlet.http.HttpServletResponse} where the renewed
-     *                           token will be added as a cookie.
+     * @param authentication The {@link org.springframework.security.core.Authentication} object associated with the token.
+     * @param response       The {@link jakarta.servlet.http.HttpServletResponse} where the renewed token will be added as a cookie.
      * @throws NotAuthorizedException If the token cannot be renewed due to validation or other issues.
      */
     private void rotateTokenSilently(String jwtToken, Authentication authentication, HttpServletResponse response) throws NotAuthorizedException {
-        boolean isARefreshableToken = this.tokenProvider.getAuthenticationMethod(jwtToken).equals(AuthenticationMethod.PASSKEY);
-        if (!isARefreshableToken) {
+        // Only rotate tokens that were issued using the PASSKEY authentication method
+        boolean canRefreshToken = Objects.equals(this.tokenProvider.getAuthenticationMethod(jwtToken), AuthenticationMethod.PASSKEY);
+        if (!canRefreshToken) {
             return;
         }
 
+        // Extract issued and expiration timestamps from the existing token
         Date issuedAt = this.tokenProvider.getIssuedAtDate(jwtToken);
         Date expirationDate = this.tokenProvider.getExpirationDate(jwtToken);
 
-        long currentTime = System.currentTimeMillis();
-        long tokenValidityInMilliseconds = this.tokenProvider.getTokenValidity(true);
-        long remainingLifetime = expirationDate.getTime() - currentTime;
+        // Calculate remaining lifetime of the token
+        long nowInMs = System.currentTimeMillis();
+        long tokenValidityInMs = this.tokenProvider.getTokenValidity(true);
+        long remainingLifetime = expirationDate.getTime() - nowInMs;
 
-        boolean isRemainingLifetimeBelowHalf = remainingLifetime < tokenValidityInMilliseconds / 2;
+        // Trigger rotation if token has less than half of its validity period remaining
+        boolean isRemainingLifetimeBelowHalf = remainingLifetime < tokenValidityInMs / 2;
         if (isRemainingLifetimeBelowHalf) {
-            long nowInMilliseconds = System.currentTimeMillis();
-            long newTokenExpirationTimeInMilliseconds = Math.min(nowInMilliseconds + tokenValidityInMilliseconds,
-                    issuedAt.getTime() + Math.multiplyExact(this.tokenValidityInSecondsForPasskey, 1000));
-            long rotatedTokenDurationInMilliseconds = newTokenExpirationTimeInMilliseconds - nowInMilliseconds;
+            // Compute the new expiration time, respecting the original token's max lifetime
+            long newTokenExpirationTimeInMs = Math.min(nowInMs + tokenValidityInMs, issuedAt.getTime() + Math.multiplyExact(this.tokenValidityInSecondsForPasskey, 1000));
+            // Determine the lifetime of the rotated token
+            long rotatedTokenDurationInMs = newTokenExpirationTimeInMs - nowInMs;
+            // Create the rotated token with updated expiration and same issued time/tools
+            var rotatedToken = this.tokenProvider.createToken(authentication, issuedAt, new Date(newTokenExpirationTimeInMs), this.tokenProvider.getTools(jwtToken), true);
 
-            String rotatedToken = this.tokenProvider.createToken(authentication, issuedAt, new Date(newTokenExpirationTimeInMilliseconds), this.tokenProvider.getTools(jwtToken),
-                    true);
-
-            ResponseCookie responseCookie = jwtCookieService.buildRotatedCookie(rotatedToken, rotatedTokenDurationInMilliseconds);
-
+            // Build and set the new token as a response cookie
+            ResponseCookie responseCookie = jwtCookieService.buildRotatedCookie(rotatedToken, rotatedTokenDurationInMs);
             response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
         }
     }
 
+    /**
+     * Filter that extracts a JWT from the incoming HTTP request, performs authentication,
+     * optionally rotates the token if it meets security criteria, and sets the authentication
+     * context for downstream processing.
+     *
+     * <p>
+     * If a valid token is extracted from a cookie and does not contain tool metadata,
+     * it is silently rotated and re-issued via a response cookie to extend the session securely.
+     * </p>
+     *
+     * @param servletRequest  the incoming request
+     * @param servletResponse the outgoing response
+     * @param filterChain     the remaining filter chain
+     * @throws IOException      in case of I/O errors
+     * @throws ServletException in case of filter chain issues
+     */
     @Override
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
         HttpServletRequest httpServletRequest = (HttpServletRequest) servletRequest;
@@ -111,6 +127,7 @@ public class JWTFilter extends GenericFilterBean {
         String jwtToken = null;
         String source = null;
         try {
+            // Extract a valid JWT (if any) and track its source (e.g., header, cookie)
             JwtWithSource jwtWithSource = extractValidJwt(httpServletRequest, this.tokenProvider);
             if (jwtWithSource != null) {
                 jwtToken = jwtWithSource.jwt();
@@ -118,21 +135,28 @@ public class JWTFilter extends GenericFilterBean {
             }
         }
         catch (IllegalArgumentException e) {
+            // Send a 400 response if the JWT is malformed
             httpServletResponse.sendError(HttpServletResponse.SC_BAD_REQUEST);
             return;
         }
 
         if (jwtToken != null) {
+            // Resolve the Spring Security authentication from the JWT
             Authentication authentication = this.tokenProvider.getAuthentication(jwtToken);
 
-            boolean isConsideredASecureToken = source.equals("cookie") && this.tokenProvider.getTools(jwtToken) == null;
-            if (isConsideredASecureToken && authentication != null) {
+            // Only consider rotating secure, cookie-based tokens without tool-specific data
+            boolean tokenIsConsideredSecure = "cookie".equals(source) && this.tokenProvider.getTools(jwtToken) == null;
+            if (tokenIsConsideredSecure && authentication != null) {
                 rotateTokenSilently(jwtToken, authentication, httpServletResponse);
             }
 
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+            // Set the security context if authentication succeeded
+            if (authentication != null) {
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+            }
         }
 
+        // Continue with the remaining filters in the chain
         filterChain.doFilter(servletRequest, servletResponse);
     }
 

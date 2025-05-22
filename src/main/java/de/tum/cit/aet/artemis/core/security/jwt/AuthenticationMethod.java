@@ -19,6 +19,12 @@ public enum AuthenticationMethod {
         return method;
     }
 
+    /**
+     * Returns the authentication method based on the provided Authentication object.
+     *
+     * @param authentication the Authentication object
+     * @return the corresponding AuthenticationMethod, or null if not found
+     */
     public static AuthenticationMethod fromAuthentication(Authentication authentication) {
         return switch (authentication) {
             case WebAuthnAuthentication webAuthnAuthentication -> AuthenticationMethod.PASSKEY;
@@ -28,6 +34,13 @@ public enum AuthenticationMethod {
         };
     }
 
+    /**
+     * Returns the authentication method based on the provided method string.
+     *
+     * @param method the method string
+     * @return the corresponding AuthenticationMethod
+     * @throws IllegalArgumentException if the method is not recognized
+     */
     public static AuthenticationMethod fromMethod(String method) {
         for (AuthenticationMethod authMethod : values()) {
             if (authMethod.method.equalsIgnoreCase(method)) {

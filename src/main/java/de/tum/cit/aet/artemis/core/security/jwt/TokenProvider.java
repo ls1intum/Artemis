@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 
 import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
+import jakarta.validation.constraints.NotNull;
 
 import javax.crypto.SecretKey;
 
@@ -101,6 +102,7 @@ public class TokenProvider {
      * @param rememberMe     Determines Token lifetime
      * @return JWT Token
      */
+    @NotNull
     public String createToken(Authentication authentication, boolean rememberMe) {
         return createToken(authentication, getTokenValidity(rememberMe), null);
     }
@@ -113,6 +115,7 @@ public class TokenProvider {
      * @param tool           tool this token is used for. If null, it's a general access token
      * @return JWT Token
      */
+    @NotNull
     public String createToken(Authentication authentication, long duration, @Nullable ToolTokenType tool) {
         long validity = System.currentTimeMillis() + duration;
         return createToken(authentication, null, new Date(validity), tool, null);
@@ -128,6 +131,7 @@ public class TokenProvider {
      * @param authenticatedWithPasskey can be manually set to true if the token was created with a passkey but for performance reasons, no actual WebAuthnAuthentication was created
      * @return JWT Token
      */
+    @NotNull
     public String createToken(Authentication authentication, @Nullable Date issuedAt, Date expiration, @Nullable ToolTokenType tool, @Nullable Boolean authenticatedWithPasskey) {
         String authorities = authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.joining(","));
 
@@ -157,6 +161,7 @@ public class TokenProvider {
      * @param token JWT Authorization Token
      * @return UsernamePasswordAuthenticationToken with principal, token and authorities that were stored in the token or null if no authorities were found
      */
+    @Nullable
     public Authentication getAuthentication(String token) {
         Claims claims = parseClaims(token);
         var authorityClaim = claims.get(AUTHORITIES_KEY);
@@ -216,19 +221,23 @@ public class TokenProvider {
         return false;
     }
 
+    @NotNull
     private Claims parseClaims(String authToken) {
         return Jwts.parser().verifyWith(key).build().parseSignedClaims(authToken).getPayload();
     }
 
+    @NotNull
     public <T> T getClaim(String token, String claimName, Class<T> claimType) {
         Claims claims = parseClaims(token);
         return claims.get(claimName, claimType);
     }
 
+    @NotNull
     public Date getExpirationDate(String authToken) {
         return parseClaims(authToken).getExpiration();
     }
 
+    @NotNull
     public Date getIssuedAtDate(String authToken) {
         return parseClaims(authToken).getIssuedAt();
     }
@@ -237,6 +246,7 @@ public class TokenProvider {
      * @param authToken of which the tools should be extracted
      * @return {@link ToolTokenType} if the token contains a tool, null otherwise
      */
+    @Nullable
     public ToolTokenType getTools(String authToken) {
         Claims claims = parseClaims(authToken);
         String toolString = claims.get(TOOLS_KEY, String.class);
@@ -252,6 +262,7 @@ public class TokenProvider {
      * @param authToken of which the authentication type on login should be extracted
      * @return {@link AuthenticationMethod} that was used to create the token
      */
+    @Nullable
     public AuthenticationMethod getAuthenticationMethod(String authToken) {
         try {
             String method = parseClaims(authToken).get(AUTHENTICATION_METHOD, String.class);
