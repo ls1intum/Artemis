@@ -17,7 +17,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { GitDiffReportComponent } from 'app/programming/shared/git-diff-report/git-diff-report/git-diff-report.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { HttpResponse } from '@angular/common/http';
+import { FileStatus, RepositoryDiffInformation } from 'app/programming/shared/entities/repository-diff-information.model';
 
 describe('CommitDetailsViewComponent', () => {
     let component: CommitDetailsViewComponent;
@@ -85,7 +85,51 @@ describe('CommitDetailsViewComponent', () => {
         id: 1,
         programmingExercise: exercise,
     };
+
     const mockRepositoryFiles: Map<string, string> = new Map<string, string>();
+
+    const mockRepositoryDiffInformation: RepositoryDiffInformation = {
+        diffInformations: [
+            {
+                title: 'modified-file.java',
+                modifiedPath: 'src/main/java/modified-file.java',
+                originalPath: 'src/main/java/modified-file.java',
+                modifiedFileContent: 'some\ncontent\nhere',
+                originalFileContent: 'some\nother\ncontent',
+                diffReady: true,
+                fileStatus: FileStatus.MODIFIED,
+                lineChange: { addedLineCount: 1, removedLineCount: 0 },
+            },
+            {
+                title: 'old-name.java → new-name.java',
+                modifiedPath: 'src/main/java/new-name.java',
+                originalPath: 'src/main/java/old-name.java',
+                modifiedFileContent: 'Hello\nWorld',
+                originalFileContent: 'Hi\nWorld!',
+                diffReady: true,
+                fileStatus: FileStatus.RENAMED,
+                lineChange: { addedLineCount: 1, removedLineCount: 1 },
+            },
+            {
+                title: 'new-file.java',
+                modifiedPath: 'src/main/java/new-file.java',
+                originalPath: '',
+                modifiedFileContent: 'new content',
+                originalFileContent: '',
+                diffReady: true,
+                fileStatus: FileStatus.CREATED,
+                lineChange: { addedLineCount: 1, removedLineCount: 0 },
+            },
+        ],
+        totalLineChange: { addedLineCount: 3, removedLineCount: 1 },
+    };
+
+    const mockLeftCommitFileContentByPath: Map<string, string> = new Map<string, string>(
+        mockRepositoryDiffInformation.diffInformations.map((diff) => [diff.originalPath, diff.originalFileContent]),
+    );
+    const mockRightCommitFileContentByPath: Map<string, string> = new Map<string, string>(
+        mockRepositoryDiffInformation.diffInformations.map((diff) => [diff.modifiedPath, diff.modifiedFileContent]),
+    );
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -116,8 +160,9 @@ describe('CommitDetailsViewComponent', () => {
 
         jest.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithAllResults').mockReturnValue(of(mockParticipation));
 
-        const mockExerciseResponse: HttpResponse<ProgrammingExercise> = new HttpResponse({ body: mockExerciseWithTemplateAndSolution });
-        jest.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipation').mockReturnValue(of(mockExerciseResponse));
+        jest.spyOn(programmingExerciseService, 'getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView')
+            .mockReturnValue(of(mockLeftCommitFileContentByPath))
+            .mockReturnValue(of(mockRightCommitFileContentByPath));
         const errorObservable = throwError(() => new Error('Error'));
         jest.spyOn(programmingExerciseParticipationService, 'retrieveCommitHistoryForParticipation').mockReturnValue(
             throwErrorWhenRetrievingCommitHistory ? errorObservable : of(mockCommits),
@@ -170,14 +215,14 @@ describe('CommitDetailsViewComponent', () => {
         expect(component.paramSub?.closed).toBeTrue();
     });
 
-    it('should handle new report for commit with template', () => {
+    it('should handle new repository diff information for commit with template', () => {
         setupComponent();
         activatedRoute.setParameters({ repositoryId: 2, commitHash: 'commit2', exerciseId: 1 });
 
         // Trigger ngOnInit
         component.ngOnInit();
 
-        expect(component.report).toEqual(mockDiffReportForCommits);
+        expect(component.repositoryDiffInformation).toEqual(mockRepositoryDiffInformation);
 
         // Trigger ngOnDestroy
         component.ngOnDestroy();

@@ -48,7 +48,7 @@ describe('MonacoDiffEditorComponent', () => {
         const original = 'some original content';
         const modified = 'some modified content';
         fixture.detectChanges();
-        comp.setFileContents(original, 'originalFileName.java', modified, 'modifiedFileName.java');
+        comp.setFileContents(original, modified, 'originalFileName.java', 'modifiedFileName.java');
         expect(comp.getText()).toEqual({ original, modified });
     });
 
@@ -60,7 +60,7 @@ describe('MonacoDiffEditorComponent', () => {
         // Wait for the diff computation, which is handled by Monaco.
         await new Promise((r) => setTimeout(r, 200));
         expect(readyCallbackStub).toHaveBeenCalledTimes(2);
-        expect(readyCallbackStub).toHaveBeenNthCalledWith(1, false);
-        expect(readyCallbackStub).toHaveBeenNthCalledWith(2, true);
+        expect(readyCallbackStub).toHaveBeenNthCalledWith(1, { ready: false, lineChange: { addedLineCount: 0, removedLineCount: 0 } });
+        expect(readyCallbackStub).toHaveBeenNthCalledWith(2, { ready: true, lineChange: { addedLineCount: 1, removedLineCount: 1 } });
     });
 });
