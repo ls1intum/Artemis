@@ -42,7 +42,7 @@ export enum FileStatus {
  * @param monacoLineChanges The Monaco line changes to convert
  * @returns The converted LineChange object
  */
-export function convertMonacoLineChanges(monacoLineChanges: monaco.editor.ILineChange[] | null): LineChange {
+export function convertMonacoLineChanges(monacoLineChanges: monaco.editor.ILineChange[]): LineChange {
     const lineChange: LineChange = { addedLineCount: 0, removedLineCount: 0 };
     if (!monacoLineChanges) {
         return lineChange;
@@ -241,44 +241,81 @@ function countLineChanges(diffs: { type: string; line: number; content: string }
 }
 
 /**
- * Checks similarities between CREATED and DELETED files and merges them into a single RENAMED file.
- * Also handles title creation for RENAMED files.
- * @param diffInformation The diff information to merge into
- * @param created The created files
- * @param deleted The deleted files
- * @returns The merged diff information
+ * Calculates the similarity ratio between two strings using Levenshtein distance
+ * @param str1 First string to compare
+ * @param str2 Second string to compare
+ * @returns Similarity ratio between 0 and 1
  */
+function calculateStringSimilarity(str1: string, str2: string): number {
+    if (!str1 || !str2) {
+        return 0;
+    }
+
+    const len1 = str1.length;
+    const len2 = str2.length;
+    const matrix: number[][] = Array(len1 + 1)
+        .fill(0)
+        .map(() => Array(len2 + 1).fill(0));
+
+    // Initialize the matrix
+    for (let i = 0; i <= len1; i++) {
+        matrix[i][0] = i;
+    }
+    for (let j = 0; j <= len2; j++) {
+        matrix[0][j] = j;
+    }
+
+    // Fill the matrix
+    for (let i = 1; i <= len1; i++) {
+        for (let j = 1; j <= len2; j++) {
+            const cost = str1[i - 1] === str2[j - 1] ? 0 : 1;
+            matrix[i][j] = Math.min(
+                matrix[i - 1][j] + 1, // deletion
+                matrix[i][j - 1] + 1, // insertion
+                matrix[i - 1][j - 1] + cost, // substitution
+            );
+        }
+    }
+
+    const maxLength = Math.max(len1, len2);
+    return 1 - matrix[len1][len2] / maxLength;
+}
+
 function mergeRenamedFiles(diffInformation: DiffInformation[], created?: string[], deleted?: string[]): DiffInformation[] {
     if (!created || !deleted) {
         created = diffInformation.filter((info) => info.fileStatus === FileStatus.CREATED).map((info) => info.modifiedPath);
         deleted = diffInformation.filter((info) => info.fileStatus === FileStatus.DELETED).map((info) => info.originalPath);
     }
 
-    const toRemove = new Set<string>();
+    const SIMILARITY_THRESHOLD = 0.8; // 80% similarity threshold
+
     for (const createdPath of created) {
         const createdFileContent = diffInformation.find((info) => info.modifiedPath === createdPath)?.modifiedFileContent;
         for (const deletedPath of deleted) {
             const deletedFileContent = diffInformation.find((info) => info.originalPath === deletedPath)?.originalFileContent;
-            //TODO: Use a similarity check instead of a string equality
-            if (createdFileContent === deletedFileContent) {
-                const createdIndex = diffInformation.findIndex((info) => info.modifiedPath === createdPath);
-                const deletedIndex = diffInformation.findIndex((info) => info.originalPath === deletedPath);
-                if (createdIndex !== -1 && deletedIndex !== -1) {
-                    // Merge into a single RENAMED entry using old/new fields
-                    diffInformation[createdIndex] = {
-                        title: `${deletedPath} → ${createdPath}`,
-                        diffReady: false,
-                        fileStatus: FileStatus.RENAMED,
-                        modifiedPath: createdPath,
-                        originalPath: deletedPath,
-                        modifiedFileContent: createdFileContent || '',
-                        originalFileContent: deletedFileContent || '',
-                    };
-                    toRemove.add(deletedPath);
+
+            if (createdFileContent && deletedFileContent) {
+                const similarity = calculateStringSimilarity(createdFileContent, deletedFileContent);
+                if (similarity >= SIMILARITY_THRESHOLD) {
+                    const createdIndex = diffInformation.findIndex((info) => info.modifiedPath === createdPath);
+                    const deletedIndex = diffInformation.findIndex((info) => info.originalPath === deletedPath);
+                    if (createdIndex !== -1 && deletedIndex !== -1) {
+                        // Merge into a single RENAMED entry using old/new fields
+                        diffInformation[createdIndex] = {
+                            title: `${deletedPath} → ${createdPath}`,
+                            diffReady: false,
+                            fileStatus: FileStatus.RENAMED,
+                            modifiedPath: createdPath,
+                            originalPath: deletedPath,
+                            modifiedFileContent: createdFileContent,
+                            originalFileContent: deletedFileContent,
+                        };
+                        // Remove the old item directly from the list
+                        diffInformation.splice(deletedIndex, 1);
+                    }
                 }
             }
         }
     }
-    // Remove deleted entries that have been merged into a RENAMED file (oldPath is deleted)
-    return diffInformation.filter((info) => !toRemove.has(info.originalPath));
+    return diffInformation;
 }
