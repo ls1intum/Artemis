@@ -59,6 +59,12 @@ public class CourseLearnerProfile extends DomainObject {
     @Max(MAX_PROFILE_VALUE)
     private int repetitionIntensity;
 
+    @Column(name = "proficiency")
+    private double proficiency;
+
+    @Column(name = "initial_proficiency")
+    private double initialProficiency;
+
     public void setLearnerProfile(LearnerProfile learnerProfile) {
         this.learnerProfile = learnerProfile;
     }
@@ -97,5 +103,21 @@ public class CourseLearnerProfile extends DomainObject {
 
     public void setRepetitionIntensity(int repetitionIntensity) {
         this.repetitionIntensity = repetitionIntensity;
+    }
+
+    public double getProficiency() {
+        return proficiency;
+    }
+
+    public void setProficiency(double proficiency) {
+        this.proficiency = proficiency;
+    }
+
+    public double getInitialProficiency() {
+        return initialProficiency;
+    }
+
+    public void setInitialProficiency(double initialProficiency) {
+        this.initialProficiency = initialProficiency;
     }
 }
