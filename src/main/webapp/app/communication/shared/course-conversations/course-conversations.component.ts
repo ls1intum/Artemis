@@ -43,7 +43,7 @@ import { MetisService } from 'app/communication/service/metis.service';
 import { PageType, SortDirection } from 'app/communication/metis.util';
 import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
 import { EMPTY, Observable, Subject, Subscription, from, take, takeUntil } from 'rxjs';
-import { catchError, debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { catchError, debounceTime, distinctUntilChanged, map } from 'rxjs/operators';
 import { CourseConversationsCodeOfConductComponent } from 'app/communication/course-conversations-components/code-of-conduct/course-conversations-code-of-conduct.component';
 import { ConversationHeaderComponent } from 'app/communication/course-conversations-components/layout/conversation-header/conversation-header.component';
 import { ConversationMessagesComponent } from 'app/communication/course-conversations-components/layout/conversation-messages/conversation-messages.component';
@@ -60,7 +60,7 @@ import { LinkifyService } from 'app/communication/link-preview/services/linkify.
 import { LinkPreviewService } from 'app/communication/link-preview/services/link-preview.service';
 import { ConversationGlobalSearchComponent, ConversationGlobalSearchConfig } from 'app/communication/shared/conversation-global-search/conversation-global-search.component';
 import { FeatureActivationComponent } from 'app/shared/feature-activation/feature-activation.component';
-
+import { toSignal } from '@angular/core/rxjs-interop';
 const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
     favoriteChannels: { entityData: [] },
     recents: { entityData: [] },
@@ -139,6 +139,8 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
 })
 export class CourseConversationsComponent implements OnInit, OnDestroy {
     protected readonly isCommunicationEnabled = computed(() => {
+        // console.log('isCommunicationEnabled', this.course());
+        // console.log('isCommunicationEnabled', isCommunicationEnabled(this.course()));
         return isCommunicationEnabled(this.course());
     });
     protected readonly faComments = faComments;
@@ -149,13 +151,14 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     private courseOverviewService = inject(CourseOverviewService);
     private modalService = inject(NgbModal);
     private profileService = inject(ProfileService);
+    readonly courseId = toSignal(this.activatedRoute.parent!.params.pipe(map((params) => Number(params.courseId))), { requireSync: true });
 
     private ngUnsubscribe = new Subject<void>();
     private closeSidebarEventSubscription: Subscription;
     private openSidebarEventSubscription: Subscription;
     private toggleSidebarEventSubscription: Subscription;
     private breakpointSubscription: Subscription;
-    course = signal<Course>(new Course());
+    course = signal<Course | undefined>(undefined);
     isLoading = false;
     isServiceSetUp = false;
     messagingEnabled = false;
@@ -276,7 +279,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                 this.subscribeToConversationsOfUser();
                 this.updateQueryParameters();
                 this.prepareSidebarData();
-                this.metisConversationService.checkIsCodeOfConductAccepted(this.course());
+                this.metisConversationService.checkIsCodeOfConductAccepted(this.course()!);
                 this.isServiceSetUp = true;
                 this.isLoading = false;
             }
@@ -406,7 +409,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
     acceptCodeOfConduct() {
         if (this.course()) {
-            this.metisConversationService.acceptCodeOfConduct(this.course());
+            this.metisConversationService.acceptCodeOfConduct(this.course()!);
         }
     }
 
@@ -460,8 +463,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     prepareSidebarData() {
         this.metisConversationService.forceRefresh().subscribe({
             complete: () => {
-                this.sidebarConversations = this.courseOverviewService.mapConversationsToSidebarCardElements(this.course(), this.conversationsOfUser);
-                this.accordionConversationGroups = this.courseOverviewService.groupConversationsByChannelType(this.course(), this.conversationsOfUser, this.messagingEnabled);
+                this.sidebarConversations = this.courseOverviewService.mapConversationsToSidebarCardElements(this.course()!, this.conversationsOfUser);
+                this.accordionConversationGroups = this.courseOverviewService.groupConversationsByChannelType(this.course()!, this.conversationsOfUser, this.messagingEnabled);
                 this.accordionConversationGroups.recents.entityData = this.sidebarConversations?.filter((item) => item.isCurrent) || [];
                 this.updateSidebarData();
             },
@@ -477,7 +480,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
             ungroupedData: this.sidebarConversations,
             showAccordionLeadingIcon: true,
             messagingEnabled: isMessagingEnabled(this.course()),
-            canCreateChannel: canCreateChannel(this.course()),
+            canCreateChannel: canCreateChannel(this.course()!),
         };
     }
 
@@ -647,7 +650,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     }
     enableCommunication(withMessaging = true) {
         if (this.course()?.id) {
-            this.metisService.enableCommunication(this.course().id!, withMessaging);
+            this.metisService.enableCommunication(this.course()!.id, withMessaging);
         }
     }
 }

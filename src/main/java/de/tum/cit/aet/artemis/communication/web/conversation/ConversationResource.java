@@ -304,7 +304,7 @@ public class ConversationResource extends ConversationManagementResource {
         });
     }
 
-    @PutMapping("{courseId}/communication/enable")
+    @PutMapping("{courseId}/enable")
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<Void> enableConversation(@PathVariable long courseId, @RequestParam boolean withMessaging) {
         Course course = courseRepository.findByIdElseThrow(courseId);
