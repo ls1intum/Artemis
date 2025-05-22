@@ -16,11 +16,13 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 
 describe('IrisCourseSettingsUpdateComponent Component', () => {
     let comp: IrisCourseSettingsUpdateComponent;
     let fixture: ComponentFixture<IrisCourseSettingsUpdateComponent>;
     let irisSettingsService: IrisSettingsService;
+    let featureToggleService: FeatureToggleService;
     const routeParamsSubject = new BehaviorSubject<Params>({ courseId: '1' });
     const route = { params: routeParamsSubject.asObservable() } as ActivatedRoute;
     let paramsSpy: jest.SpyInstance;
@@ -34,6 +36,7 @@ describe('IrisCourseSettingsUpdateComponent Component', () => {
             providers: [
                 provideRouter([]),
                 MockProvider(IrisSettingsService),
+                MockProvider(FeatureToggleService),
                 { provide: ActivatedRoute, useValue: route },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
@@ -42,6 +45,8 @@ describe('IrisCourseSettingsUpdateComponent Component', () => {
             .compileComponents()
             .then(() => {
                 irisSettingsService = TestBed.inject(IrisSettingsService);
+                featureToggleService = TestBed.inject(FeatureToggleService);
+                jest.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
 
                 // Setup
                 routeParamsSubject.next({ courseId: 1 });
@@ -71,7 +76,7 @@ describe('IrisCourseSettingsUpdateComponent Component', () => {
         expect(getSettingsSpy).toHaveBeenCalledWith(1);
         expect(getParentSettingsSpy).toHaveBeenCalledOnce();
 
-        expect(fixture.debugElement.queryAll(By.directive(IrisCommonSubSettingsUpdateComponent))).toHaveLength(7);
+        expect(fixture.debugElement.queryAll(By.directive(IrisCommonSubSettingsUpdateComponent))).toHaveLength(8);
     });
 
     it('Can deactivate correctly', () => {
