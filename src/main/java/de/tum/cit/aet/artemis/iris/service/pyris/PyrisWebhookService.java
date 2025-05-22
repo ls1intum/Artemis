@@ -162,8 +162,7 @@ public class PyrisWebhookService {
     }
 
     private boolean lectureIngestionEnabled(Course course) {
-        return irisSettingsService.getRawIrisSettingsFor(course).getIrisLectureIngestionSettings() != null
-                && irisSettingsService.getRawIrisSettingsFor(course).getIrisLectureIngestionSettings().isEnabled();
+        return irisSettingsService.getCombinedIrisSettingsFor(course, true).irisLectureIngestionSettings().enabled();
     }
 
     private String attachmentToBase64(AttachmentUnit attachmentUnit) {

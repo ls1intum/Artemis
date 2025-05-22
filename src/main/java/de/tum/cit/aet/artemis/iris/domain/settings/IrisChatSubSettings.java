@@ -18,7 +18,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @Entity
 @DiscriminatorValue("CHAT")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class IrisChatSubSettings extends IrisSubSettings {
+public class IrisChatSubSettings extends IrisSubSettings implements HasEnabledCategories {
 
     @Nullable
     @Column(name = "rate_limit")
@@ -54,10 +54,12 @@ public class IrisChatSubSettings extends IrisSubSettings {
         this.rateLimitTimeframeHours = rateLimitTimeframeHours;
     }
 
+    @Override
     public SortedSet<String> getEnabledForCategories() {
         return enabledForCategories;
     }
 
+    @Override
     public void setEnabledForCategories(SortedSet<String> enabledForCategories) {
         this.enabledForCategories = enabledForCategories;
     }

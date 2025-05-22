@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, inject } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, computed, inject } from '@angular/core';
 import { IrisEventType, IrisSubSettings, IrisSubSettingsType } from 'app/iris/shared/entities/settings/iris-sub-settings.model';
 import { IrisVariant } from 'app/iris/shared/entities/settings/iris-variant';
 import { AccountService } from 'app/core/auth/account.service';
@@ -70,6 +70,17 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
 
     categories: string[] = [];
 
+    hasCategories = computed(() =>
+        [
+            IrisSubSettingsType.CHAT,
+            IrisSubSettingsType.TEXT_EXERCISE_CHAT,
+            IrisSubSettingsType.COURSE_CHAT,
+            IrisSubSettingsType.LECTURE,
+            IrisSubSettingsType.COMPETENCY_GENERATION,
+            IrisSubSettingsType.TUTOR_SUGGESTION,
+        ].includes(this.subSettings?.type as IrisSubSettingsType),
+    );
+
     exerciseChatEvents: IrisEventType[] = [IrisEventType.BUILD_FAILED, IrisEventType.PROGRESS_STALLED];
 
     // Settings types
@@ -77,6 +88,11 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
     COURSE = IrisSettingsType.COURSE;
     TEXT_EXERCISE_CHAT = IrisSubSettingsType.TEXT_EXERCISE_CHAT;
     CHAT = IrisSubSettingsType.CHAT;
+    COURSE_CHAT = IrisSubSettingsType.COURSE_CHAT;
+    LECTURE = IrisSubSettingsType.LECTURE;
+    COMPETENCY_GENERATION = IrisSubSettingsType.COMPETENCY_GENERATION;
+    TUTOR_SUGGESTION = IrisSubSettingsType.TUTOR_SUGGESTION;
+
     // Button types
     WARNING = ButtonType.WARNING;
     // Icons

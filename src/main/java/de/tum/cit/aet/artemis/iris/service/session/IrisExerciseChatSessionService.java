@@ -181,10 +181,13 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
         var user = userRepository.findByIdElseThrow(session.getUserId());
         var latestSubmission = getLatestSubmissionIfExists(exercise, user);
 
-        var variant = irisSettingsService.getCombinedIrisSettingsFor(exercise, false).irisChatSettings().selectedVariant();
+        var settings = irisSettingsService.getCombinedIrisSettingsFor(exercise, false).irisChatSettings();
+        if (!settings.enabled()) {
+            throw new ConflictException("Iris is not enabled for this exercise", "Iris", "irisDisabled");
+        }
 
         var chatSession = (IrisExerciseChatSession) irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
-        pyrisPipelineService.executeExerciseChatPipeline(variant, latestSubmission, exercise, chatSession, event);
+        pyrisPipelineService.executeExerciseChatPipeline(settings.selectedVariant(), latestSubmission, exercise, chatSession, event);
     }
 
     /**
