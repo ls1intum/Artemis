@@ -278,6 +278,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             this.manualResult!.submission = this.submission;
         }
         this.participation = submission.participation!;
+        this.participation.submissions = [this.submission];
         this.exercise = this.participation.exercise as ProgrammingExercise;
         /**
          * CARE: Setting access rights for exercises should not happen this way and is a workaround.
