@@ -16,8 +16,7 @@ import { ProgrammingExerciseGitDiffReport } from 'app/programming/shared/entitie
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { GitDiffReportComponent } from 'app/programming/shared/git-diff-report/git-diff-report/git-diff-report.component';
-import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { FileStatus, RepositoryDiffInformation } from 'app/programming/shared/entities/repository-diff-information.model';
+import { FileStatus, RepositoryDiffInformation } from 'app/programming/shared/utils/diff.utils';
 
 describe('CommitDetailsViewComponent', () => {
     let component: CommitDetailsViewComponent;
@@ -28,15 +27,6 @@ describe('CommitDetailsViewComponent', () => {
 
     // Define mock data for participation and commits
     const exercise = { id: 1, numberOfAssessmentsOfCorrectionRounds: [new DueDateStat()], studentAssignedTeamIdComputed: true, secondCorrectionEnabled: true };
-
-    const mockExerciseWithTemplateAndSolution: ProgrammingExercise = {
-        id: 1,
-        templateParticipation: { id: 1, repositoryUri: 'template-repo-uri' },
-        solutionParticipation: { id: 1, repositoryUri: 'solution-repo-uri' },
-        numberOfAssessmentsOfCorrectionRounds: [new DueDateStat()],
-        studentAssignedTeamIdComputed: true,
-        secondCorrectionEnabled: true,
-    };
 
     const mockTemplateCommit1: CommitInfo = { hash: 'templateCommit1', author: 'author1', message: 'message1', timestamp: dayjs('2021-01-01') };
     const mockTemplateCommit2: CommitInfo = { hash: 'templateCommit2', author: 'author2', message: 'message2', timestamp: dayjs('2021-01-02') };
@@ -125,10 +115,10 @@ describe('CommitDetailsViewComponent', () => {
     };
 
     const mockLeftCommitFileContentByPath: Map<string, string> = new Map<string, string>(
-        mockRepositoryDiffInformation.diffInformations.map((diff) => [diff.originalPath, diff.originalFileContent]),
+        mockRepositoryDiffInformation.diffInformations.map((diff: { originalPath: string; originalFileContent: string }) => [diff.originalPath, diff.originalFileContent]),
     );
     const mockRightCommitFileContentByPath: Map<string, string> = new Map<string, string>(
-        mockRepositoryDiffInformation.diffInformations.map((diff) => [diff.modifiedPath, diff.modifiedFileContent]),
+        mockRepositoryDiffInformation.diffInformations.map((diff: { modifiedPath: string; modifiedFileContent: string }) => [diff.modifiedPath, diff.modifiedFileContent]),
     );
 
     beforeEach(async () => {

@@ -23,8 +23,8 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { MockProgrammingExerciseParticipationService } from 'test/helpers/mocks/service/mock-programming-exercise-participation.service';
 import { MockProgrammingExerciseService } from 'test/helpers/mocks/service/mock-programming-exercise.service';
-import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model.ts';
-import { RepositoryDiffInformation } from 'app/shared/monaco-editor/diff-editor/util/monaco-diff-editor.util';
+import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { RepositoryDiffInformation } from 'app/programming/shared/utils/diff.utils';
 describe('ProgrammingExerciseExamDiffComponent', () => {
     let component: ProgrammingExerciseExamDiffComponent;
     let fixture: ComponentFixture<ProgrammingExerciseExamDiffComponent>;
@@ -97,8 +97,8 @@ describe('ProgrammingExerciseExamDiffComponent', () => {
         expect(getRepositoryFilesSpy).toHaveBeenNthCalledWith(1, 3, 1, 'abc', RepositoryType.USER);
         expect(getRepositoryFilesSpy).toHaveBeenNthCalledWith(2, 3, 2, 'def', RepositoryType.USER);
         expect(getTemplateRepositorySpy).not.toHaveBeenCalled();
-        expect(component.diffInformation().totalLineChange.addedLineCount).toBe(mockDiffInformation.totalLineChange.addedLineCount);
-        expect(component.diffInformation().totalLineChange.removedLineCount).toBe(mockDiffInformation.totalLineChange.removedLineCount);
+        expect(component.diffInformation()?.totalLineChange?.addedLineCount).toBe(mockDiffInformation.totalLineChange.addedLineCount);
+        expect(component.diffInformation()?.totalLineChange?.removedLineCount).toBe(mockDiffInformation.totalLineChange.removedLineCount);
     });
 
     it('should call getTemplateRepositoryTestFilesWithContent when loading diff report if previous submission is undefined', () => {
@@ -173,9 +173,9 @@ describe('ProgrammingExerciseExamDiffComponent', () => {
         component.currentSubmission.update(() => currentSubmission);
         const exercise = { id: 3 } as ProgrammingExercise;
         component.exercise.update(() => exercise);
-        const cachedDiffReports = new Map<string, ProgrammingExerciseGitDiffReport>();
+        const cachedDiffInformation = new Map<string, RepositoryDiffInformation>();
         TestBed.runInInjectionContext(() => {
-            component.cachedDiffReports = input(cachedDiffReports);
+            component.cachedDiffInformation = input(cachedDiffInformation);
         });
         component.ngOnInit();
         component.exerciseIdSubject.update((subject) => {

@@ -113,18 +113,84 @@ describe('ProgrammingExerciseGitDiffReport Component', () => {
         ];
         const defaultContent = 'some content that might change';
         const modifiedContent = 'some content that has changed';
-        fixture.componentRef.setInput('report', { entries } as ProgrammingExerciseGitDiffReport);
-        const originalFileContents = new Map<string, string>();
-        const modifiedFileContents = new Map<string, string>();
-        [originalFilePath1, originalFilePath2, notRenamedFilePath].forEach((path) => {
-            originalFileContents.set(path, defaultContent);
-            modifiedFileContents.set(path, path === originalFilePath1 ? defaultContent : modifiedContent);
-        });
-        fixture.componentRef.setInput('templateFileContentByPath', originalFileContents);
-        fixture.componentRef.setInput('solutionFileContentByPath', modifiedFileContents);
+
+        const repositoryDiffInformation: RepositoryDiffInformation = {
+            diffInformations: [
+                {
+                    originalFileContent: defaultContent,
+                    modifiedFileContent: defaultContent,
+                    originalPath: originalFilePath1,
+                    modifiedPath: renamedFilePath1,
+                    diffReady: false,
+                    fileStatus: 'renamed',
+                    lineChange: {
+                        addedLineCount: 0,
+                        removedLineCount: 0,
+                    },
+                    title: renamedFilePath1,
+                },
+                {
+                    originalFileContent: defaultContent,
+                    modifiedFileContent: modifiedContent,
+                    originalPath: originalFilePath2,
+                    modifiedPath: renamedFilePath2,
+                    diffReady: false,
+                    fileStatus: 'renamed',
+                    lineChange: {
+                        addedLineCount: 1,
+                        removedLineCount: 0,
+                    },
+                    title: renamedFilePath2,
+                },
+                {
+                    originalFileContent: defaultContent,
+                    modifiedFileContent: defaultContent,
+                    originalPath: notRenamedFilePath,
+                    modifiedPath: notRenamedFilePath,
+                    diffReady: false,
+                    fileStatus: 'unchanged',
+                    lineChange: {
+                        addedLineCount: 0,
+                        removedLineCount: 0,
+                    },
+                    title: notRenamedFilePath,
+                },
+            ],
+            totalLineChange: {
+                addedLineCount: 1,
+                removedLineCount: 0,
+            },
+        };
+
+        fixture.componentRef.setInput('repositoryDiffInformation', repositoryDiffInformation);
 
         fixture.detectChanges();
 
-        expect(comp.renamedFilePaths()).toEqual({ [renamedFilePath1]: originalFilePath1, [renamedFilePath2]: originalFilePath2 });
+        // Assert that the diff information contains the correct number of entries
+        expect(comp.repositoryDiffInformation().diffInformations).toHaveLength(3);
+
+        // Assert that renamed files have the correct file status, paths and titles
+        const firstDiff = comp.repositoryDiffInformation().diffInformations[0];
+        const secondDiff = comp.repositoryDiffInformation().diffInformations[1];
+        const thirdDiff = comp.repositoryDiffInformation().diffInformations[2];
+
+        // First renamed file without changes
+        expect(firstDiff.fileStatus).toBe('renamed');
+        expect(firstDiff.originalPath).toBe(originalFilePath1);
+        expect(firstDiff.modifiedPath).toBe(renamedFilePath1);
+        expect(firstDiff.title).toBe(renamedFilePath1);
+        expect(firstDiff.originalFileContent).toBe(firstDiff.modifiedFileContent);
+
+        // Second renamed file with changes
+        expect(secondDiff.fileStatus).toBe('renamed');
+        expect(secondDiff.originalPath).toBe(originalFilePath2);
+        expect(secondDiff.modifiedPath).toBe(renamedFilePath2);
+        expect(secondDiff.title).toBe(renamedFilePath2);
+        expect(secondDiff.originalFileContent).not.toBe(secondDiff.modifiedFileContent);
+
+        // Unchanged file
+        expect(thirdDiff.fileStatus).toBe('unchanged');
+        expect(thirdDiff.originalPath).toBe(thirdDiff.modifiedPath);
+        expect(thirdDiff.originalPath).toBe(notRenamedFilePath);
     });
 });
