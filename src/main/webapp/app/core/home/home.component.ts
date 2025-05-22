@@ -128,6 +128,17 @@ export class HomeComponent implements OnInit, AfterViewChecked {
         if (prefilledUsername) {
             this.username = prefilledUsername;
         }
+
+        this.prefillPasskeysIfPossible();
+    }
+
+    async prefillPasskeysIfPossible() {
+        if (window.PublicKeyCredential && PublicKeyCredential.isConditionalMediationAvailable) {
+            const isCMA = await PublicKeyCredential.isConditionalMediationAvailable();
+            if (isCMA) {
+                this.loginWithPasskey();
+            }
+        }
     }
 
     async loginWithPasskey() {

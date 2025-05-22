@@ -26,8 +26,12 @@ export class WebauthnService {
             extensions: publicKeyCredentialOptions.extensions,
         };
 
+        const abortController = new AbortController();
+
         const credentialRequestOptions: CredentialRequestOptions = {
             publicKey: assertionOptions,
+            signal: abortController.signal,
+            mediation: 'conditional',
         };
 
         const credential = (await navigator.credentials.get(credentialRequestOptions)) ?? undefined;
