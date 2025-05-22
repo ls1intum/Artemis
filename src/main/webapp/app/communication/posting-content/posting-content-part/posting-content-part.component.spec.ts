@@ -280,10 +280,10 @@ describe('PostingContentPartComponent', () => {
         });
     });
 
-    describe('Content processing', () => {
-        it('should process content before and after reference with escaped numbered and unordered lists', () => {
-            const contentBefore = '1. This is a numbered list\n2. Another item\n- This is an unordered list';
-            const contentAfter = '1. Numbered again\n- Unordered again';
+    describe('Content processing (spacing only)', () => {
+        it('should process content and normalize excessive line breaks before and after reference', () => {
+            const contentBefore = 'Line 1\n\n\nLine 2\n\n\n\nLine 3';
+            const contentAfter = 'A\n\n\nB';
             runInInjectionContext(fixture.debugElement.injector, () => {
                 component.postingContentPart = input<PostingContentPart>({
                     contentBeforeReference: contentBefore,
@@ -296,35 +296,30 @@ describe('PostingContentPartComponent', () => {
 
                 component.processContent();
 
-                expect(component.processedContentBeforeReference).toBe('1\\.  This is a numbered list\n2\\.  Another item\n\\- This is an unordered list');
-                expect(component.processedContentAfterReference).toBe('1\\.  Numbered again\n\\- Unordered again');
+                expect(component.processedContentBeforeReference).toBe('Line 1\n\nLine 2\n\nLine 3');
+                expect(component.processedContentAfterReference).toBe('A\n\nB');
             });
         });
 
-        it('should escape numbered lists correctly', () => {
-            const content = '1. First item\n2. Second item\n3. Third item';
-            const escapedContent = component.escapeNumberedList(content);
-            expect(escapedContent).toBe('1\\.  First item\n2\\.  Second item\n3\\.  Third item');
+        it('should not alter already correct line spacing', () => {
+            const content = 'Paragraph one.\n\nParagraph two.\nLine continues.';
+            const result = component.normalizeSpacing(content);
+            expect(result).toBe(content);
         });
 
-        it('should escape unordered lists correctly', () => {
-            const content = '- First item\n- Second item\n- Third item';
-            const escapedContent = component.escapeUnorderedList(content);
-            expect(escapedContent).toBe('\\- First item\n\\- Second item\n\\- Third item');
+        it('should collapse 3 or more newlines to exactly 2', () => {
+            const content = 'A\n\n\n\nB\n\n\n\n\nC';
+            const expected = 'A\n\nB\n\nC';
+            expect(component.normalizeSpacing(content)).toBe(expected);
         });
 
-        it('should not escape text without numbered or unordered lists', () => {
-            const content = 'This is just a paragraph.\nAnother paragraph.';
-            const escapedNumbered = component.escapeNumberedList(content);
-            const escapedUnordered = component.escapeUnorderedList(content);
-            expect(escapedNumbered).toBe(content);
-            expect(escapedUnordered).toBe(content);
+        it('should leave single linebreaks untouched', () => {
+            const content = 'Line 1\nLine 2\nLine 3';
+            expect(component.normalizeSpacing(content)).toBe(content);
         });
 
-        it('should handle mixed numbered and unordered lists in content', () => {
-            const content = '1. Numbered item\n- Unordered item\n2. Another numbered item\n- Another unordered item';
-            const escapedContent = component.escapeNumberedList(component.escapeUnorderedList(content));
-            expect(escapedContent).toBe('1\\.  Numbered item\n\\- Unordered item\n2\\.  Another numbered item\n\\- Another unordered item');
+        it('should handle empty input gracefully', () => {
+            expect(component.normalizeSpacing('')).toBe('');
         });
     });
 
