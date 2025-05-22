@@ -223,7 +223,7 @@ describe('HomeComponent', () => {
         expect(handleLoginSuccessSpy).toHaveBeenCalled();
     });
 
-    it('should handle invalid credential error', async () => {
+    it('should handle invalid credential error on passkey login', async () => {
         jest.spyOn(webauthnService, 'getCredential').mockRejectedValue(new InvalidCredentialError());
         const alertSpy = jest.spyOn(alertService, 'addErrorAlert');
 
@@ -231,7 +231,7 @@ describe('HomeComponent', () => {
         expect(alertSpy).toHaveBeenCalledWith('artemisApp.userSettings.passkeySettingsPage.error.invalidCredential');
     });
 
-    it('should handle generic login error', async () => {
+    it('should handle generic login error on passkey login', async () => {
         jest.spyOn(webauthnService, 'getCredential').mockRejectedValue(new Error('Login failed'));
         const alertSpy = jest.spyOn(alertService, 'addErrorAlert');
 
