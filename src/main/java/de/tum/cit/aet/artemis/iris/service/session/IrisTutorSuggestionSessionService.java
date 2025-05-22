@@ -101,10 +101,11 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
      * @param event   Optional event to pass to the Pyris pipeline
      */
     public void requestAndHandleResponse(IrisTutorSuggestionSession session, Optional<String> event) {
-        var chatSession = (IrisTutorSuggestionSession) irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
-
-        var variant = "default";
         var post = postRepository.findPostOrMessagePostByIdElseThrow(session.getPostId());
+        var course = post.getCoursePostingBelongsTo();
+        var variant = irisSettingsService.getCombinedIrisSettingsFor(course, false).irisChatSettings().selectedVariant();
+
+        var chatSession = (IrisTutorSuggestionSession) irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
 
         pyrisPipelineService.executeTutorSuggestionPipeline(variant, chatSession, event, post);
     }
@@ -140,10 +141,10 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
         var session = (IrisTutorSuggestionSession) irisSessionRepository.findByIdWithMessagesAndContents(job.sessionId());
         IrisMessage savedMessage;
         IrisMessage savedSuggestion;
-        if (statusUpdate.suggestion() != null || statusUpdate.result() != null) {
-            if (statusUpdate.suggestion() != null) {
+        if (statusUpdate.artifact() != null || statusUpdate.result() != null) {
+            if (statusUpdate.artifact() != null) {
                 var suggestion = new IrisMessage();
-                suggestion.addContent(new IrisTextMessageContent(statusUpdate.suggestion()));
+                suggestion.addContent(new IrisTextMessageContent(statusUpdate.artifact()));
                 savedSuggestion = irisMessageService.saveMessage(suggestion, session, IrisMessageSender.ARTIFACT);
                 irisChatWebsocketService.sendMessage(session, savedSuggestion, statusUpdate.stages());
             }
