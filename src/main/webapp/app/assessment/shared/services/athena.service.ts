@@ -19,6 +19,13 @@ export class AthenaService {
     public resourceUrl = 'api/athena';
 
     /**
+     * Determine if the Athena service is available based on whether the corresponding profile is active
+     */
+    public isEnabled(): boolean {
+        return this.profileService.isProfileActive(PROFILE_ATHENA);
+    }
+
+    /**
      * Fetches all available modules for a course and exercise.
      *
      * @param courseId The id of the course for which the feedback suggestion modules should be fetched
