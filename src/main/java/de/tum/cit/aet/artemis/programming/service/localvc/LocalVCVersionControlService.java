@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.programming.service.localvc;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -9,6 +10,7 @@ import java.nio.file.Paths;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -17,7 +19,6 @@ import de.tum.cit.aet.artemis.core.exception.GitException;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.GitService;
-import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 
 @Profile(Constants.PROFILE_CORE)
 @Service
@@ -27,11 +28,11 @@ public class LocalVCVersionControlService {
 
     private final GitService gitService;
 
-    private final VersionControlService versionControlService;
+    @Value("${artemis.version-control.url}")
+    private URL localVCBaseUrl;
 
-    public LocalVCVersionControlService(GitService gitService, VersionControlService versionControlService) {
+    public LocalVCVersionControlService(GitService gitService) {
         this.gitService = gitService;
-        this.versionControlService = versionControlService;
     }
 
     public void createSingleCommitStudentRepo(VcsRepositoryUri templateUri, VcsRepositoryUri studentUri) throws Exception {
@@ -96,9 +97,6 @@ public class LocalVCVersionControlService {
             targetProjectKeyLowerCase = targetProjectKeyLowerCase + attempt;
         }
         final String targetRepoSlug = targetProjectKeyLowerCase + "-" + targetRepositoryName;
-        String baseDir = "/var/git/repos";
-        String repoName = targetRepoSlug + ".git";
-        String fullRepoPath = baseDir + "/" + repoName;
-        return new LocalVCRepositoryUri(fullRepoPath);
+        return new LocalVCRepositoryUri(targetProjectKeyLowerCase, targetRepoSlug, localVCBaseUrl);
     }
 }
