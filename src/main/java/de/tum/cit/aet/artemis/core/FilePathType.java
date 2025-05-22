@@ -46,5 +46,6 @@ public enum FilePathType {
     FILE_UPLOAD_SUBMISSION,
 
     /** <strong> Other file paths </strong> **/
-    TEMPORARY
+    TEMPORARY,
+    MARKDOWN,
 }
