@@ -796,21 +796,47 @@ Course Info Bar
         max-width: 100%;
     }
 
-    // this class is required for rendering post references in between of post content without having linebreaks
     .inline-paragraph {
         margin-bottom: 0 !important;
         display: inline;
     }
 
+    // Remove default list styles
+    ol,
     ul {
-        padding-left: 1.25em;
-        list-style-type: disc;
+        margin: 0;
+        padding: 0;
+        list-style: none;
     }
 
+    ol {
+        counter-reset: item;
+    }
+
+    ol > li,
     ul > li {
-        margin-block: 0;
-        padding: 0;
-        line-height: 0;
+        position: relative;
+        padding-left: 1em;
+        margin-bottom: 0.5em;
+        line-height: 1.5;
+        text-indent: 0;
+    }
+
+    ol > li::before {
+        content: counter(item) '.';
+        counter-increment: item;
+        position: absolute;
+        left: 0;
+        top: 0;
+        font-weight: normal;
+    }
+
+    ul > li::before {
+        content: '•';
+        position: absolute;
+        left: 0;
+        top: 0;
+        font-weight: bold;
     }
 }
 
