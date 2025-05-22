@@ -748,16 +748,7 @@ public class FileResource {
             String prefix = fileService.generateTargetFilenameBase(type);
             // the stored filename contains potentially a prefix and a timestamp. The user doesn't need that and it should be removed
             headerFilename = headerFilename.replace(prefix, "");
-            // This regex removes a timestamp prefix if present.
-            // It matches a pattern like "YYYY-MM-DDTHH-MM-SS-SSS_" at the beginning of the string.
-            // ^ asserts the position at the start of the string.
-            // \\d{4} matches four digits (year).
-            // - matches the hyphen.
-            // \\d{2} matches two digits (month/day/hour/minute/second).
-            // T matches the literal 'T' character.
-            // \\d{3} matches three digits (milliseconds).
-            // _ matches the underscore.
-            headerFilename = headerFilename.replaceFirst("^\\d{4}-\\d{2}-\\d{2}T\\d{2}-\\d{2}-\\d{2}-\\d{3}_", "");
+            headerFilename = headerFilename.replaceFirst("^[^_]*_", "");
 
             headers.setContentDisposition(ContentDisposition.builder(contentType).filename(headerFilename).build());
 

@@ -194,7 +194,7 @@ public class FileService implements DisposableBean {
         final String filenamePrefix = "Markdown_";
         final Path path = FilePathService.getMarkdownFilePathForConversation(courseId, conversationId);
 
-        String fileName = generateFilename(filenamePrefix, sanitizedOriginalFilename, true);
+        String fileName = generateFilename(filenamePrefix, sanitizedOriginalFilename, false);
         Path filePath = path.resolve(fileName);
 
         copyFile(file, filePath);
