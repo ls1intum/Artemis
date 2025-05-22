@@ -24,6 +24,7 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, SetupPasskeyModalComponent } from 'app/core/course/overview/setup-passkey-modal/setup-passkey-modal.component';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { User } from 'app/core/user/user.model';
+import { InvalidCredentialError } from 'app/core/user/settings/passkey-settings/entities/invalid-credential-error';
 
 describe('HomeComponent', () => {
     let component: HomeComponent;
@@ -31,6 +32,9 @@ describe('HomeComponent', () => {
     let accountService: AccountService;
     let modalService: NgbModal;
     let loginService: LoginService;
+    let webauthnService: WebauthnService;
+    let webauthnApiService: WebauthnApiService;
+    let alertService: AlertService;
 
     let router: MockRouter;
 
@@ -72,6 +76,9 @@ describe('HomeComponent', () => {
         accountService = TestBed.inject(AccountService);
         modalService = TestBed.inject(NgbModal);
         loginService = TestBed.inject(LoginService);
+        webauthnService = TestBed.inject(WebauthnService);
+        webauthnApiService = TestBed.inject(WebauthnApiService);
+        alertService = TestBed.inject(AlertService);
         fixture.detectChanges();
     });
 
@@ -200,5 +207,16 @@ describe('HomeComponent', () => {
 
             expect(openModalSpy).toHaveBeenCalled();
         });
+    });
+
+    it('should handle successful passkey login', async () => {
+        const mockCredential = { type: 'public-key' } as PublicKeyCredential;
+        jest.spyOn(webauthnService, 'getCredential').mockResolvedValue(mockCredential);
+        jest.spyOn(webauthnApiService, 'loginWithPasskey').mockResolvedValue();
+        const handleLoginSuccessSpy = jest.spyOn(component as any, 'handleLoginSuccess');
+
+        await component.loginWithPasskey();
+
+        expect(handleLoginSuccessSpy).toHaveBeenCalled();
     });
 });
