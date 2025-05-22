@@ -33,7 +33,6 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
     previousCommit: CommitInfo;
     repositoryType: RepositoryType;
 
-    repoFilesSubscription: Subscription;
     participationRepoFilesAtLeftCommitSubscription: Subscription;
     participationRepoFilesAtRightCommitSubscription: Subscription;
 
@@ -41,7 +40,6 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
     participationSub: Subscription;
 
     ngOnDestroy(): void {
-        this.repoFilesSubscription?.unsubscribe();
         this.participationRepoFilesAtLeftCommitSubscription?.unsubscribe();
         this.participationRepoFilesAtRightCommitSubscription?.unsubscribe();
         this.paramSub?.unsubscribe();
@@ -127,6 +125,8 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
                     },
                     error: () => {
                         this.errorWhileFetching = true;
+                        this.leftCommitFileContentByPath = new Map<string, string>();
+                        this.rightCommitFileContentByPath = new Map<string, string>();
                     },
                 });
         }
@@ -146,6 +146,7 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
                 },
                 error: () => {
                     this.errorWhileFetching = true;
+                    this.rightCommitFileContentByPath = new Map<string, string>();
                 },
             });
     }

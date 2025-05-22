@@ -5,7 +5,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { DiffInformation, FileStatus } from 'app/programming/shared/utils/diff.utils';
 
 describe('GitDiffFilePanelTitleComponent', () => {
-    let comp: GitDiffFilePanelTitleComponent;
     let fixture: ComponentFixture<GitDiffFilePanelTitleComponent>;
 
     beforeEach(() => {
@@ -13,7 +12,6 @@ describe('GitDiffFilePanelTitleComponent', () => {
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
         fixture = TestBed.createComponent(GitDiffFilePanelTitleComponent);
-        comp = fixture.componentInstance;
     });
 
     afterEach(() => {

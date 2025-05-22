@@ -3,16 +3,27 @@ import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat/git-diff-line-stat.component';
 import { GitDiffReportComponent } from 'app/programming/shared/git-diff-report/git-diff-report/git-diff-report.component';
-import { ProgrammingExerciseGitDiffReport } from 'app/programming/shared/entities/programming-exercise-git-diff-report.model';
-import { ProgrammingExerciseGitDiffEntry } from 'app/programming/shared/entities/programming-exercise-git-diff-entry.model';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { RepositoryDiffInformation } from 'app/shared/monaco-editor/diff-editor/util/monaco-diff-editor.util';
+import { FileStatus, RepositoryDiffInformation } from 'app/programming/shared/utils/diff.utils';
+import { LocalStorageService } from 'ngx-webstorage';
+import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
+
+class MockResizeObserver {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+}
+
 describe('ProgrammingExerciseGitDiffReport Component', () => {
     let comp: GitDiffReportComponent;
     let fixture: ComponentFixture<GitDiffReportComponent>;
+
+    beforeAll(() => {
+        global.ResizeObserver = MockResizeObserver;
+    });
 
     const mockDiffInformation = {
         diffInformations: [
@@ -65,7 +76,12 @@ describe('ProgrammingExerciseGitDiffReport Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             declarations: [GitDiffReportComponent, MockPipe(ArtemisTranslatePipe), MockComponent(GitDiffLineStatComponent)],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideHttpClient(), provideHttpClientTesting()],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: LocalStorageService, useClass: MockLocalStorageService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+            ],
         }).compileComponents();
         fixture = TestBed.createComponent(GitDiffReportComponent);
         comp = fixture.componentInstance;
@@ -106,11 +122,6 @@ describe('ProgrammingExerciseGitDiffReport Component', () => {
         const renamedFilePath1 = 'src/renamed-without-changes.java';
         const renamedFilePath2 = 'src/renamed-with-changes.java';
         const notRenamedFilePath = 'src/not-renamed.java';
-        const entries: ProgrammingExerciseGitDiffEntry[] = [
-            { filePath: renamedFilePath1, previousFilePath: originalFilePath1 },
-            { filePath: renamedFilePath2, previousFilePath: originalFilePath2, startLine: 1 },
-            { filePath: notRenamedFilePath, previousFilePath: notRenamedFilePath, startLine: 1 },
-        ];
         const defaultContent = 'some content that might change';
         const modifiedContent = 'some content that has changed';
 
@@ -122,7 +133,7 @@ describe('ProgrammingExerciseGitDiffReport Component', () => {
                     originalPath: originalFilePath1,
                     modifiedPath: renamedFilePath1,
                     diffReady: false,
-                    fileStatus: 'renamed',
+                    fileStatus: FileStatus.RENAMED,
                     lineChange: {
                         addedLineCount: 0,
                         removedLineCount: 0,
@@ -135,7 +146,7 @@ describe('ProgrammingExerciseGitDiffReport Component', () => {
                     originalPath: originalFilePath2,
                     modifiedPath: renamedFilePath2,
                     diffReady: false,
-                    fileStatus: 'renamed',
+                    fileStatus: FileStatus.RENAMED,
                     lineChange: {
                         addedLineCount: 1,
                         removedLineCount: 0,
@@ -148,7 +159,7 @@ describe('ProgrammingExerciseGitDiffReport Component', () => {
                     originalPath: notRenamedFilePath,
                     modifiedPath: notRenamedFilePath,
                     diffReady: false,
-                    fileStatus: 'unchanged',
+                    fileStatus: FileStatus.UNCHANGED,
                     lineChange: {
                         addedLineCount: 0,
                         removedLineCount: 0,
@@ -175,21 +186,21 @@ describe('ProgrammingExerciseGitDiffReport Component', () => {
         const thirdDiff = comp.repositoryDiffInformation().diffInformations[2];
 
         // First renamed file without changes
-        expect(firstDiff.fileStatus).toBe('renamed');
+        expect(firstDiff.fileStatus).toBe(FileStatus.RENAMED);
         expect(firstDiff.originalPath).toBe(originalFilePath1);
         expect(firstDiff.modifiedPath).toBe(renamedFilePath1);
         expect(firstDiff.title).toBe(renamedFilePath1);
         expect(firstDiff.originalFileContent).toBe(firstDiff.modifiedFileContent);
 
         // Second renamed file with changes
-        expect(secondDiff.fileStatus).toBe('renamed');
+        expect(secondDiff.fileStatus).toBe(FileStatus.RENAMED);
         expect(secondDiff.originalPath).toBe(originalFilePath2);
         expect(secondDiff.modifiedPath).toBe(renamedFilePath2);
         expect(secondDiff.title).toBe(renamedFilePath2);
         expect(secondDiff.originalFileContent).not.toBe(secondDiff.modifiedFileContent);
 
         // Unchanged file
-        expect(thirdDiff.fileStatus).toBe('unchanged');
+        expect(thirdDiff.fileStatus).toBe(FileStatus.UNCHANGED);
         expect(thirdDiff.originalPath).toBe(thirdDiff.modifiedPath);
         expect(thirdDiff.originalPath).toBe(notRenamedFilePath);
     });

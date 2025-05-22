@@ -12,7 +12,6 @@ import { MockComponent, MockPipe } from 'ng-mocks';
 import { CommitDetailsViewComponent } from 'app/programming/manage/commit-details-view/commit-details-view.component';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { MockProgrammingExerciseService } from 'test/helpers/mocks/service/mock-programming-exercise.service';
-import { ProgrammingExerciseGitDiffReport } from 'app/programming/shared/entities/programming-exercise-git-diff-report.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { GitDiffReportComponent } from 'app/programming/shared/git-diff-report/git-diff-report/git-diff-report.component';
@@ -23,7 +22,6 @@ describe('CommitDetailsViewComponent', () => {
     let fixture: ComponentFixture<CommitDetailsViewComponent>;
     let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
     let activatedRoute: MockActivatedRoute;
-    let programmingExerciseService: ProgrammingExerciseService;
 
     // Define mock data for participation and commits
     const exercise = { id: 1, numberOfAssessmentsOfCorrectionRounds: [new DueDateStat()], studentAssignedTeamIdComputed: true, secondCorrectionEnabled: true };
@@ -71,57 +69,62 @@ describe('CommitDetailsViewComponent', () => {
         timestamp: dayjs('2021-01-03'),
     };
     const mockCommits: CommitInfo[] = [commit2, commit3, commit1];
-    const mockDiffReportForCommits: ProgrammingExerciseGitDiffReport = {
-        id: 1,
-        programmingExercise: exercise,
-    };
 
-    const mockRepositoryFiles: Map<string, string> = new Map<string, string>();
-
+    // mock repository diff information, sorted by modifiedPath
     const mockRepositoryDiffInformation: RepositoryDiffInformation = {
         diffInformations: [
             {
-                title: 'modified-file.java',
+                title: 'src/main/java/modified-file.java',
                 modifiedPath: 'src/main/java/modified-file.java',
                 originalPath: 'src/main/java/modified-file.java',
                 modifiedFileContent: 'some\ncontent\nhere',
                 originalFileContent: 'some\nother\ncontent',
-                diffReady: true,
+                diffReady: false,
                 fileStatus: FileStatus.UNCHANGED,
-                lineChange: { addedLineCount: 1, removedLineCount: 0 },
-            },
-            {
-                title: 'old-name.java → new-name.java',
-                modifiedPath: 'src/main/java/new-name.java',
-                originalPath: 'src/main/java/old-name.java',
-                modifiedFileContent: 'Hello\nWorld',
-                originalFileContent: 'Hi\nWorld!',
-                diffReady: true,
-                fileStatus: FileStatus.RENAMED,
                 lineChange: { addedLineCount: 1, removedLineCount: 1 },
             },
             {
-                title: 'new-file.java',
+                title: 'src/main/java/new-file.java',
                 modifiedPath: 'src/main/java/new-file.java',
                 originalPath: '',
                 modifiedFileContent: 'new content',
-                originalFileContent: '',
-                diffReady: true,
+                originalFileContent: undefined,
+                diffReady: false,
                 fileStatus: FileStatus.CREATED,
                 lineChange: { addedLineCount: 1, removedLineCount: 0 },
             },
+            {
+                title: 'src/main/java/new-name.java',
+                modifiedPath: 'src/main/java/new-name.java',
+                originalPath: '',
+                modifiedFileContent: 'Hello\nWorld',
+                originalFileContent: undefined,
+                diffReady: false,
+                fileStatus: FileStatus.CREATED,
+                lineChange: { addedLineCount: 2, removedLineCount: 0 },
+            },
+            {
+                title: 'src/main/java/old-name.java',
+                modifiedPath: '',
+                originalPath: 'src/main/java/old-name.java',
+                modifiedFileContent: undefined,
+                originalFileContent: 'Hi\nWorld!',
+                diffReady: false,
+                fileStatus: FileStatus.DELETED,
+                lineChange: { addedLineCount: 0, removedLineCount: 2 },
+            },
         ],
-        totalLineChange: { addedLineCount: 3, removedLineCount: 1 },
+        totalLineChange: { addedLineCount: 4, removedLineCount: 3 },
     };
 
     const mockLeftCommitFileContentByPath: Map<string, string> = new Map<string, string>(
         mockRepositoryDiffInformation.diffInformations
-            .filter((diff: DiffInformation) => diff.originalPath && diff.originalFileContent)
+            .filter((diff: DiffInformation) => diff.originalPath && diff.originalFileContent !== undefined)
             .map((diff: DiffInformation) => [diff.originalPath!, diff.originalFileContent!] as [string, string]),
     );
     const mockRightCommitFileContentByPath: Map<string, string> = new Map<string, string>(
         mockRepositoryDiffInformation.diffInformations
-            .filter((diff: DiffInformation) => diff.modifiedPath && diff.modifiedFileContent)
+            .filter((diff: DiffInformation) => diff.modifiedPath && diff.modifiedFileContent !== undefined)
             .map((diff: DiffInformation) => [diff.modifiedPath!, diff.modifiedFileContent!] as [string, string]),
     );
 
@@ -147,16 +150,11 @@ describe('CommitDetailsViewComponent', () => {
         component = fixture.componentInstance;
         activatedRoute = TestBed.inject(ActivatedRoute) as MockActivatedRoute;
         programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
-        programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
-
-        mockRepositoryFiles.set('file1', 'content1');
-        mockRepositoryFiles.set('file2', 'content2');
 
         jest.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithAllResults').mockReturnValue(of(mockParticipation));
-
-        const getParticipationRepositoryFilesSpy = jest.spyOn(programmingExerciseService, 'getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView' as any);
-        getParticipationRepositoryFilesSpy.mockReturnValue(of(mockLeftCommitFileContentByPath));
-        getParticipationRepositoryFilesSpy.mockReturnValue(of(mockRightCommitFileContentByPath));
+        jest.spyOn(programmingExerciseParticipationService, 'getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView' as any)
+            .mockReturnValueOnce(of(mockLeftCommitFileContentByPath))
+            .mockReturnValueOnce(of(mockRightCommitFileContentByPath));
 
         const errorObservable = throwError(() => new Error('Error'));
         jest.spyOn(programmingExerciseParticipationService, 'retrieveCommitHistoryForParticipation').mockReturnValue(
@@ -210,8 +208,14 @@ describe('CommitDetailsViewComponent', () => {
         expect(component.paramSub?.closed).toBeTrue();
     });
 
-    it('should handle new repository diff information for commit with template', () => {
+    it('should handle new repository files for commit with template', () => {
         setupComponent();
+
+        // Set up fresh mocks for this specific test
+        jest.spyOn(programmingExerciseParticipationService, 'getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView')
+            .mockReturnValueOnce(of(mockLeftCommitFileContentByPath))
+            .mockReturnValueOnce(of(mockRightCommitFileContentByPath));
+
         activatedRoute.setParameters({ repositoryId: 2, commitHash: 'commit2', exerciseId: 1 });
 
         // Trigger ngOnInit
@@ -224,11 +228,13 @@ describe('CommitDetailsViewComponent', () => {
 
         // Expect subscription to be unsubscribed
         expect(component.paramSub?.closed).toBeTrue();
-        expect(component.repoFilesSubscription?.closed).toBeTrue();
+        expect(component.participationRepoFilesAtLeftCommitSubscription?.closed).toBeTrue();
+        expect(component.participationRepoFilesAtRightCommitSubscription?.closed).toBeTrue();
     });
 
-    it('should handle new report for template commit', () => {
+    it('should handle files for template commit', () => {
         setupComponent();
+
         activatedRoute.setParameters({ repositoryId: 2, commitHash: 'commit1', exerciseId: 1 });
 
         // Trigger ngOnInit
@@ -244,25 +250,33 @@ describe('CommitDetailsViewComponent', () => {
 
         // Expect subscription to be unsubscribed
         expect(component.paramSub?.closed).toBeTrue();
-        expect(component.repoFilesSubscription?.closed).toBeTrue();
+        expect(component.participationRepoFilesAtRightCommitSubscription?.closed).toBeTrue();
     });
 
-    it('should handle new report for commits', () => {
+    it('should handle new commits', () => {
         setupComponent();
+
+        const programmingExerciseParticipationServiceSpy = jest.spyOn(
+            programmingExerciseParticipationService,
+            'getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView' as any,
+        );
+
         //different commit hash than usual
         activatedRoute.setParameters({ repositoryId: 2, commitHash: 'commit3', exerciseId: 1 });
 
         // Trigger ngOnInit
         component.ngOnInit();
 
-        expect((component as any).report).toEqual(mockDiffReportForCommits);
+        expect(programmingExerciseParticipationServiceSpy).toHaveBeenNthCalledWith(3, 1, 2, 'commit2', 'USER');
+        expect(programmingExerciseParticipationServiceSpy).toHaveBeenNthCalledWith(4, 1, 2, 'commit3', 'USER');
 
         // Trigger ngOnDestroy
         component.ngOnDestroy();
 
         // Expect subscription to be unsubscribed
         expect(component.paramSub?.closed).toBeTrue();
-        expect(component.repoFilesSubscription?.closed).toBeTrue();
+        expect(component.participationRepoFilesAtLeftCommitSubscription?.closed).toBeTrue();
+        expect(component.participationRepoFilesAtRightCommitSubscription?.closed).toBeTrue();
     });
 
     it('should handle error when retrieving commit info', () => {
@@ -284,21 +298,25 @@ describe('CommitDetailsViewComponent', () => {
 
     it('should fetch repository files', () => {
         setupComponent();
+
+        // Set up fresh mocks for this specific test
+        jest.spyOn(programmingExerciseParticipationService, 'getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView')
+            .mockReturnValueOnce(of(mockLeftCommitFileContentByPath))
+            .mockReturnValueOnce(of(mockRightCommitFileContentByPath));
+
         activatedRoute.setParameters({ repositoryId: 2, commitHash: 'commit2', exerciseId: 1 });
-        jest.spyOn(programmingExerciseParticipationService, 'getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView').mockReturnValue(of(mockRepositoryFiles));
 
         // Trigger ngOnInit
         component.ngOnInit();
 
-        expect(component.leftCommitFileContentByPath).toEqual(mockRepositoryFiles);
-        expect(component.rightCommitFileContentByPath).toEqual(mockRepositoryFiles);
+        expect(component.leftCommitFileContentByPath).toEqual(mockLeftCommitFileContentByPath);
+        expect(component.rightCommitFileContentByPath).toEqual(mockRightCommitFileContentByPath);
 
         // Trigger ngOnDestroy
         component.ngOnDestroy();
 
         // Expect subscription to be unsubscribed
         expect(component.paramSub?.closed).toBeTrue();
-        expect(component.repoFilesSubscription?.closed).toBeTrue();
         expect(component.participationRepoFilesAtLeftCommitSubscription?.closed).toBeTrue();
         expect(component.participationRepoFilesAtRightCommitSubscription?.closed).toBeTrue();
     });
@@ -326,7 +344,6 @@ describe('CommitDetailsViewComponent', () => {
 
         // Expect subscription to be unsubscribed
         expect(component.paramSub?.closed).toBeTrue();
-        expect(component.repoFilesSubscription?.closed).toBeTrue();
         expect(component.participationRepoFilesAtLeftCommitSubscription?.closed).toBeTrue();
         expect(component.participationRepoFilesAtRightCommitSubscription?.closed).toBeTrue();
     });
@@ -342,7 +359,7 @@ describe('CommitDetailsViewComponent', () => {
         jest.spyOn(programmingExerciseParticipationService, 'getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView').mockImplementation(() => {
             if (callCount === 0) {
                 callCount++;
-                return of(mockRepositoryFiles);
+                return of(mockLeftCommitFileContentByPath);
             } else {
                 return new Observable((subscriber) => {
                     subscriber.error('Error');
@@ -355,7 +372,6 @@ describe('CommitDetailsViewComponent', () => {
         // Trigger ngOnInit
         component.ngOnInit();
 
-        expect(component.leftCommitFileContentByPath).toEqual(mockRepositoryFiles);
         expect(component.rightCommitFileContentByPath).toEqual(new Map<string, string>());
         expect(component.errorWhileFetching).toBeTrue();
 
@@ -364,7 +380,6 @@ describe('CommitDetailsViewComponent', () => {
 
         // Expect subscription to be unsubscribed
         expect(component.paramSub?.closed).toBeTrue();
-        expect(component.repoFilesSubscription?.closed).toBeTrue();
         expect(component.participationRepoFilesAtLeftCommitSubscription?.closed).toBeTrue();
         expect(component.participationRepoFilesAtRightCommitSubscription?.closed).toBeTrue();
     });

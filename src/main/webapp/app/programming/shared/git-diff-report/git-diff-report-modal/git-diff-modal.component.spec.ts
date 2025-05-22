@@ -9,12 +9,11 @@ import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { RepositoryDiffInformation } from 'app/programming/shared/entities/repository-diff-information.model';
+
 describe('GitDiffReportModalComponent', () => {
     let comp: GitDiffReportModalComponent;
     let fixture: ComponentFixture<GitDiffReportModalComponent>;
     let modal: NgbActiveModal;
-    let repositoryDiffInformation: RepositoryDiffInformation;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -29,10 +28,6 @@ describe('GitDiffReportModalComponent', () => {
         fixture = TestBed.createComponent(GitDiffReportModalComponent);
         comp = fixture.componentInstance;
         modal = TestBed.inject(NgbActiveModal);
-        repositoryDiffInformation = {
-            diffInformations: [],
-            totalLineChange: { addedLineCount: 0, removedLineCount: 0 },
-        };
     });
 
     afterEach(() => {
