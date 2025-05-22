@@ -7,7 +7,6 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -134,7 +133,7 @@ public class AttachmentVideoUnitService {
 
             if (updateFile != null) {
                 // Split the updated file into single slides only if it is a pdf
-                if (Objects.equals(FilenameUtils.getExtension(updateFile.getOriginalFilename()), "pdf")) {
+                if ("pdf".equalsIgnoreCase(FilenameUtils.getExtension(updateFile.getOriginalFilename()))) {
                     if (pageOrder == null) {
                         slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(savedAttachmentVideoUnit);
                     }

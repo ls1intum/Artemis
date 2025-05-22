@@ -272,14 +272,14 @@ export class LectureUpdateUnitsComponent implements OnInit {
             case LectureUnitType.ATTACHMENT_VIDEO:
                 this.attachmentVideoUnitFormData = {
                     formProperties: {
-                        name: this.currentlyProcessedAttachmentVideoUnit.attachment!.name,
+                        name: this.currentlyProcessedAttachmentVideoUnit.name,
                         description: this.currentlyProcessedAttachmentVideoUnit.description,
-                        releaseDate: this.currentlyProcessedAttachmentVideoUnit.attachment!.releaseDate,
-                        version: this.currentlyProcessedAttachmentVideoUnit.attachment!.version,
+                        releaseDate: this.currentlyProcessedAttachmentVideoUnit.releaseDate,
+                        version: this.currentlyProcessedAttachmentVideoUnit.attachment?.version,
                         videoSource: this.currentlyProcessedAttachmentVideoUnit.videoSource,
                     },
                     fileProperties: {
-                        fileName: this.currentlyProcessedAttachmentVideoUnit.attachment!.link,
+                        fileName: this.currentlyProcessedAttachmentVideoUnit.attachment?.link,
                     },
                 };
                 break;
