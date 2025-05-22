@@ -25,7 +25,7 @@ import { InvalidCredentialError } from 'app/core/user/settings/passkey-settings/
 import { EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, SetupPasskeyModalComponent } from 'app/core/course/overview/setup-passkey-modal/setup-passkey-modal.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
-export const ABORT_ERROR_MESSAGE = 'Aborting previous request';
+export const ABORT_ERROR_MESSAGE = 'Aborting previous getCredential request, ensuring at most one credential request is active';
 
 /**
  * This occurs if a user clicks the "login with passkey" button but then cancel the login process.
@@ -185,20 +185,16 @@ export class HomeComponent implements OnInit, AfterViewChecked {
             if (error instanceof InvalidCredentialError) {
                 this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.invalidCredential');
             } else if (error.name === USER_CANCELLED_LOGIN_WITH_PASSKEY_ERROR) {
+                // The user manually aborted the passkey login process after clicking the "Sign in with passkey" button.
+                // This required aborting the `getCredential` request with conditional mediation, which is necessary for enabling passkey autocomplete.
+                // To restore passkey autocomplete functionality, re-invoke `makePasskeyAutocompleteAvailable`.
                 // eslint-disable-next-line no-undef
                 console.warn('Operation not allowed or timed out: login with passkey was aborted manually by the user');
-                // We should only be here because the user aborted the passkey login process after using the login with passkey button (not the autocomplete)
-                // We therefore had to abort the getCredential request with conditional mediation, required for the passkey autocomplete
-                // To make the autocomplete available again, we need to call makePasskeyAutocompleteAvailable again
                 this.makePasskeyAutocompleteAvailable();
                 return;
             } else if (error === ABORT_ERROR_MESSAGE) {
                 // eslint-disable-next-line no-undef
                 console.warn(ABORT_ERROR_MESSAGE);
-                return;
-            } else if (error.name === 'OperationError' && error.message === 'A request is already pending.') {
-                // eslint-disable-next-line no-undef
-                console.warn('A request is already pending. Aborting and retrying.');
                 return;
             } else {
                 this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.login');
