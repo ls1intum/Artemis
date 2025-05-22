@@ -207,8 +207,8 @@ export class LectureUpdateUnitsComponent implements OnInit {
         const formData = new FormData();
         if (!!file && !!fileName) {
             formData.append('file', file, fileName);
-            formData.append('attachment', objectToJsonBlob(attachmentToCreateOrEdit));
         }
+        formData.append('attachment', objectToJsonBlob(attachmentToCreateOrEdit));
         formData.append('attachmentVideoUnit', objectToJsonBlob(this.currentlyProcessedAttachmentVideoUnit));
 
         (this.isEditingLectureUnit
