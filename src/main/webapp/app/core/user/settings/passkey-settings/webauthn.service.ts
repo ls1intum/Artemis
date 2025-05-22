@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { WebauthnApiService } from 'app/core/user/settings/passkey-settings/webauthn-api.service';
 import { decodeBase64url } from 'app/shared/util/base64.util';
-import { ABORT_ERROR_MESSAGE } from 'app/core/home/home.component';
+import { PasskeyAbortError } from 'app/core/user/settings/passkey-settings/entities/passkey-abort-error';
 
 @Injectable({ providedIn: 'root' })
 export class WebauthnService {
@@ -16,10 +16,10 @@ export class WebauthnService {
      */
     private ensureAtMostOneCredentialRequestIsActive() {
         try {
-            this.authAbortController.abort(ABORT_ERROR_MESSAGE);
+            this.authAbortController.abort(new PasskeyAbortError());
         } catch (error) {
             // we can ignore it if it's the expected abort error
-            if (error !== ABORT_ERROR_MESSAGE) {
+            if (!(error instanceof PasskeyAbortError)) {
                 throw error;
             }
         }

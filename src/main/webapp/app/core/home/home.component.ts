@@ -24,8 +24,7 @@ import { getCredentialWithGracefullyHandlingAuthenticatorIssues } from 'app/core
 import { InvalidCredentialError } from 'app/core/user/settings/passkey-settings/entities/invalid-credential-error';
 import { EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, SetupPasskeyModalComponent } from 'app/core/course/overview/setup-passkey-modal/setup-passkey-modal.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-
-export const ABORT_ERROR_MESSAGE = 'Aborting previous getCredential request, ensuring at most one credential request is active';
+import { PasskeyAbortError } from 'app/core/user/settings/passkey-settings/entities/passkey-abort-error';
 
 /**
  * This occurs if a user clicks the "login with passkey" button but then cancel the login process.
@@ -213,14 +212,14 @@ export class HomeComponent implements OnInit, AfterViewChecked {
             console.warn('Operation not allowed or timed out: login with passkey was aborted manually by the user');
             this.makePasskeyAutocompleteAvailable();
             return true;
-        } else if (error === ABORT_ERROR_MESSAGE) {
+        } else if (error instanceof PasskeyAbortError) {
             // eslint-disable-next-line no-undef
-            console.warn(ABORT_ERROR_MESSAGE);
+            console.warn(error.message);
             return true;
         } else if (error instanceof Error && error.name === 'OperationError' && error.message === 'A request is already pending.') {
             // This error occurs after logging out in connection with makePasskeyAutocompleteAvailable, we want to fail silently in that case
             // eslint-disable-next-line no-undef
-            console.warn('A request is already pending.');
+            console.warn(error.message);
             return true;
         }
 
