@@ -18,7 +18,7 @@ export class WebauthnService {
         try {
             this.authAbortController.abort(ABORT_ERROR_MESSAGE);
         } catch (error) {
-            // we can only have one credential request at a time
+            // we can ignore it if it's the expected abort error
             if (error !== ABORT_ERROR_MESSAGE) {
                 throw error;
             }
@@ -29,8 +29,8 @@ export class WebauthnService {
     /**
      * Retrieves a credential from the client, according to the options provided by the server.
      *
-     * @param isConditional true if credential shall be requested with mediation conditional
-     * @returns the credential or undefined if no credential was selected
+     * @param isConditional true if credential shall be requested with conditional mediation
+     * @returns the credential or undefined if no credential was selected or retrievable
      */
     async getCredential(isConditional: boolean): Promise<PublicKeyCredential | undefined> {
         this.ensureAtMostOneCredentialRequestIsActive();
