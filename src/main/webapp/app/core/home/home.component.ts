@@ -203,8 +203,8 @@ export class HomeComponent implements OnInit, AfterViewChecked {
      * @param error that occurred during the passkey login process.
      * @return true if the error is an expected error related to making passkey autocomplete available
      */
-    private isPasskeyAutocompleteError(error: Error | string): boolean {
-        if (error instanceof Error && error.name === USER_CANCELLED_LOGIN_WITH_PASSKEY_ERROR) {
+    private isPasskeyAutocompleteError(error: Error): boolean {
+        if (error.name === USER_CANCELLED_LOGIN_WITH_PASSKEY_ERROR) {
             // The user manually aborted the passkey login process after clicking the "Sign in with passkey" button.
             // This required aborting the `getCredential` request with conditional mediation, which is necessary for enabling passkey autocomplete.
             // To restore passkey autocomplete functionality, re-invoke `makePasskeyAutocompleteAvailable`.
@@ -216,7 +216,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
             // eslint-disable-next-line no-undef
             console.warn(error.message);
             return true;
-        } else if (error instanceof Error && error.name === 'OperationError' && error.message === 'A request is already pending.') {
+        } else if (error.name === 'OperationError' && error.message === 'A request is already pending.') {
             // This error occurs after logging out in connection with makePasskeyAutocompleteAvailable, we want to fail silently in that case
             // eslint-disable-next-line no-undef
             console.warn(error.message);
