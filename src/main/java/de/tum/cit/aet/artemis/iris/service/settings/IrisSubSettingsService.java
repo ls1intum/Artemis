@@ -488,10 +488,9 @@ public class IrisSubSettingsService {
      * @return Combined Tutor Suggestion settings.
      */
     public IrisCombinedTutorSuggestionSubSettingsDTO combineTutorSuggestionSettings(ArrayList<IrisSettings> settingsList, boolean minimal) {
-        var actualSettingsList = settingsList.stream().filter(settings -> !(settings instanceof IrisExerciseSettings)).toList();
-        var enabled = getCombinedEnabled(actualSettingsList, IrisSettings::getIrisTutorSuggestionSettings);
-        var allowedVariants = !minimal ? getCombinedAllowedVariants(actualSettingsList, IrisSettings::getIrisTutorSuggestionSettings) : null;
-        var selectedVariant = !minimal ? getCombinedSelectedVariant(actualSettingsList, IrisSettings::getIrisTutorSuggestionSettings) : null;
+        var enabled = getCombinedEnabled(settingsList, IrisSettings::getIrisTutorSuggestionSettings);
+        var allowedVariants = !minimal ? getCombinedAllowedVariants(settingsList, IrisSettings::getIrisTutorSuggestionSettings) : null;
+        var selectedVariant = !minimal ? getCombinedSelectedVariant(settingsList, IrisSettings::getIrisTutorSuggestionSettings) : null;
         return new IrisCombinedTutorSuggestionSubSettingsDTO(enabled, allowedVariants, selectedVariant);
     }
 
