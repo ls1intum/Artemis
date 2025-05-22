@@ -8,6 +8,9 @@ import { MAX_QUIZ_QUESTION_LENGTH_THRESHOLD } from 'app/shared/constants/input.c
 import { InvalidFlaggedQuestions, checkForInvalidFlaggedQuestions, computeQuizQuestionInvalidReason, isQuizQuestionValid } from 'app/quiz/shared/service/quiz-manage-util.service';
 import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-question-util.service';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
+import dayjs from 'dayjs/esm';
+import QuizExerciseEditorDTO from 'app/quiz/shared/entities/quiz-exercise-editor.dto';
+import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
 
 @Directive()
 export abstract class QuizExerciseValidationDirective {
@@ -185,7 +188,188 @@ export abstract class QuizExerciseValidationDirective {
         if (!this.quizExercise || !this.savedEntity) {
             return false;
         }
-        return JSON.stringify(this.quizExercise) !== JSON.stringify(this.savedEntity);
+        // Create a diff object and check if it is empty
+        const diffObject = this.createDiffObject();
+        if (this.isEmpty(diffObject)) {
+            return false;
+        }
+        return true;
+    }
+
+    createDiffObject(): QuizExerciseEditorDTO {
+        const changedFields: QuizExerciseEditorDTO = {};
+        if (this.quizExercise.title !== this.savedEntity.title) {
+            changedFields.title = this.quizExercise.title;
+        }
+        if (this.quizExercise.channelName !== this.savedEntity.channelName) {
+            changedFields.channelName = this.quizExercise.channelName;
+        }
+        if (this.quizExercise.categories !== this.savedEntity.categories) {
+            if (this.quizExercise.categories === undefined || this.quizExercise.categories.length === 0) {
+                changedFields.categories = undefined;
+            } else {
+                changedFields.categories = this.quizExercise.categories;
+            }
+        }
+        if (this.quizExercise.difficulty !== this.savedEntity.difficulty) {
+            changedFields.difficulty = this.quizExercise.difficulty;
+        }
+        if (this.quizExercise.duration !== this.savedEntity.duration) {
+            changedFields.duration = this.quizExercise.duration;
+        }
+        if (this.quizExercise.randomizeQuestionOrder !== this.savedEntity.randomizeQuestionOrder) {
+            changedFields.randomizeQuestionOrder = this.quizExercise.randomizeQuestionOrder;
+        }
+        if (this.quizExercise.quizMode !== this.savedEntity.quizMode) {
+            changedFields.quizMode = this.quizExercise.quizMode;
+        }
+        if (!dayjs(this.quizExercise.releaseDate).isSame(this.savedEntity.releaseDate)) {
+            changedFields.releaseDate = this.quizExercise.releaseDate?.toISOString();
+        }
+        if (!dayjs(this.quizExercise.dueDate).isSame(this.savedEntity.dueDate)) {
+            changedFields.dueDate = this.quizExercise.dueDate?.toISOString();
+        }
+        if (this.quizExercise.includedInOverallScore !== this.savedEntity.includedInOverallScore) {
+            changedFields.includedInOverallScore = this.quizExercise.includedInOverallScore;
+        }
+
+        if (this.quizQuestionsChanged()) {
+            changedFields.quizQuestions = this.quizExercise.quizQuestions;
+        }
+        return changedFields;
+    }
+
+    /**
+     * Compare quiz questions while ignoring specific attributes
+     */
+    private quizQuestionsChanged(): boolean {
+        const currentQuestions = this.quizExercise.quizQuestions ?? [];
+        const savedQuestions = this.savedEntity.quizQuestions ?? [];
+
+        // Quick length check first
+        if (currentQuestions.length !== savedQuestions.length) {
+            return true;
+        }
+
+        // Compare each question
+        for (let i = 0; i < currentQuestions.length; i++) {
+            const current = currentQuestions[i];
+            const saved = savedQuestions[i];
+
+            if (current.type !== saved.type) {
+                return true;
+            }
+
+            // For ShortAnswerQuestions, compare only meaningful properties
+            if (current.type === QuizQuestionType.SHORT_ANSWER) {
+                const currentSA = current as ShortAnswerQuestion;
+                const savedSA = saved as ShortAnswerQuestion;
+
+                // Compare id, title, text, points, scoringType, randomizeOrder, invalid, quizQuestionStatistic, similarityValue and matchLetterCase
+                if (
+                    currentSA.id !== savedSA.id ||
+                    currentSA.title !== savedSA.title ||
+                    currentSA.text !== savedSA.text ||
+                    currentSA.points !== savedSA.points ||
+                    currentSA.scoringType !== savedSA.scoringType ||
+                    currentSA.randomizeOrder !== savedSA.randomizeOrder ||
+                    currentSA.invalid !== savedSA.invalid ||
+                    currentSA.similarityValue !== savedSA.similarityValue ||
+                    currentSA.matchLetterCase !== savedSA.matchLetterCase
+                ) {
+                    return true;
+                }
+
+                // Compare spots (ignore tempID)
+                if (!this.compareArraysIgnoringAttributes(currentSA.spots, savedSA.spots, ['tempID'])) {
+                    return true;
+                }
+
+                // Compare solutions (ignore tempID)
+                if (!this.compareArraysIgnoringAttributes(currentSA.solutions, savedSA.solutions, ['tempID'])) {
+                    return true;
+                }
+
+                // Compare correctMappings (ignore several attributes)
+                if (
+                    !this.compareArraysIgnoringAttributes(currentSA.correctMappings, savedSA.correctMappings, ['id', 'tempID', 'shortAnswerSpotIndex', 'shortAnswerSolutionIndex'])
+                ) {
+                    return true;
+                }
+            } else {
+                // For other question types, just compare the stringified objects
+                if (JSON.stringify(current) !== JSON.stringify(saved)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Compare two arrays while ignoring specific attributes
+     */
+    private compareArraysIgnoringAttributes(arr1: any[] | undefined, arr2: any[] | undefined, ignoredAttributes: string[]): boolean {
+        if (!arr1 && !arr2) return true;
+        if (!arr1 || !arr2) return false;
+
+        for (let i = 0; i < arr1.length; i++) {
+            //Create deep copies of the objects to avoid modifying the original ones
+            const obj1 = JSON.parse(JSON.stringify(arr1[i]));
+            const obj2 = JSON.parse(JSON.stringify(arr2[i]));
+
+            // Remove ignored attributes
+            for (const attr of ignoredAttributes) {
+                delete obj1[attr];
+                delete obj2[attr];
+
+                // Also clean nested objects (like spot and solution in mappings)
+                if (obj1.spot) delete obj1.spot[attr];
+                if (obj2.spot) delete obj2.spot[attr];
+                if (obj1.solution) delete obj1.solution[attr];
+                if (obj2.solution) delete obj2.solution[attr];
+            }
+            // Remove all undefined attributes
+            for (const key in obj1) {
+                if (obj1[key] === undefined) {
+                    delete obj1[key];
+                }
+            }
+            for (const key in obj2) {
+                if (obj2[key] === undefined) {
+                    delete obj2[key];
+                }
+            }
+
+            //Compare remaining attributes by looping over them
+            if (Object.keys(obj1).length !== Object.keys(obj2).length) {
+                return false;
+            }
+            for (const key in obj1) {
+                if (obj1.hasOwnProperty(key) && obj2.hasOwnProperty(key)) {
+                    // Check if the values are objects and compare them recursively
+                    if (typeof obj1[key] === 'object' && typeof obj2[key] === 'object') {
+                        if (!this.compareArraysIgnoringAttributes([obj1[key]], [obj2[key]], ignoredAttributes)) {
+                            return false;
+                        }
+                    } else if (Array.isArray(obj1[key]) && Array.isArray(obj2[key])) {
+                        if (!this.compareArraysIgnoringAttributes(obj1[key], obj2[key], ignoredAttributes)) {
+                            return false;
+                        }
+                    } else {
+                        // Compare primitive values
+                        if (obj1[key] !== obj2[key]) {
+                            return false;
+                        }
+                    }
+                } else {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 
     checkForInvalidFlaggedQuestions() {

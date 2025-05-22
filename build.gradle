@@ -267,6 +267,8 @@ dependencies {
     implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-xml:${fasterxml_version}"
     // Support YML serialization and deserialization
     implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${fasterxml_version}"
+    // Helps defining DTOs where there is a differnce between a user omitting a field and a user sending null
+    implementation "org.openapitools:jackson-databind-nullable:0.2.6"
 
     // Avoid outdated version of netty to prevent security issues
     implementation("net.minidev:json-smart") { version { 				strictly "2.5.2" } }

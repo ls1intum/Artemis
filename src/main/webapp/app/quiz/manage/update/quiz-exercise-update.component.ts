@@ -510,6 +510,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
                 if (this.notificationText) {
                     requestOptions.notificationText = this.notificationText;
                 }
+                //const difference = this.createDiffObject();
                 this.quizExerciseService.update(this.quizExercise.id, this.quizExercise, files, requestOptions).subscribe({
                     next: (quizExerciseResponse: HttpResponse<QuizExercise>) => {
                         this.notificationText = undefined;
