@@ -44,8 +44,7 @@ public class TranscriptionPollingScheduler {
     @Scheduled(fixedRate = 60000)
     @Transactional
     public void pollPendingTranscriptions() {
-        List<LectureTranscription> pendingTranscriptions = transcriptionRepository.findAll().stream()
-                .filter(t -> t.getJobId() != null && t.getTranscriptionStatus() == TranscriptionStatus.PENDING).toList();
+        List<LectureTranscription> pendingTranscriptions = transcriptionRepository.findByTranscriptionStatusAndJobIdIsNotNull(TranscriptionStatus.PENDING);
 
         for (LectureTranscription t : pendingTranscriptions) {
             try {

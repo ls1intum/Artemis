@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
@@ -21,6 +22,7 @@ public class LectureTranscriptionService {
         this.lectureUnitRepository = lectureUnitRepository;
     }
 
+    @Transactional
     public LectureTranscription saveFinalTranscriptionResult(String jobId, LectureTranscriptionDTO dto) {
         LectureTranscription transcription = lectureTranscriptionRepository.findByJobId(jobId)
                 .orElseThrow(() -> new IllegalStateException("No transcription found for jobId: " + jobId));
@@ -32,6 +34,7 @@ public class LectureTranscriptionService {
         return lectureTranscriptionRepository.save(transcription);
     }
 
+    @Transactional
     public void createEmptyTranscription(Long lectureId, Long lectureUnitId, String jobId) {
         LectureUnit lectureUnit = validateAndCleanup(lectureId, lectureUnitId);
 

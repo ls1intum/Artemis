@@ -123,14 +123,23 @@ public class LectureTranscriptionResource {
      */
 
     @PostMapping("{lectureId}/lecture-unit/{lectureUnitId}/nebula-transcriber")
+    @EnforceAtLeastInstructor
     public ResponseEntity<?> startNebulaTranscriptionAndSave(@PathVariable Long lectureId, @PathVariable Long lectureUnitId,
             @RequestBody @Valid NebulaTranscriptionRequestDTO request) {
+
         try {
             RestClient nebulaRestClient = restClientBuilder.baseUrl(nebulaBaseUrl).build();
 
             NebulaTranscriptionInitResponseDTO response = nebulaRestClient.post().uri("/transcribe/start").header("Content-Type", "application/json")
                     .header("Authorization", nebulaSecretToken).body(request).retrieve().body(NebulaTranscriptionInitResponseDTO.class);
 
+            // Null or invalid response check
+            if (response.transcriptionId() == null) {
+                log.error("❌ Nebula returned null or missing transcription ID for Lecture ID {}, Unit ID {}", lectureId, lectureUnitId);
+                return ResponseEntity.internalServerError().body("Nebula did not return a valid transcription ID.");
+            }
+
+            // Create placeholder transcription for async processing
             lectureTranscriptionService.createEmptyTranscription(lectureId, lectureUnitId, response.transcriptionId());
 
             log.info("✅ Transcription started for Lecture ID {}, Unit ID {}, Job ID: {}", lectureId, lectureUnitId, response.transcriptionId());
@@ -139,7 +148,7 @@ public class LectureTranscriptionResource {
         }
         catch (Exception e) {
             log.error("❌ Error initiating transcription for Lecture ID: {}, Unit ID: {} → {}", lectureId, lectureUnitId, e.getMessage(), e);
-            return ResponseEntity.internalServerError().body("Failed to start transcription.");
+            return ResponseEntity.internalServerError().body("Failed to start transcription: " + e.getMessage());
         }
     }
 
