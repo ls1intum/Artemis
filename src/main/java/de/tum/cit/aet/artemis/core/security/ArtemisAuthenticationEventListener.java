@@ -24,7 +24,7 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 /**
  * Listener for successful authentication events in the Artemis system.
  * This component listens for successful login attempts and sends email notifications
- * to non-internal users when they successfully log in.
+ * to users when they successfully log in.
  */
 @Profile(PROFILE_CORE)
 @Component
@@ -52,7 +52,7 @@ public class ArtemisAuthenticationEventListener implements ApplicationListener<A
 
     /**
      * Handles successful authentication events.
-     * Sends a login notification email to non-internal users when they successfully authenticate.
+     * Sends a login notification email to users when they successfully authenticate.
      *
      * @param event The authentication success event to process
      */
