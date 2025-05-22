@@ -25,6 +25,8 @@ import { InvalidCredentialError } from 'app/core/user/settings/passkey-settings/
 import { EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, SetupPasskeyModalComponent } from 'app/core/course/overview/setup-passkey-modal/setup-passkey-modal.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
+export const ABORT_ERROR_MESSAGE = 'Aborting previous request';
+
 @Component({
     selector: 'jhi-home',
     templateUrl: './home.component.html',
@@ -136,14 +138,14 @@ export class HomeComponent implements OnInit, AfterViewChecked {
         if (window.PublicKeyCredential && PublicKeyCredential.isConditionalMediationAvailable) {
             const isCMA = await PublicKeyCredential.isConditionalMediationAvailable();
             if (isCMA) {
-                this.loginWithPasskey();
+                this.loginWithPasskey(true);
             }
         }
     }
 
-    async loginWithPasskey() {
+    async loginWithPasskey(isConditional: boolean = false) {
         try {
-            const authenticatorCredential = await this.webauthnService.getCredential();
+            const authenticatorCredential = await this.webauthnService.getCredential(isConditional);
 
             if (!authenticatorCredential || authenticatorCredential.type != 'public-key') {
                 // noinspection ExceptionCaughtLocallyJS - intended to be caught locally
@@ -161,6 +163,18 @@ export class HomeComponent implements OnInit, AfterViewChecked {
         } catch (error) {
             if (error instanceof InvalidCredentialError) {
                 this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.invalidCredential');
+            } else if (error.name === 'NotAllowedError') {
+                // eslint-disable-next-line no-undef
+                console.warn('Operation not allowed or timed out.');
+                return;
+            } else if (error === ABORT_ERROR_MESSAGE) {
+                // eslint-disable-next-line no-undef
+                console.warn(ABORT_ERROR_MESSAGE);
+                return;
+            } else if (error.name === 'OperationError' && error.message === 'A request is already pending.') {
+                // eslint-disable-next-line no-undef
+                console.warn('A request is already pending. Aborting and retrying.');
+                return;
             } else {
                 this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.login');
             }
