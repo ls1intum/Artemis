@@ -76,7 +76,7 @@ describe('CreateAttachmentVideoUnitComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should upload file, send POST for attachment and post for attachment unit', fakeAsync(() => {
+    it('should upload file, send POST for attachment and post for attachment video unit', fakeAsync(() => {
         const router: Router = TestBed.inject(Router);
         const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
 

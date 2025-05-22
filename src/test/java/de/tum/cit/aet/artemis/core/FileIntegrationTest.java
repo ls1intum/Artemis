@@ -132,7 +132,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         lecture.setTitle("Test title");
         lecture.setStartDate(ZonedDateTime.now().minusHours(1));
 
-        // create unreleased attachment unit
+        // create unreleased attachment video unit
         AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnit(true);
         attachmentVideoUnit.setLecture(lecture);
         attachmentVideoUnit.setReleaseDate(ZonedDateTime.now().plusDays(1));

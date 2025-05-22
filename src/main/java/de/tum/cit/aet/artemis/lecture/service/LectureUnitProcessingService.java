@@ -71,7 +71,7 @@ public class LectureUnitProcessingService {
      *
      * @param lectureUnitSplitInformationDTO The split information
      * @param fileBytes                      The byte content of the file (lecture slides) to be split
-     * @param lecture                        The lecture that the attachment unit belongs to
+     * @param lecture                        The lecture that the attachment video unit belongs to
      * @return The prepared units to be saved
      */
     public List<AttachmentVideoUnit> splitAndSaveUnits(LectureUnitSplitInformationDTO lectureUnitSplitInformationDTO, byte[] fileBytes, Lecture lecture) throws IOException {

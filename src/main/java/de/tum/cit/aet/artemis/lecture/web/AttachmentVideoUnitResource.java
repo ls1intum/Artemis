@@ -96,11 +96,11 @@ public class AttachmentVideoUnitResource {
     }
 
     /**
-     * GET lectures/:lectureId/attachment-video-units/:attachmentVideoUnitId : gets the attachment unit with the specified id
+     * GET lectures/:lectureId/attachment-video-units/:attachmentVideoUnitId : gets the attachment video unit with the specified id
      *
      * @param attachmentVideoUnitId the id of the attachmentVideoUnit to retrieve
      * @param lectureId             the id of the lecture to which the unit belongs
-     * @return the ResponseEntity with status 200 (OK) and with body the attachment unit, or with status 404 (Not Found)
+     * @return the ResponseEntity with status 200 (OK) and with body the attachment video unit, or with status 404 (Not Found)
      */
     @GetMapping("lectures/{lectureId}/attachment-video-units/{attachmentVideoUnitId}")
     @EnforceAtLeastEditorInLectureUnit(resourceIdFieldName = "attachmentVideoUnitId")
@@ -113,15 +113,15 @@ public class AttachmentVideoUnitResource {
     }
 
     /**
-     * PUT lectures/:lectureId/attachment-video-units/:attachmentVideoUnitId : Updates an existing attachment unit
+     * PUT lectures/:lectureId/attachment-video-units/:attachmentVideoUnitId : Updates an existing attachment video unit
      *
-     * @param lectureId             the id of the lecture to which the attachment unit belongs to update
-     * @param attachmentVideoUnitId the id of the attachment unit to update
-     * @param attachmentVideoUnit   the attachment unit with updated content
+     * @param lectureId             the id of the lecture to which the attachment video unit belongs to update
+     * @param attachmentVideoUnitId the id of the attachment video unit to update
+     * @param attachmentVideoUnit   the attachment video unit with updated content
      * @param attachment            the attachment with updated content
      * @param file                  the optional file to upload
-     * @param hiddenPages           the pages to be hidden in the attachment unit
-     * @param pageOrder             the new order of the edited attachment unit
+     * @param hiddenPages           the pages to be hidden in the attachment video unit
+     * @param pageOrder             the new order of the edited attachment video unit
      * @param keepFilename          specifies if the original filename should be kept or not
      * @param notificationText      the text to be used for the notification. No notification will be sent if the parameter is not set
      * @return the ResponseEntity with status 200 (OK) and with body the updated attachmentVideoUnit
@@ -132,7 +132,7 @@ public class AttachmentVideoUnitResource {
             @RequestPart AttachmentVideoUnit attachmentVideoUnit, @RequestPart Attachment attachment, @RequestPart(required = false) MultipartFile file,
             @RequestPart(required = false) String hiddenPages, @RequestPart(required = false) String pageOrder, @RequestParam(defaultValue = "false") boolean keepFilename,
             @RequestParam(value = "notificationText", required = false) String notificationText) {
-        log.debug("REST request to update an attachment unit : {}", attachmentVideoUnit);
+        log.debug("REST request to update an attachment video unit : {}", attachmentVideoUnit);
         AttachmentVideoUnit existingAttachmentVideoUnit = attachmentVideoUnitRepository.findWithSlidesAndCompetenciesByIdElseThrow(attachmentVideoUnitId);
         checkAttachmentVideoUnitCourseAndLecture(existingAttachmentVideoUnit, lectureId);
 
@@ -147,20 +147,20 @@ public class AttachmentVideoUnitResource {
             groupNotificationService.notifyStudentGroupAboutAttachmentChange(savedAttachmentVideoUnit.getAttachment());
         }
 
-        log.debug("REST request to update an attachment unit 4: {}", attachmentVideoUnit);
+        log.debug("REST request to update an attachment video unit 4: {}", attachmentVideoUnit);
 
         return ResponseEntity.ok(savedAttachmentVideoUnit);
     }
 
     /**
-     * POST lectures/:lectureId/attachment-video-units : creates a new attachment unit.
+     * POST lectures/:lectureId/attachment-video-units : creates a new attachment video unit.
      *
-     * @param lectureId           the id of the lecture to which the attachment unit should be added
+     * @param lectureId           the id of the lecture to which the attachment video unit should be added
      * @param attachmentVideoUnit the attachment video unit that should be created
      * @param attachment          the attachment that should be created
      * @param file                the file to upload
      * @param keepFilename        specifies if the original filename should be kept or not
-     * @return the ResponseEntity with status 201 (Created) and with body the new attachment unit
+     * @return the ResponseEntity with status 201 (Created) and with body the new attachment video unit
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping(value = "lectures/{lectureId}/attachment-video-units", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -170,7 +170,7 @@ public class AttachmentVideoUnitResource {
             throws URISyntaxException {
         log.debug("REST request to create AttachmentVideoUnit {} with Attachment {}", attachmentVideoUnit, attachment);
         if (attachmentVideoUnit.getId() != null) {
-            throw new BadRequestAlertException("A new attachment unit cannot already have an ID", ENTITY_NAME, "idexists");
+            throw new BadRequestAlertException("A new attachment video unit cannot already have an ID", ENTITY_NAME, "idexists");
         }
 
         if (attachment != null && attachment.getId() != null) {
@@ -202,7 +202,7 @@ public class AttachmentVideoUnitResource {
      * POST lectures/:lectureId/attachment-video-units/upload : Temporarily uploads a file which will be processed into lecture units
      *
      * @param file      the file that will be processed
-     * @param lectureId the id of the lecture to which the attachment units will be added
+     * @param lectureId the id of the lecture to which the attachment video units will be added
      * @return the ResponseEntity with status 200 (ok) and with body filename of the uploaded file
      */
     @PostMapping("lectures/{lectureId}/attachment-video-units/upload")
@@ -227,12 +227,12 @@ public class AttachmentVideoUnitResource {
     }
 
     /**
-     * POST lectures/:lectureId/attachment-video-units/split : creates new attachment units from the given file and lecture unit information
+     * POST lectures/:lectureId/attachment-video-units/split : creates new attachment video units from the given file and lecture unit information
      *
-     * @param lectureId                      the id of the lecture to which the attachment units will be added
+     * @param lectureId                      the id of the lecture to which the attachment video units will be added
      * @param lectureUnitSplitInformationDTO the units that will be created
      * @param filename                       the name of the lecture file, located in the temp folder
-     * @return the ResponseEntity with status 200 (ok) and with body the newly created attachment units
+     * @return the ResponseEntity with status 200 (ok) and with body the newly created attachment video units
      */
     @PostMapping("lectures/{lectureId}/attachment-video-units/split/{filename}")
     @EnforceAtLeastEditor
@@ -256,8 +256,8 @@ public class AttachmentVideoUnitResource {
             return ResponseEntity.ok().body(savedAttachmentVideoUnits);
         }
         catch (IOException e) {
-            log.error("Could not create attachment units automatically", e);
-            throw new InternalServerErrorException("Could not create attachment units automatically");
+            log.error("Could not create attachment video units automatically", e);
+            throw new InternalServerErrorException("Could not create attachment video units automatically");
         }
     }
 
@@ -316,10 +316,10 @@ public class AttachmentVideoUnitResource {
     }
 
     /**
-     * PUT lectures/:lectureId/attachment-units/:attachmentUnitId/student-version : Updates the student version file for an existing attachment unit
+     * PUT lectures/:lectureId/attachment-units/:attachmentUnitId/student-version : Updates the student version file for an existing attachment video unit
      *
-     * @param lectureId             the id of the lecture to which the attachment unit belongs
-     * @param attachmentVideoUnitId the id of the attachment unit to update
+     * @param lectureId             the id of the lecture to which the attachment video unit belongs
+     * @param attachmentVideoUnitId the id of the attachment video unit to update
      * @param studentVersionFile    the file containing the student version of the attachment
      * @return the ResponseEntity with status 200 (OK) and with body the updated attachmentUnit
      */
@@ -343,9 +343,9 @@ public class AttachmentVideoUnitResource {
     }
 
     /**
-     * Checks that the attachment unit belongs to the specified lecture.
+     * Checks that the attachment video unit belongs to the specified lecture.
      *
-     * @param attachmentVideoUnit The attachment unit to check
+     * @param attachmentVideoUnit The attachment video unit to check
      * @param lectureId           The id of the lecture to check against
      */
     private void checkAttachmentVideoUnitCourseAndLecture(AttachmentVideoUnit attachmentVideoUnit, Long lectureId) {

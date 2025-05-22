@@ -188,9 +188,9 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Fetches a PDF file based on the specified file type (attachment or attachmentUnit).
-     * @param fileType The type of file to fetch ('attachment' or 'attachmentUnit')
-     * @param slides Optional array of slides (only used for attachmentUnit)
+     * Fetches a PDF file based on the specified file type (attachment or attachmentVideoUnit).
+     * @param fileType The type of file to fetch ('attachment' or 'attachmentVideoUnit')
+     * @param slides Optional array of slides (only used for attachmentVideoUnit)
      */
     private fetchPdfFile(fileType: 'attachment' | 'attachmentVideoUnit', slides?: Slide[]): void {
         const courseId = this.course()!.id!;
@@ -243,7 +243,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      * @param fileUrl The URL of the file to load
      * @param arrayBuffer The PDF file as an ArrayBuffer
      * @param sourceId Identifier for the source PDF, or 'original' for the initial PDF
-     * @param existingSlides Optional array of existing slides (for attachmentUnit)
+     * @param existingSlides Optional array of existing slides (for attachmentVideoUnit)
      * @param append Whether to append the new pages to existing ones
      */
     async loadPdf(fileUrl: string, arrayBuffer: ArrayBuffer, sourceId: string = 'original', existingSlides?: Slide[], append: boolean = false): Promise<void> {
@@ -594,7 +594,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
     /**
      * Updates the attachment with both instructor and student versions
-     * Refactored version combining updateAttachmentWithFile and updateAttachmentUnitStudentVersion
+     * Refactored version combining updateAttachmentWithFile and updateAttachmentVideoUnitStudentVersion
      */
     async updateAttachmentWithFile(): Promise<void> {
         // Validate hidden slides dates before proceeding
@@ -620,7 +620,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                 await this.updateAttachment(instructorPdfFile);
             } else if (this.attachmentVideoUnit()) {
                 const hiddenPages = this.getHiddenPages();
-                await this.updateAttachmentUnit(instructorPdfFile, hiddenPages);
+                await this.updateAttachmentVideoUnit(instructorPdfFile, hiddenPages);
 
                 if (studentPdf && hiddenPages.length > 0) {
                     const studentPdfFile = await this.createPdfFile(studentPdf, pdfName, true);
@@ -659,9 +659,9 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Updates an attachment unit
+     * Updates an attachment video unit
      */
-    private async updateAttachmentUnit(instructorPdfFile: File, hiddenPages: HiddenPage[]): Promise<void> {
+    private async updateAttachmentVideoUnit(instructorPdfFile: File, hiddenPages: HiddenPage[]): Promise<void> {
         return new Promise<void>((resolve, reject) => {
             this.attachmentToBeEdited.set(this.attachmentVideoUnit()!.attachment!);
             this.attachmentToBeEdited()!.uploadDate = dayjs();
@@ -699,7 +699,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Updates only the student version of the attachment unit
+     * Updates only the student version of the attachment video unit
      */
     private updateStudentVersion(studentPdfFile: File): Promise<void> {
         return new Promise<void>((resolve, reject) => {
@@ -769,7 +769,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Deletes the attachment file if it exists, or deletes the attachment unit if it exists.
+     * Deletes the attachment file if it exists, or deletes the attachment video unit if it exists.
      * @returns A Promise that resolves when the deletion process is completed.
      */
     async deleteAttachmentFile() {

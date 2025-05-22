@@ -361,7 +361,7 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
             expect(comp.getText()).toBe(`[lecture]${lectureNameWithoutBrackets}(${metisService.getLinkForLecture(lecture.id.toString())})[/lecture]`);
         });
 
-        it('should reference an attachment unit without brackets', () => {
+        it('should reference an attachment video unit without brackets', () => {
             fixture.detectChanges();
 
             const attachmentVideoUnitNameWithBrackets = 'Test (AttachmentVideoUnit) With [Brackets] And (More) [Bracket(s)]';
@@ -419,7 +419,7 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
             expect(executeAction).toThrow(Error);
         });
 
-        it('should reference an attachment unit', () => {
+        it('should reference an attachment video unit', () => {
             fixture.detectChanges();
             comp.registerAction(lectureAttachmentReferenceAction);
             const lecture = lectureAttachmentReferenceAction.lecturesWithDetails[2];
@@ -441,7 +441,7 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
             expect(comp.getText()).toBe(`[lecture-unit]${attachmentVideoUnit.name}(${attachmentVideoUnitFileName})[/lecture-unit]`);
         });
 
-        it('should error when trying to reference a nonexistent attachment unit', () => {
+        it('should error when trying to reference a nonexistent attachment video unit', () => {
             fixture.detectChanges();
             comp.registerAction(lectureAttachmentReferenceAction);
             const lecture = lectureAttachmentReferenceAction.lecturesWithDetails[0];

@@ -86,7 +86,7 @@ class AttachmentServiceTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
     void testRegenerateStudentVersion_withNullAttachmentVideoUnit() {
-        // Create attachment with null attachment unit
+        // Create attachment with null attachment video unit
         Attachment attachmentWithoutUnit = new Attachment();
         attachmentWithoutUnit.setName("Test Attachment");
         attachmentWithoutUnit.setLink("/test/path/file.pdf");

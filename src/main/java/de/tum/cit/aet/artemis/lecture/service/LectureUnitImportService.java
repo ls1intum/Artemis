@@ -95,7 +95,7 @@ public class LectureUnitImportService {
                 return lectureUnitRepository.save(textUnit);
             }
             case AttachmentVideoUnit importedAttachmentVideoUnit -> {
-                // Create and save the attachment unit, then the attachment itself, as the id is needed for file handling
+                // Create and save the attachment video unit, then the attachment itself, as the id is needed for file handling
                 AttachmentVideoUnit attachmentVideoUnit = new AttachmentVideoUnit();
                 attachmentVideoUnit.setName(importedAttachmentVideoUnit.getName());
                 attachmentVideoUnit.setReleaseDate(importedAttachmentVideoUnit.getReleaseDate());

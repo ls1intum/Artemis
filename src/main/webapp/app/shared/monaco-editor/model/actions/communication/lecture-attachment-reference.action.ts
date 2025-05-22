@@ -30,7 +30,7 @@ interface LectureAttachmentReferenceActionArgs {
 }
 
 /**
- * Action to insert a reference to a lecture, attachment, slide, or attachment unit into the editor.
+ * Action to insert a reference to a lecture, attachment, slide, or attachment video unit into the editor.
  * The specific format of the reference depends on the type of reference.
  */
 export class LectureAttachmentReferenceAction extends TextEditorAction {
@@ -71,7 +71,7 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
     }
 
     /**
-     * Executes the action in the current editor for the given arguments (lecture, attachment, slide, and/or attachment unit).
+     * Executes the action in the current editor for the given arguments (lecture, attachment, slide, and/or attachment video unit).
      * @param args The arguments to execute the action with.
      */
     executeInCurrentEditor(args: LectureAttachmentReferenceActionArgs): void {
@@ -79,7 +79,7 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
     }
 
     /**
-     * Inserts, at the current position, a reference to the specified lecture, attachment, slide, or attachment unit.
+     * Inserts, at the current position, a reference to the specified lecture, attachment, slide, or attachment video unit.
      * Depending on the reference type, the reference will be formatted differently:
      * - Lecture: [lecture]Lecture Title(link)[/lecture]
      * - Attachment: [attachment]Attachment Name(link)[/attachment]
@@ -104,14 +104,14 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
                 if (args.attachmentVideoUnit) {
                     this.insertAttachmentVideoUnitReference(editor, args.attachmentVideoUnit);
                 } else {
-                    throw new Error(`[${this.id}] No attachment unit provided to reference.`);
+                    throw new Error(`[${this.id}] No attachment video unit provided to reference.`);
                 }
                 break;
             case ReferenceType.SLIDE:
                 if (args.attachmentVideoUnit && args.slide && args.slideIndex) {
                     this.insertSlideReference(editor, args.attachmentVideoUnit, args.slide, args.slideIndex);
                 } else {
-                    throw new Error(`[${this.id}] No attachment unit or slide provided to reference.`);
+                    throw new Error(`[${this.id}] No attachment video unit or slide provided to reference.`);
                 }
                 break;
             default:

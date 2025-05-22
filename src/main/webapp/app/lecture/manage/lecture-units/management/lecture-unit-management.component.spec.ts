@@ -263,7 +263,7 @@ describe('LectureUnitManagementComponent', () => {
     });
 
     describe('isViewButtonAvailable', () => {
-        it('should return true for an attachment unit with a PDF link', () => {
+        it('should return true for an attachment video unit with a PDF link', () => {
             const lectureUnit = {
                 type: LectureUnitType.ATTACHMENT_VIDEO,
                 attachment: { link: 'file.pdf' },

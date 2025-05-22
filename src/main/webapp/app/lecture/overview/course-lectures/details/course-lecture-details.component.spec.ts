@@ -161,7 +161,7 @@ describe('CourseLectureDetailsComponent', () => {
         courseLecturesDetailsComponent.ngOnDestroy();
     });
 
-    it('should display all three lecture units: 2 attachment units and 1 text unit', fakeAsync(() => {
+    it('should display all three lecture units: 2 attachment video units and 1 text unit', fakeAsync(() => {
         fixture.detectChanges();
 
         const attachmentVideoUnits = debugElement.queryAll(By.css('jhi-attachment-video-unit'));

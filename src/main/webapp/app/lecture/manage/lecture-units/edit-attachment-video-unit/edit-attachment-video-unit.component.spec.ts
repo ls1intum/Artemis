@@ -136,7 +136,7 @@ describe('EditAttachmentVideoUnitComponent', () => {
         expect(attachmentVideoUnitFormComponent.formData()?.fileProperties.file).toBeUndefined();
     });
 
-    it('should update attachment unit with file change without notification', async () => {
+    it('should update attachment video unit with file change without notification', async () => {
         fixture.detectChanges();
         const attachmentVideoUnitFormComponent: AttachmentVideoUnitFormComponent = fixture.debugElement.query(By.directive(AttachmentVideoUnitFormComponent)).componentInstance;
 
@@ -165,7 +165,7 @@ describe('EditAttachmentVideoUnitComponent', () => {
         expect(navigateSpy).toHaveBeenCalledOnce();
     });
 
-    it('should update attachment unit with file change with notification', async () => {
+    it('should update attachment video unit with file change with notification', async () => {
         fixture.detectChanges();
         const attachmentVideoUnitFormComponent: AttachmentVideoUnitFormComponent = fixture.debugElement.query(By.directive(AttachmentVideoUnitFormComponent)).componentInstance;
 
@@ -195,7 +195,7 @@ describe('EditAttachmentVideoUnitComponent', () => {
         expect(navigateSpy).toHaveBeenCalledOnce();
     });
 
-    it('should update attachment unit without file change without notification', async () => {
+    it('should update attachment video unit without file change without notification', async () => {
         fixture.detectChanges();
         const attachmentVideoUnitFormComponent: AttachmentVideoUnitFormComponent = fixture.debugElement.query(By.directive(AttachmentVideoUnitFormComponent)).componentInstance;
 

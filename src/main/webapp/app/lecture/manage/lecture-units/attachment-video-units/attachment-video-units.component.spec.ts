@@ -143,7 +143,7 @@ describe('AttachmentVideoUnitsComponent', () => {
         expect(attachmentVideoUnitsComponent.keyphrases).toMatch('');
     });
 
-    it('should create attachment units', fakeAsync(() => {
+    it('should create attachment video units', fakeAsync(() => {
         const lectureUnitInformation: LectureUnitInformationDTO = {
             units: units,
             numberOfPages: numberOfPages,

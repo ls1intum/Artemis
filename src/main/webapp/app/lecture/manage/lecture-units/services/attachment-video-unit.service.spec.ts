@@ -202,7 +202,7 @@ describe('AttachmentVideoUnitService', () => {
     }));
 
     describe('getAttachmentFile', () => {
-        it('should retrieve a file as Blob for a given course and attachment unit ID', () => {
+        it('should retrieve a file as Blob for a given course and attachment video unit ID', () => {
             const courseId = 5;
             const attachmentVideoUnitId = 10;
             const expectedBlob = new Blob(['example data'], {

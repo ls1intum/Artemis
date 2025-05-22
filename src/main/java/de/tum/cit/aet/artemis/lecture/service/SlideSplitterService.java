@@ -70,9 +70,9 @@ public class SlideSplitterService {
     }
 
     /**
-     * Splits an Attachment Unit file into single slides and saves them as PNG files asynchronously.
+     * Splits an AttachmentVideoUnit file into single slides and saves them as PNG files asynchronously.
      *
-     * @param attachmentVideoUnit The attachment unit to which the slides belong.
+     * @param attachmentVideoUnit The attachmentVideoUnit to which the slides belong.
      */
     @Async
     public void splitAttachmentVideoUnitIntoSingleSlides(AttachmentVideoUnit attachmentVideoUnit) {
@@ -83,17 +83,17 @@ public class SlideSplitterService {
             splitAttachmentVideoUnitIntoSingleSlides(document, attachmentVideoUnit, pdfFilename);
         }
         catch (IOException e) {
-            log.error("Error while splitting Attachment Unit {} into single slides", attachmentVideoUnit.getId(), e);
-            throw new InternalServerErrorException("Could not split Attachment Unit into single slides: " + e.getMessage());
+            log.error("Error while splitting AttachmentVideoUnit {} into single slides", attachmentVideoUnit.getId(), e);
+            throw new InternalServerErrorException("Could not split AttachmentVideoUnit into single slides: " + e.getMessage());
         }
     }
 
     /**
-     * Splits an Attachment Unit file into single slides and saves them as PNG files asynchronously.
+     * Splits an AttachmentVideoUnit file into single slides and saves them as PNG files asynchronously.
      *
-     * @param attachmentVideoUnit The attachment unit to which the slides belong.
-     * @param hiddenPages         The hidden pages of the attachment unit.
-     * @param pageOrder           The page order of the attachment unit.
+     * @param attachmentVideoUnit The attachmentVideoUnit to which the slides belong.
+     * @param hiddenPages         The hidden pages of the attachmentVideoUnit.
+     * @param pageOrder           The page order of the attachmentVideoUnit.
      */
     @Async
     public void splitAttachmentVideoUnitIntoSingleSlides(AttachmentVideoUnit attachmentVideoUnit, String hiddenPages, String pageOrder) {
@@ -104,21 +104,21 @@ public class SlideSplitterService {
             splitAttachmentVideoUnitIntoSingleSlides(document, attachmentVideoUnit, pdfFilename, hiddenPages, pageOrder);
         }
         catch (IOException e) {
-            log.error("Error while splitting Attachment Unit {} into single slides", attachmentVideoUnit.getId(), e);
-            throw new InternalServerErrorException("Could not split Attachment Unit into single slides: " + e.getMessage());
+            log.error("Error while splitting AttachmentVideoUnit {} into single slides", attachmentVideoUnit.getId(), e);
+            throw new InternalServerErrorException("Could not split AttachmentVideoUnit into single slides: " + e.getMessage());
         }
     }
 
     /**
-     * Splits an Attachment Unit file into single slides and saves them as PNG files.
+     * Splits an AttachmentVideoUnit file into single slides and saves them as PNG files.
      * Only creates new slides; never updates existing ones to keep slide referencing.
      *
-     * @param attachmentVideoUnit The attachment unit to which the slides belong.
+     * @param attachmentVideoUnit The attachmentVideoUnit to which the slides belong.
      * @param document            The PDF document that is already loaded.
      * @param pdfFilename         The name of the PDF file.
      */
     public void splitAttachmentVideoUnitIntoSingleSlides(PDDocument document, AttachmentVideoUnit attachmentVideoUnit, String pdfFilename) {
-        log.debug("Splitting Attachment Unit file {} into single slides", attachmentVideoUnit.getAttachment().getName());
+        log.debug("Splitting AttachmentVideoUnit file {} into single slides", attachmentVideoUnit.getAttachment().getName());
         try {
             String fileNameWithOutExt = FilenameUtils.removeExtension(pdfFilename);
             int numPages = document.getNumberOfPages();
@@ -141,22 +141,22 @@ public class SlideSplitterService {
             }
         }
         catch (IOException e) {
-            log.error("Error while splitting Attachment Unit {} into single slides", attachmentVideoUnit.getId(), e);
-            throw new InternalServerErrorException("Could not split Attachment Unit into single slides: " + e.getMessage());
+            log.error("Error while splitting AttachmentVideoUnit {} into single slides", attachmentVideoUnit.getId(), e);
+            throw new InternalServerErrorException("Could not split AttachmentVideoUnit into single slides: " + e.getMessage());
         }
     }
 
     /**
-     * Splits an Attachment Unit file into single slides and saves them as PNG files or updates existing slides.
+     * Splits an AttachmentVideoUnit file into single slides and saves them as PNG files or updates existing slides.
      *
-     * @param attachmentVideoUnit The attachment unit to which the slides belong.
+     * @param attachmentVideoUnit The attachmentVideoUnit to which the slides belong.
      * @param document            The PDF document that is already loaded.
      * @param pdfFilename         The name of the PDF file.
      * @param hiddenPages         The hidden pages information.
      * @param pageOrder           The order of pages in the PDF.
      */
     public void splitAttachmentVideoUnitIntoSingleSlides(PDDocument document, AttachmentVideoUnit attachmentVideoUnit, String pdfFilename, String hiddenPages, String pageOrder) {
-        log.debug("Processing slides for Attachment Unit with hidden pages {}", attachmentVideoUnit.getAttachment().getName());
+        log.debug("Processing slides for AttachmentVideoUnit with hidden pages {}", attachmentVideoUnit.getAttachment().getName());
 
         try {
             // Parse the page order and hidden pages information
@@ -180,8 +180,8 @@ public class SlideSplitterService {
             cleanupRemovedSlides(pageOrderList, existingSlides);
         }
         catch (IOException e) {
-            log.error("Error while splitting Attachment Unit {} into single slides", attachmentVideoUnit.getId(), e);
-            throw new InternalServerErrorException("Could not split Attachment Unit into single slides: " + e.getMessage());
+            log.error("Error while splitting AttachmentVideoUnit {} into single slides", attachmentVideoUnit.getId(), e);
+            throw new InternalServerErrorException("Could not split AttachmentVideoUnit into single slides: " + e.getMessage());
         }
     }
 
@@ -321,7 +321,7 @@ public class SlideSplitterService {
     }
 
     /**
-     * Update slides that are no longer in the page order by setting their attachment unit to null instead of deleting them.
+     * Update slides that are no longer in the page order by setting their attachmentVideoUnit to null instead of deleting them.
      */
     private void cleanupRemovedSlides(List<Map<String, Object>> pageOrderList, List<Slide> existingSlides) {
         Set<String> slideIdsInPageOrder = pageOrderList.stream().map(page -> String.valueOf(page.get("slideId"))).filter(id -> !id.startsWith("temp_")).collect(Collectors.toSet());
@@ -334,7 +334,7 @@ public class SlideSplitterService {
                     slide.setAttachmentVideoUnit(null);
                     slideRepository.save(slide);
                 }
-                log.debug("Detached {} slides that are no longer in the page order by setting their attachment unit to null", slidesToDetach.size());
+                log.debug("Detached {} slides that are no longer in the page order by setting their attachmentVideoUnit to null", slidesToDetach.size());
             }
         }
     }

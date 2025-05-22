@@ -50,12 +50,12 @@ public class AttachmentService {
      * @param attachment The attachment whose student version needs to be regenerated
      */
     public void regenerateStudentVersion(Attachment attachment) {
-        AttachmentVideoUnit attachmentUnit = attachment.getAttachmentVideoUnit();
-        if (attachmentUnit == null) {
+        AttachmentVideoUnit attachmentVideoUnit = attachment.getAttachmentVideoUnit();
+        if (attachmentVideoUnit == null) {
             return;
         }
 
-        List<Slide> hiddenSlides = slideRepository.findByAttachmentVideoUnitIdAndHiddenNotNull(attachmentUnit.getId());
+        List<Slide> hiddenSlides = slideRepository.findByAttachmentVideoUnitIdAndHiddenNotNull(attachmentVideoUnit.getId());
 
         // If no slides are marked as hidden, remove student version if it exists
         if (hiddenSlides.isEmpty()) {
@@ -73,7 +73,7 @@ public class AttachmentService {
 
             byte[] studentVersionPdf = generateStudentVersionPdf(pdfPath.toFile(), hiddenSlides);
 
-            handleStudentVersionFile(studentVersionPdf, attachment, attachmentUnit.getId());
+            handleStudentVersionFile(studentVersionPdf, attachment, attachmentVideoUnit.getId());
             attachmentRepository.save(attachment);
         }
         catch (Exception e) {
