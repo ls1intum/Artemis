@@ -9,7 +9,7 @@ import { GitDiffReportComponent } from 'app/programming/shared/git-diff-report/g
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
-import { RepositoryDiffInformation, processRepositoryDiff } from 'app/shared/monaco-editor/diff-editor/util/monaco-diff-editor.util';
+import { RepositoryDiffInformation, processRepositoryDiff } from 'app/programming/shared/utils/diff.utils';
 @Component({
     selector: 'jhi-commit-details-view',
     templateUrl: './commit-details-view.component.html',

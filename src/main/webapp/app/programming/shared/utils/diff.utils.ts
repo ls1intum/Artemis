@@ -1,5 +1,3 @@
-import * as monaco from 'monaco-editor';
-
 /**
  * Interface for line change information from the diff editor
  */
@@ -38,29 +36,6 @@ export enum FileStatus {
 }
 
 /**
- * Converts Monaco line changes to a LineChange object
- * @param monacoLineChanges The Monaco line changes to convert
- * @returns The converted LineChange object
- */
-export function convertMonacoLineChanges(monacoLineChanges: monaco.editor.ILineChange[]): LineChange {
-    const lineChange: LineChange = { addedLineCount: 0, removedLineCount: 0 };
-    if (!monacoLineChanges) {
-        return lineChange;
-    }
-
-    for (const change of monacoLineChanges) {
-        const addedLines = change.modifiedEndLineNumber >= change.modifiedStartLineNumber ? change.modifiedEndLineNumber - change.modifiedStartLineNumber + 1 : 0;
-
-        const removedLines = change.originalEndLineNumber >= change.originalStartLineNumber ? change.originalEndLineNumber - change.originalStartLineNumber + 1 : 0;
-
-        lineChange.addedLineCount += addedLines;
-        lineChange.removedLineCount += removedLines;
-    }
-
-    return lineChange;
-}
-
-/**
  * Processes the repository diff information
  * @param originalFileContentByPath The original file content by path
  * @param modifiedFileContentByPath The modified file content by path
@@ -80,7 +55,7 @@ export function processRepositoryDiff(originalFileContentByPath: Map<string, str
         const originalFileContent = originalFileContentByPath.get(originalPath) || '';
         const modifiedFileContent = modifiedFileContentByPath.get(modifiedPath) || '';
 
-        const lineChange = computeDiffsMonaco(originalFileContent, modifiedFileContent);
+        const lineChange = computeDiffs(originalFileContent, modifiedFileContent);
 
         diffInformation.lineChange = lineChange;
         repositoryDiffInformation.totalLineChange.addedLineCount += lineChange.addedLineCount;
@@ -203,7 +178,7 @@ function linesDiff(original: string[], modified: string[]): { type: string; line
     return diffs;
 }
 
-function computeDiffsMonaco(originalFileContent: string, modifiedFileContent: string): LineChange {
+function computeDiffs(originalFileContent: string, modifiedFileContent: string): LineChange {
     // Handle special cases for created or deleted files
     if (!originalFileContent && modifiedFileContent) {
         // File is newly created - count only added lines, no deleted lines
@@ -310,7 +285,6 @@ function mergeRenamedFiles(diffInformation: DiffInformation[], created?: string[
                             modifiedFileContent: createdFileContent,
                             originalFileContent: deletedFileContent,
                         };
-                        // Remove the old item directly from the list
                         diffInformation.splice(deletedIndex, 1);
                     }
                 }

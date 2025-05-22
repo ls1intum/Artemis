@@ -23,7 +23,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MatSlider, MatSliderThumb } from '@angular/material/slider';
 import { FormsModule } from '@angular/forms';
 import { toObservable } from '@angular/core/rxjs-interop';
-import { RepositoryDiffInformation } from 'app/shared/monaco-editor/diff-editor/util/monaco-diff-editor.util';
+import { RepositoryDiffInformation } from 'app/programming/shared/utils/diff.utils';
 
 @Component({
     selector: 'jhi-student-exam-timeline',

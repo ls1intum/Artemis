@@ -20,7 +20,7 @@ import { ButtonComponent } from 'app/shared/components/buttons/button/button.com
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
-import { RepositoryDiffInformation, processRepositoryDiff } from 'app/shared/monaco-editor/diff-editor/util/monaco-diff-editor.util';
+import { RepositoryDiffInformation, processRepositoryDiff } from 'app/programming/shared/utils/diff.utils';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { AlertService } from 'app/shared/service/alert.service';

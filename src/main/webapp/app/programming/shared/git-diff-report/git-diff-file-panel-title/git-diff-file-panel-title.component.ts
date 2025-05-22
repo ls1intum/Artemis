@@ -1,6 +1,6 @@
 import { NgClass } from '@angular/common';
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { DiffInformation, FileStatus } from 'app/shared/monaco-editor/diff-editor/util/monaco-diff-editor.util';
+import { DiffInformation, FileStatus } from 'app/programming/shared/utils/diff.utils';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({

@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, ViewEncapsulation, computed, effect, input, output, viewChild } from '@angular/core';
 import { MonacoDiffEditorComponent } from 'app/shared/monaco-editor/diff-editor/monaco-diff-editor.component';
-import { DiffInformation } from 'app/shared/monaco-editor/diff-editor/util/monaco-diff-editor.util';
+import { DiffInformation } from 'app/programming/shared/utils/diff.utils';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({

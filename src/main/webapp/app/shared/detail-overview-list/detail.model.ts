@@ -11,7 +11,7 @@ import { RepositoryType } from 'app/programming/shared/code-editor/model/code-ed
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
 import { ProgrammingExerciseParticipationType } from 'app/programming/shared/entities/programming-exercise-participation.model';
-import { RepositoryDiffInformation } from 'app/shared/monaco-editor/diff-editor/util/monaco-diff-editor.util';
+import { RepositoryDiffInformation } from 'app/programming/shared/utils/diff.utils';
 
 export type Detail = NotShownDetail | ShownDetail;
 
