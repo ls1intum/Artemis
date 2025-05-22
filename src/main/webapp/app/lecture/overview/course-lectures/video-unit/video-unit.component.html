@@ -7,8 +7,11 @@
     (onCompletion)="toggleCompletion($event)"
     (onCollapse)="toggleCollapse($event)"
 >
-    <div class="ratio ratio-16x9">
-        <iframe id="videoFrame" class="rounded" [src]="videoUrl() | safeResourceUrl" allow="fullscreen"></iframe>
-    </div>
+    @if (videoUrl()?.includes('.m3u8')) {
+        <jhi-video-player [videoUrl]="videoUrl()!" [transcriptSegments]="transcriptSegments()" />
+    } @else if (videoUrl()) {
+        <iframe width="100%" height="450" [src]="videoUrl() | safeResourceUrl" frameborder="0" allowfullscreen></iframe>
+    }
+
     {{ lectureUnit().description }}
 </jhi-lecture-unit-card>
