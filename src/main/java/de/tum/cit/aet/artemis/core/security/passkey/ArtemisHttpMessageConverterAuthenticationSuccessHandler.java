@@ -6,12 +6,14 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.converter.GenericHttpMessageConverter;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.server.ServletServerHttpResponse;
+import org.springframework.security.authentication.event.AuthenticationSuccessEvent;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
@@ -35,9 +37,13 @@ public final class ArtemisHttpMessageConverterAuthenticationSuccessHandler imple
 
     private final JWTCookieService jwtCookieService;
 
-    public ArtemisHttpMessageConverterAuthenticationSuccessHandler(HttpMessageConverter<Object> converter, JWTCookieService jwtCookieService) {
+    private final ApplicationEventPublisher eventPublisher;
+
+    public ArtemisHttpMessageConverterAuthenticationSuccessHandler(HttpMessageConverter<Object> converter, JWTCookieService jwtCookieService,
+            ApplicationEventPublisher eventPublisher) {
         this.jwtCookieService = jwtCookieService;
         this.converter = converter;
+        this.eventPublisher = eventPublisher;
     }
 
     /**
@@ -69,6 +75,8 @@ public final class ArtemisHttpMessageConverterAuthenticationSuccessHandler imple
         boolean rememberMe = true; // means that the JWT token will be valid for a longer time (=> less often required to authenticate)
         ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(rememberMe);
         response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
+
+        eventPublisher.publishEvent(new AuthenticationSuccessEvent(authentication));
 
         this.converter.write(new AuthenticationSuccess(redirectUrl), MediaType.APPLICATION_JSON, new ServletServerHttpResponse(response));
     }

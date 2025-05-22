@@ -79,6 +79,7 @@
                     "enabled": {
                         "on": "Enabled",
                         "off": "Disabled",
+                        "custom": "Custom",
                         "chat": "Iris Chat"
                     },
                     "disabled": {
@@ -132,6 +133,9 @@
                 "pyrisUnavailable": "Iris is currently unavailable.",
                 "pyrisError": "An error occurred while getting processing status from Iris.",
                 "transcriptionIngestionError": "Error while sending transcription"
+            },
+            "controlCenter": {
+                "tooltip": "By toggling you enable or disable ALL Iris features for this course. For a more precise control, please use the Iris settings by clicking on Custom."
             }
         }
     }
