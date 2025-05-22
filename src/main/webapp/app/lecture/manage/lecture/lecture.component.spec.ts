@@ -8,24 +8,25 @@ import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { LectureComponent, LectureDateFilter } from 'app/lecture/manage/lecture/lecture.component';
-import { MockProfileService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { MockNgbModalService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-ngb-modal.service';
-import { MockRouter } from '../../../../../../test/javascript/spec/helpers/mocks/mock-router';
+import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { MockRouterLinkDirective } from '../../../../../../test/javascript/spec/helpers/mocks/directive/mock-router-link.directive';
+import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { LectureImportComponent } from 'app/lecture/manage/lecture-import/lecture-import.component';
-import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { IngestionState } from 'app/lecture/shared/entities/lecture-unit/attachmentUnit.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
+import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 
 describe('Lecture', () => {
     let lectureComponentFixture: ComponentFixture<LectureComponent>;
@@ -129,7 +130,7 @@ describe('Lecture', () => {
                     },
                 },
                 MockProvider(LectureService, {
-                    findAllByCourseIdWithSlides: () => {
+                    findAllByCourseId: () => {
                         return of(
                             new HttpResponse({
                                 body: [pastLecture, pastLecture2, currentLecture, currentLecture2, currentLecture3, futureLecture, futureLecture2, unspecifiedLecture],
@@ -149,6 +150,7 @@ describe('Lecture', () => {
                         return of(new HttpResponse({ status: 200 }));
                     },
                 }),
+                MockProvider(IrisSettingsService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -159,8 +161,8 @@ describe('Lecture', () => {
                 lectureComponent = lectureComponentFixture.componentInstance;
                 lectureService = TestBed.inject(LectureService);
                 modalService = TestBed.inject(NgbModal);
-                profileService = lectureComponentFixture.debugElement.injector.get(ProfileService);
-                jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(profileInfo));
+                profileService = TestBed.inject(ProfileService);
+                jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
             });
     });
 
@@ -169,7 +171,7 @@ describe('Lecture', () => {
     });
 
     it('should fetch lectures when initialized', () => {
-        const findAllSpy = jest.spyOn(lectureService, 'findAllByCourseIdWithSlides');
+        const findAllSpy = jest.spyOn(lectureService, 'findAllByCourseId');
 
         lectureComponentFixture.detectChanges();
 
@@ -303,5 +305,63 @@ describe('Lecture', () => {
         lectureComponent.lectures = [lectureToIngest];
         jest.spyOn(lectureService, 'ingestLecturesInPyris').mockReturnValue(throwError(() => new Error('Error while ingesting')));
         lectureComponent.ingestLecturesInPyris();
+    });
+
+    function setupInitializationTests() {
+        const updateIngestionStatesSpy = jest.spyOn(lectureComponent, 'updateIngestionStates');
+        jest.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
+
+        // Mock the services with Subjects to control when they emit
+        const lectureSubject = new Subject<HttpResponse<Lecture[]>>();
+        const settingsSubject = new Subject<any>();
+
+        jest.spyOn(lectureService, 'findAllByCourseId').mockReturnValue(lectureSubject.asObservable());
+        jest.spyOn(TestBed.inject(IrisSettingsService), 'getCombinedCourseSettings').mockReturnValue(settingsSubject.asObservable());
+
+        // Set up test data
+        const lectures = [lectureToIngest];
+        const enabledSettings = {
+            irisLectureIngestionSettings: {
+                enabled: true,
+            },
+        };
+
+        return {
+            updateIngestionStatesSpy,
+            lectureSubject,
+            settingsSubject,
+            lectures,
+            enabledSettings,
+        };
+    }
+
+    it('should properly load ingestion state when lectures load first, then settings', () => {
+        const { updateIngestionStatesSpy, lectureSubject, settingsSubject, lectures, enabledSettings } = setupInitializationTests();
+
+        // Initialize component
+        lectureComponent.ngOnInit();
+
+        // Emit lectures first
+        lectureSubject.next(new HttpResponse({ body: lectures, status: 200 }));
+        expect(updateIngestionStatesSpy).not.toHaveBeenCalled();
+
+        // Then emit settings
+        settingsSubject.next(enabledSettings);
+        expect(updateIngestionStatesSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should properly load ingestion state when settings load first, then lectures', () => {
+        const { updateIngestionStatesSpy, lectureSubject, settingsSubject, lectures, enabledSettings } = setupInitializationTests();
+
+        // Initialize component
+        lectureComponent.ngOnInit();
+
+        // Emit settings first
+        settingsSubject.next(enabledSettings);
+        expect(updateIngestionStatesSpy).not.toHaveBeenCalled();
+
+        // Then emit lectures
+        lectureSubject.next(new HttpResponse({ body: lectures, status: 200 }));
+        expect(updateIngestionStatesSpy).toHaveBeenCalledOnce();
     });
 });

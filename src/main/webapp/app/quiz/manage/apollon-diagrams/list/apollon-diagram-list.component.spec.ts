@@ -1,9 +1,10 @@
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ApollonDiagramService } from 'app/quiz/manage/apollon-diagrams/services/apollon-diagram.service';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { MockProvider } from 'ng-mocks';
-import { MockNgbModalService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-ngb-modal.service';
+import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { of } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -14,7 +15,8 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { isEqual } from 'lodash-es';
 import { UMLDiagramType } from '@ls1intum/apollon';
@@ -42,6 +44,7 @@ describe('ApollonDiagramList Component', () => {
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ProfileService, useClass: MockProfileService },
                 MockProvider(CourseManagementService),
                 MockProvider(AccountService),
             ],
@@ -51,10 +54,9 @@ describe('ApollonDiagramList Component', () => {
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ApollonDiagramListComponent);
-                const injector = fixture.debugElement.injector;
-                apollonDiagramService = injector.get(ApollonDiagramService);
-                courseService = injector.get(CourseManagementService);
-                modalService = injector.get(NgbModal);
+                apollonDiagramService = fixture.debugElement.injector.get(ApollonDiagramService);
+                courseService = fixture.debugElement.injector.get(CourseManagementService);
+                modalService = fixture.debugElement.injector.get(NgbModal);
             });
     });
 

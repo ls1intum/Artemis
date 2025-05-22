@@ -10,7 +10,7 @@ import { MockDirective, MockProvider } from 'ng-mocks';
 
 import { ExamUpdateComponent, prepareExamForImport } from 'app/exam/manage/exams/update/exam-update.component';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockSyncStorage } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { Course, CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
@@ -29,11 +29,11 @@ import { UMLDiagramType } from '@ls1intum/apollon';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
-import { MockResizeObserver } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-resize-observer';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MockProfileService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MODULE_FEATURE_TEXT } from 'app/app.constants';
 
 @Component({
@@ -124,11 +124,11 @@ describe('ExamUpdateComponent', () => {
                 return new MockResizeObserver(callback);
             });
             component = fixture.componentInstance;
-            examManagementService = fixture.debugElement.injector.get(ExamManagementService);
+            examManagementService = TestBed.inject(ExamManagementService);
 
             profileService = TestBed.inject(ProfileService);
             getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
-            getProfileInfoSub.mockReturnValue(of({ activeModuleFeatures: [MODULE_FEATURE_TEXT] }));
+            getProfileInfoSub.mockReturnValue({ activeModuleFeatures: [MODULE_FEATURE_TEXT] });
         });
 
         it('should initialize', () => {
@@ -633,15 +633,15 @@ describe('ExamUpdateComponent', () => {
             router = TestBed.inject(Router);
             fixture = TestBed.createComponent(ExamUpdateComponent);
             component = fixture.componentInstance;
-            examManagementService = fixture.debugElement.injector.get(ExamManagementService);
-            alertService = fixture.debugElement.injector.get(AlertService);
+            examManagementService = TestBed.inject(ExamManagementService);
+            alertService = TestBed.inject(AlertService);
             global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
                 return new MockResizeObserver(callback);
             });
 
             profileService = TestBed.inject(ProfileService);
             getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
-            getProfileInfoSub.mockReturnValue(of({ activeModuleFeatures: [MODULE_FEATURE_TEXT] }));
+            getProfileInfoSub.mockReturnValue({ activeModuleFeatures: [MODULE_FEATURE_TEXT] });
         });
 
         it('should initialize without id and dates set', () => {

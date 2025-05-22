@@ -16,7 +16,7 @@ import dayjs from 'dayjs/esm';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import {
     getExerciseGeneralDetailsSection,
     getExerciseGradingDefaultDetails,
@@ -26,7 +26,7 @@ import {
 } from 'app/exercise/util/utils';
 import { DetailOverviewSection, DetailType } from 'app/shared/detail-overview-list/detail-overview-list.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { DetailOverviewListComponent } from 'app/shared/detail-overview-list/detail-overview-list.component';
 
 @Component({
@@ -64,12 +64,8 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.subscription = this.route.params.subscribe((params) => {
             // Checks if the current environment includes "apollon" profile
-            this.profileService.getProfileInfo().subscribe((profileInfo) => {
-                if (profileInfo && profileInfo.activeProfiles.includes('apollon')) {
-                    this.isApollonProfileActive = true;
-                }
-                this.load(params['exerciseId']);
-            });
+            this.isApollonProfileActive = this.profileService.isProfileActive('apollon');
+            this.load(params['exerciseId']);
         });
         this.registerChangeInModelingExercises();
     }

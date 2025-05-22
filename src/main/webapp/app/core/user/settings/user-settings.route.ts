@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
 
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { Authority } from 'app/shared/constants/authority.constants';
+import { Authority, IS_AT_LEAST_TUTOR } from 'app/shared/constants/authority.constants';
 
 export const routes: Routes = [
     {
@@ -26,10 +26,10 @@ export const routes: Routes = [
                 },
             },
             {
-                path: 'notifications',
-                loadComponent: () => import('app/core/user/settings/notification-settings/notification-settings.component').then((m) => m.NotificationSettingsComponent),
+                path: 'profile',
+                loadComponent: () => import('app/core/user/settings/learner-profile/learner-profile.component').then((m) => m.LearnerProfileComponent),
                 data: {
-                    pageTitle: 'artemisApp.userSettings.categories.NOTIFICATION_SETTINGS',
+                    pageTitle: 'artemisApp.userSettings.learnerProfile',
                 },
             },
             {
@@ -75,10 +75,17 @@ export const routes: Routes = [
                 loadComponent: () =>
                     import('app/core/user/settings/vcs-access-tokens-settings/vcs-access-tokens-settings.component').then((m) => m.VcsAccessTokensSettingsComponent),
                 data: {
-                    authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
+                    authorities: IS_AT_LEAST_TUTOR,
                     pageTitle: 'artemisApp.userSettings.categories.VCS_TOKEN_SETTINGS',
                 },
                 canActivate: [UserRouteAccessService],
+            },
+            {
+                path: 'passkeys',
+                loadComponent: () => import('app/core/user/settings/passkey-settings/passkey-settings.component').then((m) => m.PasskeySettingsComponent),
+                data: {
+                    pageTitle: 'artemisApp.userSettings.categories.PASSKEYS',
+                },
             },
             {
                 path: 'ide-preferences',

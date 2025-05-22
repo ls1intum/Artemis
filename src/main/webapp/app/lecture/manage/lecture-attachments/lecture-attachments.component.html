@@ -78,17 +78,6 @@
                                                 </td>
                                                 <td class="text-end">
                                                     <div class="flex-btn-group-container">
-                                                        @if (viewButtonAvailable[attachment.id!]) {
-                                                            <button
-                                                                type="button"
-                                                                class="btn btn-primary btn-sm me-1"
-                                                                [routerLink]="['/course-management', lecture().course?.id, 'lectures', lecture().id, 'attachments', attachment.id]"
-                                                                [ngbTooltip]="'entity.action.view' | artemisTranslate"
-                                                            >
-                                                                <fa-icon [icon]="faEye" />
-                                                                <span class="d-none d-md-inline" jhiTranslate="entity.action.view"></span>
-                                                            </button>
-                                                        }
                                                         <button
                                                             [disabled]="attachmentToBeUpdatedOrCreated()?.id === attachment?.id"
                                                             type="button"
@@ -206,13 +195,12 @@
                         </div>
                     </form>
                 } @else {
-                    <div class="row">
-                        <div class="col-12">
-                            <button type="button" (click)="addAttachment()" class="btn btn-primary" id="add-attachment">
-                                <fa-icon [icon]="faPaperclip" />&nbsp;<span jhiTranslate="entity.action.addAttachment"></span>
-                            </button>
-                        </div>
-                    </div>
+                    <a
+                        [routerLink]="['/course-management', lecture().course?.id, `lectures`, lecture().id, 'unit-management', 'attachment-units', 'create']"
+                        class="btn btn-primary me-2"
+                    >
+                        <span jhiTranslate="entity.action.addAttachment"></span>
+                    </a>
                 }
             </div>
         }

@@ -22,7 +22,7 @@ import {
     mockUserMessageWithContent,
     mockWebsocketServerMessage,
     mockWebsocketStatusMessage,
-} from '../../../../../../test/javascript/spec/helpers/sample/iris-sample-data';
+} from 'test/helpers/sample/iris-sample-data';
 import { IrisMessage, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
 import 'app/shared/util/array.extension';
 
@@ -223,6 +223,38 @@ describe('IrisChatService', () => {
             expect(messages).toHaveLength(mockConversation.messages!.length + 1);
             expect(messages.last()).toEqual(message);
         });
+        tick();
+    }));
+
+    it('should emit sessionId when set', () => {
+        const expectedId = 456;
+        service.sessionId$.subscribe((id) => {
+            expect(id).toBe(expectedId);
+        });
+        service.sessionId = expectedId;
+    });
+
+    it('should request tutor suggestion if sessionId is set', fakeAsync(() => {
+        service.sessionId = id;
+        const httpStub = jest.spyOn(httpService, 'createTutorSuggestion').mockReturnValueOnce(of());
+
+        service.requestTutorSuggestion().subscribe((res) => {
+            expect(res).toBeUndefined();
+        });
+
+        expect(httpStub).toHaveBeenCalledWith(id);
+        tick();
+    }));
+
+    it('should throw error if sessionId is undefined on tutor suggestion', fakeAsync(() => {
+        service.sessionId = undefined;
+
+        service.requestTutorSuggestion().subscribe({
+            error: (err) => {
+                expect(err.message).toBe('Not initialized');
+            },
+        });
+
         tick();
     }));
 });

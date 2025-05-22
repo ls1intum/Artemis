@@ -26,7 +26,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 
-class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsLocalVcTest {
+class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsLocalVCTest {
 
     private static final String TEST_PREFIX = "peinttest";
 

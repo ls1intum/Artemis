@@ -20,7 +20,7 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.CsrfConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -38,6 +38,7 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.filter.SpaWebFilter;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTConfigurer;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
+import de.tum.cit.aet.artemis.core.security.passkey.ArtemisPasskeyWebAuthnConfigurer;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.user.PasswordService;
 import de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer;
@@ -48,26 +49,29 @@ import de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer;
 @Profile(PROFILE_CORE)
 public class SecurityConfiguration {
 
-    private final TokenProvider tokenProvider;
+    private final CorsFilter corsFilter;
+
+    private final Optional<CustomLti13Configurer> customLti13Configurer;
+
+    private final ArtemisPasskeyWebAuthnConfigurer passkeyWebAuthnConfigurer;
 
     private final PasswordService passwordService;
 
-    private final CorsFilter corsFilter;
-
     private final ProfileService profileService;
 
-    private final Optional<CustomLti13Configurer> customLti13Configurer;
+    private final TokenProvider tokenProvider;
 
     @Value("#{'${spring.prometheus.monitoringIp:127.0.0.1}'.split(',')}")
     private List<String> monitoringIpAddresses;
 
-    public SecurityConfiguration(TokenProvider tokenProvider, PasswordService passwordService, CorsFilter corsFilter, ProfileService profileService,
-            Optional<CustomLti13Configurer> customLti13Configurer) {
-        this.tokenProvider = tokenProvider;
-        this.passwordService = passwordService;
+    public SecurityConfiguration(CorsFilter corsFilter, Optional<CustomLti13Configurer> customLti13Configurer, ArtemisPasskeyWebAuthnConfigurer passkeyWebAuthnConfigurer,
+            PasswordService passwordService, ProfileService profileService, TokenProvider tokenProvider) {
         this.corsFilter = corsFilter;
-        this.profileService = profileService;
         this.customLti13Configurer = customLti13Configurer;
+        this.passkeyWebAuthnConfigurer = passkeyWebAuthnConfigurer;
+        this.passwordService = passwordService;
+        this.profileService = profileService;
+        this.tokenProvider = tokenProvider;
     }
 
     /**
@@ -78,7 +82,6 @@ public class SecurityConfiguration {
      * @param userDetailsService               The {@link UserDetailsService} to use for internal authentication. See {@link DomainUserDetailsService} for the current
      *                                             implementation.
      * @param remoteUserAuthenticationProvider An optional {@link AuthenticationProvider} for external authentication (e.g., LDAP).
-     *
      * @return The {@link AuthenticationManager} to use for authenticating users.
      */
     @Bean
@@ -92,7 +95,6 @@ public class SecurityConfiguration {
         remoteUserAuthenticationProvider.ifPresent(builder::authenticationProvider);
         // Spring Security processes authentication providers in the order they're added. If an external provider is configured,
         // it will be tried first. The internal database-backed provider serves as a fallback if external authentication is not available or fails.
-
         return builder.build();
     }
 
@@ -169,7 +171,7 @@ public class SecurityConfiguration {
         // @formatter:off
         http
             // Disables CSRF (Cross-Site Request Forgery) protection; useful in stateless APIs where the token management is unnecessary.
-            .csrf(AbstractHttpConfigurer::disable)
+            .csrf(CsrfConfigurer::disable)
             // Adds a CORS (Cross-Origin Resource Sharing) filter before the username/password authentication to handle cross-origin requests.
             .addFilterBefore(corsFilter, UsernamePasswordAuthenticationFilter.class)
             // Configures exception handling with a custom entry point and access denied handler for authentication issues.
@@ -193,6 +195,7 @@ public class SecurityConfiguration {
             // Configures authorization for various URL patterns. The patterns are considered in order.
             .authorizeHttpRequests(requests -> {
                 requests
+                    // NOTE: Always have a look at {@link de.tum.cit.aet.artemis.core.security.filter.SpaWebFilter} to see which URLs are forwarded to the SPA
                     // Client related URLs and publicly accessible information (allowed for everyone).
                     .requestMatchers("/", "/index.html", "/public/**").permitAll()
                     .requestMatchers("/*.js", "/*.css", "/*.map", "/*.json").permitAll()
@@ -204,27 +207,30 @@ public class SecurityConfiguration {
                     .requestMatchers("/api/*/admin/**").hasAuthority(Role.ADMIN.getAuthority())
                     // Publicly accessible API endpoints (allowed for everyone).
                     .requestMatchers("/api/*/public/**").permitAll()
+                    .requestMatchers("/login/webauthn").permitAll()
                     // Websocket and other specific endpoints allowed without authentication.
                     .requestMatchers("/websocket/**").permitAll()
                     .requestMatchers("/.well-known/jwks.json").permitAll()
                     .requestMatchers("/.well-known/assetlinks.json").permitAll()
+                    .requestMatchers("/.well-known/apple-app-site-association").permitAll()
                     // Prometheus endpoint protected by IP address.
                     .requestMatchers("/management/prometheus/**").access((authentication, context) -> new AuthorizationDecision(monitoringIpAddresses.contains(context.getRequest().getRemoteAddr())));
 
                     // LocalVC related URLs: LocalVCPushFilter and LocalVCFetchFilter handle authentication on their own
-                    if (profileService.isLocalVcsActive()) {
+                    if (profileService.isLocalVCActive()) {
                         requests.requestMatchers("/git/**").permitAll();
                     }
 
                     // All other requests must be authenticated. Additional authorization happens on the endpoints themselves.
-                   requests.requestMatchers("/**").authenticated();
+                    requests.requestMatchers("/**").authenticated();
                 }
             )
             // Applies additional configurations defined in a custom security configurer adapter.
             .with(securityConfigurerAdapter(), configurer -> configurer.configure(http));
-            // FIXME: Enable HTTP Basic authentication so that people can authenticate using username and password against the server's REST API
-            //  PROBLEM: This currently would break LocalVC cloning via http based on the LocalVCServletService
-            //.httpBasic(Customizer.withDefaults());
+
+        // Configure WebAuthn passkey if enabled
+        passkeyWebAuthnConfigurer.configure(http);
+
         // @formatter:on
 
         // Conditionally adds configuration for LTI if it is active.

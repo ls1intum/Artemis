@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AdminFeatureToggleComponent } from 'app/core/admin/features/admin-feature-toggle.component';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
-import { MockFeatureToggleService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-feature-toggle.service';
+import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
 
 describe('AdminFeatureToggleComponentTest', () => {
     let fixture: ComponentFixture<AdminFeatureToggleComponent>;
@@ -29,7 +29,7 @@ describe('AdminFeatureToggleComponentTest', () => {
     it('onInit test if features mapped successfully', () => {
         expect(comp.availableToggles).toHaveLength(0);
         comp.ngOnInit();
-        expect(comp.availableToggles).toHaveLength(9);
+        expect(comp.availableToggles).toHaveLength(8);
     });
 
     it('onFeatureToggle test if feature disabled on toggle', () => {

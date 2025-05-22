@@ -2,7 +2,7 @@ import { ConversationMessagesComponent } from 'app/communication/course-conversa
 import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { ButtonComponent } from 'app/shared/components/button/button.component';
+import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { PostingThreadComponent } from 'app/communication/posting-thread/posting-thread.component';
@@ -13,12 +13,8 @@ import { MetisService } from 'app/communication/service/metis.service';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { BehaviorSubject, of } from 'rxjs';
 import { Conversation, ConversationDTO, ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
-import {
-    generateExampleChannelDTO,
-    generateExampleGroupChatDTO,
-    generateOneToOneChatDTO,
-} from '../../../../../../../test/javascript/spec/helpers/sample/conversationExampleModels';
-import { Directive, ElementRef, EventEmitter, Input, Output, QueryList, input, runInInjectionContext } from '@angular/core';
+import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from 'test/helpers/sample/conversationExampleModels';
+import { Directive, EventEmitter, Input, Output, QueryList, input, runInInjectionContext } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ChannelDTO, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
@@ -127,24 +123,6 @@ examples.forEach((activeConversation) => {
             component.course = course;
             component._activeConversation = activeConversation;
             component.posts = [examplePost];
-        }));
-
-        it('should fetch posts on search input and clear search again on clear button press', fakeAsync(() => {
-            const getFilteredPostSpy = jest.spyOn(metisService, 'getFilteredPosts');
-            const inputField = fixture.debugElement.query(By.css('#searchInput'));
-            inputField.nativeElement.value = 'test';
-            inputField.nativeElement.dispatchEvent(new Event('input'));
-            tick(301);
-            expect(component.searchText).toBe('test');
-            expect(getFilteredPostSpy).toHaveBeenCalledOnce();
-            fixture.detectChanges();
-
-            getFilteredPostSpy.mockClear();
-            const clearButton = fixture.debugElement.query(By.css('#clearSearchButton'));
-            clearButton.nativeElement.click();
-            tick(301);
-            expect(component.searchText).toBe('');
-            expect(getFilteredPostSpy).toHaveBeenCalledOnce();
         }));
 
         it('should fetch posts on next page fetch', fakeAsync(() => {
@@ -356,8 +334,8 @@ examples.forEach((activeConversation) => {
 
             tick();
 
-            expect(component.posts[0].forwardedPosts).toEqual([]);
-            expect(component.posts[0].forwardedAnswerPosts).toEqual([]);
+            expect(component.posts[0].forwardedPosts).toEqual([undefined]);
+            expect(component.posts[0].forwardedAnswerPosts).toEqual([undefined]);
         }));
 
         it('should not fetch source posts or answers for empty forwarded messages', fakeAsync(() => {
@@ -412,15 +390,36 @@ examples.forEach((activeConversation) => {
             expect(getSourcePostsSpy).toHaveBeenCalled();
             expect(getSourceAnswersSpy).toHaveBeenCalled();
 
+            const forwardedPosts = component.posts[0].forwardedPosts;
+            const forwardedAnswerPosts = component.posts[0].forwardedAnswerPosts;
+
             expect(component.posts).toHaveLength(1);
-            expect(component.posts[0].forwardedPosts).toBeDefined();
-            expect(component.posts[0].forwardedAnswerPosts).toBeDefined();
+            expect(forwardedPosts).toBeDefined();
+            expect(forwardedAnswerPosts).toBeDefined();
 
-            expect(component.posts[0].forwardedPosts!).toHaveLength(mockSourcePosts.length);
-            expect(component.posts[0].forwardedAnswerPosts!).toHaveLength(mockSourceAnswerPosts.length);
+            if (forwardedPosts) {
+                expect(forwardedPosts).toHaveLength(mockSourcePosts.length);
+                forwardedPosts.forEach((post) => {
+                    if (post) {
+                        expect(post.id).toBeDefined();
+                        expect(post.id).toBe(10);
+                    } else {
+                        expect(post).toBeUndefined();
+                    }
+                });
+            }
 
-            expect(component.posts[0].forwardedPosts![0].id).toBe(10);
-            expect(component.posts[0].forwardedAnswerPosts![0].id).toBe(11);
+            if (forwardedAnswerPosts) {
+                expect(forwardedAnswerPosts).toHaveLength(mockSourceAnswerPosts.length);
+                forwardedAnswerPosts.forEach((post) => {
+                    if (post) {
+                        expect(post.id).toBeDefined();
+                        expect(post.id).toBe(11);
+                    } else {
+                        expect(post).toBeUndefined();
+                    }
+                });
+            }
         }));
 
         it('should filter posts to show only pinned posts when showOnlyPinned is true', () => {
@@ -521,9 +520,6 @@ examples.forEach((activeConversation) => {
 
             component._activeConversation = { id: 123, type: ConversationType.CHANNEL };
             component.course = { id: 1 } as Course;
-            component.searchInput = {
-                nativeElement: { value: '' },
-            } as ElementRef;
 
             component['onActiveConversationChange']();
             tick();
@@ -531,5 +527,63 @@ examples.forEach((activeConversation) => {
             expect(component.pinnedPosts).toEqual(pinnedPostsStub);
             expect(pinnedCountSpy).toHaveBeenCalledWith(pinnedPostsStub.length);
         }));
+
+        it('should group posts correctly with consecutive messages from same author', () => {
+            const posts = [
+                { id: 1, creationDate: dayjs(), author: { id: 1 } } as Post,
+                { id: 2, creationDate: dayjs().add(1, 'minute'), author: { id: 1 } } as Post,
+                { id: 3, creationDate: dayjs().add(2, 'minutes'), author: { id: 1 } } as Post,
+            ];
+
+            component.posts = posts;
+            (component as any).groupPosts();
+
+            expect(component.groupedPosts).toHaveLength(1);
+            expect(component.groupedPosts[0].posts).toHaveLength(3);
+            expect(component.groupedPosts[0].posts[0].isConsecutive).toBeFalse();
+            expect(component.groupedPosts[0].posts[1].isConsecutive).toBeTrue();
+            expect(component.groupedPosts[0].posts[2].isConsecutive).toBeTrue();
+        });
+
+        it('should group posts correctly with different authors', () => {
+            const posts = [
+                { id: 1, creationDate: dayjs(), author: { id: 1 } } as Post,
+                { id: 2, creationDate: dayjs().add(1, 'minute'), author: { id: 2 } } as Post,
+                { id: 3, creationDate: dayjs().add(2, 'minutes'), author: { id: 1 } } as Post,
+            ];
+
+            component.posts = posts;
+            (component as any).groupPosts();
+
+            expect(component.groupedPosts).toHaveLength(3);
+            expect(component.groupedPosts[0].posts).toHaveLength(1);
+            expect(component.groupedPosts[1].posts).toHaveLength(1);
+            expect(component.groupedPosts[2].posts).toHaveLength(1);
+        });
+
+        it('should handle multiple message deletions correctly', () => {
+            // Initial posts
+            const initialPosts = [
+                { id: 1, creationDate: dayjs(), author: { id: 1 } } as Post,
+                { id: 2, creationDate: dayjs().add(1, 'minute'), author: { id: 1 } } as Post,
+                { id: 3, creationDate: dayjs().add(2, 'minutes'), author: { id: 2 } } as Post,
+                { id: 4, creationDate: dayjs().add(3, 'minutes'), author: { id: 2 } } as Post,
+            ];
+
+            component.posts = initialPosts;
+            (component as any).groupPosts();
+
+            // Delete posts 2 and 3
+            const postsAfterDeletion = [{ id: 1, creationDate: dayjs(), author: { id: 1 } } as Post, { id: 4, creationDate: dayjs().add(3, 'minutes'), author: { id: 2 } } as Post];
+
+            component.posts = postsAfterDeletion;
+            (component as any).groupPosts();
+
+            expect(component.groupedPosts).toHaveLength(2);
+            expect(component.groupedPosts[0].posts).toHaveLength(1);
+            expect(component.groupedPosts[1].posts).toHaveLength(1);
+            expect(component.groupedPosts[0].author?.id).toBe(1);
+            expect(component.groupedPosts[1].author?.id).toBe(2);
+        });
     });
 });

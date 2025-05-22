@@ -1,6 +1,5 @@
 import { Course, CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
 import { User } from 'app/core/user/user.model';
-import { VOTE_EMOJI_ID } from 'app/communication/metis.util';
 import { Reaction } from 'app/communication/shared/entities/reaction.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
@@ -35,7 +34,6 @@ export const metisTutor = { id: 4, name: 'username4', login: 'login4', groups: [
 
 export const metisTags = ['Tag1', 'Tag2'];
 
-export const metisUpVoteReactionUser1 = { id: 1, user: metisUser1, emojiId: VOTE_EMOJI_ID } as Reaction;
 export const metisReactionUser2 = { id: 2, user: metisUser2, emojiId: 'smile', creationDate: undefined } as Reaction;
 export const metisReactionToCreate = { emojiId: 'cheerio', creationDate: undefined } as Reaction;
 

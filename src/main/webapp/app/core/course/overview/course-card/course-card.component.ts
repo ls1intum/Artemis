@@ -34,7 +34,6 @@ export class CourseCardComponent implements OnChanges, OnInit, OnDestroy {
 
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
     @Input() course: Course;
-    @Input() hasGuidedTour: boolean;
 
     CachingStrategy = CachingStrategy;
 

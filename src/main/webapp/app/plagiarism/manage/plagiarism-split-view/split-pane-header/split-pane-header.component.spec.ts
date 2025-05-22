@@ -4,7 +4,7 @@ import { SplitPaneHeaderComponent } from 'app/plagiarism/manage/plagiarism-split
 import { TextPlagiarismFileElement } from 'app/plagiarism/shared/entities/text/TextPlagiarismFileElement';
 import { Subject } from 'rxjs';
 import { By } from '@angular/platform-browser';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('SplitPaneHeaderComponent', () => {

@@ -4,19 +4,13 @@ import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
 import { MetisService } from 'app/communication/service/metis.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { MockMetisService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-metis-service.service';
+import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.service';
 import { PatternMatch, PostingContentPart, ReferenceType } from 'app/communication/metis.util';
 import { Observable, of } from 'rxjs';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import {
-    metisCourse,
-    metisCoursePosts,
-    metisExercisePosts,
-    metisGeneralCourseWidePosts,
-    metisLecturePosts,
-} from '../../../../../test/javascript/spec/helpers/sample/metis-sample-data';
+import { metisCourse, metisCoursePosts, metisExercisePosts, metisGeneralCourseWidePosts, metisLecturePosts } from 'test/helpers/sample/metis-sample-data';
 import { Params } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -42,7 +36,7 @@ describe('PostingContentComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(PostingContentComponent);
                 component = fixture.componentInstance;
-                metisService = fixture.debugElement.injector.get(MetisService);
+                metisService = TestBed.inject(MetisService);
             });
     });
 

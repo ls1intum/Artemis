@@ -1,0 +1,33 @@
+.iris-headline {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.iris-suggestion {
+    padding: 10px;
+}
+
+.iris-suggestion-field {
+    background: var(--tutor-suggestion-background);
+    border-radius: 5px;
+    width: 100%;
+    padding: 10px;
+}
+
+.iris-logo-wrapper {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.iris-logo {
+    float: left;
+    margin-right: 10px;
+}
+
+.iris-suggestion-text {
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
+}

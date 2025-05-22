@@ -19,32 +19,6 @@ export class AttachmentService {
     public resourceUrl = 'api/lecture/attachments';
 
     /**
-     * Create a new attachment
-     * @param attachment the attachment object to create
-     * @param file the file to save as an attachment
-     */
-    create(attachment: Attachment, file: File): Observable<EntityResponseType> {
-        const copy = this.convertAttachmentDatesFromClient(attachment);
-        // avoid potential issues when sending the attachment to the server
-        if (copy.attachmentUnit) {
-            copy.attachmentUnit.lecture = undefined;
-            copy.attachmentUnit.competencyLinks = undefined;
-        }
-        if (copy.lecture) {
-            copy.lecture.lectureUnits = undefined;
-            copy.lecture.course = undefined;
-            copy.lecture.posts = undefined;
-        }
-
-        /** Ngsw-worker is bypassed temporarily to fix Chromium file upload issue
-         * See: https://issues.chromium.org/issues/374550348
-         **/
-        return this.http
-            .post<Attachment>(this.resourceUrl, this.createFormData(copy, file), { headers: { 'ngsw-bypass': 'true' }, observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertAttachmentResponseDatesFromServer(res)));
-    }
-
-    /**
      * Update an existing attachment
      * @param attachmentId the id of the attachment to update
      * @param attachment the attachment object holding the updated values

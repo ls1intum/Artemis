@@ -158,7 +158,7 @@ public class LtiResource {
         OidcIdToken idToken = new OidcIdToken(ltiIdToken, null, null, SignedJWT.parse(ltiIdToken).getJWTClaimsSet().getClaims());
 
         String targetLink = switch (resourceType) {
-            case EXERCISE, LECTURE, GROUPED_EXERCISE -> {
+            case EXERCISE, LECTURE, GROUPED_EXERCISE, GROUPED_LECTURE -> {
                 if (contentIds == null || contentIds.isEmpty()) {
                     throw new BadRequestAlertException("Content IDs are required for resource type: " + resourceType, "LTI", "contentIdsRequired");
                 }

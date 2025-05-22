@@ -1,12 +1,12 @@
 import { OnlineUnitComponent } from 'app/lecture/overview/course-lectures/online-unit/online-unit.component';
 import { OnlineUnit } from 'app/lecture/shared/entities/lecture-unit/onlineUnit.model';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 import { ScienceService } from 'app/shared/science/science.service';
-import { MockScienceService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-science-service';
+import { MockScienceService } from 'test/helpers/mocks/service/mock-science-service';
 import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
 
 describe('OnlineUnitComponent', () => {
@@ -48,6 +48,7 @@ describe('OnlineUnitComponent', () => {
         component = fixture.componentInstance;
 
         fixture.componentRef.setInput('lectureUnit', onlineUnit);
+        fixture.componentRef.setInput('courseId', 1);
     });
 
     afterEach(() => {

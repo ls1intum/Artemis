@@ -14,6 +14,7 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -169,11 +170,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities", "organizations" })
     Optional<User> findOneWithGroupsAndAuthoritiesAndOrganizationsByLogin(String userLogin);
 
-    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities", "guidedTourSettings" })
-    Optional<User> findOneWithGroupsAuthoritiesAndGuidedTourSettingsByLogin(String login);
-
-    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities", "guidedTourSettings", "externalLLMUsageAccepted" })
-    Optional<User> findOneWithGroupsAndAuthoritiesAndGuidedTourSettingsAndExternalLLMUsageAcceptedTimestampByLogin(String login);
+    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities", "externalLLMUsageAccepted" })
+    Optional<User> findOneWithGroupsAndAuthoritiesAndExternalLLMUsageAcceptedTimestampByLogin(String login);
 
     Long countByDeletedIsFalseAndGroupsContains(String groupName);
 
@@ -700,48 +698,10 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @Transactional // ok because of modifying query
     @Query("""
             UPDATE User user
-            SET user.lastNotificationRead = :lastNotificationRead
-            WHERE user.id = :userId
-            """)
-    void updateUserNotificationReadDate(@Param("userId") long userId, @Param("lastNotificationRead") ZonedDateTime lastNotificationRead);
-
-    /**
-     * Update user notification read date for current user
-     *
-     * @param userId the user for which the notification read date should be updated
-     */
-    @Transactional
-    default void updateUserNotificationReadDate(long userId) {
-        updateUserNotificationReadDate(userId, ZonedDateTime.now());
-    }
-
-    @Modifying
-    @Transactional // ok because of modifying query
-    @Query("""
-            UPDATE User user
             SET user.imageUrl = :imageUrl
             WHERE user.id = :userId
             """)
     void updateUserImageUrl(@Param("userId") long userId, @Param("imageUrl") String imageUrl);
-
-    /**
-     * Update user notification hide until property for current user
-     * I.e. updates the filter that hides all notifications with a creation/notification date prior to the set value.
-     * If the value is null then all notifications should be shown.
-     * (Not to be confused with notification settings. This filter is based on the notification date alone)
-     *
-     * @param userId                of the user
-     * @param hideNotificationUntil indicates a time that is used to filter all notifications that are prior to it
-     *                                  (if null -> show all notifications)
-     */
-    @Modifying
-    @Transactional // ok because of modifying query
-    @Query("""
-            UPDATE User user
-            SET user.hideNotificationsUntil = :hideNotificationUntil
-            WHERE user.id = :userId
-            """)
-    void updateUserNotificationVisibility(@Param("userId") long userId, @Param("hideNotificationUntil") ZonedDateTime hideNotificationUntil);
 
     @Modifying
     @Transactional // ok because of modifying query
@@ -929,18 +889,6 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
         return getValueElseThrow(findOneWithGroupsAndAuthoritiesAndOrganizationsByLogin(currentUserLogin));
     }
 
-    /**
-     * Get user with user groups, authorities and guided tour settings of currently logged-in user
-     * Note: this method should only be invoked if the guided tour settings are really needed
-     *
-     * @return currently logged-in user
-     */
-    @NotNull
-    default User getUserWithGroupsAuthoritiesAndGuidedTourSettings() {
-        String currentUserLogin = getCurrentUserLogin();
-        return getValueElseThrow(findOneWithGroupsAuthoritiesAndGuidedTourSettingsByLogin(currentUserLogin));
-    }
-
     private String getCurrentUserLogin() {
         Optional<String> currentUserLogin = SecurityUtils.getCurrentUserLogin();
         if (currentUserLogin.isPresent()) {
@@ -1072,7 +1020,12 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @return all users in the course
      */
     default Set<User> getUsersInCourse(Course course) {
-        Set<String> groupNames = Set.of(course.getStudentGroupName(), course.getTeachingAssistantGroupName(), course.getEditorGroupName(), course.getInstructorGroupName());
+        // NOTE: we cannot use Set.of(), because the group names might be identical and then the ImmutableCollections$SetN would throw an exception
+        Set<String> groupNames = new HashSet<>();
+        groupNames.add(course.getStudentGroupName());
+        groupNames.add(course.getTeachingAssistantGroupName());
+        groupNames.add(course.getEditorGroupName());
+        groupNames.add(course.getInstructorGroupName());
         return findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(groupNames);
     }
 
@@ -1260,4 +1213,58 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                     OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
             """)
     boolean isAtLeastInstructorInExercise(@Param("login") String login, @Param("exerciseId") long exerciseId);
+
+    @Query("""
+            SELECT COUNT(user) > 0
+            FROM User user
+            INNER JOIN LectureUnit lectureUnit
+            ON user.login = :login
+                AND lectureUnit.id = :lectureUnitId
+            LEFT JOIN lectureUnit.lecture.course course
+            WHERE (course.studentGroupName MEMBER OF user.groups)
+                    OR (course.teachingAssistantGroupName MEMBER OF user.groups)
+                    OR (course.editorGroupName MEMBER OF user.groups)
+                    OR (course.instructorGroupName MEMBER OF user.groups)
+                    OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
+            """)
+    boolean isAtLeastStudentInLectureUnit(@Param("login") String login, @Param("lectureUnitId") long lectureUnitId);
+
+    @Query("""
+            SELECT COUNT(user) > 0
+            FROM User user
+            INNER JOIN LectureUnit lectureUnit
+            ON user.login = :login
+                AND lectureUnit.id = :lectureUnitId
+            LEFT JOIN lectureUnit.lecture.course course
+            WHERE (course.teachingAssistantGroupName MEMBER OF user.groups)
+                    OR (course.editorGroupName MEMBER OF user.groups)
+                    OR (course.instructorGroupName MEMBER OF user.groups)
+                    OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
+            """)
+    boolean isAtLeastTeachingAssistantInLectureUnit(@Param("login") String login, @Param("lectureUnitId") long lectureUnitId);
+
+    @Query("""
+            SELECT COUNT(user) > 0
+            FROM User user
+            INNER JOIN LectureUnit lectureUnit
+            ON user.login = :login
+                AND lectureUnit.id = :lectureUnitId
+            LEFT JOIN lectureUnit.lecture.course course
+            WHERE (course.editorGroupName MEMBER OF user.groups)
+                    OR (course.instructorGroupName MEMBER OF user.groups)
+                    OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
+            """)
+    boolean isAtLeastEditorInLectureUnit(@Param("login") String login, @Param("lectureUnitId") long lectureUnitId);
+
+    @Query("""
+            SELECT COUNT(user) > 0
+            FROM User user
+            INNER JOIN LectureUnit lectureUnit
+            ON user.login = :login
+                AND lectureUnit.id = :lectureUnitId
+            LEFT JOIN lectureUnit.lecture.course course
+            WHERE (course.instructorGroupName MEMBER OF user.groups)
+                    OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
+            """)
+    boolean isAtLeastInstructorInLectureUnit(@Param("login") String login, @Param("lectureUnitId") long lectureUnitId);
 }

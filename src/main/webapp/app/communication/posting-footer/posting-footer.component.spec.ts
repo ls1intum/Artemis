@@ -3,21 +3,15 @@ import { MockComponent } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MetisService } from 'app/communication/service/metis.service';
 import { PostService } from 'app/communication/service/post.service';
-import { MockPostService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-post.service';
+import { MockPostService } from 'test/helpers/mocks/service/mock-post.service';
 import { AnswerPostService } from 'app/communication/service/answer-post.service';
-import { MockAnswerPostService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-answer-post.service';
+import { MockAnswerPostService } from 'test/helpers/mocks/service/mock-answer-post.service';
 import { PostComponent } from 'app/communication/post/post.component';
 import { AnswerPostComponent } from 'app/communication/answer-post/answer-post.component';
 import { AnswerPostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
-import { TranslatePipeMock } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
-import { MockMetisService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-metis-service.service';
-import {
-    metisPostExerciseUser1,
-    post,
-    unApprovedAnswerPost1,
-    unApprovedAnswerPost2,
-    unsortedAnswerArray,
-} from '../../../../../test/javascript/spec/helpers/sample/metis-sample-data';
+import { TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
+import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.service';
+import { metisPostExerciseUser1, post, unApprovedAnswerPost1, unApprovedAnswerPost2, unsortedAnswerArray } from 'test/helpers/sample/metis-sample-data';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { User } from 'app/core/user/user.model';
 import dayjs from 'dayjs/esm';

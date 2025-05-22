@@ -2,7 +2,7 @@
     "artemisApp": {
         "programmingExercise": {
             "home": {
-                "title": "Programmieraufgaben",
+                "title": "Programmieraufgabe",
                 "createLabel": "Programmieraufgabe erstellen",
                 "editLabel": "Programmieraufgabe bearbeiten",
                 "importLabel": "Programmieraufgabe importieren",

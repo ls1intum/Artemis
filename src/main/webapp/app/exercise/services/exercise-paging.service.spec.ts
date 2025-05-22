@@ -7,9 +7,9 @@ import { ExercisePagingService } from 'app/exercise/services/exercise-paging.ser
 import { SortingOrder } from 'app/shared/table/pageable-table';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { take } from 'rxjs';
-import { MockSyncStorage } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
-import { DummyPagingService } from '../../../../../test/javascript/spec/helpers/mocks/service/dummy-paging-service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { DummyPagingService } from 'test/helpers/mocks/service/dummy-paging-service';
 
 describe('Exercise Paging Service', () => {
     let service: ExercisePagingService<any>;

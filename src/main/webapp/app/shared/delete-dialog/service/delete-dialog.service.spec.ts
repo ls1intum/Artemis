@@ -5,9 +5,9 @@ import { ActionType, DeleteDialogData } from 'app/shared/delete-dialog/delete-di
 import { EventEmitter } from '@angular/core';
 import { Observable } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { DeleteDialogComponent } from 'app/shared/delete-dialog/component/delete-dialog.component';
-import { ButtonType } from 'app/shared/components/button/button.component';
+import { ButtonType } from 'app/shared/components/buttons/button/button.component';
 
 describe('Delete Dialog Service', () => {
     let service: DeleteDialogService;

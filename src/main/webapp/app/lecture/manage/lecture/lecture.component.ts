@@ -13,19 +13,22 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { faFile, faFileExport, faFileImport, faFilter, faPencilAlt, faPlus, faPuzzlePiece, faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { LectureImportComponent } from 'app/lecture/manage/lecture-import/lecture-import.component';
 import { Subject, Subscription } from 'rxjs';
-import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { SortService } from 'app/shared/service/sort.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { IngestionState } from 'app/lecture/shared/entities/lecture-unit/attachmentUnit.model';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
-import { DocumentationButtonComponent } from '../../../shared/components/documentation-button/documentation-button.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { SortDirective } from '../../../shared/sort/directive/sort.directive';
-import { SortByDirective } from '../../../shared/sort/directive/sort-by.directive';
-import { DeleteButtonDirective } from '../../../shared/delete-dialog/directive/delete-button.directive';
+import { SortDirective } from 'app/shared/sort/directive/sort.directive';
+import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { HtmlForMarkdownPipe } from '../../../shared/pipes/html-for-markdown.pipe';
+import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { CourseTitleBarTitleComponent } from 'app/core/course/shared/course-title-bar-title/course-title-bar-title.component';
+import { CourseTitleBarTitleDirective } from 'app/core/course/shared/directives/course-title-bar-title.directive';
+import { CourseTitleBarActionsDirective } from 'app/core/course/shared/directives/course-title-bar-actions.directive';
 
 export enum LectureDateFilter {
     PAST = 'filterPast',
@@ -51,6 +54,9 @@ export enum LectureDateFilter {
         DeleteButtonDirective,
         ArtemisDatePipe,
         HtmlForMarkdownPipe,
+        CourseTitleBarTitleComponent,
+        CourseTitleBarTitleDirective,
+        CourseTitleBarActionsDirective,
     ],
 })
 export class LectureComponent implements OnInit, OnDestroy {
@@ -103,14 +109,16 @@ export class LectureComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
-        this.profileInfoSubscription = this.profileService.getProfileInfo().subscribe(async (profileInfo) => {
-            this.irisEnabled = profileInfo.activeProfiles.includes(PROFILE_IRIS);
-            if (this.irisEnabled) {
-                this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {
-                    this.lectureIngestionEnabled = settings?.irisLectureIngestionSettings?.enabled || false;
-                });
-            }
-        });
+        this.irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
+        if (this.irisEnabled) {
+            this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {
+                this.lectureIngestionEnabled = settings?.irisLectureIngestionSettings?.enabled || false;
+                if (this.lectureIngestionEnabled && this.lectures?.length) {
+                    this.updateIngestionStates();
+                }
+            });
+        }
+
         this.loadAll();
     }
 
@@ -182,7 +190,7 @@ export class LectureComponent implements OnInit, OnDestroy {
 
     private loadAll() {
         this.lectureService
-            .findAllByCourseIdWithSlides(this.courseId)
+            .findAllByCourseId(this.courseId)
             .pipe(
                 filter((res: HttpResponse<Lecture[]>) => res.ok),
                 map((res: HttpResponse<Lecture[]>) => res.body),

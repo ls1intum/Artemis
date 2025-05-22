@@ -18,7 +18,7 @@ import { IrisWebsocketService } from 'app/iris/overview/services/iris-websocket.
 import { of } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { ButtonComponent } from 'app/shared/components/button/button.component';
+import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import {
     mockClientMessage,
     mockServerMessage,
@@ -27,7 +27,7 @@ import {
     mockServerSessionHttpResponseWithId,
     mockUserMessageWithContent,
     mockWebsocketServerMessage,
-} from '../../../../../../test/javascript/spec/helpers/sample/iris-sample-data';
+} from 'test/helpers/sample/iris-sample-data';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { By } from '@angular/platform-browser';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';

@@ -5,7 +5,7 @@ import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/programmin
 import { Feedback, FeedbackType, NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER } from 'app/assessment/shared/entities/feedback.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { By } from '@angular/platform-browser';
 
@@ -34,7 +34,7 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
                 comp.readOnly = false;
                 comp.selectedFile = fileName;
                 comp.codeLine = codeLine;
-                sgiService = fixture.debugElement.injector.get(StructuredGradingCriterionService);
+                sgiService = TestBed.inject(StructuredGradingCriterionService);
             });
     });
 

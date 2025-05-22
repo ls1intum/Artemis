@@ -25,7 +25,7 @@ public class SentryConfiguration {
     @Value("${info.sentry.dsn}")
     private Optional<String> sentryDsn;
 
-    @Value("${info.test-server}")
+    @Value("${info.testServer}")
     private Optional<Boolean> isTestServer;
 
     /**

@@ -5,7 +5,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { matchesRegexFully } from 'app/shared/util/regex.util';
 import { AlertService } from 'app/shared/service/alert.service';
-import { ConfirmAutofocusButtonComponent } from 'app/shared/components/confirm-autofocus-button/confirm-autofocus-button.component';
+import { ConfirmAutofocusButtonComponent } from 'app/shared/components/buttons/confirm-autofocus-button/confirm-autofocus-button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
@@ -28,11 +28,8 @@ export class CourseRegistrationButtonComponent implements OnInit {
     loadUserIsAllowedToRegister() {
         this.loading = true;
         this.accountService.identity().then((user) => {
-            this.profileService.getProfileInfo().subscribe((profileInfo) => {
-                if (profileInfo) {
-                    this.userIsAllowedToRegister = matchesRegexFully(user!.login, profileInfo.allowedCourseRegistrationUsernamePattern);
-                }
-            });
+            const profileInfo = this.profileService.getProfileInfo();
+            this.userIsAllowedToRegister = matchesRegexFully(user!.login, profileInfo.allowedCourseRegistrationUsernamePattern);
         });
         this.loading = false;
     }

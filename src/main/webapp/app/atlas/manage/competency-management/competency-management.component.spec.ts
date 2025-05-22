@@ -9,10 +9,9 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete
 import { AccountService } from 'app/core/auth/account.service';
 import { NgbModal, NgbModalRef, NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/shared/service/alert.service';
-import { MockNgbModalService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-ngb-modal.service';
-import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
-import { MockHasAnyAuthorityDirective } from '../../../../../../test/javascript/spec/helpers/mocks/directive/mock-has-any-authority.directive';
-import { By } from '@angular/platform-browser';
+import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
+import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
+import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
 import '@angular/localize/init';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
@@ -28,11 +27,11 @@ import {
     ImportAllCourseCompetenciesModalComponent,
     ImportAllCourseCompetenciesResult,
 } from 'app/atlas/manage/import-all-course-competencies-modal/import-all-course-competencies-modal.component';
-import { MockProfileService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
-import { MockAlertService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-alert.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
@@ -119,14 +118,14 @@ describe('CompetencyManagementComponent', () => {
         const profileInfoResponse = {
             activeProfiles: [PROFILE_IRIS],
         } as ProfileInfo;
-        getProfileInfoSpy = jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(profileInfoResponse));
+        getProfileInfoSpy = jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfoResponse);
 
         getIrisSettingsSpy = jest.spyOn(irisSettingsService, 'getCombinedCourseSettings');
 
         fixture = TestBed.createComponent(CompetencyManagementComponent);
         component = fixture.componentInstance;
 
-        modalService = fixture.debugElement.injector.get(NgbModal);
+        modalService = TestBed.inject(NgbModal);
     });
 
     afterEach(() => {
@@ -145,11 +144,8 @@ describe('CompetencyManagementComponent', () => {
         await fixture.whenStable();
         fixture.detectChanges();
 
-        const generateButton = fixture.nativeElement.querySelector('#generateButton');
-
         expect(getProfileInfoSpy).toHaveBeenCalled();
         expect(getIrisSettingsSpy).toHaveBeenCalled();
-        expect(generateButton).not.toBeNull();
     });
 
     it('should load competencies and prerequisites', async () => {
@@ -224,10 +220,11 @@ describe('CompetencyManagementComponent', () => {
 
         jest.spyOn(modalService, 'open').mockReturnValue(modalRef);
         jest.spyOn(courseCompetencyApiService, 'importAllByCourseId').mockResolvedValue(importedCompetencies);
+        component.courseCompetencies.set([]);
+        fixture.detectChanges();
         const existingCompetencies = component.competencies().length;
 
-        const importButton = fixture.debugElement.query(By.css('#courseCompetencyImportAllButton'));
-        importButton.nativeElement.click();
+        await component.openImportAllModal();
         fixture.detectChanges();
         await fixture.whenStable();
         expect(modalService.open).toHaveBeenCalledExactlyOnceWith(ImportAllCourseCompetenciesModalComponent, {
@@ -235,6 +232,6 @@ describe('CompetencyManagementComponent', () => {
             backdrop: 'static',
         });
 
-        expect(component.competencies()).toHaveLength(existingCompetencies + 2);
+        expect(component.competencies()).toHaveLength(existingCompetencies + 3);
     });
 });

@@ -33,11 +33,12 @@ export default tseslint.config(
             'target/',
             'uploads/',
             'supporting_scripts/',
-            'stub.js',
+            'src/test/javascript/spec/stub.js',
             '.lintstagedrc.js',
             'jest.config.js',
             'prebuild.mjs',
             'rules/**/*.js',
+            'src/main/webapp/content/scripts/pdf.worker.min.mjs',
         ],
     },
     eslint.configs.recommended,
@@ -124,6 +125,10 @@ export default tseslint.config(
                         {
                             name: 'dayjs',
                             message: "Please import from 'dayjs/esm' instead."
+                        },
+                        {
+                            name: 'lodash',
+                            message: "Please import from 'lodash-es' instead."
                         }
                     ]
                 }

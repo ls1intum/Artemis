@@ -7,11 +7,11 @@ import { CreateCompetencyComponent } from 'app/atlas/manage/create/create-compet
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
-import { MockRouter } from '../../../../../../test/javascript/spec/helpers/mocks/mock-router';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { HttpResponse } from '@angular/common/http';
 import { Competency } from 'app/atlas/shared/entities/competency.model';
 import { By } from '@angular/platform-browser';
-import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { CourseCompetencyFormData } from 'app/atlas/manage/forms/course-competency-form.component';

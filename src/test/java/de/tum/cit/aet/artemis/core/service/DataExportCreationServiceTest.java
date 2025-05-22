@@ -75,9 +75,9 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVcTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTest;
 
-class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLocalVcTest {
+class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
 
     private static final String TEST_PREFIX = "dataexportcreation";
 
@@ -608,21 +608,10 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
         Exception exception = new RuntimeException("error");
         doThrow(exception).when(fileService).scheduleDirectoryPathForRecursiveDeletion(any(Path.class), anyLong());
         doNothing().when(mailService).sendDataExportFailedEmailToAdmin(any(), any(), any());
-        doNothing().when(singleUserNotificationService).notifyUserAboutDataExportCreation(any(DataExport.class));
         dataExportCreationService.createDataExport(dataExport);
         var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
         assertThat(dataExportFromDb.getDataExportState()).isEqualTo(DataExportState.FAILED);
-        verify(singleUserNotificationService).notifyUserAboutDataExportFailure(any(DataExport.class));
         verify(mailService).sendDataExportFailedEmailToAdmin(any(User.class), eq(dataExportFromDb), eq(exception));
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testDataExportSuccess_informsUser() {
-        var dataExport = initDataExport();
-        doNothing().when(singleUserNotificationService).notifyUserAboutDataExportCreation(any(DataExport.class));
-        dataExportCreationService.createDataExport(dataExport);
-        verify(singleUserNotificationService).notifyUserAboutDataExportCreation(any(DataExport.class));
     }
 
     @Test

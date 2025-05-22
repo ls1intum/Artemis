@@ -15,8 +15,8 @@ import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { ExerciseDetailsStudentActionsComponent } from 'app/core/course/overview/exercise-details/student-actions/exercise-details-student-actions.component';
-import { CodeButtonComponent } from 'app/shared/components/code-button/code-button.component';
-import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button/exercise-action-button.component';
+import { CodeButtonComponent } from 'app/shared/components/buttons/code-button/code-button.component';
+import { ExerciseActionButtonComponent } from 'app/shared/components/buttons/exercise-action-button/exercise-action-button.component';
 import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -25,14 +25,15 @@ import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { Subject, of } from 'rxjs';
-import { MockRouterLinkDirective } from '../../../../../../../../test/javascript/spec/helpers/mocks/directive/mock-router-link.directive';
-import { MockRouter } from '../../../../../../../../test/javascript/spec/helpers/mocks/mock-router';
-import { MockCourseExerciseService } from '../../../../../../../../test/javascript/spec/helpers/mocks/service/mock-course-exercise.service';
-import { MockSyncStorage } from '../../../../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
 import { PROFILE_ATHENA } from 'app/app.constants';
+import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
+import { MockCourseExerciseService } from 'test/helpers/mocks/service/mock-course-exercise.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { TranslateService } from '@ngx-translate/core';
-import { MockTranslateService } from '../../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
-import { MockActivatedRoute } from '../../../../../../../../test/javascript/spec/helpers/mocks/activated-route/mock-activated-route';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { StartPracticeModeButtonComponent } from 'app/core/course/overview/exercise-details/start-practice-mode-button/start-practice-mode-button.component';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { MODULE_FEATURE_TEXT } from 'app/app.constants';
@@ -76,8 +77,8 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         exerciseGroup: {},
     } as ProgrammingExercise;
 
-    beforeEach(() => {
-        return TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports: [MockModule(NgbTooltipModule)],
             declarations: [
                 ExerciseDetailsStudentActionsComponent,
@@ -97,25 +98,22 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                { provide: ProfileService, useClass: MockProfileService },
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ExerciseDetailsStudentActionsComponent);
-                comp = fixture.componentInstance;
-                debugElement = fixture.debugElement;
-                courseExerciseService = debugElement.injector.get(CourseExerciseService);
-                profileService = debugElement.injector.get(ProfileService);
-                router = debugElement.injector.get(Router) as unknown as MockRouter;
-
-                getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
-                getProfileInfoSub.mockReturnValue(
-                    of({ inProduction: false, sshCloneURLTemplate: 'ssh://git@testserver.com:1234/', activeModuleFeatures: [MODULE_FEATURE_TEXT] } as ProfileInfo),
-                );
-
-                startExerciseStub = jest.spyOn(courseExerciseService, 'startExercise');
-                resumeStub = jest.spyOn(courseExerciseService, 'resumeProgrammingExercise');
-            });
+        }).compileComponents();
+        fixture = TestBed.createComponent(ExerciseDetailsStudentActionsComponent);
+        comp = fixture.componentInstance;
+        debugElement = fixture.debugElement;
+        courseExerciseService = TestBed.inject(CourseExerciseService);
+        profileService = TestBed.inject(ProfileService);
+        router = TestBed.inject(Router) as unknown as MockRouter;
+        getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
+        getProfileInfoSub.mockReturnValue({
+            sshCloneURLTemplate: 'ssh://git@testserver.com:1234/',
+            activeModuleFeatures: [MODULE_FEATURE_TEXT],
+        } as unknown as ProfileInfo);
+        startExerciseStub = jest.spyOn(courseExerciseService, 'startExercise');
+        resumeStub = jest.spyOn(courseExerciseService, 'resumeProgrammingExercise');
     });
 
     afterEach(() => {

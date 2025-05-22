@@ -1,6 +1,6 @@
 import { Component, EventEmitter, OnInit, Output, ViewChild, inject } from '@angular/core';
 import { NgbActiveModal, NgbModule, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
-import { faBackward, faFilter } from '@fortawesome/free-solid-svg-icons';
+import { faFilter } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 import { FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -33,10 +33,9 @@ import { SidebarCardElement, SidebarData } from 'app/shared/types/sidebar';
     imports: [FormsModule, ReactiveFormsModule, FontAwesomeModule, CustomExerciseCategoryBadgeComponent, RangeSliderComponent, NgbModule, TranslateDirective, ArtemisTranslatePipe],
 })
 export class ExerciseFilterModalComponent implements OnInit {
-    private activeModal = inject(NgbActiveModal);
+    protected readonly faFilter = faFilter;
 
-    readonly faFilter = faFilter;
-    readonly faBackward = faBackward;
+    private activeModal = inject(NgbActiveModal);
 
     @Output() filterApplied = new EventEmitter<ExerciseFilterResults>();
 

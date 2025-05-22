@@ -44,13 +44,11 @@ export class ProgrammingExerciseResetDialogComponent implements OnInit {
 
     ngOnInit() {
         this.isLoading = true;
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            if (profileInfo) {
-                this.versionControlName = profileInfo.versionControlName;
-                this.continuousIntegrationName = profileInfo.continuousIntegrationName;
-                this.hasCustomizedBuildPlans = profileInfo?.activeProfiles.includes(PROFILE_LOCALCI) || profileInfo?.activeProfiles.includes(PROFILE_AEOLUS);
-            }
-        });
+        const profileInfo = this.profileService.getProfileInfo();
+        this.versionControlName = profileInfo.versionControlName;
+        this.continuousIntegrationName = profileInfo.continuousIntegrationName;
+        this.hasCustomizedBuildPlans = this.profileService.isProfileActive(PROFILE_LOCALCI) || this.profileService.isProfileActive(PROFILE_AEOLUS);
+
         this.resetInProgress = false;
         this.programmingExerciseResetOptions = {
             deleteBuildPlans: false,

@@ -98,7 +98,7 @@ describe('CourseTitleBarComponent', () => {
         fixture.componentRef.setInput('pageTitle', 'Custom Title');
         fixture.detectChanges();
 
-        const titleElement = fixture.debugElement.query(By.css('.h5'));
+        const titleElement = fixture.debugElement.query(By.css('h5'));
         expect(titleElement.nativeElement.textContent.trim()).toBe('Custom Title');
     });
 
@@ -106,7 +106,8 @@ describe('CourseTitleBarComponent', () => {
         fixture.componentRef.setInput('pageTitle', 'custom.translation.key');
         fixture.detectChanges();
 
-        const titleElement = fixture.debugElement.query(By.css('.h5'));
+        // we want to get a very specific translate directive, so we cannot use TestBed.inject
+        const titleElement = fixture.debugElement.query(By.css('h5'));
         const translateDirective = titleElement.injector.get(TranslateDirective);
 
         expect(translateDirective.jhiTranslate).toBe('custom.translation.key');

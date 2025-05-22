@@ -254,7 +254,7 @@ Update exercise code in repositories
       fi
 
       # default base URL to repositories; change this according to your needs
-      BASE="ssh://git@bitbucket.ase.in.tum.de:7999/$EXERCISE/$EXERCISE"
+      BASE="ssh://git@artemis.tum.de:7999/$EXERCISE/$EXERCISE"
 
       # clone the test repository
       git clone "$BASE-tests.git" "$NAME" && \
@@ -298,7 +298,7 @@ Update exercise code in repositories
       fi
 
       # default base URL to repositories; change this according to your needs
-      BASE="ssh://git@bitbucket.ase.in.tum.de:7999/$EXERCISE/$EXERCISE"
+      BASE="ssh://git@artemis.tum.de:7999/$EXERCISE/$EXERCISE"
 
       # clone the test repository
       git clone "$BASE-tests.git" "$NAME/tests"

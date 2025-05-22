@@ -15,7 +15,6 @@ import static org.apache.commons.lang3.StringUtils.lowerCase;
 
 import java.net.URI;
 import java.time.Instant;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -44,8 +43,8 @@ import de.tum.cit.aet.artemis.communication.domain.SavedPost;
 import de.tum.cit.aet.artemis.communication.repository.SavedPostRepository;
 import de.tum.cit.aet.artemis.communication.service.CourseNotificationSettingService;
 import de.tum.cit.aet.artemis.communication.service.UserCourseNotificationStatusService;
+import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.domain.Authority;
-import de.tum.cit.aet.artemis.core.domain.GuidedTourSetting;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
@@ -56,7 +55,6 @@ import de.tum.cit.aet.artemis.core.exception.EmailAlreadyUsedException;
 import de.tum.cit.aet.artemis.core.exception.PasswordViolatesRequirementsException;
 import de.tum.cit.aet.artemis.core.exception.UsernameAlreadyUsedException;
 import de.tum.cit.aet.artemis.core.repository.AuthorityRepository;
-import de.tum.cit.aet.artemis.core.repository.GuidedTourSettingsRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.FilePathService;
@@ -105,8 +103,6 @@ public class UserService {
 
     private final AuthorityRepository authorityRepository;
 
-    private final GuidedTourSettingsRepository guidedTourSettingsRepository;
-
     private final InstanceMessageSendService instanceMessageSendService;
 
     private final FileService fileService;
@@ -126,7 +122,7 @@ public class UserService {
     private final UserCourseNotificationStatusService userCourseNotificationStatusService;
 
     public UserService(UserCreationService userCreationService, UserRepository userRepository, AuthorityService authorityService, AuthorityRepository authorityRepository,
-            CacheManager cacheManager, Optional<LdapUserService> ldapUserService, GuidedTourSettingsRepository guidedTourSettingsRepository, PasswordService passwordService,
+            CacheManager cacheManager, Optional<LdapUserService> ldapUserService, PasswordService passwordService,
             Optional<CIUserManagementService> optionalCIUserManagementService, InstanceMessageSendService instanceMessageSendService, FileService fileService,
             Optional<ScienceEventApi> scienceEventApi, ParticipationVcsAccessTokenService participationVCSAccessTokenService, Optional<LearnerProfileApi> learnerProfileApi,
             SavedPostRepository savedPostRepository, UserSshPublicKeyService userSshPublicKeyService, CourseNotificationSettingService courseNotificationSettingService,
@@ -137,7 +133,6 @@ public class UserService {
         this.authorityRepository = authorityRepository;
         this.cacheManager = cacheManager;
         this.ldapUserService = ldapUserService;
-        this.guidedTourSettingsRepository = guidedTourSettingsRepository;
         this.passwordService = passwordService;
         this.optionalCIUserManagementService = optionalCIUserManagementService;
         this.instanceMessageSendService = instanceMessageSendService;
@@ -512,7 +507,7 @@ public class UserService {
         scienceEventApi.ifPresent(api -> api.renameIdentity(originalLogin, anonymizedLogin));
 
         if (userImageString != null) {
-            fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPath(URI.create(userImageString)), 0);
+            fileService.schedulePathForDeletion(FilePathService.fileSystemPathForExternalUri(URI.create(userImageString), FilePathType.PROFILE_PICTURE), 0);
         }
 
         updateUserInConnectorsAndAuthProvider(user, originalLogin, originalGroups, randomPassword);
@@ -597,41 +592,6 @@ public class UserService {
         if (userCache != null) {
             userCache.evict(user.getLogin());
         }
-    }
-
-    /**
-     * Update the guided tour settings of the currently logged-in user
-     *
-     * @param guidedTourSettings the updated set of guided tour settings
-     * @return the updated user object with the changed guided tour settings
-     */
-    public User updateGuidedTourSettings(Set<GuidedTourSetting> guidedTourSettings) {
-        User loggedInUser = userRepository.getUserWithGroupsAuthoritiesAndGuidedTourSettings();
-        loggedInUser.getGuidedTourSettings().clear();
-        for (GuidedTourSetting setting : guidedTourSettings) {
-            loggedInUser.addGuidedTourSetting(setting);
-            guidedTourSettingsRepository.save(setting);
-        }
-        // TODO: do we really need to save the user here, or is it enough if we save in the guidedTourSettingsRepository?
-        return saveUser(loggedInUser);
-    }
-
-    /**
-     * Delete a given guided tour setting of the currently logged-in user (e.g. when the user restarts a guided tutorial)
-     *
-     * @param guidedTourSettingsKey the key of the guided tour setting that should be deleted
-     * @return the updated user object without the deleted guided tour setting
-     */
-    public User deleteGuidedTourSetting(String guidedTourSettingsKey) {
-        User loggedInUser = userRepository.getUserWithGroupsAuthoritiesAndGuidedTourSettings();
-        Set<GuidedTourSetting> guidedTourSettings = loggedInUser.getGuidedTourSettings();
-        for (GuidedTourSetting setting : guidedTourSettings) {
-            if (setting.getGuidedTourKey().equals(guidedTourSettingsKey)) {
-                loggedInUser.removeGuidedTourSetting(setting);
-                break;
-            }
-        }
-        return saveUser(loggedInUser);
     }
 
     /**
@@ -803,10 +763,6 @@ public class UserService {
             optionalUser = createUserFromLdapWithRegistrationNumber(registrationNumber);
         }
         return optionalUser;
-    }
-
-    public void updateUserNotificationVisibility(Long userId, ZonedDateTime hideUntil) {
-        userRepository.updateUserNotificationVisibility(userId, hideUntil);
     }
 
     public void updateUserLanguageKey(Long userId, String languageKey) {

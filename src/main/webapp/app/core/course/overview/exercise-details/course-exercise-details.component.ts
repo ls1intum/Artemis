@@ -7,8 +7,6 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import dayjs from 'dayjs/esm';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
-import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
-import { programmingExerciseFail, programmingExerciseSuccess } from 'app/core/guided-tour/tours/course-exercise-detail-tour';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -34,7 +32,6 @@ import { MAX_RESULT_HISTORY_LENGTH, ResultHistoryComponent } from 'app/exercise/
 import { isCommunicationEnabled, isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
 import { ExerciseCacheService } from 'app/exercise/services/exercise-cache.service';
 import { IrisSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
-import { AbstractScienceComponent } from 'app/shared/science/science.component';
 import { ScienceEventType } from 'app/shared/science/science.model';
 import { PROFILE_IRIS } from 'app/app.constants';
 import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
@@ -58,6 +55,8 @@ import { LtiInitializerComponent } from './lti-initializer/lti-initializer.compo
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ResetRepoButtonComponent } from 'app/core/course/overview/exercise-details/reset-repo-button/reset-repo-button.component';
+import { ScienceService } from 'app/shared/science/science.service';
+import { CompetencyContributionComponent } from 'app/atlas/shared/competency-contribution/competency-contribution.component';
 
 interface InstructorActionItem {
     routerLink: string;
@@ -95,21 +94,22 @@ interface InstructorActionItem {
         LtiInitializerComponent,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
+        CompetencyContributionComponent,
     ],
 })
-export class CourseExerciseDetailsComponent extends AbstractScienceComponent implements OnInit, OnDestroy {
+export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     private exerciseService = inject(ExerciseService);
     private participationWebsocketService = inject(ParticipationWebsocketService);
     private participationService = inject(ParticipationService);
     private route = inject(ActivatedRoute);
     private profileService = inject(ProfileService);
-    private guidedTourService = inject(GuidedTourService);
     private alertService = inject(AlertService);
     private teamService = inject(TeamService);
     private quizExerciseService = inject(QuizExerciseService);
     private complaintService = inject(ComplaintService);
     private artemisMarkdown = inject(ArtemisMarkdownService);
     private readonly cdr = inject(ChangeDetectorRef);
+    private readonly scienceService = inject(ScienceService);
 
     readonly AssessmentType = AssessmentType;
     readonly PlagiarismVerdict = PlagiarismVerdict;
@@ -150,7 +150,6 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     plagiarismCaseInfo?: PlagiarismCaseInfo;
     irisSettings?: IrisSettings;
     paramsSubscription: Subscription;
-    profileSubscription?: Subscription;
     isProduction = true;
     isTestServer = false;
     instructorActionItems: InstructorActionItem[] = [];
@@ -166,10 +165,6 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     faListAlt = faListAlt;
     faAngleDown = faAngleDown;
     faAngleUp = faAngleUp;
-
-    constructor() {
-        super(ScienceEventType.EXERCISE__OPEN);
-    }
 
     ngOnInit() {
         const courseIdParams$ = this.route.parent?.parent?.params;
@@ -188,18 +183,12 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
                     this.loadExercise();
                 }
 
-                // log event
-                if (this.exerciseId) {
-                    this.setResourceId(this.exerciseId);
-                }
-                this.logEvent();
+                this.scienceService.logEvent(ScienceEventType.EXERCISE__OPEN, this.exerciseId);
             });
         }
 
-        this.profileSubscription = this.profileService.getProfileInfo()?.subscribe((profileInfo) => {
-            this.isProduction = profileInfo?.inProduction;
-            this.isTestServer = profileInfo.testServer ?? false;
-        });
+        this.isProduction = this.profileService.isProduction();
+        this.isTestServer = this.profileService.isTestServer();
     }
 
     loadExercise() {
@@ -231,11 +220,9 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
             this.allowComplaintsForAutomaticAssessments = !!programmingExercise.allowComplaintsForAutomaticAssessments && isAfterDateForComplaint;
             this.submissionPolicy = programmingExercise.submissionPolicy;
 
-            this.profileService.getProfileInfo().subscribe((profileInfo) => {
-                if (profileInfo?.activeProfiles?.includes(PROFILE_IRIS)) {
-                    this.irisSettings = newExerciseDetails.irisSettings;
-                }
-            });
+            if (this.profileService.isProfileActive(PROFILE_IRIS)) {
+                this.irisSettings = newExerciseDetails.irisSettings;
+            }
         }
 
         this.showIfExampleSolutionPresent(newExerciseDetails.exercise);
@@ -308,13 +295,6 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
             this.studentParticipations.forEach((participation) => {
                 this.participationWebsocketService.addParticipation(participation, this.exercise);
             });
-            if (this.latestRatedResult) {
-                if (this.latestRatedResult.successful) {
-                    this.guidedTourService.enableTourForExercise(this.exercise, programmingExerciseSuccess, true);
-                } else {
-                    this.guidedTourService.enableTourForExercise(this.exercise, programmingExerciseFail, true);
-                }
-            }
         }
 
         this.participationUpdateListener?.unsubscribe();
@@ -559,6 +539,5 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
         this.teamAssignmentUpdateListener?.unsubscribe();
         this.submissionSubscription?.unsubscribe();
         this.paramsSubscription?.unsubscribe();
-        this.profileSubscription?.unsubscribe();
     }
 }

@@ -81,6 +81,7 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
+import de.tum.cit.aet.artemis.lecture.api.SlideApi;
 import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismDetectionApi;
 import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismResultApi;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfigHelper;
@@ -164,6 +165,8 @@ public class TextExerciseResource {
 
     private final Optional<IrisSettingsApi> irisSettingsApi;
 
+    private final Optional<SlideApi> slideApi;
+
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, FeedbackRepository feedbackRepository,
             ExerciseDeletionService exerciseDeletionService, Optional<PlagiarismResultApi> plagiarismResultApi, UserRepository userRepository,
             AuthorizationCheckService authCheckService, CourseService courseService, StudentParticipationRepository studentParticipationRepository,
@@ -172,7 +175,7 @@ public class TextExerciseResource {
             GradingCriterionRepository gradingCriterionRepository, TextBlockRepository textBlockRepository, GroupNotificationScheduleService groupNotificationScheduleService,
             InstanceMessageSendService instanceMessageSendService, Optional<PlagiarismDetectionApi> plagiarismDetectionApi, CourseRepository courseRepository,
             ChannelService channelService, ChannelRepository channelRepository, Optional<AthenaApi> athenaApi, Optional<CompetencyProgressApi> competencyProgressApi,
-            Optional<IrisSettingsApi> irisSettingsApi, Optional<ExamAccessApi> examAccessApi) {
+            Optional<IrisSettingsApi> irisSettingsApi, Optional<ExamAccessApi> examAccessApi, Optional<SlideApi> slideApi) {
         this.feedbackRepository = feedbackRepository;
         this.exerciseDeletionService = exerciseDeletionService;
         this.plagiarismResultApi = plagiarismResultApi;
@@ -200,6 +203,7 @@ public class TextExerciseResource {
         this.examAccessApi = examAccessApi;
         this.competencyProgressApi = competencyProgressApi;
         this.irisSettingsApi = irisSettingsApi;
+        this.slideApi = slideApi;
     }
 
     /**
@@ -306,6 +310,7 @@ public class TextExerciseResource {
         instanceMessageSendService.sendTextExerciseSchedule(updatedTextExercise.getId());
         exerciseService.checkExampleSubmissions(updatedTextExercise);
         exerciseService.notifyAboutExerciseChanges(textExerciseBeforeUpdate, updatedTextExercise, notificationText);
+        slideApi.ifPresent(api -> api.handleDueDateChange(textExerciseBeforeUpdate, updatedTextExercise));
 
         competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(textExerciseBeforeUpdate, Optional.of(textExercise)));
 
@@ -480,6 +485,14 @@ public class TextExerciseResource {
                 }
                 participation.addSubmission(textSubmission);
             }
+        }
+
+        // if all submissions were deleted, add a new one since the client relies on the existence of at least one submission
+        if (submissions.isEmpty()) {
+            TextSubmission textSubmission = new TextSubmission();
+            textSubmission.setParticipation(participation);
+            textSubmission.setSubmitted(false);
+            participation.addSubmission(textSubmission);
         }
 
         if (!(authCheckService.isAtLeastInstructorForExercise(textExercise, user) || participation.isOwnedBy(user))) {

@@ -1,6 +1,5 @@
 import { Authority } from 'app/shared/constants/authority.constants';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { LocalVCGuard } from 'app/programming/shared/services/localvc-guard.service';
 
 export const repositorySubRoutes = [
     {
@@ -10,7 +9,7 @@ export const repositorySubRoutes = [
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.repository.title',
         },
-        canActivate: [UserRouteAccessService, LocalVCGuard],
+        canActivate: [UserRouteAccessService],
     },
     {
         path: 'commit-history',
@@ -19,7 +18,7 @@ export const repositorySubRoutes = [
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.repository.title',
         },
-        canActivate: [UserRouteAccessService, LocalVCGuard],
+        canActivate: [UserRouteAccessService],
     },
     {
         path: 'commit-history/:commitHash',
@@ -28,7 +27,7 @@ export const repositorySubRoutes = [
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.repository.title',
         },
-        canActivate: [UserRouteAccessService, LocalVCGuard],
+        canActivate: [UserRouteAccessService],
     },
     {
         path: 'vcs-access-log',
@@ -38,6 +37,6 @@ export const repositorySubRoutes = [
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
             pageTitle: 'artemisApp.repository.title',
         },
-        canActivate: [UserRouteAccessService, LocalVCGuard],
+        canActivate: [UserRouteAccessService],
     },
 ];

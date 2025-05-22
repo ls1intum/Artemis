@@ -6,11 +6,11 @@ import { ProgrammingExerciseGradingStatistics } from 'app/programming/shared/ent
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { TranslateService } from '@ngx-translate/core';
-import { MockTranslateService } from '../../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { ProgrammingExerciseTask } from 'app/programming/manage/grading/tasks/programming-exercise-task';
-import { ButtonComponent } from 'app/shared/components/button/button.component';
+import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { ProgrammingExerciseTestCase } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -38,7 +38,7 @@ describe('ProgrammingExerciseGradingTasksTableComponent', () => {
                 comp.gradingStatisticsObservable = of(gradingStatistics);
                 comp.exercise = exercise;
                 comp.course = course;
-                taskService = fixture.debugElement.injector.get(ProgrammingExerciseTaskService);
+                taskService = TestBed.inject(ProgrammingExerciseTaskService);
                 taskServiceUpdateTasksStub = jest.spyOn(taskService, 'updateTasks');
             });
     });

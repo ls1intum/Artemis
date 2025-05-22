@@ -6,7 +6,7 @@ import { ArtemisServerDateService } from 'app/shared/service/server-date.service
 import dayjs from 'dayjs/esm';
 import { MockPipe } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('ExamTimerComponent', () => {

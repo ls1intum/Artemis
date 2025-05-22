@@ -8,7 +8,7 @@ import { ExampleSubmissionImportPagingService } from 'app/exercise/example-submi
 import { ExampleSubmissionImportComponent } from 'app/exercise/example-submission/example-submission-import/example-submission-import.component';
 import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
 import { ResultComponent } from 'app/exercise/result/result.component';
-import { ButtonComponent } from 'app/shared/components/button/button.component';
+import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
@@ -16,7 +16,7 @@ import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { SearchResult } from 'app/shared/table/pageable-table';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 

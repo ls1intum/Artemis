@@ -1,12 +1,10 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
-import { NavigationEnd, RouterLink, RouterOutlet } from '@angular/router';
+import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
+import { RouterLink, RouterOutlet } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject, Subscription, of } from 'rxjs';
-import { filter, map } from 'rxjs/operators';
-import { NgClass, NgStyle, NgTemplateOutlet } from '@angular/common';
+import { map } from 'rxjs/operators';
+import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { MatSidenav, MatSidenavContainer, MatSidenavContent } from '@angular/material/sidenav';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 import {
     faChartBar,
@@ -23,13 +21,11 @@ import {
     faTimes,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
-
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { CourseExamArchiveButtonComponent } from 'app/shared/components/course-exam-archive-button/course-exam-archive-button.component';
+import { CourseExamArchiveButtonComponent } from 'app/shared/components/buttons/course-exam-archive-button/course-exam-archive-button.component';
 import { CourseSidebarComponent, SidebarItem } from 'app/core/course/shared/course-sidebar/course-sidebar.component';
 import { EventManager } from 'app/shared/service/event-manager.service';
-import { facSidebar } from 'app/shared/icons/icons';
 import { BaseCourseContainerComponent } from 'app/core/course/shared/course-base-container/course-base-container.component';
 import { CourseSidebarItemService } from 'app/core/course/shared/services/sidebar-item.service';
 import { CourseTitleBarComponent } from 'app/core/course/shared/course-title-bar/course-title-bar.component';
@@ -53,7 +49,7 @@ import { CourseManagementExercisesComponent } from 'app/core/course/manage/exerc
 import { LectureComponent } from 'app/lecture/manage/lecture/lecture.component';
 import { CourseManagementStatisticsComponent } from 'app/core/course/manage/statistics/course-management-statistics.component';
 import { CourseConversationsComponent } from 'app/communication/shared/course-conversations/course-conversations.component';
-import { ButtonSize } from 'app/shared/components/button/button.component';
+import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
 import { Course, isCommunicationEnabled } from 'app/core/course/shared/entities/course.model';
 import { CourseDeletionSummaryDTO } from 'app/core/course/shared/entities/course-deletion-summary.model';
 
@@ -67,12 +63,9 @@ import { CourseDeletionSummaryDTO } from 'app/core/course/shared/entities/course
         MatSidenavContainer,
         MatSidenavContent,
         MatSidenav,
-        NgbTooltip,
-        NgStyle,
         RouterLink,
         RouterOutlet,
         NgTemplateOutlet,
-        FaIconComponent,
         TranslateDirective,
         CourseSidebarComponent,
         CourseExamArchiveButtonComponent,
@@ -92,7 +85,9 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     private courseSub?: Subscription;
     private urlSubscription?: Subscription;
     private learningPathsActive = signal(false);
-    isOverviewPage = signal(false);
+    courseBody = viewChild<ElementRef<HTMLElement>>('courseBodyContainer');
+    isSettingsPage = signal(false);
+    studentViewLink = signal<string[]>([]);
 
     // we cannot use signals here because the child component doesn't expect it
     dialogErrorSource = new Subject<string>();
@@ -129,7 +124,6 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     faCircleNotch = faCircleNotch;
     faChevronRight = faChevronRight;
     faChevronLeft = faChevronLeft;
-    facSidebar = facSidebar;
     faQuestion = faQuestion;
 
     protected readonly ButtonSize = ButtonSize;
@@ -138,10 +132,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         this.subscription = this.route.firstChild?.params.subscribe((params: { courseId: string }) => {
             const id = Number(params.courseId);
             this.handleCourseIdChange(id);
-            this.checkIfOverviewPage();
-        });
-        this.urlSubscription = this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe(() => {
-            this.checkIfOverviewPage();
+            this.checkIfSettingsPage();
         });
 
         this.featureToggleSub = this.featureToggleService.getFeatureToggleActive(FeatureToggle.LearningPaths).subscribe((isActive) => {
@@ -156,15 +147,54 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         });
     }
 
-    private checkIfOverviewPage() {
+    protected handleNavigationEndActions(): void {
+        this.checkIfSettingsPage();
+        this.determineStudentViewLink();
+    }
+
+    private checkIfSettingsPage() {
         const currentUrl = this.router.url;
-        const isDetailsPage = currentUrl.endsWith(`/${this.courseId()}`) || currentUrl.endsWith(`/${this.courseId()}/`);
-        this.isOverviewPage.set(isDetailsPage);
+        const isSettingsPage = currentUrl.endsWith(`/course-management/${this.courseId()}/settings`);
+        this.isSettingsPage.set(isSettingsPage);
     }
 
     handleCourseIdChange(courseId: number): void {
         this.courseId.set(courseId);
+        this.determineStudentViewLink();
         this.subscribeToCourseUpdates(courseId);
+    }
+
+    determineStudentViewLink() {
+        const courseIdString = this.courseId().toString();
+        const routerUrl = this.router.url;
+        const baseStudentPath = ['/courses', courseIdString];
+
+        const routeMappings = [
+            { urlPart: 'exams', targetPath: [...baseStudentPath, 'exams'] },
+            { urlPart: 'exercises', targetPath: [...baseStudentPath, 'exercises'] },
+            { urlPart: 'lectures', targetPath: [...baseStudentPath, 'lectures'] },
+            { urlPart: 'communication', targetPath: [...baseStudentPath, 'communication'] },
+            { urlPart: 'learning-path-management', targetPath: [...baseStudentPath, 'learning-path'] },
+            { urlPart: 'competency-management', targetPath: [...baseStudentPath, 'competencies'] },
+            { urlPart: 'faqs', targetPath: [...baseStudentPath, 'faq'] },
+            {
+                urlPart: ['tutorial-groups', 'tutorial-groups-checklist'],
+                targetPath: [...baseStudentPath, 'tutorial-groups'],
+                matcher: (url: string | string[], parts: string[]) => parts.some((part) => url.includes(part)),
+            },
+            { urlPart: 'course-statistics', targetPath: [...baseStudentPath, 'statistics'] },
+        ];
+
+        const defaultPath = [...baseStudentPath, 'exercises'];
+
+        const matchedRoute = routeMappings.find((route) => {
+            if (route.matcher) {
+                return route.matcher(routerUrl, Array.isArray(route.urlPart) ? route.urlPart : [route.urlPart]);
+            }
+            return routerUrl.includes(route.urlPart);
+        });
+
+        this.studentViewLink.set(matchedRoute ? matchedRoute.targetPath : defaultPath);
     }
 
     private subscribeToCourseUpdates(courseId: number) {
@@ -223,6 +253,10 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
             const childRouteComponent = this.activatedComponentReference() as CourseConversationsComponent;
             this.isSidebarCollapsed.set(childRouteComponent?.isCollapsed ?? false);
         }
+        // if we don't scroll to the top, the page will be scrolled to the last position which is not expected by the user
+        if (this.courseBody()) {
+            this.courseBody()!.nativeElement.scrollTop = 0;
+        }
     }
 
     handleToggleSidebar(): void {
@@ -261,7 +295,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
             const atlasItems = this.getAtlasItems();
             const scoresItem = this.getScoresItem();
             const buildAndLtiItems: SidebarItem[] = [];
-            this.addBuildQueueItem(currentCourse, buildAndLtiItems);
+            this.addBuildQueueItem(buildAndLtiItems);
             this.addLtiItem(currentCourse, buildAndLtiItems);
 
             sidebarItems.splice(3, 0, ...irisItems); // After lectures
@@ -275,13 +309,13 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     }
 
     private addLtiItem(currentCourse: Course, sidebarItems: SidebarItem[]) {
-        if (this.ltiEnabled() && currentCourse.onlineCourse) {
+        if (this.ltiEnabled && currentCourse.onlineCourse) {
             sidebarItems.push(this.sidebarItemService.getLtiConfigurationItem(this.courseId()));
         }
     }
 
-    private addBuildQueueItem(currentCourse: Course, sidebarItems: SidebarItem[]) {
-        if (this.localCIActive()) {
+    private addBuildQueueItem(sidebarItems: SidebarItem[]) {
+        if (this.localCIActive) {
             sidebarItems.push(this.sidebarItemService.getBuildQueueItem(this.courseId()));
         }
     }
@@ -302,7 +336,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
 
     private getAtlasItems() {
         const atlasItems: SidebarItem[] = [];
-        if (this.atlasEnabled()) {
+        if (this.atlasEnabled) {
             atlasItems.push(this.sidebarItemService.getCompetenciesManagementItem(this.courseId()));
             if (this.learningPathsActive()) {
                 atlasItems.push(this.sidebarItemService.getLearningPathManagementItem(this.courseId()));
@@ -329,7 +363,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
 
     private getIrisSettingsItem() {
         const irisItems: SidebarItem[] = [];
-        if (this.irisEnabled()) {
+        if (this.irisEnabled) {
             irisItems.push(this.sidebarItemService.getIrisSettingsItem(this.courseId()));
         }
         return irisItems;

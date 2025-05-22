@@ -89,8 +89,6 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
-    private final ProgrammingMessagingService programmingMessagingService;
-
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
     private final Optional<ExamSubmissionApi> examSubmissionApi;
@@ -108,8 +106,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
     private final SubmissionPolicyRepository submissionPolicyRepository;
 
     public ProgrammingSubmissionService(ProgrammingSubmissionRepository programmingSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            SubmissionRepository submissionRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
-            ProgrammingMessagingService programmingMessagingService, ResultRepository resultRepository,
+            SubmissionRepository submissionRepository, UserRepository userRepository, AuthorizationCheckService authCheckService, ResultRepository resultRepository,
             Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, ParticipationService participationService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, Optional<ExamSubmissionApi> examSubmissionApi, GitService gitService,
             StudentParticipationRepository studentParticipationRepository, FeedbackRepository feedbackRepository, Optional<ExamDateApi> examDateApi,
@@ -122,7 +119,6 @@ public class ProgrammingSubmissionService extends SubmissionService {
                 exerciseDateService, courseRepository, participationRepository, complaintRepository, feedbackService, athenaApi);
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
-        this.programmingMessagingService = programmingMessagingService;
         this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.examSubmissionApi = examSubmissionApi;
@@ -262,7 +258,6 @@ public class ProgrammingSubmissionService extends SubmissionService {
             final String message = ("The student %s illegally submitted code after the allowed individual due date (including the grace period) in the participation %d for the "
                     + "programming exercise \"%s\"").formatted(user.getLogin(), programmingExerciseParticipation.getId(), programmingExercise.getTitle());
             programmingSubmission.setType(SubmissionType.ILLEGAL);
-            programmingMessagingService.notifyInstructorGroupAboutIllegalSubmissionsForExercise(programmingExercise, message);
             log.warn(message);
             return;
         }
@@ -272,7 +267,6 @@ public class ProgrammingSubmissionService extends SubmissionService {
             final String message = "The student %s illegally submitted code after the submission policy lock limit %d in the participation %d for the programming exercise \"%s\""
                     .formatted(user.getLogin(), submissionPolicy.getSubmissionLimit(), programmingExerciseParticipation.getId(), programmingExercise.getTitle());
             programmingSubmission.setType(SubmissionType.ILLEGAL);
-            programmingMessagingService.notifyInstructorGroupAboutIllegalSubmissionsForExercise(programmingExercise, message);
             log.warn(message);
         }
     }

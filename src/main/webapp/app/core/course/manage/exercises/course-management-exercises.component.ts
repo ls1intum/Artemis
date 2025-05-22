@@ -1,15 +1,12 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnInit, TemplateRef, inject } from '@angular/core';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { ExerciseFilter } from 'app/exercise/shared/entities/exercise/exercise-filter.model';
-import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { CourseManagementExercisesSearchComponent } from '../exercises-search/course-management-exercises-search.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseExerciseCardComponent } from '../course-exercise-card/course-exercise-card.component';
-import { ProgrammingExerciseCreateButtonsComponent } from 'app/programming/manage/create-buttons/programming-exercise-create-buttons.component';
 import { ProgrammingExerciseComponent } from 'app/programming/manage/exercise/programming-exercise.component';
 import { QuizExerciseCreateButtonsComponent } from 'app/quiz/manage/create-buttons/quiz-exercise-create-buttons.component';
 import { QuizExerciseComponent } from 'app/quiz/manage/exercise/quiz-exercise.component';
@@ -20,6 +17,9 @@ import { FileUploadExerciseComponent } from 'app/fileupload/manage/file-upload-e
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_TEXT } from 'app/app.constants';
+import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { CourseTitleBarTitleDirective } from 'app/core/course/shared/directives/course-title-bar-title.directive';
+import { CourseTitleBarActionsDirective } from 'app/core/course/shared/directives/course-title-bar-actions.directive';
 
 @Component({
     selector: 'jhi-course-management-exercises',
@@ -29,7 +29,6 @@ import { MODULE_FEATURE_TEXT } from 'app/app.constants';
         CourseManagementExercisesSearchComponent,
         TranslateDirective,
         CourseExerciseCardComponent,
-        ProgrammingExerciseCreateButtonsComponent,
         ProgrammingExerciseComponent,
         QuizExerciseCreateButtonsComponent,
         QuizExerciseComponent,
@@ -38,12 +37,17 @@ import { MODULE_FEATURE_TEXT } from 'app/app.constants';
         TextExerciseComponent,
         FileUploadExerciseComponent,
         ArtemisTranslatePipe,
+        CourseTitleBarTitleDirective,
+        CourseTitleBarActionsDirective,
     ],
 })
-export class CourseManagementExercisesComponent implements OnInit, OnDestroy {
-    readonly ExerciseType = ExerciseType;
-    readonly documentationType: DocumentationType = 'Exercise';
+export class CourseManagementExercisesComponent implements OnInit {
+    protected readonly ExerciseType = ExerciseType;
+    protected readonly documentationType: DocumentationType = 'Exercise';
+    protected readonly FeatureToggle = FeatureToggle;
 
+    titleTitleTpl?: TemplateRef<any>;
+    actionButtonsTpl?: TemplateRef<any>;
     course: Course;
     showSearch = false;
     quizExercisesCount = 0;
@@ -62,7 +66,6 @@ export class CourseManagementExercisesComponent implements OnInit, OnDestroy {
 
     private readonly route = inject(ActivatedRoute);
     private readonly profileService = inject(ProfileService);
-    private profileSubscription: Subscription | null;
 
     /**
      * initializes course
@@ -74,28 +77,9 @@ export class CourseManagementExercisesComponent implements OnInit, OnDestroy {
             }
         });
 
-        this.profileSubscription = this.profileService.getProfileInfo().subscribe((result) => {
-            this.textExerciseEnabled = result.activeModuleFeatures.includes(MODULE_FEATURE_TEXT);
-        });
+        this.textExerciseEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_TEXT);
         this.exerciseFilter = new ExerciseFilter('');
     }
-
-    ngOnDestroy(): void {
-        this.profileSubscription?.unsubscribe();
-    }
-
-    /**
-     * Sets the (filtered) programming exercise count. Required to pass a callback to the
-     * overrideProgrammingExerciseCard extension since extensions don't support @Output
-     * @param count to set the programmingExerciseCount to
-     */
-    setProgrammingExerciseCount(count: number) {
-        this.programmingExercisesCount = count;
-    }
-    setFilteredProgrammingExerciseCount(count: number) {
-        this.filteredProgrammingExercisesCount = count;
-    }
-
     /**
      * Toggles the search bar
      */

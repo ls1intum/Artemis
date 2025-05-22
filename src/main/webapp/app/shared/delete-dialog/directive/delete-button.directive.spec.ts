@@ -5,7 +5,7 @@ import { By } from '@angular/platform-browser';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { DeleteDialogService } from 'app/shared/delete-dialog/service/delete-dialog.service';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({

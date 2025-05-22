@@ -13,24 +13,35 @@ on:
     - '.github/**'
     - '!.github/workflows/build.yml'
     - '!.github/workflows/test-e2e.yml'
-    - '!.github/workflows/testserver-deployment.yml'
-    - '!.github/workflows/staging-deployment.yml'
+    - '.husky/**'
+    - 'docker/**'
+    - '!docker/*'
+    - 'docker/README.md'
+    - '!docker/artemis/Dockerfile'
+    - 'rules/**'
+    - 'supporting_scripts/**'
+    - '.coderabbit.yaml'
+    - '.editorconfig'
+    - '.gitattributes'
+    - '.lintstagedrc.js'
+    - '.prettierignore'
+    - '.prettierrc'
+    - '.whitesource'
+    - 'artemis-server-cli'
+    - 'CITATION.cff'
+    - 'jest.config.js'
+    - 'linting.sh'
+    - 'proxy.conf.mjs'
+    - 'read.ms'
+    - 'result.md'
+    - 'src/test/javascript/spec/stub.js'
+
   push:
     branches:
     - develop
     - main
     - release/*
     tags: '[0-9]+.[0-9]+.[0-9]+'
-    paths-ignore:
-    - 'README.md'
-    - 'CODE_OF_CONDUCT.md'
-    - 'CONTRIBUTING.md'
-    - 'LICENSE'
-    - 'SECURITY.md'
-    - 'docs/**'
-    - '.github/**'
-    - '!.github/workflows/build.yml'
-    - '!.github/workflows/test-e2e.yml'
   release:
     types:
     - created

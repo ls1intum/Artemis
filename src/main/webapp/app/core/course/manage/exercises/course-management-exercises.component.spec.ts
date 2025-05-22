@@ -15,14 +15,15 @@ import { ExtensionPointDirective } from 'app/shared/extension-point/extension-po
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseManagementExercisesSearchComponent } from 'app/core/course/manage/exercises-search/course-management-exercises-search.component';
 import { of } from 'rxjs';
-import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MODULE_FEATURE_TEXT } from 'app/app.constants';
-import { MockProfileService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { CourseTitleBarActionsDirective } from 'app/core/course/shared/directives/course-title-bar-actions.directive';
 
 describe('Course Management Exercises Component', () => {
     let comp: CourseManagementExercisesComponent;
@@ -64,6 +65,7 @@ describe('Course Management Exercises Component', () => {
                 { provide: ProfileService, useClass: MockProfileService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
+                CourseTitleBarActionsDirective,
             ],
         })
             .compileComponents()
@@ -73,7 +75,7 @@ describe('Course Management Exercises Component', () => {
 
                 profileService = TestBed.inject(ProfileService);
                 getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
-                getProfileInfoSub.mockReturnValue(of({ activeModuleFeatures: [MODULE_FEATURE_TEXT] }));
+                getProfileInfoSub.mockReturnValue({ activeModuleFeatures: [MODULE_FEATURE_TEXT] });
             });
     });
 
@@ -86,12 +88,10 @@ describe('Course Management Exercises Component', () => {
         expect(comp.course).toBe(course);
     });
 
-    it('should open search bar on button click', () => {
+    it('should open search bar on toggle search', () => {
         fixture.detectChanges();
-        const button = fixture.debugElement.nativeElement.querySelector('#toggleSearchButton');
-        button.click();
+        comp.toggleSearch();
         fixture.detectChanges();
-
         const searchBar = fixture.debugElement.nativeElement.querySelector('jhi-course-management-exercises-search');
 
         expect(comp.showSearch).toBeTrue();

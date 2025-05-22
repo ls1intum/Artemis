@@ -59,7 +59,6 @@ describe('CourseSidebarItemService', () => {
                     icon: faChartColumn,
                     title: 'Statistics',
                     translation: 'artemisApp.courseOverview.menu.statistics',
-                    guidedTour: true,
                     hidden: false,
                 },
             ];
@@ -173,12 +172,6 @@ describe('CourseSidebarItemService', () => {
                 translation: 'artemisApp.courseOverview.menu.communication',
                 hidden: false,
             });
-        });
-
-        it('getTutorialGroupsItem should include feature toggle', () => {
-            const item = service.getTutorialGroupsItem(courseId);
-
-            expect(item.featureToggle).toBe(FeatureToggle.TutorialGroups);
         });
 
         it('getCompetenciesManagementItem should return correct item', () => {
@@ -309,12 +302,6 @@ describe('CourseSidebarItemService', () => {
             });
         });
 
-        it('getNotificationSettingsItem should include feature toggle', () => {
-            const item = service.getNotificationSettingsItem();
-
-            expect(item.featureToggle).toBe(FeatureToggle.CourseSpecificNotifications);
-        });
-
         it('getCourseSettingsItem should return correct item', () => {
             const item = service.getCourseSettingsItem(courseId);
 
@@ -326,7 +313,6 @@ describe('CourseSidebarItemService', () => {
                 testId: 'course-settings',
                 bottom: true,
                 hidden: false,
-                guidedTour: false,
             });
         });
     });
