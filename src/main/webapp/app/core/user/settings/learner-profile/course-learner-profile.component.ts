@@ -164,6 +164,7 @@ export class CourseLearnerProfileComponent implements OnInit {
 
             this.updateProfileValues(savedProfile);
 
+            this.alertService.closeAll();
             this.alertService.addAlert({
                 type: AlertType.SUCCESS,
                 message: 'Profile saved',
