@@ -453,9 +453,9 @@ describe('PdfPreviewComponent', () => {
             // We need to mock the validateHiddenSlidesDates method to return true
             jest.spyOn(component as any, 'validateHiddenSlidesDates').mockReturnValue(true);
 
-            // We need to override the updateAttachmentUnit method
+            // We need to override the updateAttachmentVideoUnit method
             // because it uses a Promise that resolves inside a subscription
-            jest.spyOn(component as any, 'updateAttachmentUnit').mockImplementation(() => {
+            jest.spyOn(component as any, 'updateAttachmentVideoUnit').mockImplementation(() => {
                 return Promise.resolve();
             });
 
@@ -466,7 +466,7 @@ describe('PdfPreviewComponent', () => {
 
             await component.updateAttachmentWithFile();
 
-            expect(component['updateAttachmentUnit']).toHaveBeenCalled();
+            expect(component['updateAttachmentVideoUnit']).toHaveBeenCalled();
             expect(component['updateStudentVersion']).toHaveBeenCalled();
         });
 
@@ -1828,7 +1828,7 @@ describe('PdfPreviewComponent', () => {
                 studentPdf: mockStudentPdf as any,
             });
 
-            jest.spyOn(component as any, 'updateAttachmentUnit').mockResolvedValue(undefined);
+            jest.spyOn(component as any, 'updateAttachmentVideoUnit').mockResolvedValue(undefined);
 
             const updateStudentVersionSpy = jest.spyOn(component as any, 'updateStudentVersion').mockResolvedValue(undefined);
 
@@ -1865,7 +1865,7 @@ describe('PdfPreviewComponent', () => {
                 studentPdf: null,
             });
 
-            jest.spyOn(component as any, 'updateAttachmentUnit').mockResolvedValue(undefined);
+            jest.spyOn(component as any, 'updateAttachmentVideoUnit').mockResolvedValue(undefined);
 
             const updateStudentVersionSpy = jest.spyOn(component as any, 'updateStudentVersion');
 

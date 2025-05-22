@@ -316,7 +316,7 @@ public class AttachmentVideoUnitResource {
     }
 
     /**
-     * PUT lectures/:lectureId/attachment-units/:attachmentUnitId/student-version : Updates the student version file for an existing attachment video unit
+     * PUT lectures/:lectureId/attachment-video-units/:attachmentVideoUnitId/student-version : Updates the student version file for an existing attachment video unit
      *
      * @param lectureId             the id of the lecture to which the attachment video unit belongs
      * @param attachmentVideoUnitId the id of the attachment video unit to update
@@ -325,7 +325,7 @@ public class AttachmentVideoUnitResource {
      */
     @PutMapping("lectures/{lectureId}/attachment-video-units/{attachmentVideoUnitId}/student-version")
     @EnforceAtLeastEditorInLectureUnit(resourceIdFieldName = "attachmentVideoUnitId")
-    public ResponseEntity<AttachmentVideoUnit> updateAttachmentUnitStudentVersion(@PathVariable Long lectureId, @PathVariable Long attachmentVideoUnitId,
+    public ResponseEntity<AttachmentVideoUnit> updateAttachmentVideoUnitStudentVersion(@PathVariable Long lectureId, @PathVariable Long attachmentVideoUnitId,
             @RequestParam("studentVersion") MultipartFile studentVersionFile) {
 
         AttachmentVideoUnit existingAttachmentUnit = attachmentVideoUnitRepository.findWithSlidesAndCompetenciesByIdElseThrow(attachmentVideoUnitId);
