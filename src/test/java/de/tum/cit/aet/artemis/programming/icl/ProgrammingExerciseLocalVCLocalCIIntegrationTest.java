@@ -28,6 +28,7 @@ import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
@@ -80,6 +81,9 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
     private LocalRepository assignmentRepository;
 
     private Competency competency;
+
+    @Value("${artemis.repo-clone-path}")
+    private String repoClonePath;
 
     @Autowired
     private ProgrammingExerciseTestService programmingExerciseTestService;
@@ -391,7 +395,6 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         assertThat(importedExercise.getProgrammingLanguage()).isEqualTo(importResult.parsedExercise().getProgrammingLanguage());
         assertThat(importedExercise.getCourseViaExerciseGroupOrCourseMember()).isEqualTo(course);
 
-        String repoClonePath = System.getProperty("artemis.repo-clone-path", "repos");
         String projectKey = importResult.parsedExercise().getProjectKey();
         Path exercisePath = Path.of(repoClonePath, projectKey);
         int newTitleCount = programmingExerciseImportTestService.countOccurrencesInDirectory(exercisePath, newTitle);
