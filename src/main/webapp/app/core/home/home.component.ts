@@ -196,6 +196,11 @@ export class HomeComponent implements OnInit, AfterViewChecked {
                 // eslint-disable-next-line no-undef
                 console.warn(ABORT_ERROR_MESSAGE);
                 return;
+            } else if (error.name === 'OperationError' && error.message === 'A request is already pending.') {
+                // This error occurs after logging out in connection with makePasskeyAutocompleteAvailable, we want to fail silently in that case
+                // eslint-disable-next-line no-undef
+                console.warn('A request is already pending.');
+                return;
             } else {
                 this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.login');
             }
