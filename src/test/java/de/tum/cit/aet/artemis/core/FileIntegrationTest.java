@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -23,6 +24,9 @@ import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -366,9 +370,10 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         request.get("/api/core/files/courses/" + courseId + "/attachment-units/" + attachmentUnitId, HttpStatus.OK, byte[].class);
     }
 
-    @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testGetAttachmentUnitAttachmentFilenameSanitization() throws Exception {
+    @ParameterizedTest
+    @MethodSource("provideUnsanitizedFilenamesAndExpectedSanitizedFilenames")
+    void testGetAttachmentUnitAttachmentFilenameSanitization(String unsanitizedName, String expectedSanitizedFilename) throws Exception {
         Path tempFile = Files.createTempFile("dummy", ".pdf");
         byte[] dummyContent = "dummy pdf content".getBytes();
         FileUtils.writeByteArrayToFile(tempFile.toFile(), dummyContent);
@@ -380,7 +385,6 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         AttachmentUnit attachmentUnit = lectureUtilService.createAttachmentUnit(true);
         attachmentUnit.setLecture(lecture);
 
-        String unsanitizedName = "test–file"; // contains en-dash
         Attachment attachment = attachmentUnit.getAttachment();
         attachment.setName(unsanitizedName);
         attachment.setLink(tempFile.toUri().toString());
@@ -401,8 +405,13 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             String contentDisposition = result.getResponse().getHeader("Content-Disposition");
             assertThat(contentDisposition).isNotNull();
             assertThat(contentDisposition).doesNotContain("–");
-            assertThat(contentDisposition).contains("filename=");
+            assertThat(contentDisposition).contains("filename=" + "\"" + expectedSanitizedFilename + "\"");
         }
+    }
+
+    private static Stream<Arguments> provideUnsanitizedFilenamesAndExpectedSanitizedFilenames() {
+        return Stream.of(Arguments.of("AttachmentUnit_2025-05-22T18-14-54-420_test–file", "test_file.pdf"), Arguments.of("2025-05-22T18-14-54-420_test–file", "test_file.pdf"),
+                Arguments.of("AttachmentUnit_abc", "abc.pdf"), Arguments.of("my_super_cool_file_name", "my_super_cool_file_name.pdf"));
     }
 
     @Test
