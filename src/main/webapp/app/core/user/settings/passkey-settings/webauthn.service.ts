@@ -18,7 +18,7 @@ export class WebauthnService {
         try {
             this.authAbortController.abort(new PasskeyAbortError());
         } catch (error) {
-            // we can ignore it if it's the expected abort error
+            // we can ignore the error if it's the expected abort error
             if (!(error instanceof PasskeyAbortError)) {
                 throw error;
             }
