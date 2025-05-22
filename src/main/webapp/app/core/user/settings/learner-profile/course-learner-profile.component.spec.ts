@@ -25,10 +25,6 @@ describe('CourseLearnerProfileComponent', () => {
 
     let putUpdatedCourseLearnerProfileSpy: jest.SpyInstance;
 
-    const errorHeaders = {
-        'x-artemisapp-error': 'error.courseLearnerProfileNotFound',
-        'x-artemisapp-params': 'courseLearnerProfile',
-    };
     const course1: Course = {
         id: 1,
         title: 'Course 1',
