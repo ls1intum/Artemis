@@ -440,8 +440,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             FROM StudentParticipation p
                 LEFT JOIN FETCH p.team t
                 LEFT JOIN FETCH t.students s
-                LEFT JOIN fetch p.submissions sub
-                LEFT JOIN fetch sub.results r
+                LEFT JOIN FETCH p.submissions sub
+                LEFT JOIN FETCH sub.results r
             WHERE p.exercise.id = :exerciseId
                 AND s.id = :studentId
             """)
@@ -1257,7 +1257,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      * - Search term: Case-insensitive filtering on feedback detail text.
      * - Test case names: Filters feedback based on specific test case names (optional).
      * - Task names: Filters feedback based on specific task names by mapping them to their associated test cases.
-     * If "Not assigned to task" is specified, only feedback items without an associated task will be included.
+     * If "Not assigned to task" is specified, only feedback entries without an associated task will be returned.
      * - Occurrence range: Filters feedback where the number of occurrences (COUNT) is between the specified minimum and maximum values (inclusive).
      * - Error categories: Filters feedback based on error categories, which can be "Student Error", "Ares Error", or "AST Error".
      * <br>
