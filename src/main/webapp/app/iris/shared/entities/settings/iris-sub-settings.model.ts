@@ -9,6 +9,7 @@ export enum IrisSubSettingsType {
     COMPETENCY_GENERATION = 'competency-generation',
     FAQ_INGESTION = 'faq-ingestion',
     TUTOR_SUGGESTION = 'tutor-suggestion',
+    ALL = 'all',
 }
 
 export enum IrisEventType {
