@@ -8,13 +8,6 @@ import { DiffInformation, FileStatus } from 'app/programming/shared/utils/diff.u
 import { TranslateModule, TranslateStore } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
-function getDiffEntryWithPaths(previousFilePath?: string, filePath?: string) {
-    return {
-        previousFilePath,
-        filePath,
-    };
-}
-
 const mockDiffInformations: DiffInformation[] = [
     {
         title: 'modified-file.java',
@@ -23,7 +16,7 @@ const mockDiffInformations: DiffInformation[] = [
         modifiedFileContent: 'public class ModifiedFile { private String name; public void setName(String name) { this.name = name; } public String getName() { return name; } }',
         originalFileContent: 'public class ModifiedFile { private String name; public void setName(String name) { this.name = name; } }',
         diffReady: true,
-        fileStatus: FileStatus.MODIFIED,
+        fileStatus: FileStatus.UNCHANGED,
         lineChange: { addedLineCount: 1, removedLineCount: 0 },
     },
     {

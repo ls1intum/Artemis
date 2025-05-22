@@ -30,7 +30,8 @@ import { SubmissionPolicyService } from 'app/programming/manage/services/submiss
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProfileInfo, ProgrammingLanguageFeature } from 'app/core/layouts/profiles/profile-info.model';
 import { MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
-import { RepositoryDiffInformation } from 'app/exam/shared/entities/repository-diff-information.model';
+import { RepositoryDiffInformation } from 'app/programming/shared/utils/diff.utils';
+
 describe('ProgrammingExerciseDetailComponent', () => {
     let comp: ProgrammingExerciseDetailComponent;
     let fixture: ComponentFixture<ProgrammingExerciseDetailComponent>;
@@ -135,10 +136,10 @@ describe('ProgrammingExerciseDetailComponent', () => {
             .mockReturnValue(of(new HttpResponse<ProgrammingExercise>({ body: mockProgrammingExercise })));
         getTemplateRepositoryFilesStub = jest
             .spyOn(exerciseService, 'getTemplateRepositoryTestFilesWithContent')
-            .mockReturnValueOnce(of(new Map([[mockDiffInformation.diffInformations[0].originalPath, mockDiffInformation.diffInformations[0].originalFileContent]])));
+            .mockReturnValueOnce(of(new Map([[mockDiffInformation.diffInformations[0].originalPath, mockDiffInformation.diffInformations[0].originalFileContent ?? '']])));
         getSolutionRepositoryFilesStub = jest
             .spyOn(exerciseService, 'getSolutionRepositoryTestFilesWithContent')
-            .mockReturnValueOnce(of(new Map([[mockDiffInformation.diffInformations[0].modifiedPath, mockDiffInformation.diffInformations[0].modifiedFileContent]])));
+            .mockReturnValueOnce(of(new Map([[mockDiffInformation.diffInformations[0].modifiedPath, mockDiffInformation.diffInformations[0].modifiedFileContent ?? '']])));
         submissionPolicyServiceStub = jest.spyOn(submissionPolicyService, 'getSubmissionPolicyOfProgrammingExercise').mockReturnValue(of(undefined));
 
         jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
@@ -216,8 +217,7 @@ describe('ProgrammingExerciseDetailComponent', () => {
 
             expect(errorSpy).toHaveBeenCalledOnce();
             expect(comp.exerciseDetailSections).toBeDefined();
-            expect(comp.addedLineCount).toBeUndefined();
-            expect(comp.removedLineCount).toBeUndefined();
+            expect(comp.repositoryDiffInformation).toBeUndefined();
         }));
     });
 
