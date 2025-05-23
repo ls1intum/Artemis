@@ -735,6 +735,7 @@ public class FileResource {
                     : "inline";
             String headerFilename = FileService.sanitizeFilename(replaceFilename.orElse(filename));
             headers.setContentDisposition(ContentDisposition.builder(contentType).filename(headerFilename).build());
+            headers.set("Filename", headerFilename);
 
             var response = ResponseEntity.ok().headers(headers).contentType(getMediaTypeFromFilename(filename)).header("filename", filename);
             if (cache) {
