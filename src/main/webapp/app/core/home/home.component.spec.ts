@@ -82,7 +82,13 @@ describe('HomeComponent', () => {
         webauthnApiService = TestBed.inject(WebauthnApiService);
         alertService = TestBed.inject(AlertService);
 
+        /**
+         * We are expecting to log errors {@link HomeComponent#loginWithPasskey} to the console as browser- and authenticator-specific issues might occur
+         */
         jest.spyOn(console, 'error').mockImplementation(() => {});
+        /**
+         * We are expecting to log warnings {@link HomeComponent#isPasskeyAutocompleteError} to the console as browser- and authenticator-specific issues might occur
+         */
         jest.spyOn(console, 'warn').mockImplementation(() => {});
 
         fixture.detectChanges();
@@ -218,40 +224,40 @@ describe('HomeComponent', () => {
     describe('prefillPasskeysIfPossible', () => {
         it('should call makePasskeyAutocompleteAvailable if passkey is enabled and conditional mediation is available', async () => {
             component.isPasskeyEnabled = true;
-            const makePasskeyAutocompleteAvailableSpy = jest.spyOn(component as any, 'makePasskeyAutocompleteAvailable').mockResolvedValue(undefined);
+            const makePasskeyAutocompleteAvailableSpy = jest.spyOn(component, 'makePasskeyAutocompleteAvailable').mockResolvedValue(undefined);
             (window.PublicKeyCredential as any) = {
                 isConditionalMediationAvailable: jest.fn().mockResolvedValue(true),
             };
 
             await component.prefillPasskeysIfPossible();
 
-            expect(window.PublicKeyCredential.isConditionalMediationAvailable).toHaveBeenCalled();
+            expect(window.PublicKeyCredential.isConditionalMediationAvailable).toHaveBeenCalledOnce();
             expect(makePasskeyAutocompleteAvailableSpy).toHaveBeenCalled();
         });
 
         it('should not call makePasskeyAutocompleteAvailable if passkey is disabled', () => {
             component.isPasskeyEnabled = false;
-            const makePasskeyAutocompleteAvailableSpy = jest.spyOn(component as any, 'makePasskeyAutocompleteAvailable');
+            const makePasskeyAutocompleteAvailableSpy = jest.spyOn(component, 'makePasskeyAutocompleteAvailable');
             (window.PublicKeyCredential as any) = {
                 isConditionalMediationAvailable: jest.fn(),
             };
 
             component.prefillPasskeysIfPossible();
 
-            expect(window.PublicKeyCredential.isConditionalMediationAvailable).not.toHaveBeenCalled();
+            expect(window.PublicKeyCredential.isConditionalMediationAvailable).not.toHaveBeenCalledOnce();
             expect(makePasskeyAutocompleteAvailableSpy).not.toHaveBeenCalled();
         });
 
         it('should not call makePasskeyAutocompleteAvailable if conditional mediation is unavailable', async () => {
             component.isPasskeyEnabled = true;
-            const makePasskeyAutocompleteAvailableSpy = jest.spyOn(component as any, 'makePasskeyAutocompleteAvailable');
+            const makePasskeyAutocompleteAvailableSpy = jest.spyOn(component, 'makePasskeyAutocompleteAvailable');
             (window.PublicKeyCredential as any) = {
                 isConditionalMediationAvailable: jest.fn().mockResolvedValue(false),
             };
 
             await component.prefillPasskeysIfPossible();
 
-            expect(window.PublicKeyCredential.isConditionalMediationAvailable).toHaveBeenCalled();
+            expect(window.PublicKeyCredential.isConditionalMediationAvailable).toHaveBeenCalledOnce();
             expect(makePasskeyAutocompleteAvailableSpy).not.toHaveBeenCalled();
         });
 
@@ -292,7 +298,7 @@ describe('HomeComponent', () => {
         });
 
         it('should fail silently on PasskeyAbortError', async () => {
-            const makePasskeyAutocompleteAvailableSpy = jest.spyOn(component as any, 'makePasskeyAutocompleteAvailable');
+            const makePasskeyAutocompleteAvailableSpy = jest.spyOn(component, 'makePasskeyAutocompleteAvailable');
             jest.spyOn(alertService, 'addErrorAlert').mockImplementation(() => {}); // Mock addErrorAlert
             jest.spyOn(webauthnService, 'getCredential').mockRejectedValue(new PasskeyAbortError('Passkey process aborted'));
 
@@ -315,7 +321,7 @@ describe('HomeComponent', () => {
         });
 
         it('should fail silently when user cancels passkey login', async () => {
-            const makePasskeyAutocompleteAvailableSpy = jest.spyOn(component as any, 'makePasskeyAutocompleteAvailable');
+            const makePasskeyAutocompleteAvailableSpy = jest.spyOn(component, 'makePasskeyAutocompleteAvailable');
             jest.spyOn(alertService, 'addErrorAlert').mockImplementation(() => {}); // Mock addErrorAlert
             jest.spyOn(webauthnService, 'getCredential').mockRejectedValue({ name: USER_CANCELLED_LOGIN_WITH_PASSKEY_ERROR });
 
