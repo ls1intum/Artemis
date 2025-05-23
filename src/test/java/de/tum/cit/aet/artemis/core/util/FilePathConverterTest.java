@@ -118,17 +118,17 @@ class FilePathConverterTest {
         assertThat(uri).isEqualTo(URI.create("attachments/lecture/4/slides.pdf"));
 
         // SLIDE
-        path = FilePathConverter.getAttachmentUnitFileSystemPath().resolve(Path.of("4", "slide", "1", "slide1.pdf"));
+        path = FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(Path.of("4", "slide", "1", "slide1.pdf"));
         uri = FilePathConverter.externalUriForFileSystemPath(path, FilePathType.SLIDE, 1L);
         assertThat(uri).isEqualTo(URI.create("attachments/attachment-unit/4/slide/1/slide1.pdf"));
 
         // STUDENT_VERSION_SLIDES
-        path = FilePathConverter.getAttachmentUnitFileSystemPath().resolve(Path.of("4", "student", "notes.pdf"));
+        path = FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(Path.of("4", "student", "notes.pdf"));
         uri = FilePathConverter.externalUriForFileSystemPath(path, FilePathType.STUDENT_VERSION_SLIDES, 4L);
         assertThat(uri).isEqualTo(URI.create("attachments/attachment-unit/4/student/notes.pdf"));
 
         // ATTACHMENT_UNIT
-        path = FilePathConverter.getAttachmentUnitFileSystemPath().resolve(Path.of("4", "file.pdf"));
+        path = FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(Path.of("4", "file.pdf"));
         uri = FilePathConverter.externalUriForFileSystemPath(path, FilePathType.ATTACHMENT_UNIT, 4L);
         assertThat(uri).isEqualTo(URI.create("attachments/attachment-unit/4/file.pdf"));
 

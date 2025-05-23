@@ -368,14 +368,14 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetAttachmentUnitStudentVersion() throws Exception {
-        testGetAttachmentUnitAsStudent();
+    void testGetAttachmentVideoUnitStudentVersion() throws Exception {
+        testGetAttachmentVideoUnitAsStudent();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetAttachmentVideoUnitAttachmentFilenameSanitization() throws Exception {
-        testGetAttachmentUnitAsTutor();
+        testGetAttachmentVideoUnitAsTutor();
     }
 
     private void testGetAttachmentVideoUnitAsStudent() throws Exception {

@@ -647,13 +647,13 @@ public class FileResource {
      * @param attachmentUnitId ID of the attachment video unit, the student version belongs to
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
-    @GetMapping("files/attachments/attachment-unit/{attachmentUnitId}/student/*")
+    @GetMapping("files/attachments/attachment-video-unit/{attachmentVideoUnitId}/student/*")
     @EnforceAtLeastStudent
-    public ResponseEntity<byte[]> getAttachmentUnitStudentVersion(@PathVariable long attachmentUnitId) {
-        log.debug("REST request to get the student version of attachment Unit : {}", attachmentUnitId);
+    public ResponseEntity<byte[]> getAttachmentVideoUnitStudentVersion(@PathVariable long attachmentVideoUnitId) {
+        log.debug("REST request to get the student version of attachment video unit : {}", attachmentVideoUnitId);
         LectureAttachmentApi api = lectureAttachmentApi.orElseThrow(() -> new LectureApiNotPresentException(LectureAttachmentApi.class));
 
-        AttachmentVideoUnit attachmentVideoUnit = api.findAttachmentVideoUnitByIdElseThrow(attachmentUnitId);
+        AttachmentVideoUnit attachmentVideoUnit = api.findAttachmentVideoUnitByIdElseThrow(attachmentVideoUnitId);
         Attachment attachment = attachmentVideoUnit.getAttachment();
         Course course = attachmentVideoUnit.getLecture().getCourse();
         checkAttachmentAuthorizationOrThrow(course, attachment);
