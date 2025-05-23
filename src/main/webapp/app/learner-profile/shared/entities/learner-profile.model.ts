@@ -5,4 +5,6 @@ export class CourseLearnerProfileDTO {
     public aimForGradeOrBonus: number;
     public timeInvestment: number;
     public repetitionIntensity: number;
+    public initialProficiency: number;
+    public proficiency: number;
 }

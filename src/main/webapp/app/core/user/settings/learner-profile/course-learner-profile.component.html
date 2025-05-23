@@ -59,5 +59,16 @@
                 (currentValueChange)="this.editing = true"
             />
         </div>
+        <div class="col align-items-end">
+            <jhi-double-slider
+                [title]="translateService.instant('artemisApp.learnerProfile.courseLearnerProfile.proficiency')"
+                [step]="0.1"
+                [min]="MIN_PROFILE_VALUE"
+                [max]="MAX_PROFILE_VALUE"
+                [initialValue]="initialProficiency"
+                [(currentValue)]="proficiency"
+                (currentValueChange)="this.editing = true"
+            />
+        </div>
     </div>
 </div>

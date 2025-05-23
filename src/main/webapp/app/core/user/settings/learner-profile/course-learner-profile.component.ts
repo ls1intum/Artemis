@@ -42,13 +42,14 @@ export class CourseLearnerProfileComponent implements OnInit {
 
     disabled = true;
     editing = false;
-    aimForGradeOrBonus = signal<number>(1);
-    timeInvestment = signal<number>(1);
-    repetitionIntensity = signal<number>(1);
-
-    initialAimForGradeOrBonus = 1;
-    initialTimeInvestment = 1;
-    initialRepetitionIntensity = 1;
+    aimForGradeOrBonus = signal<number>(3);
+    timeInvestment = signal<number>(3);
+    repetitionIntensity = signal<number>(3);
+    proficiency = signal<number>(3);
+    initialAimForGradeOrBonus = 3;
+    initialTimeInvestment = 3;
+    initialRepetitionIntensity = 3;
+    initialProficiency = 3;
 
     async ngOnInit() {
         await this.loadProfiles();
@@ -78,10 +79,12 @@ export class CourseLearnerProfileComponent implements OnInit {
         this.initialAimForGradeOrBonus = courseLearnerProfile.aimForGradeOrBonus;
         this.initialTimeInvestment = courseLearnerProfile.timeInvestment;
         this.initialRepetitionIntensity = courseLearnerProfile.repetitionIntensity;
+        this.initialProficiency = courseLearnerProfile.initialProficiency;
         // update signals
         this.aimForGradeOrBonus.set(courseLearnerProfile.aimForGradeOrBonus);
         this.timeInvestment.set(courseLearnerProfile.timeInvestment);
         this.repetitionIntensity.set(courseLearnerProfile.repetitionIntensity);
+        this.proficiency.set(courseLearnerProfile.proficiency);
     }
 
     getCourseLearnerProfile(courseId: number): CourseLearnerProfileDTO | undefined {
@@ -100,6 +103,8 @@ export class CourseLearnerProfileComponent implements OnInit {
         courseLearnerProfile.aimForGradeOrBonus = this.aimForGradeOrBonus();
         courseLearnerProfile.timeInvestment = this.timeInvestment();
         courseLearnerProfile.repetitionIntensity = this.repetitionIntensity();
+        courseLearnerProfile.initialProficiency = this.proficiency();
+        courseLearnerProfile.proficiency = this.proficiency();
 
         // Try to update profile
         this.learnerProfileAPIService.putUpdatedCourseLearnerProfile(courseLearnerProfile).then(

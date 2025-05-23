@@ -130,6 +130,12 @@ public class LearnerProfileResource {
         updateProfile.setTimeInvestment(courseLearnerProfileDTO.timeInvestment());
         updateProfile.setRepetitionIntensity(courseLearnerProfileDTO.repetitionIntensity());
 
+        double sentProficiency = courseLearnerProfileDTO.proficiency();
+        if (Math.abs(updateProfile.getProficiency() - sentProficiency) >= 0.1) {
+            updateProfile.setProficiency(sentProficiency);
+            updateProfile.setInitialProficiency(sentProficiency);
+        }
+
         courseLearnerProfileRepository.save(updateProfile);
         return ResponseEntity.ok(CourseLearnerProfileDTO.of(updateProfile));
     }
