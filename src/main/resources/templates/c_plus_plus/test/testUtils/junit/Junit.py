@@ -18,7 +18,7 @@ class Junit:
     def toXml(self, outputPath: str) -> None:
         suiteXml: Et.Element = self.suite.toXml()
 
-        # ANSI-Farbcodes aus den Attributen und Texten entfernen
+        # remove ANSI colour codes
         for element in suiteXml.iter():
             for key, value in element.attrib.items():
                 if isinstance(value, str):
