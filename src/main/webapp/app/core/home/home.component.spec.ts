@@ -268,7 +268,7 @@ describe('HomeComponent', () => {
         it('should handle successful passkey login', async () => {
             const mockCredential = { type: 'public-key' } as PublicKeyCredential;
             jest.spyOn(webauthnService, 'getCredential').mockResolvedValue(mockCredential);
-            jest.spyOn(webauthnApiService, 'loginWithPasskey').mockResolvedValue(undefined);
+            jest.spyOn(webauthnApiService, 'loginWithPasskey').mockResolvedValue({} as PasskeyLoginResponseDTO);
             const handleLoginSuccessSpy = jest.spyOn(component as any, 'handleLoginSuccess');
 
             await component.loginWithPasskey();
