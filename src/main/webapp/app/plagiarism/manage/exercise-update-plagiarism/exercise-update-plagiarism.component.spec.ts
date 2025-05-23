@@ -7,6 +7,7 @@ import { Subject } from 'rxjs';
 import { ExerciseUpdatePlagiarismComponent } from './exercise-update-plagiarism.component';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { NgModel } from '@angular/forms';
 
 describe('Exercise Update Plagiarism Component', () => {
     let comp: ExerciseUpdatePlagiarismComponent;
