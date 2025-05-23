@@ -33,7 +33,7 @@ spring:
                 enabled: true
 
 management:
-    endpoint:F
+    endpoint:
         health:
             show-details: when_authorized
             roles: 'ROLE_ADMIN'
