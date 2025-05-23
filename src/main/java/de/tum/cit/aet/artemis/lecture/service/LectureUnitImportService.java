@@ -103,13 +103,16 @@ public class LectureUnitImportService {
                 attachmentVideoUnit.setVideoSource(importedAttachmentVideoUnit.getVideoSource());
                 attachmentVideoUnit = lectureUnitRepository.save(attachmentVideoUnit);
 
-                Attachment attachment = importAttachment(attachmentVideoUnit.getId(), importedAttachmentVideoUnit.getAttachment());
-                attachment.setAttachmentVideoUnit(attachmentVideoUnit);
-                attachmentRepository.save(attachment);
-                if (attachment.getLink().endsWith(".pdf")) {
-                    slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(attachmentVideoUnit);
+                if (importedAttachmentVideoUnit.getAttachment() != null) {
+                    Attachment attachment = importAttachment(attachmentVideoUnit.getId(), importedAttachmentVideoUnit.getAttachment());
+                    attachment.setAttachmentVideoUnit(attachmentVideoUnit);
+                    attachmentRepository.save(attachment);
+                    if (attachment.getLink().endsWith(".pdf")) {
+                        slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(attachmentVideoUnit);
+                    }
+                    attachmentVideoUnit.setAttachment(attachment);
                 }
-                attachmentVideoUnit.setAttachment(attachment);
+
                 return attachmentVideoUnit;
             }
             case OnlineUnit importedOnlineUnit -> {
