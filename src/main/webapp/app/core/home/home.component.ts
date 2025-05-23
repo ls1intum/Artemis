@@ -1,4 +1,4 @@
-import { AfterViewChecked, Component, OnInit, Renderer2, inject } from '@angular/core';
+import { AfterViewChecked, Component, OnDestroy, OnInit, Renderer2, inject } from '@angular/core';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { User } from 'app/core/user/user.model';
@@ -25,6 +25,7 @@ import { InvalidCredentialError } from 'app/core/user/settings/passkey-settings/
 import { EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, SetupPasskeyModalComponent } from 'app/core/course/overview/setup-passkey-modal/setup-passkey-modal.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { PasskeyAbortError } from 'app/core/user/settings/passkey-settings/entities/passkey-abort-error';
+import { Subscription } from 'rxjs';
 
 /**
  * This occurs if a user clicks the "login with passkey" button but then cancel the login process.
@@ -37,7 +38,7 @@ export const USER_CANCELLED_LOGIN_WITH_PASSKEY_ERROR = 'NotAllowedError';
     styleUrls: ['home.scss'],
     imports: [TranslateDirective, FormsModule, RouterLink, FaIconComponent, Saml2LoginComponent, ButtonComponent],
 })
-export class HomeComponent implements OnInit, AfterViewChecked {
+export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
     protected readonly faCircleNotch = faCircleNotch;
     protected readonly faKey = faKey;
     protected readonly ButtonSize = ButtonSize;
@@ -92,6 +93,9 @@ export class HomeComponent implements OnInit, AfterViewChecked {
 
     profileInfo: ProfileInfo;
 
+    private langChangeSubscription: Subscription;
+    private queryParamsSubscription: Subscription;
+
     /**
      * Flag indicating whether the passkey autocomplete request is being retried
      * after encountering an error. This prevents an infinite loop of failure
@@ -143,6 +147,11 @@ export class HomeComponent implements OnInit, AfterViewChecked {
         }
 
         this.prefillPasskeysIfPossible();
+    }
+
+    ngOnDestroy() {
+        this.langChangeSubscription?.unsubscribe();
+        this.queryParamsSubscription?.unsubscribe();
     }
 
     /**
@@ -257,13 +266,15 @@ export class HomeComponent implements OnInit, AfterViewChecked {
             this.usernameRegexPattern = new RegExp(/^(?!.*@.*@)[a-zA-Z0-9.@_-]{7,50}$/);
         }
         this.usernamePlaceholderTranslated = this.translateService.instant(this.usernamePlaceholder);
-        this.translateService.onLangChange.subscribe(() => {
+        this.langChangeSubscription = this.translateService.onLangChange.subscribe(() => {
             this.usernamePlaceholderTranslated = this.translateService.instant(this.usernamePlaceholder);
         });
 
         this.isRegistrationEnabled = !!this.profileInfo.registrationEnabled;
         this.needsToAcceptTerms = !!this.profileInfo.needsToAcceptTerms;
-        this.activatedRoute.queryParams.subscribe((params) => {
+
+        this.queryParamsSubscription?.unsubscribe();
+        this.queryParamsSubscription = this.activatedRoute.queryParams.subscribe((params) => {
             const loginFormOverride = params.hasOwnProperty('showLoginForm');
             this.isPasswordLoginDisabled = !!this.profileInfo?.saml2 && this.profileInfo.saml2.passwordLoginDisabled && !loginFormOverride;
         });
