@@ -15,14 +15,7 @@ export class WebauthnService {
      * we would get an error as we cannot have multiple credential requests at the same time.
      */
     private ensureAtMostOneCredentialRequestIsActive() {
-        try {
-            this.authAbortController.abort(new PasskeyAbortError());
-        } catch (error) {
-            // we can ignore the error if it's the expected abort error
-            if (!(error instanceof PasskeyAbortError)) {
-                throw error;
-            }
-        }
+        this.authAbortController.abort(new PasskeyAbortError());
         this.authAbortController = new AbortController();
     }
 
