@@ -35,7 +35,7 @@ describe('Text Submission Viewer Component', () => {
         'src/image.png': FileType.FILE,
     };
 
-    beforeEach(() => {
+    beforeEach(async () => {
         TestBed.configureTestingModule({
             declarations: [TextSubmissionViewerComponent, MockComponent(SplitPaneHeaderComponent), MockPipe(ArtemisTranslatePipe)],
             providers: [
@@ -52,6 +52,15 @@ describe('Text Submission Viewer Component', () => {
         comp = fixture.componentInstance;
         repositoryService = TestBed.inject(CodeEditorRepositoryFileService);
         textSubmissionService = TestBed.inject(TextSubmissionService);
+
+        fixture.componentRef.setInput('plagiarismSubmission', { submissionId: 1 } as PlagiarismSubmission<TextSubmissionElement>);
+        fixture.componentRef.setInput('exercise', { type: ExerciseType.TEXT } as Exercise);
+        fixture.componentRef.setInput('fileSelectedSubject', new Subject<TextPlagiarismFileElement>());
+        fixture.componentRef.setInput('showFilesSubject', new Subject<boolean>(false));
+        fixture.componentRef.setInput('dropdownHoverSubject', new Subject<TextPlagiarismFileElement>());
+        fixture.componentRef.setInput('matches', new Map());
+
+        await fixture.whenStable();
     });
 
     afterEach(() => {
@@ -151,12 +160,6 @@ describe('Text Submission Viewer Component', () => {
     it('handles file selection', async () => {
         const submissionId = 1;
 
-        fixture.componentRef.setInput('plagiarismSubmission', { submissionId } as PlagiarismSubmission<TextSubmissionElement>);
-        fixture.componentRef.setInput('exercise', { type: ExerciseType.TEXT } as Exercise);
-        fixture.componentRef.setInput('fileSelectedSubject', new Subject<TextPlagiarismFileElement>());
-        fixture.componentRef.setInput('showFilesSubject', new Subject<boolean>(false));
-        fixture.componentRef.setInput('dropdownHoverSubject', new Subject<TextPlagiarismFileElement>());
-        fixture.componentRef.setInput('matches', new Map());
         fixture.detectChanges();
 
         const fileName = Object.keys(files)[1];
@@ -174,6 +177,7 @@ describe('Text Submission Viewer Component', () => {
     });
 
     it('handles binary file selection', () => {
+        fixture.componentRef.setInput('exercise', { type: ExerciseType.PROGRAMMING } as Exercise);
         fixture.componentRef.setInput('plagiarismSubmission', { submissionId: 1 } as PlagiarismSubmission<TextSubmissionElement>);
         fixture.detectChanges();
         const fileName = Object.keys(files)[4];
