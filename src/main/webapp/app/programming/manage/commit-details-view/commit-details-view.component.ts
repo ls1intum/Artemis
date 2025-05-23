@@ -32,6 +32,7 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
     currentCommit: CommitInfo;
     previousCommit: CommitInfo;
     repositoryType: RepositoryType;
+    diffReady = false;
 
     participationRepoFilesAtLeftCommitSubscription: Subscription;
     participationRepoFilesAtRightCommitSubscription: Subscription;
@@ -136,17 +137,24 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
      * Fetches the participation repository files for the right commit.
      * @private
      */
-    private fetchParticipationRepoFilesAtRightCommit() {
+    private async fetchParticipationRepoFilesAtRightCommit() {
+        // Set ready state to false when starting diff processing
+        this.diffReady = false;
+
         this.participationRepoFilesAtRightCommitSubscription = this.programmingExerciseParticipationService
             .getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView(this.exerciseId, this.repositoryId, this.currentCommit.hash!, this.repositoryType)
             .subscribe({
-                next: (filesWithContent: Map<string, string>) => {
+                next: async (filesWithContent: Map<string, string>) => {
                     this.rightCommitFileContentByPath = filesWithContent;
-                    this.repositoryDiffInformation = processRepositoryDiff(this.leftCommitFileContentByPath, this.rightCommitFileContentByPath);
+                    this.repositoryDiffInformation = await processRepositoryDiff(this.leftCommitFileContentByPath, this.rightCommitFileContentByPath);
+
+                    // Set ready state to true when diff processing is complete
+                    this.diffReady = true;
                 },
                 error: () => {
                     this.errorWhileFetching = true;
                     this.rightCommitFileContentByPath = new Map<string, string>();
+                    this.diffReady = false;
                 },
             });
     }

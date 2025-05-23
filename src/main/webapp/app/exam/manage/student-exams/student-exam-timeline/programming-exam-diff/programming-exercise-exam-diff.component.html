@@ -15,7 +15,7 @@
     [submissions]="submissions()"
     [exerciseProjectKey]="exercise()?.projectKey"
 />
-@if (diffInformation()) {
+@if (diffInformation() && diffReady()) {
     <div>
         <dt>
             <span

@@ -3,7 +3,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { SafeHtml } from '@angular/platform-browser';
 import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
 import { ExerciseDetailStatisticsComponent } from 'app/exercise/statistics/exercise-detail-statistic/exercise-detail-statistics.component';
-import { Observable, Subject, Subscription, forkJoin, of } from 'rxjs';
+import { Observable, Subject, Subscription, forkJoin, from, of } from 'rxjs';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
@@ -52,7 +52,7 @@ import { IrisSubSettingsType } from 'app/iris/shared/entities/settings/iris-sub-
 import { Detail } from 'app/shared/detail-overview-list/detail.model';
 import { Competency } from 'app/atlas/shared/entities/competency.model';
 import { AeolusService } from 'app/programming/shared/services/aeolus.service';
-import { catchError, mergeMap, tap } from 'rxjs/operators';
+import { catchError, mergeMap, switchMap, tap } from 'rxjs/operators';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
@@ -148,6 +148,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     teamBaseResource: string;
     loadingTemplateParticipationResults = true;
     loadingSolutionParticipationResults = true;
+    diffReady = false;
     courseId: number;
     doughnutStats: ExerciseManagementStatisticsDto;
     formattedGradingInstructions: SafeHtml;
@@ -242,8 +243,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         this.alertService.error('artemisApp.programmingExercise.repositoryFilesError');
                         return of({ templateFiles: undefined, solutionFiles: undefined });
                     }),
-                    tap(({ templateFiles, solutionFiles }) => {
-                        this.handleDiff(templateFiles, solutionFiles);
+                    switchMap(({ templateFiles, solutionFiles }: { templateFiles: Map<string, string> | undefined; solutionFiles: Map<string, string> | undefined }) => {
+                        return from(this.handleDiff(templateFiles, solutionFiles));
                     }),
                 )
                 // split pipe to keep type checks
@@ -468,7 +469,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 },
                 this.repositoryDiffInformation &&
                     this.templateFileContentByPath &&
-                    this.solutionFileContentByPath && {
+                    this.solutionFileContentByPath &&
+                    this.diffReady && {
                         type: DetailType.ProgrammingDiffReport,
                         title: 'artemisApp.programmingExercise.diffReport.title',
                         titleHelpText: 'artemisApp.programmingExercise.diffReport.detailedTooltip',
@@ -605,9 +607,17 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     onParticipationChange(): void {
-        this.fetchRepositoryFiles().subscribe(({ templateFiles, solutionFiles }) => {
-            this.handleDiff(templateFiles, solutionFiles);
-        });
+        this.fetchRepositoryFiles()
+            .pipe(
+                switchMap(({ templateFiles, solutionFiles }) => {
+                    return from(this.handleDiff(templateFiles, solutionFiles));
+                }),
+                tap(() => {
+                    // Update exercise details after diff processing is complete
+                    this.exerciseDetailSections = this.getExerciseDetails();
+                }),
+            )
+            .subscribe();
     }
 
     combineTemplateCommits() {
@@ -714,13 +724,20 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         });
     }
 
-    handleDiff(templateFiles: Map<string, string> | undefined, solutionFiles: Map<string, string> | undefined) {
+    async handleDiff(templateFiles: Map<string, string> | undefined, solutionFiles: Map<string, string> | undefined) {
         if (!templateFiles || !solutionFiles) {
             return;
         }
+
+        // Set ready state to false when starting diff processing
+        this.diffReady = false;
+
         this.templateFileContentByPath = templateFiles;
         this.solutionFileContentByPath = solutionFiles;
         //TODO: Add version check to avoid recomputing the diff if the files have not changed
-        this.repositoryDiffInformation = processRepositoryDiff(templateFiles, solutionFiles);
+        this.repositoryDiffInformation = await processRepositoryDiff(templateFiles, solutionFiles);
+
+        // Set ready state to true when diff processing is complete
+        this.diffReady = true;
     }
 }

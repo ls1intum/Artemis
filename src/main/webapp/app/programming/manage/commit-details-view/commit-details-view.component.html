@@ -21,7 +21,7 @@
     </div>
     <br />
 
-    @if (repositoryDiffInformation) {
+    @if (repositoryDiffInformation && diffReady) {
         <jhi-git-diff-report
             [repositoryDiffInformation]="repositoryDiffInformation"
             [diffForTemplateAndSolution]="false"

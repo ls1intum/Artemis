@@ -56,6 +56,7 @@ export class ProgrammingExerciseExamDiffComponent extends ExamSubmissionComponen
     cachedRepositoryFiles: Map<string, Map<string, string>> = new Map<string, Map<string, string>>();
     exerciseType = ExerciseType.PROGRAMMING;
     diffInformation = signal<RepositoryDiffInformation | undefined>(undefined);
+    diffReady = signal<boolean>(false);
 
     private exerciseIdSubscription: Subscription;
 
@@ -76,6 +77,7 @@ export class ProgrammingExerciseExamDiffComponent extends ExamSubmissionComponen
                 const key = this.calculateMapKey();
                 if (this.cachedDiffInformation().has(key)) {
                     this.diffInformation.set(this.cachedDiffInformation().get(key)!);
+                    this.diffReady.set(true);
                 } else {
                     this.fetchRepositoriesAndProcessDiff();
                 }
@@ -143,11 +145,17 @@ export class ProgrammingExerciseExamDiffComponent extends ExamSubmissionComponen
         }
     }
 
-    processRepositoryDiff(left: Map<string, string>, right: Map<string, string>) {
-        this.diffInformation.set(processRepositoryDiff(left, right));
+    async processRepositoryDiff(left: Map<string, string>, right: Map<string, string>) {
+        // Set ready state to false when starting diff processing
+        this.diffReady.set(false);
+
+        this.diffInformation.set(await processRepositoryDiff(left, right));
         this.cachedDiffInformation().set(this.calculateMapKey(), this.diffInformation()!);
         this.cachedDiffInformationChange.emit(this.cachedDiffInformation());
         this.isLoadingDiffReport = false;
+
+        // Set ready state to true when diff processing is complete
+        this.diffReady.set(true);
     }
 
     /**
