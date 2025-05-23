@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, computed, inject } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, inject } from '@angular/core';
 import { IrisEventType, IrisSubSettings, IrisSubSettingsType } from 'app/iris/shared/entities/settings/iris-sub-settings.model';
 import { IrisVariant } from 'app/iris/shared/entities/settings/iris-variant';
 import { AccountService } from 'app/core/auth/account.service';
@@ -69,17 +69,6 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
     enabled: boolean;
 
     categories: string[] = [];
-
-    hasCategories = computed(() =>
-        [
-            IrisSubSettingsType.CHAT,
-            IrisSubSettingsType.TEXT_EXERCISE_CHAT,
-            IrisSubSettingsType.COURSE_CHAT,
-            IrisSubSettingsType.LECTURE,
-            IrisSubSettingsType.COMPETENCY_GENERATION,
-            IrisSubSettingsType.TUTOR_SUGGESTION,
-        ].includes(this.subSettings?.type as IrisSubSettingsType),
-    );
 
     exerciseChatEvents: IrisEventType[] = [IrisEventType.BUILD_FAILED, IrisEventType.PROGRESS_STALLED];
 

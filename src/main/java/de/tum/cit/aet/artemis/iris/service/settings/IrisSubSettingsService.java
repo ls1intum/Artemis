@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.iris.service.settings;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -392,7 +393,7 @@ public class IrisSubSettingsService {
         var enabled = getCombinedEnabled(settingsList, IrisSettings::getIrisChatSettings);
         var rateLimit = getCombinedRateLimit(settingsList);
         var allowedVariants = !minimal ? getCombinedAllowedVariants(settingsList, IrisSettings::getIrisChatSettings) : null;
-        var selectedVariant = !minimal ? getCombinedSelectedVariant(settingsList, IrisSettings::getIrisChatSettings) : null;
+        var selectedVariant = !minimal ? getCombinedSelectedVariant(settingsList, IrisSettings::getIrisChatSettings, allowedVariants) : null;
         var enabledForCategories = !minimal ? getCombinedEnabledForCategories(settingsList, IrisSettings::getIrisChatSettings) : null;
         var disabledForEvents = !minimal ? getCombinedDisabledForEvents(settingsList, IrisSettings::getIrisChatSettings) : null;
 
@@ -412,7 +413,7 @@ public class IrisSubSettingsService {
         var enabled = getCombinedEnabled(settingsList, IrisSettings::getIrisTextExerciseChatSettings);
         var rateLimit = getCombinedRateLimit(settingsList);
         var allowedVariants = !minimal ? getCombinedAllowedVariants(settingsList, IrisSettings::getIrisTextExerciseChatSettings) : null;
-        var selectedVariant = !minimal ? getCombinedSelectedVariant(settingsList, IrisSettings::getIrisTextExerciseChatSettings) : null;
+        var selectedVariant = !minimal ? getCombinedSelectedVariant(settingsList, IrisSettings::getIrisTextExerciseChatSettings, allowedVariants) : null;
         var enabledForCategories = !minimal ? getCombinedEnabledForCategories(settingsList, IrisSettings::getIrisTextExerciseChatSettings) : null;
         return new IrisCombinedTextExerciseChatSubSettingsDTO(enabled, rateLimit, null, allowedVariants, selectedVariant, enabledForCategories);
     }
@@ -430,7 +431,7 @@ public class IrisSubSettingsService {
         boolean enabled = getCombinedEnabled(settingsList, IrisSettings::getIrisLectureChatSettings);
         Integer rateLimit = getCombinedRateLimit(settingsList);
         SortedSet<String> allowedVariants = !minimal ? getCombinedAllowedVariants(settingsList, IrisSettings::getIrisLectureChatSettings) : null;
-        String selectedVariant = !minimal ? getCombinedSelectedVariant(settingsList, IrisSettings::getIrisLectureChatSettings) : null;
+        String selectedVariant = !minimal ? getCombinedSelectedVariant(settingsList, IrisSettings::getIrisLectureChatSettings, allowedVariants) : null;
         return new IrisCombinedLectureChatSubSettingsDTO(enabled, rateLimit, null, allowedVariants, selectedVariant);
     }
 
@@ -447,7 +448,7 @@ public class IrisSubSettingsService {
         var enabled = getCombinedEnabled(settingsList, IrisSettings::getIrisCourseChatSettings);
         var rateLimit = getCombinedRateLimit(settingsList);
         var allowedVariants = !minimal ? getCombinedAllowedVariants(settingsList, IrisSettings::getIrisCourseChatSettings) : null;
-        var selectedVariant = !minimal ? getCombinedSelectedVariant(settingsList, IrisSettings::getIrisCourseChatSettings) : null;
+        var selectedVariant = !minimal ? getCombinedSelectedVariant(settingsList, IrisSettings::getIrisCourseChatSettings, allowedVariants) : null;
         return new IrisCombinedCourseChatSubSettingsDTO(enabled, rateLimit, null, allowedVariants, selectedVariant);
     }
 
@@ -463,7 +464,7 @@ public class IrisSubSettingsService {
     public IrisCombinedLectureIngestionSubSettingsDTO combineLectureIngestionSubSettings(ArrayList<IrisSettings> settingsList, boolean minimal) {
         var enabled = getCombinedEnabled(settingsList, IrisSettings::getIrisLectureIngestionSettings);
         var allowedVariants = !minimal ? getCombinedAllowedVariants(settingsList, IrisSettings::getIrisLectureIngestionSettings) : null;
-        var selectedVariant = !minimal ? getCombinedSelectedVariant(settingsList, IrisSettings::getIrisLectureIngestionSettings) : null;
+        var selectedVariant = !minimal ? getCombinedSelectedVariant(settingsList, IrisSettings::getIrisLectureIngestionSettings, allowedVariants) : null;
         return new IrisCombinedLectureIngestionSubSettingsDTO(enabled, allowedVariants, selectedVariant);
     }
 
@@ -479,7 +480,7 @@ public class IrisSubSettingsService {
     public IrisCombinedFaqIngestionSubSettingsDTO combineFaqIngestionSubSettings(ArrayList<IrisSettings> settingsList, boolean minimal) {
         var enabled = getCombinedEnabled(settingsList, IrisSettings::getIrisFaqIngestionSettings);
         var allowedVariants = !minimal ? getCombinedAllowedVariants(settingsList, IrisSettings::getIrisFaqIngestionSettings) : null;
-        var selectedVariant = !minimal ? getCombinedSelectedVariant(settingsList, IrisSettings::getIrisFaqIngestionSettings) : null;
+        var selectedVariant = !minimal ? getCombinedSelectedVariant(settingsList, IrisSettings::getIrisFaqIngestionSettings, allowedVariants) : null;
         return new IrisCombinedFaqIngestionSubSettingsDTO(enabled, allowedVariants, selectedVariant);
     }
 
@@ -496,7 +497,7 @@ public class IrisSubSettingsService {
         var actualSettingsList = settingsList.stream().filter(settings -> !(settings instanceof IrisExerciseSettings)).toList();
         var enabled = getCombinedEnabled(actualSettingsList, IrisSettings::getIrisCompetencyGenerationSettings);
         var allowedVariants = !minimal ? getCombinedAllowedVariants(actualSettingsList, IrisSettings::getIrisCompetencyGenerationSettings) : null;
-        var selectedVariant = !minimal ? getCombinedSelectedVariant(actualSettingsList, IrisSettings::getIrisCompetencyGenerationSettings) : null;
+        var selectedVariant = !minimal ? getCombinedSelectedVariant(actualSettingsList, IrisSettings::getIrisCompetencyGenerationSettings, allowedVariants) : null;
         return new IrisCombinedCompetencyGenerationSubSettingsDTO(enabled, allowedVariants, selectedVariant);
     }
 
@@ -510,7 +511,7 @@ public class IrisSubSettingsService {
     public IrisCombinedTutorSuggestionSubSettingsDTO combineTutorSuggestionSettings(ArrayList<IrisSettings> settingsList, boolean minimal) {
         var enabled = getCombinedEnabled(settingsList, IrisSettings::getIrisTutorSuggestionSettings);
         var allowedVariants = !minimal ? getCombinedAllowedVariants(settingsList, IrisSettings::getIrisTutorSuggestionSettings) : null;
-        var selectedVariant = !minimal ? getCombinedSelectedVariant(settingsList, IrisSettings::getIrisTutorSuggestionSettings) : null;
+        var selectedVariant = !minimal ? getCombinedSelectedVariant(settingsList, IrisSettings::getIrisTutorSuggestionSettings, allowedVariants) : null;
         return new IrisCombinedTutorSuggestionSubSettingsDTO(enabled, allowedVariants, selectedVariant);
     }
 
@@ -557,7 +558,7 @@ public class IrisSubSettingsService {
      */
     private SortedSet<String> getCombinedAllowedVariants(List<IrisSettings> settingsList, Function<IrisSettings, IrisSubSettings> subSettingsFunction) {
         return settingsList.stream().filter(Objects::nonNull).map(subSettingsFunction).filter(Objects::nonNull).map(IrisSubSettings::getAllowedVariants).filter(Objects::nonNull)
-                .filter(models -> !models.isEmpty()).reduce((first, second) -> second).orElse(new TreeSet<>());
+                .filter(variants -> !variants.isEmpty()).reduce((first, second) -> second).orElse(new TreeSet<>());
     }
 
     /**
@@ -568,9 +569,10 @@ public class IrisSubSettingsService {
      * @param subSettingsFunction Function to get the sub settings from an IrisSettings object.
      * @return Combined selectedVariant field.
      */
-    private String getCombinedSelectedVariant(List<IrisSettings> settingsList, Function<IrisSettings, IrisSubSettings> subSettingsFunction) {
+    private String getCombinedSelectedVariant(List<IrisSettings> settingsList, Function<IrisSettings, IrisSubSettings> subSettingsFunction, Collection<String> allowedVariants) {
         return settingsList.stream().filter(Objects::nonNull).map(subSettingsFunction).filter(Objects::nonNull).map(IrisSubSettings::getSelectedVariant)
-                .filter(model -> model != null && !model.isBlank()).reduce((first, second) -> second).orElse(null);
+                .filter(variant -> variant != null && !variant.isBlank() && (allowedVariants == null || allowedVariants.contains(variant))).reduce((first, second) -> second)
+                .orElse(null);
     }
 
     /**
