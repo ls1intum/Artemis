@@ -108,7 +108,7 @@ describe('HomeComponent', () => {
     });
 
     it('should handle successful login', async () => {
-        const loginSpy = jest.spyOn(loginService, 'login').mockResolvedValue();
+        const loginSpy = jest.spyOn(loginService, 'login').mockResolvedValue(undefined);
         const handleLoginSuccessSpy = jest.spyOn(component as any, 'handleLoginSuccess');
 
         component.username = 'testUser';
@@ -219,7 +219,7 @@ describe('HomeComponent', () => {
     describe('prefillPasskeysIfPossible', () => {
         it('should call makePasskeyAutocompleteAvailable if passkey is enabled and conditional mediation is available', async () => {
             component.isPasskeyEnabled = true;
-            const makePasskeyAutocompleteAvailableSpy = jest.spyOn(component as any, 'makePasskeyAutocompleteAvailable').mockResolvedValue();
+            const makePasskeyAutocompleteAvailableSpy = jest.spyOn(component as any, 'makePasskeyAutocompleteAvailable').mockResolvedValue(undefined);
             (window.PublicKeyCredential as any) = {
                 isConditionalMediationAvailable: jest.fn().mockResolvedValue(true),
             };
@@ -268,7 +268,7 @@ describe('HomeComponent', () => {
         it('should handle successful passkey login', async () => {
             const mockCredential = { type: 'public-key' } as PublicKeyCredential;
             jest.spyOn(webauthnService, 'getCredential').mockResolvedValue(mockCredential);
-            jest.spyOn(webauthnApiService, 'loginWithPasskey').mockResolvedValue();
+            jest.spyOn(webauthnApiService, 'loginWithPasskey').mockResolvedValue(undefined);
             const handleLoginSuccessSpy = jest.spyOn(component as any, 'handleLoginSuccess');
 
             await component.loginWithPasskey();
