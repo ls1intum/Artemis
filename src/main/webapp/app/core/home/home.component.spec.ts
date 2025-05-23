@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { HomeComponent, USER_CANCELLED_LOGIN_WITH_PASSKEY_ERROR } from './home.component';
+import { HomeComponent } from './home.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AccountService } from 'app/core/auth/account.service';
 import { LoginService } from 'app/core/login/login.service';
@@ -240,17 +240,6 @@ describe('HomeComponent', () => {
 
             await expect(component.loginWithPasskey()).rejects.toThrow('Login failed');
             expect(alertSpy).toHaveBeenCalledWith('artemisApp.userSettings.passkeySettingsPage.error.login');
-        });
-
-        it('should fail silently when user cancels passkey login', async () => {
-            const makePasskeyAutocompleteAvailableSpy = jest.spyOn(component as any, 'makePasskeyAutocompleteAvailable');
-            jest.spyOn(alertService, 'addErrorAlert').mockImplementation(() => {}); // Mock addErrorAlert
-            jest.spyOn(webauthnService, 'getCredential').mockRejectedValue({ name: USER_CANCELLED_LOGIN_WITH_PASSKEY_ERROR });
-
-            await component.loginWithPasskey();
-
-            expect(makePasskeyAutocompleteAvailableSpy).toHaveBeenCalled();
-            expect(alertService.addErrorAlert).not.toHaveBeenCalled();
         });
 
         it('should fail silently on PasskeyAbortError', async () => {
