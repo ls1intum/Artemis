@@ -5,7 +5,7 @@ import { Subject, of } from 'rxjs';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
 import { PlagiarismSplitViewComponent } from 'app/plagiarism/manage/plagiarism-split-view/plagiarism-split-view.component';
-import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { PlagiarismSubmission } from 'app/plagiarism/shared/entities/PlagiarismSubmission';
 import { FromToElement, TextSubmissionElement } from 'app/plagiarism/shared/entities/text/TextSubmissionElement';
@@ -60,12 +60,13 @@ describe('Plagiarism Split View Component', () => {
         comp = fixture.componentInstance;
         plagiarismCasesService = TestBed.inject(PlagiarismCasesService);
 
-        comp.comparison = {
+        comp.plagiarismComparison = comparison;
+        fixture.componentRef.setInput('comparison', {
             submissionA,
             submissionB,
-        } as PlagiarismComparison<TextSubmissionElement>;
-        comp.plagiarismComparison = comparison;
-        comp.splitControlSubject = splitControlSubject;
+        } as PlagiarismComparison<TextSubmissionElement>);
+
+        fixture.componentRef.setInput('splitControlSubject', splitControlSubject);
     });
 
     afterEach(() => {
@@ -81,7 +82,7 @@ describe('Plagiarism Split View Component', () => {
     });
 
     it('should parse text matches for comparison', fakeAsync(() => {
-        comp.exercise = textExercise;
+        fixture.componentRef.setInput('exercise', textExercise as Exercise);
         jest.spyOn(comp, 'parseTextMatches');
         jest.spyOn(plagiarismCasesService, 'getPlagiarismComparisonForSplitView').mockReturnValue(
             of({ body: comparison } as HttpResponse<PlagiarismComparison<TextSubmissionElement>>),
@@ -98,16 +99,15 @@ describe('Plagiarism Split View Component', () => {
     }));
 
     it('should subscribe to the split control subject', () => {
-        comp.exercise = textExercise;
-        jest.spyOn(splitControlSubject, 'subscribe');
+        fixture.componentRef.setInput('exercise', textExercise as Exercise);
+        const subscribeSpy = jest.spyOn(splitControlSubject, 'subscribe');
 
         comp.ngOnInit();
 
-        expect(comp.splitControlSubject.subscribe).toHaveBeenCalledOnce();
+        expect(subscribeSpy).toHaveBeenCalledOnce();
     });
 
     it('should collapse the left pane', () => {
-        comp.exercise = textExercise;
         comp.split = { collapse } as unknown as Split.Instance;
 
         comp.handleSplitControl('left');
@@ -116,7 +116,6 @@ describe('Plagiarism Split View Component', () => {
     });
 
     it('should collapse the right pane', () => {
-        comp.exercise = textExercise;
         comp.split = { collapse } as unknown as Split.Instance;
 
         comp.handleSplitControl('right');
@@ -125,7 +124,6 @@ describe('Plagiarism Split View Component', () => {
     });
 
     it('should reset the split panes', () => {
-        comp.exercise = textExercise;
         comp.split = { setSizes } as unknown as Split.Instance;
 
         comp.handleSplitControl('even');
@@ -275,8 +273,8 @@ describe('Plagiarism Split View Component', () => {
             .spyOn(plagiarismCasesService, 'getPlagiarismComparisonForSplitView')
             .mockReturnValue(of({ body: plagiarismComparison } as HttpResponse<PlagiarismComparison<TextSubmissionElement>>));
 
-        comp.sortByStudentLogin = studentLogin;
-        comp.exercise = textExercise;
+        fixture.componentRef.setInput('sortByStudentLogin', studentLogin);
+        fixture.componentRef.setInput('exercise', textExercise as Exercise);
 
         comp.ngOnChanges({ comparison: { currentValue: { id: 1 } } as SimpleChange });
 
