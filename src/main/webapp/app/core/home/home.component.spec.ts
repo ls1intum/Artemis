@@ -26,6 +26,7 @@ import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.s
 import { User } from 'app/core/user/user.model';
 import { InvalidCredentialError } from 'app/core/user/settings/passkey-settings/entities/invalid-credential-error';
 import { PasskeyAbortError } from 'app/core/user/settings/passkey-settings/entities/passkey-abort-error';
+import { PasskeyLoginResponseDTO } from 'app/core/user/settings/passkey-settings/dto/passkey-login-response.dto';
 
 describe('HomeComponent', () => {
     let component: HomeComponent;
