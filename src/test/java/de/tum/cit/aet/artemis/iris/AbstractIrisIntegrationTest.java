@@ -80,6 +80,17 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
         settings.setAllowedVariants(new TreeSet<>(Set.of("default")));
     }
 
+    /**
+     * Sets a type of IrisSubSettings to disabled.
+     *
+     * @param settings the settings to be disabled
+     */
+    private void deactivateSubSettings(IrisSubSettings settings) {
+        settings.setEnabled(false);
+        settings.setSelectedVariant("default");
+        settings.setAllowedVariants(new TreeSet<>(Set.of("default")));
+    }
+
     protected void activateIrisFor(Course course) {
         var courseSettings = irisSettingsService.getDefaultSettingsFor(course);
 
@@ -99,6 +110,14 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
         var exerciseSettings = irisSettingsService.getDefaultSettingsFor(exercise);
         activateSubSettings(exerciseSettings.getIrisProgrammingExerciseChatSettings());
         activateSubSettings(exerciseSettings.getIrisTextExerciseChatSettings());
+
+        irisSettingsRepository.save(exerciseSettings);
+    }
+
+    protected void disableIrisFor(Exercise exercise) {
+        var exerciseSettings = irisSettingsService.getDefaultSettingsFor(exercise);
+        deactivateSubSettings(exerciseSettings.getIrisProgrammingExerciseChatSettings());
+        deactivateSubSettings(exerciseSettings.getIrisTextExerciseChatSettings());
 
         irisSettingsRepository.save(exerciseSettings);
     }

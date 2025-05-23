@@ -558,6 +558,9 @@ public class IrisSubSettingsService {
                 continue;
             }
             var settings = subSettingsFunction.apply(irisSettings);
+            if (settings == null) {
+                continue;
+            }
             if (!settings.isEnabled()) {
                 return false;
             }
