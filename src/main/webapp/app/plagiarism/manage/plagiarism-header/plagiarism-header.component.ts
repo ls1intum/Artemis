@@ -1,4 +1,4 @@
-import { Component, Input, inject } from '@angular/core';
+import { Component, inject, input } from '@angular/core';
 import { Subject } from 'rxjs';
 import { PlagiarismStatus } from 'app/plagiarism/shared/entities/PlagiarismStatus';
 import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
@@ -23,9 +23,9 @@ export class PlagiarismHeaderComponent {
     private plagiarismCasesService = inject(PlagiarismCasesService);
     private modalService = inject(NgbModal);
 
-    @Input() comparison: PlagiarismComparison<TextSubmissionElement>;
-    @Input() exercise: Exercise;
-    @Input() splitControlSubject: Subject<string>;
+    readonly comparison = input<PlagiarismComparison<TextSubmissionElement>>(undefined!);
+    readonly exercise = input<Exercise>(undefined!);
+    readonly splitControlSubject = input<Subject<string>>(undefined!);
 
     readonly plagiarismStatus = PlagiarismStatus;
     isLoading = false;
@@ -41,7 +41,7 @@ export class PlagiarismHeaderComponent {
      * Set the status of the currently selected comparison to DENIED.
      */
     denyPlagiarism() {
-        if (this.comparison.status === PlagiarismStatus.CONFIRMED) {
+        if (this.comparison().status === PlagiarismStatus.CONFIRMED) {
             this.askForConfirmationOfDenying(() => this.updatePlagiarismStatus(PlagiarismStatus.DENIED));
         } else {
             this.updatePlagiarismStatus(PlagiarismStatus.DENIED);
@@ -65,19 +65,19 @@ export class PlagiarismHeaderComponent {
     updatePlagiarismStatus(status: PlagiarismStatus) {
         this.isLoading = true;
         // store comparison in variable in case comparison changes while request is made
-        const comparison = this.comparison;
-        this.plagiarismCasesService.updatePlagiarismComparisonStatus(getCourseId(this.exercise)!, comparison.id, status).subscribe(() => {
+        const comparison = this.comparison();
+        this.plagiarismCasesService.updatePlagiarismComparisonStatus(getCourseId(this.exercise())!, comparison.id, status).subscribe(() => {
             comparison.status = status;
             this.isLoading = false;
         });
     }
 
     expandSplitPane(pane: 'left' | 'right') {
-        this.splitControlSubject.next(pane);
+        this.splitControlSubject().next(pane);
     }
 
     resetSplitPanes() {
-        this.splitControlSubject.next('even');
+        this.splitControlSubject().next('even');
     }
 
     protected readonly faCircleInfo = faCircleInfo;

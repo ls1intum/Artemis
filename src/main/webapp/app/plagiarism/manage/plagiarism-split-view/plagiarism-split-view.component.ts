@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, Directive, ElementRef, OnChanges, OnDestroy, OnInit, SimpleChanges, effect, inject, input, viewChildren } from '@angular/core';
+import { AfterViewInit, Component, Directive, ElementRef, OnChanges, OnDestroy, OnInit, SimpleChanges, inject, input, viewChildren } from '@angular/core';
 import * as Split from 'split.js';
 import { Subject } from 'rxjs';
 import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
@@ -52,16 +52,6 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
     readonly dayjs = dayjs;
     protected readonly faLock: IconDefinition = faLock;
     protected readonly faUnlock: IconDefinition = faUnlock;
-
-    constructor() {
-        effect(() => {
-            const list = this.files();
-            if (list?.length) {
-                this.activeFileIndex = 0;
-                this.selectFile.emit(list[0].file);
-            }
-        });
-    }
 
     /**
      * Initialize third-party libraries inside this lifecycle hook.

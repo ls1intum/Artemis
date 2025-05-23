@@ -35,13 +35,13 @@ describe('Plagiarism Header Component', () => {
         comp = fixture.componentInstance;
 
         plagiarismCasesService = TestBed.inject(PlagiarismCasesService);
-        comp.comparison = {
+        fixture.componentRef.setInput('comparison', {
             submissionA: { studentLogin: 'studentA' },
             submissionB: { studentLogin: 'studentB' },
             status: PlagiarismStatus.NONE,
-        } as PlagiarismComparison<TextSubmissionElement>;
-        comp.exercise = { course: { id: 1 } } as Exercise;
-        comp.splitControlSubject = new Subject<string>();
+        } as PlagiarismComparison<TextSubmissionElement>);
+        fixture.componentRef.setInput('exercise', { course: { id: 1 } } as Exercise);
+        fixture.componentRef.setInput('splitControlSubject', new Subject<string>());
     });
 
     afterEach(() => {
@@ -81,7 +81,7 @@ describe('Plagiarism Header Component', () => {
         jest.spyOn(comp, 'updatePlagiarismStatus');
         const modalSpy = jest.spyOn(TestBed.inject(NgbModal), 'open');
 
-        comp.comparison.status = PlagiarismStatus.CONFIRMED;
+        fixture.componentRef.setInput('comparison', { ...comp.exercise(), status: PlagiarismStatus.CONFIRMED });
 
         comp.denyPlagiarism();
 
@@ -99,13 +99,12 @@ describe('Plagiarism Header Component', () => {
         tick();
 
         expect(updatePlagiarismComparisonStatusStub).toHaveBeenCalledOnce();
-        expect(comp.comparison.status).toEqual(PlagiarismStatus.CONFIRMED);
+        expect(comp.comparison().status).toEqual(PlagiarismStatus.CONFIRMED);
         expect(comp.isLoading).toBeFalse();
     }));
 
     it('should emit when expanding left split view pane', () => {
-        comp.splitControlSubject = new Subject<string>();
-        jest.spyOn(comp.splitControlSubject, 'next');
+        jest.spyOn(comp.splitControlSubject(), 'next');
 
         const nativeElement = fixture.nativeElement;
         const splitLeftButton = nativeElement.querySelector("[data-qa='split-view-left']");
@@ -113,12 +112,11 @@ describe('Plagiarism Header Component', () => {
 
         fixture.detectChanges();
 
-        expect(comp.splitControlSubject.next).toHaveBeenCalledWith('left');
+        expect(comp.splitControlSubject().next).toHaveBeenCalledWith('left');
     });
 
     it('should emit when expanding right split view pane', () => {
-        comp.splitControlSubject = new Subject<string>();
-        jest.spyOn(comp.splitControlSubject, 'next');
+        jest.spyOn(comp.splitControlSubject(), 'next');
 
         const nativeElement = fixture.nativeElement;
         const splitRightButton = nativeElement.querySelector("[data-qa='split-view-right']");
@@ -126,12 +124,11 @@ describe('Plagiarism Header Component', () => {
 
         fixture.detectChanges();
 
-        expect(comp.splitControlSubject.next).toHaveBeenCalledWith('right');
+        expect(comp.splitControlSubject().next).toHaveBeenCalledWith('right');
     });
 
     it('should emit when resetting the split panes', () => {
-        comp.splitControlSubject = new Subject<string>();
-        jest.spyOn(comp.splitControlSubject, 'next');
+        jest.spyOn(comp.splitControlSubject(), 'next');
 
         const nativeElement = fixture.nativeElement;
         const splitHalfButton = nativeElement.querySelector("[data-qa='split-view-even']");
@@ -139,11 +136,11 @@ describe('Plagiarism Header Component', () => {
 
         fixture.detectChanges();
 
-        expect(comp.splitControlSubject.next).toHaveBeenCalledWith('even');
+        expect(comp.splitControlSubject().next).toHaveBeenCalledWith('even');
     });
 
     it('should display team mode disabled help icon when teamMode is enabled', () => {
-        comp.exercise.teamMode = true;
+        fixture.componentRef.setInput('exercise', { ...comp.exercise(), teamMode: true });
         fixture.detectChanges();
 
         const nativeElement = fixture.nativeElement;
@@ -156,7 +153,7 @@ describe('Plagiarism Header Component', () => {
     });
 
     it('should hide team mode disabled help icon when teamMode is disabled', () => {
-        comp.exercise.teamMode = false;
+        fixture.componentRef.setInput('exercise', { ...comp.exercise(), teamMode: false });
         fixture.detectChanges();
 
         const nativeElement = fixture.nativeElement;

@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { Subject } from 'rxjs';
 import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -13,8 +13,8 @@ import { PlagiarismSplitViewComponent } from '../plagiarism-split-view/plagiaris
     imports: [PlagiarismHeaderComponent, PlagiarismSplitViewComponent],
 })
 export class PlagiarismDetailsComponent {
-    @Input() comparison?: PlagiarismComparison<TextSubmissionElement>;
-    @Input() exercise: Exercise;
+    readonly comparison = input<PlagiarismComparison<TextSubmissionElement>>();
+    readonly exercise = input<Exercise>(undefined!);
 
     /**
      * Subject to be passed into PlagiarismSplitViewComponent to control the split view.
