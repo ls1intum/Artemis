@@ -92,7 +92,7 @@ public class JWTFilter extends GenericFilterBean {
                      "source": "{}",
                      "remote_ip": "{}",
                      "user_agent": "{}",
-                     "request_uri: "{}",
+                     "request_uri": "{}",
                      "headers": {}
                     }
                     """, source, httpServletRequest.getRemoteAddr(), httpServletRequest.getHeader("User-Agent"), httpServletRequest.getRequestURI(),
