@@ -15,7 +15,7 @@ import de.tum.cit.aet.artemis.core.util.FilePathConverter;
  * <li>Ensure related items in the file system are grouped together.</li>
  * </ul>
  *
- * @see FilePathConverter FilePathService for the actual path generation.
+ * @see FilePathConverter FilePathConverter for the actual file system path/external URI generation.
  */
 public enum FilePathType {
     // @formatter:off

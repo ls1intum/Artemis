@@ -12,16 +12,19 @@ import de.tum.cit.aet.artemis.core.exception.FilePathParsingException;
 import de.tum.cit.aet.artemis.core.service.FileService;
 
 /**
- * Converter for generating and parsing file system paths and public URIs for different file types in Artemis.
+ * Converter for generating and parsing file system paths and external URIs for different file types in Artemis.
  * <p>
- * This converter provides static methods to convert between internal file system paths and public URIs,
+ * This converter provides static methods to convert between internal file system paths and external URIs,
  * as well as to generate base paths for various file storage locations (e.g., attachments, profile pictures, uploads).
  * The mapping is based on the {@link FilePathType} and the entity IDs associated with the files.
  * </p>
  */
-public class FilePathConverter {
+public final class FilePathConverter {
 
     private static Path fileUploadPath;
+
+    private FilePathConverter() {
+    }
 
     /**
      * Sets the base file upload path from the application properties.
@@ -391,7 +394,7 @@ public class FilePathConverter {
      * @return path where submission for file upload exercise is stored
      */
     @NotNull
-    public static Path buildFileUploadSubmissionPath(Long exerciseId, Long submissionId) {
-        return getFileUploadExercisesFilePath().resolve(exerciseId.toString()).resolve(submissionId.toString());
+    public static Path buildFileUploadSubmissionPath(long exerciseId, long submissionId) {
+        return getFileUploadExercisesFilePath().resolve(String.valueOf(exerciseId)).resolve(String.valueOf(submissionId));
     }
 }
