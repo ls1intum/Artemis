@@ -406,13 +406,8 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         attachmentUnitRepo.save(attachmentUnit);
 
         String unsanitizedFilename = "AttachmentUnit_2025-05-10T12-10-34_" + unsanitizedName + ".pdf";
-        String url;
-        if (isTutor) {
-            url = "/api/core/files/attachments/attachment-unit/" + attachmentUnit.getId() + "/" + unsanitizedFilename;
-        }
-        else {
-            url = "/api/core/files/attachments/attachment-unit/" + attachmentUnit.getId() + "/student/" + unsanitizedFilename;
-        }
+        String url = isTutor ? "/api/core/files/attachments/attachment-unit/" + attachmentUnit.getId() + "/" + unsanitizedFilename
+                : "/api/core/files/attachments/attachment-unit/" + attachmentUnit.getId() + "/student/" + unsanitizedFilename;
 
         try (MockedStatic<FilePathService> filePathServiceMock = Mockito.mockStatic(FilePathService.class)) {
             filePathServiceMock.when(() -> FilePathService.fileSystemPathForExternalUri(Mockito.any(URI.class), Mockito.eq(FilePathType.ATTACHMENT_UNIT))).thenReturn(tempFile);
