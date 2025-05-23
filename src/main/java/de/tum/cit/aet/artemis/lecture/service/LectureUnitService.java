@@ -34,8 +34,8 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
@@ -161,8 +161,8 @@ public class LectureUnitService {
         LectureUnit lectureUnitToDelete = lectureUnitRepository.findByIdWithCompetenciesAndSlidesElseThrow(lectureUnit.getId());
 
         if (lectureUnitToDelete instanceof AttachmentUnit attachmentUnit) {
-            fileService.schedulePathForDeletion(FilePathService.fileSystemPathForExternalUri(URI.create((attachmentUnit.getAttachment().getLink())), FilePathType.ATTACHMENT_UNIT),
-                    5);
+            fileService.schedulePathForDeletion(
+                    FilePathConverter.fileSystemPathForExternalUri(URI.create((attachmentUnit.getAttachment().getLink())), FilePathType.ATTACHMENT_UNIT), 5);
         }
 
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureUnitToDelete.getLecture().getId());
