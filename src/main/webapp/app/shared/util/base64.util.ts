@@ -47,7 +47,6 @@ export function decodeBase64url(input: string | BufferSource): ArrayBuffer {
  * It ensures the result does not include padding (=).
  */
 export function encodeAsBase64Url(uint8array: Uint8Array) {
-    // eslint-disable-next-line no-undef
     return btoa(String.fromCharCode(...uint8array))
         .replace(/\//g, '_')
         .replace(/\+/g, '-')

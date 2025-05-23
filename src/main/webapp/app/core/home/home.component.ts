@@ -208,7 +208,7 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
             } else {
                 this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.login');
             }
-            // eslint-disable-next-line no-undef
+
             console.error(error);
             throw error;
         }
@@ -225,7 +225,6 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
             // The user manually aborted the passkey login process after clicking the "Sign in with passkey" button.
             // This required aborting the `getCredential` request with conditional mediation, which is necessary for enabling passkey autocomplete.
             // To restore passkey autocomplete functionality, re-invoke `makePasskeyAutocompleteAvailable`.
-            // eslint-disable-next-line no-undef
             console.warn('Operation not allowed or timed out: login with passkey was aborted manually by the user');
             const isInRecursiveFailingLoop = this.isRetryingPasskeyAutocompleteRequest;
             if (!isInRecursiveFailingLoop) {
@@ -234,12 +233,10 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
             }
             return true;
         } else if (error instanceof PasskeyAbortError) {
-            // eslint-disable-next-line no-undef
             console.warn(error.message);
             return true;
         } else if (error.name === 'OperationError' && error.message === 'A request is already pending.') {
             // This error occurs after logging out in connection with makePasskeyAutocompleteAvailable, we want to fail silently in that case
-            // eslint-disable-next-line no-undef
             console.warn(error.message);
             return true;
         }

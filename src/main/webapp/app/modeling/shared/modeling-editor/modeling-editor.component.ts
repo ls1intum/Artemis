@@ -118,9 +118,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
             return;
         }
 
-        // eslint-disable-next-line no-undef
         console.log('Warning: Installing hack to prevent UI scroll jumps in Safari while using Apollon!');
-        // eslint-disable-next-line no-undef
         console.log('Warning: If you experience problems regarding the scrolling behavior, please report them at https://github.com/ls1intum/Artemis');
 
         this.mouseDownListener = () => {
