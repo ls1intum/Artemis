@@ -5,6 +5,8 @@ import { WebsocketService } from 'app/shared/service/websocket.service';
 import { Response } from 'app/iris/overview/services/iris-chat-http.service';
 import { IrisStatusDTO } from 'app/iris/shared/entities/iris-health.model';
 import { IrisRateLimitInformation } from 'app/iris/shared/entities/iris-ratelimit-info.model';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { PROFILE_IRIS } from 'app/app.constants';
 
 /**
  * The `IrisHeartbeatService` is responsible for monitoring the health status of Iris.
@@ -16,12 +18,13 @@ import { IrisRateLimitInformation } from 'app/iris/shared/entities/iris-ratelimi
 export class IrisStatusService implements OnDestroy {
     private websocketService = inject(WebsocketService);
     private httpClient = inject(HttpClient);
+    private profileService = inject(ProfileService);
 
     intervalId: ReturnType<typeof setInterval> | undefined;
     websocketStatusSubscription: Subscription;
     disconnected = false;
 
-    active = true;
+    active = false;
     activeSubject = new BehaviorSubject<boolean>(this.active);
 
     currentRatelimitInfoSubject = new BehaviorSubject<IrisRateLimitInformation>(new IrisRateLimitInformation(0, 0, 0));
@@ -32,6 +35,9 @@ export class IrisStatusService implements OnDestroy {
      * @param httpSessionService The IrisHttpChatSessionService for HTTP operations related to sessions.
      */
     constructor() {
+        if (!this.profileService.isProfileActive(PROFILE_IRIS)) {
+            return;
+        }
         this.checkHeartbeat();
         this.intervalId = setInterval(() => {
             this.checkHeartbeat();
