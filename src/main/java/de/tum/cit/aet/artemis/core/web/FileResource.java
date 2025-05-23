@@ -644,7 +644,7 @@ public class FileResource {
     /**
      * GET files/attachments/attachment-unit/{attachmentUnitId}/student/* : Get the student version of attachment video unit by attachment video unit id
      *
-     * @param attachmentUnitId ID of the attachment video unit, the student version belongs to
+     * @param attachmentVideoUnitId ID of the attachment video unit, the student version belongs to
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
     @GetMapping("files/attachments/attachment-video-unit/{attachmentVideoUnitId}/student/*")
