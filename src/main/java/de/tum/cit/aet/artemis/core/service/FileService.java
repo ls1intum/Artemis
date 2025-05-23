@@ -581,7 +581,7 @@ public class FileService implements DisposableBean {
      * @throws IOException if an issue occurs on file access for the replacement of the variables.
      */
     public void replaceVariablesInDirectoryName(Path startPath, String targetString, String replacementString) throws IOException {
-        log.debug("Replacing {} with {} in directory {}", targetString, replacementString, startPath);
+        log.debug("Replace {} with {} in directory with path {}", targetString, replacementString, startPath);
         File directory = startPath.toFile();
         if (!directory.exists() || !directory.isDirectory()) {
             throw new RuntimeException("Directory " + startPath + " should be replaced but does not exist.");
@@ -614,7 +614,7 @@ public class FileService implements DisposableBean {
      * @throws IOException if an issue occurs on file access for the replacement of the variables.
      */
     public void replaceVariablesInFilename(Path startPath, String targetString, String replacementString) throws IOException {
-        log.debug("Replacing {} with {} in directory {}", targetString, replacementString, startPath);
+        log.debug("Replace {} with {} in directory with path {}", targetString, replacementString, startPath);
         File directory = startPath.toFile();
         if (!directory.exists() || !directory.isDirectory()) {
             throw new FileNotFoundException("Files in the directory " + startPath + " should be replaced but it does not exist.");
@@ -657,7 +657,7 @@ public class FileService implements DisposableBean {
      * @param filesToIgnore the name of files for which no replacement should be done
      */
     public void replaceVariablesInFileRecursive(Path startPath, Map<String, String> replacements, List<String> filesToIgnore) {
-        log.debug("Replacing {} in files in directory {}", replacements, startPath);
+        log.debug("Replace {} in files in directory {}", replacements, startPath);
         File directory = startPath.toFile();
         if (!directory.exists() || !directory.isDirectory()) {
             throw new RuntimeException("Files in directory " + startPath + " should be replaced but the directory does not exist.");
@@ -694,7 +694,7 @@ public class FileService implements DisposableBean {
      * @param replacements the replacements that should be applied
      */
     public void replaceVariablesInFile(Path filePath, Map<String, String> replacements) {
-        log.debug("Replacing {} in file {}", replacements, filePath);
+        log.debug("Replace {} in file {}", replacements, filePath);
         if (isBinaryFile(filePath.toString())) {
             // do not try to read binary files with 'readString'
             return;
