@@ -1,3 +1,5 @@
+import * as monaco from 'monaco-editor';
+
 /**
  * Interface for line change information from the diff editor
  */
@@ -39,9 +41,9 @@ export enum FileStatus {
  * Processes the repository diff information
  * @param originalFileContentByPath The original file content by path
  * @param modifiedFileContentByPath The modified file content by path
- * @returns The repository diff information
+ * @returns Promise resolving to the repository diff information
  */
-export function processRepositoryDiff(originalFileContentByPath: Map<string, string>, modifiedFileContentByPath: Map<string, string>): RepositoryDiffInformation {
+export async function processRepositoryDiff(originalFileContentByPath: Map<string, string>, modifiedFileContentByPath: Map<string, string>): Promise<RepositoryDiffInformation> {
     const diffInformation = getDiffInformation(originalFileContentByPath, modifiedFileContentByPath);
 
     const repositoryDiffInformation: RepositoryDiffInformation = {
@@ -49,18 +51,21 @@ export function processRepositoryDiff(originalFileContentByPath: Map<string, str
         totalLineChange: { addedLineCount: 0, removedLineCount: 0 },
     };
 
-    diffInformation.forEach((diffInformation) => {
-        const modifiedPath = diffInformation.modifiedPath;
-        const originalPath = diffInformation.originalPath;
-        const originalFileContent = originalFileContentByPath.get(originalPath) || '';
-        const modifiedFileContent = modifiedFileContentByPath.get(modifiedPath) || '';
+    // Process each diff information asynchronously
+    await Promise.all(
+        diffInformation.map(async (diffInfo) => {
+            const modifiedPath = diffInfo.modifiedPath;
+            const originalPath = diffInfo.originalPath;
+            const originalFileContent = originalFileContentByPath.get(originalPath) || '';
+            const modifiedFileContent = modifiedFileContentByPath.get(modifiedPath) || '';
 
-        const lineChange = computeDiffs(originalFileContent, modifiedFileContent);
+            const lineChange = await computeDiffsMonaco(originalFileContent, modifiedFileContent);
 
-        diffInformation.lineChange = lineChange;
-        repositoryDiffInformation.totalLineChange.addedLineCount += lineChange.addedLineCount;
-        repositoryDiffInformation.totalLineChange.removedLineCount += lineChange.removedLineCount;
-    });
+            diffInfo.lineChange = lineChange;
+            repositoryDiffInformation.totalLineChange.addedLineCount += lineChange.addedLineCount;
+            repositoryDiffInformation.totalLineChange.removedLineCount += lineChange.removedLineCount;
+        }),
+    );
 
     return repositoryDiffInformation;
 }
@@ -125,94 +130,54 @@ function getDiffInformation(originalFileContentByPath: Map<string, string>, modi
 }
 
 /**
- * Calculates line changes between two arrays of lines
- * @param originalLines Array of original lines
- * @param modifiedLines Array of modified lines
- * @returns LineChange object containing added and removed line counts
+ * Computes the line changes between two files using Monaco Editor
+ * @param originalFileContent The original file content
+ * @param modifiedFileContent The modified file content
+ * @returns Promise resolving to the line change object containing added and removed line counts
  */
-function linesDiff(original: string[], modified: string[]): { type: string; line: number; content: string }[] {
-    const diffs: { type: string; line: number; content: string }[] = [];
-    const oLen = original.length;
-    const mLen = modified.length;
-    const dp = Array.from({ length: oLen + 1 }, () => Array(mLen + 1).fill(0));
+function computeDiffsMonaco(originalFileContent: string, modifiedFileContent: string): Promise<LineChange> {
+    return new Promise((resolve) => {
+        const originalModel = monaco.editor.createModel(originalFileContent, 'plaintext');
+        const modifiedModel = monaco.editor.createModel(modifiedFileContent, 'plaintext');
 
-    // Build LCS matrix
-    for (let i = 1; i <= oLen; i++) {
-        for (let j = 1; j <= mLen; j++) {
-            if (original[i - 1] === modified[j - 1]) {
-                dp[i][j] = dp[i - 1][j - 1] + 1;
-            } else {
-                dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
+        const diffEditor = monaco.editor.createDiffEditor(document.createElement('div'), {
+            readOnly: true,
+            automaticLayout: false,
+        });
+
+        diffEditor.setModel({ original: originalModel, modified: modifiedModel });
+
+        // Set up a one-time listener for diff updates
+        const diffListener = diffEditor.onDidUpdateDiff(() => {
+            const changes = diffEditor.getLineChanges();
+            let added = 0,
+                removed = 0;
+
+            if (changes) {
+                changes.forEach((change) => {
+                    const origCount = change.originalEndLineNumber - change.originalStartLineNumber + 1;
+                    const modCount = change.modifiedEndLineNumber - change.modifiedStartLineNumber + 1;
+
+                    if (change.originalEndLineNumber === 0) {
+                        added += modCount;
+                    } else if (change.modifiedEndLineNumber === 0) {
+                        removed += origCount;
+                    } else {
+                        added += modCount;
+                        removed += origCount;
+                    }
+                });
             }
-        }
-    }
 
-    // Backtrack to find differences
-    let i = oLen;
-    let j = mLen;
-    while (i > 0 && j > 0) {
-        if (original[i - 1] === modified[j - 1]) {
-            i--;
-            j--;
-        } else if (dp[i - 1][j] >= dp[i][j - 1]) {
-            diffs.unshift({ type: 'removed', line: i - 1, content: original[i - 1] });
-            i--;
-        } else {
-            diffs.unshift({ type: 'added', line: j - 1, content: modified[j - 1] });
-            j--;
-        }
-    }
+            // Clean up
+            diffListener.dispose();
+            originalModel.dispose();
+            modifiedModel.dispose();
+            diffEditor.dispose();
 
-    // Remaining lines in original
-    while (i > 0) {
-        diffs.unshift({ type: 'removed', line: i - 1, content: original[i - 1] });
-        i--;
-    }
-
-    // Remaining lines in modified
-    while (j > 0) {
-        diffs.unshift({ type: 'added', line: j - 1, content: modified[j - 1] });
-        j--;
-    }
-
-    return diffs;
-}
-
-function computeDiffs(originalFileContent: string, modifiedFileContent: string): LineChange {
-    // Handle special cases for created or deleted files
-    if (!originalFileContent && modifiedFileContent) {
-        // File is newly created - count only added lines, no deleted lines
-        const modifiedFileContentLines = modifiedFileContent.split('\n').filter((line) => line.trim() !== '');
-        return { addedLineCount: modifiedFileContentLines.length, removedLineCount: 0 };
-    } else if (originalFileContent && !modifiedFileContent) {
-        // File is deleted - count only removed lines, no added lines
-        const originalFileContentLines = originalFileContent.split('\n').filter((line) => line.trim() !== '');
-        return { addedLineCount: 0, removedLineCount: originalFileContentLines.length };
-    }
-
-    const originalFileContentLines = originalFileContent.split('\n').filter((line) => line.trim() !== '');
-    const modifiedFileContentLines = modifiedFileContent.split('\n').filter((line) => line.trim() !== '');
-
-    return countLineChanges(linesDiff(originalFileContentLines, modifiedFileContentLines));
-}
-
-/**
- * Counts the line changes between two arrays of lines
- * @param diffs The diffs between the two arrays of lines
- * @returns The line change object containing added and removed line counts
- */
-function countLineChanges(diffs: { type: string; line: number; content: string }[]): LineChange {
-    const lineChange: LineChange = { addedLineCount: 0, removedLineCount: 0 };
-
-    for (const diff of diffs) {
-        if (diff.type === 'added') {
-            lineChange.addedLineCount++;
-        } else if (diff.type === 'removed') {
-            lineChange.removedLineCount++;
-        }
-    }
-
-    return lineChange;
+            resolve({ addedLineCount: added, removedLineCount: removed });
+        });
+    });
 }
 
 /**
