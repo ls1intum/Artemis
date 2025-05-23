@@ -459,7 +459,7 @@ public class FileResource {
         // check if the user is authorized to access the requested attachment unit
         checkAttachmentAuthorizationOrThrow(course, attachment);
 
-        return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.LECTURE_ATTACHMENT), Optional.of(retrieveDownloadFilename(attachment)));
+        return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.LECTURE_ATTACHMENT), retrieveDownloadFilename(attachment));
     }
 
     /**
@@ -527,11 +527,7 @@ public class FileResource {
 
         // check if the user is authorized to access the requested attachment unit
         checkAttachmentAuthorizationOrThrow(course, attachment);
-        return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.ATTACHMENT_UNIT), Optional.of(retrieveDownloadFilename(attachment)));
-    }
-
-    private static String retrieveDownloadFilename(Attachment attachment) {
-        return attachment.getName() + "." + getExtension(attachment.getLink());
+        return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.ATTACHMENT_UNIT), retrieveDownloadFilename(attachment));
     }
 
     /**
@@ -552,7 +548,7 @@ public class FileResource {
         Attachment attachment = attachmentUnit.getAttachment();
         checkAttachmentUnitExistsInCourseOrThrow(course, attachmentUnit);
 
-        return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.ATTACHMENT_UNIT), Optional.of(retrieveDownloadFilename(attachment)));
+        return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.ATTACHMENT_UNIT), retrieveDownloadFilename(attachment));
     }
 
     /**
@@ -572,7 +568,7 @@ public class FileResource {
         Course course = courseRepository.findByIdElseThrow(courseId);
         checkAttachmentExistsInCourseOrThrow(course, attachment);
 
-        return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.LECTURE_ATTACHMENT), Optional.of(retrieveDownloadFilename(attachment)));
+        return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.LECTURE_ATTACHMENT), retrieveDownloadFilename(attachment));
     }
 
     /**
@@ -664,7 +660,7 @@ public class FileResource {
         Course course = attachmentUnit.getLecture().getCourse();
         checkAttachmentAuthorizationOrThrow(course, attachment);
 
-        Optional<String> downloadFilename = Optional.of(retrieveDownloadFilename(attachment));
+        Optional<String> downloadFilename = retrieveDownloadFilename(attachment);
         // check if hidden link is available in the attachment
         String studentVersion = attachment.getStudentVersion();
         if (studentVersion == null) {
@@ -675,6 +671,10 @@ public class FileResource {
 
         return buildFileResponse(FilePathService.getAttachmentUnitFileSystemPath().resolve(Path.of(attachmentUnit.getId().toString(), "student")), fileName, downloadFilename,
                 false);
+    }
+
+    private static Optional<String> retrieveDownloadFilename(Attachment attachment) {
+        return Optional.of(attachment.getName() + "." + getExtension(attachment.getLink()));
     }
 
     /**
