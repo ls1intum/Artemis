@@ -189,7 +189,7 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     static void setup() {
         // Set the static file upload path for all tests
         // This makes it a simple unit test that doesn't require a server start.
-        FilePathConverter.setFileUploadPath(Path.of("local", "upload"));
+        FilePathConverter.setFileUploadPath(Path.of("uploads"));
     }
 
     @BeforeEach
