@@ -81,7 +81,7 @@ describe('Plagiarism Header Component', () => {
         jest.spyOn(comp, 'updatePlagiarismStatus');
         const modalSpy = jest.spyOn(TestBed.inject(NgbModal), 'open');
 
-        fixture.componentRef.setInput('comparison', { ...comp.exercise(), status: PlagiarismStatus.CONFIRMED });
+        fixture.componentRef.setInput('comparison', { ...comp.comparison(), status: PlagiarismStatus.CONFIRMED });
 
         comp.denyPlagiarism();
 
