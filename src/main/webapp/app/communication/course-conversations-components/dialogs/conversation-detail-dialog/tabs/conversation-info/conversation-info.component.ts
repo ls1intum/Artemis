@@ -27,7 +27,7 @@ import { ConversationService } from 'app/communication/conversations/service/con
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faVolumeUp, faVolumeXmark } from '@fortawesome/free-solid-svg-icons';
+import { faVolumeXmark } from '@fortawesome/free-solid-svg-icons';
 import { CourseNotificationSettingService } from 'app/communication/course-notification/course-notification-setting.service';
 import { CourseNotificationSettingInfo } from 'app/communication/shared/entities/course-notification/course-notification-setting-info';
 import { RouterLink } from '@angular/router';
@@ -72,9 +72,7 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
     notificationSettings?: CourseNotificationSettingInfo;
     isNotificationsEnabled = false;
 
-    // Icons
-    faVolumeUp = faVolumeUp;
-    faVolumeXmark = faVolumeXmark;
+    protected readonly faVolumeXmark = faVolumeXmark;
 
     ngOnInit(): void {
         if (this.activeConversation()) {
@@ -256,7 +254,6 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
                 next: () => {
                     this.activeConversation()!.isMuted = isMuted;
                     this.onChangePerformed();
-                    this.changesPerformed.emit();
                 },
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             });
