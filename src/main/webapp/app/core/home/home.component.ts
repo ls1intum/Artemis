@@ -149,7 +149,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
      * Makes sure that passkeys can be autofilled on <a href="https://caniuse.com/mdn-api_publickeycredential_isconditionalmediationavailable_static">supporting browsers</a>.
      */
     async prefillPasskeysIfPossible() {
-        if (window.PublicKeyCredential && PublicKeyCredential.isConditionalMediationAvailable) {
+        if (this.isPasskeyEnabled && window.PublicKeyCredential && PublicKeyCredential.isConditionalMediationAvailable) {
             const isConditionalMediationAvailable = await PublicKeyCredential.isConditionalMediationAvailable();
             if (isConditionalMediationAvailable) {
                 await this.makePasskeyAutocompleteAvailable();

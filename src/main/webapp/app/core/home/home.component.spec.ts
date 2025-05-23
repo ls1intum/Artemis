@@ -213,6 +213,56 @@ describe('HomeComponent', () => {
             expect(openModalSpy).toHaveBeenCalled();
         });
     });
+    /**
+     * Makes sure that passkeys can be autofilled on <a href="https://caniuse.com/mdn-api_publickeycredential_isconditionalmediationavailable_static">supporting browsers</a>.
+     */
+    describe('prefillPasskeysIfPossible', () => {
+        it('should call makePasskeyAutocompleteAvailable if passkey is enabled and conditional mediation is available', async () => {
+            component.isPasskeyEnabled = true;
+            const makePasskeyAutocompleteAvailableSpy = jest.spyOn(component as any, 'makePasskeyAutocompleteAvailable').mockResolvedValue();
+            (window.PublicKeyCredential as any) = {
+                isConditionalMediationAvailable: jest.fn().mockResolvedValue(true),
+            };
+
+            await component.prefillPasskeysIfPossible();
+
+            expect(window.PublicKeyCredential.isConditionalMediationAvailable).toHaveBeenCalled();
+            expect(makePasskeyAutocompleteAvailableSpy).toHaveBeenCalled();
+        });
+
+        it('should not call makePasskeyAutocompleteAvailable if passkey is disabled', async () => {
+            component.isPasskeyEnabled = false;
+            const makePasskeyAutocompleteAvailableSpy = jest.spyOn(component as any, 'makePasskeyAutocompleteAvailable');
+            (window.PublicKeyCredential as any) = {
+                isConditionalMediationAvailable: jest.fn(),
+            };
+
+            await component.prefillPasskeysIfPossible();
+
+            expect(window.PublicKeyCredential.isConditionalMediationAvailable).not.toHaveBeenCalled();
+            expect(makePasskeyAutocompleteAvailableSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not call makePasskeyAutocompleteAvailable if conditional mediation is unavailable', async () => {
+            component.isPasskeyEnabled = true;
+            const makePasskeyAutocompleteAvailableSpy = jest.spyOn(component as any, 'makePasskeyAutocompleteAvailable');
+            (window.PublicKeyCredential as any) = {
+                isConditionalMediationAvailable: jest.fn().mockResolvedValue(false),
+            };
+
+            await component.prefillPasskeysIfPossible();
+
+            expect(window.PublicKeyCredential.isConditionalMediationAvailable).toHaveBeenCalled();
+            expect(makePasskeyAutocompleteAvailableSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not throw if PublicKeyCredential is undefined', async () => {
+            component.isPasskeyEnabled = true;
+            (window as any).PublicKeyCredential = undefined;
+
+            await expect(component.prefillPasskeysIfPossible()).resolves.not.toThrow();
+        });
+    });
 
     describe('loginWithPasskey', () => {
         it('should handle successful passkey login', async () => {
