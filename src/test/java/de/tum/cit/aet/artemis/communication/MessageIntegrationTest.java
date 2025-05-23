@@ -213,7 +213,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         // given
         Channel channel = conversationUtilService.createCourseWideChannel(course, "test");
-        CreatePostDTO postDTOToSave = new CreatePostDTO("", "", false, new CreatePostConversationDTO(channel.getId()));
+        CreatePostDTO postDTOToSave = new CreatePostDTO("", "", false, new CreatePostConversationDTO(channel.getId()), null);
 
         // then
         // expected are 7 database calls independent of the number of students in the course.
@@ -235,7 +235,8 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         postToSave.setConversation(channel);
         postToSave.setContent(userMention);
 
-        CreatePostDTO postDTOToSave = new CreatePostDTO(postToSave.getContent(), "", false, new CreatePostConversationDTO(postToSave.getConversation().getId()));
+        CreatePostDTO postDTOToSave = new CreatePostDTO(postToSave.getContent(), "", false, new CreatePostConversationDTO(postToSave.getConversation().getId()),
+                postToSave.getOriginalPostId());
 
         if (!isUserMentionValid) {
             request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postDTOToSave, Post.class, HttpStatus.BAD_REQUEST);
@@ -330,7 +331,8 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(persistedCourse.getCourseInformationSharingConfiguration()).isEqualTo(CourseInformationSharingConfiguration.DISABLED);
 
         Post postToSave = createPostWithOneToOneChat(TEST_PREFIX);
-        CreatePostDTO postDTOToSave = new CreatePostDTO(postToSave.getContent(), "", false, new CreatePostConversationDTO(postToSave.getConversation().getId()));
+        CreatePostDTO postDTOToSave = new CreatePostDTO(postToSave.getContent(), "", false, new CreatePostConversationDTO(postToSave.getConversation().getId()),
+                postToSave.getOriginalPostId());
 
         var requestingUser = userTestRepository.getUser();
 
@@ -361,7 +363,8 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         postToSave.setConversation(existingConversationMessages.getFirst().getConversation());
         var requestingUser = userTestRepository.getUser();
 
-        CreatePostDTO postDTOToSave = new CreatePostDTO(postToSave.getContent(), "", false, new CreatePostConversationDTO(postToSave.getConversation().getId()));
+        CreatePostDTO postDTOToSave = new CreatePostDTO(postToSave.getContent(), "", false, new CreatePostConversationDTO(postToSave.getConversation().getId()),
+                postToSave.getOriginalPostId());
 
         long[] conversationIds = new long[] { postToSave.getConversation().getId() };
         PostContextFilterDTO postContextFilter = new PostContextFilterDTO(courseId, null, conversationIds, null, null, false, false, false, null, null);
@@ -673,7 +676,8 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         var student2 = userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
 
         Post postToSave1 = createPostWithOneToOneChat(TEST_PREFIX);
-        CreatePostDTO postDTOToSave1 = new CreatePostDTO(postToSave1.getContent(), "", false, new CreatePostConversationDTO(postToSave1.getConversation().getId()));
+        CreatePostDTO postDTOToSave1 = new CreatePostDTO(postToSave1.getContent(), "", false, new CreatePostConversationDTO(postToSave1.getConversation().getId()),
+                postToSave1.getOriginalPostId());
         Post createdPost1 = request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postDTOToSave1, Post.class, HttpStatus.CREATED);
 
         userUtilService.changeUser(TEST_PREFIX + "student2");
@@ -699,7 +703,8 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         final var student2 = userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
 
         Post postToSave1 = createPostWithOneToOneChat(TEST_PREFIX);
-        CreatePostDTO postToSaveDTO1 = new CreatePostDTO(postToSave1.getContent(), "", false, new CreatePostConversationDTO(postToSave1.getConversation().getId()));
+        CreatePostDTO postToSaveDTO1 = new CreatePostDTO(postToSave1.getContent(), "", false, new CreatePostConversationDTO(postToSave1.getConversation().getId()),
+                postToSave1.getOriginalPostId());
 
         Post createdPost1 = request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postToSaveDTO1, Post.class, HttpStatus.CREATED);
         final var oneToOneChat1 = createdPost1.getConversation();
@@ -929,7 +934,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         postToSave.setContent("[user]" + mentionedUser.getName() + "(" + mentionedUser.getLogin() + ")[/user] Check this out!");
 
         CreatePostDTO postDTOToSave = new CreatePostDTO(postToSave.getContent(), postToSave.getTitle(), postToSave.getHasForwardedMessages(),
-                new CreatePostConversationDTO(postToSave.getConversation().getId()));
+                new CreatePostConversationDTO(postToSave.getConversation().getId()), postToSave.getOriginalPostId());
 
         request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postDTOToSave, Post.class, HttpStatus.CREATED);
 
@@ -953,7 +958,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         postToSave.setContent("Important announcement!");
 
         CreatePostDTO postDTOToSave = new CreatePostDTO(postToSave.getContent(), postToSave.getTitle(), postToSave.getHasForwardedMessages(),
-                new CreatePostConversationDTO(postToSave.getConversation().getId()));
+                new CreatePostConversationDTO(postToSave.getConversation().getId()), postToSave.getOriginalPostId());
 
         request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postDTOToSave, Post.class, HttpStatus.CREATED);
 
@@ -1037,7 +1042,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
      */
     private Post createPostAndAwaitAsyncCode(Post postToSave) throws Exception {
         var postDTOToSave = new CreatePostDTO(postToSave.getContent(), postToSave.getTitle(), postToSave.getHasForwardedMessages(),
-                new CreatePostConversationDTO(postToSave.getConversation().getId()));
+                new CreatePostConversationDTO(postToSave.getConversation().getId()), postToSave.getOriginalPostId());
         return request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postDTOToSave, Post.class, HttpStatus.CREATED);
     }
 
