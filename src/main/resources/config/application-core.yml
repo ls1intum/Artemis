@@ -33,14 +33,14 @@ spring:
                 enabled: true
 
 management:
-    endpoint:
+    endpoint:F
         health:
             show-details: when_authorized
             roles: 'ROLE_ADMIN'
             probes:
                 enabled: true
         jhimetrics:
-            enabled: true
+            access: read_only
     metrics:
         enable:
             http: true

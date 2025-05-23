@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -22,6 +23,7 @@ import de.tum.cit.aet.artemis.core.config.ArtemisCompatibleVersionsConfiguration
 import de.tum.cit.aet.artemis.core.config.LicenseConfiguration;
 import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
 import de.tum.cit.aet.artemis.core.config.TheiaConfiguration;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import tech.jhipster.config.DefaultProfileUtil;
 import tech.jhipster.config.JHipsterConstants;
@@ -69,6 +71,9 @@ public class ArtemisApp {
         DefaultProfileUtil.addDefaultProfile(app);
         var context = app.run(args);
         Environment env = context.getEnvironment();
+        String fileUploadPath = env.getProperty("artemis.file-upload-path");
+        // Set the file upload path for the FilePathConverter, use the default path "uploads" if not specified
+        FilePathConverter.setFileUploadPath(Path.of(fileUploadPath == null ? "uploads" : fileUploadPath));
         var buildProperties = context.getBean(BuildProperties.class);
         var gitProperties = context.getBean(GitProperties.class);
         logApplicationStartup(env, buildProperties, gitProperties);
