@@ -321,7 +321,7 @@ describe('HomeComponent', () => {
 
             await component.loginWithPasskey();
 
-            // The times 1 assertion is important, as it makes sure that we cannot have a recursive infinite loop
+            // The toHaveBeenCalledOnce assertion is important, as it makes sure that we cannot have a recursive infinite loop
             expect(makePasskeyAutocompleteAvailableSpy).toHaveBeenCalledOnce();
             expect(alertService.addErrorAlert).not.toHaveBeenCalled();
         });
