@@ -169,12 +169,14 @@ export class LectureUpdateUnitsComponent implements OnInit {
         }
 
         this.currentlyProcessedAttachmentVideoUnit = this.isEditingLectureUnit ? this.currentlyProcessedAttachmentVideoUnit : new AttachmentVideoUnit();
-        const attachmentToCreateOrEdit = this.isEditingLectureUnit ? this.currentlyProcessedAttachmentVideoUnit.attachment! : new Attachment();
+        const attachmentToCreateOrEdit = this.isEditingLectureUnit ? this.currentlyProcessedAttachmentVideoUnit.attachment : new Attachment();
 
         if (this.isEditingLectureUnit) {
             // breaking the connection to prevent errors in deserialization. will be reconnected on the server side
             this.currentlyProcessedAttachmentVideoUnit.attachment = undefined;
-            attachmentToCreateOrEdit.attachmentVideoUnit = undefined;
+            if (attachmentToCreateOrEdit != null) {
+                attachmentToCreateOrEdit.attachmentVideoUnit = undefined;
+            }
         }
 
         let notificationText: string | undefined;
@@ -185,15 +187,21 @@ export class LectureUpdateUnitsComponent implements OnInit {
 
         if (name) {
             this.currentlyProcessedAttachmentVideoUnit.name = name;
-            attachmentToCreateOrEdit.name = name;
+            if (attachmentToCreateOrEdit != null) {
+                attachmentToCreateOrEdit.name = name;
+            }
         }
         if (releaseDate) {
             this.currentlyProcessedAttachmentVideoUnit.releaseDate = releaseDate;
-            attachmentToCreateOrEdit.releaseDate = releaseDate;
+            if (attachmentToCreateOrEdit != null) {
+                attachmentToCreateOrEdit.releaseDate = releaseDate;
+            }
         }
-        attachmentToCreateOrEdit.attachmentType = AttachmentType.FILE;
-        attachmentToCreateOrEdit.version = 1;
-        attachmentToCreateOrEdit.uploadDate = dayjs();
+        if (attachmentToCreateOrEdit != null) {
+            attachmentToCreateOrEdit.attachmentType = AttachmentType.FILE;
+            attachmentToCreateOrEdit.version = 1;
+            attachmentToCreateOrEdit.uploadDate = dayjs();
+        }
 
         if (videoSource) {
             this.currentlyProcessedAttachmentVideoUnit.videoSource = videoSource;
@@ -208,7 +216,9 @@ export class LectureUpdateUnitsComponent implements OnInit {
         if (!!file && !!fileName) {
             formData.append('file', file, fileName);
         }
-        formData.append('attachment', objectToJsonBlob(attachmentToCreateOrEdit));
+        if (attachmentToCreateOrEdit != null) {
+            formData.append('attachment', objectToJsonBlob(attachmentToCreateOrEdit));
+        }
         formData.append('attachmentVideoUnit', objectToJsonBlob(this.currentlyProcessedAttachmentVideoUnit));
 
         (this.isEditingLectureUnit
