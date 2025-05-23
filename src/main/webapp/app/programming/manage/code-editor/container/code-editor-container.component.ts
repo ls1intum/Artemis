@@ -310,6 +310,15 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
     }
 
     /**
+     * Returns the feedbacks for the current submission or an empty array if no feedbacks are available.
+     */
+    feedbackForSubmission(): Feedback[] {
+        const submission = this.participation?.submissions?.[0];
+        const result = submission?.results?.[0];
+        return this.showInlineFeedback && result?.feedbacks ? result.feedbacks : [];
+    }
+
+    /**
      * Displays the alert for confirming refreshing or closing the page if there are unsaved changes
      * NOTE: while the beforeunload event might be deprecated in the future, it is currently the only way to display a confirmation dialog when the user tries to leave the page
      * @param event the beforeunload event

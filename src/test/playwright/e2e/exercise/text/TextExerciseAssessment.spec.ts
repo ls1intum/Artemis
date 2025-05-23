@@ -25,8 +25,8 @@ test.describe('Text exercise assessment', { tag: '@fast' }, () => {
     test.beforeAll('Create course and make a submission', async ({ browser }) => {
         const context = await browser.newContext();
         const page = await context.newPage();
-        dueDate = dayjs().add(15, 'seconds');
-        assessmentDueDate = dueDate.add(20, 'seconds');
+        dueDate = dayjs().add(20, 'seconds');
+        assessmentDueDate = dueDate.add(30, 'seconds');
         const courseManagementAPIRequests = new CourseManagementAPIRequests(page);
         const exerciseAPIRequests = new ExerciseAPIRequests(page);
         await Commands.login(page, admin);

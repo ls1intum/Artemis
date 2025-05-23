@@ -76,7 +76,7 @@ public class SubmissionFilterService {
         // during the allowed timeframe of the exercise (or participation, if the participant has a different due date)
         if (latestResult == null) {
             Optional<ZonedDateTime> optionalDueDate = ExerciseDateService.getDueDate(participation);
-            return optionalDueDate.map(dueDate -> programmingSubmission.getSubmissionDate().isBefore(dueDate)).orElse(true);
+            return optionalDueDate.map(dueDate -> programmingSubmission.getSubmissionDate() != null && programmingSubmission.getSubmissionDate().isBefore(dueDate)).orElse(true);
         }
         // if the result is not rated, we don't consider it
         if (Boolean.FALSE.equals(latestResult.isRated())) {

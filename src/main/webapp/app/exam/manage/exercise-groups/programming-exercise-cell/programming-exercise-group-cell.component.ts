@@ -8,6 +8,7 @@ import { ProgrammingExerciseInstructorStatusComponent } from 'app/programming/ma
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 
 @Component({
     selector: 'jhi-programming-exercise-group-cell',
@@ -30,6 +31,8 @@ export class ProgrammingExerciseGroupCellComponent implements OnInit {
     displayTemplateUrls = input(false);
     displayEditorMode = input(false);
     exercise = input.required<ProgrammingExercise>();
+    numberOfResultsOfTemplateParticipation = 0;
+    numberOfResultsOfSolutionParticipation = 0;
 
     faDownload = faDownload;
 
@@ -41,13 +44,14 @@ export class ProgrammingExerciseGroupCellComponent implements OnInit {
         if (projectKey && !this.localCIEnabled) {
             // buildPlanURLTemplate is only available on Artemis instances without LocalCI (e.g. using Jenkins)
             const buildPlanURLTemplate = this.profileService.getProfileInfo().buildPlanURLTemplate;
-
             const solutionParticipation = this.exercise()?.solutionParticipation;
+            this.numberOfResultsOfSolutionParticipation = getAllResultsOfAllSubmissions(solutionParticipation?.submissions).length;
             if (solutionParticipation?.buildPlanId && buildPlanURLTemplate) {
                 solutionParticipation.buildPlanUrl = createBuildPlanUrl(buildPlanURLTemplate, projectKey, solutionParticipation.buildPlanId);
             }
 
             const templateParticipation = this.exercise()?.templateParticipation;
+            this.numberOfResultsOfTemplateParticipation = getAllResultsOfAllSubmissions(templateParticipation?.submissions).length;
             if (templateParticipation?.buildPlanId && buildPlanURLTemplate) {
                 templateParticipation.buildPlanUrl = createBuildPlanUrl(buildPlanURLTemplate, projectKey, templateParticipation.buildPlanId);
             }

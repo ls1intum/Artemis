@@ -95,8 +95,8 @@ describe('SubmissionResultStatusComponent', () => {
 
         it.each([
             [{ type: ExerciseType.QUIZ, quizBatches: [] as QuizBatch[] }, {}, false],
-            [{ type: ExerciseType.QUIZ, quizBatches: [] as QuizBatch[] }, { results: [] }, false],
-            [{ type: ExerciseType.QUIZ, quizBatches: [] as QuizBatch[] }, { results: [{}] }, true],
+            [{ type: ExerciseType.QUIZ, quizBatches: [] as QuizBatch[] }, { submissions: [{ results: [] }] }, false],
+            [{ type: ExerciseType.QUIZ, quizBatches: [] as QuizBatch[] }, { submissions: [{ results: [{}] }] }, true],
             [{ type: ExerciseType.MODELING }, { initializationState: InitializationState.INITIALIZED }, false],
             [{ type: ExerciseType.MODELING }, { initializationState: InitializationState.FINISHED }, true],
             [{ type: ExerciseType.PROGRAMMING }, { initializationState: InitializationState.UNINITIALIZED }, false],
@@ -104,7 +104,11 @@ describe('SubmissionResultStatusComponent', () => {
             [{ type: ExerciseType.PROGRAMMING }, { initializationState: InitializationState.INACTIVE }, true],
             [{ type: ExerciseType.PROGRAMMING }, { initializationState: InitializationState.FINISHED }, true],
             [{ type: ExerciseType.PROGRAMMING, dueDate: dayjs().subtract(1, 'hour') }, { initializationState: InitializationState.INITIALIZED }, false],
-            [{ type: ExerciseType.PROGRAMMING, dueDate: dayjs().subtract(1, 'hour') }, { initializationState: InitializationState.INITIALIZED, results: [{}] }, true],
+            [
+                { type: ExerciseType.PROGRAMMING, dueDate: dayjs().subtract(1, 'hour') },
+                { initializationState: InitializationState.INITIALIZED, submissions: [{ results: [{}] }] },
+                true,
+            ],
         ])(
             'should determine if results should be shown',
             fakeAsync((exercise: Exercise, participation: StudentParticipation, expected: boolean) => {

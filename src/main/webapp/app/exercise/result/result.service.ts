@@ -272,7 +272,7 @@ export class ResultService implements IResultService {
 
     private convertResultDatesFromServer(result: Result) {
         result.completionDate = convertDateFromServer(result.completionDate);
-        ParticipationService.convertParticipationDatesFromServer(result.participation as StudentParticipation);
+        ParticipationService.convertParticipationDatesFromServer(result.submission?.participation as StudentParticipation);
         SubmissionService.convertSubmissionDateFromServer(result.submission);
     }
 
@@ -302,15 +302,11 @@ export class ResultService implements IResultService {
     }
 
     public static processReceivedResult(exercise: Exercise, result: Result): Result {
-        if (result.participation) {
-            result.participation.results = [result];
-            (result.participation as StudentParticipation).exercise = exercise;
+        if (result.submission?.participation) {
+            (result.submission.participation as StudentParticipation).exercise = exercise;
             // Nest submission into participation so that it is available for the result component
-            if (result.submission) {
-                result.participation.submissions = [result.submission];
-            }
         }
-        result.durationInMinutes = ResultService.durationInMinutes(result.completionDate!, result.participation?.initializationDate ?? exercise.releaseDate!);
+        result.durationInMinutes = ResultService.durationInMinutes(result.completionDate!, result.submission?.participation?.initializationDate ?? exercise.releaseDate!);
         return result;
     }
 

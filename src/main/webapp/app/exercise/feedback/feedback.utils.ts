@@ -34,10 +34,6 @@ export function prepareFeedbackComponentParameters(
         result: result,
     };
 
-    if (!result.participation) {
-        result.participation = participation;
-    }
-
     if (exercise) {
         preparedParameters.exerciseType = exercise.type!;
         preparedParameters.showScoreChart = true;

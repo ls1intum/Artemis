@@ -470,7 +470,7 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
         assertThat(numberOfSubmissionsForSubmissionPolicy).isZero();
 
         Submission submission1 = participationUtilService.addSubmission(participation, new ProgrammingSubmission().commitHash("first").type(SubmissionType.MANUAL));
-        participationUtilService.addResultToParticipation(participation, submission1);
+        participationUtilService.addResultToSubmission(participation, submission1);
         numberOfSubmissionsForSubmissionPolicy = request.get("/api/programming/participations/" + participation.getId() + "/submission-count", HttpStatus.OK, Integer.class);
         assertThat(numberOfSubmissionsForSubmissionPolicy).isOne();
 
@@ -478,12 +478,12 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
         numberOfSubmissionsForSubmissionPolicy = request.get("/api/programming/participations/" + participation.getId() + "/submission-count", HttpStatus.OK, Integer.class);
         assertThat(numberOfSubmissionsForSubmissionPolicy).isOne();
 
-        participationUtilService.addResultToParticipation(participation, submission2);
+        participationUtilService.addResultToSubmission(participation, submission2);
 
         numberOfSubmissionsForSubmissionPolicy = request.get("/api/programming/participations/" + participation.getId() + "/submission-count", HttpStatus.OK, Integer.class);
         assertThat(numberOfSubmissionsForSubmissionPolicy).isEqualTo(2);
 
-        participationUtilService.addResultToParticipation(participation, submission2);
+        participationUtilService.addResultToSubmission(participation, submission2);
         numberOfSubmissionsForSubmissionPolicy = request.get("/api/programming/participations/" + participation.getId() + "/submission-count", HttpStatus.OK, Integer.class);
         assertThat(numberOfSubmissionsForSubmissionPolicy).isEqualTo(2);
     }

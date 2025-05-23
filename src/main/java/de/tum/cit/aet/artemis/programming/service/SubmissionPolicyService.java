@@ -328,7 +328,7 @@ public class SubmissionPolicyService {
      */
     public void createFeedbackForPenaltyPolicy(Result result, SubmissionPenaltyPolicy penaltyPolicy) {
         if (penaltyPolicy != null && penaltyPolicy.isActive()) {
-            int presentSubmissions = getParticipationSubmissionCount(result.getParticipation());
+            int presentSubmissions = getParticipationSubmissionCount(result.getSubmission().getParticipation());
             int illegalSubmissionCount = presentSubmissions - penaltyPolicy.getSubmissionLimit();
             if (illegalSubmissionCount > 0) {
                 double deduction = illegalSubmissionCount * penaltyPolicy.getExceedingPenalty();
