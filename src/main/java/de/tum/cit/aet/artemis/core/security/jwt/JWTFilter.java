@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.core.security.jwt;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import jakarta.annotation.Nullable;
 import jakarta.servlet.FilterChain;
@@ -11,6 +13,8 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.StringUtils;
@@ -21,6 +25,8 @@ import org.springframework.web.util.WebUtils;
  * Filters incoming requests and installs a Spring Security principal if a header corresponding to a valid user is found.
  */
 public class JWTFilter extends GenericFilterBean {
+
+    private static final Logger log = LoggerFactory.getLogger(JWTFilter.class);
 
     public static final String JWT_COOKIE_NAME = "jwt";
 
@@ -80,10 +86,29 @@ public class JWTFilter extends GenericFilterBean {
         String source = cookie != null ? "cookie" : "bearer";
 
         if (!isJwtValid(tokenProvider, jwtToken, source)) {
+            log.info("""
+                    Invalid JWT token detected. Details:
+                    {
+                     "source": "{}",
+                     "remote_ip": "{}",
+                     "user_agent": "{}",
+                     "request_uri: "{}",
+                     "headers": {}
+                    }
+                    """, source, httpServletRequest.getRemoteAddr(), httpServletRequest.getHeader("User-Agent"), httpServletRequest.getRequestURI(),
+                    collectHeaders(httpServletRequest));
             return null;
         }
 
         return jwtToken;
+    }
+
+    private static String collectHeaders(HttpServletRequest request) {
+        List<String> headerEntries = new ArrayList<>();
+        request.getHeaderNames().asIterator().forEachRemaining(headerName -> headerEntries.add(String.format("\"%s\": \"%s\"", headerName, request.getHeader(headerName))));
+        ;
+
+        return "[\n" + String.join(",\n", headerEntries) + "\n]";
     }
 
     /**
