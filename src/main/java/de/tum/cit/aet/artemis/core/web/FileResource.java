@@ -62,10 +62,10 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.core.service.file.FileUploadService;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.exam.api.ExamUserApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
@@ -221,7 +221,7 @@ public class FileResource {
         log.debug("REST request to get file for markdown in conversation: File {} for conversation {} in course {}", filename, conversationId, courseId);
         sanitizeFilenameElseThrow(filename);
 
-        var serverFilePath = FilePathService.getMarkdownFilePathForConversation(courseId, conversationId);
+        var serverFilePath = FilePathConverter.getMarkdownFilePathForConversation(courseId, conversationId);
         var publicPath = "courses/" + courseId + "/conversations/" + conversationId + "/" + filename;
         var fileUpload = fileUploadService.findByPath(publicPath);
 
@@ -243,7 +243,7 @@ public class FileResource {
     public ResponseEntity<byte[]> getMarkdownFile(@PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
         sanitizeFilenameElseThrow(filename);
-        return buildFileResponse(FilePathService.getMarkdownFilePath(), filename, false);
+        return buildFileResponse(FilePathConverter.getMarkdownFilePath(), filename, false);
     }
 
     /**
@@ -494,7 +494,7 @@ public class FileResource {
             Attachment attachment = unit.getAttachment();
             String filePath = attachment.getStudentVersion() != null ? attachment.getStudentVersion() : attachment.getLink();
             FilePathType filePathType = attachment.getStudentVersion() != null ? FilePathType.STUDENT_VERSION_SLIDES : FilePathType.ATTACHMENT_UNIT;
-            return FilePathService.fileSystemPathForExternalUri(URI.create(filePath), filePathType);
+            return FilePathConverter.fileSystemPathForExternalUri(URI.create(filePath), filePathType);
         }).toList();
 
         Optional<byte[]> file = fileService.mergePdfFiles(attachmentLinks, api.getLectureTitle(lectureId));
@@ -669,7 +669,7 @@ public class FileResource {
 
         String fileName = studentVersion.substring(studentVersion.lastIndexOf("/") + 1);
 
-        return buildFileResponse(FilePathService.getAttachmentUnitFileSystemPath().resolve(Path.of(attachmentUnit.getId().toString(), "student")), fileName, downloadFilename,
+        return buildFileResponse(FilePathConverter.getAttachmentUnitFileSystemPath().resolve(Path.of(attachmentUnit.getId().toString(), "student")), fileName, downloadFilename,
                 false);
     }
 
@@ -751,14 +751,6 @@ public class FileResource {
         }
     }
 
-    private Path getResponsePathFromPublicPath(@NotNull Path publicPath) {
-        // fail-safe to raise awareness if the public path is not correct (should not happen)
-        if (publicPath.startsWith(ARTEMIS_FILE_PATH_PREFIX)) {
-            throw new IllegalArgumentException("The public path should not contain the Artemis file path prefix");
-        }
-        return Path.of(ARTEMIS_FILE_PATH_PREFIX, publicPath.toString());
-    }
-
     private String getResponsePathFromPublicPathString(@NotNull String publicPath) {
         // fail-safe to raise awareness if the public path is not correct (should not happen)
         if (publicPath.startsWith(ARTEMIS_FILE_PATH_PREFIX)) {
@@ -768,7 +760,7 @@ public class FileResource {
     }
 
     private Path getActualPathFromPublicPathString(@NotNull String publicPath, FilePathType filePathType) {
-        return FilePathService.fileSystemPathForExternalUri(URI.create(publicPath), filePathType);
+        return FilePathConverter.fileSystemPathForExternalUri(URI.create(publicPath), filePathType);
     }
 
     private MediaType getMediaTypeFromFilename(String filename) {
