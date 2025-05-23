@@ -244,8 +244,6 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
         } else if (error instanceof PasskeyAbortError || (error instanceof DOMException && this.isSafariAbortError(error))) {
             console.warn(error.message);
             return true;
-        } else if (error instanceof DOMException && error.name === 'AbortError') {
-            console.warn('Safari-specific AbortError caught:', error.message);
         } else if (error.name === 'OperationError' && error.message === 'A request is already pending.') {
             // This error occurs after logging out in connection with makePasskeyAutocompleteAvailable, we want to fail silently in that case
             console.warn(error.message);
@@ -255,6 +253,9 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
         return false;
     }
 
+    /**
+     * Safari appears to handle the abort error as {@link DOMException} instead of an {@link PasskeyAbortError}
+     */
     private isSafariAbortError(error: DOMException) {
         return error.name === 'AbortError' && error.message === 'Aborted by AbortSignal.';
     }
