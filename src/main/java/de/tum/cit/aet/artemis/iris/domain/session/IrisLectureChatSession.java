@@ -32,9 +32,4 @@ public class IrisLectureChatSession extends IrisChatSession {
     public void setLectureId(long lectureId) {
         this.lectureId = lectureId;
     }
-
-    @Override
-    public boolean shouldAcceptExternalLLMUsage() {
-        return true;
-    }
 }

@@ -1,34 +1,28 @@
 @if (irisEnabled) {
     <div class="iris-suggestion">
+        <div class="iris-headline">
+            <jhi-iris-logo [size]="IrisLogoSize.TEXT" />
+            <h5>Iris Suggestion:</h5>
+        </div>
         <div class="iris-suggestion-field">
-            <div class="iris-text-content">
-                <div class="iris-logo">
-                    <jhi-iris-logo [size]="IrisLogoSize.TEXT" />
-                </div>
-                @if (suggestion) {
-                    @for (content of suggestion?.content; track content.id) {
-                        <div>
-                            @for (line of (content | as: IrisTextMessageContent).textContent.split('\n'); track line) {
-                                <div [innerHTML]="line" class="iris-suggestion-text"></div>
-                            }
-                        </div>
-                    }
-                    <jhi-chat-status-bar [stages]="stages" />
-                } @else {
-                    @if (irisIsActive) {
-                        @if (error) {
-                            <div class="iris-suggestion-text">
-                                {{ error }}
-                            </div>
-                        } @else {
-                            <div class="iris-suggestion-text" jhiTranslate="artemisApp.iris.tutorSuggestion.loading"></div>
+            @if (suggestion) {
+                @for (content of suggestion?.content; track content.id) {
+                    <div>
+                        @for (line of (content | as: IrisTextMessageContent).textContent.split('\n'); track line) {
+                            <div [innerHTML]="line" class="iris-suggestion-text"></div>
                         }
-                        <jhi-chat-status-bar [stages]="stages" />
-                    } @else {
-                        <div class="iris-suggestion-text" jhiTranslate="artemisApp.iris.tutorSuggestion.noIris"></div>
-                    }
+                    </div>
                 }
-            </div>
+            } @else {
+                @if (error) {
+                    <div class="iris-suggestion-text">
+                        {{ error }}
+                    </div>
+                } @else {
+                    <div class="iris-suggestion-text">Loading suggestion...</div>
+                }
+            }
+            <jhi-chat-status-bar [stages]="stages" />
         </div>
     </div>
 }

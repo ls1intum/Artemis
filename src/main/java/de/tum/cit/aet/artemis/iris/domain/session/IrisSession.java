@@ -93,6 +93,4 @@ public abstract class IrisSession extends DomainObject {
         this.latestSuggestions = latestSuggestions;
     }
 
-    public abstract boolean shouldAcceptExternalLLMUsage();
-
 }

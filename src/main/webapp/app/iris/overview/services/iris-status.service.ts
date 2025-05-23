@@ -24,7 +24,7 @@ export class IrisStatusService implements OnDestroy {
     websocketStatusSubscription: Subscription;
     disconnected = false;
 
-    active = false;
+    active = true;
     activeSubject = new BehaviorSubject<boolean>(this.active);
 
     currentRatelimitInfoSubject = new BehaviorSubject<IrisRateLimitInformation>(new IrisRateLimitInformation(0, 0, 0));

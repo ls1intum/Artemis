@@ -105,10 +105,6 @@
             "chat": {
                 "helpOffer": "Wie kann ich Dir helfen?"
             },
-            "tutorSuggestion": {
-                "loading": "Lade Vorschläge...",
-                "noIris": "Iris ist derzeit nicht verfügbar."
-            },
             "chatBubble": {
                 "seeFull": "Vollständige Nachricht sehen"
             },

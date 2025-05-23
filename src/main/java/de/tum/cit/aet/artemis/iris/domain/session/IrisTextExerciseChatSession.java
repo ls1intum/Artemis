@@ -36,9 +36,4 @@ public class IrisTextExerciseChatSession extends IrisChatSession {
     public void setExerciseId(long exerciseId) {
         this.exerciseId = exerciseId;
     }
-
-    @Override
-    public boolean shouldAcceptExternalLLMUsage() {
-        return true;
-    }
 }

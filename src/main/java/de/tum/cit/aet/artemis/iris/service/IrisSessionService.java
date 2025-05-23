@@ -80,7 +80,7 @@ public class IrisSessionService {
             user = userRepository.getUserWithGroupsAndAuthorities();
         }
         var wrapper = getIrisSessionSubService(session);
-        if (session.shouldAcceptExternalLLMUsage()) {
+        if (!(wrapper.irisSession instanceof IrisTutorSuggestionSession)) {
             user.hasAcceptedExternalLLMUsageElseThrow();
         }
         wrapper.irisSubFeatureInterface.checkHasAccessTo(user, wrapper.irisSession);
