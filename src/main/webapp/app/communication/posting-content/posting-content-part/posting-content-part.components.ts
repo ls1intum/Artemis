@@ -44,7 +44,8 @@ export class PostingContentPartComponent implements OnInit, OnChanges {
     hasClickedUserReference = false;
 
     // Only allow certain html tags and attributes
-    allowedHtmlTags: string[] = ['a', 'b', 'br', 'blockquote', 'code', 'del', 'em', 'i', 'ins', 'mark', 'p', 'pre', 'small', 's', 'span', 'strong', 'sub', 'sup'];
+
+    allowedHtmlTags: string[] = ['a', 'b', 'br', 'blockquote', 'code', 'del', 'em', 'i', 'ins', 'li', 'mark', 'p', 'pre', 'small', 's', 'span', 'strong', 'sub', 'sup', 'ul', 'ol'];
     allowedHtmlAttributes: string[] = ['href'];
 
     // icons
@@ -81,22 +82,16 @@ export class PostingContentPartComponent implements OnInit, OnChanges {
 
     processContent() {
         if (this.postingContentPart()?.contentBeforeReference) {
-            this.processedContentBeforeReference = this.escapeNumberedList(this.postingContentPart()?.contentBeforeReference || '');
-            this.processedContentBeforeReference = this.escapeUnorderedList(this.processedContentBeforeReference);
+            this.processedContentBeforeReference = this.normalizeSpacing(this.postingContentPart()?.contentBeforeReference || '');
         }
 
         if (this.postingContentPart()?.contentAfterReference) {
-            this.processedContentAfterReference = this.escapeNumberedList(this.postingContentPart()?.contentAfterReference || '');
-            this.processedContentAfterReference = this.escapeUnorderedList(this.processedContentAfterReference);
+            this.processedContentAfterReference = this.normalizeSpacing(this.postingContentPart()?.contentAfterReference || '');
         }
     }
 
-    escapeNumberedList(content: string): string {
-        return content.replace(/^(\s*\d+)\. /gm, '$1\\.  ');
-    }
-
-    escapeUnorderedList(content: string): string {
-        return content.replace(/^(- )/gm, '\\$1');
+    normalizeSpacing(content: string): string {
+        return content.replace(/\n{3,}/g, '\n\n');
     }
 
     /**
