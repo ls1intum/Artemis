@@ -62,7 +62,7 @@ export class SidebarCardItemComponent implements OnInit, OnChanges {
     }
 
     protected updateShouldDisplayUnreadCount(): void {
-        this.shouldDisplayUnreadCount.set(this.sidebarItem.conversation?.isMuted == false);
+        this.shouldDisplayUnreadCount.set(!this.sidebarItem.conversation?.isMuted);
     }
 
     extractMessageUser(): void {
