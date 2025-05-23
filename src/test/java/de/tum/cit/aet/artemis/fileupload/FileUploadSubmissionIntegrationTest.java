@@ -34,7 +34,7 @@ import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.service.FilePathService;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
@@ -150,21 +150,22 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
         Path actualFilePath;
 
         if (differentFilePath) {
-            actualFilePath = FileUploadSubmission.buildFilePath(releasedFileUploadExercise.getId(), returnedSubmission.getId()).resolve(filename);
+            actualFilePath = FilePathConverter.buildFileUploadSubmissionPath(releasedFileUploadExercise.getId(), returnedSubmission.getId()).resolve(filename);
         }
         else {
             if (filename.length() < 5) {
-                actualFilePath = FileUploadSubmission.buildFilePath(releasedFileUploadExercise.getId(), returnedSubmission.getId()).resolve(Path.of("file" + filename));
+                actualFilePath = FilePathConverter.buildFileUploadSubmissionPath(releasedFileUploadExercise.getId(), returnedSubmission.getId())
+                        .resolve(Path.of("file" + filename));
             }
             else if (filename.contains("\\")) {
-                actualFilePath = FileUploadSubmission.buildFilePath(releasedFileUploadExercise.getId(), returnedSubmission.getId()).resolve("file.png");
+                actualFilePath = FilePathConverter.buildFileUploadSubmissionPath(releasedFileUploadExercise.getId(), returnedSubmission.getId()).resolve("file.png");
             }
             else {
-                actualFilePath = FileUploadSubmission.buildFilePath(releasedFileUploadExercise.getId(), returnedSubmission.getId()).resolve(filename);
+                actualFilePath = FilePathConverter.buildFileUploadSubmissionPath(releasedFileUploadExercise.getId(), returnedSubmission.getId()).resolve(filename);
             }
         }
 
-        URI publicFilePath = FilePathService.externalUriForFileSystemPath(actualFilePath, FilePathType.FILE_UPLOAD_SUBMISSION, returnedSubmission.getId());
+        URI publicFilePath = FilePathConverter.externalUriForFileSystemPath(actualFilePath, FilePathType.FILE_UPLOAD_SUBMISSION, returnedSubmission.getId());
         assertThat(returnedSubmission).as("submission correctly posted").isNotNull();
         assertThat(returnedSubmission.getFilePath()).isEqualTo(publicFilePath.toString());
         var fileBytes = Files.readAllBytes(actualFilePath);
