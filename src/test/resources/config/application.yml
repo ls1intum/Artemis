@@ -247,7 +247,7 @@ management:
                 include: ["jhimetrics"]
     endpoint:
         jhimetrics:
-            enabled: true
+            access: read_only
     info:
         env:
             enabled: true

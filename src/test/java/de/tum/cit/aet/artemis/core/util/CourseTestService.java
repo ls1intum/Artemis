@@ -111,7 +111,6 @@ import de.tum.cit.aet.artemis.core.dto.UserPublicInfoDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.CustomAuditEventRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
-import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.export.CourseExamExportService;
 import de.tum.cit.aet.artemis.core.service.export.DataExportUtil;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
@@ -3352,7 +3351,7 @@ public class CourseTestService {
         byte[] iconBytes = "icon".getBytes();
         MockMultipartFile iconFile = new MockMultipartFile("file", "icon.png", MediaType.APPLICATION_JSON_VALUE, iconBytes);
         Course savedCourseWithFile = request.putWithMultipartFile("/api/core/courses/" + savedCourse.getId(), savedCourse, "course", iconFile, Course.class, HttpStatus.OK, null);
-        Path path = FilePathService.fileSystemPathForExternalUri(URI.create(savedCourseWithFile.getCourseIcon()), FilePathType.COURSE_ICON);
+        Path path = FilePathConverter.fileSystemPathForExternalUri(URI.create(savedCourseWithFile.getCourseIcon()), FilePathType.COURSE_ICON);
 
         savedCourseWithFile.setCourseIcon(null);
         request.putWithMultipartFile("/api/core/courses/" + savedCourseWithFile.getId(), savedCourseWithFile, "course", null, Course.class, HttpStatus.OK, null);

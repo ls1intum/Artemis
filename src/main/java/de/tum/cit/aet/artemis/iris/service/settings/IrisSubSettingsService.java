@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.iris.domain.settings.IrisSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSettingsType;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisTextExerciseChatSubSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisTutorSuggestionSubSettings;
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedChatSubSettingsDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedCompetencyGenerationSubSettingsDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedCourseChatSubSettingsDTO;
@@ -34,6 +35,7 @@ import de.tum.cit.aet.artemis.iris.dto.IrisCombinedFaqIngestionSubSettingsDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedLectureChatSubSettingsDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedLectureIngestionSubSettingsDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedTextExerciseChatSubSettingsDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisCombinedTutorSuggestionSubSettingsDTO;
 
 /**
  * Service for handling {@link IrisSubSettings} objects.
@@ -76,9 +78,7 @@ public class IrisSubSettingsService {
         if (currentSettings == null) {
             currentSettings = new IrisChatSubSettings();
         }
-        if (settingsType == IrisSettingsType.EXERCISE || authCheckService.isAdmin()) {
-            currentSettings.setEnabled(newSettings.isEnabled());
-        }
+        currentSettings.setEnabled(newSettings.isEnabled());
         if (settingsType == IrisSettingsType.COURSE) {
             var enabledForCategories = newSettings.getEnabledForCategories();
             currentSettings.setEnabledForCategories(enabledForCategories);
@@ -87,11 +87,7 @@ public class IrisSubSettingsService {
             currentSettings.setRateLimit(newSettings.getRateLimit());
             currentSettings.setRateLimitTimeframeHours(newSettings.getRateLimitTimeframeHours());
         }
-        if (authCheckService.isAdmin() && settingsType == IrisSettingsType.GLOBAL) {
-            currentSettings.setDisabledProactiveEvents(newSettings.getDisabledProactiveEvents());
-
-        }
-        else if (settingsType == IrisSettingsType.COURSE || settingsType == IrisSettingsType.EXERCISE) {
+        if (settingsType == IrisSettingsType.COURSE || settingsType == IrisSettingsType.EXERCISE || authCheckService.isAdmin()) {
             currentSettings.setDisabledProactiveEvents(newSettings.getDisabledProactiveEvents());
         }
         currentSettings.setAllowedVariants(selectAllowedVariants(currentSettings.getAllowedVariants(), newSettings.getAllowedVariants()));
@@ -120,9 +116,7 @@ public class IrisSubSettingsService {
         if (currentSettings == null) {
             currentSettings = new IrisTextExerciseChatSubSettings();
         }
-        if (settingsType == IrisSettingsType.EXERCISE || authCheckService.isAdmin()) {
-            currentSettings.setEnabled(newSettings.isEnabled());
-        }
+        currentSettings.setEnabled(newSettings.isEnabled());
         if (settingsType == IrisSettingsType.COURSE) {
             var enabledForCategories = newSettings.getEnabledForCategories();
             currentSettings.setEnabledForCategories(enabledForCategories);
@@ -157,15 +151,25 @@ public class IrisSubSettingsService {
         if (currentSettings == null) {
             currentSettings = new IrisCourseChatSubSettings();
         }
-        if (authCheckService.isAdmin()) {
+
+        if (isCourseOrGlobalSettings(settingsType)) {
             currentSettings.setEnabled(newSettings.isEnabled());
-            currentSettings.setRateLimit(newSettings.getRateLimit());
-            currentSettings.setRateLimitTimeframeHours(newSettings.getRateLimitTimeframeHours());
+
+            if (authCheckService.isAdmin()) {
+                currentSettings.setRateLimit(newSettings.getRateLimit());
+                currentSettings.setRateLimitTimeframeHours(newSettings.getRateLimitTimeframeHours());
+            }
+
+            currentSettings.setAllowedVariants(selectAllowedVariants(currentSettings.getAllowedVariants(), newSettings.getAllowedVariants()));
+            currentSettings.setSelectedVariant(validateSelectedVariant(currentSettings.getSelectedVariant(), newSettings.getSelectedVariant(), currentSettings.getAllowedVariants(),
+                    parentSettings != null ? parentSettings.allowedVariants() : null));
         }
-        currentSettings.setAllowedVariants(selectAllowedVariants(currentSettings.getAllowedVariants(), newSettings.getAllowedVariants()));
-        currentSettings.setSelectedVariant(validateSelectedVariant(currentSettings.getSelectedVariant(), newSettings.getSelectedVariant(), currentSettings.getAllowedVariants(),
-                parentSettings != null ? parentSettings.allowedVariants() : null));
+
         return currentSettings;
+    }
+
+    private static boolean isCourseOrGlobalSettings(IrisSettingsType settingsType) {
+        return settingsType == IrisSettingsType.COURSE || settingsType == IrisSettingsType.GLOBAL;
     }
 
     /**
@@ -191,7 +195,7 @@ public class IrisSubSettingsService {
             currentSettings = new IrisLectureIngestionSubSettings();
         }
 
-        if (authCheckService.isAdmin() && (settingsType == IrisSettingsType.COURSE || settingsType == IrisSettingsType.GLOBAL)) {
+        if (isCourseOrGlobalSettings(settingsType)) {
             currentSettings.setEnabled(newSettings.isEnabled());
             currentSettings.setAutoIngestOnLectureAttachmentUpload(newSettings.getAutoIngestOnLectureAttachmentUpload());
         }
@@ -222,8 +226,15 @@ public class IrisSubSettingsService {
             currentSettings = new IrisLectureChatSubSettings();
         }
 
-        if (authCheckService.isAdmin() && (settingsType == IrisSettingsType.COURSE || settingsType == IrisSettingsType.GLOBAL)) {
+        if (isCourseOrGlobalSettings(settingsType)) {
             currentSettings.setEnabled(newSettings.isEnabled());
+            if (authCheckService.isAdmin()) {
+                currentSettings.setRateLimit(newSettings.getRateLimit());
+                currentSettings.setRateLimitTimeframeHours(newSettings.getRateLimitTimeframeHours());
+            }
+            currentSettings.setAllowedVariants(selectAllowedVariants(currentSettings.getAllowedVariants(), newSettings.getAllowedVariants()));
+            currentSettings.setSelectedVariant(validateSelectedVariant(currentSettings.getSelectedVariant(), newSettings.getSelectedVariant(), currentSettings.getAllowedVariants(),
+                    parentSettings != null ? parentSettings.allowedVariants() : null));
         }
 
         return currentSettings;
@@ -252,7 +263,7 @@ public class IrisSubSettingsService {
             currentSettings = new IrisFaqIngestionSubSettings();
         }
 
-        if (authCheckService.isAdmin() && (settingsType == IrisSettingsType.COURSE || settingsType == IrisSettingsType.GLOBAL)) {
+        if (isCourseOrGlobalSettings(settingsType)) {
             currentSettings.setEnabled(newSettings.isEnabled());
             currentSettings.setAutoIngestOnFaqCreation(newSettings.getAutoIngestOnFaqCreation());
         }
@@ -284,12 +295,49 @@ public class IrisSubSettingsService {
         if (currentSettings == null) {
             currentSettings = new IrisCompetencyGenerationSubSettings();
         }
-        if (authCheckService.isAdmin()) {
+
+        if (isCourseOrGlobalSettings(settingsType)) {
             currentSettings.setEnabled(newSettings.isEnabled());
             currentSettings.setAllowedVariants(selectAllowedVariants(currentSettings.getAllowedVariants(), newSettings.getAllowedVariants()));
+            currentSettings.setSelectedVariant(validateSelectedVariant(currentSettings.getSelectedVariant(), newSettings.getSelectedVariant(), currentSettings.getAllowedVariants(),
+                    parentSettings != null ? parentSettings.allowedVariants() : null));
         }
-        currentSettings.setSelectedVariant(validateSelectedVariant(currentSettings.getSelectedVariant(), newSettings.getSelectedVariant(), currentSettings.getAllowedVariants(),
-                parentSettings != null ? parentSettings.allowedVariants() : null));
+
+        return currentSettings;
+    }
+
+    /**
+     * Updates a Tutor Suggestion sub settings object.
+     * If the new settings are null, the current settings will be deleted (except if the parent settings are null == if the settings are global).
+     * Special notes:
+     * - If user is not an admin the allowed models will not be updated.
+     * - If user is not an admin the preferred model will only be updated if it is included in the allowed models.
+     *
+     * @param currentSettings Current Tutor Suggestion sub settings.
+     * @param newSettings     Updated Tutor Suggestion sub settings.
+     * @param parentSettings  Parent Tutor Suggestion sub settings.
+     * @param settingsType    Type of the settings the sub settings belong to.
+     * @return Updated Tutor Suggestion sub settings.
+     */
+    public IrisTutorSuggestionSubSettings update(IrisTutorSuggestionSubSettings currentSettings, IrisTutorSuggestionSubSettings newSettings,
+            IrisCombinedTutorSuggestionSubSettingsDTO parentSettings, IrisSettingsType settingsType) {
+        if (newSettings == null) {
+            if (parentSettings == null) {
+                throw new IllegalArgumentException("Cannot delete the Tutor Suggestion settings");
+            }
+            return null;
+        }
+        if (currentSettings == null) {
+            currentSettings = new IrisTutorSuggestionSubSettings();
+        }
+
+        if (isCourseOrGlobalSettings(settingsType)) {
+            currentSettings.setEnabled(newSettings.isEnabled());
+            currentSettings.setAllowedVariants(selectAllowedVariants(currentSettings.getAllowedVariants(), newSettings.getAllowedVariants()));
+            currentSettings.setSelectedVariant(validateSelectedVariant(currentSettings.getSelectedVariant(), newSettings.getSelectedVariant(), currentSettings.getAllowedVariants(),
+                    parentSettings != null ? parentSettings.allowedVariants() : null));
+        }
+
         return currentSettings;
     }
 
@@ -378,9 +426,11 @@ public class IrisSubSettingsService {
      * @return Combined lecture chat settings.
      */
     public IrisCombinedLectureChatSubSettingsDTO combineLectureChatSettings(ArrayList<IrisSettings> settingsList, boolean minimal) {
-        var enabled = getCombinedEnabled(settingsList, IrisSettings::getIrisLectureChatSettings);
-        var rateLimit = getCombinedRateLimit(settingsList);
-        return new IrisCombinedLectureChatSubSettingsDTO(enabled, rateLimit, null);
+        boolean enabled = getCombinedEnabled(settingsList, IrisSettings::getIrisLectureChatSettings);
+        Integer rateLimit = getCombinedRateLimit(settingsList);
+        SortedSet<String> allowedVariants = !minimal ? getCombinedAllowedVariants(settingsList, IrisSettings::getIrisLectureChatSettings) : null;
+        String selectedVariant = !minimal ? getCombinedSelectedVariant(settingsList, IrisSettings::getIrisLectureChatSettings) : null;
+        return new IrisCombinedLectureChatSubSettingsDTO(enabled, rateLimit, null, allowedVariants, selectedVariant);
     }
 
     /**
@@ -443,6 +493,20 @@ public class IrisSubSettingsService {
         var allowedVariants = !minimal ? getCombinedAllowedVariants(actualSettingsList, IrisSettings::getIrisCompetencyGenerationSettings) : null;
         var selectedVariant = !minimal ? getCombinedSelectedVariant(actualSettingsList, IrisSettings::getIrisCompetencyGenerationSettings) : null;
         return new IrisCombinedCompetencyGenerationSubSettingsDTO(enabled, allowedVariants, selectedVariant);
+    }
+
+    /**
+     * Combines the Tutor Suggestion settings of multiple {@link IrisSettings} objects.
+     *
+     * @param settingsList List of {@link IrisSettings} objects to combine.
+     * @param minimal      Whether to return a minimal version of the combined settings.
+     * @return Combined Tutor Suggestion settings.
+     */
+    public IrisCombinedTutorSuggestionSubSettingsDTO combineTutorSuggestionSettings(ArrayList<IrisSettings> settingsList, boolean minimal) {
+        var enabled = getCombinedEnabled(settingsList, IrisSettings::getIrisTutorSuggestionSettings);
+        var allowedVariants = !minimal ? getCombinedAllowedVariants(settingsList, IrisSettings::getIrisTutorSuggestionSettings) : null;
+        var selectedVariant = !minimal ? getCombinedSelectedVariant(settingsList, IrisSettings::getIrisTutorSuggestionSettings) : null;
+        return new IrisCombinedTutorSuggestionSubSettingsDTO(enabled, allowedVariants, selectedVariant);
     }
 
     /**

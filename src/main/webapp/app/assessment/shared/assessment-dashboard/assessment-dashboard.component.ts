@@ -37,6 +37,9 @@ import { CourseManagementService } from 'app/core/course/manage/services/course-
 import { SecondCorrectionEnableButtonComponent } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/second-correction-button/second-correction-enable-button.component';
 import { MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
 import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
+import { CourseTitleBarActionsDirective } from 'app/core/course/shared/directives/course-title-bar-actions.directive';
+import { CourseTitleBarTitleComponent } from 'app/core/course/shared/course-title-bar-title/course-title-bar-title.component';
+import { CourseTitleBarTitleDirective } from 'app/core/course/shared/directives/course-title-bar-title.directive';
 
 @Component({
     selector: 'jhi-assessment-dashboard',
@@ -62,6 +65,9 @@ import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/f
         SortDirective,
         SortByDirective,
         FeatureOverlayComponent,
+        CourseTitleBarActionsDirective,
+        CourseTitleBarTitleComponent,
+        CourseTitleBarTitleDirective,
     ],
 })
 export class AssessmentDashboardComponent implements OnInit {

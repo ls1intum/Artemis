@@ -11,6 +11,7 @@ public record IrisCombinedSettingsDTO(
         IrisCombinedLectureIngestionSubSettingsDTO irisLectureIngestionSettings,
         IrisCombinedCompetencyGenerationSubSettingsDTO irisCompetencyGenerationSettings,
         IrisCombinedLectureChatSubSettingsDTO irisLectureChatSettings,
-        IrisCombinedFaqIngestionSubSettingsDTO irisFaqIngestionSettings
+        IrisCombinedFaqIngestionSubSettingsDTO irisFaqIngestionSettings,
+        IrisCombinedTutorSuggestionSubSettingsDTO irisTutorSuggestionSettings
 ) {}
 // @formatter:on
