@@ -295,6 +295,8 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
     void updateCourseSettingsCategories(List<String> operations, List<List<String>> categories, boolean exerciseEnabled) throws Exception {
         activateIrisGlobally();
         activateIrisFor(course);
+        disableIrisFor(programmingExercise);
+        disableIrisFor(textExercise);
         course = courseRepository.findByIdElseThrow(course.getId());
 
         for (int i = 0; i < operations.size(); i++) {
