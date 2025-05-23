@@ -222,13 +222,6 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
      * @return true if the error is an expected error related to making passkey autocomplete available
      */
     private isPasskeyAutocompleteError(error: Error | DOMException): boolean {
-        // const isSafariAbortError = error.name === 'AbortError' && error.message === 'The operation was aborted.';
-
-        console.log('error', error);
-        console.log(error);
-        console.log('error name', error.name);
-        console.log('error message', error.message);
-
         if (error.name === USER_CANCELLED_LOGIN_WITH_PASSKEY_ERROR) {
             // The user manually aborted the passkey login process after clicking the "Sign in with passkey" button.
             // This required aborting the `getCredential` request with <a href="https://www.corbado.com/blog/webauthn-conditional-ui-passkeys-autofill">conditional mediation</a>,
