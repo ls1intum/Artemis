@@ -162,17 +162,17 @@ class FilePathConverterTest {
     }
 
     @Test
-    void testFileSystemPathForExternalUriInvalidAttachmentUnit() {
+    void testFileSystemPathForExternalUriInvalidAttachmentVideoUnit() {
         assertThatExceptionOfType(FilePathParsingException.class)
                 .isThrownBy(() -> FilePathConverter.fileSystemPathForExternalUri(URI.create("attachments/attachment-unit/file.pdf"), FilePathType.ATTACHMENT_UNIT))
-                .withMessageContaining("attachmentUnitId");
+                .withMessageContaining("attachmentVideoUnitId");
     }
 
     @Test
     void testFileSystemPathForExternalUriInvalidSlide() {
         assertThatExceptionOfType(FilePathParsingException.class)
                 .isThrownBy(() -> FilePathConverter.fileSystemPathForExternalUri(URI.create("attachments/attachment-unit/4/slide/slide.jpg"), FilePathType.SLIDE))
-                .withMessageContaining("attachmentUnitId or slideId");
+                .withMessageContaining("attachmentVideoUnitId or slideId");
     }
 
     @Test
@@ -191,21 +191,21 @@ class FilePathConverterTest {
 
     @Test
     void testExternalUriForSlideFileSystemPathShouldThrowException() {
-        // Path too short, missing attachmentUnitId
+        // Path too short, missing attachmentVideoUnitId
         Path invalidPath = rootPath.resolve("attachments").resolve("attachment-unit").resolve("slide").resolve("1").resolve("slide1.pdf");
         assertThatExceptionOfType(FilePathParsingException.class).isThrownBy(() -> {
             // id is arbitrary here, since the path is invalid
             FilePathConverter.externalUriForFileSystemPath(invalidPath, FilePathType.SLIDE, 1L);
-        }).withMessageContaining("AttachmentUnit ID should be present here");
+        }).withMessageContaining("AttachmentVideoUnit ID should be present here");
     }
 
     @Test
     void testGetStudentVersionSlidesFileSystemPathShouldThrowException() {
-        // Path too short, missing attachmentUnitId
+        // Path too short, missing attachmentVideoUnitId
         Path invalidPath = Path.of("attachments", "attachment-unit", "student", "notes.pdf");
         assertThatExceptionOfType(FilePathParsingException.class)
                 .isThrownBy(() -> FilePathConverter.fileSystemPathForExternalUri((invalidPath.toUri()), FilePathType.STUDENT_VERSION_SLIDES))
-                .withMessageContaining("attachmentUnitId");
+                .withMessageContaining("attachmentVideoUnitId");
     }
 
     @Test

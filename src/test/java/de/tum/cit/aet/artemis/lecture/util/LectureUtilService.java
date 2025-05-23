@@ -237,6 +237,8 @@ public class LectureUtilService {
         attachmentOfAttachmentVideoUnit.setAttachmentVideoUnit(attachmentVideoUnit);
         attachmentOfAttachmentVideoUnit = attachmentRepository.save(attachmentOfAttachmentVideoUnit);
         attachmentVideoUnit.setAttachment(attachmentOfAttachmentVideoUnit);
+        attachmentVideoUnit.setName(attachmentOfAttachmentVideoUnit.getName());
+        attachmentVideoUnit.setReleaseDate(attachmentOfAttachmentVideoUnit.getReleaseDate());
         return attachmentVideoUnitRepository.save(attachmentVideoUnit);
     }
 

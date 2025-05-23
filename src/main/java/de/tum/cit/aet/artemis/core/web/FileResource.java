@@ -647,7 +647,7 @@ public class FileResource {
      * @param attachmentVideoUnitId ID of the attachment video unit, the student version belongs to
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
-    @GetMapping("files/attachments/attachment-video-unit/{attachmentVideoUnitId}/student/*")
+    @GetMapping("files/attachments/attachment-unit/{attachmentVideoUnitId}/student/*")
     @EnforceAtLeastStudent
     public ResponseEntity<byte[]> getAttachmentVideoUnitStudentVersion(@PathVariable long attachmentVideoUnitId) {
         log.debug("REST request to get the student version of attachment video unit : {}", attachmentVideoUnitId);
