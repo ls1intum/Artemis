@@ -168,7 +168,8 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
 
     /**
      * Ensures that passkey autocomplete functionality is available by initiating a credential request
-     * with conditional mediation. This is required to enable the browser's passkey autocomplete feature.
+     * with <a href="https://www.corbado.com/blog/webauthn-conditional-ui-passkeys-autofill">conditional mediation</a>.
+     * This is required to enable the browser's passkey autocomplete feature.
      */
     async makePasskeyAutocompleteAvailable() {
         await this.loginWithPasskey(true);
@@ -177,7 +178,7 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
     /**
      * Performs a passkey login. This includes requesting the passkey credential from the authenticator.
      *
-     * @param isConditional set to true if the passkey credential shall be requested with conditional mediation (required for the passkey autocomplete)
+     * @param isConditional set to true if the passkey credential shall be requested with <a href="https://www.corbado.com/blog/webauthn-conditional-ui-passkeys-autofill">conditional mediation</a> (required for the passkey autocomplete)
      */
     async loginWithPasskey(isConditional: boolean = false) {
         try {
@@ -223,7 +224,8 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
     private isPasskeyAutocompleteError(error: Error): boolean {
         if (error.name === USER_CANCELLED_LOGIN_WITH_PASSKEY_ERROR) {
             // The user manually aborted the passkey login process after clicking the "Sign in with passkey" button.
-            // This required aborting the `getCredential` request with conditional mediation, which is necessary for enabling passkey autocomplete.
+            // This required aborting the `getCredential` request with <a href="https://www.corbado.com/blog/webauthn-conditional-ui-passkeys-autofill">conditional mediation</a>,
+            // which is necessary for enabling passkey autocomplete.
             // To restore passkey autocomplete functionality, re-invoke `makePasskeyAutocompleteAvailable`.
             console.warn('Operation not allowed or timed out: login with passkey was aborted manually by the user');
             const isInRecursiveFailingLoop = this.isRetryingPasskeyAutocompleteRequest;

@@ -22,7 +22,7 @@ export class WebauthnService {
     /**
      * Retrieves a credential from the client, according to the options provided by the server.
      *
-     * @param isConditional true if credential shall be requested with conditional mediation
+     * @param isConditional true if credential shall be requested with <a href="https://www.corbado.com/blog/webauthn-conditional-ui-passkeys-autofill">conditional mediation</a>
      * @returns the credential or undefined if no credential was selected or retrievable
      */
     async getCredential(isConditional: boolean): Promise<PublicKeyCredential | undefined> {
