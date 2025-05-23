@@ -14,7 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.FilePathType;
-import de.tum.cit.aet.artemis.core.service.FilePathService;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
@@ -65,7 +65,7 @@ class AttachmentServiceTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
     void testRegenerateStudentVersion_withNoHiddenSlides() {
         String originalPath = testAttachment1.getStudentVersion();
-        Path actualFilePath = FilePathService.fileSystemPathForExternalUri(URI.create(originalPath), FilePathType.STUDENT_VERSION_SLIDES);
+        Path actualFilePath = FilePathConverter.fileSystemPathForExternalUri(URI.create(originalPath), FilePathType.STUDENT_VERSION_SLIDES);
 
         attachmentService.regenerateStudentVersion(testAttachment1);
         assertThat(testAttachment1.getStudentVersion()).isNull();
@@ -77,7 +77,7 @@ class AttachmentServiceTest extends AbstractSpringIntegrationIndependentTest {
     void testRegenerateStudentVersion_withHiddenSlides() {
         attachmentService.regenerateStudentVersion(testAttachment2);
         String originalPath = testAttachment2.getStudentVersion();
-        Path actualFilePath = FilePathService.fileSystemPathForExternalUri(URI.create(originalPath), FilePathType.STUDENT_VERSION_SLIDES);
+        Path actualFilePath = FilePathConverter.fileSystemPathForExternalUri(URI.create(originalPath), FilePathType.STUDENT_VERSION_SLIDES);
 
         assertThat(testAttachment2.getStudentVersion()).isNotNull();
         assertThat(Files.exists(actualFilePath)).isTrue();
@@ -108,7 +108,7 @@ class AttachmentServiceTest extends AbstractSpringIntegrationIndependentTest {
         List<Slide> hiddenSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachment2.getAttachmentVideoUnit().getId());
 
         byte[] pdfData = attachmentService.generateStudentVersionPdf(
-                FilePathService.fileSystemPathForExternalUri(URI.create(testAttachment2.getLink()), FilePathType.ATTACHMENT_UNIT).toFile(), hiddenSlides);
+                FilePathConverter.fileSystemPathForExternalUri(URI.create(testAttachment2.getLink()), FilePathType.ATTACHMENT_UNIT).toFile(), hiddenSlides);
 
         // Verify output
         assertThat(pdfData).isNotNull();

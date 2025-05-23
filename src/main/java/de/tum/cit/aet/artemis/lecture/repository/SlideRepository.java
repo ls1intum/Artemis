@@ -24,7 +24,7 @@ import de.tum.cit.aet.artemis.lecture.dto.SlideUnhideDTO;
 @Repository
 public interface SlideRepository extends ArtemisJpaRepository<Slide, Long> {
 
-    Slide findSlideByAttachmentVideoUnitIdAndSlideNumber(Long attachmentVideoUnitId, Integer slideNumber);
+    Slide findSlideByAttachmentVideoUnitIdAndSlideNumber(long attachmentVideoUnitId, int slideNumber);
 
     List<Slide> findAllByAttachmentVideoUnitId(Long attachmentUnitId);
 

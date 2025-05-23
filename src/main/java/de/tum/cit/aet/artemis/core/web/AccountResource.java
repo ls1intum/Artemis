@@ -39,10 +39,10 @@ import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AccountService;
-import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.core.service.user.UserService;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCPersonalAccessTokenManagementService;
 
 /**
@@ -222,15 +222,15 @@ public class AccountResource {
         }
 
         User user = userRepository.getUser();
-        Path basePath = FilePathService.getProfilePictureFilePath();
+        Path basePath = FilePathConverter.getProfilePictureFilePath();
 
         // Delete existing
         if (user.getImageUrl() != null) {
-            fileService.schedulePathForDeletion(FilePathService.fileSystemPathForExternalUri(new URI(user.getImageUrl()), FilePathType.PROFILE_PICTURE), 0);
+            fileService.schedulePathForDeletion(FilePathConverter.fileSystemPathForExternalUri(new URI(user.getImageUrl()), FilePathType.PROFILE_PICTURE), 0);
         }
 
         Path savePath = fileService.saveFile(file, basePath, FilePathType.PROFILE_PICTURE, false);
-        String publicPath = FilePathService.externalUriForFileSystemPath(savePath, FilePathType.PROFILE_PICTURE, user.getId()).toString();
+        String publicPath = FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.PROFILE_PICTURE, user.getId()).toString();
         userRepository.updateUserImageUrl(user.getId(), publicPath);
         user.setImageUrl(publicPath);
         return ResponseEntity.ok(new UserDTO(user));
@@ -247,7 +247,7 @@ public class AccountResource {
         log.debug("REST request to remove profile picture for logged-in user");
         User user = userRepository.getUser();
         if (user.getImageUrl() != null) {
-            fileService.schedulePathForDeletion(FilePathService.fileSystemPathForExternalUri(new URI(user.getImageUrl()), FilePathType.PROFILE_PICTURE), 0);
+            fileService.schedulePathForDeletion(FilePathConverter.fileSystemPathForExternalUri(new URI(user.getImageUrl()), FilePathType.PROFILE_PICTURE), 0);
             userRepository.updateUserImageUrl(user.getId(), null);
         }
         return ResponseEntity.ok().build();

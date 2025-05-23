@@ -26,10 +26,10 @@ import de.tum.cit.aet.artemis.communication.test_repository.ConversationTestRepo
 import de.tum.cit.aet.artemis.communication.util.ConversationFactory;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
@@ -268,7 +268,7 @@ public class LectureUtilService {
             // we have to set a dummy value here, as null is not allowed. The correct value is set below.
             slide.setSlideImagePath("dummy");
             slide = slideRepository.save(slide);
-            Path slidePath = FilePathService.getAttachmentVideoUnitFileSystemPath()
+            Path slidePath = FilePathConverter.getAttachmentVideoUnitFileSystemPath()
                     .resolve(Path.of(attachmentVideoUnit.getId().toString(), "slide", slide.getId().toString(), testFileName));
             try {
                 FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/attachment/placeholder.jpg"), slidePath.toFile());
@@ -305,7 +305,7 @@ public class LectureUtilService {
             slide.setSlideNumber(i);
             String testFileName = "slide" + i + ".png";
             try {
-                FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/attachment/placeholder.jpg"), FilePathService.getTempFilePath().resolve(testFileName).toFile());
+                FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/attachment/placeholder.jpg"), FilePathConverter.getTempFilePath().resolve(testFileName).toFile());
             }
             catch (IOException ex) {
                 fail("Failed while copying test attachment files", ex);

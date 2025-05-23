@@ -30,7 +30,7 @@ public class AccountService {
      * @return whether the registration is enabled or not
      */
     public boolean isRegistrationDisabled() {
-        return registrationEnabled.isEmpty() || Boolean.FALSE.equals(registrationEnabled.get());
+        return registrationEnabled.isEmpty() || !registrationEnabled.get();
     }
 
     /**

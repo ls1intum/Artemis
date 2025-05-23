@@ -38,7 +38,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.service.FilePathService;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserDTO;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
@@ -367,8 +367,26 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetAttachmentUnitStudentVersion() throws Exception {
+        testGetAttachmentUnitAsStudent();
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetAttachmentVideoUnitAttachmentFilenameSanitization() throws Exception {
+        testGetAttachmentUnitAsTutor();
+    }
+
+    private void testGetAttachmentVideoUnitAsStudent() throws Exception {
+        testGetAttachmentVideoUnit(false);
+    }
+
+    private void testGetAttachmentVideoUnitAsTutor() throws Exception {
+        testGetAttachmentVideoUnit(true);
+    }
+
+    private void testGetAttachmentVideoUnit(boolean isTutor) throws Exception {
         Path tempFile = Files.createTempFile("dummy", ".pdf");
         byte[] dummyContent = "dummy pdf content".getBytes();
         FileUtils.writeByteArrayToFile(tempFile.toFile(), dummyContent);
@@ -387,11 +405,12 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         attachmentRepo.save(attachment);
         attachmentVideoUnitRepo.save(attachmentVideoUnit);
 
-        String unsanitizedFilename = unsanitizedName + ".pdf";
-        String url = "/api/core/files/attachments/attachment-unit/" + attachmentVideoUnit.getId() + "/" + unsanitizedFilename;
+        String unsanitizedFilename = "AttachmentUnit_2025-05-10T12-10-34_" + unsanitizedName + ".pdf";
+        String url = isTutor ? "/api/core/files/attachments/attachment-unit/" + attachmentVideoUnit.getId() + "/" + unsanitizedFilename
+                : "/api/core/files/attachments/attachment-unit/" + attachmentVideoUnit.getId() + "/student/" + unsanitizedFilename;
 
-        try (MockedStatic<FilePathService> filePathServiceMock = Mockito.mockStatic(FilePathService.class)) {
-            filePathServiceMock.when(() -> FilePathService.fileSystemPathForExternalUri(Mockito.any(URI.class), Mockito.eq(FilePathType.ATTACHMENT_UNIT))).thenReturn(tempFile);
+        try (MockedStatic<FilePathConverter> filePathServiceMock = Mockito.mockStatic(FilePathConverter.class)) {
+            filePathServiceMock.when(() -> FilePathConverter.fileSystemPathForExternalUri(Mockito.any(URI.class), Mockito.eq(FilePathType.ATTACHMENT_UNIT))).thenReturn(tempFile);
 
             MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
 
@@ -401,7 +420,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             String contentDisposition = result.getResponse().getHeader("Content-Disposition");
             assertThat(contentDisposition).isNotNull();
             assertThat(contentDisposition).doesNotContain("–");
-            assertThat(contentDisposition).contains("filename=");
+            assertThat(contentDisposition).contains("filename=\"test_file.pdf\"");
         }
     }
 
