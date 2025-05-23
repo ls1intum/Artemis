@@ -23,7 +23,7 @@ export class PlagiarismHeaderComponent {
     private plagiarismCasesService = inject(PlagiarismCasesService);
     private modalService = inject(NgbModal);
 
-    readonly comparison = input<PlagiarismComparison<TextSubmissionElement>>(undefined!);
+    readonly comparison = input<PlagiarismComparison<TextSubmissionElement> | undefined>(undefined!);
     readonly exercise = input<Exercise>(undefined!);
     readonly splitControlSubject = input<Subject<string>>(undefined!);
 
@@ -41,7 +41,7 @@ export class PlagiarismHeaderComponent {
      * Set the status of the currently selected comparison to DENIED.
      */
     denyPlagiarism() {
-        if (this.comparison().status === PlagiarismStatus.CONFIRMED) {
+        if (this.comparison()?.status === PlagiarismStatus.CONFIRMED) {
             this.askForConfirmationOfDenying(() => this.updatePlagiarismStatus(PlagiarismStatus.DENIED));
         } else {
             this.updatePlagiarismStatus(PlagiarismStatus.DENIED);
@@ -66,10 +66,12 @@ export class PlagiarismHeaderComponent {
         this.isLoading = true;
         // store comparison in variable in case comparison changes while request is made
         const comparison = this.comparison();
-        this.plagiarismCasesService.updatePlagiarismComparisonStatus(getCourseId(this.exercise())!, comparison.id, status).subscribe(() => {
-            comparison.status = status;
-            this.isLoading = false;
-        });
+        if (comparison && comparison.id) {
+            this.plagiarismCasesService.updatePlagiarismComparisonStatus(getCourseId(this.exercise())!, comparison!.id, status).subscribe(() => {
+                comparison.status = status;
+                this.isLoading = false;
+            });
+        }
     }
 
     expandSplitPane(pane: 'left' | 'right') {

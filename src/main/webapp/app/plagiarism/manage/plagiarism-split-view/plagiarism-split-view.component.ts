@@ -28,7 +28,7 @@ export class SplitPaneDirective {
 export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, OnInit, OnDestroy {
     private plagiarismCasesService = inject(PlagiarismCasesService);
 
-    readonly comparison = input<PlagiarismComparison<TextSubmissionElement>>(undefined!);
+    readonly comparison = input<PlagiarismComparison<TextSubmissionElement> | undefined>(undefined!);
     readonly exercise = input<Exercise>(undefined!);
     readonly splitControlSubject = input<Subject<string>>(undefined!);
     readonly sortByStudentLogin = input<string>(undefined!);

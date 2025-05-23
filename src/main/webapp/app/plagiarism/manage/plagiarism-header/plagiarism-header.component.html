@@ -1,14 +1,14 @@
 <div class="plagiarism-header">
     <div class="plagiarism-header-left">
         <h5 class="fw-medium">
-            {{ comparison().submissionA.studentLogin || ('artemisApp.plagiarism.unknownStudent' | artemisTranslate) }},
-            {{ comparison().submissionB.studentLogin || ('artemisApp.plagiarism.unknownStudent' | artemisTranslate) }}
+            {{ comparison()?.submissionA?.studentLogin || ('artemisApp.plagiarism.unknownStudent' | artemisTranslate) }},
+            {{ comparison()?.submissionB?.studentLogin || ('artemisApp.plagiarism.unknownStudent' | artemisTranslate) }}
         </h5>
     </div>
 
     <div class="plagiarism-header-right">
         @if (!exercise().teamMode) {
-            @if (comparison().status === plagiarismStatus.CONFIRMED) {
+            @if (comparison()?.status === plagiarismStatus.CONFIRMED) {
                 <button
                     class="btn btn-primary btn-sm"
                     data-qa="view-plagiarism-cases-button"
@@ -32,7 +32,7 @@
                 (click)="denyPlagiarism()"
                 data-qa="deny-plagiarism-button"
                 jhiTranslate="artemisApp.plagiarism.deny"
-                [disabled]="comparison().status === plagiarismStatus.DENIED || isLoading"
+                [disabled]="comparison()?.status === plagiarismStatus.DENIED || isLoading"
             ></button>
         } @else {
             <fa-icon [icon]="faCircleInfo" class="fa-light text-secondary" />

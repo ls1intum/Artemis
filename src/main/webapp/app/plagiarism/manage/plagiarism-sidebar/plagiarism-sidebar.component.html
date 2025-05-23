@@ -16,7 +16,7 @@
             <span jhiTranslate="artemisApp.plagiarism.casesTrimmed"></span>
         </div>
     }
-    @if (comparisons() && comparisons().length) {
+    @if (comparisons() && comparisons()?.length) {
         <ul class="plagiarism-list">
             @for (comparison of pagedComparisons; track comparison; let idx = $index) {
                 <li class="plagiarism-list-item" [class.selected]="!showRunDetails() && comparison.id === activeID()" (click)="selectIndex.emit(comparison.id)">
@@ -41,7 +41,7 @@
             }
         </ul>
     }
-    @if (!comparisons() || !comparisons().length) {
+    @if (!comparisons() || !comparisons()?.length) {
         <div class="plagiarism-empty" jhiTranslate="artemisApp.plagiarism.notFound"></div>
     }
     <div class="plagiarism-paging">
