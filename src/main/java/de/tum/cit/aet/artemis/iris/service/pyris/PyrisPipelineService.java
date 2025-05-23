@@ -31,7 +31,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisExerciseChatSession;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisProgrammingExerciseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
 import de.tum.cit.aet.artemis.iris.exception.IrisException;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionDTO;
@@ -155,8 +155,8 @@ public class PyrisPipelineService {
      * @param eventVariant     if this function triggers a pipeline execution due to a specific event, this is the used event variant
      * @see PyrisPipelineService#executePipeline for more details on the pipeline execution process.
      */
-    public void executeExerciseChatPipeline(String variant, Optional<ProgrammingSubmission> latestSubmission, ProgrammingExercise exercise, IrisExerciseChatSession session,
-            Optional<String> eventVariant) {
+    public void executeExerciseChatPipeline(String variant, Optional<ProgrammingSubmission> latestSubmission, ProgrammingExercise exercise,
+            IrisProgrammingExerciseChatSession session, Optional<String> eventVariant) {
         // @formatter:off
         executePipeline(
                 "programming-exercise-chat",

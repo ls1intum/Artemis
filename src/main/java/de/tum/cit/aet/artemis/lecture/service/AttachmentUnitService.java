@@ -85,7 +85,7 @@ public class AttachmentUnitService {
         Attachment savedAttachment = attachmentRepository.saveAndFlush(attachment);
         savedAttachmentUnit.setAttachment(savedAttachment);
         evictCache(file, savedAttachmentUnit);
-        irisLectureApi.ifPresent(api -> api.autoUpdateAttachmentUnitsInPyris(lecture.getCourse().getId(), List.of(savedAttachmentUnit)));
+        irisLectureApi.ifPresent(api -> api.autoUpdateAttachmentUnitsInPyris(List.of(savedAttachmentUnit)));
         return savedAttachmentUnit;
     }
 
@@ -136,7 +136,7 @@ public class AttachmentUnitService {
                     slideSplitterService.splitAttachmentUnitIntoSingleSlides(savedAttachmentUnit, hiddenPages, pageOrder);
                 }
             }
-            irisLectureApi.ifPresent(api -> api.autoUpdateAttachmentUnitsInPyris(savedAttachmentUnit.getLecture().getCourse().getId(), List.of(savedAttachmentUnit)));
+            irisLectureApi.ifPresent(api -> api.autoUpdateAttachmentUnitsInPyris(List.of(savedAttachmentUnit)));
         }
 
         // Set the original competencies back to the attachment unit so that the competencyProgressService can determine which competencies changed

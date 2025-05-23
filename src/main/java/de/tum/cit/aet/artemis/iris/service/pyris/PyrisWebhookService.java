@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -25,7 +26,6 @@ import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.service.FilePathService;
-import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.dto.IngestionState;
 import de.tum.cit.aet.artemis.iris.exception.IrisInternalPyrisErrorException;
 import de.tum.cit.aet.artemis.iris.repository.IrisSettingsRepository;
@@ -202,16 +202,20 @@ public class PyrisWebhookService {
     /**
      * send the updated / created attachment to Pyris for ingestion if autoLecturesUpdate is enabled
      *
-     * @param courseId           Id of the course where the attachment is added
      * @param newAttachmentUnits the new attachment Units to be sent to pyris for ingestion
      */
-    public void autoUpdateAttachmentUnitsInPyris(Long courseId, List<AttachmentUnit> newAttachmentUnits) {
-        IrisCourseSettings courseSettings = irisSettingsRepository.findCourseSettings(courseId).isPresent() ? irisSettingsRepository.findCourseSettings(courseId).get() : null;
-        if (courseSettings != null && courseSettings.getIrisLectureIngestionSettings() != null && courseSettings.getIrisLectureIngestionSettings().isEnabled()
-                && courseSettings.getIrisLectureIngestionSettings().getAutoIngestOnLectureAttachmentUpload()) {
-            for (AttachmentUnit attachmentUnit : newAttachmentUnits) {
-                addLectureUnitToPyrisDB(attachmentUnit);
-            }
+    public void autoUpdateAttachmentUnitsInPyris(List<AttachmentUnit> newAttachmentUnits) {
+        var course = newAttachmentUnits.stream().map(AttachmentUnit::getLecture).filter(Objects::nonNull).map(Lecture::getCourse).filter(Objects::nonNull).findFirst();
+
+        if (course.isEmpty()) {
+            return;
+        }
+        var settings = irisSettingsService.getCombinedIrisSettingsFor(course.get(), false).irisLectureIngestionSettings();
+        if (!settings.enabled() || !settings.autoIngest()) {
+            return;
+        }
+        for (AttachmentUnit attachmentUnit : newAttachmentUnits) {
+            addLectureUnitToPyrisDB(attachmentUnit);
         }
     }
 
@@ -346,18 +350,13 @@ public class PyrisWebhookService {
     /**
      * send the updated / created faqs to Pyris for ingestion if autoLecturesUpdate is enabled.
      *
-     * @param courseId Id of the course where the attachment is added
-     * @param newFaq   the new faqs to be sent to pyris for ingestion
+     * @param newFaq the new faqs to be sent to pyris for ingestion
      */
-    public void autoUpdateFaqInPyris(Long courseId, Faq newFaq) {
-        IrisCourseSettings presentCourseSettings = null;
-        Optional<IrisCourseSettings> courseSettings = irisSettingsRepository.findCourseSettings(courseId);
-        if (courseSettings.isPresent()) {
-            presentCourseSettings = courseSettings.get();
-        }
+    public void autoUpdateFaqInPyris(Faq newFaq) {
+        var course = newFaq.getCourse();
+        var settings = irisSettingsService.getCombinedIrisSettingsFor(course, false).irisFaqIngestionSettings();
 
-        if (presentCourseSettings != null && presentCourseSettings.getIrisFaqIngestionSettings() != null && presentCourseSettings.getIrisFaqIngestionSettings().isEnabled()
-                && presentCourseSettings.getIrisFaqIngestionSettings().getAutoIngestOnFaqCreation()) {
+        if (settings.enabled() && settings.autoIngest()) {
             addFaq(newFaq);
         }
     }

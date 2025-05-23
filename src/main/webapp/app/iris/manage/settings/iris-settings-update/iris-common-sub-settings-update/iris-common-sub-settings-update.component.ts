@@ -76,7 +76,7 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
     EXERCISE = IrisSettingsType.EXERCISE;
     COURSE = IrisSettingsType.COURSE;
     TEXT_EXERCISE_CHAT = IrisSubSettingsType.TEXT_EXERCISE_CHAT;
-    CHAT = IrisSubSettingsType.CHAT;
+    PROGRAMMING_EXERCISE_CHAT = IrisSubSettingsType.PROGRAMMING_EXERCISE_CHAT;
     COURSE_CHAT = IrisSubSettingsType.COURSE_CHAT;
     LECTURE = IrisSubSettingsType.LECTURE;
     COMPETENCY_GENERATION = IrisSubSettingsType.COMPETENCY_GENERATION;

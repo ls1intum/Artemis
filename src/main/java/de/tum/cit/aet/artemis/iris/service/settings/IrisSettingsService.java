@@ -32,7 +32,6 @@ import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
-import de.tum.cit.aet.artemis.iris.domain.settings.IrisChatSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCompetencyGenerationSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseChatSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
@@ -41,6 +40,7 @@ import de.tum.cit.aet.artemis.iris.domain.settings.IrisFaqIngestionSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisGlobalSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisLectureChatSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisLectureIngestionSubSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisProgrammingExerciseChatSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
@@ -116,7 +116,7 @@ public class IrisSettingsService {
     private void createInitialGlobalSettings() {
         var settings = new IrisGlobalSettings();
 
-        initializeIrisChatSettings(settings);
+        initializeIrisProgrammingExerciseChatSettings(settings);
         initializeIrisTextExerciseChatSettings(settings);
         initializeIrisCourseChatSettings(settings);
         initializeIrisLectureIngestionSettings(settings);
@@ -138,10 +138,10 @@ public class IrisSettingsService {
         return settings;
     }
 
-    private void initializeIrisChatSettings(IrisGlobalSettings settings) {
-        var irisChatSettings = settings.getIrisChatSettings();
-        irisChatSettings = initializeSettings(irisChatSettings, IrisChatSubSettings::new);
-        settings.setIrisChatSettings(irisChatSettings);
+    private void initializeIrisProgrammingExerciseChatSettings(IrisGlobalSettings settings) {
+        var irisProgrammingExerciseChatSettings = settings.getIrisProgrammingExerciseChatSettings();
+        irisProgrammingExerciseChatSettings = initializeSettings(irisProgrammingExerciseChatSettings, IrisProgrammingExerciseChatSubSettings::new);
+        settings.setIrisProgrammingExerciseChatSettings(irisProgrammingExerciseChatSettings);
     }
 
     private void initializeIrisTextExerciseChatSettings(IrisGlobalSettings settings) {
@@ -282,9 +282,9 @@ public class IrisSettingsService {
      */
     private IrisGlobalSettings updateGlobalSettings(IrisGlobalSettings existingSettings, IrisGlobalSettings settingsUpdate) {
         // @formatter:off
-        existingSettings.setIrisChatSettings(irisSubSettingsService.update(
-            existingSettings.getIrisChatSettings(),
-            settingsUpdate.getIrisChatSettings(),
+        existingSettings.setIrisProgrammingExerciseChatSettings(irisSubSettingsService.update(
+            existingSettings.getIrisProgrammingExerciseChatSettings(),
+            settingsUpdate.getIrisProgrammingExerciseChatSettings(),
             null,
             GLOBAL
         ));
@@ -343,17 +343,17 @@ public class IrisSettingsService {
      * @return The updated course Iris settings
      */
     private IrisCourseSettings updateCourseSettings(IrisCourseSettings existingSettings, IrisCourseSettings settingsUpdate) {
-        var oldEnabledForCategoriesExerciseChat = existingSettings.getIrisChatSettings() == null ? new TreeSet<String>()
-                : existingSettings.getIrisChatSettings().getEnabledForCategories();
+        var oldEnabledForCategoriesExerciseChat = existingSettings.getIrisProgrammingExerciseChatSettings() == null ? new TreeSet<String>()
+                : existingSettings.getIrisProgrammingExerciseChatSettings().getEnabledForCategories();
         var oldEnabledForCategoriesTextExerciseChat = existingSettings.getIrisTextExerciseChatSettings() == null ? new TreeSet<String>()
                 : existingSettings.getIrisTextExerciseChatSettings().getEnabledForCategories();
 
         var parentSettings = getCombinedIrisGlobalSettings();
         // @formatter:off
-        existingSettings.setIrisChatSettings(irisSubSettingsService.update(
-            existingSettings.getIrisChatSettings(),
-            settingsUpdate.getIrisChatSettings(),
-            parentSettings.irisChatSettings(),
+        existingSettings.setIrisProgrammingExerciseChatSettings(irisSubSettingsService.update(
+            existingSettings.getIrisProgrammingExerciseChatSettings(),
+            settingsUpdate.getIrisProgrammingExerciseChatSettings(),
+            parentSettings.irisProgrammingExerciseChatSettings(),
             COURSE
         ));
         existingSettings.setIrisTextExerciseChatSettings(irisSubSettingsService.update(
@@ -401,8 +401,8 @@ public class IrisSettingsService {
         // @formatter:on
 
         // Automatically update the exercise settings when the enabledForCategories is changed
-        var newEnabledForCategoriesExerciseChat = existingSettings.getIrisChatSettings() == null ? new TreeSet<String>()
-                : existingSettings.getIrisChatSettings().getEnabledForCategories();
+        var newEnabledForCategoriesExerciseChat = existingSettings.getIrisProgrammingExerciseChatSettings() == null ? new TreeSet<String>()
+                : existingSettings.getIrisProgrammingExerciseChatSettings().getEnabledForCategories();
         if (!oldEnabledForCategoriesExerciseChat.equals(newEnabledForCategoriesExerciseChat)) {
             programmingExerciseRepository.findAllWithCategoriesByCourseId(existingSettings.getCourseId())
                     .forEach(exercise -> setEnabledForExerciseByCategories(exercise, oldEnabledForCategoriesExerciseChat, newEnabledForCategoriesExerciseChat));
@@ -461,7 +461,7 @@ public class IrisSettingsService {
 
         Set<String> enabledForCategories;
         if (exercise instanceof ProgrammingExercise) {
-            enabledForCategories = courseSettings.getIrisChatSettings().getEnabledForCategories();
+            enabledForCategories = courseSettings.getIrisProgrammingExerciseChatSettings().getEnabledForCategories();
         }
         else if (exercise instanceof TextExercise) {
             enabledForCategories = courseSettings.getIrisTextExerciseChatSettings().getEnabledForCategories();
@@ -491,7 +491,7 @@ public class IrisSettingsService {
     private void setExerciseSettingsEnabled(Exercise exercise, boolean enabled) {
         var exerciseSettings = getRawIrisSettingsFor(exercise);
         if (exercise instanceof ProgrammingExercise) {
-            exerciseSettings.getIrisChatSettings().setEnabled(enabled);
+            exerciseSettings.getIrisProgrammingExerciseChatSettings().setEnabled(enabled);
         }
         else if (exercise instanceof TextExercise) {
             exerciseSettings.getIrisTextExerciseChatSettings().setEnabled(enabled);
@@ -530,10 +530,10 @@ public class IrisSettingsService {
         var exercise = exerciseRepository.findByIdElseThrow(existingSettings.getExerciseId());
         var parentSettings = getCombinedIrisSettingsFor(exercise.getCourseViaExerciseGroupOrCourseMember(), false);
         // @formatter:off
-        existingSettings.setIrisChatSettings(irisSubSettingsService.update(
-            existingSettings.getIrisChatSettings(),
-            settingsUpdate.getIrisChatSettings(),
-            parentSettings.irisChatSettings(),
+        existingSettings.setIrisProgrammingExerciseChatSettings(irisSubSettingsService.update(
+            existingSettings.getIrisProgrammingExerciseChatSettings(),
+            settingsUpdate.getIrisProgrammingExerciseChatSettings(),
+            parentSettings.irisProgrammingExerciseChatSettings(),
             EXERCISE
         ));
         existingSettings.setIrisTextExerciseChatSettings(irisSubSettingsService.update(
@@ -568,7 +568,7 @@ public class IrisSettingsService {
      * @param course The course to check
      */
     public void isActivatedForElseThrow(IrisEventType type, Course course) {
-        isEnabledForElseThrow(IrisSubSettingsType.CHAT, course);
+        isEnabledForElseThrow(IrisSubSettingsType.PROGRAMMING_EXERCISE_CHAT, course);
 
         if (!isActivatedFor(type, course)) {
             throw new AccessForbiddenAlertException("The Iris " + type.name() + " event is disabled for this course.", "Iris", "iris." + type.name().toLowerCase() + "Disabled");
@@ -583,8 +583,8 @@ public class IrisSettingsService {
      * @param type     The Iris event to check
      * @param exercise The exercise to check
      */
-    public void isActivatedForElseThrow(IrisEventType type, Exercise exercise) {
-        isEnabledForElseThrow(IrisSubSettingsType.CHAT, exercise);
+    public void isActivatedForElseThrow(IrisEventType type, ProgrammingExercise exercise) {
+        isEnabledForElseThrow(IrisSubSettingsType.PROGRAMMING_EXERCISE_CHAT, exercise);
 
         if (!isActivatedFor(type, exercise)) {
             throw new AccessForbiddenAlertException("The Iris " + type.name() + " event is disabled for this exercise.", "Iris", "iris." + type.name().toLowerCase() + "Disabled");
@@ -756,7 +756,7 @@ public class IrisSettingsService {
     public IrisCourseSettings getDefaultSettingsFor(Course course) {
         var settings = new IrisCourseSettings();
         settings.setCourseId(course.getId());
-        settings.setIrisChatSettings(new IrisChatSubSettings());
+        settings.setIrisProgrammingExerciseChatSettings(new IrisProgrammingExerciseChatSubSettings());
         settings.setIrisLectureChatSettings(new IrisLectureChatSubSettings());
         settings.setIrisTextExerciseChatSettings(new IrisTextExerciseChatSubSettings());
         settings.setIrisCourseChatSettings(new IrisCourseChatSubSettings());
@@ -777,7 +777,7 @@ public class IrisSettingsService {
     public IrisExerciseSettings getDefaultSettingsFor(Exercise exercise) {
         var settings = new IrisExerciseSettings();
         settings.setExerciseId(exercise.getId());
-        settings.setIrisChatSettings(new IrisChatSubSettings());
+        settings.setIrisProgrammingExerciseChatSettings(new IrisProgrammingExerciseChatSubSettings());
         settings.setIrisTextExerciseChatSettings(new IrisTextExerciseChatSubSettings());
 
         return settings;
@@ -836,7 +836,7 @@ public class IrisSettingsService {
      */
     private boolean isFeatureEnabledInSettings(IrisCombinedSettingsDTO settings, IrisSubSettingsType type) {
         return switch (type) {
-            case CHAT -> settings.irisChatSettings().enabled();
+            case PROGRAMMING_EXERCISE_CHAT -> settings.irisProgrammingExerciseChatSettings().enabled();
             case TEXT_EXERCISE_CHAT -> settings.irisTextExerciseChatSettings().enabled();
             case COURSE_CHAT -> settings.irisCourseChatSettings().enabled();
             case COMPETENCY_GENERATION -> settings.irisCompetencyGenerationSettings().enabled();
@@ -857,16 +857,16 @@ public class IrisSettingsService {
     private boolean isEventEnabledInSettings(IrisCombinedSettingsDTO settings, IrisEventType type) {
         return switch (type) {
             case PROGRESS_STALLED -> {
-                if (settings.irisChatSettings().disabledProactiveEvents() != null) {
-                    yield !settings.irisChatSettings().disabledProactiveEvents().contains(IrisEventType.PROGRESS_STALLED.name().toLowerCase());
+                if (settings.irisProgrammingExerciseChatSettings().disabledProactiveEvents() != null) {
+                    yield !settings.irisProgrammingExerciseChatSettings().disabledProactiveEvents().contains(IrisEventType.PROGRESS_STALLED.name().toLowerCase());
                 }
                 else {
                     yield true;
                 }
             }
             case BUILD_FAILED -> {
-                if (settings.irisChatSettings().disabledProactiveEvents() != null) {
-                    yield !settings.irisChatSettings().disabledProactiveEvents().contains(IrisEventType.BUILD_FAILED.name().toLowerCase());
+                if (settings.irisProgrammingExerciseChatSettings().disabledProactiveEvents() != null) {
+                    yield !settings.irisProgrammingExerciseChatSettings().disabledProactiveEvents().contains(IrisEventType.BUILD_FAILED.name().toLowerCase());
                 }
                 else {
                     yield true;

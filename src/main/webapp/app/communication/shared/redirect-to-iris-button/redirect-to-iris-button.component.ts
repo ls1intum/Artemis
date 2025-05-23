@@ -144,7 +144,7 @@ export class RedirectToIrisButtonComponent implements OnInit, OnDestroy {
                     this.updateIrisStatus<IrisExerciseSettings>(
                         this.irisCombinedExerciseSettings,
                         () => this.irisSettingsService.getCombinedExerciseSettings(channelDTO.subTypeReferenceId!),
-                        (settings) => settings.irisChatSettings?.enabled,
+                        (settings) => settings.irisProgrammingExerciseChatSettings?.enabled,
                         channelDTO,
                         (settings) => (this.irisCombinedExerciseSettings = settings),
                     );

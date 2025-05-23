@@ -27,7 +27,7 @@ public interface IrisSettingsRepository extends ArtemisJpaRepository<IrisSetting
     @Query("""
             SELECT irisSettings
             FROM IrisGlobalSettings irisSettings
-                LEFT JOIN FETCH irisSettings.irisChatSettings
+                LEFT JOIN FETCH irisSettings.irisProgrammingExerciseChatSettings
                 LEFT JOIN FETCH irisSettings.irisTextExerciseChatSettings
                 LEFT JOIN FETCH irisSettings.irisLectureIngestionSettings
                 LEFT JOIN FETCH irisSettings.irisCompetencyGenerationSettings
@@ -43,7 +43,7 @@ public interface IrisSettingsRepository extends ArtemisJpaRepository<IrisSetting
     @Query("""
             SELECT irisSettings
             FROM IrisCourseSettings irisSettings
-                LEFT JOIN FETCH irisSettings.irisChatSettings
+                LEFT JOIN FETCH irisSettings.irisProgrammingExerciseChatSettings
                 LEFT JOIN FETCH irisSettings.irisTextExerciseChatSettings
                 LEFT JOIN FETCH irisSettings.irisLectureIngestionSettings
                 LEFT JOIN FETCH irisSettings.irisCompetencyGenerationSettings
@@ -63,7 +63,7 @@ public interface IrisSettingsRepository extends ArtemisJpaRepository<IrisSetting
     @Query("""
             SELECT irisSettings
             FROM IrisExerciseSettings irisSettings
-                LEFT JOIN FETCH irisSettings.irisChatSettings
+                LEFT JOIN FETCH irisSettings.irisProgrammingExerciseChatSettings
                 LEFT JOIN FETCH irisSettings.irisTextExerciseChatSettings
             WHERE irisSettings.exerciseId = :exerciseId
             """)

@@ -78,6 +78,6 @@ class IrisSessionActivationIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     private static String exerciseChatUrl(long sessionId) {
-        return "/api/iris/exercise-chat/" + sessionId + "/sessions";
+        return "/api/iris/programming-exercise-chat/" + sessionId + "/sessions";
     }
 }

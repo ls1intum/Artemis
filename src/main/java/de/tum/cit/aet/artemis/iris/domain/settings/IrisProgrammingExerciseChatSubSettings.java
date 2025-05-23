@@ -16,9 +16,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * Chat settings notably provide settings for the rate limit.
  */
 @Entity
-@DiscriminatorValue("CHAT")
+@DiscriminatorValue("PROGRAMMING_EXERCISE_CHAT")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class IrisChatSubSettings extends IrisSubSettings implements HasEnabledCategories {
+public class IrisProgrammingExerciseChatSubSettings extends IrisSubSettings implements HasEnabledCategories {
 
     @Nullable
     @Column(name = "rate_limit")

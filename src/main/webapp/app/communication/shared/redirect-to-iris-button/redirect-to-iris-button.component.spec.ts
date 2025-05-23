@@ -121,7 +121,7 @@ describe('RedirectToIrisButtonComponent', () => {
 
     it('should be disabled for exercise chats if Iris is disabled for the exercise', fakeAsync(() => {
         const disabledIrisSettings = mockSettings();
-        disabledIrisSettings.irisChatSettings!.enabled = false;
+        disabledIrisSettings.irisProgrammingExerciseChatSettings!.enabled = false;
         const getExerciseSettingsSpy = jest.spyOn(irisSettingsService, 'getCombinedExerciseSettings').mockReturnValue(of(disabledIrisSettings));
         jest.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
 

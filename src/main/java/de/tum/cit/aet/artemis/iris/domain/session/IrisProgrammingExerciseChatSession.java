@@ -10,21 +10,21 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 /**
- * An IrisExerciseChatSession represents a conversation between a user and an LLM.
+ * An IrisProgrammingExerciseChatSession represents a conversation between a user and an LLM.
  * This is used for students receiving tutor assistance from Iris while working on an exercise.
  */
 @Entity
-@DiscriminatorValue("CHAT") // TODO: Legacy. Should ideally be "EXERCISE_CHAT"
+@DiscriminatorValue("CHAT")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class IrisExerciseChatSession extends IrisChatSession {
+public class IrisProgrammingExerciseChatSession extends IrisChatSession {
 
     @JsonIgnore
     private long exerciseId;
 
-    public IrisExerciseChatSession() {
+    public IrisProgrammingExerciseChatSession() {
     }
 
-    public IrisExerciseChatSession(Exercise exercise, User user) {
+    public IrisProgrammingExerciseChatSession(Exercise exercise, User user) {
         super(user);
         this.exerciseId = exercise.getId();
     }

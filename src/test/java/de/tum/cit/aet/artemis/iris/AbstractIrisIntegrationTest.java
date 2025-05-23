@@ -58,7 +58,7 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
 
     protected void activateIrisGlobally() {
         var globalSettings = irisSettingsService.getGlobalSettings();
-        activateSubSettings(globalSettings.getIrisChatSettings());
+        activateSubSettings(globalSettings.getIrisProgrammingExerciseChatSettings());
         activateSubSettings(globalSettings.getIrisTextExerciseChatSettings());
         activateSubSettings(globalSettings.getIrisCourseChatSettings());
         activateSubSettings(globalSettings.getIrisLectureIngestionSettings());
@@ -83,7 +83,7 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
     protected void activateIrisFor(Course course) {
         var courseSettings = irisSettingsService.getDefaultSettingsFor(course);
 
-        activateSubSettings(courseSettings.getIrisChatSettings());
+        activateSubSettings(courseSettings.getIrisProgrammingExerciseChatSettings());
         activateSubSettings(courseSettings.getIrisTextExerciseChatSettings());
         activateSubSettings(courseSettings.getIrisLectureChatSettings());
         activateSubSettings(courseSettings.getIrisCourseChatSettings());
@@ -97,7 +97,7 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
 
     protected void activateIrisFor(Exercise exercise) {
         var exerciseSettings = irisSettingsService.getDefaultSettingsFor(exercise);
-        activateSubSettings(exerciseSettings.getIrisChatSettings());
+        activateSubSettings(exerciseSettings.getIrisProgrammingExerciseChatSettings());
         activateSubSettings(exerciseSettings.getIrisTextExerciseChatSettings());
 
         irisSettingsRepository.save(exerciseSettings);

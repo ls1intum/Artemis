@@ -44,7 +44,7 @@ class PyrisConnectorServiceTest extends AbstractIrisIntegrationTest {
     void testExceptionV2(int httpStatus, Class<?> exceptionClass) {
         irisRequestMockProvider.mockRunError(httpStatus);
 
-        assertThatThrownBy(() -> pyrisConnectorService.executePipeline("tutor-chat", null, Optional.empty())).isInstanceOf(exceptionClass);
+        assertThatThrownBy(() -> pyrisConnectorService.executePipeline("programming-exercise-chat", null, Optional.empty())).isInstanceOf(exceptionClass);
     }
 
     @ParameterizedTest
@@ -66,20 +66,20 @@ class PyrisConnectorServiceTest extends AbstractIrisIntegrationTest {
 
     @ParameterizedTest
     @EnumSource(IrisSubSettingsType.class)
-    void testOfferedModels(IrisSubSettingsType feature) throws Exception {
+    void testAvailablevariants(IrisSubSettingsType feature) throws Exception {
         irisRequestMockProvider.mockVariantsResponse(feature);
 
-        var offeredModels = pyrisConnectorService.getOfferedVariants(feature);
-        assertThat(offeredModels).hasSize(1);
-        assertThat(offeredModels.getFirst().id()).isEqualTo("TEST_MODEL");
+        var availablevariants = pyrisConnectorService.getAvailablevariants(feature);
+        assertThat(availablevariants).hasSize(1);
+        assertThat(availablevariants.getFirst().id()).isEqualTo("TEST_MODEL");
     }
 
     @ParameterizedTest
     @EnumSource(IrisSubSettingsType.class)
-    void testOfferedModelsError(IrisSubSettingsType feature) {
+    void testAvailablevariantsError(IrisSubSettingsType feature) {
         irisRequestMockProvider.mockVariantsError(feature);
 
-        assertThatThrownBy(() -> pyrisConnectorService.getOfferedVariants(feature)).isInstanceOf(PyrisConnectorException.class);
+        assertThatThrownBy(() -> pyrisConnectorService.getAvailablevariants(feature)).isInstanceOf(PyrisConnectorException.class);
     }
 
 }

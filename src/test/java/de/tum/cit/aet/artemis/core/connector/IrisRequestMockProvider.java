@@ -97,7 +97,7 @@ public class IrisRequestMockProvider {
     public void mockProgrammingExerciseChatResponse(Consumer<PyrisExerciseChatPipelineExecutionDTO> responseConsumer) {
         // @formatter:off
         mockServer
-            .expect(ExpectedCount.once(), requestTo(pipelinesApiURL + "/tutor-chat/run"))
+            .expect(ExpectedCount.once(), requestTo(pipelinesApiURL + "/programming-exercise-chat/run"))
             .andExpect(method(HttpMethod.POST))
             .andRespond(request -> {
                 var mockRequest = (MockClientHttpRequest) request;
@@ -111,7 +111,7 @@ public class IrisRequestMockProvider {
     public void mockProgrammingExerciseChatResponseExpectingSubmissionId(Consumer<PyrisExerciseChatPipelineExecutionDTO> responseConsumer, long submissionId) {
         // @formatter:off
         mockServer
-            .expect(ExpectedCount.once(), requestTo(pipelinesApiURL + "/tutor-chat/run"))
+            .expect(ExpectedCount.once(), requestTo(pipelinesApiURL + "/programming-exercise-chat/run"))
             .andExpect(method(HttpMethod.POST))
             .andExpect(request -> {
                 var mockRequest = (MockClientHttpRequest) request;
@@ -266,21 +266,23 @@ public class IrisRequestMockProvider {
     }
 
     public void mockBuildFailedRunResponse(Consumer<PyrisExerciseChatPipelineExecutionDTO> responseConsumer) {
-        mockServer.expect(ExpectedCount.max(2), requestTo(pipelinesApiURL + "/tutor-chat/run?event=build_failed")).andExpect(method(HttpMethod.POST)).andRespond(request -> {
-            var mockRequest = (MockClientHttpRequest) request;
-            var dto = mapper.readValue(mockRequest.getBodyAsString(), PyrisExerciseChatPipelineExecutionDTO.class);
-            responseConsumer.accept(dto);
-            return MockRestResponseCreators.withRawStatus(HttpStatus.ACCEPTED.value()).createResponse(request);
-        });
+        mockServer.expect(ExpectedCount.max(2), requestTo(pipelinesApiURL + "/programming-exercise-chat/run?event=build_failed")).andExpect(method(HttpMethod.POST))
+                .andRespond(request -> {
+                    var mockRequest = (MockClientHttpRequest) request;
+                    var dto = mapper.readValue(mockRequest.getBodyAsString(), PyrisExerciseChatPipelineExecutionDTO.class);
+                    responseConsumer.accept(dto);
+                    return MockRestResponseCreators.withRawStatus(HttpStatus.ACCEPTED.value()).createResponse(request);
+                });
     }
 
     public void mockProgressStalledEventRunResponse(Consumer<PyrisCourseChatPipelineExecutionDTO> responseConsumer) {
-        mockServer.expect(ExpectedCount.max(2), requestTo(pipelinesApiURL + "/tutor-chat/run?event=progress_stalled")).andExpect(method(HttpMethod.POST)).andRespond(request -> {
-            var mockRequest = (MockClientHttpRequest) request;
-            var dto = mapper.readValue(mockRequest.getBodyAsString(), PyrisCourseChatPipelineExecutionDTO.class);
-            responseConsumer.accept(dto);
-            return MockRestResponseCreators.withRawStatus(HttpStatus.ACCEPTED.value()).createResponse(request);
-        });
+        mockServer.expect(ExpectedCount.max(2), requestTo(pipelinesApiURL + "/programming-exercise-chat/run?event=progress_stalled")).andExpect(method(HttpMethod.POST))
+                .andRespond(request -> {
+                    var mockRequest = (MockClientHttpRequest) request;
+                    var dto = mapper.readValue(mockRequest.getBodyAsString(), PyrisCourseChatPipelineExecutionDTO.class);
+                    responseConsumer.accept(dto);
+                    return MockRestResponseCreators.withRawStatus(HttpStatus.ACCEPTED.value()).createResponse(request);
+                });
     }
 
     public void mockJolEventRunResponse(Consumer<PyrisCourseChatPipelineExecutionDTO> responseConsumer) {
@@ -295,7 +297,7 @@ public class IrisRequestMockProvider {
     public void mockRunError(int httpStatus) {
         // @formatter:off
         mockServer
-            .expect(ExpectedCount.once(), requestTo(pipelinesApiURL + "/tutor-chat/run"))
+            .expect(ExpectedCount.once(), requestTo(pipelinesApiURL + "/programming-exercise-chat/run"))
             .andExpect(method(HttpMethod.POST))
             .andRespond(withStatus(HttpStatus.valueOf(httpStatus)));
         // @formatter:on
