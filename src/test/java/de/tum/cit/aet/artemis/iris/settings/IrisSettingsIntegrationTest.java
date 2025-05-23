@@ -24,6 +24,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.course.util.CourseUtilService;
 import de.tum.cit.aet.artemis.iris.AbstractIrisIntegrationTest;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCompetencyGenerationSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseChatSubSettings;
@@ -59,14 +60,19 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
 
+    @Autowired
+    private CourseUtilService courseUtilService;
+
     private Course course;
 
     private ProgrammingExercise programmingExercise;
 
     private TextExercise textExercise;
 
+    // @formatter:off
     private static Stream<Arguments> getCourseSettingsCategoriesSource() {
-        return Stream.of(Arguments.of(List.of("COURSE"), List.of(List.of("category1")), false),
+        return Stream.of(
+                Arguments.of(List.of("COURSE"), List.of(List.of("category1")), false),
                 Arguments.of(List.of("COURSE", "EXERCISE"), List.of(List.of("category1"), List.of("category1")), true),
                 Arguments.of(List.of("EXERCISE", "COURSE"), List.of(List.of("category1"), List.of("category1")), true),
                 Arguments.of(List.of("EXERCISE"), List.of(List.of("category1")), false),
@@ -76,8 +82,10 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
                 Arguments.of(List.of("EXERCISE", "COURSE", "EXERCISE"), List.of(List.of("category1", "category2"), List.of("category1"), List.of("category1")), true),
                 Arguments.of(List.of("EXERCISE", "COURSE", "EXERCISE"), List.of(List.of("category1"), List.of("category2"), List.of("category2")), true),
                 Arguments.of(List.of("COURSE", "EXERCISE", "COURSE"), List.of(List.of("category1", "category2"), List.of("category1"), List.of("category2")), false),
-                Arguments.of(List.of("COURSE", "EXERCISE", "COURSE"), List.of(List.of("category1", "category2"), List.of("category1"), List.of("category1")), true));
+                Arguments.of(List.of("COURSE", "EXERCISE", "COURSE"), List.of(List.of("category1", "category2"), List.of("category1"), List.of("category1")), true)
+        );
     }
+    // @formatter:on
 
     @BeforeEach
     void initTestCase() throws JsonProcessingException {
@@ -478,5 +486,38 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
         // Combined settings should include the union of the disabled course events and disabled exercise events
         assertThat(loadedExerciseSettings.irisProgrammingExerciseChatSettings().disabledProactiveEvents()).isNotNull()
                 .isEqualTo(new TreeSet<>(Set.of(IrisEventType.PROGRESS_STALLED.name().toLowerCase(), IrisEventType.BUILD_FAILED.name().toLowerCase())));
+    }
+
+    @Test
+    void verifyDefaultCourseSettingsState() {
+        userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1); // Create an instructor
+        Course newCourse = courseUtilService.createCourse();
+
+        IrisCourseSettings courseSettings = irisSettingsService.getDefaultSettingsFor(newCourse);
+
+        assertThat(courseSettings.getIrisProgrammingExerciseChatSettings().isEnabled()).isTrue();
+        assertThat(courseSettings.getIrisTextExerciseChatSettings().isEnabled()).isTrue();
+        assertThat(courseSettings.getIrisCourseChatSettings().isEnabled()).isTrue();
+        assertThat(courseSettings.getIrisLectureIngestionSettings().isEnabled()).isTrue();
+        assertThat(courseSettings.getIrisLectureIngestionSettings().getAutoIngestOnLectureAttachmentUpload()).isTrue();
+        assertThat(courseSettings.getIrisLectureChatSettings().isEnabled()).isTrue();
+        assertThat(courseSettings.getIrisFaqIngestionSettings().isEnabled()).isTrue();
+        assertThat(courseSettings.getIrisFaqIngestionSettings().getAutoIngestOnFaqCreation()).isTrue();
+        assertThat(courseSettings.getIrisCompetencyGenerationSettings().isEnabled()).isTrue();
+        assertThat(courseSettings.getIrisTutorSuggestionSettings().isEnabled()).isTrue();
+    }
+
+    @Test
+    void verifyDefaultExerciseSettingsState() {
+        userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1); // Ensure instructor exists for course creation
+        Course courseWithExercise = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        ProgrammingExercise newProgrammingExercise = exerciseUtilService.getFirstExerciseWithType(courseWithExercise, ProgrammingExercise.class);
+
+        IrisExerciseSettings exerciseSettings = irisSettingsService.getDefaultSettingsFor(newProgrammingExercise);
+
+        assertThat(exerciseSettings.getIrisProgrammingExerciseChatSettings().isEnabled()).isTrue();
+        // Assert that TextExerciseChatSettings are now instantiated and enabled by default for Programming Exercises as well
+        assertThat(exerciseSettings.getIrisTextExerciseChatSettings()).isNotNull();
+        assertThat(exerciseSettings.getIrisTextExerciseChatSettings().isEnabled()).isTrue();
     }
 }
