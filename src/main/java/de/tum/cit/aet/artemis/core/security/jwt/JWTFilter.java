@@ -2,8 +2,8 @@ package de.tum.cit.aet.artemis.core.security.jwt;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Date;
+import java.util.List;
 import java.util.Objects;
 
 import jakarta.annotation.Nullable;
@@ -191,6 +191,7 @@ public class JWTFilter extends GenericFilterBean {
         String source = cookie != null ? "cookie" : "bearer";
 
         if (!isJwtValid(tokenProvider, jwtToken, source)) {
+            // Log the invalid JWT token details to find out how it was created in case of accidental issues
             log.info("""
                     Invalid JWT token detected. Details:
                     {
@@ -208,11 +209,15 @@ public class JWTFilter extends GenericFilterBean {
         return new JwtWithSource(jwtToken, source);
     }
 
+    /**
+     * Collects the headers of the request and formats them as a JSON-like string
+     *
+     * @param request the http request
+     * @return the formatted headers
+     */
     private static String collectHeaders(HttpServletRequest request) {
         List<String> headerEntries = new ArrayList<>();
         request.getHeaderNames().asIterator().forEachRemaining(headerName -> headerEntries.add(String.format("\"%s\": \"%s\"", headerName, request.getHeader(headerName))));
-        ;
-
         return "[\n" + String.join(",\n", headerEntries) + "\n]";
     }
 
