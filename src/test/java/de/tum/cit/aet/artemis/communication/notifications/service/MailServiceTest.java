@@ -105,7 +105,7 @@ class MailServiceTest {
         templateEngine = mock(SpringTemplateEngine.class);
         when(templateEngine.process(any(String.class), any())).thenReturn("test");
 
-        mailSendingService = new MailSendingService(jHipsterProperties, javaMailSender);
+        mailSendingService = new MailSendingService(jHipsterProperties, javaMailSender, messageSource, templateEngine);
 
         mailService = new MailService(messageSource, templateEngine, mailSendingService);
         ReflectionTestUtils.setField(mailService, "artemisServerUrl", new URI("http://localhost:8080").toURL());
