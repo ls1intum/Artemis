@@ -36,6 +36,7 @@ describe('Plagiarism Header Component', () => {
 
         plagiarismCasesService = TestBed.inject(PlagiarismCasesService);
         fixture.componentRef.setInput('comparison', {
+            id: 1,
             submissionA: { studentLogin: 'studentA' },
             submissionB: { studentLogin: 'studentB' },
             status: PlagiarismStatus.NONE,
