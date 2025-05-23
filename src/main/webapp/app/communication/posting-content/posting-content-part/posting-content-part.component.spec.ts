@@ -364,4 +364,102 @@ describe('PostingContentPartComponent', () => {
             });
         });
     });
+
+    describe('Markdown structure rendering', () => {
+        it('should render ordered and unordered lists', () => {
+            const content = `1. First Number \n 2. Second number \n * First point \n * Second Point`;
+
+            runInInjectionContext(fixture.debugElement.injector, () => {
+                component.postingContentPart = input<PostingContentPart>({
+                    contentBeforeReference: content,
+                } as PostingContentPart);
+                fixture.detectChanges();
+
+                const olItems = debugElement.nativeElement.querySelectorAll('ol > li');
+                const ulItems = debugElement.nativeElement.querySelectorAll('ul > li');
+
+                expect(olItems).toHaveLength(2);
+                expect(ulItems).toHaveLength(2);
+            });
+        });
+
+        it('should render unordered lists with both possible inputs', () => {
+            const content = `- First Input A \n - First Input B \n * Second Input A \n * Second Input B`;
+
+            runInInjectionContext(fixture.debugElement.injector, () => {
+                component.postingContentPart = input<PostingContentPart>({
+                    contentBeforeReference: content,
+                } as PostingContentPart);
+                fixture.detectChanges();
+
+                const ulItems = debugElement.nativeElement.querySelectorAll('ul > li');
+
+                expect(ulItems).toHaveLength(4);
+            });
+        });
+
+        it('should render bold and italic text correctly', () => {
+            const content = '**fett** und *kursiv*';
+            runInInjectionContext(fixture.debugElement.injector, () => {
+                component.postingContentPart = input<PostingContentPart>({
+                    contentBeforeReference: content,
+                } as PostingContentPart);
+                fixture.detectChanges();
+
+                const strong = debugElement.nativeElement.querySelector('strong');
+                const em = debugElement.nativeElement.querySelector('em');
+
+                expect(strong).not.toBeNull();
+                expect(strong.textContent).toBe('fett');
+                expect(em).not.toBeNull();
+                expect(em.textContent).toBe('kursiv');
+            });
+        });
+
+        it('should render paragraphs', () => {
+            const content = 'Absatz eins.\n\nAbsatz zwei.';
+            runInInjectionContext(fixture.debugElement.injector, () => {
+                component.postingContentPart = input<PostingContentPart>({
+                    contentBeforeReference: content,
+                } as PostingContentPart);
+                fixture.detectChanges();
+
+                const paragraphs = getElements(debugElement, '.markdown-preview p');
+                expect(paragraphs).toHaveLength(2);
+            });
+        });
+
+        it('should render single paragraph', () => {
+            const content = 'Absatz eins.\nAbsatz zwei.';
+            runInInjectionContext(fixture.debugElement.injector, () => {
+                component.postingContentPart = input<PostingContentPart>({
+                    contentBeforeReference: content,
+                } as PostingContentPart);
+                fixture.detectChanges();
+
+                const paragraphs = getElements(debugElement, '.markdown-preview p');
+                expect(paragraphs).toHaveLength(1);
+            });
+        });
+
+        it('should render multiple markdown elements from full example', () => {
+            const content = `**Have a good day** \n 1. Point 1\n 2. Point 2 \n * Point A \n * Point B \n \n A normal p element`;
+            runInInjectionContext(fixture.debugElement.injector, () => {
+                component.postingContentPart = input<PostingContentPart>({
+                    contentBeforeReference: content,
+                } as PostingContentPart);
+                fixture.detectChanges();
+
+                const boldText = debugElement.nativeElement.querySelector('strong');
+                const olItems = debugElement.nativeElement.querySelectorAll('ol > li');
+                const ulItems = debugElement.nativeElement.querySelectorAll('ul > li');
+                const paragraphs = debugElement.nativeElement.querySelectorAll('p');
+
+                expect(boldText).not.toBeNull();
+                expect(olItems).toHaveLength(2);
+                expect(ulItems).toHaveLength(2);
+                expect(paragraphs.length).toBeGreaterThanOrEqual(2);
+            });
+        });
+    });
 });
