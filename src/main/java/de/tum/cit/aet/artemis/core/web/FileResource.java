@@ -580,8 +580,8 @@ public class FileResource {
      */
     @GetMapping("files/attachments/attachment-unit/{attachmentUnitId}/slide/{slideNumber}")
     @EnforceAtLeastStudent
-    public ResponseEntity<byte[]> getAttachmentUnitAttachmentSlide(@PathVariable Long attachmentUnitId, @PathVariable String slideNumber) {
-        log.debug("REST request to get the slide : {}", slideNumber);
+    public ResponseEntity<byte[]> getAttachmentUnitAttachmentSlide(@PathVariable long attachmentUnitId, @PathVariable String slideNumber) {
+        log.debug("REST request to get the slide {} in attachment unit {}", slideNumber, attachmentUnitId);
         LectureAttachmentApi api = lectureAttachmentApi.orElseThrow(() -> new LectureApiNotPresentException(LectureAttachmentApi.class));
         SlideApi sApi = slideApi.orElseThrow(() -> new LectureApiNotPresentException(SlideApi.class));
 
@@ -592,23 +592,11 @@ public class FileResource {
 
         checkAttachmentAuthorizationOrThrow(course, attachment);
 
-        Slide slide = sApi.findSlideByAttachmentUnitIdAndSlideNumber(attachmentUnitId, Integer.parseInt(slideNumber));
+        int sNumber = Integer.parseInt(slideNumber);
 
-        if (slide.getHidden() != null) {
-            throw new AccessForbiddenException("Slide is hidden");
-        }
-        String directoryPath = slide.getSlideImagePath();
+        Slide slide = sApi.findSlideByAttachmentUnitIdAndSlideNumber(attachmentUnitId, sNumber);
 
-        // Use regular expression to match and extract the file name with ".png" format
-        Pattern pattern = Pattern.compile(".*/([^/]+\\.png)$");
-        Matcher matcher = pattern.matcher(directoryPath);
-
-        if (matcher.matches()) {
-            return buildFileResponse(getActualPathFromPublicPathString(slide.getSlideImagePath(), FilePathType.SLIDE), false);
-        }
-        else {
-            throw new EntityNotFoundException("Slide", slideNumber);
-        }
+        return getSlideResponse(slide, sNumber);
     }
 
     /**
@@ -619,12 +607,22 @@ public class FileResource {
      */
     @GetMapping("files/slides/{slideId}")
     @EnforceAtLeastStudent
-    public ResponseEntity<byte[]> getSlideById(@PathVariable Long slideId) {
-        log.debug("REST request to get the slide : {}", slideId);
+    public ResponseEntity<byte[]> getSlideById(@PathVariable long slideId) {
+        log.debug("REST request to get the slide with id {}", slideId);
         SlideApi api = slideApi.orElseThrow(() -> new LectureApiNotPresentException(SlideApi.class));
 
         Slide slide = api.findSlideByIdElseThrow(slideId);
 
+        return getSlideResponse(slide, slideId);
+    }
+
+    /**
+     * GET files/slides/{slideIdOrNumber} : Get the lecture unit attachment slide by slide id or number
+     *
+     * @param slideIdOrNumber the id or number of the slide that wanted to be retrieved
+     * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
+     */
+    private ResponseEntity<byte[]> getSlideResponse(Slide slide, long slideIdOrNumber) {
         if (slide.getHidden() != null) {
             throw new AccessForbiddenException("Slide is hidden");
         }
@@ -639,7 +637,7 @@ public class FileResource {
             return buildFileResponse(getActualPathFromPublicPathString(slide.getSlideImagePath(), FilePathType.SLIDE), false);
         }
         else {
-            throw new EntityNotFoundException("Slide", slideId);
+            throw new EntityNotFoundException("Slide", slideIdOrNumber);
         }
     }
 
@@ -651,7 +649,7 @@ public class FileResource {
      */
     @GetMapping("files/attachments/attachment-unit/{attachmentUnitId}/student/*")
     @EnforceAtLeastStudent
-    public ResponseEntity<byte[]> getAttachmentUnitStudentVersion(@PathVariable Long attachmentUnitId) {
+    public ResponseEntity<byte[]> getAttachmentUnitStudentVersion(@PathVariable long attachmentUnitId) {
         log.debug("REST request to get the student version of attachment Unit : {}", attachmentUnitId);
         LectureAttachmentApi api = lectureAttachmentApi.orElseThrow(() -> new LectureApiNotPresentException(LectureAttachmentApi.class));
 
