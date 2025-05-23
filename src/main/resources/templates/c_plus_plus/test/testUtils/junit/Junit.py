@@ -35,8 +35,8 @@ class Junit:
         chmod(outputPath, 0o644)
 
     @staticmethod
-    def strip_ansi_codes(text):
-        """Entferne ANSI-Farbcodes aus dem Text"""
+    def strip_ansi_codes(text: str) -> str:
+        """Removes ANSI colour codes from the text"""
         ansi_escape_pattern = re.compile(
             r'(?:\x1B|\x9B)'  # ESC or CSI
             r'[\[\]()#;?]*'  # Intermediate bytes
