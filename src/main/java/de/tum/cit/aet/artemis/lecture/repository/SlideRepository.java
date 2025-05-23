@@ -41,11 +41,11 @@ public interface SlideRepository extends ArtemisJpaRepository<Slide, Long> {
     List<SlideUnhideDTO> findHiddenSlidesProjection();
 
     /**
-     * Find slides for a specific attachment unit where the hidden field is not null
+     * Find slides for a specific attachment video unit where the hidden field is not null
      * (these are the hidden slides)
      *
-     * @param attachmentUnitId The ID of the attachment unit
-     * @return List of hidden slides for the attachment unit
+     * @param attachmentUnitId The ID of the attachment video unit
+     * @return List of hidden slides for the attachment video unit
      */
     List<Slide> findByAttachmentVideoUnitIdAndHiddenNotNull(Long attachmentUnitId);
 

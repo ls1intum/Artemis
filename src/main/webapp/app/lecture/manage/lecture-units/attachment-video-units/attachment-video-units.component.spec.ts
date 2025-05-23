@@ -112,9 +112,7 @@ describe('AttachmentVideoUnitsComponent', () => {
                 MockProvider(Router),
             ],
         }).compileComponents();
-    });
 
-    beforeEach(() => {
         jest.spyOn(TestBed.inject(Router), 'getCurrentNavigation').mockReturnValue({
             extras: {
                 state: {
@@ -132,7 +130,7 @@ describe('AttachmentVideoUnitsComponent', () => {
         attachmentVideoUnitsComponent.numberOfPages = numberOfPages;
 
         attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
-        router = TestBed.get(Router);
+        router = TestBed.inject(Router);
     });
 
     afterEach(() => {
@@ -143,7 +141,7 @@ describe('AttachmentVideoUnitsComponent', () => {
         expect(attachmentVideoUnitsComponent.keyphrases).toMatch('');
     });
 
-    it('should create attachment units', fakeAsync(() => {
+    it('should create attachment video units', fakeAsync(() => {
         const lectureUnitInformation: LectureUnitInformationDTO = {
             units: units,
             numberOfPages: numberOfPages,

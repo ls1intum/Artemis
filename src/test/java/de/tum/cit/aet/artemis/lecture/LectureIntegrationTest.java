@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
+import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureFactory;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -57,6 +58,9 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private AttachmentRepository attachmentRepository;
+
+    @Autowired
+    private AttachmentVideoUnitTestRepository attachmentVideoUnitRepository;
 
     @Autowired
     ChannelRepository channelRepository;
@@ -327,11 +331,17 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void getLecture_AttachmentNotReleased_shouldGetLectureWithoutAttachmentVideoUnitAndAttachment() throws Exception {
+    void getLecture_LectureAttachmentOrAttachmentVideoUnitNotReleased_shouldGetLectureWithoutAttachmentVideoUnitAndAttachment() throws Exception {
+        var newReleaseDate = ZonedDateTime.now().plusDays(10);
+
         Attachment unitAttachment = attachmentRepository.findById(attachmentOfAttachmentVideoUnit.getId()).orElseThrow();
-        unitAttachment.setReleaseDate(ZonedDateTime.now().plusDays(10));
+        attachmentVideoUnit.setReleaseDate(newReleaseDate);
+        unitAttachment.setReleaseDate(newReleaseDate);
+        attachmentVideoUnitRepository.save(attachmentVideoUnit);
+
         Attachment lectureAttachment = attachmentRepository.findById(attachmentDirectOfLecture.getId()).orElseThrow();
-        lectureAttachment.setReleaseDate(ZonedDateTime.now().plusDays(10));
+        lectureAttachment.setReleaseDate(newReleaseDate);
+
         attachmentRepository.saveAll(Set.of(unitAttachment, lectureAttachment));
 
         Lecture receivedLectureWithDetails = request.get("/api/lecture/lectures/" + lecture1.getId() + "/details", HttpStatus.OK, Lecture.class);

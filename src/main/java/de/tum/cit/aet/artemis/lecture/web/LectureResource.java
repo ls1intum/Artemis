@@ -225,7 +225,7 @@ public class LectureResource {
         // Load slides separately to avoid too large data exchange
         Set<SlideDTO> slides = slideRepository.findVisibleSlidesByAttachmentVideoUnits(attachmentVideoUnitIds);
 
-        // Group slides by attachment unit id to combine them into the DTOs
+        // Group slides by attachment video unit id to combine them into the DTOs
         Map<Long, List<SlideDTO>> slidesByAttachmentVideoUnitId = slides.stream().collect(Collectors.groupingBy(SlideDTO::attachmentVideoUnitId));
         // Convert visible lectures to DTOs (filtering active attachments) and add non hidden slides to the DTOs
         List<LectureDTO> lectureDTOs = lectures.stream().map(LectureDTO::from).sorted(Comparator.comparingLong(LectureDTO::id)).toList();
@@ -251,7 +251,7 @@ public class LectureResource {
             List<AttachmentVideoUnitDTO> lectureUnits) {
 
         /**
-         * Converts a lecture to a DTO. Only the attachments and attachment units that are visible to students are included.
+         * Converts a lecture to a DTO. Only the attachments and attachment video units that are visible to students are included.
          *
          * @param lecture The lecture to convert
          * @return The converted lecture DTO
@@ -259,7 +259,7 @@ public class LectureResource {
         public static LectureDTO from(Lecture lecture) {
             // only attachments visible to students are included
             List<AttachmentDTO> attachmentDTOs = lecture.getAttachments().stream().filter(Attachment::isVisibleToStudents).map(AttachmentDTO::from).toList();
-            // only attachment units visible to students are included
+            // only attachment video units visible to students are included
             List<AttachmentVideoUnitDTO> attachmentVideoUnitDTOs = lecture.getLectureUnits().stream().filter(lectureUnit -> lectureUnit instanceof AttachmentVideoUnit)
                     .map(lectureUnit -> (AttachmentVideoUnit) lectureUnit).filter(AttachmentVideoUnit::isVisibleToStudents).map(AttachmentVideoUnitDTO::from).toList();
             return new LectureDTO(lecture.getId(), lecture.getTitle(), lecture.getVisibleDate(), lecture.getStartDate(), lecture.getEndDate(), attachmentDTOs,

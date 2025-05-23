@@ -24,12 +24,12 @@ public class IrisLectureApi extends AbstractIrisApi {
     }
 
     /**
-     * Adds the provided PDF attachment unit to the vector database in Pyris.
+     * Adds the provided PDF attachment video unit to the vector database in Pyris.
      * <p>
      * This method calls {@link PyrisWebhookService#addLectureUnitToPyrisDB(AttachmentVideoUnit)}.
      * The lecture ingestion must be enabled for the course.
      *
-     * @param attachmentVideoUnit the attachment unit to be added
+     * @param attachmentVideoUnit the attachment video unit to be added
      * @return a job token if ingestion is triggered successfully, otherwise null
      */
     public String addLectureUnitToPyrisDB(AttachmentVideoUnit attachmentVideoUnit) {
@@ -41,19 +41,19 @@ public class IrisLectureApi extends AbstractIrisApi {
      * <p>
      * This method calls {@link PyrisWebhookService#deleteLectureFromPyrisDB(List)}.
      *
-     * @param attachmentVideoUnits the list of attachment units to be removed
+     * @param attachmentVideoUnits the list of attachment video units to be removed
      */
     public void deleteLectureFromPyrisDB(List<AttachmentVideoUnit> attachmentVideoUnits) {
         pyrisWebhookService.deleteLectureFromPyrisDB(attachmentVideoUnits);
     }
 
     /**
-     * Updates or creates the specified attachment units in the Pyris database automatically if auto-ingestion is enabled.
+     * Updates or creates the specified attachment video units in the Pyris database automatically if auto-ingestion is enabled.
      * <p>
      * This method calls {@link PyrisWebhookService#autoUpdateAttachmentVideoUnitsInPyris(Long, List)}.
      *
      * @param courseId                the ID of the course
-     * @param newAttachmentVideoUnits the new attachment units to be sent to Pyris
+     * @param newAttachmentVideoUnits the new attachment video units to be sent to Pyris
      */
     public void autoUpdateAttachmentVideoUnitsInPyris(Long courseId, List<AttachmentVideoUnit> newAttachmentVideoUnits) {
         pyrisWebhookService.autoUpdateAttachmentVideoUnitsInPyris(courseId, newAttachmentVideoUnits);

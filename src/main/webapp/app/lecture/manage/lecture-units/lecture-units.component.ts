@@ -161,20 +161,22 @@ export class LectureUpdateUnitsComponent implements OnInit {
     }
 
     createEditAttachmentVideoUnit(attachmentVideoUnitFormData: AttachmentVideoUnitFormData): void {
-        if (!attachmentVideoUnitFormData?.formProperties?.name || !attachmentVideoUnitFormData?.fileProperties?.file || !attachmentVideoUnitFormData?.fileProperties?.fileName) {
-            return;
-        }
-
         const { description, name, releaseDate, videoSource, updateNotificationText, competencyLinks } = attachmentVideoUnitFormData.formProperties;
         const { file, fileName } = attachmentVideoUnitFormData.fileProperties;
 
+        if (!name || (!(file && fileName) && !videoSource)) {
+            return;
+        }
+
         this.currentlyProcessedAttachmentVideoUnit = this.isEditingLectureUnit ? this.currentlyProcessedAttachmentVideoUnit : new AttachmentVideoUnit();
-        const attachmentToCreateOrEdit = this.isEditingLectureUnit ? this.currentlyProcessedAttachmentVideoUnit.attachment! : new Attachment();
+        const attachmentToCreateOrEdit = this.isEditingLectureUnit ? this.currentlyProcessedAttachmentVideoUnit.attachment : new Attachment();
 
         if (this.isEditingLectureUnit) {
             // breaking the connection to prevent errors in deserialization. will be reconnected on the server side
             this.currentlyProcessedAttachmentVideoUnit.attachment = undefined;
-            attachmentToCreateOrEdit.attachmentVideoUnit = undefined;
+            if (attachmentToCreateOrEdit != null) {
+                attachmentToCreateOrEdit.attachmentVideoUnit = undefined;
+            }
         }
 
         let notificationText: string | undefined;
@@ -185,14 +187,21 @@ export class LectureUpdateUnitsComponent implements OnInit {
 
         if (name) {
             this.currentlyProcessedAttachmentVideoUnit.name = name;
-            attachmentToCreateOrEdit.name = name;
+            if (attachmentToCreateOrEdit != null) {
+                attachmentToCreateOrEdit.name = name;
+            }
         }
         if (releaseDate) {
-            attachmentToCreateOrEdit.releaseDate = releaseDate;
+            this.currentlyProcessedAttachmentVideoUnit.releaseDate = releaseDate;
+            if (attachmentToCreateOrEdit != null) {
+                attachmentToCreateOrEdit.releaseDate = releaseDate;
+            }
         }
-        attachmentToCreateOrEdit.attachmentType = AttachmentType.FILE;
-        attachmentToCreateOrEdit.version = 1;
-        attachmentToCreateOrEdit.uploadDate = dayjs();
+        if (attachmentToCreateOrEdit != null) {
+            attachmentToCreateOrEdit.attachmentType = AttachmentType.FILE;
+            attachmentToCreateOrEdit.version = 1;
+            attachmentToCreateOrEdit.uploadDate = dayjs();
+        }
 
         if (videoSource) {
             this.currentlyProcessedAttachmentVideoUnit.videoSource = videoSource;
@@ -204,8 +213,12 @@ export class LectureUpdateUnitsComponent implements OnInit {
         this.currentlyProcessedAttachmentVideoUnit.competencyLinks = competencyLinks;
 
         const formData = new FormData();
-        formData.append('file', file, fileName);
-        formData.append('attachment', objectToJsonBlob(attachmentToCreateOrEdit));
+        if (!!file && !!fileName) {
+            formData.append('file', file, fileName);
+        }
+        if (attachmentToCreateOrEdit != null) {
+            formData.append('attachment', objectToJsonBlob(attachmentToCreateOrEdit));
+        }
         formData.append('attachmentVideoUnit', objectToJsonBlob(this.currentlyProcessedAttachmentVideoUnit));
 
         (this.isEditingLectureUnit
@@ -269,14 +282,14 @@ export class LectureUpdateUnitsComponent implements OnInit {
             case LectureUnitType.ATTACHMENT_VIDEO:
                 this.attachmentVideoUnitFormData = {
                     formProperties: {
-                        name: this.currentlyProcessedAttachmentVideoUnit.attachment!.name,
+                        name: this.currentlyProcessedAttachmentVideoUnit.name,
                         description: this.currentlyProcessedAttachmentVideoUnit.description,
-                        releaseDate: this.currentlyProcessedAttachmentVideoUnit.attachment!.releaseDate,
-                        version: this.currentlyProcessedAttachmentVideoUnit.attachment!.version,
+                        releaseDate: this.currentlyProcessedAttachmentVideoUnit.releaseDate,
+                        version: this.currentlyProcessedAttachmentVideoUnit.attachment?.version,
                         videoSource: this.currentlyProcessedAttachmentVideoUnit.videoSource,
                     },
                     fileProperties: {
-                        fileName: this.currentlyProcessedAttachmentVideoUnit.attachment!.link,
+                        fileName: this.currentlyProcessedAttachmentVideoUnit.attachment?.link,
                     },
                 };
                 break;

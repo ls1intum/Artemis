@@ -154,9 +154,9 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
     }
 
     /**
-     * Generates an attachment unit pdf file with 5 pages
+     * Generates an attachment video unit pdf file with 5 pages
      *
-     * @return MockMultipartFile attachment unit pdf file
+     * @return MockMultipartFile attachment video unit pdf file
      */
     private MockMultipartFile createAttachmentVideoUnitPdf() throws IOException {
 
@@ -234,7 +234,7 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         var persistedAttachment = persistedAttachmentVideoUnit.getAttachment();
         assertThat(persistedAttachment.getId()).isNotNull();
         var updatedAttachmentVideoUnit = attachmentVideoUnitRepository.findOneWithCompetencyLinksById(persistedAttachmentVideoUnit.getId());
-        // Wait for async operation to complete (after attachment unit is saved, the file gets split into slides)
+        // Wait for async operation to complete (after attachment video unit is saved, the file gets split into slides)
         await().untilAsserted(() -> assertThat(slideRepository.findAllByAttachmentVideoUnitId(persistedAttachmentVideoUnit.getId())).hasSize(SLIDE_COUNT));
         assertThat(updatedAttachmentVideoUnit.getAttachment()).isEqualTo(persistedAttachment);
         assertThat(updatedAttachmentVideoUnit.getAttachment().getName()).isEqualTo("LoremIpsum");
@@ -271,20 +271,20 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         var attachment = attachmentVideoUnit.getAttachment();
         attachmentVideoUnit.setDescription("Changed");
 
-        // Wait for async operation to complete (after attachment unit is saved, the file gets split into slides)
+        // Wait for async operation to complete (after attachment video unit is saved, the file gets split into slides)
         await().untilAsserted(() -> assertThat(slideRepository.findAllByAttachmentVideoUnitId(attachmentVideoUnit.getId())).hasSize(SLIDE_COUNT));
 
         // Store the original attachment filename to check it changes
         String originalAttachmentLink = attachment.getLink();
 
-        // Update the attachment unit
+        // Update the attachment video unit
         var updateResult = request.performMvcRequest(buildUpdateAttachmentVideoUnit(attachmentVideoUnit, attachment, "new File", true)).andExpect(status().isOk()).andReturn();
         AttachmentVideoUnit attachmentVideoUnit1 = mapper.readValue(updateResult.getResponse().getContentAsString(), AttachmentVideoUnit.class);
         // Verify description was updated
         assertThat(attachmentVideoUnit1.getDescription()).isEqualTo("Changed");
         // Verify attachment file was updated (this should pass)
         assertThat(attachmentVideoUnit1.getAttachment().getLink()).isNotEqualTo(originalAttachmentLink);
-        // Create a query to find the latest slides for this attachment unit
+        // Create a query to find the latest slides for this attachment video unit
         // Since we know there will be duplicate slide numbers, we need to check for the latest ones (with highest ID)
         var groupedSlides = slideRepository.findAllByAttachmentVideoUnitId(attachmentVideoUnit1.getId()).stream().collect(Collectors.groupingBy(Slide::getSlideNumber));
         List<Slide> latestSlides = new ArrayList<>();
@@ -349,7 +349,7 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateAttachmentVideoUnit_withoutAttachment_shouldUpdateAttachmentVideoUnit() throws Exception {
         persistAttachmentVideoUnitWithLecture();
-        request.performMvcRequest(buildUpdateAttachmentVideoUnit(attachmentVideoUnit, null)).andExpect(status().isBadRequest());
+        request.performMvcRequest(buildUpdateAttachmentVideoUnit(attachmentVideoUnit, null)).andExpect(status().isOk());
     }
 
     @Test
@@ -391,7 +391,7 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void handleStudentVersionFile_shouldUpdateAttachmentStudentVersion() throws Exception {
-        // Create an attachment unit first
+        // Create an attachment video unit first
         attachmentVideoUnit.setCompetencyLinks(Set.of(new CompetencyLectureUnitLink(competency, attachmentVideoUnit, 1)));
         var result = request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated()).andReturn();
         var persistedAttachmentVideoUnit = mapper.readValue(result.getResponse().getContentAsString(), AttachmentVideoUnit.class);
@@ -447,7 +447,7 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateAttachmentUnit_withInvalidHiddenSlideDates_shouldReturnBadRequest() throws Exception {
-        // First create an attachment unit
+        // First create an attachment video unit
         attachmentVideoUnit.setCompetencyLinks(Set.of(new CompetencyLectureUnitLink(competency, attachmentVideoUnit, 1)));
         var createResult = request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated()).andReturn();
         var persistedAttachmentUnit = mapper.readValue(createResult.getResponse().getContentAsString(), AttachmentVideoUnit.class);
@@ -492,7 +492,7 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateAttachmentUnit_withForeverHiddenSlideDates_shouldSucceed() throws Exception {
-        // First create an attachment unit
+        // First create an attachment video unit
         attachmentVideoUnit.setCompetencyLinks(Set.of(new CompetencyLectureUnitLink(competency, attachmentVideoUnit, 1)));
         var createResult = request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated()).andReturn();
         var persistedAttachmentUnit = mapper.readValue(createResult.getResponse().getContentAsString(), AttachmentVideoUnit.class);
@@ -521,7 +521,7 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateAttachmentUnit_withInvalidHiddenSlidesDatesFormat_shouldReturnBadRequest() throws Exception {
-        // First create an attachment unit
+        // First create an attachment video unit
         attachmentVideoUnit.setCompetencyLinks(Set.of(new CompetencyLectureUnitLink(competency, attachmentVideoUnit, 1)));
         var createResult = request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated()).andReturn();
         var persistedAttachmentVideoUnit = mapper.readValue(createResult.getResponse().getContentAsString(), AttachmentVideoUnit.class);

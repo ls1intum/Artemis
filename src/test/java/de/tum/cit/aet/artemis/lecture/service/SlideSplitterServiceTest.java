@@ -63,7 +63,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
 
     @BeforeEach
     void initTestCase() {
-        // Create a test attachment unit with a PDF file
+        // Create a test attachment video unit with a PDF file
         testAttachmentVideoUnit = lectureUtilService.createAttachmentVideoUnitWithSlidesAndFile(3, true);
 
         // Create a real PDF document for tests
@@ -77,7 +77,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
     void testSplitAttachmentVideoUnitIntoSingleSlides_BasicFunction() {
-        // Clear existing slides for this attachment unit
+        // Clear existing slides for this attachment video unit
         List<Slide> existingSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
         slideRepository.deleteAll(existingSlides);
 
@@ -370,7 +370,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(testDocument, testAttachmentVideoUnit, "test.pdf", hiddenPages, pageOrder);
 
         // Assert
-        // Get all slides by attachment unit ID instead of by slide ID
+        // Get all slides by attachment video unit ID instead of by slide ID
         List<Slide> updatedSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
         assertThat(updatedSlides).isNotEmpty();
 
@@ -439,7 +439,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(testDocument, testAttachmentVideoUnit, "test.pdf", hiddenPages, pageOrder);
 
         // Assert
-        // Find all slides by attachment unit ID
+        // Find all slides by attachment video unit ID
         List<Slide> updatedSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
         assertThat(updatedSlides).isNotEmpty();
 
@@ -646,7 +646,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
             doc.save(tempPdfPath.toFile());
         }
 
-        // Set up the attachment unit to use our test PDF file
+        // Set up the attachment video unit to use our test PDF file
         testAttachmentVideoUnit.getAttachment().setLink(tempPdfPath.toUri().toString());
         testAttachmentVideoUnit.getAttachment().setName("test-slides.pdf");
 

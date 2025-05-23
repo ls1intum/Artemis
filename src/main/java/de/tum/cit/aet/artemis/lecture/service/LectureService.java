@@ -86,9 +86,9 @@ public class LectureService {
     }
 
     /**
-     * Lecture with only active attachment units
+     * Lecture with only active attachment video units
      *
-     * @param lectureWithAttachmentVideoUnits lecture that has attachment units
+     * @param lectureWithAttachmentVideoUnits lecture that has attachment video units
      */
     public void filterActiveAttachmentVideoUnits(Lecture lectureWithAttachmentVideoUnits) {
 

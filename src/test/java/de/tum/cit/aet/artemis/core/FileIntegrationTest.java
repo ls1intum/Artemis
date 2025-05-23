@@ -132,7 +132,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         lecture.setTitle("Test title");
         lecture.setStartDate(ZonedDateTime.now().minusHours(1));
 
-        // create unreleased attachment unit
+        // create unreleased attachment video unit
         AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnit(true);
         attachmentVideoUnit.setLecture(lecture);
         attachmentVideoUnit.setReleaseDate(ZonedDateTime.now().plusDays(1));
@@ -229,10 +229,12 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     private void adjustReleaseDateToFuture(Lecture lecture) {
-        var attachment = lecture.getLectureUnits().stream().sorted(Comparator.comparing(LectureUnit::getId)).map(lectureUnit -> ((AttachmentVideoUnit) lectureUnit).getAttachment())
-                .findFirst().orElseThrow();
-        attachment.setReleaseDate(ZonedDateTime.now().plusHours(2));
-        attachmentRepo.save(attachment);
+        var unit = (AttachmentVideoUnit) lecture.getLectureUnits().stream().min(Comparator.comparing(LectureUnit::getId)).orElseThrow();
+        var targetTime = ZonedDateTime.now().plusHours(2);
+        unit.getAttachment().setReleaseDate(targetTime);
+        unit.setReleaseDate(targetTime);
+        attachmentRepo.save(unit.getAttachment());
+        attachmentVideoUnitRepo.save(unit);
     }
 
     @Test

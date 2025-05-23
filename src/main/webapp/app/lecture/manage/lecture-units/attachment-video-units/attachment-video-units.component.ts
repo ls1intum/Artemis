@@ -154,7 +154,7 @@ export class AttachmentVideoUnitsComponent implements OnInit {
     }
 
     /**
-     * Creates the attachment units with the information given on this page
+     * Creates the attachment video units with the information given on this page
      */
     createAttachmentVideoUnits(): void {
         if (this.validUnitInformation()) {

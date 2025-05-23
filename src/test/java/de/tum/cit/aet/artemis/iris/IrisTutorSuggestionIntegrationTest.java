@@ -156,9 +156,8 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
             pipelineDone.set(true);
         });
 
-        var response = request.postWithResponseBody(irisSessionUrl(irisSession.getId()) + "/tutor-suggestion", true, Boolean.class, HttpStatus.CREATED);
+        request.postWithResponseBody(irisSessionUrl(irisSession.getId()) + "/tutor-suggestion", null, Void.class, HttpStatus.CREATED);
         await().atMost(java.time.Duration.ofSeconds(5)).until(pipelineDone::get);
-        assertThat(response.booleanValue()).isEqualTo(true);
     }
 
     @Test
@@ -188,10 +187,9 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
             pipelineDone.set(true);
         });
 
-        var response = request.postWithResponseBody(irisSessionUrl(irisSession.getId()) + "/tutor-suggestion", true, Boolean.class, HttpStatus.CREATED);
+        request.postWithResponseBody(irisSessionUrl(irisSession.getId()) + "/tutor-suggestion", null, Void.class, HttpStatus.CREATED);
         await().atMost(java.time.Duration.ofSeconds(5)).until(pipelineDone::get);
 
-        assertThat(response.booleanValue()).isEqualTo(true);
     }
 
     @Test
@@ -221,10 +219,8 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
             pipelineDone.set(true);
         });
 
-        var response = request.postWithResponseBody(irisSessionUrl(irisSession.getId()) + "/tutor-suggestion", true, Boolean.class, HttpStatus.CREATED);
+        request.postWithResponseBody(irisSessionUrl(irisSession.getId()) + "/tutor-suggestion", null, Void.class, HttpStatus.CREATED);
         await().atMost(java.time.Duration.ofSeconds(5)).until(pipelineDone::get);
-
-        assertThat(response.booleanValue()).isEqualTo(true);
     }
 
     @Test

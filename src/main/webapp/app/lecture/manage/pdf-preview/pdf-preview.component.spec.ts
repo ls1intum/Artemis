@@ -185,7 +185,7 @@ describe('PdfPreviewComponent', () => {
             expect(attachmentUnitServiceMock.getAttachmentFile).not.toHaveBeenCalled();
         });
 
-        it('should load attachment unit file and verify service calls when attachment unit data is available', fakeAsync(() => {
+        it('should load attachment video unit file and verify service calls when attachment video unit data is available', fakeAsync(() => {
             const mockAttachmentUnit = {
                 id: 1,
                 name: 'Chapter 1',
@@ -236,7 +236,7 @@ describe('PdfPreviewComponent', () => {
             expect(alertServiceSpy).toHaveBeenCalled();
         });
 
-        it('should handle errors and trigger alert when loading an attachment unit file fails', fakeAsync(() => {
+        it('should handle errors and trigger alert when loading an attachment video unit file fails', fakeAsync(() => {
             routeMock.data = of({
                 course: { id: 1, name: 'Example Course' },
                 attachmentVideoUnit: {
@@ -373,7 +373,7 @@ describe('PdfPreviewComponent', () => {
             );
         });
 
-        it('should update an attachment unit successfully without hidden pages', async () => {
+        it('should update an attachment video unit successfully without hidden pages', async () => {
             component.attachment.set(undefined);
             component.attachmentVideoUnit.set({
                 id: 2,
@@ -416,7 +416,7 @@ describe('PdfPreviewComponent', () => {
             appendSpy.mockRestore();
         });
 
-        it('should update an attachment unit with hidden pages and create a student version', async () => {
+        it('should update an attachment video unit with hidden pages and create a student version', async () => {
             attachmentUnitServiceMock.updateStudentVersion = jest.fn().mockReturnValue(of({}));
 
             component.attachment.set(undefined);
@@ -453,9 +453,9 @@ describe('PdfPreviewComponent', () => {
             // We need to mock the validateHiddenSlidesDates method to return true
             jest.spyOn(component as any, 'validateHiddenSlidesDates').mockReturnValue(true);
 
-            // We need to override the updateAttachmentUnit method
+            // We need to override the updateAttachmentVideoUnit method
             // because it uses a Promise that resolves inside a subscription
-            jest.spyOn(component as any, 'updateAttachmentUnit').mockImplementation(() => {
+            jest.spyOn(component as any, 'updateAttachmentVideoUnit').mockImplementation(() => {
                 return Promise.resolve();
             });
 
@@ -466,7 +466,7 @@ describe('PdfPreviewComponent', () => {
 
             await component.updateAttachmentWithFile();
 
-            expect(component['updateAttachmentUnit']).toHaveBeenCalled();
+            expect(component['updateAttachmentVideoUnit']).toHaveBeenCalled();
             expect(component['updateStudentVersion']).toHaveBeenCalled();
         });
 
@@ -508,7 +508,7 @@ describe('PdfPreviewComponent', () => {
             expect(routerNavigateSpy).not.toHaveBeenCalled();
         });
 
-        it('should handle errors when attachment unit update fails', async () => {
+        it('should handle errors when attachment video unit update fails', async () => {
             component.attachment.set(undefined);
             component.attachmentVideoUnit.set({
                 id: 2,
@@ -690,7 +690,7 @@ describe('PdfPreviewComponent', () => {
             expect(component.dialogErrorSource.next).toHaveBeenCalledWith('');
         });
 
-        it('should delete the attachment unit and navigate to unit management on success', () => {
+        it('should delete the attachment video unit and navigate to unit management on success', () => {
             component.attachment.set(undefined);
             component.attachmentVideoUnit.set({ id: 4, lecture: { id: 5 } });
             component.course.set({ id: 6 });
@@ -714,7 +714,7 @@ describe('PdfPreviewComponent', () => {
             expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: 'Deletion failed' });
         });
 
-        it('should handle error when deletion of attachment unit fails', () => {
+        it('should handle error when deletion of attachment video unit fails', () => {
             const error = { message: 'Deletion failed' };
             lectureUnitServiceMock.delete.mockReturnValue(throwError(() => error));
             component.attachment.set(undefined);
@@ -1746,7 +1746,7 @@ describe('PdfPreviewComponent', () => {
             routerNavigateSpy = jest.spyOn(TestBed.inject(Router), 'navigate').mockImplementation(() => Promise.resolve(true));
         });
 
-        it('should successfully update the student version of an attachment unit', fakeAsync(() => {
+        it('should successfully update the student version of an attachment video unit', fakeAsync(() => {
             component.attachmentVideoUnit.set({
                 id: 2,
                 name: 'Chapter 1',
@@ -1828,7 +1828,7 @@ describe('PdfPreviewComponent', () => {
                 studentPdf: mockStudentPdf as any,
             });
 
-            jest.spyOn(component as any, 'updateAttachmentUnit').mockResolvedValue(undefined);
+            jest.spyOn(component as any, 'updateAttachmentVideoUnit').mockResolvedValue(undefined);
 
             const updateStudentVersionSpy = jest.spyOn(component as any, 'updateStudentVersion').mockResolvedValue(undefined);
 
@@ -1865,7 +1865,7 @@ describe('PdfPreviewComponent', () => {
                 studentPdf: null,
             });
 
-            jest.spyOn(component as any, 'updateAttachmentUnit').mockResolvedValue(undefined);
+            jest.spyOn(component as any, 'updateAttachmentVideoUnit').mockResolvedValue(undefined);
 
             const updateStudentVersionSpy = jest.spyOn(component as any, 'updateStudentVersion');
 

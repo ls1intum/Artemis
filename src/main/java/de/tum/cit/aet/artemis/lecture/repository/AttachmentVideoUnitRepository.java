@@ -43,7 +43,7 @@ public interface AttachmentVideoUnitRepository extends ArtemisJpaRepository<Atta
      *
      * @param lectureId      the id of the lecture
      * @param attachmentType the attachment type
-     * @return the list of all attachment units with the given lecture id and attachment type
+     * @return the list of all attachment video units with the given lecture id and attachment type
      * @throws EntityNotFoundException if no results are found
      */
     @NotNull
