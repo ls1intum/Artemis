@@ -139,11 +139,10 @@ public class AttachmentVideoUnitResource {
         if (!validateHiddenSlidesDates(hiddenPages)) {
             throw new BadRequestAlertException("Hidden slide dates cannot be in the past", ENTITY_NAME, "invalidHiddenDates");
         }
-
         AttachmentVideoUnit savedAttachmentVideoUnit = attachmentVideoUnitService.updateAttachmentVideoUnit(existingAttachmentVideoUnit, attachmentVideoUnit, attachment, file,
                 keepFilename, hiddenPages, pageOrder);
 
-        if (notificationText != null) {
+        if (notificationText != null && attachment != null) {
             groupNotificationService.notifyStudentGroupAboutAttachmentChange(savedAttachmentVideoUnit.getAttachment());
         }
 

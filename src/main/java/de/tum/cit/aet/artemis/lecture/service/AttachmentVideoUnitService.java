@@ -107,6 +107,12 @@ public class AttachmentVideoUnitService {
         existingAttachmentVideoUnit.setCompetencyLinks(updateUnit.getCompetencyLinks());
         existingAttachmentVideoUnit.setVideoSource(updateUnit.getVideoSource());
 
+        Attachment existingAttachment = existingAttachmentVideoUnit.getAttachment();
+
+        if (existingAttachment == null && updateAttachment != null) {
+            createAttachment(updateAttachment, existingAttachmentVideoUnit, updateFile, keepFilename);
+        }
+
         AttachmentVideoUnit savedAttachmentVideoUnit = lectureUnitService.saveWithCompetencyLinks(existingAttachmentVideoUnit, attachmentVideoUnitRepository::saveAndFlush);
 
         // Set the original competencies back to the attachment video unit so that the competencyProgressService can determine which competencies changed
@@ -117,18 +123,13 @@ public class AttachmentVideoUnitService {
             return existingAttachmentVideoUnit;
         }
 
-        Attachment existingAttachment = existingAttachmentVideoUnit.getAttachment();
-        if (existingAttachment == null) {
-            createAttachment(updateAttachment, savedAttachmentVideoUnit, updateFile, keepFilename);
-        }
-        else {
+        if (existingAttachment != null) {
             updateAttachment(existingAttachment, updateAttachment, savedAttachmentVideoUnit, hiddenPages);
             handleFile(updateFile, existingAttachment, keepFilename, savedAttachmentVideoUnit.getId());
             final int revision = existingAttachment.getVersion() == null ? 1 : existingAttachment.getVersion() + 1;
             existingAttachment.setVersion(revision);
             Attachment savedAttachment = attachmentRepository.saveAndFlush(existingAttachment);
             savedAttachmentVideoUnit.setAttachment(savedAttachment);
-            prepareAttachmentVideoUnitForClient(savedAttachmentVideoUnit);
             evictCache(updateFile, savedAttachmentVideoUnit);
 
             if (updateFile != null) {
@@ -143,6 +144,8 @@ public class AttachmentVideoUnitService {
                 }
             }
         }
+
+        prepareAttachmentVideoUnitForClient(savedAttachmentVideoUnit);
 
         irisLectureApi.ifPresent(api -> api.autoUpdateAttachmentVideoUnitsInPyris(savedAttachmentVideoUnit.getLecture().getCourse().getId(), List.of(savedAttachmentVideoUnit)));
 
