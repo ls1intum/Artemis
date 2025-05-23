@@ -137,32 +137,51 @@ public class TutorialGroupService {
     }
 
     /**
-     * Sets the averageAttendance transient field of the given tutorial group
+     * Computes and sets the transient {@code averageAttendance} field for the given {@link TutorialGroup}.
      * <p>
-     * Calculation:
+     * The method evaluates the attendance of up to the last three completed and valid sessions:
      * <ul>
-     * <li>Get set of the last three completed sessions (or less than three if not more available)</li>
-     * <li>Remove sessions without attendance data (null) from the set</li>
-     * <li>If set is empty, set attendance average of tutorial group to null (meaning could not be determined)</li>
-     * <li>If set is non empty, set the attendance average of the tutorial group to the arithmetic mean (rounded to integer)</li>
+     * <li>Fetches sessions from the tutorial group if they are already loaded; otherwise queries the repository.</li>
+     * <li>Filters for completed sessions (i.e., with an end date before now), active status, and non-null attendance.</li>
+     * <li>Sorts the sessions by start date in descending order and selects the most recent three.</li>
+     * <li>If no sessions remain after filtering, sets {@code averageAttendance} to {@code null}.</li>
+     * <li>Otherwise, calculates the arithmetic mean of attendance counts (rounded to nearest integer) and sets it.</li>
      * </ul>
      *
-     * @param tutorialGroup the tutorial group to set the averageAttendance for
+     * @param tutorialGroup the {@link TutorialGroup} entity for which the attendance average should be computed
      */
     private void setAverageAttendance(TutorialGroup tutorialGroup) {
         Collection<TutorialGroupSession> sessions;
+
+        // Check if sessions are already loaded via JPA; otherwise fetch from the database
         if (getPersistenceUtil().isLoaded(tutorialGroup, "tutorialGroupSessions") && tutorialGroup.getTutorialGroupSessions() != null) {
             sessions = tutorialGroup.getTutorialGroupSessions();
         }
         else {
             sessions = tutorialGroupSessionRepository.findAllByTutorialGroupId(tutorialGroup.getId());
         }
+
+        //@formatter:off
         sessions.stream()
-                .filter(tutorialGroupSession -> TutorialGroupSessionStatus.ACTIVE.equals(tutorialGroupSession.getStatus())
-                        && tutorialGroupSession.getEnd().isBefore(ZonedDateTime.now()))
-                .sorted(Comparator.comparing(TutorialGroupSession::getStart).reversed()).limit(3)
-                .map(tutorialGroupSession -> Optional.ofNullable(tutorialGroupSession.getAttendanceCount())).flatMap(Optional::stream).mapToInt(attendance -> attendance).average()
-                .ifPresentOrElse(value -> tutorialGroup.setAverageAttendance((int) Math.round(value)), () -> tutorialGroup.setAverageAttendance(null));
+            // Keep only sessions that have already ended
+            .filter(session -> session.getEnd().isBefore(ZonedDateTime.now()))
+            // Keep only sessions that are marked as ACTIVE
+            .filter(session -> TutorialGroupSessionStatus.ACTIVE.equals(session.getStatus()))
+            // Exclude sessions without attendance data
+            .filter(session -> session.getAttendanceCount() != null)
+            // Sort by start time in descending order (most recent first)
+            .sorted(Comparator.comparing(TutorialGroupSession::getStart).reversed())
+            // Limit to the last three valid sessions
+            .limit(3)
+            // Map to attendance count for averaging
+            .mapToInt(TutorialGroupSession::getAttendanceCount)
+            // Compute the average and set it (rounded to integer), or null if no valid sessions
+            .average()
+            .ifPresentOrElse(
+                value -> tutorialGroup.setAverageAttendance((int) Math.round(value)),
+                () -> tutorialGroup.setAverageAttendance(null)
+            );
+        //@formatter:on
     }
 
     /**

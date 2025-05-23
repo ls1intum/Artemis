@@ -25,8 +25,8 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.service.ArchivalReportEntry;
-import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionExportOptionsDTO;
 
@@ -175,7 +175,7 @@ public abstract class ExerciseWithSubmissionsExportService {
      */
     private void constructFilenameAndCopyFile(Exercise exercise, List<String> exportErrors, Path embeddedFilesDir, String filePath) {
         String fileName = filePath.replace(API_MARKDOWN_FILE_PATH, "");
-        Path imageFilePath = FilePathService.getMarkdownFilePath().resolve(fileName);
+        Path imageFilePath = FilePathConverter.getMarkdownFilePath().resolve(fileName);
         Path imageExportPath = embeddedFilesDir.resolve(fileName);
         // we need this check as it might be that the matched string is different and not filtered out above but the file is already copied
         if (!Files.exists(imageExportPath)) {

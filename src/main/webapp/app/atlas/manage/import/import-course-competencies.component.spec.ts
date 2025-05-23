@@ -86,7 +86,7 @@ describe('ImportCourseCompetenciesComponent', () => {
         componentFixture.detectChanges();
 
         expect(component.disabledIds).toHaveLength(6);
-        expect(component.disabledIds).toContainAllValues([1, 2, 3, 4, 11, 12]);
+        expect(component.disabledIds).toIncludeAllMembers([1, 2, 3, 4, 11, 12]);
         expect(component.searchedCourseCompetencies.resultsOnPage).toHaveLength(3);
     });
 

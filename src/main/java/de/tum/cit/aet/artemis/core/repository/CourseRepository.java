@@ -82,6 +82,15 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
             FROM Course c
             WHERE (c.startDate <= :now OR c.startDate IS NULL)
                 AND (c.endDate >= :now OR c.endDate IS NULL)
+                AND c.learningPathsEnabled=true
+            """)
+    List<Course> findAllActiveForUserAndLearningPathsEnabled(@Param("now") ZonedDateTime now);
+
+    @Query("""
+            SELECT DISTINCT c
+            FROM Course c
+            WHERE (c.startDate <= :now OR c.startDate IS NULL)
+                AND (c.endDate >= :now OR c.endDate IS NULL)
                 AND c.testCourse = FALSE
             """)
     List<Course> findAllActiveWithoutTestCourses(@Param("now") ZonedDateTime now);
