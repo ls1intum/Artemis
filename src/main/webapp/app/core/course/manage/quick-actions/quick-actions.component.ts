@@ -8,6 +8,7 @@ import { UserManagementDropdownComponent } from 'app/core/course/manage/user-man
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgTemplateOutlet } from '@angular/common';
 import { AddExercisePopoverComponent } from 'app/core/course/manage/quick-actions/add-exercise-popover/add-exercise-popover.component';
+import { CardWrapperComponent } from 'app/shared/card-wrapper/card-wrapper.component';
 
 export enum CourseManagementSection {
     LECTURE = 'lectures',
@@ -17,10 +18,10 @@ export enum CourseManagementSection {
 @Component({
     selector: 'jhi-quick-actions',
     templateUrl: './quick-actions.component.html',
-    imports: [ButtonComponent, UserManagementDropdownComponent, TranslateDirective, RouterLink, NgTemplateOutlet, AddExercisePopoverComponent],
+    imports: [ButtonComponent, UserManagementDropdownComponent, TranslateDirective, RouterLink, NgTemplateOutlet, AddExercisePopoverComponent, CardWrapperComponent],
 })
 export class QuickActionsComponent {
-    course = input.required<Course>();
+    protected readonly FeatureToggle = FeatureToggle;
     protected readonly ButtonType = ButtonType;
     protected readonly ButtonSize = ButtonSize;
     protected readonly faListAlt = faListAlt;
@@ -30,8 +31,8 @@ export class QuickActionsComponent {
     protected readonly faChalkboardUser = faChalkboardUser;
     protected readonly faQuestion = faQuestion;
     protected readonly CourseManagementSection = CourseManagementSection;
+    course = input.required<Course>();
     private router = inject(Router);
-    protected readonly FeatureToggle = FeatureToggle;
 
     navigateToCourseManagementSection(section: CourseManagementSection) {
         return this.router.navigate(['/course-management', this.course().id, section, 'new']);
