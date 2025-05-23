@@ -221,7 +221,14 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
      * @param error that occurred during the passkey login process.
      * @return true if the error is an expected error related to making passkey autocomplete available
      */
-    private isPasskeyAutocompleteError(error: Error): boolean {
+    private isPasskeyAutocompleteError(error: Error | DOMException): boolean {
+        // const isSafariAbortError = error.name === 'AbortError' && error.message === 'The operation was aborted.';
+
+        console.log('error', error);
+        console.log(error);
+        console.log('error name', error.name);
+        console.log('error message', error.message);
+
         if (error.name === USER_CANCELLED_LOGIN_WITH_PASSKEY_ERROR) {
             // The user manually aborted the passkey login process after clicking the "Sign in with passkey" button.
             // This required aborting the `getCredential` request with <a href="https://www.corbado.com/blog/webauthn-conditional-ui-passkeys-autofill">conditional mediation</a>,
@@ -234,9 +241,11 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
                 this.makePasskeyAutocompleteAvailable();
             }
             return true;
-        } else if (error instanceof PasskeyAbortError) {
+        } else if (error instanceof PasskeyAbortError || (error instanceof DOMException && this.isSafariAbortError(error))) {
             console.warn(error.message);
             return true;
+        } else if (error instanceof DOMException && error.name === 'AbortError') {
+            console.warn('Safari-specific AbortError caught:', error.message);
         } else if (error.name === 'OperationError' && error.message === 'A request is already pending.') {
             // This error occurs after logging out in connection with makePasskeyAutocompleteAvailable, we want to fail silently in that case
             console.warn(error.message);
@@ -244,6 +253,10 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
         }
 
         return false;
+    }
+
+    private isSafariAbortError(error: DOMException) {
+        return error.name === 'AbortError' && error.message === 'Aborted by AbortSignal.';
     }
 
     /**
