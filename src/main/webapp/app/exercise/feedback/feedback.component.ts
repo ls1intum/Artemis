@@ -183,7 +183,7 @@ export class FeedbackComponent implements OnInit, OnChanges {
      * Sets up the information related to the exercise.
      */
     private initializeExerciseInformation() {
-        this.exercise = this.result.submission?.participation?.exercise;
+        this.exercise ??= this.result.submission?.participation?.exercise;
         if (this.exercise) {
             this.course = getCourseFromExercise(this.exercise);
         }
