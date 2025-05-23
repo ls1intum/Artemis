@@ -56,7 +56,7 @@ describe('Text Submission Viewer Component', () => {
         fixture.componentRef.setInput('plagiarismSubmission', { submissionId: 1 } as PlagiarismSubmission<TextSubmissionElement>);
         fixture.componentRef.setInput('exercise', { type: ExerciseType.TEXT } as Exercise);
         fixture.componentRef.setInput('fileSelectedSubject', new Subject<TextPlagiarismFileElement>());
-        fixture.componentRef.setInput('showFilesSubject', new Subject<boolean>(false));
+        fixture.componentRef.setInput('showFilesSubject', new Subject<boolean>());
         fixture.componentRef.setInput('dropdownHoverSubject', new Subject<TextPlagiarismFileElement>());
         fixture.componentRef.setInput('matches', new Map());
 
