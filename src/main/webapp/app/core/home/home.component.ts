@@ -92,6 +92,8 @@ export class HomeComponent implements OnInit, AfterViewChecked {
 
     profileInfo: ProfileInfo;
 
+    isRetryingPasskeyAutocompleteRequest = false;
+
     /**
      * <p>
      * We want users to use passkey authentication over password authentication.
@@ -180,6 +182,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
 
             await this.webauthnApiService.loginWithPasskey(credential);
             this.handleLoginSuccess();
+            this.isRetryingPasskeyAutocompleteRequest = false;
         } catch (error) {
             const shouldFailErrorSilently = this.isPasskeyAutocompleteError(error);
             if (shouldFailErrorSilently) {
@@ -210,7 +213,11 @@ export class HomeComponent implements OnInit, AfterViewChecked {
             // To restore passkey autocomplete functionality, re-invoke `makePasskeyAutocompleteAvailable`.
             // eslint-disable-next-line no-undef
             console.warn('Operation not allowed or timed out: login with passkey was aborted manually by the user');
-            this.makePasskeyAutocompleteAvailable();
+            const isInRecursiveFailingLoop = this.isRetryingPasskeyAutocompleteRequest;
+            if (!isInRecursiveFailingLoop) {
+                this.isRetryingPasskeyAutocompleteRequest = true;
+                this.makePasskeyAutocompleteAvailable();
+            }
             return true;
         } else if (error instanceof PasskeyAbortError) {
             // eslint-disable-next-line no-undef
