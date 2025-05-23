@@ -177,7 +177,6 @@ public class AttachmentVideoUnitService {
         existingAttachment.setAttachmentVideoUnit(attachmentVideoUnit);
         existingAttachment.setReleaseDate(updateAttachment.getReleaseDate());
         existingAttachment.setName(updateAttachment.getName());
-        existingAttachment.setReleaseDate(updateAttachment.getReleaseDate());
         existingAttachment.setAttachmentType(updateAttachment.getAttachmentType());
         if (hiddenPages == null && existingAttachment.getStudentVersion() != null) {
             existingAttachment.setStudentVersion(null);
