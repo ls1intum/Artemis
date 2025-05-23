@@ -399,7 +399,7 @@ describe('PostingContentPartComponent', () => {
         });
 
         it('should render bold and italic text correctly', () => {
-            const content = '**fett** und *kursiv*';
+            const content = '**bold** und *italic*';
             runInInjectionContext(fixture.debugElement.injector, () => {
                 component.postingContentPart = input<PostingContentPart>({
                     contentBeforeReference: content,
@@ -410,14 +410,14 @@ describe('PostingContentPartComponent', () => {
                 const em = debugElement.nativeElement.querySelector('em');
 
                 expect(strong).not.toBeNull();
-                expect(strong.textContent).toBe('fett');
+                expect(strong.textContent).toBe('bold');
                 expect(em).not.toBeNull();
-                expect(em.textContent).toBe('kursiv');
+                expect(em.textContent).toBe('italic');
             });
         });
 
         it('should render paragraphs', () => {
-            const content = 'Absatz eins.\n\nAbsatz zwei.';
+            const content = 'Paragraph One.\n\nParagraph Two.';
             runInInjectionContext(fixture.debugElement.injector, () => {
                 component.postingContentPart = input<PostingContentPart>({
                     contentBeforeReference: content,
@@ -430,7 +430,7 @@ describe('PostingContentPartComponent', () => {
         });
 
         it('should render single paragraph', () => {
-            const content = 'Absatz eins.\nAbsatz zwei.';
+            const content = 'Paragraph One.\nParagraph Two.';
             runInInjectionContext(fixture.debugElement.injector, () => {
                 component.postingContentPart = input<PostingContentPart>({
                     contentBeforeReference: content,
