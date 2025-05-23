@@ -227,7 +227,7 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
             // This required aborting the `getCredential` request with <a href="https://www.corbado.com/blog/webauthn-conditional-ui-passkeys-autofill">conditional mediation</a>,
             // which is necessary for enabling passkey autocomplete.
             // To restore passkey autocomplete functionality, re-invoke `makePasskeyAutocompleteAvailable`.
-            console.warn('Operation not allowed or timed out: login with passkey was aborted manually by the user');
+            console.warn('Operation not allowed or timed out: login with passkey was aborted manually');
             const isInRecursiveFailingLoop = this.isRetryingPasskeyAutocompleteRequest;
             if (!isInRecursiveFailingLoop) {
                 this.isRetryingPasskeyAutocompleteRequest = true;
