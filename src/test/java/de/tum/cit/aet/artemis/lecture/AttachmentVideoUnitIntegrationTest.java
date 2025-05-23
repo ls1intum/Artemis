@@ -349,7 +349,7 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateAttachmentVideoUnit_withoutAttachment_shouldUpdateAttachmentVideoUnit() throws Exception {
         persistAttachmentVideoUnitWithLecture();
-        request.performMvcRequest(buildUpdateAttachmentVideoUnit(attachmentVideoUnit, null)).andExpect(status().isBadRequest());
+        request.performMvcRequest(buildUpdateAttachmentVideoUnit(attachmentVideoUnit, null)).andExpect(status().isOk());
     }
 
     @Test
