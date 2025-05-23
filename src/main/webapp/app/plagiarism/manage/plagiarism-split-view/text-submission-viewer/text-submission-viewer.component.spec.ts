@@ -6,9 +6,7 @@ import { TextSubmissionViewerComponent } from 'app/plagiarism/manage/plagiarism-
 import { CodeEditorRepositoryFileService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { TextSubmissionService } from 'app/text/overview/service/text-submission.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
-import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { DomainChange, DomainType, FileType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { PlagiarismSubmission } from 'app/plagiarism/shared/entities/PlagiarismSubmission';
 import { TextSubmissionElement } from 'app/plagiarism/shared/entities/text/TextSubmissionElement';
@@ -155,7 +153,7 @@ describe('Text Submission Viewer Component', () => {
 
         fixture.componentRef.setInput('plagiarismSubmission', { submissionId } as PlagiarismSubmission<TextSubmissionElement>);
         fixture.componentRef.setInput('exercise', { type: ExerciseType.TEXT } as Exercise);
-        fixture.componentRef.setInput('fileSelectedSubject', new Subject<TextPlagiarismElement>());
+        fixture.componentRef.setInput('fileSelectedSubject', new Subject<TextPlagiarismFileElement>());
         fixture.componentRef.setInput('showFilesSubject', new Subject<boolean>(false));
         fixture.componentRef.setInput('dropdownHoverSubject', new Subject<TextPlagiarismFileElement>());
         fixture.componentRef.setInput('matches', new Map());
@@ -176,8 +174,8 @@ describe('Text Submission Viewer Component', () => {
     });
 
     it('handles binary file selection', () => {
-        comp.plagiarismSubmission = { submissionId: 1 } as PlagiarismSubmission<TextSubmissionElement>;
-
+        fixture.componentRef.setInput('plagiarismSubmission', { submissionId: 1 } as PlagiarismSubmission<TextSubmissionElement>);
+        fixture.detectChanges();
         const fileName = Object.keys(files)[4];
         jest.spyOn(repositoryService, 'getFileForPlagiarismView').mockReturnValue(of({ fileContent: 'Test' }));
 
@@ -470,7 +468,8 @@ describe('Text Submission Viewer Component', () => {
             },
         ];
         jest.spyOn(comp, 'getMatchesForCurrentFile').mockReturnValue(mockMatches);
-        comp.exercise = { type: ExerciseType.TEXT } as unknown as Exercise;
+        fixture.componentRef.setInput('exercise', { type: ExerciseType.TEXT } as Exercise);
+        fixture.detectChanges();
 
         const fileContent = `Lorem ipsum dolor sit amet.\nConsetetur sadipscing elitr.`;
         const expectedFileContent = `Lorem ipsum dolor sit amet.\nConsetetur sadipscing elitr.`;
@@ -500,7 +499,8 @@ describe('Text Submission Viewer Component', () => {
             },
         ];
         jest.spyOn(comp, 'getMatchesForCurrentFile').mockReturnValue(mockMatches);
-        comp.exercise = { type: ExerciseType.PROGRAMMING } as unknown as Exercise;
+        fixture.componentRef.setInput('exercise', { type: ExerciseType.PROGRAMMING } as Exercise);
+        fixture.detectChanges();
 
         const fileContent = `Lorem ipsum dolor sit amet.\nConsetetur sadipscing elitr.`;
         const expectedFileContent = `Lorem ipsum dolor sit amet.\nConsetetur sadipscing elitr.`;

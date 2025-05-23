@@ -65,7 +65,7 @@ describe('Plagiarism Header Component', () => {
     });
 
     it('should disable deny button if plagiarism status is denied or loading', () => {
-        comp.comparison.status = PlagiarismStatus.DENIED;
+        fixture.componentRef.setInput('comparison', { ...comp.comparison(), status: PlagiarismStatus.DENIED });
         comp.isLoading = true;
 
         fixture.detectChanges();
