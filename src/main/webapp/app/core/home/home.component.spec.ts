@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { HomeComponent } from './home.component';
+import { HomeComponent, USER_CANCELLED_LOGIN_WITH_PASSKEY_ERROR } from './home.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AccountService } from 'app/core/auth/account.service';
 import { LoginService } from 'app/core/login/login.service';
@@ -25,6 +25,7 @@ import { EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, SetupPasskeyMod
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { User } from 'app/core/user/user.model';
 import { InvalidCredentialError } from 'app/core/user/settings/passkey-settings/entities/invalid-credential-error';
+import { PasskeyAbortError } from 'app/core/user/settings/passkey-settings/entities/passkey-abort-error';
 
 describe('HomeComponent', () => {
     let component: HomeComponent;
@@ -81,6 +82,7 @@ describe('HomeComponent', () => {
         alertService = TestBed.inject(AlertService);
 
         jest.spyOn(console, 'error').mockImplementation(() => {});
+        jest.spyOn(console, 'warn').mockImplementation(() => {});
 
         fixture.detectChanges();
     });
@@ -212,30 +214,66 @@ describe('HomeComponent', () => {
         });
     });
 
-    it('should handle successful passkey login', async () => {
-        const mockCredential = { type: 'public-key' } as PublicKeyCredential;
-        jest.spyOn(webauthnService, 'getCredential').mockResolvedValue(mockCredential);
-        jest.spyOn(webauthnApiService, 'loginWithPasskey').mockResolvedValue();
-        const handleLoginSuccessSpy = jest.spyOn(component as any, 'handleLoginSuccess');
+    describe('loginWithPasskey', () => {
+        it('should handle successful passkey login', async () => {
+            const mockCredential = { type: 'public-key' } as PublicKeyCredential;
+            jest.spyOn(webauthnService, 'getCredential').mockResolvedValue(mockCredential);
+            jest.spyOn(webauthnApiService, 'loginWithPasskey').mockResolvedValue();
+            const handleLoginSuccessSpy = jest.spyOn(component as any, 'handleLoginSuccess');
 
-        await component.loginWithPasskey();
+            await component.loginWithPasskey();
 
-        expect(handleLoginSuccessSpy).toHaveBeenCalled();
-    });
+            expect(handleLoginSuccessSpy).toHaveBeenCalled();
+        });
 
-    it('should handle invalid credential error on passkey login', async () => {
-        jest.spyOn(webauthnService, 'getCredential').mockRejectedValue(new InvalidCredentialError());
-        const alertSpy = jest.spyOn(alertService, 'addErrorAlert');
+        it('should handle invalid credential error on passkey login', async () => {
+            jest.spyOn(webauthnService, 'getCredential').mockRejectedValue(new InvalidCredentialError());
+            const alertSpy = jest.spyOn(alertService, 'addErrorAlert');
 
-        await expect(component.loginWithPasskey()).rejects.toThrow(Error);
-        expect(alertSpy).toHaveBeenCalledWith('artemisApp.userSettings.passkeySettingsPage.error.invalidCredential');
-    });
+            await expect(component.loginWithPasskey()).rejects.toThrow(Error);
+            expect(alertSpy).toHaveBeenCalledWith('artemisApp.userSettings.passkeySettingsPage.error.invalidCredential');
+        });
 
-    it('should handle generic login error on passkey login', async () => {
-        jest.spyOn(webauthnService, 'getCredential').mockRejectedValue(new Error('Login failed'));
-        const alertSpy = jest.spyOn(alertService, 'addErrorAlert');
+        it('should handle generic login error on passkey login', async () => {
+            jest.spyOn(webauthnService, 'getCredential').mockRejectedValue(new Error('Login failed'));
+            const alertSpy = jest.spyOn(alertService, 'addErrorAlert');
 
-        await expect(component.loginWithPasskey()).rejects.toThrow('Login failed');
-        expect(alertSpy).toHaveBeenCalledWith('artemisApp.userSettings.passkeySettingsPage.error.login');
+            await expect(component.loginWithPasskey()).rejects.toThrow('Login failed');
+            expect(alertSpy).toHaveBeenCalledWith('artemisApp.userSettings.passkeySettingsPage.error.login');
+        });
+
+        it('should fail silently when user cancels passkey login', async () => {
+            const makePasskeyAutocompleteAvailableSpy = jest.spyOn(component as any, 'makePasskeyAutocompleteAvailable');
+            jest.spyOn(alertService, 'addErrorAlert').mockImplementation(() => {}); // Mock addErrorAlert
+            jest.spyOn(webauthnService, 'getCredential').mockRejectedValue({ name: USER_CANCELLED_LOGIN_WITH_PASSKEY_ERROR });
+
+            await component.loginWithPasskey();
+
+            expect(makePasskeyAutocompleteAvailableSpy).toHaveBeenCalled();
+            expect(alertService.addErrorAlert).not.toHaveBeenCalled();
+        });
+
+        it('should fail silently on PasskeyAbortError', async () => {
+            const makePasskeyAutocompleteAvailableSpy = jest.spyOn(component as any, 'makePasskeyAutocompleteAvailable');
+            jest.spyOn(alertService, 'addErrorAlert').mockImplementation(() => {}); // Mock addErrorAlert
+            jest.spyOn(webauthnService, 'getCredential').mockRejectedValue(new PasskeyAbortError('Passkey process aborted'));
+
+            await component.loginWithPasskey();
+
+            expect(makePasskeyAutocompleteAvailableSpy).not.toHaveBeenCalled();
+            expect(alertService.addErrorAlert).not.toHaveBeenCalled();
+        });
+
+        it('should fail silently on OperationError with pending request', async () => {
+            jest.spyOn(alertService, 'addErrorAlert').mockImplementation(() => {}); // Mock addErrorAlert
+            jest.spyOn(webauthnService, 'getCredential').mockRejectedValue({
+                name: 'OperationError',
+                message: 'A request is already pending.',
+            });
+
+            await component.loginWithPasskey();
+
+            expect(alertService.addErrorAlert).not.toHaveBeenCalled();
+        });
     });
 });

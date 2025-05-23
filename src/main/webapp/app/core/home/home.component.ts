@@ -29,7 +29,7 @@ import { PasskeyAbortError } from 'app/core/user/settings/passkey-settings/entit
 /**
  * This occurs if a user clicks the "login with passkey" button but then cancel the login process.
  */
-const USER_CANCELLED_LOGIN_WITH_PASSKEY_ERROR = 'NotAllowedError';
+export const USER_CANCELLED_LOGIN_WITH_PASSKEY_ERROR = 'NotAllowedError';
 
 @Component({
     selector: 'jhi-home',
