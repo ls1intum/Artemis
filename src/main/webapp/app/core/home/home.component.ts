@@ -92,6 +92,11 @@ export class HomeComponent implements OnInit, AfterViewChecked {
 
     profileInfo: ProfileInfo;
 
+    /**
+     * Flag indicating whether the passkey autocomplete request is being retried
+     * after encountering an error. This prevents an infinite loop of failure
+     * when attempting to re-enable passkey autocomplete functionality.
+     */
     isRetryingPasskeyAutocompleteRequest = false;
 
     /**
