@@ -271,6 +271,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
             const faqItem = this.sidebarItemService.getFaqItem();
             sidebarItems.push(faqItem);
         }
+        sidebarItems.push(this.sidebarItemService.getPracticeItem());
         sidebarItems.push(this.sidebarItemService.getNotificationSettingsItem());
 
         return sidebarItems;
