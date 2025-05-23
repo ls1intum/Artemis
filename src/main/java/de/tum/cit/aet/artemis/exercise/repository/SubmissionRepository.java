@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.exercise.repository;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -72,6 +73,15 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
     Long countByParticipationId(long participationId);
 
     Optional<Submission> findByParticipationIdOrderBySubmissionDateDesc(long participationId);
+
+    /**
+     * Get last submission before date for a participation
+     *
+     * @param participationId the id of the participation
+     * @param submissionDate  cutoff time for submissions
+     * @return the last submission before the cutoff
+     */
+    Optional<Submission> findFirstByParticipationIdAndSubmissionDateBeforeOrderBySubmissionDateDesc(long participationId, ZonedDateTime submissionDate);
 
     /**
      * Get all submissions of a participation and eagerly load results

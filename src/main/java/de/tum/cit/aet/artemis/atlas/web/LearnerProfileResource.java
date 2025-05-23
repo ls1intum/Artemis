@@ -88,7 +88,7 @@ public class LearnerProfileResource {
      * @param value     Value of the field
      * @param fieldName Field name
      */
-    private void validateProfileField(int value, String fieldName) {
+    private void validateProfileField(double value, String fieldName) {
         if (value < MIN_PROFILE_VALUE || value > MAX_PROFILE_VALUE) {
             String message = String.format("%s (%d) is outside valid bounds [%d, %d]", fieldName, value, MIN_PROFILE_VALUE, MAX_PROFILE_VALUE);
             throw new BadRequestAlertException(message, CourseLearnerProfile.ENTITY_NAME, fieldName.toLowerCase() + "OutOfBounds", true);
@@ -123,11 +123,18 @@ public class LearnerProfileResource {
         validateProfileField(courseLearnerProfileDTO.aimForGradeOrBonus(), "AimForGradeOrBonus");
         validateProfileField(courseLearnerProfileDTO.timeInvestment(), "TimeInvestment");
         validateProfileField(courseLearnerProfileDTO.repetitionIntensity(), "RepetitionIntensity");
+        validateProfileField(courseLearnerProfileDTO.proficiency(), "Proficiency");
 
         CourseLearnerProfile updateProfile = optionalCourseLearnerProfile.get();
         updateProfile.setAimForGradeOrBonus(courseLearnerProfileDTO.aimForGradeOrBonus());
         updateProfile.setTimeInvestment(courseLearnerProfileDTO.timeInvestment());
         updateProfile.setRepetitionIntensity(courseLearnerProfileDTO.repetitionIntensity());
+
+        double sentProficiency = courseLearnerProfileDTO.proficiency();
+        if (Math.abs(updateProfile.getProficiency() - sentProficiency) >= 0.1) {
+            updateProfile.setProficiency(sentProficiency);
+            updateProfile.setInitialProficiency(sentProficiency);
+        }
 
         courseLearnerProfileRepository.save(updateProfile);
         return ResponseEntity.ok(CourseLearnerProfileDTO.of(updateProfile));
