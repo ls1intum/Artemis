@@ -594,7 +594,7 @@ public class FileResource {
 
         int sNumber = Integer.parseInt(slideNumber);
 
-        Slide slide = sApi.findSlideByAttachmentVideoUnitIdAndSlideNumber(attachmentUnitId, sNumber);
+        Slide slide = sApi.findSlideByAttachmentVideoUnitIdAndSlideNumber(attachmentVideoUnitId, sNumber);
 
         return getSlideResponse(slide, sNumber);
     }
