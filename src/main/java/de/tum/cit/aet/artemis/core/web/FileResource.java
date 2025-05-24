@@ -62,10 +62,10 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.core.service.file.FileUploadService;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.exam.api.ExamUserApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
@@ -221,7 +221,7 @@ public class FileResource {
         log.debug("REST request to get file for markdown in conversation: File {} for conversation {} in course {}", filename, conversationId, courseId);
         sanitizeFilenameElseThrow(filename);
 
-        var serverFilePath = FilePathService.getMarkdownFilePathForConversation(courseId, conversationId);
+        var serverFilePath = FilePathConverter.getMarkdownFilePathForConversation(courseId, conversationId);
         var publicPath = "courses/" + courseId + "/conversations/" + conversationId + "/" + filename;
         var fileUpload = fileUploadService.findByPath(publicPath);
 
@@ -243,7 +243,7 @@ public class FileResource {
     public ResponseEntity<byte[]> getMarkdownFile(@PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
         sanitizeFilenameElseThrow(filename);
-        return buildFileResponse(FilePathService.getMarkdownFilePath(), filename, false);
+        return buildFileResponse(FilePathConverter.getMarkdownFilePath(), filename, false);
     }
 
     /**
@@ -459,7 +459,7 @@ public class FileResource {
         // check if the user is authorized to access the requested attachment unit
         checkAttachmentAuthorizationOrThrow(course, attachment);
 
-        return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.LECTURE_ATTACHMENT), Optional.of(attachmentName));
+        return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.LECTURE_ATTACHMENT), retrieveDownloadFilename(attachment));
     }
 
     /**
@@ -494,7 +494,7 @@ public class FileResource {
             Attachment attachment = unit.getAttachment();
             String filePath = attachment.getStudentVersion() != null ? attachment.getStudentVersion() : attachment.getLink();
             FilePathType filePathType = attachment.getStudentVersion() != null ? FilePathType.STUDENT_VERSION_SLIDES : FilePathType.ATTACHMENT_UNIT;
-            return FilePathService.fileSystemPathForExternalUri(URI.create(filePath), filePathType);
+            return FilePathConverter.fileSystemPathForExternalUri(URI.create(filePath), filePathType);
         }).toList();
 
         Optional<byte[]> file = fileService.mergePdfFiles(attachmentLinks, api.getLectureTitle(lectureId));
@@ -527,8 +527,7 @@ public class FileResource {
 
         // check if the user is authorized to access the requested attachment unit
         checkAttachmentAuthorizationOrThrow(course, attachment);
-        return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.ATTACHMENT_UNIT),
-                Optional.of(attachment.getName() + "." + getExtension(attachment.getLink())));
+        return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.ATTACHMENT_UNIT), retrieveDownloadFilename(attachment));
     }
 
     /**
@@ -549,7 +548,7 @@ public class FileResource {
         Attachment attachment = attachmentUnit.getAttachment();
         checkAttachmentUnitExistsInCourseOrThrow(course, attachmentUnit);
 
-        return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.ATTACHMENT_UNIT), false);
+        return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.ATTACHMENT_UNIT), retrieveDownloadFilename(attachment));
     }
 
     /**
@@ -569,7 +568,7 @@ public class FileResource {
         Course course = courseRepository.findByIdElseThrow(courseId);
         checkAttachmentExistsInCourseOrThrow(course, attachment);
 
-        return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.LECTURE_ATTACHMENT), false);
+        return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.LECTURE_ATTACHMENT), retrieveDownloadFilename(attachment));
     }
 
     /**
@@ -581,8 +580,8 @@ public class FileResource {
      */
     @GetMapping("files/attachments/attachment-unit/{attachmentUnitId}/slide/{slideNumber}")
     @EnforceAtLeastStudent
-    public ResponseEntity<byte[]> getAttachmentUnitAttachmentSlide(@PathVariable Long attachmentUnitId, @PathVariable String slideNumber) {
-        log.debug("REST request to get the slide : {}", slideNumber);
+    public ResponseEntity<byte[]> getAttachmentUnitAttachmentSlide(@PathVariable long attachmentUnitId, @PathVariable String slideNumber) {
+        log.debug("REST request to get the slide {} in attachment unit {}", slideNumber, attachmentUnitId);
         LectureAttachmentApi api = lectureAttachmentApi.orElseThrow(() -> new LectureApiNotPresentException(LectureAttachmentApi.class));
         SlideApi sApi = slideApi.orElseThrow(() -> new LectureApiNotPresentException(SlideApi.class));
 
@@ -593,23 +592,11 @@ public class FileResource {
 
         checkAttachmentAuthorizationOrThrow(course, attachment);
 
-        Slide slide = sApi.findSlideByAttachmentUnitIdAndSlideNumber(attachmentUnitId, Integer.parseInt(slideNumber));
+        int sNumber = Integer.parseInt(slideNumber);
 
-        if (slide.getHidden() != null) {
-            throw new AccessForbiddenException("Slide is hidden");
-        }
-        String directoryPath = slide.getSlideImagePath();
+        Slide slide = sApi.findSlideByAttachmentUnitIdAndSlideNumber(attachmentUnitId, sNumber);
 
-        // Use regular expression to match and extract the file name with ".png" format
-        Pattern pattern = Pattern.compile(".*/([^/]+\\.png)$");
-        Matcher matcher = pattern.matcher(directoryPath);
-
-        if (matcher.matches()) {
-            return buildFileResponse(getActualPathFromPublicPathString(slide.getSlideImagePath(), FilePathType.SLIDE), false);
-        }
-        else {
-            throw new EntityNotFoundException("Slide", slideNumber);
-        }
+        return getSlideResponse(slide, sNumber);
     }
 
     /**
@@ -620,12 +607,22 @@ public class FileResource {
      */
     @GetMapping("files/slides/{slideId}")
     @EnforceAtLeastStudent
-    public ResponseEntity<byte[]> getSlideById(@PathVariable Long slideId) {
-        log.debug("REST request to get the slide : {}", slideId);
+    public ResponseEntity<byte[]> getSlideById(@PathVariable long slideId) {
+        log.debug("REST request to get the slide with id {}", slideId);
         SlideApi api = slideApi.orElseThrow(() -> new LectureApiNotPresentException(SlideApi.class));
 
         Slide slide = api.findSlideByIdElseThrow(slideId);
 
+        return getSlideResponse(slide, slideId);
+    }
+
+    /**
+     * GET files/slides/{slideIdOrNumber} : Get the lecture unit attachment slide by slide id or number
+     *
+     * @param slideIdOrNumber the id or number of the slide that wanted to be retrieved
+     * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
+     */
+    private ResponseEntity<byte[]> getSlideResponse(Slide slide, long slideIdOrNumber) {
         if (slide.getHidden() != null) {
             throw new AccessForbiddenException("Slide is hidden");
         }
@@ -640,7 +637,7 @@ public class FileResource {
             return buildFileResponse(getActualPathFromPublicPathString(slide.getSlideImagePath(), FilePathType.SLIDE), false);
         }
         else {
-            throw new EntityNotFoundException("Slide", slideId);
+            throw new EntityNotFoundException("Slide", slideIdOrNumber);
         }
     }
 
@@ -652,7 +649,7 @@ public class FileResource {
      */
     @GetMapping("files/attachments/attachment-unit/{attachmentUnitId}/student/*")
     @EnforceAtLeastStudent
-    public ResponseEntity<byte[]> getAttachmentUnitStudentVersion(@PathVariable Long attachmentUnitId) {
+    public ResponseEntity<byte[]> getAttachmentUnitStudentVersion(@PathVariable long attachmentUnitId) {
         log.debug("REST request to get the student version of attachment Unit : {}", attachmentUnitId);
         LectureAttachmentApi api = lectureAttachmentApi.orElseThrow(() -> new LectureApiNotPresentException(LectureAttachmentApi.class));
 
@@ -661,15 +658,21 @@ public class FileResource {
         Course course = attachmentUnit.getLecture().getCourse();
         checkAttachmentAuthorizationOrThrow(course, attachment);
 
+        Optional<String> downloadFilename = retrieveDownloadFilename(attachment);
         // check if hidden link is available in the attachment
         String studentVersion = attachment.getStudentVersion();
         if (studentVersion == null) {
-            return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.ATTACHMENT_UNIT), false);
+            return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.ATTACHMENT_UNIT), downloadFilename);
         }
 
         String fileName = studentVersion.substring(studentVersion.lastIndexOf("/") + 1);
 
-        return buildFileResponse(FilePathService.getAttachmentUnitFileSystemPath().resolve(Path.of(attachmentUnit.getId().toString(), "student")), fileName, false);
+        return buildFileResponse(FilePathConverter.getAttachmentUnitFileSystemPath().resolve(Path.of(attachmentUnit.getId().toString(), "student")), fileName, downloadFilename,
+                false);
+    }
+
+    private static Optional<String> retrieveDownloadFilename(Attachment attachment) {
+        return Optional.of(attachment.getName() + "." + getExtension(attachment.getLink()));
     }
 
     /**
@@ -732,6 +735,7 @@ public class FileResource {
                     : "inline";
             String headerFilename = FileService.sanitizeFilename(replaceFilename.orElse(filename));
             headers.setContentDisposition(ContentDisposition.builder(contentType).filename(headerFilename).build());
+            headers.set("Filename", headerFilename);
 
             var response = ResponseEntity.ok().headers(headers).contentType(getMediaTypeFromFilename(filename)).header("filename", filename);
             if (cache) {
@@ -746,14 +750,6 @@ public class FileResource {
         }
     }
 
-    private Path getResponsePathFromPublicPath(@NotNull Path publicPath) {
-        // fail-safe to raise awareness if the public path is not correct (should not happen)
-        if (publicPath.startsWith(ARTEMIS_FILE_PATH_PREFIX)) {
-            throw new IllegalArgumentException("The public path should not contain the Artemis file path prefix");
-        }
-        return Path.of(ARTEMIS_FILE_PATH_PREFIX, publicPath.toString());
-    }
-
     private String getResponsePathFromPublicPathString(@NotNull String publicPath) {
         // fail-safe to raise awareness if the public path is not correct (should not happen)
         if (publicPath.startsWith(ARTEMIS_FILE_PATH_PREFIX)) {
@@ -763,7 +759,7 @@ public class FileResource {
     }
 
     private Path getActualPathFromPublicPathString(@NotNull String publicPath, FilePathType filePathType) {
-        return FilePathService.fileSystemPathForExternalUri(URI.create(publicPath), filePathType);
+        return FilePathConverter.fileSystemPathForExternalUri(URI.create(publicPath), filePathType);
     }
 
     private MediaType getMediaTypeFromFilename(String filename) {
