@@ -44,10 +44,10 @@
     </div>
 }
 @if (subSettings?.type === PROGRAMMING_EXERCISE_CHAT) {
-    <div class="mt-3">
-        <span class="form-label fs-4" jhiTranslate="artemisApp.iris.settings.subSettings.proactivitySettings.title"></span>
+    <h5 class="mt-3">
+        <span class="fw-bold" jhiTranslate="artemisApp.iris.settings.subSettings.proactivitySettings.title"></span>
         <fa-icon [icon]="faQuestionCircle" [ngbTooltip]="'artemisApp.iris.settings.subSettings.proactivitySettings.tooltip' | artemisTranslate" />
-    </div>
+    </h5>
     <div class="form-group">
         <div class="form-group">
             @for (event of exerciseChatEvents; track event) {
@@ -74,7 +74,7 @@
     </div>
 }
 @if (isAdmin) {
-    <span><span class="fw-bold fs-5" jhiTranslate="artemisApp.iris.settings.subSettings.variants.allowedVariants.title"></span>: </span>
+    <h5 class="mt-3"><span class="fw-bold" jhiTranslate="artemisApp.iris.settings.subSettings.variants.allowedVariants.title"></span>:</h5>
     @if (parentSubSettings) {
         <div class="form-check form-switch">
             <input
