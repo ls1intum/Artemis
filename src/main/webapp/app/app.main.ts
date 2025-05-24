@@ -39,5 +39,4 @@ bootstrapApplication(AppComponent, appConfig)
             tooltipConfig.disableTooltip = true;
         }
     })
-    // eslint-disable-next-line no-undef
     .catch((err) => console.error(err));
