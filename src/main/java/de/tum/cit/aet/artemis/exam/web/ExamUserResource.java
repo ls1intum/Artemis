@@ -23,8 +23,8 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserAttendanceCheckDTO;
@@ -87,13 +87,13 @@ public class ExamUserResource {
 
         if (signatureFile != null) {
             String oldPathString = examUser.getSigningImagePath();
-            Path basePath = FilePathService.getExamUserSignatureFilePath();
+            Path basePath = FilePathConverter.getExamUserSignatureFilePath();
             Path savePath = fileService.saveFile(signatureFile, basePath, FilePathType.EXAM_USER_SIGNATURE, false);
-            examUser.setSigningImagePath(FilePathService.externalUriForFileSystemPath(savePath, FilePathType.EXAM_USER_SIGNATURE, examUser.getId()).toString());
+            examUser.setSigningImagePath(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.EXAM_USER_SIGNATURE, examUser.getId()).toString());
 
             if (oldPathString != null) {
                 // Only delete old file if saving the new one succeeded
-                Path oldPath = FilePathService.fileSystemPathForExternalUri(URI.create(oldPathString), FilePathType.EXAM_USER_SIGNATURE);
+                Path oldPath = FilePathConverter.fileSystemPathForExternalUri(URI.create(oldPathString), FilePathType.EXAM_USER_SIGNATURE);
                 // Don't throw an exception if the file does not exist as then it's already deleted for some reason
                 fileService.schedulePathForDeletion(oldPath, 0);
             }

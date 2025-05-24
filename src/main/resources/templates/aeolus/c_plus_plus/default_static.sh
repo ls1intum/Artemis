@@ -12,7 +12,7 @@ setup_the_build_environment () {
 
   mkdir test-reports
 
-  # Updating ownership...
+  # Update ownership to avoid permission issues
   chown -R artemis_user:artemis_user .
 
   REQ_FILE=requirements.txt
