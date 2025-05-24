@@ -1,6 +1,4 @@
-package de.tum.cit.aet.artemis.core.service;
-
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+package de.tum.cit.aet.artemis.core.util;
 
 import java.net.URI;
 import java.nio.file.Path;
@@ -8,33 +6,25 @@ import java.nio.file.Path;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Service;
-
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.exception.FilePathParsingException;
-import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
+import de.tum.cit.aet.artemis.core.service.FileService;
 
 /**
- * Service for generating and parsing file system paths and public URIs for different file types in Artemis.
+ * Converter for generating and parsing file system paths and external URIs for different file types in Artemis.
  * <p>
- * This service provides static methods to convert between internal file system paths and public URIs,
+ * This converter provides static methods to convert between internal file system paths and external URIs,
  * as well as to generate base paths for various file storage locations (e.g., attachments, profile pictures, uploads).
  * The mapping is based on the {@link FilePathType} and the entity IDs associated with the files.
  * </p>
  */
-@Profile(PROFILE_CORE)
-@Service
-public class FilePathService {
+public final class FilePathConverter {
 
-    // Note: We use this static field as a kind of constant. In Spring, we cannot inject a value into a constant field, so we have to use this work-around.
-    // This is also documented here: https://www.baeldung.com/spring-inject-static-field
-    // We can not use a normal service here, as some classes (in the domain package) require this service (or depend on another service that depend on this service), were we cannot
-    // use auto-injection
-    // TODO: Rework this behavior be removing the dependencies to services (like FileService) from the domain package
-    private static String fileUploadPath;
+    private static Path fileUploadPath;
+
+    private FilePathConverter() {
+    }
 
     /**
      * Sets the base file upload path from the application properties.
@@ -42,9 +32,8 @@ public class FilePathService {
      *
      * @param fileUploadPath the base path for file uploads
      */
-    @Value("${artemis.file-upload-path}")
-    public void setFileUploadPathStatic(@NotNull String fileUploadPath) {
-        FilePathService.fileUploadPath = fileUploadPath;
+    public static void setFileUploadPath(@NotNull Path fileUploadPath) {
+        FilePathConverter.fileUploadPath = fileUploadPath;
     }
 
     /**
@@ -52,7 +41,7 @@ public class FilePathService {
      */
     @NotNull
     public static Path getTempFilePath() {
-        return Path.of(fileUploadPath, "images", "temp");
+        return fileUploadPath.resolve("images").resolve("temp");
     }
 
     /**
@@ -60,7 +49,7 @@ public class FilePathService {
      */
     @NotNull
     public static Path getDragAndDropBackgroundFilePath() {
-        return Path.of(fileUploadPath, "images", "drag-and-drop", "backgrounds");
+        return fileUploadPath.resolve("images").resolve("drag-and-drop").resolve("backgrounds");
     }
 
     /**
@@ -68,7 +57,7 @@ public class FilePathService {
      */
     @NotNull
     public static Path getDragItemFilePath() {
-        return Path.of(fileUploadPath, "images", "drag-and-drop", "drag-items");
+        return fileUploadPath.resolve("images").resolve("drag-and-drop").resolve("drag-items");
     }
 
     /**
@@ -76,7 +65,7 @@ public class FilePathService {
      */
     @NotNull
     public static Path getCourseIconFilePath() {
-        return Path.of(fileUploadPath, "images", "course", "icons");
+        return fileUploadPath.resolve("images").resolve("course").resolve("icons");
     }
 
     /**
@@ -84,7 +73,7 @@ public class FilePathService {
      */
     @NotNull
     public static Path getProfilePictureFilePath() {
-        return Path.of(fileUploadPath, "images", "user", "profile-pictures");
+        return fileUploadPath.resolve("images").resolve("user").resolve("profile-pictures");
     }
 
     /**
@@ -92,7 +81,7 @@ public class FilePathService {
      */
     @NotNull
     public static Path getExamUserSignatureFilePath() {
-        return Path.of(fileUploadPath, "images", "exam-user", "signatures");
+        return fileUploadPath.resolve("images").resolve("exam-user").resolve("signatures");
     }
 
     /**
@@ -100,7 +89,7 @@ public class FilePathService {
      */
     @NotNull
     public static Path getStudentImageFilePath() {
-        return Path.of(fileUploadPath, "images", "exam-user");
+        return fileUploadPath.resolve("images").resolve("exam-user");
     }
 
     /**
@@ -108,7 +97,7 @@ public class FilePathService {
      */
     @NotNull
     public static Path getLectureAttachmentFileSystemPath() {
-        return Path.of(fileUploadPath, "attachments", "lecture");
+        return fileUploadPath.resolve("attachments").resolve("lecture");
     }
 
     /**
@@ -116,7 +105,7 @@ public class FilePathService {
      */
     @NotNull
     public static Path getAttachmentUnitFileSystemPath() {
-        return Path.of(fileUploadPath, "attachments", "attachment-unit");
+        return fileUploadPath.resolve("attachments").resolve("attachment-unit");
     }
 
     /**
@@ -124,7 +113,7 @@ public class FilePathService {
      */
     @NotNull
     public static Path getFileUploadExercisesFilePath() {
-        return Path.of(fileUploadPath, "file-upload-exercises");
+        return fileUploadPath.resolve("file-upload-exercises");
     }
 
     /**
@@ -132,7 +121,7 @@ public class FilePathService {
      */
     @NotNull
     public static Path getMarkdownFilePath() {
-        return Path.of(fileUploadPath, "markdown");
+        return fileUploadPath.resolve("markdown");
     }
 
     /**
@@ -291,9 +280,9 @@ public class FilePathService {
         try {
             String expectedExerciseId = path.getName(1).toString();
             String expectedSubmissionId = path.getName(3).toString();
-            Long exerciseId = Long.parseLong(expectedExerciseId);
-            Long submissionId = Long.parseLong(expectedSubmissionId);
-            return FileUploadSubmission.buildFilePath(exerciseId, submissionId).resolve(filename);
+            long exerciseId = Long.parseLong(expectedExerciseId);
+            long submissionId = Long.parseLong(expectedSubmissionId);
+            return buildFileUploadSubmissionPath(exerciseId, submissionId).resolve(filename);
         }
         catch (IllegalArgumentException e) {
             throw new FilePathParsingException("External URI does not contain correct exerciseId or submissionId: " + externalUri, e);
@@ -307,7 +296,7 @@ public class FilePathService {
      * Example:
      *
      * <pre>
-     *     Path fileSystemPath = Path.of("uploads", "attachments", "lecture", "4", "slides.pdf");
+     *     Path fileSystemPath = Path.of("uploads").resolve("attachments").resolve("lecture").resolve("4").resolve("slides.pdf");
      *     URI externalUri = FilePathService.externalUriForFileSystemPath(fileSystemPath, FilePathType.LECTURE_ATTACHMENT, 4L);
      *     externalUri: attachments/lecture/4/slides.pdf
      * </pre>
@@ -346,7 +335,7 @@ public class FilePathService {
      * Example:
      *
      * <pre>
-     *     Path fileSystemPath = Path.of("uploads", "attachments", "attachment-unit", "1", "slide", "3", "slide_17.png");
+     *     Path fileSystemPath = Path.of("uploads").resolve("attachments").resolve("attachment-unit").resolve("1").resolve("slide").resolve("3").resolve("slide_17.png");
      *     URI externalUri = FilePathService.externalUriForFileSystemPath(fileSystemPath, FilePathType.SLIDE, "3");
      *     externalUri: attachments/attachment-unit/1/slide/3/slide_17.png
      * </pre>
@@ -374,7 +363,7 @@ public class FilePathService {
      * Example:
      *
      * <pre>
-     *     Path fileSystemPath = Path.of("uploads", "file-upload-exercises", "1", "submissions", "2", "submission.pdf");
+     *     Path fileSystemPath = Path.of("uploads").resolve("file-upload-exercises").resolve("1").resolve("submissions").resolve("2").resolve("submission.pdf");
      *     URI externalUri = FilePathService.externalUriForFileSystemPath(fileSystemPath, FilePathType.FILE_UPLOAD_SUBMISSION, "2);
      *     externalUri: file-upload-exercises/1/submissions/2/submission.pdf
      * </pre>
@@ -395,5 +384,17 @@ public class FilePathService {
         catch (IllegalArgumentException e) {
             throw new FilePathParsingException("Unexpected String in upload file path. Exercise ID should be present here: " + path, e);
         }
+    }
+
+    /**
+     * Builds file path for file upload submission.
+     *
+     * @param exerciseId   the id of the exercise
+     * @param submissionId the id of the submission
+     * @return path where submission for file upload exercise is stored
+     */
+    @NotNull
+    public static Path buildFileUploadSubmissionPath(long exerciseId, long submissionId) {
+        return getFileUploadExercisesFilePath().resolve(String.valueOf(exerciseId)).resolve(String.valueOf(submissionId));
     }
 }
