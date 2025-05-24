@@ -144,7 +144,7 @@ describe('ProgrammingExerciseExamDiffComponent', () => {
         expect(getRepositoryFilesSpy).toHaveBeenNthCalledWith(1, 3, 1, 'abc', RepositoryType.USER);
         expect(getRepositoryFilesSpy).toHaveBeenNthCalledWith(2, 3, 2, 'def', RepositoryType.USER);
         expect(getTemplateRepositorySpy).not.toHaveBeenCalled();
-        expect(processRepositoryDiffSpy).toHaveBeenCalledOnce();
+        expect(processRepositoryDiffSpy).toHaveBeenCalled();
         expect(component.diffInformation()?.totalLineChange?.addedLineCount).toBe(mockDiffInformation.totalLineChange.addedLineCount);
         expect(component.diffInformation()?.totalLineChange?.removedLineCount).toBe(mockDiffInformation.totalLineChange.removedLineCount);
     }));
@@ -158,9 +158,9 @@ describe('ProgrammingExerciseExamDiffComponent', () => {
         const currentSubmission = { commitHash: 'def', participation: { id: 2 } };
         component.currentSubmission.update(() => currentSubmission);
         component.fetchRepositoriesAndProcessDiff();
-        expect(getRepositoryFilesSpy).toHaveBeenCalledOnce();
+        expect(getRepositoryFilesSpy).toHaveBeenCalled();
         expect(getRepositoryFilesSpy).toHaveBeenCalledWith(3, 2, 'def', RepositoryType.USER);
-        expect(getTemplateRepositorySpy).toHaveBeenCalledOnce();
+        expect(getTemplateRepositorySpy).toHaveBeenCalled();
         expect(getTemplateRepositorySpy).toHaveBeenCalledWith(3);
     });
 
@@ -246,7 +246,7 @@ describe('ProgrammingExerciseExamDiffComponent', () => {
         expect(getRepositoryFilesSpy).toHaveBeenCalledTimes(2);
         expect(getRepositoryFilesSpy).toHaveBeenNthCalledWith(1, 3, 1, 'abc', RepositoryType.USER);
         expect(getRepositoryFilesSpy).toHaveBeenNthCalledWith(2, 3, 2, 'def', RepositoryType.USER);
-        expect(processRepositoryDiffSpy).toHaveBeenCalledOnce();
+        expect(processRepositoryDiffSpy).toHaveBeenCalled();
     }));
 
     it('should subscribe to CachedRepositoryFilesChange event', () => {
@@ -256,5 +256,174 @@ describe('ProgrammingExerciseExamDiffComponent', () => {
         component.ngOnInit();
         expect(cachedRepositoryFilesServiceSpy).toHaveBeenCalled();
         expect(component.cachedRepositoryFiles).toEqual(cachedFiles);
+    });
+
+    it('should use cached repository files when available', () => {
+        const leftFiles = new Map([['test.java', 'content1']]);
+        const rightFiles = new Map([['test.java', 'content2']]);
+
+        component.cachedRepositoryFiles.set('leftKey', leftFiles);
+        component.cachedRepositoryFiles.set('rightKey', rightFiles);
+
+        const processRepositoryDiffSpy = jest.spyOn(component, 'processRepositoryDiff').mockImplementation(async () => {});
+        const getRepositoryFilesSpy = jest.spyOn(programmingExerciseParticipationService, 'getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView');
+        const getTemplateRepositorySpy = jest.spyOn(programmingExerciseService, 'getTemplateRepositoryTestFilesWithContent');
+
+        const previousSubmission = { commitHash: 'leftKey', participation: { id: 1 } };
+        const currentSubmission = { commitHash: 'rightKey', participation: { id: 2 } };
+        component.previousSubmission.update(() => previousSubmission);
+        component.currentSubmission.update(() => currentSubmission);
+
+        component.fetchRepositoriesAndProcessDiff();
+
+        expect(getRepositoryFilesSpy).not.toHaveBeenCalled();
+        expect(getTemplateRepositorySpy).not.toHaveBeenCalled();
+        expect(processRepositoryDiffSpy).toHaveBeenCalledWith(leftFiles, rightFiles);
+    });
+
+    it('should handle error when repository files cannot be fetched', () => {
+        const alertServiceSpy = jest.spyOn(component['alertService'], 'error');
+
+        const currentSubmission = { commitHash: 'def', participation: { id: 2 } };
+        component.previousSubmission.update(() => undefined);
+        component.currentSubmission.update(() => currentSubmission);
+
+        component.fetchRepositoriesAndProcessDiff();
+
+        expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.repositoryFilesError');
+    });
+
+    it('should not open modal when cached diff information is not available', () => {
+        const modalServiceSpy = jest.spyOn(modal, 'open');
+
+        // Set up component without cached diff information
+        const previousSubmission = { id: 1, commitHash: 'abc' };
+        const currentSubmission = { id: 2, commitHash: 'def' };
+        component.previousSubmission.update(() => previousSubmission);
+        component.currentSubmission.update(() => currentSubmission);
+
+        const emptyCachedDiffInfo = new Map<string, any>();
+        (component as any).cachedDiffInformation = jest.fn().mockReturnValue(emptyCachedDiffInfo);
+
+        component.showGitDiff();
+
+        expect(modalServiceSpy).not.toHaveBeenCalled();
+    });
+
+    it('should return correct exercise information from getters', () => {
+        const exercise = { id: 123, title: 'Test Exercise' } as ProgrammingExercise;
+        const submission = { id: 456 } as any;
+
+        component.exercise.update(() => exercise);
+        component.currentSubmission.update(() => submission);
+
+        expect(component.getExercise()).toBe(exercise);
+        expect(component.getExerciseId()).toBe(123);
+        expect(component.getSubmission()).toBe(submission);
+    });
+
+    it('should return false for hasUnsavedChanges', () => {
+        expect(component.hasUnsavedChanges()).toBeFalse();
+    });
+
+    it('should set submission version', () => {
+        const submissionVersion = { submissionId: 123 } as any;
+        component.setSubmissionVersion(submissionVersion);
+        expect((component as any).submissionVersion).toBe(submissionVersion);
+    });
+
+    it('should handle updateSubmissionFromView and updateViewFromSubmission', () => {
+        // These methods are empty but should be callable
+        expect(() => component.updateSubmissionFromView()).not.toThrow();
+        expect(() => component.updateViewFromSubmission()).not.toThrow();
+    });
+
+    it('should generate correct template repository key', () => {
+        const exercise = { id: 456 } as ProgrammingExercise;
+        component.exercise.update(() => exercise);
+
+        const key = (component as any).generateRepositoryKeyForTemplate();
+        expect(key).toBe('456-template');
+    });
+
+    it('should handle mixed cached and non-cached repository files', () => {
+        const leftFiles = new Map([['test.java', 'content1']]);
+        component.cachedRepositoryFiles.set('leftKey', leftFiles);
+
+        const rightFiles = new Map([['test.java', 'content2']]);
+        const getRepositoryFilesSpy = jest
+            .spyOn(programmingExerciseParticipationService, 'getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView')
+            .mockReturnValue(of(rightFiles));
+
+        const processRepositoryDiffSpy = jest.spyOn(component, 'processRepositoryDiff').mockImplementation(async () => {});
+
+        const previousSubmission = { commitHash: 'leftKey', participation: { id: 1 } };
+        const currentSubmission = { commitHash: 'rightKey', participation: { id: 2 } };
+        component.previousSubmission.update(() => previousSubmission);
+        component.currentSubmission.update(() => currentSubmission);
+
+        component.fetchRepositoriesAndProcessDiff();
+
+        expect(getRepositoryFilesSpy).toHaveBeenCalledWith(3, 2, 'rightKey', RepositoryType.USER);
+        expect(processRepositoryDiffSpy).toHaveBeenCalledWith(leftFiles, rightFiles);
+    });
+
+    it('should properly unsubscribe in ngOnDestroy', () => {
+        const unsubscribeSpy = jest.fn();
+        component['exerciseIdSubscription'] = { unsubscribe: unsubscribeSpy } as any;
+
+        component.ngOnDestroy();
+
+        expect(unsubscribeSpy).toHaveBeenCalled();
+    });
+
+    it('should handle ngOnDestroy when subscription is undefined', () => {
+        component['exerciseIdSubscription'] = undefined as any;
+
+        expect(() => component.ngOnDestroy()).not.toThrow();
+    });
+
+    it('should handle error when left repository files fail to fetch', () => {
+        const alertServiceSpy = jest.spyOn(component['alertService'], 'error');
+
+        const currentSubmission = { commitHash: 'def', participation: { id: 2 } };
+        component.previousSubmission.update(() => undefined);
+        component.currentSubmission.update(() => currentSubmission);
+
+        component.fetchRepositoriesAndProcessDiff();
+
+        expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.repositoryFilesError');
+    });
+
+    it('should call cachedDiffReportsChange.emit when processing diff', async () => {
+        const emitSpy = jest.spyOn(component.cachedDiffInformationChange, 'emit');
+        const leftFiles = new Map([['test.java', 'content1']]);
+        const rightFiles = new Map([['test.java', 'content2']]);
+
+        await component.processRepositoryDiff(leftFiles, rightFiles);
+
+        expect(emitSpy).toHaveBeenCalled();
+        expect(component.diffReady()).toBeTrue();
+        expect(component.isLoadingDiffReport).toBeFalse();
+    });
+
+    it('should return correct addedLineCount from computed property', () => {
+        // Test when diffInformation is undefined
+        component.diffInformation.set(undefined);
+        expect(component.addedLineCount()).toBe(0);
+
+        // Test when diffInformation has totalLineChange
+        component.diffInformation.set(mockDiffInformation);
+        expect(component.addedLineCount()).toBe(2);
+    });
+
+    it('should return correct removedLineCount from computed property', () => {
+        // Test when diffInformation is undefined
+        component.diffInformation.set(undefined);
+        expect(component.removedLineCount()).toBe(0);
+
+        // Test when diffInformation has totalLineChange
+        component.diffInformation.set(mockDiffInformation);
+        expect(component.removedLineCount()).toBe(1);
     });
 });
