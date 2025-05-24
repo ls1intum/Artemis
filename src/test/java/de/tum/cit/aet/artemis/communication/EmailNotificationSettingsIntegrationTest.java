@@ -99,7 +99,7 @@ class EmailNotificationSettingsIntegrationTest extends AbstractSpringIntegration
         settings.put(EmailNotificationType.VCS_TOKEN_EXPIRED, false);
         settings.put(EmailNotificationType.SSH_KEY_EXPIRED, false);
 
-        request.put("/api/email-notification-settings/" + testUser.getId(), settings, HttpStatus.OK);
+        request.put("/api/communication/email-notification-settings/" + testUser.getId(), settings, HttpStatus.OK);
 
         assertThat(emailNotificationSettingService.isNotificationEnabled(testUser.getId(), EmailNotificationType.NEW_LOGIN)).isTrue();
         assertThat(emailNotificationSettingService.isNotificationEnabled(testUser.getId(), EmailNotificationType.NEW_PASSKEY_ADDED)).isTrue();
