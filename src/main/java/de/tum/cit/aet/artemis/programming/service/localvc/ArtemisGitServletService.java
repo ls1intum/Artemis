@@ -7,6 +7,7 @@ import jakarta.annotation.PostConstruct;
 import org.eclipse.jgit.http.server.GitServlet;
 import org.eclipse.jgit.transport.ReceivePack;
 import org.eclipse.jgit.transport.UploadPack;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -17,6 +18,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
  */
 @Profile(PROFILE_LOCALVC)
 @Service
+@Lazy(value = false)
 public class ArtemisGitServletService extends GitServlet {
 
     private final LocalVCServletService localVCServletService;

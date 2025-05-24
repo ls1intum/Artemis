@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 
 import de.tum.cit.aet.artemis.programming.service.localvc.GitPublickeyAuthenticatorService;
@@ -23,6 +24,7 @@ import de.tum.cit.aet.artemis.programming.service.localvc.SshGitLocationResolver
 
 @Profile(PROFILE_LOCALVC)
 @Configuration
+@Lazy(value = false)
 public class SshConfiguration {
 
     private static final Logger log = LoggerFactory.getLogger(SshConfiguration.class);

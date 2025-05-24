@@ -8,13 +8,16 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.web.servlet.ServletRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 
 /**
  * Configuration of the JGit Servlet that handles fetch and push requests for local Version Control.
+ * Registering this as lazy is not possible, as the servlet needs to be initialized at application startup otherwise access via SSH will not work.
  */
 @Configuration
 @Profile(PROFILE_LOCALVC)
+@Lazy(value = false)
 public class JGitServletConfiguration {
 
     private static final Logger log = LoggerFactory.getLogger(JGitServletConfiguration.class);
