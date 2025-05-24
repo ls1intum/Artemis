@@ -69,6 +69,19 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
         irisSettingsRepository.save(globalSettings);
     }
 
+    protected void disableIrisGlobally() {
+        var globalSettings = irisSettingsService.getGlobalSettings();
+        deactivateSubSettings(globalSettings.getIrisProgrammingExerciseChatSettings());
+        deactivateSubSettings(globalSettings.getIrisTextExerciseChatSettings());
+        deactivateSubSettings(globalSettings.getIrisCourseChatSettings());
+        deactivateSubSettings(globalSettings.getIrisLectureIngestionSettings());
+        deactivateSubSettings(globalSettings.getIrisCompetencyGenerationSettings());
+        deactivateSubSettings(globalSettings.getIrisLectureChatSettings());
+        deactivateSubSettings(globalSettings.getIrisFaqIngestionSettings());
+        deactivateSubSettings(globalSettings.getIrisTutorSuggestionSettings());
+        irisSettingsRepository.save(globalSettings);
+    }
+
     /**
      * Sets a type of IrisSubSettings to enabled and their preferred model to null.
      *
@@ -102,6 +115,21 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
         activateSubSettings(courseSettings.getIrisLectureIngestionSettings());
         activateSubSettings(courseSettings.getIrisFaqIngestionSettings());
         activateSubSettings(courseSettings.getIrisTutorSuggestionSettings());
+
+        irisSettingsRepository.save(courseSettings);
+    }
+
+    protected void disableIrisFor(Course course) {
+        var courseSettings = irisSettingsService.getDefaultSettingsFor(course);
+
+        deactivateSubSettings(courseSettings.getIrisProgrammingExerciseChatSettings());
+        deactivateSubSettings(courseSettings.getIrisTextExerciseChatSettings());
+        deactivateSubSettings(courseSettings.getIrisLectureChatSettings());
+        deactivateSubSettings(courseSettings.getIrisCourseChatSettings());
+        deactivateSubSettings(courseSettings.getIrisCompetencyGenerationSettings());
+        deactivateSubSettings(courseSettings.getIrisLectureIngestionSettings());
+        deactivateSubSettings(courseSettings.getIrisFaqIngestionSettings());
+        deactivateSubSettings(courseSettings.getIrisTutorSuggestionSettings());
 
         irisSettingsRepository.save(courseSettings);
     }

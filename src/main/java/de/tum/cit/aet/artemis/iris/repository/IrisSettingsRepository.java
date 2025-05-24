@@ -68,4 +68,32 @@ public interface IrisSettingsRepository extends ArtemisJpaRepository<IrisSetting
             WHERE irisSettings.exerciseId = :exerciseId
             """)
     Optional<IrisExerciseSettings> findExerciseSettings(@Param("exerciseId") long exerciseId);
+
+    /**
+     * Checks if the course chat is enabled for a given course ID, based on the global settings and the course settings.
+     * If both settings are not found, it defaults to true.
+     * If the course settings are not found, it returns the global settings value.
+     * If the global settings are not found, it returns the course settings value.
+     * If both are found, it returns true if both settings are enabled, otherwise false.
+     *
+     * @param courseId the ID of the course to check
+     * @return true if the course chat is enabled, false otherwise
+     */
+    @Query("""
+            SELECT CASE
+                       WHEN COALESCE(gps.enabled, TRUE) = TRUE
+                        AND COALESCE(cps.enabled, TRUE) = TRUE
+                       THEN TRUE
+                       ELSE FALSE
+                   END
+            FROM Course c
+            LEFT JOIN IrisCourseSettings   cs  ON cs.courseId = c.id
+            LEFT JOIN IrisGlobalSettings   gs  ON TRUE
+
+            LEFT JOIN gs.irisProgrammingExerciseChatSettings gps
+            LEFT JOIN cs.irisProgrammingExerciseChatSettings cps
+
+            WHERE c.id = :courseId
+            """)
+    Boolean isCourseChatEnabled(@Param("courseId") long courseId);
 }

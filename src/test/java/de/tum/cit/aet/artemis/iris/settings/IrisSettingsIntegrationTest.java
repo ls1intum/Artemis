@@ -26,6 +26,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.iris.AbstractIrisIntegrationTest;
+import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCompetencyGenerationSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseChatSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
@@ -62,6 +63,9 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
 
     @Autowired
     private CourseUtilService courseUtilService;
+
+    @Autowired
+    private IrisSettingsApi irisSettingsApi;
 
     private Course course;
 
@@ -519,5 +523,111 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
         // Assert that TextExerciseChatSettings are now instantiated and enabled by default for Programming Exercises as well
         assertThat(exerciseSettings.getIrisTextExerciseChatSettings()).isNotNull();
         assertThat(exerciseSettings.getIrisTextExerciseChatSettings().isEnabled()).isTrue();
+    }
+
+    /**
+     * Verifies the AND-combination logic of global and course chat enablement.
+     * Iris must be enabled both globally and for the specific course for the
+     * repository method to return {@code true}.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void isCourseChatEnabled_GlobalEnabled_CourseEnabled() throws Exception {
+        activateIrisGlobally();
+        activateIrisFor(course);
+        course = courseRepository.findByIdElseThrow(course.getId());
+
+        boolean enabled = irisSettingsApi.isCourseChatEnabled(course.getId());
+        assertThat(enabled).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void isCourseChatEnabled_GlobalEnabled_CourseDisabled() throws Exception {
+        activateIrisGlobally();
+
+        boolean enabled = irisSettingsApi.isCourseChatEnabled(course.getId());
+        assertThat(enabled).isTrue();
+
+        disableIrisFor(course);
+        course = courseRepository.findByIdElseThrow(course.getId());
+
+        enabled = irisSettingsApi.isCourseChatEnabled(course.getId());
+        assertThat(enabled).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void isCourseChatEnabled_GlobalDisabled_CourseEnabled() throws Exception {
+        disableIrisGlobally();
+        activateIrisFor(course);
+
+        boolean enabled = irisSettingsApi.isCourseChatEnabled(course.getId());
+        assertThat(enabled).isFalse();
+    }
+
+    /**
+     * Verifies the enablement logic for programming‑exercise chat:
+     * it is {@code true} only when the global, course, and exercise flags
+     * are all (explicitly or implicitly) enabled.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void isProgrammingExerciseChatEnabled_GlobalEnabled_CourseEnabled_ExerciseEnabled() throws Exception {
+        activateIrisGlobally();
+        activateIrisFor(course);
+
+        // Create a programming exercise belonging to the course
+        ProgrammingExercise exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+        activateIrisFor(exercise);
+        exercise = programmingExerciseRepository.findByIdElseThrow(exercise.getId());
+
+        boolean enabled = irisSettingsApi.isProgrammingExerciseChatEnabled(exercise.getId());
+        assertThat(enabled).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void isProgrammingExerciseChatEnabled_GlobalEnabled_CourseDisabled() throws Exception {
+        activateIrisGlobally();
+        disableIrisFor(course);
+
+        ProgrammingExercise exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+
+        boolean enabled = irisSettingsApi.isProgrammingExerciseChatEnabled(exercise.getId());
+        assertThat(enabled).isFalse();
+
+        activateIrisFor(exercise);
+        exercise = programmingExerciseRepository.findByIdElseThrow(exercise.getId());
+
+        enabled = irisSettingsApi.isProgrammingExerciseChatEnabled(exercise.getId());
+        assertThat(enabled).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void isProgrammingExerciseChatEnabled_GlobalEnabled_ExerciseDisabled() throws Exception {
+        activateIrisGlobally();
+        activateIrisFor(course);
+
+        ProgrammingExercise exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+        disableIrisFor(exercise);
+        exercise = programmingExerciseRepository.findByIdElseThrow(exercise.getId());
+
+        boolean enabled = irisSettingsApi.isProgrammingExerciseChatEnabled(exercise.getId());
+        assertThat(enabled).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void isProgrammingExerciseChatEnabled_GlobalDisabled_ExerciseEnabled() throws Exception {
+        disableIrisGlobally();
+
+        ProgrammingExercise exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+        activateIrisFor(exercise);
+        exercise = programmingExerciseRepository.findByIdElseThrow(exercise.getId());
+
+        boolean enabled = irisSettingsApi.isProgrammingExerciseChatEnabled(exercise.getId());
+        assertThat(enabled).isFalse();
     }
 }
