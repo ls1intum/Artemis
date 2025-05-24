@@ -367,8 +367,26 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetAttachmentUnitStudentVersion() throws Exception {
+        testGetAttachmentUnitAsStudent();
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetAttachmentUnitAttachmentFilenameSanitization() throws Exception {
+        testGetAttachmentUnitAsTutor();
+    }
+
+    private void testGetAttachmentUnitAsStudent() throws Exception {
+        testGetAttachmentUnit(false);
+    }
+
+    private void testGetAttachmentUnitAsTutor() throws Exception {
+        testGetAttachmentUnit(true);
+    }
+
+    private void testGetAttachmentUnit(boolean isTutor) throws Exception {
         Path tempFile = Files.createTempFile("dummy", ".pdf");
         byte[] dummyContent = "dummy pdf content".getBytes();
         FileUtils.writeByteArrayToFile(tempFile.toFile(), dummyContent);
@@ -387,8 +405,9 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         attachmentRepo.save(attachment);
         attachmentUnitRepo.save(attachmentUnit);
 
-        String unsanitizedFilename = unsanitizedName + ".pdf";
-        String url = "/api/core/files/attachments/attachment-unit/" + attachmentUnit.getId() + "/" + unsanitizedFilename;
+        String unsanitizedFilename = "AttachmentUnit_2025-05-10T12-10-34_" + unsanitizedName + ".pdf";
+        String url = isTutor ? "/api/core/files/attachments/attachment-unit/" + attachmentUnit.getId() + "/" + unsanitizedFilename
+                : "/api/core/files/attachments/attachment-unit/" + attachmentUnit.getId() + "/student/" + unsanitizedFilename;
 
         try (MockedStatic<FilePathConverter> filePathServiceMock = Mockito.mockStatic(FilePathConverter.class)) {
             filePathServiceMock.when(() -> FilePathConverter.fileSystemPathForExternalUri(Mockito.any(URI.class), Mockito.eq(FilePathType.ATTACHMENT_UNIT))).thenReturn(tempFile);
@@ -401,7 +420,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             String contentDisposition = result.getResponse().getHeader("Content-Disposition");
             assertThat(contentDisposition).isNotNull();
             assertThat(contentDisposition).doesNotContain("–");
-            assertThat(contentDisposition).contains("filename=");
+            assertThat(contentDisposition).contains("filename=\"test_file.pdf\"");
         }
     }
 

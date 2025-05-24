@@ -280,8 +280,8 @@ public final class FilePathConverter {
         try {
             String expectedExerciseId = path.getName(1).toString();
             String expectedSubmissionId = path.getName(3).toString();
-            Long exerciseId = Long.parseLong(expectedExerciseId);
-            Long submissionId = Long.parseLong(expectedSubmissionId);
+            long exerciseId = Long.parseLong(expectedExerciseId);
+            long submissionId = Long.parseLong(expectedSubmissionId);
             return buildFileUploadSubmissionPath(exerciseId, submissionId).resolve(filename);
         }
         catch (IllegalArgumentException e) {
