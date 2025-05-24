@@ -47,4 +47,6 @@ public class LearnerProfileApi extends AbstractAtlasApi {
     public void deleteProfile(User user) {
         learnerProfileService.deleteProfile(user);
     }
+
+    // TODO: Add the functionality needed to be used in Athena here
 }
