@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.iris.domain.settings.IrisLectureChatSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisLectureIngestionSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisTextExerciseChatSubSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisTutorSuggestionSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisEventType;
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedSettingsDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisSettingsRepository;
@@ -168,6 +169,7 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
         loadedSettings1.getIrisCompetencyGenerationSettings().setEnabled(false);
         loadedSettings1.getIrisLectureIngestionSettings().setEnabled(false);
         loadedSettings1.getIrisLectureChatSettings().setEnabled(false);
+        loadedSettings1.getIrisTutorSuggestionSettings().setEnabled(false);
 
         var updatedSettings = request.putWithResponseBody("/api/iris/courses/" + course.getId() + "/raw-iris-settings", loadedSettings1, IrisSettings.class, HttpStatus.OK);
         var loadedSettings2 = request.get("/api/iris/courses/" + course.getId() + "/raw-iris-settings", HttpStatus.OK, IrisSettings.class);
@@ -181,6 +183,7 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
         assertThat(updatedSettings.getIrisCompetencyGenerationSettings().getId()).isEqualTo(loadedSettings1.getIrisCompetencyGenerationSettings().getId());
         assertThat(updatedSettings.getIrisLectureIngestionSettings().getId()).isEqualTo(loadedSettings1.getIrisLectureIngestionSettings().getId());
         assertThat(updatedSettings.getIrisLectureChatSettings().getId()).isEqualTo(loadedSettings1.getIrisLectureChatSettings().getId());
+        assertThat(updatedSettings.getIrisTutorSuggestionSettings().getId()).isEqualTo(loadedSettings1.getIrisTutorSuggestionSettings().getId());
     }
 
     @Test
@@ -197,6 +200,7 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
         var courseChatSubSettingsId = loadedSettings1.getIrisCourseChatSettings().getId();
         var competencyGenerationSubSettingsId = loadedSettings1.getIrisCompetencyGenerationSettings().getId();
         var lectureIngestionSubSettingsId = loadedSettings1.getIrisLectureIngestionSettings().getId();
+        var tutorSuggestionSubSettingsId = loadedSettings1.getIrisTutorSuggestionSettings().getId();
         var lectureChatSubSettingsId = loadedSettings1.getIrisLectureChatSettings().getId();
 
         loadedSettings1.setIrisChatSettings(null);
@@ -204,6 +208,7 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
         loadedSettings1.setIrisCourseChatSettings(null);
         loadedSettings1.setIrisCompetencyGenerationSettings(null);
         loadedSettings1.setIrisLectureIngestionSettings(null);
+        loadedSettings1.setIrisTutorSuggestionSettings(null);
         loadedSettings1.setIrisLectureChatSettings(null);
 
         var updatedSettings = request.putWithResponseBody("/api/iris/courses/" + course.getId() + "/raw-iris-settings", loadedSettings1, IrisSettings.class, HttpStatus.OK);
@@ -217,6 +222,7 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
         assertThat(irisSubSettingsRepository.findById(courseChatSubSettingsId)).isEmpty();
         assertThat(irisSubSettingsRepository.findById(competencyGenerationSubSettingsId)).isEmpty();
         assertThat(irisSubSettingsRepository.findById(lectureIngestionSubSettingsId)).isEmpty();
+        assertThat(irisSubSettingsRepository.findById(tutorSuggestionSubSettingsId)).isEmpty();
         assertThat(irisSubSettingsRepository.findById(lectureChatSubSettingsId)).isEmpty();
     }
 
@@ -252,12 +258,18 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
         courseSettings.getIrisLectureChatSettings().setEnabled(true);
         courseSettings.getIrisLectureChatSettings().setSelectedVariant(null);
 
+        courseSettings.setIrisTutorSuggestionSettings(new IrisTutorSuggestionSubSettings());
+        courseSettings.getIrisTutorSuggestionSettings().setEnabled(true);
+        courseSettings.getIrisTutorSuggestionSettings().setSelectedVariant(null);
+
         var updatedSettings = request.putWithResponseBody("/api/iris/courses/" + course.getId() + "/raw-iris-settings", courseSettings, IrisSettings.class, HttpStatus.OK);
         var loadedSettings1 = request.get("/api/iris/courses/" + course.getId() + "/raw-iris-settings", HttpStatus.OK, IrisSettings.class);
 
         assertThat(updatedSettings).usingRecursiveComparison().ignoringFields("course").isEqualTo(loadedSettings1);
-        assertThat(loadedSettings1).usingRecursiveComparison().ignoringFields("id", "course", "irisChatSettings.id", "irisTextExerciseChatSettings.id",
-                "irisLectureIngestionSettings.id", "irisCompetencyGenerationSettings.id", "irisCourseChatSettings.id", "irisLectureChatSettings.id").isEqualTo(courseSettings);
+        assertThat(loadedSettings1)
+                .usingRecursiveComparison().ignoringFields("id", "course", "irisChatSettings.id", "irisTextExerciseChatSettings.id", "irisLectureIngestionSettings.id",
+                        "irisCompetencyGenerationSettings.id", "irisCourseChatSettings.id", "irisLectureChatSettings.id", "irisTutorSuggestionSettings.id")
+                .isEqualTo(courseSettings);
     }
 
     @Test

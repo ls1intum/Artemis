@@ -226,12 +226,12 @@ describe('Faq Service', () => {
 
             filteredFaq = service.applyFilters(activeFilters, filteredFaq);
             expect(filteredFaq).toBeArrayOfSize(3);
-            expect(filteredFaq).toContainAllValues([faq1, faq11, faq2]);
+            expect(filteredFaq).toIncludeAllMembers([faq1, faq11, faq2]);
 
             activeFilters.add('test');
             filteredFaq = service.applyFilters(activeFilters, filteredFaq);
             expect(filteredFaq).toBeArrayOfSize(2);
-            expect(filteredFaq).toContainAllValues([faq1, faq11]);
+            expect(filteredFaq).toIncludeAllMembers([faq1, faq11]);
         });
 
         it('should convert String into FAQ categories   correctly', async () => {

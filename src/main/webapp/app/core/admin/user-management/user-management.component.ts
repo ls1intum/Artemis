@@ -212,7 +212,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
             this.userListSubscription = this.eventManager.subscribe('userListModification', () => this.loadAll());
             this.handleNavigation();
         });
-        this.isLdapProfileActive = this.profileService.isProfileActive('ldap') || this.profileService.isProfileActive('ldap-only');
+        this.isLdapProfileActive = this.profileService.isProfileActive('ldap');
     }
 
     /**

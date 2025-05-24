@@ -41,6 +41,7 @@
                         "autoIngest": "Send FAQs To Iris Automatically"
                     },
                     "competencyGenerationSettings": "Competency Generation Settings",
+                    "tutorSuggestionSettings": "Tutor Suggestion Settings",
                     "proactivityBuildFailedEventEnabled": {
                         "label": "Monitor submission build failures",
                         "tooltip": "When enabled, Iris will proactively send help messages if a submission build fails."
@@ -78,6 +79,7 @@
                     "enabled": {
                         "on": "Enabled",
                         "off": "Disabled",
+                        "custom": "Custom",
                         "chat": "Iris Chat"
                     },
                     "disabled": {
@@ -108,6 +110,10 @@
             "chat": {
                 "helpOffer": "How can I help you today?"
             },
+            "tutorSuggestion": {
+                "loading": "Loading suggestions...",
+                "noIris": "Iris is currently unavailable."
+            },
             "chatBubble": {
                 "seeFull": "See full message"
             },
@@ -132,6 +138,9 @@
                 "pyrisUnavailable": "Iris is currently unavailable.",
                 "pyrisError": "An error occurred while getting processing status from Iris.",
                 "transcriptionIngestionError": "Error while sending transcription"
+            },
+            "controlCenter": {
+                "tooltip": "By toggling you enable or disable ALL Iris features for this course. For a more precise control, please use the Iris settings by clicking on Custom."
             }
         }
     }
