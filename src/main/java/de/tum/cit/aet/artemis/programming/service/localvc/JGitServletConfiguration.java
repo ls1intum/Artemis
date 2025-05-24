@@ -12,7 +12,6 @@ import org.springframework.context.annotation.Profile;
 
 /**
  * Configuration of the JGit Servlet that handles fetch and push requests for local Version Control.
- * Registering this as lazy is not possible, as the servlet needs to be initialized at application startup otherwise access via SSH will not work.
  */
 @Configuration
 @Profile(PROFILE_LOCALVC)

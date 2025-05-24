@@ -22,6 +22,12 @@ import de.tum.cit.aet.artemis.programming.service.localvc.GitPublickeyAuthentica
 import de.tum.cit.aet.artemis.programming.service.localvc.SshGitCommandFactoryService;
 import de.tum.cit.aet.artemis.programming.service.localvc.SshGitLocationResolverService;
 
+/**
+ * Configuration of the SSH server for Local Version Control (LocalVC).
+ * This server handles SSH requests for Git operations.
+ * It is only active when the 'localvc' profile is enabled.
+ * We have to use @Lazy(false) here, as the SSH server needs to be started at application startup otherwise ssh operations get a connection refused.
+ */
 @Profile(PROFILE_LOCALVC)
 @Configuration
 @Lazy(value = false)
