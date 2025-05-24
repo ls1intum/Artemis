@@ -40,6 +40,7 @@ import de.tum.cit.aet.artemis.atlas.service.LearningObjectService;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.atlas.service.learningpath.LearningPathNavigationService;
 import de.tum.cit.aet.artemis.atlas.service.learningpath.LearningPathRecommendationService;
+import de.tum.cit.aet.artemis.atlas.service.learningpath.LearningPathRepositoryService;
 import de.tum.cit.aet.artemis.atlas.service.learningpath.LearningPathService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -74,6 +75,8 @@ public class LearningPathResource {
 
     private final LearningPathRepository learningPathRepository;
 
+    private final LearningPathRepositoryService learningPathRepositoryService;
+
     private final UserRepository userRepository;
 
     private final CompetencyProgressService competencyProgressService;
@@ -85,14 +88,15 @@ public class LearningPathResource {
     private final LearningPathNavigationService learningPathNavigationService;
 
     public LearningPathResource(CourseService courseService, CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService,
-            LearningPathService learningPathService, LearningPathRepository learningPathRepository, UserRepository userRepository,
-            CompetencyProgressService competencyProgressService, LearningPathRecommendationService learningPathRecommendationService, LearningObjectService learningObjectService,
-            LearningPathNavigationService learningPathNavigationService) {
+            LearningPathService learningPathService, LearningPathRepository learningPathRepository, LearningPathRepositoryService learningPathRepositoryService,
+            UserRepository userRepository, CompetencyProgressService competencyProgressService, LearningPathRecommendationService learningPathRecommendationService,
+            LearningObjectService learningObjectService, LearningPathNavigationService learningPathNavigationService) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.learningPathService = learningPathService;
         this.learningPathRepository = learningPathRepository;
+        this.learningPathRepositoryService = learningPathRepositoryService;
         this.userRepository = userRepository;
         this.competencyProgressService = competencyProgressService;
         this.learningPathRecommendationService = learningPathRecommendationService;
@@ -193,7 +197,7 @@ public class LearningPathResource {
     @EnforceAtLeastStudent
     public ResponseEntity<LearningPathCompetencyGraphDTO> getLearningPathCompetencyGraph(@PathVariable long learningPathId) {
         log.debug("REST request to get competency graph for learning path with id: {}", learningPathId);
-        LearningPath learningPath = learningPathRepository.findWithEagerCourseAndCompetenciesByIdElseThrow(learningPathId);
+        LearningPath learningPath = learningPathRepositoryService.findWithEagerCourseAndCompetenciesByIdElseThrow(learningPathId);
         User user = userRepository.getUser();
 
         checkLearningPathAccessElseThrow(Optional.of(learningPath.getCourse()), learningPath, Optional.of(user));
@@ -321,7 +325,7 @@ public class LearningPathResource {
     @EnforceAtLeastStudent
     public ResponseEntity<Set<CompetencyProgressForLearningPathDTO>> getCompetencyProgressForLearningPath(@PathVariable long learningPathId) {
         log.debug("REST request to get competency progress for learning path: {}", learningPathId);
-        final var learningPath = learningPathRepository.findWithEagerCourseAndCompetenciesByIdElseThrow(learningPathId);
+        final var learningPath = learningPathRepositoryService.findWithEagerCourseAndCompetenciesByIdElseThrow(learningPathId);
 
         checkLearningPathAccessElseThrow(Optional.of(learningPath.getCourse()), learningPath, Optional.empty());
 
@@ -365,7 +369,7 @@ public class LearningPathResource {
     @EnforceAtLeastStudent
     public ResponseEntity<List<LearningPathNavigationObjectDTO>> getLearningObjectsForCompetency(@PathVariable long learningPathId, @PathVariable long competencyId) {
         log.debug("REST request to get learning objects for competency: {} in learning path: {}", competencyId, learningPathId);
-        final var learningPath = learningPathRepository.findWithEagerCourseAndCompetenciesByIdElseThrow(learningPathId);
+        final var learningPath = learningPathRepositoryService.findWithEagerCourseAndCompetenciesByIdElseThrow(learningPathId);
         final var user = userRepository.getUserWithGroupsAndAuthoritiesAndLearnerProfile(learningPath.getCourse().getId());
 
         checkLearningPathAccessElseThrow(Optional.of(learningPath.getCourse()), learningPath, Optional.of(user));

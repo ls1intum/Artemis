@@ -1829,7 +1829,7 @@ public class CourseTestService {
         course.setLearningPathsEnabled(true);
         course = courseRepo.save(course);
         testAddStudentOrTutorOrEditorOrInstructorToCourse(course, HttpStatus.OK);
-        course = courseRepo.findWithEagerLearningPathsAndLearningPathCompetenciesByIdElseThrow(course.getId());
+        course = courseRepo.findWithEagerLearningPathsByIdElseThrow(course.getId());
         assertThat(course.getLearningPaths()).isNotEmpty();
         // TODO check that the roles have changed accordingly
     }
