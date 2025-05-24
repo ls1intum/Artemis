@@ -14,7 +14,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
  * This is used for students receiving tutor assistance from Iris while working on an exercise.
  */
 @Entity
-@DiscriminatorValue("CHAT")
+@DiscriminatorValue("PROGRAMMING_EXERCISE_CHAT")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class IrisProgrammingExerciseChatSession extends IrisChatSession {
 

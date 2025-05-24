@@ -51,7 +51,7 @@ public class IrisLectureApi extends AbstractIrisApi {
     /**
      * Updates or creates the specified attachment units in the Pyris database automatically if auto-ingestion is enabled.
      * <p>
-     * This method calls {@link PyrisWebhookService#autoUpdateAttachmentUnitsInPyris(Long, List)}.
+     * This method calls {@link PyrisWebhookService#autoUpdateAttachmentUnitsInPyris(List)}.
      *
      * @param newAttachmentUnits the new attachment units to be sent to Pyris
      */

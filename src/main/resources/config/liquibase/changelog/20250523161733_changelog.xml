@@ -9,5 +9,11 @@
             <column name="discriminator" value="PROGRAMMING_EXERCISE_CHAT"/>
             <where>discriminator = 'CHAT'</where>
         </update>
+
+        <!-- Update the discriminator value from deprecated "CHAT" to "PROGRAMMING_EXERCISE_CHAT" for iris sessions -->
+        <update tableName="iris_session">
+            <column name="discriminator" value="PROGRAMMING_EXERCISE_CHAT"/>
+            <where>discriminator = 'CHAT'</where>
+        </update>
     </changeSet>
 </databaseChangeLog>
