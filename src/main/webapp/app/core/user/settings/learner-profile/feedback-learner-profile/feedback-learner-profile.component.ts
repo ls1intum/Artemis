@@ -11,7 +11,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { LearnerProfileDTO } from 'app/core/user/settings/learner-profile/dto/learner-profile-dto.model';
 import { SegmentedToggleComponent } from 'app/shared/segmented-toggle/segmented-toggle.component';
-import { COURSE_LEARNER_PROFILE_OPTIONS } from 'app/core/user/settings/learner-profile/entities/course-learner-profile-options.model';
+import { ALTERNATIVE_STANDARD_OPTIONS, BRIEF_DETAILED_OPTIONS, FOLLOWUP_SUMMARY_OPTIONS } from 'app/core/user/settings/learner-profile/entities/learner-profile-options.model';
 
 @Component({
     selector: 'jhi-feedback-learner-profile',
@@ -33,15 +33,15 @@ export class FeedbackLearnerProfileComponent implements OnInit {
     /**
      * Options mapped from shared options with translated labels.
      */
-    protected readonly feedbackAlternativeStandardOptions = COURSE_LEARNER_PROFILE_OPTIONS.map((option) => ({
+    protected readonly feedbackAlternativeStandardOptions = ALTERNATIVE_STANDARD_OPTIONS.map((option) => ({
         label: this.translateService.instant(option.translationKey),
         value: option.level,
     }));
-    protected readonly feedbackFollowupSummaryOptions = COURSE_LEARNER_PROFILE_OPTIONS.map((option) => ({
+    protected readonly feedbackFollowupSummaryOptions = FOLLOWUP_SUMMARY_OPTIONS.map((option) => ({
         label: this.translateService.instant(option.translationKey),
         value: option.level,
     }));
-    protected readonly feedbackBriefDetailedOptions = COURSE_LEARNER_PROFILE_OPTIONS.map((option) => ({
+    protected readonly feedbackBriefDetailedOptions = BRIEF_DETAILED_OPTIONS.map((option) => ({
         label: this.translateService.instant(option.translationKey),
         value: option.level,
     }));
@@ -109,7 +109,7 @@ export class FeedbackLearnerProfileComponent implements OnInit {
             this.alertService.closeAll();
             this.alertService.addAlert({
                 type: AlertType.SUCCESS,
-                message: 'artemisApp.learnerProfile.feedbackLearnerProfile.updateSuccess',
+                message: 'artemisApp.learnerProfile.feedbackLearnerProfile.profileSaved',
             });
         } catch (error) {
             this.handleError(error);

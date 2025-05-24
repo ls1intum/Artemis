@@ -149,8 +149,7 @@ export class CourseLearnerProfileComponent implements OnInit {
         if (!updatedProfile.isValid()) {
             this.alertService.addAlert({
                 type: AlertType.DANGER,
-                message: `Values must be between ${CourseLearnerProfileDTO.MIN_VALUE} and ${CourseLearnerProfileDTO.MAX_VALUE}`,
-                translationKey: 'artemisApp.learnerProfile.courseLearnerProfile.invalidRange',
+                message: 'artemisApp.learnerProfile.courseLearnerProfile.invalidRange',
             });
             return;
         }
@@ -167,8 +166,7 @@ export class CourseLearnerProfileComponent implements OnInit {
             this.alertService.closeAll();
             this.alertService.addAlert({
                 type: AlertType.SUCCESS,
-                message: 'Profile saved',
-                translationKey: 'artemisApp.learnerProfile.courseLearnerProfile.profileSaved',
+                message: 'artemisApp.learnerProfile.courseLearnerProfile.profileSaved',
             });
         } catch (error) {
             this.handleError(error);
