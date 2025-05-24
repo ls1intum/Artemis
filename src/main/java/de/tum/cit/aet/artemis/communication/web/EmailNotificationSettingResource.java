@@ -26,18 +26,27 @@ public class EmailNotificationSettingResource {
 
     private final UserRepository userRepository;
 
+    /**
+     * Creates a new {@code EmailNotificationSettingResource}.
+     *
+     * @param emailNotificationSettingService business service used to create, update and read settings
+     * @param userRepository                  repository used to fetch the currently authenticated {@link User}
+     */
     public EmailNotificationSettingResource(EmailNotificationSettingService emailNotificationSettingService, UserRepository userRepository) {
         this.emailNotificationSettingService = emailNotificationSettingService;
         this.userRepository = userRepository;
     }
 
-    @GetMapping("/email-notification-settings")
-    public ResponseEntity<List<EmailNotificationSetting>> getUserSettings() {
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        return ResponseEntity.ok(emailNotificationSettingService.getUserSettings(user.getId()));
-    }
-
-    @PutMapping("/email-notification-settings/{notificationType}")
+    /**
+     * {@code PUT /email-notification-settings/{notificationType}} : Update (or create) the
+     * {@link EmailNotificationSetting} for the given {@code notificationType}.
+     *
+     * @param notificationType the name of the {@link EmailNotificationType}; case‑insensitive
+     * @param request          the JSON request body, e.g. {@code {"enabled":true}}
+     * @return {@link ResponseEntity} containing the persisted setting and HTTP 200 on success;<br>
+     *         HTTP 400 if the body is missing the {@code enabled} property or if {@code notificationType} is unknown
+     */
+    @PutMapping("email-notification-settings/{notificationType}")
     public ResponseEntity<EmailNotificationSetting> updateSetting(@PathVariable String notificationType, @RequestBody Map<String, Boolean> request) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Boolean enabled = request.get("enabled");
@@ -53,7 +62,15 @@ public class EmailNotificationSettingResource {
         }
     }
 
-    @GetMapping("/email-notification-settings/all")
+    /**
+     * {@code GET  /email-notification-settings} : Return the enabled/disabled state of each
+     * {@link EmailNotificationType} for the current user.
+     *
+     * @return {@link ResponseEntity} with HTTP 200 and a map where the key is the {@code name()} of the type
+     *         and the value indicates whether e‑mails of this type are enabled.
+     *         Types without an explicit setting default to {@code true}.
+     */
+    @GetMapping("email-notification-settings")
     public ResponseEntity<Map<String, Boolean>> getAllSettings() {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         List<EmailNotificationSetting> settings = emailNotificationSettingService.getUserSettings(user.getId());

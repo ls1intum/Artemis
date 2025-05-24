@@ -2,7 +2,6 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { EmailNotificationsSettingsComponent } from './email-notifications-settings.component';
 import { EmailNotificationSettingsService } from './email-notifications-settings.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';

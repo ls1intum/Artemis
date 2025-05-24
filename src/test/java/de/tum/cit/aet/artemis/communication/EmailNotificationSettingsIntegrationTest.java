@@ -34,20 +34,23 @@ class EmailNotificationSettingsIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testEnableNotification() throws Exception {
+        Map<String, Boolean> requestBody = new HashMap<>();
+        requestBody.put("enabled", true);
+
         // Enable NEW_LOGIN notification
-        request.put("/api/communication/email-notification-settings/" + testUser.getId() + "/" + EmailNotificationType.NEW_LOGIN, null, HttpStatus.OK);
+        request.put("/api/communication/email-notification-settings/" + EmailNotificationType.NEW_LOGIN, requestBody, HttpStatus.OK);
         assertThat(emailNotificationSettingService.isNotificationEnabled(testUser.getId(), EmailNotificationType.NEW_LOGIN)).isTrue();
 
         // Enable NEW_PASSKEY_ADDED notification
-        request.put("/api/communication/email-notification-settings/" + testUser.getId() + "/" + EmailNotificationType.NEW_PASSKEY_ADDED, null, HttpStatus.OK);
+        request.put("/api/communication/email-notification-settings/" + EmailNotificationType.NEW_PASSKEY_ADDED, requestBody, HttpStatus.OK);
         assertThat(emailNotificationSettingService.isNotificationEnabled(testUser.getId(), EmailNotificationType.NEW_PASSKEY_ADDED)).isTrue();
 
         // Enable VCS_TOKEN_EXPIRED notification
-        request.put("/api/communication/email-notification-settings/" + testUser.getId() + "/" + EmailNotificationType.VCS_TOKEN_EXPIRED, null, HttpStatus.OK);
+        request.put("/api/communication/email-notification-settings/" + EmailNotificationType.VCS_TOKEN_EXPIRED, requestBody, HttpStatus.OK);
         assertThat(emailNotificationSettingService.isNotificationEnabled(testUser.getId(), EmailNotificationType.VCS_TOKEN_EXPIRED)).isTrue();
 
         // Enable SSH_KEY_EXPIRED notification
-        request.put("/api/communication/email-notification-settings/" + testUser.getId() + "/" + EmailNotificationType.SSH_KEY_EXPIRED, null, HttpStatus.OK);
+        request.put("/api/communication/email-notification-settings/" + EmailNotificationType.SSH_KEY_EXPIRED, requestBody, HttpStatus.OK);
         assertThat(emailNotificationSettingService.isNotificationEnabled(testUser.getId(), EmailNotificationType.SSH_KEY_EXPIRED)).isTrue();
     }
 
@@ -57,20 +60,23 @@ class EmailNotificationSettingsIntegrationTest extends AbstractSpringIntegration
         // First enable all notifications
         testEnableNotification();
 
+        Map<String, Boolean> requestBody = new HashMap<>();
+        requestBody.put("enabled", false);
+
         // Disable NEW_LOGIN notification
-        request.delete("/api/communication/email-notification-settings/" + testUser.getId() + "/" + EmailNotificationType.NEW_LOGIN, HttpStatus.OK);
+        request.put("/api/communication/email-notification-settings/" + EmailNotificationType.NEW_LOGIN, requestBody, HttpStatus.OK);
         assertThat(emailNotificationSettingService.isNotificationEnabled(testUser.getId(), EmailNotificationType.NEW_LOGIN)).isFalse();
 
         // Disable NEW_PASSKEY_ADDED notification
-        request.delete("/api/communication/email-notification-settings/" + testUser.getId() + "/" + EmailNotificationType.NEW_PASSKEY_ADDED, HttpStatus.OK);
+        request.put("/api/communication/email-notification-settings/" + EmailNotificationType.NEW_PASSKEY_ADDED, requestBody, HttpStatus.OK);
         assertThat(emailNotificationSettingService.isNotificationEnabled(testUser.getId(), EmailNotificationType.NEW_PASSKEY_ADDED)).isFalse();
 
         // Disable VCS_TOKEN_EXPIRED notification
-        request.delete("/api/communication/email-notification-settings/" + testUser.getId() + "/" + EmailNotificationType.VCS_TOKEN_EXPIRED, HttpStatus.OK);
+        request.put("/api/communication/email-notification-settings/" + EmailNotificationType.VCS_TOKEN_EXPIRED, requestBody, HttpStatus.OK);
         assertThat(emailNotificationSettingService.isNotificationEnabled(testUser.getId(), EmailNotificationType.VCS_TOKEN_EXPIRED)).isFalse();
 
         // Disable SSH_KEY_EXPIRED notification
-        request.delete("/api/communication/email-notification-settings/" + testUser.getId() + "/" + EmailNotificationType.SSH_KEY_EXPIRED, HttpStatus.OK);
+        request.put("/api/communication/email-notification-settings/" + EmailNotificationType.SSH_KEY_EXPIRED, requestBody, HttpStatus.OK);
         assertThat(emailNotificationSettingService.isNotificationEnabled(testUser.getId(), EmailNotificationType.SSH_KEY_EXPIRED)).isFalse();
     }
 
@@ -81,26 +87,32 @@ class EmailNotificationSettingsIntegrationTest extends AbstractSpringIntegration
         testEnableNotification();
 
         // Get all notification settings
-        Map<EmailNotificationType, Boolean> settings = request.get("/api/communication/email-notification-settings/" + testUser.getId(), HttpStatus.OK, Map.class);
+        Map<String, Boolean> settings = request.get("/api/communication/email-notification-settings", HttpStatus.OK, Map.class);
 
         assertThat(settings).isNotNull();
-        assertThat(settings.get(EmailNotificationType.NEW_LOGIN)).isTrue();
-        assertThat(settings.get(EmailNotificationType.NEW_PASSKEY_ADDED)).isTrue();
-        assertThat(settings.get(EmailNotificationType.VCS_TOKEN_EXPIRED)).isTrue();
-        assertThat(settings.get(EmailNotificationType.SSH_KEY_EXPIRED)).isTrue();
+        assertThat(settings.get(EmailNotificationType.NEW_LOGIN.name())).isTrue();
+        assertThat(settings.get(EmailNotificationType.NEW_PASSKEY_ADDED.name())).isTrue();
+        assertThat(settings.get(EmailNotificationType.VCS_TOKEN_EXPIRED.name())).isTrue();
+        assertThat(settings.get(EmailNotificationType.SSH_KEY_EXPIRED.name())).isTrue();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUpdateAllNotificationSettings() throws Exception {
-        Map<EmailNotificationType, Boolean> settings = new HashMap<>();
-        settings.put(EmailNotificationType.NEW_LOGIN, true);
-        settings.put(EmailNotificationType.NEW_PASSKEY_ADDED, true);
-        settings.put(EmailNotificationType.VCS_TOKEN_EXPIRED, false);
-        settings.put(EmailNotificationType.SSH_KEY_EXPIRED, false);
+        // Update each notification type individually
+        Map<String, Boolean> requestBody = new HashMap<>();
+        requestBody.put("enabled", true);
 
-        request.put("/api/communication/email-notification-settings/" + testUser.getId(), settings, HttpStatus.OK);
+        // Enable NEW_LOGIN and NEW_PASSKEY_ADDED
+        request.put("/api/communication/email-notification-settings/" + EmailNotificationType.NEW_LOGIN, requestBody, HttpStatus.OK);
+        request.put("/api/communication/email-notification-settings/" + EmailNotificationType.NEW_PASSKEY_ADDED, requestBody, HttpStatus.OK);
 
+        // Disable VCS_TOKEN_EXPIRED and SSH_KEY_EXPIRED
+        requestBody.put("enabled", false);
+        request.put("/api/communication/email-notification-settings/" + EmailNotificationType.VCS_TOKEN_EXPIRED, requestBody, HttpStatus.OK);
+        request.put("/api/communication/email-notification-settings/" + EmailNotificationType.SSH_KEY_EXPIRED, requestBody, HttpStatus.OK);
+
+        // Verify the settings
         assertThat(emailNotificationSettingService.isNotificationEnabled(testUser.getId(), EmailNotificationType.NEW_LOGIN)).isTrue();
         assertThat(emailNotificationSettingService.isNotificationEnabled(testUser.getId(), EmailNotificationType.NEW_PASSKEY_ADDED)).isTrue();
         assertThat(emailNotificationSettingService.isNotificationEnabled(testUser.getId(), EmailNotificationType.VCS_TOKEN_EXPIRED)).isFalse();
@@ -110,14 +122,8 @@ class EmailNotificationSettingsIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testInvalidNotificationType() throws Exception {
-        request.put("/api/communication/email-notification-settings/" + testUser.getId() + "/INVALID_TYPE", null, HttpStatus.BAD_REQUEST);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testUnauthorizedAccess() throws Exception {
-        // Try to access another user's settings
-        User otherUser = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
-        request.put("/api/communication/email-notification-settings/" + otherUser.getId() + "/" + EmailNotificationType.NEW_LOGIN, null, HttpStatus.FORBIDDEN);
+        Map<String, Boolean> requestBody = new HashMap<>();
+        requestBody.put("enabled", true);
+        request.put("/api/communication/email-notification-settings/INVALID_TYPE", requestBody, HttpStatus.BAD_REQUEST);
     }
 }

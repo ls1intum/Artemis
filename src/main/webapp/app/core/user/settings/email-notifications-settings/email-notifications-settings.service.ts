@@ -1,19 +1,18 @@
-import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
 
 @Injectable({ providedIn: 'root' })
 export class EmailNotificationSettingsService {
     private resourceUrl = 'api/communication/email-notification-settings';
 
-    constructor(private http: HttpClient) {}
+    private httpClient = inject(HttpClient);
 
     getAll(): Observable<{ [key: string]: boolean }> {
-        // Adjust the endpoint if you have a different one for all settings
-        return this.http.get<{ [key: string]: boolean }>(`${this.resourceUrl}/all`);
+        return this.httpClient.get<{ [key: string]: boolean }>(`${this.resourceUrl}`);
     }
 
     update(type: string, enabled: boolean): Observable<any> {
-        return this.http.put(`${this.resourceUrl}/${type}`, { enabled });
+        return this.httpClient.put(`${this.resourceUrl}/${type}`, { enabled });
     }
 }

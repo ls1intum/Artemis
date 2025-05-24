@@ -6,6 +6,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { inject } from '@angular/core';
 
 @Component({
     selector: 'jhi-email-notifications-settings',
@@ -18,7 +19,7 @@ export class EmailNotificationsSettingsComponent implements OnInit {
     notificationTypes = ['NEW_LOGIN', 'NEW_PASSKEY_ADDED', 'VCS_TOKEN_EXPIRED', 'SSH_KEY_EXPIRED'];
     notificationSettings: { [key: string]: boolean } | null = null;
 
-    constructor(private emailNotificationSettingsService: EmailNotificationSettingsService) {}
+    private emailNotificationSettingsService = inject(EmailNotificationSettingsService);
 
     ngOnInit(): void {
         this.loadSettings();
