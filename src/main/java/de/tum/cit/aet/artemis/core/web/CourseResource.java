@@ -121,6 +121,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
+import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
 import de.tum.cit.aet.artemis.lti.api.LtiApi;
 import de.tum.cit.aet.artemis.programming.service.ci.CIUserManagementService;
 import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupChannelManagementApi;
@@ -178,6 +179,8 @@ public class CourseResource {
 
     private final Optional<LearnerProfileApi> learnerProfileApi;
 
+    private final Optional<IrisSettingsApi> irisSettingsApi;
+
     @Value("${artemis.course-archives-path}")
     private String courseArchivesDirPath;
 
@@ -195,7 +198,7 @@ public class CourseResource {
             FileService fileService, Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi, CourseScoreCalculationService courseScoreCalculationService,
             GradingScaleRepository gradingScaleRepository, Optional<LearningPathApi> learningPathApi, ConductAgreementService conductAgreementService,
             Optional<AthenaApi> athenaApi, Optional<ExamRepositoryApi> examRepositoryApi, ComplaintService complaintService, TeamRepository teamRepository,
-            Optional<LearnerProfileApi> learnerProfileApi) {
+            Optional<LearnerProfileApi> learnerProfileApi, Optional<IrisSettingsApi> irisSettingsApi) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
@@ -218,6 +221,7 @@ public class CourseResource {
         this.complaintService = complaintService;
         this.teamRepository = teamRepository;
         this.learnerProfileApi = learnerProfileApi;
+        this.irisSettingsApi = irisSettingsApi;
     }
 
     /**
@@ -602,7 +606,7 @@ public class CourseResource {
         log.debug("courseService.fetchPlagiarismCasesForCourseExercises done in getCourseForDashboard");
         GradingScale gradingScale = gradingScaleRepository.findByCourseId(course.getId()).orElse(null);
         log.debug("gradingScaleRepository.findByCourseId done in getCourseForDashboard");
-        CourseForDashboardDTO courseForDashboardDTO = courseScoreCalculationService.getScoresAndParticipationResults(course, gradingScale, user.getId());
+        CourseForDashboardDTO courseForDashboardDTO = courseScoreCalculationService.getScoresAndParticipationResults(course, gradingScale, user.getId(), true);
         logDuration(List.of(course), user, timeNanoStart, "courses/" + courseId + "/for-dashboard (single course)");
         return ResponseEntity.ok(courseForDashboardDTO);
     }
@@ -668,7 +672,7 @@ public class CourseResource {
         Set<CourseForDashboardDTO> coursesForDashboard = new HashSet<>();
         for (Course course : courses) {
             GradingScale gradingScale = gradingScales.stream().filter(scale -> scale.getCourse().getId().equals(course.getId())).findFirst().orElse(null);
-            CourseForDashboardDTO courseForDashboardDTO = courseScoreCalculationService.getScoresAndParticipationResults(course, gradingScale, user.getId());
+            CourseForDashboardDTO courseForDashboardDTO = courseScoreCalculationService.getScoresAndParticipationResults(course, gradingScale, user.getId(), false);
             coursesForDashboard.add(courseForDashboardDTO);
         }
         logDuration(courses, user, timeNanoStart, "courses/for-dashboard (multiple courses)");

@@ -35,6 +35,11 @@ public class IrisSettingsApi extends AbstractIrisApi {
         return irisExerciseSettingsRepository.isExerciseChatEnabled(exerciseId);
     }
 
+    public boolean isCourseChatEnabled(long courseId) {
+        var settings = irisSettingsService.getCombinedIrisSettingsForCourse(courseId, false);
+        return settings != null && settings.irisCourseChatSettings().enabled();
+    }
+
     public boolean shouldShowMinimalSettings(Exercise exercise, User user) {
         return irisSettingsService.shouldShowMinimalSettings(exercise, user);
     }

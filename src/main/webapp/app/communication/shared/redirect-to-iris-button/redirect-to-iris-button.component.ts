@@ -111,7 +111,7 @@ export class RedirectToIrisButtonComponent implements OnInit, OnDestroy {
         switch (channelDTO.subType) {
             case ChannelSubType.GENERAL: {
                 const course = this.course();
-                if (course?.studentCourseAnalyticsDashboardEnabled && course.id) {
+                if (course?.id) {
                     this.updateIrisStatus<IrisCourseSettings>(
                         this.irisCombinedCourseSettings,
                         () => this.irisSettingsService.getCombinedCourseSettings(course.id!),

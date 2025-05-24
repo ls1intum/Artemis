@@ -687,9 +687,23 @@ public class IrisSettingsService {
      * @return The combined Iris settings for the course
      */
     public IrisCombinedSettingsDTO getCombinedIrisSettingsFor(Course course, boolean minimal) {
+        return getCombinedIrisSettingsForCourse(course.getId(), minimal);
+    }
+
+    /**
+     * Get the combined Iris settings for a course as an {@link IrisCombinedSettingsDTO}.
+     * Combines the global Iris settings with the course Iris settings.
+     * If minimal is true, only certain attributes are returned. The minimal version can safely be passed to the students.
+     * See also {@link IrisSubSettingsService} for how the combining works in detail
+     *
+     * @param courseId The id of the course to get the Iris settings for
+     * @param minimal  Whether to return the minimal version of the settings
+     * @return The combined Iris settings for the course
+     */
+    public IrisCombinedSettingsDTO getCombinedIrisSettingsForCourse(long courseId, boolean minimal) {
         var settingsList = new ArrayList<IrisSettings>();
         settingsList.add(getGlobalSettings());
-        settingsList.add(irisSettingsRepository.findCourseSettings(course.getId()).orElse(null));
+        settingsList.add(irisSettingsRepository.findCourseSettings(courseId).orElse(null));
 
         // @formatter:off
         return new IrisCombinedSettingsDTO(
