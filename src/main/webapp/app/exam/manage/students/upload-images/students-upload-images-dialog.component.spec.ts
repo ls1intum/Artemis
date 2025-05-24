@@ -54,10 +54,8 @@ describe('StudentsUploadImagesDialogComponent', () => {
                 component = fixture.componentInstance;
                 examManagementService = TestBed.inject(ExamManagementService);
 
-                TestBed.runInInjectionContext(() => {
-                    component.exam = exam;
-                    component.courseId = course.id!;
-                });
+                fixture.componentRef.setInput('exam', exam);
+                fixture.componentRef.setInput('courseId', course.id!);
 
                 ngbModal = TestBed.get(NgbActiveModal);
             });
@@ -68,10 +66,18 @@ describe('StudentsUploadImagesDialogComponent', () => {
     });
 
     it('should reset dialog when selecting pdf file', async () => {
-        component.notFoundUsers = { numberOfUsersNotFound: 1, numberOfImagesSaved: 10, listOfExamUserRegistrationNumbers: ['12345678'] };
+        component.notFoundUsers = {
+            numberOfUsersNotFound: 1,
+            numberOfImagesSaved: 10,
+            listOfExamUserRegistrationNumbers: ['12345678'],
+        };
         component.hasParsed = true;
 
-        const event = { target: { files: [{ file: new File([''], 'testFile.pdf', { type: 'application/pdf' }), fileName: 'testFile' }] } };
+        const event = {
+            target: {
+                files: [{ file: new File([''], 'testFile.pdf', { type: 'application/pdf' }), fileName: 'testFile' }],
+            },
+        };
         await component.onPDFFileSelect(event);
 
         expect(component.notFoundUsers).toBeUndefined();
