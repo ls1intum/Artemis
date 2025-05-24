@@ -157,7 +157,7 @@ public class TextPlagiarismDetectionService {
             }
 
             TextPlagiarismResult textPlagiarismResult = new TextPlagiarismResult();
-            textPlagiarismResult.convertJPlagResult(jPlagResult, textExercise);
+            textPlagiarismResult.convertJPlagResult(jPlagResult, textExercise, minimumSize);
 
             log.info("JPlag text comparison for {} submissions done in {}", submissionsSize, TimeLogUtil.formatDurationFrom(start));
             plagiarismWebsocketService.notifyInstructorAboutPlagiarismState(topic, PlagiarismCheckState.COMPLETED, List.of());

@@ -58,7 +58,6 @@ import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseExportService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGitDiffReportService;
 import de.tum.cit.aet.artemis.programming.service.UriService;
 
 @Conditional(PlagiarismEnabled.class)
@@ -90,12 +89,9 @@ public class ProgrammingPlagiarismDetectionService {
 
     private final UriService uriService;
 
-    private final ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService;
-
     public ProgrammingPlagiarismDetectionService(FileService fileService, ProgrammingExerciseRepository programmingExerciseRepository, PlagiarismService plagiarismService,
             GitService gitService, StudentParticipationRepository studentParticipationRepository, ProgrammingExerciseExportService programmingExerciseExportService,
-            PlagiarismWebsocketService plagiarismWebsocketService, PlagiarismCacheService plagiarismCacheService, UriService uriService,
-            ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService) {
+            PlagiarismWebsocketService plagiarismWebsocketService, PlagiarismCacheService plagiarismCacheService, UriService uriService) {
         this.fileService = fileService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.plagiarismService = plagiarismService;
@@ -105,7 +101,6 @@ public class ProgrammingPlagiarismDetectionService {
         this.plagiarismWebsocketService = plagiarismWebsocketService;
         this.plagiarismCacheService = plagiarismCacheService;
         this.uriService = uriService;
-        this.programmingExerciseGitDiffReportService = programmingExerciseGitDiffReportService;
     }
 
     /**
@@ -148,7 +143,7 @@ public class ProgrammingPlagiarismDetectionService {
 
             log.info("JPlag programming comparison finished with {} comparisons for programming exercise {}", jPlagResult.getAllComparisons().size(), programmingExerciseId);
             TextPlagiarismResult textPlagiarismResult = new TextPlagiarismResult();
-            textPlagiarismResult.convertJPlagResult(jPlagResult, programmingExercise);
+            textPlagiarismResult.convertJPlagResult(jPlagResult, programmingExercise, minimumSize);
 
             log.info("JPlag programming comparison done in {}", TimeLogUtil.formatDurationFrom(start));
             plagiarismWebsocketService.notifyInstructorAboutPlagiarismState(topic, PlagiarismCheckState.COMPLETED, List.of());
@@ -362,16 +357,6 @@ public class ProgrammingPlagiarismDetectionService {
         }
     }
 
-    private boolean shouldAddRepo(int minimumSize, Repository repo, Optional<Repository> templateRepo) {
-        if (templateRepo.isEmpty()) {
-            return true;
-        }
-
-        var diffToTemplate = programmingExerciseGitDiffReportService.calculateNumberOfDiffLinesBetweenRepos(repo.getRemoteRepositoryUri(), repo.getLocalPath(),
-                templateRepo.get().getRemoteRepositoryUri(), templateRepo.get().getLocalPath());
-        return diffToTemplate >= minimumSize;
-    }
-
     private List<Repository> downloadRepositories(ProgrammingExercise programmingExercise, List<ProgrammingExerciseParticipation> participations, String targetPath,
             int minimumSize) {
         // Used for sending progress notifications
@@ -391,13 +376,7 @@ public class ProgrammingPlagiarismDetectionService {
 
                 Repository repo = gitService.getOrCheckoutRepositoryForJPlag(participation, targetPath);
                 gitService.resetToOriginHead(repo); // start with clean state
-
-                if (shouldAddRepo(minimumSize, repo, templateRepo)) {
-                    downloadedRepositories.add(repo);
-                }
-                else {
-                    deleteTempLocalRepository(repo);
-                }
+                downloadedRepositories.add(repo);
             }
             catch (GitException | GitAPIException | InvalidPathException ex) {
                 log.error("Clone student repository {} in exercise '{}' did not work as expected: {}", participation.getVcsRepositoryUri(), programmingExercise.getTitle(),

@@ -1,6 +1,4 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { ProgrammingExerciseGitDiffReport } from 'app/programming/shared/entities/programming-exercise-git-diff-report.model';
-import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { Subscription, throwError } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
@@ -11,18 +9,16 @@ import { GitDiffReportComponent } from 'app/programming/shared/git-diff-report/g
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
-
+import { RepositoryDiffInformation, processRepositoryDiff } from 'app/programming/shared/utils/diff.utils';
 @Component({
     selector: 'jhi-commit-details-view',
     templateUrl: './commit-details-view.component.html',
     imports: [GitDiffReportComponent, ArtemisDatePipe, ArtemisTranslatePipe],
 })
 export class CommitDetailsViewComponent implements OnDestroy, OnInit {
-    private programmingExerciseService = inject(ProgrammingExerciseService);
     private programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
     private route = inject(ActivatedRoute);
 
-    report: ProgrammingExerciseGitDiffReport;
     exerciseId: number;
     repositoryId?: number; // acts as both participationId (USER repositories) and repositoryId (AUXILIARY repositories), undefined for TEMPLATE, SOLUTION and TEST
     commitHash: string;
@@ -31,12 +27,13 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
     errorWhileFetching = false;
     leftCommitFileContentByPath: Map<string, string>;
     rightCommitFileContentByPath: Map<string, string>;
+    repositoryDiffInformation: RepositoryDiffInformation;
     commits: CommitInfo[] = [];
     currentCommit: CommitInfo;
     previousCommit: CommitInfo;
     repositoryType: RepositoryType;
+    diffReady = false;
 
-    repoFilesSubscription: Subscription;
     participationRepoFilesAtLeftCommitSubscription: Subscription;
     participationRepoFilesAtRightCommitSubscription: Subscription;
 
@@ -44,7 +41,6 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
     participationSub: Subscription;
 
     ngOnDestroy(): void {
-        this.repoFilesSubscription?.unsubscribe();
         this.participationRepoFilesAtLeftCommitSubscription?.unsubscribe();
         this.participationRepoFilesAtRightCommitSubscription?.unsubscribe();
         this.paramSub?.unsubscribe();
@@ -105,37 +101,11 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
                 }),
             )
             .subscribe({
-                next: () => this.getDiffReport(),
+                next: () => this.fetchParticipationRepoFiles(),
                 error: () => {
                     this.errorWhileFetching = true;
                 },
             });
-    }
-
-    /**
-     * Gets the diff report for the current and previous commit or the template commit and an empty file.
-     * @private
-     */
-    private getDiffReport() {
-        this.repoFilesSubscription = this.programmingExerciseService
-            .getDiffReportForCommits(this.exerciseId, this.repositoryId, this.previousCommit.hash!, this.currentCommit.hash!, this.repositoryType)
-            .subscribe((report) => {
-                this.handleNewReport(report!);
-            });
-    }
-
-    /**
-     * Handles the new report and sets the report, the left and right commit hash and the participation ids for the left and right commit.
-     * @param report the new report
-     * @private
-     */
-    private handleNewReport(report: ProgrammingExerciseGitDiffReport) {
-        this.report = report;
-        this.report.leftCommitHash = this.previousCommit.hash;
-        this.report.rightCommitHash = this.currentCommit.hash;
-        this.report.participationIdForLeftCommit = this.repositoryId;
-        this.report.participationIdForRightCommit = this.repositoryId;
-        this.fetchParticipationRepoFiles();
     }
 
     /**
@@ -148,12 +118,7 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
             this.fetchParticipationRepoFilesAtRightCommit();
         } else {
             this.participationRepoFilesAtLeftCommitSubscription = this.programmingExerciseParticipationService
-                .getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView(
-                    this.exerciseId,
-                    this.report.participationIdForLeftCommit!,
-                    this.report.leftCommitHash!,
-                    this.repositoryType,
-                )
+                .getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView(this.exerciseId, this.repositoryId, this.previousCommit.hash!, this.repositoryType)
                 .subscribe({
                     next: (filesWithContent: Map<string, string>) => {
                         this.leftCommitFileContentByPath = filesWithContent;
@@ -161,6 +126,8 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
                     },
                     error: () => {
                         this.errorWhileFetching = true;
+                        this.leftCommitFileContentByPath = new Map<string, string>();
+                        this.rightCommitFileContentByPath = new Map<string, string>();
                     },
                 });
         }
@@ -170,20 +137,24 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
      * Fetches the participation repository files for the right commit.
      * @private
      */
-    private fetchParticipationRepoFilesAtRightCommit() {
+    private async fetchParticipationRepoFilesAtRightCommit() {
+        // Set ready state to false when starting diff processing
+        this.diffReady = false;
+
         this.participationRepoFilesAtRightCommitSubscription = this.programmingExerciseParticipationService
-            .getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView(
-                this.exerciseId,
-                this.report.participationIdForRightCommit!,
-                this.report.rightCommitHash!,
-                this.repositoryType,
-            )
+            .getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView(this.exerciseId, this.repositoryId, this.currentCommit.hash!, this.repositoryType)
             .subscribe({
-                next: (filesWithContent: Map<string, string>) => {
+                next: async (filesWithContent: Map<string, string>) => {
                     this.rightCommitFileContentByPath = filesWithContent;
+                    this.repositoryDiffInformation = await processRepositoryDiff(this.leftCommitFileContentByPath, this.rightCommitFileContentByPath);
+
+                    // Set ready state to true when diff processing is complete
+                    this.diffReady = true;
                 },
                 error: () => {
                     this.errorWhileFetching = true;
+                    this.rightCommitFileContentByPath = new Map<string, string>();
+                    this.diffReady = false;
                 },
             });
     }

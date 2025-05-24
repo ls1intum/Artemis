@@ -2,9 +2,9 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { GitDiffFilePanelTitleComponent } from 'app/programming/shared/git-diff-report/git-diff-file-panel-title/git-diff-file-panel-title.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { DiffInformation, FileStatus } from 'app/programming/shared/utils/diff.utils';
 
 describe('GitDiffFilePanelTitleComponent', () => {
-    let comp: GitDiffFilePanelTitleComponent;
     let fixture: ComponentFixture<GitDiffFilePanelTitleComponent>;
 
     beforeEach(() => {
@@ -12,7 +12,6 @@ describe('GitDiffFilePanelTitleComponent', () => {
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
         fixture = TestBed.createComponent(GitDiffFilePanelTitleComponent);
-        comp = fixture.componentInstance;
     });
 
     afterEach(() => {
@@ -21,34 +20,72 @@ describe('GitDiffFilePanelTitleComponent', () => {
 
     it.each([
         {
-            modifiedFilePath: 'some-unchanged-file.java',
-            originalFilePath: 'some-unchanged-file.java',
-            status: 'unchanged',
+            diffInformation: {
+                title: 'some-unchanged-file.java',
+                modifiedPath: 'some-unchanged-file.java',
+                originalPath: 'some-unchanged-file.java',
+                fileStatus: FileStatus.UNCHANGED,
+                diffReady: false,
+            } as DiffInformation,
             title: 'some-unchanged-file.java',
+            status: FileStatus.UNCHANGED,
+            shouldShowBadge: false,
         },
         {
-            modifiedFilePath: undefined,
-            originalFilePath: 'some-deleted-file.java',
-            status: 'deleted',
+            diffInformation: {
+                title: 'some-deleted-file.java',
+                modifiedPath: '',
+                originalPath: 'some-deleted-file.java',
+                fileStatus: FileStatus.DELETED,
+                diffReady: false,
+            } as DiffInformation,
             title: 'some-deleted-file.java',
+            status: FileStatus.DELETED,
+            shouldShowBadge: true,
+            badgeClass: 'bg-danger',
         },
         {
-            modifiedFilePath: 'some-created-file.java',
-            originalFilePath: undefined,
-            status: 'created',
+            diffInformation: {
+                title: 'some-created-file.java',
+                modifiedPath: 'some-created-file.java',
+                originalPath: '',
+                fileStatus: FileStatus.CREATED,
+                diffReady: false,
+            } as DiffInformation,
             title: 'some-created-file.java',
+            status: FileStatus.CREATED,
+            shouldShowBadge: true,
+            badgeClass: 'bg-success',
         },
         {
-            modifiedFilePath: 'some-renamed-file.java',
-            originalFilePath: 'some-file.java',
-            status: 'renamed',
+            diffInformation: {
+                title: 'some-file.java → some-renamed-file.java',
+                modifiedPath: 'some-renamed-file.java',
+                originalPath: 'some-file.java',
+                fileStatus: FileStatus.RENAMED,
+                diffReady: false,
+            } as DiffInformation,
             title: 'some-file.java → some-renamed-file.java',
+            status: FileStatus.RENAMED,
+            shouldShowBadge: true,
+            badgeClass: 'bg-warning',
         },
-    ])('should correctly set title and status', ({ originalFilePath, modifiedFilePath, status, title }) => {
-        fixture.componentRef.setInput('originalFilePath', originalFilePath);
-        fixture.componentRef.setInput('modifiedFilePath', modifiedFilePath);
+    ])('should correctly display title and status badge', ({ diffInformation, title, status, shouldShowBadge, badgeClass }) => {
+        fixture.componentRef.setInput('diffInformation', diffInformation);
         fixture.detectChanges();
-        expect(comp.title()).toBe(title);
-        expect(comp.fileStatus()).toBe(status);
+
+        const element = fixture.nativeElement;
+        const titleElement = element.querySelector('.file-path-with-badge');
+        const badge = element.querySelector('.badge');
+
+        if (shouldShowBadge) {
+            expect(badge).toBeTruthy();
+            expect(badge.classList.contains(badgeClass)).toBeTrue();
+            const badgeText = `artemisApp.programmingExercise.diffReport.fileChange.${status.toLowerCase()}`;
+            expect(titleElement.textContent.trim()).toBe(`${title} ${badgeText}`);
+        } else {
+            expect(badge).toBeFalsy();
+            expect(titleElement.textContent.trim()).toBe(title);
+        }
     });
 });
