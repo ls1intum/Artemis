@@ -1,12 +1,11 @@
 import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
 import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-overall-score-picker/included-in-overall-score-picker.component';
 import { PresentationScoreComponent } from 'app/exercise/presentation-score/presentation-score.component';
 import { GradingInstructionsDetailsComponent } from 'app/exercise/structured-grading-criterion/grading-instructions-details/grading-instructions-details.component';
-import { ModelingExerciseService } from '../services/modeling-exercise.service';
+import { ModelingExerciseV2Service } from '../services/modeling-exercise-v2.service';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ExerciseMode, IncludedInOverallScore, resetForImport } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -20,8 +19,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
 import { onError } from 'app/shared/util/global.utils';
 import { EditType, SaveExerciseCommand } from 'app/exercise/util/exercise.utils';
-import { UMLDiagramType, UMLModel } from '@ls1intum/apollon';
-import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
+import { UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import { AlertService } from 'app/shared/service/alert.service';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
@@ -44,6 +42,8 @@ import { loadCourseExerciseCategories } from 'app/exercise/course-exercises/cour
 import { FormSectionStatus, FormStatusBarComponent } from 'app/shared/form/form-status-bar/form-status-bar.component';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { FormFooterComponent } from 'app/shared/form/form-footer/form-footer.component';
+import { ModelingEditorV2Component } from 'app/modeling/shared/modeling-editor-v2/modeling-editor.component';
+import { ModelingExerciseV2 } from 'app/modeling/shared/entities/modeling-exercise-v2.model';
 
 @Component({
     selector: 'jhi-modeling-exercise-update',
@@ -61,7 +61,7 @@ import { FormFooterComponent } from 'app/shared/form/form-footer/form-footer.com
         TeamConfigFormGroupComponent,
         MarkdownEditorMonacoComponent,
         CompetencySelectionComponent,
-        ModelingEditorComponent,
+        ModelingEditorV2Component,
         FormDateTimePickerComponent,
         IncludedInOverallScorePickerComponent,
         CustomMinDirective,
@@ -75,7 +75,7 @@ import { FormFooterComponent } from 'app/shared/form/form-footer/form-footer.com
 })
 export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy, OnInit {
     private alertService = inject(AlertService);
-    private modelingExerciseService = inject(ModelingExerciseService);
+    private modelingExerciseService = inject(ModelingExerciseV2Service);
     private modalService = inject(NgbModal);
     private popupService = inject(ExerciseUpdateWarningService);
     private courseService = inject(CourseManagementService);
@@ -88,7 +88,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
 
     @ViewChild(ExerciseTitleChannelNameComponent) exerciseTitleChannelNameComponent: ExerciseTitleChannelNameComponent;
     @ViewChild(TeamConfigFormGroupComponent) teamConfigFormGroupComponent?: TeamConfigFormGroupComponent;
-    @ViewChild(ModelingEditorComponent, { static: false }) modelingEditor?: ModelingEditorComponent;
+    @ViewChild(ModelingEditorV2Component, { static: false }) modelingEditor?: ModelingEditorV2Component;
     @ViewChild('bonusPoints') bonusPoints?: NgModel;
     @ViewChild('points') points?: NgModel;
     @ViewChild('solutionPublicationDate') solutionPublicationDateField?: FormDateTimePickerComponent;
@@ -103,8 +103,8 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     AssessmentType = AssessmentType;
     UMLDiagramType = UMLDiagramType;
 
-    modelingExercise: ModelingExercise;
-    backupExercise: ModelingExercise;
+    modelingExercise: ModelingExerciseV2;
+    backupExercise: ModelingExerciseV2;
     exampleSolution: UMLModel;
     isSaving: boolean;
     exerciseCategories: ExerciseCategory[];
@@ -150,6 +150,8 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
 
         // Get the modelingExercise
         this.activatedRoute.data.subscribe(({ modelingExercise }) => {
+            // eslint-disable-next-line no-undef
+            console.log('DEBUG modelingExercise,', JSON.stringify(modelingExercise));
             this.modelingExercise = modelingExercise;
 
             if (this.modelingExercise.exampleSolutionModel != undefined) {
@@ -193,8 +195,9 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
 
                         if (this.isExamMode) {
                             // The target exerciseGroupId where we want to import into
-                            const exerciseGroupId = params['exerciseGroupId'];
-                            const examId = params['examId'];
+                            // const exerciseGroupId = params['exerciseGroupId'];
+                            // const examId = params['examId'];
+                            const { exerciseGroupId, examId } = params;
 
                             this.exerciseGroupService.find(courseId, examId, exerciseGroupId).subscribe((res) => (this.modelingExercise.exerciseGroup = res.body!));
                             // We reference exam exercises by their exercise group, not their course. Having both would lead to conflicts on the server
@@ -225,19 +228,25 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     }
 
     async calculateFormSectionStatus() {
-        await this.modelingEditor?.apollonEditor?.nextRender;
         this.formSectionStatus = [
             {
                 title: 'artemisApp.exercise.sections.general',
                 valid: Boolean(this.exerciseTitleChannelNameComponent?.titleChannelNameComponent.formValid),
             },
-            { title: 'artemisApp.exercise.sections.mode', valid: Boolean(this.teamConfigFormGroupComponent?.formValid) },
-            { title: 'artemisApp.exercise.sections.problem', valid: true, empty: !this.modelingExercise.problemStatement },
+            {
+                title: 'artemisApp.exercise.sections.mode',
+                valid: Boolean(this.teamConfigFormGroupComponent?.formValid),
+            },
+            {
+                title: 'artemisApp.exercise.sections.problem',
+                valid: true,
+                empty: !this.modelingExercise.problemStatement,
+            },
             {
                 title: 'artemisApp.exercise.sections.solution',
                 valid: Boolean(this.isExamMode || (!this.modelingExercise.exampleSolutionPublicationDateError && this.solutionPublicationDateField?.dateInput.valid)),
                 empty:
-                    isEmpty(this.modelingEditor?.getCurrentModel()?.elements) ||
+                    isEmpty(this.modelingEditor?.getCurrentModel()?.nodes) ||
                     (!this.isExamMode && !this.modelingExercise.exampleSolutionPublicationDate) ||
                     !this.modelingExercise.exampleSolutionExplanation,
             },
@@ -293,7 +302,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
         new SaveExerciseCommand(this.modalService, this.popupService, this.modelingExerciseService, this.backupExercise, this.editType, this.alertService)
             .save(this.modelingExercise, this.isExamMode, this.notificationText)
             .subscribe({
-                next: (exercise: ModelingExercise) => this.onSaveSuccess(exercise),
+                next: (exercise: ModelingExerciseV2) => this.onSaveSuccess(exercise),
                 error: (error: HttpErrorResponse) => this.onSaveError(error),
                 complete: () => {
                     this.isSaving = false;
@@ -308,7 +317,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
         this.navigationUtilService.navigateBackFromExerciseUpdate(this.modelingExercise);
     }
 
-    private onSaveSuccess(exercise: ModelingExercise): void {
+    private onSaveSuccess(exercise: ModelingExerciseV2): void {
         this.eventManager.broadcast({ name: 'modelingExerciseListModification', content: 'OK' });
         this.isSaving = false;
 
