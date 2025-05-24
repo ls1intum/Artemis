@@ -24,8 +24,8 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { Slide } from 'app/lecture/shared/entities/lecture-unit/slide.model';
 import { finalize } from 'rxjs/operators';
-import { ConfirmAutofocusButtonComponent } from 'app/shared/components/confirm-autofocus-button/confirm-autofocus-button.component';
-import { ButtonType } from 'app/shared/components/button/button.component';
+import { ConfirmAutofocusButtonComponent } from 'app/shared/components/buttons/confirm-autofocus-button/confirm-autofocus-button.component';
+import { ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { PdfPreviewDateBoxComponent } from 'app/lecture/manage/pdf-preview/pdf-preview-date-box/pdf-preview-date-box.component';
 import * as PDFJS from 'pdfjs-dist';
 
@@ -674,16 +674,21 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             this.getFinalPageOrder().then((finalPageOrder) => {
                 formData.append(
                     'pageOrder',
-                    JSON.stringify(
-                        finalPageOrder.map((page) => ({
-                            slideId: page.slideId,
-                            order: page.order,
-                        })),
+                    new Blob(
+                        [
+                            JSON.stringify(
+                                finalPageOrder.map((page) => ({
+                                    slideId: page.slideId,
+                                    order: page.order,
+                                })),
+                            ),
+                        ],
+                        { type: 'application/json' },
                     ),
                 );
 
                 if (hiddenPages.length > 0) {
-                    formData.append('hiddenPages', JSON.stringify(hiddenPages));
+                    formData.append('hiddenPages', new Blob([JSON.stringify(hiddenPages)], { type: 'application/json' }));
                 }
 
                 this.attachmentUnitService.update(this.attachmentUnit()!.lecture!.id!, this.attachmentUnit()!.id!, formData).subscribe({

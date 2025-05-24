@@ -2,7 +2,7 @@ import { Component, EventEmitter, Output, WritableSignal, inject, signal } from 
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { faEraser } from '@fortawesome/free-solid-svg-icons';
 
-import { ButtonComponent, ButtonType } from 'app/shared/components/button/button.component';
+import { ButtonComponent, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { AdminUserService } from 'app/core/user/shared/admin-user.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';

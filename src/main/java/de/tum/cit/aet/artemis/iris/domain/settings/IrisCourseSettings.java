@@ -9,8 +9,6 @@ import jakarta.persistence.OneToOne;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
-
 /**
  * An {@link IrisSettings} implementation for course specific settings.
  * Course settings are used to override global settings and allows all sub setting types.
@@ -20,9 +18,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class IrisCourseSettings extends IrisSettings {
 
-    @OneToOne(optional = false)
-    @JoinColumn(name = "course_id", unique = true, nullable = false)
-    private Course course;
+    private long courseId;
 
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @JoinColumn(name = "iris_chat_settings_id")
@@ -52,12 +48,16 @@ public class IrisCourseSettings extends IrisSettings {
     @JoinColumn(name = "iris_competency_generation_settings_id")
     private IrisCompetencyGenerationSubSettings irisCompetencyGenerationSettings;
 
-    public Course getCourse() {
-        return course;
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @JoinColumn(name = "iris_tutor_suggestion_settings_id")
+    private IrisTutorSuggestionSubSettings irisTutorSuggestionSettings;
+
+    public long getCourseId() {
+        return courseId;
     }
 
-    public void setCourse(Course course) {
-        this.course = course;
+    public void setCourseId(long courseId) {
+        this.courseId = courseId;
     }
 
     @Override
@@ -128,5 +128,15 @@ public class IrisCourseSettings extends IrisSettings {
     @Override
     public void setIrisFaqIngestionSettings(IrisFaqIngestionSubSettings irisFaqIngestionSubSettings) {
         this.irisFaqIngestionSettings = irisFaqIngestionSubSettings;
+    }
+
+    @Override
+    public IrisTutorSuggestionSubSettings getIrisTutorSuggestionSettings() {
+        return irisTutorSuggestionSettings;
+    }
+
+    @Override
+    public void setIrisTutorSuggestionSettings(IrisTutorSuggestionSubSettings irisTutorSuggestionSubSettings) {
+        this.irisTutorSuggestionSettings = irisTutorSuggestionSubSettings;
     }
 }

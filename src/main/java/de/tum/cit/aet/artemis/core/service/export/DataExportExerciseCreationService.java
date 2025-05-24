@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.RepositoryExportOptionsDTO;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FileService;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
@@ -207,7 +208,7 @@ public class DataExportExerciseCreationService {
             for (var submission : participation.getSubmissions()) {
                 createSubmissionCsvFile(submission, exerciseDir);
                 if (submission instanceof FileUploadSubmission fileUploadSubmission) {
-                    copyFileUploadSubmissionFile(FileUploadSubmission.buildFilePath(exercise.getId(), submission.getId()), exerciseDir, fileUploadSubmission);
+                    copyFileUploadSubmissionFile(FilePathConverter.buildFileUploadSubmissionPath(exercise.getId(), submission.getId()), exerciseDir, fileUploadSubmission);
                 }
                 else if (submission instanceof TextSubmission textSubmission) {
                     storeTextSubmissionContent(textSubmission, exerciseDir);
