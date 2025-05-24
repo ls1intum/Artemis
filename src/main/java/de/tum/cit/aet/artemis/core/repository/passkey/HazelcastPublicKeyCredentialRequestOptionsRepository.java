@@ -101,12 +101,7 @@ public class HazelcastPublicKeyCredentialRequestOptionsRepository implements Pub
         HttpSession session = request.getSession();
         session.setAttribute(this.attrName, options);
 
-        if (options != null) {
-            authOptionsMap.put(session.getId(), options);
-        }
-        else {
-            authOptionsMap.remove(session.getId());
-        }
+        updateByRequestId(request, options);
     }
 
     /**
@@ -118,12 +113,53 @@ public class HazelcastPublicKeyCredentialRequestOptionsRepository implements Pub
      */
     @Override
     public PublicKeyCredentialRequestOptions load(HttpServletRequest request) {
-        String sessionId = request.getRequestedSessionId();
-        if (sessionId == null) {
-            log.warn("Session ID is null. This might indicate that the session does not exist or has expired. Unable to load PublicKeyCredentialRequestOptions.");
-            return null;
+        return getOptionsBySessionId(request);
+    }
+
+    private void updateByRequestId(HttpServletRequest request, PublicKeyCredentialRequestOptions options) {
+        String sessionId = request.getSession().getId();
+        String requestedSessionId = request.getRequestedSessionId();
+
+        if (options != null) {
+            if (sessionId != null) {
+                authOptionsMap.put(sessionId, options);
+            }
+            if (requestedSessionId != null) {
+                authOptionsMap.put(requestedSessionId, options);
+            }
+        }
+        else {
+            if (sessionId != null) {
+                authOptionsMap.remove(sessionId);
+            }
+            if (requestedSessionId != null) {
+                authOptionsMap.remove(requestedSessionId);
+            }
+        }
+    }
+
+    private PublicKeyCredentialRequestOptions getOptionsBySessionId(HttpServletRequest request) {
+        String sessionId = request.getSession().getId();
+        String requestedSessionId = request.getRequestedSessionId();
+
+        PublicKeyCredentialRequestOptions options = null;
+        if (requestedSessionId != null) {
+            options = authOptionsMap.get(requestedSessionId);
         }
 
-        return authOptionsMap.get(sessionId);
+        if (sessionId != null && options == null) {
+            // we don't have options from the requested session id, so we try to get the options from the current session id
+            // we also do not need to update anything in hazelcast in this case
+            return authOptionsMap.get(sessionId);
+        }
+
+        // we found options with the old id (otherwise we would have returned null above), so we need to update the hazelcast map
+        boolean hasSessionIdChanged = sessionId != null;
+        if (hasSessionIdChanged) {
+            authOptionsMap.remove(requestedSessionId);
+            authOptionsMap.put(sessionId, options);
+        }
+
+        return options;
     }
 }
