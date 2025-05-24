@@ -31,7 +31,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.FilePathType;
-import de.tum.cit.aet.artemis.core.service.FilePathService;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
@@ -120,7 +120,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         slideRepository.deleteAll(existingSlides);
 
         // Get a proper temp path for slides
-        Path tempFilePath = FilePathService.getTempFilePath();
+        Path tempFilePath = FilePathConverter.getTempFilePath();
         Files.createDirectories(tempFilePath);
 
         // Create existing slides with valid paths
@@ -172,7 +172,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         slideRepository.deleteAll(existingSlides);
 
         // Get a proper temp path for slides
-        Path tempFilePath = FilePathService.getTempFilePath();
+        Path tempFilePath = FilePathConverter.getTempFilePath();
         Files.createDirectories(tempFilePath);
 
         // Create existing slides (we're missing slide 2 intentionally)
@@ -227,7 +227,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         slideRepository.deleteAll(existingSlides);
 
         // Get a proper temp path for slides
-        Path tempFilePath = FilePathService.getTempFilePath();
+        Path tempFilePath = FilePathConverter.getTempFilePath();
         Files.createDirectories(tempFilePath);
 
         // Create existing slides (all 3) with known IDs and valid paths
@@ -292,7 +292,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         slideRepository.deleteAll(existingSlides);
 
         // Get a proper temp path for slides
-        Path tempFilePath = FilePathService.getTempFilePath();
+        Path tempFilePath = FilePathConverter.getTempFilePath();
         Files.createDirectories(tempFilePath);
 
         // Create a real file in the temp directory for slide 1
@@ -347,10 +347,10 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         // Verify the slide was saved properly
         assertThat(slideId).isNotNull();
 
-        Path directoryFilePath = FilePathService.getAttachmentUnitFileSystemPath().resolve(Path.of(testAttachmentUnit.getId().toString(), "slide", slideId.toString()));
+        Path directoryFilePath = FilePathConverter.getAttachmentUnitFileSystemPath().resolve(Path.of(testAttachmentUnit.getId().toString(), "slide", slideId.toString()));
         Files.createDirectories(directoryFilePath);
         Path originalSlidePath = directoryFilePath.resolve("original_slide.png");
-        slide.setSlideImagePath(FilePathService.externalUriForFileSystemPath(originalSlidePath, FilePathType.SLIDE, slide.getId()).toString());
+        slide.setSlideImagePath(FilePathConverter.externalUriForFileSystemPath(originalSlidePath, FilePathType.SLIDE, slide.getId()).toString());
         slideRepository.save(slide);
         // Create a test image file
         BufferedImage originalImage = new BufferedImage(10, 10, BufferedImage.TYPE_INT_RGB);
@@ -395,7 +395,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         assertThat(originalSlidePath.toFile().exists()).isFalse();
 
         // Verify the new file exists by resolving the path
-        Path newImagePath = FilePathService.fileSystemPathForExternalUri(URI.create(updatedSlide.getSlideImagePath()), FilePathType.SLIDE);
+        Path newImagePath = FilePathConverter.fileSystemPathForExternalUri(URI.create(updatedSlide.getSlideImagePath()), FilePathType.SLIDE);
         assert newImagePath != null;
         assertThat(newImagePath.toFile().exists()).isTrue();
 
@@ -532,7 +532,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         // Clear existing slides
         List<Slide> existingSlides = slideRepository.findAllByAttachmentUnitId(testAttachmentUnit.getId());
         slideRepository.deleteAll(existingSlides);
-        Path attachmentDirectory = FilePathService.getAttachmentUnitFileSystemPath().resolve(testAttachmentUnit.getId().toString());
+        Path attachmentDirectory = FilePathConverter.getAttachmentUnitFileSystemPath().resolve(testAttachmentUnit.getId().toString());
         Files.createDirectories(attachmentDirectory);
         // Create mock PDF file with 3 pages
         Path pdfPath = attachmentDirectory.resolve("test-slides.pdf");
@@ -544,7 +544,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         }
 
         // Set up attachment link - make sure the link is updated properly
-        testAttachmentUnit.getAttachment().setLink(FilePathService.externalUriForFileSystemPath(pdfPath, FilePathType.ATTACHMENT_UNIT, testAttachmentUnit.getId()).toString());
+        testAttachmentUnit.getAttachment().setLink(FilePathConverter.externalUriForFileSystemPath(pdfPath, FilePathType.ATTACHMENT_UNIT, testAttachmentUnit.getId()).toString());
         testAttachmentUnit.getAttachment().setName("test-slides.pdf");
 
         // Create temp directory for mock slide images
@@ -570,7 +570,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
             BufferedImage image = new BufferedImage(10, 10, BufferedImage.TYPE_INT_RGB);
             ImageIO.write(image, "png", slidePath.toFile());
 
-            savedSlide.setSlideImagePath(FilePathService.externalUriForFileSystemPath(slidePath, FilePathType.SLIDE, slide.getId()).toString());
+            savedSlide.setSlideImagePath(FilePathConverter.externalUriForFileSystemPath(slidePath, FilePathType.SLIDE, slide.getId()).toString());
             savedSlide = slideRepository.save(savedSlide);
             createdSlides.add(savedSlide);
         }
@@ -695,9 +695,43 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         assertThat(firstSlide.getHidden().truncatedTo(ChronoUnit.MILLIS)).isEqualTo(hiddenDate.truncatedTo(ChronoUnit.MILLIS));
         assertThat(firstSlide.getExercise()).isNotNull();
         assertThat(firstSlide.getExercise().getId()).isEqualTo(testExercise.getId());
-    }
 
-    // Additional updated test methods
+        // Verify slides 2 and 3 aren't hidden
+        for (int i = 2; i <= 3; i++) {
+            int finalI = i;
+            Slide slide = slides.stream().filter(s -> s.getSlideNumber() == finalI).findFirst().orElse(null);
+            assertThat(slide).isNotNull();
+            assertThat(slide.getHidden()).isNull();
+            assertThat(slide.getExercise()).isNull();
+        }
+
+        // Verify slide images were created correctly
+        for (Slide slide : slides) {
+            assertThat(slide.getSlideImagePath()).isNotNull().isNotEmpty();
+
+            // Check that image files actually exist on filesystem
+            Path imagePath = FilePathConverter.fileSystemPathForExternalUri(URI.create(slide.getSlideImagePath()), FilePathType.SLIDE);
+            assert imagePath != null;
+            assertThat(imagePath.toFile().exists()).isTrue();
+        }
+
+        // Clean up
+        Files.deleteIfExists(tempPdfPath);
+        Files.walkFileTree(tempDir, new SimpleFileVisitor<>() {
+
+            @Override
+            public @NotNull FileVisitResult visitFile(Path file, @NotNull BasicFileAttributes attrs) throws IOException {
+                Files.delete(file);
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public @NotNull FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                Files.delete(dir);
+                return FileVisitResult.CONTINUE;
+            }
+        });
+    }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
