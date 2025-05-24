@@ -26,15 +26,6 @@
                 [formData]="textUnitFormData"
             />
         }
-        @if (isVideoUnitFormOpen()) {
-            <jhi-video-unit-form
-                [isEditMode]="isEditingLectureUnit"
-                [hasCancelButton]="true"
-                (onCancel)="onCloseLectureUnitForms()"
-                (formSubmitted)="createEditVideoUnit($event)"
-                [formData]="videoUnitFormData"
-            />
-        }
         @if (isOnlineUnitFormOpen()) {
             <jhi-online-unit-form
                 [isEditMode]="isEditingLectureUnit"
@@ -44,13 +35,13 @@
                 [formData]="onlineUnitFormData"
             />
         }
-        @if (isAttachmentUnitFormOpen()) {
-            <jhi-attachment-unit-form
+        @if (isAttachmentVideoUnitFormOpen()) {
+            <jhi-attachment-video-unit-form
                 [isEditMode]="isEditingLectureUnit"
                 [hasCancelButton]="true"
                 (onCancel)="onCloseLectureUnitForms()"
-                (formSubmitted)="createEditAttachmentUnit($event)"
-                [formData]="attachmentUnitFormData"
+                (formSubmitted)="createEditAttachmentVideoUnit($event)"
+                [formData]="attachmentVideoUnitFormData"
             />
         }
         @if (isExerciseUnitFormOpen()) {

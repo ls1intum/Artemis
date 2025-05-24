@@ -196,12 +196,12 @@ describe('PostingContentPartComponent', () => {
                 } as PostingContentPart);
                 fixture.detectChanges();
 
-                // should display attachment unit file name to user
+                // should display attachment video unit file name to user
                 const referenceLink = getElement(debugElement, '.reference');
                 expect(referenceLink).not.toBeNull();
                 expect(referenceLink.innerHTML).toInclude(referenceStr);
 
-                // on click should open referenced attachment unit within new tab
+                // on click should open referenced attachment video unit within new tab
                 referenceLink.click();
                 expect(openAttachmentSpy).toHaveBeenCalledOnce();
                 expect(openAttachmentSpy).toHaveBeenCalledWith(attachmentURL);
@@ -219,7 +219,7 @@ describe('PostingContentPartComponent', () => {
                 } as PostingContentPart);
                 fixture.detectChanges();
 
-                // should display attachment unit slide name and link to user
+                // should display attachment video unit slide name and link to user
                 const referenceLink = getElement(debugElement, '.reference');
                 expect(referenceLink).not.toBeNull();
                 expect(referenceLink.innerHTML).toInclude(referenceStr);
@@ -228,7 +228,7 @@ describe('PostingContentPartComponent', () => {
 
                 const enlargeImageSpy = jest.spyOn(component, 'enlargeImage');
 
-                // on click should open referenced attachment unit slide
+                // on click should open referenced attachment video unit slide
                 referenceLink.click();
                 expect(enlargeImageSpy).toHaveBeenCalledOnce();
                 expect(enlargeImageSpy).toHaveBeenCalledWith(imageURL);

@@ -16,7 +16,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
-import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.test_repository.SlideTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
@@ -41,16 +41,17 @@ class AttachmentServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @BeforeEach
     void initTestCase() {
-        // AttachmentUnit with no hidden slides
-        AttachmentUnit testAttachmentUnit1 = lectureUtilService.createAttachmentUnitWithSlidesAndFile(5, true);
-        testAttachment1 = testAttachmentUnit1.getAttachment();
-        testAttachment1.setStudentVersion("attachments/attachment-unit/" + testAttachmentUnit1.getId() + "/student/example.pdf"); // Set an existing student version to verify it
-                                                                                                                                  // gets removed
+        // AttachmentVideoUnit with no hidden slides
+        AttachmentVideoUnit testAttachmentVideoUnit1 = lectureUtilService.createAttachmentVideoUnitWithSlidesAndFile(5, true);
+        testAttachment1 = testAttachmentVideoUnit1.getAttachment();
+        testAttachment1.setStudentVersion("attachments/attachment-unit/" + testAttachmentVideoUnit1.getId() + "/student/example.pdf"); // Set an existing student version to verify
+                                                                                                                                       // it
+        // gets removed
 
-        // AttachmentUnit with hidden slides
-        AttachmentUnit testAttachmentUnit2 = lectureUtilService.createAttachmentUnitWithSlidesAndFile(5, true);
-        testAttachment2 = testAttachmentUnit2.getAttachment();
-        List<Slide> testSlides2 = slideRepository.findAllByAttachmentUnitId(testAttachmentUnit2.getId());
+        // AttachmentVideoUnit with hidden slides
+        AttachmentVideoUnit testAttachmentVideoUnit2 = lectureUtilService.createAttachmentVideoUnitWithSlidesAndFile(5, true);
+        testAttachment2 = testAttachmentVideoUnit2.getAttachment();
+        List<Slide> testSlides2 = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit2.getId());
 
         // Make slides 2 and 4 hidden
         ZonedDateTime futureTime = ZonedDateTime.now().plusDays(7);
@@ -84,12 +85,12 @@ class AttachmentServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
-    void testRegenerateStudentVersion_withNullAttachmentUnit() {
-        // Create attachment with null attachment unit
+    void testRegenerateStudentVersion_withNullAttachmentVideoUnit() {
+        // Create attachment with null attachment video unit
         Attachment attachmentWithoutUnit = new Attachment();
         attachmentWithoutUnit.setName("Test Attachment");
         attachmentWithoutUnit.setLink("/test/path/file.pdf");
-        attachmentWithoutUnit.setAttachmentUnit(null);
+        attachmentWithoutUnit.setAttachmentVideoUnit(null);
 
         // Should not throw exception
         attachmentService.regenerateStudentVersion(attachmentWithoutUnit);
@@ -104,7 +105,7 @@ class AttachmentServiceTest extends AbstractSpringIntegrationIndependentTest {
         Path testPdfPath = Path.of(testAttachment2.getLink());
 
         // Get hidden slides
-        List<Slide> hiddenSlides = slideRepository.findByAttachmentUnitIdAndHiddenNotNull(testAttachment2.getAttachmentUnit().getId());
+        List<Slide> hiddenSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachment2.getAttachmentVideoUnit().getId());
 
         byte[] pdfData = attachmentService.generateStudentVersionPdf(
                 FilePathConverter.fileSystemPathForExternalUri(URI.create(testAttachment2.getLink()), FilePathType.ATTACHMENT_UNIT).toFile(), hiddenSlides);

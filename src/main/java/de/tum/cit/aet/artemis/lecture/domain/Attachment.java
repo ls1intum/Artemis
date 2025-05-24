@@ -59,7 +59,7 @@ public class Attachment extends DomainObject implements Serializable {
 
     @OneToOne
     @JoinColumn(name = "attachment_unit_id")
-    private AttachmentUnit attachmentUnit;
+    private AttachmentVideoUnit attachmentVideoUnit;
 
     // Student Version holds the version of the file without the pages hidden by the Instructor
     @Column(name = "student_version")
@@ -129,12 +129,12 @@ public class Attachment extends DomainObject implements Serializable {
         this.lecture = lecture;
     }
 
-    public AttachmentUnit getAttachmentUnit() {
-        return attachmentUnit;
+    public AttachmentVideoUnit getAttachmentVideoUnit() {
+        return attachmentVideoUnit;
     }
 
-    public void setAttachmentUnit(AttachmentUnit attachmentUnit) {
-        this.attachmentUnit = attachmentUnit;
+    public void setAttachmentVideoUnit(AttachmentVideoUnit attachmentVideoUnit) {
+        this.attachmentVideoUnit = attachmentVideoUnit;
     }
 
     public String getStudentVersion() {

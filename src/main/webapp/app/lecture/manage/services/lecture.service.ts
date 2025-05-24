@@ -7,7 +7,7 @@ import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lectureUnit.service';
 import { convertDateFromClient, convertDateFromServer } from 'app/shared/util/date.utils';
-import { IngestionState } from 'app/lecture/shared/entities/lecture-unit/attachmentUnit.model';
+import { IngestionState } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 
 type EntityResponseType = HttpResponse<Lecture>;

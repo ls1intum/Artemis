@@ -31,7 +31,7 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     currentPdfUrl = input<string>();
     isAppendingFile = input<boolean>();
     hiddenPages = input<HiddenPageMap>({});
-    isAttachmentUnit = input<boolean>();
+    isAttachmentVideoUnit = input<boolean>();
     updatedSelectedPages = input<Set<OrderedPage>>(new Set());
     orderedPages = input<OrderedPage[]>([]);
 

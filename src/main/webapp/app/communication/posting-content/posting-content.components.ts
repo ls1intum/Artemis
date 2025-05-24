@@ -175,8 +175,8 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
                         const slideRefDir = this.SLIDE_DIR;
                         slideToReference = slideRefDir + slideId;
                     } else {
-                        const attachmentUnitRefDir = this.ATTACHMENT_DIR;
-                        slideToReference = attachmentUnitRefDir + fullPath;
+                        const attachmentVideoUnitRefDir = this.ATTACHMENT_DIR;
+                        slideToReference = attachmentVideoUnitRefDir + fullPath;
                     }
                 } else if (ReferenceType.USER === referenceType) {
                     // referenceStr: string to be displayed for the reference

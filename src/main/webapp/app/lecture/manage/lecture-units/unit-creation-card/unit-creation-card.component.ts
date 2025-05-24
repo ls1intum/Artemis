@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { faCheck, faFileUpload, faLink, faScroll, faVideo } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faFileVideo, faLink, faScroll } from '@fortawesome/free-solid-svg-icons';
 import { DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { RouterLink } from '@angular/router';
@@ -25,10 +25,9 @@ export class UnitCreationCardComponent {
 
     // Icons
     faCheck = faCheck;
-    faVideo = faVideo;
-    faFileUpload = faFileUpload;
     faScroll = faScroll;
     faLink = faLink;
+    faFileVideo = faFileVideo;
 
     onButtonClicked(type: LectureUnitType) {
         if (this.emitEvents) {

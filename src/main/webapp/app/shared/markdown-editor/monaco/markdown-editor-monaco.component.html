@@ -165,7 +165,7 @@
                                         >
                                             {{ lecture.title }}
                                         </button>
-                                        @for (unit of lecture.attachmentUnits; track unit.id) {
+                                        @for (unit of lecture.attachmentVideoUnits; track unit.id) {
                                             <button class="ps-1 me-1" mat-menu-item [matMenuTriggerFor]="lectureMenuUnitsSlide" type="button">
                                                 <span>{{ unit.name }}</span>
                                             </button>
@@ -177,7 +177,7 @@
                                                         displayedActions.lecture.executeInCurrentEditor({
                                                             reference: ReferenceType.ATTACHMENT_UNITS,
                                                             lecture,
-                                                            attachmentUnit: unit,
+                                                            attachmentVideoUnit: unit,
                                                         })
                                                     "
                                                     type="button"
@@ -193,7 +193,7 @@
                                                                 reference: ReferenceType.SLIDE,
                                                                 lecture,
                                                                 slide,
-                                                                attachmentUnit: unit,
+                                                                attachmentVideoUnit: unit,
                                                                 slideIndex: index + 1,
                                                             })
                                                         "

@@ -30,8 +30,8 @@ public class SlideApi extends AbstractLectureApi {
         return slideRepository.findByIdElseThrow(id);
     }
 
-    public Slide findSlideByAttachmentUnitIdAndSlideNumber(long attachmentUnitId, int slideNumber) {
-        return slideRepository.findSlideByAttachmentUnitIdAndSlideNumber(attachmentUnitId, slideNumber);
+    public Slide findSlideByAttachmentVideoUnitIdAndSlideNumber(long attachmentVideoUnitId, int slideNumber) {
+        return slideRepository.findSlideByAttachmentVideoUnitIdAndSlideNumber(attachmentVideoUnitId, slideNumber);
     }
 
     public void handleDueDateChange(Exercise originalExercise, Exercise updatedExercise) {

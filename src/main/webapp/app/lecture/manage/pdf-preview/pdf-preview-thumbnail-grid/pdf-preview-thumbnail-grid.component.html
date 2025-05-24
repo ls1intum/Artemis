@@ -7,7 +7,7 @@
     [cdkDropListData]="orderedPages()"
     (cdkDropListDropped)="onPageDrop($event)"
 >
-    @if (isAttachmentUnit()) {
+    @if (isAttachmentVideoUnit()) {
         @for (page of orderedPages(); track page.slideId) {
             <div
                 [id]="'pdf-page-' + page.slideId"

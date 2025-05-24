@@ -11,7 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
-import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
@@ -45,7 +45,7 @@ class LectureUnitServiceTest extends AbstractSpringIntegrationIndependentTest {
     @BeforeEach
     void init() {
         Lecture lecture = lectureUtilService.createCourseWithLecture(true);
-        unit1 = lectureUtilService.createAttachmentUnit(false);
+        unit1 = lectureUtilService.createAttachmentVideoUnit(false);
         unit2 = lectureUtilService.createTextUnit();
         lectureUtilService.addLectureUnitsToLecture(lecture, List.of(unit1, unit2));
         student1 = userUtilService.createAndSaveUser(TEST_PREFIX + "student1");
@@ -89,7 +89,7 @@ class LectureUnitServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     void testSaveWithCompetencyLinksWithNullLinks() {
-        AttachmentUnit lectureUnit = new AttachmentUnit();
+        AttachmentVideoUnit lectureUnit = new AttachmentVideoUnit();
         lectureUnit.setCompetencyLinks(null);
 
         LectureUnit savedLectureUnit = lectureUnitService.saveWithCompetencyLinks(lectureUnit, unit -> {
