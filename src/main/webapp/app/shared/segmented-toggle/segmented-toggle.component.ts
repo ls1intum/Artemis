@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { NgClass } from '@angular/common';
-import { CourseLearnerProfileLevel } from 'app/learner-profile/shared/entities/learner-profile-options.model';
+// TODO: Options should actually be generic
+import { CourseLearnerProfileLevel } from 'app/core/user/settings/learner-profile/entities/course-learner-profile-options.model';
 
 @Component({
     selector: 'jhi-segmented-toggle',
