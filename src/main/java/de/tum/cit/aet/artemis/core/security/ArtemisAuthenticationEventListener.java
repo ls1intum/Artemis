@@ -16,6 +16,8 @@ import org.springframework.security.authentication.event.AuthenticationSuccessEv
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
+import de.tum.cit.aet.artemis.communication.domain.EmailNotificationType;
+import de.tum.cit.aet.artemis.communication.service.EmailNotificationSettingService;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -45,9 +47,13 @@ public class ArtemisAuthenticationEventListener implements ApplicationListener<A
 
     private final MailSendingService mailSendingService;
 
-    public ArtemisAuthenticationEventListener(UserRepository userRepository, MailSendingService mailSendingService) {
+    private final EmailNotificationSettingService emailNotificationSettingService;
+
+    public ArtemisAuthenticationEventListener(UserRepository userRepository, MailSendingService mailSendingService,
+            EmailNotificationSettingService emailNotificationSettingService) {
         this.userRepository = userRepository;
         this.mailSendingService = mailSendingService;
+        this.emailNotificationSettingService = emailNotificationSettingService;
     }
 
     /**
@@ -61,6 +67,11 @@ public class ArtemisAuthenticationEventListener implements ApplicationListener<A
         Authentication authentication = event.getAuthentication();
         try {
             User recipient = userRepository.getUserByLoginElseThrow(authentication.getName());
+
+            if (!emailNotificationSettingService.isNotificationEnabled(recipient.getId(), EmailNotificationType.NEW_LOGIN)) {
+                return;
+            }
+
             var contextVariables = new HashMap<String, Object>();
             ZonedDateTime now = ZonedDateTime.now();
             contextVariables.put("loginDate", now.format(DateTimeFormatter.ofPattern("dd.MM.yyyy")));

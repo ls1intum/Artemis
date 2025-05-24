@@ -18,6 +18,8 @@ import org.springframework.security.web.webauthn.management.UserCredentialReposi
 import org.springframework.security.web.webauthn.management.WebAuthnRelyingPartyOperations;
 import org.springframework.security.web.webauthn.registration.WebAuthnRegistrationFilter;
 
+import de.tum.cit.aet.artemis.communication.domain.EmailNotificationType;
+import de.tum.cit.aet.artemis.communication.service.EmailNotificationSettingService;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -36,11 +38,14 @@ public class ArtemisWebAuthnRegistrationFilter extends WebAuthnRegistrationFilte
 
     private final UserRepository userRepository;
 
+    private final EmailNotificationSettingService emailNotificationSettingService;
+
     public ArtemisWebAuthnRegistrationFilter(@NotNull UserCredentialRepository userCredentials, @NotNull WebAuthnRelyingPartyOperations rpOptions,
-            MailSendingService mailSendingService, UserRepository userRepository) {
+            MailSendingService mailSendingService, UserRepository userRepository, EmailNotificationSettingService emailNotificationSettingService) {
         super(userCredentials, rpOptions);
         this.mailSendingService = mailSendingService;
         this.userRepository = userRepository;
+        this.emailNotificationSettingService = emailNotificationSettingService;
     }
 
     /**
@@ -60,7 +65,9 @@ public class ArtemisWebAuthnRegistrationFilter extends WebAuthnRegistrationFilte
         if (isWebAuthnRegistrationRequest(request) && response.getStatus() == HttpStatus.OK.value()) {
             User recipient = userRepository.getUser();
 
-            mailSendingService.buildAndSendAsync(recipient, "email.notification.newPasskey.title", "mail/notification/newPasskeyEmail", new HashMap<>());
+            if (emailNotificationSettingService.isNotificationEnabled(recipient.getId(), EmailNotificationType.NEW_PASSKEY_ADDED)) {
+                mailSendingService.buildAndSendAsync(recipient, "email.notification.newPasskey.title", "mail/notification/newPasskeyEmail", new HashMap<>());
+            }
         }
     }
 

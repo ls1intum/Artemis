@@ -13,6 +13,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.communication.domain.EmailNotificationType;
+import de.tum.cit.aet.artemis.communication.service.EmailNotificationSettingService;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -27,9 +29,13 @@ public class UserTokenExpiryNotificationService {
 
     private final MailSendingService mailSendingService;
 
-    public UserTokenExpiryNotificationService(UserRepository userRepository, MailSendingService mailSendingService) {
+    private final EmailNotificationSettingService emailNotificationSettingService;
+
+    public UserTokenExpiryNotificationService(UserRepository userRepository, MailSendingService mailSendingService,
+            EmailNotificationSettingService emailNotificationSettingService) {
         this.userRepository = userRepository;
         this.mailSendingService = mailSendingService;
+        this.emailNotificationSettingService = emailNotificationSettingService;
     }
 
     /**
@@ -66,6 +72,8 @@ public class UserTokenExpiryNotificationService {
      * @param recipient the user to whose account the VCS access token was added
      */
     private void notifyUserAboutExpiredVcsAccessToken(User recipient) {
-        mailSendingService.buildAndSendSync(recipient, "email.notification.vcsAccessTokenExpiry.title", "mail/notification/vcsAccessTokenExpiredEmail", new HashMap<>());
+        if (emailNotificationSettingService.isNotificationEnabled(recipient.getId(), EmailNotificationType.VCS_TOKEN_EXPIRED)) {
+            mailSendingService.buildAndSendSync(recipient, "email.notification.vcsAccessTokenExpiry.title", "mail/notification/vcsAccessTokenExpiredEmail", new HashMap<>());
+        }
     }
 }
