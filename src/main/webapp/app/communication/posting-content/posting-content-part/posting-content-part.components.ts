@@ -45,7 +45,33 @@ export class PostingContentPartComponent implements OnInit, OnChanges {
 
     // Only allow certain html tags and attributes
 
-    allowedHtmlTags: string[] = ['a', 'b', 'br', 'blockquote', 'code', 'del', 'em', 'i', 'ins', 'li', 'mark', 'p', 'pre', 'small', 's', 'span', 'strong', 'sub', 'sup', 'ul', 'ol'];
+    allowedHtmlTags: string[] = [
+        'a',
+        'b',
+        'br',
+        'blockquote',
+        'code',
+        'del',
+        'em',
+        'hr',
+        'h1',
+        'h2',
+        'h3',
+        'i',
+        'ins',
+        'li',
+        'mark',
+        'p',
+        'pre',
+        'small',
+        's',
+        'span',
+        'strong',
+        'sub',
+        'sup',
+        'ul',
+        'ol',
+    ];
     allowedHtmlAttributes: string[] = ['href'];
 
     // icons
