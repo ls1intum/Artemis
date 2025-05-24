@@ -13,6 +13,7 @@
         "node_modules"
     ],
     "dependencies": {
+        "@tumaet/apollon": "file:../Apollon2/library/",
         "@angular/animations": "19.2.12",
         "@angular/cdk": "19.2.17",
         "@angular/common": "19.2.12",
