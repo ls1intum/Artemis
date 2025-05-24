@@ -649,7 +649,9 @@ public class RequestUtilService {
 
         String tmpDirectory = System.getProperty("java.io.tmpdir");
         var filename = res.getResponse().getHeader("filename");
-        var tmpFile = Files.createFile(Path.of(tmpDirectory, filename));
+        var tmpFilePath = Path.of(tmpDirectory, filename);
+        Files.deleteIfExists(tmpFilePath);
+        var tmpFile = Files.createFile(tmpFilePath);
         FileUtils.writeByteArrayToFile(tmpFile.toFile(), res.getResponse().getContentAsByteArray());
         return tmpFile.toFile();
     }
