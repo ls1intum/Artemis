@@ -1,9 +1,5 @@
 @if (postingContentPart()?.contentBeforeReference) {
-    <span
-        class="markdown-preview"
-        style="white-space: pre-wrap"
-        [innerHTML]="processedContentBeforeReference | htmlForPostingMarkdown: true : allowedHtmlTags : allowedHtmlAttributes"
-    ></span>
+    <div class="markdown-preview" [innerHTML]="processedContentBeforeReference | htmlForPostingMarkdown: true : allowedHtmlTags : allowedHtmlAttributes"></div>
 }
 @if (postingContentPart()?.linkToReference) {
     <a class="reference" [routerLink]="postingContentPart()?.linkToReference" [queryParams]="postingContentPart()?.queryParams">

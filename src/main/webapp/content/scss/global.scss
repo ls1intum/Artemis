@@ -801,6 +801,43 @@ Course Info Bar
         margin-bottom: 0 !important;
         display: inline;
     }
+
+    ol,
+    ul {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    ol {
+        counter-reset: item;
+    }
+
+    ol > li,
+    ul > li {
+        position: relative;
+        padding-left: 1em;
+        margin-bottom: 0.5em;
+        line-height: 1;
+        text-indent: 0;
+    }
+
+    ol > li::before {
+        content: counter(item) '.';
+        counter-increment: item;
+        position: absolute;
+        left: 0;
+        top: 0;
+        font-weight: normal;
+    }
+
+    ul > li::before {
+        content: '•';
+        position: absolute;
+        left: 0;
+        top: 0;
+        font-weight: bold;
+    }
 }
 
 /* Make PlantUML outputs responsive */
