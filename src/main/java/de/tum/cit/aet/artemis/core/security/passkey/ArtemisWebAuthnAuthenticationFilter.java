@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.core.security.passkey;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.security.web.authentication.AuthenticationEntryPointFailureHandler;
@@ -18,12 +19,12 @@ import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 public class ArtemisWebAuthnAuthenticationFilter extends WebAuthnAuthenticationFilter {
 
     public ArtemisWebAuthnAuthenticationFilter(HttpMessageConverter<Object> converter, JWTCookieService jwtCookieService,
-            PublicKeyCredentialRequestOptionsRepository publicKeyCredentialRequestOptionsRepository) {
+            PublicKeyCredentialRequestOptionsRepository publicKeyCredentialRequestOptionsRepository, ApplicationEventPublisher eventPublisher) {
         super();
         setSecurityContextRepository(new HttpSessionSecurityContextRepository());
         setRequestOptionsRepository(publicKeyCredentialRequestOptionsRepository);
         setAuthenticationFailureHandler(new AuthenticationEntryPointFailureHandler(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)));
-        setAuthenticationSuccessHandler(new ArtemisHttpMessageConverterAuthenticationSuccessHandler(converter, jwtCookieService));
+        setAuthenticationSuccessHandler(new ArtemisHttpMessageConverterAuthenticationSuccessHandler(converter, jwtCookieService, eventPublisher));
     }
 
 }
