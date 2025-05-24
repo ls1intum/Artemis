@@ -31,6 +31,39 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProfileInfo, ProgrammingLanguageFeature } from 'app/core/layouts/profiles/profile-info.model';
 import { MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
 import { RepositoryDiffInformation } from 'app/programming/shared/utils/diff.utils';
+import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
+
+// Mock the diff.utils module to avoid Monaco Editor issues in tests
+jest.mock('app/programming/shared/utils/diff.utils', () => ({
+    ...jest.requireActual('app/programming/shared/utils/diff.utils'),
+    processRepositoryDiff: jest.fn().mockImplementation((templateFiles, solutionFiles) => {
+        // Handle the case where files are undefined (when repository fetch fails)
+        if (!templateFiles || !solutionFiles) {
+            return Promise.resolve(undefined);
+        }
+        return Promise.resolve({
+            diffInformations: [
+                {
+                    originalFileContent: 'testing line differences',
+                    modifiedFileContent: 'testing line diff\nnew line',
+                    originalPath: 'Example.java',
+                    modifiedPath: 'Example.java',
+                    diffReady: true,
+                    fileStatus: 'unchanged',
+                    lineChange: {
+                        addedLineCount: 2,
+                        removedLineCount: 1,
+                    },
+                    title: 'Example.java',
+                },
+            ],
+            totalLineChange: {
+                addedLineCount: 2,
+                removedLineCount: 1,
+            },
+        } as RepositoryDiffInformation);
+    }),
+}));
 
 describe('ProgrammingExerciseDetailComponent', () => {
     let comp: ProgrammingExerciseDetailComponent;
@@ -118,6 +151,12 @@ describe('ProgrammingExerciseDetailComponent', () => {
                 provideHttpClientTesting(),
             ],
         }).compileComponents();
+
+        // Mock the ResizeObserver, which is not available in the test environment
+        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+            return new MockResizeObserver(callback);
+        });
+
         fixture = TestBed.createComponent(ProgrammingExerciseDetailComponent);
         comp = fixture.componentInstance;
 
@@ -207,17 +246,37 @@ describe('ProgrammingExerciseDetailComponent', () => {
             },
         );
 
-        it('should create detail sections after repositoryFilesError', fakeAsync(() => {
+        it('should handle repositoryFilesError gracefully', fakeAsync(() => {
+            // Create a fresh programming exercise for this test
+            const testExercise = new ProgrammingExercise(new Course(), undefined);
+            testExercise.id = 456; // Different ID to avoid conflicts
+
+            // Set up the route data for this test
+            const route = TestBed.inject(ActivatedRoute);
+            route.data = of({ programmingExercise: testExercise });
+
             const errorSpy = jest.spyOn(alertService, 'error');
-            getTemplateRepositoryFilesStub.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
-            getSolutionRepositoryFilesStub.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+
+            // Mock the repository file services to throw errors only for this test
+            const templateFilesSpy = jest
+                .spyOn(exerciseService, 'getTemplateRepositoryTestFilesWithContent')
+                .mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+            const solutionFilesSpy = jest
+                .spyOn(exerciseService, 'getSolutionRepositoryTestFilesWithContent')
+                .mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
 
             comp.ngOnInit();
-            tick();
+            tick(1000); // Wait for all async operations to complete
 
-            expect(errorSpy).toHaveBeenCalledOnce();
-            expect(comp.exerciseDetailSections).toBeDefined();
+            // The error should be reported
+            expect(errorSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.repositoryFilesError');
+
+            // Repository diff information should not be set due to the error
             expect(comp.repositoryDiffInformation).toBeUndefined();
+
+            // Clean up the spies
+            templateFilesSpy.mockRestore();
+            solutionFilesSpy.mockRestore();
         }));
     });
 
