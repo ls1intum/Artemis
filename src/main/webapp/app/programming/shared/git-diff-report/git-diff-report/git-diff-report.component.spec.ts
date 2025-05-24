@@ -10,6 +10,12 @@ import { TranslateService } from '@ngx-translate/core';
 import { FileStatus, RepositoryDiffInformation } from 'app/programming/shared/utils/diff.utils';
 import { LocalStorageService } from 'ngx-webstorage';
 import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
+import { captureException } from '@sentry/angular';
+
+// Mock @sentry/angular module
+jest.mock('@sentry/angular', () => ({
+    captureException: jest.fn(),
+}));
 
 class MockResizeObserver {
     observe() {}
@@ -203,5 +209,92 @@ describe('ProgrammingExerciseGitDiffReport Component', () => {
         expect(thirdDiff.fileStatus).toBe(FileStatus.UNCHANGED);
         expect(thirdDiff.originalPath).toBe(thirdDiff.modifiedPath);
         expect(thirdDiff.originalPath).toBe(notRenamedFilePath);
+    });
+
+    it('should handle diff ready event for unknown path and capture exception', () => {
+        fixture.detectChanges();
+
+        // Call onDiffReady with a path that doesn't exist in the mock data
+        comp.onDiffReady('unknown-path.java', true);
+
+        // Verify that captureException was called
+        expect(captureException).toHaveBeenCalledWith('Received diff ready event for unknown path: unknown-path.java');
+
+        // Verify that allDiffsReady is still false since we have valid files that are not ready
+        expect(comp.allDiffsReady()).toBeFalse();
+    });
+
+    it('should test handleDiffReady method', () => {
+        const onDiffReadySpy = jest.spyOn(comp, 'onDiffReady');
+
+        fixture.detectChanges();
+
+        // Call handleDiffReady
+        comp.handleDiffReady('Test.java', true);
+
+        // Verify that onDiffReady was called with the same parameters
+        expect(onDiffReadySpy).toHaveBeenCalledWith('Test.java', true);
+    });
+
+    it('should test computed properties', () => {
+        fixture.detectChanges();
+
+        // Test addedLineCount and removedLineCount
+        expect(comp.addedLineCount()).toBe(8);
+        expect(comp.removedLineCount()).toBe(1);
+    });
+
+    it('should test nothingToDisplay computed property when no diff informations', () => {
+        const emptyDiffInformation = {
+            diffInformations: [],
+            totalLineChange: {
+                addedLineCount: 0,
+                removedLineCount: 0,
+            },
+        } as RepositoryDiffInformation;
+
+        fixture.componentRef.setInput('repositoryDiffInformation', emptyDiffInformation);
+        fixture.detectChanges();
+
+        expect(comp.nothingToDisplay()).toBeTrue();
+        expect(comp.addedLineCount()).toBe(0);
+        expect(comp.removedLineCount()).toBe(0);
+    });
+
+    it('should test commit hash computed properties', () => {
+        const leftHash = 'abcdef1234567890abcdef1234567890abcdef12';
+        const rightHash = '1234567890abcdef1234567890abcdef12345678';
+
+        fixture.componentRef.setInput('leftCommitHash', leftHash);
+        fixture.componentRef.setInput('rightCommitHash', rightHash);
+        fixture.detectChanges();
+
+        // Test that leftCommit and rightCommit return the first 10 characters
+        expect(comp.leftCommit()).toBe('abcdef1234');
+        expect(comp.rightCommit()).toBe('1234567890');
+    });
+
+    it('should handle undefined commit hashes', () => {
+        fixture.componentRef.setInput('leftCommitHash', undefined);
+        fixture.componentRef.setInput('rightCommitHash', undefined);
+        fixture.detectChanges();
+
+        // Test that computed properties handle undefined values
+        expect(comp.leftCommit()).toBeUndefined();
+        expect(comp.rightCommit()).toBeUndefined();
+    });
+
+    it('should test optional input properties', () => {
+        fixture.componentRef.setInput('diffForTemplateAndSolution', false);
+        fixture.componentRef.setInput('diffForTemplateAndEmptyRepository', true);
+        fixture.componentRef.setInput('isRepositoryView', true);
+        fixture.componentRef.setInput('participationId', 123);
+        fixture.detectChanges();
+
+        // Verify the inputs are set correctly
+        expect(comp.diffForTemplateAndSolution()).toBeFalse();
+        expect(comp.diffForTemplateAndEmptyRepository()).toBeTrue();
+        expect(comp.isRepositoryView()).toBeTrue();
+        expect(comp.participationId()).toBe(123);
     });
 });
