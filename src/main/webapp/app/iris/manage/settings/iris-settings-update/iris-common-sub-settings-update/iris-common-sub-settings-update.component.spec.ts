@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
-import { IrisChatSubSettings } from 'app/iris/shared/entities/settings/iris-sub-settings.model';
+import { IrisProgrammingExerciseChatSubSettings } from 'app/iris/shared/entities/settings/iris-sub-settings.model';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { SimpleChange, SimpleChanges } from '@angular/core';
@@ -22,7 +22,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 function baseSettings() {
-    const irisSubSettings = new IrisChatSubSettings();
+    const irisSubSettings = new IrisProgrammingExerciseChatSubSettings();
     irisSubSettings.id = 2;
     irisSubSettings.enabled = true;
     const allowedVariants = mockVariants();

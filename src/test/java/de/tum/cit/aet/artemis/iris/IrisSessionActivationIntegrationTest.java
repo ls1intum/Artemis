@@ -35,6 +35,9 @@ class IrisSessionActivationIntegrationTest extends AbstractIrisIntegrationTest {
         exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         activateIrisGlobally();
         activateIrisFor(course);
+        // The point of this test is to check the behavior of the exercise chat session when Iris is not enabled for an exercise
+        // We need to actively disable it as it's on by default
+        disableIrisFor(exercise);
     }
 
     @Test
@@ -78,6 +81,6 @@ class IrisSessionActivationIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     private static String exerciseChatUrl(long sessionId) {
-        return "/api/iris/exercise-chat/" + sessionId + "/sessions";
+        return "/api/iris/programming-exercise-chat/" + sessionId + "/sessions";
     }
 }

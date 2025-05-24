@@ -234,7 +234,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         const currentCourse = this.course();
 
         // Use the service to get sidebar items
-        const defaultItems = this.sidebarItemService.getStudentDefaultItems(currentCourse?.studentCourseAnalyticsDashboardEnabled);
+        const defaultItems = this.sidebarItemService.getStudentDefaultItems(currentCourse?.studentCourseAnalyticsDashboardEnabled || currentCourse?.irisCourseChatEnabled);
         sidebarItems.push(...defaultItems);
 
         if (currentCourse?.lectures) {
@@ -410,7 +410,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
 
     /** Navigate to a new Course */
     switchCourse(course: Course) {
-        const url = ['courses', course.id, 'exercises'];
+        const url = ['courses', course.id, 'dashboard'];
         this.router.navigateByUrl('/', { skipLocationChange: true }).then(() => {
             this.router.navigate(url);
         });

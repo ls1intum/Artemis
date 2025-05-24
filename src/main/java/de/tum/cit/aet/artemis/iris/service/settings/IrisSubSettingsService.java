@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.iris.service.settings;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -15,7 +16,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.iris.domain.settings.IrisChatSubSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.HasEnabledCategories;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCompetencyGenerationSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseChatSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
@@ -23,17 +24,18 @@ import de.tum.cit.aet.artemis.iris.domain.settings.IrisExerciseSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisFaqIngestionSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisLectureChatSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisLectureIngestionSubSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisProgrammingExerciseChatSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSettingsType;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisTextExerciseChatSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisTutorSuggestionSubSettings;
-import de.tum.cit.aet.artemis.iris.dto.IrisCombinedChatSubSettingsDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedCompetencyGenerationSubSettingsDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedCourseChatSubSettingsDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedFaqIngestionSubSettingsDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedLectureChatSubSettingsDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedLectureIngestionSubSettingsDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisCombinedProgrammingExerciseChatSubSettingsDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedTextExerciseChatSubSettingsDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedTutorSuggestionSubSettingsDTO;
 
@@ -67,8 +69,8 @@ public class IrisSubSettingsService {
      * @param settingsType    Type of the settings the sub settings belong to.
      * @return Updated chat sub settings.
      */
-    public IrisChatSubSettings update(IrisChatSubSettings currentSettings, IrisChatSubSettings newSettings, IrisCombinedChatSubSettingsDTO parentSettings,
-            IrisSettingsType settingsType) {
+    public IrisProgrammingExerciseChatSubSettings update(IrisProgrammingExerciseChatSubSettings currentSettings, IrisProgrammingExerciseChatSubSettings newSettings,
+            IrisCombinedProgrammingExerciseChatSubSettingsDTO parentSettings, IrisSettingsType settingsType) {
         if (newSettings == null) {
             if (parentSettings == null) {
                 throw new IllegalArgumentException("Cannot delete the chat settings");
@@ -76,7 +78,7 @@ public class IrisSubSettingsService {
             return null;
         }
         if (currentSettings == null) {
-            currentSettings = new IrisChatSubSettings();
+            currentSettings = new IrisProgrammingExerciseChatSubSettings();
         }
         currentSettings.setEnabled(newSettings.isEnabled());
         if (settingsType == IrisSettingsType.COURSE) {
@@ -387,15 +389,15 @@ public class IrisSubSettingsService {
      * @param minimal      Whether to return a minimal version of the combined settings.
      * @return Combined chat settings.
      */
-    public IrisCombinedChatSubSettingsDTO combineChatSettings(ArrayList<IrisSettings> settingsList, boolean minimal) {
-        var enabled = getCombinedEnabled(settingsList, IrisSettings::getIrisChatSettings);
+    public IrisCombinedProgrammingExerciseChatSubSettingsDTO combineChatSettings(ArrayList<IrisSettings> settingsList, boolean minimal) {
+        var enabled = getCombinedEnabled(settingsList, IrisSettings::getIrisProgrammingExerciseChatSettings);
         var rateLimit = getCombinedRateLimit(settingsList);
-        var allowedVariants = !minimal ? getCombinedAllowedVariants(settingsList, IrisSettings::getIrisChatSettings) : null;
-        var selectedVariant = !minimal ? getCombinedSelectedVariant(settingsList, IrisSettings::getIrisChatSettings) : null;
-        var enabledForCategories = !minimal ? getCombinedEnabledForCategories(settingsList, IrisSettings::getIrisChatSettings) : null;
-        var disabledForEvents = !minimal ? getCombinedDisabledForEvents(settingsList, IrisSettings::getIrisChatSettings) : null;
+        var allowedVariants = !minimal ? getCombinedAllowedVariants(settingsList, IrisSettings::getIrisProgrammingExerciseChatSettings) : null;
+        var selectedVariant = !minimal ? getCombinedSelectedVariant(settingsList, IrisSettings::getIrisProgrammingExerciseChatSettings, allowedVariants) : null;
+        var enabledForCategories = !minimal ? getCombinedEnabledForCategories(settingsList, IrisSettings::getIrisProgrammingExerciseChatSettings) : null;
+        var disabledForEvents = !minimal ? getCombinedDisabledForEvents(settingsList, IrisSettings::getIrisProgrammingExerciseChatSettings) : null;
 
-        return new IrisCombinedChatSubSettingsDTO(enabled, rateLimit, null, allowedVariants, selectedVariant, enabledForCategories, disabledForEvents);
+        return new IrisCombinedProgrammingExerciseChatSubSettingsDTO(enabled, rateLimit, null, allowedVariants, selectedVariant, enabledForCategories, disabledForEvents);
     }
 
     /**
@@ -410,9 +412,9 @@ public class IrisSubSettingsService {
     public IrisCombinedTextExerciseChatSubSettingsDTO combineTextExerciseChatSettings(ArrayList<IrisSettings> settingsList, boolean minimal) {
         var enabled = getCombinedEnabled(settingsList, IrisSettings::getIrisTextExerciseChatSettings);
         var rateLimit = getCombinedRateLimit(settingsList);
-        var allowedVariants = !minimal ? getCombinedAllowedVariants(settingsList, IrisSettings::getIrisChatSettings) : null;
-        var selectedVariant = !minimal ? getCombinedSelectedVariant(settingsList, IrisSettings::getIrisChatSettings) : null;
-        var enabledForCategories = !minimal ? getCombinedEnabledForCategories(settingsList, IrisSettings::getIrisChatSettings) : null;
+        var allowedVariants = !minimal ? getCombinedAllowedVariants(settingsList, IrisSettings::getIrisTextExerciseChatSettings) : null;
+        var selectedVariant = !minimal ? getCombinedSelectedVariant(settingsList, IrisSettings::getIrisTextExerciseChatSettings, allowedVariants) : null;
+        var enabledForCategories = !minimal ? getCombinedEnabledForCategories(settingsList, IrisSettings::getIrisTextExerciseChatSettings) : null;
         return new IrisCombinedTextExerciseChatSubSettingsDTO(enabled, rateLimit, null, allowedVariants, selectedVariant, enabledForCategories);
     }
 
@@ -429,7 +431,7 @@ public class IrisSubSettingsService {
         boolean enabled = getCombinedEnabled(settingsList, IrisSettings::getIrisLectureChatSettings);
         Integer rateLimit = getCombinedRateLimit(settingsList);
         SortedSet<String> allowedVariants = !minimal ? getCombinedAllowedVariants(settingsList, IrisSettings::getIrisLectureChatSettings) : null;
-        String selectedVariant = !minimal ? getCombinedSelectedVariant(settingsList, IrisSettings::getIrisLectureChatSettings) : null;
+        String selectedVariant = !minimal ? getCombinedSelectedVariant(settingsList, IrisSettings::getIrisLectureChatSettings, allowedVariants) : null;
         return new IrisCombinedLectureChatSubSettingsDTO(enabled, rateLimit, null, allowedVariants, selectedVariant);
     }
 
@@ -445,8 +447,8 @@ public class IrisSubSettingsService {
     public IrisCombinedCourseChatSubSettingsDTO combineCourseChatSettings(ArrayList<IrisSettings> settingsList, boolean minimal) {
         var enabled = getCombinedEnabled(settingsList, IrisSettings::getIrisCourseChatSettings);
         var rateLimit = getCombinedRateLimit(settingsList);
-        var allowedVariants = !minimal ? getCombinedAllowedVariants(settingsList, IrisSettings::getIrisChatSettings) : null;
-        var selectedVariant = !minimal ? getCombinedSelectedVariant(settingsList, IrisSettings::getIrisChatSettings) : null;
+        var allowedVariants = !minimal ? getCombinedAllowedVariants(settingsList, IrisSettings::getIrisCourseChatSettings) : null;
+        var selectedVariant = !minimal ? getCombinedSelectedVariant(settingsList, IrisSettings::getIrisCourseChatSettings, allowedVariants) : null;
         return new IrisCombinedCourseChatSubSettingsDTO(enabled, rateLimit, null, allowedVariants, selectedVariant);
     }
 
@@ -461,7 +463,22 @@ public class IrisSubSettingsService {
      */
     public IrisCombinedLectureIngestionSubSettingsDTO combineLectureIngestionSubSettings(ArrayList<IrisSettings> settingsList, boolean minimal) {
         var enabled = getCombinedEnabled(settingsList, IrisSettings::getIrisLectureIngestionSettings);
-        return new IrisCombinedLectureIngestionSubSettingsDTO(enabled);
+        var allowedVariants = !minimal ? getCombinedAllowedVariants(settingsList, IrisSettings::getIrisLectureIngestionSettings) : null;
+        var selectedVariant = !minimal ? getCombinedSelectedVariant(settingsList, IrisSettings::getIrisLectureIngestionSettings, allowedVariants) : null;
+
+        var autoIngestOnLectureAttachmentUpload = true;
+        for (var settings : settingsList) {
+            if (settings == null) {
+                continue;
+            }
+            var lectureIngestionSettings = settings.getIrisLectureIngestionSettings();
+            if (lectureIngestionSettings != null && !lectureIngestionSettings.getAutoIngestOnLectureAttachmentUpload()) {
+                autoIngestOnLectureAttachmentUpload = false;
+                break;
+            }
+        }
+
+        return new IrisCombinedLectureIngestionSubSettingsDTO(enabled, autoIngestOnLectureAttachmentUpload, allowedVariants, selectedVariant);
     }
 
     /**
@@ -475,7 +492,22 @@ public class IrisSubSettingsService {
      */
     public IrisCombinedFaqIngestionSubSettingsDTO combineFaqIngestionSubSettings(ArrayList<IrisSettings> settingsList, boolean minimal) {
         var enabled = getCombinedEnabled(settingsList, IrisSettings::getIrisFaqIngestionSettings);
-        return new IrisCombinedFaqIngestionSubSettingsDTO(enabled);
+        var allowedVariants = !minimal ? getCombinedAllowedVariants(settingsList, IrisSettings::getIrisFaqIngestionSettings) : null;
+        var selectedVariant = !minimal ? getCombinedSelectedVariant(settingsList, IrisSettings::getIrisFaqIngestionSettings, allowedVariants) : null;
+
+        var autoIngestOnFaqCreation = true;
+        for (var settings : settingsList) {
+            if (settings == null) {
+                continue;
+            }
+            var faqIngestionSettings = settings.getIrisFaqIngestionSettings();
+            if (faqIngestionSettings != null && !faqIngestionSettings.getAutoIngestOnFaqCreation()) {
+                autoIngestOnFaqCreation = false;
+                break;
+            }
+        }
+
+        return new IrisCombinedFaqIngestionSubSettingsDTO(enabled, autoIngestOnFaqCreation, allowedVariants, selectedVariant);
     }
 
     /**
@@ -491,7 +523,7 @@ public class IrisSubSettingsService {
         var actualSettingsList = settingsList.stream().filter(settings -> !(settings instanceof IrisExerciseSettings)).toList();
         var enabled = getCombinedEnabled(actualSettingsList, IrisSettings::getIrisCompetencyGenerationSettings);
         var allowedVariants = !minimal ? getCombinedAllowedVariants(actualSettingsList, IrisSettings::getIrisCompetencyGenerationSettings) : null;
-        var selectedVariant = !minimal ? getCombinedSelectedVariant(actualSettingsList, IrisSettings::getIrisCompetencyGenerationSettings) : null;
+        var selectedVariant = !minimal ? getCombinedSelectedVariant(actualSettingsList, IrisSettings::getIrisCompetencyGenerationSettings, allowedVariants) : null;
         return new IrisCombinedCompetencyGenerationSubSettingsDTO(enabled, allowedVariants, selectedVariant);
     }
 
@@ -505,7 +537,7 @@ public class IrisSubSettingsService {
     public IrisCombinedTutorSuggestionSubSettingsDTO combineTutorSuggestionSettings(ArrayList<IrisSettings> settingsList, boolean minimal) {
         var enabled = getCombinedEnabled(settingsList, IrisSettings::getIrisTutorSuggestionSettings);
         var allowedVariants = !minimal ? getCombinedAllowedVariants(settingsList, IrisSettings::getIrisTutorSuggestionSettings) : null;
-        var selectedVariant = !minimal ? getCombinedSelectedVariant(settingsList, IrisSettings::getIrisTutorSuggestionSettings) : null;
+        var selectedVariant = !minimal ? getCombinedSelectedVariant(settingsList, IrisSettings::getIrisTutorSuggestionSettings, allowedVariants) : null;
         return new IrisCombinedTutorSuggestionSubSettingsDTO(enabled, allowedVariants, selectedVariant);
     }
 
@@ -518,12 +550,18 @@ public class IrisSubSettingsService {
      * @return Combined enabled field.
      */
     private <T extends IrisSubSettings> boolean getCombinedEnabled(List<IrisSettings> settingsList, Function<IrisSettings, T> subSettingsFunction) {
+        if (settingsList == null || settingsList.isEmpty() || settingsList.stream().allMatch(Objects::isNull)) {
+            return false;
+        }
         for (var irisSettings : settingsList) {
             if (irisSettings == null) {
-                return false;
+                continue;
             }
             var settings = subSettingsFunction.apply(irisSettings);
-            if (settings == null || !settings.isEnabled()) {
+            if (settings == null) {
+                continue;
+            }
+            if (!settings.isEnabled()) {
                 return false;
             }
         }
@@ -538,8 +576,9 @@ public class IrisSubSettingsService {
      * @return Combined rateLimit field.
      */
     private Integer getCombinedRateLimit(List<IrisSettings> settingsList) {
-        return settingsList.stream().filter(Objects::nonNull).map(IrisSettings::getIrisChatSettings).filter(Objects::nonNull).map(IrisChatSubSettings::getRateLimit)
-                .filter(rateLimit -> rateLimit != null && rateLimit >= 0).min(Comparator.comparingInt(Integer::intValue)).orElse(null);
+        return settingsList.stream().filter(Objects::nonNull).map(IrisSettings::getIrisProgrammingExerciseChatSettings).filter(Objects::nonNull)
+                .map(IrisProgrammingExerciseChatSubSettings::getRateLimit).filter(rateLimit -> rateLimit != null && rateLimit >= 0).min(Comparator.comparingInt(Integer::intValue))
+                .orElse(null);
     }
 
     /**
@@ -552,7 +591,7 @@ public class IrisSubSettingsService {
      */
     private SortedSet<String> getCombinedAllowedVariants(List<IrisSettings> settingsList, Function<IrisSettings, IrisSubSettings> subSettingsFunction) {
         return settingsList.stream().filter(Objects::nonNull).map(subSettingsFunction).filter(Objects::nonNull).map(IrisSubSettings::getAllowedVariants).filter(Objects::nonNull)
-                .filter(models -> !models.isEmpty()).reduce((first, second) -> second).orElse(new TreeSet<>());
+                .filter(variants -> !variants.isEmpty()).reduce((first, second) -> second).orElse(new TreeSet<>());
     }
 
     /**
@@ -563,9 +602,10 @@ public class IrisSubSettingsService {
      * @param subSettingsFunction Function to get the sub settings from an IrisSettings object.
      * @return Combined selectedVariant field.
      */
-    private String getCombinedSelectedVariant(List<IrisSettings> settingsList, Function<IrisSettings, IrisSubSettings> subSettingsFunction) {
+    private String getCombinedSelectedVariant(List<IrisSettings> settingsList, Function<IrisSettings, IrisSubSettings> subSettingsFunction, Collection<String> allowedVariants) {
         return settingsList.stream().filter(Objects::nonNull).map(subSettingsFunction).filter(Objects::nonNull).map(IrisSubSettings::getSelectedVariant)
-                .filter(model -> model != null && !model.isBlank()).reduce((first, second) -> second).orElse(null);
+                .filter(variant -> variant != null && !variant.isBlank() && (allowedVariants == null || allowedVariants.contains(variant))).reduce((first, second) -> second)
+                .orElse(null);
     }
 
     /**
@@ -576,9 +616,9 @@ public class IrisSubSettingsService {
      * @param subSettingsFunction Function to get the sub settings from an IrisSettings object.
      * @return Combined enabledForCategories field.
      */
-    private SortedSet<String> getCombinedEnabledForCategories(List<IrisSettings> settingsList, Function<IrisSettings, IrisChatSubSettings> subSettingsFunction) {
+    private SortedSet<String> getCombinedEnabledForCategories(List<IrisSettings> settingsList, Function<IrisSettings, HasEnabledCategories> subSettingsFunction) {
         return settingsList.stream().filter(Objects::nonNull).filter(settings -> settings instanceof IrisCourseSettings).map(subSettingsFunction).filter(Objects::nonNull)
-                .map(IrisChatSubSettings::getEnabledForCategories).filter(Objects::nonNull).filter(models -> !models.isEmpty()).reduce((first, second) -> second)
+                .map(HasEnabledCategories::getEnabledForCategories).filter(Objects::nonNull).filter(models -> !models.isEmpty()).reduce((first, second) -> second)
                 .orElse(new TreeSet<>());
     }
 
@@ -590,9 +630,9 @@ public class IrisSubSettingsService {
      * @param subSettingsFunction Function to get the sub settings from an IrisSettings object.
      * @return Combined disabledProactiveEvents field.
      */
-    private SortedSet<String> getCombinedDisabledForEvents(List<IrisSettings> settingsList, Function<IrisSettings, IrisChatSubSettings> subSettingsFunction) {
-        return settingsList.stream().filter(Objects::nonNull).map(subSettingsFunction).filter(Objects::nonNull).map(IrisChatSubSettings::getDisabledProactiveEvents)
-                .filter(Objects::nonNull).reduce((first, second) -> {
+    private SortedSet<String> getCombinedDisabledForEvents(List<IrisSettings> settingsList, Function<IrisSettings, IrisProgrammingExerciseChatSubSettings> subSettingsFunction) {
+        return settingsList.stream().filter(Objects::nonNull).map(subSettingsFunction).filter(Objects::nonNull)
+                .map(IrisProgrammingExerciseChatSubSettings::getDisabledProactiveEvents).filter(Objects::nonNull).reduce((first, second) -> {
                     var result = new TreeSet<>(second);
                     result.addAll(first);
                     return result;

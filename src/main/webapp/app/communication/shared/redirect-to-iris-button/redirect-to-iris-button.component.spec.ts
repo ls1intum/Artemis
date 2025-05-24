@@ -121,7 +121,7 @@ describe('RedirectToIrisButtonComponent', () => {
 
     it('should be disabled for exercise chats if Iris is disabled for the exercise', fakeAsync(() => {
         const disabledIrisSettings = mockSettings();
-        disabledIrisSettings.irisChatSettings!.enabled = false;
+        disabledIrisSettings.irisProgrammingExerciseChatSettings!.enabled = false;
         const getExerciseSettingsSpy = jest.spyOn(irisSettingsService, 'getCombinedExerciseSettings').mockReturnValue(of(disabledIrisSettings));
         jest.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
 
@@ -205,7 +205,7 @@ describe('RedirectToIrisButtonComponent', () => {
         expect(getSettingsSpy).toHaveBeenCalledOnce();
     }));
 
-    it('should not be displayed for general chats if the Student Course Analytics Dashboard is disabled', fakeAsync(() => {
+    it('should be displayed for general chats regardless whether Student Course Analytics Dashboard is disabled', fakeAsync(() => {
         const getExerciseSettingsSpy = jest.spyOn(irisSettingsService, 'getCombinedCourseSettings').mockReturnValue(of(irisSettings));
         jest.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
 
@@ -222,8 +222,8 @@ describe('RedirectToIrisButtonComponent', () => {
         component.ngOnInit();
         tick();
 
-        expect(component.irisEnabled()).toBeFalse();
-        expect(getExerciseSettingsSpy).toHaveBeenCalledTimes(0);
+        expect(component.irisEnabled()).toBeTrue();
+        expect(getExerciseSettingsSpy).toHaveBeenCalledOnce();
     }));
 
     it('should add the message as payload when redirectToIrisButton is pressed', fakeAsync(() => {

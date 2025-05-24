@@ -89,7 +89,7 @@ describe('Iris Chat Http Service', () => {
             const returnedFromService = mockConversation;
             const expected = returnedFromService;
             service
-                .getCurrentSessionOrCreateIfNotExists(ChatServiceMode.EXERCISE + '/' + irisExercise.id!)
+                .getCurrentSessionOrCreateIfNotExists(ChatServiceMode.PROGRAMMING_EXERCISE + '/' + irisExercise.id!)
                 .pipe(take(1))
                 .subscribe((resp) => expect(resp.body).toEqual(expected));
             const req = httpMock.expectOne({ method: 'POST' });

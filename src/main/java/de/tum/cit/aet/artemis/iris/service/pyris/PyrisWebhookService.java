@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -25,7 +26,6 @@ import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
-import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.dto.IngestionState;
 import de.tum.cit.aet.artemis.iris.exception.IrisInternalPyrisErrorException;
 import de.tum.cit.aet.artemis.iris.repository.IrisSettingsRepository;
@@ -121,10 +121,11 @@ public class PyrisWebhookService {
      */
     private String executeTranscriptionAdditionWebhook(PyrisTranscriptionIngestionWebhookDTO toUpdateTranscription, Course course, Lecture lecture, LectureUnit lectureUnit) {
         String jobToken = pyrisJobService.addTranscriptionIngestionWebhookJob(course.getId(), lecture.getId(), lectureUnit.getId());
-        PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, List.of(), artemisBaseUrl);
+        var settings = irisSettingsService.getCombinedIrisSettingsFor(course, false).irisLectureIngestionSettings();
+        PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, artemisBaseUrl, settings.selectedVariant());
         PyrisWebhookTranscriptionIngestionExecutionDTO executionDTO = new PyrisWebhookTranscriptionIngestionExecutionDTO(toUpdateTranscription, lectureUnit.getId(), settingsDTO,
                 List.of());
-        pyrisConnectorService.executeTranscriptionAdditionWebhook("fullIngestion", executionDTO);
+        pyrisConnectorService.executeTranscriptionAdditionWebhook(executionDTO);
         return jobToken;
     }
 
@@ -154,7 +155,7 @@ public class PyrisWebhookService {
     private String executeLectureTranscriptionDeletionWebhook(PyrisTranscriptionIngestionWebhookDTO toUpdateLectureTranscription) {
         String jobToken = pyrisJobService.addTranscriptionIngestionWebhookJob(toUpdateLectureTranscription.courseId(), toUpdateLectureTranscription.lectureId(),
                 toUpdateLectureTranscription.transcription().getLectureUnit().getId());
-        PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, List.of(), artemisBaseUrl);
+        PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, artemisBaseUrl, "default");
         PyrisWebhookTranscriptionDeletionExecutionDTO executionDTO = new PyrisWebhookTranscriptionDeletionExecutionDTO(toUpdateLectureTranscription, settingsDTO, List.of());
         pyrisConnectorService.executeLectureTranscriptionDeletionWebhook(executionDTO);
 
@@ -162,8 +163,7 @@ public class PyrisWebhookService {
     }
 
     private boolean lectureIngestionEnabled(Course course) {
-        return irisSettingsService.getRawIrisSettingsFor(course).getIrisLectureIngestionSettings() != null
-                && irisSettingsService.getRawIrisSettingsFor(course).getIrisLectureIngestionSettings().isEnabled();
+        return irisSettingsService.getCombinedIrisSettingsFor(course, true).irisLectureIngestionSettings().enabled();
     }
 
     private String attachmentToBase64(AttachmentUnit attachmentUnit) {
@@ -202,16 +202,20 @@ public class PyrisWebhookService {
     /**
      * send the updated / created attachment to Pyris for ingestion if autoLecturesUpdate is enabled
      *
-     * @param courseId           Id of the course where the attachment is added
      * @param newAttachmentUnits the new attachment Units to be sent to pyris for ingestion
      */
-    public void autoUpdateAttachmentUnitsInPyris(Long courseId, List<AttachmentUnit> newAttachmentUnits) {
-        IrisCourseSettings courseSettings = irisSettingsRepository.findCourseSettings(courseId).isPresent() ? irisSettingsRepository.findCourseSettings(courseId).get() : null;
-        if (courseSettings != null && courseSettings.getIrisLectureIngestionSettings() != null && courseSettings.getIrisLectureIngestionSettings().isEnabled()
-                && courseSettings.getIrisLectureIngestionSettings().getAutoIngestOnLectureAttachmentUpload()) {
-            for (AttachmentUnit attachmentUnit : newAttachmentUnits) {
-                addLectureUnitToPyrisDB(attachmentUnit);
-            }
+    public void autoUpdateAttachmentUnitsInPyris(List<AttachmentUnit> newAttachmentUnits) {
+        var course = newAttachmentUnits.stream().map(AttachmentUnit::getLecture).filter(Objects::nonNull).map(Lecture::getCourse).filter(Objects::nonNull).findFirst();
+
+        if (course.isEmpty()) {
+            return;
+        }
+        var settings = irisSettingsService.getCombinedIrisSettingsFor(course.get(), false).irisLectureIngestionSettings();
+        if (!settings.enabled() || !settings.autoIngest()) {
+            return;
+        }
+        for (AttachmentUnit attachmentUnit : newAttachmentUnits) {
+            addLectureUnitToPyrisDB(attachmentUnit);
         }
     }
 
@@ -242,7 +246,7 @@ public class PyrisWebhookService {
     public String addLectureUnitToPyrisDB(AttachmentUnit attachmentUnit) {
         if (lectureIngestionEnabled(attachmentUnit.getLecture().getCourse())) {
             if (attachmentUnit.getAttachment().getAttachmentType() == AttachmentType.FILE && attachmentUnit.getAttachment().getLink().endsWith(".pdf")) {
-                return executeLectureAdditionWebhook(processAttachmentForUpdate(attachmentUnit));
+                return executeLectureAdditionWebhook(processAttachmentForUpdate(attachmentUnit), attachmentUnit.getLecture().getCourse());
             }
             log.error("Attachment {} is not a file or is not of type pdf thus it will not be sent to Pyris", attachmentUnit.getId());
         }
@@ -257,7 +261,7 @@ public class PyrisWebhookService {
      */
     private String executeLectureDeletionWebhook(List<PyrisLectureUnitWebhookDTO> toUpdateAttachmentUnits) {
         String jobToken = pyrisJobService.addLectureIngestionWebhookJob(0, 0, 0);
-        PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, List.of(), artemisBaseUrl);
+        PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, artemisBaseUrl, "default");
         PyrisWebhookLectureDeletionExecutionDTO executionDTO = new PyrisWebhookLectureDeletionExecutionDTO(toUpdateAttachmentUnits, settingsDTO, List.of());
         pyrisConnectorService.executeLectureDeletionWebhook(executionDTO);
         return jobToken;
@@ -267,14 +271,16 @@ public class PyrisWebhookService {
      * executes executeLectureAdditionWebhook add lecture from to the vector database on pyris
      *
      * @param toUpdateAttachmentUnit The attachmentUnit that are going to be Updated
+     * @param course                 The course of the attachment video unit
      * @return jobToken if the job was created
      */
-    private String executeLectureAdditionWebhook(PyrisLectureUnitWebhookDTO toUpdateAttachmentUnit) {
+    private String executeLectureAdditionWebhook(PyrisLectureUnitWebhookDTO toUpdateAttachmentUnit, Course course) {
         String jobToken = pyrisJobService.addLectureIngestionWebhookJob(toUpdateAttachmentUnit.courseId(), toUpdateAttachmentUnit.lectureId(),
                 toUpdateAttachmentUnit.lectureUnitId());
-        PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, List.of(), artemisBaseUrl);
+        var settings = irisSettingsService.getCombinedIrisSettingsFor(course, false).irisLectureIngestionSettings();
+        PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, artemisBaseUrl, settings.selectedVariant());
         PyrisWebhookLectureIngestionExecutionDTO executionDTO = new PyrisWebhookLectureIngestionExecutionDTO(toUpdateAttachmentUnit, settingsDTO, List.of());
-        pyrisConnectorService.executeLectureAddtionWebhook("fullIngestion", executionDTO);
+        pyrisConnectorService.executeLectureAdditionWebhook(executionDTO);
         return jobToken;
     }
 
@@ -344,18 +350,13 @@ public class PyrisWebhookService {
     /**
      * send the updated / created faqs to Pyris for ingestion if autoLecturesUpdate is enabled.
      *
-     * @param courseId Id of the course where the attachment is added
-     * @param newFaq   the new faqs to be sent to pyris for ingestion
+     * @param newFaq the new faqs to be sent to pyris for ingestion
      */
-    public void autoUpdateFaqInPyris(Long courseId, Faq newFaq) {
-        IrisCourseSettings presentCourseSettings = null;
-        Optional<IrisCourseSettings> courseSettings = irisSettingsRepository.findCourseSettings(courseId);
-        if (courseSettings.isPresent()) {
-            presentCourseSettings = courseSettings.get();
-        }
+    public void autoUpdateFaqInPyris(Faq newFaq) {
+        var course = newFaq.getCourse();
+        var settings = irisSettingsService.getCombinedIrisSettingsFor(course, false).irisFaqIngestionSettings();
 
-        if (presentCourseSettings != null && presentCourseSettings.getIrisFaqIngestionSettings() != null && presentCourseSettings.getIrisFaqIngestionSettings().isEnabled()
-                && presentCourseSettings.getIrisFaqIngestionSettings().getAutoIngestOnFaqCreation()) {
+        if (settings.enabled() && settings.autoIngest()) {
             addFaq(newFaq);
         }
     }
@@ -369,7 +370,7 @@ public class PyrisWebhookService {
     public String addFaq(Faq faq) {
         if (faqIngestionEnabled(faq.getCourse())) {
             return executeFaqAdditionWebhook(new PyrisFaqWebhookDTO(faq.getId(), faq.getQuestionTitle(), faq.getQuestionAnswer(), faq.getCourse().getId(),
-                    faq.getCourse().getTitle(), faq.getCourse().getDescription()));
+                    faq.getCourse().getTitle(), faq.getCourse().getDescription()), faq.getCourse());
         }
         return null;
     }
@@ -378,12 +379,14 @@ public class PyrisWebhookService {
      * executes the faq addition webhook to add faq to the vector database on pyris
      *
      * @param toUpdateFaq The faq that got Updated as webhook DTO
+     * @param course      The course of the faq
      * @return jobToken if the job was created else null
      */
 
-    private String executeFaqAdditionWebhook(PyrisFaqWebhookDTO toUpdateFaq) {
+    private String executeFaqAdditionWebhook(PyrisFaqWebhookDTO toUpdateFaq, Course course) {
         String jobToken = pyrisJobService.addFaqIngestionWebhookJob(toUpdateFaq.courseId(), toUpdateFaq.faqId());
-        PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, List.of(), artemisBaseUrl);
+        var settings = irisSettingsService.getCombinedIrisSettingsFor(course, false).irisFaqIngestionSettings();
+        PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, artemisBaseUrl, settings.selectedVariant());
         PyrisWebhookFaqIngestionExecutionDTO executionDTO = new PyrisWebhookFaqIngestionExecutionDTO(toUpdateFaq, settingsDTO, List.of());
         pyrisConnectorService.executeFaqAdditionWebhook(toUpdateFaq, executionDTO);
         return jobToken;
@@ -410,7 +413,7 @@ public class PyrisWebhookService {
      */
     private String executeFaqDeletionWebhook(PyrisFaqWebhookDTO toUpdateFaqs) {
         String jobToken = pyrisJobService.addFaqIngestionWebhookJob(0, 0);
-        PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, List.of(), artemisBaseUrl);
+        PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, artemisBaseUrl, "default");
         PyrisWebhookFaqDeletionExecutionDTO executionDTO = new PyrisWebhookFaqDeletionExecutionDTO(toUpdateFaqs, settingsDTO, List.of());
         pyrisConnectorService.executeFaqDeletionWebhook(executionDTO);
         return jobToken;

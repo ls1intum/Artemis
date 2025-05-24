@@ -17,7 +17,7 @@ import { AccountService } from 'app/core/auth/account.service';
 
 export enum ChatServiceMode {
     TEXT_EXERCISE = 'text-exercise-chat',
-    EXERCISE = 'exercise-chat', // TODO: Rename to PROGRAMMING_EXERCISE
+    PROGRAMMING_EXERCISE = 'programming-exercise-chat',
     COURSE = 'course-chat',
     LECTURE = 'lecture-chat',
     TUTOR_SUGGESTION = 'tutor-suggestion',
@@ -30,7 +30,7 @@ export enum ChatServiceMode {
 export class IrisChatService implements OnDestroy {
     private modeRequiresLLMAcceptance = new Map<ChatServiceMode, boolean>([
         [ChatServiceMode.TEXT_EXERCISE, true],
-        [ChatServiceMode.EXERCISE, true],
+        [ChatServiceMode.PROGRAMMING_EXERCISE, true],
         [ChatServiceMode.COURSE, true],
         [ChatServiceMode.LECTURE, true],
         [ChatServiceMode.TUTOR_SUGGESTION, false],

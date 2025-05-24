@@ -185,7 +185,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
             { urlPart: 'course-statistics', targetPath: [...baseStudentPath, 'statistics'] },
         ];
 
-        const defaultPath = [...baseStudentPath, 'exercises'];
+        const defaultPath = [...baseStudentPath, 'dashboard'];
 
         const matchedRoute = routeMappings.find((route) => {
             if (route.matcher) {

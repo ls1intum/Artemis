@@ -26,7 +26,7 @@ public class PyrisFaqApi extends AbstractIrisApi {
         pyrisWebhookService.deleteFaq(faq);
     }
 
-    public void autoUpdateFaqInPyris(long courseId, Faq faq) {
-        pyrisWebhookService.autoUpdateFaqInPyris(courseId, faq);
+    public void autoUpdateFaqInPyris(Faq faq) {
+        pyrisWebhookService.autoUpdateFaqInPyris(faq);
     }
 }
