@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.communication.web;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -50,5 +51,18 @@ public class EmailNotificationSettingResource {
         catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().build();
         }
+    }
+
+    @GetMapping("/email-notification-settings/all")
+    public ResponseEntity<Map<String, Boolean>> getAllSettings() {
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        List<EmailNotificationSetting> settings = emailNotificationSettingService.getUserSettings(user.getId());
+        Map<String, Boolean> result = new HashMap<>();
+        for (EmailNotificationType type : EmailNotificationType.values()) {
+            // Default to true if not set
+            boolean enabled = settings.stream().filter(s -> s.getNotificationType() == type).findFirst().map(EmailNotificationSetting::getEnabled).orElse(true);
+            result.put(type.name(), enabled);
+        }
+        return ResponseEntity.ok(result);
     }
 }
