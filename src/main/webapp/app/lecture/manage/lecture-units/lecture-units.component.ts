@@ -163,8 +163,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
     createEditAttachmentVideoUnit(attachmentVideoUnitFormData: AttachmentVideoUnitFormData): void {
         const { description, name, releaseDate, videoSource, updateNotificationText, competencyLinks } = attachmentVideoUnitFormData.formProperties;
         const { file, fileName } = attachmentVideoUnitFormData.fileProperties;
-
-        if (!name || (!(file && fileName) && !videoSource)) {
+        if (!name || (!fileName && !videoSource)) {
             return;
         }
 
