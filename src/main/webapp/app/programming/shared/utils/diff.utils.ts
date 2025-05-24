@@ -78,7 +78,7 @@ export async function processRepositoryDiff(originalFileContentByPath: Map<strin
  * @returns The diff information
  */
 function getDiffInformation(originalFileContentByPath: Map<string, string>, modifiedFileContentByPath: Map<string, string>): DiffInformation[] {
-    const paths = [...new Set([...originalFileContentByPath.keys(), ...modifiedFileContentByPath.keys()])];
+    const paths = Array.from(new Set(Array.from(originalFileContentByPath.keys()).concat(Array.from(modifiedFileContentByPath.keys()))));
     const created: string[] = [];
     const deleted: string[] = [];
 
