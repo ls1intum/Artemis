@@ -117,13 +117,15 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
     @Override
     public void requestAndHandleResponse(IrisCourseChatSession session) {
         var course = courseRepository.findByIdElseThrow(session.getCourseId());
-        var variant = irisSettingsService.getCombinedIrisSettingsFor(course, false).irisChatSettings().selectedVariant();
-        requestAndHandleResponse(session, variant, null);
+        var settings = irisSettingsService.getCombinedIrisSettingsFor(course, false);
+        var variant = settings.irisCourseChatSettings().selectedVariant();
+        var customInstructions = settings.irisCourseChatSettings().customInstructions();
+        requestAndHandleResponse(session, variant, customInstructions, null);
     }
 
-    private void requestAndHandleResponse(IrisCourseChatSession session, String variant, Object object) {
+    private void requestAndHandleResponse(IrisCourseChatSession session, String variant, String customInstructions, Object object) {
         var chatSession = (IrisCourseChatSession) irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
-        pyrisPipelineService.executeCourseChatPipeline(variant, chatSession, object);
+        pyrisPipelineService.executeCourseChatPipeline(variant, customInstructions, chatSession, object);
     }
 
     @Override
@@ -145,7 +147,12 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
         var user = competencyJol.getUser();
         user.hasAcceptedExternalLLMUsageElseThrow();
         var session = getCurrentSessionOrCreateIfNotExistsInternal(course, user, false);
-        CompletableFuture.runAsync(() -> requestAndHandleResponse(session, "default", competencyJol));
+
+        var settings = irisSettingsService.getCombinedIrisSettingsFor(course, false);
+        var variant = "default";
+        var customInstructions = settings.irisCourseChatSettings().customInstructions();
+
+        CompletableFuture.runAsync(() -> requestAndHandleResponse(session, variant, customInstructions, competencyJol));
     }
 
     /**
