@@ -91,12 +91,12 @@ export class ProgrammingExerciseExamDiffComponent extends ExamSubmissionComponen
     fetchRepositoriesAndProcessDiff(): void {
         if (this.previousSubmission()) {
             this.isLeftTemplate = false;
-            this.leftKey = this.previousSubmission()?.commitHash!;
+            this.leftKey = this.previousSubmission()?.commitHash ?? '';
         } else {
             this.isLeftTemplate = true;
             this.leftKey = this.generateRepositoryKeyForTemplate();
         }
-        this.rightKey = this.currentSubmission()?.commitHash!;
+        this.rightKey = this.currentSubmission()?.commitHash ?? '';
 
         let leftSubscription: Observable<Map<string, string> | undefined>;
         if (this.cachedRepositoryFiles.has(this.leftKey)) {
@@ -124,22 +124,43 @@ export class ProgrammingExerciseExamDiffComponent extends ExamSubmissionComponen
     }
 
     fetchRepositoryFilesAtRightCommit(): Observable<Map<string, string> | undefined> {
+        const exerciseId = this.exercise()?.id;
+        const participationId = this.currentSubmission()?.participation?.id;
+        const commitHash = this.currentSubmission()?.commitHash;
+
+        if (!exerciseId || !participationId || !commitHash) {
+            return of(undefined);
+        }
+
         return this.programmingExerciseParticipationService.getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView(
-            this.exercise().id!,
-            this.currentSubmission()?.participation?.id!,
-            this.currentSubmission()?.commitHash!,
+            exerciseId,
+            participationId,
+            commitHash,
             RepositoryType.USER,
         );
     }
 
     fetchRepositoryFilesAtLeftCommit(): Observable<Map<string, string> | undefined> {
+        const exerciseId = this.exercise()?.id;
+
+        if (!exerciseId) {
+            return of(undefined);
+        }
+
         if (this.isLeftTemplate) {
-            return this.programmingExerciseService.getTemplateRepositoryTestFilesWithContent(this.exercise().id!);
+            return this.programmingExerciseService.getTemplateRepositoryTestFilesWithContent(exerciseId);
         } else {
+            const participationId = this.previousSubmission()?.participation?.id;
+            const commitHash = this.previousSubmission()?.commitHash;
+
+            if (!participationId || !commitHash) {
+                return of(undefined);
+            }
+
             return this.programmingExerciseParticipationService.getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView(
-                this.exercise().id!,
-                this.previousSubmission()?.participation?.id!,
-                this.previousSubmission()?.commitHash!,
+                exerciseId,
+                participationId,
+                commitHash,
                 RepositoryType.USER,
             );
         }

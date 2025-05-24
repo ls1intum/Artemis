@@ -284,6 +284,10 @@ describe('ProgrammingExerciseExamDiffComponent', () => {
     it('should handle error when repository files cannot be fetched', () => {
         const alertServiceSpy = jest.spyOn(component['alertService'], 'error');
 
+        // Mock the service calls to return undefined to trigger error handling
+        jest.spyOn(programmingExerciseParticipationService, 'getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView').mockReturnValue(of(undefined));
+        jest.spyOn(programmingExerciseService, 'getTemplateRepositoryTestFilesWithContent').mockReturnValue(of(undefined));
+
         const currentSubmission = { commitHash: 'def', participation: { id: 2 } };
         component.previousSubmission.update(() => undefined);
         component.currentSubmission.update(() => currentSubmission);
@@ -385,6 +389,10 @@ describe('ProgrammingExerciseExamDiffComponent', () => {
 
     it('should handle error when left repository files fail to fetch', () => {
         const alertServiceSpy = jest.spyOn(component['alertService'], 'error');
+
+        // Mock the service calls to return undefined to trigger error handling
+        jest.spyOn(programmingExerciseParticipationService, 'getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView').mockReturnValue(of(undefined));
+        jest.spyOn(programmingExerciseService, 'getTemplateRepositoryTestFilesWithContent').mockReturnValue(of(undefined));
 
         const currentSubmission = { commitHash: 'def', participation: { id: 2 } };
         component.previousSubmission.update(() => undefined);
