@@ -75,7 +75,7 @@ public class PyrisConnectorService {
      * @param feature The feature to get the variants for
      * @return A list of available Models as IrisVariantDTO
      */
-    public List<PyrisVariantDTO> getAvailablevariants(IrisSubSettingsType feature) throws PyrisConnectorException {
+    public List<PyrisVariantDTO> getAvailableVariants(IrisSubSettingsType feature) throws PyrisConnectorException {
         try {
             var response = restTemplate.getForEntity(pyrisUrl + "/api/v1/pipelines/" + feature.name() + "/variants", PyrisVariantDTO[].class);
             if (!response.getStatusCode().is2xxSuccessful() || !response.hasBody()) {

@@ -69,7 +69,7 @@ class PyrisConnectorServiceTest extends AbstractIrisIntegrationTest {
     void testAvailablevariants(IrisSubSettingsType feature) throws Exception {
         irisRequestMockProvider.mockVariantsResponse(feature);
 
-        var availablevariants = pyrisConnectorService.getAvailablevariants(feature);
+        var availablevariants = pyrisConnectorService.getAvailableVariants(feature);
         assertThat(availablevariants).hasSize(1);
         assertThat(availablevariants.getFirst().id()).isEqualTo("TEST_MODEL");
     }
@@ -79,7 +79,7 @@ class PyrisConnectorServiceTest extends AbstractIrisIntegrationTest {
     void testAvailablevariantsError(IrisSubSettingsType feature) {
         irisRequestMockProvider.mockVariantsError(feature);
 
-        assertThatThrownBy(() -> pyrisConnectorService.getAvailablevariants(feature)).isInstanceOf(PyrisConnectorException.class);
+        assertThatThrownBy(() -> pyrisConnectorService.getAvailableVariants(feature)).isInstanceOf(PyrisConnectorException.class);
     }
 
 }
