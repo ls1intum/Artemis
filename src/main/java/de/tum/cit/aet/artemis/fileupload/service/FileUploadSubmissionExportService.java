@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ZipFileService;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
@@ -40,7 +41,7 @@ public class FileUploadSubmissionExportService extends SubmissionExportService {
         }
 
         // we need to get the 'real' file path here, the submission only has the api url path
-        Path filePath = FileUploadSubmission.buildFilePath(exercise.getId(), submission.getId());
+        Path filePath = FilePathConverter.buildFileUploadSubmissionPath(exercise.getId(), submission.getId());
 
         if (!Files.exists(filePath)) { // throw if submission file does not exist
             throw new IOException("Cannot export submission " + submission.getId() + " because the uploaded file " + filePath + " doesn't exist.");
