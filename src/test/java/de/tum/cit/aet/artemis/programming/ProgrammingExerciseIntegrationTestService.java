@@ -569,7 +569,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void testExportSubmissionsByParticipationIds_instructorNotInCourse_forbidden() throws Exception {
-        userUtilService.addInstructor("other-instructors", userPrefix + "instructoralt");
+        userUtilService.addInstructor("other-instructors", userPrefix + "instructoralt1");
         var participationIds = programmingExerciseStudentParticipationRepository.findAll().stream().map(participation -> participation.getId().toString()).toList();
         final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repos-by-participation-ids/" + String.join(",", participationIds);
         request.postWithResponseBodyFile(path, getOptions(), HttpStatus.FORBIDDEN);
@@ -877,7 +877,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void updateProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
-        userUtilService.addInstructor("other-instructors", userPrefix + "instructoralt");
+        userUtilService.addInstructor("other-instructors", userPrefix + "instructoralt1");
         request.put("/api/programming/programming-exercises", programmingExercise, HttpStatus.FORBIDDEN);
     }
 
@@ -1306,7 +1306,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void importProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
-        userUtilService.addInstructor("other-instructors", userPrefix + "instructoralt");
+        userUtilService.addInstructor("other-instructors", userPrefix + "instructoralt1");
         request.post("/api/programming/programming-exercises/import/" + programmingExercise.getId(), programmingExercise, HttpStatus.FORBIDDEN);
     }
 
@@ -1472,7 +1472,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void hasAtLeastOneStudentResult_isNotTeachingAssistant_forbidden() throws Exception {
-        userUtilService.addTeachingAssistant("other-tutors", userPrefix + "tutoralt");
+        userUtilService.addTeachingAssistant("other-tutors", userPrefix + "tutoralt1");
         request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-case-state", HttpStatus.FORBIDDEN, String.class);
     }
 
@@ -1490,7 +1490,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void getTestCases_tutorInOtherCourse_forbidden() throws Exception {
-        userUtilService.addTeachingAssistant("other-teaching-assistants", userPrefix + "other-teaching-assistant");
+        userUtilService.addTeachingAssistant("other-teaching-assistants", userPrefix + "other-teaching-assistant1");
         final var endpoint = "/programming/programming-exercises/" + programmingExercise.getId() + "/test-cases";
 
         request.getList("/api" + endpoint, HttpStatus.FORBIDDEN, ProgrammingExerciseTestCase.class);
@@ -1543,7 +1543,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void updateTestCases_instructorInWrongCourse_forbidden() throws Exception {
-        userUtilService.addInstructor("other-instructors", userPrefix + "other-instructor");
+        userUtilService.addInstructor("other-instructors", userPrefix + "other-instructor1");
         final var update = new ProgrammingExerciseTestCaseDTO(null, null, null, null, null);
         final var endpoint = "/programming/programming-exercises/" + programmingExercise.getId() + "/update-test-cases";
 
@@ -1630,7 +1630,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void resetTestCaseWeights_instructorInWrongCourse_forbidden() throws Exception {
-        userUtilService.addInstructor("other-instructors", userPrefix + "other-instructor");
+        userUtilService.addInstructor("other-instructors", userPrefix + "other-instructor1");
         final var endpoint = "/programming/programming-exercises/" + programmingExercise.getId() + "/test-cases/reset";
         request.patchWithResponseBody("/api" + endpoint, "{}", String.class, HttpStatus.FORBIDDEN);
     }
@@ -2156,7 +2156,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void testReEvaluateAndUpdateProgrammingExercise_instructorNotInCourse_forbidden(String testPrefix) throws Exception {
-        userUtilService.addInstructor("other-instructors", testPrefix + "instructoralt");
+        userUtilService.addInstructor("other-instructors", testPrefix + "instructoralt1");
         programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         ProgrammingExercise programmingExercise = programmingExerciseTestRepository.findAllWithEagerTemplateAndSolutionParticipations().getFirst();
         request.put("/api/programming/programming-exercises/" + programmingExercise.getId() + "/re-evaluate", programmingExercise, HttpStatus.FORBIDDEN);

@@ -149,7 +149,7 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractProgrammingIntegrati
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructoralt1", roles = "INSTRUCTOR")
     void testCombineTemplateRepositoryCommits_instructorNotInCourse_forbidden() throws Exception {
-        userUtilService.addInstructor("other-instructors", TEST_PREFIX + "instructoralt");
+        userUtilService.addInstructor("other-instructors", TEST_PREFIX + "instructoralt1");
         final var path = COMBINE_COMMITS_ENDPOINT.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         request.put(path, Void.class, HttpStatus.FORBIDDEN);
     }
