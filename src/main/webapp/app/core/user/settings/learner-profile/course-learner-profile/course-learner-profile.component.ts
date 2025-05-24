@@ -3,7 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { LearnerProfileApiService } from 'app/core/user/settings/learner-profile/learner-profile-api.service';
-import { CourseLearnerProfileDTO } from 'app/core/user/settings/learner-profile/dto/course-learner-profile.model';
+import { CourseLearnerProfileDTO } from 'app/core/user/settings/learner-profile/dto/course-learner-profile-dto.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { SegmentedToggleComponent } from 'app/shared/segmented-toggle/segmented-toggle.component';

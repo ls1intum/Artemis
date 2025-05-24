@@ -1,8 +1,6 @@
 {
     "artemisApp": {
         "learnerProfile": {
-            "initialValueHint": "Der Initialwert, welcher vom System für die Statistik verwendet wird.",
-            "currentValueHint": "Der aktuelle Wert, berechnet aus dem Initialwert und deinen Interaktionen mit Artemis.",
             "courseLearnerProfile": {
                 "title": "Kurs-Lernprofil",
                 "selectCourse": "Kurs auswählen...",
@@ -29,6 +27,22 @@
                     "medium": "Mittel",
                     "high": "Hoch",
                     "veryHigh": "Sehr hoch"
+                }
+            },
+            "feedbackLearnerProfile": {
+                "title": "Feedback-Lernprofil",
+                "description": "Hier kannst du dein Feedback-Lernprofil einsehen und aktualisieren. Diese Einstellungen werden verwendet, um deine Feedback-Erfahrung zu personalisieren.",
+                "alternativeStandard": {
+                    "label": "Alternative vs. Standard",
+                    "description": "Wähle die Option, die deinem Ziel für diesen Kurs am besten entspricht."
+                },
+                "followupSummary": {
+                    "label": "Follow-up vs. Zusammenfassung",
+                    "description": "Wähle, ob du Feedback bevorzugst, das mit einer Follow-up-Frage endet (um weitere Gedanken und Reflexionen zu fördern) oder mit einem Zusammenfassung/Abschluss (um das Feedback klar abzuschließen)."
+                },
+                "briefDetailed": {
+                    "label": "Kurz vs. Detailliert",
+                    "description": "Wähle, ob du Feedback bevorzugst, das kurz und direkt ist, oder detaillierter mit Erklärungen und Beispielen."
                 }
             }
         }

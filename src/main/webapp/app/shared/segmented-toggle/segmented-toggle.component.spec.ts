@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SegmentedToggleComponent } from 'app/shared/segmented-toggle/segmented-toggle.component';
-import { CourseLearnerProfileLevel } from 'app/core/user/settings/learner-profile/entities/learner-profile-options.model';
+import { CourseLearnerProfileLevel } from 'app/core/user/settings/learner-profile/entities/course-learner-profile-options.model';
+// TODO: Fix this test
 
 describe('SegmentedToggleComponent', () => {
     let component: SegmentedToggleComponent;
