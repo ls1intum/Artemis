@@ -182,7 +182,8 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
      */
     async loginWithPasskey(isConditional: boolean = false) {
         try {
-            const authenticatorCredential = await this.webauthnService.getCredential(isConditional);
+            const publicKeyCredentialOptions = await this.webauthnApiService.getAuthenticationOptions();
+            const authenticatorCredential = await this.webauthnService.getCredential(publicKeyCredentialOptions, isConditional);
 
             if (!authenticatorCredential || authenticatorCredential.type != 'public-key') {
                 // noinspection ExceptionCaughtLocallyJS - intended to be caught locally

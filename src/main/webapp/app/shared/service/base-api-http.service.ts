@@ -59,6 +59,7 @@ export abstract class BaseApiHttpService {
             const response = await lastValueFrom(
                 this.httpClient.request(method, `${this.baseUrl}/${url}`, {
                     observe: 'body',
+                    withCredentials: true,
                     ...options,
                     responseType: options?.responseType ?? 'json',
                 }),
