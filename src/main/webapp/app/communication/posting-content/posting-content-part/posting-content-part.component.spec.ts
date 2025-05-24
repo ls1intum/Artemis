@@ -280,6 +280,42 @@ describe('PostingContentPartComponent', () => {
         });
     });
 
+    describe('Component internals', () => {
+        it('should define the correct allowedHtmlTags', () => {
+            const expectedTags = [
+                'a',
+                'b',
+                'br',
+                'blockquote',
+                'code',
+                'del',
+                'em',
+                'hr',
+                'h1',
+                'h2',
+                'h3',
+                'h4',
+                'h5',
+                'h6',
+                'i',
+                'ins',
+                'li',
+                'mark',
+                'p',
+                'pre',
+                'small',
+                's',
+                'span',
+                'strong',
+                'sub',
+                'sup',
+                'ul',
+                'ol',
+            ];
+            expect(component['allowedHtmlTags']).toEqual(expectedTags);
+        });
+    });
+
     describe('Content processing (spacing only)', () => {
         it('should process content and normalize excessive line breaks before and after reference', () => {
             const contentBefore = 'Line 1\n\n\nLine 2\n\n\n\nLine 3';
