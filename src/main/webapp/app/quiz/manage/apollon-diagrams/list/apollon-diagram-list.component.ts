@@ -12,7 +12,7 @@ import { CourseManagementService } from 'app/core/course/manage/services/course-
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { faPlus, faSort, faTimes, faX } from '@fortawesome/free-solid-svg-icons';
 import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
-import { UMLDiagramType } from '@ls1intum/apollon';
+import { UMLDiagramType } from '@tumaet/apollon';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';

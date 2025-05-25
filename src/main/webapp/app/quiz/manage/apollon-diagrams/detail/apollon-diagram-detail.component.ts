@@ -1,8 +1,8 @@
 import { Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { ApollonEditor, ApollonMode, Locale, UMLModel } from '@ls1intum/apollon';
+import { ApollonEditor, ApollonMode, Locale, UMLModel } from '@tumaet/apollon';
 import { NgbModal, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
+//import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { convertRenderedSVGToPNG } from '../exercise-generation/svg-renderer';
 import { ApollonDiagramService } from 'app/quiz/manage/apollon-diagrams/services/apollon-diagram.service';
 import { ApollonDiagram } from 'app/modeling/shared/entities/apollon-diagram.model';
@@ -32,7 +32,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     private courseService = inject(CourseManagementService);
     private alertService = inject(AlertService);
     private translateService = inject(TranslateService);
-    private languageHelper = inject(JhiLanguageHelper);
+    //private languageHelper = inject(JhiLanguageHelper);
     private modalService = inject(NgbModal);
     private route = inject(ActivatedRoute);
 
@@ -63,8 +63,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     get hasInteractive(): boolean {
         return (
             !!this.apollonEditor &&
-            (Object.entries(this.apollonEditor.model.interactive.elements).some(([, selected]) => selected) ||
-                Object.entries(this.apollonEditor.model.interactive.relationships).some(([, selected]) => selected))
+            (Object.entries(this.apollonEditor.model.nodes).some(([, selected]) => selected) || Object.entries(this.apollonEditor.model.edges).some(([, selected]) => selected))
         );
     }
 
@@ -72,8 +71,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     get hasSelection(): boolean {
         return (
             !!this.apollonEditor &&
-            (Object.entries(this.apollonEditor.selection.elements).some(([, selected]) => selected) ||
-                Object.entries(this.apollonEditor.selection.relationships).some(([, selected]) => selected))
+            (Object.entries(this.apollonEditor.getNodes()).some(([, selected]) => selected) || Object.entries(this.apollonEditor.getEdges()).some(([, selected]) => selected))
         );
     }
 
@@ -115,12 +113,14 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
                 },
             });
 
-            this.languageHelper.language.subscribe(async (languageKey: string) => {
+            /*this.languageHelper.language.subscribe(async (languageKey: string) => {
                 if (this.apollonEditor) {
                     await this.apollonEditor.nextRender;
                     this.apollonEditor.locale = languageKey as Locale;
                 }
             });
+
+             */
         });
     }
 
@@ -146,7 +146,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         }
 
         this.apollonEditor = new ApollonEditor(this.editorContainer.nativeElement, {
-            mode: ApollonMode.Exporting,
+            mode: ApollonMode.Modelling,
             model: initialModel,
             type: this.apollonDiagram!.diagramType,
             locale: this.translateService.currentLang as Locale,
@@ -255,10 +255,10 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         }
 
         const selection = [
-            ...Object.entries(this.apollonEditor!.selection.elements)
+            ...Object.entries(this.apollonEditor!.getNodes())
                 .filter(([, selected]) => selected)
                 .map(([id]) => id),
-            ...Object.entries(this.apollonEditor!.selection.relationships)
+            ...Object.entries(this.apollonEditor!.getEdges())
                 .filter(([, selected]) => selected)
                 .map(([id]) => id),
         ];
