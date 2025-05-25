@@ -31,7 +31,6 @@ import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
-import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamSession;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
@@ -50,6 +49,7 @@ import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
@@ -58,6 +58,7 @@ import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseFactory;
 import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseUtilService;
 import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
+import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseFactory;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -114,9 +115,6 @@ public class ExamUtilService {
     private ExerciseGroupRepository exerciseGroupRepository;
 
     @Autowired
-    private CourseUtilService courseUtilService;
-
-    @Autowired
     private ModelingExerciseUtilService modelingExerciseUtilService;
 
     @Autowired
@@ -149,6 +147,12 @@ public class ExamUtilService {
     @Autowired
     private ExamSessionRepository examSessionRepository;
 
+    @Autowired
+    private ModelingExerciseRepository modelingExerciseRepository;
+
+    @Autowired
+    private ExerciseRepository exerciseRepository;
+
     /**
      * Creates and saves a course with an exam and an exercise group with all exercise types excluding programming exercises.
      *
@@ -158,12 +162,34 @@ public class ExamUtilService {
      * @param end     The end date of the Exam
      * @return The newly created course
      */
-    public Course createCourseWithExamAndExerciseGroupAndExercises(User user, ZonedDateTime visible, ZonedDateTime start, ZonedDateTime end) {
-        Course course = courseUtilService.createCourse();
+    public Course createCourseWithExamAndExerciseGroupAndExercises(Course course, User user, ZonedDateTime visible, ZonedDateTime start, ZonedDateTime end) {
         Exam exam = addExamWithUser(course, user, false, visible, start, end);
         course.addExam(exam);
         addExerciseGroupsAndExercisesToExam(exam, false);
         return courseRepo.save(course);
+    }
+
+    /**
+     * Creates and saves a ModelingExercise. Also creates an active Course and an Exam with a mandatory ExerciseGroup the Modeling Exercise belongs to.
+     *
+     * @return The created ModelingExercise
+     */
+    public ModelingExercise addCourseExamExerciseGroupWithOneModelingExercise() {
+        return addCourseExamExerciseGroupWithOneModelingExercise("ClassDiagram");
+    }
+
+    /**
+     * Creates and saves a ModelingExercise. Also creates an active Course and an Exam with a mandatory ExerciseGroup the Modeling Exercise belongs to.
+     *
+     * @param title The title of the ModelingExercise
+     * @return The created ModelingExercise
+     */
+    public ModelingExercise addCourseExamExerciseGroupWithOneModelingExercise(String title) {
+        ExerciseGroup exerciseGroup = addExerciseGroupWithExamAndCourse(true);
+        ModelingExercise classExercise = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup);
+        classExercise.setTitle(title);
+        classExercise = modelingExerciseRepository.save(classExercise);
+        return classExercise;
     }
 
     /**
@@ -173,8 +199,7 @@ public class ExamUtilService {
      * @param user The User who should be registered for the Exam
      * @return The newly created course
      */
-    public Course createCourseWithExamAndExerciseGroupAndExercises(User user) {
-        Course course = courseUtilService.createCourse();
+    public Course createCourseWithExamAndExerciseGroupAndExercises(Course course, User user) {
         Exam exam = addExamWithUser(course, user, false, ZonedDateTime.now().minusMinutes(1), ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(1));
         course.addExam(exam);
         addExerciseGroupsAndExercisesToExam(exam, false);
@@ -706,8 +731,7 @@ public class ExamUtilService {
      * @param userLogin The login of the User for which the StudentExam should be created
      * @return The newly created StudentExam
      */
-    public StudentExam addStudentExamForActiveExamWithUser(String userLogin) {
-        Course course = courseUtilService.addEmptyCourse();
+    public StudentExam addStudentExamForActiveExamWithUser(Course course, String userLogin) {
         User studentUser = userUtilService.getUserByLogin(userLogin);
         Exam exam = addActiveTestExamWithRegisteredUserWithoutStudentExam(course, studentUser);
         return addStudentExamWithUser(exam, studentUser, 0);
@@ -1020,8 +1044,7 @@ public class ExamUtilService {
      * @param mandatory True, if the ExerciseGroup should be mandatory
      * @return The newly created ExerciseGroup
      */
-    public ExerciseGroup createAndSaveActiveExerciseGroup(boolean mandatory) {
-        Course course = courseUtilService.createAndSaveCourse(1L, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, Set.of());
+    public ExerciseGroup createAndSaveActiveExerciseGroup(Course course, boolean mandatory) {
         Exam exam = ExamFactory.generateExam(course);
         ExerciseGroup exerciseGroup = ExamFactory.generateExerciseGroup(mandatory, exam);
         examRepository.save(exam);
@@ -1170,6 +1193,41 @@ public class ExamUtilService {
     public void addExerciseToStudentExam(StudentExam studentExam, Exercise exercise) {
         studentExam.addExercise(exercise);
         studentExamRepository.save(studentExam);
+    }
+
+    /**
+     * Creates and saves a Course with an Exam with one mandatory ExerciseGroup with one TextExercise. The exam has a review date [now; now + 60min].
+     *
+     * @return The created TextExercise
+     */
+    public TextExercise addCourseExamWithReviewDatesExerciseGroupWithOneTextExercise() {
+        ExerciseGroup exerciseGroup = addExerciseGroupWithExamWithReviewDatesAndCourse(true);
+        TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
+        return exerciseRepository.save(textExercise);
+    }
+
+    /**
+     * Creates and saves a Course with an Exam with one mandatory ExerciseGroup with one TextExercise.
+     *
+     * @param title The title of the created TextExercise
+     * @return The created TextExercise
+     */
+    public TextExercise addCourseExamExerciseGroupWithOneTextExercise(String title) {
+        ExerciseGroup exerciseGroup = addExerciseGroupWithExamAndCourse(true);
+        TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
+        if (title != null) {
+            textExercise.setTitle(title);
+        }
+        return exerciseRepository.save(textExercise);
+    }
+
+    /**
+     * Creates and saves a Course with an Exam with one mandatory ExerciseGroup with one TextExercise.
+     *
+     * @return The created TextExercise
+     */
+    public TextExercise addCourseExamExerciseGroupWithOneTextExercise() {
+        return addCourseExamExerciseGroupWithOneTextExercise(null);
     }
 
 }

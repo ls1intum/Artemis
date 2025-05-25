@@ -330,7 +330,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testSaveExamWithExerciseGroupWithExerciseToDatabase() {
-        textExerciseUtilService.addCourseExamExerciseGroupWithOneTextExercise();
+        examUtilService.addCourseExamExerciseGroupWithOneTextExercise();
     }
 
     private void testAllPreAuthorize(Course course, Exam exam) throws Exception {
@@ -574,7 +574,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateExam_exampleSolutionPublicationDateChanged() throws Exception {
-        var modelingExercise = modelingExerciseUtilService.addCourseExamExerciseGroupWithOneModelingExercise();
+        var modelingExercise = examUtilService.addCourseExamExerciseGroupWithOneModelingExercise();
         var examWithModelingEx = modelingExercise.getExerciseGroup().getExam();
         assertThat(modelingExercise.isExampleSolutionPublished()).isFalse();
 
@@ -885,7 +885,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
     @ValueSource(ints = { 0, 1, 2 })
     void testGetExamForExamAssessmentDashboard(int numberOfCorrectionRounds) throws Exception {
         // we need an exam from the past, otherwise the tutor won't have access
-        Course course = examUtilService.createCourseWithExamAndExerciseGroupAndExercises(student1, now().minusHours(3), now().minusHours(2), now().minusHours(1));
+        Course course = courseUtilService.createCourse();
+        course = examUtilService.createCourseWithExamAndExerciseGroupAndExercises(course, student1, now().minusHours(3), now().minusHours(2), now().minusHours(1));
         Exam exam = course.getExams().iterator().next();
 
         // Ensure the API endpoint works for all number of correctionRounds

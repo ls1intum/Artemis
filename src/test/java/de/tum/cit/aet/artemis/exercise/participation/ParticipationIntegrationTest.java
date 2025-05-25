@@ -343,7 +343,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
     void participateInTextExerciseAsStudentBeforeNormalDueDatePassed() throws Exception {
-        TextExercise examTextExercise = textExerciseUtilService.addCourseExamExerciseGroupWithOneTextExercise();
+        TextExercise examTextExercise = examUtilService.addCourseExamExerciseGroupWithOneTextExercise();
         examTextExercise.getExam().setStartDate(ZonedDateTime.now().minusHours(2));
         examTextExercise.getExam().setEndDate(ZonedDateTime.now().plusHours(1));
         examTestRepository.save(examTextExercise.getExam());
@@ -362,7 +362,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
     void participateInTextExerciseAsStudentAfterNormalDueDatePassed() throws Exception {
-        TextExercise examTextExercise = textExerciseUtilService.addCourseExamExerciseGroupWithOneTextExercise();
+        TextExercise examTextExercise = examUtilService.addCourseExamExerciseGroupWithOneTextExercise();
         examTextExercise.getExam().setStartDate(ZonedDateTime.now().minusHours(2));
         examTextExercise.getExam().setEndDate(ZonedDateTime.now().minusHours(1));
         examTestRepository.save(examTextExercise.getExam());
@@ -376,7 +376,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
     void participateInTextExerciseAsStudentAfterBeforeStartDatePassed() throws Exception {
-        TextExercise examTextExercise = textExerciseUtilService.addCourseExamExerciseGroupWithOneTextExercise();
+        TextExercise examTextExercise = examUtilService.addCourseExamExerciseGroupWithOneTextExercise();
         examTextExercise.getExam().setStartDate(ZonedDateTime.now().plusHours(1));
         examTextExercise.getExam().setEndDate(ZonedDateTime.now().plusHours(2));
         examTestRepository.save(examTextExercise.getExam());
@@ -392,7 +392,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     @WithMockUser(username = TEST_PREFIX + "student1")
     void participateInTextExerciseAsStudentAfterNormalDueDatePassedWithOngoingIndividualWorkingTime() throws Exception {
         String studentLogin = TEST_PREFIX + "student1";
-        TextExercise examTextExercise = textExerciseUtilService.addCourseExamExerciseGroupWithOneTextExercise();
+        TextExercise examTextExercise = examUtilService.addCourseExamExerciseGroupWithOneTextExercise();
         examTextExercise.getExam().setStartDate(ZonedDateTime.now().minusHours(2));
         examTextExercise.getExam().setEndDate(ZonedDateTime.now().minusHours(1));
         examTestRepository.save(examTextExercise.getExam());
@@ -420,7 +420,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     @WithMockUser(username = TEST_PREFIX + "student1")
     void participateInTextExerciseAsStudentAfterNormalDueDatePassedWithExpiredIndividualWorkingTime() throws Exception {
         String studentLogin = TEST_PREFIX + "student1";
-        TextExercise examTextExercise = textExerciseUtilService.addCourseExamExerciseGroupWithOneTextExercise();
+        TextExercise examTextExercise = examUtilService.addCourseExamExerciseGroupWithOneTextExercise();
         examTextExercise.getExam().setStartDate(ZonedDateTime.now().minusHours(3));
         examTextExercise.getExam().setEndDate(ZonedDateTime.now().minusHours(1));
         examTestRepository.save(examTextExercise.getExam());

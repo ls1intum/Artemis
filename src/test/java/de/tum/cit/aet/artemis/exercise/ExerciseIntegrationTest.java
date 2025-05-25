@@ -141,7 +141,8 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetStatsForExamExerciseAssessmentDashboard() throws Exception {
         var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        Course course = examUtilService.createCourseWithExamAndExerciseGroupAndExercises(user);
+        Course course = courseUtilService.createCourse();
+        course = examUtilService.createCourseWithExamAndExerciseGroupAndExercises(course, user);
         course = courseRepository.findByIdWithEagerExercisesElseThrow(course.getId());
         var exam = examRepository.findByCourseId(course.getId()).getFirst();
         var textExercise = examRepository.findAllExercisesWithDetailsByExamId(exam.getId()).stream().filter(ex -> ex instanceof TextExercise).findFirst().orElseThrow();
@@ -298,7 +299,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     private void getExamExercise() throws Exception {
-        TextExercise textExercise = textExerciseUtilService.addCourseExamExerciseGroupWithOneTextExercise();
+        TextExercise textExercise = examUtilService.addCourseExamExerciseGroupWithOneTextExercise();
         request.get("/api/exercise/exercises/" + textExercise.getId(), HttpStatus.FORBIDDEN, Exercise.class);
         request.get("/api/exercise/exercises/" + textExercise.getId() + "/details", HttpStatus.FORBIDDEN, Exercise.class);
     }
@@ -405,7 +406,8 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "TA")
     void testGetExamExerciseForExampleSolution() throws Exception {
         var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        Course course = examUtilService.createCourseWithExamAndExerciseGroupAndExercises(user);
+        Course course = courseUtilService.createCourse();
+        course = examUtilService.createCourseWithExamAndExerciseGroupAndExercises(course, user);
         Exam exam = course.getExams().stream().findFirst().orElseThrow();
         exam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(exam.getId());
         TextExercise exercise = (TextExercise) exam.getExerciseGroups().getFirst().getExercises().stream().findFirst().orElseThrow();
@@ -777,7 +779,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     private void testGetExamExerciseTitle() throws Exception {
-        TextExercise textExercise = textExerciseUtilService.addCourseExamExerciseGroupWithOneTextExercise();
+        TextExercise textExercise = examUtilService.addCourseExamExerciseGroupWithOneTextExercise();
         final String expectedTitle = textExercise.getExerciseGroup().getTitle();
         final String title = request.get("/api/exercise/exercises/" + textExercise.getId() + "/title", HttpStatus.OK, String.class);
         assertThat(title).isEqualTo(expectedTitle);

@@ -45,7 +45,6 @@ import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.repository.ExerciseGroupRepository;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
-import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
@@ -62,7 +61,11 @@ import de.tum.cit.aet.artemis.fileupload.repository.FileUploadSubmissionReposito
 import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseFactory;
 import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseUtilService;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
+import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
+import de.tum.cit.aet.artemis.lecture.domain.VideoUnit;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureFactory;
@@ -86,6 +89,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
+import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 import de.tum.cit.aet.artemis.text.test_repository.TextSubmissionTestRepository;
 import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
@@ -193,6 +197,9 @@ public class CourseUtilService {
 
     @Autowired
     private GradingScaleUtilService gradingScaleUtilService;
+
+    @Autowired
+    private TextExerciseRepository textExerciseRepository;
 
     /**
      * Creates and saves a course (`id` is automatically generated).
@@ -306,11 +313,38 @@ public class CourseUtilService {
      */
     public List<Course> createCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(String userPrefix, boolean withParticipations, boolean withFiles,
             int numberOfTutorParticipations) throws IOException {
-        List<Course> courses = lectureUtilService.createCoursesWithExercisesAndLecturesAndLectureUnits(userPrefix, withParticipations, withFiles, numberOfTutorParticipations);
+        List<Course> courses = createCoursesWithExercisesAndLecturesAndLectureUnits(userPrefix, withParticipations, withFiles, numberOfTutorParticipations);
         return courses.stream().peek(course -> {
             List<Lecture> lectures = new ArrayList<>(course.getLectures());
             var competency = competencyUtilService.orElseThrow().createCompetency(course);
             lectures.replaceAll(lecture -> lectureUtilService.addCompetencyToLectureUnits(lecture, Set.of(competency)));
+            course.setLectures(new HashSet<>(lectures));
+        }).toList();
+    }
+
+    /**
+     * Creates and saves two Courses with Exercises of each type and two Lectures. For each Lecture, a LectureUnit of each type is added.
+     *
+     * @param userPrefix                  The prefix of the Course's user groups
+     * @param withParticipations          True, if 5 participations by student1 should be added for the Course's Exercises
+     * @param withFiles                   True, if the LectureUnit of type AttachmentUnit should contain an Attachment with a link to an image file
+     * @param numberOfTutorParticipations The number of tutor participations to add to the ModelingExercise ("withParticipations" must be true for this to have an effect)
+     * @return A List of the created Courses
+     * @throws IOException If a file cannot be loaded from resources
+     */
+    public List<Course> createCoursesWithExercisesAndLecturesAndLectureUnits(String userPrefix, boolean withParticipations, boolean withFiles, int numberOfTutorParticipations)
+            throws IOException {
+        List<Course> courses = createCoursesWithExercisesAndLectures(userPrefix, withParticipations, withFiles, numberOfTutorParticipations);
+        return courses.stream().peek(course -> {
+            List<Lecture> lectures = new ArrayList<>(course.getLectures());
+            for (int i = 0; i < lectures.size(); i++) {
+                TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).stream().findFirst().orElseThrow();
+                VideoUnit videoUnit = lectureUtilService.createVideoUnit();
+                TextUnit textUnit = lectureUtilService.createTextUnit();
+                AttachmentUnit attachmentUnit = lectureUtilService.createAttachmentUnit(withFiles);
+                ExerciseUnit exerciseUnit = lectureUtilService.createExerciseUnit(textExercise);
+                lectures.set(i, lectureUtilService.addLectureUnitsToLecture(lectures.get(i), List.of(videoUnit, textUnit, attachmentUnit, exerciseUnit)));
+            }
             course.setLectures(new HashSet<>(lectures));
         }).toList();
     }
@@ -1149,22 +1183,6 @@ public class CourseUtilService {
                 }
             }
         }
-        return course;
-    }
-
-    /**
-     * Creates and saves a new course.
-     *
-     * @param id        The id of the course.
-     * @param startDate The start date of the course.
-     * @param endDate   The end date of the course.
-     * @param exercises Exercises to be added to the course.
-     * @return Created and saved course.
-     */
-    public Course createAndSaveCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises) {
-        Course course = CourseFactory.generateCourse(id, startDate, endDate, exercises, "tumuser", "tutor", "editor", "instructor");
-        courseRepo.save(course);
-
         return course;
     }
 

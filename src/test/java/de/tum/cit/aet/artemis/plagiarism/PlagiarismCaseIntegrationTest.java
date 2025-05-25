@@ -20,6 +20,7 @@ import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
@@ -52,6 +53,9 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependent
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
 
+    @Autowired
+    private ExamUtilService examUtilService;
+
     private Course course;
 
     private TextExercise textExercise;
@@ -76,7 +80,7 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependent
         coursePlagiarismCases = createPlagiarismCases(numberOfPlagiarismCases, textExercise);
         plagiarismCase1 = coursePlagiarismCases.getFirst();
 
-        examTextExercise = textExerciseUtilService.addCourseExamExerciseGroupWithOneTextExercise();
+        examTextExercise = examUtilService.addCourseExamExerciseGroupWithOneTextExercise();
         examPlagiarismCases = createPlagiarismCases(2, examTextExercise);
     }
 

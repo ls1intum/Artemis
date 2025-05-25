@@ -199,7 +199,8 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testExamExerciseSubmission_withoutParticipation() throws Exception {
         var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        Course course = examUtilService.createCourseWithExamAndExerciseGroupAndExercises(user);
+        var course = courseUtilService.createCourse();
+        course = examUtilService.createCourseWithExamAndExerciseGroupAndExercises(course, user);
 
         var exam = examRepository.findByCourseId(course.getId()).getFirst();
         var fileUploadExercise = examRepository.findAllExercisesWithDetailsByExamId(exam.getId()).stream().filter(ex -> ex instanceof FileUploadExercise).findFirst().orElseThrow();

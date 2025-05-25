@@ -1077,7 +1077,7 @@ public class CourseTestService {
         String suffix = "getall";
         adjustUserGroupsToCustomGroups(suffix);
         // Note: with the suffix, we reduce the amount of courses loaded below to prevent test issues
-        List<Course> coursesCreated = lectureUtilService.createCoursesWithExercisesAndLecturesAndLectureUnits(userPrefix, true, false, NUMBER_OF_TUTORS);
+        List<Course> coursesCreated = courseUtilService.createCoursesWithExercisesAndLecturesAndLectureUnits(userPrefix, true, false, NUMBER_OF_TUTORS);
         for (var course : coursesCreated) {
             courseUtilService.updateCourseGroups(userPrefix, course, suffix);
         }

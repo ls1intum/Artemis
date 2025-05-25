@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -28,7 +27,6 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
-import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
@@ -51,8 +49,6 @@ import de.tum.cit.aet.artemis.lecture.repository.TextUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.VideoUnitRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentUnitTestRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.SlideTestRepository;
-import de.tum.cit.aet.artemis.text.domain.TextExercise;
-import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 
 /**
  * Service responsible for initializing the database with specific testdata related to lectures for use in integration tests.
@@ -70,9 +66,6 @@ public class LectureUtilService {
 
     @Autowired
     private LectureRepository lectureRepo;
-
-    @Autowired
-    private TextExerciseRepository textExerciseRepository;
 
     @Autowired
     private LectureUnitRepository lectureUnitRepository;
@@ -97,9 +90,6 @@ public class LectureUtilService {
 
     @Autowired
     private OnlineUnitRepository onlineUnitRepository;
-
-    @Autowired
-    private CourseUtilService courseUtilService;
 
     @Autowired
     private ConversationTestRepository conversationRepository;
@@ -140,33 +130,6 @@ public class LectureUtilService {
         lecture.setVisibleDate(visibleDate);
         lectureRepo.save(lecture);
         return lecture;
-    }
-
-    /**
-     * Creates and saves two Courses with Exercises of each type and two Lectures. For each Lecture, a LectureUnit of each type is added.
-     *
-     * @param userPrefix                  The prefix of the Course's user groups
-     * @param withParticipations          True, if 5 participations by student1 should be added for the Course's Exercises
-     * @param withFiles                   True, if the LectureUnit of type AttachmentUnit should contain an Attachment with a link to an image file
-     * @param numberOfTutorParticipations The number of tutor participations to add to the ModelingExercise ("withParticipations" must be true for this to have an effect)
-     * @return A List of the created Courses
-     * @throws IOException If a file cannot be loaded from resources
-     */
-    public List<Course> createCoursesWithExercisesAndLecturesAndLectureUnits(String userPrefix, boolean withParticipations, boolean withFiles, int numberOfTutorParticipations)
-            throws IOException {
-        List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(userPrefix, withParticipations, withFiles, numberOfTutorParticipations);
-        return courses.stream().peek(course -> {
-            List<Lecture> lectures = new ArrayList<>(course.getLectures());
-            for (int i = 0; i < lectures.size(); i++) {
-                TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).stream().findFirst().orElseThrow();
-                VideoUnit videoUnit = createVideoUnit();
-                TextUnit textUnit = createTextUnit();
-                AttachmentUnit attachmentUnit = createAttachmentUnit(withFiles);
-                ExerciseUnit exerciseUnit = createExerciseUnit(textExercise);
-                lectures.set(i, addLectureUnitsToLecture(lectures.get(i), List.of(videoUnit, textUnit, attachmentUnit, exerciseUnit)));
-            }
-            course.setLectures(new HashSet<>(lectures));
-        }).toList();
     }
 
     /**

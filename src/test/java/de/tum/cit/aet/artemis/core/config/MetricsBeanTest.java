@@ -202,13 +202,15 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     void testPublicMetricsExams() {
         var users = userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
-        var courseWithActiveExam = examUtilService.createCourseWithExamAndExerciseGroupAndExercises(users.getFirst());
+        var courseWithActiveExam = courseUtilService.createCourse();
+        courseWithActiveExam = examUtilService.createCourseWithExamAndExerciseGroupAndExercises(courseWithActiveExam, users.getFirst());
         var activeExam = examRepository.findByCourseId(courseWithActiveExam.getId()).getFirst();
         activeExam.setStartDate(ZonedDateTime.now().minusDays(1));
         activeExam.setEndDate(ZonedDateTime.now().plusDays(1));
         examRepository.save(activeExam);
 
-        var courseWithInactiveExam = examUtilService.createCourseWithExamAndExerciseGroupAndExercises(users.getFirst());
+        var courseWithInactiveExam = courseUtilService.createCourse();
+        courseWithInactiveExam = examUtilService.createCourseWithExamAndExerciseGroupAndExercises(courseWithInactiveExam, users.getFirst());
         var inactiveExam = examRepository.findByCourseId(courseWithInactiveExam.getId()).getFirst();
         inactiveExam.setStartDate(ZonedDateTime.now().minusDays(1));
         inactiveExam.setEndDate(ZonedDateTime.now().plusDays(1));
