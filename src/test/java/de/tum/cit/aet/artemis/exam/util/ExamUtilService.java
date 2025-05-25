@@ -64,8 +64,9 @@ import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
-import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseUtilService;
@@ -106,6 +107,9 @@ public class ExamUtilService {
     private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     @Autowired
+    private ProgrammingExerciseParticipationUtilService programmingExerciseParticipationUtilService;
+
+    @Autowired
     private ExamUserRepository examUserRepository;
 
     @Autowired
@@ -122,9 +126,6 @@ public class ExamUtilService {
 
     @Autowired
     private QuizExerciseUtilService quizExerciseUtilService;
-
-    @Autowired
-    private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
     @Autowired
     private FileUploadExerciseUtilService fileUploadExerciseUtilService;
@@ -152,6 +153,9 @@ public class ExamUtilService {
 
     @Autowired
     private ExerciseRepository exerciseRepository;
+
+    @Autowired
+    private ProgrammingSubmissionRepository programmingSubmissionRepository;
 
     /**
      * Creates and saves a course with an exam and an exercise group with all exercise types excluding programming exercises.
@@ -245,7 +249,7 @@ public class ExamUtilService {
                     submission = quizExerciseUtilService.saveQuizSubmission(quizExercise, ParticipationFactory.generateQuizSubmission(false), instructor.getLogin());
                 case ProgrammingExercise programmingExercise -> {
                     submission = new ProgrammingSubmission().submitted(true);
-                    programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, (ProgrammingSubmission) submission, instructor.getLogin());
+                    addProgrammingSubmission(programmingExercise, (ProgrammingSubmission) submission, instructor.getLogin());
                     submission = submissionRepository.save(submission);
                 }
                 case FileUploadExercise fileUploadExercise -> submission = fileUploadExerciseUtilService.saveFileUploadSubmission(fileUploadExercise,
@@ -258,6 +262,21 @@ public class ExamUtilService {
             studentParticipationRepo.save(studentParticipation);
         }
         return testRun;
+    }
+
+    /**
+     * Adds programming submission to provided programming exercise. The provided login is used to access or create a participation.
+     *
+     * @param exercise   The exercise to which the submission should be added.
+     * @param submission The submission which should be added to the programming exercise.
+     * @param login      The login of the user used to access or create an exercise participation.
+     * @return The created programming submission.
+     */
+    public ProgrammingSubmission addProgrammingSubmission(ProgrammingExercise exercise, ProgrammingSubmission submission, String login) {
+        StudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, login);
+        submission.setParticipation(participation);
+        submission = programmingSubmissionRepository.save(submission);
+        return submission;
     }
 
     /**
@@ -867,8 +886,8 @@ public class ExamUtilService {
             ProgrammingExercise programmingExercise1 = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup6, "Programming");
             programmingExerciseBuildConfigRepository.save(programmingExercise1.getBuildConfig());
             exerciseRepo.save(programmingExercise1);
-            programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise1);
-            programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise1);
+            programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise1);
+            programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise1);
 
             exerciseGroup6.setExercises(Set.of(programmingExercise1));
         }
@@ -915,8 +934,8 @@ public class ExamUtilService {
             ProgrammingExercise programmingExercise1 = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup2);
             programmingExerciseBuildConfigRepository.save(programmingExercise1.getBuildConfig());
             exerciseRepo.save(programmingExercise1);
-            programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise1);
-            programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise1);
+            programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise1);
+            programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise1);
             exerciseGroup2.setExercises(Set.of(programmingExercise1));
         }
 

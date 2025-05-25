@@ -82,6 +82,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
@@ -200,6 +201,9 @@ public class CourseUtilService {
 
     @Autowired
     private TextExerciseRepository textExerciseRepository;
+
+    @Autowired
+    private ProgrammingExerciseParticipationUtilService programmingExerciseParticipationUtilService;
 
     /**
      * Creates and saves a course (`id` is automatically generated).
@@ -956,8 +960,8 @@ public class CourseUtilService {
             programmingExercise.setBuildConfig(savedBuildConfig);
             programmingExercise = programmingExerciseRepository.save(programmingExercise);
             course.addExercises(programmingExercise);
-            programmingExercise = programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
-            programmingExercise = programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+            programmingExercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+            programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
 
             assertThat(programmingExercise.getPresentationScoreEnabled()).as("presentation score is enabled").isTrue();
         }

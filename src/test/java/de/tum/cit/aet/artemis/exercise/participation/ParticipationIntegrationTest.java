@@ -78,6 +78,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
@@ -131,6 +132,9 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ProgrammingExerciseParticipationUtilService programmingExerciseParticipationUtilService;
 
     @Autowired
     private ParticipationUtilService participationUtilService;
@@ -543,7 +547,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     }
 
     private void prepareMocksForProgrammingExercise(String userLogin, boolean practiceMode) throws Exception {
-        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
         programmingExerciseTestService.setupRepositoryMocks(programmingExercise);
         var repo = new LocalRepository(defaultBranch);

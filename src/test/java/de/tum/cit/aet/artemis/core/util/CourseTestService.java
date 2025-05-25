@@ -142,7 +142,6 @@ import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.fileupload.repository.FileUploadExerciseRepository;
 import de.tum.cit.aet.artemis.fileupload.util.ZipFileTestUtilService;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
-import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
 import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
 import de.tum.cit.aet.artemis.lti.test_repository.LtiPlatformConfigurationTestRepository;
@@ -157,6 +156,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.MockDelegate;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
@@ -274,13 +274,13 @@ public class CourseTestService {
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
     @Autowired
+    private ProgrammingExerciseParticipationUtilService programmingExerciseParticipationUtilService;
+
+    @Autowired
     private Optional<CompetencyUtilService> competencyUtilService; // Optional because it is not used in all tests
 
     @Autowired
     private Optional<PrerequisiteUtilService> prerequisiteUtilService; // Optional because it is not used in all tests
-
-    @Autowired
-    private LectureUtilService lectureUtilService;
 
     @Autowired
     private ParticipationUtilService participationUtilService;
@@ -552,8 +552,8 @@ public class CourseTestService {
                     final var templateRepoName = programmingExercise.generateRepositoryName(RepositoryType.TEMPLATE);
                     final var solutionRepoName = programmingExercise.generateRepositoryName(RepositoryType.SOLUTION);
                     final var testsRepoName = programmingExercise.generateRepositoryName(RepositoryType.TESTS);
-                    programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
-                    programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+                    programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+                    programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
                     mockDelegate.mockDeleteBuildPlan(projectKey, programmingExercise.getTemplateBuildPlanId(), false);
                     mockDelegate.mockDeleteBuildPlan(projectKey, programmingExercise.getSolutionBuildPlanId(), false);
                     mockDelegate.mockDeleteBuildPlanProject(projectKey, false);

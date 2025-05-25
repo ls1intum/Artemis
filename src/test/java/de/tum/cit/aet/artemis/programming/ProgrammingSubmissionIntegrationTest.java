@@ -65,8 +65,8 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
         exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         exercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(exercise.getId()).orElseThrow();
-        programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(exercise);
-        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(exercise);
+        programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(exercise);
+        programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(exercise);
         participationUtilService.addProgrammingParticipationWithResultForExercise(exercise, TEST_PREFIX + "student1");
         exercise.setTestCasesChanged(true);
         programmingExerciseRepository.save(exercise);

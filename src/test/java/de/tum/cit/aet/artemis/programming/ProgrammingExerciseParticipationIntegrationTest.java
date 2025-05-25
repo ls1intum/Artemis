@@ -895,14 +895,16 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     }
 
     private TemplateProgrammingExerciseParticipation addTemplateParticipationWithResult() {
-        programmingExerciseParticipation = programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise).getTemplateParticipation();
+        programmingExerciseParticipation = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise)
+                .getTemplateParticipation();
         Result r = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, null, programmingExerciseParticipation);
         participationUtilService.addVariousVisibilityFeedbackToResult(r);
         return (TemplateProgrammingExerciseParticipation) programmingExerciseParticipation;
     }
 
     private SolutionProgrammingExerciseParticipation addSolutionParticipationWithResult() {
-        programmingExerciseParticipation = programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise).getSolutionParticipation();
+        programmingExerciseParticipation = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise)
+                .getSolutionParticipation();
         Result result = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, null, programmingExerciseParticipation);
         participationUtilService.addVariousVisibilityFeedbackToResult(result);
         return (SolutionProgrammingExerciseParticipation) programmingExerciseParticipation;

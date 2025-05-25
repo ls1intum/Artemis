@@ -118,6 +118,7 @@ import de.tum.cit.aet.artemis.programming.util.GitUtilService;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.MockDelegate;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingUtilTestService;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
@@ -178,6 +179,9 @@ public class ProgrammingExerciseIntegrationTestService {
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ProgrammingExerciseParticipationUtilService programmingExerciseParticipationUtilService;
 
     @Autowired
     private ExerciseUtilService exerciseUtilService;
@@ -817,13 +821,13 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void updateProgrammingExercise_invalidTemplateBuildPlan_badRequest() throws Exception {
-        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
         mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), false, false);
         request.putAndExpectError("/api/programming/programming-exercises", programmingExercise, HttpStatus.BAD_REQUEST, INVALID_TEMPLATE_BUILD_PLAN_ID);
     }
 
     void updateProgrammingExercise_idIsNull_badRequest() throws Exception {
-        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
         programmingExercise.setId(null);
         request.put("/api/programming/programming-exercises", programmingExercise, HttpStatus.BAD_REQUEST);
     }
@@ -882,7 +886,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void updateProgrammingExercise_invalidTemplateVcs_badRequest() throws Exception {
-        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
         mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), true, false);
         mockDelegate.mockRepositoryUriIsValid(programmingExercise.getVcsTemplateRepositoryUri(), programmingExercise.getProjectKey(), false);
 
@@ -890,8 +894,8 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void updateProgrammingExercise_invalidSolutionBuildPlan_badRequest() throws Exception {
-        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
-        programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
         mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), true, false);
         mockDelegate.mockRepositoryUriIsValid(programmingExercise.getVcsTemplateRepositoryUri(), programmingExercise.getProjectKey(), true);
         mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getSolutionBuildPlanId(), false, false);
@@ -900,8 +904,8 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void updateProgrammingExercise_invalidSolutionRepository_badRequest() throws Exception {
-        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
-        programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
         mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), true, false);
         mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getSolutionBuildPlanId(), true, false);
         mockDelegate.mockRepositoryUriIsValid(programmingExercise.getVcsTemplateRepositoryUri(), programmingExercise.getProjectKey(), true);
@@ -911,7 +915,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void updateProgrammingExercise_checkIfBuildPlanExistsFails_badRequest() throws Exception {
-        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
         mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), true, true);
         mockDelegate.mockRepositoryUriIsValid(programmingExercise.getVcsTemplateRepositoryUri(), programmingExercise.getProjectKey(), true);
         request.putAndExpectError("/api/programming/programming-exercises", programmingExercise, HttpStatus.BAD_REQUEST, INVALID_TEMPLATE_BUILD_PLAN_ID);

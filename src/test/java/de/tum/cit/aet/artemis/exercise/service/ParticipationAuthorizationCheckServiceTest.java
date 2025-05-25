@@ -20,6 +20,7 @@ import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -49,6 +50,9 @@ class ParticipationAuthorizationCheckServiceTest extends AbstractSpringIntegrati
     @Autowired
     private ParticipationUtilService participationUtilService;
 
+    @Autowired
+    private ProgrammingExerciseParticipationUtilService programmingExerciseParticipationUtilService;
+
     private ProgrammingExercise programmingExercise;
 
     private ProgrammingExerciseStudentParticipation participation;
@@ -66,7 +70,7 @@ class ParticipationAuthorizationCheckServiceTest extends AbstractSpringIntegrati
 
         participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
 
-        programmingExercise = programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
     }
 
@@ -95,8 +99,8 @@ class ParticipationAuthorizationCheckServiceTest extends AbstractSpringIntegrati
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCanAccessParticipationAsInstructor() {
         // Set solution and template participation
-        programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
-        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
 
         checkCanAccessParticipation(programmingExercise, participation, true, true);
     }
@@ -105,8 +109,8 @@ class ParticipationAuthorizationCheckServiceTest extends AbstractSpringIntegrati
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCanAccessParticipationAsInstructorEdgeCaseExerciseNull() {
         // Set solution and template participation
-        programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
-        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
 
         // Check with exercise null
         participation.setExercise(null);
@@ -131,8 +135,8 @@ class ParticipationAuthorizationCheckServiceTest extends AbstractSpringIntegrati
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCanAccessParticipationAsInstructorEdgeCaseProgrammingExerciseNull() {
         // Set solution and template participation
-        programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
-        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
 
         // Check with programmingExercise only null
         participation.setProgrammingExercise(null);
@@ -146,8 +150,8 @@ class ParticipationAuthorizationCheckServiceTest extends AbstractSpringIntegrati
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCanAccessParticipationAsInstructorEdgeCaseProgrammingExerciseUnknownId() {
         // Set solution and template participation
-        programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
-        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
 
         // Check with programmingExercise null and a non-existent participation id
         participation.setProgrammingExercise(null);
@@ -164,8 +168,8 @@ class ParticipationAuthorizationCheckServiceTest extends AbstractSpringIntegrati
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCanAccessParticipationAsStudent() {
         // Set solution and template participation
-        programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
-        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
 
         checkCanAccessParticipation(programmingExercise, participation, true, false);
     }
@@ -174,8 +178,8 @@ class ParticipationAuthorizationCheckServiceTest extends AbstractSpringIntegrati
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testCanAccessParticipationAsTutor() {
         // Set solution and template participation
-        programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
-        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
 
         checkCanAccessParticipation(programmingExercise, participation, true, true);
     }
@@ -184,8 +188,8 @@ class ParticipationAuthorizationCheckServiceTest extends AbstractSpringIntegrati
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testCanAccessParticipationAsEditor() {
         // Set solution and template participation
-        programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
-        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
 
         checkCanAccessParticipation(programmingExercise, participation, true, true);
     }

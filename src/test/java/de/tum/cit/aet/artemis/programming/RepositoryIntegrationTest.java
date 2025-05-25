@@ -209,7 +209,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         Path templateFolderPath = Path.of(templateRepository.localRepoFile + "/" + currentLocalFolderName);
         Files.createDirectory(templateFolderPath);
 
-        programmingExercise = programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
 
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(templateRepository.localRepoFile.toPath(), null)).when(gitService)
@@ -484,7 +484,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         Path solutionFolderPath = Path.of(tempRepository.localRepoFile + "/" + currentLocalFolderName);
         Files.createDirectory(solutionFolderPath);
 
-        programmingExercise = programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
 
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(tempRepository.localRepoFile.toPath(), null)).when(gitService)

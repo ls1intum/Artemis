@@ -40,7 +40,6 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
-import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
@@ -57,15 +56,10 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
-import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
-import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
-import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
@@ -89,9 +83,6 @@ public class ProgrammingExerciseUtilService {
     @Value("${artemis.version-control.default-branch:main}")
     protected String defaultBranch;
 
-    @Value("${artemis.version-control.url}")
-    protected String artemisVersionControlUrl;
-
     @Autowired
     private TemplateProgrammingExerciseParticipationTestRepository templateProgrammingExerciseParticipationTestRepo;
 
@@ -102,7 +93,7 @@ public class ProgrammingExerciseUtilService {
     private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     @Autowired
-    private SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepo;
+    private ProgrammingExerciseParticipationUtilService programmingExerciseParticipationUtilService;
 
     @Autowired
     private ExamTestRepository examRepository;
@@ -181,42 +172,6 @@ public class ProgrammingExerciseUtilService {
     }
 
     /**
-     * Adds template participation to the provided programming exercise.
-     *
-     * @param exercise The exercise to which the template participation should be added.
-     * @return The programming exercise to which a participation was added.
-     */
-    public ProgrammingExercise addTemplateParticipationForProgrammingExercise(ProgrammingExercise exercise) {
-        final var repoName = exercise.generateRepositoryName(RepositoryType.TEMPLATE);
-        TemplateProgrammingExerciseParticipation participation = new TemplateProgrammingExerciseParticipation();
-        participation.setProgrammingExercise(exercise);
-        participation.setBuildPlanId(exercise.generateBuildPlanId(BuildPlanType.TEMPLATE));
-        participation.setRepositoryUri(String.format("%s/git/%s/%s.git", artemisVersionControlUrl, exercise.getProjectKey(), repoName));
-        participation.setInitializationState(InitializationState.INITIALIZED);
-        templateProgrammingExerciseParticipationTestRepo.save(participation);
-        exercise.setTemplateParticipation(participation);
-        return programmingExerciseRepository.save(exercise);
-    }
-
-    /**
-     * Adds a solution participation to the provided programming exercise.
-     *
-     * @param exercise The exercise to which the solution participation should be added.
-     * @return The programming exercise to which a participation was added.
-     */
-    public ProgrammingExercise addSolutionParticipationForProgrammingExercise(ProgrammingExercise exercise) {
-        final var repoName = exercise.generateRepositoryName(RepositoryType.SOLUTION);
-        SolutionProgrammingExerciseParticipation participation = new SolutionProgrammingExerciseParticipation();
-        participation.setProgrammingExercise(exercise);
-        participation.setBuildPlanId(exercise.generateBuildPlanId(BuildPlanType.SOLUTION));
-        participation.setRepositoryUri(String.format("%s/git/%s/%s.git", artemisVersionControlUrl, exercise.getProjectKey(), repoName));
-        participation.setInitializationState(InitializationState.INITIALIZED);
-        solutionProgrammingExerciseParticipationRepo.save(participation);
-        exercise.setSolutionParticipation(participation);
-        return programmingExerciseRepository.save(exercise);
-    }
-
-    /**
      * Creates and saves a course with an exam and an exercise group with a programming exercise. Test cases are added to this programming exercise.
      *
      * @return The newly created programming exercise with test cases.
@@ -251,8 +206,8 @@ public class ProgrammingExerciseUtilService {
         var savedBuildConfig = programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
         programmingExercise.setBuildConfig(savedBuildConfig);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
-        programmingExercise = addSolutionParticipationForProgrammingExercise(programmingExercise);
-        programmingExercise = addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
 
         return programmingExercise;
     }
@@ -284,8 +239,8 @@ public class ProgrammingExerciseUtilService {
         var savedBuildConfig = programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
         programmingExercise.setBuildConfig(savedBuildConfig);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
-        programmingExercise = addSolutionParticipationForProgrammingExercise(programmingExercise);
-        programmingExercise = addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
 
         exam.getExerciseGroups().get(exerciseGroupNumber).addExercise(programmingExercise);
         examRepository.save(exam);
@@ -492,9 +447,9 @@ public class ProgrammingExerciseUtilService {
         programmingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig()));
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         course.addExercises(programmingExercise);
-        programmingExercise = addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
 
-        return addTemplateParticipationForProgrammingExercise(programmingExercise);
+        return programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
     }
 
     /**
@@ -516,8 +471,8 @@ public class ProgrammingExerciseUtilService {
         programmingExercise.setBuildConfig(savedBuildConfig);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         course.addExercises(programmingExercise);
-        programmingExercise = addSolutionParticipationForProgrammingExercise(programmingExercise);
-        addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
 
         return courseRepo.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(course.getId());
     }
