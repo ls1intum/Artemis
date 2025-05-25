@@ -43,5 +43,5 @@
         }
     },
     "include": ["src/main/webapp/app"],
-    "exclude": ["node_modules", "src/main/resources", "src/main/webapp/app/**/*.spec.ts"]
+    "exclude": ["node_modules", "src/main/resources", "src/main/webapp/app/**/*.spec.ts", "src/main/webapp/app/openapi/**"]
 }

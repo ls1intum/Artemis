@@ -224,9 +224,3 @@ data-exports/
 /supporting_scripts/**/*.ini
 /legal
 /src/test/resources/config/application-local.yml
-
-
-##############################
-# Files generated for OpenAPI
-##############################
-/src/main/webapp/app/**/openapi/**

@@ -9,8 +9,13 @@ import angular from 'angular-eslint';
 import tseslint from 'typescript-eslint';
 import eslint from '@eslint/js';
 
-export default tseslint.config(
+export default [
+    // 🔒 Completely ignore all generated files BEFORE any other config runs
     {
+        ignores: ['src/main/webapp/app/openapi/**'],
+    },
+    // 🌐 Base ignore and global config
+    ...tseslint.config(    {
         ignores: [
             '.cache/',
             '.git/',
@@ -191,4 +196,5 @@ export default tseslint.config(
             '@angular-eslint/template/prefer-self-closing-tags': 'error',
         },
     },
-);
+),
+]

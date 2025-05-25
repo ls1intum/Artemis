@@ -292,6 +292,8 @@ springdoc:
     path: api.html
     operationsSorter: method
     enabled: false
+  default-consumes-media-type: application/json
+  default-produces-media-type: application/json
 
 server:
     servlet:

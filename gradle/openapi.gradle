@@ -39,7 +39,7 @@
         apiPackage = "api"
         modelPackage = "model"
         configOptions = [
-            apiNameSuffix      : "ApiService",
+            serviceSuffix: "ApiService",
             supportsES6: "true",
             serviceFileSuffix: "Api.service"
         ]
