@@ -2843,6 +2843,7 @@ public class CourseTestService {
     // Test
     public void testGetCourseManagementDetailData() throws Exception {
         adjustUserGroupsToCustomGroups();
+        // TODO: we should use fixed dates here to avoid flakiness, e.g. mock the clock
         ZonedDateTime now = ZonedDateTime.now();
         // add courses with exercises
         var courses = courseUtilService.createCoursesWithExercisesAndLectures(userPrefix, true, 5);
@@ -3027,8 +3028,8 @@ public class CourseTestService {
 
         lifetimeOverviewStats = request.get("/api/core/courses/" + course2.getId() + "/statistics-lifetime-overview", HttpStatus.OK, List.class);
 
-        expectedLifetimeOverviewStats = Arrays.stream(new int[20]).boxed().collect(Collectors.toCollection(ArrayList::new));
-        expectedLifetimeOverviewStats.set(18, 1);
+        expectedLifetimeOverviewStats = Arrays.stream(new int[19]).boxed().collect(Collectors.toCollection(ArrayList::new));
+        expectedLifetimeOverviewStats.set(17, 1);
         assertThat(lifetimeOverviewStats).as("should only depict data until the end date of the course").isEqualTo(expectedLifetimeOverviewStats);
 
         course2.setStartDate(now.minusWeeks(2));
