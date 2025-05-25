@@ -33,9 +33,9 @@
     }
 
     openApiGenerate {
-        generatorName = "typescript-fetch"
+        generatorName = "typescript-angular"
         inputSpec.set(file("${rootDir}/openapi/openapi.yaml").toURI().toString())
-        outputDir = "${rootDir}/src/main/webapp/app/tutorialgroup/openapi"
+        outputDir = "${rootDir}/src/main/webapp/app/openapi"
         apiPackage = "api"
         modelPackage = "model"
         configOptions = [
@@ -121,10 +121,10 @@
             fileTree(dir: genDir, include: '**/*.ts').each { File tsFile ->
                 def content = tsFile.text
 
-                // 1) Prepend ts-nocheck if missing
-                if (!content.startsWith('// @ts-nocheck')) {
-                    content = "// @ts-nocheck\n" + content
-                }
+//                // 1) Prepend ts-nocheck if missing
+//                if (!content.startsWith('// @ts-nocheck')) {
+//                    content = "// @ts-nocheck\n" + content
+//                }
 
                 // 2) Strip leading underscores on public methods
                 content = content.replaceAll(
@@ -148,22 +148,6 @@
 //    tasks.named('pruneOpenApiSpec') {
 //        dependsOn tasks.named('generateOpenApiDocs')
 //    }
-    tasks.register('generateHeyApi', Exec) {
-        group = "api"
-        description = "Generate TS client via Hey API codegen"
-
-        // 2) Define the CLI invocation
-        commandLine = [
-            "npx", "@hey-api/openapi-ts",
-            "--input", "$rootDir/openapi/openapi.yaml",
-            "--output", "$rootDir/src/main/webapp/app/openapi",
-            "--client", "@hey-api/client-fetch",
-        ]
-
-        // 3) Incremental build inputs/outputs (optional)
-        inputs.file("$rootDir/openapi/openapi.yaml")
-        outputs.dir("$rootDir/src/main/webapp/app/openapi")
-    }
 
     tasks.named('openApiGenerate') {
         finalizedBy 'postProcessTsFiles'
