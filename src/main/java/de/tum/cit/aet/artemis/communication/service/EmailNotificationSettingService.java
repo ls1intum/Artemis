@@ -1,8 +1,11 @@
 package de.tum.cit.aet.artemis.communication.service;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -11,6 +14,7 @@ import de.tum.cit.aet.artemis.communication.domain.EmailNotificationType;
 import de.tum.cit.aet.artemis.communication.repository.EmailNotificationSettingRepository;
 import de.tum.cit.aet.artemis.core.domain.User;
 
+@Profile(PROFILE_CORE)
 @Service
 @Transactional
 public class EmailNotificationSettingService {
