@@ -73,7 +73,7 @@ public class ReactionResource {
     @EnforceAtLeastStudent
     public ResponseEntity<Void> deleteReaction(@PathVariable long courseId, @PathVariable long reactionId) {
         // NOTE: the service method handles authorization checks and throws an exception if the user is not allowed to delete the reaction
-        reactionService.deleteReactionById(reactionId, courseId);
+        reactionService.deleteReactionByIdIfAllowedElseThrow(reactionId, courseId);
         return ResponseEntity.ok().build();
     }
 }

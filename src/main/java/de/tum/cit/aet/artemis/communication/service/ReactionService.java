@@ -96,7 +96,7 @@ public class ReactionService {
      * @param reactionId id of the reaction to delete
      * @param courseId   id of the course the according posting belongs to
      */
-    public void deleteReactionById(Long reactionId, Long courseId) {
+    public void deleteReactionByIdIfAllowedElseThrow(Long reactionId, Long courseId) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         final Course course = courseRepository.findByIdElseThrow(courseId);
         Reaction reaction = reactionRepository.findByIdElseThrow(reactionId);
