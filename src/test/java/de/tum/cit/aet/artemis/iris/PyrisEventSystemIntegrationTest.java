@@ -352,7 +352,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
         // Set custom instructions in the exercise settings
         var settings = irisSettingsRepository.findExerciseSettings(exercise.getId()).orElseThrow();
         String testCustomInstructions = "Test custom instructions for the AI model";
-        settings.getIrisChatSettings().setCustomInstructions(testCustomInstructions);
+        settings.getIrisProgrammingExerciseChatSettings().setCustomInstructions(testCustomInstructions);
         irisSettingsRepository.save(settings);
 
         var irisSession = irisExerciseChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
@@ -414,7 +414,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
         // Set custom instructions for exercise chat event
         var settings = irisSettingsRepository.findExerciseSettings(exercise.getId()).orElseThrow();
         String testCustomInstructions = "Custom instructions for exercise event";
-        settings.getIrisChatSettings().setCustomInstructions(testCustomInstructions);
+        settings.getIrisProgrammingExerciseChatSettings().setCustomInstructions(testCustomInstructions);
         irisSettingsRepository.save(settings);
 
         // Create session and trigger build failed event

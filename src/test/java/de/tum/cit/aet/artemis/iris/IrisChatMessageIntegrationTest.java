@@ -193,7 +193,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
         // Set custom instructions for programming exercise chat
         String testCustomInstructions = "Please focus on code style.";
         var exerciseSettings = irisSettingsService.getRawIrisSettingsFor(soloExercise);
-        exerciseSettings.getIrisChatSettings().setCustomInstructions(testCustomInstructions);
+        exerciseSettings.getIrisProgrammingExerciseChatSettings().setCustomInstructions(testCustomInstructions);
         irisSettingsService.saveIrisSettings(exerciseSettings);
 
         // Prepare session and message

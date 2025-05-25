@@ -672,7 +672,7 @@ public class IrisSubSettingsService {
      */
     private String getCustomInstructionsFromSubSettings(IrisSubSettings subSettings) {
         // TODO: Introduce intermediary abstract class for all chat settings types
-        if (subSettings instanceof IrisChatSubSettings settings) {
+        if (subSettings instanceof IrisProgrammingExerciseChatSubSettings settings) {
             return settings.getCustomInstructions();
         }
         else if (subSettings instanceof IrisTextExerciseChatSubSettings settings) {
