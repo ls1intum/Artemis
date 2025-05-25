@@ -53,6 +53,7 @@ class ArtemisAuthenticationEventListenerTest {
         User nonInternalUser = new User();
         nonInternalUser.setLogin(username);
         nonInternalUser.setInternal(false);
+        nonInternalUser.setId(1L);
 
         when(userRepository.getUserByLoginElseThrow(username)).thenReturn(nonInternalUser);
         when(emailNotificationSettingRepository.isNotificationEnabled(nonInternalUser.getId(), EmailNotificationType.NEW_LOGIN)).thenReturn(true);
@@ -71,6 +72,7 @@ class ArtemisAuthenticationEventListenerTest {
         User nonInternalUser = new User();
         nonInternalUser.setLogin(username);
         nonInternalUser.setInternal(false);
+        nonInternalUser.setId(1L);
 
         when(userRepository.getUserByLoginElseThrow(username)).thenReturn(nonInternalUser);
         when(emailNotificationSettingRepository.isNotificationEnabled(nonInternalUser.getId(), EmailNotificationType.NEW_LOGIN)).thenReturn(false);
