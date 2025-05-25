@@ -20,10 +20,11 @@ import de.tum.cit.aet.artemis.communication.domain.EmailNotificationType;
 import de.tum.cit.aet.artemis.communication.service.EmailNotificationSettingService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("/api/communication/email-notification-settings")
+@RequestMapping("/api/communication/")
 public class EmailNotificationSettingResource {
 
     private final EmailNotificationSettingService emailNotificationSettingService;
@@ -50,7 +51,8 @@ public class EmailNotificationSettingResource {
      * @return {@link ResponseEntity} containing the persisted setting and HTTP 200 on success;
      *         HTTP 400 if the body is missing the {@code enabled} property or if {@code notificationType} is unknown
      */
-    @PutMapping("{notificationType}")
+    @PutMapping("email-notification-settings/{notificationType}")
+    @EnforceAtLeastStudent
     public ResponseEntity<EmailNotificationSetting> updateSetting(@PathVariable String notificationType, @RequestBody Map<String, Boolean> request) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Boolean enabled = request.get("enabled");
@@ -74,7 +76,8 @@ public class EmailNotificationSettingResource {
      *         and the value indicates whether e‑mails of this type are enabled.
      *         Types without an explicit setting default to {@code true}.
      */
-    @GetMapping
+    @GetMapping("email-notification-settings")
+    @EnforceAtLeastStudent
     public ResponseEntity<Map<String, Boolean>> getAllSettings() {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         List<EmailNotificationSetting> settings = emailNotificationSettingService.getUserSettings(user.getId());
