@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
@@ -183,15 +184,16 @@ public class LectureTranscriptionResource {
      * @return {@link ResponseEntity} containing the {@link LectureTranscriptionDTO} if found, or 404 Not Found if no transcript exists
      */
     @GetMapping("lecture-unit/{lectureUnitId}/transcript")
+    @EnforceAtLeastStudent
     public ResponseEntity<LectureTranscriptionDTO> getTranscript(@PathVariable Long lectureUnitId) {
-        var transcriptionOpt = lectureTranscriptionRepository.findByLectureUnit_Id(lectureUnitId);
+        Optional<LectureTranscription> transcriptionOpt = lectureTranscriptionRepository.findByLectureUnit_Id(lectureUnitId);
 
         if (transcriptionOpt.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
 
-        var transcription = transcriptionOpt.get();
-        var dto = new LectureTranscriptionDTO(lectureUnitId, transcription.getLanguage(), transcription.getSegments());
+        LectureTranscription transcription = transcriptionOpt.get();
+        LectureTranscriptionDTO dto = new LectureTranscriptionDTO(lectureUnitId, transcription.getLanguage(), transcription.getSegments());
 
         return ResponseEntity.ok(dto);
     }

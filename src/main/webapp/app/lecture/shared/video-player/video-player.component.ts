@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, Input, OnDestroy, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, Input, OnDestroy, signal, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import videojs from 'video.js';
 
@@ -10,18 +10,20 @@ import videojs from 'video.js';
     styleUrls: ['./video-player.component.scss'],
 })
 export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
-    @ViewChild('videoRef', { static: false }) videoRef?: ElementRef<HTMLVideoElement>;
+    videoRef = viewChild<ElementRef<HTMLVideoElement>>('videoRef');
 
-    @Input() videoUrl!: string;
+    @Input({ required: true }) videoUrl: string = '';
     @Input() transcriptSegments: any[] = [];
 
-    player: any;
-    currentSegmentIndex = -1;
+    player: videojs.Player | null = null;
+    currentSegmentIndex = signal<number>(-1);
 
     ngAfterViewInit(): void {
-        if (!this.videoRef || !this.videoUrl) return;
+        const videoElement = this.videoRef()?.nativeElement;
 
-        this.player = videojs(this.videoRef.nativeElement, {
+        if (!videoElement || !this.videoUrl) return;
+
+        this.player = videojs(videoElement, {
             controls: true,
             preload: 'auto',
             sources: [
@@ -33,7 +35,7 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
         });
 
         this.player.on('timeupdate', () => {
-            const currentTime = this.player.currentTime();
+            const currentTime = this.player?.currentTime?.() ?? 0;
             this.updateCurrentSegment(currentTime);
         });
     }
@@ -47,8 +49,8 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
         const margin = 0.3;
         const index = this.transcriptSegments.findIndex((s) => currentTime >= s.startTime - margin && currentTime <= s.endTime + margin);
 
-        if (index !== -1 && index !== this.currentSegmentIndex) {
-            this.currentSegmentIndex = index;
+        if (index !== -1 && index !== this.currentSegmentIndex()) {
+            this.currentSegmentIndex.set(index);
             const el = document.getElementById(`segment-${this.transcriptSegments[index].startTime}`);
             el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
