@@ -25,7 +25,6 @@ import jakarta.annotation.PreDestroy;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
@@ -37,7 +36,6 @@ import org.springframework.stereotype.Service;
 import com.hazelcast.cluster.Member;
 import com.hazelcast.collection.ItemEvent;
 import com.hazelcast.collection.ItemListener;
-import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
@@ -59,8 +57,6 @@ import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessS
 public class SharedQueueProcessingService {
 
     private static final Logger log = LoggerFactory.getLogger(SharedQueueProcessingService.class);
-
-    private final HazelcastInstance hazelcastInstance;
 
     private final BuildAgentConfiguration buildAgentConfiguration;
 
@@ -115,10 +111,9 @@ public class SharedQueueProcessingService {
     @Value("${artemis.continuous-integration.build-agent.display-name:}")
     private String buildAgentDisplayName;
 
-    public SharedQueueProcessingService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, BuildAgentConfiguration buildAgentConfiguration,
-            BuildJobManagementService buildJobManagementService, BuildLogsMap buildLogsMap, TaskScheduler taskScheduler, BuildAgentDockerService buildAgentDockerService,
-            BuildAgentInformationService buildAgentInformationService, DistributedDataAccessService distributedDataAccessService) {
-        this.hazelcastInstance = hazelcastInstance;
+    public SharedQueueProcessingService(BuildAgentConfiguration buildAgentConfiguration, BuildJobManagementService buildJobManagementService, BuildLogsMap buildLogsMap,
+            TaskScheduler taskScheduler, BuildAgentDockerService buildAgentDockerService, BuildAgentInformationService buildAgentInformationService,
+            DistributedDataAccessService distributedDataAccessService) {
         this.buildAgentConfiguration = buildAgentConfiguration;
         this.buildJobManagementService = buildJobManagementService;
         this.buildLogsMap = buildLogsMap;
@@ -201,7 +196,7 @@ public class SharedQueueProcessingService {
      */
     @Scheduled(initialDelay = 60000, fixedRate = 60000) // 1 minute initial delay, 1 minute fixed rate
     public void updateBuildAgentInformation() {
-        if (noDataMemberInClusterAvailable(hazelcastInstance)) {
+        if (noDataMemberInClusterAvailable()) {
             log.debug("There are only lite member in the cluster. Not updating build agent information.");
             return;
         }
@@ -220,7 +215,7 @@ public class SharedQueueProcessingService {
      * If so, process the next build job.
      */
     private void checkAvailabilityAndProcessNextBuild() {
-        if (noDataMemberInClusterAvailable(hazelcastInstance) || distributedDataAccessService.getDistributedQueuedJobs() == null) {
+        if (noDataMemberInClusterAvailable() || distributedDataAccessService.getDistributedQueuedJobs() == null) {
             log.debug("There are only lite member in the cluster. Not processing build jobs.");
             return;
         }
@@ -282,8 +277,8 @@ public class SharedQueueProcessingService {
         }
     }
 
-    private static boolean noDataMemberInClusterAvailable(HazelcastInstance hazelcastInstance) {
-        return hazelcastInstance.getCluster().getMembers().stream().allMatch(Member::isLiteMember);
+    private boolean noDataMemberInClusterAvailable() {
+        return distributedDataAccessService.getClusterMembers().allMatch(Member::isLiteMember);
     }
 
     private BuildJobQueueItem addToProcessingJobs() {
@@ -306,7 +301,7 @@ public class SharedQueueProcessingService {
     }
 
     private void removeOfflineNodes() {
-        Set<String> memberAddresses = hazelcastInstance.getCluster().getMembers().stream().map(member -> member.getAddress().toString()).collect(Collectors.toSet());
+        Set<String> memberAddresses = distributedDataAccessService.getClusterMembers().map(member -> member.getAddress().toString()).collect(Collectors.toSet());
         for (String key : distributedDataAccessService.getDistributedBuildAgentInformation().keySet()) {
             if (!memberAddresses.contains(key)) {
                 distributedDataAccessService.getDistributedBuildAgentInformation().remove(key);

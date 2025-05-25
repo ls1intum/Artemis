@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import jakarta.annotation.PostConstruct;
 
@@ -15,6 +16,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import com.hazelcast.cluster.Member;
 import com.hazelcast.collection.IQueue;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
@@ -293,5 +295,14 @@ public class DistributedDataAccessService {
      */
     public boolean isInstanceRunning() {
         return hazelcastInstance != null && hazelcastInstance.getLifecycleService().isRunning();
+    }
+
+    /**
+     * Retrieves the members of the Hazelcast cluster.
+     *
+     * @return a stream of Hazelcast cluster members
+     */
+    public Stream<Member> getClusterMembers() {
+        return hazelcastInstance.getCluster().getMembers().stream();
     }
 }
