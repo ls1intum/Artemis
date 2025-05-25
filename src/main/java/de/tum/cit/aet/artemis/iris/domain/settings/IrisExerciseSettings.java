@@ -107,4 +107,15 @@ public class IrisExerciseSettings extends IrisSettings {
         // Empty because exercises don't have exercise faq settings
 
     }
+
+    @Override
+    public IrisTutorSuggestionSubSettings getIrisTutorSuggestionSettings() {
+        // Empty because exercises don't have exercise tutor suggestion settings
+        return null;
+    }
+
+    @Override
+    public void setIrisTutorSuggestionSettings(IrisTutorSuggestionSubSettings irisTutorSuggestionSubSettings) {
+        // Empty because exercises don't have exercise tutor suggestion settings
+    }
 }

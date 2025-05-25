@@ -65,9 +65,9 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.En
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.CourseService;
-import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
@@ -693,7 +693,7 @@ public class QuizExerciseResource {
 
     private Path convertToActualPath(String pathString, FilePathType filePathType) {
         try {
-            return FilePathService.fileSystemPathForExternalUri(URI.create(pathString), filePathType);
+            return FilePathConverter.fileSystemPathForExternalUri(URI.create(pathString), filePathType);
         }
         catch (FilePathParsingException e) {
             log.warn("Could not find file {} for deletion", pathString);

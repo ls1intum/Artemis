@@ -12,6 +12,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -455,9 +456,13 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationIndependent
         await().untilAsserted(() -> assertThat(slideRepository.findAllByAttachmentUnitId(persistedAttachmentUnit.getId())).hasSize(SLIDE_COUNT));
 
         // Create a hiddenPages JSON with past dates
-        // Format: ZonedDateTime string representation
-        String pastDate = ZonedDateTime.now().minusDays(1).toString();
-        String hiddenPagesJson = "[{\"page\": 1, \"date\": \"" + pastDate + "\"}]";
+        // @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX")
+        ZonedDateTime pastDateTime = ZonedDateTime.now().minusDays(1);
+        java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+        String pastDate = pastDateTime.format(formatter);
+
+        // The HiddenPageInfoDTO expects slideId as a String
+        String hiddenPagesJson = "[{\"slideId\": \"1\", \"date\": \"" + pastDate + "\"}]";
 
         // Create multipart request parts
         var attachmentUnitPart = new MockMultipartFile("attachmentUnit", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(persistedAttachmentUnit).getBytes());
@@ -472,8 +477,10 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationIndependent
         request.performMvcRequest(builder).andExpect(status().isBadRequest());
 
         // Now create a valid future date
-        String futureDate = ZonedDateTime.now().plusDays(1).toString();
-        String validHiddenPagesJson = "[{\"page\": 1, \"date\": \"" + futureDate + "\"}]";
+        ZonedDateTime futureDateTime = ZonedDateTime.now().plusDays(1);
+        String futureDate = futureDateTime.format(formatter);
+
+        String validHiddenPagesJson = "[{\"slideId\": \"1\", \"date\": \"" + futureDate + "\"}]";
 
         // Create new multipart request parts with valid dates
         var validHiddenPagesPart = new MockMultipartFile("hiddenPages", "", MediaType.APPLICATION_JSON_VALUE, validHiddenPagesJson.getBytes());
@@ -498,9 +505,10 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationIndependent
         // Wait for async operation to complete
         await().untilAsserted(() -> assertThat(slideRepository.findAllByAttachmentUnitId(persistedAttachmentUnit.getId())).hasSize(SLIDE_COUNT));
 
-        // Create a hiddenPages JSON with "forever" date (year >= 9000)
-        String foreverDate = ZonedDateTime.of(9999, 12, 31, 23, 59, 59, 0, ZonedDateTime.now().getZone()).toString();
-        String hiddenPagesJson = "[{\"page\": 1, \"date\": \"" + foreverDate + "\"}]";
+        String foreverDate = "9999-12-31T23:59:59.999+02:00";
+
+        // Also, looking at HiddenPageInfoDTO, the field is called "slideId", not "page"
+        String hiddenPagesJson = "[{\"slideId\": \"1\", \"date\": \"" + foreverDate + "\"}]";
 
         // Create multipart request parts
         var attachmentUnitPart = new MockMultipartFile("attachmentUnit", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(persistedAttachmentUnit).getBytes());
@@ -517,7 +525,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void updateAttachmentUnit_withInvalidHiddenSlidesDatesFormat_shouldReturnBadRequest() throws Exception {
+    void updateAttachmentUnit_withInvalidHiddenSlidesDates_shouldReturnBadRequest() throws Exception {
         // First create an attachment unit
         attachmentUnit.setCompetencyLinks(Set.of(new CompetencyLectureUnitLink(competency, attachmentUnit, 1)));
         var createResult = request.performMvcRequest(buildCreateAttachmentUnit(attachmentUnit, attachment)).andExpect(status().isCreated()).andReturn();
@@ -527,19 +535,40 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationIndependent
         // Wait for async operation to complete
         await().untilAsserted(() -> assertThat(slideRepository.findAllByAttachmentUnitId(persistedAttachmentUnit.getId())).hasSize(SLIDE_COUNT));
 
-        // Create an invalid format for hiddenPages JSON
-        String invalidJson = "[{\"page\": 1, \"date\": \"invalid-date-format\"}]";
+        // Create a hiddenPages JSON with past dates using the correct format
+        // The format should be exactly "yyyy-MM-dd'T'HH:mm:ss.SSSXXX" (without the timezone ID in brackets)
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+        ZonedDateTime pastDateTime = ZonedDateTime.now().minusDays(1);
+        String pastDate = pastDateTime.format(formatter);
+
+        // Use the correct property name 'slideId' instead of 'page'
+        String hiddenPagesJson = "[{\"slideId\": \"1\", \"date\": \"" + pastDate + "\"}]";
 
         // Create multipart request parts
         var attachmentUnitPart = new MockMultipartFile("attachmentUnit", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(persistedAttachmentUnit).getBytes());
         var attachmentPart = new MockMultipartFile("attachment", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(persistedAttachment).getBytes());
-        var hiddenPagesPart = new MockMultipartFile("hiddenPages", "", MediaType.APPLICATION_JSON_VALUE, invalidJson.getBytes());
+        var hiddenPagesPart = new MockMultipartFile("hiddenPages", "", MediaType.APPLICATION_JSON_VALUE, hiddenPagesJson.getBytes());
 
         // Build request with multipart
         var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-units/" + persistedAttachmentUnit.getId())
                 .file(attachmentUnitPart).file(attachmentPart).file(hiddenPagesPart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
 
-        // Should get a bad request due to invalid format
+        // Should get a bad request due to invalid dates (dates in the past)
         request.performMvcRequest(builder).andExpect(status().isBadRequest());
+
+        // Now create a valid future date
+        ZonedDateTime futureDateTime = ZonedDateTime.now().plusDays(1);
+        String futureDate = futureDateTime.format(formatter);
+        String validHiddenPagesJson = "[{\"slideId\": \"1\", \"date\": \"" + futureDate + "\"}]";
+
+        // Create new multipart request parts with valid dates
+        var validHiddenPagesPart = new MockMultipartFile("hiddenPages", "", MediaType.APPLICATION_JSON_VALUE, validHiddenPagesJson.getBytes());
+
+        // Build valid request
+        var validBuilder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-units/" + persistedAttachmentUnit.getId())
+                .file(attachmentUnitPart).file(attachmentPart).file(validHiddenPagesPart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+
+        // Should succeed with valid dates
+        request.performMvcRequest(validBuilder).andExpect(status().isOk());
     }
 }
