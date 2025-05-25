@@ -189,6 +189,95 @@ Once you're done assessing the solution, you can either:
 
 - Click on |exercise-dashboard-button| to navigate to the **Exercise Dashboard**.
 
+Automatic Student Feedback
+--------------------------
+
+.. admonition:: Why Automatic Student Feedback
+   :class: tip
+
+   In large courses, providing timely and personalized feedback on text-based exercises is 
+   challenging. Automated student feedback helps learners identify misunderstandings early, 
+   iterate on their drafts, and refine their writing skills—all without waiting for an 
+   instructor or tutor to be available.
+
+**Overview:**
+
+When a text exercise is configured with the ``Allow automatic AI preliminary feedback requests`` 
+option, students can request preliminary AI feedback on their written submissions. 
+The feedback is generated through the :ref:`Athena Service <athena_service>`, 
+which analyzes the **content**, **structure**, and **style** of the text and produces 
+comments based on the provided **Grading Instructions**, **Problem Statement**, and **Sample Solution**.
+
+.. admonition:: Note
+   :class: note
+
+   For best results, include detailed **Grading Instructions** as **Structured Grading Instructions**, and provide a Sample Solution (optional but recommended). This ensures that AI-generated feedback aligns with the intended evaluation criteria and offers focused, actionable suggestions.
+
+**How to Request Automatic Feedback:**
+
+1. **Requesting Feedback**
+
+   .. container::
+
+      - 1.1. Navigate to a **Text Exercise** with the **Automatic Student Feedback** feature enabled.
+      - 1.2. Enter your response in the text editor and submit it.
+      - 1.3. You can request AI feedback either from the exercise overview page or directly within the text editor.
+
+    .. figure:: text/automatic-feedback-request-overview.png
+       :align: center
+       :alt: Screenshot showing the request feedback button in the exercise overview
+       :scale: 80%
+
+    .. figure:: text/automatic-feedback-request-editor.png
+       :align: center
+       :alt: Screenshot showing the request feedback button in the text editor
+       :scale: 80%
+
+2. **Viewing Feedback**
+
+   .. container::
+
+      - 2.1. After submitting a feedback request, the system processes the text and generates preliminary comments.
+      - 2.2. An alert appears at the top of the page indicating that feedback is ready.
+
+      .. figure:: text/automatic-feedback-request-alert.png
+         :align: center
+         :alt: Screenshot showing the notification alert when AI feedback is ready
+
+      - 2.3. A preliminary score is displayed in the top-right corner of the screen.
+
+      .. figure:: text/automatic-feedback-request-score.png
+         :align: center
+         :alt: Screenshot showing the preliminary score in the text editor
+
+      - 2.4. Clicking on the score reveals inline feedback that highlights specific issues and offers suggestions directly under the text.
+
+      .. figure:: text/automatic-feedback-view-detailed.png
+         :align: center
+         :alt: Screenshot showing detailed AI feedback
+         :scale: 50%
+
+3. **Submission History**
+
+   .. container::
+
+      - You may request feedback multiple times before the submission deadline. All feedback requests are recorded in the submission history.
+      - To review past feedback, open the submission history section and click an entry to view its detailed comments.
+
+      .. figure:: text/automatic-feedback-history.png
+         :align: center
+         :alt: Screenshot showing the submission history section in the text editor
+         :scale: 50%
+
+**Demo:**
+
+Watch this screencast for a demonstration of automated AI feedback on a text exercise:
+
+.. raw:: html
+
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/59983?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+        Video tutorial of the automated assessment of text exercises on TUM-Live.
+    </iframe>
 
 .. |course-management| image:: general/course-management.png
 .. |hint| image:: general/hint-icon.png
