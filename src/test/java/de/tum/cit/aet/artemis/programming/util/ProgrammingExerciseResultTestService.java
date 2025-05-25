@@ -77,7 +77,7 @@ import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionT
 
 /**
  * Note: this class should be independent of the actual VCS and CIS and contains common test logic for both scenarios:
- * 1) Jenkins + LocalVc
+ * 1) Jenkins + LocalVC
  */
 @Service
 @Profile(SPRING_PROFILE_TEST)
@@ -157,7 +157,7 @@ public class ProgrammingExerciseResultTestService {
 
     public void setupForProgrammingLanguage(ProgrammingLanguage programmingLanguage) throws GitAPIException, IOException {
         course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, programmingLanguage);
-        programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
         ProgrammingExercise programmingExerciseWithStaticCodeAnalysis = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, true, programmingLanguage);
         staticCodeAnalysisService.createDefaultCategories(programmingExerciseWithStaticCodeAnalysis);

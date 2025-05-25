@@ -12,7 +12,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.ExerciseAssessedNotification;
@@ -29,8 +28,6 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
-import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
-import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 
 @Profile(PROFILE_CORE)
 @Service
@@ -142,25 +139,6 @@ public class SingleUserNotificationService {
     }
 
     /**
-     * Notify user about the expiration of an SSH key
-     *
-     * @param recipient the user to whose account the SSH key was added
-     * @param key       the key which was added
-     */
-    public void notifyUserAboutExpiredSshKey(User recipient, UserSshPublicKey key) {
-        // TODO: This notification needs to be implemented
-    }
-
-    /**
-     * Notify user about the expiration of the VCS access token
-     *
-     * @param recipient the user to whose account the VCS access token was added
-     */
-    public void notifyUserAboutExpiredVcsAccessToken(User recipient) {
-        // TODO: This notification needs to be implemented
-    }
-
-    /**
      * Notify student about possible plagiarism case.
      *
      * @param plagiarismCase that hold the major information for the plagiarism case
@@ -207,24 +185,6 @@ public class SingleUserNotificationService {
                 plagiarismCaseExercise.getSanitizedExerciseTitle(), plagiarismCaseExercise.getType(), plagiarismCase.getVerdict().toString());
 
         courseNotificationService.sendCourseNotification(plagiarismCaseVerdictNotification, List.of(student));
-    }
-
-    /**
-     * Record to store tutorial group, users and responsible user in one notification subject.
-     */
-    public record TutorialGroupNotificationSubject(TutorialGroup tutorialGroup, Set<User> users, User responsibleUser) {
-    }
-
-    /**
-     * Record to store conversation, user and responsible user in one notification subject.
-     */
-    public record ConversationNotificationSubject(Conversation conversation, User user, User responsibleUser) {
-    }
-
-    /**
-     * Record to store Answer post, users and responsible user in one notification subject.
-     */
-    public record NewReplyNotificationSubject(AnswerPost answerPost, User user, User responsibleUser) {
     }
 
     /**

@@ -7,7 +7,7 @@ import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lectureUnit.service';
 import { convertDateFromClient, convertDateFromServer } from 'app/shared/util/date.utils';
-import { IngestionState } from 'app/lecture/shared/entities/lecture-unit/attachmentUnit.model';
+import { IngestionState } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 
 type EntityResponseType = HttpResponse<Lecture>;
@@ -45,23 +45,6 @@ export class LectureService {
 
     findWithDetails(lectureId: number): Observable<EntityResponseType> {
         return this.http.get<Lecture>(`${this.resourceUrl}/${lectureId}/details`, { observe: 'response' }).pipe(
-            map((res: EntityResponseType) => {
-                if (res.body) {
-                    // insert an empty list to avoid additional calls in case the list is empty on the server (because then it would be undefined in the client)
-                    if (res.body.posts === undefined) {
-                        res.body.posts = [];
-                    }
-                }
-                this.convertLectureResponseDatesFromServer(res);
-                this.setAccessRightsLecture(res.body);
-                this.sendTitlesToEntityTitleService(res?.body);
-                return res;
-            }),
-        );
-    }
-
-    findWithDetailsWithSlides(lectureId: number): Observable<EntityResponseType> {
-        return this.http.get<Lecture>(`${this.resourceUrl}/${lectureId}/details-with-slides`, { observe: 'response' }).pipe(
             map((res: EntityResponseType) => {
                 if (res.body) {
                     // insert an empty list to avoid additional calls in case the list is empty on the server (because then it would be undefined in the client)

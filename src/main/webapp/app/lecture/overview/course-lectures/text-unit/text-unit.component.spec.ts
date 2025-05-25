@@ -3,10 +3,16 @@ import { TextUnitComponent } from 'app/lecture/overview/course-lectures/text-uni
 import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { MockScienceService } from 'test/helpers/mocks/service/mock-science-service';
+import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
+import { MockComponent, MockProvider } from 'ng-mocks';
+import { CompetencyContributionComponent } from 'app/atlas/shared/competency-contribution/competency-contribution.component';
+import { CompetencyContributionCardDTO } from 'app/atlas/shared/entities/competency.model';
+import { of } from 'rxjs';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 describe('TextUnitComponent', () => {
     let scienceService: ScienceService;
@@ -31,7 +37,7 @@ describe('TextUnitComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [TextUnitComponent],
+            imports: [TextUnitComponent, MockComponent(CompetencyContributionComponent)],
             providers: [
                 provideHttpClient(),
                 {
@@ -39,8 +45,13 @@ describe('TextUnitComponent', () => {
                     useClass: MockTranslateService,
                 },
                 { provide: ScienceService, useClass: MockScienceService },
+                MockProvider(CourseCompetencyService),
+                MockProvider(ProfileService),
             ],
         }).compileComponents();
+
+        const competencyService = TestBed.inject(CourseCompetencyService);
+        jest.spyOn(competencyService, 'getCompetencyContributionsForLectureUnit').mockReturnValue(of({} as HttpResponse<CompetencyContributionCardDTO[]>));
 
         scienceService = TestBed.inject(ScienceService);
 
@@ -53,6 +64,7 @@ describe('TextUnitComponent', () => {
         component = fixture.componentInstance;
 
         fixture.componentRef.setInput('lectureUnit', textUnit);
+        fixture.componentRef.setInput('courseId', 1);
     });
 
     afterEach(() => {

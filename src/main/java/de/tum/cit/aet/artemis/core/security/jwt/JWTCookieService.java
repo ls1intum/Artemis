@@ -55,13 +55,24 @@ public class JWTCookieService {
     /**
      * Builds a cookie with the tool claim in the jwt
      *
-     * @param duration the duration of the cookie in milli seconds and the jwt
+     * @param duration the duration of the cookie in milliseconds and the jwt
      * @param tool     the tool claim in the jwt
      * @return the login ResponseCookie containing the JWT
      */
     public ResponseCookie buildLoginCookie(long duration, ToolTokenType tool) {
         String jwt = tokenProvider.createToken(SecurityContextHolder.getContext().getAuthentication(), duration, tool);
         return buildJWTCookie(jwt, Duration.of(duration, ChronoUnit.MILLIS));
+    }
+
+    /**
+     * Builds the cookie containing the jwt for a login
+     *
+     * @param rotatedJwtToken        with the updated values
+     * @param durationInMilliseconds of the cookie in milliseconds and the jwt
+     * @return the login {@link ResponseCookie} containing the JWT
+     */
+    public ResponseCookie buildRotatedCookie(String rotatedJwtToken, long durationInMilliseconds) {
+        return buildJWTCookie(rotatedJwtToken, Duration.of(durationInMilliseconds, ChronoUnit.MILLIS));
     }
 
     /**

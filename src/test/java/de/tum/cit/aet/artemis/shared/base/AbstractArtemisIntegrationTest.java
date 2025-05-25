@@ -4,6 +4,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -11,6 +12,7 @@ import java.util.Optional;
 import jakarta.mail.internet.MimeMessage;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.parallel.Execution;
@@ -45,6 +47,7 @@ import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserFactory;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.HibernateQueryInterceptor;
 import de.tum.cit.aet.artemis.core.util.QueryCountAssert;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
@@ -78,9 +81,6 @@ import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 @Import(TestRepositoryConfiguration.class)
 @AutoConfigureEmbeddedDatabase
 public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
-
-    @Value("${server.url}")
-    protected String artemisServerUrl;
 
     @Value("${artemis.version-control.default-branch:main}")
     protected String defaultBranch;
@@ -184,6 +184,15 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
 
     @Autowired
     protected CourseTestRepository courseRepository;
+
+    private static final Path rootPath = Path.of("local", "upload");
+
+    @BeforeAll
+    static void setup() {
+        // Set the static file upload path for all tests
+        // This makes it a simple unit test that doesn't require a server start.
+        FilePathConverter.setFileUploadPath(rootPath);
+    }
 
     @BeforeEach
     void mockMailService() {

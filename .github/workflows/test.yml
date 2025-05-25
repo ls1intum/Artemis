@@ -17,11 +17,9 @@ on:
     - '.editorconfig'
     - '.gitattributes'
     - 'artemis-server-cli'
-    - 'check_client_override_version_updates.sh'
-    - 'check_modules.sh'
+    - 'supporting_scripts/**'
     - 'CITATION.cff'
     - 'proxy.conf.mjs'
-    - 'update_version.sh'
   push:
     branches:
     - develop
@@ -43,11 +41,9 @@ on:
     - '.editorconfig'
     - '.gitattributes'
     - 'artemis-server-cli'
-    - 'check_client_override_version_updates.sh'
-    - 'check_modules.sh'
+    - 'supporting_scripts/**'
     - 'CITATION.cff'
     - 'proxy.conf.mjs'
-    - 'update_version.sh'
   release:
     types:
     - created
@@ -70,8 +66,9 @@ env:
 jobs:
 
   server-tests:
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
+    runs-on: aet-large-ubuntu
+    timeout-minutes: 80
+
     steps:
     - uses: actions/checkout@v4
     - name: Setup Java
@@ -188,7 +185,7 @@ jobs:
         reporter: java-junit
 
   client-tests:
-    runs-on: ubuntu-latest
+    runs-on: aet-large-ubuntu
     timeout-minutes: 30
     steps:
         - uses: actions/checkout@v4
@@ -271,3 +268,4 @@ jobs:
       run: npm install
     - name: Compile TypeScript Files With Typechecking
       run: npm run compile:ts
+

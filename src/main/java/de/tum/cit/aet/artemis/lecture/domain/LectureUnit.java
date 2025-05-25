@@ -17,7 +17,6 @@ import jakarta.persistence.InheritanceType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 
@@ -47,10 +46,9 @@ import de.tum.cit.aet.artemis.core.domain.User;
 // Annotation necessary to distinguish between concrete implementations of lecture-content when deserializing from JSON
 // @formatter:off
 @JsonSubTypes({
-    @JsonSubTypes.Type(value = AttachmentUnit.class, name = "attachment"),
+    @JsonSubTypes.Type(value = AttachmentVideoUnit.class, name = "attachment"),
     @JsonSubTypes.Type(value = ExerciseUnit.class, name = "exercise"),
     @JsonSubTypes.Type(value = TextUnit.class, name = "text"),
-    @JsonSubTypes.Type(value = VideoUnit.class, name = "video"),
     @JsonSubTypes.Type(value = OnlineUnit.class, name = "online")
 })
 // @formatter:on
@@ -78,10 +76,6 @@ public abstract class LectureUnit extends DomainObject implements LearningObject
     @OneToMany(mappedBy = "lectureUnit", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JsonIgnore // important, so that the completion status of other users do not leak to anyone
     private Set<LectureUnitCompletion> completedUsers = new HashSet<>();
-
-    @OneToOne(mappedBy = "lectureUnit")
-    @JsonIgnore
-    protected LectureTranscription lectureTranscription;
 
     public String getName() {
         return name;
@@ -116,13 +110,7 @@ public abstract class LectureUnit extends DomainObject implements LearningObject
         this.competencyLinks = competencyLinks;
     }
 
-    public LectureTranscription getLectureTranscription() {
-        return lectureTranscription;
-    }
-
-    public void setLectureTranscription(LectureTranscription lectureTranscription) {
-        this.lectureTranscription = lectureTranscription;
-    }
+    // NOTE: we explicitly do not add LectureTranscription here to avoid Hibernate issues because of its OneToOne relationship which is EAGER and cannot be set to LAZY
 
     @JsonIgnore(false)
     @JsonProperty("completed")

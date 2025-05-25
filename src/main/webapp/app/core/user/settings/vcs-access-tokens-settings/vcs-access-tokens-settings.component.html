@@ -1,6 +1,4 @@
-<h1 jhiTranslate="artemisApp.userSettings.vcsAccessTokenSettings">
-    <!--VCS access token Settings-->
-</h1>
+<h1 jhiTranslate="artemisApp.userSettings.vcsAccessTokenSettings"></h1>
 @if (currentUser) {
     <div class="list-group d-block">
         <div class="list-group-item">
@@ -32,16 +30,7 @@
                                 <tr>
                                     <td>***************</td>
                                     <td>
-                                        <button
-                                            [cdkCopyToClipboard]="currentUser!.vcsAccessToken || ''"
-                                            (cdkCopyToClipboardCopied)="onCopyFinished($event)"
-                                            [class.btn-success]="wasCopied"
-                                            class="btn btn-secondary btn-sm me-2"
-                                            id="copy-token-button"
-                                            type="button"
-                                        >
-                                            <fa-icon [icon]="faCopy" />
-                                        </button>
+                                        <jhi-copy-to-clipboard-button [copyText]="currentUser.vcsAccessToken ?? ''" [class]="'btn-secondary btn-sm me-2'" />
                                     </td>
                                     <td>{{ this.currentUser?.vcsAccessTokenExpiryDate | artemisDate }}</td>
                                     <td>
@@ -83,8 +72,7 @@
                     </dt>
                 </div>
             }
-        }
-        @if (edit) {
+        } @else {
             <div class="list-group-item">
                 <dt>
                     <h4 jhiTranslate="artemisApp.userSettings.vcsAccessTokensSettingsPage.addTokenTitle"></h4>

@@ -20,6 +20,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Language;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -143,7 +144,7 @@ class SubmissionExportIntegrationTest extends AbstractSpringIntegrationIndepende
 
         String[] parts = submission.getFilePath().split(Pattern.quote(File.separator));
         String fileName = parts[parts.length - 1];
-        File file = FileUploadSubmission.buildFilePath(exercise.getId(), submission.getId()).resolve(fileName).toFile();
+        File file = FilePathConverter.buildFileUploadSubmissionPath(exercise.getId(), submission.getId()).resolve(fileName).toFile();
 
         File parent = file.getParentFile();
         if (!parent.exists() && !parent.mkdirs()) {

@@ -31,10 +31,10 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
-import de.tum.cit.aet.artemis.lecture.domain.VideoUnit;
 import de.tum.cit.aet.artemis.lecture.dto.LectureTranscriptionDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
@@ -95,10 +95,8 @@ public class LectureTranscriptionResource {
                     .body(null);
         }
 
-        if (lectureUnit.getLectureTranscription() != null) {
-            lectureTranscriptionRepository.deleteById(lectureUnit.getLectureTranscription().getId());
-            lectureUnit.setLectureTranscription(null);
-        }
+        var existingTranscription = lectureTranscriptionRepository.findByLectureUnit_Id(lectureUnitId);
+        existingTranscription.ifPresent(lectureTranscription -> lectureTranscriptionRepository.deleteById(lectureTranscription.getId()));
 
         LectureTranscription lectureTranscription = new LectureTranscription(transcriptionDTO.language(), transcriptionDTO.segments(), lectureUnit);
 
@@ -108,7 +106,7 @@ public class LectureTranscriptionResource {
     }
 
     /**
-     * POST lecture/{lectureId}/lecture-unit/{lectureUnitId/ingest-transcription
+     * POST lecture/{lectureId}/lecture-unit/{lectureUnitId}/ingest-transcription
      * This endpoint is for starting the ingestion of all lectures or only one lecture when triggered in Artemis.
      *
      * @param lectureId     The id of the lecture of the transcription
@@ -134,12 +132,13 @@ public class LectureTranscriptionResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "artemisApp.iris.ingestionAlert.transcriptionIngestionError", "noTranscription"))
                     .body(null);
         }
-        if (!(lectureUnit instanceof VideoUnit)) {
+        if (!(lectureUnit instanceof AttachmentVideoUnit)) {
             return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createAlert(applicationName, "artemisApp.iris.ingestionAlert.transcriptionIngestionError", "lectureUnitIsNotAVideoUnit")).body(null);
+                    .headers(HeaderUtil.createAlert(applicationName, "artemisApp.iris.ingestionAlert.transcriptionIngestionError", "lectureUnitIsNotAAttachmentVideoUnit"))
+                    .body(null);
         }
         LectureTranscription transcriptionToIngest = transcription.get();
-        lectureService.ingestTranscriptionInPyris(transcriptionToIngest, course, lecture, (VideoUnit) lectureUnit);
+        lectureService.ingestTranscriptionInPyris(transcriptionToIngest, course, lecture, (AttachmentVideoUnit) lectureUnit);
         return ResponseEntity.ok().build();
     }
 

@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.tutorialgroup.web;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.util.DateUtil.isIso8601DateString;
 import static de.tum.cit.aet.artemis.core.util.DateUtil.isIso8601TimeString;
 
@@ -25,9 +24,8 @@ import jakarta.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
@@ -42,7 +40,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.TutorialGroupAssignedNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.TutorialGroupDeletedNotification;
@@ -61,9 +58,8 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.core.service.feature.Feature;
-import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupRegistrationApi;
+import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistrationType;
@@ -75,8 +71,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupChannelManageme
 import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupScheduleService;
 import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupService;
 
-@Profile(PROFILE_CORE)
-@FeatureToggle(Feature.TutorialGroups)
+@Conditional(TutorialGroupEnabled.class)
 @RestController
 @RequestMapping("api/tutorialgroup/")
 public class TutorialGroupResource {
@@ -589,15 +584,10 @@ public class TutorialGroupResource {
      */
     @GetMapping(value = "courses/{courseId}/tutorial-groups/export/json", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<String> exportTutorialGroupsToJSON(@PathVariable Long courseId, @RequestParam List<String> fields) {
+    public ResponseEntity<List<TutorialGroupService.TutorialGroupExportDTO>> exportTutorialGroupsToJSON(@PathVariable Long courseId, @RequestParam List<String> fields) {
         log.debug("REST request to export TutorialGroups to JSON for course: {}", courseId);
-        try {
-            String json = tutorialGroupService.exportTutorialGroupsToJSON(courseId, fields);
-            return ResponseEntity.ok().body(json);
-        }
-        catch (JsonProcessingException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to process JSON export");
-        }
+        var exportInformation = tutorialGroupService.exportTutorialGroupInformation(courseId, fields);
+        return ResponseEntity.ok().body(exportInformation);
     }
 
     /**

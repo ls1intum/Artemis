@@ -41,9 +41,9 @@ import {
     faUsers,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
-import { ButtonSize } from 'app/shared/components/button/button.component';
+import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
 import { ProgrammingLanguageFeatureService } from 'app/programming/shared/services/programming-language-feature/programming-language-feature.service';
-import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { MODULE_FEATURE_PLAGIARISM, PROFILE_IRIS, PROFILE_LOCALCI } from 'app/app.constants';
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from 'app/shared/detail-overview-list/detail-overview-list.component';
@@ -228,7 +228,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                             this.programmingLanguageFeatureService.getProgrammingLanguageFeature(programmingExercise.programmingLanguage)?.auxiliaryRepositoriesSupported ?? false;
                         if (this.irisEnabled && !this.isExamExercise) {
                             this.irisSettingsSubscription = this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {
-                                this.irisChatEnabled = settings?.irisChatSettings?.enabled ?? false;
+                                this.irisChatEnabled = settings?.irisProgrammingExerciseChatSettings?.enabled ?? false;
                             });
                         }
                         this.plagiarismEnabled = profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_PLAGIARISM);
@@ -598,7 +598,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     !this.isExamExercise && {
                         type: DetailType.ProgrammingIrisEnabled,
                         title: 'artemisApp.iris.settings.subSettings.enabled.chat',
-                        data: { exercise, disabled: !exercise.isAtLeastInstructor, subSettingsType: IrisSubSettingsType.CHAT },
+                        data: { exercise, disabled: !exercise.isAtLeastInstructor, subSettingsType: IrisSubSettingsType.PROGRAMMING_EXERCISE_CHAT },
                     },
             ],
         };

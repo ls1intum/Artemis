@@ -66,8 +66,16 @@
                                 <span class="d-none d-sm-inline" jhiTranslate="artemisApp.exercise.refresh">Refresh</span>
                             </button>
                         }
+                        @if (selectableSettingPresets) {
+                            <jhi-course-notification-preset-picker
+                                [availableCourseSettingPresets]="selectableSettingPresets"
+                                [selectedCourseSettingPreset]="selectedSettingPreset"
+                                [isSmallButton]="true"
+                                (onPresetSelected)="presetSelected($event)"
+                            />
+                        }
                         @if (course()!.id) {
-                            <jhi-course-notification-overview [jhiFeatureToggleHide]="FeatureToggle.CourseSpecificNotifications" [courseId]="course()!.id!" />
+                            <jhi-course-notification-overview [courseId]="course()!.id!" />
                         }
                     </jhi-course-title-bar>
 

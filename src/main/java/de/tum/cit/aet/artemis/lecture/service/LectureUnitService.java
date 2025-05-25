@@ -32,11 +32,12 @@ import de.tum.cit.aet.artemis.atlas.api.CompetencyRelationApi;
 import de.tum.cit.aet.artemis.atlas.api.CourseCompetencyApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
+import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
-import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
@@ -159,8 +160,9 @@ public class LectureUnitService {
     public void removeLectureUnit(@NotNull LectureUnit lectureUnit) {
         LectureUnit lectureUnitToDelete = lectureUnitRepository.findByIdWithCompetenciesAndSlidesElseThrow(lectureUnit.getId());
 
-        if (lectureUnitToDelete instanceof AttachmentUnit attachmentUnit) {
-            fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(URI.create((attachmentUnit.getAttachment().getLink()))), 5);
+        if (lectureUnitToDelete instanceof AttachmentVideoUnit attachmentVideoUnit) {
+            fileService.schedulePathForDeletion(
+                    FilePathConverter.fileSystemPathForExternalUri(URI.create((attachmentVideoUnit.getAttachment().getLink())), FilePathType.ATTACHMENT_UNIT), 5);
         }
 
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureUnitToDelete.getLecture().getId());
@@ -190,17 +192,6 @@ public class LectureUnitService {
     }
 
     /**
-     * Removes competency from all lecture units.
-     *
-     * @param lectureUnitLinks set of lecture unit links
-     * @param competency       competency to remove
-     */
-    public void removeCompetency(Set<CompetencyLectureUnitLink> lectureUnitLinks, CourseCompetency competency) {
-        competencyRelationApi.ifPresent(api -> api.deleteAllLectureUnitLinks(lectureUnitLinks));
-        competency.getLectureUnitLinks().removeAll(lectureUnitLinks);
-    }
-
-    /**
      * Validates the given URL string and returns the URL object
      *
      * @param urlString The URL string to validate
@@ -218,25 +209,25 @@ public class LectureUnitService {
 
     /**
      * This method is responsible for ingesting a specific `LectureUnit` into Pyris, but only if it is an instance of
-     * `AttachmentUnit`. If the Pyris webhook service is available, it attempts to add the `LectureUnit` to the Pyris
+     * `AttachmentVideoUnit`. If the Pyris webhook service is available, it attempts to add the `LectureUnit` to the Pyris
      * database.
      * The method responds with different HTTP status codes based on the result:
      * Returns {OK} if the ingestion is successful.
      * Returns {SERVICE_UNAVAILABLE} if the Pyris webhook service is unavailable or if the ingestion fails.
-     * Returns {400 BAD_REQUEST} if the provided lecture unit is not of type {AttachmentUnit}.
+     * Returns {400 BAD_REQUEST} if the provided lecture unit is not of type {AttachmentVideoUnit}.
      *
-     * @param lectureUnit the lecture unit to be ingested, which must be an instance of AttachmentUnit.
+     * @param lectureUnit the lecture unit to be ingested, which must be an instance of AttachmentVideoUnit.
      * @return ResponseEntity<Void> representing the outcome of the operation with the appropriate HTTP status.
      */
     public ResponseEntity<Void> ingestLectureUnitInPyris(LectureUnit lectureUnit) {
-        if (!(lectureUnit instanceof AttachmentUnit)) {
+        if (!(lectureUnit instanceof AttachmentVideoUnit)) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
         if (irisLectureApi.isEmpty()) {
             log.error("Could not send Lecture Unit to Pyris: Pyris webhook service is not available, check if IRIS is enabled.");
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
         }
-        boolean isIngested = irisLectureApi.get().addLectureUnitToPyrisDB((AttachmentUnit) lectureUnit) != null;
+        boolean isIngested = irisLectureApi.get().addLectureUnitToPyrisDB((AttachmentVideoUnit) lectureUnit) != null;
         return ResponseEntity.status(isIngested ? HttpStatus.OK : HttpStatus.BAD_REQUEST).build();
     }
 

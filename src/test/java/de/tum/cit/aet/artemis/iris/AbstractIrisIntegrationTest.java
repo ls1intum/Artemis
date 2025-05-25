@@ -58,13 +58,27 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
 
     protected void activateIrisGlobally() {
         var globalSettings = irisSettingsService.getGlobalSettings();
-        activateSubSettings(globalSettings.getIrisChatSettings());
+        activateSubSettings(globalSettings.getIrisProgrammingExerciseChatSettings());
         activateSubSettings(globalSettings.getIrisTextExerciseChatSettings());
         activateSubSettings(globalSettings.getIrisCourseChatSettings());
         activateSubSettings(globalSettings.getIrisLectureIngestionSettings());
         activateSubSettings(globalSettings.getIrisCompetencyGenerationSettings());
         activateSubSettings(globalSettings.getIrisLectureChatSettings());
         activateSubSettings(globalSettings.getIrisFaqIngestionSettings());
+        activateSubSettings(globalSettings.getIrisTutorSuggestionSettings());
+        irisSettingsRepository.save(globalSettings);
+    }
+
+    protected void disableIrisGlobally() {
+        var globalSettings = irisSettingsService.getGlobalSettings();
+        deactivateSubSettings(globalSettings.getIrisProgrammingExerciseChatSettings());
+        deactivateSubSettings(globalSettings.getIrisTextExerciseChatSettings());
+        deactivateSubSettings(globalSettings.getIrisCourseChatSettings());
+        deactivateSubSettings(globalSettings.getIrisLectureIngestionSettings());
+        deactivateSubSettings(globalSettings.getIrisCompetencyGenerationSettings());
+        deactivateSubSettings(globalSettings.getIrisLectureChatSettings());
+        deactivateSubSettings(globalSettings.getIrisFaqIngestionSettings());
+        deactivateSubSettings(globalSettings.getIrisTutorSuggestionSettings());
         irisSettingsRepository.save(globalSettings);
     }
 
@@ -79,24 +93,56 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
         settings.setAllowedVariants(new TreeSet<>(Set.of("default")));
     }
 
+    /**
+     * Sets a type of IrisSubSettings to disabled.
+     *
+     * @param settings the settings to be disabled
+     */
+    private void deactivateSubSettings(IrisSubSettings settings) {
+        settings.setEnabled(false);
+        settings.setSelectedVariant("default");
+        settings.setAllowedVariants(new TreeSet<>(Set.of("default")));
+    }
+
     protected void activateIrisFor(Course course) {
         var courseSettings = irisSettingsService.getDefaultSettingsFor(course);
 
-        activateSubSettings(courseSettings.getIrisChatSettings());
+        activateSubSettings(courseSettings.getIrisProgrammingExerciseChatSettings());
         activateSubSettings(courseSettings.getIrisTextExerciseChatSettings());
         activateSubSettings(courseSettings.getIrisLectureChatSettings());
         activateSubSettings(courseSettings.getIrisCourseChatSettings());
         activateSubSettings(courseSettings.getIrisCompetencyGenerationSettings());
         activateSubSettings(courseSettings.getIrisLectureIngestionSettings());
         activateSubSettings(courseSettings.getIrisFaqIngestionSettings());
+        activateSubSettings(courseSettings.getIrisTutorSuggestionSettings());
 
+        irisSettingsRepository.save(courseSettings);
+    }
+
+    protected void disableCourseChatFor(Course course) {
+        var courseSettings = irisSettingsService.getDefaultSettingsFor(course);
+        deactivateSubSettings(courseSettings.getIrisCourseChatSettings());
+        irisSettingsRepository.save(courseSettings);
+    }
+
+    protected void disableProgrammingExerciseChatFor(Course course) {
+        var courseSettings = irisSettingsService.getDefaultSettingsFor(course);
+        deactivateSubSettings(courseSettings.getIrisProgrammingExerciseChatSettings());
         irisSettingsRepository.save(courseSettings);
     }
 
     protected void activateIrisFor(Exercise exercise) {
         var exerciseSettings = irisSettingsService.getDefaultSettingsFor(exercise);
-        activateSubSettings(exerciseSettings.getIrisChatSettings());
+        activateSubSettings(exerciseSettings.getIrisProgrammingExerciseChatSettings());
         activateSubSettings(exerciseSettings.getIrisTextExerciseChatSettings());
+
+        irisSettingsRepository.save(exerciseSettings);
+    }
+
+    protected void disableIrisFor(Exercise exercise) {
+        var exerciseSettings = irisSettingsService.getDefaultSettingsFor(exercise);
+        deactivateSubSettings(exerciseSettings.getIrisProgrammingExerciseChatSettings());
+        deactivateSubSettings(exerciseSettings.getIrisTextExerciseChatSettings());
 
         irisSettingsRepository.save(exerciseSettings);
     }

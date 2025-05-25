@@ -1,0 +1,16 @@
+{
+  "tool": "CLANG_TIDY",
+  "issues": [
+    {
+      "filePath": "/var/tmp/testing-dir/assignment/src/main.cpp",
+      "startLine": 5,
+      "endLine": 5,
+      "startColumn": 16,
+      "endColumn": 17,
+      "rule": "clang-analyzer-core.NullDereference",
+      "category": "Lint",
+      "message": "Dereference of null pointer (loaded from variable 'p')",
+      "priority": "warning"
+    }
+  ]
+}

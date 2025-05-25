@@ -3,8 +3,10 @@ package de.tum.cit.aet.artemis.lecture.repository;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -12,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
+import de.tum.cit.aet.artemis.lecture.dto.SlideDTO;
 import de.tum.cit.aet.artemis.lecture.dto.SlideUnhideDTO;
 
 /**
@@ -21,9 +24,9 @@ import de.tum.cit.aet.artemis.lecture.dto.SlideUnhideDTO;
 @Repository
 public interface SlideRepository extends ArtemisJpaRepository<Slide, Long> {
 
-    Slide findSlideByAttachmentUnitIdAndSlideNumber(Long attachmentUnitId, Integer slideNumber);
+    Slide findSlideByAttachmentVideoUnitIdAndSlideNumber(long attachmentVideoUnitId, int slideNumber);
 
-    List<Slide> findAllByAttachmentUnitId(Long attachmentUnitId);
+    List<Slide> findAllByAttachmentVideoUnitId(Long attachmentUnitId);
 
     /**
      * Find all slides with non-null hidden field but only returns the id and hidden fields
@@ -38,13 +41,13 @@ public interface SlideRepository extends ArtemisJpaRepository<Slide, Long> {
     List<SlideUnhideDTO> findHiddenSlidesProjection();
 
     /**
-     * Find slides for a specific attachment unit where the hidden field is not null
+     * Find slides for a specific attachment video unit where the hidden field is not null
      * (these are the hidden slides)
      *
-     * @param attachmentUnitId The ID of the attachment unit
-     * @return List of hidden slides for the attachment unit
+     * @param attachmentUnitId The ID of the attachment video unit
+     * @return List of hidden slides for the attachment video unit
      */
-    List<Slide> findByAttachmentUnitIdAndHiddenNotNull(Long attachmentUnitId);
+    List<Slide> findByAttachmentVideoUnitIdAndHiddenNotNull(Long attachmentUnitId);
 
     /**
      * Find all slides associated with a specific exercise
@@ -64,11 +67,20 @@ public interface SlideRepository extends ArtemisJpaRepository<Slide, Long> {
      *
      * @param slideId The ID of the slide to unhide
      */
-    @Transactional
-    default void unhideSlide(Long slideId) {
-        findById(slideId).ifPresent(slide -> {
-            slide.setHidden(null);
-            save(slide);
-        });
-    }
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE Slide s
+            SET s.hidden = NULL
+            WHERE s.id = :slideId
+            """)
+    void unhideSlide(@Param("slideId") Long slideId);
+
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.lecture.dto.SlideDTO(s.id, s.slideNumber, s.hidden, s.attachmentVideoUnit.id)
+            FROM Slide s
+            WHERE s.attachmentVideoUnit.id IN :attachmentVideoUnitIds
+                AND (s.hidden IS NULL OR s.hidden < CURRENT_TIMESTAMP())
+            """)
+    Set<SlideDTO> findVisibleSlidesByAttachmentVideoUnits(@Param("attachmentVideoUnitIds") Set<Long> attachmentVideoUnitIds);
 }

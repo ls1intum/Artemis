@@ -16,12 +16,14 @@ import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.domain.ConversationNotificationRecipientSummary;
+import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
 import de.tum.cit.aet.artemis.communication.domain.CreatedConversationMessage;
 import de.tum.cit.aet.artemis.communication.domain.DisplayPriority;
 import de.tum.cit.aet.artemis.communication.domain.Post;
@@ -33,9 +35,11 @@ import de.tum.cit.aet.artemis.communication.domain.conversation.OneToOneChat;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewAnnouncementNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewMentionNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewPostNotification;
+import de.tum.cit.aet.artemis.communication.dto.CreatePostDTO;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.PostContextFilterDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostDTO;
+import de.tum.cit.aet.artemis.communication.dto.UpdatePostingDTO;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
 import de.tum.cit.aet.artemis.communication.repository.PostRepository;
@@ -51,10 +55,7 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.core.service.feature.Feature;
-import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
-import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 
 @Profile(PROFILE_CORE)
 @Service
@@ -72,43 +73,43 @@ public class ConversationMessagingService extends PostingService {
 
     private final PostRepository postRepository;
 
-    private final FeatureToggleService featureToggleService;
-
     private final SingleUserNotificationService singleUserNotificationService;
 
-    protected ConversationMessagingService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository,
-            ConversationMessageRepository conversationMessageRepository, AuthorizationCheckService authorizationCheckService, WebsocketMessagingService websocketMessagingService,
-            UserRepository userRepository, ConversationService conversationService, ConversationParticipantRepository conversationParticipantRepository,
-            ChannelAuthorizationService channelAuthorizationService, SavedPostRepository savedPostRepository, CourseNotificationService courseNotificationService,
-            PostRepository postRepository, FeatureToggleService featureToggleService, SingleUserNotificationService singleUserNotificationService) {
-        super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, websocketMessagingService, conversationParticipantRepository,
-                savedPostRepository);
+    protected ConversationMessagingService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, ConversationMessageRepository conversationMessageRepository,
+            AuthorizationCheckService authorizationCheckService, WebsocketMessagingService websocketMessagingService, UserRepository userRepository,
+            ConversationService conversationService, ConversationParticipantRepository conversationParticipantRepository, ChannelAuthorizationService channelAuthorizationService,
+            SavedPostRepository savedPostRepository, CourseNotificationService courseNotificationService, PostRepository postRepository,
+            SingleUserNotificationService singleUserNotificationService) {
+        super(courseRepository, userRepository, exerciseRepository, authorizationCheckService, websocketMessagingService, conversationParticipantRepository, savedPostRepository);
         this.conversationService = conversationService;
         this.conversationMessageRepository = conversationMessageRepository;
         this.channelAuthorizationService = channelAuthorizationService;
         this.courseNotificationService = courseNotificationService;
         this.postRepository = postRepository;
-        this.featureToggleService = featureToggleService;
         this.singleUserNotificationService = singleUserNotificationService;
     }
 
     /**
      * Creates a new message in a conversation
      *
-     * @param courseId   the id where the conversation is located
-     * @param newMessage the message to be created includes the conversation id
+     * @param courseId the id where the conversation is located
+     * @param message  the post to be created includes the conversation id
      * @return the created message and associated data
      */
-    public CreatedConversationMessage createMessage(Long courseId, Post newMessage) {
+    public CreatedConversationMessage createMessage(Long courseId, CreatePostDTO message) {
         var author = this.userRepository.getUserWithGroupsAndAuthorities();
+
+        var newMessage = message.toEntity();
         newMessage.setAuthor(author);
         newMessage.setDisplayPriority(DisplayPriority.NONE);
 
-        var conversationId = newMessage.getConversation().getId();
+        var conversationId = message.conversation().id();
 
         var conversation = conversationService.isMemberOrCreateForCourseWideElseThrow(conversationId, author, Optional.empty())
                 .orElse(conversationService.loadConversationWithParticipantsIfGroupChat(conversationId));
         log.debug("      createMessage:conversationService.isMemberOrCreateForCourseWideElseThrow DONE");
+
+        newMessage.setConversation(conversation);
 
         var course = preCheckUserAndCourseForMessaging(author, courseId);
 
@@ -160,7 +161,7 @@ public class ConversationMessagingService extends PostingService {
         if (createdConversationMessage.completeConversation() instanceof Channel channel && channel.getIsCourseWide()) {
             // We don't need the list of participants for course-wide channels. We can delay the db query and send the WS messages first
             if (conversationService.isChannelVisibleToStudents(channel)) {
-                broadcastForPost(postDTO, course.getId(), null, null);
+                broadcastForPost(postDTO, course.getId(), null);
             }
             log.debug("      broadcastForPost DONE");
 
@@ -180,7 +181,7 @@ public class ConversationMessagingService extends PostingService {
                 }
             }
 
-            broadcastForPost(postDTO, course.getId(), recipientSummaries, createdConversationMessage.mentionedUsers());
+            broadcastForPost(postDTO, course.getId(), recipientSummaries);
 
             log.debug("      broadcastForPost DONE");
         }
@@ -188,58 +189,56 @@ public class ConversationMessagingService extends PostingService {
         var post = createdConversationMessage.messageWithHiddenDetails();
         var author = post.getAuthor();
 
-        if (featureToggleService.isFeatureEnabled(Feature.CourseSpecificNotifications)) {
-            String channelType = switch (conversation) {
-                case OneToOneChat ignored -> "oneToOneChat";
-                case GroupChat ignored -> "groupChat";
-                default -> "channel";
-            };
+        String channelType = switch (conversation) {
+            case OneToOneChat ignored -> "oneToOneChat";
+            case GroupChat ignored -> "groupChat";
+            default -> "channel";
+        };
 
-            var mentionedUserRecipients = singleUserNotificationService.filterAllowedRecipientsInMentionedUsers(createdConversationMessage.mentionedUsers(), conversation)
-                    .filter((mentionedUser) -> !Objects.equals(mentionedUser.getId(), author.getId())).toList();
+        var mentionedUserRecipients = singleUserNotificationService.filterAllowedRecipientsInMentionedUsers(createdConversationMessage.mentionedUsers(), conversation)
+                .filter((mentionedUser) -> !Objects.equals(mentionedUser.getId(), author.getId())).toList();
 
-            if (conversation instanceof Channel channel && channel.getIsAnnouncementChannel()) {
-                var newAnnouncementNotification = new NewAnnouncementNotification(course.getId(), course.getTitle(), course.getCourseIcon(), post.getId(), post.getTitle(),
-                        post.getContent(), author.getName(), author.getImageUrl(), author.getId(), conversation.getId());
+        if (conversation instanceof Channel channel && channel.getIsAnnouncementChannel()) {
+            var newAnnouncementNotification = new NewAnnouncementNotification(course.getId(), course.getTitle(), course.getCourseIcon(), post.getId(), post.getTitle(),
+                    post.getContent(), author.getName(), author.getImageUrl(), author.getId(), conversation.getId());
 
-                // Announcements are always sent, even for hidden/muted channels
-                courseNotificationService.sendCourseNotification(newAnnouncementNotification,
-                        recipientSummaries.stream().filter((summary) -> summary.userId() != author.getId()).map((summary) -> {
-                            var user = new User(summary.userId());
-                            user.setLogin(summary.userLogin());
-                            user.setEmail(summary.userEmail());
-                            user.setFirstName(summary.firstName());
-                            user.setLastName(summary.lastName());
-                            user.setLangKey(summary.userLangKey());
-                            return user;
-                        }).toList());
-            }
-            else {
-                var newPostNotification = new NewPostNotification(course.getId(), course.getTitle(), course.getCourseIcon(), post.getId(), post.getContent(), conversation.getId(),
-                        conversation.getHumanReadableNameForReceiver(post.getAuthor()), channelType, author.getName(), author.getImageUrl(), author.getId());
-
-                var isChannelVisibleForStudents = (conversation instanceof Channel channel) && conversationService.isChannelVisibleToStudents(channel);
-
-                // We only send notifications to users that are not the author, that are part of the conversation, that have the role rights to see it,
-                // that did not mute or hide it and if they were not mentioned (since they get a separate notification for that)
-                courseNotificationService.sendCourseNotification(newPostNotification,
-                        recipientSummaries.stream()
-                                .filter((summary) -> summary.userId() != author.getId() && !summary.isConversationHidden() && !summary.isConversationMuted()
-                                        && (isChannelVisibleForStudents || summary.isAtLeastTutorInCourse())
-                                        && mentionedUserRecipients.stream().noneMatch((mentionedUser) -> summary.userId() == mentionedUser.getId()))
-                                .map((summary) -> {
-                                    var user = new User(summary.userId());
-                                    user.setLogin(summary.userLogin());
-                                    return user;
-                                }).toList());
-            }
-
-            var mentionCourseNotification = new NewMentionNotification(course.getId(), conversation.getCourse().getTitle(), conversation.getCourse().getCourseIcon(),
-                    post.getContent(), post.getCreationDate().toString(), post.getAuthor().getName(), post.getId(), null, null, post.getAuthor().getName(),
-                    post.getAuthor().getId(), post.getAuthor().getImageUrl(), null, conversation.getHumanReadableNameForReceiver(post.getAuthor()), conversation.getId());
-
-            this.courseNotificationService.sendCourseNotification(mentionCourseNotification, mentionedUserRecipients);
+            // Announcements are always sent, even for hidden/muted channels
+            courseNotificationService.sendCourseNotification(newAnnouncementNotification,
+                    recipientSummaries.stream().filter((summary) -> summary.userId() != author.getId()).map((summary) -> {
+                        var user = new User(summary.userId());
+                        user.setLogin(summary.userLogin());
+                        user.setEmail(summary.userEmail());
+                        user.setFirstName(summary.firstName());
+                        user.setLastName(summary.lastName());
+                        user.setLangKey(summary.userLangKey());
+                        return user;
+                    }).toList());
         }
+        else {
+            var newPostNotification = new NewPostNotification(course.getId(), course.getTitle(), course.getCourseIcon(), post.getId(), post.getContent(), conversation.getId(),
+                    conversation.getHumanReadableNameForReceiver(post.getAuthor()), channelType, author.getName(), author.getImageUrl(), author.getId());
+
+            var isChannelVisibleForStudents = (conversation instanceof Channel channel) && conversationService.isChannelVisibleToStudents(channel);
+
+            // We only send notifications to users that are not the author, that are part of the conversation, that have the role rights to see it,
+            // that did not mute or hide it and if they were not mentioned (since they get a separate notification for that)
+            courseNotificationService.sendCourseNotification(newPostNotification,
+                    recipientSummaries.stream()
+                            .filter((summary) -> summary.userId() != author.getId() && !summary.isConversationHidden() && !summary.isConversationMuted()
+                                    && (isChannelVisibleForStudents || summary.isAtLeastTutorInCourse())
+                                    && mentionedUserRecipients.stream().noneMatch((mentionedUser) -> summary.userId() == mentionedUser.getId()))
+                            .map((summary) -> {
+                                var user = new User(summary.userId());
+                                user.setLogin(summary.userLogin());
+                                return user;
+                            }).toList());
+        }
+
+        var mentionCourseNotification = new NewMentionNotification(course.getId(), conversation.getCourse().getTitle(), conversation.getCourse().getCourseIcon(), post.getContent(),
+                post.getCreationDate().toString(), post.getAuthor().getName(), post.getId(), null, null, post.getAuthor().getName(), post.getAuthor().getId(),
+                post.getAuthor().getImageUrl(), null, conversation.getHumanReadableNameForReceiver(post.getAuthor()), conversation.getId());
+
+        this.courseNotificationService.sendCourseNotification(mentionCourseNotification, mentionedUserRecipients);
 
         conversationParticipantRepository.incrementUnreadMessagesCountOfParticipants(conversation.getId(), author.getId());
     }
@@ -275,8 +274,26 @@ public class ConversationMessagingService extends PostingService {
         // This check is needed to avoid resetting the unread count when searching
         if (postContextFilter.searchText() == null && postContextFilter.conversationIds().length == 1) {
             Long conversationId = conversationIds.getFirst();
-            // invoke async due to db write access to avoid that the client has to wait
-            conversationParticipantRepository.updateLastReadAsync(requestingUser.getId(), conversationId, ZonedDateTime.now());
+            var participantSet = conversationParticipantRepository.findConversationParticipantsByConversationIdAndUserIds(conversationId, Set.of(requestingUser.getId()));
+
+            // If there is no entry yet (e.g. for course-wide channels in which the user did not write a post yet,
+            // we create the entry to be able to track the unread count)
+            if (participantSet.isEmpty()) {
+                var participant = ConversationParticipant.createWithDefaultValues(requestingUser, conversationService.getConversationById(conversationId));
+                participant.setLastRead(ZonedDateTime.now());
+                // We surround this with a try/catch to avoid errors in case there are multiple requests at the exact
+                // same time and the select query on top was not aware of that yet. Therefore, we simply continue.
+                try {
+                    conversationParticipantRepository.save(participant);
+                }
+                catch (DataIntegrityViolationException e) {
+                    // Continue
+                }
+            }
+            else {
+                // invoke async due to db write access to avoid that the client has to wait
+                conversationParticipantRepository.updateLastReadAsync(requestingUser.getId(), conversationId, ZonedDateTime.now());
+            }
         }
 
         return conversationPosts;
@@ -292,10 +309,10 @@ public class ConversationMessagingService extends PostingService {
      * @param messagePost post to update
      * @return updated post that was persisted
      */
-    public Post updateMessage(Long courseId, Long postId, Post messagePost) {
+    public Post updateMessage(Long courseId, Long postId, UpdatePostingDTO messagePost) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         // check
-        if (messagePost.getId() == null || !Objects.equals(messagePost.getId(), postId)) {
+        if (!Objects.equals(messagePost.id(), postId)) {
             throw new BadRequestAlertException("Invalid id", METIS_POST_ENTITY_NAME, "idnull");
         }
 
@@ -303,11 +320,11 @@ public class ConversationMessagingService extends PostingService {
         Conversation conversation = mayUpdateOrDeleteMessageElseThrow(existingMessage, user);
         var course = preCheckUserAndCourseForMessaging(user, courseId);
 
-        parseUserMentions(course, messagePost.getContent());
+        parseUserMentions(course, messagePost.content());
 
         // update: allow overwriting of values only for depicted fields
-        existingMessage.setContent(messagePost.getContent());
-        existingMessage.setTitle(messagePost.getTitle());
+        existingMessage.setContent(messagePost.content());
+        existingMessage.setTitle(messagePost.title());
         existingMessage.setUpdatedDate(ZonedDateTime.now());
 
         Post updatedPost = conversationMessageRepository.save(existingMessage);
@@ -315,7 +332,7 @@ public class ConversationMessagingService extends PostingService {
 
         // emit a post update via websocket
         preparePostForBroadcast(updatedPost);
-        broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course.getId(), null, null);
+        broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course.getId(), null);
 
         return updatedPost;
     }
@@ -347,7 +364,7 @@ public class ConversationMessagingService extends PostingService {
 
         conversationService.notifyAllConversationMembersAboutUpdate(conversation);
         preparePostForBroadcast(post);
-        broadcastForPost(new PostDTO(post, MetisCrudAction.DELETE), course.getId(), null, null);
+        broadcastForPost(new PostDTO(post, MetisCrudAction.DELETE), course.getId(), null);
     }
 
     /**
@@ -379,7 +396,7 @@ public class ConversationMessagingService extends PostingService {
         message.getConversation().hideDetails();
         preparePostForBroadcast(message);
         preparePostForBroadcast(updatedMessage);
-        broadcastForPost(new PostDTO(message, MetisCrudAction.UPDATE), course.getId(), null, null);
+        broadcastForPost(new PostDTO(message, MetisCrudAction.UPDATE), course.getId(), null);
         return updatedMessage;
     }
 

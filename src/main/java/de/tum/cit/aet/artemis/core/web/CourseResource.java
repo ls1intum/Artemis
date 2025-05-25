@@ -68,6 +68,7 @@ import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
 import de.tum.cit.aet.artemis.atlas.api.LearningPathApi;
 import de.tum.cit.aet.artemis.communication.service.ConductAgreementService;
+import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -103,10 +104,11 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.CourseService;
-import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -290,17 +292,17 @@ public class CourseResource {
         courseUpdate.validateUnenrollmentEndDate();
 
         if (file != null) {
-            Path basePath = FilePathService.getCourseIconFilePath();
-            Path savePath = fileService.saveFile(file, basePath, false);
-            courseUpdate.setCourseIcon(FilePathService.publicPathForActualPathOrThrow(savePath, courseId).toString());
+            Path basePath = FilePathConverter.getCourseIconFilePath();
+            Path savePath = FileUtil.saveFile(file, basePath, FilePathType.COURSE_ICON, false);
+            courseUpdate.setCourseIcon(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.COURSE_ICON, courseId).toString());
             if (existingCourse.getCourseIcon() != null) {
                 // delete old course icon
-                fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(new URI(existingCourse.getCourseIcon())), 0);
+                fileService.schedulePathForDeletion(FilePathConverter.fileSystemPathForExternalUri(new URI(existingCourse.getCourseIcon()), FilePathType.COURSE_ICON), 0);
             }
         }
         else if (courseUpdate.getCourseIcon() == null && existingCourse.getCourseIcon() != null) {
             // delete old course icon
-            fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(new URI(existingCourse.getCourseIcon())), 0);
+            fileService.schedulePathForDeletion(FilePathConverter.fileSystemPathForExternalUri(new URI(existingCourse.getCourseIcon()), FilePathType.COURSE_ICON), 0);
         }
 
         if (courseUpdate.isOnlineCourse() != existingCourse.isOnlineCourse()) {
@@ -372,8 +374,8 @@ public class CourseResource {
 
         Set<Course> courses = courseService.findAllOnlineCoursesForPlatformForUser(clientId, user);
 
-        List<OnlineCourseDTO> onlineCourseDTOS = courses.stream()
-                .map(c -> new OnlineCourseDTO(c.getId(), c.getTitle(), c.getShortName(), c.getOnlineCourseConfiguration().getLtiPlatformConfiguration().getRegistrationId()))
+        List<OnlineCourseDTO> onlineCourseDTOS = courses.stream().map(c -> new OnlineCourseDTO(c.getId(), c.getTitle(), c.getShortName(),
+                c.getOnlineCourseConfiguration().getLtiPlatformConfiguration().getRegistrationId(), c.getStartDate(), c.getEndDate(), c.getDescription(), c.getNumberOfStudents()))
                 .toList();
 
         return ResponseEntity.ok(onlineCourseDTOS);
@@ -601,7 +603,7 @@ public class CourseResource {
         log.debug("courseService.fetchPlagiarismCasesForCourseExercises done in getCourseForDashboard");
         GradingScale gradingScale = gradingScaleRepository.findByCourseId(course.getId()).orElse(null);
         log.debug("gradingScaleRepository.findByCourseId done in getCourseForDashboard");
-        CourseForDashboardDTO courseForDashboardDTO = courseScoreCalculationService.getScoresAndParticipationResults(course, gradingScale, user.getId());
+        CourseForDashboardDTO courseForDashboardDTO = courseScoreCalculationService.getScoresAndParticipationResults(course, gradingScale, user.getId(), true);
         logDuration(List.of(course), user, timeNanoStart, "courses/" + courseId + "/for-dashboard (single course)");
         return ResponseEntity.ok(courseForDashboardDTO);
     }
@@ -667,7 +669,7 @@ public class CourseResource {
         Set<CourseForDashboardDTO> coursesForDashboard = new HashSet<>();
         for (Course course : courses) {
             GradingScale gradingScale = gradingScales.stream().filter(scale -> scale.getCourse().getId().equals(course.getId())).findFirst().orElse(null);
-            CourseForDashboardDTO courseForDashboardDTO = courseScoreCalculationService.getScoresAndParticipationResults(course, gradingScale, user.getId());
+            CourseForDashboardDTO courseForDashboardDTO = courseScoreCalculationService.getScoresAndParticipationResults(course, gradingScale, user.getId(), false);
             coursesForDashboard.add(courseForDashboardDTO);
         }
         logDuration(courses, user, timeNanoStart, "courses/for-dashboard (multiple courses)");

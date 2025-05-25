@@ -64,7 +64,7 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 
 /**
  * Note: this class should be independent of the actual VCS and CIS and contains common test logic for scenarios:
- * 1) Jenkins + LocalVc
+ * 1) Jenkins + LocalVC
  */
 @Service
 @Profile(SPRING_PROFILE_TEST)
@@ -119,7 +119,7 @@ public class UserTestService {
     private SubmissionTestRepository submissionRepository;
 
     @Autowired
-    private LearnerProfileRepository learnerProfileRepository;
+    private Optional<LearnerProfileRepository> learnerProfileRepository;
 
     @Autowired
     private ExerciseTestRepository exerciseTestRepository;
@@ -204,7 +204,7 @@ public class UserTestService {
     // Test
     public void deleteUser_isSuccessful() throws Exception {
         student.setRegistrationNumber("123");
-        student.setImageUrl("https://www.somewebsite.com/image.jpg");
+        student.setImageUrl("images/user/profiles-pictures/image.jpg");
         userTestRepository.save(student);
 
         request.delete("/api/core/admin/users/" + student.getLogin(), HttpStatus.OK);
@@ -413,7 +413,9 @@ public class UserTestService {
         assertThat(student).as("New user is equal to request response").isEqualTo(response);
         assertThat(student).as("New user is equal to new user in DB").isEqualTo(userInDB);
 
-        assertThat(learnerProfileRepository.findByUser(student)).isNotEmpty();
+        learnerProfileRepository.ifPresent((repository) -> {
+            assertThat(repository.findByUser(student)).isNotEmpty();
+        });
 
         return userInDB;
     }

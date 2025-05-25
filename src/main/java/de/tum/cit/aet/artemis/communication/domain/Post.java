@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.communication.domain;
 import java.util.HashSet;
 import java.util.Set;
 
+import jakarta.annotation.Nullable;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
@@ -29,12 +30,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 
 /**
- * A Post, i.e. start of a Metis thread.
+ * A message in the communication system which can be answered using {@link AnswerPost}.
  */
 @Entity
 @PostConstraints
@@ -62,18 +61,6 @@ public class Post extends Posting {
     private Set<String> tags = new HashSet<>();
 
     @ManyToOne
-    @JsonIncludeProperties({ "id", "title" })
-    private Exercise exercise;
-
-    @ManyToOne
-    @JsonIncludeProperties({ "id", "title" })
-    private Lecture lecture;
-
-    @ManyToOne
-    @JsonIncludeProperties({ "id", "title" })
-    private Course course;
-
-    @ManyToOne
     private Conversation conversation;
 
     // TODO: convert to real database enum
@@ -81,6 +68,7 @@ public class Post extends Posting {
     @Column(name = "display_priority", columnDefinition = "varchar(25) default 'NONE'")
     private DisplayPriority displayPriority = DisplayPriority.NONE;
 
+    // TODO: we should convert this to "Long plagiarismCaseId" to avoid performance issues. The plagiarism case is only needed in very specific cases, so do not load it by default!
     @OneToOne
     @JoinColumn(name = "plagiarism_case_id")
     @JsonIncludeProperties({ "id" })
@@ -174,10 +162,6 @@ public class Post extends Posting {
         this.tags.add(tag);
     }
 
-    public void setCourse(Course course) {
-        this.course = course;
-    }
-
     public Conversation getConversation() {
         return conversation;
     }
@@ -227,6 +211,7 @@ public class Post extends Posting {
      */
     @JsonIgnore
     @Override
+    @Nullable
     public Course getCoursePostingBelongsTo() {
         if (this.plagiarismCase != null) {
             return this.plagiarismCase.getExercise().getCourseViaExerciseGroupOrCourseMember();

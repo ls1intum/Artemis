@@ -9,7 +9,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
-class BuildJobGitServiceTest extends BuildAgentIntegrationTest {
+import de.tum.cit.aet.artemis.shared.base.AbstractArtemisBuildAgentTest;
+
+class BuildJobGitServiceTest extends AbstractArtemisBuildAgentTest {
 
     @BeforeEach
     void setUp() {
@@ -22,6 +24,7 @@ class BuildJobGitServiceTest extends BuildAgentIntegrationTest {
     void shouldNotUseSshWhenUseSshBuildAgentDisabled() {
         assertThat(buildJobGitService.useSsh()).isFalse();
         buildJobGitService.init();
+        // should not throw
     }
 
     @Test
@@ -29,6 +32,7 @@ class BuildJobGitServiceTest extends BuildAgentIntegrationTest {
         ReflectionTestUtils.setField(buildJobGitService, "useSshForBuildAgent", true);
         assertThat(buildJobGitService.useSsh()).isTrue();
         buildJobGitService.init();
+        // should not throw
     }
 
     @Test

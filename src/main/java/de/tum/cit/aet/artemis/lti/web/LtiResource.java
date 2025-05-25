@@ -158,14 +158,13 @@ public class LtiResource {
         OidcIdToken idToken = new OidcIdToken(ltiIdToken, null, null, SignedJWT.parse(ltiIdToken).getJWTClaimsSet().getClaims());
 
         String targetLink = switch (resourceType) {
-            case EXERCISE, LECTURE, GROUPED_EXERCISE -> {
+            case EXERCISE, LECTURE, GROUPED_EXERCISE, GROUPED_LECTURE -> {
                 if (contentIds == null || contentIds.isEmpty()) {
                     throw new BadRequestAlertException("Content IDs are required for resource type: " + resourceType, "LTI", "contentIdsRequired");
                 }
                 yield ltiDeepLinkingService.performDeepLinking(idToken, clientRegistrationId, courseId, contentIds, resourceType);
             }
             case COMPETENCY, LEARNING_PATH, IRIS -> ltiDeepLinkingService.performDeepLinking(idToken, clientRegistrationId, courseId, null, resourceType);
-            default -> throw new BadRequestAlertException("Unsupported resource type provided: " + resourceType, "LTI", "invalidResourceType");
         };
 
         ObjectNode json = new ObjectMapper().createObjectNode();

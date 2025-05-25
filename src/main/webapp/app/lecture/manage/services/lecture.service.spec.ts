@@ -10,7 +10,7 @@ import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import dayjs from 'dayjs/esm';
-import { IngestionState } from 'app/lecture/shared/entities/lecture-unit/attachmentUnit.model';
+import { IngestionState } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 
 describe('Lecture Service', () => {
     let httpMock: HttpTestingController;
@@ -89,22 +89,6 @@ describe('Lecture Service', () => {
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({
                 url: `${resourceUrl}/${lectureId}/details`,
-                method: 'GET',
-            });
-            req.flush(returnedFromService);
-            expect(expectedResult.body).toEqual(expected);
-        });
-
-        it('should find a lecture with details and with slides in the database', async () => {
-            const returnedFromService = { ...elemDefault };
-            const expected = { ...returnedFromService, posts: [] };
-            const lectureId = elemDefault.id!;
-            service
-                .findWithDetailsWithSlides(lectureId)
-                .pipe(take(1))
-                .subscribe((resp) => (expectedResult = resp));
-            const req = httpMock.expectOne({
-                url: `${resourceUrl}/${lectureId}/details-with-slides`,
                 method: 'GET',
             });
             req.flush(returnedFromService);

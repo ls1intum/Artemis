@@ -116,8 +116,9 @@ class IrisTextExerciseChatMessageIntegrationTest extends AbstractIrisIntegration
 
         await().until(pipelineDone::get);
 
-        verifyWebsocketActivityWasExactly(irisSession.getUser().getLogin(), String.valueOf(irisSession.getId()), messageDTO(messageToSend.getContent()),
-                statusDTO(IN_PROGRESS, NOT_STARTED), statusDTO(DONE, IN_PROGRESS), messageDTO("Hello World"));
+        var user = userTestRepository.findByIdElseThrow(irisSession.getUserId());
+        verifyWebsocketActivityWasExactly(user.getLogin(), String.valueOf(irisSession.getId()), messageDTO(messageToSend.getContent()), statusDTO(IN_PROGRESS, NOT_STARTED),
+                statusDTO(DONE, IN_PROGRESS), messageDTO("Hello World"));
     }
 
     @Test
@@ -258,7 +259,9 @@ class IrisTextExerciseChatMessageIntegrationTest extends AbstractIrisIntegration
         var irisMessage = irisMessageService.saveMessage(messageToSend, irisSession, IrisMessageSender.USER);
         request.postWithoutResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/resend", null, HttpStatus.OK);
         await().until(() -> irisTextExerciseChatSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId()).getMessages().size() == 2);
-        verifyWebsocketActivityWasExactly(irisSession.getUser().getLogin(), String.valueOf(irisSession.getId()), statusDTO(IN_PROGRESS, NOT_STARTED), statusDTO(DONE, IN_PROGRESS),
+
+        var user = userTestRepository.findByIdElseThrow(irisSession.getUserId());
+        verifyWebsocketActivityWasExactly(user.getLogin(), String.valueOf(irisSession.getId()), statusDTO(IN_PROGRESS, NOT_STARTED), statusDTO(DONE, IN_PROGRESS),
                 messageDTO("Hello World"));
     }
 
@@ -279,8 +282,8 @@ class IrisTextExerciseChatMessageIntegrationTest extends AbstractIrisIntegration
         });
 
         var globalSettings = irisSettingsService.getGlobalSettings();
-        globalSettings.getIrisChatSettings().setRateLimit(1);
-        globalSettings.getIrisChatSettings().setRateLimitTimeframeHours(10);
+        globalSettings.getIrisProgrammingExerciseChatSettings().setRateLimit(1);
+        globalSettings.getIrisProgrammingExerciseChatSettings().setRateLimitTimeframeHours(10);
         irisSettingsService.saveIrisSettings(globalSettings);
 
         try {
@@ -290,13 +293,14 @@ class IrisTextExerciseChatMessageIntegrationTest extends AbstractIrisIntegration
             var irisMessage = irisMessageService.saveMessage(messageToSend2, irisSession, IrisMessageSender.USER);
             request.postWithoutResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/resend", null, HttpStatus.TOO_MANY_REQUESTS);
 
-            verifyWebsocketActivityWasExactly(irisSession.getUser().getLogin(), String.valueOf(irisSession.getId()), messageDTO(messageToSend1.getContent()),
-                    statusDTO(IN_PROGRESS, NOT_STARTED), statusDTO(DONE, IN_PROGRESS), messageDTO("Hello World"));
+            var user = userTestRepository.findByIdElseThrow(irisSession.getUserId());
+            verifyWebsocketActivityWasExactly(user.getLogin(), String.valueOf(irisSession.getId()), messageDTO(messageToSend1.getContent()), statusDTO(IN_PROGRESS, NOT_STARTED),
+                    statusDTO(DONE, IN_PROGRESS), messageDTO("Hello World"));
         }
         finally {
             // Reset to not interfere with other tests
-            globalSettings.getIrisChatSettings().setRateLimit(null);
-            globalSettings.getIrisChatSettings().setRateLimitTimeframeHours(null);
+            globalSettings.getIrisProgrammingExerciseChatSettings().setRateLimit(null);
+            globalSettings.getIrisProgrammingExerciseChatSettings().setRateLimitTimeframeHours(null);
             irisSettingsService.saveIrisSettings(globalSettings);
         }
     }

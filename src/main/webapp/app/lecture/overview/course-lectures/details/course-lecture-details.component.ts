@@ -8,14 +8,13 @@ import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { Attachment } from 'app/lecture/shared/entities/attachment.model';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { LectureUnit, LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
-import { AttachmentUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentUnit.model';
+import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { onError } from 'app/shared/util/global.utils';
 import { finalize, tap } from 'rxjs/operators';
 import { AlertService } from 'app/shared/service/alert.service';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lectureUnit.service';
 import { isCommunicationEnabled, isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
-import { AbstractScienceComponent } from 'app/shared/science/science.component';
 import { ScienceEventType } from 'app/shared/science/science.model';
 import { Subscription } from 'rxjs';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -25,8 +24,7 @@ import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settin
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgClass, UpperCasePipe } from '@angular/common';
 import { ExerciseUnitComponent } from '../exercise-unit/exercise-unit.component';
-import { AttachmentUnitComponent } from '../attachment-unit/attachment-unit.component';
-import { VideoUnitComponent } from '../video-unit/video-unit.component';
+import { AttachmentVideoUnitComponent } from '../attachment-video-unit/attachment-video-unit.component';
 import { TextUnitComponent } from '../text-unit/text-unit.component';
 import { OnlineUnitComponent } from '../online-unit/online-unit.component';
 import { CompetenciesPopoverComponent } from 'app/atlas/shared/competencies-popover/competencies-popover.component';
@@ -37,6 +35,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { IrisExerciseChatbotButtonComponent } from 'app/iris/overview/exercise-chatbot/exercise-chatbot-button.component';
 import { FileService } from 'app/shared/service/file.service';
+import { ScienceService } from 'app/shared/science/science.service';
 
 export interface LectureUnitCompletionEvent {
     lectureUnit: LectureUnit;
@@ -51,8 +50,7 @@ export interface LectureUnitCompletionEvent {
         TranslateDirective,
         NgClass,
         ExerciseUnitComponent,
-        AttachmentUnitComponent,
-        VideoUnitComponent,
+        AttachmentVideoUnitComponent,
         TextUnitComponent,
         OnlineUnitComponent,
         CompetenciesPopoverComponent,
@@ -65,7 +63,7 @@ export interface LectureUnitCompletionEvent {
         IrisExerciseChatbotButtonComponent,
     ],
 })
-export class CourseLectureDetailsComponent extends AbstractScienceComponent implements OnInit, OnDestroy {
+export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     private alertService = inject(AlertService);
     private lectureService = inject(LectureService);
     private lectureUnitService = inject(LectureUnitService);
@@ -74,6 +72,7 @@ export class CourseLectureDetailsComponent extends AbstractScienceComponent impl
     private router = inject(Router);
     private profileService = inject(ProfileService);
     private irisSettingsService = inject(IrisSettingsService);
+    private readonly scienceService = inject(ScienceService);
 
     lectureId?: number;
     courseId?: number;
@@ -97,10 +96,6 @@ export class CourseLectureDetailsComponent extends AbstractScienceComponent impl
     // Icons
     faSpinner = faSpinner;
 
-    constructor() {
-        super(ScienceEventType.LECTURE__OPEN);
-    }
-
     ngOnInit(): void {
         this.isProduction = this.profileService.isProduction();
         this.isTestServer = this.profileService.isTestServer();
@@ -109,9 +104,7 @@ export class CourseLectureDetailsComponent extends AbstractScienceComponent impl
         this.paramsSubscription = this.activatedRoute.params.subscribe((params) => {
             this.lectureId = +params.lectureId;
             if (this.lectureId) {
-                // science logging
-                this.setResourceId(this.lectureId);
-                this.logEvent();
+                this.scienceService.logEvent(ScienceEventType.LECTURE__OPEN, this.lectureId);
                 this.loadData();
             }
         });
@@ -140,7 +133,7 @@ export class CourseLectureDetailsComponent extends AbstractScienceComponent impl
                         if (this.lectureUnits?.length) {
                             // Check if PDF attachments exist in lecture units
                             this.hasPdfLectureUnit =
-                                (<AttachmentUnit[]>this.lectureUnits.filter((unit) => unit.type === LectureUnitType.ATTACHMENT)).filter(
+                                (<AttachmentVideoUnit[]>this.lectureUnits.filter((unit) => unit.type === LectureUnitType.ATTACHMENT_VIDEO)).filter(
                                     (unit) => unit.attachment?.link?.split('.').pop()!.toLocaleLowerCase() === 'pdf',
                                 ).length > 0;
                         }

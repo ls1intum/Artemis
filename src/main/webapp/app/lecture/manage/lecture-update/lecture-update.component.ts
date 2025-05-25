@@ -8,7 +8,7 @@ import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
-import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { faBan, faPuzzlePiece, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER, ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE } from 'app/shared/constants/file-extensions.constants';
 import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
@@ -20,12 +20,12 @@ import cloneDeep from 'lodash-es/cloneDeep';
 import { LectureAttachmentsComponent } from 'app/lecture/manage/lecture-attachments/lecture-attachments.component';
 import { LectureUpdateUnitsComponent } from 'app/lecture/manage/lecture-units/lecture-units.component';
 import { FormsModule } from '@angular/forms';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
-import { DocumentationButtonComponent } from '../../../shared/components/documentation-button/documentation-button.component';
-import { MarkdownEditorMonacoComponent } from '../../../shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
+import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { captureException } from '@sentry/angular';
 import { FormSectionStatus, FormStatusBarComponent } from 'app/shared/form/form-status-bar/form-status-bar.component';
 
@@ -42,7 +42,6 @@ import { FormSectionStatus, FormStatusBarComponent } from 'app/shared/form/form-
         MarkdownEditorMonacoComponent,
         LectureUpdatePeriodComponent,
         FaIconComponent,
-        LectureAttachmentsComponent,
         LectureUpdateUnitsComponent,
         NgbTooltip,
         ArtemisTranslatePipe,
@@ -246,7 +245,6 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
     save() {
         this.shouldDisplayDismissWarning = false;
         this.isSaving = true;
-        this.isProcessing = true;
         if (this.lecture().id !== undefined) {
             this.subscribeToSaveResponse(this.lectureService.update(this.lecture()));
         } else {
@@ -256,6 +254,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
     }
 
     proceedToUnitSplit() {
+        this.isProcessing = true;
         this.save();
     }
 
@@ -302,7 +301,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
         if (this.processUnitMode) {
             this.isProcessing = false;
             this.alertService.success(`Lecture with title ${lecture.title} was successfully ${this.lecture().id !== undefined ? 'updated' : 'created'}.`);
-            this.router.navigate(['course-management', lecture.course.id, 'lectures', lecture.id, 'unit-management', 'attachment-units', 'process'], {
+            this.router.navigate(['course-management', lecture.course.id, 'lectures', lecture.id, 'unit-management', 'attachment-video-units', 'process'], {
                 state: { file: this.file, fileName: this.fileName },
             });
         } else if (this.isEditMode()) {

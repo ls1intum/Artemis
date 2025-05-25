@@ -6,10 +6,9 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lectureUnit.service';
-import { AttachmentUnitComponent } from 'app/lecture/overview/course-lectures/attachment-unit/attachment-unit.component';
+import { AttachmentVideoUnitComponent } from 'app/lecture/overview/course-lectures/attachment-video-unit/attachment-video-unit.component';
 import { ExerciseUnitComponent } from 'app/lecture/overview/course-lectures/exercise-unit/exercise-unit.component';
 import { TextUnitComponent } from 'app/lecture/overview/course-lectures/text-unit/text-unit.component';
-import { VideoUnitComponent } from 'app/lecture/overview/course-lectures/video-unit/video-unit.component';
 import { OnlineUnitComponent } from 'app/lecture/overview/course-lectures/online-unit/online-unit.component';
 import { CompetencyRingsComponent } from 'app/atlas/shared/competency-rings/competency-rings.component';
 import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
@@ -37,6 +36,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { FireworksComponent } from 'app/atlas/overview/fireworks/fireworks.component';
+import { ScienceService } from 'app/shared/science/science.service';
 
 describe('CourseCompetenciesDetails', () => {
     let fixture: ComponentFixture<CourseCompetenciesDetailsComponent>;
@@ -59,10 +59,9 @@ describe('CourseCompetenciesDetails', () => {
                 CourseCompetenciesDetailsComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(MockHasAnyAuthorityDirective),
-                MockComponent(AttachmentUnitComponent),
+                MockComponent(AttachmentVideoUnitComponent),
                 MockComponent(ExerciseUnitComponent),
                 MockComponent(TextUnitComponent),
-                MockComponent(VideoUnitComponent),
                 MockComponent(OnlineUnitComponent),
                 MockComponent(CompetencyRingsComponent),
                 MockComponent(SidePanelComponent),
@@ -86,6 +85,7 @@ describe('CourseCompetenciesDetails', () => {
                 { provide: Router, useValue: MockRouter },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
+                MockProvider(ScienceService),
             ],
             schemas: [],
         })

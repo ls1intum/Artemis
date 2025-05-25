@@ -37,7 +37,6 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.LearningPath;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Prerequisite;
 import de.tum.cit.aet.artemis.communication.domain.Faq;
-import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -141,11 +140,6 @@ public class Course extends DomainObject {
 
     @Column(name = "max_complaint_response_text_limit")
     private int maxComplaintResponseTextLimit = DEFAULT_COMPLAINT_TEXT_LIMIT;
-
-    @OneToMany(mappedBy = "course", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonIgnoreProperties("course")
-    private Set<Post> posts = new HashSet<>();
 
     @Column(name = "color")
     private String color;
@@ -1022,21 +1016,6 @@ public class Course extends DomainObject {
 
     public void setCourseInformationSharingMessagingCodeOfConduct(String courseInformationSharingMessagingCodeOfConduct) {
         this.courseInformationSharingMessagingCodeOfConduct = courseInformationSharingMessagingCodeOfConduct;
-    }
-
-    public enum CourseSearchColumn {
-
-        ID("id"), TITLE("title"), SHORT_NAME("shortName"), SEMESTER("semester");
-
-        private final String mappedColumnName;
-
-        CourseSearchColumn(String mappedColumnName) {
-            this.mappedColumnName = mappedColumnName;
-        }
-
-        public String getMappedColumnName() {
-            return mappedColumnName;
-        }
     }
 
     public Set<Faq> getFaqs() {
