@@ -65,4 +65,8 @@ export class EmailNotificationsSettingsComponent implements OnInit, OnDestroy {
     getNotificationTypeLabel(type: string): string {
         return `artemisApp.userSettings.emailNotificationSettings.options.${type}`;
     }
+
+    isSettingAvailable(type: string): boolean {
+        return type !== 'NEW_PASSKEY_ADDED' || this.isPasskeyEnabled;
+    }
 }

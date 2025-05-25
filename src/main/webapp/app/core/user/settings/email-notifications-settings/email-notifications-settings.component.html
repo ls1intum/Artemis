@@ -3,7 +3,7 @@
 @if (notificationSettings) {
     <div class="list-group d-block">
         @for (type of notificationTypes; track type) {
-            @if (type !== 'NEW_PASSKEY_ADDED' || isPasskeyEnabled) {
+            @if (isSettingAvailable(type)) {
                 <div class="list-group-item">
                     <dt>
                         <div class="form-check form-switch">
