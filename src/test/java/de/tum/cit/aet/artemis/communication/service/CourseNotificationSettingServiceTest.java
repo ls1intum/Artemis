@@ -329,6 +329,11 @@ class CourseNotificationSettingServiceTest {
         }
 
         @Override
+        public String getRelativeWebAppUrl() {
+            return "/";
+        }
+
+        @Override
         public Map<String, Object> getParameters() {
             return Map.of("key", "value");
         }

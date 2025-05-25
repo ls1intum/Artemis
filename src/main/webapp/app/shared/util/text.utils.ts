@@ -39,7 +39,7 @@ export const deterministicRandomValueFromString = (str: string): number => {
 export const getInitialsFromString = (username: string): string => {
     const parts = username.trim().split(/\s+/);
 
-    let initials = '';
+    let initials: string;
 
     if (parts.length > 1) {
         // Takes first and last word in string and returns their initials.

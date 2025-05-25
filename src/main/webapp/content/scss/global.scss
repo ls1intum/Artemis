@@ -509,8 +509,6 @@ ui bootstrap tweaks
     font-weight: bold;
 }
 
-/* jhipster-needle-scss-add-main JHipster will add new css style */
-
 .result-orange {
     color: $result-orange;
 }
@@ -765,7 +763,7 @@ Course Info Bar
 .course-info-bar {
     background-color: $artemis-dark;
     padding: 0.5rem 1rem;
-    margin: 0rem -1rem 0 -1rem;
+    margin: -1rem -1rem 0 -0.5rem;
     display: flex;
     color: $white;
     flex-direction: column;

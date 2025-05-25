@@ -1,5 +1,5 @@
 import { Page } from 'playwright';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { MODELING_EXERCISE_BASE, PROGRAMMING_EXERCISE_BASE, QUIZ_EXERCISE_BASE, TEXT_EXERCISE_BASE, UPLOAD_EXERCISE_BASE } from '../../constants';
 import { expect } from '@playwright/test';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
@@ -89,7 +89,7 @@ export class CourseManagementExercisesPage {
     }
 
     async createQuizExercise() {
-        await this.page.locator('#create-quiz-button').click();
+        await this.page.locator('#create-quiz-exercise').click();
     }
 
     async createFileUploadExercise() {

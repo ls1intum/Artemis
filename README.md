@@ -71,7 +71,7 @@ Artemis brings interactive learning to life with instant, individual feedback on
 
 1. **[Integrated markdown editor](https://docs.artemis.cit.tum.de/user/markdown-support/)**: Markdown is used to format text content across the platform using an integrated markdown editor.
 2. **[Scalable](https://docs.artemis.cit.tum.de/admin/scaling/)**: Artemis scales to multiple courses with thousands of students simultaneously using it. In fact, the largest course had 2,400 students. Administrators can easily scale Artemis with additional build agents in the continuous integration environment.
-3. **[High user satisfaction](https://docs.artemis.cit.tum.de/user/user-experience/)**: Artemis is easy to use, provides guided tutorials. Developers focus on usability, user experience, and performance.
+3. **[High user satisfaction](https://docs.artemis.cit.tum.de/user/user-experience/)**: Artemis is easy to use. Developers focus on usability, user experience, and performance.
 4. **Customizable**: It supports multiple instructors, editors, and tutors per course and allows instructors to customize many course settings including user management, 
 5. **[Open-source](https://docs.artemis.cit.tum.de/dev/open-source/)**: Free to use with a large community and many active maintainers.
 
@@ -147,7 +147,7 @@ The following members of the project management team are responsible for specifi
 * [How to set up your local development environment](https://docs.artemis.cit.tum.de/dev/setup/)
 * [Server coding and design guidelines](https://docs.artemis.cit.tum.de/dev/guidelines/server/)
 * [Client coding and design guidelines](https://docs.artemis.cit.tum.de/dev/guidelines/client/)
-* [Code Review Guidelines](https://docs.artemis.cit.tum.de/dev/development-process/#review)
+* [Code Review Guidelines](https://docs.artemis.cit.tum.de/dev/development-process/development-process.html#review-process)
 * [Performance Guidelines](https://docs.artemis.cit.tum.de/dev/guidelines/performance/)
 
 ### Documentation
@@ -191,7 +191,7 @@ Refer to [Using JHipster in production](http://www.jhipster.tech/production) for
 The following command can automate the deployment to a server. The example shows the deployment to the main Artemis test server (which runs a virtual machine):
 
 ```shell
-./artemis-server-cli deploy username@artemis-test0.artemis.in.tum.de -w build/libs/Artemis-8.0.0.war
+./artemis-server-cli deploy username@artemis-test0.artemis.in.tum.de -w build/libs/Artemis-8.1.0.war
 ```
 
 ## Architecture
@@ -257,7 +257,7 @@ The following universities are actively using Artemis or are currently evaluatin
   Main contact person: [Benedikt Fein](mailto:fein@fim.uni-passau.de)  
   
 * **Karlsruhe Institute of Technology**  
-  https://artemis.praktomat.cs.kit.edu  
+  https://artemis.cs.kit.edu  
   Main contact person: [Dominik Fuchß](mailto:dominik.fuchss@kit.edu)  
   
 * **Hochschule München**  
@@ -292,6 +292,8 @@ The following universities are actively using Artemis or are currently evaluatin
    Main contact person: [Daniel Merkle](https://ekvv.uni-bielefeld.de/pers_publ/publ/PersonDetail.jsp?personId=451188465)
 * **Universität Ulm**  
    Main contact person: [Matthias Tichy](https://www.uni-ulm.de/in/sp/team/tichy)
+* **Technischen Hochschule Mittelhessen**  
+   Main contact person: [Christian Prause](https://www.thm.de/iem/christian-prause)
 * **Imperial College London**  
    Main contact person: [Robert Chatley](https://www.doc.ic.ac.uk/~rbc)
 * **University of South Australia**  

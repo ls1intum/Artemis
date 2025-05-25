@@ -1,0 +1,114 @@
+<div class="row justify-content-center">
+    <div class="col-11">
+        @if (exam) {
+            <div>
+                <h2 id="exam-detail-title">
+                    @if (!exam.testExam) {
+                        <span class="badge bg-success" jhiTranslate="artemisApp.examManagement.testExam.realExam"></span>
+                    }
+                    @if (exam.testExam) {
+                        <span class="badge bg-primary" jhiTranslate="artemisApp.examManagement.testExam.testExam"></span>
+                    }
+                    {{ exam.title }}
+                </h2>
+                <hr />
+                @if (exam.course?.isAtLeastInstructor) {
+                    <div>
+                        <a id="exercises-button-groups" type="submit" [routerLink]="getExamRoutesByIdentifier('exercise-groups')" class="btn btn-primary mt-1">
+                            <fa-icon [icon]="faListAlt" />
+                            <span jhiTranslate="artemisApp.examManagement.exerciseGroups"></span>
+                        </a>
+                        @if (!exam.testExam) {
+                            <a id="students-button" [routerLink]="getExamRoutesByIdentifier('students')" class="btn btn-info mt-1">
+                                <fa-icon [icon]="faUser" />
+                                <span jhiTranslate="artemisApp.examManagement.students"></span>
+                            </a>
+                        }
+                        <a id="studentExamsButton" [routerLink]="getExamRoutesByIdentifier('student-exams')" class="btn btn-info mt-1">
+                            <fa-icon [icon]="faEye" />
+                            <span class="d-none d-md-inline" jhiTranslate="artemisApp.examManagement.studentExams"></span>
+                        </a>
+                        <a id="testrun-button" [routerLink]="getExamRoutesByIdentifier('test-runs')" class="btn btn-info mt-1">
+                            <fa-icon [icon]="faFlaskVial" />
+                            <span jhiTranslate="artemisApp.examManagement.testRun.testRun"></span>
+                        </a>
+                        @if (!exam.testExam) {
+                            <a id="assessment-dashboard-button" [routerLink]="getExamRoutesByIdentifier('assessment-dashboard')" class="btn btn-primary mt-1">
+                                <fa-icon [icon]="faThList" />
+                                <span jhiTranslate="artemisApp.examManagement.assessmentDashboard"></span>
+                            </a>
+                        }
+                        @if (!exam.testExam) {
+                            <a [routerLink]="getExamRoutesByIdentifier('grading-system')" class="btn btn-info mt-1">
+                                <fa-icon [icon]="faClipboard" />
+                                <span jhiTranslate="artemisApp.examManagement.gradingSystem"></span>
+                            </a>
+                        }
+                        @if (canHaveBonus) {
+                            <a [routerLink]="getExamRoutesByIdentifier('bonus')" class="btn btn-info mt-1">
+                                <fa-icon [icon]="faAward" />
+                                <span jhiTranslate="artemisApp.examManagement.bonus"></span>
+                            </a>
+                        }
+                        <a id="scores-button" [routerLink]="getExamRoutesByIdentifier('scores')" class="btn btn-info mt-1">
+                            <fa-icon [icon]="faEye" />
+                            <span jhiTranslate="entity.action.scores"></span>
+                        </a>
+                        <jhi-feature-overlay [enabled]="plagiarismEnabled">
+                            <a [routerLink]="getExamRoutesByIdentifier('plagiarism-cases')" class="tab-item btn btn-info btn-md mt-1">
+                                <fa-icon [icon]="faHeartBroken" />
+                                <span jhiTranslate="artemisApp.plagiarism.cases.plagiarismCases"></span>
+                            </a>
+                        </jhi-feature-overlay>
+                        <a id="editButton" [routerLink]="getExamRoutesByIdentifier('edit')" class="btn btn-warning mt-1">
+                            <fa-icon [icon]="faWrench" />&nbsp;<span jhiTranslate="entity.action.edit"></span>
+                        </a>
+                        <button
+                            jhiDeleteButton
+                            [actionType]="resetType"
+                            [buttonSize]="buttonSize"
+                            [entityTitle]="exam.title || ''"
+                            deleteQuestion="artemisApp.examManagement.reset.question"
+                            deleteConfirmationText="artemisApp.examManagement.reset.typeNameToConfirm"
+                            (delete)="resetExam()"
+                            [dialogError]="dialogError$"
+                            class="btn mt-1"
+                            style="margin-right: 0 !important"
+                        >
+                            <fa-icon [icon]="faUndo" />
+                        </button>
+                        <button
+                            id="exam-delete"
+                            jhiDeleteButton
+                            [buttonSize]="buttonSize"
+                            [entityTitle]="exam.title || ''"
+                            entitySummaryTitle="artemisApp.examManagement.delete.summary.title"
+                            [fetchEntitySummary]="fetchExamDeletionSummary()"
+                            deleteQuestion="artemisApp.examManagement.delete.question"
+                            deleteConfirmationText="artemisApp.examManagement.delete.typeNameToConfirm"
+                            (delete)="deleteExam(exam.id!)"
+                            [dialogError]="dialogError$"
+                            class="btn mt-1"
+                        >
+                            <fa-icon [icon]="faTrash" />
+                        </button>
+                        @if (exam && isExamOver && exam.course) {
+                            <div class="d-inline">
+                                <jhi-course-exam-archive-button [archiveMode]="'Exam'" [exam]="exam" [course]="exam.course" />
+                            </div>
+                        }
+                    </div>
+                }
+                <hr />
+                @if (exam?.course?.isAtLeastInstructor) {
+                    <div>
+                        <jhi-exam-checklist [getExamRoutesByIdentifier]="getExamRoutesByIdentifier" [exam]="exam" />
+                    </div>
+                }
+                @if (examDetailSections) {
+                    <jhi-detail-overview-list [sections]="examDetailSections" />
+                }
+            </div>
+        }
+    </div>
+</div>

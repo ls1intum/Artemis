@@ -88,6 +88,7 @@ import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepos
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationService;
 import de.tum.cit.aet.artemis.communication.test_repository.ConversationParticipantTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.ConversationTestRepository;
+import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
@@ -110,7 +111,6 @@ import de.tum.cit.aet.artemis.core.dto.UserPublicInfoDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.CustomAuditEventRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
-import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.export.CourseExamExportService;
 import de.tum.cit.aet.artemis.core.service.export.DataExportUtil;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
@@ -274,10 +274,10 @@ public class CourseTestService {
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
     @Autowired
-    private CompetencyUtilService competencyUtilService;
+    private Optional<CompetencyUtilService> competencyUtilService; // Optional because it is not used in all tests
 
     @Autowired
-    private PrerequisiteUtilService prerequisiteUtilService;
+    private Optional<PrerequisiteUtilService> prerequisiteUtilService; // Optional because it is not used in all tests
 
     @Autowired
     private LectureUtilService lectureUtilService;
@@ -567,7 +567,7 @@ public class CourseTestService {
 
         for (Course course : courses) {
             if (!course.getExercises().isEmpty()) {
-                groupNotificationService.notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(course.getExercises().iterator().next(), "notify");
+                groupNotificationService.notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(course.getExercises().iterator().next());
             }
             request.delete("/api/core/admin/courses/" + course.getId(), HttpStatus.OK);
         }
@@ -681,13 +681,16 @@ public class CourseTestService {
 
         Set<Organization> organizations = course.getOrganizations();
 
+        CompetencyUtilService competencyService = competencyUtilService.orElseThrow();
+        PrerequisiteUtilService prerequisiteService = prerequisiteUtilService.orElseThrow();
+
         Set<Competency> competencies = new HashSet<>();
-        competencies.add(competencyUtilService.createCompetency(course));
+        competencies.add(competencyService.createCompetency(course));
         course.setCompetencies(competencies);
         course = courseRepo.save(course);
 
         Set<Prerequisite> prerequisites = new HashSet<>();
-        prerequisites.add(prerequisiteUtilService.createPrerequisite(course));
+        prerequisites.add(prerequisiteService.createPrerequisite(course));
         course.setPrerequisites(prerequisites);
         course = courseRepo.save(course);
 
@@ -3003,8 +3006,8 @@ public class CourseTestService {
         assertThat(courseDTO.currentMaxMoreFeedbacks()).isEqualTo(1);
 
         // Average Score
-        assertThat(courseDTO.currentPercentageAverageScore()).isEqualTo(60);
-        assertThat(courseDTO.currentAbsoluteAverageScore()).isEqualTo(18);
+        assertThat(courseDTO.currentPercentageAverageScore()).isEqualTo(50);
+        assertThat(courseDTO.currentAbsoluteAverageScore()).isEqualTo(15);
         assertThat(courseDTO.currentMaxAverageScore()).isEqualTo(30);
 
         course2.setStartDate(now.minusWeeks(20));
@@ -3348,7 +3351,7 @@ public class CourseTestService {
         byte[] iconBytes = "icon".getBytes();
         MockMultipartFile iconFile = new MockMultipartFile("file", "icon.png", MediaType.APPLICATION_JSON_VALUE, iconBytes);
         Course savedCourseWithFile = request.putWithMultipartFile("/api/core/courses/" + savedCourse.getId(), savedCourse, "course", iconFile, Course.class, HttpStatus.OK, null);
-        Path path = FilePathService.actualPathForPublicPath(URI.create(savedCourseWithFile.getCourseIcon()));
+        Path path = FilePathConverter.fileSystemPathForExternalUri(URI.create(savedCourseWithFile.getCourseIcon()), FilePathType.COURSE_ICON);
 
         savedCourseWithFile.setCourseIcon(null);
         request.putWithMultipartFile("/api/core/courses/" + savedCourseWithFile.getId(), savedCourseWithFile, "course", null, Course.class, HttpStatus.OK, null);

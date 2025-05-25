@@ -7,15 +7,18 @@ import java.time.ZonedDateTime;
 import jakarta.validation.constraints.NotNull;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyJol;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyRelation;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.RelationType;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyJolRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
@@ -32,6 +35,7 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
  */
 @Service
 @Profile(SPRING_PROFILE_TEST)
+@Conditional(AtlasEnabled.class)
 public class CompetencyUtilService {
 
     @Autowired
@@ -144,7 +148,7 @@ public class CompetencyUtilService {
      * @param competency  The Competency to add to the LectureUnit
      * @param lectureUnit The LectureUnit to update
      */
-    public LectureUnit linkLectureUnitToCompetency(Competency competency, LectureUnit lectureUnit) {
+    public LectureUnit linkLectureUnitToCompetency(CourseCompetency competency, LectureUnit lectureUnit) {
         CompetencyLectureUnitLink link = new CompetencyLectureUnitLink(competency, lectureUnit, 1);
         return competencyLectureUnitLinkRepository.save(link).getLectureUnit();
     }
@@ -156,7 +160,7 @@ public class CompetencyUtilService {
      * @param exercise   The Exercise to update
      * @return The updated Exercise
      */
-    public Exercise linkExerciseToCompetency(Competency competency, Exercise exercise) {
+    public Exercise linkExerciseToCompetency(CourseCompetency competency, Exercise exercise) {
         CompetencyExerciseLink link = new CompetencyExerciseLink(competency, exercise, 1);
         return competencyExerciseLinkRepository.save(link).getExercise();
     }

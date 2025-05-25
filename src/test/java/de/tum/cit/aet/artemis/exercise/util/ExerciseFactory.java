@@ -13,6 +13,7 @@ import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 
@@ -46,7 +47,7 @@ public class ExerciseFactory {
         exercise.setPresentationScoreEnabled(course.getPresentationScore() != 0);
         exercise.setCourse(course);
         exercise.setExerciseGroup(null);
-        if (!(exercise instanceof QuizExercise) && !(exercise instanceof FileUploadExercise)) {
+        if (!(exercise instanceof QuizExercise) && !(exercise instanceof FileUploadExercise) && !(exercise instanceof ModelingExercise)) {
             exercise.setPlagiarismDetectionConfig(new PlagiarismDetectionConfig());
         }
         return exercise;

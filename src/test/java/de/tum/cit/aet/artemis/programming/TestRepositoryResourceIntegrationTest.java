@@ -44,7 +44,7 @@ import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.web.repository.FileSubmission;
 
-class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVcTest {
+class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVCTest {
 
     private static final String TEST_PREFIX = "testrepositoryresourceint";
 
@@ -90,7 +90,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(eq(testRepoUri), eq(false),
                 any());
 
-        doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfExercise(programmingExercise);
+        doReturn(defaultBranch).when(localVCGitBranchService).getOrRetrieveBranchOfExercise(programmingExercise);
     }
 
     @AfterEach

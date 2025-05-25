@@ -1,9 +1,9 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { Course } from 'app/entities/course.model';
-import { OnlineCourseConfiguration } from 'app/entities/online-course-configuration.model';
-import { CourseManagementService } from 'app/core/course/manage/course-management.service';
-import { Exercise } from 'app/entities/exercise.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
+import { OnlineCourseConfiguration } from 'app/lti/shared/entities/online-course-configuration.model';
+import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faExclamationTriangle, faSort, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { SortService } from 'app/shared/service/sort.service';
 import { FormsModule } from '@angular/forms';
@@ -12,10 +12,11 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbNav, NgbNavContent, NgbNavItem, NgbNavLink, NgbNavLinkBase, NgbNavOutlet, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { CopyIconButtonComponent } from 'app/shared/components/copy-icon-button/copy-icon-button.component';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
-import { SortDirective } from 'app/shared/sort/sort.directive';
-import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { CopyToClipboardButtonComponent } from 'app/shared/components/buttons/copy-to-clipboard-button/copy-to-clipboard-button.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { SortDirective } from 'app/shared/sort/directive/sort.directive';
+import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 
 @Component({
     selector: 'jhi-course-lti-configuration',
@@ -33,7 +34,7 @@ import { SortByDirective } from 'app/shared/sort/sort-by.directive';
         NgbTooltip,
         NgbNavOutlet,
         ArtemisTranslatePipe,
-        CopyIconButtonComponent,
+        CopyToClipboardButtonComponent,
         HelpIconComponent,
         SortDirective,
         SortByDirective,
@@ -49,6 +50,7 @@ export class CourseLtiConfigurationComponent implements OnInit {
     course: Course;
     onlineCourseConfiguration: OnlineCourseConfiguration;
     exercises: Exercise[];
+    lectures: Lecture[];
 
     activeTab = 1;
 
@@ -69,9 +71,12 @@ export class CourseLtiConfigurationComponent implements OnInit {
             if (course) {
                 this.course = course;
                 this.onlineCourseConfiguration = course.onlineCourseConfiguration;
-                this.courseManagementService.findWithExercises(course.id).subscribe((findWithExercisesResult) => {
-                    if (findWithExercisesResult?.body?.exercises) {
-                        this.exercises = findWithExercisesResult.body.exercises;
+                this.courseManagementService.findWithExercisesAndLecturesAndCompetencies(course.id).subscribe((findWithExercisesAndLecturesResult) => {
+                    if (findWithExercisesAndLecturesResult?.body?.exercises) {
+                        this.exercises = findWithExercisesAndLecturesResult.body.exercises;
+                    }
+                    if (findWithExercisesAndLecturesResult?.body?.lectures) {
+                        this.lectures = findWithExercisesAndLecturesResult.body.lectures;
                     }
                 });
             }
@@ -83,6 +88,10 @@ export class CourseLtiConfigurationComponent implements OnInit {
      */
     getExerciseLti13LaunchUrl(exercise: Exercise): string {
         return `${location.origin}/courses/${this.course.id}/exercises/${exercise.id}`; // Needs to match url in Lti13Service
+    }
+
+    getLectureLti13LaunchUrl(lecture: Lecture): string {
+        return `${location.origin}/courses/${this.course.id}/lectures/${lecture.id}`;
     }
 
     sortRows() {

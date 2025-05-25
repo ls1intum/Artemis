@@ -1,17 +1,19 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
-import { LearningPathNavigationObjectDTO } from 'app/entities/competency/learning-path.model';
-
+import { LearningPathNavigationObjectDTO } from 'app/atlas/shared/entities/learning-path.model';
 import { NgbAccordionModule, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faCheckCircle, faChevronDown, faChevronLeft, faChevronRight, faFlag, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { LearningPathNavOverviewComponent } from 'app/atlas/overview/learning-path-nav-overview/learning-path-nav-overview.component';
 import { LearningPathNavigationService } from 'app/atlas/overview/learning-path-navigation.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ScienceEventType } from 'app/shared/science/science.model';
+import { ScienceService } from 'app/shared/science/science.service';
 
 @Component({
     selector: 'jhi-learning-path-student-nav',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [NgbDropdownModule, NgbAccordionModule, FontAwesomeModule, LearningPathNavOverviewComponent, TranslateDirective],
+    imports: [NgbDropdownModule, NgbAccordionModule, FontAwesomeModule, LearningPathNavOverviewComponent, TranslateDirective, ArtemisTranslatePipe],
     templateUrl: './learning-path-student-nav.component.html',
     styleUrl: './learning-path-student-nav.component.scss',
 })
@@ -24,6 +26,7 @@ export class LearningPathNavComponent {
     protected readonly faChevronRight = faChevronRight;
 
     private learningPathNavigationService = inject(LearningPathNavigationService);
+    private readonly scienceService = inject(ScienceService);
 
     readonly learningPathId = input.required<number>();
 
@@ -47,6 +50,8 @@ export class LearningPathNavComponent {
     }
 
     async selectLearningObject(selectedLearningObject: LearningPathNavigationObjectDTO, isSuccessor: boolean): Promise<void> {
+        this.scienceService.logEvent(isSuccessor ? ScienceEventType.LEARNING_PATH__NAV_NEXT : ScienceEventType.LEARNING_PATH__NAV_PREV, this.learningPathId());
+
         const loadingSpinner = isSuccessor ? this.isLoadingSuccessor : this.isLoadingPredecessor;
         loadingSpinner.set(true);
         await this.learningPathNavigationService.loadRelativeLearningPathNavigation(this.learningPathId(), selectedLearningObject);

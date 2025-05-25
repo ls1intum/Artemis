@@ -9,19 +9,19 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
 import { faCircleNotch, faExternalLink, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { faPlayCircle } from '@fortawesome/free-regular-svg-icons';
-import { Participation } from 'app/entities/participation/participation.model';
+import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { RequestFeedbackButtonComponent } from 'app/core/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { getLocalRepositoryLink } from 'app/shared/util/navigation.utils';
-import { CodeEditorRepositoryFileService, CodeEditorRepositoryService, ConnectionError } from 'app/programming/shared/code-editor/service/code-editor-repository.service';
-import { CodeEditorConflictStateService } from 'app/programming/shared/code-editor/service/code-editor-conflict-state.service';
-import { CodeEditorSubmissionService } from 'app/programming/shared/code-editor/service/code-editor-submission.service';
+import { CodeEditorRepositoryFileService, CodeEditorRepositoryService, ConnectionError } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
+import { CodeEditorConflictStateService } from 'app/programming/shared/code-editor/services/code-editor-conflict-state.service';
+import { CodeEditorSubmissionService } from 'app/programming/shared/code-editor/services/code-editor-submission.service';
 import { CommitState, EditorState, FileSubmission, GitConflictState } from '../model/code-editor.model';
-import { CodeEditorConfirmRefreshModalComponent } from 'app/programming/shared/code-editor/actions/code-editor-confirm-refresh-modal.component';
-import { CodeEditorResolveConflictModalComponent } from 'app/programming/shared/code-editor/actions/code-editor-resolve-conflict-modal.component';
+import { CodeEditorConfirmRefreshModalComponent } from 'app/programming/shared/code-editor/actions/refresh-modal/code-editor-confirm-refresh-modal.component';
+import { CodeEditorResolveConflictModalComponent } from 'app/programming/shared/code-editor/actions/conflict-modal/code-editor-resolve-conflict-modal.component';
 
 @Component({
     selector: 'jhi-code-editor-actions',

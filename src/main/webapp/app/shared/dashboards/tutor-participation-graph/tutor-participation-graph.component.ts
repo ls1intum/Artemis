@@ -1,8 +1,8 @@
 import { Component, Input, OnChanges, OnInit, SimpleChanges, ViewEncapsulation, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { get } from 'lodash-es';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { TutorParticipation, TutorParticipationStatus } from 'app/entities/participation/tutor-participation.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { TutorParticipation, TutorParticipationStatus } from 'app/exercise/shared/entities/participation/tutor-participation.model';
 import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
 import { faBook, faChalkboardTeacher } from '@fortawesome/free-solid-svg-icons';
 import { NgClass } from '@angular/common';

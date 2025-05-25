@@ -23,7 +23,7 @@ import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.athena.api.AthenaFeedbackApi;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationService;
-import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
+import de.tum.cit.aet.artemis.core.exception.ApiProfileNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -95,7 +95,7 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
         else {
             log.debug("tutor is responsible to process feedback request: {}", exerciseId);
             groupNotificationService.notifyTutorGroupAboutNewFeedbackRequest(programmingExercise);
-            return setIndividualDueDate(participation, programmingExercise, true);
+            return setIndividualDueDate(participation, true);
         }
     }
 
@@ -134,7 +134,7 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
 
             log.debug("Submission id: {}", submission.getId());
 
-            AthenaFeedbackApi api = athenaFeedbackApi.orElseThrow(() -> new ApiNotPresentException(AthenaFeedbackApi.class, PROFILE_ATHENA));
+            AthenaFeedbackApi api = athenaFeedbackApi.orElseThrow(() -> new ApiProfileNotPresentException(AthenaFeedbackApi.class, PROFILE_ATHENA));
             var athenaResponse = api.getProgrammingFeedbackSuggestions(programmingExercise, (ProgrammingSubmission) submission, false);
 
             List<Feedback> feedbacks = athenaResponse.stream().filter(individualFeedbackItem -> individualFeedbackItem.filePath() != null)
@@ -183,11 +183,10 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
      * Sets an individual due date for a participation, locks the repository,
      * and invalidates previous results to prepare for new feedback.
      *
-     * @param participation       the programming exercise student participation.
-     * @param programmingExercise the associated programming exercise.
+     * @param participation             the programming exercise student participation.
+     * @param invalidatePreviousResults flag indicating whether to invalidate previous results.
      */
-    private ProgrammingExerciseStudentParticipation setIndividualDueDate(ProgrammingExerciseStudentParticipation participation, ProgrammingExercise programmingExercise,
-            boolean invalidatePreviousResults) {
+    private ProgrammingExerciseStudentParticipation setIndividualDueDate(ProgrammingExerciseStudentParticipation participation, boolean invalidatePreviousResults) {
         // The participations due date is a flag showing that a feedback request is sent
         participation.setIndividualDueDate(now());
 

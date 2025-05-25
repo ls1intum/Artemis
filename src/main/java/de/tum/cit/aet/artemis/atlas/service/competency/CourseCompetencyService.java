@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.atlas.service.competency;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -15,10 +13,11 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
@@ -26,10 +25,12 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyRelation;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Prerequisite;
 import de.tum.cit.aet.artemis.atlas.domain.competency.StandardizedCompetency;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyContributionDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyRelationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.UpdateCourseCompetencyRelationDTO;
+import de.tum.cit.aet.artemis.atlas.repository.CompetencyLectureUnitLinkRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyProgressRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
@@ -47,14 +48,14 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
+import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
+import de.tum.cit.aet.artemis.lecture.config.LectureApiNotPresentException;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
-import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository;
-import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
 
 /**
  * Service for managing competencies.
  */
-@Profile(PROFILE_ATLAS)
+@Conditional(AtlasEnabled.class)
 @Service
 public class CourseCompetencyService {
 
@@ -70,37 +71,37 @@ public class CourseCompetencyService {
 
     protected final ExerciseService exerciseService;
 
-    protected final LectureUnitService lectureUnitService;
-
     protected final LearningPathService learningPathService;
 
     protected final AuthorizationCheckService authCheckService;
 
     protected final StandardizedCompetencyRepository standardizedCompetencyRepository;
 
-    protected final LectureUnitCompletionRepository lectureUnitCompletionRepository;
+    private final Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi;
 
     private final LearningObjectImportService learningObjectImportService;
 
     private final CourseRepository courseRepository;
 
+    private final CompetencyLectureUnitLinkRepository lectureUnitLinkRepository;
+
     public CourseCompetencyService(CompetencyProgressRepository competencyProgressRepository, CourseCompetencyRepository courseCompetencyRepository,
             CompetencyRelationRepository competencyRelationRepository, CompetencyProgressService competencyProgressService, ExerciseService exerciseService,
-            LectureUnitService lectureUnitService, LearningPathService learningPathService, AuthorizationCheckService authCheckService,
-            StandardizedCompetencyRepository standardizedCompetencyRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository,
-            LearningObjectImportService learningObjectImportService, CourseRepository courseRepository) {
+            LearningPathService learningPathService, AuthorizationCheckService authCheckService, StandardizedCompetencyRepository standardizedCompetencyRepository,
+            Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi, LearningObjectImportService learningObjectImportService, CourseRepository courseRepository,
+            CompetencyLectureUnitLinkRepository lectureUnitLinkRepository) {
         this.competencyProgressRepository = competencyProgressRepository;
         this.courseCompetencyRepository = courseCompetencyRepository;
         this.competencyRelationRepository = competencyRelationRepository;
         this.competencyProgressService = competencyProgressService;
         this.exerciseService = exerciseService;
-        this.lectureUnitService = lectureUnitService;
         this.learningPathService = learningPathService;
         this.authCheckService = authCheckService;
         this.standardizedCompetencyRepository = standardizedCompetencyRepository;
-        this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
+        this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
         this.learningObjectImportService = learningObjectImportService;
         this.courseRepository = courseRepository;
+        this.lectureUnitLinkRepository = lectureUnitLinkRepository;
     }
 
     /**
@@ -392,7 +393,8 @@ public class CourseCompetencyService {
         competencyProgressRepository.findByCompetencyIdAndUserId(competency.getId(), userId).ifPresent(progress -> competency.setUserProgress(Set.of(progress)));
         Set<LectureUnit> lectureUnits = competency.getLectureUnitLinks().stream().map(CompetencyLectureUnitLink::getLectureUnit).collect(Collectors.toSet());
         // collect to map lecture unit id -> this
-        var completions = lectureUnitCompletionRepository.findByLectureUnitsAndUserId(lectureUnits, userId).stream()
+        LectureUnitRepositoryApi api = lectureUnitRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureUnitRepositoryApi.class));
+        var completions = api.findByLectureUnitsAndUserId(lectureUnits, userId).stream()
                 .collect(Collectors.toMap(completion -> completion.getLectureUnit().getId(), completion -> completion));
         lectureUnits.forEach(lectureUnit -> {
             if (completions.containsKey(lectureUnit.getId())) {
@@ -441,7 +443,7 @@ public class CourseCompetencyService {
         competencyProgressService.deleteProgressForCompetency(courseCompetency.getId());
 
         exerciseService.removeCompetency(courseCompetency.getExerciseLinks(), courseCompetency);
-        lectureUnitService.removeCompetency(courseCompetency.getLectureUnitLinks(), courseCompetency);
+        removeCompetencyLectureUnitLinks(courseCompetency.getLectureUnitLinks(), courseCompetency);
 
         if (course.getLearningPathsEnabled()) {
             learningPathService.removeLinkedCompetencyFromLearningPathsOfCourse(courseCompetency, course.getId());
@@ -461,5 +463,44 @@ public class CourseCompetencyService {
         if (!courseCompetencyRepository.existsByIdAndCourseId(competencyId, courseId)) {
             throw new BadRequestAlertException("The competency does not belong to the course", ENTITY_NAME, "competencyWrongCourse");
         }
+    }
+
+    private void removeCompetencyLectureUnitLinks(Set<CompetencyLectureUnitLink> lectureUnitLinks, CourseCompetency competency) {
+        lectureUnitLinkRepository.deleteAll(lectureUnitLinks);
+        competency.getLectureUnitLinks().removeAll(lectureUnitLinks);
+    }
+
+    /**
+     * Get the competency contributions for a user in an exercise.
+     *
+     * @param exerciseId The id of the exercise
+     * @param userId     The id of the user
+     * @return The list of competency contributions
+     */
+    public List<CompetencyContributionDTO> getCompetencyContributionsForExercise(long exerciseId, long userId) {
+        final var competencies = courseCompetencyRepository.findAllByExerciseIdWithExerciseLinks(exerciseId);
+        return competencies.stream().map(competency -> {
+            final var progress = competencyProgressRepository.findByCompetencyIdAndUserId(competency.getId(), userId);
+            final var mastery = progress.map(CompetencyProgressService::getMastery).orElse(0.0);
+            return new CompetencyContributionDTO(competency.getId(), competency.getTitle(),
+                    competency.getExerciseLinks().stream().findFirst().map(CompetencyExerciseLink::getWeight).orElse(0.0), mastery);
+        }).toList();
+    }
+
+    /**
+     * Get the competency contributions for a user in a lecture unit.
+     *
+     * @param lectureUnitId The id of the lecture unit
+     * @param userId        The id of the user
+     * @return The list of competency contributions
+     */
+    public List<CompetencyContributionDTO> getCompetencyContributionsForLectureUnit(long lectureUnitId, long userId) {
+        final var competencies = courseCompetencyRepository.findAllByLectureUnitIdWithLectureUnitLinks(lectureUnitId);
+        return competencies.stream().map(competency -> {
+            final var progress = competencyProgressRepository.findByCompetencyIdAndUserId(competency.getId(), userId);
+            final var master = progress.map(CompetencyProgressService::getMastery).orElse(0.0);
+            return new CompetencyContributionDTO(competency.getId(), competency.getTitle(),
+                    competency.getLectureUnitLinks().stream().findFirst().map(CompetencyLectureUnitLink::getWeight).orElse(0.0), master);
+        }).toList();
     }
 }

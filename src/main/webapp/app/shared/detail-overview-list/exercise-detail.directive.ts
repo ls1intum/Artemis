@@ -1,5 +1,5 @@
 import { ComponentRef, Directive, Input, OnDestroy, OnInit, Type, ViewContainerRef, inject } from '@angular/core';
-import { ProgrammingBuildStatisticsComponent } from 'app/detail-overview-list/components/programming-build-statistics/programming-build-statistics.component';
+import { Detail, ShownDetail } from 'app/shared/detail-overview-list/detail.model';
 import { DetailType } from 'app/shared/detail-overview-list/detail-overview-list.component';
 import { TextDetailComponent } from 'app/shared/detail-overview-list/components/text-detail/text-detail.component';
 import { DateDetailComponent } from 'app/shared/detail-overview-list/components/date-detail/date-detail.component';
@@ -9,7 +9,6 @@ import { ProgrammingRepositoryButtonsDetailComponent } from 'app/shared/detail-o
 import { ProgrammingAuxiliaryRepositoryButtonsDetailComponent } from 'app/shared/detail-overview-list/components/programming-auxiliary-repository-buttons-detail/programming-auxiliary-repository-buttons-detail.component';
 import { ProgrammingTestStatusDetailComponent } from 'app/shared/detail-overview-list/components/programming-test-status-detail/programming-test-status-detail.component';
 import { ProgrammingDiffReportDetailComponent } from 'app/shared/detail-overview-list/components/programming-diff-report-detail/programming-diff-report-detail.component';
-import { Detail, ShownDetail } from './detail.model';
 
 @Directive({
     selector: '[jhiExerciseDetail]',
@@ -37,7 +36,6 @@ export class ExerciseDetailDirective implements OnInit, OnDestroy {
                 | ProgrammingAuxiliaryRepositoryButtonsDetailComponent
                 | ProgrammingTestStatusDetailComponent
                 | ProgrammingDiffReportDetailComponent
-                | ProgrammingBuildStatisticsComponent
             >;
         } = {
             [DetailType.Text]: TextDetailComponent,
@@ -48,7 +46,6 @@ export class ExerciseDetailDirective implements OnInit, OnDestroy {
             [DetailType.ProgrammingAuxiliaryRepositoryButtons]: ProgrammingAuxiliaryRepositoryButtonsDetailComponent,
             [DetailType.ProgrammingTestStatus]: ProgrammingTestStatusDetailComponent,
             [DetailType.ProgrammingDiffReport]: ProgrammingDiffReportDetailComponent,
-            [DetailType.ProgrammingBuildStatistics]: ProgrammingBuildStatisticsComponent,
         };
 
         const detailComponent = detailTypeToComponent[this.detail.type];

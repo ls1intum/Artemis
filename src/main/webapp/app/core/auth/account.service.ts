@@ -3,16 +3,16 @@ import { SessionStorageService } from 'ngx-webstorage';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { BehaviorSubject, Observable, lastValueFrom, of } from 'rxjs';
 import { catchError, distinctUntilChanged, map } from 'rxjs/operators';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { setUser } from '@sentry/angular';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { Exercise, getCourseFromExercise } from 'app/entities/exercise.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { Exercise, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { TranslateService } from '@ngx-translate/core';
-import { EntityResponseType } from 'app/assessment/shared/complaint.service';
+import { EntityResponseType } from 'app/assessment/shared/services/complaint.service';
 import dayjs from 'dayjs/esm';
 import { addPublicFilePrefix } from 'app/app.constants';
 
@@ -48,6 +48,7 @@ export class AccountService implements IAccountService {
     private authenticationState = new BehaviorSubject<User | undefined>(undefined);
     private prefilledUsernameValue?: string;
 
+    // TODO get and set userIdentity should be converted to a signal instead
     get userIdentity() {
         return this.userIdentityValue;
     }

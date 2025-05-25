@@ -68,6 +68,7 @@ import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
 import de.tum.cit.aet.artemis.atlas.api.LearningPathApi;
 import de.tum.cit.aet.artemis.communication.service.ConductAgreementService;
+import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -103,12 +104,13 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.CourseService;
-import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
-import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
+import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
@@ -119,7 +121,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
-import de.tum.cit.aet.artemis.lti.service.OnlineCourseConfigurationService;
+import de.tum.cit.aet.artemis.lti.api.LtiApi;
 import de.tum.cit.aet.artemis.programming.service.ci.CIUserManagementService;
 import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupChannelManagementApi;
 import tech.jhipster.web.util.PaginationUtil;
@@ -146,7 +148,7 @@ public class CourseResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final Optional<OnlineCourseConfigurationService> onlineCourseConfigurationService;
+    private final Optional<LtiApi> ltiApi;
 
     private final CourseRepository courseRepository;
 
@@ -181,24 +183,23 @@ public class CourseResource {
 
     private final Optional<LearningPathApi> learningPathApi;
 
-    private final ExamRepository examRepository;
+    private final Optional<ExamRepositoryApi> examRepositoryApi;
 
     private final ComplaintService complaintService;
 
     private final TeamRepository teamRepository;
 
-    public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
-            Optional<OnlineCourseConfigurationService> onlineCourseConfigurationService, AuthorizationCheckService authCheckService,
-            TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService, AssessmentDashboardService assessmentDashboardService,
-            ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService, FileService fileService,
-            Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi, CourseScoreCalculationService courseScoreCalculationService,
+    public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService, Optional<LtiApi> ltiApi,
+            AuthorizationCheckService authCheckService, TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService,
+            AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
+            FileService fileService, Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi, CourseScoreCalculationService courseScoreCalculationService,
             GradingScaleRepository gradingScaleRepository, Optional<LearningPathApi> learningPathApi, ConductAgreementService conductAgreementService,
-            Optional<AthenaApi> athenaApi, ExamRepository examRepository, ComplaintService complaintService, TeamRepository teamRepository,
+            Optional<AthenaApi> athenaApi, Optional<ExamRepositoryApi> examRepositoryApi, ComplaintService complaintService, TeamRepository teamRepository,
             Optional<LearnerProfileApi> learnerProfileApi) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
-        this.onlineCourseConfigurationService = onlineCourseConfigurationService;
+        this.ltiApi = ltiApi;
         this.authCheckService = authCheckService;
         this.tutorParticipationRepository = tutorParticipationRepository;
         this.submissionService = submissionService;
@@ -213,7 +214,7 @@ public class CourseResource {
         this.learningPathApi = learningPathApi;
         this.conductAgreementService = conductAgreementService;
         this.athenaApi = athenaApi;
-        this.examRepository = examRepository;
+        this.examRepositoryApi = examRepositoryApi;
         this.complaintService = complaintService;
         this.teamRepository = teamRepository;
         this.learnerProfileApi = learnerProfileApi;
@@ -290,22 +291,22 @@ public class CourseResource {
         courseUpdate.validateUnenrollmentEndDate();
 
         if (file != null) {
-            Path basePath = FilePathService.getCourseIconFilePath();
-            Path savePath = fileService.saveFile(file, basePath, false);
-            courseUpdate.setCourseIcon(FilePathService.publicPathForActualPathOrThrow(savePath, courseId).toString());
+            Path basePath = FilePathConverter.getCourseIconFilePath();
+            Path savePath = fileService.saveFile(file, basePath, FilePathType.COURSE_ICON, false);
+            courseUpdate.setCourseIcon(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.COURSE_ICON, courseId).toString());
             if (existingCourse.getCourseIcon() != null) {
                 // delete old course icon
-                fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(new URI(existingCourse.getCourseIcon())), 0);
+                fileService.schedulePathForDeletion(FilePathConverter.fileSystemPathForExternalUri(new URI(existingCourse.getCourseIcon()), FilePathType.COURSE_ICON), 0);
             }
         }
         else if (courseUpdate.getCourseIcon() == null && existingCourse.getCourseIcon() != null) {
             // delete old course icon
-            fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(new URI(existingCourse.getCourseIcon())), 0);
+            fileService.schedulePathForDeletion(FilePathConverter.fileSystemPathForExternalUri(new URI(existingCourse.getCourseIcon()), FilePathType.COURSE_ICON), 0);
         }
 
         if (courseUpdate.isOnlineCourse() != existingCourse.isOnlineCourse()) {
-            if (courseUpdate.isOnlineCourse() && onlineCourseConfigurationService.isPresent()) {
-                onlineCourseConfigurationService.get().createOnlineCourseConfiguration(courseUpdate);
+            if (courseUpdate.isOnlineCourse() && ltiApi.isPresent()) {
+                ltiApi.get().createOnlineCourseConfiguration(courseUpdate);
             }
             else {
                 courseUpdate.setOnlineCourseConfiguration(null);
@@ -372,8 +373,8 @@ public class CourseResource {
 
         Set<Course> courses = courseService.findAllOnlineCoursesForPlatformForUser(clientId, user);
 
-        List<OnlineCourseDTO> onlineCourseDTOS = courses.stream()
-                .map(c -> new OnlineCourseDTO(c.getId(), c.getTitle(), c.getShortName(), c.getOnlineCourseConfiguration().getLtiPlatformConfiguration().getRegistrationId()))
+        List<OnlineCourseDTO> onlineCourseDTOS = courses.stream().map(c -> new OnlineCourseDTO(c.getId(), c.getTitle(), c.getShortName(),
+                c.getOnlineCourseConfiguration().getLtiPlatformConfiguration().getRegistrationId(), c.getStartDate(), c.getEndDate(), c.getDescription(), c.getNumberOfStudents()))
                 .toList();
 
         return ResponseEntity.ok(onlineCourseDTOS);
@@ -654,8 +655,14 @@ public class CourseResource {
         // the course
         var gradingScales = gradingScaleRepository.findAllByCourseIds(courses.stream().map(Course::getId).collect(Collectors.toSet()));
         // we explicitly add 1 hour here to compensate for potential write extensions. Calculating it exactly is not feasible here
-        var activeExams = examRepository.findActiveExams(courses.stream().map(Course::getId).collect(Collectors.toSet()), user.getId(), ZonedDateTime.now(),
-                ZonedDateTime.now().plusHours(1));
+        Set<Exam> activeExams;
+        if (examRepositoryApi.isPresent()) {
+            activeExams = examRepositoryApi.get().findActiveExams(courses.stream().map(Course::getId).collect(Collectors.toSet()), user.getId(), ZonedDateTime.now(),
+                    ZonedDateTime.now().plusHours(1));
+        }
+        else {
+            activeExams = Set.of();
+        }
 
         log.debug("gradingScaleRepository.findAllByCourseIds done");
         Set<CourseForDashboardDTO> coursesForDashboard = new HashSet<>();
@@ -828,6 +835,26 @@ public class CourseResource {
         }
 
         return ResponseEntity.ok(submissions);
+    }
+
+    /**
+     * GET /courses/{courseId}/all-exercises-with-due-dates : Returns all exercises in a course with their titles,
+     * due dates and categories
+     *
+     * @param courseId the id of the course
+     * @return Set of exercises with status 200 (OK)
+     */
+    @GetMapping("courses/{courseId}/all-exercises-with-due-dates")
+    @EnforceAtLeastTutor
+    public ResponseEntity<Set<Exercise>> getAllExercisesWithDueDatesForCourse(@PathVariable Long courseId) {
+        log.debug("REST request to get all exercises with due dates and categories in course : {}", courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
+
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+        Set<Exercise> exercises = exerciseRepository.findByCourseIdWithFutureDueDatesAndCategories(courseId);
+        return ResponseEntity.ok(exercises);
     }
 
     /**

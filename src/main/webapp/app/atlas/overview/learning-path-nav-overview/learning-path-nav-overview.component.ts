@@ -4,12 +4,14 @@ import { NgbAccordionDirective, NgbAccordionModule, NgbDropdownModule, NgbModal 
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faCheckCircle } from '@fortawesome/free-solid-svg-icons';
 import { AlertService } from 'app/shared/service/alert.service';
-import { LearningPathCompetencyDTO } from 'app/entities/competency/learning-path.model';
-import { LearningPathApiService } from 'app/atlas/shared/learning-path-api.service';
+import { LearningPathCompetencyDTO } from 'app/atlas/shared/entities/learning-path.model';
+import { LearningPathApiService } from 'app/atlas/shared/services/learning-path-api.service';
 import { CompetencyGraphModalComponent } from 'app/atlas/manage/competency-graph-modal/competency-graph-modal.component';
 import { LearningPathNavOverviewLearningObjectsComponent } from 'app/atlas/overview/learning-path-nav-overview-learning-objects/learning-path-nav-overview-learning-objects.component';
 import { LearningPathNavigationService } from 'app/atlas/overview/learning-path-navigation.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ScienceEventType } from 'app/shared/science/science.model';
+import { ScienceService } from 'app/shared/science/science.service';
 
 @Component({
     selector: 'jhi-learning-path-nav-overview',
@@ -25,6 +27,7 @@ export class LearningPathNavOverviewComponent {
     private readonly modalService = inject(NgbModal);
     private readonly learningPathApiService = inject(LearningPathApiService);
     private readonly learningPathNavigationService = inject(LearningPathNavigationService);
+    private readonly scienceService = inject(ScienceService);
 
     readonly learningPathId = input.required<number>();
 
@@ -42,6 +45,9 @@ export class LearningPathNavOverviewComponent {
     constructor() {
         effect(() => {
             const learningPathId = this.learningPathId();
+
+            this.scienceService.logEvent(ScienceEventType.LEARNING_PATH__OPEN_NAVIGATION, learningPathId);
+
             untracked(() => this.loadCompetencies(learningPathId));
         });
     }

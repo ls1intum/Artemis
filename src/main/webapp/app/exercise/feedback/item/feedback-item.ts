@@ -1,5 +1,5 @@
 import { FeedbackColor, FeedbackNode } from 'app/exercise/feedback/node/feedback-node';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 
 export type FeedbackItemType = 'Test' | 'Static Code Analysis' | 'Reviewer' | 'Subsequent' | 'Submission Policy';
 

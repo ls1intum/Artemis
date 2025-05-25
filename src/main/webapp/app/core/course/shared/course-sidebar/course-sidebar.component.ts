@@ -1,5 +1,4 @@
-import { Component, HostListener, OnInit, ViewChild, input, output, signal } from '@angular/core';
-import { Course } from 'app/entities/course.model';
+import { Component, HostListener, OnChanges, Signal, SimpleChanges, ViewChild, computed, inject, input, output, signal } from '@angular/core';
 import { IconDefinition, faChevronRight, faCog, faEllipsis } from '@fortawesome/free-solid-svg-icons';
 import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
@@ -9,6 +8,10 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
+import { Course } from 'app/core/course/shared/entities/course.model';
+import { LayoutService } from 'app/shared/breakpoints/layout.service';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
 
 export interface CourseActionItem {
     title: string;
@@ -23,9 +26,10 @@ export interface SidebarItem {
     title: string;
     testId?: string;
     translation: string;
-    guidedTour?: boolean;
     featureToggle?: FeatureToggle;
     hidden: boolean;
+    isPrefix?: boolean;
+    bottom?: boolean;
 }
 
 @Component({
@@ -49,9 +53,15 @@ export interface SidebarItem {
         SlicePipe,
     ],
 })
-export class CourseSidebarComponent implements OnInit {
+export class CourseSidebarComponent implements OnChanges {
+    protected readonly faChevronRight = faChevronRight;
+    protected readonly faEllipsis = faEllipsis;
+    protected readonly faCog = faCog;
+
     course = input<Course | undefined>();
     courses = input<Course[] | undefined>();
+    sidebarItemsTop = signal<SidebarItem[]>([]);
+    sidebarItemsBottom = signal<SidebarItem[]>([]);
     sidebarItems = input<SidebarItem[]>([]);
     courseActionItems = input<CourseActionItem[]>([]);
     isNavbarCollapsed = input<boolean>(false);
@@ -60,6 +70,7 @@ export class CourseSidebarComponent implements OnInit {
     isTestServer = input<boolean>(false);
     hasUnreadMessages = input<boolean>(false);
     communicationRouteLoaded = input<boolean>(false);
+    layoutService = inject(LayoutService);
 
     hiddenItems = signal<SidebarItem[]>([]);
     anyItemHidden = signal<boolean>(false);
@@ -67,20 +78,29 @@ export class CourseSidebarComponent implements OnInit {
     switchCourse = output<Course>();
     courseActionItemClick = output<CourseActionItem>();
     toggleCollapseState = output<void>();
+    activeBreakpoints: Signal<string[]>;
+    canExpand: Signal<boolean>;
 
     @ViewChild('itemsDrop') itemsDrop!: NgbDropdown;
 
     // Constants for threshold calculation
-    readonly WINDOW_OFFSET: number = 300;
+    readonly WINDOW_OFFSET: number = 225;
     readonly ITEM_HEIGHT: number = 38;
 
-    // Icons
-    faChevronRight = faChevronRight;
-    faEllipsis = faEllipsis;
-    protected readonly faCog = faCog;
+    constructor() {
+        this.activeBreakpoints = toSignal(this.layoutService.subscribeToLayoutChanges(), { initialValue: [] as string[] });
+        this.canExpand = computed(() => {
+            this.activeBreakpoints();
+            return this.layoutService.isBreakpointActive(CustomBreakpointNames.sidebarExpandable);
+        });
+    }
 
-    ngOnInit() {
-        this.updateVisibleNavbarItems(window.innerHeight);
+    ngOnChanges(changes: SimpleChanges): void {
+        if (changes['sidebarItems']) {
+            this.updateVisibleNavbarItems(window.innerHeight);
+            this.sidebarItemsTop.set(this.sidebarItems().filter((item) => !item.bottom));
+            this.sidebarItemsBottom.set(this.sidebarItems().filter((item) => item.bottom));
+        }
     }
 
     /** Listen window resize event by height */
@@ -104,7 +124,7 @@ export class CourseSidebarComponent implements OnInit {
         const newHiddenItems: SidebarItem[] = [];
         let newAnyItemHidden = false;
         if (this.sidebarItems()) {
-            const reversedSidebarItems = [...this.sidebarItems()].reverse();
+            const reversedSidebarItems = [...this.sidebarItems()].filter((item) => !item.bottom).reverse();
 
             reversedSidebarItems.forEach((item, index) => {
                 const currentThreshold = threshold - index * this.ITEM_HEIGHT;
@@ -127,6 +147,4 @@ export class CourseSidebarComponent implements OnInit {
         }
         return this.sidebarItems().length * this.ITEM_HEIGHT + this.WINDOW_OFFSET;
     }
-
-    protected readonly FeatureToggle = FeatureToggle;
 }

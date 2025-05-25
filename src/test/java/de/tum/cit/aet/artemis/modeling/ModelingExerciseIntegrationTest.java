@@ -69,8 +69,6 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseFactory;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
-import de.tum.cit.aet.artemis.plagiarism.domain.modeling.ModelingPlagiarismResult;
-import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismResultDTO;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorParticipationStatus;
 
@@ -239,7 +237,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         ModelingExercise returnedModelingExercise = request.putWithResponseBodyAndParams("/api/modeling/modeling-exercises", createdModelingExercise, ModelingExercise.class,
                 HttpStatus.OK, params);
         assertThat(returnedModelingExercise.getGradingCriteria()).hasSameSizeAs(gradingCriteria);
-        verify(groupNotificationService).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(returnedModelingExercise, notificationText);
+        verify(groupNotificationService).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(returnedModelingExercise);
         verify(examLiveEventsService, never()).createAndSendProblemStatementUpdateEvent(eq(returnedModelingExercise), eq(notificationText));
         verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(createdModelingExercise), eq(Optional.of(createdModelingExercise)));
     }
@@ -266,7 +264,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         ModelingExercise returnedModelingExercise = request.putWithResponseBodyAndParams("/api/modeling/modeling-exercises", modelingExercise, ModelingExercise.class,
                 HttpStatus.OK, params);
 
-        verify(groupNotificationService, never()).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(returnedModelingExercise, notificationText);
+        verify(groupNotificationService, never()).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(returnedModelingExercise);
         verify(examLiveEventsService, times(1)).createAndSendProblemStatementUpdateEvent(eq(returnedModelingExercise), eq(notificationText));
     }
 
@@ -275,10 +273,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     void testUpdateModelingExercise_updatingCourseId_conflict() throws Exception {
         // Create a modeling exercise.
         ModelingExercise createdModelingExercise = classExercise;
-        Long oldCourseId = createdModelingExercise.getCourseViaExerciseGroupOrCourseMember().getId();
 
         // Create a new course with different id.
-        Long newCourseId = oldCourseId + 1;
         Course newCourse = courseUtilService.createCourse();
 
         // Assign new course to the modeling exercise.
@@ -480,7 +476,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         var importedExercise = request.postWithResponseBody("/api/modeling/modeling-exercises/import/" + modelingExerciseToImport.getId(), modelingExerciseToImport,
                 ModelingExercise.class, HttpStatus.CREATED);
         assertThat(importedExercise).usingRecursiveComparison().ignoringFields("id", "course", "shortName", "releaseDate", "dueDate", "assessmentDueDate",
-                "exampleSolutionPublicationDate", "channelNameTransient", "plagiarismDetectionConfig.id", "competencyLinks").isEqualTo(modelingExerciseToImport);
+                "exampleSolutionPublicationDate", "channelNameTransient", "competencyLinks").isEqualTo(modelingExerciseToImport);
         Channel channelFromDB = channelRepository.findChannelByExerciseId(importedExercise.getId());
         assertThat(channelFromDB).isNotNull();
         assertThat(channelFromDB.getName()).isEqualTo(uniqueChannelName);
@@ -513,8 +509,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
                 HttpStatus.CREATED);
 
         assertThat(modelingExerciseRepository.findById(importedModelingExercise.getId())).isPresent();
-        importedModelingExercise = modelingExerciseRepository.findByIdWithExampleSubmissionsAndResultsAndPlagiarismDetectionConfigAndGradingCriteria(modelingExercise.getId())
-                .orElseThrow();
+        importedModelingExercise = modelingExerciseRepository.findByIdWithExampleSubmissionsAndResultsAndGradingCriteria(modelingExercise.getId()).orElseThrow();
 
         var importedExampleSubmission = importedModelingExercise.getExampleSubmissions().stream().findFirst().orElseThrow();
         assertThat(importedExampleSubmission.getId()).isEqualTo(exampleSubmission.getId());
@@ -868,37 +863,6 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetPlagiarismResult() throws Exception {
-        final Course course = modelingExerciseUtilService.addCourseWithOneModelingExercise();
-        ModelingExercise modelingExercise = modelingExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
-
-        ModelingPlagiarismResult expectedResult = modelingExerciseUtilService.createModelingPlagiarismResultForExercise(modelingExercise);
-
-        var result = request.get("/api/modeling/modeling-exercises/" + modelingExercise.getId() + "/plagiarism-result", HttpStatus.OK, PlagiarismResultDTO.class);
-        assertThat(result.plagiarismResult().getId()).isEqualTo(expectedResult.getId());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetPlagiarismResultWithoutResult() throws Exception {
-        final Course course = modelingExerciseUtilService.addCourseWithOneModelingExercise();
-        ModelingExercise modelingExercise = modelingExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
-        var result = request.get("/api/modeling/modeling-exercises/" + modelingExercise.getId() + "/plagiarism-result", HttpStatus.OK, String.class);
-        assertThat(result).isNullOrEmpty();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetPlagiarismResultWithoutExercise() throws Exception {
-        Long exerciseId = classExercise.getId();
-        modelingExerciseRepository.deleteById(exerciseId);
-        ModelingPlagiarismResult result = request.get("/api/modeling/modeling-exercises/" + exerciseId + "/plagiarism-result", HttpStatus.NOT_FOUND,
-                ModelingPlagiarismResult.class);
-        assertThat(result).isNull();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testReEvaluateAndUpdateModelingExercise() throws Exception {
         Set<GradingCriterion> gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(classExercise);
         gradingCriterionRepository.saveAll(gradingCriteria);
@@ -963,14 +927,6 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testReEvaluateAndUpdateModelingExercise_notFound() throws Exception {
         request.put("/api/modeling/modeling-exercises/" + 123456789 + "/re-evaluate", classExercise, HttpStatus.NOT_FOUND);
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void deleteModelingExerciseClustersAndElementsAsAdmin() throws Exception {
-        final Course course = modelingExerciseUtilService.addCourseWithOneModelingExercise();
-        ModelingExercise modelingExercise = modelingExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
-        request.delete("/api/modeling/admin/modeling-exercises/" + modelingExercise.getId() + "/clusters", HttpStatus.OK);
     }
 
     @Test
@@ -1142,8 +1098,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         assertThat(importedFeedbackGradingInstruction.getCredits()).isEqualTo(gradingInstruction.getCredits());
         assertThat(importedFeedbackGradingInstruction.getUsageCount()).isEqualTo(gradingInstruction.getUsageCount());
 
-        var importedModelingExerciseFromDb = modelingExerciseRepository
-                .findByIdWithExampleSubmissionsAndResultsAndPlagiarismDetectionConfigAndGradingCriteria(importedModelingExercise.getId()).orElseThrow();
+        var importedModelingExerciseFromDb = modelingExerciseRepository.findByIdWithExampleSubmissionsAndResultsAndGradingCriteria(importedModelingExercise.getId()).orElseThrow();
         var importedFeedbackGradingInstructionFromDb = importedModelingExerciseFromDb.getExampleSubmissions().stream().findFirst().orElseThrow().getSubmission().getLatestResult()
                 .getFeedbacks().getFirst().getGradingInstruction();
 

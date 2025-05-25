@@ -27,7 +27,8 @@ import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.core.service.FilePathService;
+import de.tum.cit.aet.artemis.core.FilePathType;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropMapping;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropSubmittedAnswer;
@@ -54,7 +55,8 @@ public class DragAndDropQuizAnswerConversionService {
     public void convertDragAndDropQuizAnswerAndStoreAsPdf(DragAndDropSubmittedAnswer dragAndDropSubmittedAnswer, Path outputDir, boolean showResult) throws IOException {
         DragAndDropQuestion question = (DragAndDropQuestion) dragAndDropSubmittedAnswer.getQuizQuestion();
         String backgroundFilePath = question.getBackgroundFilePath();
-        BufferedImage backgroundImage = ImageIO.read(FilePathService.actualPathForPublicPath(URI.create(backgroundFilePath)).toFile());
+        BufferedImage backgroundImage = ImageIO
+                .read(FilePathConverter.fileSystemPathForExternalUri(URI.create(backgroundFilePath), FilePathType.DRAG_AND_DROP_BACKGROUND).toFile());
 
         generateDragAndDropSubmittedAnswerImage(backgroundImage, dragAndDropSubmittedAnswer, showResult);
         Path dndSubmissionPathPdf = outputDir.resolve(
@@ -86,16 +88,20 @@ public class DragAndDropQuizAnswerConversionService {
         graphics.setStroke(new BasicStroke(3));
         List<DropLocation> dropLocations = question.getDropLocations();
         for (var dropLocation : dropLocations) {
-            int dropLocationX = (int) (dropLocation.getPosX() / MAX_SIZE_UNIT * backgroundImageWidth);
-            int dropLocationY = (int) (dropLocation.getPosY() / MAX_SIZE_UNIT * backgroundImageHeight);
-            int dropLocationWidth = (int) (dropLocation.getWidth() / MAX_SIZE_UNIT * backgroundImageWidth);
-            int dropLocationHeight = (int) (dropLocation.getHeight() / MAX_SIZE_UNIT * backgroundImageHeight);
-            DropLocationCoordinates dropLocationCoordinates = new DropLocationCoordinates(dropLocationX, dropLocationY, dropLocationWidth, dropLocationHeight);
+            final var dropLocationCoordinates = getDropLocationCoordinates(dropLocation, backgroundImageWidth, backgroundImageHeight);
             drawDropLocation(dragAndDropSubmittedAnswer, graphics, dropLocation, dropLocationCoordinates, showResult);
             drawDragItem(dragAndDropSubmittedAnswer, graphics, dropLocation, dropLocationCoordinates);
         }
         graphics.drawImage(backgroundImage, 0, 0, null);
 
+    }
+
+    private static DropLocationCoordinates getDropLocationCoordinates(DropLocation dropLocation, int backgroundImageWidth, int backgroundImageHeight) {
+        int dropLocationX = (int) (dropLocation.getPosX() / MAX_SIZE_UNIT * backgroundImageWidth);
+        int dropLocationY = (int) (dropLocation.getPosY() / MAX_SIZE_UNIT * backgroundImageHeight);
+        int dropLocationWidth = (int) (dropLocation.getWidth() / MAX_SIZE_UNIT * backgroundImageWidth);
+        int dropLocationHeight = (int) (dropLocation.getHeight() / MAX_SIZE_UNIT * backgroundImageHeight);
+        return new DropLocationCoordinates(dropLocationX, dropLocationY, dropLocationWidth, dropLocationHeight);
     }
 
     private void drawDragItem(DragAndDropSubmittedAnswer dragAndDropSubmittedAnswer, Graphics2D graphics, DropLocation dropLocation,
@@ -125,7 +131,8 @@ public class DragAndDropQuizAnswerConversionService {
     }
 
     private void drawPictureDragItem(Graphics2D graphics, DropLocationCoordinates dropLocationCoordinates, DragAndDropMapping mapping) throws IOException {
-        BufferedImage dragItem = ImageIO.read(FilePathService.actualPathForPublicPath(URI.create(mapping.getDragItem().getPictureFilePath())).toFile());
+        BufferedImage dragItem = ImageIO
+                .read(FilePathConverter.fileSystemPathForExternalUri(URI.create(mapping.getDragItem().getPictureFilePath()), FilePathType.DRAG_ITEM).toFile());
         Dimension scaledDimForDragItem = getScaledDimension(new Dimension(dragItem.getWidth(), dragItem.getHeight()),
                 new Dimension(dropLocationCoordinates.width, dropLocationCoordinates.height));
         graphics.drawImage(dragItem, dropLocationCoordinates.x, dropLocationCoordinates.y, (int) scaledDimForDragItem.getWidth(), (int) scaledDimForDragItem.getHeight(), null);

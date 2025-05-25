@@ -87,10 +87,8 @@ public class LectureTranscriptionResource {
                     .body(null);
         }
 
-        if (lectureUnit.getLectureTranscription() != null) {
-            lectureTranscriptionRepository.deleteById(lectureUnit.getLectureTranscription().getId());
-            lectureUnit.setLectureTranscription(null);
-        }
+        var existingTranscription = lectureTranscriptionRepository.findByLectureUnit_Id(lectureUnitId);
+        existingTranscription.ifPresent(lectureTranscription -> lectureTranscriptionRepository.deleteById(lectureTranscription.getId()));
 
         LectureTranscription lectureTranscription = new LectureTranscription(transcriptionDTO.language(), transcriptionDTO.segments(), lectureUnit);
 

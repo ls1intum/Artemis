@@ -1,22 +1,21 @@
 import { Component, OnInit, computed, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Observable, map } from 'rxjs';
+import { Observable } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { faBan, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
-import { Faq, FaqState } from 'app/entities/faq.model';
+import { Faq, FaqState } from 'app/communication/shared/entities/faq.model';
 import { FaqService } from 'app/communication/faq/faq.service';
-import { FaqCategory } from 'app/entities/faq-category.model';
+import { FaqCategory } from 'app/communication/shared/entities/faq-category.model';
 import { loadCourseFaqCategories } from 'app/communication/faq/faq.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { RewriteAction } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewrite.action';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { PROFILE_IRIS } from 'app/app.constants';
 import RewritingVariant from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-variant';
-import { toSignal } from '@angular/core/rxjs-interop';
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -49,8 +48,8 @@ export class FaqUpdateComponent implements OnInit {
     isAtLeastInstructor = false;
     domainActionsDescription = [new FormulaAction()];
 
-    irisEnabled = toSignal(this.profileService.getProfileInfo().pipe(map((profileInfo) => profileInfo.activeProfiles.includes(PROFILE_IRIS))), { initialValue: false });
-    artemisIntelligenceActions = computed(() => (this.irisEnabled() ? [new RewriteAction(this.artemisIntelligenceService, RewritingVariant.FAQ, this.courseId)] : []));
+    irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
+    artemisIntelligenceActions = computed(() => (this.irisEnabled ? [new RewriteAction(this.artemisIntelligenceService, RewritingVariant.FAQ, this.courseId)] : []));
 
     // Icons
     readonly faQuestionCircle = faQuestionCircle;

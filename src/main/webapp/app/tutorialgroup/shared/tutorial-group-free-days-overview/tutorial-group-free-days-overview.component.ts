@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, DoCheck, IterableDiffer, IterableDiffers, OnInit, inject, input } from '@angular/core';
-import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
+import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutorial-group-free-day.model';
 import { SortService } from 'app/shared/service/sort.service';
 import dayjs from 'dayjs/esm';
 import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';

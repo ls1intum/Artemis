@@ -62,7 +62,7 @@ import de.tum.cit.aet.artemis.plagiarism.domain.text.TextSubmissionElement;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismComparisonRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVcTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTest;
 import de.tum.cit.aet.artemis.text.domain.TextBlock;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
@@ -70,7 +70,7 @@ import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
-class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVcTest {
+class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
 
     private static final String TEST_PREFIX = "cleanup";
 
@@ -381,13 +381,13 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVcTest
         oldParticipantScore1.setExercise(oldExercise);
         oldParticipantScore1.setUser(student);
         oldParticipantScore1.setLastRatedResult(oldResult1);
-        oldParticipantScore1 = studentScoreRepository.save(oldParticipantScore1);
+        studentScoreRepository.save(oldParticipantScore1);
 
         StudentScore oldParticipantScore2 = new StudentScore();
         oldParticipantScore2.setUser(student);
         oldParticipantScore2.setExercise(oldExercise);
         oldParticipantScore2.setLastResult(oldResult2);
-        oldParticipantScore2 = studentScoreRepository.save(oldParticipantScore1);
+        studentScoreRepository.save(oldParticipantScore2);
 
         // create non rated results for the new course
         var newExercise = textExerciseRepository.findByCourseIdWithCategories(newCourse.getId()).getFirst();
@@ -436,9 +436,6 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVcTest
         assertThat(responseBody.jobType()).isEqualTo("deleteNonRatedResults");
         assertThat(responseBody.executionDate()).isNotNull();
 
-        // assertThat(participantScoreRepository.findById(oldParticipantScore1.getId())).isEmpty();
-        // assertThat(participantScoreRepository.findById(oldParticipantScore2.getId())).isEmpty();
-        // assertThat(resultRepository.findById(oldResult1.getId())).isEmpty();
         assertThat(feedbackRepository.findByResult(oldResult1)).isEmpty();
         assertThat(textBlockRepository.findById(oldTextBlock1.getId())).isEmpty();
 
@@ -481,7 +478,7 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVcTest
         oldParticipantScore1.setUser(student);
         oldParticipantScore1.setExercise(oldExercise);
         oldParticipantScore1.setLastRatedResult(oldResult1);
-        oldParticipantScore1 = studentScoreRepository.save(oldParticipantScore1);
+        studentScoreRepository.save(oldParticipantScore1);
 
         StudentScore oldParticipantScore2 = new StudentScore();
         oldParticipantScore2.setExercise(oldExercise);

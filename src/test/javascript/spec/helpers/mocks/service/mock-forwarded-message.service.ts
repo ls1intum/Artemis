@@ -1,6 +1,7 @@
 import { Observable, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
-import { ForwardedMessage } from 'app/entities/metis/forwarded-message.model';
+import { ForwardedMessage } from 'app/communication/shared/entities/forwarded-message.model';
+import { PostingType } from 'app/communication/shared/entities/posting.model';
 
 export class MockForwardedMessageService {
     private forwardedMessages: Map<number, ForwardedMessage[]> = new Map();
@@ -14,7 +15,7 @@ export class MockForwardedMessageService {
         return of(new HttpResponse({ body: forwardedMessage }));
     }
 
-    getForwardedMessages(postIds: number[]): Observable<HttpResponse<Map<number, ForwardedMessage[]>>> {
+    getForwardedMessages(postIds: number[], type: PostingType): Observable<HttpResponse<Map<number, ForwardedMessage[]>>> {
         const result = new Map<number, ForwardedMessage[]>();
         postIds.forEach((postId) => {
             if (this.forwardedMessages.has(postId)) {

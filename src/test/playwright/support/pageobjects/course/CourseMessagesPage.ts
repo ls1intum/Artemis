@@ -1,7 +1,7 @@
 import { Page, expect } from '@playwright/test';
-import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
-import { GroupChat } from 'app/entities/metis/conversation/group-chat.model';
-import { Post } from 'app/entities/metis/post.model';
+import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
+import { GroupChat } from 'app/communication/shared/entities/conversation/group-chat.model';
+import { Post } from 'app/communication/shared/entities/post.model';
 
 /**
  * A class which encapsulates UI selectors and actions for the Course Messages page.
@@ -241,8 +241,20 @@ export class CourseMessagesPage {
      * @param message - The content of the message to verify.
      */
     async checkMessage(messageId: number, message: string) {
-        const messagePreview = this.getSinglePost(messageId).locator('.markdown-preview').getByText(message);
-        await expect(messagePreview).toBeVisible();
+        const postElement = this.getSinglePost(messageId);
+        await expect(postElement).toBeVisible({
+            timeout: 30000,
+        });
+
+        const markdownPreview = postElement.locator('.markdown-preview');
+        await expect(markdownPreview).toBeVisible({
+            timeout: 30000,
+        });
+
+        const messagePreview = markdownPreview.getByText(message);
+        await expect(messagePreview).toBeVisible({
+            timeout: 30000,
+        });
     }
 
     /**

@@ -1,7 +1,7 @@
 import { Component, Input, OnInit, inject } from '@angular/core';
 import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
-import { GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
-import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
+import { GradeStep, GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
+import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { faChevronLeft } from '@fortawesome/free-solid-svg-icons';
 import { GradeEditMode } from 'app/assessment/manage/grading-system/base-grading-system/base-grading-system.component';
 import { BonusService } from 'app/assessment/manage/grading-system/bonus/bonus.service';
@@ -14,7 +14,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
 import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { ScoresStorageService } from 'app/core/course/manage/course-scores/scores-storage.service';
 
 @Component({

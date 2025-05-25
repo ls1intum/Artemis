@@ -63,9 +63,9 @@ public class FeatureToggleService {
         features = hazelcastInstance.getMap("features");
 
         // Features that are neither enabled nor disabled should be enabled by default
-        // This ensures that all features (except the Science API) are enabled once the system starts up
+        // This ensures that all features (except the Science API and TutorSuggestions) are enabled once the system starts up
         for (Feature feature : Feature.values()) {
-            if (!features.containsKey(feature) && feature != Feature.Science && feature != Feature.CourseSpecificNotifications) {
+            if (!features.containsKey(feature) && feature != Feature.Science && feature != Feature.TutorSuggestions) {
                 features.put(feature, true);
             }
         }
@@ -74,9 +74,8 @@ public class FeatureToggleService {
             features.put(Feature.Science, scienceEnabledOnStart);
         }
 
-        // By default, we disable course specific notifications for now
-        if (!features.containsKey(Feature.CourseSpecificNotifications)) {
-            features.put(Feature.CourseSpecificNotifications, false);
+        if (!features.containsKey(Feature.TutorSuggestions)) {
+            features.put(Feature.TutorSuggestions, false);
         }
     }
 

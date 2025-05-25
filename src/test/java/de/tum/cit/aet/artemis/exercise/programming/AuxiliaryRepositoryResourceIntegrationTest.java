@@ -130,7 +130,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(localAuxiliaryRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(eq(auxRepoUri),
                 eq(false), any());
 
-        doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfExercise(programmingExercise);
+        doReturn(defaultBranch).when(localVCGitBranchService).getOrRetrieveBranchOfExercise(programmingExercise);
     }
 
     @AfterEach

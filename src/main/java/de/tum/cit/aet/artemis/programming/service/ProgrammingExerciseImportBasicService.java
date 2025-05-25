@@ -12,6 +12,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,6 +41,9 @@ import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 @Profile(PROFILE_CORE)
 @Service
 public class ProgrammingExerciseImportBasicService {
+
+    @Value("${artemis.version-control.default-branch:main}")
+    protected String defaultBranch;
 
     private final Optional<VersionControlService> versionControlService;
 
@@ -121,7 +125,7 @@ public class ProgrammingExerciseImportBasicService {
         setupTestRepository(newProgrammingExercise);
         programmingExerciseService.initParticipations(newProgrammingExercise);
 
-        newProgrammingExercise.getBuildConfig().setBranch(versionControlService.orElseThrow().getDefaultBranchOfArtemis());
+        newProgrammingExercise.getBuildConfig().setBranch(defaultBranch);
         if (newProgrammingExercise.getBuildConfig().getBuildPlanConfiguration() == null) {
             // this means the user did not override the build plan config when importing the exercise and want to reuse it from the existing exercise
             newProgrammingExercise.getBuildConfig().setBuildPlanConfiguration(originalProgrammingExercise.getBuildConfig().getBuildPlanConfiguration());

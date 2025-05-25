@@ -174,7 +174,7 @@
                     id="allowFeedbackRequests"
                     (change)="toggleFeedbackRequests()"
                 />
-                @if (isAthenaEnabled$ | async) {
+                @if (isAthenaEnabled) {
                     <label
                         [ngStyle]="exercise.assessmentType !== assessmentType.SEMI_AUTOMATIC ? { color: 'grey' } : {}"
                         class="form-control-label"

@@ -4,28 +4,27 @@ import { ChangeDetectorRef, Component, OnDestroy, OnInit, ViewEncapsulation, inj
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
-import { isAllowedToModifyFeedback } from 'app/assessment/manage/assessment.service';
-import { ComplaintService } from 'app/assessment/shared/complaint.service';
+import { isAllowedToModifyFeedback } from 'app/assessment/manage/services/assessment.service';
+import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/shared/service/alert.service';
-import { Complaint, ComplaintType } from 'app/entities/complaint.model';
-import { Course } from 'app/entities/course.model';
-import { ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
-import { Feedback } from 'app/entities/feedback.model';
+import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
+import { ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { Result } from 'app/entities/result.model';
-import { getLatestSubmissionResult, getSubmissionResultById } from 'app/entities/submission.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { getLatestSubmissionResult, getSubmissionResultById } from 'app/exercise/shared/entities/submission/submission.model';
 import { FileUploadAssessmentService } from 'app/fileupload/manage/assess/file-upload-assessment.service';
 import { FileUploadSubmissionService } from 'app/fileupload/overview/file-upload-submission.service';
-import { getPositiveAndCappedTotalScore, getTotalMaxPoints } from 'app/exercise/exercise.utils';
-import { assessmentNavigateBack } from 'app/exercise/navigate-back.util';
+import { getPositiveAndCappedTotalScore, getTotalMaxPoints } from 'app/exercise/util/exercise.utils';
+import { assessmentNavigateBack } from 'app/shared/util/navigate-back.util';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
-import { FileService } from 'app/shared/http/file.service';
 import { onError } from 'app/shared/util/global.utils';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/shared/util/navigation.utils';
 import dayjs from 'dayjs/esm';
@@ -37,6 +36,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { FileService } from 'app/shared/service/file.service';
 
 @Component({
     providers: [FileUploadAssessmentService],

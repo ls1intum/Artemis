@@ -1,16 +1,16 @@
-import { Component, OnDestroy, ViewEncapsulation, inject, input, viewChild } from '@angular/core';
+import { Component, Input, OnDestroy, ViewEncapsulation, inject, viewChild } from '@angular/core';
 import { FormsModule, NgForm } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/shared/service/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
-import { Exam } from 'app/entities/exam/exam.model';
-import { ExamManagementService } from 'app/exam/manage/exam-management.service';
+import { Exam } from 'app/exam/shared/entities/exam.model';
+import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { faArrowRight, faBan, faCheck, faCircleNotch, faSpinner, faUpload } from '@fortawesome/free-solid-svg-icons';
 import { onError } from 'app/shared/util/global.utils';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgClass } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -37,8 +37,9 @@ export class StudentsUploadImagesDialogComponent implements OnDestroy {
     notFoundUsers?: NotFoundExamUserType;
     file: File;
 
-    courseId = input.required<number>();
-    exam = input.required<Exam>();
+    // we cannot use input<> here because then the data is undefined
+    @Input() courseId: number;
+    @Input() exam: Exam;
 
     isParsing = false;
     hasParsed = false;
@@ -84,12 +85,12 @@ export class StudentsUploadImagesDialogComponent implements OnDestroy {
      */
     parsePDFFile() {
         this.isParsing = true;
-        const exam = this.exam();
+        const exam = this.exam;
         if (exam?.id) {
             const formData: FormData = new FormData();
             formData.append('file', this.file);
 
-            this.examManagementService.saveImages(this.courseId(), exam.id, formData).subscribe({
+            this.examManagementService.saveImages(this.courseId, exam.id, formData).subscribe({
                 next: (res: any) => {
                     if (res) {
                         this.notFoundUsers = res.body;

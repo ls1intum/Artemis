@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.exam.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.EXAM_START_WAIT_TIME_MINUTES;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.util.TimeLogUtil.formatDurationFrom;
 import static java.time.ZonedDateTime.now;
 
@@ -20,7 +19,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -46,10 +45,10 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.ExamExerciseStartPreparationStatus;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.core.util.HttpRequestUtils;
+import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamSession;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
@@ -78,7 +77,7 @@ import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
 /**
  * REST controller for managing ExerciseGroup.
  */
-@Profile(PROFILE_CORE)
+@Conditional(ExamEnabled.class)
 @RestController
 @RequestMapping("api/exam/")
 public class StudentExamResource {
@@ -113,8 +112,6 @@ public class StudentExamResource {
 
     private final ExamService examService;
 
-    private final InstanceMessageSendService instanceMessageSendService;
-
     private final WebsocketMessagingService websocketMessagingService;
 
     private final SubmissionPolicyRepository submissionPolicyRepository;
@@ -123,7 +120,7 @@ public class StudentExamResource {
 
     private final ExamLiveEventRepository examLiveEventRepository;
 
-    @Value("${info.student-exam-store-session-data:#{true}}")
+    @Value("${info.studentExamStoreSessionData:#{true}}")
     private boolean storeSessionDataInStudentExamSession;
 
     private static final String ENTITY_NAME = "studentExam";
@@ -135,9 +132,8 @@ public class StudentExamResource {
             StudentExamAccessService studentExamAccessService, UserRepository userRepository, AuditEventRepository auditEventRepository,
             StudentExamRepository studentExamRepository, ExamDateService examDateService, ExamSessionService examSessionService,
             StudentParticipationRepository studentParticipationRepository, ExamRepository examRepository, SubmittedAnswerRepository submittedAnswerRepository,
-            AuthorizationCheckService authorizationCheckService, ExamService examService, InstanceMessageSendService instanceMessageSendService,
-            WebsocketMessagingService websocketMessagingService, SubmissionPolicyRepository submissionPolicyRepository, ExamLiveEventsService examLiveEventsService,
-            ExamLiveEventRepository examLiveEventRepository) {
+            AuthorizationCheckService authorizationCheckService, ExamService examService, WebsocketMessagingService websocketMessagingService,
+            SubmissionPolicyRepository submissionPolicyRepository, ExamLiveEventsService examLiveEventsService, ExamLiveEventRepository examLiveEventRepository) {
         this.examAccessService = examAccessService;
         this.examDeletionService = examDeletionService;
         this.studentExamService = studentExamService;
@@ -152,7 +148,6 @@ public class StudentExamResource {
         this.submittedAnswerRepository = submittedAnswerRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.examService = examService;
-        this.instanceMessageSendService = instanceMessageSendService;
         this.websocketMessagingService = websocketMessagingService;
         this.submissionPolicyRepository = submissionPolicyRepository;
         this.examLiveEventsService = examLiveEventsService;
@@ -248,10 +243,6 @@ public class StudentExamResource {
             Exam exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId, false);
             if (now.isAfter(exam.getVisibleDate())) {
                 examLiveEventsService.createAndSendWorkingTimeUpdateEvent(savedStudentExam, workingTime, originalWorkingTime, false);
-            }
-            if (now.isBefore(examDateService.getLatestIndividualExamEndDate(exam))) {
-                // potentially re-schedule clustering of modeling submissions (in case Compass is active)
-                examService.scheduleModelingExercises(exam);
             }
         }
 
@@ -696,9 +687,8 @@ public class StudentExamResource {
         AuditEvent auditEvent = new AuditEvent(instructor.getLogin(), Constants.PREPARE_EXERCISE_START, "examId=" + examId, "user=" + instructor.getLogin());
         auditEventRepository.add(auditEvent);
 
-        studentExamService.startExercises(examId).thenAccept(numberOfGeneratedParticipations -> {
-            log.info("Generated {} participations in {} for student exams of exam {}", numberOfGeneratedParticipations, formatDurationFrom(start), examId);
-        });
+        studentExamService.startExercises(examId).thenAccept(numberOfGeneratedParticipations -> log.info("Generated {} participations in {} for student exams of exam {}",
+                numberOfGeneratedParticipations, formatDurationFrom(start), examId));
         return ResponseEntity.ok().build();
     }
 

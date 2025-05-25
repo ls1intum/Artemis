@@ -185,6 +185,18 @@ public class SubmissionPolicyResource {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithSubmissionPolicyElseThrow(exerciseId);
         authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
 
+        final var submissionPolicy = getSubmissionPolicy(activate, exercise);
+        if (activate) {
+            submissionPolicyService.enableSubmissionPolicy(submissionPolicy);
+        }
+        else {
+            submissionPolicyService.disableSubmissionPolicy(submissionPolicy);
+        }
+        responseHeaders = HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, Long.toString(submissionPolicy.getId()));
+        return ResponseEntity.ok().headers(responseHeaders).build();
+    }
+
+    private static SubmissionPolicy getSubmissionPolicy(Boolean activate, ProgrammingExercise exercise) {
         SubmissionPolicy submissionPolicy = exercise.getSubmissionPolicy();
         if (submissionPolicy == null) {
             throw new BadRequestAlertException("The submission policy could not be toggled, because the programming exercise does not have a submission policy.", ENTITY_NAME,
@@ -198,14 +210,7 @@ public class SubmissionPolicyResource {
 
             throw new BadRequestAlertException(defaultMessage, ENTITY_NAME, errorKey);
         }
-        if (activate) {
-            submissionPolicyService.enableSubmissionPolicy(submissionPolicy);
-        }
-        else {
-            submissionPolicyService.disableSubmissionPolicy(submissionPolicy);
-        }
-        responseHeaders = HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, Long.toString(submissionPolicy.getId()));
-        return ResponseEntity.ok().headers(responseHeaders).build();
+        return submissionPolicy;
     }
 
     /**

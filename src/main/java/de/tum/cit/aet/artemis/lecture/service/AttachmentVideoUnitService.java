@@ -7,7 +7,6 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -18,17 +17,15 @@ import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
-import de.tum.cit.aet.artemis.core.service.FilePathService;
+import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.service.FileService;
-import de.tum.cit.aet.artemis.iris.repository.IrisSettingsRepository;
-import de.tum.cit.aet.artemis.iris.service.pyris.PyrisWebhookService;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
-import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentVideoUnitRepository;
-import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 
 @Profile(PROFILE_CORE)
 @Service
@@ -42,39 +39,33 @@ public class AttachmentVideoUnitService {
 
     private final SlideSplitterService slideSplitterService;
 
-    private final SlideRepository slideRepository;
-
-    private final Optional<PyrisWebhookService> pyrisWebhookService;
-
-    private final Optional<IrisSettingsRepository> irisSettingsRepository;
+    private final Optional<IrisLectureApi> irisLectureApi;
 
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
     private final LectureUnitService lectureUnitService;
 
-    public AttachmentVideoUnitService(SlideRepository slideRepository, SlideSplitterService slideSplitterService, AttachmentVideoUnitRepository attachmentVideoUnitRepository,
-            AttachmentRepository attachmentRepository, FileService fileService, Optional<PyrisWebhookService> pyrisWebhookService,
-            Optional<IrisSettingsRepository> irisSettingsRepository, Optional<CompetencyProgressApi> competencyProgressApi, LectureUnitService lectureUnitService) {
+    public AttachmentVideoUnitService(SlideSplitterService slideSplitterService, AttachmentVideoUnitRepository attachmentVideoUnitRepository,
+            AttachmentRepository attachmentRepository, FileService fileService, Optional<IrisLectureApi> irisLectureApi, Optional<CompetencyProgressApi> competencyProgressApi,
+            LectureUnitService lectureUnitService) {
         this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.attachmentRepository = attachmentRepository;
         this.fileService = fileService;
         this.slideSplitterService = slideSplitterService;
-        this.slideRepository = slideRepository;
-        this.pyrisWebhookService = pyrisWebhookService;
-        this.irisSettingsRepository = irisSettingsRepository;
+        this.irisLectureApi = irisLectureApi;
         this.competencyProgressApi = competencyProgressApi;
         this.lectureUnitService = lectureUnitService;
     }
 
     /**
-     * Creates a new attachment unit for the given lecture.
+     * Creates a new attachment video unit for the given lecture.
      *
      * @param attachmentVideoUnit The attachmentVideoUnit to create
      * @param attachment          The attachment to create the attachmentVideoUnit for
      * @param lecture             The lecture linked to the attachmentVideoUnit
      * @param file                The file to upload
      * @param keepFilename        Whether to keep the original filename or not.
-     * @return The created attachment unit
+     * @return The created attachment video unit
      */
     public AttachmentVideoUnit createAttachmentVideoUnit(AttachmentVideoUnit attachmentVideoUnit, Attachment attachment, Lecture lecture, MultipartFile file,
             boolean keepFilename) {
@@ -90,24 +81,24 @@ public class AttachmentVideoUnitService {
             createAttachment(attachment, savedAttachmentVideoUnit, file, keepFilename);
         }
 
-        if (pyrisWebhookService.isPresent() && irisSettingsRepository.isPresent()) {
-            pyrisWebhookService.get().autoUpdateAttachmentVideoUnitsInPyris(lecture.getCourse().getId(), List.of(savedAttachmentVideoUnit));
-        }
+        irisLectureApi.ifPresent(api -> api.autoUpdateAttachmentVideoUnitsInPyris(lecture.getCourse().getId(), List.of(savedAttachmentVideoUnit)));
         return savedAttachmentVideoUnit;
     }
 
     /**
-     * Updates the provided attachment unit with an optional file.
+     * Updates the provided attachment video unit with an optional file.
      *
-     * @param existingAttachmentVideoUnit The attachment unit to update.
-     * @param updateUnit                  The new attachment unit data.
+     * @param existingAttachmentVideoUnit The attachment video unit to update.
+     * @param updateUnit                  The new attachment video unit data.
      * @param updateAttachment            The new attachment data.
      * @param updateFile                  The optional file.
      * @param keepFilename                Whether to keep the original filename or not.
-     * @return The updated attachment unit.
+     * @param hiddenPages                 The hidden pages of attachment video unit.
+     * @param pageOrder                   The new order of the edited attachment video unit
+     * @return The updated attachment video unit.
      */
     public AttachmentVideoUnit updateAttachmentVideoUnit(AttachmentVideoUnit existingAttachmentVideoUnit, AttachmentVideoUnit updateUnit, Attachment updateAttachment,
-            MultipartFile updateFile, boolean keepFilename) {
+            MultipartFile updateFile, boolean keepFilename, String hiddenPages, String pageOrder) {
         Set<CompetencyLectureUnitLink> existingCompetencyLinks = new HashSet<>(existingAttachmentVideoUnit.getCompetencyLinks());
 
         existingAttachmentVideoUnit.setDescription(updateUnit.getDescription());
@@ -116,44 +107,47 @@ public class AttachmentVideoUnitService {
         existingAttachmentVideoUnit.setCompetencyLinks(updateUnit.getCompetencyLinks());
         existingAttachmentVideoUnit.setVideoSource(updateUnit.getVideoSource());
 
+        Attachment existingAttachment = existingAttachmentVideoUnit.getAttachment();
+
+        if (existingAttachment == null && updateAttachment != null) {
+            createAttachment(updateAttachment, existingAttachmentVideoUnit, updateFile, keepFilename);
+        }
+
         AttachmentVideoUnit savedAttachmentVideoUnit = lectureUnitService.saveWithCompetencyLinks(existingAttachmentVideoUnit, attachmentVideoUnitRepository::saveAndFlush);
 
-        // Set the original competencies back to the attachment unit so that the competencyProgressService can determine which competencies changed
+        // Set the original competencies back to the attachment video unit so that the competencyProgressService can determine which competencies changed
         existingAttachmentVideoUnit.setCompetencyLinks(existingCompetencyLinks);
         competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(existingAttachmentVideoUnit, Optional.of(updateUnit)));
 
         if (updateAttachment == null) {
-            deleteSlides(existingAttachmentVideoUnit);
-
             return existingAttachmentVideoUnit;
         }
 
-        Attachment existingAttachment = existingAttachmentVideoUnit.getAttachment();
-        if (existingAttachment == null) {
-            createAttachment(updateAttachment, savedAttachmentVideoUnit, updateFile, keepFilename);
-        }
-        else {
-            updateAttachment(existingAttachment, updateAttachment, savedAttachmentVideoUnit);
+        if (existingAttachment != null) {
+            updateAttachment(existingAttachment, updateAttachment, savedAttachmentVideoUnit, hiddenPages);
             handleFile(updateFile, existingAttachment, keepFilename, savedAttachmentVideoUnit.getId());
             final int revision = existingAttachment.getVersion() == null ? 1 : existingAttachment.getVersion() + 1;
             existingAttachment.setVersion(revision);
             Attachment savedAttachment = attachmentRepository.saveAndFlush(existingAttachment);
             savedAttachmentVideoUnit.setAttachment(savedAttachment);
-            prepareAttachmentVideoUnitForClient(savedAttachmentVideoUnit);
             evictCache(updateFile, savedAttachmentVideoUnit);
 
             if (updateFile != null) {
-                deleteSlides(existingAttachmentVideoUnit);
                 // Split the updated file into single slides only if it is a pdf
-                if (Objects.equals(FilenameUtils.getExtension(updateFile.getOriginalFilename()), "pdf")) {
-                    slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(savedAttachmentVideoUnit);
+                if ("pdf".equalsIgnoreCase(FilenameUtils.getExtension(updateFile.getOriginalFilename()))) {
+                    if (pageOrder == null) {
+                        slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(savedAttachmentVideoUnit);
+                    }
+                    else {
+                        slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(savedAttachmentVideoUnit, hiddenPages, pageOrder);
+                    }
                 }
             }
         }
 
-        if (pyrisWebhookService.isPresent() && irisSettingsRepository.isPresent()) {
-            pyrisWebhookService.get().autoUpdateAttachmentVideoUnitsInPyris(savedAttachmentVideoUnit.getLecture().getCourse().getId(), List.of(savedAttachmentVideoUnit));
-        }
+        prepareAttachmentVideoUnitForClient(savedAttachmentVideoUnit);
+
+        irisLectureApi.ifPresent(api -> api.autoUpdateAttachmentVideoUnitsInPyris(savedAttachmentVideoUnit.getLecture().getCourse().getId(), List.of(savedAttachmentVideoUnit)));
 
         return savedAttachmentVideoUnit;
     }
@@ -170,30 +164,23 @@ public class AttachmentVideoUnitService {
         return savedAttachment;
     }
 
-    private void deleteSlides(AttachmentVideoUnit attachmentVideoUnit) {
-        if (attachmentVideoUnit.getSlides() != null && !attachmentVideoUnit.getSlides().isEmpty()) {
-            List<Slide> slides = attachmentVideoUnit.getSlides();
-            for (Slide slide : slides) {
-                fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(URI.create(slide.getSlideImagePath())), 5);
-            }
-            slideRepository.deleteAll(attachmentVideoUnit.getSlides());
-        }
-    }
-
     /**
      * Sets the required parameters for an attachment on update
      *
      * @param existingAttachment  the existing attachment
      * @param updateAttachment    the new attachment containing updated information
-     * @param attachmentVideoUnit the attachment unit to update
+     * @param attachmentVideoUnit the attachment video unit to update
+     * @param hiddenPages         the hidden pages in the attachment
      */
-    private void updateAttachment(Attachment existingAttachment, Attachment updateAttachment, AttachmentVideoUnit attachmentVideoUnit) {
+    private void updateAttachment(Attachment existingAttachment, Attachment updateAttachment, AttachmentVideoUnit attachmentVideoUnit, String hiddenPages) {
         // Make sure that the original references are preserved.
         existingAttachment.setAttachmentVideoUnit(attachmentVideoUnit);
         existingAttachment.setReleaseDate(updateAttachment.getReleaseDate());
         existingAttachment.setName(updateAttachment.getName());
-        existingAttachment.setReleaseDate(updateAttachment.getReleaseDate());
         existingAttachment.setAttachmentType(updateAttachment.getAttachmentType());
+        if (hiddenPages == null && existingAttachment.getStudentVersion() != null) {
+            existingAttachment.setStudentVersion(null);
+        }
     }
 
     /**
@@ -205,10 +192,37 @@ public class AttachmentVideoUnitService {
      */
     private void handleFile(MultipartFile file, Attachment attachment, boolean keepFilename, Long attachmentVideoUnitId) {
         if (file != null && !file.isEmpty()) {
-            Path basePath = FilePathService.getAttachmentVideoUnitFilePath().resolve(attachmentVideoUnitId.toString());
-            Path savePath = fileService.saveFile(file, basePath, keepFilename);
-            attachment.setLink(FilePathService.publicPathForActualPathOrThrow(savePath, attachmentVideoUnitId).toString());
+            Path basePath = FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(attachmentVideoUnitId.toString());
+            Path savePath = fileService.saveFile(file, basePath, FilePathType.ATTACHMENT_UNIT, keepFilename);
+            attachment.setLink(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.ATTACHMENT_UNIT, attachmentVideoUnitId).toString());
             attachment.setUploadDate(ZonedDateTime.now());
+        }
+    }
+
+    /**
+     * Handles the student version file of an attachment, updates its reference in the database,
+     * and deletes the old version if it exists.
+     *
+     * @param studentVersionFile    the new student version file to be saved
+     * @param attachment            the existing attachment
+     * @param attachmentVideoUnitId the id of the attachment video unit
+     */
+    public void handleStudentVersionFile(MultipartFile studentVersionFile, Attachment attachment, Long attachmentVideoUnitId) {
+        if (studentVersionFile != null) {
+            // Delete the old student version
+            if (attachment.getStudentVersion() != null) {
+                URI oldStudentVersionPath = URI.create(attachment.getStudentVersion());
+                Path localPath = FilePathConverter.fileSystemPathForExternalUri(oldStudentVersionPath, FilePathType.STUDENT_VERSION_SLIDES);
+
+                fileService.schedulePathForDeletion(localPath, 0);
+                this.fileService.evictCacheForPath(localPath);
+            }
+
+            // Update student version of attachment
+            Path basePath = FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(attachmentVideoUnitId.toString());
+            Path savePath = fileService.saveFile(studentVersionFile, basePath.resolve("student"), FilePathType.STUDENT_VERSION_SLIDES, true);
+            attachment.setStudentVersion(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.STUDENT_VERSION_SLIDES, attachmentVideoUnitId).toString());
+            attachmentRepository.save(attachment);
         }
     }
 
@@ -216,22 +230,22 @@ public class AttachmentVideoUnitService {
      * If a file was provided the cache for that file gets evicted.
      *
      * @param file                Potential file to evict the cache for.
-     * @param attachmentVideoUnit Attachment unit liked to the file.
+     * @param attachmentVideoUnit Attachment video unit liked to the file.
      */
     private void evictCache(MultipartFile file, AttachmentVideoUnit attachmentVideoUnit) {
         if (file != null && !file.isEmpty()) {
-            this.fileService.evictCacheForPath(FilePathService.actualPathForPublicPathOrThrow(URI.create(attachmentVideoUnit.getAttachment().getLink())));
+            this.fileService
+                    .evictCacheForPath(FilePathConverter.fileSystemPathForExternalUri(URI.create(attachmentVideoUnit.getAttachment().getLink()), FilePathType.ATTACHMENT_UNIT));
         }
     }
 
     /**
-     * Cleans the attachment unit before sending it to the client and sets the attachment relationship.
+     * Cleans the attachment video unit before sending it to the client and sets the attachment relationship.
      *
-     * @param attachmentVideoUnit The attachment unit to clean.
+     * @param attachmentVideoUnit The attachment video unit to clean.
      */
     public void prepareAttachmentVideoUnitForClient(AttachmentVideoUnit attachmentVideoUnit) {
         attachmentVideoUnit.getLecture().setLectureUnits(null);
         attachmentVideoUnit.getLecture().setAttachments(null);
-        attachmentVideoUnit.getLecture().setPosts(null);
     }
 }

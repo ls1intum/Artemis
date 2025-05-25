@@ -23,7 +23,7 @@
                 [posting]="posting"
                 [isDeleted]="isDeleted"
                 [isCommunicationPage]="isCommunicationPage"
-                (isModalOpen)="displayInlineInput = true"
+                (isModalOpen)="setDisplayInlineInput(true)"
                 (onUserNameClicked)="onUserNameClicked()"
                 [lastReadDate]="lastReadDate()"
             />
@@ -68,7 +68,7 @@
                     </span>
                 }
             </div>
-            @if (!displayInlineInput) {
+            @if (!displayInlineInput()) {
                 <div
                     class="message-container post-content-padding"
                     [ngClass]="{ 'is-saved': isConsecutive() && posting.isSaved }"
@@ -89,8 +89,12 @@
                             (userReferenceClicked)="onUserReferenceClicked($event)"
                             (channelReferenceClicked)="onChannelReferenceClicked($event)"
                         />
-                        @if (originalPostDetails) {
-                            <jhi-forwarded-message [originalPostDetails]="originalPostDetails" (onNavigateToPost)="onTriggerNavigateToPost(originalPostDetails)" />
+                        @if (originalPostDetails !== null) {
+                            <jhi-forwarded-message
+                                [originalPostDetails]="originalPostDetails"
+                                [hasOriginalPostBeenDeleted]="hasOriginalPostBeenDeleted"
+                                (onNavigateToPost)="onTriggerNavigateToPost(originalPostDetails)"
+                            />
                         }
                         <div class="hover-actions" [ngClass]="{ 'mb-2': previewMode() }" (click)="$event.stopPropagation()">
                             @if (!previewMode()) {
@@ -107,7 +111,7 @@
                                     [isThreadSidebar]="isThreadSidebar"
                                     (openPostingCreateEditModal)="openCreateAnswerPostModal()"
                                     (openThread)="openThread.emit()"
-                                    (isModalOpen)="displayInlineInput = true"
+                                    (isModalOpen)="setDisplayInlineInput(true)"
                                     (mayEditOutput)="onMayEdit($event)"
                                     (mayDeleteOutput)="onMayDelete($event)"
                                     (canPinOutput)="onCanPin($event)"
@@ -122,9 +126,9 @@
             }
         </div>
     </div>
-    @if (!isDeleted && displayInlineInput && !readOnlyMode()) {
+    @if (!isDeleted && displayInlineInput() && !readOnlyMode()) {
         <div class="post-content-padding">
-            <jhi-message-inline-input [posting]="posting" (isModalOpen)="displayInlineInput = false" />
+            <jhi-message-inline-input [posting]="posting" (isModalOpen)="setDisplayInlineInput(false)" />
         </div>
     }
     @if (!isDeleted) {
@@ -141,13 +145,14 @@
                     [previewMode]="previewMode()"
                     [posting]="posting"
                     [(showAnswers)]="showAnswers"
+                    [showSearchResultInAnswersHint]="showSearchResultInAnswersHint"
                     [sortedAnswerPosts]="sortedAnswerPosts"
                     [isCommunicationPage]="isCommunicationPage"
                     [isThreadSidebar]="isThreadSidebar"
                     (openPostingCreateEditModal)="openCreateAnswerPostModal()"
                     (closePostingCreateEditModal)="closeCreateAnswerPostModal()"
                     (openThread)="openThread.emit()"
-                    (isModalOpen)="displayInlineInput = true"
+                    (isModalOpen)="setDisplayInlineInput(true)"
                     [isEmojiCount]="true"
                     [hoverBar]="false"
                     (onBookmarkClicked)="toggleSavePost()"

@@ -340,8 +340,7 @@ class CourseServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         Result result = participationUtilService.createSubmissionAndResult(participation, 1L, true);
         createBuildJob(programmingExercise, course, participation, result);
 
-        course = courseRepository.findByIdWithEagerExercisesElseThrow(course.getId());
-        var summary = courseService.getDeletionSummary(course);
+        var summary = courseService.getDeletionSummary(course.getId());
         assertThat(summary.numberOfCommunicationPosts()).isEqualTo(1L);
         assertThat(summary.numberOfAnswerPosts()).isEqualTo(1L);
         assertThat(summary.numberOfBuilds()).isEqualTo(1L);

@@ -1,5 +1,5 @@
 import { Component, OnInit, input } from '@angular/core';
-import { StudentExam } from 'app/entities/student-exam.model';
+import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { round } from 'app/shared/util/utils';
 import dayjs from 'dayjs/esm';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';

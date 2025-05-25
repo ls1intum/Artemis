@@ -30,13 +30,41 @@ import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 public class MessageSpecs {
 
     /**
-     * Specification to fetch Posts belonging to a Conversation
+     * Specification which filters Messages and answer posts according to a search string and a list of authors
+     * message and answer post are only kept if the search string (which is not a #id pattern) is included in the message content (all strings lowercased)
+     * and the author of the message or answer post is in the list of authors
      *
-     * @param conversationId id of the conversation the Posts belong to
+     * @param searchText Text to be searched within messages
+     * @param authorIds  ids of the authors
      * @return specification used to chain DB operations
      */
-    public static Specification<Post> getConversationSpecification(Long conversationId) {
-        return ((root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get(Post_.CONVERSATION).get(Conversation_.ID), conversationId));
+    public static Specification<Post> getSearchTextAndAuthorSpecification(String searchText, long[] authorIds) {
+        return (root, query, criteriaBuilder) -> {
+            boolean hasText = searchText != null && !searchText.isBlank();
+            boolean hasAuthors = authorIds != null && authorIds.length > 0;
+            if (!hasText && !hasAuthors) {
+                return null;
+            }
+            if (hasText && !hasAuthors) {
+                return getSearchTextSpecification(searchText).toPredicate(root, query, criteriaBuilder);
+            }
+            if (!hasText && hasAuthors) {
+                return getAuthorSpecification(authorIds).toPredicate(root, query, criteriaBuilder);
+            }
+
+            List<Long> authorIdList = Arrays.stream(authorIds).boxed().toList();
+            Expression<String> searchTextLiteral = criteriaBuilder.literal("%" + searchText.toLowerCase() + "%");
+            Predicate baseTextPredicate = criteriaBuilder.like(criteriaBuilder.lower(root.get(Post_.CONTENT)), searchTextLiteral);
+            Predicate baseAuthorPredicate = root.get(Post_.AUTHOR).get(User_.ID).in(authorIdList);
+            Predicate baseCombined = criteriaBuilder.and(baseTextPredicate, baseAuthorPredicate);
+
+            Join<Post, AnswerPost> answerJoin = root.join(Post_.ANSWERS, JoinType.LEFT);
+            Predicate answerTextPredicate = criteriaBuilder.like(criteriaBuilder.lower(answerJoin.get(AnswerPost_.CONTENT)), searchTextLiteral);
+            Predicate answerAuthorPredicate = answerJoin.get(AnswerPost_.AUTHOR).get(User_.ID).in(authorIdList);
+            Predicate answerCombined = criteriaBuilder.and(answerTextPredicate, answerAuthorPredicate);
+
+            return criteriaBuilder.or(baseCombined, answerCombined);
+        };
     }
 
     /**
@@ -89,11 +117,15 @@ public class MessageSpecs {
     /**
      * Creates a specification to fetch messages belonging to a course-wide channels in the course
      *
-     * @param courseId id of course the posts belong to
+     * @param filterToCourseWide whether only the Posts in course-wide channels should be fetched or not
+     * @param courseId           id of course the posts belong to
      * @return specification used to chain DB operations
      */
-    public static Specification<Post> getCourseWideChannelsSpecification(Long courseId) {
+    public static Specification<Post> getCourseWideChannelsSpecification(boolean filterToCourseWide, Long courseId) {
         return (root, query, criteriaBuilder) -> {
+            if (!filterToCourseWide) {
+                return null;
+            }
             final var conversationJoin = root.join(Post_.conversation, JoinType.LEFT);
             final var isInCoursePredicate = criteriaBuilder.equal(conversationJoin.get(Channel_.COURSE).get(Course_.ID), courseId);
             final var isCourseWidePredicate = criteriaBuilder.isTrue(conversationJoin.get(Channel_.IS_COURSE_WIDE));
@@ -105,22 +137,22 @@ public class MessageSpecs {
     }
 
     /**
-     * Specification to fetch Posts and answer posts of the calling user
+     * Specification to fetch Posts that were created by given authors for the calling user
      *
-     * @param filterToOwn whether only calling users own Posts should be fetched or not
-     * @param userId      id of the calling user
+     * @param authorIds ids of the post authors
      * @return specification used to chain DB operations
      */
-    public static Specification<Post> getOwnSpecification(boolean filterToOwn, Long userId) {
+    public static Specification<Post> getAuthorSpecification(long[] authorIds) {
         return ((root, query, criteriaBuilder) -> {
-            if (!filterToOwn) {
+            if (authorIds == null || authorIds.length == 0) {
                 return null;
             }
             else {
+                List<Long> authorIdList = Arrays.stream(authorIds).boxed().toList();
                 Join<Post, AnswerPost> answersJoin = root.join(Post_.ANSWERS, JoinType.LEFT);
-                Predicate searchInAnswerContent = criteriaBuilder.equal(answersJoin.get(AnswerPost_.AUTHOR).get(User_.ID), userId);
-                Predicate isPostOwner = criteriaBuilder.equal(root.get(Post_.AUTHOR).get(User_.ID), userId);
-                return criteriaBuilder.or(isPostOwner, searchInAnswerContent);
+                Predicate isAnswerPostAuthorPredicate = answersJoin.get(AnswerPost_.AUTHOR).get(User_.ID).in(authorIdList);
+                Predicate isPostAuthorPredicate = root.get(Post_.AUTHOR).get(User_.ID).in(authorIdList);
+                return criteriaBuilder.or(isAnswerPostAuthorPredicate, isPostAuthorPredicate);
             }
         });
     }
@@ -166,8 +198,10 @@ public class MessageSpecs {
             else {
                 // Post should not have any answer that resolves
                 Predicate noResolvingAnswer = criteriaBuilder.isFalse(root.get(Post_.resolved));
+                // Posts in announcement channels can not be answered, therefore they can not be unresolved
+                Predicate notAnnouncementChannel = criteriaBuilder.isFalse(root.get(Post_.conversation).get(Channel_.IS_ANNOUNCEMENT_CHANNEL));
 
-                return criteriaBuilder.and(noResolvingAnswer);
+                return criteriaBuilder.and(noResolvingAnswer, notAnnouncementChannel);
             }
         });
     }
@@ -195,14 +229,6 @@ public class MessageSpecs {
                 if (postSortCriterion == PostSortCriterion.CREATION_DATE) {
                     // sort by creation date
                     sortCriterion = root.get(Post_.CREATION_DATE);
-                }
-                else if (postSortCriterion == PostSortCriterion.ANSWER_COUNT) {
-                    // sort by answer count
-                    sortCriterion = root.get(Post_.ANSWER_COUNT);
-                }
-                else if (postSortCriterion == PostSortCriterion.VOTES) {
-                    // sort by votes via voteEmojiCount
-                    sortCriterion = root.get(Post_.VOTE_COUNT);
                 }
 
                 orderList.add(sortingOrder == SortingOrder.ASCENDING ? criteriaBuilder.asc(sortCriterion) : criteriaBuilder.desc(sortCriterion));

@@ -1,21 +1,21 @@
 import { Component, Input, OnInit, ViewChild, computed, inject, signal, viewChild } from '@angular/core';
-import { Lecture } from 'app/entities/lecture.model';
-import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
-import { OnlineUnit } from 'app/entities/lecture-unit/onlineUnit.model';
-import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentVideoUnit.model';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
+import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
+import { OnlineUnit } from 'app/lecture/shared/entities/lecture-unit/onlineUnit.model';
+import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { TextUnitFormComponent, TextUnitFormData } from 'app/lecture/manage/lecture-units/text-unit-form/text-unit-form.component';
 import { OnlineUnitFormComponent, OnlineUnitFormData } from 'app/lecture/manage/lecture-units/online-unit-form/online-unit-form.component';
 import { AttachmentVideoUnitFormComponent, AttachmentVideoUnitFormData } from 'app/lecture/manage/lecture-units/attachment-video-unit-form/attachment-video-unit-form.component';
-import { LectureUnit, LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
+import { LectureUnit, LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { onError } from 'app/shared/util/global.utils';
-import { Attachment, AttachmentType } from 'app/entities/attachment.model';
+import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
 import { objectToJsonBlob } from 'app/shared/util/blob-util';
-import { LectureUnitManagementComponent } from 'app/lecture/manage/lecture-units/lecture-unit-management.component';
-import { TextUnitService } from 'app/lecture/manage/lecture-units/textUnit.service';
-import { OnlineUnitService } from 'app/lecture/manage/lecture-units/onlineUnit.service';
+import { LectureUnitManagementComponent } from 'app/lecture/manage/lecture-units/management/lecture-unit-management.component';
+import { TextUnitService } from 'app/lecture/manage/lecture-units/services/textUnit.service';
+import { OnlineUnitService } from 'app/lecture/manage/lecture-units/services/onlineUnit.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
-import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/attachment-video-unit.service';
+import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import dayjs from 'dayjs/esm';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -161,20 +161,23 @@ export class LectureUpdateUnitsComponent implements OnInit {
     }
 
     createEditAttachmentVideoUnit(attachmentVideoUnitFormData: AttachmentVideoUnitFormData): void {
-        if (!attachmentVideoUnitFormData?.formProperties?.name || !attachmentVideoUnitFormData?.fileProperties?.file || !attachmentVideoUnitFormData?.fileProperties?.fileName) {
-            return;
-        }
-
         const { description, name, releaseDate, videoSource, updateNotificationText, competencyLinks } = attachmentVideoUnitFormData.formProperties;
         const { file, fileName } = attachmentVideoUnitFormData.fileProperties;
 
+        if (!name || (!(file && fileName) && !videoSource)) {
+            return;
+        }
+
         this.currentlyProcessedAttachmentVideoUnit = this.isEditingLectureUnit ? this.currentlyProcessedAttachmentVideoUnit : new AttachmentVideoUnit();
-        const attachmentToCreateOrEdit = this.isEditingLectureUnit ? this.currentlyProcessedAttachmentVideoUnit.attachment! : new Attachment();
+        const attachmentToCreateOrEdit =
+            this.isEditingLectureUnit && this.currentlyProcessedAttachmentVideoUnit.attachment ? this.currentlyProcessedAttachmentVideoUnit.attachment : new Attachment();
 
         if (this.isEditingLectureUnit) {
             // breaking the connection to prevent errors in deserialization. will be reconnected on the server side
             this.currentlyProcessedAttachmentVideoUnit.attachment = undefined;
-            attachmentToCreateOrEdit.attachmentVideoUnit = undefined;
+            if (attachmentToCreateOrEdit != null) {
+                attachmentToCreateOrEdit.attachmentVideoUnit = undefined;
+            }
         }
 
         let notificationText: string | undefined;
@@ -188,6 +191,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
             attachmentToCreateOrEdit.name = name;
         }
         if (releaseDate) {
+            this.currentlyProcessedAttachmentVideoUnit.releaseDate = releaseDate;
             attachmentToCreateOrEdit.releaseDate = releaseDate;
         }
         attachmentToCreateOrEdit.attachmentType = AttachmentType.FILE;
@@ -204,8 +208,10 @@ export class LectureUpdateUnitsComponent implements OnInit {
         this.currentlyProcessedAttachmentVideoUnit.competencyLinks = competencyLinks;
 
         const formData = new FormData();
-        formData.append('file', file, fileName);
-        formData.append('attachment', objectToJsonBlob(attachmentToCreateOrEdit));
+        if (!!file && !!fileName) {
+            formData.append('file', file, fileName);
+            formData.append('attachment', objectToJsonBlob(attachmentToCreateOrEdit));
+        }
         formData.append('attachmentVideoUnit', objectToJsonBlob(this.currentlyProcessedAttachmentVideoUnit));
 
         (this.isEditingLectureUnit
@@ -269,14 +275,14 @@ export class LectureUpdateUnitsComponent implements OnInit {
             case LectureUnitType.ATTACHMENT_VIDEO:
                 this.attachmentVideoUnitFormData = {
                     formProperties: {
-                        name: this.currentlyProcessedAttachmentVideoUnit.attachment!.name,
+                        name: this.currentlyProcessedAttachmentVideoUnit.name,
                         description: this.currentlyProcessedAttachmentVideoUnit.description,
-                        releaseDate: this.currentlyProcessedAttachmentVideoUnit.attachment!.releaseDate,
-                        version: this.currentlyProcessedAttachmentVideoUnit.attachment!.version,
+                        releaseDate: this.currentlyProcessedAttachmentVideoUnit.releaseDate,
+                        version: this.currentlyProcessedAttachmentVideoUnit.attachment?.version,
                         videoSource: this.currentlyProcessedAttachmentVideoUnit.videoSource,
                     },
                     fileProperties: {
-                        fileName: this.currentlyProcessedAttachmentVideoUnit.attachment!.link,
+                        fileName: this.currentlyProcessedAttachmentVideoUnit.attachment?.link,
                     },
                 };
                 break;

@@ -1,22 +1,22 @@
 import { Component, Input, OnChanges, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
-import { CourseManagementService } from '../course-management.service';
+import { CourseManagementService } from '../services/course-management.service';
 import { Color, LineChartModule, ScaleType } from '@swimlane/ngx-charts';
 import { roundScorePercentSpecifiedByCourseSettings } from 'app/shared/util/utils';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { faArrowLeft, faArrowRight, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import * as shape from 'd3-shape';
-import { GraphColors } from 'app/entities/statistics.model';
-import { ActiveStudentsChart } from 'app/shared/chart/active-students-chart';
+import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { mean } from 'simple-statistics';
 import { RouterLink } from '@angular/router';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ActiveStudentsChart } from 'app/core/course/shared/entities/active-students-chart';
 
 export enum SwitchTimeSpanDirection {
     LEFT,

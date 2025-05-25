@@ -1,6 +1,6 @@
 import { Account } from 'app/core/user/account.model';
 import dayjs from 'dayjs/esm';
-import { Organization } from 'app/entities/organization.model';
+import { Organization } from 'app/core/shared/entities/organization.model';
 
 export class User extends Account {
     public id?: number;
@@ -10,12 +10,20 @@ export class User extends Account {
     public createdDate?: Date;
     public lastModifiedBy?: string;
     public lastModifiedDate?: Date;
-    public lastNotificationRead?: dayjs.Dayjs;
     public visibleRegistrationNumber?: string;
     public password?: string;
     public vcsAccessToken?: string;
     public vcsAccessTokenExpiryDate?: string;
     public externalLLMUsageAccepted?: dayjs.Dayjs;
+    /**
+     * True if
+     * <ul>
+     * <li>No passkey has been registered for this user yet</li>
+     * <li>and the passkey feature is enabled</li>
+     * <li>and <code>artemis.user-management.passkey.ask-users-to-setup</code> is set to true</li>
+     * </ul>
+     */
+    public askToSetupPasskey?: boolean;
 
     constructor(
         id?: number,
@@ -31,12 +39,12 @@ export class User extends Account {
         createdDate?: Date,
         lastModifiedBy?: string,
         lastModifiedDate?: Date,
-        lastNotificationRead?: dayjs.Dayjs,
         password?: string,
         imageUrl?: string,
         vcsAccessToken?: string,
         vcsAccessTokenExpiryDate?: string,
         externalLLMUsageAccepted?: dayjs.Dayjs,
+        askToSetupPasskey?: boolean,
     ) {
         super(activated, authorities, email, firstName, langKey, lastName, login, imageUrl);
         this.id = id;
@@ -45,11 +53,11 @@ export class User extends Account {
         this.createdDate = createdDate;
         this.lastModifiedBy = lastModifiedBy;
         this.lastModifiedDate = lastModifiedDate;
-        this.lastNotificationRead = lastNotificationRead;
         this.password = password;
         this.vcsAccessToken = vcsAccessToken;
         this.vcsAccessTokenExpiryDate = vcsAccessTokenExpiryDate;
         this.externalLLMUsageAccepted = externalLLMUsageAccepted;
+        this.askToSetupPasskey = askToSetupPasskey;
     }
 }
 /**

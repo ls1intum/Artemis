@@ -13,11 +13,11 @@ import {
     ViewEncapsulation,
     inject,
 } from '@angular/core';
-import { ShortAnswerQuestionUtil } from 'app/quiz/shared/short-answer-question-util.service';
+import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
 import { NgbCollapse, NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
 import { ShortAnswerMapping } from 'app/quiz/shared/entities/short-answer-mapping.model';
-import { QuizQuestionEdit } from 'app/quiz/manage/quiz-question-edit.interface';
+import { QuizQuestionEdit } from 'app/quiz/manage/interfaces/quiz-question-edit.interface';
 import { ShortAnswerSpot } from 'app/quiz/shared/entities/short-answer-spot.model';
 import { ShortAnswerSolution } from 'app/quiz/shared/entities/short-answer-solution.model';
 import { cloneDeep } from 'lodash-es';
@@ -51,7 +51,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 @Component({
     selector: 'jhi-short-answer-question-edit',
     templateUrl: './short-answer-question-edit.component.html',
-    styleUrls: ['./short-answer-question-edit.component.scss', '../quiz-exercise.scss', '../../../quiz/shared/quiz.scss'],
+    styleUrls: ['./short-answer-question-edit.component.scss', '../exercise/quiz-exercise.scss', '../../../quiz/shared/quiz.scss'],
     encapsulation: ViewEncapsulation.None,
     imports: [
         FaIconComponent,
@@ -471,8 +471,15 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         }
         const solution = new ShortAnswerSolution();
         solution.text = InsertShortAnswerOptionAction.DEFAULT_TEXT_SHORT;
-        this.insertShortAnswerOptionAction.executeInCurrentEditor({ optionText: solution.text });
-        this.questionUpdated.emit();
+        // Add solution directly to the question if re-evaluation is in progress
+        if (this.reEvaluationInProgress) {
+            this.shortAnswerQuestion.solutions.push(solution);
+            this.questionUpdated.emit();
+            // Use the editor to add the solution
+        } else {
+            this.insertShortAnswerOptionAction.executeInCurrentEditor({ optionText: solution.text });
+            this.questionUpdated.emit();
+        }
     }
 
     /**

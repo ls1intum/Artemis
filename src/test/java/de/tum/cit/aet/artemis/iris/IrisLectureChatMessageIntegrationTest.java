@@ -73,8 +73,6 @@ class IrisLectureChatMessageIntegrationTest extends AbstractIrisIntegrationTest 
     @Autowired
     private LectureUtilService lectureUtilService;
 
-    private Course course;
-
     private Lecture lecture;
 
     private AtomicBoolean pipelineDone;
@@ -88,7 +86,7 @@ class IrisLectureChatMessageIntegrationTest extends AbstractIrisIntegrationTest 
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 0);
 
-        course = courseUtilService.createCourse();
+        Course course = courseUtilService.createCourse();
         lecture = lectureUtilService.createLecture(course, ZonedDateTime.now());
 
         activateIrisGlobally();
@@ -115,8 +113,9 @@ class IrisLectureChatMessageIntegrationTest extends AbstractIrisIntegrationTest 
 
         await().until(pipelineDone::get);
 
-        verifyWebsocketActivityWasExactly(irisSession.getUser().getLogin(), String.valueOf(irisSession.getId()), messageDTO(messageToSend.getContent()),
-                statusDTO(IN_PROGRESS, NOT_STARTED), statusDTO(DONE, IN_PROGRESS), messageDTO("Hello World"));
+        var user = userTestRepository.findByIdElseThrow(irisSession.getUserId());
+        verifyWebsocketActivityWasExactly(user.getLogin(), String.valueOf(irisSession.getId()), messageDTO(messageToSend.getContent()), statusDTO(IN_PROGRESS, NOT_STARTED),
+                statusDTO(DONE, IN_PROGRESS), messageDTO("Hello World"));
     }
 
     @Test
@@ -257,7 +256,8 @@ class IrisLectureChatMessageIntegrationTest extends AbstractIrisIntegrationTest 
         var irisMessage = irisMessageService.saveMessage(messageToSend, irisSession, IrisMessageSender.USER);
         request.postWithoutResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/resend", null, HttpStatus.OK);
         await().until(() -> irisLectureChatSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId()).getMessages().size() == 2);
-        verifyWebsocketActivityWasExactly(irisSession.getUser().getLogin(), String.valueOf(irisSession.getId()), statusDTO(IN_PROGRESS, NOT_STARTED), statusDTO(DONE, IN_PROGRESS),
+        var user = userTestRepository.findByIdElseThrow(irisSession.getUserId());
+        verifyWebsocketActivityWasExactly(user.getLogin(), String.valueOf(irisSession.getId()), statusDTO(IN_PROGRESS, NOT_STARTED), statusDTO(DONE, IN_PROGRESS),
                 messageDTO("Hello World"));
     }
 
@@ -289,8 +289,9 @@ class IrisLectureChatMessageIntegrationTest extends AbstractIrisIntegrationTest 
             var irisMessage = irisMessageService.saveMessage(messageToSend2, irisSession, IrisMessageSender.USER);
             request.postWithoutResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/resend", null, HttpStatus.TOO_MANY_REQUESTS);
 
-            verifyWebsocketActivityWasExactly(irisSession.getUser().getLogin(), String.valueOf(irisSession.getId()), messageDTO(messageToSend1.getContent()),
-                    statusDTO(IN_PROGRESS, NOT_STARTED), statusDTO(DONE, IN_PROGRESS), messageDTO("Hello World"));
+            var user = userTestRepository.findByIdElseThrow(irisSession.getUserId());
+            verifyWebsocketActivityWasExactly(user.getLogin(), String.valueOf(irisSession.getId()), messageDTO(messageToSend1.getContent()), statusDTO(IN_PROGRESS, NOT_STARTED),
+                    statusDTO(DONE, IN_PROGRESS), messageDTO("Hello World"));
         }
         finally {
             // Reset to not interfere with other tests

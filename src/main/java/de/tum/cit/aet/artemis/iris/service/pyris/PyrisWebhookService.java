@@ -21,9 +21,10 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.domain.Faq;
+import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
-import de.tum.cit.aet.artemis.core.service.FilePathService;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.dto.IngestionState;
 import de.tum.cit.aet.artemis.iris.exception.IrisInternalPyrisErrorException;
@@ -36,14 +37,14 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.Pyr
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureDeletionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureIngestionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
+import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
+import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
+import de.tum.cit.aet.artemis.lecture.config.LectureApiNotPresentException;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
-import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
-import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
-import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 
 @Service
 @Profile(PROFILE_IRIS)
@@ -59,9 +60,9 @@ public class PyrisWebhookService {
 
     private final IrisSettingsRepository irisSettingsRepository;
 
-    private final LectureUnitRepository lectureUnitRepository;
+    private final Optional<LectureRepositoryApi> lectureRepositoryApi;
 
-    private final LectureRepository lectureRepository;
+    private final Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi;
 
     private final LectureTranscriptionRepository lectureTranscriptionRepository;
 
@@ -69,15 +70,13 @@ public class PyrisWebhookService {
     private String artemisBaseUrl;
 
     public PyrisWebhookService(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, IrisSettingsService irisSettingsService,
-            IrisSettingsRepository irisSettingsRepository, LectureUnitRepository lectureUnitRepository, LectureRepository lectureRepository,
-            LectureTranscriptionRepository lectureTranscriptionRepository) {
+            IrisSettingsRepository irisSettingsRepository, Optional<LectureRepositoryApi> lectureRepositoryApi, Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi) {
         this.pyrisConnectorService = pyrisConnectorService;
         this.pyrisJobService = pyrisJobService;
         this.irisSettingsService = irisSettingsService;
         this.irisSettingsRepository = irisSettingsRepository;
-        this.lectureUnitRepository = lectureUnitRepository;
-        this.lectureRepository = lectureRepository;
-        this.lectureTranscriptionRepository = lectureTranscriptionRepository;
+        this.lectureRepositoryApi = lectureRepositoryApi;
+        this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
     }
 
     private boolean lectureIngestionEnabled(Course course) {
@@ -86,7 +85,7 @@ public class PyrisWebhookService {
     }
 
     private String attachmentToBase64(AttachmentVideoUnit attachmentVideoUnit) {
-        Path path = FilePathService.actualPathForPublicPathOrThrow(URI.create(attachmentVideoUnit.getAttachment().getLink()));
+        Path path = FilePathConverter.fileSystemPathForExternalUri(URI.create(attachmentVideoUnit.getAttachment().getLink()), FilePathType.ATTACHMENT_UNIT);
         try {
             byte[] fileBytes = Files.readAllBytes(path);
             return Base64.getEncoder().encodeToString(fileBytes);
@@ -232,7 +231,8 @@ public class PyrisWebhookService {
      *
      */
     public Map<Long, IngestionState> getLecturesIngestionState(long courseId) {
-        Set<Lecture> lectures = lectureRepository.findAllByCourseId(courseId);
+        LectureRepositoryApi api = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class));
+        Set<Lecture> lectures = api.findAllByCourseId(courseId);
         return lectures.stream().collect(Collectors.toMap(DomainObject::getId, lecture -> getLectureIngestionState(courseId, lecture.getId())));
 
     }
@@ -275,7 +275,8 @@ public class PyrisWebhookService {
      * @return The ingestion state of the lecture Unit
      */
     public Map<Long, IngestionState> getLectureUnitsIngestionState(long courseId, long lectureId) {
-        List<LectureUnit> lectureunits = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId).getLectureUnits();
+        LectureRepositoryApi api = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class));
+        List<LectureUnit> lectureunits = api.findByIdWithLectureUnitsElseThrow(lectureId).getLectureUnits();
         return lectureunits.stream().filter(lectureUnit -> lectureUnit instanceof AttachmentVideoUnit)
                 .collect(Collectors.toMap(DomainObject::getId, unit -> pyrisConnectorService.getLectureUnitIngestionState(courseId, lectureId, unit.getId())));
     }

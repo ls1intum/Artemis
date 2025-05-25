@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.fail;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.IOException;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -24,10 +26,10 @@ import de.tum.cit.aet.artemis.communication.test_repository.ConversationTestRepo
 import de.tum.cit.aet.artemis.communication.util.ConversationFactory;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
@@ -235,6 +237,8 @@ public class LectureUtilService {
         attachmentOfAttachmentVideoUnit.setAttachmentVideoUnit(attachmentVideoUnit);
         attachmentOfAttachmentVideoUnit = attachmentRepository.save(attachmentOfAttachmentVideoUnit);
         attachmentVideoUnit.setAttachment(attachmentOfAttachmentVideoUnit);
+        attachmentVideoUnit.setName(attachmentOfAttachmentVideoUnit.getName());
+        attachmentVideoUnit.setReleaseDate(attachmentOfAttachmentVideoUnit.getReleaseDate());
         return attachmentVideoUnitRepository.save(attachmentVideoUnit);
     }
 
@@ -271,18 +275,28 @@ public class LectureUtilService {
         attachmentOfAttachmentVideoUnit.setAttachmentVideoUnit(attachmentVideoUnit);
         attachmentOfAttachmentVideoUnit = attachmentRepository.save(attachmentOfAttachmentVideoUnit);
         attachmentVideoUnit.setAttachment(attachmentOfAttachmentVideoUnit);
+        attachmentVideoUnit = attachmentVideoUnitRepository.save(attachmentVideoUnit);
         for (int i = 1; i <= numberOfSlides; i++) {
             Slide slide = new Slide();
             slide.setSlideNumber(i);
             String testFileName = "slide" + i + ".png";
+
+            slide.setAttachmentVideoUnit(attachmentVideoUnit);
+            // we have to set a dummy value here, as null is not allowed. The correct value is set below.
+            slide.setSlideImagePath("dummy");
+            slide = slideRepository.save(slide);
+            Path slidePath = FilePathConverter.getAttachmentVideoUnitFileSystemPath()
+                    .resolve(Path.of(attachmentVideoUnit.getId().toString(), "slide", slide.getId().toString(), testFileName));
             try {
-                FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/attachment/placeholder.jpg"), FilePathService.getTempFilePath().resolve(testFileName).toFile());
+                FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/attachment/placeholder.jpg"), slidePath.toFile());
             }
             catch (IOException ex) {
                 fail("Failed while copying test attachment files", ex);
             }
-            slide.setSlideImagePath("temp/" + testFileName);
-            slide.setAttachmentVideoUnit(attachmentVideoUnit);
+            // in the database we omit the prefix "uploads"
+            var indexOfTheFirstSeperator = slidePath.toString().indexOf(FileSystems.getDefault().getSeparator());
+            var slidePathWithoutFileUploadPathPrefix = slidePath.toString().substring(indexOfTheFirstSeperator + 1);
+            slide.setSlideImagePath(slidePathWithoutFileUploadPathPrefix);
             slideRepository.save(slide);
         }
         return attachmentVideoUnitRepository.save(attachmentVideoUnit);
@@ -308,7 +322,7 @@ public class LectureUtilService {
             slide.setSlideNumber(i);
             String testFileName = "slide" + i + ".png";
             try {
-                FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/attachment/placeholder.jpg"), FilePathService.getTempFilePath().resolve(testFileName).toFile());
+                FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/attachment/placeholder.jpg"), FilePathConverter.getTempFilePath().resolve(testFileName).toFile());
             }
             catch (IOException ex) {
                 fail("Failed while copying test attachment files", ex);

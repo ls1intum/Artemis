@@ -1,6 +1,6 @@
 import { QuizQuestion } from 'app/quiz/shared/entities/quiz-question.model';
-import { IncludedInOverallScore } from 'app/entities/exercise.model';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 
 export interface QuizConfiguration {
     id?: number;

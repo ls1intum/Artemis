@@ -1,6 +1,6 @@
 import { UserCredentials } from './users';
 import { Locator, Page, expect } from '@playwright/test';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ExerciseAPIRequests } from './requests/ExerciseAPIRequests';
 
 /**
@@ -91,5 +91,8 @@ export class Commands {
         }
 
         throw new Error('Timed out while waiting for build to finish.');
+    };
+    static toggleSidebar = async (page: Page) => {
+        await page.keyboard.press('Control+m');
     };
 }

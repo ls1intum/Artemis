@@ -7,8 +7,8 @@ import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { validTimeRange } from 'app/tutorialgroup/shared/timeRangeValidator';
-import { NgbTimeStringAdapter } from 'app/tutorialgroup/shared/ngbTimeStringAdapter';
+import { validTimeRange } from 'app/tutorialgroup/shared/util/timeRangeValidator';
+import { NgbTimeStringAdapter } from 'app/tutorialgroup/shared/util/ngbTimeStringAdapter';
 
 export interface TutorialGroupSessionFormData {
     date?: Date;

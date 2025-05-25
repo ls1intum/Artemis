@@ -32,20 +32,19 @@ import de.tum.cit.aet.artemis.atlas.api.CompetencyRelationApi;
 import de.tum.cit.aet.artemis.atlas.api.CourseCompetencyApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
+import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
-import de.tum.cit.aet.artemis.iris.service.pyris.PyrisWebhookService;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
-import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
-import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 
 @Profile(PROFILE_CORE)
 @Service
@@ -61,9 +60,7 @@ public class LectureUnitService {
 
     private final FileService fileService;
 
-    private final SlideRepository slideRepository;
-
-    private final Optional<PyrisWebhookService> pyrisWebhookService;
+    private final Optional<IrisLectureApi> irisLectureApi;
 
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
@@ -72,14 +69,13 @@ public class LectureUnitService {
     private final Optional<CompetencyRelationApi> competencyRelationApi;
 
     public LectureUnitService(LectureUnitRepository lectureUnitRepository, LectureRepository lectureRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository,
-            FileService fileService, SlideRepository slideRepository, Optional<PyrisWebhookService> pyrisWebhookService, Optional<CompetencyProgressApi> competencyProgressApi,
+            FileService fileService, Optional<IrisLectureApi> irisLectureApi, Optional<CompetencyProgressApi> competencyProgressApi,
             Optional<CourseCompetencyApi> courseCompetencyApi, Optional<CompetencyRelationApi> competencyRelationApi) {
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureRepository = lectureRepository;
         this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
         this.fileService = fileService;
-        this.slideRepository = slideRepository;
-        this.pyrisWebhookService = pyrisWebhookService;
+        this.irisLectureApi = irisLectureApi;
         this.courseCompetencyApi = courseCompetencyApi;
         this.competencyProgressApi = competencyProgressApi;
         this.competencyRelationApi = competencyRelationApi;
@@ -164,16 +160,9 @@ public class LectureUnitService {
     public void removeLectureUnit(@NotNull LectureUnit lectureUnit) {
         LectureUnit lectureUnitToDelete = lectureUnitRepository.findByIdWithCompetenciesAndSlidesElseThrow(lectureUnit.getId());
 
-        if (lectureUnitToDelete instanceof AttachmentVideoUnit attachmentVideoUnit && attachmentVideoUnit.getAttachment() != null) {
-            fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(URI.create((attachmentVideoUnit.getAttachment().getLink()))), 5);
-            if (attachmentVideoUnit.getSlides() != null && !attachmentVideoUnit.getSlides().isEmpty()) {
-                List<Slide> slides = attachmentVideoUnit.getSlides();
-                for (Slide slide : slides) {
-                    fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(URI.create(slide.getSlideImagePath())), 5);
-                }
-                pyrisWebhookService.ifPresent(service -> service.deleteLectureFromPyrisDB(List.of(attachmentVideoUnit)));
-                slideRepository.deleteAll(slides);
-            }
+        if (lectureUnitToDelete instanceof AttachmentVideoUnit attachmentVideoUnit) {
+            fileService.schedulePathForDeletion(
+                    FilePathConverter.fileSystemPathForExternalUri(URI.create((attachmentVideoUnit.getAttachment().getLink())), FilePathType.ATTACHMENT_UNIT), 5);
         }
 
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureUnitToDelete.getLecture().getId());
@@ -200,17 +189,6 @@ public class LectureUnitService {
         lectureUnitLinks.forEach(link -> link.setCompetency(competency));
         competency.setLectureUnitLinks(lectureUnitLinks);
         courseCompetencyApi.get().save(competency);
-    }
-
-    /**
-     * Removes competency from all lecture units.
-     *
-     * @param lectureUnitLinks set of lecture unit links
-     * @param competency       competency to remove
-     */
-    public void removeCompetency(Set<CompetencyLectureUnitLink> lectureUnitLinks, CourseCompetency competency) {
-        competencyRelationApi.ifPresent(api -> api.deleteAllLectureUnitLinks(lectureUnitLinks));
-        competency.getLectureUnitLinks().removeAll(lectureUnitLinks);
     }
 
     /**
@@ -245,11 +223,11 @@ public class LectureUnitService {
         if (!(lectureUnit instanceof AttachmentVideoUnit)) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
-        if (pyrisWebhookService.isEmpty()) {
+        if (irisLectureApi.isEmpty()) {
             log.error("Could not send Lecture Unit to Pyris: Pyris webhook service is not available, check if IRIS is enabled.");
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
         }
-        boolean isIngested = pyrisWebhookService.get().addLectureUnitToPyrisDB((AttachmentVideoUnit) lectureUnit) != null;
+        boolean isIngested = irisLectureApi.get().addLectureUnitToPyrisDB((AttachmentVideoUnit) lectureUnit) != null;
         return ResponseEntity.status(isIngested ? HttpStatus.OK : HttpStatus.BAD_REQUEST).build();
     }
 

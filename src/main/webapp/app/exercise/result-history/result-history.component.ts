@@ -1,6 +1,6 @@
 import { Component, OnChanges, input } from '@angular/core';
-import { Result } from 'app/entities/result.model';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { MissingResultInformation, evaluateTemplateStatus, getResultIconClass, getTextColorClass } from 'app/exercise/result/result.utils';
 import { NgClass, NgStyle } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';

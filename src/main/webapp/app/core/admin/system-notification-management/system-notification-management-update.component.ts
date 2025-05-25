@@ -2,13 +2,13 @@ import { Component, OnInit, inject } from '@angular/core';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
-import { SystemNotification, SystemNotificationType } from 'app/entities/system-notification.model';
+import { SystemNotification, SystemNotificationType } from 'app/core/shared/entities/system-notification.model';
 import dayjs from 'dayjs/esm';
-import { AdminSystemNotificationService } from 'app/shared/notification/system-notification/admin-system-notification.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { AdminSystemNotificationService } from 'app/core/notification/system-notification/admin-system-notification.service';
 
 @Component({
     selector: 'jhi-system-notification-management-update',

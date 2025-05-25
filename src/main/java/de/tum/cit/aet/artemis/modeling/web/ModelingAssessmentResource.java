@@ -132,8 +132,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
     }
 
     /**
-     * Update an assessment after a complaint was accepted. After the result is updated accordingly, Compass is notified about the changed assessment in order to adapt all
-     * automatic assessments based on this result, as well.
+     * Update an assessment after a complaint was accepted.
      *
      * @param submissionId     the id of the submission for which the assessment should be updated
      * @param assessmentUpdate the assessment update containing the new feedback items and the response to the complaint

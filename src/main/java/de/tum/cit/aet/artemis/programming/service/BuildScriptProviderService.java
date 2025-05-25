@@ -75,7 +75,7 @@ public class BuildScriptProviderService {
                 String uniqueKey = directory + "_" + filename;
                 byte[] fileContent = IOUtils.toByteArray(resource.getInputStream());
                 String script = new String(fileContent, StandardCharsets.UTF_8);
-                if (!profileService.isLocalCiActive()) {
+                if (!profileService.isLocalCIActive()) {
                     script = replacePlaceholders(script, null, null, null);
                 }
                 scriptCache.put(uniqueKey, script);
@@ -119,7 +119,7 @@ public class BuildScriptProviderService {
         }
         byte[] fileContent = IOUtils.toByteArray(fileResource.getInputStream());
         String script = new String(fileContent, StandardCharsets.UTF_8);
-        if (!profileService.isLocalCiActive()) {
+        if (!profileService.isLocalCIActive()) {
             script = replacePlaceholders(script, null, null, null);
         }
         scriptCache.put(uniqueKey, script);
@@ -140,7 +140,7 @@ public class BuildScriptProviderService {
                     buildConfig.hasSequentialTestRuns());
         }
         catch (IOException e) {
-            log.error("Failed to provide build script for programming exercise " + exercise.getId(), e);
+            log.error("Failed to provide build script for programming exercise {}", exercise.getId(), e);
         }
         return null;
     }

@@ -19,7 +19,6 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
-import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -45,20 +44,17 @@ public class QuizResultService {
 
     private final SubmittedAnswerRepository submittedAnswerRepository;
 
-    private final ResultService resultService;
-
     private final SubmissionRepository submissionRepository;
 
     private final ResultRepository resultRepository;
 
     public QuizResultService(QuizExerciseRepository quizExerciseRepository, QuizStatisticService quizStatisticService,
-            StudentParticipationRepository studentParticipationRepository, SubmittedAnswerRepository submittedAnswerRepository, ResultService resultService,
-            SubmissionRepository submissionRepository, ResultRepository resultRepository) {
+            StudentParticipationRepository studentParticipationRepository, SubmittedAnswerRepository submittedAnswerRepository, SubmissionRepository submissionRepository,
+            ResultRepository resultRepository) {
         this.quizExerciseRepository = quizExerciseRepository;
         this.quizStatisticService = quizStatisticService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.submittedAnswerRepository = submittedAnswerRepository;
-        this.resultService = resultService;
         this.submissionRepository = submissionRepository;
         this.resultRepository = resultRepository;
     }
@@ -108,7 +104,6 @@ public class QuizResultService {
         Set<Result> createdResults = new HashSet<>();
         List<StudentParticipation> studentParticipations = studentParticipationRepository.findAllWithEagerLegalSubmissionsAndEagerResultsByExerciseId(quizExercise.getId());
         submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(studentParticipations);
-        ZonedDateTime quizDeadline = quizExercise.getDueDate();
 
         for (var participation : studentParticipations) {
             if (participation.isTestRun()) {

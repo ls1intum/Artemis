@@ -1,13 +1,16 @@
 package de.tum.cit.aet.artemis.lecture.web;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -28,15 +31,17 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.cit.aet.artemis.atlas.api.CompetencyApi;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
-import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -45,14 +50,19 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
+import de.tum.cit.aet.artemis.lecture.domain.Attachment;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
+import de.tum.cit.aet.artemis.lecture.dto.SlideDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
+import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 import de.tum.cit.aet.artemis.lecture.service.LectureImportService;
 import de.tum.cit.aet.artemis.lecture.service.LectureService;
 
@@ -67,6 +77,8 @@ public class LectureResource {
     private static final Logger log = LoggerFactory.getLogger(LectureResource.class);
 
     private static final String ENTITY_NAME = "lecture";
+
+    private final SlideRepository slideRepository;
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -93,7 +105,7 @@ public class LectureResource {
 
     public LectureResource(LectureRepository lectureRepository, LectureService lectureService, LectureImportService lectureImportService, CourseRepository courseRepository,
             UserRepository userRepository, AuthorizationCheckService authCheckService, ExerciseService exerciseService, ChannelService channelService,
-            ChannelRepository channelRepository, Optional<CompetencyApi> competencyApi) {
+            ChannelRepository channelRepository, Optional<CompetencyApi> competencyApi, SlideRepository slideRepository) {
         this.lectureRepository = lectureRepository;
         this.lectureService = lectureService;
         this.lectureImportService = lectureImportService;
@@ -104,6 +116,7 @@ public class LectureResource {
         this.channelService = channelService;
         this.channelRepository = channelRepository;
         this.competencyApi = competencyApi;
+        this.slideRepository = slideRepository;
     }
 
     /**
@@ -200,18 +213,75 @@ public class LectureResource {
      * @return the ResponseEntity with status 200 (OK) and the set of lectures in body
      */
     @GetMapping("courses/{courseId}/lectures-with-slides")
-    @EnforceAtLeastStudent
-    public ResponseEntity<Set<Lecture>> getLecturesWithSlidesForCourse(@PathVariable Long courseId) {
-        log.debug("REST request to get all Lectures with slides of the units for the course with id : {}", courseId);
+    @EnforceAtLeastStudentInCourse
+    public ResponseEntity<List<LectureDTO>> getLecturesWithSlidesForCourse(@PathVariable Long courseId) {
+        log.info("Getting all lectures with slides for course {}", courseId);
+        long start = System.currentTimeMillis();
 
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+        var lectures = lectureRepository.findAllByCourseIdWithAttachmentsAndLectureUnits(courseId).stream().filter(Lecture::isVisibleToStudents).collect(Collectors.toSet());
+        Set<Long> attachmentVideoUnitIds = lectures.stream().flatMap(lecture -> lecture.getLectureUnits().stream())
+                .filter(lectureUnit -> lectureUnit instanceof AttachmentVideoUnit).map(DomainObject::getId).collect(Collectors.toSet());
 
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        Set<Lecture> lectures = lectureRepository.findAllByCourseIdWithAttachmentsAndLectureUnitsAndSlides(courseId);
-        lectures = lectureService.filterVisibleLecturesWithActiveAttachments(course, lectures, user);
-        lectures.forEach(lectureService::filterActiveAttachmentVideoUnits);
-        return ResponseEntity.ok().body(lectures);
+        // Load slides separately to avoid too large data exchange
+        Set<SlideDTO> slides = slideRepository.findVisibleSlidesByAttachmentVideoUnits(attachmentVideoUnitIds);
+
+        // Group slides by attachment video unit id to combine them into the DTOs
+        Map<Long, List<SlideDTO>> slidesByAttachmentVideoUnitId = slides.stream().collect(Collectors.groupingBy(SlideDTO::attachmentVideoUnitId));
+        // Convert visible lectures to DTOs (filtering active attachments) and add non hidden slides to the DTOs
+        List<LectureDTO> lectureDTOs = lectures.stream().map(LectureDTO::from).sorted(Comparator.comparingLong(LectureDTO::id)).toList();
+
+        lectureDTOs.forEach(lectureDTO -> {
+            for (AttachmentVideoUnitDTO attachmentVideoUnitDTO : lectureDTO.lectureUnits) {
+                List<SlideDTO> slidesForAttachmentVideoUnit = slidesByAttachmentVideoUnitId.get(attachmentVideoUnitDTO.id);
+                if (slidesForAttachmentVideoUnit != null) {
+                    // remove unnecessary fields from the slide DTOs
+                    var finalSlides = slidesForAttachmentVideoUnit.stream().map(slideDTO -> new SlideDTO(slideDTO.id(), slideDTO.slideNumber(), null, null))
+                            .sorted(Comparator.comparingInt(SlideDTO::slideNumber)).toList();
+                    attachmentVideoUnitDTO.slides.addAll(finalSlides);
+                }
+            }
+        });
+
+        log.info("     Finished getting all lectures with slides in {}ms", System.currentTimeMillis() - start);
+        return ResponseEntity.ok().body(lectureDTOs);
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public record LectureDTO(Long id, String title, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate, List<AttachmentDTO> attachments,
+            List<AttachmentVideoUnitDTO> lectureUnits) {
+
+        /**
+         * Converts a lecture to a DTO. Only the attachments and attachment video units that are visible to students are included.
+         *
+         * @param lecture The lecture to convert
+         * @return The converted lecture DTO
+         */
+        public static LectureDTO from(Lecture lecture) {
+            // only attachments visible to students are included
+            List<AttachmentDTO> attachmentDTOs = lecture.getAttachments().stream().filter(Attachment::isVisibleToStudents).map(AttachmentDTO::from).toList();
+            // only attachment video units visible to students are included
+            List<AttachmentVideoUnitDTO> attachmentVideoUnitDTOs = lecture.getLectureUnits().stream().filter(lectureUnit -> lectureUnit instanceof AttachmentVideoUnit)
+                    .map(lectureUnit -> (AttachmentVideoUnit) lectureUnit).filter(AttachmentVideoUnit::isVisibleToStudents).map(AttachmentVideoUnitDTO::from).toList();
+            return new LectureDTO(lecture.getId(), lecture.getTitle(), lecture.getVisibleDate(), lecture.getStartDate(), lecture.getEndDate(), attachmentDTOs,
+                    attachmentVideoUnitDTOs);
+        }
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public record AttachmentDTO(Long id, String link, String name, ZonedDateTime releaseDate) {
+
+        public static AttachmentDTO from(Attachment attachment) {
+            return new AttachmentDTO(attachment.getId(), attachment.getLink(), attachment.getName(), attachment.getReleaseDate());
+        }
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public record AttachmentVideoUnitDTO(Long id, String name, List<SlideDTO> slides, AttachmentDTO attachment, ZonedDateTime releaseDate, String type) {
+
+        public static AttachmentVideoUnitDTO from(AttachmentVideoUnit attachmentVideoUnit) {
+            return new AttachmentVideoUnitDTO(attachmentVideoUnit.getId(), attachmentVideoUnit.getName(), new ArrayList<>(),
+                    AttachmentDTO.from(attachmentVideoUnit.getAttachment()), attachmentVideoUnit.getReleaseDate(), "attachment");
+        }
     }
 
     /**
@@ -304,7 +374,7 @@ public class LectureResource {
     @EnforceAtLeastStudent
     public ResponseEntity<Lecture> getLectureWithDetails(@PathVariable Long lectureId) {
         log.debug("REST request to get lecture {} with details", lectureId);
-        Lecture lecture = lectureRepository.findByIdWithAttachmentsAndPostsAndLectureUnitsAndCompetenciesAndCompletionsElseThrow(lectureId);
+        Lecture lecture = lectureRepository.findByIdWithAttachmentsAndLectureUnitsAndCompetenciesAndCompletionsElseThrow(lectureId);
         if (competencyApi.isPresent()) {
             competencyApi.get().addCompetencyLinksToExerciseUnits(lecture);
         }
@@ -316,30 +386,6 @@ public class LectureResource {
         authCheckService.checkIsAllowedToSeeLectureElseThrow(lecture, user);
         lecture = filterLectureContentForUser(lecture, user);
 
-        return ResponseEntity.ok(lecture);
-    }
-
-    /**
-     * GET /lectures/:lectureId/details-with-slides : get the "lectureId" lecture with active lecture units and with slides.
-     *
-     * @param lectureId the lectureId of the lecture to retrieve
-     * @return the ResponseEntity with status 200 (OK) and with body the lecture including posts, lecture units and competencies, or with status 404 (Not Found)
-     */
-    @GetMapping("lectures/{lectureId}/details-with-slides")
-    @EnforceAtLeastStudent
-    public ResponseEntity<Lecture> getLectureWithDetailsAndSlides(@PathVariable long lectureId) {
-        log.debug("REST request to get lecture {} with details with slides ", lectureId);
-        Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndSlidesAndAttachmentsElseThrow(lectureId);
-        Course course = lecture.getCourse();
-        if (course == null) {
-            return ResponseEntity.badRequest().build();
-        }
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        authCheckService.checkIsAllowedToSeeLectureElseThrow(lecture, user);
-
-        competencyApi.orElseThrow(() -> new ApiNotPresentException(CompetencyApi.class, PROFILE_ATLAS)).addCompetencyLinksToExerciseUnits(lecture);
-        lectureService.filterActiveAttachmentVideoUnits(lecture);
-        lectureService.filterActiveAttachments(lecture, user);
         return ResponseEntity.ok(lecture);
     }
 
@@ -368,17 +414,11 @@ public class LectureResource {
         Set<Exercise> exercisesWithAllInformationNeeded = exerciseService
                 .loadExercisesWithInformationForDashboard(exercisesUserIsAllowedToSee.stream().map(Exercise::getId).collect(Collectors.toSet()), user);
 
-        List<LectureUnit> lectureUnitsUserIsAllowedToSee = lecture.getLectureUnits().stream().filter(lectureUnit -> {
-            if (lectureUnit == null) {
-                return false;
-            }
-            if (lectureUnit instanceof ExerciseUnit) {
-                return ((ExerciseUnit) lectureUnit).getExercise() != null && authCheckService.isAllowedToSeeLectureUnit(lectureUnit, user)
-                        && exercisesWithAllInformationNeeded.contains(((ExerciseUnit) lectureUnit).getExercise());
-            }
-            else {
-                return authCheckService.isAllowedToSeeLectureUnit(lectureUnit, user);
-            }
+        List<LectureUnit> lectureUnitsUserIsAllowedToSee = lecture.getLectureUnits().stream().filter(lectureUnit -> switch (lectureUnit) {
+            case null -> false;
+            case ExerciseUnit exerciseUnit -> exerciseUnit.getExercise() != null && authCheckService.isAllowedToSeeLectureUnit(lectureUnit, user)
+                    && exercisesWithAllInformationNeeded.contains(exerciseUnit.getExercise());
+            default -> authCheckService.isAllowedToSeeLectureUnit(lectureUnit, user);
         }).peek(lectureUnit -> {
             lectureUnit.setCompleted(lectureUnit.isCompletedFor(user));
 

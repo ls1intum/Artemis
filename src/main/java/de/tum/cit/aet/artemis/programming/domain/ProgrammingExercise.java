@@ -42,7 +42,6 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
-import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
@@ -156,7 +155,6 @@ public class ProgrammingExercise extends Exercise {
      *
      * @return The URL of the template repository as a String
      */
-    // jhipster-needle-entity-add-field - Jhipster will add fields here, do not remove
     @JsonIgnore
     public String getTemplateRepositoryUri() {
         if (templateParticipation != null && Hibernate.isInitialized(templateParticipation)) {
@@ -418,8 +416,6 @@ public class ProgrammingExercise extends Exercise {
         this.buildConfig = buildConfig;
     }
 
-    // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
-
     /**
      * Gets a URL of the templateRepositoryUri if there is one
      *
@@ -603,12 +599,12 @@ public class ProgrammingExercise extends Exercise {
     /**
      * Get all results of a student participation which are rated or unrated
      *
-     * @param participation The current participation
+     * @param results existing results
      * @return all results which are completed and are either automatic or manually assessed
      */
     @Override
-    public Set<Result> findResultsFilteredForStudents(Participation participation) {
-        return participation.getResults().stream().filter(result -> result.isAssessmentComplete() && (result.isAutomatic() || ExerciseDateService.isAfterAssessmentDueDate(this)))
+    public Set<Result> filterResultsForStudents(Collection<Result> results) {
+        return results.stream().filter(result -> result.isAssessmentComplete() && (result.isAutomatic() || ExerciseDateService.isAfterAssessmentDueDate(this)))
                 .collect(Collectors.toSet());
     }
 

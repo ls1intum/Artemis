@@ -1,16 +1,13 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ModelingExerciseService } from 'app/modeling/manage/modeling-exercise.service';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { TextExerciseService } from 'app/text/manage/text-exercise/text-exercise.service';
-import { ModelingPlagiarismResult } from 'app/plagiarism/shared/entities/modeling/ModelingPlagiarismResult';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { TextExerciseService } from 'app/text/manage/text-exercise/service/text-exercise.service';
 import { downloadFile, downloadZipFileFromResponse } from 'app/shared/util/download.util';
 import { TextPlagiarismResult } from 'app/plagiarism/shared/entities/text/TextPlagiarismResult';
 import { PlagiarismResult } from 'app/plagiarism/shared/entities/PlagiarismResult';
 import { download, generateCsv, mkConfig } from 'export-to-csv';
 import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
-import { ModelingSubmissionElement } from 'app/plagiarism/shared/entities/modeling/ModelingSubmissionElement';
 import { TextSubmissionElement } from 'app/plagiarism/shared/entities/text/TextSubmissionElement';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { PlagiarismOptions } from 'app/plagiarism/shared/entities/PlagiarismOptions';
@@ -20,7 +17,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { faChevronRight, faExclamationTriangle, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { Range } from 'app/shared/util/utils';
-import { PlagiarismCasesService } from 'app/plagiarism/shared/plagiarism-cases.service';
+import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
 import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { PlagiarismResultDTO, PlagiarismResultStats } from 'app/plagiarism/shared/entities/PlagiarismResultDTO';
@@ -62,7 +59,6 @@ export type PlagiarismCheckState = {
 })
 export class PlagiarismInspectorComponent implements OnInit {
     private route = inject(ActivatedRoute);
-    private modelingExerciseService = inject(ModelingExerciseService);
     private programmingExerciseService = inject(ProgrammingExerciseService);
     private textExerciseService = inject(TextExerciseService);
     private websocketService = inject(WebsocketService);
@@ -73,14 +69,14 @@ export class PlagiarismInspectorComponent implements OnInit {
     private alertService = inject(AlertService);
 
     /**
-     * The modeling exercise for which plagiarism is to be detected.
+     * The exercise for which plagiarism is to be detected.
      */
     exercise: Exercise;
 
     /**
      * Result of the automated plagiarism detection
      */
-    plagiarismResult?: TextPlagiarismResult | ModelingPlagiarismResult;
+    plagiarismResult?: TextPlagiarismResult;
 
     /**
      * Statistics for the automated plagiarism detection result
@@ -195,9 +191,6 @@ export class PlagiarismInspectorComponent implements OnInit {
             case ExerciseType.TEXT:
                 topic += 'text-exercises';
                 break;
-            case ExerciseType.MODELING:
-                topic += 'modeling-exercises';
-                break;
         }
         return topic + '/' + this.exercise.id + '/plagiarism-check';
     }
@@ -226,13 +219,6 @@ export class PlagiarismInspectorComponent implements OnInit {
         this.detectionInProgress = true;
 
         switch (this.exercise.type) {
-            case ExerciseType.MODELING: {
-                this.modelingExerciseService.getLatestPlagiarismResult(this.exercise.id!).subscribe({
-                    next: (result) => this.handlePlagiarismResult(result),
-                    error: () => this.handleError(),
-                });
-                return;
-            }
             case ExerciseType.PROGRAMMING: {
                 this.programmingExerciseService.getLatestPlagiarismResult(this.exercise.id!).subscribe({
                     next: (result) => this.handlePlagiarismResult(result),
@@ -259,9 +245,7 @@ export class PlagiarismInspectorComponent implements OnInit {
 
         const options = new PlagiarismOptions(this.similarityThreshold, minimumScore, minimumSize);
 
-        if (this.exercise.type === ExerciseType.MODELING) {
-            this.checkPlagiarismModeling(options);
-        } else if (this.generateJPlagReport) {
+        if (this.generateJPlagReport) {
             this.checkPlagiarismJPlagReport(options);
         } else {
             this.checkPlagiarismJPlag(options);
@@ -326,19 +310,7 @@ export class PlagiarismInspectorComponent implements OnInit {
         this.detectionInProgress = false;
     }
 
-    /**
-     * Trigger the server-side plagiarism detection and fetch its result.
-     */
-    checkPlagiarismModeling(options?: PlagiarismOptions) {
-        this.detectionInProgress = true;
-
-        this.modelingExerciseService.checkPlagiarism(this.exercise.id!, options).subscribe({
-            next: (result: PlagiarismResultDTO<ModelingPlagiarismResult>) => this.handlePlagiarismResult(result),
-            error: () => this.handleError(),
-        });
-    }
-
-    handlePlagiarismResult(result: PlagiarismResultDTO<ModelingPlagiarismResult | TextPlagiarismResult>) {
+    handlePlagiarismResult(result: PlagiarismResultDTO<TextPlagiarismResult>) {
         this.detectionInProgress = false;
 
         if (result?.plagiarismResult?.comparisons) {
@@ -390,7 +362,7 @@ export class PlagiarismInspectorComponent implements OnInit {
                 columnHeaders: ['Similarity', 'Status', 'Participant 1', 'Submission 1', 'Score 1', 'Size 1', 'Participant 2', 'Submission 2', 'Score 2', 'Size 2'],
             };
 
-            const rowData = (this.plagiarismResult.comparisons as PlagiarismComparison<ModelingSubmissionElement | TextSubmissionElement>[]).map((comparison) => {
+            const rowData = (this.plagiarismResult.comparisons as PlagiarismComparison<TextSubmissionElement>[]).map((comparison) => {
                 return Object.assign({
                     Similarity: comparison.similarity,
                     Status: comparison.status,
@@ -421,9 +393,6 @@ export class PlagiarismInspectorComponent implements OnInit {
             }
             case ExerciseType.TEXT: {
                 return 'artemisApp.plagiarism.minimumSizeTooltipTextExercise';
-            }
-            case ExerciseType.MODELING: {
-                return 'artemisApp.plagiarism.minimumSizeTooltipModelingExercise';
             }
         }
     }

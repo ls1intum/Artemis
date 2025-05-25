@@ -1,14 +1,14 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { CourseNotification } from 'app/entities/course-notification/course-notification';
+import { CourseNotification } from 'app/communication/shared/entities/course-notification/course-notification';
 import { Subscription } from 'rxjs';
 import { CourseNotificationComponent } from 'app/communication/course-notification/course-notification/course-notification.component';
 import { CourseNotificationWebsocketService } from 'app/communication/course-notification/course-notification-websocket.service';
 import { animate, style, transition, trigger } from '@angular/animations';
 import { CourseNotificationService } from 'app/communication/course-notification/course-notification.service';
-import { CourseNotificationViewingStatus } from 'app/entities/course-notification/course-notification-viewing-status';
+import { CourseNotificationViewingStatus } from 'app/communication/shared/entities/course-notification/course-notification-viewing-status';
 import { CommonModule } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 
 /**
  * Component that displays real-time notification popups.
@@ -40,6 +40,7 @@ export class CourseNotificationPopupOverlayComponent implements OnInit, OnDestro
 
     // Icons
     protected readonly faTimes = faTimes;
+    protected readonly faTrash = faTrash;
 
     ngOnInit(): void {
         this.courseNotificationWebsocketSubscription = this.courseNotificationWebsocketService.websocketNotification$.subscribe((notification) => {
@@ -115,6 +116,46 @@ export class CourseNotificationPopupOverlayComponent implements OnInit, OnDestro
 
         // To avoid overlap with the overlayClicked function, we do this on the next tick
         setTimeout(() => {
+            this.isExpanded = false;
+        });
+    }
+
+    /**
+     * Clears all currently visible notifications and marks them as seen.
+     */
+    clearAllNotifications() {
+        if (!this.isExpanded) {
+            return;
+        }
+
+        const notificationCourseMap: Record<string, Array<CourseNotification>> = {};
+
+        this.notifications.forEach((notification) => {
+            if (!notificationCourseMap[notification.courseId!]) {
+                notificationCourseMap[notification.courseId!] = [notification];
+            } else {
+                notificationCourseMap[notification.courseId!].push(notification);
+            }
+        });
+
+        for (const courseId of Object.keys(notificationCourseMap)) {
+            const courseIdNumber = Number(courseId);
+            this.courseNotificationService.setNotificationStatus(
+                courseIdNumber,
+                notificationCourseMap[courseId].map((notification) => notification.notificationId!),
+                CourseNotificationViewingStatus.SEEN,
+            );
+            this.courseNotificationService.setNotificationStatusInMap(
+                courseIdNumber,
+                notificationCourseMap[courseId].map((notification) => notification.notificationId!),
+                CourseNotificationViewingStatus.SEEN,
+            );
+            this.courseNotificationService.decreaseNotificationCountBy(courseIdNumber, notificationCourseMap[courseId].length);
+        }
+
+        // To avoid overlap with the overlayClicked function, we do this on the next tick
+        setTimeout(() => {
+            this.notifications = [];
             this.isExpanded = false;
         });
     }

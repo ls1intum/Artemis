@@ -10,6 +10,7 @@ $transition-color-length: 0.2s;
 
 .sidebar-container {
     width: $menu-width-open;
+
     &.collapsed {
         width: $menu-width-closed !important;
     }
@@ -53,22 +54,33 @@ jhi-secured-image {
 }
 
 .double-arrow {
-    transform: translate(180px);
-    transition: transform ease 0.3s;
-    cursor: pointer;
-    width: 30px;
-    align-items: center;
-    justify-content: center;
+    width: 100%;
     display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    cursor: pointer;
+    padding-right: 10px;
+}
+
+.menu-closed.double-arrow {
+    justify-content: center;
+    padding-right: 0;
+}
+
+.double-arrow-icon {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 40px;
+    transition: transform 0.3s ease;
+    transform: rotate(180deg);
 }
 
 .menu-closed .double-arrow-icon {
     transform: rotate(0deg);
-}
-
-.double-arrow-icon {
-    transform: rotate(180deg);
-    transition: transform ease 0.3s 0.3s;
+    padding-left: 0;
+    margin-left: -3px;
+    min-width: 40px;
 }
 
 .me-negative {
@@ -118,8 +130,20 @@ jhi-secured-image {
     color: var(--link-item-color);
 }
 
+// We have to override this style from globals.scss here as we only want to target the span with the text inside
+a:not(.btn):not(.tab-link):hover {
+    text-decoration: none !important;
+}
+
+.nav-link-sidebar:hover span {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+}
+
 .three-dots {
     cursor: pointer;
+
     &:hover {
         color: var(--link-item-color);
     }
@@ -137,6 +161,7 @@ jhi-secured-image {
     border: 1px solid var(--border-color);
     z-index: 3000;
     border-radius: 4px;
+
     &.fixedContentSize {
         max-height: 171px; // To avoid cut offs in the dropdown menu content (4 items)
     }
@@ -159,4 +184,22 @@ jhi-secured-image {
     :host {
         display: none; /* Hide the sidebar when printing */
     }
+}
+
+// Without ng-deep we fail to override the styles from the tooltip
+::ng-deep .double-arrow-tooltip {
+    // without this styling the tooltip is positioned with some distance to the left of the collapse icon when the sidebar is expanded.
+    // the margin bottom ensures the tooltip does not overlap with the collapse icon
+    left: 2rem !important;
+    margin-bottom: 0.25rem !important;
+}
+
+::ng-deep .double-arrow-tooltip-no-bottom-items {
+    left: 5.75rem !important;
+    margin-bottom: 0.25rem !important;
+}
+
+::ng-deep .double-arrow-tooltip-collapsed {
+    // without this styling the tooltip is positioned with too much distance to the right of the collapse icon when the sidebar is collapsed.
+    left: -2.25rem !important;
 }

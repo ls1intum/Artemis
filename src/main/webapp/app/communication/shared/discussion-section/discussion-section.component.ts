@@ -1,28 +1,31 @@
 import { AfterViewInit, Component, ElementRef, OnDestroy, effect, inject, input, viewChild, viewChildren } from '@angular/core';
 import interact from 'interactjs';
-import { Exercise } from 'app/entities/exercise.model';
-import { Lecture } from 'app/entities/lecture.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { DisplayPriority, PageType, PostSortCriterion, SortDirection } from 'app/communication/metis.util';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { Subject, combineLatest, map, takeUntil } from 'rxjs';
-import { MetisService } from 'app/communication/metis.service';
-import { Post } from 'app/entities/metis/post.model';
+import { MetisService } from 'app/communication/service/metis.service';
+import { Post } from 'app/communication/shared/entities/post.model';
+import { User } from 'app/core/user/user.model';
 import { PostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { HttpResponse } from '@angular/common/http';
 import { faArrowLeft, faChevronLeft, faChevronRight, faGripLinesVertical, faLongArrowRight } from '@fortawesome/free-solid-svg-icons';
-import { CourseDiscussionDirective } from 'app/communication/course-discussion.directive';
+import { CourseDiscussionDirective } from 'app/communication/directive/course-discussion.directive';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { Channel, ChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { Channel, ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
 import { PostingThreadComponent } from 'app/communication/posting-thread/posting-thread.component';
 import { MessageInlineInputComponent } from 'app/communication/message/message-inline-input/message-inline-input.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { ButtonComponent } from 'app/shared/components/button.component';
+import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { toObservable } from '@angular/core/rxjs-interop';
-import { ChannelService } from 'app/communication/conversations/channel.service';
+import { ChannelService } from 'app/communication/conversations/service/channel.service';
+import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-discussion-section',
@@ -44,6 +47,8 @@ import { ChannelService } from 'app/communication/conversations/channel.service'
 })
 export class DiscussionSectionComponent extends CourseDiscussionDirective implements AfterViewInit, OnDestroy {
     private channelService = inject(ChannelService);
+    private courseStorageService = inject(CourseStorageService);
+    private accountService = inject(AccountService);
     private activatedRoute = inject(ActivatedRoute);
     private router = inject(Router);
     private formBuilder = inject(FormBuilder);
@@ -71,6 +76,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
     collapsed = false;
     currentPostId?: number;
     currentPost?: Post;
+    currentUser?: User;
     shouldSendMessage: boolean;
     readonly PAGE_TYPE = PageType.PAGE_SECTION;
 
@@ -92,7 +98,10 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
             queryParams: this.activatedRoute.queryParams,
         }).subscribe((routeParams: { params: Params; queryParams: Params }) => {
             this.currentPostId = +routeParams.queryParams.postId;
-            this.course = exercise?.course ?? lecture?.course;
+            const courseId = exercise?.course?.id ?? lecture?.course?.id;
+            if (courseId) {
+                this.course = this.courseStorageService.getCourse(courseId);
+            }
             this.metisService.setCourse(this.course);
             this.metisService.setPageType(this.PAGE_TYPE);
             if (routeParams.params.courseId) {
@@ -123,6 +132,9 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
             if (this.currentPostId && this.posts.length > 0) {
                 this.currentPost = this.posts.find((post) => post.id === this.currentPostId);
             }
+        });
+        this.accountService.identity().then((user: User) => {
+            this.currentUser = user!;
         });
         this.metisService.totalNumberOfPosts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((totalNumberOfPosts: number) => {
             this.totalNumberOfPosts = totalNumberOfPosts;
@@ -273,10 +285,10 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
         this.scrollToBottomOfMessages();
         this.currentPostContextFilter = {
             courseId: undefined,
-            conversationId: this.channel?.id,
+            conversationIds: this.channel?.id ? [this.channel?.id] : undefined,
+            authorIds: this.formGroup.get('filterToOwn')?.value && this.currentUser?.id ? [this.currentUser.id] : undefined,
             searchText: this.searchText?.trim(),
             filterToUnresolved: this.formGroup.get('filterToUnresolved')?.value,
-            filterToOwn: this.formGroup.get('filterToOwn')?.value,
             filterToAnsweredOrReacted: this.formGroup.get('filterToAnsweredOrReacted')?.value,
             pagingEnabled: true,
             page: 0,

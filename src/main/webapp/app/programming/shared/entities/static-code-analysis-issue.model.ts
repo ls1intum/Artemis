@@ -1,4 +1,4 @@
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 
 export class StaticCodeAnalysisIssue {
     public filePath: string;

@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.MIN_SCORE_GREEN;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
 import static de.tum.cit.aet.artemis.core.util.TimeUtil.toRelativeTime;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.averagingDouble;
@@ -12,12 +11,14 @@ import static java.util.stream.Collectors.toSet;
 
 import java.time.ZonedDateTime;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.function.ToDoubleFunction;
 
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyJolDTO;
 import de.tum.cit.aet.artemis.atlas.dto.metrics.CompetencyInformationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.metrics.CompetencyProgressDTO;
@@ -32,25 +33,26 @@ import de.tum.cit.aet.artemis.atlas.dto.metrics.StudentMetricsDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyMetricsRepository;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseInformationDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseMetricsRepository;
-import de.tum.cit.aet.artemis.lecture.repository.LectureUnitMetricsRepository;
+import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
+import de.tum.cit.aet.artemis.lecture.config.LectureApiNotPresentException;
 
 /**
  * Service class to access metrics regarding students' learning progress.
  */
-@Profile(PROFILE_ATLAS)
+@Conditional(AtlasEnabled.class)
 @Service
 public class LearningMetricsService {
 
     private final ExerciseMetricsRepository exerciseMetricsRepository;
 
-    private final LectureUnitMetricsRepository lectureUnitMetricsRepository;
+    private final Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi;
 
     private final CompetencyMetricsRepository competencyMetricsRepository;
 
-    public LearningMetricsService(ExerciseMetricsRepository exerciseMetricsRepository, LectureUnitMetricsRepository lectureUnitMetricsRepository,
+    public LearningMetricsService(ExerciseMetricsRepository exerciseMetricsRepository, Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi,
             CompetencyMetricsRepository competencyMetricsRepository) {
         this.exerciseMetricsRepository = exerciseMetricsRepository;
-        this.lectureUnitMetricsRepository = lectureUnitMetricsRepository;
+        this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
         this.competencyMetricsRepository = competencyMetricsRepository;
     }
 
@@ -118,12 +120,14 @@ public class LearningMetricsService {
      * @return the metrics for the student in the course
      */
     public LectureUnitStudentMetricsDTO getStudentLectureUnitMetrics(long userId, long courseId) {
-        final var lectureUnitInfo = lectureUnitMetricsRepository.findAllLectureUnitInformationByCourseId(courseId);
+        LectureUnitRepositoryApi api = lectureUnitRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureUnitRepositoryApi.class));
+
+        final var lectureUnitInfo = api.findAllLectureUnitInformationByCourseId(courseId);
         final var lectureUnitInfoMap = lectureUnitInfo.stream().collect(toMap(LectureUnitInformationDTO::id, identity()));
 
         final var lectureUnitIds = lectureUnitInfoMap.keySet();
 
-        final var completedLectureUnitIds = lectureUnitMetricsRepository.findAllCompletedLectureUnitIdsForUserByLectureUnitIds(userId, lectureUnitIds);
+        final var completedLectureUnitIds = api.findAllCompletedLectureUnitIdsForUserByLectureUnitIds(userId, lectureUnitIds);
 
         return new LectureUnitStudentMetricsDTO(lectureUnitInfoMap, completedLectureUnitIds);
     }

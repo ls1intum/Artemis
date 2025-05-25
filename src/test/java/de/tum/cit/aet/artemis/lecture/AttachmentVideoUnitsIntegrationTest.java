@@ -250,7 +250,7 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
                 lectureUnitSplitInfo, AttachmentVideoUnit.class, HttpStatus.OK);
 
         assertThat(attachmentVideoUnits).hasSize(2);
-        assertThat(slideRepository.findAll()).hasSize(20); // 20 slides should be created for 2 attachment units
+        assertThat(slideRepository.findAll()).hasSize(20); // 20 slides should be created for 2 attachment video units
 
         List<Long> attachmentVideoUnitIds = attachmentVideoUnits.stream().map(AttachmentVideoUnit::getId).toList();
         List<AttachmentVideoUnit> attachmentVideoUnitList = attachmentVideoUnitRepository.findAllById(attachmentVideoUnitIds);
@@ -276,7 +276,7 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
         List<AttachmentVideoUnit> attachmentVideoUnits = request.postListWithResponseBody("/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/split/" + filename,
                 lectureUnitSplitInfo, AttachmentVideoUnit.class, HttpStatus.OK);
         assertThat(attachmentVideoUnits).hasSize(2);
-        assertThat(slideRepository.findAll()).hasSize(18); // 18 slides should be created for 2 attachment units (1 break slide is removed and 1 solution slide is removed)
+        assertThat(slideRepository.findAll()).hasSize(18); // 18 slides should be created for 2 attachment video units (1 break slide is removed and 1 solution slide is removed)
 
         List<Long> attachmentVideoUnitIds = attachmentVideoUnits.stream().map(AttachmentVideoUnit::getId).toList();
         List<AttachmentVideoUnit> attachmentVideoUnitList = attachmentVideoUnitRepository.findAllById(attachmentVideoUnitIds);

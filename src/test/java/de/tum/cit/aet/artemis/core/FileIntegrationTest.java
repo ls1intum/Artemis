@@ -36,8 +36,9 @@ import org.testcontainers.shaded.org.apache.commons.io.FileUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.service.FilePathService;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserDTO;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
@@ -78,6 +79,9 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private ExamUtilService examUtilService;
+
+    @Autowired
+    private ConversationUtilService conversationUtilService;
 
     @Autowired
     private MockMvc mockMvc;
@@ -128,7 +132,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         lecture.setTitle("Test title");
         lecture.setStartDate(ZonedDateTime.now().minusHours(1));
 
-        // create unreleased attachment unit
+        // create unreleased attachment video unit
         AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnit(true);
         attachmentVideoUnit.setLecture(lecture);
         attachmentVideoUnit.setReleaseDate(ZonedDateTime.now().plusDays(1));
@@ -225,10 +229,12 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     private void adjustReleaseDateToFuture(Lecture lecture) {
-        var attachment = lecture.getLectureUnits().stream().sorted(Comparator.comparing(LectureUnit::getId)).map(lectureUnit -> ((AttachmentVideoUnit) lectureUnit).getAttachment())
-                .findFirst().orElseThrow();
-        attachment.setReleaseDate(ZonedDateTime.now().plusHours(2));
-        attachmentRepo.save(attachment);
+        var unit = (AttachmentVideoUnit) lecture.getLectureUnits().stream().min(Comparator.comparing(LectureUnit::getId)).orElseThrow();
+        var targetTime = ZonedDateTime.now().plusHours(2);
+        unit.getAttachment().setReleaseDate(targetTime);
+        unit.setReleaseDate(targetTime);
+        attachmentRepo.save(unit.getAttachment());
+        attachmentVideoUnitRepo.save(unit);
     }
 
     @Test
@@ -240,7 +246,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // Change order of units
         LectureUnit unit3 = lecture.getLectureUnits().get(2);
         lecture.getLectureUnits().remove(unit3);
-        lecture.getLectureUnits().add(0, unit3);
+        lecture.getLectureUnits().addFirst(unit3);
         lectureRepo.save(lecture);
 
         userUtilService.changeUser(TEST_PREFIX + "student1");
@@ -362,7 +368,25 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetAttachmentVideoUnitStudentVersion() throws Exception {
+        testGetAttachmentVideoUnitAsStudent();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetAttachmentVideoUnitAttachmentFilenameSanitization() throws Exception {
+        testGetAttachmentVideoUnitAsTutor();
+    }
+
+    private void testGetAttachmentVideoUnitAsStudent() throws Exception {
+        testGetAttachmentVideoUnit(false);
+    }
+
+    private void testGetAttachmentVideoUnitAsTutor() throws Exception {
+        testGetAttachmentVideoUnit(true);
+    }
+
+    private void testGetAttachmentVideoUnit(boolean isTutor) throws Exception {
         Path tempFile = Files.createTempFile("dummy", ".pdf");
         byte[] dummyContent = "dummy pdf content".getBytes();
         FileUtils.writeByteArrayToFile(tempFile.toFile(), dummyContent);
@@ -381,11 +405,12 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         attachmentRepo.save(attachment);
         attachmentVideoUnitRepo.save(attachmentVideoUnit);
 
-        String unsanitizedFilename = unsanitizedName + ".pdf";
-        String url = "/api/core/files/attachments/attachment-unit/" + attachmentVideoUnit.getId() + "/" + unsanitizedFilename;
+        String unsanitizedFilename = "AttachmentUnit_2025-05-10T12-10-34_" + unsanitizedName + ".pdf";
+        String url = isTutor ? "/api/core/files/attachments/attachment-unit/" + attachmentVideoUnit.getId() + "/" + unsanitizedFilename
+                : "/api/core/files/attachments/attachment-unit/" + attachmentVideoUnit.getId() + "/student/" + unsanitizedFilename;
 
-        try (MockedStatic<FilePathService> filePathServiceMock = Mockito.mockStatic(FilePathService.class)) {
-            filePathServiceMock.when(() -> FilePathService.actualPathForPublicPathOrThrow(Mockito.any(URI.class))).thenReturn(tempFile);
+        try (MockedStatic<FilePathConverter> filePathServiceMock = Mockito.mockStatic(FilePathConverter.class)) {
+            filePathServiceMock.when(() -> FilePathConverter.fileSystemPathForExternalUri(Mockito.any(URI.class), Mockito.eq(FilePathType.ATTACHMENT_UNIT))).thenReturn(tempFile);
 
             MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
 
@@ -395,8 +420,26 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             String contentDisposition = result.getResponse().getHeader("Content-Disposition");
             assertThat(contentDisposition).isNotNull();
             assertThat(contentDisposition).doesNotContain("–");
-            assertThat(contentDisposition).contains("filename=");
+            assertThat(contentDisposition).contains("filename=\"test_file.pdf\"");
         }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testUploadAndRetrieveFileForConversation() throws Exception {
+        userUtilService.addUsers(TEST_PREFIX, 4, 4, 4, 1);
+        var posts = conversationUtilService.createPostsWithinCourse(TEST_PREFIX);
+        var conversation = posts.getFirst().getConversation();
+        var course = conversation.getCourse();
+
+        MockMultipartFile file = new MockMultipartFile("file", "image.png", "image/png", new byte[] { 1, 2, 3, 4, 5 });
+
+        JsonNode response = request.postWithMultipartFile("/api/core/files/courses/" + course.getId() + "/conversations/" + conversation.getId(), file.getOriginalFilename(),
+                "file", file, JsonNode.class, HttpStatus.CREATED);
+        String responsePath = response.get("path").asText();
+
+        byte[] retrievedContent = request.get(responsePath, HttpStatus.OK, byte[].class);
+        assertThat(retrievedContent).isEqualTo(file.getBytes());
     }
 
 }

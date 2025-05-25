@@ -34,7 +34,6 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import de.tum.cit.aet.artemis.core.domain.AbstractAuditingEntity;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.plagiarism.domain.modeling.ModelingPlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.domain.text.TextPlagiarismResult;
 
 /**
@@ -49,7 +48,6 @@ import de.tum.cit.aet.artemis.plagiarism.domain.text.TextPlagiarismResult;
 // Annotation necessary to distinguish between concrete implementations of PlagiarismResults when deserializing from JSON
 // @formatter:off
 @JsonSubTypes({
-    @JsonSubTypes.Type(value = ModelingPlagiarismResult.class, name = "modeling"),
     @JsonSubTypes.Type(value = TextPlagiarismResult.class, name = "text")
 })
 // @formatter:on

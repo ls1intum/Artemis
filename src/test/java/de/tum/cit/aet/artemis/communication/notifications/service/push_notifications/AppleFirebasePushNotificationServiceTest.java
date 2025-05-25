@@ -1,12 +1,8 @@
 package de.tum.cit.aet.artemis.communication.notifications.service.push_notifications;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.anySet;
-import static org.mockito.Mockito.timeout;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Collections;
@@ -18,15 +14,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.springframework.http.HttpEntity;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
-import de.tum.cit.aet.artemis.communication.domain.GroupNotificationType;
-import de.tum.cit.aet.artemis.communication.domain.notification.GroupNotification;
-import de.tum.cit.aet.artemis.communication.domain.notification.Notification;
-import de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants;
 import de.tum.cit.aet.artemis.communication.domain.push_notification.PushNotificationApiType;
 import de.tum.cit.aet.artemis.communication.domain.push_notification.PushNotificationDeviceConfiguration;
 import de.tum.cit.aet.artemis.communication.domain.push_notification.PushNotificationDeviceType;
@@ -35,6 +25,7 @@ import de.tum.cit.aet.artemis.communication.service.CourseNotificationPushProxyS
 import de.tum.cit.aet.artemis.communication.service.notifications.push_notifications.ApplePushNotificationService;
 import de.tum.cit.aet.artemis.communication.service.notifications.push_notifications.FirebasePushNotificationService;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 
 class AppleFirebasePushNotificationServiceTest {
 
@@ -47,14 +38,15 @@ class AppleFirebasePushNotificationServiceTest {
     @Mock
     private RestTemplate firebaseRestTemplateMock;
 
+    @Mock
+    private FeatureToggleService featureToggleService;
+
     private ApplePushNotificationService applePushNotificationService;
 
     private FirebasePushNotificationService firebasePushNotificationService;
 
     @Mock
     private CourseNotificationPushProxyService courseNotificationPushProxyService;
-
-    private Notification notification;
 
     private User student;
 
@@ -67,9 +59,6 @@ class AppleFirebasePushNotificationServiceTest {
         student = new User();
         student.setId(1L);
         student.setLogin("1");
-
-        notification = new GroupNotification(null, NotificationConstants.NEW_ANNOUNCEMENT_POST_TITLE, NotificationConstants.NEW_ANNOUNCEMENT_POST_TEXT, false, new String[0],
-                student, GroupNotificationType.STUDENT);
 
         String token = "test";
         byte[] payload = HexFormat.of().parseHex("e04fd020ea3a6910a2d808002b30309d");
@@ -93,35 +82,6 @@ class AppleFirebasePushNotificationServiceTest {
         if (closeable != null) {
             closeable.close();
         }
-    }
-
-    @Test
-    void sendNotificationRequestsToEndpoint_shouldSendNotifications() throws InterruptedException {
-        // Given
-        when(appleRestTemplateMock.postForObject(any(String.class), any(HttpEntity.class), eq(String.class))).thenReturn("ok");
-        when(firebaseRestTemplateMock.postForObject(any(String.class), any(HttpEntity.class), eq(String.class))).thenReturn("ok");
-
-        // When
-        applePushNotificationService.sendNotification(notification, student, null);
-        firebasePushNotificationService.sendNotification(notification, student, null);
-
-        // Then
-        verify(appleRestTemplateMock, timeout(1000)).postForObject(anyString(), any(HttpEntity.class), eq(String.class));
-        verify(firebaseRestTemplateMock, timeout(1000)).postForObject(anyString(), any(HttpEntity.class), eq(String.class));
-    }
-
-    @Test
-    void scheduleSendBatch_shouldRetryOnRestClientException() throws InterruptedException {
-        when(appleRestTemplateMock.postForObject(anyString(), any(HttpEntity.class), any())).thenThrow(new RestClientException(""));
-        when(firebaseRestTemplateMock.postForObject(anyString(), any(HttpEntity.class), any())).thenThrow(new RestClientException(""));
-
-        // When
-        applePushNotificationService.sendNotification(notification, student, null);
-        firebasePushNotificationService.sendNotification(notification, student, null);
-
-        // Then
-        verify(appleRestTemplateMock, timeout(5000).atLeast(2)).postForObject(anyString(), any(HttpEntity.class), any());
-        verify(firebaseRestTemplateMock, timeout(5000).atLeast(2)).postForObject(anyString(), any(HttpEntity.class), any());
     }
 
     @Test

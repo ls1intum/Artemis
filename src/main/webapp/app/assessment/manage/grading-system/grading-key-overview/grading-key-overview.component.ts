@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { GradeStep } from 'app/entities/grade-step.model';
+import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { faChevronLeft, faPrint } from '@fortawesome/free-solid-svg-icons';
 import { ThemeService } from 'app/core/theme/shared/theme.service';

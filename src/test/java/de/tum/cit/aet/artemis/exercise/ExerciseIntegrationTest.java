@@ -17,6 +17,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -431,6 +432,11 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 participationUtilService.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusHours(1L),
                         exercise.getStudentParticipations().iterator().next());
             }
+
+            var results = resultRepository.findLatestResultsForParticipation(exercise.getStudentParticipations().iterator().next().getId(), PageRequest.of(0, 20));
+            // Note: this loads results linked to a participation over a submission, therefore there is only 1 result
+            assertThat(results).hasSize(1);
+
             ExerciseDetailsDTO exerciseWithDetails = request.get("/api/exercise/exercises/" + exercise.getId() + "/details", HttpStatus.OK, ExerciseDetailsDTO.class);
             for (StudentParticipation participation : exerciseWithDetails.exercise().getStudentParticipations()) {
                 // Programming exercises should only have one automatic result
@@ -452,21 +458,30 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Course course = courseUtilService.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(TEST_PREFIX, true);
         for (Exercise exercise : course.getExercises()) {
             // For programming exercises we add a manual result, to check whether this is correctly displayed after the assessment due date
+            int resultSize = 1;
+            var participation = exercise.getStudentParticipations().iterator().next();
             if (exercise instanceof ProgrammingExercise) {
-                participationUtilService.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusHours(1L),
-                        exercise.getStudentParticipations().iterator().next());
+                var submission = participation.getSubmissions().iterator().next();
+                var result = participationUtilService.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusHours(1L), participation);
+                result.setSubmission(submission);
+                resultRepository.save(result);
+                resultSize = 2;
             }
+
+            var results = resultRepository.findLatestResultsForParticipation(participation.getId(), PageRequest.of(0, 20));
+            assertThat(results).hasSize(resultSize);
+
             ExerciseDetailsDTO exerciseWithDetails = request.get("/api/exercise/exercises/" + exercise.getId() + "/details", HttpStatus.OK, ExerciseDetailsDTO.class);
-            for (StudentParticipation participation : exerciseWithDetails.exercise().getStudentParticipations()) {
+            for (var studentParticipation : exerciseWithDetails.exercise().getStudentParticipations()) {
                 // Programming exercises should now how two results and the latest one is the manual result.
                 if (exercise instanceof ProgrammingExercise) {
-                    assertThat(participation.getResults()).hasSize(2);
-                    assertThat(participation.getResults().stream().sorted(Comparator.comparing(Result::getId).reversed()).iterator().next().getAssessmentType())
+                    assertThat(studentParticipation.getResults()).hasSize(resultSize);
+                    assertThat(studentParticipation.getResults().stream().sorted(Comparator.comparing(Result::getId).reversed()).iterator().next().getAssessmentType())
                             .isEqualTo(AssessmentType.SEMI_AUTOMATIC);
                 }
                 else {
                     // All other exercises have only one visible result now
-                    assertThat(participation.getResults()).hasSize(1);
+                    assertThat(studentParticipation.getResults()).hasSize(1);
                 }
             }
         }
@@ -618,7 +633,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private List<User> findTutors(Course course) {
         List<User> tutors = new ArrayList<>();
-        Page<User> allUsers = userTestRepository.findAllWithGroupsByIsDeletedIsFalse(Pageable.unpaged());
+        Page<User> allUsers = userTestRepository.findAllWithGroupsByDeletedIsFalse(Pageable.unpaged());
         for (User user : allUsers) {
             if (user.getGroups().contains(course.getTeachingAssistantGroupName())) {
                 tutors.add(user);

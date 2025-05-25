@@ -1,17 +1,17 @@
 import { Component, Input, OnInit, inject } from '@angular/core';
 import { TutorLeaderboardElement } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.model';
-import { Course } from 'app/entities/course.model';
-import { Exercise, getCourseFromExercise } from 'app/entities/exercise.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
+import { Exercise, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { SortService } from 'app/shared/service/sort.service';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { faExclamationTriangle, faSort } from '@fortawesome/free-solid-svg-icons';
-import { SortDirective } from '../../sort/sort.directive';
-import { SortByDirective } from '../../sort/sort-by.directive';
-import { TranslateDirective } from '../../language/translate.directive';
+import { SortDirective } from '../../sort/directive/sort.directive';
+import { SortByDirective } from '../../sort/directive/sort-by.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { RouterLink } from '@angular/router';
-import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-tutor-leaderboard',

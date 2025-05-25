@@ -53,6 +53,8 @@ const esModules = [
     'ngx-webstorage',
     'rxjs/operators',
     'trigram-utils',
+    'primeng',
+    '@primeuix'
 ].join('|');
 
 const {
@@ -91,10 +93,10 @@ module.exports = {
     coverageThreshold: {
         global: {
             // TODO: in the future, the following values should increase to at least 90%
-            statements: 88.71,
-            branches: 74.39,
-            functions: 82.86,
-            lines: 88.77,
+            statements: 89.15,
+            branches: 75.21,
+            functions: 83.01,
+            lines: 89.22,
         },
     },
     coverageReporters: ['clover', 'json', 'lcov', 'text-summary'],
@@ -107,7 +109,6 @@ module.exports = {
             {
                 tsconfig: '<rootDir>/tsconfig.spec.json',
                 stringifyContentPathRegex: '\\.html$',
-                isolatedModules: true,
                 diagnostics: {
                     ignoreCodes: [151001],
                 },
@@ -116,28 +117,19 @@ module.exports = {
     },
     modulePathIgnorePatterns: ['<rootDir>/src/main/resources/templates/', '<rootDir>/build/'],
     testTimeout: 3000,
-    testMatch: [
-        '<rootDir>/src/test/javascript/spec/component/**/*.spec.ts',
-        '<rootDir>/src/test/javascript/spec/directive/**/*.spec.ts',
-        '<rootDir>/src/test/javascript/spec/entities/**/*.spec.ts',
-        '<rootDir>/src/test/javascript/spec/integration/**/*.spec.ts',
-        '<rootDir>/src/test/javascript/spec/pipe/**/*.spec.ts',
-        '<rootDir>/src/test/javascript/spec/service/**/*.spec.ts',
-        '<rootDir>/src/test/javascript/spec/util/**/*.spec.ts',
-        '<rootDir>/src/test/javascript/spec/interceptor/**/*.spec.ts',
-        '<rootDir>/src/test/javascript/spec/config/**/*.spec.ts',
-        '<rootDir>/src/test/javascript/spec/core/**/*.spec.ts',
+    testMatch: ['<rootDir>/src/main/webapp/app/**/*.spec.ts',
+        '<rootDir>/src/test/javascript/spec/**/*.integration.spec.ts'
     ],
     moduleNameMapper: {
         '^app/(.*)': '<rootDir>/src/main/webapp/app/$1',
-        'test/(.*)': '<rootDir>/src/test/javascript/spec/$1',
+        '^test/(.*)': '<rootDir>/src/test/javascript/spec/$1',
         '@assets/(.*)': '<rootDir>/src/main/webapp/assets/$1',
         '@core/(.*)': '<rootDir>/src/main/webapp/app/core/$1',
         '@env': '<rootDir>/src/main/webapp/environments/environment',
         '@src/(.*)': '<rootDir>/src/src/$1',
         '@state/(.*)': '<rootDir>/src/app/state/$1',
         '^lodash-es$': 'lodash',
-        '\\.css$': '<rootDir>/stub.js',
+        '\\.css$': '<rootDir>/src/test/javascript/spec/stub.js',
         '^monaco-editor$': '<rootDir>/node_modules/monaco-editor/esm/vs/editor/editor.api.js',
     },
 };

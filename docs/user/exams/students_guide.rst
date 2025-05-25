@@ -58,7 +58,7 @@ Suggestions
 2. Participate in **ONE** browser window and only one browser tab!
 
     - Working in multiple browser windows or tabs at the same time is **not** allowed! Having multiple Artemis windows or tabs open is ok, as long as only one of them accesses the exam.
-    - It will lead to synchronization issues and is seen as suspicious behaviour that can be flagged as cheating.
+    - It will lead to synchronization issues and is seen as suspicious behavior that can be flagged as cheating.
 
     .. figure:: student/reload.png
        :alt: Reload
@@ -144,10 +144,10 @@ Exam Conduction
 
     1. Click the |save_exercise| button to manually save and submit your changes.
     2. Select an exercise in the navigation sidebar (either the current one or a different exercise), which will automatically save and submit your changes.
-   
+
         .. warning::
-            The |save_exercise| button is only available for text, modeling, and quiz exercises. For file upload exercises, you need to manually click the |upload| button, and for programming exercises, you need to manually click the |submit| button to save and submit your changes. 
-   
+            The |save_exercise| button is only available for text, modeling, and quiz exercises. For file upload exercises, you need to manually click the |upload| button, and for programming exercises, you need to manually click the |submit| button to save and submit your changes.
+
 - On the header, you will find the exam bar that includes the remaining time and the |exam_hand_in_early| button. If you click this button, you will be sent to the exam `End Screen`_.
 - The *time left* until the end of the exam is also shown next to the button.
 

@@ -1,12 +1,12 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
-import { CompetencyMetrics, ExerciseInformation, LectureUnitInformation, StudentMetrics } from 'app/entities/student-metrics.model';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { CompetencyMetrics, ExerciseInformation, LectureUnitInformation, StudentMetrics } from 'app/atlas/shared/entities/student-metrics.model';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import dayjs from 'dayjs/esm';
-import { ExerciseCategory } from 'app/entities/exercise-category.model';
-import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
-import { CompetencyJol } from 'app/entities/competency.model';
+import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
+import { LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
+import { CompetencyJol } from 'app/atlas/shared/entities/competency.model';
 
 @Injectable({ providedIn: 'root' })
 export class CourseDashboardService {
@@ -121,7 +121,7 @@ export class CourseDashboardService {
 
     private mapToLectureUnitType(type: string): LectureUnitType {
         switch (type) {
-            case 'de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit':
+            case 'de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit':
                 return LectureUnitType.ATTACHMENT_VIDEO;
             case 'de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit':
                 return LectureUnitType.EXERCISE;

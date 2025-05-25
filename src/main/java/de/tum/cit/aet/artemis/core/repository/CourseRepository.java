@@ -62,34 +62,6 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
     Set<String> findAllTeachingAssistantGroupNames();
 
     @Query("""
-            SELECT DISTINCT course
-            FROM Course course
-            WHERE course.instructorGroupName LIKE :name
-            """)
-    Course findCourseByInstructorGroupName(@Param("name") String name);
-
-    @Query("""
-            SELECT DISTINCT course
-            FROM Course course
-            WHERE course.editorGroupName LIKE :name
-            """)
-    Course findCourseByEditorGroupName(@Param("name") String name);
-
-    @Query("""
-            SELECT DISTINCT course
-            FROM Course course
-            WHERE course.teachingAssistantGroupName LIKE :name
-            """)
-    Course findCourseByTeachingAssistantGroupName(@Param("name") String name);
-
-    @Query("""
-            SELECT DISTINCT course
-            FROM Course course
-            WHERE course.studentGroupName LIKE :name
-            """)
-    Course findCourseByStudentGroupName(@Param("name") String name);
-
-    @Query("""
             SELECT COUNT(c) > 0
             FROM Course c
             WHERE c.id = :courseId
@@ -104,6 +76,15 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
                 AND (c.endDate >= :now OR c.endDate IS NULL)
             """)
     List<Course> findAllActive(@Param("now") ZonedDateTime now);
+
+    @Query("""
+            SELECT DISTINCT c
+            FROM Course c
+            WHERE (c.startDate <= :now OR c.startDate IS NULL)
+                AND (c.endDate >= :now OR c.endDate IS NULL)
+                AND c.learningPathsEnabled=true
+            """)
+    List<Course> findAllActiveForUserAndLearningPathsEnabled(@Param("now") ZonedDateTime now);
 
     @Query("""
             SELECT DISTINCT c

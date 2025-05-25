@@ -4,11 +4,11 @@ import { EMPTY, Subject, from } from 'rxjs';
 import { catchError, finalize, map, takeUntil } from 'rxjs/operators';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
-import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
-import { TutorialGroupSchedule } from 'app/entities/tutorial-group/tutorial-group-schedule.model';
+import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { TutorialGroupSchedule } from 'app/tutorialgroup/shared/entities/tutorial-group-schedule.model';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
-import { Course } from 'app/entities/course.model';
-import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
+import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { NgbActiveModal, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { CreateTutorialGroupSessionComponent } from 'app/tutorialgroup/manage/tutorial-group-sessions/crud/create-tutorial-group-session/create-tutorial-group-session.component';
 import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
@@ -18,9 +18,9 @@ import { TutorialGroupSessionRowButtonsComponent } from './tutorial-group-sessio
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { captureException } from '@sentry/angular';
 import { TutorialGroupSessionsTableComponent } from 'app/tutorialgroup/shared/tutorial-group-sessions-table/tutorial-group-sessions-table.component';
-import { RemoveSecondsPipe } from 'app/tutorialgroup/shared/remove-seconds.pipe';
-import { TutorialGroupsService } from 'app/tutorialgroup/shared/services/tutorial-groups.service';
-import { getDayTranslationKey } from 'app/tutorialgroup/shared/weekdays';
+import { RemoveSecondsPipe } from 'app/tutorialgroup/shared/pipe/remove-seconds.pipe';
+import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
+import { getDayTranslationKey } from 'app/tutorialgroup/shared/util/weekdays';
 
 @Component({
     selector: 'jhi-session-management',

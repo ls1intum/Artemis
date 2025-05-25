@@ -1,21 +1,21 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
 import { NavigationEnd } from '@angular/router';
 import { Subscription, interval, lastValueFrom } from 'rxjs';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import dayjs from 'dayjs/esm';
-import { ArtemisServerDateService } from 'app/shared/server-date.service';
-import { StudentExam } from 'app/entities/student-exam.model';
-import { ExamParticipationService } from 'app/exam/overview/exam-participation.service';
+import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
+import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
+import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { faAngleDown, faAngleUp, faListAlt } from '@fortawesome/free-solid-svg-icons';
-import { CourseStorageService } from 'app/core/course/manage/course-storage.service';
-import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData } from 'app/types/sidebar';
+import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
 import { cloneDeep } from 'lodash-es';
 import { NgClass } from '@angular/common';
 import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { CourseOverviewService } from 'app/core/course/overview/course-overview.service';
+import { CourseOverviewService } from 'app/core/course/overview/services/course-overview.service';
+import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData } from 'app/shared/types/sidebar';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     real: { entityData: [] },
@@ -100,7 +100,6 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
         this.courseUpdatesSubscription = this.courseStorageService.subscribeToCourseUpdates(this.courseId).subscribe((course: Course) => {
             this.course = course;
             this.updateExams();
-            this.prepareSidebarData();
         });
 
         this.studentExamTestExamUpdateSubscription = this.examParticipationService
@@ -123,7 +122,6 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
             // The Map is ued to store the boolean value, if the attempt-List for one Exam has been expanded or collapsed
             this.expandAttemptsMap = new Map(this.course.exams.filter((exam) => exam.testExam && this.isVisible(exam)).map((exam) => [exam.id!, false]));
             this.updateExams();
-            this.prepareSidebarData();
         }
 
         // If no exam is selected navigate to the last selected or upcoming Exam

@@ -1,13 +1,16 @@
 <jhi-lecture-unit-card
+    [courseId]="courseId()"
     [lectureUnit]="lectureUnit()"
     [icon]="getAttachmentIcon()"
     [showViewIsolatedButton]="hasAttachment()"
+    [showOriginalVersionButton]="!!lectureUnit().attachment?.studentVersion"
     [viewIsolatedButtonLabel]="'artemisApp.attachmentVideoUnit.download'"
     [viewIsolatedButtonIcon]="faDownload"
     [isPresentationMode]="isPresentationMode()"
     (onCompletion)="toggleCompletion($event)"
     (onCollapse)="toggleCollapse($event)"
     (onShowIsolated)="handleDownload()"
+    (onShowOriginalVersion)="handleOriginalVersion()"
 >
     @if (lectureUnit().attachment?.uploadDate) {
         <div>
@@ -35,8 +38,11 @@
         </div>
     }
 
-    @if (!!videoUrl()) {
+    @if (!!lectureUnit().attachment && !!videoUrl()) {
         <hr />
+    }
+
+    @if (!!videoUrl()) {
         <div class="video-player-container">
             <div class="ratio ratio-16x9">
                 <iframe id="videoFrame" class="rounded" [src]="videoUrl() | safeResourceUrl" allow="fullscreen"></iframe>

@@ -31,6 +31,7 @@ import org.springframework.web.multipart.MultipartFile;
 import de.tum.cit.aet.artemis.communication.domain.DefaultChannelType;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
+import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -41,10 +42,10 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.CourseService;
-import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
-import de.tum.cit.aet.artemis.lti.service.OnlineCourseConfigurationService;
+import de.tum.cit.aet.artemis.lti.api.LtiApi;
 
 /**
  * REST controller for managing Course.
@@ -74,16 +75,16 @@ public class AdminCourseResource {
 
     private final FileService fileService;
 
-    private final Optional<OnlineCourseConfigurationService> onlineCourseConfigurationService;
+    private final Optional<LtiApi> ltiApi;
 
     public AdminCourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, AuditEventRepository auditEventRepository,
-            FileService fileService, Optional<OnlineCourseConfigurationService> onlineCourseConfigurationService, ChannelService channelService) {
+            FileService fileService, Optional<LtiApi> ltiApi, ChannelService channelService) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.auditEventRepository = auditEventRepository;
         this.userRepository = userRepository;
         this.fileService = fileService;
-        this.onlineCourseConfigurationService = onlineCourseConfigurationService;
+        this.ltiApi = ltiApi;
         this.channelService = channelService;
     }
 
@@ -103,6 +104,7 @@ public class AdminCourseResource {
             groups.add(courseGroup.teachingAssistantGroupName());
             groups.add(courseGroup.studentGroupName());
         });
+        groups.remove(null); // remove a potential null group
         return ResponseEntity.ok().body(groups);
     }
 
@@ -140,8 +142,8 @@ public class AdminCourseResource {
         course.validateAccuracyOfScores();
         course.validateStartAndEndDate();
 
-        if (course.isOnlineCourse() && onlineCourseConfigurationService.isPresent()) {
-            onlineCourseConfigurationService.get().createOnlineCourseConfiguration(course);
+        if (course.isOnlineCourse() && ltiApi.isPresent()) {
+            ltiApi.get().createOnlineCourseConfiguration(course);
         }
 
         courseService.setDefaultGroupsIfNotSet(course);
@@ -149,9 +151,9 @@ public class AdminCourseResource {
         Course createdCourse = courseRepository.save(course);
 
         if (file != null) {
-            Path basePath = FilePathService.getCourseIconFilePath();
-            Path savePath = fileService.saveFile(file, basePath, false);
-            createdCourse.setCourseIcon(FilePathService.publicPathForActualPathOrThrow(savePath, createdCourse.getId()).toString());
+            Path basePath = FilePathConverter.getCourseIconFilePath();
+            Path savePath = fileService.saveFile(file, basePath, FilePathType.COURSE_ICON, false);
+            createdCourse.setCourseIcon(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.COURSE_ICON, createdCourse.getId()).toString());
             createdCourse = courseRepository.save(createdCourse);
         }
 
@@ -178,7 +180,7 @@ public class AdminCourseResource {
 
         courseService.delete(course);
         if (course.getCourseIcon() != null) {
-            fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(URI.create(course.getCourseIcon())), 0);
+            fileService.schedulePathForDeletion(FilePathConverter.fileSystemPathForExternalUri(URI.create(course.getCourseIcon()), FilePathType.COURSE_ICON), 0);
         }
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, Course.ENTITY_NAME, course.getTitle())).build();
     }
@@ -192,9 +194,7 @@ public class AdminCourseResource {
     @GetMapping("courses/{courseId}/deletion-summary")
     public ResponseEntity<CourseDeletionSummaryDTO> getDeletionSummary(@PathVariable long courseId) {
         log.debug("REST request to get deletion summary course: {}", courseId);
-        final Course course = courseRepository.findByIdWithEagerExercisesElseThrow(courseId);
-
-        return ResponseEntity.ok().body(courseService.getDeletionSummary(course));
+        return ResponseEntity.ok().body(courseService.getDeletionSummary(courseId));
     }
 
     /**

@@ -4,7 +4,7 @@ import { HttpResponse } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
-import { QuizExerciseService } from 'app/quiz/manage/quiz-exercise.service';
+import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { AbstractQuizStatisticComponent } from 'app/quiz/manage/statistics/quiz-statistics';
 import { faSync } from '@fortawesome/free-solid-svg-icons';

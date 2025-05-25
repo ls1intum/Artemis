@@ -20,7 +20,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Authority;
-import de.tum.cit.aet.artemis.core.domain.GuidedTourSetting;
 import de.tum.cit.aet.artemis.core.domain.Organization;
 import de.tum.cit.aet.artemis.core.domain.User;
 
@@ -60,21 +59,27 @@ public class UserDTO extends AuditingEntityDTO {
     @Size(min = 2, max = 6)
     private String langKey;
 
-    private boolean isInternal;
-
-    private ZonedDateTime lastNotificationRead;
+    private boolean internal;
 
     private Set<String> authorities = new HashSet<>();
 
     private Set<String> groups = new HashSet<>();
-
-    private Set<GuidedTourSetting> guidedTourSettings = new HashSet<>();
 
     private Set<Organization> organizations;
 
     private String vcsAccessToken;
 
     private ZonedDateTime vcsAccessTokenExpiryDate;
+
+    /**
+     * True if
+     * <ul>
+     * <li>No passkey has been registered for this user yet</li>
+     * <li>and the passkey feature is enabled</li>
+     * <li>and <code>artemis.user-management.passkey.ask-users-to-setup</code> is set to true</li>
+     * </ul>
+     */
+    private boolean askToSetupPasskey = false;
 
     private ZonedDateTime externalLLMUsageAccepted;
 
@@ -85,13 +90,12 @@ public class UserDTO extends AuditingEntityDTO {
     public UserDTO(User user) {
         this(user.getId(), user.getLogin(), user.getName(), user.getFirstName(), user.getLastName(), user.getEmail(), user.getVisibleRegistrationNumber(), user.getActivated(),
                 user.getImageUrl(), user.getLangKey(), user.isInternal(), user.getCreatedBy(), user.getCreatedDate(), user.getLastModifiedBy(), user.getLastModifiedDate(),
-                user.getLastNotificationRead(), user.getAuthorities(), user.getGroups(), user.getGuidedTourSettings(), user.getOrganizations(),
-                user.getExternalLLMUsageAcceptedTimestamp());
+                user.getAuthorities(), user.getGroups(), user.getOrganizations(), user.getExternalLLMUsageAcceptedTimestamp());
     }
 
     public UserDTO(Long id, String login, String name, String firstName, String lastName, String email, String visibleRegistrationNumber, boolean activated, String imageUrl,
-            String langKey, boolean isInternal, String createdBy, Instant createdDate, String lastModifiedBy, Instant lastModifiedDate, ZonedDateTime lastNotificationRead,
-            Set<Authority> authorities, Set<String> groups, Set<GuidedTourSetting> guidedTourSettings, Set<Organization> organizations, ZonedDateTime externalLLMUsageAccepted) {
+            String langKey, boolean internal, String createdBy, Instant createdDate, String lastModifiedBy, Instant lastModifiedDate, Set<Authority> authorities,
+            Set<String> groups, Set<Organization> organizations, ZonedDateTime externalLLMUsageAccepted) {
 
         this.id = id;
         this.login = login;
@@ -103,17 +107,15 @@ public class UserDTO extends AuditingEntityDTO {
         this.activated = activated;
         this.imageUrl = imageUrl;
         this.langKey = langKey;
-        this.isInternal = isInternal;
+        this.internal = internal;
         this.setCreatedBy(createdBy);
         this.setCreatedDate(createdDate);
         this.setLastModifiedBy(lastModifiedBy);
         this.setLastModifiedDate(lastModifiedDate);
-        this.lastNotificationRead = lastNotificationRead;
         if (authorities != null && Hibernate.isInitialized(authorities)) {
             this.authorities = authorities.stream().map(Authority::getName).collect(Collectors.toSet());
         }
         this.groups = groups;
-        this.guidedTourSettings = guidedTourSettings;
         this.organizations = organizations;
         this.externalLLMUsageAccepted = externalLLMUsageAccepted;
     }
@@ -198,14 +200,6 @@ public class UserDTO extends AuditingEntityDTO {
         this.langKey = langKey;
     }
 
-    public ZonedDateTime getLastNotificationRead() {
-        return lastNotificationRead;
-    }
-
-    public void setLastNotificationRead(ZonedDateTime lastNotificationRead) {
-        this.lastNotificationRead = lastNotificationRead;
-    }
-
     public Set<String> getAuthorities() {
         return authorities;
     }
@@ -230,14 +224,6 @@ public class UserDTO extends AuditingEntityDTO {
         this.organizations = organizations;
     }
 
-    public Set<GuidedTourSetting> getGuidedTourSettings() {
-        return guidedTourSettings;
-    }
-
-    public void setGuidedTourSettings(Set<GuidedTourSetting> guidedTourSettings) {
-        this.guidedTourSettings = guidedTourSettings;
-    }
-
     public String getVcsAccessToken() {
         return vcsAccessToken;
     }
@@ -259,20 +245,27 @@ public class UserDTO extends AuditingEntityDTO {
         return vcsAccessTokenExpiryDate;
     }
 
+    public void setAskToSetupPasskey(boolean askToSetupPasskey) {
+        this.askToSetupPasskey = askToSetupPasskey;
+    }
+
+    public boolean getAskToSetupPasskey() {
+        return askToSetupPasskey;
+    }
+
     @Override
     public String toString() {
         return "UserDTO{" + "login='" + login + '\'' + ", firstName='" + firstName + '\'' + ", lastName='" + lastName + '\'' + ", email='" + email + '\'' + ", imageUrl='"
                 + imageUrl + '\'' + ", activated=" + activated + ", langKey='" + langKey + '\'' + ", createdBy=" + getCreatedBy() + ", createdDate=" + getCreatedDate()
-                + ", lastModifiedBy='" + getLastModifiedBy() + '\'' + ", lastModifiedDate=" + getLastModifiedDate() + ", lastNotificationRead=" + lastNotificationRead
-                + ", authorities=" + authorities + "}";
+                + ", lastModifiedBy='" + getLastModifiedBy() + '\'' + ", lastModifiedDate=" + getLastModifiedDate() + ", authorities=" + authorities + "}";
     }
 
     public boolean isInternal() {
-        return isInternal;
+        return internal;
     }
 
     public void setInternal(boolean internal) {
-        isInternal = internal;
+        this.internal = internal;
     }
 
     public ZonedDateTime getExternalLLMUsageAccepted() {

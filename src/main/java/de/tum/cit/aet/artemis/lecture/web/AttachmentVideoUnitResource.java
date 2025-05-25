@@ -7,7 +7,9 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -28,6 +30,7 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
@@ -37,6 +40,7 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastEditorInLectureUnit;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
@@ -92,69 +96,70 @@ public class AttachmentVideoUnitResource {
     }
 
     /**
-     * GET lectures/:lectureId/attachment-video-units/:attachmentVideoUnitId : gets the attachment unit with the specified id
+     * GET lectures/:lectureId/attachment-video-units/:attachmentVideoUnitId : gets the attachment video unit with the specified id
      *
      * @param attachmentVideoUnitId the id of the attachmentVideoUnit to retrieve
      * @param lectureId             the id of the lecture to which the unit belongs
-     * @return the ResponseEntity with status 200 (OK) and with body the attachment unit, or with status 404 (Not Found)
+     * @return the ResponseEntity with status 200 (OK) and with body the attachment video unit, or with status 404 (Not Found)
      */
     @GetMapping("lectures/{lectureId}/attachment-video-units/{attachmentVideoUnitId}")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInLectureUnit(resourceIdFieldName = "attachmentVideoUnitId")
     public ResponseEntity<AttachmentVideoUnit> getAttachmentVideoUnit(@PathVariable Long attachmentVideoUnitId, @PathVariable Long lectureId) {
         log.debug("REST request to get AttachmentVideoUnit : {}", attachmentVideoUnitId);
         AttachmentVideoUnit attachmentVideoUnit = attachmentVideoUnitRepository.findWithSlidesAndCompetenciesByIdElseThrow(attachmentVideoUnitId);
         checkAttachmentVideoUnitCourseAndLecture(attachmentVideoUnit, lectureId);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, attachmentVideoUnit.getLecture().getCourse(), null);
 
         return ResponseEntity.ok().body(attachmentVideoUnit);
     }
 
     /**
-     * PUT lectures/:lectureId/attachment-video-units/:attachmentVideoUnitId : Updates an existing attachment unit
+     * PUT lectures/:lectureId/attachment-video-units/:attachmentVideoUnitId : Updates an existing attachment video unit
      *
-     * @param lectureId             the id of the lecture to which the attachment unit belongs to update
-     * @param attachmentVideoUnitId the id of the attachment unit to update
+     * @param lectureId             the id of the lecture to which the attachment video unit belongs to update
+     * @param attachmentVideoUnitId the id of the attachment video unit to update
      * @param attachmentVideoUnit   the attachment video unit with updated content
      * @param attachment            the attachment with updated content
      * @param file                  the optional file to upload
+     * @param hiddenPages           the pages to be hidden in the attachment video unit
+     * @param pageOrder             the new order of the edited attachment video unit
      * @param keepFilename          specifies if the original filename should be kept or not
      * @param notificationText      the text to be used for the notification. No notification will be sent if the parameter is not set
      * @return the ResponseEntity with status 200 (OK) and with body the updated attachmentVideoUnit
      */
     @PutMapping(value = "lectures/{lectureId}/attachment-video-units/{attachmentVideoUnitId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInLectureUnit(resourceIdFieldName = "attachmentVideoUnitId")
     public ResponseEntity<AttachmentVideoUnit> updateAttachmentVideoUnit(@PathVariable Long lectureId, @PathVariable Long attachmentVideoUnitId,
-            @RequestPart AttachmentVideoUnit attachmentVideoUnit, @RequestPart Attachment attachment, @RequestPart(required = false) MultipartFile file,
-            @RequestParam(defaultValue = "false") boolean keepFilename, @RequestParam(value = "notificationText", required = false) String notificationText) {
-        log.debug("REST request to update an attachment unit : {}", attachmentVideoUnit);
+            @RequestPart AttachmentVideoUnit attachmentVideoUnit, @RequestPart(required = false) Attachment attachment, @RequestPart(required = false) MultipartFile file,
+            @RequestPart(required = false) String hiddenPages, @RequestPart(required = false) String pageOrder, @RequestParam(defaultValue = "false") boolean keepFilename,
+            @RequestParam(value = "notificationText", required = false) String notificationText) {
+        log.debug("REST request to update an attachment video unit : {}", attachmentVideoUnit);
         AttachmentVideoUnit existingAttachmentVideoUnit = attachmentVideoUnitRepository.findWithSlidesAndCompetenciesByIdElseThrow(attachmentVideoUnitId);
-        log.debug("REST request to update an attachment unit 1: {}", attachmentVideoUnit);
         checkAttachmentVideoUnitCourseAndLecture(existingAttachmentVideoUnit, lectureId);
-        log.debug("REST request to update an attachment unit 2: {}", attachmentVideoUnit);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, existingAttachmentVideoUnit.getLecture().getCourse(), null);
 
-        log.debug("REST request to update an attachment unit 3: {}", attachmentVideoUnit);
+        if (!validateHiddenSlidesDates(hiddenPages)) {
+            throw new BadRequestAlertException("Hidden slide dates cannot be in the past", ENTITY_NAME, "invalidHiddenDates");
+        }
         AttachmentVideoUnit savedAttachmentVideoUnit = attachmentVideoUnitService.updateAttachmentVideoUnit(existingAttachmentVideoUnit, attachmentVideoUnit, attachment, file,
-                keepFilename);
+                keepFilename, hiddenPages, pageOrder);
 
-        if (notificationText != null) {
-            groupNotificationService.notifyStudentGroupAboutAttachmentChange(savedAttachmentVideoUnit.getAttachment(), notificationText);
+        if (notificationText != null && attachment != null) {
+            groupNotificationService.notifyStudentGroupAboutAttachmentChange(savedAttachmentVideoUnit.getAttachment());
         }
 
-        log.debug("REST request to update an attachment unit 4: {}", attachmentVideoUnit);
+        log.debug("REST request to update an attachment video unit 4: {}", attachmentVideoUnit);
 
         return ResponseEntity.ok(savedAttachmentVideoUnit);
     }
 
     /**
-     * POST lectures/:lectureId/attachment-video-units : creates a new attachment unit.
+     * POST lectures/:lectureId/attachment-video-units : creates a new attachment video unit.
      *
-     * @param lectureId           the id of the lecture to which the attachment unit should be added
+     * @param lectureId           the id of the lecture to which the attachment video unit should be added
      * @param attachmentVideoUnit the attachment video unit that should be created
      * @param attachment          the attachment that should be created
      * @param file                the file to upload
      * @param keepFilename        specifies if the original filename should be kept or not
-     * @return the ResponseEntity with status 201 (Created) and with body the new attachment unit
+     * @return the ResponseEntity with status 201 (Created) and with body the new attachment video unit
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping(value = "lectures/{lectureId}/attachment-video-units", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -164,7 +169,7 @@ public class AttachmentVideoUnitResource {
             throws URISyntaxException {
         log.debug("REST request to create AttachmentVideoUnit {} with Attachment {}", attachmentVideoUnit, attachment);
         if (attachmentVideoUnit.getId() != null) {
-            throw new BadRequestAlertException("A new attachment unit cannot already have an ID", ENTITY_NAME, "idexists");
+            throw new BadRequestAlertException("A new attachment video unit cannot already have an ID", ENTITY_NAME, "idexists");
         }
 
         if (attachment != null && attachment.getId() != null) {
@@ -196,7 +201,7 @@ public class AttachmentVideoUnitResource {
      * POST lectures/:lectureId/attachment-video-units/upload : Temporarily uploads a file which will be processed into lecture units
      *
      * @param file      the file that will be processed
-     * @param lectureId the id of the lecture to which the attachment units will be added
+     * @param lectureId the id of the lecture to which the attachment video units will be added
      * @return the ResponseEntity with status 200 (ok) and with body filename of the uploaded file
      */
     @PostMapping("lectures/{lectureId}/attachment-video-units/upload")
@@ -221,12 +226,12 @@ public class AttachmentVideoUnitResource {
     }
 
     /**
-     * POST lectures/:lectureId/attachment-video-units/split : creates new attachment units from the given file and lecture unit information
+     * POST lectures/:lectureId/attachment-video-units/split : creates new attachment video units from the given file and lecture unit information
      *
-     * @param lectureId                      the id of the lecture to which the attachment units will be added
+     * @param lectureId                      the id of the lecture to which the attachment video units will be added
      * @param lectureUnitSplitInformationDTO the units that will be created
      * @param filename                       the name of the lecture file, located in the temp folder
-     * @return the ResponseEntity with status 200 (ok) and with body the newly created attachment units
+     * @return the ResponseEntity with status 200 (ok) and with body the newly created attachment video units
      */
     @PostMapping("lectures/{lectureId}/attachment-video-units/split/{filename}")
     @EnforceAtLeastEditor
@@ -250,8 +255,8 @@ public class AttachmentVideoUnitResource {
             return ResponseEntity.ok().body(savedAttachmentVideoUnits);
         }
         catch (IOException e) {
-            log.error("Could not create attachment units automatically", e);
-            throw new InternalServerErrorException("Could not create attachment units automatically");
+            log.error("Could not create attachment video units automatically", e);
+            throw new InternalServerErrorException("Could not create attachment video units automatically");
         }
     }
 
@@ -310,9 +315,36 @@ public class AttachmentVideoUnitResource {
     }
 
     /**
-     * Checks that the attachment unit belongs to the specified lecture.
+     * PUT lectures/:lectureId/attachment-video-units/:attachmentVideoUnitId/student-version : Updates the student version file for an existing attachment video unit
      *
-     * @param attachmentVideoUnit The attachment unit to check
+     * @param lectureId             the id of the lecture to which the attachment video unit belongs
+     * @param attachmentVideoUnitId the id of the attachment video unit to update
+     * @param studentVersionFile    the file containing the student version of the attachment
+     * @return the ResponseEntity with status 200 (OK) and with body the updated attachmentUnit
+     */
+    @PutMapping("lectures/{lectureId}/attachment-video-units/{attachmentVideoUnitId}/student-version")
+    @EnforceAtLeastEditorInLectureUnit(resourceIdFieldName = "attachmentVideoUnitId")
+    public ResponseEntity<AttachmentVideoUnit> updateAttachmentVideoUnitStudentVersion(@PathVariable Long lectureId, @PathVariable Long attachmentVideoUnitId,
+            @RequestParam("studentVersion") MultipartFile studentVersionFile) {
+
+        AttachmentVideoUnit existingAttachmentUnit = attachmentVideoUnitRepository.findWithSlidesAndCompetenciesByIdElseThrow(attachmentVideoUnitId);
+        checkAttachmentVideoUnitCourseAndLecture(existingAttachmentUnit, lectureId);
+        Attachment attachment = existingAttachmentUnit.getAttachment();
+
+        try {
+            attachmentVideoUnitService.handleStudentVersionFile(studentVersionFile, attachment, existingAttachmentUnit.getId());
+            return ResponseEntity.ok(existingAttachmentUnit);
+        }
+        catch (Exception e) {
+            log.error("Could not set the Student Version of the Attachment Video Unit", e);
+            throw new InternalServerErrorException("Could not set the Student Version of the Attachment Video Unit");
+        }
+    }
+
+    /**
+     * Checks that the attachment video unit belongs to the specified lecture.
+     *
+     * @param attachmentVideoUnit The attachment video unit to check
      * @param lectureId           The id of the lecture to check against
      */
     private void checkAttachmentVideoUnitCourseAndLecture(AttachmentVideoUnit attachmentVideoUnit, Long lectureId) {
@@ -348,6 +380,36 @@ public class AttachmentVideoUnitResource {
         }
         if (!filePath.toString().endsWith(".pdf")) {
             throw new BadRequestAlertException("The file must be a pdf", ENTITY_NAME, "wrongFileType");
+        }
+    }
+
+    /**
+     * Validates that all hidden slide dates are not in the past
+     */
+    private boolean validateHiddenSlidesDates(String hiddenPagesJson) {
+        if (hiddenPagesJson == null || hiddenPagesJson.isEmpty()) {
+            return true;
+        }
+
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            List<Map<String, Object>> hiddenPagesList = objectMapper.readValue(hiddenPagesJson, new TypeReference<>() {
+            });
+            ZonedDateTime now = ZonedDateTime.now();
+
+            for (Map<String, Object> page : hiddenPagesList) {
+                String dateStr = (String) page.get("date");
+                ZonedDateTime date = ZonedDateTime.parse(dateStr);
+
+                if (date.isBefore(now)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        catch (Exception e) {
+            log.error("Error validating hidden slide dates", e);
+            return false;
         }
     }
 }

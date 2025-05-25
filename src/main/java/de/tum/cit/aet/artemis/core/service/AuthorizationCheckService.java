@@ -30,7 +30,6 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
-import de.tum.cit.aet.artemis.exam.service.ExamDateService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -50,18 +49,15 @@ public class AuthorizationCheckService {
 
     private final CourseRepository courseRepository;
 
-    private final ExamDateService examDateService;
-
     // TODO: we should move this into some kind of EnrollmentService
     @Value("${artemis.user-management.course-enrollment.allowed-username-pattern:#{null}}")
     private Pattern allowedCourseEnrollmentUsernamePattern;
 
     private final TeamRepository teamRepository;
 
-    public AuthorizationCheckService(UserRepository userRepository, CourseRepository courseRepository, ExamDateService examDateService, TeamRepository teamRepository) {
+    public AuthorizationCheckService(UserRepository userRepository, CourseRepository courseRepository, TeamRepository teamRepository) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
-        this.examDateService = examDateService;
         this.teamRepository = teamRepository;
     }
 
@@ -295,7 +291,7 @@ public class AuthorizationCheckService {
         if (!Boolean.TRUE.equals(course.isEnrollmentEnabled())) {
             return EnrollmentAuthorization.ENROLLMENT_STATUS;
         }
-        if (!Boolean.TRUE.equals(course.enrollmentIsActive())) {
+        if (!course.enrollmentIsActive()) {
             return EnrollmentAuthorization.ENROLLMENT_PERIOD;
         }
         Set<Organization> courseOrganizations = course.getOrganizations();
@@ -800,36 +796,6 @@ public class AuthorizationCheckService {
     }
 
     /**
-     * Checks if the user is allowed to see the exam result. Returns true if
-     * - the current user is at least teaching assistant in the course
-     * - OR if the exercise is not part of an exam
-     * - OR if the exam is a test exam
-     * - OR if the exam has not ended (including individual working time extensions)
-     * - OR if the exam has already ended and the results were published
-     *
-     * @param exercise             - Exercise that the result is requested for
-     * @param studentParticipation - used to retrieve the individual exam working time
-     * @param user                 - User that requests the result
-     * @return true if user is allowed to see the result, false otherwise
-     */
-    @CheckReturnValue
-    public boolean isAllowedToGetExamResult(Exercise exercise, StudentParticipation studentParticipation, User user) {
-        if (this.isAtLeastTeachingAssistantInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user) || exercise.isCourseExercise()) {
-            return true;
-        }
-        Exam exam = exercise.getExam();
-        if (!examDateService.isExerciseWorkingPeriodOver(exercise, studentParticipation)) {
-            // students can always see their results during the exam.
-            return true;
-        }
-        if (exam.isTestExam()) {
-            // results for test exams are always visible
-            return true;
-        }
-        return exam.resultsPublished();
-    }
-
-    /**
      * Tutors of an exercise are allowed to assess the submissions, but only instructors are allowed to assess with a specific result
      *
      * @param exercise Exercise of the submission
@@ -984,6 +950,79 @@ public class AuthorizationCheckService {
     public void checkIsAtLeastRoleInExerciseElseThrow(Role role, long exerciseId) {
         if (!isAtLeastRoleInExercise(role, exerciseId)) {
             throw new AccessForbiddenException("Exercise", exerciseId);
+        }
+    }
+
+    /**
+     * Checks if the current user is at least an instructor in the given lecture unit.
+     *
+     * @param lectureUnitId the id of the lecture unit that needs to be checked
+     * @return true if the user is at least an instructor in the course, false otherwise
+     */
+    @CheckReturnValue
+    public boolean isAtLeastStudentInLectureUnit(long lectureUnitId) {
+        final var login = SecurityUtils.getCurrentUserLogin();
+        return login.filter(s -> userRepository.isAtLeastStudentInLectureUnit(s, lectureUnitId)).isPresent();
+    }
+
+    /**
+     * Checks if the current user is at least an instructor in the given lecture unit.
+     *
+     * @param lectureUnitId the id of the lecture unit that needs to be checked
+     * @return true if the user is at least an instructor in the course, false otherwise
+     */
+    @CheckReturnValue
+    public boolean isAtLeastTeachingAssistantInLectureUnit(long lectureUnitId) {
+        final var login = SecurityUtils.getCurrentUserLogin();
+        return login.filter(s -> userRepository.isAtLeastTeachingAssistantInLectureUnit(s, lectureUnitId)).isPresent();
+    }
+
+    /**
+     * Checks if the current user is at least an editor in the given lecture unit.
+     *
+     * @param lectureUnitId the id of the lecture unit that needs to be checked
+     * @return true if the user is at least an instructor in the course, false otherwise
+     */
+    @CheckReturnValue
+    public boolean isAtLeastEditorInLectureUnit(long lectureUnitId) {
+        final var login = SecurityUtils.getCurrentUserLogin();
+        return login.filter(s -> userRepository.isAtLeastEditorInLectureUnit(s, lectureUnitId)).isPresent();
+    }
+
+    /**
+     * Checks if the current user is at least an instructor in the given lecture unit.
+     *
+     * @param lectureUnitId the id of the lecture unit that needs to be checked
+     * @return true if the user is at least an instructor in the course, false otherwise
+     */
+    @CheckReturnValue
+    public boolean isAtLeastInstructorInLectureUnit(long lectureUnitId) {
+        final var login = SecurityUtils.getCurrentUserLogin();
+        return login.filter(s -> userRepository.isAtLeastInstructorInLectureUnit(s, lectureUnitId)).isPresent();
+    }
+
+    /**
+     * Checks if the current user has at least the given role in the given lecture unit.
+     *
+     * @param role          the role that should be checked
+     * @param lectureUnitId the id of the lecture unit that needs to be checked
+     * @return true if the user has at least the role in the lecture unit, false otherwise
+     */
+    @CheckReturnValue
+    public boolean isAtLeastRoleInLectureUnit(Role role, long lectureUnitId) {
+        return switch (role) {
+            case ADMIN -> isAdmin();
+            case INSTRUCTOR -> isAtLeastInstructorInLectureUnit(lectureUnitId);
+            case EDITOR -> isAtLeastEditorInLectureUnit(lectureUnitId);
+            case TEACHING_ASSISTANT -> isAtLeastTeachingAssistantInLectureUnit(lectureUnitId);
+            case STUDENT -> isAtLeastStudentInLectureUnit(lectureUnitId);
+            case ANONYMOUS -> false;
+        };
+    }
+
+    public void checkIsAtLeastRoleInLectureUnitElseThrow(Role role, long lectureUnitId) {
+        if (!isAtLeastRoleInLectureUnit(role, lectureUnitId)) {
+            throw new AccessForbiddenException("LectureUnit", lectureUnitId);
         }
     }
 }

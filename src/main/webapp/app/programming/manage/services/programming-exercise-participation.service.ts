@@ -1,14 +1,14 @@
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
-import { Participation } from 'app/entities/participation/participation.model';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { CommitInfo } from 'app/programming/shared/entities/programming-submission.model';
-import { Result } from 'app/entities/result.model';
-import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { Observable, map, tap } from 'rxjs';
 import { VcsAccessLogDTO } from 'app/programming/shared/entities/vcs-access-log-entry.model';
+import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 
 export interface IProgrammingExerciseParticipationService {
     getLatestResultWithFeedback: (participationId: number, withSubmission: boolean) => Observable<Result | undefined>;

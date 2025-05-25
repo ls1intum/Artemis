@@ -1,6 +1,6 @@
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { Component, Input, OnInit } from '@angular/core';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { faAngleDown, faAngleUp, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { FeedbackGroup, isFeedbackGroup } from 'app/exercise/feedback/group/feedback-group';
 import { FeedbackItem } from 'app/exercise/feedback/item/feedback-item';

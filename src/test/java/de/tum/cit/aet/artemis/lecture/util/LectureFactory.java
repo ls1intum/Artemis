@@ -10,8 +10,9 @@ import java.util.UUID;
 import org.apache.commons.io.FileUtils;
 import org.springframework.util.ResourceUtils;
 
+import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.service.FilePathService;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
@@ -84,7 +85,7 @@ public class LectureFactory {
     public static Attachment generateAttachmentWithFile(ZonedDateTime startDate, Long entityId, boolean forUnit) {
         Attachment attachment = generateAttachment(startDate);
         String testFileName = "test_" + UUID.randomUUID().toString().substring(0, 8) + ".jpg";
-        Path savePath = (forUnit ? FilePathService.getAttachmentVideoUnitFilePath() : FilePathService.getLectureAttachmentFilePath()).resolve(entityId.toString())
+        Path savePath = (forUnit ? FilePathConverter.getAttachmentVideoUnitFileSystemPath() : FilePathConverter.getLectureAttachmentFileSystemPath()).resolve(entityId.toString())
                 .resolve(testFileName);
         try {
             FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/attachment/placeholder.jpg"), savePath.toFile());
@@ -92,7 +93,8 @@ public class LectureFactory {
         catch (IOException ex) {
             fail("Failed while copying test attachment files", ex);
         }
-        attachment.setLink(FilePathService.publicPathForActualPathOrThrow(savePath, entityId).toString());
+        FilePathType filePathType = forUnit ? FilePathType.ATTACHMENT_UNIT : FilePathType.LECTURE_ATTACHMENT;
+        attachment.setLink(FilePathConverter.externalUriForFileSystemPath(savePath, filePathType, entityId).toString());
         return attachment;
     }
 
@@ -105,7 +107,7 @@ public class LectureFactory {
     public static Attachment generateAttachmentWithPdfFile(ZonedDateTime startDate, Long entityId, boolean forUnit) {
         Attachment attachment = generateAttachment(startDate);
         String testFileName = "test_" + UUID.randomUUID().toString().substring(0, 8) + ".pdf";
-        Path savePath = (forUnit ? FilePathService.getAttachmentVideoUnitFilePath() : FilePathService.getLectureAttachmentFilePath()).resolve(entityId.toString())
+        Path savePath = (forUnit ? FilePathConverter.getAttachmentVideoUnitFileSystemPath() : FilePathConverter.getLectureAttachmentFileSystemPath()).resolve(entityId.toString())
                 .resolve(testFileName);
         try {
             FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/attachment/Infun.pdf"), savePath.toFile());
@@ -113,7 +115,8 @@ public class LectureFactory {
         catch (IOException ex) {
             fail("Failed while copying test attachment files", ex);
         }
-        attachment.setLink(FilePathService.publicPathForActualPathOrThrow(savePath, entityId).toString());
+        FilePathType filePathType = forUnit ? FilePathType.ATTACHMENT_UNIT : FilePathType.LECTURE_ATTACHMENT;
+        attachment.setLink(FilePathConverter.externalUriForFileSystemPath(savePath, filePathType, entityId).toString());
         return attachment;
     }
 }

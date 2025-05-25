@@ -1,16 +1,15 @@
 package de.tum.cit.aet.artemis.atlas.web;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.dto.ScienceEventDTO;
 import de.tum.cit.aet.artemis.atlas.service.ScienceEventService;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
@@ -20,7 +19,7 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 /**
  * REST controller providing the science related endpoints.
  */
-@Profile(PROFILE_ATLAS)
+@Conditional(AtlasEnabled.class)
 @FeatureToggle(Feature.Science)
 @RestController
 @RequestMapping("api/atlas/")

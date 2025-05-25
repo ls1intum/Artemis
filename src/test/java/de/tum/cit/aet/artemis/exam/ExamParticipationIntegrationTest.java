@@ -88,12 +88,12 @@ import de.tum.cit.aet.artemis.quiz.service.QuizSubmissionService;
 import de.tum.cit.aet.artemis.quiz.test_repository.QuizExerciseTestRepository;
 import de.tum.cit.aet.artemis.quiz.test_repository.QuizSubmissionTestRepository;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVcTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
-class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVcTest {
+class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
 
     private static final String TEST_PREFIX = "examparticipationtest";
 
@@ -756,7 +756,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
     @CsvSource({ "false, false", "true, false", "false, true", "true, true" })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetExamScore(boolean withCourseBonus, boolean withSecondCorrectionAndStarted) throws Exception {
-        programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
+        programmingExerciseTestService.setup(this, versionControlService, localVCGitBranchService);
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
 
         doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(any());

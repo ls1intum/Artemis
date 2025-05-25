@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.communication.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -23,7 +24,7 @@ public class ForwardedMessage extends DomainObject {
     private long sourceId;
 
     @NotNull
-    @Enumerated
+    @Enumerated(EnumType.STRING)
     @Column(name = "source_type", nullable = false)
     private PostingType sourceType;
 

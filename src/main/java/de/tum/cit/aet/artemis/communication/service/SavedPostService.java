@@ -56,7 +56,7 @@ public class SavedPostService {
      * @return false if the saved post was not found, true if post was found and deleted
      */
     public boolean removeSavedPostForCurrentUser(Posting post) {
-        var existingSavedPosts = this.getSavedPostForCurrentUser(post);
+        var existingSavedPosts = getSavedPostForCurrentUser(post);
 
         if (existingSavedPosts.isEmpty()) {
             return false;
@@ -71,13 +71,13 @@ public class SavedPostService {
     }
 
     /**
-     * Updates the status of a bookmark, will return if no bookmark is present
+     * Updates the status of a bookmark, will return if no bookmark is present for the given user
      *
      * @param post   post to change status
      * @param status status to change towards
      */
     public void updateStatusOfSavedPostForCurrentUser(Posting post, SavedPostStatus status) {
-        var existingSavedPosts = this.getSavedPostForCurrentUser(post);
+        var existingSavedPosts = getSavedPostForCurrentUser(post);
 
         if (existingSavedPosts.isEmpty()) {
             return;
@@ -118,13 +118,13 @@ public class SavedPostService {
      * Helper method to retrieve a bookmark for the current user. May be multiple rows for same posting in some edge
      * cases.
      *
-     * @param post post to search bookmark for
-     * @return The saved post for the given posting if present
+     * @param posting posting to search bookmark for
+     * @return The saved posting for the given posting if present
      */
-    private List<SavedPost> getSavedPostForCurrentUser(Posting post) {
-        PostingType type = post instanceof Post ? PostingType.POST : PostingType.ANSWER;
+    private List<SavedPost> getSavedPostForCurrentUser(Posting posting) {
+        PostingType type = posting instanceof Post ? PostingType.POST : PostingType.ANSWER;
         var author = userRepository.getUser();
 
-        return savedPostRepository.findSavedPostsByUserIdAndPostIdAndPostType(author.getId(), post.getId(), type);
+        return savedPostRepository.findSavedPostsByUserIdAndPostIdAndPostType(author.getId(), posting.getId(), type);
     }
 }

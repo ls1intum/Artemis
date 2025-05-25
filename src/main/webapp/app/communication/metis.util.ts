@@ -19,8 +19,6 @@ export enum PageType {
     PLAGIARISM_CASE_STUDENT = 'PLAGIARISM_CASE_STUDENT',
 }
 
-export const VOTE_EMOJI_ID = 'heavy_plus_sign';
-
 export enum SortDirection {
     ASCENDING = 'ASCENDING',
     DESCENDING = 'DESCENDING',
@@ -28,25 +26,23 @@ export enum SortDirection {
 
 export enum PostSortCriterion {
     CREATION_DATE = 'CREATION_DATE',
-    VOTES = 'VOTES',
 }
 
 export enum MetisPostAction {
     CREATE = 'CREATE',
     UPDATE = 'UPDATE',
     DELETE = 'DELETE',
-
     NEW_MESSAGE = 'NEW_MESSAGE',
 }
 
 export interface PostContextFilter {
     courseId?: number;
-    courseWideChannelIds?: number[];
     plagiarismCaseId?: number;
     searchText?: string;
-    conversationId?: number;
+    conversationIds?: number[];
+    authorIds?: number[];
+    filterToCourseWide?: boolean;
     filterToUnresolved?: boolean;
-    filterToOwn?: boolean;
     filterToAnsweredOrReacted?: boolean;
     postSortCriterion?: PostSortCriterion;
     sortingOrder?: SortDirection;

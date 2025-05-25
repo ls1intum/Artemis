@@ -2,26 +2,27 @@ import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { PROFILE_ATHENA, PROFILE_IRIS, PROFILE_LTI } from 'app/app.constants';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Subscription, firstValueFrom } from 'rxjs';
-import { Course } from 'app/entities/course.model';
-import { CourseManagementService } from '../course-management.service';
-import { CourseManagementDetailViewDto } from 'app/core/course/manage/course-management-detail-view-dto.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
+import { CourseManagementService } from '../services/course-management.service';
+import { CourseManagementDetailViewDto } from 'app/core/course/shared/entities/course-management-detail-view-dto.model';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/shared/service/alert.service';
 import { EventManager } from 'app/shared/service/event-manager.service';
-import { faChartBar, faClipboard, faEye, faFlag, faListAlt, faTable, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
-import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+import { faChalkboardUser, faChartBar, faClipboard, faEye, faFlag, faGraduationCap, faListAlt, faQuestion, faTable, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { DetailOverviewSection, DetailType } from 'app/shared/detail-overview-list/detail-overview-list.component';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
+import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from 'app/shared/detail-overview-list/detail-overview-list.component';
+import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
+import { IrisSubSettingsType } from 'app/iris/shared/entities/settings/iris-sub-settings.model';
 import { Detail } from 'app/shared/detail-overview-list/detail.model';
 import { CourseDetailDoughnutChartComponent } from './course-detail-doughnut-chart.component';
 import { CourseDetailLineChartComponent } from './course-detail-line-chart.component';
-import { DetailOverviewListComponent } from 'app/shared/detail-overview-list/detail-overview-list.component';
+import { QuickActionsComponent } from 'app/core/course/manage/quick-actions/quick-actions.component';
+import { ControlCenterComponent } from 'app/core/course/manage/control-center/control-center.component';
 
 export enum DoughnutChartType {
     ASSESSMENT = 'ASSESSMENT',
@@ -38,9 +39,25 @@ export enum DoughnutChartType {
     selector: 'jhi-course-detail',
     templateUrl: './course-detail.component.html',
     styleUrls: ['./course-detail.component.scss'],
-    imports: [CourseDetailDoughnutChartComponent, CourseDetailLineChartComponent, DetailOverviewListComponent],
+    imports: [CourseDetailDoughnutChartComponent, CourseDetailLineChartComponent, DetailOverviewListComponent, QuickActionsComponent, ControlCenterComponent],
 })
 export class CourseDetailComponent implements OnInit, OnDestroy {
+    protected readonly DoughnutChartType = DoughnutChartType;
+    protected readonly FeatureToggle = FeatureToggle;
+    protected readonly IrisSubSettingsType = IrisSubSettingsType;
+
+    protected readonly faTimes = faTimes;
+    protected readonly faEye = faEye;
+    protected readonly faWrench = faWrench;
+    protected readonly faTable = faTable;
+    protected readonly faFlag = faFlag;
+    protected readonly faListAlt = faListAlt;
+    protected readonly faChartBar = faChartBar;
+    protected readonly faClipboard = faClipboard;
+    protected readonly faGraduationCap = faGraduationCap;
+    protected readonly faChalkboardUser = faChalkboardUser;
+    protected readonly faQuestion = faQuestion;
+
     private eventManager = inject(EventManager);
     private courseManagementService = inject(CourseManagementService);
     private organizationService = inject(OrganizationManagementService);
@@ -50,10 +67,6 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     private accountService = inject(AccountService);
     private irisSettingsService = inject(IrisSettingsService);
     private markdownService = inject(ArtemisMarkdownService);
-    private featureToggleService = inject(FeatureToggleService);
-
-    readonly DoughnutChartType = DoughnutChartType;
-    readonly FeatureToggle = FeatureToggle;
 
     courseDTO: CourseManagementDetailViewDto;
     activeStudents?: number[];
@@ -67,37 +80,20 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     irisChatEnabled = false;
     ltiEnabled = false;
     isAthenaEnabled = false;
-    tutorialEnabled = false;
 
     isAdmin = false;
 
     private eventSubscriber: Subscription;
     paramSub: Subscription;
 
-    // Icons
-    faTimes = faTimes;
-    faEye = faEye;
-    faWrench = faWrench;
-    faTable = faTable;
-    faFlag = faFlag;
-    faListAlt = faListAlt;
-    faChartBar = faChartBar;
-    faClipboard = faClipboard;
-
     /**
      * On init load the course information and subscribe to listen for changes in courses.
      */
     async ngOnInit() {
-        this.tutorialEnabled = await firstValueFrom(this.featureToggleService.getFeatureToggleActive(FeatureToggle.TutorialGroups));
-        const profileInfo = await firstValueFrom(this.profileService.getProfileInfo());
-        this.ltiEnabled = profileInfo?.activeProfiles.includes(PROFILE_LTI);
-        this.isAthenaEnabled = profileInfo?.activeProfiles.includes(PROFILE_ATHENA);
-        this.irisEnabled = profileInfo?.activeProfiles.includes(PROFILE_IRIS);
-        if (this.irisEnabled) {
-            const irisSettings = await firstValueFrom(this.irisSettingsService.getGlobalSettings());
-            // TODO: Outdated, as we now have a bunch more sub settings
-            this.irisChatEnabled = irisSettings?.irisChatSettings?.enabled ?? false;
-        }
+        this.ltiEnabled = this.profileService.isProfileActive(PROFILE_LTI);
+        this.isAthenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
+        this.irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
+
         this.route.data.subscribe(({ course }) => {
             if (course) {
                 this.course = course;
@@ -108,6 +104,11 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
             this.isAdmin = this.accountService.isAdmin();
             this.getCourseDetailSections();
         });
+        if (this.irisEnabled && this.course.isAtLeastInstructor) {
+            const irisSettings = await firstValueFrom(this.irisSettingsService.getUncombinedCourseSettings(this.course.id!));
+            // TODO: Outdated, as we now have a bunch more sub settings
+            this.irisChatEnabled = irisSettings?.irisChatSettings?.enabled ?? false;
+        }
         this.paramSub = this.route.params.subscribe((params) => {
             const courseId = params['courseId'];
             this.fetchCourseStatistics(courseId);
@@ -119,38 +120,6 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         const generalDetails: Detail[] = [
             { type: DetailType.Text, title: 'artemisApp.course.title', data: { text: this.course.title } },
             { type: DetailType.Text, title: 'artemisApp.course.shortName', data: { text: this.course.shortName } },
-            {
-                type: DetailType.Link,
-                title: 'artemisApp.course.studentGroupName',
-                data: {
-                    text: `${this.course.studentGroupName} (${this.course.numberOfStudents ?? 0})`,
-                    routerLink: this.course.isAtLeastInstructor ? ['/course-management', this.course.id, 'groups', 'students'] : undefined,
-                },
-            },
-            {
-                type: DetailType.Link,
-                title: 'artemisApp.course.teachingAssistantGroupName',
-                data: {
-                    text: `${this.course.teachingAssistantGroupName} (${this.course.numberOfTeachingAssistants ?? 0})`,
-                    routerLink: this.course.isAtLeastInstructor ? ['/course-management', this.course.id, 'groups', 'tutors'] : undefined,
-                },
-            },
-            {
-                type: DetailType.Link,
-                title: 'artemisApp.course.editorGroupName',
-                data: {
-                    text: `${this.course.editorGroupName} (${this.course.numberOfEditors ?? 0})`,
-                    routerLink: this.course.isAtLeastInstructor ? ['/course-management', this.course.id, 'groups', 'editors'] : undefined,
-                },
-            },
-            {
-                type: DetailType.Link,
-                title: 'artemisApp.course.instructorGroupName',
-                data: {
-                    text: `${this.course.instructorGroupName} (${this.course.numberOfInstructors ?? 0})`,
-                    routerLink: this.course.isAtLeastInstructor ? ['/course-management', this.course.id, 'groups', 'instructors'] : undefined,
-                },
-            },
             { type: DetailType.Date, title: 'artemisApp.course.startDate', data: { date: this.course.startDate } },
             { type: DetailType.Date, title: 'artemisApp.course.endDate', data: { date: this.course.endDate } },
             { type: DetailType.Text, title: 'artemisApp.course.semester', data: { text: this.course.semester } },
@@ -215,22 +184,9 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         return athenaDetails;
     }
 
-    getIrisDetails(): Detail[] {
-        const irisDetails: Detail[] = [];
-        if (this.irisEnabled && this.irisChatEnabled) {
-            irisDetails.push({
-                type: DetailType.ProgrammingIrisEnabled,
-                title: 'artemisApp.iris.settings.subSettings.enabled.chat',
-                data: { course: this.course, disabled: !this.isAdmin, subSettingsType: IrisSubSettingsType.CHAT },
-            });
-        }
-        return irisDetails;
-    }
-
     getModeDetailSection(): DetailOverviewSection {
         const complaintsDetails = this.getComplaintsDetails();
         const athenaDetails = this.getAthenaDetails();
-        const irisDetails = this.getIrisDetails();
 
         const details: Detail[] = [
             { type: DetailType.Text, title: 'artemisApp.course.maxPoints.title', data: { text: this.course.maxPoints } },
@@ -251,7 +207,6 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
             },
             ...complaintsDetails,
             ...athenaDetails,
-            ...irisDetails,
         ];
 
         // inserting optional details in reversed order, so that no index calculation is needed
@@ -264,15 +219,12 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
             });
         }
 
-        if (this.tutorialEnabled) {
-            // insert tutorial detail after lti detail
-            details.splice(4, 0, {
-                type: DetailType.Text,
-                title: 'artemisApp.forms.configurationForm.timeZoneInput.label',
-                titleHelpText: 'artemisApp.forms.configurationForm.timeZoneInput.beta',
-                data: { text: this.course.timeZone },
-            });
-        }
+        details.splice(4, 0, {
+            type: DetailType.Text,
+            title: 'artemisApp.forms.configurationForm.timeZoneInput.label',
+            titleHelpText: 'artemisApp.forms.configurationForm.timeZoneInput.beta',
+            data: { text: this.course.timeZone },
+        });
 
         if (this.ltiEnabled) {
             // insert lti detail after testCourse detail

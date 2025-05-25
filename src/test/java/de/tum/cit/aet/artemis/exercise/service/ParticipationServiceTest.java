@@ -40,10 +40,10 @@ import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVcTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTest;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
-class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVcTest {
+class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
 
     private static final String TEST_PREFIX = "participationservice";
 
@@ -116,7 +116,8 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVcTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateParticipationForExternalSubmission() throws Exception {
         Optional<User> student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "student1");
-        participationUtilService.mockCreationOfExerciseParticipation(false, null, programmingExercise, uriService, versionControlService, continuousIntegrationService);
+        participationUtilService.mockCreationOfExerciseParticipation(false, null, programmingExercise, uriService, versionControlService, continuousIntegrationService,
+                localVCGitBranchService);
 
         StudentParticipation participation = participationService.createParticipationWithEmptySubmissionIfNotExisting(programmingExercise, student.orElseThrow(),
                 SubmissionType.EXTERNAL);
@@ -132,7 +133,8 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVcTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetBuildJobsForResultsOfParticipation() throws Exception {
         Optional<User> student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "student1");
-        participationUtilService.mockCreationOfExerciseParticipation(false, null, programmingExercise, uriService, versionControlService, continuousIntegrationService);
+        participationUtilService.mockCreationOfExerciseParticipation(false, null, programmingExercise, uriService, versionControlService, continuousIntegrationService,
+                localVCGitBranchService);
 
         StudentParticipation participation = participationService.createParticipationWithEmptySubmissionIfNotExisting(programmingExercise, student.orElseThrow(),
                 SubmissionType.EXTERNAL);
@@ -153,7 +155,8 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVcTe
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void canStartExerciseWithPracticeParticipationAfterDueDateChange() throws URISyntaxException {
         Participant participant = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        participationUtilService.mockCreationOfExerciseParticipation(false, null, programmingExercise, uriService, versionControlService, continuousIntegrationService);
+        participationUtilService.mockCreationOfExerciseParticipation(false, null, programmingExercise, uriService, versionControlService, continuousIntegrationService,
+                localVCGitBranchService);
 
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
         exerciseUtilService.updateExerciseDueDate(programmingExercise.getId(), ZonedDateTime.now().minusHours(1));
@@ -196,7 +199,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVcTe
         Result gradedResult = participationUtilService.addProgrammingParticipationWithResultForExercise(programmingExercise, TEST_PREFIX + "student1");
 
         participationUtilService.mockCreationOfExerciseParticipation(useGradedParticipation, gradedResult, programmingExercise, uriService, versionControlService,
-                continuousIntegrationService);
+                continuousIntegrationService, localVCGitBranchService);
 
         StudentParticipation studentParticipationReceived = participationService.startPracticeMode(programmingExercise, participant,
                 Optional.of((StudentParticipation) gradedResult.getParticipation()), useGradedParticipation);

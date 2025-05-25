@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
 
 import { PasswordResetInitService } from './password-reset-init.service';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { FormsModule } from '@angular/forms';
 import { AlertService } from 'app/shared/service/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -33,19 +33,11 @@ export class PasswordResetInitComponent implements OnInit, AfterViewInit {
     externalResetModalRef: NgbModalRef | undefined;
 
     ngOnInit() {
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            if (profileInfo) {
-                this.useExternal = profileInfo.useExternal;
-                this.externalCredentialProvider = profileInfo.externalCredentialProvider;
-                const lang = this.translateService.currentLang;
-                const linkMap = profileInfo.externalPasswordResetLinkMap;
-                if (linkMap.get(lang)) {
-                    this.externalPasswordResetLink = linkMap.get(lang);
-                } else {
-                    this.externalPasswordResetLink = linkMap.get('en');
-                }
-            }
-        });
+        const profileInfo = this.profileService.getProfileInfo();
+        this.useExternal = profileInfo.useExternal;
+        this.externalCredentialProvider = profileInfo.externalCredentialProvider;
+        const lang = this.translateService.currentLang;
+        this.externalPasswordResetLink = profileInfo.externalPasswordResetLinkMap?.[lang] ?? profileInfo.externalPasswordResetLinkMap?.['en'];
     }
 
     ngAfterViewInit(): void {

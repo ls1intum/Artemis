@@ -4,15 +4,15 @@ import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModu
 import urlParser from 'js-video-url-parser';
 import { faArrowLeft, faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER, ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE } from 'app/shared/constants/file-extensions.constants';
-import { CompetencyLectureUnitLink } from 'app/entities/competency.model';
+import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { CompetencySelectionComponent } from 'app/shared/competency-selection/competency-selection.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 
 export interface AttachmentVideoUnitFormData {
     formProperties: FormProperties;
@@ -114,8 +114,6 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
     fileName = signal<string | undefined>(undefined);
     isFileTooBig = signal<boolean>(false);
 
-    videoSource = signal<string | undefined>(undefined);
-
     videoSourceUrlValidator = videoSourceUrlValidator;
     videoSourceTransformUrlValidator = videoSourceTransformUrlValidator;
 
@@ -125,15 +123,17 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
         description: [undefined as string | undefined, [Validators.maxLength(1000)]],
         releaseDate: [undefined as dayjs.Dayjs | undefined],
         version: [{ value: 1, disabled: true }],
-        videoSource: [undefined as string | undefined, [this.videoSourceUrlValidator]],
+        videoSource: [undefined as string | undefined, this.videoSourceUrlValidator],
         urlHelper: [undefined as string | undefined, this.videoSourceTransformUrlValidator],
         updateNotificationText: [undefined as string | undefined, [Validators.maxLength(1000)]],
         competencyLinks: [undefined as CompetencyLectureUnitLink[] | undefined],
     });
     private readonly statusChanges = toSignal(this.form.statusChanges ?? 'INVALID');
 
+    readonly videoSourceSignal = toSignal(this.videoSourceControl!.valueChanges, { initialValue: this.videoSourceControl!.value });
+
     isFormValid = computed(() => {
-        return this.statusChanges() === 'VALID' && !this.isFileTooBig() && this.datePickerComponent()?.isValid() && (!!this.fileName() || !!this.videoSource());
+        return this.statusChanges() === 'VALID' && !this.isFileTooBig() && this.datePickerComponent()?.isValid() && (!!this.fileName() || !!this.videoSourceSignal());
     });
 
     ngOnChanges() {
@@ -225,7 +225,6 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
         event.stopPropagation();
         const embeddedUrl = this.extractEmbeddedUrl(this.urlHelperControl!.value);
         this.videoSourceControl!.setValue(embeddedUrl);
-        this.videoSource.set(embeddedUrl);
     }
 
     extractEmbeddedUrl(videoUrl: string) {

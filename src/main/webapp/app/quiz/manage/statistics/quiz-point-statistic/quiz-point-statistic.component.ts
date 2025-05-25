@@ -4,7 +4,7 @@ import { AbstractQuizStatisticComponent } from 'app/quiz/manage/statistics/quiz-
 import { AccountService } from 'app/core/auth/account.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { PointCounter } from 'app/quiz/shared/entities/point-counter.model';
-import { QuizExerciseService } from 'app/quiz/manage/quiz-exercise.service';
+import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { QuizPointStatistic } from 'app/quiz/shared/entities/quiz-point-statistic.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { Authority } from 'app/shared/constants/authority.constants';
@@ -13,7 +13,7 @@ import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 import { round } from 'app/shared/util/utils';
 import { faSync } from '@fortawesome/free-solid-svg-icons';
 import { calculateMaxScore } from 'app/quiz/manage/statistics/quiz-statistic/quiz-statistics.utils';
-import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { BarChartModule } from '@swimlane/ngx-charts';

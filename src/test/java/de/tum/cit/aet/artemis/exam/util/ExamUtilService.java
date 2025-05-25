@@ -66,8 +66,6 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildCon
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
-import de.tum.cit.aet.artemis.quiz.domain.QuizPool;
-import de.tum.cit.aet.artemis.quiz.service.QuizPoolService;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseUtilService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -151,9 +149,6 @@ public class ExamUtilService {
     @Autowired
     private ExamSessionRepository examSessionRepository;
 
-    @Autowired
-    private QuizPoolService quizPoolService;
-
     /**
      * Creates and saves a course with an exam and an exercise group with all exercise types excluding programming exercises.
      *
@@ -216,57 +211,28 @@ public class ExamUtilService {
             testRun.addExercise(exercise);
             assertThat(exercise.isExamExercise()).isTrue();
             Submission submission = null;
-            if (exercise instanceof ModelingExercise modelingExercise) {
-                submission = modelingExerciseUtilService.addModelingSubmission(modelingExercise, ParticipationFactory.generateModelingSubmission("", false), instructor.getLogin());
-            }
-            else if (exercise instanceof TextExercise textExercise) {
-                submission = textExerciseUtilService.saveTextSubmission(textExercise, ParticipationFactory.generateTextSubmission("", null, false), instructor.getLogin());
-            }
-            else if (exercise instanceof QuizExercise quizExercise) {
-                submission = quizExerciseUtilService.saveQuizSubmission(quizExercise, ParticipationFactory.generateQuizSubmission(false), instructor.getLogin());
-            }
-            else if (exercise instanceof ProgrammingExercise programmingExercise) {
-                submission = new ProgrammingSubmission().submitted(true);
-                programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, (ProgrammingSubmission) submission, instructor.getLogin());
-                submission = submissionRepository.save(submission);
-            }
-            else if (exercise instanceof FileUploadExercise fileUploadExercise) {
-                submission = fileUploadExerciseUtilService.saveFileUploadSubmission(fileUploadExercise, ParticipationFactory.generateFileUploadSubmission(false),
-                        instructor.getLogin());
+            switch (exercise) {
+                case ModelingExercise modelingExercise -> submission = modelingExerciseUtilService.addModelingSubmission(modelingExercise,
+                        ParticipationFactory.generateModelingSubmission("", false), instructor.getLogin());
+                case TextExercise textExercise ->
+                    submission = textExerciseUtilService.saveTextSubmission(textExercise, ParticipationFactory.generateTextSubmission("", null, false), instructor.getLogin());
+                case QuizExercise quizExercise ->
+                    submission = quizExerciseUtilService.saveQuizSubmission(quizExercise, ParticipationFactory.generateQuizSubmission(false), instructor.getLogin());
+                case ProgrammingExercise programmingExercise -> {
+                    submission = new ProgrammingSubmission().submitted(true);
+                    programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, (ProgrammingSubmission) submission, instructor.getLogin());
+                    submission = submissionRepository.save(submission);
+                }
+                case FileUploadExercise fileUploadExercise -> submission = fileUploadExerciseUtilService.saveFileUploadSubmission(fileUploadExercise,
+                        ParticipationFactory.generateFileUploadSubmission(false), instructor.getLogin());
+                default -> {
+                }
             }
             var studentParticipation = (StudentParticipation) submission.getParticipation();
             studentParticipation.setTestRun(true);
             studentParticipationRepo.save(studentParticipation);
         }
         return testRun;
-    }
-
-    /**
-     * Creates and saves an Exam with one mandatory ExerciseGroup with three TextExercises.
-     *
-     * @param course The Course to which the Exam should be added
-     * @return The newly created Exam
-     */
-    public Exam setupSimpleExamWithExerciseGroupExercise(Course course) {
-        var exam = ExamFactory.generateExam(course);
-        exam.setNumberOfExercisesInExam(1);
-        exam.setRandomizeExerciseOrder(true);
-        exam.setStartDate(ZonedDateTime.now().plusHours(2));
-        exam.setEndDate(ZonedDateTime.now().plusHours(4));
-        exam.setExamMaxPoints(20);
-        exam = examRepository.save(exam);
-
-        // add exercise group: 1 mandatory
-        ExamFactory.generateExerciseGroup(true, exam);
-        exam = examRepository.save(exam);
-
-        // add exercises
-        var exercise1a = TextExerciseFactory.generateTextExerciseForExam(exam.getExerciseGroups().getFirst());
-        var exercise1b = TextExerciseFactory.generateTextExerciseForExam(exam.getExerciseGroups().getFirst());
-        var exercise1c = TextExerciseFactory.generateTextExerciseForExam(exam.getExerciseGroups().getFirst());
-        exerciseRepo.saveAll(List.of(exercise1a, exercise1b, exercise1c));
-
-        return examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(exam.getId());
     }
 
     /**
@@ -718,9 +684,8 @@ public class ExamUtilService {
      * @param browserFingerprint The browser fingerprint hash of the ExamSession
      * @param instanceId         The instance id of the ExamSession
      * @param userAgent          The user agent of the ExamSession
-     * @return The ExamSession that was added to the student exam
      */
-    public ExamSession addExamSessionToStudentExam(StudentExam studentExam, String sessionToken, String ipAddress, String browserFingerprint, String instanceId, String userAgent) {
+    public void addExamSessionToStudentExam(StudentExam studentExam, String sessionToken, String ipAddress, String browserFingerprint, String instanceId, String userAgent) {
         ExamSession examSession = new ExamSession();
         examSession.setSessionToken(sessionToken);
         examSession.setIpAddress(ipAddress);
@@ -732,7 +697,6 @@ public class ExamUtilService {
         examSession = examSessionRepository.save(examSession);
         studentExam = studentExam.addExamSession(examSession);
         studentExamRepository.save(studentExam);
-        return examSession;
     }
 
     /**
@@ -1088,9 +1052,8 @@ public class ExamUtilService {
      * @param studentExam   The StudentExam for which the StudentParticipations and Submissions should be created
      * @param validModel    The valid model for the modeling exercise
      * @param localRepoPath The local repository path for the programming exercise
-     * @return The updated StudentExam
      */
-    public StudentExam addExercisesWithParticipationsAndSubmissionsToStudentExam(Exam exam, StudentExam studentExam, String validModel, URI localRepoPath) {
+    public void addExercisesWithParticipationsAndSubmissionsToStudentExam(Exam exam, StudentExam studentExam, String validModel, URI localRepoPath) {
         var exerciseGroups = exam.getExerciseGroups();
         // text exercise
         var exercise = exerciseGroups.getFirst().getExercises().iterator().next();
@@ -1176,7 +1139,7 @@ public class ExamUtilService {
         submissionRepository.save(submission);
         exerciseRepo.save(exercise);
 
-        return studentExamRepository.save(studentExam);
+        studentExamRepository.save(studentExam);
     }
 
     /**
@@ -1199,29 +1162,14 @@ public class ExamUtilService {
     }
 
     /**
-     * Creates and saves an Exam with a quiz pool
-     *
-     * @param course course in which the exam belongs to
-     * @return Exam with a quiz pool
-     */
-    public Exam addExamWithQuizPool(Course course) {
-        Exam exam = addExam(course);
-        QuizPool quizPool = new QuizPool();
-        quizPool.setExam(exam);
-        quizPoolService.save(quizPool);
-        return exam;
-    }
-
-    /**
      * Adds exercise to student exam
      *
      * @param studentExam student exam to which exercise should be added
      * @param exercise    exercise which should be added
-     * @return Student exam with added exercise
      */
-    public StudentExam addExerciseToStudentExam(StudentExam studentExam, Exercise exercise) {
+    public void addExerciseToStudentExam(StudentExam studentExam, Exercise exercise) {
         studentExam.addExercise(exercise);
-        return studentExamRepository.save(studentExam);
+        studentExamRepository.save(studentExam);
     }
 
 }

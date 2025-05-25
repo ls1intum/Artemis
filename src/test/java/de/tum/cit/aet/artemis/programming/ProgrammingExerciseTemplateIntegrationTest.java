@@ -58,7 +58,7 @@ import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVcTest {
+class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVCTest {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseTemplateIntegrationTest.class);
 
@@ -197,7 +197,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
         solutionRepo.configureRepos("solutionLocalRepo", "solutionOriginRepo");
         auxRepo.configureRepos("auxLocalRepo", "auxOriginRepo");
 
-        programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
+        programmingExerciseTestService.setup(this, versionControlService, localVCGitBranchService);
         programmingExerciseTestService.setupRepositoryMocks(exercise, exerciseRepo, solutionRepo, testRepo, auxRepo);
     }
 

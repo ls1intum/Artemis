@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.assessment.ResultListener;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.domain.ParticipantScore;
+import de.tum.cit.aet.artemis.assessment.dto.ExerciseAverageScoreDTO;
 import de.tum.cit.aet.artemis.assessment.dto.score.ScoreDTO;
 import de.tum.cit.aet.artemis.assessment.dto.score.StudentScoreSumDTO;
 import de.tum.cit.aet.artemis.assessment.dto.score.TeamScoreSumDTO;
@@ -113,9 +114,9 @@ public class ParticipantScoreService {
 
         // we want the score for everybody who can perform exercises in the course (students, tutors and instructors)
         Set<User> usersOfCourse = new HashSet<>();
-        usersOfCourse.addAll(userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course.getStudentGroupName()));
-        usersOfCourse.addAll(userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course.getTeachingAssistantGroupName()));
-        usersOfCourse.addAll(userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course.getInstructorGroupName()));
+        usersOfCourse.addAll(userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(course.getStudentGroupName()));
+        usersOfCourse.addAll(userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(course.getTeachingAssistantGroupName()));
+        usersOfCourse.addAll(userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(course.getInstructorGroupName()));
 
         // we only consider released exercises that are not optional
         Set<Exercise> exercisesToConsider = course.getExercises().stream().filter(Exercise::isCourseExercise)
@@ -214,8 +215,7 @@ public class ParticipantScoreService {
     }
 
     public double getAverageOfAverageScores(Set<Exercise> exercises) {
-        return participantScoreRepository.findAverageScoreForExercises(exercises).stream().mapToDouble(exerciseInfo -> (double) exerciseInfo.get("averageScore")).average()
-                .orElse(0.0);
+        return participantScoreRepository.findAverageScoreForExercises(exercises).stream().mapToDouble(ExerciseAverageScoreDTO::averageScore).average().orElse(0.0);
     }
 
     /**

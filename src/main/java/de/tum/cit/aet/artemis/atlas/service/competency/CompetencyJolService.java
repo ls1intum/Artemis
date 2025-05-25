@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.atlas.service.competency;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 
@@ -11,9 +10,10 @@ import java.util.function.Function;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyJol;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyProgress;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyJolDTO;
@@ -23,13 +23,13 @@ import de.tum.cit.aet.artemis.atlas.repository.CompetencyProgressRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.iris.service.pyris.PyrisEventService;
+import de.tum.cit.aet.artemis.iris.api.PyrisEventApi;
 import de.tum.cit.aet.artemis.iris.service.pyris.event.CompetencyJolSetEvent;
 
 /**
  * Service Implementation for managing CompetencyJol.
  */
-@Profile(PROFILE_ATLAS)
+@Conditional(AtlasEnabled.class)
 @Service
 public class CompetencyJolService {
 
@@ -45,15 +45,15 @@ public class CompetencyJolService {
 
     private final UserRepository userRepository;
 
-    private final Optional<PyrisEventService> pyrisEventService;
+    private final Optional<PyrisEventApi> pyrisEventApi;
 
     public CompetencyJolService(CompetencyJolRepository competencyJolRepository, CompetencyRepository competencyRepository,
-            CompetencyProgressRepository competencyProgressRepository, UserRepository userRepository, Optional<PyrisEventService> pyrisEventService) {
+            CompetencyProgressRepository competencyProgressRepository, UserRepository userRepository, Optional<PyrisEventApi> pyrisEventApi) {
         this.competencyJolRepository = competencyJolRepository;
         this.competencyRepository = competencyRepository;
         this.competencyProgressRepository = competencyProgressRepository;
         this.userRepository = userRepository;
-        this.pyrisEventService = pyrisEventService;
+        this.pyrisEventApi = pyrisEventApi;
     }
 
     /**
@@ -84,7 +84,7 @@ public class CompetencyJolService {
         final var jol = createCompetencyJol(competencyId, userId, jolValue, ZonedDateTime.now(), competencyProgress);
         competencyJolRepository.save(jol);
 
-        pyrisEventService.ifPresent(service -> {
+        pyrisEventApi.ifPresent(service -> {
             // Inform Iris so it can send a message to the user
             try {
                 service.trigger(new CompetencyJolSetEvent(jol));

@@ -132,11 +132,11 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedText;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.test_repository.QuizSubmissionTestRepository;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVcTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
-class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVcTest {
+class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
 
     private static final Logger log = LoggerFactory.getLogger(StudentExamIntegrationTest.class);
 
@@ -270,8 +270,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVc
         doReturn(new Repository("ab", new VcsRepositoryUri("uri"))).when(gitService).getOrCheckoutRepositoryIntoTargetDirectory(any(), any(), anyBoolean());
         doReturn(new Repository("ab", new VcsRepositoryUri("uri"))).when(gitService).getExistingCheckedOutRepositoryByLocalPath(any(), any(), any());
 
-        // TODO: all parts using programmingExerciseTestService should also be provided for LocalVc+Jenkins
-        programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
+        // TODO: all parts using programmingExerciseTestService should also be provided for LocalVC+Jenkins
+        programmingExerciseTestService.setup(this, versionControlService, localVCGitBranchService);
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
     }
 

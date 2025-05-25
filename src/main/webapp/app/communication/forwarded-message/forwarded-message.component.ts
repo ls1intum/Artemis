@@ -1,13 +1,13 @@
 import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, effect, inject, input, output, viewChild } from '@angular/core';
 import { faShare } from '@fortawesome/free-solid-svg-icons';
-import { Post } from 'app/entities/metis/post.model';
-import { AnswerPost } from 'app/entities/metis/answer-post.model';
-import { Posting } from 'app/entities/metis/posting.model';
+import { Post } from 'app/communication/shared/entities/post.model';
+import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
+import { Posting } from 'app/communication/shared/entities/posting.model';
 import dayjs from 'dayjs/esm';
-import { Conversation } from 'app/entities/metis/conversation/conversation.model';
+import { Conversation } from 'app/communication/shared/entities/conversation/conversation.model';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { PostingContentComponent } from 'app/communication/posting-content.components';
+import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { NgClass } from '@angular/common';
@@ -27,13 +27,14 @@ export class ForwardedMessageComponent implements AfterViewInit {
 
     sourceName: string | undefined = '';
     todayFlag?: string;
-    originalPostDetails = input<Posting>();
+    originalPostDetails = input<Posting | undefined>();
     messageContent = viewChild<ElementRef>('messageContent');
     isContentLong = false;
     showFullForwardedMessage = false;
     postingIsOfToday = false;
 
     protected viewButtonVisible = false;
+    hasOriginalPostBeenDeleted = input<boolean | undefined>();
 
     private cdr = inject(ChangeDetectorRef);
     private conversation: Conversation | undefined;
@@ -101,7 +102,7 @@ export class ForwardedMessageComponent implements AfterViewInit {
     }
 
     onTriggerNavigateToPost() {
-        if (this.originalPostDetails() === undefined) {
+        if (!this.originalPostDetails()) {
             return;
         }
         this.onNavigateToPost.emit(this.originalPostDetails()!);
