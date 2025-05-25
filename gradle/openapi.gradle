@@ -32,6 +32,15 @@
         }
     }
 
+    // TODO missing steps of the overall process
+    // 1. Detect if any resources have changed
+    // 2. If so, modify the packages to scan accordingly in the task above
+    // 3. Replace the existing OpenAPI spec with the new part. Keep the rest as is.
+    // 4. Run the OpenAPI generator to generate the complete TypeScript files for the Angular client
+    // 5. Post-process the generated files to remove leading underscores and numeric suffixes from method names
+    // 6. Remove unused imports from the generated TypeScript files to satisfy our tsconfig.
+    // 7. Move the generated files to the correct module with ts-morph
+
     openApiGenerate {
         generatorName = "typescript-angular"
         inputSpec.set(file("${rootDir}/openapi/openapi.yaml").toURI().toString())
@@ -55,63 +64,86 @@
             def spec       = yaml.load(inputFile.text) as Map<String, Object>
             def components = (spec.components ?: [:]) as Map<String, Map<String, Object>>
 
-            // 1) Prune invalid $ref nodes
+            // 1) Define a recursive function to prune invalid $ref nodes in the spec
             Closure pruneRec
             pruneRec = { obj ->
+                // If the object is a Map with only a $ref key
                 if (obj instanceof Map && obj.size() == 1 && obj.containsKey('$ref')) {
-                    def ref     = obj['$ref'] as String
+                    def ref = obj['$ref'] as String
+
+                    // Match references of the form "#/components/{type}/{name}"
                     def matcher = (ref =~ /^#\/components\/([^\/]+)\/(.+)$/)
+
+                    // If it's a valid match but the referenced component is missing, prune it (return null)
                     if (matcher.matches() && !components[matcher[0][1]]?.containsKey(matcher[0][2])) {
                         return null
                     }
+
+                    // Otherwise, keep the reference as is
                     return obj
                 }
+
+                // Recursively process maps: build a new map with only non-null values
                 if (obj instanceof Map) {
                     obj.collectEntries { key, val ->
                         def prunedVal = pruneRec(val)
                         prunedVal != null ? [(key): prunedVal] : [:]
                     }
-                } else if (obj instanceof List) {
+                }
+                // Recursively process lists: remove any null entries after pruning
+                else if (obj instanceof List) {
                     obj.collect { pruneRec(it) }.findAll { it != null }
-                } else {
+                }
+                // If it's not a map or list, return the object unchanged
+                else {
                     obj
                 }
             }
+
+// Apply the recursive pruning function to the OpenAPI spec
             def prunedSpec = pruneRec(spec) as Map<String, Object>
 
-            // 2) Drop invalid operations
+// 2) Remove operations from paths that have invalid request/response schemas
             prunedSpec.paths?.with { pathsMap ->
                 pathsMap.each { pathName, ops ->
-                    // collect operation names to remove
+                    // Collect operation keys (e.g., get, post) that need to be removed
                     def toRemoveOps = ops.keySet().findAll { opName ->
                         def op = ops[opName] as Map
-                        // invalid if requestBody has a content type with null schema
-                        def badReq  = op.requestBody?.content?.values()?.any { mt -> mt.schema == null }
-                        // or any response media type has null schema
+
+                        // Determine if the request body has a content type with a null schema
+                        def badReq = op.requestBody?.content?.values()?.any { mt -> mt.schema == null }
+
+                        // Determine if any response media type has a null schema
                         def badResp = op.responses?.values()?.any { resp ->
                             resp.content?.values()?.any { mt -> mt.schema == null }
                         }
+
+                        // Mark the operation for removal if either request or response is bad
                         badReq || badResp
                     }
-                    // remove them
+
+                    // Actually remove the invalid operations from the map
                     toRemoveOps.each { badOpName ->
                         ops.remove(badOpName)
                     }
                 }
-                // 3) Drop any path now left with no operations
+
+                // 3) After removing bad operations, remove any path that has no remaining operations
                 def emptyPaths = pathsMap.keySet().findAll { pn ->
                     (pathsMap[pn] as Map).isEmpty()
                 }
+
+                // Remove the empty paths from the paths map
                 emptyPaths.each { ep ->
                     pathsMap.remove(ep)
                 }
             }
 
-            // 4) Write out the cleaned spec
+// 4) Write the cleaned and pruned spec to an output YAML file
             outputFile.text = yaml.dump(prunedSpec)
             println "✔ Pruned spec written to $outputFile"
+
         }
-    }
 
     tasks.register('postProcessTsFiles') {
         description = 'Remove leading underscores and numeric suffixes from OpenAPI TS methods, and add // @ts-nocheck'

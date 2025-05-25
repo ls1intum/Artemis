@@ -19,6 +19,7 @@ import { TranslateDirective } from '../../language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { HelpIconComponent } from '../../components/help-icon/help-icon.component';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
+import { Student } from 'app/openapi';
 
 const POSSIBLE_REGISTRATION_NUMBER_HEADERS = ['registrationnumber', 'matriculationnumber', 'matrikelnummer', 'number'];
 const POSSIBLE_LOGIN_HEADERS = ['login', 'user', 'username', 'benutzer', 'benutzername'];
@@ -231,7 +232,30 @@ export class UsersImportDialogComponent implements OnDestroy {
         this.isImporting = true;
         if (this.tutorialGroup) {
             this.tutorialGroupService.registerMultipleStudents(this.courseId, this.tutorialGroup.id!, this.usersToImport).subscribe({
-                next: (res) => this.onSaveSuccess(res),
+                next: (res: HttpResponse<Set<Student>>) => {
+                    // Assuming res.body contains students that could NOT be registered.
+                    // Convert Set<Student> to Partial<StudentDTO>[] for onSaveSuccess.
+                    const notFoundDtos: Partial<StudentDTO>[] = [];
+                    if (res.body) {
+                        for (const student of res.body) {
+                            notFoundDtos.push({
+                                login: student.login,
+                                firstName: student.firstName,
+                                lastName: student.lastName,
+                                registrationNumber: student.registrationNumber,
+                                email: student.email,
+                            });
+                        }
+                    }
+                    const newHttpResponse = new HttpResponse<Partial<StudentDTO>[]>({
+                        body: notFoundDtos,
+                        headers: res.headers,
+                        status: res.status,
+                        statusText: res.statusText,
+                        url: res.url ?? undefined,
+                    });
+                    this.onSaveSuccess(newHttpResponse);
+                },
                 error: () => this.onSaveError(),
             });
         } else if (this.courseGroup && !this.exam) {
