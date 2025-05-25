@@ -15,8 +15,6 @@ import de.tum.cit.aet.artemis.atlas.repository.CourseLearnerProfileRepository;
 import de.tum.cit.aet.artemis.atlas.repository.LearnerProfileRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.core.service.ProfileService;
 
 @Conditional(AtlasEnabled.class)
 @Service
@@ -30,17 +28,11 @@ public class CourseLearnerProfileService {
 
     private final LearnerProfileService learnerProfileService;
 
-    private final UserRepository userRepository;
-
-    private final ProfileService profileService;
-
     public CourseLearnerProfileService(CourseLearnerProfileRepository courseLearnerProfileRepository, LearnerProfileRepository learnerProfileRepository,
-            LearnerProfileService learnerProfileService, UserRepository userRepository, ProfileService profileService) {
+            LearnerProfileService learnerProfileService) {
         this.courseLearnerProfileRepository = courseLearnerProfileRepository;
         this.learnerProfileRepository = learnerProfileRepository;
         this.learnerProfileService = learnerProfileService;
-        this.userRepository = userRepository;
-        this.profileService = profileService;
     }
 
     /**
@@ -167,6 +159,7 @@ public class CourseLearnerProfileService {
      * Uses the lines changed by the student, lines changed in the template and the achieved score of a submission to estimate a proficiency.
      * Moves the current proficiency towards the estimated proficiency.
      *
+     * @param users                  The set of users affected by the changes.
      * @param course                 The course the submission is from.
      * @param linesChanged           The lines changed by the student.
      * @param linesChangedInTemplate the lines changed in the template.
