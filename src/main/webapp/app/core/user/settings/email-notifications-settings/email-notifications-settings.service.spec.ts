@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
 import { EmailNotificationSettingsService } from './email-notifications-settings.service';
 
 describe('EmailNotificationSettingsService', () => {
@@ -8,8 +9,7 @@ describe('EmailNotificationSettingsService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule],
-            providers: [EmailNotificationSettingsService],
+            providers: [EmailNotificationSettingsService, provideHttpClient(), provideHttpClientTesting()],
         });
 
         service = TestBed.inject(EmailNotificationSettingsService);
