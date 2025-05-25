@@ -409,7 +409,7 @@ describe('PdfPreviewComponent', () => {
             expect(appendSpy).toHaveBeenCalledWith('file', expect.any(File));
             expect(appendSpy).toHaveBeenCalledWith('attachment', expect.any(Blob));
             expect(appendSpy).toHaveBeenCalledWith('attachmentVideoUnit', expect.any(Blob));
-            expect(appendSpy).toHaveBeenCalledWith('pageOrder', expect.any(String));
+            expect(appendSpy).toHaveBeenCalledWith('pageOrder', expect.any(Blob));
             expect(appendSpy).not.toHaveBeenCalledWith('studentVersion', expect.any(File));
             expect(appendSpy).not.toHaveBeenCalledWith('hiddenPages', expect.any(String));
             expect(attachmentUnitServiceMock.update).toHaveBeenCalledWith(3, 2, expect.any(FormData));
