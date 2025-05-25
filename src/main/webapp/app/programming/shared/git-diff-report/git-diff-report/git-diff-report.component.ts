@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, effect, input, signal, un
 import { ProgrammingExerciseGitDiffReport } from 'app/programming/shared/entities/programming-exercise-git-diff-report.model';
 import { ProgrammingExerciseGitDiffEntry } from 'app/programming/shared/entities/programming-exercise-git-diff-entry.model';
 import { faSpinner, faTableColumns } from '@fortawesome/free-solid-svg-icons';
-import { ButtonComponent, ButtonSize, ButtonType, TooltipPlacement } from 'app/shared/components/button/button.component';
+import { ButtonComponent, ButtonSize, ButtonType, TooltipPlacement } from 'app/shared/components/buttons/button/button.component';
 import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat/git-diff-line-stat.component';
 
 import { GitDiffFilePanelComponent } from 'app/programming/shared/git-diff-report/git-diff-file-panel/git-diff-file-panel.component';

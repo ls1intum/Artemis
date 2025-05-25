@@ -3,7 +3,7 @@ import { IrisSettingsUpdateComponent } from 'app/iris/manage/settings/iris-setti
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { BehaviorSubject, of } from 'rxjs';
-import { ButtonComponent } from 'app/shared/components/button/button.component';
+import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { IrisCommonSubSettingsUpdateComponent } from 'app/iris/manage/settings/iris-settings-update/iris-common-sub-settings-update/iris-common-sub-settings-update.component';
 import { mockSettings } from 'test/helpers/mocks/iris/mock-settings';
 import { IrisExerciseSettingsUpdateComponent } from 'app/iris/manage/settings/iris-exercise-settings-update/iris-exercise-settings-update.component';
@@ -15,11 +15,13 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 
 describe('IrisExerciseSettingsUpdateComponent Component', () => {
     let comp: IrisExerciseSettingsUpdateComponent;
     let fixture: ComponentFixture<IrisExerciseSettingsUpdateComponent>;
     let irisSettingsService: IrisSettingsService;
+    let featureToggleService: FeatureToggleService;
     const routeParamsSubject = new BehaviorSubject<Params>({ courseId: 1, exerciseId: 1 });
     const route = { parent: { params: routeParamsSubject.asObservable() } } as ActivatedRoute;
     let paramsSpy: jest.SpyInstance;
@@ -32,6 +34,7 @@ describe('IrisExerciseSettingsUpdateComponent Component', () => {
             providers: [
                 provideRouter([]),
                 MockProvider(IrisSettingsService),
+                MockProvider(FeatureToggleService),
                 { provide: ActivatedRoute, useValue: route },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
@@ -40,6 +43,8 @@ describe('IrisExerciseSettingsUpdateComponent Component', () => {
             .compileComponents()
             .then(() => {
                 irisSettingsService = TestBed.inject(IrisSettingsService);
+                featureToggleService = TestBed.inject(FeatureToggleService);
+                jest.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
 
                 // Setup
                 routeParamsSubject.next({ courseId: 1, exerciseId: 2 });

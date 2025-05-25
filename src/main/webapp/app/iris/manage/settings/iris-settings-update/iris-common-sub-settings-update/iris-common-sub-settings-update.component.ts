@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChange
 import { IrisEventType, IrisSubSettings, IrisSubSettingsType } from 'app/iris/shared/entities/settings/iris-sub-settings.model';
 import { IrisVariant } from 'app/iris/shared/entities/settings/iris-variant';
 import { AccountService } from 'app/core/auth/account.service';
-import { ButtonType } from 'app/shared/components/button/button.component';
+import { ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { faCircleExclamation, faQuestionCircle, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { IrisSettingsType } from 'app/iris/shared/entities/settings/iris-settings.model';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
@@ -229,7 +229,7 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
     }
 
     get isSettingsSwitchDisabled() {
-        return this.inheritDisabled || (!this.isAdmin && this.settingsType !== this.EXERCISE);
+        return this.inheritDisabled;
     }
 
     /**

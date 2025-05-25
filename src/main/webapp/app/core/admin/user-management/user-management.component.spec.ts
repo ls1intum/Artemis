@@ -179,7 +179,7 @@ describe('User Management Component', () => {
         tick(1000);
 
         expect(identitySpy).toHaveBeenCalledOnce();
-        expect(profileSpy).toHaveBeenCalledTimes(2);
+        expect(profileSpy).toHaveBeenCalledOnce();
         expect(comp.currentAccount).toEqual({ id: 99, login: 'admin' });
 
         expect(comp.page).toBe(1);
@@ -247,7 +247,7 @@ describe('User Management Component', () => {
         comp.ngOnInit();
 
         expect(initFiltersSpy).toHaveBeenCalledOnce();
-        expect(profileSpy).toHaveBeenCalledTimes(2);
+        expect(profileSpy).toHaveBeenCalledOnce();
         expect(userService.query).toHaveBeenCalledTimes(0);
     });
 

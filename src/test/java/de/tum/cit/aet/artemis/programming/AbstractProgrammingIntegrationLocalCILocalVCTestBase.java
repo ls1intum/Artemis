@@ -1,11 +1,14 @@
 package de.tum.cit.aet.artemis.programming;
 
+import static org.mockito.Mockito.when;
+
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
 
 import org.apache.sshd.server.SshServer;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,6 +16,7 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.dockerjava.api.DockerClient;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -25,6 +29,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.icl.DockerClientTestService;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.VcsAccessLogRepository;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
@@ -43,6 +48,23 @@ import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionT
  * </ul>
  */
 public abstract class AbstractProgrammingIntegrationLocalCILocalVCTestBase extends AbstractProgrammingIntegrationLocalCILocalVCTest {
+
+    /**
+     * This is the mock(DockerClient.class).
+     * Subclasses can use this to dynamically mock methods of the DockerClient.
+     */
+    protected DockerClient dockerClient;
+
+    @BeforeAll
+    protected static void mockDockerClient() throws InterruptedException {
+        dockerClientMock = DockerClientTestService.mockDockerClient();
+    }
+
+    @BeforeEach
+    protected void mockBuildAgentServices() {
+        when(buildAgentConfiguration.getDockerClient()).thenReturn(dockerClientMock);
+        this.dockerClient = dockerClientMock;
+    }
 
     // Config
     @Value("${artemis.version-control.user}")

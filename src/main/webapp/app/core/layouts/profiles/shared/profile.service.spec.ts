@@ -108,7 +108,6 @@ export const expectedProfileInfo: ProfileInfo = {
     externalPasswordResetLinkMap: { en: '', de: '' },
     features: [FeatureToggle.ProgrammingExercises, FeatureToggle.PlagiarismChecks],
     git: gitInformation,
-    imprint: 'https://ase.in.tum.de/lehrstuhl_1/component/content/article/179-imprint',
     java: {},
     needsToAcceptTerms: false,
     operatorAdminName: '',

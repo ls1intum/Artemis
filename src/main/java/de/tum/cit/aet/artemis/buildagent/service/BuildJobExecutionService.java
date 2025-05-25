@@ -1,8 +1,7 @@
 package de.tum.cit.aet.artemis.buildagent.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.CHECKED_OUT_REPOS_TEMP_DIR;
+import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY;
 import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_RESULTS_DIRECTORY;
-import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_WORKING_DIRECTORY;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 
 import java.io.IOException;
@@ -80,6 +79,9 @@ public class BuildJobExecutionService {
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
 
+    @Value("${artemis.checked-out-repos-path}")
+    private String checkedOutReposPath;
+
     private static final Duration TEMP_DIR_RETENTION_PERIOD = Duration.ofMinutes(5);
 
     public BuildJobExecutionService(BuildJobContainerService buildJobContainerService, BuildJobGitService buildJobGitService, BuildAgentDockerService buildAgentDockerService,
@@ -102,8 +104,8 @@ public class BuildJobExecutionService {
     }
 
     private void cleanUpTempDirectoriesAsync(ZonedDateTime currentTime) {
-        log.debug("Cleaning up temporary directories in {}", CHECKED_OUT_REPOS_TEMP_DIR);
-        try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(Path.of(CHECKED_OUT_REPOS_TEMP_DIR))) {
+        log.debug("Cleaning up temporary directories in {}", checkedOutReposPath);
+        try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(Path.of(checkedOutReposPath))) {
             for (Path path : directoryStream) {
                 try {
                     ZonedDateTime lastModifiedTime = ZonedDateTime.ofInstant(Files.getLastModifiedTime(path).toInstant(), currentTime.getZone());
@@ -119,7 +121,7 @@ public class BuildJobExecutionService {
         catch (IOException e) {
             log.error("Could not delete temporary directories", e);
         }
-        log.debug("Clean up of temporary directories in {} completed.", CHECKED_OUT_REPOS_TEMP_DIR);
+        log.debug("Clean up of temporary directories in {} completed.", checkedOutReposPath);
     }
 
     /**
@@ -321,7 +323,8 @@ public class BuildJobExecutionService {
         buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
         log.debug(msg);
 
-        buildJobContainerService.moveResultsToSpecifiedDirectory(containerId, buildJob.buildConfig().resultPaths(), LOCAL_CI_WORKING_DIRECTORY + LOCAL_CI_RESULTS_DIRECTORY);
+        buildJobContainerService.moveResultsToSpecifiedDirectory(containerId, buildJob.buildConfig().resultPaths(),
+                LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + LOCAL_CI_RESULTS_DIRECTORY);
 
         // Get an input stream of the test result files.
 
@@ -334,7 +337,7 @@ public class BuildJobExecutionService {
         BuildResult buildResult;
 
         try {
-            testResultsTarInputStream = buildJobContainerService.getArchiveFromContainer(containerId, LOCAL_CI_WORKING_DIRECTORY + LOCAL_CI_RESULTS_DIRECTORY);
+            testResultsTarInputStream = buildJobContainerService.getArchiveFromContainer(containerId, LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + LOCAL_CI_RESULTS_DIRECTORY);
 
             var buildLogs = buildLogsMap.getAndTruncateBuildLogs(buildJob.id());
             buildResult = parseTestResults(testResultsTarInputStream, buildJob.buildConfig().branch(), assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate,
@@ -381,7 +384,7 @@ public class BuildJobExecutionService {
                 deleteRepoParentFolder(assignmentRepoCommitHash, assignmentRepositoryPath, testRepoCommitHash, testsRepositoryPath);
             }
             catch (IOException e) {
-                msg = "Could not delete " + CHECKED_OUT_REPOS_TEMP_DIR + " directory";
+                msg = "Could not delete " + checkedOutReposPath + " directory";
                 buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
                 log.error(msg, e);
             }
@@ -546,8 +549,7 @@ public class BuildJobExecutionService {
                 // Generate a random folder name for the repository parent folder if the commit hash is null. This is to avoid conflicts when cloning multiple repositories.
                 String repositoryParentFolder = commitHash != null ? commitHash : UUID.randomUUID().toString();
                 // Clone the assignment repository into a temporary directory
-                repository = buildJobGitService.cloneRepository(repositoryUri,
-                        Path.of(CHECKED_OUT_REPOS_TEMP_DIR, repositoryParentFolder, repositoryUri.folderNameForRepositoryUri()));
+                repository = buildJobGitService.cloneRepository(repositoryUri, Path.of(checkedOutReposPath, repositoryParentFolder, repositoryUri.folderNameForRepositoryUri()));
 
                 break;
             }
@@ -583,7 +585,7 @@ public class BuildJobExecutionService {
     private void deleteCloneRepo(VcsRepositoryUri repositoryUri, @Nullable String commitHash, String buildJobId, Path repositoryPath) {
         String msg;
         try {
-            Path repositoryPathForDeletion = commitHash != null ? Path.of(CHECKED_OUT_REPOS_TEMP_DIR, commitHash, repositoryUri.folderNameForRepositoryUri()) : repositoryPath;
+            Path repositoryPathForDeletion = commitHash != null ? Path.of(checkedOutReposPath, commitHash, repositoryUri.folderNameForRepositoryUri()) : repositoryPath;
             Repository repository = buildJobGitService.getExistingCheckedOutRepositoryByLocalPath(repositoryPathForDeletion, repositoryUri, defaultBranch);
             if (repository == null) {
                 msg = "Repository with commit hash " + commitHash + " not found";
@@ -606,10 +608,9 @@ public class BuildJobExecutionService {
     }
 
     private void deleteRepoParentFolder(String assignmentRepoCommitHash, Path assignmentRepositoryPath, String testRepoCommitHash, Path testsRepositoryPath) throws IOException {
-        Path assignmentRepo = assignmentRepoCommitHash != null ? Path.of(CHECKED_OUT_REPOS_TEMP_DIR, assignmentRepoCommitHash)
-                : getRepositoryParentFolderPath(assignmentRepositoryPath);
+        Path assignmentRepo = assignmentRepoCommitHash != null ? Path.of(checkedOutReposPath, assignmentRepoCommitHash) : getRepositoryParentFolderPath(assignmentRepositoryPath);
         FileUtils.deleteDirectory(assignmentRepo.toFile());
-        Path testRepo = testRepoCommitHash != null ? Path.of(CHECKED_OUT_REPOS_TEMP_DIR, testRepoCommitHash) : getRepositoryParentFolderPath(testsRepositoryPath);
+        Path testRepo = testRepoCommitHash != null ? Path.of(checkedOutReposPath, testRepoCommitHash) : getRepositoryParentFolderPath(testsRepositoryPath);
         FileUtils.deleteDirectory(testRepo.toFile());
     }
 

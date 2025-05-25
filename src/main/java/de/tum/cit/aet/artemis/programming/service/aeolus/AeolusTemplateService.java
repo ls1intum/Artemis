@@ -84,7 +84,7 @@ public class AeolusTemplateService {
                 String uniqueKey = directory + "_" + filename;
                 byte[] fileContent = IOUtils.toByteArray(resource.getInputStream());
                 String script = new String(fileContent, StandardCharsets.UTF_8);
-                if (!profileService.isLocalCiActive()) {
+                if (!profileService.isLocalCIActive()) {
                     script = buildScriptProviderService.replacePlaceholders(script, null, null, null);
                 }
                 Windfile windfile = readWindfile(script);
@@ -149,7 +149,7 @@ public class AeolusTemplateService {
             log.error("No windfile found for key {}", uniqueKey);
             return null;
         }
-        if (!profileService.isLocalCiActive()) {
+        if (!profileService.isLocalCIActive()) {
             scriptCache = buildScriptProviderService.replacePlaceholders(scriptCache, null, null, null);
         }
         Windfile windfile = readWindfile(scriptCache);

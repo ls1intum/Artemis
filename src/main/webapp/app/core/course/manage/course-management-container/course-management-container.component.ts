@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, ViewChild, inject, signal } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
 import { RouterLink, RouterOutlet } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject, Subscription, of } from 'rxjs';
@@ -23,7 +23,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { CourseExamArchiveButtonComponent } from 'app/shared/components/course-exam-archive-button/course-exam-archive-button.component';
+import { CourseExamArchiveButtonComponent } from 'app/shared/components/buttons/course-exam-archive-button/course-exam-archive-button.component';
 import { CourseSidebarComponent, SidebarItem } from 'app/core/course/shared/course-sidebar/course-sidebar.component';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { BaseCourseContainerComponent } from 'app/core/course/shared/course-base-container/course-base-container.component';
@@ -49,7 +49,7 @@ import { CourseManagementExercisesComponent } from 'app/core/course/manage/exerc
 import { LectureComponent } from 'app/lecture/manage/lecture/lecture.component';
 import { CourseManagementStatisticsComponent } from 'app/core/course/manage/statistics/course-management-statistics.component';
 import { CourseConversationsComponent } from 'app/communication/shared/course-conversations/course-conversations.component';
-import { ButtonSize } from 'app/shared/components/button/button.component';
+import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
 import { Course, isCommunicationEnabled } from 'app/core/course/shared/entities/course.model';
 import { CourseDeletionSummaryDTO } from 'app/core/course/shared/entities/course-deletion-summary.model';
 
@@ -85,7 +85,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     private courseSub?: Subscription;
     private urlSubscription?: Subscription;
     private learningPathsActive = signal(false);
-    @ViewChild('courseBodyContainer') courseBody: ElementRef<HTMLElement>;
+    courseBody = viewChild<ElementRef<HTMLElement>>('courseBodyContainer');
     isSettingsPage = signal(false);
     studentViewLink = signal<string[]>([]);
 
@@ -254,7 +254,9 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
             this.isSidebarCollapsed.set(childRouteComponent?.isCollapsed ?? false);
         }
         // if we don't scroll to the top, the page will be scrolled to the last position which is not expected by the user
-        this.courseBody.nativeElement.scrollTop = 0;
+        if (this.courseBody()) {
+            this.courseBody()!.nativeElement.scrollTop = 0;
+        }
     }
 
     handleToggleSidebar(): void {

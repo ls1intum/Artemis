@@ -263,8 +263,6 @@ public final class Constants {
 
     public static final String USE_EXTERNAL = "useExternal";
 
-    public static final String PASSKEY_ENABLED = "passkeyEnabled";
-
     public static final String EXTERNAL_CREDENTIAL_PROVIDER = "externalCredentialProvider";
 
     public static final String EXTERNAL_PASSWORD_RESET_LINK_MAP = "externalPasswordResetLinkMap";
@@ -323,9 +321,15 @@ public final class Constants {
     public static final String PROFILE_APOLLON = "apollon";
 
     /**
-     * The name of the Spring profile used for the Aeolus external system.
+     * The name of the Spring profile used for the external Aeolus system.
      */
     public static final String PROFILE_AEOLUS = "aeolus";
+
+    /**
+     * The name of the Spring profile used for the external LDAP system.
+     * Use this profile if you want to synchronize users with an external LDAP system, but you want to route the authentication through another system
+     */
+    public static final String PROFILE_LDAP = "ldap";
 
     /**
      * The name of the Spring profile used for activating LTI in Artemis, see {@link de.tum.cit.aet.artemis.lti.web.LtiResource}.
@@ -435,6 +439,16 @@ public final class Constants {
     public static final String PASSKEY_ENABLED_PROPERTY_NAME = "artemis.user-management.passkey.enabled";
 
     /**
+     * The name of the property used to define the directories for file uploads.
+     */
+    public static final String UPLOADS_FILE_PATH_PROPERTY_NAME = "artemis.file-upload-path";
+
+    /**
+     * The fallback value when no value for the uploads file path is defined.
+     */
+    public static final String UPLOADS_FILE_PATH_DEFAULT = "uploads";
+
+    /**
      * Size of an unsigned tinyInt in SQL, that is used in the database
      */
     public static final int SIZE_OF_UNSIGNED_TINYINT = 255;
@@ -450,19 +464,14 @@ public final class Constants {
     public static final int PUSH_NOTIFICATION_VERSION = 1;
 
     /**
-     * The directory in the docker container in which the build script is executed
-     */
-    public static final String LOCAL_CI_WORKING_DIRECTORY = "/var/tmp";
-
-    /**
      * The directory in the docker container in which the results can be found
      */
     public static final String LOCAL_CI_RESULTS_DIRECTORY = "/results";
 
     /**
-     * The directory to which repositories temporarily get cloned for the build job execution
+     * The directory in the docker container in which the build script is executed
      */
-    public static final String CHECKED_OUT_REPOS_TEMP_DIR = "checked-out-repos";
+    public static final String LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY = "/var/tmp";
 
     /**
      * Minimum score for a result to be considered successful and shown in green

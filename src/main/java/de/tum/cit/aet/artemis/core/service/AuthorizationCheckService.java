@@ -291,7 +291,7 @@ public class AuthorizationCheckService {
         if (!Boolean.TRUE.equals(course.isEnrollmentEnabled())) {
             return EnrollmentAuthorization.ENROLLMENT_STATUS;
         }
-        if (!Boolean.TRUE.equals(course.enrollmentIsActive())) {
+        if (!course.enrollmentIsActive()) {
             return EnrollmentAuthorization.ENROLLMENT_PERIOD;
         }
         Set<Organization> courseOrganizations = course.getOrganizations();
@@ -950,6 +950,79 @@ public class AuthorizationCheckService {
     public void checkIsAtLeastRoleInExerciseElseThrow(Role role, long exerciseId) {
         if (!isAtLeastRoleInExercise(role, exerciseId)) {
             throw new AccessForbiddenException("Exercise", exerciseId);
+        }
+    }
+
+    /**
+     * Checks if the current user is at least an instructor in the given lecture unit.
+     *
+     * @param lectureUnitId the id of the lecture unit that needs to be checked
+     * @return true if the user is at least an instructor in the course, false otherwise
+     */
+    @CheckReturnValue
+    public boolean isAtLeastStudentInLectureUnit(long lectureUnitId) {
+        final var login = SecurityUtils.getCurrentUserLogin();
+        return login.filter(s -> userRepository.isAtLeastStudentInLectureUnit(s, lectureUnitId)).isPresent();
+    }
+
+    /**
+     * Checks if the current user is at least an instructor in the given lecture unit.
+     *
+     * @param lectureUnitId the id of the lecture unit that needs to be checked
+     * @return true if the user is at least an instructor in the course, false otherwise
+     */
+    @CheckReturnValue
+    public boolean isAtLeastTeachingAssistantInLectureUnit(long lectureUnitId) {
+        final var login = SecurityUtils.getCurrentUserLogin();
+        return login.filter(s -> userRepository.isAtLeastTeachingAssistantInLectureUnit(s, lectureUnitId)).isPresent();
+    }
+
+    /**
+     * Checks if the current user is at least an editor in the given lecture unit.
+     *
+     * @param lectureUnitId the id of the lecture unit that needs to be checked
+     * @return true if the user is at least an instructor in the course, false otherwise
+     */
+    @CheckReturnValue
+    public boolean isAtLeastEditorInLectureUnit(long lectureUnitId) {
+        final var login = SecurityUtils.getCurrentUserLogin();
+        return login.filter(s -> userRepository.isAtLeastEditorInLectureUnit(s, lectureUnitId)).isPresent();
+    }
+
+    /**
+     * Checks if the current user is at least an instructor in the given lecture unit.
+     *
+     * @param lectureUnitId the id of the lecture unit that needs to be checked
+     * @return true if the user is at least an instructor in the course, false otherwise
+     */
+    @CheckReturnValue
+    public boolean isAtLeastInstructorInLectureUnit(long lectureUnitId) {
+        final var login = SecurityUtils.getCurrentUserLogin();
+        return login.filter(s -> userRepository.isAtLeastInstructorInLectureUnit(s, lectureUnitId)).isPresent();
+    }
+
+    /**
+     * Checks if the current user has at least the given role in the given lecture unit.
+     *
+     * @param role          the role that should be checked
+     * @param lectureUnitId the id of the lecture unit that needs to be checked
+     * @return true if the user has at least the role in the lecture unit, false otherwise
+     */
+    @CheckReturnValue
+    public boolean isAtLeastRoleInLectureUnit(Role role, long lectureUnitId) {
+        return switch (role) {
+            case ADMIN -> isAdmin();
+            case INSTRUCTOR -> isAtLeastInstructorInLectureUnit(lectureUnitId);
+            case EDITOR -> isAtLeastEditorInLectureUnit(lectureUnitId);
+            case TEACHING_ASSISTANT -> isAtLeastTeachingAssistantInLectureUnit(lectureUnitId);
+            case STUDENT -> isAtLeastStudentInLectureUnit(lectureUnitId);
+            case ANONYMOUS -> false;
+        };
+    }
+
+    public void checkIsAtLeastRoleInLectureUnitElseThrow(Role role, long lectureUnitId) {
+        if (!isAtLeastRoleInLectureUnit(role, lectureUnitId)) {
+            throw new AccessForbiddenException("LectureUnit", lectureUnitId);
         }
     }
 }

@@ -270,4 +270,42 @@ describe('RedirectToIrisButtonComponent', () => {
 
         jest.spyOn(component.metisConversationService, 'activeConversation$', 'get').mockReturnValue(of(mockChannelDTO));
     }
+
+    it('should ignore undefined conversations', fakeAsync(() => {
+        jest.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
+        const spyCheckIrisSettings = jest.spyOn(component as any, 'checkIrisSettings');
+        jest.spyOn(component.metisConversationService, 'activeConversation$', 'get').mockReturnValue(of(undefined));
+
+        component.ngOnInit();
+        tick();
+
+        expect(spyCheckIrisSettings).not.toHaveBeenCalled();
+    }));
+
+    it('should call checkIrisSettings on new conversation with different id', fakeAsync(() => {
+        jest.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
+        const spyCheckIrisSettings = jest.spyOn(component as any, 'checkIrisSettings');
+
+        const firstConversation = { id: 1, type: ConversationType.CHANNEL, subType: ChannelSubType.EXERCISE } as ConversationDTO;
+        const secondConversation = { id: 2, type: ConversationType.CHANNEL, subType: ChannelSubType.EXERCISE } as ConversationDTO;
+        jest.spyOn(component.metisConversationService, 'activeConversation$', 'get').mockReturnValue(of(firstConversation, secondConversation));
+
+        component.ngOnInit();
+        tick();
+
+        expect(spyCheckIrisSettings).toHaveBeenCalledTimes(2);
+    }));
+
+    it('should not call checkIrisSettings if conversation id stays the same', fakeAsync(() => {
+        jest.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
+        const spyCheckIrisSettings = jest.spyOn(component as any, 'checkIrisSettings');
+
+        const sameConversation = { id: 1, type: ConversationType.CHANNEL, subType: ChannelSubType.EXERCISE } as ConversationDTO;
+        jest.spyOn(component.metisConversationService, 'activeConversation$', 'get').mockReturnValue(of(sameConversation, sameConversation));
+
+        component.ngOnInit();
+        tick();
+
+        expect(spyCheckIrisSettings).toHaveBeenCalledOnce();
+    }));
 });
