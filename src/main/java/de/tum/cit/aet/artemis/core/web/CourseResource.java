@@ -1267,7 +1267,7 @@ public class CourseResource {
         if (authCheckService.isAtLeastInstructorInCourse(course, instructorOrAdmin)) {
             Optional<User> userToAddToGroup = userRepository.findOneWithGroupsAndAuthoritiesByLogin(userLogin);
             if (userToAddToGroup.isEmpty()) {
-                throw new EntityNotFoundException("User", userLogin);
+                throw new EntityNotFoundException("User with login", userLogin);
             }
             User user = userToAddToGroup.get();
             courseService.addUserToGroup(user, group, course);
@@ -1355,7 +1355,7 @@ public class CourseResource {
         }
         Optional<User> userToRemoveFromGroup = userRepository.findOneWithGroupsAndAuthoritiesByLogin(userLogin);
         if (userToRemoveFromGroup.isEmpty()) {
-            throw new EntityNotFoundException("User", userLogin);
+            throw new EntityNotFoundException("User with login", userLogin);
         }
         courseService.removeUserFromGroup(userToRemoveFromGroup.get(), group);
         return ResponseEntity.ok().body(null);
