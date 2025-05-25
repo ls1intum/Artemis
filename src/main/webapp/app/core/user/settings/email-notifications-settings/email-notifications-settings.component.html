@@ -8,11 +8,11 @@
                     <dt>
                         <div class="form-check form-switch">
                             <input
-                                class="form-check-input"
                                 type="checkbox"
+                                class="form-check-input"
                                 [id]="'notification-' + type"
-                                [checked]="notificationSettings[type]"
-                                (change)="updateSetting(type, $event)"
+                                [(ngModel)]="notificationSettings[type]"
+                                (ngModelChange)="updateSetting(type, $event)"
                             />
                             <label class="form-check-label" [for]="'notification-' + type" jhiTranslate="{{ getNotificationTypeLabel(type) }}"> </label>
                         </div>

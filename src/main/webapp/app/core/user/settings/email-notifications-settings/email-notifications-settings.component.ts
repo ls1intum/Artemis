@@ -4,7 +4,6 @@ import { EmailNotificationSettingsService } from './email-notifications-settings
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { FEATURE_PASSKEY } from 'app/app.constants';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -13,7 +12,7 @@ import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-email-notifications-settings',
-    imports: [TranslateDirective, FaIconComponent, CommonModule, FormsModule],
+    imports: [TranslateDirective, FaIconComponent, FormsModule],
     templateUrl: './email-notifications-settings.component.html',
     styleUrls: ['../user-settings.scss'],
 })
@@ -52,17 +51,14 @@ export class EmailNotificationsSettingsComponent implements OnInit, OnDestroy {
         });
     }
 
-    updateSetting(type: string, event: Event): void {
-        const enabled = (event.target as HTMLInputElement).checked;
+    updateSetting(type: string, enabled: boolean): void {
         this.updateSub = this.emailNotificationSettingsService.update(type, enabled).subscribe({
             next: () => {
                 if (this.notificationSettings) {
                     this.notificationSettings[type] = enabled;
                 }
             },
-            error: (error) => {
-                onError(this.alertService, error);
-            },
+            error: (error) => onError(this.alertService, error),
         });
     }
 

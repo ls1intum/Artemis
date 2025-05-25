@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { of } from 'rxjs';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
@@ -22,7 +21,7 @@ describe('EmailNotificationsSettingsComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [CommonModule, FormsModule, EmailNotificationsSettingsComponent],
+            imports: [FormsModule, EmailNotificationsSettingsComponent],
             declarations: [MockDirective(TranslateDirective), MockPipe(ArtemisDatePipe)],
             providers: [{ provide: EmailNotificationSettingsService, useValue: mockService }, MockProvider(ProfileService), MockProvider(AlertService)],
             schemas: [CUSTOM_ELEMENTS_SCHEMA],
