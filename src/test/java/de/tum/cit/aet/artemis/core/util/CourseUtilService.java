@@ -61,11 +61,10 @@ import de.tum.cit.aet.artemis.fileupload.repository.FileUploadSubmissionReposito
 import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseFactory;
 import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseUtilService;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
-import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
-import de.tum.cit.aet.artemis.lecture.domain.VideoUnit;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureFactory;
@@ -331,7 +330,7 @@ public class CourseUtilService {
      *
      * @param userPrefix                  The prefix of the Course's user groups
      * @param withParticipations          True, if 5 participations by student1 should be added for the Course's Exercises
-     * @param withFiles                   True, if the LectureUnit of type AttachmentUnit should contain an Attachment with a link to an image file
+     * @param withFiles                   True, if the LectureUnit of type AttachmentVideoUnit should contain an Attachment with a link to an image file
      * @param numberOfTutorParticipations The number of tutor participations to add to the ModelingExercise ("withParticipations" must be true for this to have an effect)
      * @return A List of the created Courses
      * @throws IOException If a file cannot be loaded from resources
@@ -343,11 +342,10 @@ public class CourseUtilService {
             List<Lecture> lectures = new ArrayList<>(course.getLectures());
             for (int i = 0; i < lectures.size(); i++) {
                 TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).stream().findFirst().orElseThrow();
-                VideoUnit videoUnit = lectureUtilService.createVideoUnit();
                 TextUnit textUnit = lectureUtilService.createTextUnit();
-                AttachmentUnit attachmentUnit = lectureUtilService.createAttachmentUnit(withFiles);
+                AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnit(withFiles);
                 ExerciseUnit exerciseUnit = lectureUtilService.createExerciseUnit(textExercise);
-                lectures.set(i, lectureUtilService.addLectureUnitsToLecture(lectures.get(i), List.of(videoUnit, textUnit, attachmentUnit, exerciseUnit)));
+                lectures.set(i, lectureUtilService.addLectureUnitsToLecture(lectures.get(i), List.of(textUnit, attachmentVideoUnit, exerciseUnit)));
             }
             course.setLectures(new HashSet<>(lectures));
         }).toList();
