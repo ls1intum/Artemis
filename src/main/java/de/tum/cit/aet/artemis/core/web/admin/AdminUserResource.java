@@ -153,10 +153,10 @@ public class AdminUserResource {
     }
 
     /**
-     * PATCH users/:userId/deactivate : activate the user with the given login.
+     * PATCH users/:userId/deactivate : deactivate the user with the given login.
      *
-     * @param userId the id of the user to activate
-     * @return the ResponseEntity with status 200 (OK) and with body the activated user, or with status 404 (Not Found)
+     * @param userId the id of the user to deactivate
+     * @return the ResponseEntity with status 200 (OK) and with body the deactivated user, or with status 404 (Not Found)
      */
     @PatchMapping("users/{userId}/deactivate")
     public ResponseEntity<UserDTO> deactivateUser(@PathVariable long userId) {
