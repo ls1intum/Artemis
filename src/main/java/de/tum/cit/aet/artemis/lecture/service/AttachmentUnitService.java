@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
@@ -178,7 +179,7 @@ public class AttachmentUnitService {
     private void handleFile(MultipartFile file, Attachment attachment, boolean keepFilename, Long attachmentUnitId) {
         if (file != null && !file.isEmpty()) {
             Path basePath = FilePathConverter.getAttachmentUnitFileSystemPath().resolve(attachmentUnitId.toString());
-            Path savePath = fileService.saveFile(file, basePath, FilePathType.ATTACHMENT_UNIT, keepFilename);
+            Path savePath = FileUtil.saveFile(file, basePath, FilePathType.ATTACHMENT_UNIT, keepFilename);
             attachment.setLink(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.ATTACHMENT_UNIT, attachmentUnitId).toString());
             attachment.setUploadDate(ZonedDateTime.now());
         }
@@ -204,7 +205,7 @@ public class AttachmentUnitService {
 
             // Update student version of attachment
             Path basePath = FilePathConverter.getAttachmentUnitFileSystemPath().resolve(attachmentUnitId.toString());
-            Path savePath = fileService.saveFile(studentVersionFile, basePath.resolve("student"), FilePathType.STUDENT_VERSION_SLIDES, true);
+            Path savePath = FileUtil.saveFile(studentVersionFile, basePath.resolve("student"), FilePathType.STUDENT_VERSION_SLIDES, true);
             attachment.setStudentVersion(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.STUDENT_VERSION_SLIDES, attachmentUnitId).toString());
             attachmentRepository.save(attachment);
         }

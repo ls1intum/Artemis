@@ -9,7 +9,6 @@ import jakarta.validation.constraints.NotNull;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.exception.FilePathParsingException;
-import de.tum.cit.aet.artemis.core.service.FileService;
 
 /**
  * Converter for generating and parsing file system paths and external URIs for different file types in Artemis.
@@ -21,6 +20,12 @@ import de.tum.cit.aet.artemis.core.service.FileService;
  */
 public final class FilePathConverter {
 
+    /**
+     * The base path for file uploads, set from application properties.
+     * This is used as the root for all file storage locations.
+     * Must be initialized before any file path operations are performed, typically during application startup (see ArtemisApp.java).
+     */
+    @NotNull
     private static Path fileUploadPath;
 
     private FilePathConverter() {
@@ -314,7 +319,7 @@ public final class FilePathConverter {
         String id = entityId == null ? Constants.FILEPATH_ID_PLACEHOLDER : entityId.toString();
 
         return switch (filePathType) {
-            case TEMPORARY -> URI.create(FileService.DEFAULT_FILE_SUBPATH + filename);
+            case TEMPORARY -> URI.create(FileUtil.DEFAULT_FILE_SUBPATH + filename);
             case DRAG_AND_DROP_BACKGROUND -> URI.create("drag-and-drop/backgrounds/" + id + "/" + filename);
             case DRAG_ITEM -> URI.create("drag-and-drop/drag-items/" + id + "/" + filename);
             case COURSE_ICON -> URI.create("course/icons/" + id + "/" + filename);

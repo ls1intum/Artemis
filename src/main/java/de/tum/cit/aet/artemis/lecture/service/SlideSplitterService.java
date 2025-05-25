@@ -32,8 +32,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
-import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
@@ -51,16 +51,13 @@ public class SlideSplitterService {
 
     private static final Logger log = LoggerFactory.getLogger(SlideSplitterService.class);
 
-    private final FileService fileService;
-
     private final SlideRepository slideRepository;
 
     private final SlideUnhideService slideUnhideService;
 
     private final ExerciseRepository exerciseRepository;
 
-    public SlideSplitterService(FileService fileService, SlideRepository slideRepository, SlideUnhideService slideUnhideService, ExerciseRepository exerciseRepository) {
-        this.fileService = fileService;
+    public SlideSplitterService(SlideRepository slideRepository, SlideUnhideService slideUnhideService, ExerciseRepository exerciseRepository) {
         this.slideRepository = slideRepository;
         this.slideUnhideService = slideUnhideService;
         this.exerciseRepository = exerciseRepository;
@@ -126,8 +123,8 @@ public class SlideSplitterService {
                 byte[] imageInByte = bufferedImageToByteArray(bufferedImage, "png");
                 int slideNumber = page + 1;
                 String filename = fileNameWithOutExt + "_" + attachmentUnit.getId() + "_Slide_" + slideNumber + ".png";
-                MultipartFile slideFile = fileService.convertByteArrayToMultipart(filename, ".png", imageInByte);
-                Path savePath = fileService.saveFile(slideFile, FilePathConverter.getAttachmentUnitFileSystemPath().resolve(attachmentUnit.getId().toString()).resolve("slide")
+                MultipartFile slideFile = FileUtil.convertByteArrayToMultipart(filename, ".png", imageInByte);
+                Path savePath = FileUtil.saveFile(slideFile, FilePathConverter.getAttachmentUnitFileSystemPath().resolve(attachmentUnit.getId().toString()).resolve("slide")
                         .resolve(String.valueOf(slideNumber)).resolve(filename));
 
                 Slide slideEntity = new Slide();
@@ -258,8 +255,8 @@ public class SlideSplitterService {
             BufferedImage bufferedImage = pdfRenderer.renderImageWithDPI(pdfPageIndex, 72, ImageType.RGB);
             byte[] imageInByte = bufferedImageToByteArray(bufferedImage, "png");
             String filename = fileNameWithOutExt + "_" + attachmentUnit.getId() + "_Slide_" + order + ".png";
-            MultipartFile slideFile = fileService.convertByteArrayToMultipart(filename, ".png", imageInByte);
-            Path savePath = fileService.saveFile(slideFile, FilePathConverter.getAttachmentUnitFileSystemPath().resolve(attachmentUnit.getId().toString()).resolve("slide")
+            MultipartFile slideFile = FileUtil.convertByteArrayToMultipart(filename, ".png", imageInByte);
+            Path savePath = FileUtil.saveFile(slideFile, FilePathConverter.getAttachmentUnitFileSystemPath().resolve(attachmentUnit.getId().toString()).resolve("slide")
                     .resolve(String.valueOf(order)).resolve(filename));
 
             slideEntity.setSlideImagePath(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.SLIDE, (long) order).toString());
@@ -281,8 +278,8 @@ public class SlideSplitterService {
                     BufferedImage image = ImageIO.read(existingFile);
                     byte[] imageInByte = bufferedImageToByteArray(image, "png");
 
-                    MultipartFile slideFile = fileService.convertByteArrayToMultipart(newFilename, ".png", imageInByte);
-                    Path savePath = fileService.saveFile(slideFile, FilePathConverter.getAttachmentUnitFileSystemPath().resolve(attachmentUnit.getId().toString()).resolve("slide")
+                    MultipartFile slideFile = FileUtil.convertByteArrayToMultipart(newFilename, ".png", imageInByte);
+                    Path savePath = FileUtil.saveFile(slideFile, FilePathConverter.getAttachmentUnitFileSystemPath().resolve(attachmentUnit.getId().toString()).resolve("slide")
                             .resolve(String.valueOf(order)).resolve(newFilename));
 
                     slideEntity.setSlideImagePath(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.SLIDE, (long) order).toString());

@@ -21,6 +21,7 @@ import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
@@ -136,7 +137,7 @@ public class AttachmentService {
         Path basePath = FilePathConverter.getAttachmentUnitFileSystemPath().resolve(attachmentUnitId.toString()).resolve("student");
         Files.createDirectories(basePath);
 
-        String sanitizedName = fileService.checkAndSanitizeFilename(attachment.getName());
+        String sanitizedName = FileUtil.checkAndSanitizeFilename(attachment.getName());
         String filename = sanitizedName + ".pdf";
         Path savePath = basePath.resolve(filename);
 

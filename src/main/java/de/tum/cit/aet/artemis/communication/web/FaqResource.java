@@ -234,7 +234,6 @@ public class FaqResource {
     @PostMapping("courses/{courseId}/faqs/ingest")
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<Void> ingestFaqInIris(@PathVariable Long courseId, @RequestParam(required = false) Optional<Long> faqId) {
-        Course course = courseRepository.findByIdElseThrow(courseId);
         faqService.ingestFaqsIntoPyris(courseId, faqId);
         return ResponseEntity.ok().build();
     }
@@ -261,9 +260,4 @@ public class FaqResource {
             checkRoleForCourse(courseId, Role.INSTRUCTOR);
         }
     }
-
-    private boolean checkIfFaqIsAccepted(Faq faq) {
-        return faq.getFaqState() == FaqState.ACCEPTED;
-    }
-
 }

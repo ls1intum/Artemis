@@ -213,7 +213,7 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
         var isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(channelFromDb.orElseThrow().getCourse(), userToCheck);
         var isChannelModerator = isChannelModerator(channel.getId(), userToCheck.getId());
 
-        var isPrivateChannel = Boolean.FALSE.equals(channel.getIsPublic());
+        var isPrivateChannel = !channel.getIsPublic();
         if (isJoinRequest) {
             if (isPrivateChannel && !isAtLeastInstructor) {
                 throw new AccessForbiddenException("You are not allowed to join this channel");

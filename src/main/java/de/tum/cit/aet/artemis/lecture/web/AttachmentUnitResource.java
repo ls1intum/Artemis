@@ -240,10 +240,7 @@ public class AttachmentUnitResource {
                     lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureId));
             savedAttachmentUnits.forEach(attachmentUnitService::prepareAttachmentUnitForClient);
 
-            if (competencyProgressApi.isPresent()) {
-                var api = competencyProgressApi.get();
-                savedAttachmentUnits.forEach(api::updateProgressByLearningObjectAsync);
-            }
+            competencyProgressApi.ifPresent(api -> savedAttachmentUnits.forEach(api::updateProgressByLearningObjectAsync));
             return ResponseEntity.ok().body(savedAttachmentUnits);
         }
         catch (IOException e) {

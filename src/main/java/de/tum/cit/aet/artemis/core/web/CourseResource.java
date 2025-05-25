@@ -108,6 +108,7 @@ import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -292,7 +293,7 @@ public class CourseResource {
 
         if (file != null) {
             Path basePath = FilePathConverter.getCourseIconFilePath();
-            Path savePath = fileService.saveFile(file, basePath, FilePathType.COURSE_ICON, false);
+            Path savePath = FileUtil.saveFile(file, basePath, FilePathType.COURSE_ICON, false);
             courseUpdate.setCourseIcon(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.COURSE_ICON, courseId).toString());
             if (existingCourse.getCourseIcon() != null) {
                 // delete old course icon
