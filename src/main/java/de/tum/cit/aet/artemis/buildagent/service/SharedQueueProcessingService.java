@@ -180,7 +180,7 @@ public class SharedQueueProcessingService {
     private void removeListener() {
         // check if Hazelcast is still active, before invoking this
         try {
-            if (hazelcastInstance != null && hazelcastInstance.getLifecycleService().isRunning()) {
+            if (distributedDataAccessService.isInstanceRunning()) {
                 distributedDataAccessService.getDistributedQueuedJobs().removeItemListener(this.listenerId);
             }
         }

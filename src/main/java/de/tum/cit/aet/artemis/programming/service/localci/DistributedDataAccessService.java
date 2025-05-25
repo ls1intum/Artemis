@@ -284,4 +284,14 @@ public class DistributedDataAccessService {
     public String getLocalMemberAddress() {
         return hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
     }
+
+    /**
+     * Checks if the Hazelcast instance is active and operational.
+     *
+     * @return {@code true} if the Hazelcast instance has been initialized and is actively running,
+     *         {@code false} if the instance has not been initialized or is no longer running
+     */
+    public boolean isInstanceRunning() {
+        return hazelcastInstance != null && hazelcastInstance.getLifecycleService().isRunning();
+    }
 }
