@@ -102,6 +102,8 @@ public class LectureUnitProcessingService {
 
                 // setup attachmentVideoUnit and attachment
                 attachmentVideoUnit.setDescription("");
+                attachmentVideoUnit.setName(lectureUnit.unitName());
+                attachmentVideoUnit.setReleaseDate(lectureUnit.releaseDate());
                 attachment.setName(lectureUnit.unitName());
                 attachment.setAttachmentType(AttachmentType.FILE);
                 attachment.setReleaseDate(lectureUnit.releaseDate());

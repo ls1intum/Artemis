@@ -243,21 +243,6 @@ public class LectureUtilService {
     }
 
     /**
-     * Creates and saves an AttachmentUnit with a video.
-     *
-     * @param videoSource the link to the lecture video
-     * @return The created AttachmentVideoUnit
-     */
-    public AttachmentVideoUnit createAttachmentVideoUnitWithVideoSource(String videoSource) {
-        ZonedDateTime started = ZonedDateTime.now().minusDays(5);
-        AttachmentVideoUnit attachmentVideoUnit = new AttachmentVideoUnit();
-        attachmentVideoUnit.setDescription("Lorem Ipsum");
-        attachmentVideoUnit.setVideoSource(videoSource);
-        attachmentVideoUnit = attachmentVideoUnitRepository.save(attachmentVideoUnit);
-        return attachmentVideoUnitRepository.save(attachmentVideoUnit);
-    }
-
-    /**
      * Creates and saves an AttachmentVideoUnit with an Attachment that has a file. Also creates and saves the given number of Slides for the AttachmentVideoUnit.
      * The Slides link to image files.
      *

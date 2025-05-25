@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,8 @@ import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.dto.HiddenPageInfoDTO;
+import de.tum.cit.aet.artemis.lecture.dto.SlideOrderDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentVideoUnitRepository;
 
@@ -98,7 +101,7 @@ public class AttachmentVideoUnitService {
      * @return The updated attachment video unit.
      */
     public AttachmentVideoUnit updateAttachmentVideoUnit(AttachmentVideoUnit existingAttachmentVideoUnit, AttachmentVideoUnit updateUnit, Attachment updateAttachment,
-            MultipartFile updateFile, boolean keepFilename, String hiddenPages, String pageOrder) {
+            MultipartFile updateFile, boolean keepFilename, List<HiddenPageInfoDTO> hiddenPages, List<SlideOrderDTO> pageOrder) {
         Set<CompetencyLectureUnitLink> existingCompetencyLinks = new HashSet<>(existingAttachmentVideoUnit.getCompetencyLinks());
 
         existingAttachmentVideoUnit.setDescription(updateUnit.getDescription());
@@ -120,6 +123,7 @@ public class AttachmentVideoUnitService {
         competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(existingAttachmentVideoUnit, Optional.of(updateUnit)));
 
         if (updateAttachment == null) {
+            prepareAttachmentVideoUnitForClient(existingAttachmentVideoUnit);
             return existingAttachmentVideoUnit;
         }
 
@@ -172,13 +176,13 @@ public class AttachmentVideoUnitService {
      * @param attachmentVideoUnit the attachment video unit to update
      * @param hiddenPages         the hidden pages in the attachment
      */
-    private void updateAttachment(Attachment existingAttachment, Attachment updateAttachment, AttachmentVideoUnit attachmentVideoUnit, String hiddenPages) {
+    private void updateAttachment(Attachment existingAttachment, Attachment updateAttachment, AttachmentVideoUnit attachmentVideoUnit, List<HiddenPageInfoDTO> hiddenPages) {
         // Make sure that the original references are preserved.
         existingAttachment.setAttachmentVideoUnit(attachmentVideoUnit);
         existingAttachment.setReleaseDate(updateAttachment.getReleaseDate());
         existingAttachment.setName(updateAttachment.getName());
         existingAttachment.setAttachmentType(updateAttachment.getAttachmentType());
-        if (hiddenPages == null && existingAttachment.getStudentVersion() != null) {
+        if (CollectionUtils.isEmpty(hiddenPages) && existingAttachment.getStudentVersion() != null) {
             existingAttachment.setStudentVersion(null);
         }
     }

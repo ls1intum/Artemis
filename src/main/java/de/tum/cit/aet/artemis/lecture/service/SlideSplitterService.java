@@ -30,9 +30,6 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.service.FileService;
@@ -40,9 +37,9 @@ import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
-import de.tum.cit.aet.artemis.lecture.domain.HiddenPageInfo;
-import de.tum.cit.aet.artemis.lecture.domain.HiddenPagesData;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
+import de.tum.cit.aet.artemis.lecture.dto.HiddenPageInfoDTO;
+import de.tum.cit.aet.artemis.lecture.dto.SlideOrderDTO;
 import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 
 /**
@@ -96,7 +93,7 @@ public class SlideSplitterService {
      * @param pageOrder           The page order of the attachmentVideoUnit.
      */
     @Async
-    public void splitAttachmentVideoUnitIntoSingleSlides(AttachmentVideoUnit attachmentVideoUnit, String hiddenPages, String pageOrder) {
+    public void splitAttachmentVideoUnitIntoSingleSlides(AttachmentVideoUnit attachmentVideoUnit, List<HiddenPageInfoDTO> hiddenPages, List<SlideOrderDTO> pageOrder) {
         Path attachmentPath = FilePathConverter.fileSystemPathForExternalUri(URI.create(attachmentVideoUnit.getAttachment().getLink()), FilePathType.ATTACHMENT_UNIT);
         File file = attachmentPath.toFile();
         try (PDDocument document = Loader.loadPDF(file)) {
@@ -155,13 +152,13 @@ public class SlideSplitterService {
      * @param hiddenPages         The hidden pages information.
      * @param pageOrder           The order of pages in the PDF.
      */
-    public void splitAttachmentVideoUnitIntoSingleSlides(PDDocument document, AttachmentVideoUnit attachmentVideoUnit, String pdfFilename, String hiddenPages, String pageOrder) {
-        log.debug("Processing slides for AttachmentVideoUnit with hidden pages {}", attachmentVideoUnit.getAttachment().getName());
+    public void splitAttachmentVideoUnitIntoSingleSlides(PDDocument document, AttachmentVideoUnit attachmentVideoUnit, String pdfFilename, List<HiddenPageInfoDTO> hiddenPages,
+            List<SlideOrderDTO> pageOrder) {
+        log.debug("Processing slides for Attachment Video Unit with hidden pages {}", attachmentVideoUnit.getAttachment().getName());
 
         try {
-            // Parse the page order and hidden pages information
-            List<Map<String, Object>> pageOrderList = parsePageOrder(pageOrder);
-            HiddenPagesData hiddenPagesData = HiddenPagesData.fromJson(hiddenPages);
+            // Create a map of hiddenPages for easier lookup
+            Map<String, HiddenPageInfoDTO> hiddenPagesMap = hiddenPages != null ? hiddenPages.stream().collect(Collectors.toMap(HiddenPageInfoDTO::slideId, dto -> dto)) : Map.of();
 
             // Retrieve existing slides
             List<Slide> existingSlides = slideRepository.findAllByAttachmentVideoUnitId(attachmentVideoUnit.getId());
@@ -172,12 +169,14 @@ public class SlideSplitterService {
             String fileNameWithOutExt = FilenameUtils.removeExtension(pdfFilename);
 
             // Process each slide in the page order
-            for (Map<String, Object> page : pageOrderList) {
-                processSlide(page, attachmentVideoUnit, existingSlidesMap, hiddenPagesData, pdfRenderer, fileNameWithOutExt, document.getNumberOfPages());
+            if (pageOrder != null) {
+                for (SlideOrderDTO page : pageOrder) {
+                    processSlide(page, attachmentVideoUnit, existingSlidesMap, hiddenPagesMap, pdfRenderer, fileNameWithOutExt, document.getNumberOfPages());
+                }
             }
 
             // Clean up slides that are no longer in the page order
-            cleanupRemovedSlides(pageOrderList, existingSlides);
+            cleanupRemovedSlides(pageOrder, existingSlides);
         }
         catch (IOException e) {
             log.error("Error while splitting AttachmentVideoUnit {} into single slides", attachmentVideoUnit.getId(), e);
@@ -188,10 +187,10 @@ public class SlideSplitterService {
     /**
      * Process a single slide in the page order.
      */
-    private void processSlide(Map<String, Object> page, AttachmentVideoUnit attachmentVideoUnit, Map<String, Slide> existingSlidesMap, HiddenPagesData hiddenPagesData,
+    private void processSlide(SlideOrderDTO page, AttachmentVideoUnit attachmentVideoUnit, Map<String, Slide> existingSlidesMap, Map<String, HiddenPageInfoDTO> hiddenPagesMap,
             PDFRenderer pdfRenderer, String fileNameWithOutExt, int totalPages) throws IOException {
-        String slideId = String.valueOf(page.get("slideId"));
-        int order = ((Number) page.get("order")).intValue();
+        String slideId = page.slideId();
+        int order = page.order();
 
         Slide slideEntity;
         boolean isNewSlide = false;
@@ -207,7 +206,7 @@ public class SlideSplitterService {
         }
 
         slideEntity.setSlideNumber(order);
-        ZonedDateTime previousHiddenValue = updateSlideHiddenStatus(slideEntity, hiddenPagesData, slideId);
+        ZonedDateTime previousHiddenValue = updateSlideHiddenStatus(slideEntity, hiddenPagesMap, slideId);
 
         if (isNewSlide) {
             createNewSlideImage(slideEntity, pdfRenderer, fileNameWithOutExt, attachmentVideoUnit, order, totalPages);
@@ -226,12 +225,12 @@ public class SlideSplitterService {
      *
      * @return The previous hidden value
      */
-    private ZonedDateTime updateSlideHiddenStatus(Slide slideEntity, HiddenPagesData hiddenPagesData, String slideId) {
+    private ZonedDateTime updateSlideHiddenStatus(Slide slideEntity, Map<String, HiddenPageInfoDTO> hiddenPagesMap, String slideId) {
         ZonedDateTime previousHiddenValue = slideEntity.getHidden();
-        HiddenPageInfo hiddenPageInfo = hiddenPagesData.getHiddenPageInfo(slideId);
+        HiddenPageInfoDTO hiddenPageInfo = hiddenPagesMap.get(slideId);
 
         if (hiddenPageInfo != null) {
-            slideEntity.setHidden(hiddenPageInfo.hiddenDate());
+            slideEntity.setHidden(hiddenPageInfo.date());
 
             if (hiddenPageInfo.hasExercise()) {
                 Optional<Exercise> exercise = exerciseRepository.findById(hiddenPageInfo.exerciseId());
@@ -247,15 +246,6 @@ public class SlideSplitterService {
         }
 
         return previousHiddenValue;
-    }
-
-    /**
-     * Parse the page order JSON string into a list of maps.
-     */
-    private List<Map<String, Object>> parsePageOrder(String pageOrder) throws IOException {
-        ObjectMapper objectMapper = new ObjectMapper();
-        return objectMapper.readValue(pageOrder, new TypeReference<>() {
-        });
     }
 
     /**
@@ -323,8 +313,12 @@ public class SlideSplitterService {
     /**
      * Update slides that are no longer in the page order by setting their attachmentVideoUnit to null instead of deleting them.
      */
-    private void cleanupRemovedSlides(List<Map<String, Object>> pageOrderList, List<Slide> existingSlides) {
-        Set<String> slideIdsInPageOrder = pageOrderList.stream().map(page -> String.valueOf(page.get("slideId"))).filter(id -> !id.startsWith("temp_")).collect(Collectors.toSet());
+    private void cleanupRemovedSlides(List<SlideOrderDTO> pageOrderList, List<Slide> existingSlides) {
+        if (pageOrderList == null || pageOrderList.isEmpty()) {
+            return;
+        }
+
+        Set<String> slideIdsInPageOrder = pageOrderList.stream().map(SlideOrderDTO::slideId).filter(id -> !id.startsWith("temp_")).collect(Collectors.toSet());
 
         if (!slideIdsInPageOrder.isEmpty()) {
             List<Slide> slidesToDetach = existingSlides.stream().filter(slide -> !slideIdsInPageOrder.contains(String.valueOf(slide.getId()))).toList();

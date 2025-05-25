@@ -674,16 +674,21 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             this.getFinalPageOrder().then((finalPageOrder) => {
                 formData.append(
                     'pageOrder',
-                    JSON.stringify(
-                        finalPageOrder.map((page) => ({
-                            slideId: page.slideId,
-                            order: page.order,
-                        })),
+                    new Blob(
+                        [
+                            JSON.stringify(
+                                finalPageOrder.map((page) => ({
+                                    slideId: page.slideId,
+                                    order: page.order,
+                                })),
+                            ),
+                        ],
+                        { type: 'application/json' },
                     ),
                 );
 
                 if (hiddenPages.length > 0) {
-                    formData.append('hiddenPages', JSON.stringify(hiddenPages));
+                    formData.append('hiddenPages', new Blob([JSON.stringify(hiddenPages)], { type: 'application/json' }));
                 }
 
                 this.attachmentVideoUnitService.update(this.attachmentVideoUnit()!.lecture!.id!, this.attachmentVideoUnit()!.id!, formData).subscribe({
