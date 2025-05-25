@@ -18,6 +18,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.authentication.event.AuthenticationSuccessEvent;
 import org.springframework.security.core.Authentication;
 
+import de.tum.cit.aet.artemis.communication.service.EmailNotificationSettingService;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -32,11 +33,14 @@ class ArtemisAuthenticationEventListenerTest {
     @Mock
     private MailSendingService mailSendingService;
 
+    @Mock
+    private EmailNotificationSettingService emailNotificationSettingService;
+
     private ArtemisAuthenticationEventListener listener;
 
     @BeforeEach
     void setUp() {
-        listener = new ArtemisAuthenticationEventListener(userRepository, mailSendingService);
+        listener = new ArtemisAuthenticationEventListener(userRepository, mailSendingService, emailNotificationSettingService);
     }
 
     @Test

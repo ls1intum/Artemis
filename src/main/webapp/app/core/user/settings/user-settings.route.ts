@@ -94,6 +94,14 @@ export const routes: Routes = [
                     pageTitle: 'artemisApp.userSettings.categories.IDE_PREFERENCES',
                 },
             },
+            {
+                path: 'email-notifications',
+                loadComponent: () =>
+                    import('app/core/user/settings/email-notifications-settings/email-notifications-settings.component').then((m) => m.EmailNotificationsSettingsComponent),
+                data: {
+                    pageTitle: 'artemisApp.userSettings.categories.EMAIL_NOTIFICATIONS',
+                },
+            },
         ],
     },
 ];
