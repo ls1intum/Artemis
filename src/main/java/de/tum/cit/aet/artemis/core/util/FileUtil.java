@@ -87,14 +87,14 @@ public class FileUtil {
     private static final List<String> IGNORED_DIRECTORY_SUFFIXES = List.of(".xcassets", ".colorset", ".appiconset", ".xcworkspace", ".xcodeproj", ".swiftpm", ".tests", ".mvn");
 
     /**
-     * Sanitize the filename
+     * Sanitizes the provided filename string.
      * <ul>
-     * <li>replace all invalid characters with an underscore</li>
-     * <li>replace multiple . with a single one</li>
+     * <li>Replaces all characters that are not letters (a-z, A-Z), digits (0-9), dots (.), or hyphens (-) with underscores (_).</li>
+     * <li>Collapses multiple consecutive dots (.) into a single dot (.) to avoid issues with file extensions or hidden files.</li>
      * </ul>
      *
-     * @param filename the filename to sanitize
-     * @return the sanitized filename
+     * @param filename the original filename string to sanitize
+     * @return the sanitized filename, with invalid characters replaced and multiple dots reduced
      */
     public static String sanitizeFilename(String filename) {
         return filename.replaceAll("[^a-zA-Z\\d.\\-]", "_").replaceAll("\\.+", ".");
