@@ -793,7 +793,7 @@ public class ExamResource {
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
         // Forbid cleaning the course if no archive has been created
         if (!exam.hasExamArchive()) {
-            throw new BadRequestAlertException("Failed to clean up exam " + examId + " because it needs to be archived first.", ENTITY_NAME, "archivenonexistant");
+            throw new BadRequestAlertException("Failed to clean up exam " + examId + " because it needs to be archived first.", ENTITY_NAME, "archivenonexistent");
         }
         examService.cleanupExam(examId, principal);
         return ResponseEntity.ok().build();

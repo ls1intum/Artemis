@@ -145,7 +145,7 @@ public class CourseArchiveResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         // Forbid cleaning the course if no archive has been created
         if (!course.hasCourseArchive()) {
-            throw new BadRequestAlertException("Failed to clean up course " + courseId + " because it needs to be archived first.", Course.ENTITY_NAME, "archivenonexistant");
+            throw new BadRequestAlertException("Failed to clean up course " + courseId + " because it needs to be archived first.", Course.ENTITY_NAME, "archivenonexistent");
         }
         courseService.cleanupCourse(courseId, principal);
         return ResponseEntity.ok().build();
