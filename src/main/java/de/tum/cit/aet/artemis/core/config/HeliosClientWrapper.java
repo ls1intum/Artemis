@@ -5,6 +5,7 @@ import java.lang.reflect.Method;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 /**
@@ -21,6 +22,7 @@ import org.springframework.stereotype.Component;
  *      >Helios Status Spring Starter README</a>
  */
 @Component
+@Profile(Constants.PROFILE_CORE)
 public class HeliosClientWrapper {
 
     private static final Logger log = LoggerFactory.getLogger(HeliosClientWrapper.class);
