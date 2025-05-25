@@ -3,7 +3,7 @@ import { IrisSettingsUpdateComponent } from 'app/iris/manage/settings/iris-setti
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
-import { ButtonComponent } from 'app/shared/components/button/button.component';
+import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { IrisCommonSubSettingsUpdateComponent } from 'app/iris/manage/settings/iris-settings-update/iris-common-sub-settings-update/iris-common-sub-settings-update.component';
 import { mockSettings } from 'test/helpers/mocks/iris/mock-settings';
 import { IrisGlobalSettingsUpdateComponent } from 'app/iris/manage/settings/iris-global-settings-update/iris-global-settings-update.component';
@@ -14,11 +14,13 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 
 describe('IrisGlobalSettingsUpdateComponent Component', () => {
     let comp: IrisGlobalSettingsUpdateComponent;
     let fixture: ComponentFixture<IrisGlobalSettingsUpdateComponent>;
     let irisSettingsService: IrisSettingsService;
+    let featureToggleService: FeatureToggleService;
     let getSettingsSpy: jest.SpyInstance;
 
     beforeEach(() => {
@@ -26,6 +28,7 @@ describe('IrisGlobalSettingsUpdateComponent Component', () => {
             declarations: [IrisGlobalSettingsUpdateComponent, IrisSettingsUpdateComponent, MockComponent(IrisCommonSubSettingsUpdateComponent), MockComponent(ButtonComponent)],
             providers: [
                 MockProvider(IrisSettingsService),
+                MockProvider(FeatureToggleService),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
             ],
@@ -33,6 +36,8 @@ describe('IrisGlobalSettingsUpdateComponent Component', () => {
             .compileComponents()
             .then(() => {
                 irisSettingsService = TestBed.inject(IrisSettingsService);
+                featureToggleService = TestBed.inject(FeatureToggleService);
+                jest.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
 
                 // Setup
                 const irisSettings = mockSettings();
@@ -55,7 +60,7 @@ describe('IrisGlobalSettingsUpdateComponent Component', () => {
         expect(comp.settingsUpdateComponent).toBeTruthy();
         expect(getSettingsSpy).toHaveBeenCalledOnce();
 
-        expect(fixture.debugElement.queryAll(By.directive(IrisCommonSubSettingsUpdateComponent))).toHaveLength(7);
+        expect(fixture.debugElement.queryAll(By.directive(IrisCommonSubSettingsUpdateComponent))).toHaveLength(8);
     });
 
     it('Can deactivate correctly', () => {

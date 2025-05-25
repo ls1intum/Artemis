@@ -1,7 +1,6 @@
 {
     "artemisApp": {
         "userSettings": {
-            "settings": "Benachrichtigungseinstellungen",
             "saveChanges": "Änderungen speichern",
             "saveSettingsSuccessAlert": "Die Einstellungen wurden erfolgreich gespeichert.",
             "userSettings": "Benutzereinstellungen",
@@ -87,8 +86,7 @@
                 "actions": "Aktionen"
             },
             "passkeySettingsPage": {
-                "infoText": "Passkeys sind Webauthn-Anmeldeinformationen, die deine Identität mithilfe von Berührung, Gesichtserkennung, einem Gerätepasswort oder einer PIN überprüfen. Passkeys können als Passwortersatz verwendet werden.",
-                "onlyOnePerAuthenticator": "Du kannst nur einen Passkey pro Authentifikator für diese Seite registrieren (z. B. einen in Apple Keychain und einen anderen im Google Password Manager, etc.). Das Erstellen eines zweiten Passkeys mit dem gleichen Authentifikator wird den ersten registrierten Passkey überschreiben, den du manuell in Artemis entfernen musst.",
+                "infoText": "Passkeys bieten eine moderne, sichere und bequeme Alternative zu Passwörtern. Sie schützen dein Konto vor Phishing, Diebstahl von Zugangsdaten und der Wiederverwendung von Passwörtern.",
                 "learnMore": "Erfahre mehr über Passkeys.",
                 "noneRegistered": "Du hast bisher keine Passkeys bei Artemis registriert.",
                 "deletePasskeyQuestion": "Möchtest du deinen Passkey für passwortlose Authentifikation mit Artemis wirklich löschen?",
@@ -101,13 +99,27 @@
                 "validation": {
                     "labelLength": "Die Passkey-Bezeichnung darf maximal {{maxLabelLength}} Zeichen lang sein."
                 },
+                "success": {
+                    "registration": "Dein Passkey wurde erfolgreich registriert. Du kannst deine Passkeys in den Benutzereinstellungen verwalten."
+                },
                 "error": {
+                    "invalidCredential": "Es wurde ein ungültiger Passkey bereitgestellt. Bitte versuche es erneut mit einem anderen Authentifikator (z. B. Apple Keychain, Windows Hello, Google Password Manager, etc.).",
                     "login": "Login mit Passkey fehlgeschlagen. Bitte überprüfe, ob du einen Passkey bei Artemis registriert hast.",
                     "passkeyAlreadyRegistered": "Du hast bereits einen Passkey mit dem ausgewählten Authentifikator registriert. Wähle einen anderen Authentifikator, wenn du einen weiteren Passkey registrieren möchtest.",
                     "registration": "Der Passkey konnte nicht registriert werden. Bitte versuche es erneut.",
                     "save": "Der Passkey konnte nicht gespeichert werden. Bitte versuche es erneut.",
                     "delete": "Der Passkey konnte nicht gelöscht werden. Bitte versuche es erneut."
                 }
+            },
+            "setupPasskeyModal": {
+                "title": "Bleib sicher mit Passkeys",
+                "description": {
+                    "howItWorks": "Dein Passkey wird auf deinem Gerät gespeichert und ist durch biometrische Daten oder eine PIN gesichert, was das Einloggen schnell und sicher macht – ohne dass du dir ein Passwort merken musst.",
+                    "recommendation": "Wir empfehlen, jetzt einen Passkey einzurichten, um die Sicherheit deines Kontos zu erhöhen und von einer nahtlosen und passwortfreien Anmeldung zu profitieren."
+                },
+                "setupLater": "Später einrichten",
+                "setupPasskey": "Passkey einrichten",
+                "remindMeIn30Days": "Erinnere mich in 30 Tagen"
             },
             "accountInformationPage": {
                 "registrationNumber": "Matrikelnummer",

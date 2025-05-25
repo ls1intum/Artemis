@@ -94,6 +94,33 @@ import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.ser
     ],
 })
 export class NavbarComponent implements OnInit, OnDestroy {
+    protected readonly faBars = faBars;
+    protected readonly faThLarge = faThLarge;
+    protected readonly faThList = faThList;
+    protected readonly faUser = faUser;
+    protected readonly faBell = faBell;
+    protected readonly faUniversity = faUniversity;
+    protected readonly faEye = faEye;
+    protected readonly faCog = faCog;
+    protected readonly faWrench = faWrench;
+    protected readonly faLock = faLock;
+    protected readonly faStamp = faStamp;
+    protected readonly faFlag = faFlag;
+    protected readonly faBook = faBook;
+    protected readonly faTasks = faTasks;
+    protected readonly faList = faList;
+    protected readonly faRobot = faRobot;
+    protected readonly faHeart = faHeart;
+    protected readonly faTachometerAlt = faTachometerAlt;
+    protected readonly faToggleOn = faToggleOn;
+    protected readonly faBookOpen = faBookOpen;
+    protected readonly faUserPlus = faUserPlus;
+    protected readonly faSignOutAlt = faSignOutAlt;
+    protected readonly faGears = faGears;
+    protected readonly faPuzzlePiece = faPuzzlePiece;
+    protected readonly faChevronRight = faChevronRight;
+    protected readonly faBroom = faBroom;
+
     private accountService = inject(AccountService);
     private loginService = inject(LoginService);
     private translateService = inject(TranslateService);
@@ -143,34 +170,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
     exerciseTitle?: string;
     lectureTitle?: string;
     examTitle?: string;
-
-    // Icons
-    faBars = faBars;
-    faThLarge = faThLarge;
-    faThList = faThList;
-    faUser = faUser;
-    faBell = faBell;
-    faUniversity = faUniversity;
-    faEye = faEye;
-    faCog = faCog;
-    faWrench = faWrench;
-    faLock = faLock;
-    faStamp = faStamp;
-    faFlag = faFlag;
-    faBook = faBook;
-    faTasks = faTasks;
-    faList = faList;
-    faRobot = faRobot;
-    faHeart = faHeart;
-    faTachometerAlt = faTachometerAlt;
-    faToggleOn = faToggleOn;
-    faBookOpen = faBookOpen;
-    faUserPlus = faUserPlus;
-    faSignOutAlt = faSignOutAlt;
-    faGears = faGears;
-    faPuzzlePiece = faPuzzlePiece;
-    faChevronRight = faChevronRight;
-    faBroom = faBroom;
 
     private standardizedCompetencySubscription: Subscription;
     private authStateSubscription: Subscription;

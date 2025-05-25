@@ -21,9 +21,10 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.domain.Faq;
+import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
-import de.tum.cit.aet.artemis.core.service.FilePathService;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.dto.IngestionState;
 import de.tum.cit.aet.artemis.iris.exception.IrisInternalPyrisErrorException;
@@ -166,7 +167,7 @@ public class PyrisWebhookService {
     }
 
     private String attachmentToBase64(AttachmentUnit attachmentUnit) {
-        Path path = FilePathService.actualPathForPublicPathOrThrow(URI.create(attachmentUnit.getAttachment().getLink()));
+        Path path = FilePathConverter.fileSystemPathForExternalUri(URI.create(attachmentUnit.getAttachment().getLink()), FilePathType.ATTACHMENT_UNIT);
         try {
             byte[] fileBytes = Files.readAllBytes(path);
             return Base64.getEncoder().encodeToString(fileBytes);

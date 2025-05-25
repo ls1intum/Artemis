@@ -261,7 +261,7 @@ describe('MonacoEditorComponent', () => {
         comp.layoutWithFixedSize(400, 400);
         const lineNumbers = fixture.debugElement.nativeElement.querySelectorAll('.line-numbers');
         expect(lineNumbers).toHaveLength(5);
-        expect([...lineNumbers].map((elem: HTMLElement) => elem.textContent)).toContainAllValues(['5', '6', '7', '8', '9']);
+        expect([...lineNumbers].map((elem: HTMLElement) => elem.textContent)).toIncludeAllMembers(['5', '6', '7', '8', '9']);
     });
 
     it('should apply option presets to the editor', () => {
