@@ -64,6 +64,49 @@ public class ChannelService {
     }
 
     /**
+     * Creates a channel object with the provided name.
+     * The resulting channel is public, not an announcement channel and not archived.
+     *
+     * @param channelNameOptional the desired name of the channel wrapped in an Optional
+     * @param prefix              the prefix for the channel name
+     * @param backupTitle         used as a basis for the resulting channel name if the provided channel name is empty
+     * @return a default channel with the given name
+     */
+    private static Channel createDefaultChannel(Optional<String> channelNameOptional, @NotNull String prefix, String backupTitle) {
+        String channelName = channelNameOptional.filter(s -> !s.isEmpty()).orElse(generateChannelNameFromTitle(prefix, Optional.ofNullable(backupTitle)));
+        Channel defaultChannel = new Channel();
+        defaultChannel.setName(channelName);
+        defaultChannel.setIsPublic(true);
+        defaultChannel.setIsCourseWide(true);
+        defaultChannel.setIsAnnouncementChannel(false);
+        defaultChannel.setIsArchived(false);
+        return defaultChannel;
+    }
+
+    /**
+     * Generates the channel name based on the associated lecture/exercise/exam title and a corresponding prefix.
+     * The resulting name only contains lower case letters, digits and hyphens and has a maximum length of 30 characters.
+     * Upper case letters are transformed to lower case and special characters are replaced with a hyphen, while avoiding
+     * consecutive hyphens, e.g. "Example(%)name" becomes "example-name".
+     *
+     * @param prefix prefix for the channel
+     * @param title  title of the lecture/exercise/exam to derive the channel name from
+     * @return the generated channel name
+     */
+    private static String generateChannelNameFromTitle(@NotNull String prefix, Optional<String> title) {
+        String channelName = prefix + title.orElse("");
+        // [^a-z0-9]+ matches all occurrences of single or consecutive characters that are no digits and letters
+        String specialCharacters = "[^a-z0-9]+";
+        // -+$ matches a trailing hyphen at the end of a string
+        String leadingTrailingHyphens = "-$";
+        channelName = channelName.toLowerCase().replaceAll(specialCharacters, "-").replaceFirst(leadingTrailingHyphens, "");
+        if (channelName.length() > 30) {
+            channelName = channelName.substring(0, 30);
+        }
+        return channelName;
+    }
+
+    /**
      * Grants the channel moderator role to the given user for the given channel
      *
      * @param channel      the channel
@@ -328,6 +371,24 @@ public class ChannelService {
     }
 
     /**
+     * Update the channel of an exercise
+     *
+     * @param originalExercise The original exercise
+     * @param channelName      The new channel name
+     * @return the updated channel
+     */
+    public Channel updateExerciseChannel(Exercise originalExercise, @NotNull String channelName) {
+        if (channelName == null) {
+            return null;
+        }
+        Channel channel = channelRepository.findChannelByExerciseId(originalExercise.getId());
+        if (channel == null) {
+            return null;
+        }
+        return updateChannelName(channel, channelName);
+    }
+
+    /**
      * Update the channel of an exam
      *
      * @param originalExam the original exam
@@ -358,55 +419,12 @@ public class ChannelService {
     }
 
     /**
-     * Creates a channel object with the provided name.
-     * The resulting channel is public, not an announcement channel and not archived.
-     *
-     * @param channelNameOptional the desired name of the channel wrapped in an Optional
-     * @param prefix              the prefix for the channel name
-     * @param backupTitle         used as a basis for the resulting channel name if the provided channel name is empty
-     * @return a default channel with the given name
-     */
-    private static Channel createDefaultChannel(Optional<String> channelNameOptional, @NotNull String prefix, String backupTitle) {
-        String channelName = channelNameOptional.filter(s -> !s.isEmpty()).orElse(generateChannelNameFromTitle(prefix, Optional.ofNullable(backupTitle)));
-        Channel defaultChannel = new Channel();
-        defaultChannel.setName(channelName);
-        defaultChannel.setIsPublic(true);
-        defaultChannel.setIsCourseWide(true);
-        defaultChannel.setIsAnnouncementChannel(false);
-        defaultChannel.setIsArchived(false);
-        return defaultChannel;
-    }
-
-    /**
      * Determines whether duplicate channel names are allowed for the given channel
      *
      * @return true if the channel does belong to a lecture/exercise/exam
      */
     private boolean allowDuplicateChannelName(Channel channel) {
         return channel.getExercise() != null || channel.getLecture() != null || channel.getExam() != null;
-    }
-
-    /**
-     * Generates the channel name based on the associated lecture/exercise/exam title and a corresponding prefix.
-     * The resulting name only contains lower case letters, digits and hyphens and has a maximum length of 30 characters.
-     * Upper case letters are transformed to lower case and special characters are replaced with a hyphen, while avoiding
-     * consecutive hyphens, e.g. "Example(%)name" becomes "example-name".
-     *
-     * @param prefix prefix for the channel
-     * @param title  title of the lecture/exercise/exam to derive the channel name from
-     * @return the generated channel name
-     */
-    private static String generateChannelNameFromTitle(@NotNull String prefix, Optional<String> title) {
-        String channelName = prefix + title.orElse("");
-        // [^a-z0-9]+ matches all occurrences of single or consecutive characters that are no digits and letters
-        String specialCharacters = "[^a-z0-9]+";
-        // -+$ matches a trailing hyphen at the end of a string
-        String leadingTrailingHyphens = "-$";
-        channelName = channelName.toLowerCase().replaceAll(specialCharacters, "-").replaceFirst(leadingTrailingHyphens, "");
-        if (channelName.length() > 30) {
-            channelName = channelName.substring(0, 30);
-        }
-        return channelName;
     }
 
     /**
@@ -436,4 +454,5 @@ public class ChannelService {
 
         return createdChannel;
     }
+
 }

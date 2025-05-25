@@ -55,6 +55,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizPointStatistic;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
+import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseForEditorDTO;
 import de.tum.cit.aet.artemis.quiz.repository.DragAndDropMappingRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
@@ -280,9 +281,20 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * @param files            the provided files
      */
     public void handleDndQuizFileUpdates(QuizExercise updatedExercise, QuizExercise originalExercise, List<MultipartFile> files) throws IOException {
+        Map<FilePathType, Set<String>> oldPaths = getAllPathsFromDragAndDropQuestionsOfExercise(originalExercise);
+        handleDndQuizFileUpdates(updatedExercise, oldPaths, files);
+    }
+
+    /**
+     * Handles the file updates for drag and drop questions in a quiz exercise.
+     *
+     * @param updatedExercise the updated quiz exercise
+     * @param oldPaths        the old paths of the drag and drop questions
+     * @param files           the provided files
+     */
+    public void handleDndQuizFileUpdates(QuizExercise updatedExercise, Map<FilePathType, Set<String>> oldPaths, List<MultipartFile> files) throws IOException {
         List<MultipartFile> nullsafeFiles = files == null ? new ArrayList<>() : files;
         validateQuizExerciseFiles(updatedExercise, nullsafeFiles, false);
-        Map<FilePathType, Set<String>> oldPaths = getAllPathsFromDragAndDropQuestionsOfExercise(originalExercise);
         Map<FilePathType, Set<String>> filesToRemove = new HashMap<>(oldPaths);
 
         Map<String, MultipartFile> fileMap = nullsafeFiles.stream().collect(Collectors.toMap(MultipartFile::getOriginalFilename, file -> file));
@@ -300,7 +312,13 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         fileService.deleteFiles(allFilesToRemoveMerged);
     }
 
-    private Map<FilePathType, Set<String>> getAllPathsFromDragAndDropQuestionsOfExercise(QuizExercise quizExercise) {
+    /**
+     * Retrieves all drag and drop paths from the drag and drop questions of a quiz exercise.
+     *
+     * @param quizExercise The quiz exercise for which to get all drag and drop paths
+     * @return A map containing all drag and drop paths of the quiz exercise, categorized by type.
+     */
+    public Map<FilePathType, Set<String>> getAllPathsFromDragAndDropQuestionsOfExercise(QuizExercise quizExercise) {
         Map<FilePathType, Set<String>> paths = new HashMap<>();
         paths.put(FilePathType.DRAG_AND_DROP_BACKGROUND, new HashSet<>());
         paths.put(FilePathType.DRAG_ITEM, new HashSet<>());
@@ -531,4 +549,28 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         }
         return newQuizExercise;
     }
+
+    /**
+     * Applies the changes from a QuizExerciseForEditorDTO to a QuizExercise.
+     *
+     * @param quizExercise             The original quiz exercise to apply the patch to
+     * @param quizExerciseForEditorDTO The Patch DTO containing the changes to apply
+     * @return The updated quiz exercise with the applied changes
+     */
+    public QuizExercise applyPatchToQuizExercise(QuizExercise quizExercise, QuizExerciseForEditorDTO quizExerciseForEditorDTO) {
+        // Apply the changes from the DTO to the quiz exercise
+        quizExerciseForEditorDTO.title().ifPresent(quizExercise::setTitle);
+        quizExerciseForEditorDTO.channelName().ifPresent(quizExercise::setChannelName);
+        quizExerciseForEditorDTO.categories().ifPresent(quizExercise::setCategories);
+        quizExerciseForEditorDTO.difficulty().ifPresent(quizExercise::setDifficulty);
+        quizExerciseForEditorDTO.duration().ifPresent(quizExercise::setDuration);
+        quizExerciseForEditorDTO.randomizeQuestionOrder().ifPresent(quizExercise::setRandomizeQuestionOrder);
+        quizExerciseForEditorDTO.quizMode().ifPresent(quizExercise::setQuizMode);
+        quizExerciseForEditorDTO.releaseDate().ifPresent(quizExercise::setReleaseDate);
+        quizExerciseForEditorDTO.dueDate().ifPresent(quizExercise::setDueDate);
+        quizExerciseForEditorDTO.includedInOverallScore().ifPresent(quizExercise::setIncludedInOverallScore);
+
+        return quizExercise;
+    }
+
 }

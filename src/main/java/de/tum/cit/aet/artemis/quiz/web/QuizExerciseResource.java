@@ -11,6 +11,7 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -28,6 +29,7 @@ import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.InitBinder;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -82,6 +84,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
 import de.tum.cit.aet.artemis.quiz.dto.QuizBatchJoinDTO;
+import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseForEditorDTO;
 import de.tum.cit.aet.artemis.quiz.repository.QuizBatchRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
@@ -103,9 +106,6 @@ public class QuizExerciseResource {
     private static final Logger log = LoggerFactory.getLogger(QuizExerciseResource.class);
 
     private static final String ENTITY_NAME = "quizExercise";
-
-    @Value("${jhipster.clientApp.name}")
-    private String applicationName;
 
     private final QuizSubmissionService quizSubmissionService;
 
@@ -154,6 +154,9 @@ public class QuizExerciseResource {
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
     private final Optional<SlideApi> slideApi;
+
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
 
     public QuizExerciseResource(QuizExerciseService quizExerciseService, QuizMessagingService quizMessagingService, QuizExerciseRepository quizExerciseRepository,
             UserRepository userRepository, CourseService courseService, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService,
@@ -319,6 +322,53 @@ public class QuizExerciseResource {
         slideApi.ifPresent(api -> api.handleDueDateChange(originalQuiz, finalQuizExercise));
 
         return ResponseEntity.ok(quizExercise);
+    }
+
+    @PatchMapping("quiz-exercises/{exerciseId}")
+    @EnforceAtLeastEditorInExercise
+    public ResponseEntity<QuizExercise> patchQuizExercise(@PathVariable Long exerciseId, @RequestPart("exercise") QuizExerciseForEditorDTO quizExercise,
+            @RequestPart(value = "files", required = false) List<MultipartFile> files, @RequestParam(value = "notificationText", required = false) String notificationText) {
+        log.info("REST request to patch quiz exercise : {}", quizExercise);
+        QuizExercise originalQuiz = quizExerciseRepository.findByIdWithQuestionsAndCompetenciesElseThrow(exerciseId);
+
+        // Check if the quiz has already started
+        var batches = quizBatchRepository.findAllByQuizExercise(originalQuiz);
+        if (batches.stream().anyMatch(QuizBatch::isStarted)) {
+            throw new BadRequestAlertException("The quiz has already started. Use the re-evaluate endpoint to make retroactive corrections.", ENTITY_NAME, "quizHasStarted");
+        }
+
+        // Merge the patch data into the original quiz exercise
+        originalQuiz = quizExerciseService.applyPatchToQuizExercise(originalQuiz, quizExercise);
+        // Validate the quiz exercise after applying the patch
+        if (!originalQuiz.isValid()) {
+            throw new BadRequestAlertException("The quiz exercise is invalid after patching", ENTITY_NAME, "");
+        }
+        // Validate general settings
+        originalQuiz.validateGeneralSettings();
+
+        // Update the channel name if provided in the patch
+        Channel channel = null;
+        if (quizExercise.channelName().isPresent()) {
+            channel = channelService.updateExerciseChannel(originalQuiz, quizExercise.channelName().get());
+        }
+
+        // Handle questions being updated
+        if (quizExercise.quizQuestions().isPresent()) {
+            Map<FilePathType, Set<String>> oldPaths = quizExerciseService.getAllPathsFromDragAndDropQuestionsOfExercise(originalQuiz);
+            // Update the questions in the quiz exercise
+            originalQuiz.setQuizQuestions(quizExercise.quizQuestions().get());
+            // Handle drag and drop question files
+            quizExerciseService.handleDndQuizFileUpdates(originalQuiz, oldPaths, files);
+        }
+
+        // Save the updated quiz exercise
+        originalQuiz = quizExerciseService.save(originalQuiz);
+
+        // Log the update
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        exerciseService.logUpdate(originalQuiz, originalQuiz.getCourseViaExerciseGroupOrCourseMember(), user);
+
+        return ResponseEntity.ok(originalQuiz);
     }
 
     /**
@@ -820,4 +870,5 @@ public class QuizExerciseResource {
             quizExercise.setQuizBatches(batches);
         }
     }
+
 }
