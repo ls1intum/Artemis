@@ -23,9 +23,9 @@ import de.tum.cit.aet.artemis.athena.dto.ProgrammingFeedbackDTO;
 import de.tum.cit.aet.artemis.athena.dto.ResponseMetaDTO;
 import de.tum.cit.aet.artemis.athena.dto.SubmissionBaseDTO;
 import de.tum.cit.aet.artemis.athena.dto.TextFeedbackDTO;
+import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
 import de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile;
 import de.tum.cit.aet.artemis.atlas.dto.LearnerProfileDTO;
-import de.tum.cit.aet.artemis.atlas.repository.LearnerProfileRepository;
 import de.tum.cit.aet.artemis.core.domain.LLMRequest;
 import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -65,7 +65,7 @@ public class AthenaFeedbackSuggestionsService {
 
     private final LLMTokenUsageService llmTokenUsageService;
 
-    private final LearnerProfileRepository learnerProfileRepository;
+    private final LearnerProfileApi learnerProfileApi;
 
     @Value("${artemis.athena.allowed-feedback-requests:10}")
     private int allowedFeedbackRequests;
@@ -77,16 +77,17 @@ public class AthenaFeedbackSuggestionsService {
      * @param athenaModuleService       Athena module serviced used to determine the urls for different modules
      * @param athenaDTOConverterService Service to convert exrcises and submissions to DTOs
      * @param llmTokenUsageService      Service to store the usage of LLM tokens
+     * @param learnerProfileApi         API for learner profile operations
      */
     public AthenaFeedbackSuggestionsService(@Qualifier("athenaRestTemplate") RestTemplate athenaRestTemplate, AthenaModuleService athenaModuleService,
-            AthenaDTOConverterService athenaDTOConverterService, LLMTokenUsageService llmTokenUsageService, LearnerProfileRepository learnerProfileRepository) {
+            AthenaDTOConverterService athenaDTOConverterService, LLMTokenUsageService llmTokenUsageService, LearnerProfileApi learnerProfileApi) {
         textAthenaConnector = new AthenaConnector<>(athenaRestTemplate, ResponseDTOText.class);
         programmingAthenaConnector = new AthenaConnector<>(athenaRestTemplate, ResponseDTOProgramming.class);
         modelingAthenaConnector = new AthenaConnector<>(athenaRestTemplate, ResponseDTOModeling.class);
         this.athenaDTOConverterService = athenaDTOConverterService;
         this.athenaModuleService = athenaModuleService;
         this.llmTokenUsageService = llmTokenUsageService;
-        this.learnerProfileRepository = learnerProfileRepository;
+        this.learnerProfileApi = learnerProfileApi;
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -113,7 +114,7 @@ public class AthenaFeedbackSuggestionsService {
      */
     private LearnerProfile extractLearnerProfile(Submission submission) {
         if (submission.getParticipation() instanceof StudentParticipation studentParticipation) {
-            return studentParticipation.getStudent().map(User::getLearnerProfile).map(lp -> learnerProfileRepository.findByIdInitialized(lp.getId()).orElse(null)).orElse(null);
+            return studentParticipation.getStudent().map(User::getLearnerProfile).map(lp -> learnerProfileApi.findByIdInitialized(lp.getId())).orElse(null);
         }
         return null;
     }
@@ -135,8 +136,14 @@ public class AthenaFeedbackSuggestionsService {
                     "Exercise", "exerciseIdDoesNotMatch");
         }
 
+        LearnerProfile learnerProfile = extractLearnerProfile(submission);
+        LearnerProfileDTO learnerProfileDTO = learnerProfile != null ? LearnerProfileDTO.of(learnerProfile) : null;
+        System.out.println("--------------------------------");
+        System.out.println("Learner profile: " + learnerProfile);
+        System.out.println("Learner profile DTO: " + learnerProfileDTO);
+        System.out.println("--------------------------------");
         final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission),
-                LearnerProfileDTO.of(extractLearnerProfile(submission)), isGraded);
+                learnerProfileDTO, isGraded);
         ResponseDTOText response = textAthenaConnector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise) + "/feedback_suggestions", request, 0);
         log.info("Athena responded to '{}' feedback suggestions request: {}", isGraded ? "Graded" : "Non Graded", response.data);
         storeTokenUsage(exercise, submission, response.meta, !isGraded);

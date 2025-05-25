@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
+import de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile;
 import de.tum.cit.aet.artemis.atlas.service.profile.CourseLearnerProfileService;
 import de.tum.cit.aet.artemis.atlas.service.profile.LearnerProfileService;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -46,6 +47,16 @@ public class LearnerProfileApi extends AbstractAtlasApi {
 
     public void deleteProfile(User user) {
         learnerProfileService.deleteProfile(user);
+    }
+
+    /**
+     * Get an initialized learner profile by its ID
+     *
+     * @param id the ID of the learner profile
+     * @return the initialized learner profile or null if not found
+     */
+    public LearnerProfile findByIdInitialized(Long id) {
+        return learnerProfileService.findByIdInitialized(id);
     }
 
 }
