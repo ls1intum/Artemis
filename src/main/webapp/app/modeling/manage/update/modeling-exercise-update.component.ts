@@ -150,8 +150,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
 
         // Get the modelingExercise
         this.activatedRoute.data.subscribe(({ modelingExercise }) => {
-            // eslint-disable-next-line no-undef
-            console.log('DEBUG modelingExercise,', JSON.stringify(modelingExercise));
+            // console.log('DEBUG modelingExercise,', JSON.stringify(modelingExercise));
             this.modelingExercise = modelingExercise;
 
             if (this.modelingExercise.exampleSolutionModel != undefined) {

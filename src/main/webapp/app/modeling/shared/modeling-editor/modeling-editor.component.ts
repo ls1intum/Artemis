@@ -60,13 +60,13 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
     async ngAfterViewInit(): Promise<void> {
         this.initializeApollonEditor();
         if (this.readOnly) {
-            this.readonlyApollonDiagram = await this.apollonEditor?.exportAsSVG();
-            if (this.readonlyApollonDiagram?.svg) {
-                this.readOnlySVG = this.sanitizer.bypassSecurityTrustHtml(this.readonlyApollonDiagram.svg);
+            if (this.apollonEditor) {
+                await ApollonEditor.exportModelAsSvg(this.apollonEditor?.model);
+                this.readonlyApollonDiagram = await this.apollonEditor?.exportAsSVG();
+                if (this.readonlyApollonDiagram?.svg) {
+                    this.readOnlySVG = this.sanitizer.bypassSecurityTrustHtml(this.readonlyApollonDiagram.svg);
+                }
             }
-
-            // Destroy the Apollon editor after exporting the SVG, to avoid SVG <marker> id collisions
-            this.destroyApollonEditor();
         } else {
             this.setupInteract();
             this.setupSafariScrollFix();
