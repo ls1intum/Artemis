@@ -84,7 +84,7 @@ public class AttachmentVideoUnitService {
             createAttachment(attachment, savedAttachmentVideoUnit, file, keepFilename);
         }
 
-        irisLectureApi.ifPresent(api -> api.autoUpdateAttachmentVideoUnitsInPyris(lecture.getCourse().getId(), List.of(savedAttachmentVideoUnit)));
+        irisLectureApi.ifPresent(api -> api.autoUpdateAttachmentVideoUnitsInPyris(List.of(savedAttachmentVideoUnit)));
         return savedAttachmentVideoUnit;
     }
 
@@ -151,7 +151,7 @@ public class AttachmentVideoUnitService {
 
         prepareAttachmentVideoUnitForClient(savedAttachmentVideoUnit);
 
-        irisLectureApi.ifPresent(api -> api.autoUpdateAttachmentVideoUnitsInPyris(savedAttachmentVideoUnit.getLecture().getCourse().getId(), List.of(savedAttachmentVideoUnit)));
+        irisLectureApi.ifPresent(api -> api.autoUpdateAttachmentVideoUnitsInPyris(List.of(savedAttachmentVideoUnit)));
 
         return savedAttachmentVideoUnit;
     }
