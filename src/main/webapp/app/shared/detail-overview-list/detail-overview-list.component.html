@@ -52,14 +52,14 @@
                     }
                     @case (DetailType.ModelingEditor) {
                         <dd class="p-3 border" id="detail-value-{{ detail.title }}">
-                            @if (!!detail.data.umlModel?.elements?.length && detail.data.isApollonProfileActive) {
+                            @if (!!detail.data.umlModel?.nodes?.length && detail.data.isApollonProfileActive) {
                                 <button
                                     (click)="downloadApollonDiagramAsPDf(detail.data.umlModel, detail.data.title)"
                                     class="btn btn-primary m-2"
                                     jhiTranslate="entity.action.export"
                                 ></button>
                             }
-                            @if (!isEmpty(detail.data.umlModel?.elements) && detail.data.diagramType && detail.data.umlModel) {
+                            @if (!isEmpty(detail.data.umlModel?.nodes) && detail.data.diagramType && detail.data.umlModel) {
                                 <jhi-modeling-editor
                                     class="editor-outline-background"
                                     [readOnly]="true"

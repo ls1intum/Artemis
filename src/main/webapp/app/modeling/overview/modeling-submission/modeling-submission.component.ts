@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, HostListener, Input, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { Patch, Selection, UMLDiagramType, UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
+import { Selection, UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { Feedback, buildFeedbackTextForReview, checkSubsequentFeedbackInAssessment } from 'app/assessment/shared/entities/feedback.model';
@@ -381,7 +381,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     private updateModelAndExplanation(): void {
         if (this.submission.model) {
             this.umlModel = JSON.parse(this.submission.model);
-            this.hasElements = this.umlModel.elements && Object.values(this.umlModel.elements).length !== 0;
+            this.hasElements = this.umlModel.nodes && Object.values(this.umlModel.nodes).length !== 0;
         }
         this.explanation = this.submission.explanationText ?? '';
     }
@@ -416,7 +416,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                 this.submission = submission;
                 if (this.submission.model) {
                     this.umlModel = JSON.parse(this.submission.model);
-                    this.hasElements = this.umlModel.elements && Object.values(this.umlModel.elements).length !== 0;
+                    this.hasElements = this.umlModel.nodes && Object.values(this.umlModel.nodes).length !== 0;
                 }
                 const latestResult = getLatestSubmissionResult(this.submission);
                 if (latestResult && latestResult.completionDate && (this.isAfterAssessmentDueDate || latestResult.assessmentType === AssessmentType.AUTOMATIC_ATHENA)) {
@@ -524,23 +524,23 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.cleanup(() => clearInterval(teamSyncInterval));
     }
 
-    /**
-     * Emits submission patches when receiving patches from the modeling editor.
-     * These patches need to be synced with other team members in team exercises.
-     * The observable through which the patches are emitted is passed to the team sync
-     * component, who then sends the patches to the server and other team members.
-     * @param patch The patch to update the submission with.
-     */
-    onModelPatch(patch: Patch) {
-        if (this.modelingExercise.teamMode) {
-            const submissionPatch = new SubmissionPatch(patch);
-            submissionPatch.participation = this.participation;
-            if (submissionPatch.participation?.exercise) {
-                submissionPatch.participation.exercise.studentParticipations = [];
-            }
-            this.submissionPatchObservable.next(Object.assign({}, submissionPatch));
-        }
-    }
+    // /**
+    //  * Emits submission patches when receiving patches from the modeling editor.
+    //  * These patches need to be synced with other team members in team exercises.
+    //  * The observable through which the patches are emitted is passed to the team sync
+    //  * component, who then sends the patches to the server and other team members.
+    //  * @param patch The patch to update the submission with.
+    //  */
+    // onModelPatch(patch: Patch) {
+    //     if (this.modelingExercise.teamMode) {
+    //         const submissionPatch = new SubmissionPatch(patch);
+    //         submissionPatch.participation = this.participation;
+    //         if (submissionPatch.participation?.exercise) {
+    //             submissionPatch.participation.exercise.studentParticipations = [];
+    //         }
+    //         this.submissionPatchObservable.next(Object.assign({}, submissionPatch));
+    //     }
+    // }
 
     /**
      * Runs given cleanup logic when the component is destroyed.
@@ -604,7 +604,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     this.submission = response.body!;
                     if (this.submission.model) {
                         this.umlModel = JSON.parse(this.submission.model);
-                        this.hasElements = this.umlModel.elements && Object.values(this.umlModel.elements).length !== 0;
+                        this.hasElements = this.umlModel.nodes && Object.values(this.umlModel.nodes).length !== 0;
                     }
                     this.submissionChange.next(this.submission);
                     this.participation = this.submission.participation as StudentParticipation;
@@ -670,18 +670,18 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.updateModelingSubmission(submission);
     }
 
-    /**
-     * This is called when the team sync component receives
-     * patches from the server. Updates the modeling editor with the received patch.
-     * @param submissionPatch
-     */
-    onReceiveSubmissionPatchFromTeam(submissionPatch: SubmissionPatch) {
-        this.modelingEditor.importPatch(submissionPatch.patch);
-    }
+    // /**
+    //  * This is called when the team sync component receives
+    //  * patches from the server. Updates the modeling editor with the received patch.
+    //  * @param submissionPatch
+    //  */
+    // onReceiveSubmissionPatchFromTeam(submissionPatch: SubmissionPatch) {
+    //     this.modelingEditor.importPatch(submissionPatch.patch);
+    // }
 
     private isModelEmpty(model?: string): boolean {
         const umlModel: UMLModel = model ? JSON.parse(model) : undefined;
-        return !umlModel || !umlModel.elements || Object.values(umlModel.elements).length === 0;
+        return !umlModel || !umlModel.nodes || Object.values(umlModel.nodes).length === 0;
     }
 
     ngOnDestroy(): void {
@@ -742,7 +742,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             return;
         }
         const umlModel = this.modelingEditor.getCurrentModel();
-        this.hasElements = umlModel.elements && Object.values(umlModel.elements).length !== 0;
+        this.hasElements = umlModel.nodes && Object.values(umlModel.nodes).length !== 0;
         const diagramJson = JSON.stringify(umlModel);
         if (this.submission && diagramJson) {
             this.submission.model = diagramJson;
@@ -776,43 +776,45 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
      * @param selection the new selection
      */
     onSelectionChanged(selection: Selection) {
-        this.selectedEntities = Object.entries(selection.elements)
-            .filter(([, selected]) => selected)
-            .map(([elementId]) => elementId);
-        for (const selectedEntity of this.selectedEntities) {
-            this.selectedEntities.push(...this.getSelectedChildren(selectedEntity));
-        }
-        this.selectedRelationships = Object.entries(selection.relationships)
-            .filter(([, selected]) => selected)
-            .map(([elementId]) => elementId);
+        // console.log('DEBUG Modeling-submission onSelectionChanged ', JSON.stringify(selection));
+        // this.selectedEntities = Object.entries(selection.nodes)
+        //     .filter(([, selected]) => selected)
+        //     .map(([elementId]) => elementId);
+        // for (const selectedEntity of this.selectedEntities) {
+        //     this.selectedEntities.push(...this.getSelectedChildren(selectedEntity));
+        // }
+        // this.selectedRelationships = Object.entries(selection.relationships)
+        //     .filter(([, selected]) => selected)
+        //     .map(([elementId]) => elementId);
     }
 
-    /**
-     * Returns the elementIds of all the children of the element with the given elementId
-     * or an empty list, if no children exist for this element.
-     */
-    private getSelectedChildren(elementId: string): string[] {
-        if (!this.umlModel || !this.umlModel.elements) {
-            return [];
-        }
-        return Object.values(this.umlModel.elements)
-            .filter((element) => element.owner === elementId)
-            .map((element) => element.id);
-    }
+    // /**
+    //  * Returns the elementIds of all the children of the element with the given elementId
+    //  * or an empty list, if no children exist for this element.
+    //  */
+    // private getSelectedChildren(elementId: string): string[] {
+    //     if (!this.umlModel || !this.umlModel.nodes) {
+    //         return [];
+    //     }
+    //     return Object.values(this.umlModel.nodes)
+    //         .filter((element) => element.parentId === elementId)
+    //         .map((element) => element.id);
+    // }
 
     /**
      * Checks whether a model element in the modeling editor is selected.
      */
     shouldBeDisplayed(feedback: Feedback): boolean {
-        if ((!this.selectedEntities || this.selectedEntities.length === 0) && (!this.selectedRelationships || this.selectedRelationships.length === 0)) {
-            return true;
-        }
-        const referencedModelType = feedback.referenceType! as UMLElementType;
-        if (referencedModelType in UMLRelationshipType) {
-            return this.selectedRelationships.indexOf(feedback.referenceId!) > -1;
-        } else {
-            return this.selectedEntities.indexOf(feedback.referenceId!) > -1;
-        }
+        return false;
+        // if ((!this.selectedEntities || this.selectedEntities.length === 0) && (!this.selectedRelationships || this.selectedRelationships.length === 0)) {
+        //     return true;
+        // }
+        // const referencedModelType = feedback.referenceType! as UMLElementType;
+        // if (referencedModelType in UMLRelationshipType) {
+        //     return this.selectedRelationships.indexOf(feedback.referenceId!) > -1;
+        // } else {
+        //     return this.selectedEntities.indexOf(feedback.referenceId!) > -1;
+        // }
     }
 
     canDeactivate(): boolean {
@@ -843,7 +845,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
      */
     private modelHasUnsavedChanges(model: UMLModel): boolean {
         if (!this.submission || !this.submission.model) {
-            return Object.values(model.elements).length > 0 && JSON.stringify(model) !== '';
+            return Object.values(model.nodes).length > 0 && JSON.stringify(model) !== '';
         } else if (this.submission && this.submission.model) {
             const currentModel = JSON.parse(this.submission.model);
             const versionMatch = currentModel.version === model.version;

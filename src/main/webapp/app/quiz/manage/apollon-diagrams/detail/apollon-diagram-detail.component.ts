@@ -140,6 +140,8 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
      */
     initializeApollonEditor(initialModel: UMLModel) {
         if (this.apollonEditor) {
+            // eslint-disable-next-line no-undef
+            console.log('DEBUG initializeApollonEditor destroy');
             this.apollonEditor.destroy();
         }
 

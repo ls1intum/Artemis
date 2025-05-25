@@ -5,7 +5,7 @@ import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedbac
 import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-overall-score-picker/included-in-overall-score-picker.component';
 import { PresentationScoreComponent } from 'app/exercise/presentation-score/presentation-score.component';
 import { GradingInstructionsDetailsComponent } from 'app/exercise/structured-grading-criterion/grading-instructions-details/grading-instructions-details.component';
-import { ModelingExerciseV2Service } from '../services/modeling-exercise-v2.service';
+import { ModelingExerciseService } from '../services/modeling-exercise.service';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ExerciseMode, IncludedInOverallScore, resetForImport } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -42,8 +42,8 @@ import { loadCourseExerciseCategories } from 'app/exercise/course-exercises/cour
 import { FormSectionStatus, FormStatusBarComponent } from 'app/shared/form/form-status-bar/form-status-bar.component';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { FormFooterComponent } from 'app/shared/form/form-footer/form-footer.component';
-import { ModelingEditorV2Component } from 'app/modeling/shared/modeling-editor-v2/modeling-editor.component';
-import { ModelingExerciseV2 } from 'app/modeling/shared/entities/modeling-exercise-v2.model';
+import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 
 @Component({
     selector: 'jhi-modeling-exercise-update',
@@ -61,7 +61,7 @@ import { ModelingExerciseV2 } from 'app/modeling/shared/entities/modeling-exerci
         TeamConfigFormGroupComponent,
         MarkdownEditorMonacoComponent,
         CompetencySelectionComponent,
-        ModelingEditorV2Component,
+        ModelingEditorComponent,
         FormDateTimePickerComponent,
         IncludedInOverallScorePickerComponent,
         CustomMinDirective,
@@ -75,7 +75,7 @@ import { ModelingExerciseV2 } from 'app/modeling/shared/entities/modeling-exerci
 })
 export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy, OnInit {
     private alertService = inject(AlertService);
-    private modelingExerciseService = inject(ModelingExerciseV2Service);
+    private modelingExerciseService = inject(ModelingExerciseService);
     private modalService = inject(NgbModal);
     private popupService = inject(ExerciseUpdateWarningService);
     private courseService = inject(CourseManagementService);
@@ -88,7 +88,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
 
     @ViewChild(ExerciseTitleChannelNameComponent) exerciseTitleChannelNameComponent: ExerciseTitleChannelNameComponent;
     @ViewChild(TeamConfigFormGroupComponent) teamConfigFormGroupComponent?: TeamConfigFormGroupComponent;
-    @ViewChild(ModelingEditorV2Component, { static: false }) modelingEditor?: ModelingEditorV2Component;
+    @ViewChild(ModelingEditorComponent, { static: false }) modelingEditor?: ModelingEditorComponent;
     @ViewChild('bonusPoints') bonusPoints?: NgModel;
     @ViewChild('points') points?: NgModel;
     @ViewChild('solutionPublicationDate') solutionPublicationDateField?: FormDateTimePickerComponent;
@@ -103,8 +103,8 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     AssessmentType = AssessmentType;
     UMLDiagramType = UMLDiagramType;
 
-    modelingExercise: ModelingExerciseV2;
-    backupExercise: ModelingExerciseV2;
+    modelingExercise: ModelingExercise;
+    backupExercise: ModelingExercise;
     exampleSolution: UMLModel;
     isSaving: boolean;
     exerciseCategories: ExerciseCategory[];
@@ -302,7 +302,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
         new SaveExerciseCommand(this.modalService, this.popupService, this.modelingExerciseService, this.backupExercise, this.editType, this.alertService)
             .save(this.modelingExercise, this.isExamMode, this.notificationText)
             .subscribe({
-                next: (exercise: ModelingExerciseV2) => this.onSaveSuccess(exercise),
+                next: (exercise: ModelingExercise) => this.onSaveSuccess(exercise),
                 error: (error: HttpErrorResponse) => this.onSaveError(error),
                 complete: () => {
                     this.isSaving = false;
@@ -317,7 +317,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
         this.navigationUtilService.navigateBackFromExerciseUpdate(this.modelingExercise);
     }
 
-    private onSaveSuccess(exercise: ModelingExerciseV2): void {
+    private onSaveSuccess(exercise: ModelingExercise): void {
         this.eventManager.broadcast({ name: 'modelingExerciseListModification', content: 'OK' });
         this.isSaving = false;
 

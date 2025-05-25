@@ -3,7 +3,7 @@ import { Location } from '@angular/common';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
 import { firstValueFrom } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';
-import { UMLDiagramType, UMLModel } from '@ls1intum/apollon';
+import { UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -191,6 +191,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     private loadSubmission(submissionId: number): void {
         this.modelingSubmissionService.getSubmission(submissionId, this.correctionRound, this.resultId).subscribe({
             next: (submission: ModelingSubmission) => {
+                // console.log('DEBUG received submission,', submission);
                 this.handleReceivedSubmission(submission);
                 this.validateFeedback();
             },
@@ -427,7 +428,9 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     onSubmitAssessment() {
-        if ((this.model && this.referencedFeedback.length < Object.keys(this.model.elements).length) || !this.assessmentsAreValid) {
+        const totalNumberOfElements = (this.model?.nodes.length ?? 0) + (this.model?.edges.length ?? 0);
+        // console.log('DEBUG onSubmit assessment is triggered totalNumberOfElements:', totalNumberOfElements);
+        if ((this.model && this.referencedFeedback.length < totalNumberOfElements) || !this.assessmentsAreValid) {
             const confirmationMessage = this.translateService.instant('artemisApp.modelingAssessmentEditor.messages.confirmSubmission');
 
             // if the assessment is before the assessment due date, don't show the confirm submission button
@@ -454,6 +457,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             return;
         }
 
+        // console.log('DEBUG before modelingAssessmentService.saveAssessment is called', this.feedback);
         this.modelingAssessmentService.saveAssessment(this.result!.id!, this.feedback, this.submission!.id!, this.result!.assessmentNote?.note, true).subscribe({
             next: (result: Result) => {
                 result.participation!.results = [result];
@@ -530,6 +534,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
      * @param feedback The feedback present in the editor.
      */
     onFeedbackChanged(feedback: Feedback[]) {
+        // console.log('DEBUG on feedbackChanged,', feedback);
         this.updateApollonEditorWithFeedback(feedback);
     }
 
@@ -590,7 +595,12 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             : new Map<string, string>();
 
         const referenceIds = this.referencedFeedback.map((feedback) => feedback.referenceId);
-        for (const element of Object.values(this.model.elements)) {
+        for (const element of Object.values(this.model.nodes)) {
+            if (!referenceIds.includes(element.id)) {
+                this.highlightedElements.set(element.id, FeedbackHighlightColor.RED);
+            }
+        }
+        for (const element of Object.values(this.model.edges)) {
             if (!referenceIds.includes(element.id)) {
                 this.highlightedElements.set(element.id, FeedbackHighlightColor.RED);
             }
