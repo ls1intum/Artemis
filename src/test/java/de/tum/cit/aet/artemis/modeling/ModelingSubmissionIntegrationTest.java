@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilServi
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionVersionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
@@ -119,11 +120,11 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
     void initTestCase() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 3, 1, 0, 1);
         course = modelingExerciseUtilService.addCourseWithDifferentModelingExercises();
-        classExercise = exerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
-        activityExercise = exerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ActivityDiagram");
-        objectExercise = exerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ObjectDiagram");
-        useCaseExercise = exerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "UseCaseDiagram");
-        finishedExercise = exerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "finished");
+        classExercise = ExerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
+        activityExercise = ExerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ActivityDiagram");
+        objectExercise = ExerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ObjectDiagram");
+        useCaseExercise = ExerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "UseCaseDiagram");
+        finishedExercise = ExerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "finished");
         afterDueDateParticipation = participationUtilService.createAndSaveParticipationForExercise(finishedExercise, TEST_PREFIX + "student3");
         participationUtilService.createAndSaveParticipationForExercise(classExercise, TEST_PREFIX + "student3");
 

@@ -19,6 +19,7 @@ import { CourseExercisePerformanceComponent } from 'app/core/course/overview/cou
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
+import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
 
 describe('CourseDashboardComponent', () => {
     let component: CourseDashboardComponent;
@@ -45,6 +46,13 @@ describe('CourseDashboardComponent', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: ProfileService, useClass: MockProfileService },
+                {
+                    provide: CourseStorageService,
+                    useValue: {
+                        getCourse: () => ({ id: 123, studentCourseAnalyticsDashboardEnabled: true, irisCourseChatEnabled: true, learningPathsEnabled: true }),
+                        subscribeToCourseUpdates: () => ({ subscribe: jest.fn() }),
+                    },
+                },
             ],
         }).compileComponents();
     }));
@@ -54,10 +62,10 @@ describe('CourseDashboardComponent', () => {
         component = fixture.componentInstance;
         debugElement = fixture.debugElement;
         fixture.detectChanges();
+        component.isLoading = false;
     });
 
     it('should display chatbot when iris is enabled', () => {
-        component.irisEnabled = true;
         fixture.detectChanges();
 
         const chatContainer = debugElement.query(By.css('.chat-container'));
@@ -73,7 +81,6 @@ describe('CourseDashboardComponent', () => {
     });
 
     it('should show learning paths button if course has learningPathsEnabled', () => {
-        component.course = { learningPathsEnabled: true };
         component.atlasEnabled = true;
         fixture.detectChanges();
 
@@ -83,7 +90,6 @@ describe('CourseDashboardComponent', () => {
     });
 
     it('should navigate to learning paths when button is clicked', () => {
-        component.course = { learningPathsEnabled: true };
         component.atlasEnabled = true;
         fixture.detectChanges();
 

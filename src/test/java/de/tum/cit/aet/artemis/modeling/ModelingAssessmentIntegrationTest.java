@@ -55,6 +55,7 @@ import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilServi
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
@@ -129,10 +130,10 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
     void initTestCase() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 6, 2, 0, 1);
         this.course = modelingExerciseUtilService.addCourseWithDifferentModelingExercises();
-        classExercise = exerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
-        activityExercise = exerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ActivityDiagram");
-        objectExercise = exerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ObjectDiagram");
-        useCaseExercise = exerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "UseCaseDiagram");
+        classExercise = ExerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
+        activityExercise = ExerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ActivityDiagram");
+        objectExercise = ExerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ObjectDiagram");
+        useCaseExercise = ExerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "UseCaseDiagram");
 
         validModel = loadFileFromResources("test-data/model-submission/model.54727.json");
     }
@@ -289,7 +290,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
         assertThat(storedResult.getParticipation()).isNotNull();
 
         Course course = request.get("/api/core/courses/" + this.course.getId() + "/for-assessment-dashboard", HttpStatus.OK, Course.class);
-        Exercise exercise = exerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
+        Exercise exercise = ExerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
         assertThat(exercise.getNumberOfAssessmentsOfCorrectionRounds()).hasSize(1);
         assertThat(exercise.getNumberOfAssessmentsOfCorrectionRounds()[0].inTime()).isEqualTo(1L);
     }
