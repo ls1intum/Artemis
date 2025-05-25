@@ -227,7 +227,7 @@ spring:
     main:
         allow-bean-definition-overriding: false
         allow-circular-references: false
-        lazy-initialization: false # cannot set this because of static inject in FilePathService
+        lazy-initialization: true
     task:
         execution:
             thread-name-prefix: artemis-task-
