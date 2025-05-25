@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.core.service;
 
+import static de.tum.cit.aet.artemis.core.service.FileService.BACKGROUND_FILE_SUBPATH;
+import static de.tum.cit.aet.artemis.core.service.FileService.PICTURE_FILE_SUBPATH;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatNoException;
@@ -45,7 +47,6 @@ import org.springframework.util.ResourceUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.cit.aet.artemis.core.FilePathType;
-import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class FileServiceTest extends AbstractSpringIntegrationIndependentTest {
@@ -61,17 +62,17 @@ class FileServiceTest extends AbstractSpringIntegrationIndependentTest {
     // the resource loader allows to load resources from the file system for this prefix
     private final Path overridableBasePath = Path.of("templates", "jenkins");
 
-    private static final URI VALID_BACKGROUND_PATH = URI.create("/api/core/uploads/images/drag-and-drop/backgrounds/1/BackgroundFile.jpg");
+    private static final URI VALID_BACKGROUND_PATH = URI.create("drag-and-drop/backgrounds/1/BackgroundFile.jpg");
 
-    private static final URI VALID_INTENDED_BACKGROUND_PATH = createURIWithPath("/api/core/", FilePathConverter.getDragAndDropBackgroundFilePath());
+    private static final URI VALID_INTENDED_BACKGROUND_PATH = URI.create(BACKGROUND_FILE_SUBPATH);
 
-    private static final URI INVALID_BACKGROUND_PATH = URI.create("/api/core/uploads/images/drag-and-drop/backgrounds/1/../../../exam-users/signatures/some-file.png");
+    private static final URI INVALID_BACKGROUND_PATH = URI.create("drag-and-drop/backgrounds/1/../../../exam-users/signatures/some-file.png");
 
-    private static final URI VALID_DRAGITEM_PATH = URI.create("/api/core/uploads/images/drag-and-drop/drag-items/1/PictureFile.jpg");
+    private static final URI VALID_DRAGITEM_PATH = URI.create("drag-and-drop/drag-items/1/PictureFile.jpg");
 
-    private static final URI VALID_INTENDED_DRAGITEM_PATH = createURIWithPath("/api/core/", FilePathConverter.getDragItemFilePath());
+    private static final URI VALID_INTENDED_DRAGITEM_PATH = URI.create(PICTURE_FILE_SUBPATH);
 
-    private static final URI INVALID_DRAGITEM_PATH = URI.create("/api/core/uploads/images/drag-and-drop/drag-items/1/../../../exam-users/signatures/some-file.png");
+    private static final URI INVALID_DRAGITEM_PATH = URI.create("drag-and-drop/drag-items/1/../../../exam-users/signatures/some-file.png");
 
     private static final Path lineEndingsUnixPath = Path.of(".", "exportTest", "LineEndingsUnix.java");
 
