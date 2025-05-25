@@ -126,7 +126,6 @@ public class DatabaseMigration {
         if (previousVersionString == null) {
             log.info("Migration path check: Not necessary");
             heliosClient.pushDbMigrationStarted();
-            ;
             return;
         }
 
