@@ -98,7 +98,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
     void init() {
         userUtilService.addUsers(TEST_PREFIX, 3, 0, 0, 1);
         Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        this.programmingExercise = exerciseUtilService.findProgrammingExerciseWithTitle(course.getExercises(), "Programming");
+        this.programmingExercise = ExerciseUtilService.findProgrammingExerciseWithTitle(course.getExercises(), "Programming");
         programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
         // TODO: is this actually needed?
         closeable = MockitoAnnotations.openMocks(this);
@@ -220,7 +220,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDeleteParticipation_removesBuildLogEntries() {
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
-        var programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        var programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
 
         // Setup: Create participation, submission and build log entries for template, solution and student
         var templateParticipation = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise).getTemplateParticipation();

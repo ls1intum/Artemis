@@ -38,6 +38,7 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -64,7 +65,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 4, 2, 0, 2);
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
-        programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();
         programmingExerciseIntegrationTestService.addAuxiliaryRepositoryToExercise(programmingExercise);
     }
@@ -712,7 +713,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         void setup() throws GitAPIException {
             userUtilService.addUsers(TEST_PREFIX, 4, 2, 0, 2);
             var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
-            programmingExerciseWithAuxRepo = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+            programmingExerciseWithAuxRepo = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
             programmingExerciseWithAuxRepo = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExerciseWithAuxRepo.getId()).orElseThrow();
             programmingExerciseIntegrationTestService.addAuxiliaryRepositoryToExercise(programmingExerciseWithAuxRepo);
 
@@ -795,7 +796,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
             userUtilService.addUsers(TEST_PREFIX, 4, 2, 0, 2);
             participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
             var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
-            programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+            programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
             programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();
             programmingExerciseIntegrationTestService.addAuxiliaryRepositoryToExercise(programmingExercise);
             COMMIT_HASH = "commitHash";

@@ -428,7 +428,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUploadAndRetrieveFileForConversation() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 4, 4, 4, 1);
-        var posts = conversationUtilService.createPostsWithinCourse(TEST_PREFIX);
+        var posts = conversationUtilService.createPostsWithinCourse(courseUtilService.createCourse(), TEST_PREFIX);
         var conversation = posts.getFirst().getConversation();
         var course = conversation.getCourse();
 

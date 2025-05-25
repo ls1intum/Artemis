@@ -1202,14 +1202,14 @@ public class CourseUtilService {
         course.setEndDate(ZonedDateTime.now().minusMinutes(5));
         course = courseRepo.save(course);
 
-        var fileUploadExercise = exerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "FileUpload");
+        var fileUploadExercise = ExerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "FileUpload");
         fileUploadExerciseUtilService.createFileUploadSubmissionWithFile(userPrefix, fileUploadExercise, "uploaded-file.png");
 
-        var textExercise = exerciseUtilService.findTextExerciseWithTitle(course.getExercises(), "Text");
+        var textExercise = ExerciseUtilService.findTextExerciseWithTitle(course.getExercises(), "Text");
         var textSubmission = ParticipationFactory.generateTextSubmission("example text", Language.ENGLISH, true);
         textExerciseUtilService.saveTextSubmission(textExercise, textSubmission, userPrefix + "student1");
 
-        var modelingExercise = exerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "Modeling");
+        var modelingExercise = ExerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "Modeling");
         participationUtilService.createAndSaveParticipationForExercise(modelingExercise, userPrefix + "student1");
         String emptyActivityModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/empty-activity-diagram.json");
         ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(emptyActivityModel, true);

@@ -126,7 +126,7 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
         course1.setStudentGroupName(TEST_PREFIX + "active" + "tumuser");
         courseRepository.save(course1);
 
-        var textExercise = exerciseUtilService.getFirstExerciseWithType(course1, TextExercise.class);
+        var textExercise = ExerciseUtilService.getFirstExerciseWithType(course1, TextExercise.class);
         textExercise.setStartDate(ZonedDateTime.now().minusDays(40));
 
         var result1 = participationUtilService.createParticipationSubmissionAndResult(textExercise.getId(), users.getFirst(), 10.0, 0.0, 50, true);
@@ -341,7 +341,7 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
         assertMetricEquals(0, "artemis.scheduled.exercises.due.student_multiplier.active.14", "exerciseType", ExerciseType.QUIZ.toString(), "range", "15");
 
         // Add activity to user
-        quizExerciseUtilService.saveQuizSubmission(exerciseUtilService.getFirstExerciseWithType(course1, QuizExercise.class), ParticipationFactory.generateQuizSubmission(true),
+        quizExerciseUtilService.saveQuizSubmission(ExerciseUtilService.getFirstExerciseWithType(course1, QuizExercise.class), ParticipationFactory.generateQuizSubmission(true),
                 users.getFirst().getLogin());
 
         // We have to first refresh the active users and then the metrics to ensure the data is updated correctly
@@ -356,7 +356,7 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
         assertMetricEquals(3, "artemis.scheduled.exercises.release.student_multiplier", "exerciseType", ExerciseType.QUIZ.toString(), "range", "15");
 
         // Add activity to another user
-        quizExerciseUtilService.saveQuizSubmission(exerciseUtilService.getFirstExerciseWithType(course1, QuizExercise.class), ParticipationFactory.generateQuizSubmission(true),
+        quizExerciseUtilService.saveQuizSubmission(ExerciseUtilService.getFirstExerciseWithType(course1, QuizExercise.class), ParticipationFactory.generateQuizSubmission(true),
                 users.get(1).getLogin());
 
         // We have to first refresh the active users and then the metrics to ensure the data is updated correctly

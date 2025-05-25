@@ -40,6 +40,7 @@ import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -71,10 +72,10 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 3, 1, 0, 1);
         Course course = fileUploadExerciseUtilService.addCourseWithFourFileUploadExercise();
-        releasedFileUploadExercise = exerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "released");
-        finishedFileUploadExercise = exerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "finished");
-        assessedFileUploadExercise = exerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "assessed");
-        noDueDateFileUploadExercise = exerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "noDueDate");
+        releasedFileUploadExercise = ExerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "released");
+        finishedFileUploadExercise = ExerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "finished");
+        assessedFileUploadExercise = ExerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "assessed");
+        noDueDateFileUploadExercise = ExerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "noDueDate");
         submittedFileUploadSubmission = ParticipationFactory.generateFileUploadSubmission(true);
         notSubmittedFileUploadSubmission = ParticipationFactory.generateFileUploadSubmission(false);
         lateFileUploadSubmission = ParticipationFactory.generateLateFileUploadSubmission();
@@ -415,7 +416,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getFileUploadSubmissionWithoutAssessment_wrongExerciseType() throws Exception {
         Course course = modelingExerciseUtilService.addCourseWithOneModelingExercise();
-        ModelingExercise modelingExercise = exerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
+        ModelingExercise modelingExercise = ExerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
         request.get("/api/fileupload/exercises/" + modelingExercise.getId() + "/file-upload-submission-without-assessment", HttpStatus.BAD_REQUEST, FileUploadSubmission.class);
     }
 
@@ -485,7 +486,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
     @WithMockUser(username = TEST_PREFIX + "student1")
     void getDataForFileUpload_wrongExerciseType() throws Exception {
         Course course = modelingExerciseUtilService.addCourseWithOneModelingExercise();
-        ModelingExercise modelingExercise = exerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
+        ModelingExercise modelingExercise = ExerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
         Participation modelingExerciseParticipation = participationUtilService.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "student1");
         FileUploadSubmission submission = request.get("/api/fileupload/participations/" + modelingExerciseParticipation.getId() + "/file-upload-editor", HttpStatus.BAD_REQUEST,
                 FileUploadSubmission.class);

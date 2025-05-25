@@ -72,11 +72,11 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
     void init() {
         userUtilService.addUsers(TEST_PREFIX, 3, 0, 0, 0);
         Course course = modelingExerciseUtilService.addCourseWithOneModelingExercise();
-        ModelingExercise modelingExercise = exerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
+        ModelingExercise modelingExercise = ExerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
         participation = participationUtilService.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "student1");
 
         Course textCourse = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
-        TextExercise textExercise = exerciseUtilService.findTextExerciseWithTitle(textCourse.getExercises(), "Text");
+        TextExercise textExercise = ExerciseUtilService.findTextExerciseWithTitle(textCourse.getExercises(), "Text");
         textParticipation = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
 
         closeable = MockitoAnnotations.openMocks(this);

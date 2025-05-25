@@ -23,6 +23,7 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismResult;
@@ -76,7 +77,7 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependent
         course = textExerciseUtilService.addCourseWithOneFinishedTextExercise();
 
         // We need at least 3 cases
-        textExercise = exerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
+        textExercise = ExerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
         coursePlagiarismCases = createPlagiarismCases(numberOfPlagiarismCases, textExercise);
         plagiarismCase1 = coursePlagiarismCases.getFirst();
 

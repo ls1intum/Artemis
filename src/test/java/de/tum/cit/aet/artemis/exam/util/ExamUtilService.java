@@ -54,8 +54,9 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
+import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
+import de.tum.cit.aet.artemis.fileupload.repository.FileUploadSubmissionRepository;
 import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseFactory;
-import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseUtilService;
 import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
@@ -128,9 +129,6 @@ public class ExamUtilService {
     private QuizExerciseUtilService quizExerciseUtilService;
 
     @Autowired
-    private FileUploadExerciseUtilService fileUploadExerciseUtilService;
-
-    @Autowired
     private UserUtilService userUtilService;
 
     @Autowired
@@ -156,6 +154,9 @@ public class ExamUtilService {
 
     @Autowired
     private ProgrammingSubmissionRepository programmingSubmissionRepository;
+
+    @Autowired
+    private FileUploadSubmissionRepository fileUploadSubmissionRepo;
 
     /**
      * Creates and saves a course with an exam and an exercise group with all exercise types excluding programming exercises.
@@ -252,8 +253,8 @@ public class ExamUtilService {
                     addProgrammingSubmission(programmingExercise, (ProgrammingSubmission) submission, instructor.getLogin());
                     submission = submissionRepository.save(submission);
                 }
-                case FileUploadExercise fileUploadExercise -> submission = fileUploadExerciseUtilService.saveFileUploadSubmission(fileUploadExercise,
-                        ParticipationFactory.generateFileUploadSubmission(false), instructor.getLogin());
+                case FileUploadExercise fileUploadExercise ->
+                    submission = saveFileUploadSubmission(fileUploadExercise, ParticipationFactory.generateFileUploadSubmission(false), instructor.getLogin());
                 default -> {
                 }
             }
@@ -266,6 +267,8 @@ public class ExamUtilService {
 
     /**
      * Adds programming submission to provided programming exercise. The provided login is used to access or create a participation.
+     * NOTE: this code is duplicated in ProgrammingExerciseUtilService to avoid circular dependencies, so if you change it here, please also change it there.
+     * TODO: refactor this code into a common smaller test service to avoid circular dependencies and code duplication in the future.
      *
      * @param exercise   The exercise to which the submission should be added.
      * @param submission The submission which should be added to the programming exercise.
@@ -276,6 +279,24 @@ public class ExamUtilService {
         StudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, login);
         submission.setParticipation(participation);
         submission = programmingSubmissionRepository.save(submission);
+        return submission;
+    }
+
+    /**
+     * Creates and saves a StudentParticipation for the given FileUploadExercise, the FileUploadSubmission, and login.
+     * NOTE: this code is duplicated in FileUploadExerciseUtilService to avoid circular dependencies, so if you change it here, please also change it there.
+     * TODO: refactor this code into a common smaller test service to avoid circular dependencies and code duplication in the future.
+     *
+     * @param exercise   The FileUploadExercise the StudentParticipation should belong to
+     * @param submission The FileUploadSubmission the StudentParticipation should belong to
+     * @param login      The login of the user the StudentParticipation should belong to
+     * @return The updated FileUploadSubmission
+     */
+    public FileUploadSubmission saveFileUploadSubmission(FileUploadExercise exercise, FileUploadSubmission submission, String login) {
+        StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(exercise, login);
+        participation.addSubmission(submission);
+        submission.setParticipation(participation);
+        fileUploadSubmissionRepo.save(submission);
         return submission;
     }
 

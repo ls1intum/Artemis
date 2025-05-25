@@ -138,9 +138,6 @@ public class ProgrammingExerciseUtilService {
     private ExamUtilService examUtilService;
 
     @Autowired
-    private ExerciseUtilService exerciseUtilService;
-
-    @Autowired
     private ParticipationUtilService participationUtilService;
 
     @Autowired
@@ -494,7 +491,7 @@ public class ProgrammingExerciseUtilService {
      */
     public ProgrammingExercise addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(ProgrammingLanguage programmingLanguage) {
         Course course = addCourseWithOneProgrammingExercise(true, programmingLanguage);
-        ProgrammingExercise programmingExercise = exerciseUtilService.findProgrammingExerciseWithTitle(course.getExercises(), "Programming");
+        ProgrammingExercise programmingExercise = ExerciseUtilService.findProgrammingExerciseWithTitle(course.getExercises(), "Programming");
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         programmingExercise = programmingExerciseRepository.findWithBuildConfigById(programmingExercise.getId()).orElseThrow();
         addStaticCodeAnalysisCategoriesToProgrammingExercise(programmingExercise);
@@ -528,7 +525,7 @@ public class ProgrammingExerciseUtilService {
      */
     public Course addCourseWithOneProgrammingExerciseAndTestCases() {
         Course course = addCourseWithOneProgrammingExercise();
-        ProgrammingExercise programmingExercise = exerciseUtilService.findProgrammingExerciseWithTitle(course.getExercises(), "Programming");
+        ProgrammingExercise programmingExercise = ExerciseUtilService.findProgrammingExerciseWithTitle(course.getExercises(), "Programming");
         addTestCasesToProgrammingExercise(programmingExercise);
         return courseRepo.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(course.getId());
     }
@@ -550,7 +547,7 @@ public class ProgrammingExerciseUtilService {
      */
     public void addCourseWithNamedProgrammingExerciseAndTestCases(String programmingExerciseTitle, boolean scaActive) {
         Course course = addCourseWithNamedProgrammingExercise(programmingExerciseTitle, scaActive);
-        ProgrammingExercise programmingExercise = exerciseUtilService.findProgrammingExerciseWithTitle(course.getExercises(), programmingExerciseTitle);
+        ProgrammingExercise programmingExercise = ExerciseUtilService.findProgrammingExerciseWithTitle(course.getExercises(), programmingExerciseTitle);
 
         addTestCasesToProgrammingExercise(programmingExercise);
 

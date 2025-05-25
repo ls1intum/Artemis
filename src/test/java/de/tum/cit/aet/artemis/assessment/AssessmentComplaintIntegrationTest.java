@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.exercise.dto.SubmissionWithComplaintDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseUtilService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -111,7 +112,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
 
         // Initialize with 3 max complaints and 7 days max complaint due date
         course = courseUtilService.addCourseWithModelingAndTextAndFileUploadExercise();
-        modelingExercise = exerciseUtilService.getFirstExerciseWithType(course, ModelingExercise.class);
+        modelingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ModelingExercise.class);
         saveModelingSubmissionAndAssessment();
         complaint = new Complaint().result(modelingAssessment).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);
         complaintRequest = new ComplaintRequestDTO(modelingAssessment.getId(), "This is not fair", ComplaintType.COMPLAINT, Optional.empty());
@@ -633,7 +634,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getSubmittedComplaintsForFileUploadExercise() throws Exception {
-        var fileUploadExercise = exerciseUtilService.getFirstExerciseWithType(course, FileUploadExercise.class);
+        var fileUploadExercise = ExerciseUtilService.getFirstExerciseWithType(course, FileUploadExercise.class);
         var fileUploadSubmission = ParticipationFactory.generateFileUploadSubmission(true);
 
         fileUploadSubmission = fileUploadExerciseUtilService.saveFileUploadSubmissionWithResultAndAssessor(fileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student1",

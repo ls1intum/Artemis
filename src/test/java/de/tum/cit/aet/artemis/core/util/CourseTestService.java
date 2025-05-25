@@ -1311,7 +1311,7 @@ public class CourseTestService {
     // Tests that average rating and number of ratings are computed correctly in '/for-assessment-dashboard'
     public void testGetCourseForAssessmentDashboard_averageRatingComputedCorrectly() throws Exception {
         var testCourse = courseUtilService.createCoursesWithExercisesAndLectures(userPrefix, true, 5).getFirst();
-        var exercise = exerciseUtilService.getFirstExerciseWithType(testCourse, TextExercise.class);
+        var exercise = ExerciseUtilService.getFirstExerciseWithType(testCourse, TextExercise.class);
 
         int[] ratings = { 3, 4, 5 };
         for (int i = 0; i < ratings.length; i++) {
@@ -1321,7 +1321,7 @@ public class CourseTestService {
         }
 
         var responseCourse = request.get("/api/core/courses/" + testCourse.getId() + "/for-assessment-dashboard", HttpStatus.OK, Course.class);
-        var responseExercise = exerciseUtilService.getFirstExerciseWithType(responseCourse, TextExercise.class);
+        var responseExercise = ExerciseUtilService.getFirstExerciseWithType(responseCourse, TextExercise.class);
 
         // Ensure that average rating and number of ratings is computed correctly
         var averageRating = Arrays.stream(ratings).mapToDouble(Double::valueOf).sum() / ratings.length;
@@ -1976,7 +1976,7 @@ public class CourseTestService {
     // Test
     public void testGetLockedSubmissionsForCourseAsTutor() throws Exception {
         Course course = modelingExerciseUtilService.addCourseWithDifferentModelingExercises();
-        ModelingExercise classExercise = exerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
+        ModelingExercise classExercise = ExerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
 
         List<Submission> lockedSubmissions = request.getList("/api/core/courses/" + course.getId() + "/locked-submissions", HttpStatus.OK, Submission.class);
         assertThat(lockedSubmissions).as("Locked Submissions is not null").isNotNull();
@@ -2514,7 +2514,7 @@ public class CourseTestService {
         course.setCourseArchivePath("some-archive-path");
         course = courseRepo.save(course);
 
-        final ProgrammingExercise courseExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        final ProgrammingExercise courseExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
 
         final var programmingExercise = programmingExerciseRepository.findWithEagerTemplateAndSolutionParticipationsById(courseExercise.getId()).orElseThrow();
         participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, userPrefix + "student1");
@@ -2611,7 +2611,7 @@ public class CourseTestService {
         var quizDetailsOptional = exerciseDetails.stream().filter(e -> e instanceof QuizExercise).findFirst();
         assertThat(quizDetailsOptional).isPresent();
 
-        var quizExercise = exerciseUtilService.getFirstExerciseWithType(returnedCourse, QuizExercise.class);
+        var quizExercise = ExerciseUtilService.getFirstExerciseWithType(returnedCourse, QuizExercise.class);
 
         var quizDetails = quizDetailsOptional.get();
         assertThat(quizDetails.getCategories()).hasSize(quizExercise.getCategories().size());

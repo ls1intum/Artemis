@@ -45,6 +45,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
+import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
@@ -137,6 +138,9 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
     @Autowired
     private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private ConversationUtilService conversationUtilService;
 
     // helper attributes for shorter code in assert statements
     private final PointCounter pc01 = pc(0, 1);
@@ -500,7 +504,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void testDeleteQuizExerciseWithChannel() throws Exception {
         Course course = quizExerciseUtilService.addCourseWithOneQuizExercise();
         QuizExercise quizExercise = (QuizExercise) course.getExercises().stream().findFirst().orElseThrow();
-        Channel exerciseChannel = exerciseUtilService.addChannelToExercise(quizExercise);
+        Channel exerciseChannel = conversationUtilService.addChannelToExercise(quizExercise);
 
         request.delete("/api/quiz/quiz-exercises/" + quizExercise.getId(), OK);
 

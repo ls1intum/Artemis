@@ -43,6 +43,7 @@ import de.tum.cit.aet.artemis.exercise.dto.ExerciseDetailsDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -107,7 +108,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void testGetStatsForExerciseAssessmentDashboardWithSubmissions() throws Exception {
         List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, 1);
         Course course = courses.getFirst();
-        TextExercise textExercise = exerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
+        TextExercise textExercise = ExerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
         List<Submission> submissions = new ArrayList<>();
 
         userUtilService.addStudents(TEST_PREFIX, 4, 7);
@@ -558,7 +559,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "student11", roles = "USER")
     void testGetExercise_forbidden() throws Exception {
         var course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
-        var exercise = exerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
+        var exercise = ExerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
         request.get("/api/exercise/exercises/" + exercise.getId(), HttpStatus.FORBIDDEN, Exercise.class);
         request.get("/api/exercise/exercises/" + exercise.getId() + "/details", HttpStatus.FORBIDDEN, Exercise.class);
     }
@@ -601,7 +602,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void testGetExerciseForAssessmentDashboard_submissionsWithoutAssessments() throws Exception {
         var validModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
         var course = modelingExerciseUtilService.addCourseWithOneModelingExercise();
-        var exercise = exerciseUtilService.getFirstExerciseWithType(course, ModelingExercise.class);
+        var exercise = ExerciseUtilService.getFirstExerciseWithType(course, ModelingExercise.class);
         var exampleSubmission = participationUtilService.generateExampleSubmission(validModel, exercise, true);
         participationUtilService.addExampleSubmission(exampleSubmission);
         Exercise receivedExercise = request.get("/api/exercise/exercises/" + exercise.getId() + "/for-assessment-dashboard", HttpStatus.OK, Exercise.class);

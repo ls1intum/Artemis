@@ -48,6 +48,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
+import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.dto.CourseForDashboardDTO;
@@ -137,6 +138,9 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @Autowired
     private CompetencyUtilService competencyUtilService;
 
+    @Autowired
+    private ConversationUtilService conversationUtilService;
+
     private Course course;
 
     private TextExercise textExercise;
@@ -184,7 +188,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         Course course = courseUtilService.createCourse();
         ZonedDateTime now = ZonedDateTime.now();
         TextExercise textExercise = textExerciseUtilService.createIndividualTextExercise(course, now, now, now);
-        Channel exerciseChannel = exerciseUtilService.addChannelToExercise(textExercise);
+        Channel exerciseChannel = conversationUtilService.addChannelToExercise(textExercise);
 
         request.delete("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.OK);
 

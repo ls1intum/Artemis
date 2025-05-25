@@ -62,7 +62,7 @@ class ParticipationAuthorizationCheckServiceTest extends AbstractSpringIntegrati
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
 
         final var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
-        programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();
 
         programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(1));
@@ -78,7 +78,7 @@ class ParticipationAuthorizationCheckServiceTest extends AbstractSpringIntegrati
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCanAccessOwnTextParticipation() {
         final var course = exerciseUtilService.addCourseWithOneExerciseAndSubmissions(TEST_PREFIX, "text", 1);
-        final var exercise = exerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
+        final var exercise = ExerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
         final var participation = studentParticipationRepository.findByExerciseId(exercise.getId()).stream().findFirst().orElseThrow();
 
         checkParticipationAccess(participation, true);
@@ -88,7 +88,7 @@ class ParticipationAuthorizationCheckServiceTest extends AbstractSpringIntegrati
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testStudentCannotAccessOtherTextParticipation() {
         final var course = exerciseUtilService.addCourseWithOneExerciseAndSubmissions(TEST_PREFIX, "text", 2);
-        final var exercise = exerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
+        final var exercise = ExerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
         final var participation = studentParticipationRepository.findByExerciseId(exercise.getId()).stream()
                 .filter(studentParticipation -> !studentParticipation.isOwnedBy(TEST_PREFIX + "student1")).findFirst().orElseThrow();
 
