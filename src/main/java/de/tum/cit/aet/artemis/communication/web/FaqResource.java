@@ -93,7 +93,7 @@ public class FaqResource {
         }
         Faq savedFaq = faqRepository.save(faq);
         FaqDTO dto = new FaqDTO(savedFaq);
-        faqService.autoIngestFaqsIntoPyris(courseId, savedFaq);
+        faqService.autoIngestFaqIntoPyris(savedFaq);
         return ResponseEntity.created(new URI("/api/communication/courses/" + courseId + "/faqs/" + savedFaq.getId())).body(dto);
     }
 
@@ -120,7 +120,7 @@ public class FaqResource {
             throw new BadRequestAlertException("Course ID of the FAQ provided courseID must match", ENTITY_NAME, "idNull");
         }
         Faq updatedFaq = faqRepository.save(faq);
-        faqService.autoIngestFaqsIntoPyris(courseId, updatedFaq);
+        faqService.autoIngestFaqIntoPyris(updatedFaq);
         FaqDTO dto = new FaqDTO(updatedFaq);
         return ResponseEntity.ok().body(dto);
     }
