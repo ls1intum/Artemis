@@ -25,7 +25,7 @@ public record CourseLearnerProfileDTO(long id, long courseId, String courseTitle
     }
 
     /**
-     * Clamps the given value to be within the range of {@link #MIN_PROFILE_VALUE} and {@link #MAX_PROFILE_VALUE}.
+     * Clamps the given value to be within the range of {@link CourseLearnerProfile#MIN_PROFILE_VALUE} and {@link CourseLearnerProfile#MAX_PROFILE_VALUE}.
      *
      * @param value The value to clamp
      * @return The clamped value

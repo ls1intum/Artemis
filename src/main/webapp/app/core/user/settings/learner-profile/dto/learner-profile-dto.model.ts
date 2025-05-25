@@ -8,7 +8,7 @@ export class LearnerProfileDTO {
      * Maximum value allowed for profile fields representing values on a Likert scale.
      * Must be the same as in the server in LearnerProfile.java
      */
-    public static readonly MAX_VALUE = 5;
+    public static readonly MAX_VALUE = 3;
 
     public id: number;
     public feedbackAlternativeStandard: number;
