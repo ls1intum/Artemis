@@ -18,6 +18,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.authentication.event.AuthenticationSuccessEvent;
 import org.springframework.security.core.Authentication;
 
+import de.tum.cit.aet.artemis.communication.domain.EmailNotificationType;
 import de.tum.cit.aet.artemis.communication.service.EmailNotificationSettingService;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -54,10 +55,29 @@ class ArtemisAuthenticationEventListenerTest {
         nonInternalUser.setInternal(false);
 
         when(userRepository.getUserByLoginElseThrow(username)).thenReturn(nonInternalUser);
+        when(emailNotificationSettingService.isNotificationEnabled(nonInternalUser.getId(), EmailNotificationType.NEW_LOGIN)).thenReturn(true);
 
         listener.onApplicationEvent(event);
 
         verify(mailSendingService).buildAndSendAsync(eq(nonInternalUser), eq("email.notification.login.title"), eq("mail/notification/newLoginEmail"), any(Map.class));
+    }
+
+    @Test
+    void shouldNotSendEmailWhenNotificationDisabled() throws EntityNotFoundException {
+        String username = "testuser";
+        Authentication authentication = new UsernamePasswordAuthenticationToken(username, "password");
+        AuthenticationSuccessEvent event = new AuthenticationSuccessEvent(authentication);
+
+        User nonInternalUser = new User();
+        nonInternalUser.setLogin(username);
+        nonInternalUser.setInternal(false);
+
+        when(userRepository.getUserByLoginElseThrow(username)).thenReturn(nonInternalUser);
+        when(emailNotificationSettingService.isNotificationEnabled(nonInternalUser.getId(), EmailNotificationType.NEW_LOGIN)).thenReturn(false);
+
+        listener.onApplicationEvent(event);
+
+        verify(mailSendingService, never()).buildAndSendAsync(any(User.class), anyString(), anyString(), any(Map.class));
     }
 
     @Test
