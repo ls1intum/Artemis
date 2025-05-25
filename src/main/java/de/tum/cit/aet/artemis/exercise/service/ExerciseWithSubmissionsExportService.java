@@ -57,15 +57,12 @@ public abstract class ExerciseWithSubmissionsExportService {
 
     private static final Logger log = LoggerFactory.getLogger(ExerciseWithSubmissionsExportService.class);
 
-    private final FileService fileService;
-
     private final ObjectMapper objectMapper;
 
     private final SubmissionExportService submissionExportService;
 
     protected ExerciseWithSubmissionsExportService(FileService fileService, MappingJackson2HttpMessageConverter springMvcJacksonConverter,
             SubmissionExportService submissionExportService) {
-        this.fileService = fileService;
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
         this.submissionExportService = submissionExportService;
     }
