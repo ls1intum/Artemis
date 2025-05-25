@@ -6,7 +6,8 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { of } from 'rxjs';
-import { MockDirective, MockPipe } from 'ng-mocks';
+import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { ProfileService } from '../../../layouts/profiles/shared/profile.service';
 
 // Mock settings data
 const mockSettings = {
@@ -29,7 +30,7 @@ describe('EmailNotificationsSettingsComponent', () => {
 
         await TestBed.configureTestingModule({
             imports: [CommonModule, FormsModule, EmailNotificationsSettingsComponent],
-            providers: [{ provide: EmailNotificationSettingsService, useValue: mockService }],
+            providers: [{ provide: EmailNotificationSettingsService, useValue: mockService }, MockProvider(ProfileService)],
             declarations: [MockDirective(TranslateDirective), MockPipe(ArtemisDatePipe)],
         }).compileComponents();
 
