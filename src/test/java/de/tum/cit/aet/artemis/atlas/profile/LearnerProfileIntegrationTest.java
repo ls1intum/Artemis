@@ -54,7 +54,7 @@ class LearnerProfileIntegrationTest extends AbstractAtlasIntegrationTest {
     @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
     void shouldRejectInvalidProfileId() throws Exception {
 
-        CourseLearnerProfileDTO dto = new CourseLearnerProfileDTO(2, 0, "title1", 1, 1, 1);
+        CourseLearnerProfileDTO dto = new CourseLearnerProfileDTO(2, 0, "title1", 1, 1, 1, 1, 1);
         request.put("/api/atlas/course-learner-profiles/" + 1, dto, HttpStatus.BAD_REQUEST);
         request.put("/api/atlas/course-learner-profiles/" + 0, dto, HttpStatus.BAD_REQUEST);
         request.put("/api/atlas/course-learner-profiles/" + 2, dto, HttpStatus.BAD_REQUEST);
@@ -64,17 +64,25 @@ class LearnerProfileIntegrationTest extends AbstractAtlasIntegrationTest {
     @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
     void shouldNotUpdateWithInvalidValues() throws Exception {
 
-        CourseLearnerProfileDTO dto = new CourseLearnerProfileDTO(0, 0, "title1", 0, 1, 1);
+        CourseLearnerProfileDTO dto = new CourseLearnerProfileDTO(0, 0, "title1", 0, 1, 1, 1, 1);
         request.put("/api/atlas/course-learner-profiles/" + 0, dto, HttpStatus.BAD_REQUEST);
-        dto = new CourseLearnerProfileDTO(0, 0, "title1", 6, 1, 1);
+        dto = new CourseLearnerProfileDTO(0, 0, "title1", 6, 1, 1, 1, 1);
         request.put("/api/atlas/course-learner-profiles/" + 0, dto, HttpStatus.BAD_REQUEST);
-        dto = new CourseLearnerProfileDTO(0, 0, "title1", 1, 0, 1);
+        dto = new CourseLearnerProfileDTO(0, 0, "title1", 1, 0, 1, 1, 1);
         request.put("/api/atlas/course-learner-profiles/" + 0, dto, HttpStatus.BAD_REQUEST);
-        dto = new CourseLearnerProfileDTO(0, 0, "title1", 1, 6, 1);
+        dto = new CourseLearnerProfileDTO(0, 0, "title1", 1, 6, 1, 1, 1);
         request.put("/api/atlas/course-learner-profiles/" + 0, dto, HttpStatus.BAD_REQUEST);
-        dto = new CourseLearnerProfileDTO(0, 0, "title1", 1, 1, 0);
+        dto = new CourseLearnerProfileDTO(0, 0, "title1", 1, 1, 0, 1, 1);
         request.put("/api/atlas/course-learner-profiles/" + 0, dto, HttpStatus.BAD_REQUEST);
-        dto = new CourseLearnerProfileDTO(0, 0, "title1", 1, 1, 6);
+        dto = new CourseLearnerProfileDTO(0, 0, "title1", 1, 1, 6, 1, 1);
+        request.put("/api/atlas/course-learner-profiles/" + 0, dto, HttpStatus.BAD_REQUEST);
+        dto = new CourseLearnerProfileDTO(0, 0, "title1", 1, 1, 1, 0, 1);
+        request.put("/api/atlas/course-learner-profiles/" + 0, dto, HttpStatus.BAD_REQUEST);
+        dto = new CourseLearnerProfileDTO(0, 0, "title1", 1, 1, 1, 6, 1);
+        request.put("/api/atlas/course-learner-profiles/" + 0, dto, HttpStatus.BAD_REQUEST);
+        dto = new CourseLearnerProfileDTO(0, 0, "title1", 1, 1, 1, 1, 0);
+        request.put("/api/atlas/course-learner-profiles/" + 0, dto, HttpStatus.BAD_REQUEST);
+        dto = new CourseLearnerProfileDTO(0, 0, "title1", 1, 1, 1, 1, 6);
         request.put("/api/atlas/course-learner-profiles/" + 0, dto, HttpStatus.BAD_REQUEST);
     }
 
@@ -85,8 +93,8 @@ class LearnerProfileIntegrationTest extends AbstractAtlasIntegrationTest {
         CourseLearnerProfile courseLearnerProfile = courseLearnerProfileRepository.findAllByLoginAndCourseActive(STUDENT1_OF_COURSE, ZonedDateTime.now()).stream().findAny().get();
         var course = courseLearnerProfile.getCourse();
         CourseLearnerProfileDTO dto = new CourseLearnerProfileDTO(courseLearnerProfile.getId(), course.getId(), course.getTitle(),
-                (courseLearnerProfile.getAimForGradeOrBonus()) % 4 + 1, (courseLearnerProfile.getTimeInvestment()) % 4 + 1,
-                (courseLearnerProfile.getRepetitionIntensity()) % 4 + 1);
+                (courseLearnerProfile.getAimForGradeOrBonus()) % 4 + 1, (courseLearnerProfile.getTimeInvestment()) % 4 + 1, (courseLearnerProfile.getRepetitionIntensity()) % 4 + 1,
+                courseLearnerProfile.getProficiency() % 4 + 1, courseLearnerProfile.getInitialProficiency() % 4 + 1);
 
         CourseLearnerProfileDTO response = request.putWithResponseBody("/api/atlas/course-learner-profiles/" + courseLearnerProfile.getId(), dto, CourseLearnerProfileDTO.class,
                 HttpStatus.OK);
