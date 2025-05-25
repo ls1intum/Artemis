@@ -444,7 +444,7 @@ public final class Constants {
     /**
      * The name of the property used to define the directories for file uploads.
      */
-    public static final String UPLOADS_FILE_PATH_PROPERTY_NAME = "artemis.uploads.file-path";
+    public static final String UPLOADS_FILE_PATH_PROPERTY_NAME = "artemis.file-upload-path";
 
     /**
      * The fallback value when no value for the uploads file path is defined.
