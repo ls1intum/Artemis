@@ -4,13 +4,13 @@
 
     <changeSet id="20250524152730" author="ahmetsenturk">
         <addColumn tableName="learner_profile">
-            <column name="feedback_alternative_standard" type="int" defaultValueNumeric="3">
+            <column name="feedback_alternative_standard" type="int" defaultValueNumeric="2">
                 <constraints nullable="false"/>
             </column>
-            <column name="feedback_followup_summary" type="int" defaultValueNumeric="3">
+            <column name="feedback_followup_summary" type="int" defaultValueNumeric="2">
                 <constraints nullable="false"/>
             </column>
-            <column name="feedback_brief_detailed" type="int" defaultValueNumeric="3">
+            <column name="feedback_brief_detailed" type="int" defaultValueNumeric="2">
                 <constraints nullable="false"/>
             </column>
         </addColumn>

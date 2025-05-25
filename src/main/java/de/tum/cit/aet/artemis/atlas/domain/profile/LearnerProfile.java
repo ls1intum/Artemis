@@ -39,7 +39,7 @@ public class LearnerProfile extends DomainObject {
     /**
      * Maximum value allowed for profile fields representing values on a Likert scale.
      */
-    public static final int MAX_PROFILE_VALUE = 5;
+    public static final int MAX_PROFILE_VALUE = 3;
 
     @JsonIgnoreProperties("learnerProfile")
     @OneToOne(mappedBy = "learnerProfile", cascade = CascadeType.PERSIST)
@@ -52,17 +52,17 @@ public class LearnerProfile extends DomainObject {
     @Column(name = "feedback_alternative_standard")
     @Min(MIN_PROFILE_VALUE)
     @Max(MAX_PROFILE_VALUE)
-    private int feedbackAlternativeStandard = 3;
+    private int feedbackAlternativeStandard = 2;
 
     @Column(name = "feedback_followup_summary")
     @Min(MIN_PROFILE_VALUE)
     @Max(MAX_PROFILE_VALUE)
-    private int feedbackFollowupSummary = 3;
+    private int feedbackFollowupSummary = 2;
 
     @Column(name = "feedback_brief_detailed")
     @Min(MIN_PROFILE_VALUE)
     @Max(MAX_PROFILE_VALUE)
-    private int feedbackBriefDetailed = 3;
+    private int feedbackBriefDetailed = 2;
 
     public void setUser(User user) {
         this.user = user;
