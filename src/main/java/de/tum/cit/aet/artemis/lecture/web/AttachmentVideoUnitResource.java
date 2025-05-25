@@ -9,7 +9,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -30,7 +29,6 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
@@ -46,7 +44,9 @@ import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.dto.HiddenPageInfoDTO;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitSplitInformationDTO;
+import de.tum.cit.aet.artemis.lecture.dto.SlideOrderDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentVideoUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.service.AttachmentVideoUnitService;
@@ -129,9 +129,9 @@ public class AttachmentVideoUnitResource {
     @PutMapping(value = "lectures/{lectureId}/attachment-video-units/{attachmentVideoUnitId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastEditorInLectureUnit(resourceIdFieldName = "attachmentVideoUnitId")
     public ResponseEntity<AttachmentVideoUnit> updateAttachmentVideoUnit(@PathVariable Long lectureId, @PathVariable Long attachmentVideoUnitId,
-            @RequestPart AttachmentVideoUnit attachmentVideoUnit, @RequestPart(required = false) Attachment attachment, @RequestPart(required = false) MultipartFile file,
-            @RequestPart(required = false) String hiddenPages, @RequestPart(required = false) String pageOrder, @RequestParam(defaultValue = "false") boolean keepFilename,
-            @RequestParam(value = "notificationText", required = false) String notificationText) {
+            @RequestPart AttachmentVideoUnit attachmentVideoUnit, @RequestPart Attachment attachment, @RequestPart(required = false) MultipartFile file,
+            @RequestPart(required = false) List<HiddenPageInfoDTO> hiddenPages, @RequestPart(required = false) List<SlideOrderDTO> pageOrder,
+            @RequestParam(defaultValue = "false") boolean keepFilename, @RequestParam(value = "notificationText", required = false) String notificationText) {
         log.debug("REST request to update an attachment video unit : {}", attachmentVideoUnit);
         AttachmentVideoUnit existingAttachmentVideoUnit = attachmentVideoUnitRepository.findWithSlidesAndCompetenciesByIdElseThrow(attachmentVideoUnitId);
         checkAttachmentVideoUnitCourseAndLecture(existingAttachmentVideoUnit, lectureId);
@@ -386,30 +386,17 @@ public class AttachmentVideoUnitResource {
     /**
      * Validates that all hidden slide dates are not in the past
      */
-    private boolean validateHiddenSlidesDates(String hiddenPagesJson) {
-        if (hiddenPagesJson == null || hiddenPagesJson.isEmpty()) {
+    private boolean validateHiddenSlidesDates(List<HiddenPageInfoDTO> hiddenPages) {
+        if (hiddenPages == null || hiddenPages.isEmpty()) {
             return true;
         }
 
-        try {
-            ObjectMapper objectMapper = new ObjectMapper();
-            List<Map<String, Object>> hiddenPagesList = objectMapper.readValue(hiddenPagesJson, new TypeReference<>() {
-            });
-            ZonedDateTime now = ZonedDateTime.now();
-
-            for (Map<String, Object> page : hiddenPagesList) {
-                String dateStr = (String) page.get("date");
-                ZonedDateTime date = ZonedDateTime.parse(dateStr);
-
-                if (date.isBefore(now)) {
-                    return false;
-                }
+        ZonedDateTime now = ZonedDateTime.now();
+        for (HiddenPageInfoDTO page : hiddenPages) {
+            if (page.date() != null && page.date().isBefore(now)) {
+                return false;
             }
-            return true;
         }
-        catch (Exception e) {
-            log.error("Error validating hidden slide dates", e);
-            return false;
-        }
+        return true;
     }
 }
