@@ -17,5 +17,6 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
  * @param tokens List of token usages send by Pyris for tracking the token usage and cost
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PyrisRewritingStatusUpdateDTO(List<PyrisStageDTO> stages, String result, List<LLMRequest> tokens) {
+public record PyrisRewritingStatusUpdateDTO(List<PyrisStageDTO> stages, String result, List<LLMRequest> tokens, List<String> inconsistencies, List<String> suggestions,
+        String improvement) {
 }
