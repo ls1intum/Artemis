@@ -248,10 +248,7 @@ public class AttachmentVideoUnitResource {
                     lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureId));
             savedAttachmentVideoUnits.forEach(attachmentVideoUnitService::prepareAttachmentVideoUnitForClient);
 
-            if (competencyProgressApi.isPresent()) {
-                var api = competencyProgressApi.get();
-                savedAttachmentVideoUnits.forEach(api::updateProgressByLearningObjectAsync);
-            }
+            competencyProgressApi.ifPresent(api -> savedAttachmentVideoUnits.forEach(api::updateProgressByLearningObjectAsync));
             return ResponseEntity.ok().body(savedAttachmentVideoUnits);
         }
         catch (IOException e) {

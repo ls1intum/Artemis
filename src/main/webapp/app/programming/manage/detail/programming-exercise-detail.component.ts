@@ -228,7 +228,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                             this.programmingLanguageFeatureService.getProgrammingLanguageFeature(programmingExercise.programmingLanguage)?.auxiliaryRepositoriesSupported ?? false;
                         if (this.irisEnabled && !this.isExamExercise) {
                             this.irisSettingsSubscription = this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {
-                                this.irisChatEnabled = settings?.irisChatSettings?.enabled ?? false;
+                                this.irisChatEnabled = settings?.irisProgrammingExerciseChatSettings?.enabled ?? false;
                             });
                         }
                         this.plagiarismEnabled = profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_PLAGIARISM);
@@ -598,7 +598,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     !this.isExamExercise && {
                         type: DetailType.ProgrammingIrisEnabled,
                         title: 'artemisApp.iris.settings.subSettings.enabled.chat',
-                        data: { exercise, disabled: !exercise.isAtLeastInstructor, subSettingsType: IrisSubSettingsType.CHAT },
+                        data: { exercise, disabled: !exercise.isAtLeastInstructor, subSettingsType: IrisSubSettingsType.PROGRAMMING_EXERCISE_CHAT },
                     },
             ],
         };
