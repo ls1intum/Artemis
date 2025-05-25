@@ -43,10 +43,6 @@ describe('EmailNotificationsSettingsComponent', () => {
         SSH_KEY_EXPIRED: false,
     };
 
-    it('should create the component', () => {
-        expect(component).toBeTruthy();
-    });
-
     it('should load notification settings on init', fakeAsync(() => {
         mockService.getAll.mockReturnValue(of(mockSettings));
 

@@ -8,5 +8,5 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param enabled whether the email notification type is enabled
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record UpdateEmailNotificationSettingDTO(Boolean enabled) {
+public record UpdateEmailNotificationSettingDTO(boolean enabled) {
 }

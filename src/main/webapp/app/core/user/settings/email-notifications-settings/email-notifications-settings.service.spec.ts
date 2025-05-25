@@ -20,10 +20,6 @@ describe('EmailNotificationSettingsService', () => {
         httpMock.verify();
     });
 
-    it('should be created', () => {
-        expect(service).toBeTruthy();
-    });
-
     it('should fetch all notification settings', () => {
         const mockSettings = {
             NEW_LOGIN: true,
