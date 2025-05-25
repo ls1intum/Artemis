@@ -3,21 +3,23 @@
 @if (notificationSettings) {
     <div class="list-group d-block">
         @for (type of notificationTypes; track type) {
-            <div class="list-group-item">
-                <dt>
-                    <div class="form-check form-switch">
-                        <input
-                            class="form-check-input"
-                            type="checkbox"
-                            [id]="'notification-' + type"
-                            [checked]="notificationSettings[type]"
-                            #cb
-                            (change)="updateSetting(type, cb.checked)"
-                        />
-                        <label class="form-check-label" [for]="'notification-' + type" jhiTranslate="{{ getNotificationTypeLabel(type) }}"> </label>
-                    </div>
-                </dt>
-            </div>
+            @if (type !== 'NEW_PASSKEY_ADDED' || isPasskeyEnabled) {
+                <div class="list-group-item">
+                    <dt>
+                        <div class="form-check form-switch">
+                            <input
+                                class="form-check-input"
+                                type="checkbox"
+                                [id]="'notification-' + type"
+                                [checked]="notificationSettings[type]"
+                                #cb
+                                (change)="updateSetting(type, cb.checked)"
+                            />
+                            <label class="form-check-label" [for]="'notification-' + type" jhiTranslate="{{ getNotificationTypeLabel(type) }}"> </label>
+                        </div>
+                    </dt>
+                </div>
+            }
         }
     </div>
 } @else {
