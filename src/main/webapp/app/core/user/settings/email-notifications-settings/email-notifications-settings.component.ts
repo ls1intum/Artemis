@@ -41,6 +41,7 @@ export class EmailNotificationsSettingsComponent implements OnInit, OnDestroy {
     }
 
     loadSettings(): void {
+        this.getAllSub?.unsubscribe();
         this.getAllSub = this.emailNotificationSettingsService.getAll().subscribe({
             next: (settings: { [key: string]: boolean } | null) => {
                 this.notificationSettings = settings;
@@ -52,6 +53,7 @@ export class EmailNotificationsSettingsComponent implements OnInit, OnDestroy {
     }
 
     updateSetting(type: string, enabled: boolean): void {
+        this.updateSub?.unsubscribe();
         this.updateSub = this.emailNotificationSettingsService.update(type, enabled).subscribe({
             next: () => {
                 if (this.notificationSettings) {
