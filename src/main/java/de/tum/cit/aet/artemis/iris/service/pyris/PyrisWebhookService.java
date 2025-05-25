@@ -368,5 +368,4 @@ public class PyrisWebhookService {
     public IngestionState getFaqIngestionState(long courseId, long faqId) {
         return pyrisConnectorService.getFaqIngestionState(courseId, faqId);
     }
-
 }
