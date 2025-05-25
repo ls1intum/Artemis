@@ -233,7 +233,7 @@ public class FaqResource {
     @Profile(PROFILE_IRIS)
     @PostMapping("courses/{courseId}/faqs/ingest")
     @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<Void> ingestFaqInIris(@PathVariable Long courseId, @RequestParam(required = false) Optional<Long> faqId) {
+    public ResponseEntity<Void> ingestFaqInIris(@PathVariable long courseId, @RequestParam(required = false) Optional<Long> faqId) {
         faqService.ingestFaqsIntoPyris(courseId, faqId);
         return ResponseEntity.ok().build();
     }
