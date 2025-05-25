@@ -227,6 +227,8 @@ function mergeRenamedFiles(diffInformation: DiffInformation[], created?: string[
         deleted = diffInformation.filter((info) => info.fileStatus === FileStatus.DELETED).map((info) => info.originalPath);
     }
 
+    // TODO: Reduce time complexity of this function, currently it is O(n^2)
+    // TODO: Use highest similarity ratio to merge files
     const SIMILARITY_THRESHOLD = 0.8; // 80% similarity threshold
 
     for (const createdPath of created) {

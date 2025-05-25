@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { GitDiffReportComponent } from 'app/programming/shared/git-diff-report/git-diff-report/git-diff-report.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -17,8 +17,6 @@ export class GitDiffReportModalComponent {
     readonly repositoryDiffInformation = input.required<RepositoryDiffInformation>();
 
     readonly diffForTemplateAndSolution = input<boolean>(true);
-
-    readonly errorWhileFetchingRepos = signal<boolean>(false);
 
     close(): void {
         this.activeModal.dismiss();

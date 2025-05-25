@@ -241,7 +241,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     mergeMap(() => this.fetchRepositoryFiles()),
                     catchError(() => {
                         this.alertService.error('artemisApp.programmingExercise.repositoryFilesError');
-                        return of({ templateFiles: undefined, solutionFiles: undefined });
+                        return of({ templateFiles: new Map<string, string>(), solutionFiles: new Map<string, string>() });
                     }),
                     switchMap(({ templateFiles, solutionFiles }: { templateFiles: Map<string, string> | undefined; solutionFiles: Map<string, string> | undefined }) => {
                         return from(this.handleDiff(templateFiles, solutionFiles));
@@ -617,7 +617,11 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     this.exerciseDetailSections = this.getExerciseDetails();
                 }),
             )
-            .subscribe();
+            .subscribe({
+                error: (error) => {
+                    this.alertService.error('artemisApp.programmingExercise.participationChangeError');
+                },
+            });
     }
 
     combineTemplateCommits() {
@@ -729,15 +733,24 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             return;
         }
 
-        // Set ready state to false when starting diff processing
-        this.diffReady = false;
-
-        this.templateFileContentByPath = templateFiles;
-        this.solutionFileContentByPath = solutionFiles;
-        //TODO: Add version check to avoid recomputing the diff if the files have not changed
-        this.repositoryDiffInformation = await processRepositoryDiff(templateFiles, solutionFiles);
-
-        // Set ready state to true when diff processing is complete
-        this.diffReady = true;
+        try {
+            this.templateFileContentByPath = templateFiles;
+            this.solutionFileContentByPath = solutionFiles;
+            //TODO: Add version check to avoid recomputing the diff if the files have not changed
+            this.repositoryDiffInformation = await processRepositoryDiff(templateFiles, solutionFiles);
+            // Set ready state to true when diff processing is complete
+            this.diffReady = true;
+        } catch (error) {
+            this.alertService.error('artemisApp.programmingExercise.diffProcessingError');
+            // Reset to a consistent state
+            this.diffReady = false;
+            this.repositoryDiffInformation = {
+                diffInformations: [],
+                totalLineChange: {
+                    addedLineCount: 0,
+                    removedLineCount: 0,
+                },
+            };
+        }
     }
 }
