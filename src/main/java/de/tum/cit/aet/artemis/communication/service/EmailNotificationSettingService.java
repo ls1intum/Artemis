@@ -52,9 +52,7 @@ public class EmailNotificationSettingService {
     }
 
     public boolean isNotificationEnabled(Long userId, EmailNotificationType notificationType) {
-        return emailNotificationSettingRepository.findByUserIdAndNotificationType(userId, notificationType).map(EmailNotificationSetting::getEnabled).orElse(true); // Default to
-                                                                                                                                                                    // true if no
-                                                                                                                                                                    // setting
-                                                                                                                                                                    // exists
+        // Default to true if no setting exists
+        return emailNotificationSettingRepository.findByUserIdAndNotificationType(userId, notificationType).map(EmailNotificationSetting::getEnabled).orElse(true);
     }
 }

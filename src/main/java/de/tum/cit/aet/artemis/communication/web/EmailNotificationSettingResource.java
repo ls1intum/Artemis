@@ -47,10 +47,10 @@ public class EmailNotificationSettingResource {
      *
      * @param notificationType the name of the {@link EmailNotificationType}; case‑insensitive
      * @param request          the JSON request body, e.g. {@code {"enabled":true}}
-     * @return {@link ResponseEntity} containing the persisted setting and HTTP 200 on success;<br>
+     * @return {@link ResponseEntity} containing the persisted setting and HTTP 200 on success;
      *         HTTP 400 if the body is missing the {@code enabled} property or if {@code notificationType} is unknown
      */
-    @PutMapping("/{notificationType}")
+    @PutMapping("{notificationType}")
     public ResponseEntity<EmailNotificationSetting> updateSetting(@PathVariable String notificationType, @RequestBody Map<String, Boolean> request) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Boolean enabled = request.get("enabled");
