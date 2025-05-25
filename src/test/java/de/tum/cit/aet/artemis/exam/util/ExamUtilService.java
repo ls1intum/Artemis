@@ -49,7 +49,6 @@ import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
@@ -65,7 +64,7 @@ import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
@@ -102,7 +101,7 @@ public class ExamUtilService {
     private ExamTestRepository examRepository;
 
     @Autowired
-    private ExerciseTestRepository exerciseRepo;
+    private ExerciseTestRepository exerciseRepository;
 
     @Autowired
     private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
@@ -150,10 +149,7 @@ public class ExamUtilService {
     private ModelingExerciseRepository modelingExerciseRepository;
 
     @Autowired
-    private ExerciseRepository exerciseRepository;
-
-    @Autowired
-    private ProgrammingSubmissionRepository programmingSubmissionRepository;
+    private ProgrammingSubmissionTestRepository programmingSubmissionRepository;
 
     @Autowired
     private FileUploadSubmissionRepository fileUploadSubmissionRepo;
@@ -333,27 +329,27 @@ public class ExamUtilService {
         var exercise1a = TextExerciseFactory.generateTextExerciseForExam(exam.getExerciseGroups().getFirst());
         var exercise1b = TextExerciseFactory.generateTextExerciseForExam(exam.getExerciseGroups().getFirst());
         var exercise1c = TextExerciseFactory.generateTextExerciseForExam(exam.getExerciseGroups().getFirst());
-        exerciseRepo.saveAll(List.of(exercise1a, exercise1b, exercise1c));
+        exerciseRepository.saveAll(List.of(exercise1a, exercise1b, exercise1c));
 
         var exercise2a = TextExerciseFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(1));
         var exercise2b = TextExerciseFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(1));
         var exercise2c = TextExerciseFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(1));
-        exerciseRepo.saveAll(List.of(exercise2a, exercise2b, exercise2c));
+        exerciseRepository.saveAll(List.of(exercise2a, exercise2b, exercise2c));
 
         var exercise3a = TextExerciseFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(2));
         var exercise3b = TextExerciseFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(2));
         var exercise3c = TextExerciseFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(2));
-        exerciseRepo.saveAll(List.of(exercise3a, exercise3b, exercise3c));
+        exerciseRepository.saveAll(List.of(exercise3a, exercise3b, exercise3c));
 
         var exercise4a = TextExerciseFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(3));
         var exercise4b = TextExerciseFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(3));
         var exercise4c = TextExerciseFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(3));
-        exerciseRepo.saveAll(List.of(exercise4a, exercise4b, exercise4c));
+        exerciseRepository.saveAll(List.of(exercise4a, exercise4b, exercise4c));
 
         var exercise5a = TextExerciseFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(4));
         var exercise5b = TextExerciseFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(4));
         var exercise5c = TextExerciseFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(4));
-        exerciseRepo.saveAll(List.of(exercise5a, exercise5b, exercise5c));
+        exerciseRepository.saveAll(List.of(exercise5a, exercise5b, exercise5c));
 
         // register user
         return registerUsersForExamAndSaveExam(exam, userPrefix, numberOfStudents);
@@ -665,22 +661,22 @@ public class ExamUtilService {
         ExerciseGroup modellingGroup = exam.getExerciseGroups().getFirst();
         Exercise modelling = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, modellingGroup);
         modellingGroup.addExercise(modelling);
-        exerciseRepo.save(modelling);
+        exerciseRepository.save(modelling);
 
         ExerciseGroup textGroup = exam.getExerciseGroups().get(1);
         Exercise text = TextExerciseFactory.generateTextExerciseForExam(textGroup);
         textGroup.addExercise(text);
-        exerciseRepo.save(text);
+        exerciseRepository.save(text);
 
         ExerciseGroup fileUploadGroup = exam.getExerciseGroups().get(2);
         Exercise fileUpload = FileUploadExerciseFactory.generateFileUploadExerciseForExam("png", fileUploadGroup);
         fileUploadGroup.addExercise(fileUpload);
-        exerciseRepo.save(fileUpload);
+        exerciseRepository.save(fileUpload);
 
         ExerciseGroup quizGroup = exam.getExerciseGroups().get(3);
         Exercise quiz = QuizExerciseFactory.generateQuizExerciseForExam(quizGroup);
         quizGroup.addExercise(quiz);
-        exerciseRepo.save(quiz);
+        exerciseRepository.save(quiz);
 
         return exam;
     }
@@ -860,8 +856,8 @@ public class ExamUtilService {
         TextExercise textExercise1 = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup0, "Text");
         TextExercise textExercise2 = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup0, "Text");
         exerciseGroup0.setExercises(Set.of(textExercise1, textExercise2));
-        exerciseRepo.save(textExercise1);
-        exerciseRepo.save(textExercise2);
+        exerciseRepository.save(textExercise1);
+        exerciseRepository.save(textExercise2);
         QuizExercise quizExercise1;
         if (withAllQuizQuestionTypes) {
             quizExercise1 = QuizExerciseFactory.createQuizWithAllQuestionTypesForExam(exerciseGroup1, "Quiz");
@@ -872,30 +868,30 @@ public class ExamUtilService {
 
         QuizExercise quizExercise2 = QuizExerciseFactory.createQuizForExam(exerciseGroup1);
         exerciseGroup1.setExercises(Set.of(quizExercise1, quizExercise2));
-        exerciseRepo.save(quizExercise1);
-        exerciseRepo.save(quizExercise2);
+        exerciseRepository.save(quizExercise1);
+        exerciseRepository.save(quizExercise2);
 
         FileUploadExercise fileUploadExercise1 = FileUploadExerciseFactory.generateFileUploadExerciseForExam("pdf", exerciseGroup2, "FileUpload");
         FileUploadExercise fileUploadExercise2 = FileUploadExerciseFactory.generateFileUploadExerciseForExam("pdf", exerciseGroup2, "FileUpload");
         exerciseGroup2.setExercises(Set.of(fileUploadExercise1, fileUploadExercise2));
-        exerciseRepo.save(fileUploadExercise1);
-        exerciseRepo.save(fileUploadExercise2);
+        exerciseRepository.save(fileUploadExercise1);
+        exerciseRepository.save(fileUploadExercise2);
 
         ModelingExercise modelingExercise1 = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup3, "Modeling");
         ModelingExercise modelingExercise2 = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup3, "Modeling");
         exerciseGroup3.setExercises(Set.of(modelingExercise1, modelingExercise2));
-        exerciseRepo.save(modelingExercise1);
-        exerciseRepo.save(modelingExercise2);
+        exerciseRepository.save(modelingExercise1);
+        exerciseRepository.save(modelingExercise2);
 
         TextExercise bonusTextExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup4);
         bonusTextExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_AS_BONUS);
         exerciseGroup4.setExercises(Set.of(bonusTextExercise));
-        exerciseRepo.save(bonusTextExercise);
+        exerciseRepository.save(bonusTextExercise);
 
         TextExercise notIncludedTextExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup5);
         notIncludedTextExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
         exerciseGroup5.setExercises(Set.of(notIncludedTextExercise));
-        exerciseRepo.save(notIncludedTextExercise);
+        exerciseRepository.save(notIncludedTextExercise);
 
         if (withProgrammingExercise) {
             ExamFactory.generateExerciseGroup(true, exam); // programming
@@ -906,7 +902,7 @@ public class ExamUtilService {
             // Programming exercises need a proper setup for 'prepare exam start' to work
             ProgrammingExercise programmingExercise1 = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup6, "Programming");
             programmingExerciseBuildConfigRepository.save(programmingExercise1.getBuildConfig());
-            exerciseRepo.save(programmingExercise1);
+            exerciseRepository.save(programmingExercise1);
             programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise1);
             programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise1);
 
@@ -937,14 +933,14 @@ public class ExamUtilService {
         TextExercise textExercise1 = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup0);
         TextExercise textExercise2 = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup0);
         exerciseGroup0.setExercises(Set.of(textExercise1, textExercise2));
-        exerciseRepo.save(textExercise1);
-        exerciseRepo.save(textExercise2);
+        exerciseRepository.save(textExercise1);
+        exerciseRepository.save(textExercise2);
 
         ModelingExercise modelingExercise1 = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup1);
         ModelingExercise modelingExercise2 = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup1);
         exerciseGroup1.setExercises(Set.of(modelingExercise1, modelingExercise2));
-        exerciseRepo.save(modelingExercise1);
-        exerciseRepo.save(modelingExercise2);
+        exerciseRepository.save(modelingExercise1);
+        exerciseRepository.save(modelingExercise2);
 
         if (withProgrammingExercise) {
             ExamFactory.generateExerciseGroup(true, exam); // programming
@@ -954,7 +950,7 @@ public class ExamUtilService {
             // Programming exercises need a proper setup for 'prepare exam start' to work
             ProgrammingExercise programmingExercise1 = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup2);
             programmingExerciseBuildConfigRepository.save(programmingExercise1.getBuildConfig());
-            exerciseRepo.save(programmingExercise1);
+            exerciseRepository.save(programmingExercise1);
             programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise1);
             programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise1);
             exerciseGroup2.setExercises(Set.of(programmingExercise1));
@@ -967,7 +963,7 @@ public class ExamUtilService {
             var exerciseGroup3 = exam.getExerciseGroups().get(2 + (withProgrammingExercise ? 1 : 0));
             // Programming exercises need a proper setup for 'prepare exam start' to work
             QuizExercise quizExercise = QuizExerciseFactory.createQuizForExam(exerciseGroup3);
-            exerciseRepo.save(quizExercise);
+            exerciseRepository.save(quizExercise);
             exerciseGroup3.setExercises(Set.of(quizExercise));
         }
         return exam;
@@ -1135,7 +1131,7 @@ public class ExamUtilService {
         studentParticipationRepo.save(participation);
         submissionRepository.save(submission);
 
-        exerciseRepo.save(exercise);
+        exerciseRepository.save(exercise);
         // quiz exercise
         exercise = exerciseGroups.get(1).getExercises().iterator().next();
         participation = ParticipationFactory.generateStudentParticipation(InitializationState.INITIALIZED, exercise, user);
@@ -1151,7 +1147,7 @@ public class ExamUtilService {
         participation.addResult(result);
         studentParticipationRepo.save(participation);
         submissionRepository.save(submission);
-        exerciseRepo.save(exercise);
+        exerciseRepository.save(exercise);
         // file upload
         exercise = exerciseGroups.get(2).getExercises().iterator().next();
         participation = ParticipationFactory.generateStudentParticipation(InitializationState.INITIALIZED, exercise, user);
@@ -1167,7 +1163,7 @@ public class ExamUtilService {
         participation.addResult(result);
         studentParticipationRepo.save(participation);
         submissionRepository.save(submission);
-        exerciseRepo.save(exercise);
+        exerciseRepository.save(exercise);
         // modeling
         exercise = exerciseGroups.get(3).getExercises().iterator().next();
         participation = ParticipationFactory.generateStudentParticipation(InitializationState.INITIALIZED, exercise, user);
@@ -1178,7 +1174,7 @@ public class ExamUtilService {
         studentExam.addExercise(exercise);
         studentParticipationRepo.save(participation);
         submissionRepository.save(submission);
-        exerciseRepo.save(exercise);
+        exerciseRepository.save(exercise);
         result = participationUtilService.generateResultWithScore(submission, studentExam.getUser(), 3.0);
         submission.addResult(result);
         participation.addResult(result);
@@ -1200,7 +1196,7 @@ public class ExamUtilService {
         participation.addResult(result);
         studentParticipationRepo.save(participation);
         submissionRepository.save(submission);
-        exerciseRepo.save(exercise);
+        exerciseRepository.save(exercise);
 
         studentExamRepository.save(studentExam);
     }
