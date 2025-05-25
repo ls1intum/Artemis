@@ -19,7 +19,7 @@ import org.springframework.security.web.webauthn.management.WebAuthnRelyingParty
 import org.springframework.security.web.webauthn.registration.WebAuthnRegistrationFilter;
 
 import de.tum.cit.aet.artemis.communication.domain.EmailNotificationType;
-import de.tum.cit.aet.artemis.communication.service.EmailNotificationSettingService;
+import de.tum.cit.aet.artemis.communication.repository.EmailNotificationSettingRepository;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -38,14 +38,14 @@ public class ArtemisWebAuthnRegistrationFilter extends WebAuthnRegistrationFilte
 
     private final UserRepository userRepository;
 
-    private final EmailNotificationSettingService emailNotificationSettingService;
+    private final EmailNotificationSettingRepository emailNotificationSettingRepository;
 
     public ArtemisWebAuthnRegistrationFilter(@NotNull UserCredentialRepository userCredentials, @NotNull WebAuthnRelyingPartyOperations rpOptions,
-            MailSendingService mailSendingService, UserRepository userRepository, EmailNotificationSettingService emailNotificationSettingService) {
+            MailSendingService mailSendingService, UserRepository userRepository, EmailNotificationSettingRepository emailNotificationSettingRepository) {
         super(userCredentials, rpOptions);
         this.mailSendingService = mailSendingService;
         this.userRepository = userRepository;
-        this.emailNotificationSettingService = emailNotificationSettingService;
+        this.emailNotificationSettingRepository = emailNotificationSettingRepository;
     }
 
     /**
@@ -65,7 +65,7 @@ public class ArtemisWebAuthnRegistrationFilter extends WebAuthnRegistrationFilte
         if (isWebAuthnRegistrationRequest(request) && response.getStatus() == HttpStatus.OK.value()) {
             User recipient = userRepository.getUser();
 
-            if (emailNotificationSettingService.isNotificationEnabled(recipient.getId(), EmailNotificationType.NEW_PASSKEY_ADDED)) {
+            if (emailNotificationSettingRepository.isNotificationEnabled(recipient.getId(), EmailNotificationType.NEW_PASSKEY_ADDED)) {
                 mailSendingService.buildAndSendAsync(recipient, "email.notification.newPasskey.title", "mail/notification/newPasskeyEmail", new HashMap<>());
             }
         }

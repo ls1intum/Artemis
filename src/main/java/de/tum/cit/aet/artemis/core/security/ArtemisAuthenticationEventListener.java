@@ -17,7 +17,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.communication.domain.EmailNotificationType;
-import de.tum.cit.aet.artemis.communication.service.EmailNotificationSettingService;
+import de.tum.cit.aet.artemis.communication.repository.EmailNotificationSettingRepository;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -47,13 +47,13 @@ public class ArtemisAuthenticationEventListener implements ApplicationListener<A
 
     private final MailSendingService mailSendingService;
 
-    private final EmailNotificationSettingService emailNotificationSettingService;
+    private final EmailNotificationSettingRepository emailNotificationSettingRepository;
 
     public ArtemisAuthenticationEventListener(UserRepository userRepository, MailSendingService mailSendingService,
-            EmailNotificationSettingService emailNotificationSettingService) {
+            EmailNotificationSettingRepository emailNotificationSettingRepository) {
         this.userRepository = userRepository;
         this.mailSendingService = mailSendingService;
-        this.emailNotificationSettingService = emailNotificationSettingService;
+        this.emailNotificationSettingRepository = emailNotificationSettingRepository;
     }
 
     /**
@@ -68,7 +68,7 @@ public class ArtemisAuthenticationEventListener implements ApplicationListener<A
         try {
             User recipient = userRepository.getUserByLoginElseThrow(authentication.getName());
 
-            if (!emailNotificationSettingService.isNotificationEnabled(recipient.getId(), EmailNotificationType.NEW_LOGIN)) {
+            if (!emailNotificationSettingRepository.isNotificationEnabled(recipient.getId(), EmailNotificationType.NEW_LOGIN)) {
                 return;
             }
 

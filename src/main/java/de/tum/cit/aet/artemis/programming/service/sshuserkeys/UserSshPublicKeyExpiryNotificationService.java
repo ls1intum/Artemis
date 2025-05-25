@@ -17,7 +17,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.domain.EmailNotificationType;
-import de.tum.cit.aet.artemis.communication.service.EmailNotificationSettingService;
+import de.tum.cit.aet.artemis.communication.repository.EmailNotificationSettingRepository;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -34,14 +34,14 @@ public class UserSshPublicKeyExpiryNotificationService {
 
     private final MailSendingService mailSendingService;
 
-    private final EmailNotificationSettingService emailNotificationSettingService;
+    private final EmailNotificationSettingRepository emailNotificationSettingRepository;
 
     public UserSshPublicKeyExpiryNotificationService(UserSshPublicKeyRepository userSshPublicKeyRepository, UserRepository userRepository, MailSendingService mailSendingService,
-            EmailNotificationSettingService emailNotificationSettingService) {
+            EmailNotificationSettingRepository emailNotificationSettingRepository) {
         this.userSshPublicKeyRepository = userSshPublicKeyRepository;
         this.userRepository = userRepository;
         this.mailSendingService = mailSendingService;
-        this.emailNotificationSettingService = emailNotificationSettingService;
+        this.emailNotificationSettingRepository = emailNotificationSettingRepository;
     }
 
     /**
@@ -81,7 +81,7 @@ public class UserSshPublicKeyExpiryNotificationService {
      * @param key       the key which was added
      */
     public void notifyUserAboutExpiredSshKey(User recipient, UserSshPublicKey key) {
-        if (emailNotificationSettingService.isNotificationEnabled(recipient.getId(), EmailNotificationType.SSH_KEY_EXPIRED)) {
+        if (emailNotificationSettingRepository.isNotificationEnabled(recipient.getId(), EmailNotificationType.SSH_KEY_EXPIRED)) {
             var contextVariables = new HashMap<String, Object>();
 
             contextVariables.put("sshKey", key);

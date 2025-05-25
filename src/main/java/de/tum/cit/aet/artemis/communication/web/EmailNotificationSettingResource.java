@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.communication.domain.EmailNotificationSetting;
 import de.tum.cit.aet.artemis.communication.domain.EmailNotificationType;
 import de.tum.cit.aet.artemis.communication.dto.UpdateEmailNotificationSettingDTO;
+import de.tum.cit.aet.artemis.communication.repository.EmailNotificationSettingRepository;
 import de.tum.cit.aet.artemis.communication.service.EmailNotificationSettingService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -28,6 +29,8 @@ public class EmailNotificationSettingResource {
 
     private final EmailNotificationSettingService emailNotificationSettingService;
 
+    private final EmailNotificationSettingRepository emailNotificationSettingRepository;
+
     private final UserRepository userRepository;
 
     /**
@@ -36,8 +39,10 @@ public class EmailNotificationSettingResource {
      * @param emailNotificationSettingService business service used to create, update and read settings
      * @param userRepository                  repository used to fetch the currently authenticated {@link User}
      */
-    public EmailNotificationSettingResource(EmailNotificationSettingService emailNotificationSettingService, UserRepository userRepository) {
+    public EmailNotificationSettingResource(EmailNotificationSettingService emailNotificationSettingService, EmailNotificationSettingRepository emailNotificationSettingRepository,
+            UserRepository userRepository) {
         this.emailNotificationSettingService = emailNotificationSettingService;
+        this.emailNotificationSettingRepository = emailNotificationSettingRepository;
         this.userRepository = userRepository;
     }
 
@@ -74,7 +79,7 @@ public class EmailNotificationSettingResource {
     @EnforceAtLeastStudent
     public ResponseEntity<Map<String, Boolean>> getAllSettings() {
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        Map<String, Boolean> result = emailNotificationSettingService.getAllUserSettingsAsMap(user.getId());
+        Map<String, Boolean> result = emailNotificationSettingRepository.getAllSettingsAsMap(user.getId());
         return ResponseEntity.ok(result);
     }
 }
