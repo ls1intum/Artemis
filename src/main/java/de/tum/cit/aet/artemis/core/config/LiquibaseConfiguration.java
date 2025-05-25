@@ -40,15 +40,18 @@ public class LiquibaseConfiguration {
 
     private final BuildProperties buildProperties;
 
+    private final HeliosClientWrapper heliosClient;
+
     private DataSource dataSource;
 
     private DatabaseMigration databaseMigration;
 
     private String currentVersionString;
 
-    public LiquibaseConfiguration(Environment env, BuildProperties buildProperties) {
+    public LiquibaseConfiguration(Environment env, BuildProperties buildProperties, HeliosClientWrapper heliosClient) {
         this.env = env;
         this.buildProperties = buildProperties;
+        this.heliosClient = heliosClient;
     }
 
     /**
@@ -68,7 +71,7 @@ public class LiquibaseConfiguration {
         this.currentVersionString = buildProperties.getVersion();
 
         if (!env.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
-            this.databaseMigration = new DatabaseMigration(currentVersionString, dataSource);
+            this.databaseMigration = new DatabaseMigration(currentVersionString, dataSource, heliosClient);
             databaseMigration.checkMigrationPath();
         }
 
@@ -137,9 +140,11 @@ public class LiquibaseConfiguration {
 
             preparedStatement.executeUpdate();
             connection.commit(); // Ensure the transaction is committed.
+            heliosClient.pushDbMigrationFinished();
         }
         catch (SQLException e) {
             log.error("Failed to store the current version to the database", e);
+            heliosClient.pushDbMigrationFailed();
             throw new RuntimeException("Error updating the application version in the database", e);
         }
     }
