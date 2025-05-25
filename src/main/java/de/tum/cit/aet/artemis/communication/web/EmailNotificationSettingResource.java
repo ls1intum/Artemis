@@ -52,7 +52,7 @@ public class EmailNotificationSettingResource {
      */
     @PutMapping("email-notification-settings/{notificationType}")
     @EnforceAtLeastStudent
-    public ResponseEntity<EmailNotificationSetting> updateSetting(@PathVariable String notificationType, @RequestBody UpdateEmailNotificationSettingDTO request) {
+    public ResponseEntity<EmailNotificationSetting> updateSetting(@PathVariable EmailNotificationType notificationType, @RequestBody UpdateEmailNotificationSettingDTO request) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Boolean enabled = request.enabled();
         if (enabled == null) {
