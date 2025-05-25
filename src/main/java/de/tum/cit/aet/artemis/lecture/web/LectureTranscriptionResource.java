@@ -171,6 +171,17 @@ public class LectureTranscriptionResource {
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, lectureTranscription.get().getId().toString())).build();
     }
 
+    /**
+     * Retrieves the transcript for a given lecture unit.
+     *
+     * <p>
+     * This endpoint returns the transcript associated with the specified {@code lectureUnitId}, including
+     * the language and individual transcript segments.
+     * </p>
+     *
+     * @param lectureUnitId the ID of the lecture unit for which to retrieve the transcript
+     * @return {@link ResponseEntity} containing the {@link LectureTranscriptionDTO} if found, or 404 Not Found if no transcript exists
+     */
     @GetMapping("lecture-unit/{lectureUnitId}/transcript")
     public ResponseEntity<LectureTranscriptionDTO> getTranscript(@PathVariable Long lectureUnitId) {
         var transcriptionOpt = lectureTranscriptionRepository.findByLectureUnit_Id(lectureUnitId);

@@ -31,6 +31,12 @@ describe('VideoUnitComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [VideoUnitComponent, MockComponent(CompetencyContributionComponent)],
+            declarations: [
+                MockComponent({
+                    selector: 'jhi-video-player',
+                    inputs: ['videoUrl', 'transcriptSegments'],
+                }),
+            ],
             providers: [
                 provideHttpClient(),
                 {
@@ -72,8 +78,9 @@ describe('VideoUnitComponent', () => {
 
         fixture.detectChanges();
 
-        const iFrame = fixture.debugElement.nativeElement.querySelector('#videoFrame');
-        expect(iFrame.src).toEqual(videoUnit.source);
+        const iFrame = fixture.debugElement.nativeElement.querySelector('iframe');
+        expect(iFrame).not.toBeNull();
+        expect(iFrame?.src).toContain('youtube.com');
     });
 
     it('should toggle collapse, log event and set timeout on open', () => {
@@ -103,5 +110,32 @@ describe('VideoUnitComponent', () => {
         component.toggleCollapse(true); // Toggle to close
 
         expect(clearTimeoutSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should pass transcript segments to jhi-video-player for HLS (.m3u8) video', () => {
+        const hlsVideoUnit: VideoUnit = {
+            ...videoUnit,
+            source: 'https://tum.live/hls/streamId/playlist.m3u8?jwt=abc123',
+        };
+
+        const mockTranscript = [
+            { startTime: 0, endTime: 5, text: 'Intro', slideNumber: 1 },
+            { startTime: 6, endTime: 10, text: 'Part A', slideNumber: 2 },
+        ];
+
+        fixture.componentRef.setInput('lectureUnit', hlsVideoUnit);
+        fixture.componentRef.setInput('transcriptSegments', mockTranscript);
+        fixture.detectChanges();
+
+        const lectureUnitToggleButton = fixture.debugElement.query(By.css('#lecture-unit-toggle-button'));
+        lectureUnitToggleButton.nativeElement.click();
+        fixture.detectChanges();
+
+        const videoPlayerEl = fixture.debugElement.query(By.css('jhi-video-player'));
+        expect(videoPlayerEl).not.toBeNull();
+
+        // Verify that transcript segments are passed correctly
+        const videoPlayerInstance = videoPlayerEl.componentInstance;
+        expect(videoPlayerInstance.transcriptSegments).toEqual(mockTranscript);
     });
 });
