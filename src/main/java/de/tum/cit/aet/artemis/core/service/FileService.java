@@ -65,6 +65,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.FilePathParsingException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.util.CommonsMultipartFile;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 
 @Profile(PROFILE_CORE)
 @Service
@@ -166,7 +167,7 @@ public class FileService implements DisposableBean {
         validateExtension(filename, markdown);
 
         final String filenamePrefix = markdown ? "Markdown_" : "Temp_";
-        final Path path = markdown ? FilePathService.getMarkdownFilePath() : FilePathService.getTempFilePath();
+        final Path path = markdown ? FilePathConverter.getMarkdownFilePath() : FilePathConverter.getTempFilePath();
 
         String generatedFilename = generateFilename(filenamePrefix, filename, keepFilename);
         Path filePath = path.resolve(generatedFilename);
@@ -192,7 +193,7 @@ public class FileService implements DisposableBean {
         validateExtension(sanitizedOriginalFilename, true);
 
         final String filenamePrefix = "Markdown_";
-        final Path path = FilePathService.getMarkdownFilePathForConversation(courseId, conversationId);
+        final Path path = FilePathConverter.getMarkdownFilePathForConversation(courseId, conversationId);
 
         String fileName = generateFilename(filenamePrefix, sanitizedOriginalFilename, false);
         Path filePath = path.resolve(fileName);
@@ -580,7 +581,7 @@ public class FileService implements DisposableBean {
      * @throws IOException if an issue occurs on file access for the replacement of the variables.
      */
     public void replaceVariablesInDirectoryName(Path startPath, String targetString, String replacementString) throws IOException {
-        log.debug("Replacing {} with {} in directory {}", targetString, replacementString, startPath);
+        log.debug("Replace {} with {} in directory with path {}", targetString, replacementString, startPath);
         File directory = startPath.toFile();
         if (!directory.exists() || !directory.isDirectory()) {
             throw new RuntimeException("Directory " + startPath + " should be replaced but does not exist.");
@@ -613,7 +614,7 @@ public class FileService implements DisposableBean {
      * @throws IOException if an issue occurs on file access for the replacement of the variables.
      */
     public void replaceVariablesInFilename(Path startPath, String targetString, String replacementString) throws IOException {
-        log.debug("Replacing {} with {} in directory {}", targetString, replacementString, startPath);
+        log.debug("Replace {} with {} in directory with path {}", targetString, replacementString, startPath);
         File directory = startPath.toFile();
         if (!directory.exists() || !directory.isDirectory()) {
             throw new FileNotFoundException("Files in the directory " + startPath + " should be replaced but it does not exist.");
@@ -656,7 +657,7 @@ public class FileService implements DisposableBean {
      * @param filesToIgnore the name of files for which no replacement should be done
      */
     public void replaceVariablesInFileRecursive(Path startPath, Map<String, String> replacements, List<String> filesToIgnore) {
-        log.debug("Replacing {} in files in directory {}", replacements, startPath);
+        log.debug("Replace {} in files in directory {}", replacements, startPath);
         File directory = startPath.toFile();
         if (!directory.exists() || !directory.isDirectory()) {
             throw new RuntimeException("Files in directory " + startPath + " should be replaced but the directory does not exist.");
@@ -693,7 +694,7 @@ public class FileService implements DisposableBean {
      * @param replacements the replacements that should be applied
      */
     public void replaceVariablesInFile(Path filePath, Map<String, String> replacements) {
-        log.debug("Replacing {} in file {}", replacements, filePath);
+        log.debug("Replace {} in file {}", replacements, filePath);
         if (isBinaryFile(filePath.toString())) {
             // do not try to read binary files with 'readString'
             return;
@@ -1013,7 +1014,7 @@ public class FileService implements DisposableBean {
     public MultipartFile convertByteArrayToMultipart(String filename, String extension, byte[] streamByteArray) {
         try {
             String cleanFilename = sanitizeFilename(filename);
-            Path tempPath = FilePathService.getTempFilePath().resolve(cleanFilename + extension);
+            Path tempPath = FilePathConverter.getTempFilePath().resolve(cleanFilename + extension);
             FileUtils.writeByteArrayToFile(tempPath.toFile(), streamByteArray);
             File outputFile = tempPath.toFile();
             FileItem fileItem = new DiskFileItem(cleanFilename, Files.probeContentType(tempPath), false, outputFile.getName(), (int) outputFile.length(),

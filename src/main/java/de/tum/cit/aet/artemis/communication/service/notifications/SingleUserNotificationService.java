@@ -28,7 +28,6 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
-import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
 
 @Profile(PROFILE_CORE)
 @Service
@@ -136,25 +135,6 @@ public class SingleUserNotificationService {
         StudentParticipation studentParticipationForEmail = new StudentParticipation();
         studentParticipationForEmail.setParticipant(recipient);
         exercise.setStudentParticipations(Set.of(studentParticipationForEmail));
-    }
-
-    /**
-     * Notify user about the expiration of an SSH key
-     *
-     * @param recipient the user to whose account the SSH key was added
-     * @param key       the key which was added
-     */
-    public void notifyUserAboutExpiredSshKey(User recipient, UserSshPublicKey key) {
-        // TODO: This notification needs to be implemented
-    }
-
-    /**
-     * Notify user about the expiration of the VCS access token
-     *
-     * @param recipient the user to whose account the VCS access token was added
-     */
-    public void notifyUserAboutExpiredVcsAccessToken(User recipient) {
-        // TODO: This notification needs to be implemented
     }
 
     /**

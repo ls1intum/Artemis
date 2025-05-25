@@ -19,7 +19,6 @@ import java.util.stream.Stream;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.NoHeadException;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -35,6 +34,7 @@ import org.springframework.util.MultiValueMap;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -673,24 +673,25 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
                 null, HttpStatus.FORBIDDEN);
     }
 
-    @Disabled // TODO enable
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void checkResetRepository_participationLocked_forbidden() throws Exception {
         ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = participationUtilService
                 .addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
-        // TODO: make sure to activate one condition in which the participation would be locked, see ParticipationAuthorizationService#isLocked
+        programmingExerciseStudentParticipation.setIndividualDueDate(ZonedDateTime.now().minusDays(1));
+        programmingExerciseStudentParticipation = studentParticipationRepository.save(programmingExerciseStudentParticipation);
 
         request.put("/api/programming/programming-exercise-participations/" + programmingExerciseStudentParticipation.getId() + "/reset-repository", null, HttpStatus.FORBIDDEN);
     }
 
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void checkResetRepository_exam_badRequest() throws Exception {
         programmingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();
         programmingExerciseParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
-
+        Exam exam = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(programmingExercise.getExam().getId());
+        examUtilService.registerUsersForExamAndSaveExam(exam, TEST_PREFIX, 1);
+        studentExamService.generateStudentExams(exam);
         request.put("/api/programming/programming-exercise-participations/" + programmingExerciseParticipation.getId() + "/reset-repository", null, HttpStatus.BAD_REQUEST);
     }
 

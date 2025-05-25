@@ -57,6 +57,7 @@ import { CourseScoresStudentStatistics } from 'app/core/course/manage/course-sco
 import { ExerciseTypeStatisticsMap } from 'app/core/course/manage/course-scores/exercise-type-statistics-map';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { CourseTitleBarActionsDirective } from 'app/core/course/shared/directives/course-title-bar-actions.directive';
 
 export enum HighlightType {
     AVERAGE = 'average',
@@ -80,6 +81,7 @@ export enum HighlightType {
         SortDirective,
         SortByDirective,
         ArtemisTranslatePipe,
+        CourseTitleBarActionsDirective,
     ],
 })
 export class CourseScoresComponent implements OnInit, OnDestroy {

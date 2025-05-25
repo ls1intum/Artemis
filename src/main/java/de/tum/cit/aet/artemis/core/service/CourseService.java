@@ -394,6 +394,17 @@ public class CourseService {
     }
 
     /**
+     * Get all courses for the given user which have learning paths enabled
+     *
+     * @param user the user entity
+     * @return an unmodifiable set of all courses for the user
+     */
+    public Set<Course> findAllActiveForUserAndLearningPathsEnabled(User user) {
+        return courseRepository.findAllActiveForUserAndLearningPathsEnabled(ZonedDateTime.now()).stream().filter(course -> isCourseVisibleForUser(user, course))
+                .collect(Collectors.toSet());
+    }
+
+    /**
      * Get all courses with exercises (filtered for given user)
      *
      * @param user the user entity

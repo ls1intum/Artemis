@@ -22,11 +22,22 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { CourseCompetenciesRelationModalComponent } from 'app/atlas/manage/course-competencies-relation-modal/course-competencies-relation-modal.component';
 import { CourseCompetencyExplanationModalComponent } from 'app/atlas/manage/course-competency-explanation-modal/course-competency-explanation-modal.component';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { CourseTitleBarTitleComponent } from 'app/core/course/shared/course-title-bar-title/course-title-bar-title.component';
+import { CourseTitleBarTitleDirective } from 'app/core/course/shared/directives/course-title-bar-title.directive';
+import { CourseTitleBarActionsDirective } from 'app/core/course/shared/directives/course-title-bar-actions.directive';
 
 @Component({
     selector: 'jhi-competency-management',
     templateUrl: './competency-management.component.html',
-    imports: [CompetencyManagementTableComponent, TranslateDirective, FontAwesomeModule, RouterModule],
+    imports: [
+        CompetencyManagementTableComponent,
+        TranslateDirective,
+        FontAwesomeModule,
+        RouterModule,
+        CourseTitleBarTitleComponent,
+        CourseTitleBarTitleDirective,
+        CourseTitleBarActionsDirective,
+    ],
 })
 export class CompetencyManagementComponent implements OnInit {
     protected readonly faEdit = faEdit;
