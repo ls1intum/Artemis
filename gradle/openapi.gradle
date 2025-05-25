@@ -161,3 +161,13 @@
             println "✔ Deleted old openapi files"
         }
     }
+
+    tasks.register('cleanUnusedImports', Exec) {
+        description = "Removes unused imports from generated OpenAPI TypeScript files"
+
+        commandLine "npx", "tsx", "gradle/scripts/remove-unused-imports.ts"
+    }
+    tasks.named('postProcessTsFiles') {
+        finalizedBy 'cleanUnusedImports'
+    }
+

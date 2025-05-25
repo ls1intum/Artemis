@@ -10,8 +10,7 @@
 /* tslint:disable:no-unused-variable member-ordering */
 
 import { Inject, Injectable, Optional } from '@angular/core';
-import { HttpClient, HttpHeaders, HttpParams, HttpResponse, HttpEvent, HttpParameterCodec, HttpContext } from '@angular/common/http';
-import { CustomHttpParameterCodec } from '../encoder';
+import { HttpClient, HttpParams, HttpResponse, HttpEvent, HttpContext } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 // @ts-ignore
@@ -20,7 +19,7 @@ import { TutorialGroupSession } from '../model/tutorialGroupSession';
 import { TutorialGroupStatus } from '../model/tutorialGroupStatus';
 
 // @ts-ignore
-import { BASE_PATH, COLLECTION_FORMATS } from '../variables';
+import { BASE_PATH } from '../variables';
 import { Configuration } from '../configuration';
 import { BaseService } from '../api.base.service';
 

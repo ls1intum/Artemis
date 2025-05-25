@@ -8,8 +8,7 @@ import { map } from 'rxjs/operators';
 import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { TutorialGroupSessionService } from 'app/tutorialgroup/shared/service/tutorial-group-session.service';
 import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/shared/service/tutorial-groups-configuration.service';
-import { Student, TutorialGroupApiService, TutorialGroupRegistrationImport } from 'app/tutorialgroup/generated';
-
+import { Student, TutorialGroupApiService, TutorialGroupRegistrationImport } from 'app/openapi';
 type EntityResponseType = HttpResponse<TutorialGroup>;
 type EntityArrayResponseType = HttpResponse<TutorialGroup[]>;
 
