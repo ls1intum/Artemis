@@ -31,6 +31,12 @@ import { CourseTutorialGroupsComponent } from 'app/tutorialgroup/shared/course-t
 import { CourseConversationsComponent } from 'app/communication/shared/course-conversations/course-conversations.component';
 import { Course, isCommunicationEnabled } from 'app/core/course/shared/entities/course.model';
 import { CourseUnenrollmentModalComponent } from 'app/core/course/overview/course-unenrollment-modal/course-unenrollment-modal.component';
+import { CourseNotificationSettingPreset } from 'app/communication/shared/entities/course-notification/course-notification-setting-preset';
+import { CourseNotificationInfo } from 'app/communication/shared/entities/course-notification/course-notification-info';
+import { CourseNotificationSettingInfo } from 'app/communication/shared/entities/course-notification/course-notification-setting-info';
+import { CourseNotificationSettingService } from 'app/communication/course-notification/course-notification-setting.service';
+import { CourseNotificationService } from 'app/communication/course-notification/course-notification.service';
+import { CourseNotificationPresetPickerComponent } from 'app/communication/course-notification/course-notification-preset-picker/course-notification-preset-picker.component';
 
 @Component({
     selector: 'jhi-course-overview',
@@ -49,6 +55,7 @@ import { CourseUnenrollmentModalComponent } from 'app/core/course/overview/cours
         CourseNotificationOverviewComponent,
         CourseTitleBarComponent,
         CourseSidebarComponent,
+        CourseNotificationPresetPickerComponent,
     ],
     providers: [MetisConversationService],
 })
@@ -61,12 +68,19 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     private modalService = inject(NgbModal);
     private examParticipationService = inject(ExamParticipationService);
     private sidebarItemService = inject(CourseSidebarItemService);
+    protected readonly courseNotificationSettingService: CourseNotificationSettingService = inject(CourseNotificationSettingService);
+    protected readonly courseNotificationService: CourseNotificationService = inject(CourseNotificationService);
 
     private toggleSidebarEventSubscription: Subscription;
     private teamAssignmentUpdateListener: Subscription;
     private quizExercisesChannel: string;
     private examStartedSubscription: Subscription;
     manageViewLink = signal<string[]>(['']);
+
+    protected selectableSettingPresets: CourseNotificationSettingPreset[];
+    protected selectedSettingPreset?: CourseNotificationSettingPreset;
+    private info?: CourseNotificationInfo;
+    private settingInfo?: CourseNotificationSettingInfo;
 
     courseActionItems = signal<CourseActionItem[]>([]);
     canUnenroll = signal<boolean>(false);
@@ -95,6 +109,26 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         this.subscription = this.route?.params.subscribe(async (params: { courseId: string }) => {
             const id = Number(params.courseId);
             this.courseId.set(id);
+
+            this.courseNotificationSettingService.getSettingInfo(this.courseId(), false).subscribe((settingInfo) => {
+                if (settingInfo) {
+                    this.settingInfo = settingInfo;
+
+                    if (this.info) {
+                        this.initializeCourseNotificationValues();
+                    }
+                }
+            });
+
+            this.courseNotificationService.getInfo().subscribe((info) => {
+                if (info.body) {
+                    this.info = info.body;
+
+                    if (this.settingInfo) {
+                        this.initializeCourseNotificationValues();
+                    }
+                }
+            });
         });
         await super.ngOnInit();
 
@@ -106,6 +140,28 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         this.courseActionItems.set(this.getCourseActionItems());
         this.isSidebarCollapsed.set(this.activatedComponentReference()?.isCollapsed ?? false);
         this.sidebarItems.set(this.getSidebarItems());
+    }
+
+    /**
+     * Initializes component values once both settingInfo and info are available.
+     * Sets up selectable presets, and the currently selected preset.
+     */
+    private initializeCourseNotificationValues() {
+        this.selectableSettingPresets = this.info!.presets;
+
+        this.selectedSettingPreset =
+            this.settingInfo!.selectedPreset === 0 ? undefined : this.selectableSettingPresets.find((preset) => preset.typeId === this.settingInfo!.selectedPreset)!;
+    }
+
+    /**
+     * Handles selection of a notification preset.
+     *
+     * @param presetTypeId - The ID of the selected preset (0 for custom settings)
+     */
+    presetSelected(presetTypeId: number) {
+        this.courseNotificationSettingService.setSettingPreset(this.courseId(), presetTypeId, this.selectedSettingPreset);
+
+        this.selectedSettingPreset = presetTypeId === 0 ? undefined : this.selectableSettingPresets.find((preset) => preset.typeId === presetTypeId)!;
     }
 
     protected handleNavigationEndActions() {

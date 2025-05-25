@@ -3,7 +3,7 @@ import { faComments, faPersonChalkboard, faRectangleList, faTriangleExclamation 
 import dayjs from 'dayjs/esm';
 import { CourseNotification } from 'app/communication/shared/entities/course-notification/course-notification';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, of, tap } from 'rxjs';
 import { CourseNotificationInfo } from 'app/communication/shared/entities/course-notification/course-notification-info';
 import { CourseNotificationPage } from 'app/communication/shared/entities/course-notification/course-notification-page';
 import { CourseNotificationCategory } from 'app/communication/shared/entities/course-notification/course-notification-category';
@@ -89,6 +89,7 @@ export class CourseNotificationService {
     private notificationSubject = new BehaviorSubject<Record<number, CourseNotification[]>>({});
     private courseNotificationCountMap: Record<number, number> = {};
     private notificationCountSubject = new BehaviorSubject<Record<number, number>>({});
+    private cachedNotificationInfo: HttpResponse<CourseNotificationInfo> | null = null;
 
     public notificationCount$: Observable<Record<number, number>> = this.notificationCountSubject.asObservable();
     public notifications$: Observable<Record<number, CourseNotification[]>> = this.notificationSubject.asObservable();
@@ -104,7 +105,18 @@ export class CourseNotificationService {
      * @returns Observable with notification information
      */
     public getInfo(): Observable<HttpResponse<CourseNotificationInfo>> {
-        return this.http.get<CourseNotificationInfo>(this.apiEndpoint + 'info', { observe: 'response' });
+        if (this.cachedNotificationInfo) {
+            return of(this.cachedNotificationInfo);
+        }
+
+        // Otherwise, fetch from server and cache the result
+        return this.http.get<CourseNotificationInfo>(this.apiEndpoint + 'info', { observe: 'response' }).pipe(
+            tap((response) => {
+                if (response.body) {
+                    this.cachedNotificationInfo = response;
+                }
+            }),
+        );
     }
 
     /**
