@@ -43,6 +43,7 @@ import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.core.service.user.UserService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCPersonalAccessTokenManagementService;
 
 /**
@@ -229,7 +230,7 @@ public class AccountResource {
             fileService.schedulePathForDeletion(FilePathConverter.fileSystemPathForExternalUri(new URI(user.getImageUrl()), FilePathType.PROFILE_PICTURE), 0);
         }
 
-        Path savePath = fileService.saveFile(file, basePath, FilePathType.PROFILE_PICTURE, false);
+        Path savePath = FileUtil.saveFile(file, basePath, FilePathType.PROFILE_PICTURE, false);
         String publicPath = FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.PROFILE_PICTURE, user.getId()).toString();
         userRepository.updateUserImageUrl(user.getId(), publicPath);
         user.setImageUrl(publicPath);

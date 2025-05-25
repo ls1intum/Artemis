@@ -29,7 +29,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisExerciseChatSession;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisProgrammingExerciseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
 import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisEventType;
 import de.tum.cit.aet.artemis.iris.repository.IrisExerciseChatSessionRepository;
@@ -52,7 +52,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionReposi
  */
 @Service
 @Profile(PROFILE_IRIS)
-public class IrisExerciseChatSessionService extends AbstractIrisChatSessionService<IrisExerciseChatSession> implements IrisRateLimitedFeatureInterface {
+public class IrisExerciseChatSessionService extends AbstractIrisChatSessionService<IrisProgrammingExerciseChatSession> implements IrisRateLimitedFeatureInterface {
 
     private static final Logger log = LoggerFactory.getLogger(IrisExerciseChatSessionService.class);
 
@@ -112,9 +112,9 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
      * @return The created session
      */
     // TODO: This function is only used in tests. Replace with createSession once the tests are refactored.
-    public IrisExerciseChatSession createChatSessionForProgrammingExercise(ProgrammingExercise exercise, User user) {
+    public IrisProgrammingExerciseChatSession createChatSessionForProgrammingExercise(ProgrammingExercise exercise, User user) {
         checkIfExamExercise(exercise);
-        return irisSessionRepository.save(new IrisExerciseChatSession(exercise, user));
+        return irisSessionRepository.save(new IrisProgrammingExerciseChatSession(exercise, user));
     }
 
     /**
@@ -125,7 +125,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
      * @param session The session to check
      */
     @Override
-    public void checkHasAccessTo(User user, IrisExerciseChatSession session) {
+    public void checkHasAccessTo(User user, IrisProgrammingExerciseChatSession session) {
         var exercise = exerciseRepository.findByIdElseThrow(session.getExerciseId());
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
         if (!Objects.equals(session.getUserId(), user.getId())) {
@@ -139,13 +139,13 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
      * @param session The session to check
      */
     @Override
-    public void checkIsFeatureActivatedFor(IrisExerciseChatSession session) {
+    public void checkIsFeatureActivatedFor(IrisProgrammingExerciseChatSession session) {
         var exercise = exerciseRepository.findByIdElseThrow(session.getExerciseId());
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.CHAT, exercise);
+        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.PROGRAMMING_EXERCISE_CHAT, exercise);
     }
 
     @Override
-    public void sendOverWebsocket(IrisExerciseChatSession session, IrisMessage message) {
+    public void sendOverWebsocket(IrisProgrammingExerciseChatSession session, IrisMessage message) {
         irisChatWebsocketService.sendMessage(session, message, null);
     }
 
@@ -161,7 +161,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
      * @param session The chat session to send to the LLM
      */
     @Override
-    public void requestAndHandleResponse(IrisExerciseChatSession session) {
+    public void requestAndHandleResponse(IrisProgrammingExerciseChatSession session) {
         requestAndHandleResponse(session, Optional.empty());
     }
 
@@ -172,7 +172,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
      * @param session The chat session to send to the LLM
      * @param event   The event to trigger on Pyris side
      */
-    public void requestAndHandleResponse(IrisExerciseChatSession session, Optional<String> event) {
+    public void requestAndHandleResponse(IrisProgrammingExerciseChatSession session, Optional<String> event) {
         var exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(session.getExerciseId());
         if (exercise.isExamExercise()) {
             throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
@@ -181,10 +181,13 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
         var user = userRepository.findByIdElseThrow(session.getUserId());
         var latestSubmission = getLatestSubmissionIfExists(exercise, user);
 
-        var variant = irisSettingsService.getCombinedIrisSettingsFor(exercise, false).irisChatSettings().selectedVariant();
+        var settings = irisSettingsService.getCombinedIrisSettingsFor(exercise, false).irisProgrammingExerciseChatSettings();
+        if (!settings.enabled()) {
+            throw new ConflictException("Iris is not enabled for this exercise", "Iris", "irisDisabled");
+        }
 
-        var chatSession = (IrisExerciseChatSession) irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
-        pyrisPipelineService.executeExerciseChatPipeline(variant, latestSubmission, exercise, chatSession, event);
+        var chatSession = (IrisProgrammingExerciseChatSession) irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
+        pyrisPipelineService.executeExerciseChatPipeline(settings.selectedVariant(), latestSubmission, exercise, chatSession, event);
     }
 
     /**
@@ -244,7 +247,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
             var needsIntervention = needsIntervention(listOfScores);
             if (needsIntervention) {
                 log.info("Scores in the last 3 submissions did not improve for user {}", studentParticipation.getParticipant().getName());
-                var participant = ((ProgrammingExerciseStudentParticipation) participation).getParticipant();
+                var participant = studentParticipation.getParticipant();
                 if (participant instanceof User user) {
                     var session = getCurrentSessionOrCreateIfNotExistsInternal(exercise, user, false);
                     CompletableFuture.runAsync(() -> requestAndHandleResponse(session, Optional.of(IrisEventType.PROGRESS_STALLED.name().toLowerCase())));
@@ -322,13 +325,13 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
      * @param sendInitialMessageIfCreated Whether to send an initial message from Iris if a new session is created
      * @return The current Iris session
      */
-    public IrisExerciseChatSession getCurrentSessionOrCreateIfNotExists(ProgrammingExercise exercise, User user, boolean sendInitialMessageIfCreated) {
+    public IrisProgrammingExerciseChatSession getCurrentSessionOrCreateIfNotExists(ProgrammingExercise exercise, User user, boolean sendInitialMessageIfCreated) {
         user.hasAcceptedExternalLLMUsageElseThrow();
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.CHAT, exercise);
+        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.PROGRAMMING_EXERCISE_CHAT, exercise);
         return getCurrentSessionOrCreateIfNotExistsInternal(exercise, user, sendInitialMessageIfCreated);
     }
 
-    private IrisExerciseChatSession getCurrentSessionOrCreateIfNotExistsInternal(ProgrammingExercise exercise, User user, boolean sendInitialMessageIfCreated) {
+    private IrisProgrammingExerciseChatSession getCurrentSessionOrCreateIfNotExistsInternal(ProgrammingExercise exercise, User user, boolean sendInitialMessageIfCreated) {
         var sessionOptional = irisExerciseChatSessionRepository.findLatestByExerciseIdAndUserIdWithMessages(exercise.getId(), user.getId(), Pageable.ofSize(1)).stream()
                 .findFirst();
 
@@ -343,10 +346,10 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
      * @param sendInitialMessage Whether to send an initial message from Iris
      * @return The created session
      */
-    public IrisExerciseChatSession createSession(ProgrammingExercise exercise, User user, boolean sendInitialMessage) {
+    public IrisProgrammingExerciseChatSession createSession(ProgrammingExercise exercise, User user, boolean sendInitialMessage) {
         user.hasAcceptedExternalLLMUsageElseThrow();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.CHAT, exercise);
+        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.PROGRAMMING_EXERCISE_CHAT, exercise);
         return createSessionInternal(exercise, user, sendInitialMessage);
     }
 
@@ -358,10 +361,10 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
      * @param sendInitialMessage Whether to send an initial message from Iris
      * @return The created session
      */
-    private IrisExerciseChatSession createSessionInternal(ProgrammingExercise exercise, User user, boolean sendInitialMessage) {
+    private IrisProgrammingExerciseChatSession createSessionInternal(ProgrammingExercise exercise, User user, boolean sendInitialMessage) {
         checkIfExamExercise(exercise);
 
-        var session = irisExerciseChatSessionRepository.save(new IrisExerciseChatSession(exercise, user));
+        var session = irisExerciseChatSessionRepository.save(new IrisProgrammingExerciseChatSession(exercise, user));
 
         if (sendInitialMessage) {
             // Run async to allow the session to be returned immediately
@@ -372,7 +375,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
     }
 
     @Override
-    protected void setLLMTokenUsageParameters(LLMTokenUsageService.LLMTokenUsageBuilder builder, IrisExerciseChatSession session) {
+    protected void setLLMTokenUsageParameters(LLMTokenUsageService.LLMTokenUsageBuilder builder, IrisProgrammingExerciseChatSession session) {
         var exercise = exerciseRepository.findByIdElseThrow(session.getExerciseId());
         builder.withCourse(exercise.getCourseViaExerciseGroupOrCourseMember().getId()).withExercise(exercise.getId());
     }
