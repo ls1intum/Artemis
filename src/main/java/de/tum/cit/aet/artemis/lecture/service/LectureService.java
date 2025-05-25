@@ -25,11 +25,10 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
-import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
-import de.tum.cit.aet.artemis.lecture.domain.VideoUnit;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 
 @Profile(PROFILE_CORE)
@@ -134,11 +133,12 @@ public class LectureService {
      */
     public void delete(Lecture lecture, boolean updateCompetencyProgress) {
         if (irisLectureApi.isPresent()) {
-            Lecture lectureWithAttachmentUnits = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture.getId());
-            List<AttachmentUnit> attachmentUnitList = lectureWithAttachmentUnits.getLectureUnits().stream().filter(lectureUnit -> lectureUnit instanceof AttachmentUnit)
-                    .map(lectureUnit -> (AttachmentUnit) lectureUnit).toList();
-            if (!attachmentUnitList.isEmpty()) {
-                irisLectureApi.get().deleteLectureFromPyrisDB(attachmentUnitList);
+            Lecture lectureWithAttachmentVideoUnits = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture.getId());
+            List<AttachmentVideoUnit> attachmentVideoUnitList = lectureWithAttachmentVideoUnits.getLectureUnits().stream()
+                    .filter(lectureUnit -> lectureUnit instanceof AttachmentVideoUnit).map(lectureUnit -> (AttachmentVideoUnit) lectureUnit).toList();
+
+            if (!attachmentVideoUnitList.isEmpty()) {
+                irisLectureApi.get().deleteLectureFromPyrisDB(attachmentVideoUnitList);
             }
         }
 
@@ -163,10 +163,10 @@ public class LectureService {
      */
     public void ingestLecturesInPyris(Set<Lecture> lectures) {
         if (irisLectureApi.isPresent()) {
-            List<AttachmentUnit> attachmentUnitList = lectures.stream().flatMap(lec -> lec.getLectureUnits().stream()).filter(unit -> unit instanceof AttachmentUnit)
-                    .map(unit -> (AttachmentUnit) unit).toList();
-            for (AttachmentUnit attachmentUnit : attachmentUnitList) {
-                irisLectureApi.get().addLectureUnitToPyrisDB(attachmentUnit);
+            List<AttachmentVideoUnit> attachmentVideoUnitList = lectures.stream().flatMap(lec -> lec.getLectureUnits().stream()).filter(unit -> unit instanceof AttachmentVideoUnit)
+                    .map(unit -> (AttachmentVideoUnit) unit).toList();
+            for (AttachmentVideoUnit attachmentVideoUnit : attachmentVideoUnitList) {
+                irisLectureApi.get().addLectureUnitToPyrisDB(attachmentVideoUnit);
             }
         }
     }
@@ -174,13 +174,13 @@ public class LectureService {
     /**
      * Ingest the transcriptions in the Pyris system
      *
-     * @param transcription Transcription to be ingested
-     * @param course        The course containing the transcription
-     * @param lecture       The lecture containing the transcription
-     * @param lectureUnit   The lecture unit containing the transcription
+     * @param transcription       Transcription to be ingested
+     * @param course              The course containing the transcription
+     * @param lecture             The lecture containing the transcription
+     * @param attachmentVideoUnit The lecture unit containing the transcription
      */
-    public void ingestTranscriptionInPyris(LectureTranscription transcription, Course course, Lecture lecture, VideoUnit lectureUnit) {
-        irisLectureApi.ifPresent(webhookService -> webhookService.addTranscriptionsToPyrisDB(transcription, course, lecture, lectureUnit));
+    public void ingestTranscriptionInPyris(LectureTranscription transcription, Course course, Lecture lecture, AttachmentVideoUnit attachmentVideoUnit) {
+        irisLectureApi.ifPresent(webhookService -> webhookService.addTranscriptionsToPyrisDB(transcription, course, lecture, attachmentVideoUnit));
     }
 
     /**

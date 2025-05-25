@@ -654,7 +654,8 @@ public class RequestUtilService {
 
         var filename = res.getResponse().getHeader("filename");
         assertThat(filename).isNotNull();
-        var tmpFile = Path.of("./local/server-integration-test/temp", filename);
+        var tmpDirectory = Path.of("./local/server-integration-test/temp");
+        var tmpFile = Files.createTempFile(tmpDirectory, filename, ".tmp");
         Files.createDirectories(tmpFile.getParent());  // Ensure directory exists
         FileUtils.writeByteArrayToFile(tmpFile.toFile(), res.getResponse().getContentAsByteArray());
         return tmpFile.toFile();
