@@ -2,7 +2,9 @@ package de.tum.cit.aet.artemis.communication.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.context.annotation.Profile;
@@ -84,5 +86,24 @@ public class EmailNotificationSettingService {
     public boolean isNotificationEnabled(Long userId, EmailNotificationType notificationType) {
         // Default to true if no setting exists
         return emailNotificationSettingRepository.findByUserIdAndNotificationType(userId, notificationType).map(EmailNotificationSetting::getEnabled).orElse(true);
+    }
+
+    /**
+     * Returns a map of email notification settings for a given user.
+     * Each entry in the map corresponds to an {@link EmailNotificationType}, with the key being the enum's {@code name()},
+     * and the value indicating whether notifications of that type are enabled.
+     * If a setting is not explicitly defined for a type, it defaults to {@code true}.
+     *
+     * @param userId the ID of the user whose notification settings should be retrieved
+     * @return a map of {@link EmailNotificationType} names to their enabled/disabled status
+     */
+    public Map<String, Boolean> getAllUserSettingsAsMap(Long userId) {
+        List<EmailNotificationSetting> settings = getUserSettings(userId);
+        Map<String, Boolean> result = new HashMap<>();
+        for (EmailNotificationType type : EmailNotificationType.values()) {
+            boolean enabled = settings.stream().filter(s -> s.getNotificationType() == type).findFirst().map(EmailNotificationSetting::getEnabled).orElse(true);
+            result.put(type.name(), enabled);
+        }
+        return result;
     }
 }

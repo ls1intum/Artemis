@@ -8,13 +8,14 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotNull;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.User;
 
 @Entity
-@Table(name = "email_notification_setting")
+@Table(name = "email_notification_setting", uniqueConstraints = @UniqueConstraint(columnNames = { "user_id", "email_notification_type" }))
 public class EmailNotificationSetting extends DomainObject {
 
     @NotNull
@@ -29,7 +30,7 @@ public class EmailNotificationSetting extends DomainObject {
 
     @NotNull
     @Column(name = "enabled", nullable = false)
-    private Boolean enabled;
+    private boolean enabled;
 
     public User getUser() {
         return user;
@@ -47,11 +48,11 @@ public class EmailNotificationSetting extends DomainObject {
         this.notificationType = notificationType;
     }
 
-    public Boolean getEnabled() {
+    public boolean getEnabled() {
         return enabled;
     }
 
-    public void setEnabled(Boolean enabled) {
+    public void setEnabled(boolean enabled) {
         this.enabled = enabled;
     }
 }

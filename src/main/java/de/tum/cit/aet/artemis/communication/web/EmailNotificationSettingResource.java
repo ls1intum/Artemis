@@ -2,8 +2,6 @@ package de.tum.cit.aet.artemis.communication.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.springframework.context.annotation.Profile;
@@ -17,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.communication.domain.EmailNotificationSetting;
 import de.tum.cit.aet.artemis.communication.domain.EmailNotificationType;
+import de.tum.cit.aet.artemis.communication.dto.UpdateEmailNotificationSettingDTO;
 import de.tum.cit.aet.artemis.communication.service.EmailNotificationSettingService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -53,9 +52,9 @@ public class EmailNotificationSettingResource {
      */
     @PutMapping("email-notification-settings/{notificationType}")
     @EnforceAtLeastStudent
-    public ResponseEntity<EmailNotificationSetting> updateSetting(@PathVariable String notificationType, @RequestBody Map<String, Boolean> request) {
+    public ResponseEntity<EmailNotificationSetting> updateSetting(@PathVariable String notificationType, @RequestBody UpdateEmailNotificationSettingDTO request) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        Boolean enabled = request.get("enabled");
+        Boolean enabled = request.enabled();
         if (enabled == null) {
             return ResponseEntity.badRequest().build();
         }
@@ -69,24 +68,17 @@ public class EmailNotificationSettingResource {
     }
 
     /**
-     * {@code GET  /email-notification-settings} : Return the enabled/disabled state of each
-     * {@link EmailNotificationType} for the current user.
+     * {@code GET /email-notification-settings} : Retrieves the email notification settings for the currently logged-in user.
      *
-     * @return {@link ResponseEntity} with HTTP 200 and a map where the key is the {@code name()} of the type
-     *         and the value indicates whether e‑mails of this type are enabled.
-     *         Types without an explicit setting default to {@code true}.
+     * @return {@link ResponseEntity} with HTTP status 200 (OK) and a map containing each {@link EmailNotificationType}
+     *         as a key (using {@code name()}) and a boolean value indicating whether notifications of that type are enabled.
+     *         If a specific type has no stored setting, it defaults to {@code true}.
      */
     @GetMapping("email-notification-settings")
     @EnforceAtLeastStudent
     public ResponseEntity<Map<String, Boolean>> getAllSettings() {
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        List<EmailNotificationSetting> settings = emailNotificationSettingService.getUserSettings(user.getId());
-        Map<String, Boolean> result = new HashMap<>();
-        for (EmailNotificationType type : EmailNotificationType.values()) {
-            // Default to true if not set
-            boolean enabled = settings.stream().filter(s -> s.getNotificationType() == type).findFirst().map(EmailNotificationSetting::getEnabled).orElse(true);
-            result.put(type.name(), enabled);
-        }
+        Map<String, Boolean> result = emailNotificationSettingService.getAllUserSettingsAsMap(user.getId());
         return ResponseEntity.ok(result);
     }
 }

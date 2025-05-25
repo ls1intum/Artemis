@@ -8,6 +8,8 @@ import { CommonModule } from '@angular/common';
 import { inject } from '@angular/core';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { FEATURE_PASSKEY } from 'app/app.constants';
+import { AlertService } from 'app/shared/service/alert.service';
+import { onError } from 'app/shared/util/global.utils';
 
 @Component({
     selector: 'jhi-email-notifications-settings',
@@ -22,6 +24,7 @@ export class EmailNotificationsSettingsComponent implements OnInit {
 
     private emailNotificationSettingsService = inject(EmailNotificationSettingsService);
     private profileService = inject(ProfileService);
+    private alertService = inject(AlertService);
 
     isPasskeyEnabled = false;
 
@@ -31,16 +34,26 @@ export class EmailNotificationsSettingsComponent implements OnInit {
     }
 
     loadSettings(): void {
-        this.emailNotificationSettingsService.getAll().subscribe((settings: { [key: string]: boolean } | null) => {
-            this.notificationSettings = settings;
+        this.emailNotificationSettingsService.getAll().subscribe({
+            next: (settings: { [key: string]: boolean } | null) => {
+                this.notificationSettings = settings;
+            },
+            error: (error) => {
+                onError(this.alertService, error);
+            },
         });
     }
 
     updateSetting(type: string, enabled: boolean): void {
-        this.emailNotificationSettingsService.update(type, enabled).subscribe(() => {
-            if (this.notificationSettings) {
-                this.notificationSettings[type] = enabled;
-            }
+        this.emailNotificationSettingsService.update(type, enabled).subscribe({
+            next: () => {
+                if (this.notificationSettings) {
+                    this.notificationSettings[type] = enabled;
+                }
+            },
+            error: (error) => {
+                onError(this.alertService, error);
+            },
         });
     }
 

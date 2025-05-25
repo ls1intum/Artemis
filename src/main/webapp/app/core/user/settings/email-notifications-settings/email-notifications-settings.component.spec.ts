@@ -8,6 +8,7 @@ import { FormsModule } from '@angular/forms';
 import { of } from 'rxjs';
 import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ProfileService } from '../../../layouts/profiles/shared/profile.service';
+import { AlertService } from '../../../../shared/service/alert.service';
 
 // Mock settings data
 const mockSettings = {
@@ -31,7 +32,7 @@ describe('EmailNotificationsSettingsComponent', () => {
         await TestBed.configureTestingModule({
             imports: [CommonModule, FormsModule, EmailNotificationsSettingsComponent],
             providers: [{ provide: EmailNotificationSettingsService, useValue: mockService }, MockProvider(ProfileService)],
-            declarations: [MockDirective(TranslateDirective), MockPipe(ArtemisDatePipe)],
+            declarations: [MockDirective(TranslateDirective), MockPipe(ArtemisDatePipe), MockProvider(AlertService)],
         }).compileComponents();
 
         fixture = TestBed.createComponent(EmailNotificationsSettingsComponent);
