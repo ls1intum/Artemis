@@ -327,4 +327,13 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
         }
         this.isSaving = false;
     }
+
+    /**
+     * When the diagram type changes, we need to check whether {@link AssessmentType.SEMI_AUTOMATIC} is available for the type. If not, we revert to {@link AssessmentType.MANUAL}
+     */
+    diagramTypeChanged() {
+        if (!this.semiAutomaticAssessmentAvailable) {
+            this.modelingExercise.assessmentType = AssessmentType.MANUAL;
+        }
+    }
 }
