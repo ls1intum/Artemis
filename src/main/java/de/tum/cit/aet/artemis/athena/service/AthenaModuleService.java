@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 
+import jakarta.annotation.Nullable;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -18,6 +20,7 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -60,7 +63,8 @@ public class AthenaModuleService {
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    private record AthenaModuleDTO(String name, String type) {
+    private record AthenaModuleDTO(String name, String type, @JsonProperty("supports_graded_feedback_requests") boolean supportsGradedFeedbackRequests,
+            @JsonProperty("supports_non_graded_feedback_requests") boolean supportsNonGradedFeedbackRequests) {
     }
 
     /**
@@ -92,17 +96,25 @@ public class AthenaModuleService {
      * @return The list of available Athena text modules for the course
      * @throws NetworkingException is thrown in case the modules can't be fetched from Athena
      */
-    public List<String> getAthenaModulesForCourse(Course course, ExerciseType exerciseType) throws NetworkingException {
+    public List<String> getAthenaModulesForCourse(Course course, ExerciseType exerciseType, @Nullable ModuleType moduleType) throws NetworkingException {
 
         final String exerciseTypeName = exerciseType.getExerciseTypeAsReadableString();
 
-        Stream<String> availableModules = getAthenaModules().stream().filter(module -> exerciseTypeName.equals(module.type)).map(module -> module.name);
+        Stream<AthenaModuleDTO> availableModules = getAthenaModules().stream().filter(module -> exerciseTypeName.equals(module.type()));
 
         if (!course.getRestrictedAthenaModulesAccess()) {
             // filter out restricted modules
-            availableModules = availableModules.filter(moduleName -> !restrictedModules.contains(moduleName));
+            availableModules = availableModules.filter(module -> !restrictedModules.contains(module.name()));
         }
-        return availableModules.toList();
+
+        if (moduleType != null) {
+            availableModules = switch (moduleType) {
+                case FEEDBACK_SUGGESTIONS -> availableModules.filter(AthenaModuleDTO::supportsGradedFeedbackRequests);
+                case PRELIMINARY_FEEDBACK -> availableModules.filter(AthenaModuleDTO::supportsNonGradedFeedbackRequests);
+            };
+        }
+
+        return availableModules.map(AthenaModuleDTO::name).toList();
     }
 
     /**

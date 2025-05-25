@@ -10,6 +10,8 @@ import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { PROFILE_ATHENA } from 'app/app.constants';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { ModelingFeedbackSuggestion, ProgrammingFeedbackSuggestion, TextFeedbackSuggestion } from 'app/assessment/shared/entities/feedback-suggestion.model';
+import { HttpParams } from '@angular/common/http';
+import { ModuleType } from 'app/assessment/shared/entities/athena.model';
 
 @Injectable({ providedIn: 'root' })
 export class AthenaService {
@@ -31,13 +33,18 @@ export class AthenaService {
      * @param courseId The id of the course for which the feedback suggestion modules should be fetched
      * @param exercise The exercise for which the feedback suggestion modules should be fetched
      */
-    public getAvailableModules(courseId: number, exercise: Exercise): Observable<string[]> {
+    public getAvailableModules(courseId: number, exercise: Exercise, moduleType?: ModuleType): Observable<string[]> {
         if (!this.profileService.isProfileActive(PROFILE_ATHENA)) {
             return of([] as string[]);
         }
 
+        let params = new HttpParams();
+        if (moduleType) {
+            params = params.set('moduleType', moduleType);
+        }
+
         return this.http
-            .get<string[]>(`${this.resourceUrl}/courses/${courseId}/${exercise.type}-exercises/available-modules`, { observe: 'response' })
+            .get<string[]>(`${this.resourceUrl}/courses/${courseId}/${exercise.type}-exercises/available-modules`, { params, observe: 'response' })
             .pipe(switchMap((res: HttpResponse<string[]>) => of(res.body!)));
     }
 

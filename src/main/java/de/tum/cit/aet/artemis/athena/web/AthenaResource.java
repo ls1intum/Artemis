@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
+import jakarta.annotation.Nullable;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,8 +22,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.athena.domain.ModuleType;
 import de.tum.cit.aet.artemis.athena.dto.ModelingFeedbackDTO;
 import de.tum.cit.aet.artemis.athena.dto.ProgrammingFeedbackDTO;
 import de.tum.cit.aet.artemis.athena.dto.TextFeedbackDTO;
@@ -143,14 +147,14 @@ public class AthenaResource {
         }
     }
 
-    private ResponseEntity<List<String>> getAvailableModules(long courseId, ExerciseType exerciseType) {
+    private ResponseEntity<List<String>> getAvailableModules(long courseId, ExerciseType exerciseType, @Nullable ModuleType moduleType) {
         Course course = courseRepository.findByIdElseThrow(courseId);
         log.debug("REST request to get available Athena modules for {} exercises in course {}", exerciseType.getExerciseTypeAsReadableString(), course.getTitle());
 
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
         try {
-            List<String> modules = athenaModuleService.getAthenaModulesForCourse(course, exerciseType);
+            List<String> modules = athenaModuleService.getAthenaModulesForCourse(course, exerciseType, moduleType);
             return ResponseEntity.ok(modules);
         }
         catch (NetworkingException e) {
@@ -211,8 +215,8 @@ public class AthenaResource {
      */
     @GetMapping("courses/{courseId}/text-exercises/available-modules")
     @EnforceAtLeastEditor
-    public ResponseEntity<List<String>> getAvailableModulesForTextExercises(@PathVariable long courseId) {
-        return this.getAvailableModules(courseId, ExerciseType.TEXT);
+    public ResponseEntity<List<String>> getAvailableModulesForTextExercises(@PathVariable long courseId, @RequestParam(required = false) ModuleType moduleType) {
+        return this.getAvailableModules(courseId, ExerciseType.TEXT, moduleType);
     }
 
     /**
@@ -223,8 +227,8 @@ public class AthenaResource {
      */
     @GetMapping("courses/{courseId}/programming-exercises/available-modules")
     @EnforceAtLeastEditor
-    public ResponseEntity<List<String>> getAvailableModulesForProgrammingExercises(@PathVariable long courseId) {
-        return this.getAvailableModules(courseId, ExerciseType.PROGRAMMING);
+    public ResponseEntity<List<String>> getAvailableModulesForProgrammingExercises(@PathVariable long courseId, @RequestParam(required = false) ModuleType moduleType) {
+        return this.getAvailableModules(courseId, ExerciseType.PROGRAMMING, moduleType);
     }
 
     /**
@@ -235,8 +239,8 @@ public class AthenaResource {
      */
     @GetMapping("courses/{courseId}/modeling-exercises/available-modules")
     @EnforceAtLeastEditor
-    public ResponseEntity<List<String>> getAvailableModulesForModelingExercises(@PathVariable long courseId) {
-        return this.getAvailableModules(courseId, ExerciseType.MODELING);
+    public ResponseEntity<List<String>> getAvailableModulesForModelingExercises(@PathVariable long courseId, @RequestParam(required = false) ModuleType moduleType) {
+        return this.getAvailableModules(courseId, ExerciseType.MODELING, moduleType);
     }
 
     /**
