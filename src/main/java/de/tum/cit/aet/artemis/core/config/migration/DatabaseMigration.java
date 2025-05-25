@@ -4,6 +4,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import javax.sql.DataSource;
 
@@ -13,7 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import com.vdurmont.semver4j.Semver;
 
-import de.tum.cit.aet.artemis.core.config.HeliosClientWrapper;
+import de.tum.cit.aet.helios.HeliosClient;
 
 /**
  * Represents a migration path that defines the necessary steps for database migration before
@@ -95,12 +96,12 @@ public class DatabaseMigration {
 
     private String previousVersionString;
 
-    private final HeliosClientWrapper heliosClient;
+    private final Optional<HeliosClient> optionalHeliosClient;
 
-    public DatabaseMigration(String currentVersionString, DataSource dataSource, HeliosClientWrapper heliosClient) {
+    public DatabaseMigration(String currentVersionString, DataSource dataSource, Optional<HeliosClient> optionalHeliosClient) {
         this.currentVersionString = currentVersionString;
         this.dataSource = dataSource;
-        this.heliosClient = heliosClient;
+        this.optionalHeliosClient = optionalHeliosClient;
 
         // Initialize migration paths here in the correct order
         migrationPaths.add(new MigrationPath("5.12.9")); // required for migration to 6.0.0 until 7.0.0
@@ -125,7 +126,7 @@ public class DatabaseMigration {
 
         if (previousVersionString == null) {
             log.info("Migration path check: Not necessary");
-            heliosClient.pushDbMigrationStarted();
+            optionalHeliosClient.ifPresent(HeliosClient::pushDbMigrationStarted);
             return;
         }
 
@@ -135,7 +136,7 @@ public class DatabaseMigration {
             if (currentVersion.isGreaterThanOrEqualTo(path.upgradeVersion) && currentVersion.isLowerThan(path.nextUpgradeVersion)) {
                 if (previousVersion.isLowerThan(path.requiredVersion)) {
                     log.error(path.errorMessage);
-                    heliosClient.pushDbMigrationFailed();
+                    optionalHeliosClient.ifPresent(HeliosClient::pushDbMigrationFailed);
                     System.exit(15);
                 }
                 else if (previousVersion.isEqualTo(path.requiredVersion)) {
@@ -146,7 +147,7 @@ public class DatabaseMigration {
             }
         }
 
-        heliosClient.pushDbMigrationStarted();
+        optionalHeliosClient.ifPresent(HeliosClient::pushDbMigrationStarted);
     }
 
     /**
@@ -243,7 +244,7 @@ public class DatabaseMigration {
         }
         catch (SQLException e) {
             log.error("Cannot update checksum for initial schema migration: {}", e.getMessage());
-            heliosClient.pushDbMigrationFailed();
+            optionalHeliosClient.ifPresent(HeliosClient::pushDbMigrationFailed);
             System.exit(11);
         }
     }
@@ -272,7 +273,7 @@ public class DatabaseMigration {
         }
         catch (Exception e) {
             log.error("Cannot connect to the database {} (This typically indicates that the database is not running or there are permission issues", e.getMessage());
-            heliosClient.pushDbMigrationFailed();
+            optionalHeliosClient.ifPresent(HeliosClient::pushDbMigrationFailed);
             System.exit(10);
         }
         return null;

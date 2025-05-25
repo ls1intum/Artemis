@@ -5,6 +5,7 @@ import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Optional;
 
 import javax.sql.DataSource;
 
@@ -24,6 +25,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 
 import de.tum.cit.aet.artemis.core.config.migration.DatabaseMigration;
+import de.tum.cit.aet.helios.HeliosClient;
 import liquibase.Scope;
 import liquibase.SingletonScopeManager;
 import liquibase.integration.spring.SpringLiquibase;
@@ -40,7 +42,7 @@ public class LiquibaseConfiguration {
 
     private final BuildProperties buildProperties;
 
-    private final HeliosClientWrapper heliosClient;
+    private final Optional<HeliosClient> optionalHeliosClient;
 
     private DataSource dataSource;
 
@@ -48,10 +50,10 @@ public class LiquibaseConfiguration {
 
     private String currentVersionString;
 
-    public LiquibaseConfiguration(Environment env, BuildProperties buildProperties, HeliosClientWrapper heliosClient) {
+    public LiquibaseConfiguration(Environment env, BuildProperties buildProperties, Optional<HeliosClient> optionalHeliosClient) {
         this.env = env;
         this.buildProperties = buildProperties;
-        this.heliosClient = heliosClient;
+        this.optionalHeliosClient = optionalHeliosClient;
     }
 
     /**
@@ -71,7 +73,7 @@ public class LiquibaseConfiguration {
         this.currentVersionString = buildProperties.getVersion();
 
         if (!env.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
-            this.databaseMigration = new DatabaseMigration(currentVersionString, dataSource, heliosClient);
+            this.databaseMigration = new DatabaseMigration(currentVersionString, dataSource, optionalHeliosClient);
             databaseMigration.checkMigrationPath();
         }
 
@@ -140,11 +142,11 @@ public class LiquibaseConfiguration {
 
             preparedStatement.executeUpdate();
             connection.commit(); // Ensure the transaction is committed.
-            heliosClient.pushDbMigrationFinished();
+            optionalHeliosClient.ifPresent(HeliosClient::pushDbMigrationFinished);
         }
         catch (SQLException e) {
             log.error("Failed to store the current version to the database", e);
-            heliosClient.pushDbMigrationFailed();
+            optionalHeliosClient.ifPresent(HeliosClient::pushDbMigrationFailed);
             throw new RuntimeException("Error updating the application version in the database", e);
         }
     }
