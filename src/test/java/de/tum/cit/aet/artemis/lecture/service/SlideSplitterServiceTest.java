@@ -784,7 +784,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         testAttachmentVideoUnit.getAttachment().setLink(tempPdfPath.toUri().toString());
 
         // Act - call the async method
-        slideSplitterService.splitAttachmentUnitIntoSingleSlides(testAttachmentUnit, hiddenPagesList, pageOrderList);
+        slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(testAttachmentVideoUnit, hiddenPagesList, pageOrderList);
 
         // Use Awaitility for deterministic waiting
         await().atMost(2, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {

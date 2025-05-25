@@ -152,9 +152,9 @@ public class SlideSplitterService {
      * @param hiddenPages         The hidden pages information.
      * @param pageOrder           The order of pages in the PDF.
      */
-    public void splitAttachmentVideoUnitIntoSingleSlides(PDDocument document, AttachmentVideoUnit attachmentUnit, String pdfFilename, List<HiddenPageInfoDTO> hiddenPages,
+    public void splitAttachmentVideoUnitIntoSingleSlides(PDDocument document, AttachmentVideoUnit attachmentVideoUnit, String pdfFilename, List<HiddenPageInfoDTO> hiddenPages,
             List<SlideOrderDTO> pageOrder) {
-        log.debug("Processing slides for Attachment Video Unit with hidden pages {}", attachmentUnit.getAttachment().getName());
+        log.debug("Processing slides for Attachment Video Unit with hidden pages {}", attachmentVideoUnit.getAttachment().getName());
 
         try {
             // Create a map of hiddenPages for easier lookup
