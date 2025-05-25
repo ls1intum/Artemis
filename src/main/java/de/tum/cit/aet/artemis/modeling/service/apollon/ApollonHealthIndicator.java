@@ -38,7 +38,7 @@ public class ApollonHealthIndicator implements HealthIndicator {
         Map<String, Object> additionalInfo = Map.of("url", apollonConversionUrl);
         ConnectorHealth health;
         try {
-            ResponseEntity<String> response = shortTimeoutRestTemplate.getForEntity(apollonConversionUrl + "/status", String.class);
+            ResponseEntity<String> response = shortTimeoutRestTemplate.getForEntity(apollonConversionUrl + "/api/converter/status", String.class);
             HttpStatusCode statusCode = response.getStatusCode();
             health = new ConnectorHealth(statusCode.is2xxSuccessful(), additionalInfo);
         }
