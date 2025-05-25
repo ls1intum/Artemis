@@ -11,7 +11,7 @@
                     class="transcript-line"
                     [id]="'segment-' + segment.startTime"
                     (click)="seekTo(segment.startTime)"
-                    [class.active]="segment.startTime === transcriptSegments[currentSegmentIndex]?.startTime"
+                    [class.active]="segment.startTime === transcriptSegments[currentSegmentIndex()]?.startTime"
                 >
                     {{ segment.text }}
                 </div>

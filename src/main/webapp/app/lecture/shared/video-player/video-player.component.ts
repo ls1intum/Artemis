@@ -2,6 +2,15 @@ import { AfterViewInit, Component, ElementRef, Input, OnDestroy, signal, viewChi
 import { CommonModule } from '@angular/common';
 import videojs from 'video.js';
 
+type VideoJsPlayer = ReturnType<typeof videojs>;
+
+interface TranscriptSegment {
+    startTime: number;
+    endTime: number;
+    text: string;
+    slideNumber?: number;
+}
+
 @Component({
     selector: 'jhi-video-player',
     standalone: true,
@@ -13,14 +22,13 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
     videoRef = viewChild<ElementRef<HTMLVideoElement>>('videoRef');
 
     @Input({ required: true }) videoUrl: string = '';
-    @Input() transcriptSegments: any[] = [];
+    @Input() transcriptSegments: TranscriptSegment[] = [];
 
-    player: videojs.Player | null = null;
+    player: VideoJsPlayer | null = null;
     currentSegmentIndex = signal<number>(-1);
 
     ngAfterViewInit(): void {
         const videoElement = this.videoRef()?.nativeElement;
-
         if (!videoElement || !this.videoUrl) return;
 
         this.player = videojs(videoElement, {

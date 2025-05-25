@@ -55,3 +55,9 @@
     border-radius: 0.25rem;
     transition: background 0.2s;
 }
+
+.transcript-line.active {
+    background-color: var(--transcript-active-bg);
+    color: var(--transcript-active-text);
+    font-weight: 600;
+}
