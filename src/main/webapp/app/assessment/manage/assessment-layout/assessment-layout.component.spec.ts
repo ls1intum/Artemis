@@ -44,6 +44,12 @@ describe('AssessmentLayoutComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(AssessmentLayoutComponent);
                 component = fixture.componentInstance;
+                fixture.componentRef.setInput('isLoading', false);
+                fixture.componentRef.setInput('isTeamMode', false);
+                fixture.componentRef.setInput('isAssessor', true);
+                fixture.componentRef.setInput('exerciseDashboardLink', []);
+                fixture.componentRef.setInput('canOverride', false);
+                fixture.componentRef.setInput('hasAssessmentDueDatePassed', true);
                 fixture.detectChanges();
             });
     });
@@ -71,7 +77,7 @@ describe('AssessmentLayoutComponent', () => {
         let complaintsForTutorComponent = fixture.debugElement.query(By.directive(ComplaintsForTutorComponent));
         expect(complaintsForTutorComponent).toBeFalsy();
 
-        component.complaint = new Complaint();
+        fixture.componentRef.setInput('complaint', new Complaint());
         fixture.detectChanges();
         complaintsForTutorComponent = fixture.debugElement.query(By.directive(ComplaintsForTutorComponent));
         expect(complaintsForTutorComponent).toBeTruthy();
