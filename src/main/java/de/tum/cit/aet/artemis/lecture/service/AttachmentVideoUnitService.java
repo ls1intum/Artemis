@@ -21,6 +21,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
@@ -156,7 +157,7 @@ public class AttachmentVideoUnitService {
         return savedAttachmentVideoUnit;
     }
 
-    private Attachment createAttachment(Attachment attachment, AttachmentVideoUnit attachmentVideoUnit, MultipartFile file, boolean keepFilename) {
+    private void createAttachment(Attachment attachment, AttachmentVideoUnit attachmentVideoUnit, MultipartFile file, boolean keepFilename) {
         handleFile(file, attachment, keepFilename, attachmentVideoUnit.getId());
         // Default attachment
         attachment.setVersion(1);
@@ -165,7 +166,6 @@ public class AttachmentVideoUnitService {
         Attachment savedAttachment = attachmentRepository.saveAndFlush(attachment);
         attachmentVideoUnit.setAttachment(savedAttachment);
         evictCache(file, attachmentVideoUnit);
-        return savedAttachment;
     }
 
     /**
@@ -197,7 +197,7 @@ public class AttachmentVideoUnitService {
     private void handleFile(MultipartFile file, Attachment attachment, boolean keepFilename, Long attachmentVideoUnitId) {
         if (file != null && !file.isEmpty()) {
             Path basePath = FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(attachmentVideoUnitId.toString());
-            Path savePath = fileService.saveFile(file, basePath, FilePathType.ATTACHMENT_UNIT, keepFilename);
+            Path savePath = FileUtil.saveFile(file, basePath, FilePathType.ATTACHMENT_UNIT, keepFilename);
             attachment.setLink(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.ATTACHMENT_UNIT, attachmentVideoUnitId).toString());
             attachment.setUploadDate(ZonedDateTime.now());
         }
@@ -224,7 +224,7 @@ public class AttachmentVideoUnitService {
 
             // Update student version of attachment
             Path basePath = FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(attachmentVideoUnitId.toString());
-            Path savePath = fileService.saveFile(studentVersionFile, basePath.resolve("student"), FilePathType.STUDENT_VERSION_SLIDES, true);
+            Path savePath = FileUtil.saveFile(studentVersionFile, basePath.resolve("student"), FilePathType.STUDENT_VERSION_SLIDES, true);
             attachment.setStudentVersion(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.STUDENT_VERSION_SLIDES, attachmentVideoUnitId).toString());
             attachmentRepository.save(attachment);
         }

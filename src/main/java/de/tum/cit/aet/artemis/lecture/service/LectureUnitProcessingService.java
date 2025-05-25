@@ -31,6 +31,7 @@ import org.springframework.web.multipart.MultipartFile;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
@@ -109,7 +110,7 @@ public class LectureUnitProcessingService {
                 attachment.setReleaseDate(lectureUnit.releaseDate());
                 attachment.setUploadDate(ZonedDateTime.now());
 
-                MultipartFile multipartFile = fileService.convertByteArrayToMultipart(lectureUnit.unitName(), ".pdf", outputStream.toByteArray());
+                MultipartFile multipartFile = FileUtil.convertByteArrayToMultipart(lectureUnit.unitName(), ".pdf", outputStream.toByteArray());
                 AttachmentVideoUnit savedAttachmentVideoUnit = attachmentVideoUnitService.createAttachmentVideoUnit(attachmentVideoUnit, attachment, lecture, multipartFile, true);
                 slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(documentUnits.getFirst(), savedAttachmentVideoUnit, multipartFile.getOriginalFilename());
                 documentUnits.getFirst().close(); // make sure to close the document
@@ -224,8 +225,8 @@ public class LectureUnitProcessingService {
      */
     public String saveTempFileForProcessing(long lectureId, MultipartFile file, int minutesUntilDeletion) throws IOException {
         String prefix = "Temp_" + lectureId + "_";
-        String sanitisedFilename = fileService.checkAndSanitizeFilename(file.getOriginalFilename());
-        Path filePath = FilePathConverter.getTempFilePath().resolve(fileService.generateFilename(prefix, sanitisedFilename, false));
+        String sanitisedFilename = FileUtil.checkAndSanitizeFilename(file.getOriginalFilename());
+        Path filePath = FilePathConverter.getTempFilePath().resolve(FileUtil.generateFilename(prefix, sanitisedFilename, false));
         FileUtils.copyInputStreamToFile(file.getInputStream(), filePath.toFile());
         fileService.schedulePathForDeletion(filePath, minutesUntilDeletion);
         return filePath.getFileName().toString().substring(prefix.length());
@@ -239,7 +240,7 @@ public class LectureUnitProcessingService {
      * @return Path of the file
      */
     public Path getPathForTempFilename(long lectureId, String filename) {
-        String fullFilename = "Temp_" + lectureId + "_" + FileService.sanitizeFilename(filename);
+        String fullFilename = "Temp_" + lectureId + "_" + FileUtil.sanitizeFilename(filename);
         return FilePathConverter.getTempFilePath().resolve(fullFilename);
     }
 

@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.lecture.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -30,7 +29,6 @@ import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
-import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 
 @Profile(PROFILE_CORE)
@@ -83,22 +81,6 @@ public class LectureService {
         }
         lectureWithAttachments.setAttachments(filteredAttachments);
         return lectureWithAttachments;
-    }
-
-    /**
-     * Lecture with only active attachment video units
-     *
-     * @param lectureWithAttachmentVideoUnits lecture that has attachment video units
-     */
-    public void filterActiveAttachmentVideoUnits(Lecture lectureWithAttachmentVideoUnits) {
-
-        List<LectureUnit> filteredAttachmentVideoUnits = new ArrayList<>();
-        for (LectureUnit unit : lectureWithAttachmentVideoUnits.getLectureUnits()) {
-            if (unit instanceof AttachmentVideoUnit && (unit.getReleaseDate() == null || unit.getReleaseDate().isBefore(ZonedDateTime.now()))) {
-                filteredAttachmentVideoUnits.add(unit);
-            }
-        }
-        lectureWithAttachmentVideoUnits.setLectureUnits(filteredAttachmentVideoUnits);
     }
 
     /**
