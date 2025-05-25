@@ -18,8 +18,8 @@ import { onError } from 'app/shared/util/global.utils';
     styleUrls: ['../user-settings.scss'],
 })
 export class EmailNotificationsSettingsComponent implements OnInit {
-    faSpinner = faSpinner;
-    notificationTypes = ['NEW_LOGIN', 'NEW_PASSKEY_ADDED', 'VCS_TOKEN_EXPIRED', 'SSH_KEY_EXPIRED'];
+    protected readonly faSpinner = faSpinner;
+ protected readonly   notificationTypes = ['NEW_LOGIN', 'NEW_PASSKEY_ADDED', 'VCS_TOKEN_EXPIRED', 'SSH_KEY_EXPIRED'];
     notificationSettings: { [key: string]: boolean } | null = null;
 
     private emailNotificationSettingsService = inject(EmailNotificationSettingsService);
