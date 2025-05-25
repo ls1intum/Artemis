@@ -70,6 +70,15 @@ class FileUtilUnitTest {
     }
 
     @Test
+    void pathWithPathTraversalShouldThrow() {
+        URI path = URI.create("/api/core/uploads/images/drag-and-drop/drag-items/../../exam-users/1/PictureFile.jpg");
+        URI subPath = URI.create("/api/core/uploads/images/drag-and-drop/drag-items");
+
+        assertThatThrownBy(() -> FileUtil.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(path, subPath)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Invalid path");
+    }
+
+    @Test
     void validPathWithRedundantElementsShouldPass() {
         URI path = URI.create("/api/core/../core/uploads/./images/drag-and-drop/backgrounds/1/BackgroundFile.jpg");
         URI subPath = URI.create("/api/core/uploads/images/drag-and-drop");
