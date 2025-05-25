@@ -54,7 +54,7 @@ const esModules = [
     'rxjs/operators',
     'trigram-utils',
     'primeng',
-    '@primeuix',
+    '@primeuix'
 ].join('|');
 
 const {
@@ -82,17 +82,19 @@ module.exports = {
     ],
     collectCoverageFrom: [
         'src/main/webapp/**/*.ts',
-        '!src/main/webapp/**/*.module.ts', // ignore modules files because they cannot be properly tested
-        '!src/main/webapp/**/*.routes.ts', // ignore routes files because they cannot be properly tested
-        '!src/main/webapp/**/*.route.ts', // ignore route files because they cannot be properly tested
+        '!src/main/webapp/**/*.module.ts',  // ignore modules files because they cannot be properly tested
+        '!src/main/webapp/**/*.routes.ts',   // ignore routes files because they cannot be properly tested
+        '!src/main/webapp/**/*.route.ts',   // ignore route files because they cannot be properly tested
         '!**/node_modules/**',
     ],
-    coveragePathIgnorePatterns: ['src/main/webapp/app/core/config/prod.config.ts'],
+    coveragePathIgnorePatterns: [
+        'src/main/webapp/app/core/config/prod.config.ts',
+    ],
     coverageThreshold: {
         global: {
             // TODO: in the future, the following values should increase to at least 90%
             statements: 89.14,
-            branches: 75.2,
+            branches: 75.20,
             functions: 83.01,
             lines: 89.22,
         },
@@ -115,7 +117,9 @@ module.exports = {
     },
     modulePathIgnorePatterns: ['<rootDir>/src/main/resources/templates/', '<rootDir>/build/'],
     testTimeout: 3000,
-    testMatch: ['<rootDir>/src/main/webapp/app/**/*.spec.ts', '<rootDir>/src/test/javascript/spec/**/*.integration.spec.ts'],
+    testMatch: ['<rootDir>/src/main/webapp/app/**/*.spec.ts',
+        '<rootDir>/src/test/javascript/spec/**/*.integration.spec.ts'
+    ],
     moduleNameMapper: {
         '^app/(.*)': '<rootDir>/src/main/webapp/app/$1',
         '^test/(.*)': '<rootDir>/src/test/javascript/spec/$1',
