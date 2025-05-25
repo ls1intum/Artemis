@@ -45,25 +45,29 @@ public class CourseLearnerProfile extends DomainObject {
     private Course course;
 
     @Column(name = "aim_for_grade_or_bonus")
-    @Min(0) // TODO should actually be MIN_PROFILE_VALUE = 1, however, then almost all tests in LearningPathIntegrationTest fail
+    @Min(MIN_PROFILE_VALUE) // TODO should actually be MIN_PROFILE_VALUE = 1, however, then almost all tests in LearningPathIntegrationTest fail
     @Max(MAX_PROFILE_VALUE)
-    private int aimForGradeOrBonus;
+    private int aimForGradeOrBonus = 3;
 
     @Column(name = "time_investment")
-    @Min(0) // TODO should actually be MIN_PROFILE_VALUE = 1, however, then almost all tests in LearningPathIntegrationTest fail
+    @Min(MIN_PROFILE_VALUE) // TODO should actually be MIN_PROFILE_VALUE = 1, however, then almost all tests in LearningPathIntegrationTest fail
     @Max(MAX_PROFILE_VALUE)
-    private int timeInvestment;
+    private int timeInvestment = 3;
 
     @Column(name = "repetition_intensity")
-    @Min(0) // TODO should actually be MIN_PROFILE_VALUE = 1, however, then almost all tests in LearningPathIntegrationTest fail
+    @Min(MIN_PROFILE_VALUE) // TODO should actually be MIN_PROFILE_VALUE = 1, however, then almost all tests in LearningPathIntegrationTest fail
     @Max(MAX_PROFILE_VALUE)
-    private int repetitionIntensity;
+    private int repetitionIntensity = 3;
 
     @Column(name = "proficiency")
-    private double proficiency;
+    @Min(MIN_PROFILE_VALUE)
+    @Max(MAX_PROFILE_VALUE)
+    private double proficiency = 3;
 
     @Column(name = "initial_proficiency")
-    private double initialProficiency;
+    @Min(MIN_PROFILE_VALUE)
+    @Max(MAX_PROFILE_VALUE)
+    private double initialProficiency = 3;
 
     public void setLearnerProfile(LearnerProfile learnerProfile) {
         this.learnerProfile = learnerProfile;
