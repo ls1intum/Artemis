@@ -327,7 +327,8 @@ public class QuizExerciseResource {
     @PatchMapping("quiz-exercises/{exerciseId}")
     @EnforceAtLeastEditorInExercise
     public ResponseEntity<QuizExercise> patchQuizExercise(@PathVariable Long exerciseId, @RequestPart("exercise") QuizExerciseForEditorDTO quizExercise,
-            @RequestPart(value = "files", required = false) List<MultipartFile> files, @RequestParam(value = "notificationText", required = false) String notificationText) {
+            @RequestPart(value = "files", required = false) List<MultipartFile> files, @RequestParam(value = "notificationText", required = false) String notificationText)
+            throws IOException {
         log.info("REST request to patch quiz exercise : {}", quizExercise);
         QuizExercise originalQuiz = quizExerciseRepository.findByIdWithQuestionsAndCompetenciesElseThrow(exerciseId);
 
