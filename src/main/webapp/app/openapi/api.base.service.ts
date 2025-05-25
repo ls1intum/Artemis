@@ -8,7 +8,7 @@ export class BaseService {
     public configuration: Configuration;
     public encoder: HttpParameterCodec;
 
-    constructor(basePath?: string | string[], configuration?: Configuration) {
+    constructor(basePath?: string|string[], configuration?: Configuration) {
         this.configuration = configuration || new Configuration();
         if (typeof this.configuration.basePath !== 'string') {
             const firstBasePath = Array.isArray(basePath) ? basePath[0] : undefined;
@@ -47,15 +47,15 @@ export class BaseService {
             }
             // Otherwise, if it's an array, add each element.
             if (Array.isArray(value)) {
-                value.forEach((elem) => (httpParams = this.addToHttpParamsRecursive(httpParams, elem, key)));
+                value.forEach(elem => httpParams = this.addToHttpParamsRecursive(httpParams, elem, key));
             } else if (value instanceof Date) {
                 if (key != null) {
                     httpParams = httpParams.append(key, value.toISOString());
                 } else {
-                    throw Error('key may not be null if value is Date');
+                    throw Error("key may not be null if value is Date");
                 }
             } else {
-                Object.keys(value).forEach((k) => {
+                Object.keys(value).forEach(k => {
                     const paramKey = key ? `${key}.${k}` : k;
                     httpParams = this.addToHttpParamsRecursive(httpParams, value[k], paramKey);
                 });
@@ -64,6 +64,6 @@ export class BaseService {
         } else if (key != null) {
             return httpParams.append(key, value);
         }
-        throw Error('key may not be null if value is not object or array');
+        throw Error("key may not be null if value is not object or array");
     }
 }

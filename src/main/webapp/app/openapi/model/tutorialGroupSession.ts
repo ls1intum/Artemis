@@ -8,7 +8,9 @@
  * Do not edit the class manually.
  */
 
-export interface TutorialGroupSession {
+
+export interface TutorialGroupSession { 
     date: string;
     location?: string;
 }
+

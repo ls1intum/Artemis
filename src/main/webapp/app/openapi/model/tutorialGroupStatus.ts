@@ -8,6 +8,8 @@
  * Do not edit the class manually.
  */
 
-export interface TutorialGroupStatus {
+
+export interface TutorialGroupStatus { 
     status_explanation?: string;
 }
+

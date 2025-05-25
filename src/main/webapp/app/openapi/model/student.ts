@@ -8,10 +8,12 @@
  * Do not edit the class manually.
  */
 
-export interface Student {
+
+export interface Student { 
     login?: string;
     firstName?: string;
     lastName?: string;
     registrationNumber?: string;
     email?: string;
 }
+

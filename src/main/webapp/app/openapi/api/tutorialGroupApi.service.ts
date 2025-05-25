@@ -9,9 +9,11 @@
  */
 /* tslint:disable:no-unused-variable member-ordering */
 
-import { Inject, Injectable, Optional } from '@angular/core';
-import { HttpClient, HttpParams, HttpResponse, HttpEvent, HttpContext } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Inject, Injectable, Optional }                      from '@angular/core';
+import { HttpClient, HttpParams,
+         HttpResponse, HttpEvent, HttpContext 
+        }       from '@angular/common/http';
+import { Observable }                                        from 'rxjs';
 
 // @ts-ignore
 import { Student } from '../model/student';
@@ -21,56 +23,31 @@ import { TutorialGroupExport } from '../model/tutorialGroupExport';
 import { TutorialGroupRegistrationImport } from '../model/tutorialGroupRegistrationImport';
 
 // @ts-ignore
-import { BASE_PATH } from '../variables';
-import { Configuration } from '../configuration';
+import { BASE_PATH }                     from '../variables';
+import { Configuration }                                     from '../configuration';
 import { BaseService } from '../api.base.service';
 
+
+
 @Injectable({
-    providedIn: 'root',
+  providedIn: 'root'
 })
 export class TutorialGroupApiService extends BaseService {
-    constructor(
-        protected httpClient: HttpClient,
-        @Optional() @Inject(BASE_PATH) basePath: string | string[],
-        @Optional() configuration?: Configuration,
-    ) {
+
+    constructor(protected httpClient: HttpClient, @Optional() @Inject(BASE_PATH) basePath: string|string[], @Optional() configuration?: Configuration) {
         super(basePath, configuration);
     }
 
     /**
-     * @param courseId
-     * @param tutorialGroupId
+     * @param courseId 
+     * @param tutorialGroupId 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      */
-    public delete(
-        courseId: number,
-        tutorialGroupId: number,
-        observe?: 'body',
-        reportProgress?: boolean,
-        options?: { httpHeaderAccept?: undefined; context?: HttpContext; transferCache?: boolean },
-    ): Observable<any>;
-    public delete(
-        courseId: number,
-        tutorialGroupId: number,
-        observe?: 'response',
-        reportProgress?: boolean,
-        options?: { httpHeaderAccept?: undefined; context?: HttpContext; transferCache?: boolean },
-    ): Observable<HttpResponse<any>>;
-    public delete(
-        courseId: number,
-        tutorialGroupId: number,
-        observe?: 'events',
-        reportProgress?: boolean,
-        options?: { httpHeaderAccept?: undefined; context?: HttpContext; transferCache?: boolean },
-    ): Observable<HttpEvent<any>>;
-    public delete(
-        courseId: number,
-        tutorialGroupId: number,
-        observe: any = 'body',
-        reportProgress: boolean = false,
-        options?: { httpHeaderAccept?: undefined; context?: HttpContext; transferCache?: boolean },
-    ): Observable<any> {
+    public delete(courseId: number, tutorialGroupId: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public delete(courseId: number, tutorialGroupId: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public delete(courseId: number, tutorialGroupId: number, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public delete(courseId: number, tutorialGroupId: number, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (courseId === null || courseId === undefined) {
             throw new Error('Required parameter courseId was null or undefined when calling _delete.');
         }
@@ -80,7 +57,8 @@ export class TutorialGroupApiService extends BaseService {
 
         let localVarHeaders = this.defaultHeaders;
 
-        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([]);
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+        ]);
         if (localVarHttpHeaderAcceptSelected !== undefined) {
             localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
         }
@@ -88,6 +66,7 @@ export class TutorialGroupApiService extends BaseService {
         const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
 
         const localVarTransferCache: boolean = options?.transferCache ?? true;
+
 
         let responseType_: 'text' | 'json' | 'blob' = 'json';
         if (localVarHttpHeaderAcceptSelected) {
@@ -100,57 +79,31 @@ export class TutorialGroupApiService extends BaseService {
             }
         }
 
-        let localVarPath = `/api/tutorialgroup/courses/${this.configuration.encodeParam({ name: 'courseId', value: courseId, in: 'path', style: 'simple', explode: false, dataType: 'number', dataFormat: 'int64' })}/tutorial-groups/${this.configuration.encodeParam({ name: 'tutorialGroupId', value: tutorialGroupId, in: 'path', style: 'simple', explode: false, dataType: 'number', dataFormat: 'int64' })}`;
-        return this.httpClient.request<any>('delete', `${this.configuration.basePath}${localVarPath}`, {
-            context: localVarHttpContext,
-            responseType: <any>responseType_,
-            withCredentials: this.configuration.withCredentials,
-            headers: localVarHeaders,
-            observe: observe,
-            transferCache: localVarTransferCache,
-            reportProgress: reportProgress,
-        });
+        let localVarPath = `/api/tutorialgroup/courses/${this.configuration.encodeParam({name: "courseId", value: courseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/tutorial-groups/${this.configuration.encodeParam({name: "tutorialGroupId", value: tutorialGroupId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}`;
+        return this.httpClient.request<any>('delete', `${this.configuration.basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                withCredentials: this.configuration.withCredentials,
+                headers: localVarHeaders,
+                observe: observe,
+                transferCache: localVarTransferCache,
+                reportProgress: reportProgress
+            }
+        );
     }
 
     /**
-     * @param courseId
-     * @param tutorialGroupId
-     * @param studentLogin
+     * @param courseId 
+     * @param tutorialGroupId 
+     * @param studentLogin 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      */
-    public deregisterStudent(
-        courseId: number,
-        tutorialGroupId: number,
-        studentLogin: string,
-        observe?: 'body',
-        reportProgress?: boolean,
-        options?: { httpHeaderAccept?: undefined; context?: HttpContext; transferCache?: boolean },
-    ): Observable<any>;
-    public deregisterStudent(
-        courseId: number,
-        tutorialGroupId: number,
-        studentLogin: string,
-        observe?: 'response',
-        reportProgress?: boolean,
-        options?: { httpHeaderAccept?: undefined; context?: HttpContext; transferCache?: boolean },
-    ): Observable<HttpResponse<any>>;
-    public deregisterStudent(
-        courseId: number,
-        tutorialGroupId: number,
-        studentLogin: string,
-        observe?: 'events',
-        reportProgress?: boolean,
-        options?: { httpHeaderAccept?: undefined; context?: HttpContext; transferCache?: boolean },
-    ): Observable<HttpEvent<any>>;
-    public deregisterStudent(
-        courseId: number,
-        tutorialGroupId: number,
-        studentLogin: string,
-        observe: any = 'body',
-        reportProgress: boolean = false,
-        options?: { httpHeaderAccept?: undefined; context?: HttpContext; transferCache?: boolean },
-    ): Observable<any> {
+    public deregisterStudent(courseId: number, tutorialGroupId: number, studentLogin: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public deregisterStudent(courseId: number, tutorialGroupId: number, studentLogin: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public deregisterStudent(courseId: number, tutorialGroupId: number, studentLogin: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public deregisterStudent(courseId: number, tutorialGroupId: number, studentLogin: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (courseId === null || courseId === undefined) {
             throw new Error('Required parameter courseId was null or undefined when calling deregisterStudent.');
         }
@@ -163,7 +116,8 @@ export class TutorialGroupApiService extends BaseService {
 
         let localVarHeaders = this.defaultHeaders;
 
-        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([]);
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+        ]);
         if (localVarHttpHeaderAcceptSelected !== undefined) {
             localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
         }
@@ -171,6 +125,7 @@ export class TutorialGroupApiService extends BaseService {
         const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
 
         const localVarTransferCache: boolean = options?.transferCache ?? true;
+
 
         let responseType_: 'text' | 'json' | 'blob' = 'json';
         if (localVarHttpHeaderAcceptSelected) {
@@ -183,52 +138,30 @@ export class TutorialGroupApiService extends BaseService {
             }
         }
 
-        let localVarPath = `/api/tutorialgroup/courses/${this.configuration.encodeParam({ name: 'courseId', value: courseId, in: 'path', style: 'simple', explode: false, dataType: 'number', dataFormat: 'int64' })}/tutorial-groups/${this.configuration.encodeParam({ name: 'tutorialGroupId', value: tutorialGroupId, in: 'path', style: 'simple', explode: false, dataType: 'number', dataFormat: 'int64' })}/deregister/${this.configuration.encodeParam({ name: 'studentLogin', value: studentLogin, in: 'path', style: 'simple', explode: false, dataType: 'string', dataFormat: undefined })}`;
-        return this.httpClient.request<any>('delete', `${this.configuration.basePath}${localVarPath}`, {
-            context: localVarHttpContext,
-            responseType: <any>responseType_,
-            withCredentials: this.configuration.withCredentials,
-            headers: localVarHeaders,
-            observe: observe,
-            transferCache: localVarTransferCache,
-            reportProgress: reportProgress,
-        });
+        let localVarPath = `/api/tutorialgroup/courses/${this.configuration.encodeParam({name: "courseId", value: courseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/tutorial-groups/${this.configuration.encodeParam({name: "tutorialGroupId", value: tutorialGroupId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/deregister/${this.configuration.encodeParam({name: "studentLogin", value: studentLogin, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}`;
+        return this.httpClient.request<any>('delete', `${this.configuration.basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                withCredentials: this.configuration.withCredentials,
+                headers: localVarHeaders,
+                observe: observe,
+                transferCache: localVarTransferCache,
+                reportProgress: reportProgress
+            }
+        );
     }
 
     /**
-     * @param courseId
-     * @param fields
+     * @param courseId 
+     * @param fields 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      */
-    public exportTutorialGroupsToCSV(
-        courseId: number,
-        fields: Array<string>,
-        observe?: 'body',
-        reportProgress?: boolean,
-        options?: { httpHeaderAccept?: 'text/csv'; context?: HttpContext; transferCache?: boolean },
-    ): Observable<string>;
-    public exportTutorialGroupsToCSV(
-        courseId: number,
-        fields: Array<string>,
-        observe?: 'response',
-        reportProgress?: boolean,
-        options?: { httpHeaderAccept?: 'text/csv'; context?: HttpContext; transferCache?: boolean },
-    ): Observable<HttpResponse<string>>;
-    public exportTutorialGroupsToCSV(
-        courseId: number,
-        fields: Array<string>,
-        observe?: 'events',
-        reportProgress?: boolean,
-        options?: { httpHeaderAccept?: 'text/csv'; context?: HttpContext; transferCache?: boolean },
-    ): Observable<HttpEvent<string>>;
-    public exportTutorialGroupsToCSV(
-        courseId: number,
-        fields: Array<string>,
-        observe: any = 'body',
-        reportProgress: boolean = false,
-        options?: { httpHeaderAccept?: 'text/csv'; context?: HttpContext; transferCache?: boolean },
-    ): Observable<any> {
+    public exportTutorialGroupsToCSV(courseId: number, fields: Array<string>, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'text/csv', context?: HttpContext, transferCache?: boolean}): Observable<string>;
+    public exportTutorialGroupsToCSV(courseId: number, fields: Array<string>, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'text/csv', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<string>>;
+    public exportTutorialGroupsToCSV(courseId: number, fields: Array<string>, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'text/csv', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<string>>;
+    public exportTutorialGroupsToCSV(courseId: number, fields: Array<string>, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'text/csv', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (courseId === null || courseId === undefined) {
             throw new Error('Required parameter courseId was null or undefined when calling exportTutorialGroupsToCSV.');
         }
@@ -236,16 +169,19 @@ export class TutorialGroupApiService extends BaseService {
             throw new Error('Required parameter fields was null or undefined when calling exportTutorialGroupsToCSV.');
         }
 
-        let localVarQueryParameters = new HttpParams({ encoder: this.encoder });
+        let localVarQueryParameters = new HttpParams({encoder: this.encoder});
         if (fields) {
             fields.forEach((element) => {
-                localVarQueryParameters = this.addToHttpParams(localVarQueryParameters, <any>element, 'fields');
-            });
+                localVarQueryParameters = this.addToHttpParams(localVarQueryParameters,
+                  <any>element, 'fields');
+            })
         }
 
         let localVarHeaders = this.defaultHeaders;
 
-        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept(['text/csv']);
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'text/csv'
+        ]);
         if (localVarHttpHeaderAcceptSelected !== undefined) {
             localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
         }
@@ -253,6 +189,7 @@ export class TutorialGroupApiService extends BaseService {
         const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
 
         const localVarTransferCache: boolean = options?.transferCache ?? true;
+
 
         let responseType_: 'text' | 'json' | 'blob' = 'json';
         if (localVarHttpHeaderAcceptSelected) {
@@ -265,53 +202,31 @@ export class TutorialGroupApiService extends BaseService {
             }
         }
 
-        let localVarPath = `/api/tutorialgroup/courses/${this.configuration.encodeParam({ name: 'courseId', value: courseId, in: 'path', style: 'simple', explode: false, dataType: 'number', dataFormat: 'int64' })}/tutorial-groups/export/csv`;
-        return this.httpClient.request<string>('get', `${this.configuration.basePath}${localVarPath}`, {
-            context: localVarHttpContext,
-            params: localVarQueryParameters,
-            responseType: <any>responseType_,
-            withCredentials: this.configuration.withCredentials,
-            headers: localVarHeaders,
-            observe: observe,
-            transferCache: localVarTransferCache,
-            reportProgress: reportProgress,
-        });
+        let localVarPath = `/api/tutorialgroup/courses/${this.configuration.encodeParam({name: "courseId", value: courseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/tutorial-groups/export/csv`;
+        return this.httpClient.request<string>('get', `${this.configuration.basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                params: localVarQueryParameters,
+                responseType: <any>responseType_,
+                withCredentials: this.configuration.withCredentials,
+                headers: localVarHeaders,
+                observe: observe,
+                transferCache: localVarTransferCache,
+                reportProgress: reportProgress
+            }
+        );
     }
 
     /**
-     * @param courseId
-     * @param fields
+     * @param courseId 
+     * @param fields 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      */
-    public exportTutorialGroupsToJSON(
-        courseId: number,
-        fields: Array<string>,
-        observe?: 'body',
-        reportProgress?: boolean,
-        options?: { httpHeaderAccept?: 'application/json'; context?: HttpContext; transferCache?: boolean },
-    ): Observable<Array<TutorialGroupExport>>;
-    public exportTutorialGroupsToJSON(
-        courseId: number,
-        fields: Array<string>,
-        observe?: 'response',
-        reportProgress?: boolean,
-        options?: { httpHeaderAccept?: 'application/json'; context?: HttpContext; transferCache?: boolean },
-    ): Observable<HttpResponse<Array<TutorialGroupExport>>>;
-    public exportTutorialGroupsToJSON(
-        courseId: number,
-        fields: Array<string>,
-        observe?: 'events',
-        reportProgress?: boolean,
-        options?: { httpHeaderAccept?: 'application/json'; context?: HttpContext; transferCache?: boolean },
-    ): Observable<HttpEvent<Array<TutorialGroupExport>>>;
-    public exportTutorialGroupsToJSON(
-        courseId: number,
-        fields: Array<string>,
-        observe: any = 'body',
-        reportProgress: boolean = false,
-        options?: { httpHeaderAccept?: 'application/json'; context?: HttpContext; transferCache?: boolean },
-    ): Observable<any> {
+    public exportTutorialGroupsToJSON(courseId: number, fields: Array<string>, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<TutorialGroupExport>>;
+    public exportTutorialGroupsToJSON(courseId: number, fields: Array<string>, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<TutorialGroupExport>>>;
+    public exportTutorialGroupsToJSON(courseId: number, fields: Array<string>, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<TutorialGroupExport>>>;
+    public exportTutorialGroupsToJSON(courseId: number, fields: Array<string>, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (courseId === null || courseId === undefined) {
             throw new Error('Required parameter courseId was null or undefined when calling exportTutorialGroupsToJSON.');
         }
@@ -319,16 +234,19 @@ export class TutorialGroupApiService extends BaseService {
             throw new Error('Required parameter fields was null or undefined when calling exportTutorialGroupsToJSON.');
         }
 
-        let localVarQueryParameters = new HttpParams({ encoder: this.encoder });
+        let localVarQueryParameters = new HttpParams({encoder: this.encoder});
         if (fields) {
             fields.forEach((element) => {
-                localVarQueryParameters = this.addToHttpParams(localVarQueryParameters, <any>element, 'fields');
-            });
+                localVarQueryParameters = this.addToHttpParams(localVarQueryParameters,
+                  <any>element, 'fields');
+            })
         }
 
         let localVarHeaders = this.defaultHeaders;
 
-        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept(['application/json']);
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
         if (localVarHttpHeaderAcceptSelected !== undefined) {
             localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
         }
@@ -336,6 +254,7 @@ export class TutorialGroupApiService extends BaseService {
         const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
 
         const localVarTransferCache: boolean = options?.transferCache ?? true;
+
 
         let responseType_: 'text' | 'json' | 'blob' = 'json';
         if (localVarHttpHeaderAcceptSelected) {
@@ -348,55 +267,39 @@ export class TutorialGroupApiService extends BaseService {
             }
         }
 
-        let localVarPath = `/api/tutorialgroup/courses/${this.configuration.encodeParam({ name: 'courseId', value: courseId, in: 'path', style: 'simple', explode: false, dataType: 'number', dataFormat: 'int64' })}/tutorial-groups/export/json`;
-        return this.httpClient.request<Array<TutorialGroupExport>>('get', `${this.configuration.basePath}${localVarPath}`, {
-            context: localVarHttpContext,
-            params: localVarQueryParameters,
-            responseType: <any>responseType_,
-            withCredentials: this.configuration.withCredentials,
-            headers: localVarHeaders,
-            observe: observe,
-            transferCache: localVarTransferCache,
-            reportProgress: reportProgress,
-        });
+        let localVarPath = `/api/tutorialgroup/courses/${this.configuration.encodeParam({name: "courseId", value: courseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/tutorial-groups/export/json`;
+        return this.httpClient.request<Array<TutorialGroupExport>>('get', `${this.configuration.basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                params: localVarQueryParameters,
+                responseType: <any>responseType_,
+                withCredentials: this.configuration.withCredentials,
+                headers: localVarHeaders,
+                observe: observe,
+                transferCache: localVarTransferCache,
+                reportProgress: reportProgress
+            }
+        );
     }
 
     /**
-     * @param courseId
+     * @param courseId 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      */
-    public getAllForCourse(
-        courseId: number,
-        observe?: 'body',
-        reportProgress?: boolean,
-        options?: { httpHeaderAccept?: 'application/json'; context?: HttpContext; transferCache?: boolean },
-    ): Observable<Array<any>>;
-    public getAllForCourse(
-        courseId: number,
-        observe?: 'response',
-        reportProgress?: boolean,
-        options?: { httpHeaderAccept?: 'application/json'; context?: HttpContext; transferCache?: boolean },
-    ): Observable<HttpResponse<Array<any>>>;
-    public getAllForCourse(
-        courseId: number,
-        observe?: 'events',
-        reportProgress?: boolean,
-        options?: { httpHeaderAccept?: 'application/json'; context?: HttpContext; transferCache?: boolean },
-    ): Observable<HttpEvent<Array<any>>>;
-    public getAllForCourse(
-        courseId: number,
-        observe: any = 'body',
-        reportProgress: boolean = false,
-        options?: { httpHeaderAccept?: 'application/json'; context?: HttpContext; transferCache?: boolean },
-    ): Observable<any> {
+    public getAllForCourse(courseId: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<any>>;
+    public getAllForCourse(courseId: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<any>>>;
+    public getAllForCourse(courseId: number, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<any>>>;
+    public getAllForCourse(courseId: number, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (courseId === null || courseId === undefined) {
             throw new Error('Required parameter courseId was null or undefined when calling getAllForCourse.');
         }
 
         let localVarHeaders = this.defaultHeaders;
 
-        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept(['application/json']);
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
         if (localVarHttpHeaderAcceptSelected !== undefined) {
             localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
         }
@@ -404,6 +307,7 @@ export class TutorialGroupApiService extends BaseService {
         const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
 
         const localVarTransferCache: boolean = options?.transferCache ?? true;
+
 
         let responseType_: 'text' | 'json' | 'blob' = 'json';
         if (localVarHttpHeaderAcceptSelected) {
@@ -416,54 +320,38 @@ export class TutorialGroupApiService extends BaseService {
             }
         }
 
-        let localVarPath = `/api/tutorialgroup/courses/${this.configuration.encodeParam({ name: 'courseId', value: courseId, in: 'path', style: 'simple', explode: false, dataType: 'number', dataFormat: 'int64' })}/tutorial-groups`;
-        return this.httpClient.request<Array<any>>('get', `${this.configuration.basePath}${localVarPath}`, {
-            context: localVarHttpContext,
-            responseType: <any>responseType_,
-            withCredentials: this.configuration.withCredentials,
-            headers: localVarHeaders,
-            observe: observe,
-            transferCache: localVarTransferCache,
-            reportProgress: reportProgress,
-        });
+        let localVarPath = `/api/tutorialgroup/courses/${this.configuration.encodeParam({name: "courseId", value: courseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/tutorial-groups`;
+        return this.httpClient.request<Array<any>>('get', `${this.configuration.basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                withCredentials: this.configuration.withCredentials,
+                headers: localVarHeaders,
+                observe: observe,
+                transferCache: localVarTransferCache,
+                reportProgress: reportProgress
+            }
+        );
     }
 
     /**
-     * @param tutorialGroupId
+     * @param tutorialGroupId 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      */
-    public getTitle(
-        tutorialGroupId: number,
-        observe?: 'body',
-        reportProgress?: boolean,
-        options?: { httpHeaderAccept?: 'application/json'; context?: HttpContext; transferCache?: boolean },
-    ): Observable<string>;
-    public getTitle(
-        tutorialGroupId: number,
-        observe?: 'response',
-        reportProgress?: boolean,
-        options?: { httpHeaderAccept?: 'application/json'; context?: HttpContext; transferCache?: boolean },
-    ): Observable<HttpResponse<string>>;
-    public getTitle(
-        tutorialGroupId: number,
-        observe?: 'events',
-        reportProgress?: boolean,
-        options?: { httpHeaderAccept?: 'application/json'; context?: HttpContext; transferCache?: boolean },
-    ): Observable<HttpEvent<string>>;
-    public getTitle(
-        tutorialGroupId: number,
-        observe: any = 'body',
-        reportProgress: boolean = false,
-        options?: { httpHeaderAccept?: 'application/json'; context?: HttpContext; transferCache?: boolean },
-    ): Observable<any> {
+    public getTitle(tutorialGroupId: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<string>;
+    public getTitle(tutorialGroupId: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<string>>;
+    public getTitle(tutorialGroupId: number, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<string>>;
+    public getTitle(tutorialGroupId: number, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (tutorialGroupId === null || tutorialGroupId === undefined) {
             throw new Error('Required parameter tutorialGroupId was null or undefined when calling getTitle.');
         }
 
         let localVarHeaders = this.defaultHeaders;
 
-        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept(['application/json']);
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
         if (localVarHttpHeaderAcceptSelected !== undefined) {
             localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
         }
@@ -471,6 +359,7 @@ export class TutorialGroupApiService extends BaseService {
         const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
 
         const localVarTransferCache: boolean = options?.transferCache ?? true;
+
 
         let responseType_: 'text' | 'json' | 'blob' = 'json';
         if (localVarHttpHeaderAcceptSelected) {
@@ -483,54 +372,38 @@ export class TutorialGroupApiService extends BaseService {
             }
         }
 
-        let localVarPath = `/api/tutorialgroup/tutorial-groups/${this.configuration.encodeParam({ name: 'tutorialGroupId', value: tutorialGroupId, in: 'path', style: 'simple', explode: false, dataType: 'number', dataFormat: 'int64' })}/title`;
-        return this.httpClient.request<string>('get', `${this.configuration.basePath}${localVarPath}`, {
-            context: localVarHttpContext,
-            responseType: <any>responseType_,
-            withCredentials: this.configuration.withCredentials,
-            headers: localVarHeaders,
-            observe: observe,
-            transferCache: localVarTransferCache,
-            reportProgress: reportProgress,
-        });
+        let localVarPath = `/api/tutorialgroup/tutorial-groups/${this.configuration.encodeParam({name: "tutorialGroupId", value: tutorialGroupId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/title`;
+        return this.httpClient.request<string>('get', `${this.configuration.basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                withCredentials: this.configuration.withCredentials,
+                headers: localVarHeaders,
+                observe: observe,
+                transferCache: localVarTransferCache,
+                reportProgress: reportProgress
+            }
+        );
     }
 
     /**
-     * @param courseId
+     * @param courseId 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      */
-    public getUniqueCampusValues(
-        courseId: number,
-        observe?: 'body',
-        reportProgress?: boolean,
-        options?: { httpHeaderAccept?: 'application/json'; context?: HttpContext; transferCache?: boolean },
-    ): Observable<Set<string>>;
-    public getUniqueCampusValues(
-        courseId: number,
-        observe?: 'response',
-        reportProgress?: boolean,
-        options?: { httpHeaderAccept?: 'application/json'; context?: HttpContext; transferCache?: boolean },
-    ): Observable<HttpResponse<Set<string>>>;
-    public getUniqueCampusValues(
-        courseId: number,
-        observe?: 'events',
-        reportProgress?: boolean,
-        options?: { httpHeaderAccept?: 'application/json'; context?: HttpContext; transferCache?: boolean },
-    ): Observable<HttpEvent<Set<string>>>;
-    public getUniqueCampusValues(
-        courseId: number,
-        observe: any = 'body',
-        reportProgress: boolean = false,
-        options?: { httpHeaderAccept?: 'application/json'; context?: HttpContext; transferCache?: boolean },
-    ): Observable<any> {
+    public getUniqueCampusValues(courseId: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Set<string>>;
+    public getUniqueCampusValues(courseId: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Set<string>>>;
+    public getUniqueCampusValues(courseId: number, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Set<string>>>;
+    public getUniqueCampusValues(courseId: number, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (courseId === null || courseId === undefined) {
             throw new Error('Required parameter courseId was null or undefined when calling getUniqueCampusValues.');
         }
 
         let localVarHeaders = this.defaultHeaders;
 
-        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept(['application/json']);
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
         if (localVarHttpHeaderAcceptSelected !== undefined) {
             localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
         }
@@ -538,6 +411,7 @@ export class TutorialGroupApiService extends BaseService {
         const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
 
         const localVarTransferCache: boolean = options?.transferCache ?? true;
+
 
         let responseType_: 'text' | 'json' | 'blob' = 'json';
         if (localVarHttpHeaderAcceptSelected) {
@@ -550,54 +424,38 @@ export class TutorialGroupApiService extends BaseService {
             }
         }
 
-        let localVarPath = `/api/tutorialgroup/courses/${this.configuration.encodeParam({ name: 'courseId', value: courseId, in: 'path', style: 'simple', explode: false, dataType: 'number', dataFormat: 'int64' })}/tutorial-groups/campus-values`;
-        return this.httpClient.request<Set<string>>('get', `${this.configuration.basePath}${localVarPath}`, {
-            context: localVarHttpContext,
-            responseType: <any>responseType_,
-            withCredentials: this.configuration.withCredentials,
-            headers: localVarHeaders,
-            observe: observe,
-            transferCache: localVarTransferCache,
-            reportProgress: reportProgress,
-        });
+        let localVarPath = `/api/tutorialgroup/courses/${this.configuration.encodeParam({name: "courseId", value: courseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/tutorial-groups/campus-values`;
+        return this.httpClient.request<Set<string>>('get', `${this.configuration.basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                withCredentials: this.configuration.withCredentials,
+                headers: localVarHeaders,
+                observe: observe,
+                transferCache: localVarTransferCache,
+                reportProgress: reportProgress
+            }
+        );
     }
 
     /**
-     * @param courseId
+     * @param courseId 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      */
-    public getUniqueLanguageValues(
-        courseId: number,
-        observe?: 'body',
-        reportProgress?: boolean,
-        options?: { httpHeaderAccept?: 'application/json'; context?: HttpContext; transferCache?: boolean },
-    ): Observable<Set<string>>;
-    public getUniqueLanguageValues(
-        courseId: number,
-        observe?: 'response',
-        reportProgress?: boolean,
-        options?: { httpHeaderAccept?: 'application/json'; context?: HttpContext; transferCache?: boolean },
-    ): Observable<HttpResponse<Set<string>>>;
-    public getUniqueLanguageValues(
-        courseId: number,
-        observe?: 'events',
-        reportProgress?: boolean,
-        options?: { httpHeaderAccept?: 'application/json'; context?: HttpContext; transferCache?: boolean },
-    ): Observable<HttpEvent<Set<string>>>;
-    public getUniqueLanguageValues(
-        courseId: number,
-        observe: any = 'body',
-        reportProgress: boolean = false,
-        options?: { httpHeaderAccept?: 'application/json'; context?: HttpContext; transferCache?: boolean },
-    ): Observable<any> {
+    public getUniqueLanguageValues(courseId: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Set<string>>;
+    public getUniqueLanguageValues(courseId: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Set<string>>>;
+    public getUniqueLanguageValues(courseId: number, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Set<string>>>;
+    public getUniqueLanguageValues(courseId: number, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (courseId === null || courseId === undefined) {
             throw new Error('Required parameter courseId was null or undefined when calling getUniqueLanguageValues.');
         }
 
         let localVarHeaders = this.defaultHeaders;
 
-        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept(['application/json']);
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
         if (localVarHttpHeaderAcceptSelected !== undefined) {
             localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
         }
@@ -605,6 +463,7 @@ export class TutorialGroupApiService extends BaseService {
         const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
 
         const localVarTransferCache: boolean = options?.transferCache ?? true;
+
 
         let responseType_: 'text' | 'json' | 'blob' = 'json';
         if (localVarHttpHeaderAcceptSelected) {
@@ -617,52 +476,30 @@ export class TutorialGroupApiService extends BaseService {
             }
         }
 
-        let localVarPath = `/api/tutorialgroup/courses/${this.configuration.encodeParam({ name: 'courseId', value: courseId, in: 'path', style: 'simple', explode: false, dataType: 'number', dataFormat: 'int64' })}/tutorial-groups/language-values`;
-        return this.httpClient.request<Set<string>>('get', `${this.configuration.basePath}${localVarPath}`, {
-            context: localVarHttpContext,
-            responseType: <any>responseType_,
-            withCredentials: this.configuration.withCredentials,
-            headers: localVarHeaders,
-            observe: observe,
-            transferCache: localVarTransferCache,
-            reportProgress: reportProgress,
-        });
+        let localVarPath = `/api/tutorialgroup/courses/${this.configuration.encodeParam({name: "courseId", value: courseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/tutorial-groups/language-values`;
+        return this.httpClient.request<Set<string>>('get', `${this.configuration.basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                withCredentials: this.configuration.withCredentials,
+                headers: localVarHeaders,
+                observe: observe,
+                transferCache: localVarTransferCache,
+                reportProgress: reportProgress
+            }
+        );
     }
 
     /**
-     * @param courseId
-     * @param tutorialGroupRegistrationImport
+     * @param courseId 
+     * @param tutorialGroupRegistrationImport 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      */
-    public importRegistrations(
-        courseId: number,
-        tutorialGroupRegistrationImport: Set<TutorialGroupRegistrationImport>,
-        observe?: 'body',
-        reportProgress?: boolean,
-        options?: { httpHeaderAccept?: 'application/json'; context?: HttpContext; transferCache?: boolean },
-    ): Observable<Array<TutorialGroupRegistrationImport>>;
-    public importRegistrations(
-        courseId: number,
-        tutorialGroupRegistrationImport: Set<TutorialGroupRegistrationImport>,
-        observe?: 'response',
-        reportProgress?: boolean,
-        options?: { httpHeaderAccept?: 'application/json'; context?: HttpContext; transferCache?: boolean },
-    ): Observable<HttpResponse<Array<TutorialGroupRegistrationImport>>>;
-    public importRegistrations(
-        courseId: number,
-        tutorialGroupRegistrationImport: Set<TutorialGroupRegistrationImport>,
-        observe?: 'events',
-        reportProgress?: boolean,
-        options?: { httpHeaderAccept?: 'application/json'; context?: HttpContext; transferCache?: boolean },
-    ): Observable<HttpEvent<Array<TutorialGroupRegistrationImport>>>;
-    public importRegistrations(
-        courseId: number,
-        tutorialGroupRegistrationImport: Set<TutorialGroupRegistrationImport>,
-        observe: any = 'body',
-        reportProgress: boolean = false,
-        options?: { httpHeaderAccept?: 'application/json'; context?: HttpContext; transferCache?: boolean },
-    ): Observable<any> {
+    public importRegistrations(courseId: number, tutorialGroupRegistrationImport: Set<TutorialGroupRegistrationImport>, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<TutorialGroupRegistrationImport>>;
+    public importRegistrations(courseId: number, tutorialGroupRegistrationImport: Set<TutorialGroupRegistrationImport>, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<TutorialGroupRegistrationImport>>>;
+    public importRegistrations(courseId: number, tutorialGroupRegistrationImport: Set<TutorialGroupRegistrationImport>, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<TutorialGroupRegistrationImport>>>;
+    public importRegistrations(courseId: number, tutorialGroupRegistrationImport: Set<TutorialGroupRegistrationImport>, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (courseId === null || courseId === undefined) {
             throw new Error('Required parameter courseId was null or undefined when calling importRegistrations.');
         }
@@ -672,7 +509,9 @@ export class TutorialGroupApiService extends BaseService {
 
         let localVarHeaders = this.defaultHeaders;
 
-        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept(['application/json']);
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
         if (localVarHttpHeaderAcceptSelected !== undefined) {
             localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
         }
@@ -681,8 +520,11 @@ export class TutorialGroupApiService extends BaseService {
 
         const localVarTransferCache: boolean = options?.transferCache ?? true;
 
+
         // to determine the Content-Type header
-        const consumes: string[] = ['application/json'];
+        const consumes: string[] = [
+            'application/json'
+        ];
         const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
         if (httpContentTypeSelected !== undefined) {
             localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
@@ -699,58 +541,32 @@ export class TutorialGroupApiService extends BaseService {
             }
         }
 
-        let localVarPath = `/api/tutorialgroup/courses/${this.configuration.encodeParam({ name: 'courseId', value: courseId, in: 'path', style: 'simple', explode: false, dataType: 'number', dataFormat: 'int64' })}/tutorial-groups/import`;
-        return this.httpClient.request<Array<TutorialGroupRegistrationImport>>('post', `${this.configuration.basePath}${localVarPath}`, {
-            context: localVarHttpContext,
-            body: tutorialGroupRegistrationImport,
-            responseType: <any>responseType_,
-            withCredentials: this.configuration.withCredentials,
-            headers: localVarHeaders,
-            observe: observe,
-            transferCache: localVarTransferCache,
-            reportProgress: reportProgress,
-        });
+        let localVarPath = `/api/tutorialgroup/courses/${this.configuration.encodeParam({name: "courseId", value: courseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/tutorial-groups/import`;
+        return this.httpClient.request<Array<TutorialGroupRegistrationImport>>('post', `${this.configuration.basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                body: tutorialGroupRegistrationImport,
+                responseType: <any>responseType_,
+                withCredentials: this.configuration.withCredentials,
+                headers: localVarHeaders,
+                observe: observe,
+                transferCache: localVarTransferCache,
+                reportProgress: reportProgress
+            }
+        );
     }
 
     /**
-     * @param courseId
-     * @param tutorialGroupId
-     * @param student
+     * @param courseId 
+     * @param tutorialGroupId 
+     * @param student 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      */
-    public registerMultipleStudentsToTutorialGroup(
-        courseId: number,
-        tutorialGroupId: number,
-        student: Set<Student>,
-        observe?: 'body',
-        reportProgress?: boolean,
-        options?: { httpHeaderAccept?: 'application/json'; context?: HttpContext; transferCache?: boolean },
-    ): Observable<Set<Student>>;
-    public registerMultipleStudentsToTutorialGroup(
-        courseId: number,
-        tutorialGroupId: number,
-        student: Set<Student>,
-        observe?: 'response',
-        reportProgress?: boolean,
-        options?: { httpHeaderAccept?: 'application/json'; context?: HttpContext; transferCache?: boolean },
-    ): Observable<HttpResponse<Set<Student>>>;
-    public registerMultipleStudentsToTutorialGroup(
-        courseId: number,
-        tutorialGroupId: number,
-        student: Set<Student>,
-        observe?: 'events',
-        reportProgress?: boolean,
-        options?: { httpHeaderAccept?: 'application/json'; context?: HttpContext; transferCache?: boolean },
-    ): Observable<HttpEvent<Set<Student>>>;
-    public registerMultipleStudentsToTutorialGroup(
-        courseId: number,
-        tutorialGroupId: number,
-        student: Set<Student>,
-        observe: any = 'body',
-        reportProgress: boolean = false,
-        options?: { httpHeaderAccept?: 'application/json'; context?: HttpContext; transferCache?: boolean },
-    ): Observable<any> {
+    public registerMultipleStudentsToTutorialGroup(courseId: number, tutorialGroupId: number, student: Set<Student>, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Set<Student>>;
+    public registerMultipleStudentsToTutorialGroup(courseId: number, tutorialGroupId: number, student: Set<Student>, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Set<Student>>>;
+    public registerMultipleStudentsToTutorialGroup(courseId: number, tutorialGroupId: number, student: Set<Student>, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Set<Student>>>;
+    public registerMultipleStudentsToTutorialGroup(courseId: number, tutorialGroupId: number, student: Set<Student>, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (courseId === null || courseId === undefined) {
             throw new Error('Required parameter courseId was null or undefined when calling registerMultipleStudentsToTutorialGroup.');
         }
@@ -763,7 +579,9 @@ export class TutorialGroupApiService extends BaseService {
 
         let localVarHeaders = this.defaultHeaders;
 
-        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept(['application/json']);
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
         if (localVarHttpHeaderAcceptSelected !== undefined) {
             localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
         }
@@ -772,8 +590,11 @@ export class TutorialGroupApiService extends BaseService {
 
         const localVarTransferCache: boolean = options?.transferCache ?? true;
 
+
         // to determine the Content-Type header
-        const consumes: string[] = ['application/json'];
+        const consumes: string[] = [
+            'application/json'
+        ];
         const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
         if (httpContentTypeSelected !== undefined) {
             localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
@@ -790,58 +611,32 @@ export class TutorialGroupApiService extends BaseService {
             }
         }
 
-        let localVarPath = `/api/tutorialgroup/courses/${this.configuration.encodeParam({ name: 'courseId', value: courseId, in: 'path', style: 'simple', explode: false, dataType: 'number', dataFormat: 'int64' })}/tutorial-groups/${this.configuration.encodeParam({ name: 'tutorialGroupId', value: tutorialGroupId, in: 'path', style: 'simple', explode: false, dataType: 'number', dataFormat: 'int64' })}/register-multiple`;
-        return this.httpClient.request<Set<Student>>('post', `${this.configuration.basePath}${localVarPath}`, {
-            context: localVarHttpContext,
-            body: student,
-            responseType: <any>responseType_,
-            withCredentials: this.configuration.withCredentials,
-            headers: localVarHeaders,
-            observe: observe,
-            transferCache: localVarTransferCache,
-            reportProgress: reportProgress,
-        });
+        let localVarPath = `/api/tutorialgroup/courses/${this.configuration.encodeParam({name: "courseId", value: courseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/tutorial-groups/${this.configuration.encodeParam({name: "tutorialGroupId", value: tutorialGroupId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/register-multiple`;
+        return this.httpClient.request<Set<Student>>('post', `${this.configuration.basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                body: student,
+                responseType: <any>responseType_,
+                withCredentials: this.configuration.withCredentials,
+                headers: localVarHeaders,
+                observe: observe,
+                transferCache: localVarTransferCache,
+                reportProgress: reportProgress
+            }
+        );
     }
 
     /**
-     * @param courseId
-     * @param tutorialGroupId
-     * @param studentLogin
+     * @param courseId 
+     * @param tutorialGroupId 
+     * @param studentLogin 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      */
-    public registerStudent(
-        courseId: number,
-        tutorialGroupId: number,
-        studentLogin: string,
-        observe?: 'body',
-        reportProgress?: boolean,
-        options?: { httpHeaderAccept?: undefined; context?: HttpContext; transferCache?: boolean },
-    ): Observable<any>;
-    public registerStudent(
-        courseId: number,
-        tutorialGroupId: number,
-        studentLogin: string,
-        observe?: 'response',
-        reportProgress?: boolean,
-        options?: { httpHeaderAccept?: undefined; context?: HttpContext; transferCache?: boolean },
-    ): Observable<HttpResponse<any>>;
-    public registerStudent(
-        courseId: number,
-        tutorialGroupId: number,
-        studentLogin: string,
-        observe?: 'events',
-        reportProgress?: boolean,
-        options?: { httpHeaderAccept?: undefined; context?: HttpContext; transferCache?: boolean },
-    ): Observable<HttpEvent<any>>;
-    public registerStudent(
-        courseId: number,
-        tutorialGroupId: number,
-        studentLogin: string,
-        observe: any = 'body',
-        reportProgress: boolean = false,
-        options?: { httpHeaderAccept?: undefined; context?: HttpContext; transferCache?: boolean },
-    ): Observable<any> {
+    public registerStudent(courseId: number, tutorialGroupId: number, studentLogin: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public registerStudent(courseId: number, tutorialGroupId: number, studentLogin: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public registerStudent(courseId: number, tutorialGroupId: number, studentLogin: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public registerStudent(courseId: number, tutorialGroupId: number, studentLogin: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (courseId === null || courseId === undefined) {
             throw new Error('Required parameter courseId was null or undefined when calling registerStudent.');
         }
@@ -854,7 +649,8 @@ export class TutorialGroupApiService extends BaseService {
 
         let localVarHeaders = this.defaultHeaders;
 
-        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([]);
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+        ]);
         if (localVarHttpHeaderAcceptSelected !== undefined) {
             localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
         }
@@ -862,6 +658,7 @@ export class TutorialGroupApiService extends BaseService {
         const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
 
         const localVarTransferCache: boolean = options?.transferCache ?? true;
+
 
         let responseType_: 'text' | 'json' | 'blob' = 'json';
         if (localVarHttpHeaderAcceptSelected) {
@@ -874,15 +671,18 @@ export class TutorialGroupApiService extends BaseService {
             }
         }
 
-        let localVarPath = `/api/tutorialgroup/courses/${this.configuration.encodeParam({ name: 'courseId', value: courseId, in: 'path', style: 'simple', explode: false, dataType: 'number', dataFormat: 'int64' })}/tutorial-groups/${this.configuration.encodeParam({ name: 'tutorialGroupId', value: tutorialGroupId, in: 'path', style: 'simple', explode: false, dataType: 'number', dataFormat: 'int64' })}/register/${this.configuration.encodeParam({ name: 'studentLogin', value: studentLogin, in: 'path', style: 'simple', explode: false, dataType: 'string', dataFormat: undefined })}`;
-        return this.httpClient.request<any>('post', `${this.configuration.basePath}${localVarPath}`, {
-            context: localVarHttpContext,
-            responseType: <any>responseType_,
-            withCredentials: this.configuration.withCredentials,
-            headers: localVarHeaders,
-            observe: observe,
-            transferCache: localVarTransferCache,
-            reportProgress: reportProgress,
-        });
+        let localVarPath = `/api/tutorialgroup/courses/${this.configuration.encodeParam({name: "courseId", value: courseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/tutorial-groups/${this.configuration.encodeParam({name: "tutorialGroupId", value: tutorialGroupId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/register/${this.configuration.encodeParam({name: "studentLogin", value: studentLogin, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}`;
+        return this.httpClient.request<any>('post', `${this.configuration.basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                withCredentials: this.configuration.withCredentials,
+                headers: localVarHeaders,
+                observe: observe,
+                transferCache: localVarTransferCache,
+                reportProgress: reportProgress
+            }
+        );
     }
+
 }

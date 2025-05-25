@@ -8,7 +8,8 @@
  * Do not edit the class manually.
  */
 
-export interface ConversationUser {
+
+export interface ConversationUser { 
     id?: number;
     login?: string;
     name?: string;
@@ -22,3 +23,4 @@ export interface ConversationUser {
     isChannelModerator?: boolean;
     isRequestingUser?: boolean;
 }
+

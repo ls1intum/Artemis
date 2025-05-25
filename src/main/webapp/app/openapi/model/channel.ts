@@ -9,7 +9,8 @@
  */
 import { ConversationUser } from './conversationUser';
 
-export interface Channel {
+
+export interface Channel { 
     type?: string;
     id?: number;
     creationDate?: string;
@@ -45,6 +46,8 @@ export namespace Channel {
         Exercise: 'exercise' as SubTypeEnum,
         Lecture: 'lecture' as SubTypeEnum,
         Exam: 'exam' as SubTypeEnum,
-        FeedbackDiscussion: 'feedbackDiscussion' as SubTypeEnum,
+        FeedbackDiscussion: 'feedbackDiscussion' as SubTypeEnum
     };
 }
+
+

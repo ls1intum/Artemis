@@ -5,7 +5,7 @@ export interface ConfigurationParameters {
     /**
      *  @deprecated Since 5.0. Use credentials instead
      */
-    apiKeys?: { [key: string]: string };
+    apiKeys?: {[ key: string ]: string};
     username?: string;
     password?: string;
     /**
@@ -31,14 +31,14 @@ export interface ConfigurationParameters {
      * document. They should map to the value used for authentication
      * minus any standard prefixes such as 'Basic' or 'Bearer'.
      */
-    credentials?: { [key: string]: string | (() => string | undefined) };
+    credentials?: {[ key: string ]: string | (() => string | undefined)};
 }
 
 export class Configuration {
     /**
      *  @deprecated Since 5.0. Use credentials instead
      */
-    apiKeys?: { [key: string]: string };
+    apiKeys?: {[ key: string ]: string};
     username?: string;
     password?: string;
     /**
@@ -64,7 +64,7 @@ export class Configuration {
      * document. They should map to the value used for authentication
      * minus any standard prefixes such as 'Basic' or 'Bearer'.
      */
-    credentials: { [key: string]: string | (() => string | undefined) };
+    credentials: {[ key: string ]: string | (() => string | undefined)};
 
     constructor(configurationParameters: ConfigurationParameters = {}) {
         this.apiKeys = configurationParameters.apiKeys;
@@ -76,12 +76,14 @@ export class Configuration {
         this.encoder = configurationParameters.encoder;
         if (configurationParameters.encodeParam) {
             this.encodeParam = configurationParameters.encodeParam;
-        } else {
-            this.encodeParam = (param) => this.defaultEncodeParam(param);
+        }
+        else {
+            this.encodeParam = param => this.defaultEncodeParam(param);
         }
         if (configurationParameters.credentials) {
             this.credentials = configurationParameters.credentials;
-        } else {
+        }
+        else {
             this.credentials = {};
         }
     }
@@ -93,7 +95,7 @@ export class Configuration {
      * @param contentTypes - the array of content types that are available for selection
      * @returns the selected content-type or <code>undefined</code> if no selection could be made.
      */
-    public selectHeaderContentType(contentTypes: string[]): string | undefined {
+    public selectHeaderContentType (contentTypes: string[]): string | undefined {
         if (contentTypes.length === 0) {
             return undefined;
         }
@@ -141,17 +143,23 @@ export class Configuration {
 
     public lookupCredential(key: string): string | undefined {
         const value = this.credentials[key];
-        return typeof value === 'function' ? value() : value;
+        return typeof value === 'function'
+            ? value()
+            : value;
     }
 
     public addCredentialToHeaders(credentialKey: string, headerName: string, headers: HttpHeaders, prefix?: string): HttpHeaders {
         const value = this.lookupCredential(credentialKey);
-        return value ? headers.set(headerName, (prefix ?? '') + value) : headers;
+        return value
+            ? headers.set(headerName, (prefix ?? '') + value)
+            : headers;
     }
 
     public addCredentialToQuery(credentialKey: string, paramName: string, query: HttpParams): HttpParams {
         const value = this.lookupCredential(credentialKey);
-        return value ? query.set(paramName, value) : query;
+        return value
+            ? query.set(paramName, value)
+            : query;
     }
 
     private defaultEncodeParam(param: Param): string {
@@ -163,7 +171,9 @@ export class Configuration {
         //
         // But: if that's all you need (i.e.: the most common use-case): no need for customization!
 
-        const value = param.dataFormat === 'date-time' && param.value instanceof Date ? (param.value as Date).toISOString() : param.value;
+        const value = param.dataFormat === 'date-time' && param.value instanceof Date
+            ? (param.value as Date).toISOString()
+            : param.value;
 
         return encodeURIComponent(String(value));
     }

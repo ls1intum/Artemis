@@ -8,7 +8,9 @@
  * Do not edit the class manually.
  */
 
-export interface TutorialGroupUpdate {
+
+export interface TutorialGroupUpdate { 
     notificationText?: string;
     updateTutorialGroupChannelName?: boolean;
 }
+

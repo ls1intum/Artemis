@@ -9,7 +9,8 @@
  */
 import { StudentExport } from './studentExport';
 
-export interface TutorialGroupExport {
+
+export interface TutorialGroupExport { 
     id?: number;
     title?: string;
     dayOfWeek?: string;
@@ -23,3 +24,4 @@ export interface TutorialGroupExport {
     isOnline?: boolean;
     students?: Array<StudentExport>;
 }
+

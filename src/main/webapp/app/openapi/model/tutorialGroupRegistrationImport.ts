@@ -9,7 +9,8 @@
  */
 import { Student } from './student';
 
-export interface TutorialGroupRegistrationImport {
+
+export interface TutorialGroupRegistrationImport { 
     title?: string;
     student?: Student;
     importSuccessful?: boolean;
@@ -25,6 +26,8 @@ export namespace TutorialGroupRegistrationImport {
     export const ErrorEnum = {
         NoTitle: 'NO_TITLE' as ErrorEnum,
         NoUserFound: 'NO_USER_FOUND' as ErrorEnum,
-        MultipleRegistrations: 'MULTIPLE_REGISTRATIONS' as ErrorEnum,
+        MultipleRegistrations: 'MULTIPLE_REGISTRATIONS' as ErrorEnum
     };
 }
+
+

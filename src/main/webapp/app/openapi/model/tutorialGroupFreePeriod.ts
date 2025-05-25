@@ -8,8 +8,10 @@
  * Do not edit the class manually.
  */
 
-export interface TutorialGroupFreePeriod {
+
+export interface TutorialGroupFreePeriod { 
     startDate: string;
     endDate: string;
     reason?: string;
 }
+
