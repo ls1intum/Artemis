@@ -8,6 +8,8 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { CompetencyContributionCardComponent } from 'app/atlas/shared/competency-contribution/competency-contribution-card/competency-contribution-card.component';
 import { CarouselModule } from 'primeng/carousel';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-competency-contribution',
@@ -21,7 +23,9 @@ export class CompetencyContributionComponent {
 
     private readonly courseCompetencyService = inject(CourseCompetencyService);
     private readonly alertService = inject(AlertService);
+    private readonly profileService = inject(ProfileService);
 
+    atlasEnabled = false;
     competencies: CompetencyContributionCardDTO[] = [];
 
     constructor() {
@@ -29,6 +33,13 @@ export class CompetencyContributionComponent {
     }
 
     private loadData(): void {
+        this.atlasEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS);
+
+        // we can return early if atlas is not enabled
+        if (!this.atlasEnabled) {
+            return;
+        }
+
         let observable: Observable<HttpResponse<CompetencyContributionCardDTO[]>>;
         if (this.isExercise()) {
             observable = this.courseCompetencyService.getCompetencyContributionsForExercise(this.learningObjectId());

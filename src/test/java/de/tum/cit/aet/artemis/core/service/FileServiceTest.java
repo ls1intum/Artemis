@@ -37,11 +37,15 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.util.ResourceUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import de.tum.cit.aet.artemis.core.FilePathType;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class FileServiceTest extends AbstractSpringIntegrationIndependentTest {
@@ -59,13 +63,13 @@ class FileServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final URI VALID_BACKGROUND_PATH = URI.create("/api/core/uploads/images/drag-and-drop/backgrounds/1/BackgroundFile.jpg");
 
-    private static final URI VALID_INTENDED_BACKGROUND_PATH = createURIWithPath("/api/core/", FilePathService.getDragAndDropBackgroundFilePath());
+    private static final URI VALID_INTENDED_BACKGROUND_PATH = createURIWithPath("/api/core/", FilePathConverter.getDragAndDropBackgroundFilePath());
 
     private static final URI INVALID_BACKGROUND_PATH = URI.create("/api/core/uploads/images/drag-and-drop/backgrounds/1/../../../exam-users/signatures/some-file.png");
 
     private static final URI VALID_DRAGITEM_PATH = URI.create("/api/core/uploads/images/drag-and-drop/drag-items/1/PictureFile.jpg");
 
-    private static final URI VALID_INTENDED_DRAGITEM_PATH = createURIWithPath("/api/core/", FilePathService.getDragItemFilePath());
+    private static final URI VALID_INTENDED_DRAGITEM_PATH = createURIWithPath("/api/core/", FilePathConverter.getDragItemFilePath());
 
     private static final URI INVALID_DRAGITEM_PATH = URI.create("/api/core/uploads/images/drag-and-drop/drag-items/1/../../../exam-users/signatures/some-file.png");
 
@@ -171,7 +175,7 @@ class FileServiceTest extends AbstractSpringIntegrationIndependentTest {
         FileUtils.writeStringToFile(filePath.toFile(), payload, StandardCharsets.UTF_8);
         Path newFolder = Path.of(".", "exportTest", "newFolder");
 
-        Path newPath = fileService.copyExistingFileToTarget(filePath, newFolder);
+        Path newPath = fileService.copyExistingFileToTarget(filePath, newFolder, FilePathType.COURSE_ICON);
         assertThat(newPath).isNotNull();
 
         assertThat(FileUtils.readFileToString(newPath.toFile(), StandardCharsets.UTF_8)).isEqualTo(payload);
@@ -179,7 +183,7 @@ class FileServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     void testCopyExistingFileToTarget_newFile() {
-        assertThat(fileService.copyExistingFileToTarget(null, Path.of(".", "exportTest"))).isNull();
+        assertThat(fileService.copyExistingFileToTarget(null, Path.of(".", "exportTest"), FilePathType.DRAG_ITEM)).isNull();
     }
 
     @Test
@@ -187,7 +191,7 @@ class FileServiceTest extends AbstractSpringIntegrationIndependentTest {
         // We don't need to create a file here as we expect the method to terminate early
         Path tempPath = Path.of(".", "uploads", "files", "temp", "testFile.txt");
         Path newPath = Path.of(".", "exportTest");
-        assertThat(fileService.copyExistingFileToTarget(tempPath, newPath)).isNull();
+        assertThat(fileService.copyExistingFileToTarget(tempPath, newPath, FilePathType.TEMPORARY)).isNull();
     }
 
     @Test
@@ -434,5 +438,23 @@ class FileServiceTest extends AbstractSpringIntegrationIndependentTest {
     void testSanitizeByCheckingIfPathContainsSubPathElseThrow_Picture_Invalid_Path() {
         assertThatExceptionOfType(IllegalArgumentException.class)
                 .isThrownBy(() -> FileService.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(INVALID_DRAGITEM_PATH, VALID_INTENDED_DRAGITEM_PATH));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "folder/file.txt", "folder/subfolder/file.pdf", "file.docx", "safe_name-123.txt" })
+    void testSanitizeFilePath_ValidPaths(String filePath) {
+        assertThatNoException().isThrownBy(() -> FileService.sanitizeFilePathByCheckingForInvalidCharactersElseThrow(filePath));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "folder/../file.txt", "folder/evil/../../file.txt" })
+    void testSanitizeFilePath_InvalidPaths(String filePath) {
+        assertThatThrownBy(() -> FileService.sanitizeFilePathByCheckingForInvalidCharactersElseThrow(filePath)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Path is not valid!");
+    }
+
+    @Test
+    void testSanitizeFilePath_EmptyPath() {
+        assertThatNoException().isThrownBy(() -> FileService.sanitizeFilePathByCheckingForInvalidCharactersElseThrow(""));
     }
 }

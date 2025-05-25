@@ -15,7 +15,7 @@ import org.apache.commons.io.FileUtils;
 import org.springframework.util.ResourceUtils;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.service.FilePathService;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseFactory;
@@ -46,6 +46,8 @@ import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
  * Factory for creating QuizExercises and related objects.
  */
 public class QuizExerciseFactory {
+
+    public static final String DRAG_ITEM_PATH_PREFIX = "drag-and-drop/drag-items/";
 
     /**
      * Creates a quiz exercise with the given dates and adds it to the course.
@@ -170,11 +172,11 @@ public class QuizExerciseFactory {
 
         var dragItem1 = new DragItem().text("D1");
         dragItem1.setTempID(generateTempId());
-        var dragItem2 = new DragItem().pictureFilePath("dragItemImage2.png");
+        var dragItem2 = new DragItem().pictureFilePath(DRAG_ITEM_PATH_PREFIX + "dragItemImage2.png");
         dragItem2.setTempID(generateTempId());
         var dragItem3 = new DragItem().text("D3");
         dragItem3.setTempID(generateTempId());
-        var dragItem4 = new DragItem().pictureFilePath("dragItemImage4.png");
+        var dragItem4 = new DragItem().pictureFilePath(DRAG_ITEM_PATH_PREFIX + "dragItemImage4.png");
         dragItem4.setTempID(generateTempId());
         dnd.addDragItem(dragItem1);
         assertThat(dragItem1.getQuestion()).isEqualTo(dnd);
@@ -473,12 +475,12 @@ public class QuizExerciseFactory {
         dragItem4.setTempID(generateTempId());
         try {
             FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/attachment/placeholder.jpg"),
-                    FilePathService.getDragItemFilePath().resolve("10").resolve("drag_item.jpg").toFile());
+                    FilePathConverter.getDragItemFilePath().resolve("10").resolve("drag_item.jpg").toFile());
         }
         catch (IOException ex) {
             fail("Failed while copying test attachment files", ex);
         }
-        var dragItem5 = new DragItem().pictureFilePath("drag-and-drop/drag-items/10/drag_item.jpg");
+        var dragItem5 = new DragItem().pictureFilePath(DRAG_ITEM_PATH_PREFIX + "10/drag_item.jpg");
         dragItem4.setInvalid(true);
         dnd.addDragItem(dragItem1);
         assertThat(dragItem1.getQuestion()).isEqualTo(dnd);

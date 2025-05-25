@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepos
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationService;
+import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -64,9 +65,9 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.En
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.CourseService;
-import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
@@ -675,19 +676,10 @@ public class QuizExerciseResource {
                 .map(question -> ((DragAndDropQuestion) question)).toList();
         List<String> backgroundImagePaths = dragAndDropQuestions.stream().map(DragAndDropQuestion::getBackgroundFilePath).toList();
         List<String> dragItemImagePaths = dragAndDropQuestions.stream().flatMap(question -> question.getDragItems().stream().map(DragItem::getPictureFilePath)).toList();
-        List<Path> imagesToDelete = Stream.concat(backgroundImagePaths.stream(), dragItemImagePaths.stream()).map(path -> {
-            if (path == null) {
-                return null;
-            }
-            try {
-                return FilePathService.actualPathForPublicPathOrThrow(URI.create(path));
-            }
-            catch (FilePathParsingException e) {
-                // if the path is invalid, we can't delete it, but we don't want to fail the whole deletion
-                log.warn("Could not find file {} for deletion", path);
-                return null;
-            }
-        }).filter(Objects::nonNull).toList();
+        List<Path> imagesToDelete = Stream
+                .concat(backgroundImagePaths.stream().filter(Objects::nonNull).map(path -> convertToActualPath(path, FilePathType.DRAG_AND_DROP_BACKGROUND)),
+                        dragItemImagePaths.stream().filter(Objects::nonNull).map(path -> convertToActualPath(path, FilePathType.DRAG_ITEM)))
+                .filter(Objects::nonNull).toList();
 
         // note: we use the exercise service here, because this one makes sure to clean up all lazy references correctly.
         exerciseService.logDeletion(quizExercise, quizExercise.getCourseViaExerciseGroupOrCourseMember(), user);
@@ -697,6 +689,16 @@ public class QuizExerciseResource {
         fileService.deleteFiles(imagesToDelete);
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, quizExercise.getTitle())).build();
+    }
+
+    private Path convertToActualPath(String pathString, FilePathType filePathType) {
+        try {
+            return FilePathConverter.fileSystemPathForExternalUri(URI.create(pathString), filePathType);
+        }
+        catch (FilePathParsingException e) {
+            log.warn("Could not find file {} for deletion", pathString);
+            return null;
+        }
     }
 
     /**

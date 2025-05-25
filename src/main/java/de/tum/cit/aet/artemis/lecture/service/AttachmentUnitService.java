@@ -18,13 +18,16 @@ import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
+import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.dto.HiddenPageInfoDTO;
+import de.tum.cit.aet.artemis.lecture.dto.SlideOrderDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentUnitRepository;
 
@@ -101,7 +104,7 @@ public class AttachmentUnitService {
      * @return The updated attachment unit.
      */
     public AttachmentUnit updateAttachmentUnit(AttachmentUnit existingAttachmentUnit, AttachmentUnit updateUnit, Attachment updateAttachment, MultipartFile updateFile,
-            boolean keepFilename, String hiddenPages, String pageOrder) {
+            boolean keepFilename, List<HiddenPageInfoDTO> hiddenPages, List<SlideOrderDTO> pageOrder) {
         Set<CompetencyLectureUnitLink> existingCompetencyLinks = new HashSet<>(existingAttachmentUnit.getCompetencyLinks());
 
         existingAttachmentUnit.setDescription(updateUnit.getDescription());
@@ -153,7 +156,7 @@ public class AttachmentUnitService {
      * @param attachmentUnit     the attachment unit to update
      * @param hiddenPages        the hidden pages in the attachment
      */
-    private void updateAttachment(Attachment existingAttachment, Attachment updateAttachment, AttachmentUnit attachmentUnit, String hiddenPages) {
+    private void updateAttachment(Attachment existingAttachment, Attachment updateAttachment, AttachmentUnit attachmentUnit, List<HiddenPageInfoDTO> hiddenPages) {
         // Make sure that the original references are preserved.
         existingAttachment.setAttachmentUnit(attachmentUnit);
         existingAttachment.setReleaseDate(updateAttachment.getReleaseDate());
@@ -174,9 +177,9 @@ public class AttachmentUnitService {
      */
     private void handleFile(MultipartFile file, Attachment attachment, boolean keepFilename, Long attachmentUnitId) {
         if (file != null && !file.isEmpty()) {
-            Path basePath = FilePathService.getAttachmentUnitFilePath().resolve(attachmentUnitId.toString());
-            Path savePath = fileService.saveFile(file, basePath, keepFilename);
-            attachment.setLink(FilePathService.publicPathForActualPathOrThrow(savePath, attachmentUnitId).toString());
+            Path basePath = FilePathConverter.getAttachmentUnitFileSystemPath().resolve(attachmentUnitId.toString());
+            Path savePath = fileService.saveFile(file, basePath, FilePathType.ATTACHMENT_UNIT, keepFilename);
+            attachment.setLink(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.ATTACHMENT_UNIT, attachmentUnitId).toString());
             attachment.setUploadDate(ZonedDateTime.now());
         }
     }
@@ -194,14 +197,15 @@ public class AttachmentUnitService {
             // Delete the old student version
             if (attachment.getStudentVersion() != null) {
                 URI oldStudentVersionPath = URI.create(attachment.getStudentVersion());
-                fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(oldStudentVersionPath), 0);
-                this.fileService.evictCacheForPath(FilePathService.actualPathForPublicPathOrThrow(oldStudentVersionPath));
+                Path localPath = FilePathConverter.fileSystemPathForExternalUri(oldStudentVersionPath, FilePathType.STUDENT_VERSION_SLIDES);
+                fileService.schedulePathForDeletion(localPath, 0);
+                this.fileService.evictCacheForPath(localPath);
             }
 
             // Update student version of attachment
-            Path basePath = FilePathService.getAttachmentUnitFilePath().resolve(attachmentUnitId.toString());
-            Path savePath = fileService.saveFile(studentVersionFile, basePath.resolve("student"), true);
-            attachment.setStudentVersion(FilePathService.publicPathForActualPath(savePath, attachmentUnitId).toString());
+            Path basePath = FilePathConverter.getAttachmentUnitFileSystemPath().resolve(attachmentUnitId.toString());
+            Path savePath = fileService.saveFile(studentVersionFile, basePath.resolve("student"), FilePathType.STUDENT_VERSION_SLIDES, true);
+            attachment.setStudentVersion(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.STUDENT_VERSION_SLIDES, attachmentUnitId).toString());
             attachmentRepository.save(attachment);
         }
     }
@@ -214,7 +218,7 @@ public class AttachmentUnitService {
      */
     private void evictCache(MultipartFile file, AttachmentUnit attachmentUnit) {
         if (file != null && !file.isEmpty()) {
-            this.fileService.evictCacheForPath(FilePathService.actualPathForPublicPathOrThrow(URI.create(attachmentUnit.getAttachment().getLink())));
+            this.fileService.evictCacheForPath(FilePathConverter.fileSystemPathForExternalUri(URI.create(attachmentUnit.getAttachment().getLink()), FilePathType.ATTACHMENT_UNIT));
         }
     }
 
@@ -226,6 +230,5 @@ public class AttachmentUnitService {
     public void prepareAttachmentUnitForClient(AttachmentUnit attachmentUnit) {
         attachmentUnit.getLecture().setLectureUnits(null);
         attachmentUnit.getLecture().setAttachments(null);
-        attachmentUnit.getLecture().setPosts(null);
     }
 }

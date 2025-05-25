@@ -277,7 +277,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void averageAttendanceCalculationTest_lastThreeSessionsWithoutAttendanceData_AverageNull(boolean useSingleEndpoint) throws Exception {
-        this.averageAttendanceTestScaffold(new Integer[] { 99, 99, null, null, null }, null, useSingleEndpoint);
+        this.averageAttendanceTestScaffold(new Integer[] { 99, 99, null, null, null }, 99, useSingleEndpoint);
     }
 
     @ParameterizedTest
@@ -291,9 +291,9 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void averageAttendanceCalculationTest_OneSessionOfTheLastThreeHasAttendanceData_AverageIsAttendanceOfSession(boolean useSingleEndpoint) throws Exception {
-        this.averageAttendanceTestScaffold(new Integer[] { 99, 99, 8, null, null }, 8, useSingleEndpoint);
-        this.averageAttendanceTestScaffold(new Integer[] { 99, 99, null, 8, null }, 8, useSingleEndpoint);
-        this.averageAttendanceTestScaffold(new Integer[] { 99, 99, null, null, 8 }, 8, useSingleEndpoint);
+        this.averageAttendanceTestScaffold(new Integer[] { 99, 99, 8, null, null }, 69, useSingleEndpoint);
+        this.averageAttendanceTestScaffold(new Integer[] { 99, 99, null, 8, null }, 69, useSingleEndpoint);
+        this.averageAttendanceTestScaffold(new Integer[] { 99, 99, null, null, 8 }, 69, useSingleEndpoint);
 
     }
 
@@ -308,9 +308,9 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void averageAttendanceCalculationTest_TwoSessionsOfTheLastThreeHaveAttendanceData_AverageIsArithmeticMean(boolean useSingleEndpoint) throws Exception {
-        this.averageAttendanceTestScaffold(new Integer[] { 99, 99, null, 8, 5 }, 7, useSingleEndpoint);
-        this.averageAttendanceTestScaffold(new Integer[] { 99, 99, 8, null, 5 }, 7, useSingleEndpoint);
-        this.averageAttendanceTestScaffold(new Integer[] { 99, 99, 8, 5, null }, 7, useSingleEndpoint);
+        this.averageAttendanceTestScaffold(new Integer[] { 99, 99, null, 8, 5 }, 37, useSingleEndpoint);
+        this.averageAttendanceTestScaffold(new Integer[] { 99, 99, 8, null, 5 }, 37, useSingleEndpoint);
+        this.averageAttendanceTestScaffold(new Integer[] { 99, 99, 8, 5, null }, 37, useSingleEndpoint);
 
     }
 
@@ -1060,10 +1060,10 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         String jsonResponse = request.get(url, HttpStatus.OK, String.class);
 
         // then
-        assertThat(jsonResponse).contains("ID");
-        assertThat(jsonResponse).contains("Title");
-        assertThat(jsonResponse).contains("Campus");
-        assertThat(jsonResponse).contains("Language");
+        assertThat(jsonResponse).contains("id");
+        assertThat(jsonResponse).contains("title");
+        assertThat(jsonResponse).contains("campus");
+        assertThat(jsonResponse).contains("language");
         assertThat(jsonResponse).contains("LoremIpsum1");
         assertThat(jsonResponse).contains("LoremIpsum2");
     }
@@ -1100,12 +1100,12 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         String jsonResponse = request.get(url, HttpStatus.OK, String.class);
 
         // then
-        assertThat(jsonResponse).contains("ID");
-        assertThat(jsonResponse).contains("Title");
-        assertThat(jsonResponse).contains("Campus");
-        assertThat(jsonResponse).contains("Language");
-        assertThat(jsonResponse).contains("Capacity");
-        assertThat(jsonResponse).contains("Is Online");
+        assertThat(jsonResponse).contains("id");
+        assertThat(jsonResponse).contains("title");
+        assertThat(jsonResponse).contains("campus");
+        assertThat(jsonResponse).contains("language");
+        assertThat(jsonResponse).contains("capacity");
+        assertThat(jsonResponse).contains("isOnline");
         assertThat(jsonResponse).contains("SampleTitle1");
         assertThat(jsonResponse).contains("SampleInfo1");
         assertThat(jsonResponse).contains("ENGLISH");
@@ -1127,18 +1127,18 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         String jsonResponse = request.get(url, HttpStatus.OK, String.class);
 
         // then
-        assertThat(jsonResponse).contains("ID");
-        assertThat(jsonResponse).contains("Title");
-        assertThat(jsonResponse).contains("Campus");
-        assertThat(jsonResponse).contains("Language");
-        assertThat(jsonResponse).contains("Additional Information");
-        assertThat(jsonResponse).contains("Capacity");
-        assertThat(jsonResponse).contains("Is Online");
-        assertThat(jsonResponse).contains("Day of Week");
-        assertThat(jsonResponse).contains("Start Time");
-        assertThat(jsonResponse).contains("End Time");
-        assertThat(jsonResponse).contains("Location");
-        assertThat(jsonResponse).contains("Students");
+        assertThat(jsonResponse).contains("id");
+        assertThat(jsonResponse).contains("title");
+        assertThat(jsonResponse).contains("campus");
+        assertThat(jsonResponse).contains("language");
+        assertThat(jsonResponse).contains("additionalInformation");
+        assertThat(jsonResponse).contains("capacity");
+        assertThat(jsonResponse).contains("isOnline");
+        assertThat(jsonResponse).contains("dayOfWeek");
+        assertThat(jsonResponse).doesNotContain("startTime"); // value is not defined
+        assertThat(jsonResponse).doesNotContain("endTime");   // value is not defined
+        assertThat(jsonResponse).doesNotContain("location");  // value is not defined
+        assertThat(jsonResponse).contains("students");
         assertThat(jsonResponse).contains("LoremIpsum1");
         assertThat(jsonResponse).contains("LoremIpsum2");
     }
@@ -1158,18 +1158,18 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         String jsonResponse = request.get(url, HttpStatus.OK, String.class);
 
         // then
-        assertThat(jsonResponse).contains("ID");
-        assertThat(jsonResponse).contains("Title");
-        assertThat(jsonResponse).contains("Campus");
-        assertThat(jsonResponse).contains("Language");
-        assertThat(jsonResponse).contains("Additional Information");
-        assertThat(jsonResponse).contains("Capacity");
-        assertThat(jsonResponse).contains("Is Online");
-        assertThat(jsonResponse).contains("Day of Week");
-        assertThat(jsonResponse).contains("Start Time");
-        assertThat(jsonResponse).contains("End Time");
-        assertThat(jsonResponse).contains("Location");
-        assertThat(jsonResponse).contains("Students");
+        assertThat(jsonResponse).contains("id");
+        assertThat(jsonResponse).contains("title");
+        assertThat(jsonResponse).contains("campus");
+        assertThat(jsonResponse).contains("language");
+        assertThat(jsonResponse).contains("additionalInformation");
+        assertThat(jsonResponse).contains("capacity");
+        assertThat(jsonResponse).contains("isOnline");
+        assertThat(jsonResponse).contains("dayOfWeek");
+        assertThat(jsonResponse).doesNotContain("startTime");    // value is not defined
+        assertThat(jsonResponse).doesNotContain("endTime");      // value is not defined
+        assertThat(jsonResponse).doesNotContain("location");      // value is not defined
+        assertThat(jsonResponse).contains("students");
         assertThat(jsonResponse).contains("SampleTitle1");
         assertThat(jsonResponse).contains("SampleInfo1");
         assertThat(jsonResponse).contains("ENGLISH");

@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.programming.domain.FileType;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.util.GitUtilService;
 
+// TODO: now that we have LocalVC, this test class is heavily outdated and needs to be refactored / reimplemented using LocalVC in mind
 class GitServiceTest extends AbstractProgrammingIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "gitservice";
