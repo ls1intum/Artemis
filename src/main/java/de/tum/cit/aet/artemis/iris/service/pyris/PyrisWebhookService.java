@@ -45,6 +45,7 @@ import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
+import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 
 @Service
 @Profile(PROFILE_IRIS)
@@ -70,13 +71,15 @@ public class PyrisWebhookService {
     private String artemisBaseUrl;
 
     public PyrisWebhookService(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, IrisSettingsService irisSettingsService,
-            IrisSettingsRepository irisSettingsRepository, Optional<LectureRepositoryApi> lectureRepositoryApi, Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi) {
+            IrisSettingsRepository irisSettingsRepository, Optional<LectureRepositoryApi> lectureRepositoryApi, Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi,
+            LectureTranscriptionRepository lectureTranscriptionRepository) {
         this.pyrisConnectorService = pyrisConnectorService;
         this.pyrisJobService = pyrisJobService;
         this.irisSettingsService = irisSettingsService;
         this.irisSettingsRepository = irisSettingsRepository;
         this.lectureRepositoryApi = lectureRepositoryApi;
         this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
+        this.lectureTranscriptionRepository = lectureTranscriptionRepository;
     }
 
     private boolean lectureIngestionEnabled(Course course) {
@@ -118,10 +121,11 @@ public class PyrisWebhookService {
             lectureUnitLink = "";
         }
 
-        lectureUnitRepository.save(attachmentVideoUnit);
-
         Optional<LectureTranscription> lectureTranscription = lectureTranscriptionRepository.findByLectureUnit_Id(attachmentVideoUnit.getId());
         int version = attachmentVideoUnit.getAttachment() != null ? attachmentVideoUnit.getAttachment().getVersion() : 1;
+
+        LectureUnitRepositoryApi api = lectureUnitRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureUnitRepositoryApi.class));
+        api.save(attachmentVideoUnit);
 
         if (lectureTranscription.isPresent()) {
             LectureTranscription transcription = lectureTranscription.get();
