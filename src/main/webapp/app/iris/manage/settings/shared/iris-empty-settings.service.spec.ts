@@ -66,5 +66,11 @@ describe('IrisEmptySettingsService', () => {
             expect(result!.irisFaqIngestionSettings).toBeInstanceOf(IrisFaqIngestionSubSettings);
             expect(result!.irisTutorSuggestionSettings).toBeInstanceOf(IrisTutorSuggestionSubSettings);
         });
+
+        it('should intialize autoIngestOnLectureAttachmentUpload and autoIngestOnFaqCreation to true', () => {
+            const result = service.fillEmptyIrisSubSettings({} as IrisSettings);
+            expect(result!.irisLectureIngestionSettings?.autoIngestOnLectureAttachmentUpload).toBeTrue();
+            expect(result!.irisFaqIngestionSettings?.autoIngestOnFaqCreation).toBeTrue();
+        });
     });
 });

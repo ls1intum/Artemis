@@ -20,7 +20,7 @@ export enum IrisEventType {
 export abstract class IrisSubSettings implements BaseEntity {
     id?: number;
     type: IrisSubSettingsType;
-    enabled = false;
+    enabled = true;
     allowedVariants?: string[];
     selectedVariant?: string;
     enabledForCategories?: string[];
@@ -53,12 +53,12 @@ export class IrisCourseChatSubSettings extends IrisSubSettings {
 
 export class IrisLectureIngestionSubSettings extends IrisSubSettings {
     type = IrisSubSettingsType.LECTURE_INGESTION;
-    autoIngestOnLectureAttachmentUpload: boolean;
+    autoIngestOnLectureAttachmentUpload: boolean = true;
 }
 
 export class IrisFaqIngestionSubSettings extends IrisSubSettings {
     type = IrisSubSettingsType.FAQ_INGESTION;
-    autoIngestOnFaqCreation: boolean;
+    autoIngestOnFaqCreation: boolean = true;
 }
 
 export class IrisCompetencyGenerationSubSettings extends IrisSubSettings {

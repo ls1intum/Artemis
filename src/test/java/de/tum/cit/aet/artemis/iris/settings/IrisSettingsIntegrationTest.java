@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.iris.domain.settings.IrisCompetencyGenerationSubSe
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseChatSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisExerciseSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisFaqIngestionSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisLectureIngestionSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisProgrammingExerciseChatSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSettings;
@@ -493,8 +494,8 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void verifyDefaultCourseSettingsState() {
-        userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1); // Create an instructor
         Course newCourse = courseUtilService.createCourse();
 
         IrisCourseSettings courseSettings = irisSettingsService.getDefaultSettingsFor(newCourse);
@@ -512,6 +513,7 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void verifyDefaultExerciseSettingsState() {
         userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1); // Ensure instructor exists for course creation
         Course courseWithExercise = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
@@ -523,6 +525,16 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
         // Assert that TextExerciseChatSettings are now instantiated and enabled by default for Programming Exercises as well
         assertThat(exerciseSettings.getIrisTextExerciseChatSettings()).isNotNull();
         assertThat(exerciseSettings.getIrisTextExerciseChatSettings().isEnabled()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void verifyDefaultFaqIngestionSettingsState() {
+        Course courseWithFaq = courseUtilService.createCourse();
+        IrisFaqIngestionSubSettings faqSettings = irisSettingsService.getDefaultSettingsFor(courseWithFaq).getIrisFaqIngestionSettings();
+
+        assertThat(faqSettings.isEnabled()).isTrue();
+        assertThat(faqSettings.getAutoIngestOnFaqCreation()).isTrue();
     }
 
     /**
