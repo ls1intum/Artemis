@@ -210,7 +210,7 @@ public class SharedQueueProcessingService {
         removeOfflineNodes();
 
         // Add build agent information of local hazelcast member to map if not already present
-        if (!distributedDataAccessService.getBuildAgentInformationMap().containsKey(hazelcastInstance.getCluster().getLocalMember().getAddress().toString())) {
+        if (!distributedDataAccessService.getBuildAgentInformationMap().containsKey(distributedDataAccessService.getLocalMemberAddress())) {
             buildAgentInformationService.updateLocalBuildAgentInformation(isPaused.get());
         }
     }
@@ -227,7 +227,7 @@ public class SharedQueueProcessingService {
         // Check conditions before acquiring the lock to avoid unnecessary locking
         if (!nodeIsAvailable()) {
             // Add build agent information of local hazelcast member to map if not already present
-            if (!distributedDataAccessService.getBuildAgentInformationMap().containsKey(hazelcastInstance.getCluster().getLocalMember().getAddress().toString())) {
+            if (!distributedDataAccessService.getBuildAgentInformationMap().containsKey(distributedDataAccessService.getLocalMemberAddress())) {
                 buildAgentInformationService.updateLocalBuildAgentInformation(isPaused.get());
             }
 
@@ -289,7 +289,7 @@ public class SharedQueueProcessingService {
     private BuildJobQueueItem addToProcessingJobs() {
         BuildJobQueueItem buildJob = distributedDataAccessService.getDistributedQueuedJobs().poll();
         if (buildJob != null) {
-            String hazelcastMemberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
+            String hazelcastMemberAddress = distributedDataAccessService.getLocalMemberAddress();
 
             long estimatedDuration = Math.max(0, buildJob.jobTimingInfo().estimatedDuration());
             ZonedDateTime estimatedCompletionDate = ZonedDateTime.now().plusSeconds(estimatedDuration);
@@ -419,7 +419,7 @@ public class SharedQueueProcessingService {
 
         pauseResumeLock.lock();
         try {
-            log.info("Pausing build agent with address {}", hazelcastInstance.getCluster().getLocalMember().getAddress().toString());
+            log.info("Pausing build agent with address {}", distributedDataAccessService.getLocalMemberAddress());
 
             isPaused.set(true);
             removeListenerAndCancelScheduledFuture();
@@ -482,7 +482,7 @@ public class SharedQueueProcessingService {
 
         pauseResumeLock.lock();
         try {
-            log.info("Resuming build agent with address {}", hazelcastInstance.getCluster().getLocalMember().getAddress().toString());
+            log.info("Resuming build agent with address {}", distributedDataAccessService.getLocalMemberAddress());
             isPaused.set(false);
             processResults.set(true);
             buildAgentConfiguration.openBuildAgentServices();

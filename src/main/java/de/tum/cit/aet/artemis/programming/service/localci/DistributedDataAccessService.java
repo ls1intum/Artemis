@@ -277,4 +277,11 @@ public class DistributedDataAccessService {
     public List<BuildJobQueueItem> getProcessingJobsForParticipation(long participationId) {
         return getProcessingJobs().stream().filter(job -> job.participationId() == participationId).toList();
     }
+
+    /**
+     * @return the address of the local Hazelcast member
+     */
+    public String getLocalMemberAddress() {
+        return hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
+    }
 }
