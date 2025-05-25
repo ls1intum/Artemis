@@ -106,7 +106,7 @@ public class FileUtil {
      * @param file         The file to be uploaded with a maximum file size set in resources/config/application.yml
      * @param keepFilename specifies if original file name should be kept
      * @param markdown     boolean which is set to true, when we are uploading a file within the markdown editor
-     * @return The public path of the file
+     * @return The external URI of the file
      */
     @NotNull
     public static URI handleSaveFile(MultipartFile file, boolean keepFilename, boolean markdown) {
