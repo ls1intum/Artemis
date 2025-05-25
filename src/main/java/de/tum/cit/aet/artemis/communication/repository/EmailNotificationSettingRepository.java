@@ -23,7 +23,7 @@ public interface EmailNotificationSettingRepository extends ArtemisJpaRepository
             FROM EmailNotificationSetting setting
             WHERE setting.user.id = :userId
             """)
-    List<EmailNotificationSetting> findByUserId(@Param("userId") Long userId);
+    List<EmailNotificationSetting> findByUserId(@Param("userId") long userId);
 
     @Query("""
             SELECT setting
