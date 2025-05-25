@@ -15,6 +15,6 @@ export class DoubleSliderComponent {
     currentValue = model.required<number>();
 
     onChange(event: Event) {
-        this.currentValue.set(parseInt((event.currentTarget as HTMLInputElement).value));
+        this.currentValue.set(parseFloat((event.currentTarget as HTMLInputElement).value));
     }
 }
