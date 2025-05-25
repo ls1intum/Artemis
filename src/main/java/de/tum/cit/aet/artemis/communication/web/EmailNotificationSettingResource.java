@@ -24,7 +24,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("/api/communication/")
+@RequestMapping("api/communication/")
 public class EmailNotificationSettingResource {
 
     private final EmailNotificationSettingService emailNotificationSettingService;
