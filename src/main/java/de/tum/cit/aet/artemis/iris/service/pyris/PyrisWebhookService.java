@@ -214,7 +214,7 @@ public class PyrisWebhookService {
             return;
         }
         for (AttachmentVideoUnit attachmentVideoUnit : newAttachmentVideoUnits) {
-            addLectureUnitToPyrisDB(attachmentUnit);
+            addLectureUnitToPyrisDB(attachmentVideoUnit);
         }
     }
 
