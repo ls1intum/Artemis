@@ -12,6 +12,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedSettingsDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisExerciseSettingsRepository;
+import de.tum.cit.aet.artemis.iris.repository.IrisSettingsRepository;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 
 @Profile(PROFILE_IRIS)
@@ -22,17 +23,24 @@ public class IrisSettingsApi extends AbstractIrisApi {
 
     private final IrisSettingsService irisSettingsService;
 
-    public IrisSettingsApi(IrisExerciseSettingsRepository irisExerciseSettingsRepository, IrisSettingsService irisSettingsService) {
+    private final IrisSettingsRepository irisSettingsRepository;
+
+    public IrisSettingsApi(IrisExerciseSettingsRepository irisExerciseSettingsRepository, IrisSettingsService irisSettingsService, IrisSettingsRepository irisSettingsRepository) {
         this.irisExerciseSettingsRepository = irisExerciseSettingsRepository;
         this.irisSettingsService = irisSettingsService;
+        this.irisSettingsRepository = irisSettingsRepository;
     }
 
     public IrisCombinedSettingsDTO getCombinedIrisSettingsFor(Exercise exercise, boolean minimal) {
         return irisSettingsService.getCombinedIrisSettingsFor(exercise, minimal);
     }
 
-    public boolean isExerciseChatEnabled(long exerciseId) {
-        return irisExerciseSettingsRepository.isExerciseChatEnabled(exerciseId);
+    public boolean isProgrammingExerciseChatEnabled(long exerciseId) {
+        return !Boolean.FALSE.equals(irisExerciseSettingsRepository.isProgrammingExerciseChatEnabled(exerciseId));
+    }
+
+    public boolean isCourseChatEnabled(long courseId) {
+        return !Boolean.FALSE.equals(irisSettingsRepository.isCourseChatEnabled(courseId));
     }
 
     public boolean shouldShowMinimalSettings(Exercise exercise, User user) {

@@ -113,7 +113,7 @@ public class IrisTextExerciseChatSessionService implements IrisChatBasedFeatureI
         // @formatter:off
         pyrisPipelineService.executePipeline(
                 "text-exercise-chat",
-                "default",
+                settings.selectedVariant(),
                 Optional.empty(),
                 pyrisJobService.createTokenForJob(token -> new TextExerciseChatJob(token, course.getId(), exercise.getId(), session.getId())),
                 dto -> new PyrisTextExerciseChatPipelineExecutionDTO(dto, PyrisTextExerciseDTO.of(exercise), conversation, latestSubmissionText, settings.customInstructions()),

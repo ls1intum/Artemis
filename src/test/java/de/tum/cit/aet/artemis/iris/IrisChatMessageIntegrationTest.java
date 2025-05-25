@@ -424,8 +424,8 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
         });
 
         var globalSettings = irisSettingsService.getGlobalSettings();
-        globalSettings.getIrisChatSettings().setRateLimit(1);
-        globalSettings.getIrisChatSettings().setRateLimitTimeframeHours(10);
+        globalSettings.getIrisProgrammingExerciseChatSettings().setRateLimit(1);
+        globalSettings.getIrisProgrammingExerciseChatSettings().setRateLimitTimeframeHours(10);
         irisSettingsService.saveIrisSettings(globalSettings);
 
         try {
@@ -441,8 +441,8 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
         }
         finally {
             // Reset to not interfere with other tests
-            globalSettings.getIrisChatSettings().setRateLimit(null);
-            globalSettings.getIrisChatSettings().setRateLimitTimeframeHours(null);
+            globalSettings.getIrisProgrammingExerciseChatSettings().setRateLimit(null);
+            globalSettings.getIrisProgrammingExerciseChatSettings().setRateLimitTimeframeHours(null);
             irisSettingsService.saveIrisSettings(globalSettings);
         }
     }
@@ -544,7 +544,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
     private void sendStatus(String jobId, String result, List<PyrisStageDTO> stages, List<String> suggestions) throws Exception {
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of("Authorization", List.of("Bearer " + jobId))));
-        request.postWithoutResponseBody("/api/iris/public/pyris/pipelines/tutor-chat/runs/" + jobId + "/status", new PyrisChatStatusUpdateDTO(result, stages, suggestions, null),
-                HttpStatus.OK, headers);
+        request.postWithoutResponseBody("/api/iris/public/pyris/pipelines/programming-exercise-chat/runs/" + jobId + "/status",
+                new PyrisChatStatusUpdateDTO(result, stages, suggestions, null), HttpStatus.OK, headers);
     }
 }

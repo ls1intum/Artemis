@@ -72,8 +72,9 @@ public class LectureUnitImportService {
         lectureUnitRepository.saveAll(lectureUnits);
 
         // Send lectures to pyris
-        irisLectureApi.ifPresent(lectureApi -> lectureApi.autoUpdateAttachmentVideoUnitsInPyris(lecture.getCourse().getId(),
-                lectureUnits.stream().filter(lectureUnit -> lectureUnit instanceof AttachmentVideoUnit).map(lectureUnit -> (AttachmentVideoUnit) lectureUnit).toList()));
+        irisLectureApi
+                .ifPresent(lectureApi -> lectureApi.autoUpdateAttachmentVideoUnitsInPyris(lectureUnits.stream().filter(lectureUnit -> lectureUnit instanceof AttachmentVideoUnit)
+                        .map(lectureUnit -> (AttachmentVideoUnit) lectureUnit).filter(unit -> unit.getAttachment() != null).toList()));
     }
 
     /**

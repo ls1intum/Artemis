@@ -28,7 +28,7 @@
                     }
                 },
                 "subSettings": {
-                    "chatSettings": "Chat Settings",
+                    "exerciseChatSettings": "Programming Exercise Chat Settings",
                     "textExerciseChatSettings": "Text Exercise Chat Settings",
                     "lectureChatSettings": "Lecture Chat Settings",
                     "courseChatSettings": "Course Chat Settings",

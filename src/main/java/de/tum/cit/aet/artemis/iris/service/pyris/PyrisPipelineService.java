@@ -31,7 +31,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisExerciseChatSession;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisProgrammingExerciseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
 import de.tum.cit.aet.artemis.iris.exception.IrisException;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionDTO;
@@ -118,7 +118,7 @@ public class PyrisPipelineService {
         // Send initial status update indicating that the preparation stage is in progress
         statusUpdater.accept(List.of(preparing.inProgress(), executing.notStarted()));
 
-        var baseDto = new PyrisPipelineExecutionDTO(new PyrisPipelineExecutionSettingsDTO(jobToken, List.of(), artemisBaseUrl), List.of(preparing.done()));
+        var baseDto = new PyrisPipelineExecutionDTO(new PyrisPipelineExecutionSettingsDTO(jobToken, artemisBaseUrl, variant), List.of(preparing.done()));
         var pipelineDto = dtoMapper.apply(baseDto);
 
         try {
@@ -127,7 +127,7 @@ public class PyrisPipelineService {
 
             try {
                 // Execute the pipeline using the connector service
-                pyrisConnectorService.executePipeline(name, variant, pipelineDto, event);
+                pyrisConnectorService.executePipeline(name, pipelineDto, event);
             }
             catch (PyrisConnectorException | IrisException e) {
                 log.error("Failed to execute {} pipeline", name, e);
@@ -157,10 +157,10 @@ public class PyrisPipelineService {
      * @see PyrisPipelineService#executePipeline for more details on the pipeline execution process.
      */
     public void executeExerciseChatPipeline(String variant, String customInstructions, Optional<ProgrammingSubmission> latestSubmission, ProgrammingExercise exercise,
-            IrisExerciseChatSession session, Optional<String> eventVariant) {
+            IrisProgrammingExerciseChatSession session, Optional<String> eventVariant) {
         // @formatter:off
         executePipeline(
-                "tutor-chat", // TODO: Rename this to 'exercise-chat' with next breaking Pyris version
+                "programming-exercise-chat",
                 variant,
                 eventVariant,
                 pyrisJobService.addExerciseChatJob(exercise.getCourseViaExerciseGroupOrCourseMember().getId(), exercise.getId(), session.getId()),

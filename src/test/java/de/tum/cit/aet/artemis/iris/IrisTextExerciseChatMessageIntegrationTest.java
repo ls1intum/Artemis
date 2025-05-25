@@ -310,8 +310,8 @@ class IrisTextExerciseChatMessageIntegrationTest extends AbstractIrisIntegration
         });
 
         var globalSettings = irisSettingsService.getGlobalSettings();
-        globalSettings.getIrisChatSettings().setRateLimit(1);
-        globalSettings.getIrisChatSettings().setRateLimitTimeframeHours(10);
+        globalSettings.getIrisProgrammingExerciseChatSettings().setRateLimit(1);
+        globalSettings.getIrisProgrammingExerciseChatSettings().setRateLimitTimeframeHours(10);
         irisSettingsService.saveIrisSettings(globalSettings);
 
         try {
@@ -327,8 +327,8 @@ class IrisTextExerciseChatMessageIntegrationTest extends AbstractIrisIntegration
         }
         finally {
             // Reset to not interfere with other tests
-            globalSettings.getIrisChatSettings().setRateLimit(null);
-            globalSettings.getIrisChatSettings().setRateLimitTimeframeHours(null);
+            globalSettings.getIrisProgrammingExerciseChatSettings().setRateLimit(null);
+            globalSettings.getIrisProgrammingExerciseChatSettings().setRateLimitTimeframeHours(null);
             irisSettingsService.saveIrisSettings(globalSettings);
         }
     }
