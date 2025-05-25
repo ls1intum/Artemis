@@ -13,7 +13,6 @@
         "node_modules"
     ],
     "dependencies": {
-        "@tumaet/apollon": "4.0.0-alpha.0",
         "@angular/animations": "19.2.12",
         "@angular/cdk": "19.2.17",
         "@angular/common": "19.2.12",
@@ -41,6 +40,7 @@
         "@siemens/ngx-datatable": "22.4.1",
         "@swimlane/ngx-charts": "22.0.0",
         "@swimlane/ngx-graph": "10.0.0",
+        "@tumaet/apollon": "4.0.0-alpha.0",
         "@vscode/codicons": "0.0.36",
         "@vscode/markdown-it-katex": "1.1.1",
         "bootstrap": "5.3.6",
