@@ -38,8 +38,8 @@ import org.springframework.util.FileSystemUtils;
 import de.tum.cit.aet.artemis.core.config.BinaryFileExtensionConfiguration;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
-import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
+import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.programming.domain.File;
 import de.tum.cit.aet.artemis.programming.domain.FileType;
@@ -456,7 +456,7 @@ public class RepositoryService {
      */
     public void renameFile(Repository repository, FileMove fileMove) throws FileNotFoundException, FileAlreadyExistsException, IllegalArgumentException {
         Path currentSafePath = checkIfPathIsValidAndExistanceAndReturnSafePath(repository, fileMove.currentFilePath(), true);
-        String newFilename = FileService.sanitizeFilename(fileMove.newFilename());
+        String newFilename = FileUtil.sanitizeFilename(fileMove.newFilename());
 
         Optional<File> existingFile = gitService.getFileByName(repository, currentSafePath.toString());
         if (existingFile.isEmpty()) {
