@@ -121,7 +121,6 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
-import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
 import de.tum.cit.aet.artemis.lti.api.LtiApi;
 import de.tum.cit.aet.artemis.programming.service.ci.CIUserManagementService;
 import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupChannelManagementApi;
@@ -179,8 +178,6 @@ public class CourseResource {
 
     private final Optional<LearnerProfileApi> learnerProfileApi;
 
-    private final Optional<IrisSettingsApi> irisSettingsApi;
-
     @Value("${artemis.course-archives-path}")
     private String courseArchivesDirPath;
 
@@ -198,7 +195,7 @@ public class CourseResource {
             FileService fileService, Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi, CourseScoreCalculationService courseScoreCalculationService,
             GradingScaleRepository gradingScaleRepository, Optional<LearningPathApi> learningPathApi, ConductAgreementService conductAgreementService,
             Optional<AthenaApi> athenaApi, Optional<ExamRepositoryApi> examRepositoryApi, ComplaintService complaintService, TeamRepository teamRepository,
-            Optional<LearnerProfileApi> learnerProfileApi, Optional<IrisSettingsApi> irisSettingsApi) {
+            Optional<LearnerProfileApi> learnerProfileApi) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
@@ -221,7 +218,6 @@ public class CourseResource {
         this.complaintService = complaintService;
         this.teamRepository = teamRepository;
         this.learnerProfileApi = learnerProfileApi;
-        this.irisSettingsApi = irisSettingsApi;
     }
 
     /**

@@ -68,7 +68,7 @@ public class FaqService {
      *
      * @param faq the FAQ to be ingested or updated in Pyris
      */
-    public void autoIngestFaqsIntoPyris(Faq faq) {
+    public void autoIngestFaqIntoPyris(Faq faq) {
         if (pyrisFaqApi.isEmpty()) {
             return;
         }
