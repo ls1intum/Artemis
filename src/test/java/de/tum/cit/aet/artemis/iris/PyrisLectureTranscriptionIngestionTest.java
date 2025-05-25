@@ -91,7 +91,6 @@ class PyrisLectureTranscriptionIngestionTest extends AbstractIrisIntegrationTest
     void testIngestTranscriptionInPyrisWithLectureId() throws Exception {
         activateIrisFor(lecture1.getCourse());
         irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> {
-            System.out.println("TOKEN: " + dto.settings().authenticationToken());
             assertThat(dto.settings().authenticationToken()).isNotNull();
         });
         // request.post("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + this.lectureUnit.getId() + "/ingest", Optional.empty(), HttpStatus.OK);
