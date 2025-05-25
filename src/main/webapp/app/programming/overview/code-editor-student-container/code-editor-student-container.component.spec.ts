@@ -1,12 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CodeEditorStudentContainerComponent } from 'app/programming/overview/code-editor-student-container/code-editor-student-container.component';
 import { ResultService } from 'app/exercise/result/result.service';
-import { MockResultService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-result.service';
+import { MockResultService } from 'test/helpers/mocks/service/mock-result.service';
 import { DomainService } from 'app/programming/shared/code-editor/services/code-editor-domain.service';
 import { MockProvider } from 'ng-mocks';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
-import { MockProgrammingExerciseParticipationService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-programming-exercise-participation.service';
-import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
+import { MockProgrammingExerciseParticipationService } from 'test/helpers/mocks/service/mock-programming-exercise-participation.service';
 import { SubmissionPolicyService } from 'app/programming/manage/services/submission-policy.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { of } from 'rxjs';
@@ -37,7 +36,6 @@ describe('CodeEditorStudentContainerComponent', () => {
                     useValue: { params: of({ participationId: studentParticipation.id }) },
                 },
                 MockProvider(DomainService),
-                MockProvider(GuidedTourService),
                 MockProvider(SubmissionPolicyService),
                 MockProvider(AlertService),
             ],
@@ -46,9 +44,7 @@ describe('CodeEditorStudentContainerComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(CodeEditorStudentContainerComponent);
                 comp = fixture.componentInstance;
-                const debugElement = fixture.debugElement;
-
-                programmingExerciseParticipationService = debugElement.injector.get(ProgrammingExerciseParticipationService);
+                programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
                 submissionPolicyService = TestBed.inject(SubmissionPolicyService);
             });
     });

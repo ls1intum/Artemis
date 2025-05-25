@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.cit.aet.artemis.communication.service.notifications.SingleUserNotificationService;
+import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.PasswordChangeDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
@@ -146,7 +147,6 @@ public class AccountResource {
 
         userRepository.updateUserVcsAccessToken(user.getId(), LocalVCPersonalAccessTokenManagementService.generateSecureVCSAccessToken(), expiryDate);
         log.debug("Successfully created a VCS access token for user {}", user.getLogin());
-        singleUserNotificationService.notifyUserAboutNewlyAddedVcsAccessToken(user);
         user = userRepository.getUser();
         UserDTO userDTO = new UserDTO();
         userDTO.setLogin(user.getLogin());
@@ -230,11 +230,11 @@ public class AccountResource {
 
         // Delete existing
         if (user.getImageUrl() != null) {
-            fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(new URI(user.getImageUrl())), 0);
+            fileService.schedulePathForDeletion(FilePathService.fileSystemPathForExternalUri(new URI(user.getImageUrl()), FilePathType.PROFILE_PICTURE), 0);
         }
 
-        Path savePath = fileService.saveFile(file, basePath, false);
-        String publicPath = FilePathService.publicPathForActualPathOrThrow(savePath, user.getId()).toString();
+        Path savePath = fileService.saveFile(file, basePath, FilePathType.PROFILE_PICTURE, false);
+        String publicPath = FilePathService.externalUriForFileSystemPath(savePath, FilePathType.PROFILE_PICTURE, user.getId()).toString();
         userRepository.updateUserImageUrl(user.getId(), publicPath);
         user.setImageUrl(publicPath);
         return ResponseEntity.ok(new UserDTO(user));
@@ -251,7 +251,7 @@ public class AccountResource {
         log.debug("REST request to remove profile picture for logged-in user");
         User user = userRepository.getUser();
         if (user.getImageUrl() != null) {
-            fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(new URI(user.getImageUrl())), 0);
+            fileService.schedulePathForDeletion(FilePathService.fileSystemPathForExternalUri(new URI(user.getImageUrl()), FilePathType.PROFILE_PICTURE), 0);
             userRepository.updateUserImageUrl(user.getId(), null);
         }
         return ResponseEntity.ok().build();

@@ -5,8 +5,8 @@ import { Participation } from 'app/exercise/shared/entities/participation/partic
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
-import { MockWebsocketService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-websocket.service';
-import { MockParticipationService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-participation.service';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
+import { MockParticipationService } from 'test/helpers/mocks/service/mock-participation.service';
 
 describe('ParticipationWebsocketService', () => {
     let websocketService: WebsocketService;

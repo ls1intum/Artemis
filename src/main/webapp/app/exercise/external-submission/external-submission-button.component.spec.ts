@@ -4,7 +4,7 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ExternalSubmissionButtonComponent } from 'app/exercise/external-submission/external-submission-button.component';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { By } from '@angular/platform-browser';
-import { MockTranslateService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 

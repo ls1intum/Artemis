@@ -9,7 +9,7 @@ import { CreateCourseCompetencyComponent } from 'app/atlas/manage/create/create-
 import { PrerequisiteService } from 'app/atlas/manage/services/prerequisite.service';
 
 import { CourseCompetencyFormData } from 'app/atlas/manage/forms/course-competency-form.component';
-import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({

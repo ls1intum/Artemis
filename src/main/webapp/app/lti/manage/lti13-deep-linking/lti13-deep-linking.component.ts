@@ -58,6 +58,10 @@ export class Lti13DeepLinkingComponent implements OnInit {
     reverse = false;
     isLinking = true;
 
+    //grouping
+    isExerciseGroupingActive = false;
+    isLectureGroupingActive = false;
+
     // Icons
     faSort = faSort;
     faExclamationTriangle = faExclamationTriangle;
@@ -153,6 +157,14 @@ export class Lti13DeepLinkingComponent implements OnInit {
         return exerciseId !== undefined && this.selectedExercises?.has(exerciseId);
     }
 
+    activateExerciseGrouping() {
+        this.isExerciseGroupingActive = true;
+    }
+
+    activateLectureGrouping() {
+        this.isLectureGroupingActive = true;
+    }
+
     selectLecture(lectureId: number | undefined) {
         if (lectureId !== undefined) {
             if (this.selectedLectures?.has(lectureId)) {
@@ -208,10 +220,18 @@ export class Lti13DeepLinkingComponent implements OnInit {
             let contentIds: string | undefined = undefined;
 
             if (this.selectedExercises?.size) {
-                resourceType = DeepLinkingType.EXERCISE;
+                if (this.isExerciseGroupingActive) {
+                    resourceType = DeepLinkingType.GROUPED_EXERCISE;
+                } else {
+                    resourceType = DeepLinkingType.EXERCISE;
+                }
                 contentIds = Array.from(this.selectedExercises).join(',');
             } else if (this.selectedLectures?.size) {
-                resourceType = DeepLinkingType.LECTURE;
+                if (this.isLectureGroupingActive) {
+                    resourceType = DeepLinkingType.GROUPED_LECTURE;
+                } else {
+                    resourceType = DeepLinkingType.LECTURE;
+                }
                 contentIds = Array.from(this.selectedLectures).join(',');
             } else if (this.isCompetencySelected) {
                 resourceType = DeepLinkingType.COMPETENCY;

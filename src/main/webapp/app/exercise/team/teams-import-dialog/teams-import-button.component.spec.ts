@@ -5,10 +5,10 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { TeamService } from 'app/exercise/team/team.service';
 import { TeamsImportButtonComponent } from 'app/exercise/team/teams-import-dialog/teams-import-button.component';
-import { ButtonComponent } from 'app/shared/components/button/button.component';
+import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { mockExercise, mockSourceTeams, mockTeams } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-team.service';
+import { mockExercise, mockSourceTeams, mockTeams } from 'test/helpers/mocks/service/mock-team.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 describe('TeamsImportButtonComponent', () => {
     let comp: TeamsImportButtonComponent;

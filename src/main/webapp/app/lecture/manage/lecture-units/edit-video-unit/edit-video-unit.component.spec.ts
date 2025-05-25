@@ -1,6 +1,6 @@
 import dayjs from 'dayjs/esm';
 import { VideoUnitService } from 'app/lecture/manage/lecture-units/services/videoUnit.service';
-import { MockRouter } from '../../../../../../../test/javascript/spec/helpers/mocks/mock-router';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { EditVideoUnitComponent } from 'app/lecture/manage/lecture-units/edit-video-unit/edit-video-unit.component';
 import { MockProvider } from 'ng-mocks';
@@ -12,12 +12,12 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { VideoUnitFormComponent } from 'app/lecture/manage/lecture-units/video-unit-form/video-unit-form.component';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ProfileService } from '../../../../core/layouts/profiles/shared/profile.service';
-import { MockProfileService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
 describe('EditVideoUnitComponent', () => {
     let fixture: ComponentFixture<EditVideoUnitComponent>;

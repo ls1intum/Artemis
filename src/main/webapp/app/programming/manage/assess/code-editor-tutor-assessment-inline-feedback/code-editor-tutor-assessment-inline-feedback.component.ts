@@ -1,7 +1,7 @@
 import { Component, ElementRef, EventEmitter, Input, Output, ViewChild, inject } from '@angular/core';
 import { Feedback, FeedbackType, buildFeedbackTextForReview } from 'app/assessment/shared/entities/feedback.model';
 import { FeedbackSuggestionBadgeComponent } from 'app/exercise/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
-import { ButtonSize } from 'app/shared/components/button/button.component';
+import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
 import { cloneDeep } from 'lodash-es';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';

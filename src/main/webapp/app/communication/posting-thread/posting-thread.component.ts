@@ -4,6 +4,7 @@ import dayjs from 'dayjs/esm';
 import { PostComponent } from '../post/post.component';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { Posting } from 'app/communication/shared/entities/posting.model';
+import { CourseWideSearchConfig } from 'app/communication/course-conversations-components/course-wide-search/course-wide-search.component';
 
 @Component({
     selector: 'jhi-posting-thread',
@@ -22,8 +23,10 @@ export class PostingThreadComponent {
     @Input() hasChannelModerationRights = false;
     @Output() openThread = new EventEmitter<Post>();
     @Input() isConsecutive: boolean | undefined = false;
-    forwardedPosts = input<Post[]>([]);
-    forwardedAnswerPosts = input<AnswerPost[]>([]);
+    searchConfig = input<CourseWideSearchConfig | undefined>(undefined);
+    forwardedPosts = input<(Post | undefined)[]>([]);
+    forwardedAnswerPosts = input<(AnswerPost | undefined)[]>([]);
+
     readonly onNavigateToPost = output<Posting>();
 
     elementRef = inject(ElementRef);

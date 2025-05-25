@@ -1,7 +1,6 @@
 import { ChangeDetectorRef, Component, OnChanges, OnInit, SimpleChanges, input } from '@angular/core';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { Observable } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -9,6 +8,7 @@ import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.com
 import { AsyncPipe, NgStyle } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AthenaService } from 'app/assessment/shared/services/athena.service';
+import { ModuleType } from 'app/assessment/shared/entities/athena.model';
 
 @Component({
     selector: 'jhi-exercise-preliminary-feedback-options',
@@ -26,7 +26,7 @@ export class ExercisePreliminaryFeedbackOptionsComponent implements OnInit, OnCh
 
     readonly assessmentType: AssessmentType;
 
-    isAthenaEnabled$: Observable<boolean>;
+    isAthenaEnabled: boolean;
     modulesAvailable: boolean;
     availableAthenaModules: string[];
     initialAthenaModule?: string;
@@ -40,12 +40,12 @@ export class ExercisePreliminaryFeedbackOptionsComponent implements OnInit, OnCh
 
     ngOnInit(): void {
         const courseId = Number(this.activatedRoute.snapshot.paramMap.get('courseId'));
-        this.athenaService.getAvailableModules(courseId, this.exercise()).subscribe((modules) => {
+        this.athenaService.getAvailableModules(courseId, this.exercise(), ModuleType.PRELIMINARY_FEEDBACK).subscribe((modules) => {
             this.availableAthenaModules = modules;
             this.modulesAvailable = modules.length > 0;
             this.cdr.detectChanges();
         });
-        this.isAthenaEnabled$ = this.athenaService.isEnabled();
+        this.isAthenaEnabled = this.athenaService.isEnabled();
         this.initialAthenaModule = this.exercise().preliminaryFeedbackModule;
     }
 

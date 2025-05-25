@@ -4,7 +4,7 @@ import { take } from 'rxjs/operators';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { PostService } from 'app/communication/service/post.service';
 import { DisplayPriority } from 'app/communication/metis.util';
-import { metisCourse, metisCoursePosts, metisPostExerciseUser1, metisPostToCreateUser1 } from '../../../../../test/javascript/spec/helpers/sample/metis-sample-data';
+import { metisCourse, metisCoursePosts, metisPostExerciseUser1, metisPostToCreateUser1 } from 'test/helpers/sample/metis-sample-data';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('Post Service', () => {
@@ -104,13 +104,13 @@ describe('Post Service', () => {
             tick();
         }));
 
-        it('should use /messages endpoints if course-wide channel ids are provided', fakeAsync(() => {
-            const courseWideChannelIds = [123];
-            const expectedUrl = `api/communication/courses/${metisCourse.id}/messages?courseWideChannelIds=${courseWideChannelIds}`;
+        it('should use /messages endpoints if conversation ids are provided', fakeAsync(() => {
+            const conversationIds = [123];
+            const expectedUrl = `api/communication/courses/${metisCourse.id}/messages?conversationIds=${conversationIds}`;
             const mockResponse: Post[] = [];
 
             service
-                .getPosts(metisCourse.id!, { courseWideChannelIds })
+                .getPosts(metisCourse.id!, { conversationIds })
                 .pipe(take(1))
                 .subscribe((resp) => expect(resp.body).toEqual(mockResponse));
             const req = httpMock.expectOne({ method: 'GET', url: expectedUrl });

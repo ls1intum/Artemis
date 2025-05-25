@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { DebugElement, TemplateRef } from '@angular/core';
+import { PROFILE_ATHENA } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Observable, of } from 'rxjs';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -10,11 +11,11 @@ import { CourseExerciseService } from 'app/exercise/course-exercises/course-exer
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { RequestFeedbackButtonComponent } from 'app/core/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
-import { MockProfileService } from '../../../../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
-import { MockTranslateService } from '../../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { NgbModal, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
@@ -42,15 +43,15 @@ describe('RequestFeedbackButtonComponent', () => {
                 fixture = TestBed.createComponent(RequestFeedbackButtonComponent);
                 component = fixture.componentInstance;
                 debugElement = fixture.debugElement;
-                courseExerciseService = debugElement.injector.get(CourseExerciseService);
-                exerciseService = debugElement.injector.get(ExerciseService);
-                profileService = debugElement.injector.get(ProfileService);
-                alertService = debugElement.injector.get(AlertService);
+                courseExerciseService = TestBed.inject(CourseExerciseService);
+                exerciseService = TestBed.inject(ExerciseService);
+                profileService = TestBed.inject(ProfileService);
+                alertService = TestBed.inject(AlertService);
             });
     });
 
     function setAthenaEnabled(enabled: boolean) {
-        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of({ activeProfiles: enabled ? ['athena'] : [] } as ProfileInfo));
+        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles: enabled ? [PROFILE_ATHENA] : [] } as ProfileInfo);
     }
 
     function mockExerciseDetails(exercise: Exercise) {

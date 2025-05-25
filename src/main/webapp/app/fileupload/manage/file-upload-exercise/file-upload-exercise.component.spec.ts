@@ -4,8 +4,8 @@ import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
 import { FileUploadExerciseComponent } from 'app/fileupload/manage/file-upload-exercise/file-upload-exercise.component';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
-import { MockSyncStorage } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -13,7 +13,7 @@ import { ExerciseFilter } from 'app/exercise/shared/entities/exercise/exercise-f
 import { FileUploadExerciseService } from 'app/fileupload/manage/services/file-upload-exercise.service';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { MockProvider } from 'ng-mocks';
 

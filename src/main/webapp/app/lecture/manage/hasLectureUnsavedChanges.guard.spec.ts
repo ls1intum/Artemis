@@ -2,10 +2,10 @@ import { ActivatedRouteSnapshot, GuardResult, MaybeAsync, Router, RouterStateSna
 import { hasLectureUnsavedChangesGuard } from 'app/lecture/manage/hasLectureUnsavedChanges.guard';
 import { LectureUpdateComponent } from 'app/lecture/manage/lecture-update/lecture-update.component';
 import { TestBed } from '@angular/core/testing';
-import { MockRouter } from '../../../../../test/javascript/spec/helpers/mocks/mock-router';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { Observable, firstValueFrom, of } from 'rxjs';
-import { MockNgbModalService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-ngb-modal.service';
+import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 
 describe('hasLectureUnsavedChanges', () => {
     let component: LectureUpdateComponent;

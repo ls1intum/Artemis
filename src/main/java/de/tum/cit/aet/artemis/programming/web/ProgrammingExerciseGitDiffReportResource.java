@@ -75,7 +75,7 @@ public class ProgrammingExerciseGitDiffReportResource {
     /**
      * {@code GET exercises/:exerciseId/diff-report} : Get the diff report for a programming exercise.
      *
-     * @param exerciseId the exerciseId of the exercise of which to create the exerciseHint
+     * @param exerciseId the exerciseId of the exercise
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the diff report
      */
     @GetMapping("programming-exercises/{exerciseId}/diff-report")

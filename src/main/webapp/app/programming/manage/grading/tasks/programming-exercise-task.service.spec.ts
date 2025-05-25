@@ -7,7 +7,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ProgrammingExerciseGradingStatistics, TestCaseStats } from 'app/programming/shared/entities/programming-exercise-test-case-statistics.model';
 import { MockProvider } from 'ng-mocks';
-import { MockProgrammingExerciseGradingService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-programming-exercise-grading.service';
+import { MockProgrammingExerciseGradingService } from 'test/helpers/mocks/service/mock-programming-exercise-grading.service';
 import { ProgrammingExerciseTask } from 'app/programming/manage/grading/tasks/programming-exercise-task';
 import { ProgrammingExerciseServerSideTask } from 'app/programming/shared/entities/programming-exercise-task.model';
 import { ProgrammingExerciseTestCase, ProgrammingExerciseTestCaseType, Visibility } from 'app/programming/shared/entities/programming-exercise-test-case.model';

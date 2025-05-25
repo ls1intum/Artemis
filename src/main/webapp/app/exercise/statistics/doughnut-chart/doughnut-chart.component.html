@@ -7,7 +7,7 @@
     @if (!titleLink) {
         <h4 class="text-center">{{ 'exercise-statistics.' + doughnutChartTitle | artemisTranslate }}</h4>
     }
-    <div class="doughnut-chart-container" [ngClass]="titleLink ? 'clickable' : ''" (click)="openCorrespondingPage()">
+    <div class="doughnut-chart-container position-relative" [ngClass]="titleLink ? 'clickable' : ''" (click)="openCorrespondingPage()">
         <div class="doughnut-chart-text">
             @if (receivedStats) {
                 <h2 class="text-center">{{ currentPercentage }}%</h2>

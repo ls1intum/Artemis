@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ApollonDiagramImportDialogComponent } from 'app/quiz/manage/apollon-diagrams/import-dialog/apollon-diagram-import-dialog.component';
-import { MockNgbActiveModalService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-ngb-active-modal.service';
+import { MockNgbActiveModalService } from 'test/helpers/mocks/service/mock-ngb-active-modal.service';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 
 describe('ApollonDiagramImportDialog Component', () => {
@@ -19,8 +19,7 @@ describe('ApollonDiagramImportDialog Component', () => {
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ApollonDiagramImportDialogComponent);
-                const injector = fixture.debugElement.injector;
-                activeModal = injector.get(NgbActiveModal);
+                activeModal = TestBed.inject(NgbActiveModal);
             });
     });
 

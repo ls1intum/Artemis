@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { StateStorageService } from 'app/core/auth/state-storage.service';
 import { SessionStorageService } from 'ngx-webstorage';
-import { MockSyncStorage } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 
 describe('StateStorageService', () => {
     let service: StateStorageService;

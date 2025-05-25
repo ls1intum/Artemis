@@ -9,12 +9,9 @@ import {
     TutorialGroupsConfigurationFormComponent,
     TutorialGroupsConfigurationFormData,
 } from 'app/tutorialgroup/manage/tutorial-groups-configuration/crud/tutorial-groups-configuration-form/tutorial-groups-configuration-form.component';
-import {
-    generateClickSubmitButton,
-    generateTestFormIsInvalidOnMissingRequiredProperty,
-} from '../../../../../../../../test/javascript/spec/helpers/sample/tutorialgroup/tutorialGroupFormsUtils';
+import { generateClickSubmitButton, generateTestFormIsInvalidOnMissingRequiredProperty } from 'test/helpers/sample/tutorialgroup/tutorialGroupFormsUtils';
 import { ArtemisDateRangePipe } from 'app/shared/pipes/artemis-date-range.pipe';
-import { runOnPushChangeDetection } from '../../../../../../../../test/javascript/spec/helpers/on-push-change-detection.helper';
+import { runOnPushChangeDetection } from 'test/helpers/on-push-change-detection.helper';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 

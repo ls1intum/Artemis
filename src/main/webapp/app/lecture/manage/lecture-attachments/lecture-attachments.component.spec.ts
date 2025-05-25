@@ -1,14 +1,13 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import dayjs from 'dayjs/esm';
 import { ActivatedRoute, RouterModule } from '@angular/router';
-import { By } from '@angular/platform-browser';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
 import { LectureAttachmentsComponent } from 'app/lecture/manage/lecture-attachments/lecture-attachments.component';
 import { AttachmentService } from 'app/lecture/manage/services/attachment.service';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { MockFileService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-file.service';
+import { MockFileService } from 'test/helpers/mocks/service/mock-file.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
@@ -20,9 +19,9 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { MockSyncStorage } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { SessionStorageService } from 'ngx-webstorage';
 import { FileService } from 'app/shared/service/file.service';
 
@@ -32,7 +31,6 @@ describe('LectureAttachmentsComponent', () => {
     let lectureService: LectureService;
     let attachmentService: AttachmentService;
     let attachmentServiceFindAllByLectureIdStub: jest.SpyInstance;
-    let attachmentServiceCreateStub: jest.SpyInstance;
     let attachmentServiceUpdateStub: jest.SpyInstance;
 
     const lecture = {
@@ -115,7 +113,6 @@ describe('LectureAttachmentsComponent', () => {
                 attachmentService = TestBed.inject(AttachmentService);
                 lectureService = TestBed.inject(LectureService);
                 attachmentServiceFindAllByLectureIdStub = jest.spyOn(attachmentService, 'findAllByLectureId').mockReturnValue(of(new HttpResponse({ body: [...attachments] })));
-                attachmentServiceCreateStub = jest.spyOn(attachmentService, 'create').mockReturnValue(of(new HttpResponse({ body: newAttachment })));
                 attachmentServiceUpdateStub = jest.spyOn(attachmentService, 'update').mockReturnValue(of(new HttpResponse({ body: newAttachment })));
             });
     });
@@ -143,90 +140,13 @@ describe('LectureAttachmentsComponent', () => {
         expect(findAllAttachmentsByLectureId).toHaveBeenCalledWith(42);
     }));
 
-    it('should accept file and add attachment to list', fakeAsync(() => {
-        fixture.detectChanges();
-        jest.spyOn(attachmentService, 'create').mockReturnValue(of(new HttpResponse({ body: newAttachment })));
-        const addAttachmentButton = fixture.debugElement.query(By.css('#add-attachment'));
-        expect(comp.attachmentToBeUpdatedOrCreated()).toBeUndefined();
-        expect(addAttachmentButton).not.toBeNull();
-        addAttachmentButton.nativeElement.click();
-        fixture.detectChanges();
-        comp.attachmentFile.set(new File([''], 'Test-File.pdf', { type: 'application/pdf' }));
-        const uploadAttachmentButton = fixture.debugElement.query(By.css('#upload-attachment'));
-        expect(uploadAttachmentButton).not.toBeNull();
-        expect(comp.attachmentToBeUpdatedOrCreated()).not.toBeNull();
-        comp.form.patchValue({
-            attachmentName: 'Test File Name',
-            releaseDate: dayjs(),
-        });
-        fixture.detectChanges();
-        expect(uploadAttachmentButton.nativeElement.disabled).toBeFalse();
-        uploadAttachmentButton.nativeElement.click();
-        fixture.detectChanges();
-        tick();
-        expect(comp.attachments).toHaveLength(3);
-        expect(attachmentServiceFindAllByLectureIdStub).toHaveBeenCalledTimes(2);
-    }));
-
-    it('should not accept too large file', fakeAsync(() => {
-        attachmentServiceCreateStub.mockReturnValue(throwError(() => new Error('File too large')));
-        fixture.detectChanges();
-        const addAttachmentButton = fixture.debugElement.query(By.css('#add-attachment'));
-        expect(comp.attachmentToBeUpdatedOrCreated()).toBeUndefined();
-        expect(addAttachmentButton).not.toBeNull();
-        addAttachmentButton.nativeElement.click();
-        fixture.detectChanges();
-        const fakeBlob = { name: 'Test-File.pdf', size: 100000000000000000 };
-        comp.attachmentFile.set(fakeBlob as File);
-        const uploadAttachmentButton = fixture.debugElement.query(By.css('#upload-attachment'));
-        expect(uploadAttachmentButton).not.toBeNull();
-        expect(comp.attachmentToBeUpdatedOrCreated()).not.toBeNull();
-        comp.form.patchValue({
-            attachmentName: 'Test File Name',
-            releaseDate: dayjs(),
-        });
-        fixture.detectChanges();
-        expect(uploadAttachmentButton.nativeElement.disabled).toBeFalse();
-        uploadAttachmentButton.nativeElement.click();
-        tick();
-        fixture.detectChanges();
-        const fileAlert = fixture.debugElement.query(By.css('#too-large-file-alert'));
-        expect(comp.attachments).toHaveLength(2);
-        expect(fileAlert).not.toBeNull();
-        expect(attachmentServiceFindAllByLectureIdStub).toHaveBeenCalledOnce();
-    }));
-
     it('should exit saveAttachment', fakeAsync(() => {
         fixture.detectChanges();
         comp.attachmentToBeUpdatedOrCreated.set(undefined);
         comp.saveAttachment();
         expect(attachmentServiceFindAllByLectureIdStub).toHaveBeenCalledOnce();
-        expect(attachmentServiceCreateStub).not.toHaveBeenCalled();
         expect(attachmentServiceUpdateStub).not.toHaveBeenCalled();
         expect(comp.attachmentToBeUpdatedOrCreated()).toBeUndefined();
-    }));
-
-    it('should reset on error for create', fakeAsync(() => {
-        const errorMessage = 'File too large';
-        fixture.detectChanges();
-        const attachment = {
-            lecture: comp.lecture,
-            attachmentType: AttachmentType.FILE,
-            version: 1,
-            uploadDate: dayjs(),
-        } as Attachment;
-        const file = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
-        comp.fileInput = { nativeElement: { value: 'Test-File.pdf' } };
-        comp.attachmentToBeUpdatedOrCreated.set(attachment);
-        comp.attachmentFile.set(file);
-        const attachmentServiceCreateStub = jest.spyOn(attachmentService, 'create').mockReturnValue(throwError(() => new Error(errorMessage)));
-        comp.saveAttachment();
-        expect(attachmentServiceCreateStub).toHaveBeenCalledExactlyOnceWith(attachment, file);
-        expect(comp.attachmentToBeUpdatedOrCreated()).toEqual(attachment);
-        expect(comp.attachmentFile()).toBeUndefined();
-        expect(comp.erroredFile).toEqual(file);
-        expect(comp.errorMessage).toBe(errorMessage);
-        expect(comp.fileInput.nativeElement.value).toBe('');
     }));
 
     it.each([true, false])(
@@ -395,21 +315,4 @@ describe('LectureAttachmentsComponent', () => {
         expect(comp.attachmentToBeUpdatedOrCreated()?.link).toBe(myBlob1.name);
         expect(attachmentServiceFindAllByLectureIdStub).toHaveBeenCalledOnce();
     }));
-
-    describe('isViewButtonAvailable', () => {
-        it('should return true if the attachment link ends with .pdf', () => {
-            const attachment = { id: 1, link: 'example.pdf', attachmentType: 'FILE' } as Attachment;
-            expect(comp.isViewButtonAvailable(attachment.link!)).toBeTrue();
-        });
-
-        it('should return false if the attachment link does not end with .pdf', () => {
-            const attachment = { id: 2, link: 'example.txt', attachmentType: 'FILE' } as Attachment;
-            expect(comp.isViewButtonAvailable(attachment.link!)).toBeFalse();
-        });
-
-        it.each([['document.docx'], ['spreadsheet.xlsx'], ['presentation.pptx'], ['image.jpeg']])('should return false for common file extension %s', (link) => {
-            const attachment = { link };
-            expect(comp.isViewButtonAvailable(attachment.link)).toBeFalse();
-        });
-    });
 });

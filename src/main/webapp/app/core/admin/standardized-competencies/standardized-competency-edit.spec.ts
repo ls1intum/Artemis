@@ -1,12 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
 import { StandardizedCompetencyEditComponent } from 'app/core/admin/standardized-competencies/standardized-competency-edit.component';
-import { ButtonComponent } from 'app/shared/components/button/button.component';
+import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { TaxonomySelectComponent } from 'app/atlas/manage/taxonomy-select/taxonomy-select.component';
-import { TranslatePipeMock } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { KnowledgeAreaDTO, StandardizedCompetencyDTO } from 'app/atlas/shared/entities/standardized-competency.model';

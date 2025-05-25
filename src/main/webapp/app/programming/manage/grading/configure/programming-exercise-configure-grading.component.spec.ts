@@ -4,6 +4,7 @@ import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { NgbModal, NgbModalRef, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExerciseGradingStatistics } from 'app/programming/shared/entities/programming-exercise-test-case-statistics.model';
@@ -39,21 +40,22 @@ import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { Subject, of } from 'rxjs';
-import { MockActivatedRouteWithSubjects } from '../../../../../../../test/javascript/spec/helpers/mocks/activated-route/mock-activated-route-with-subjects';
-import { MockRouter } from '../../../../../../../test/javascript/spec/helpers/mocks/mock-router';
-import { MockFeatureToggleService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-feature-toggle.service';
-import { MockNgbModalService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-ngb-modal.service';
-import { MockProgrammingBuildRunService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-programming-build-run.service';
-import { MockProgrammingExerciseGradingService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-programming-exercise-grading.service';
-import { MockProgrammingExerciseWebsocketService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-programming-exercise-websocket.service';
-import { MockProgrammingExerciseService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-programming-exercise.service';
-import { MockSyncStorage } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
-import { expectElementToBeEnabled, getElement } from '../../../../../../../test/javascript/spec/helpers/utils/general.utils';
+import { MockActivatedRouteWithSubjects } from 'test/helpers/mocks/activated-route/mock-activated-route-with-subjects';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
+import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
+import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { MockProgrammingBuildRunService } from 'test/helpers/mocks/service/mock-programming-build-run.service';
+import { MockProgrammingExerciseGradingService } from 'test/helpers/mocks/service/mock-programming-exercise-grading.service';
+import { MockProgrammingExerciseWebsocketService } from 'test/helpers/mocks/service/mock-programming-exercise-websocket.service';
+import { MockProgrammingExerciseService } from 'test/helpers/mocks/service/mock-programming-exercise.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
+import { expectElementToBeEnabled, getElement } from 'test/helpers/utils/general-test.utils';
 import { ProgrammingExerciseGradingTasksTableComponent } from 'app/programming/manage/grading/tasks/programming-exercise-grading-tasks-table/programming-exercise-grading-tasks-table.component';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('ProgrammingExerciseConfigureGradingComponent', () => {
     let comp: ProgrammingExerciseConfigureGradingComponent;
@@ -222,6 +224,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ProfileService, useClass: MockProfileService },
                 MockProvider(AlertService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -232,12 +235,12 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         debugElement = fixture.debugElement;
         comp = fixture.componentInstance as ProgrammingExerciseConfigureGradingComponent;
 
-        gradingService = debugElement.injector.get(ProgrammingExerciseGradingService);
-        route = debugElement.injector.get(ActivatedRoute);
-        const router = debugElement.injector.get(Router);
-        programmingExerciseWebsocketService = debugElement.injector.get(ProgrammingExerciseWebsocketService);
-        programmingExerciseService = debugElement.injector.get(ProgrammingExerciseService);
-        modalService = debugElement.injector.get(NgbModal);
+        gradingService = fixture.debugElement.injector.get(ProgrammingExerciseGradingService);
+        route = fixture.debugElement.injector.get(ActivatedRoute);
+        const router = fixture.debugElement.injector.get(Router);
+        programmingExerciseWebsocketService = fixture.debugElement.injector.get(ProgrammingExerciseWebsocketService);
+        programmingExerciseService = fixture.debugElement.injector.get(ProgrammingExerciseService);
+        modalService = fixture.debugElement.injector.get(NgbModal);
 
         updateCategoriesStub = jest.spyOn(gradingService, 'updateCodeAnalysisCategories');
         resetCategoriesStub = jest.spyOn(gradingService, 'resetCategories');

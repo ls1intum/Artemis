@@ -10,16 +10,16 @@ import { EventManager } from 'app/shared/service/event-manager.service';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { HeaderCourseComponent } from 'app/core/course/manage/header-course/header-course.component';
-import { CourseExamArchiveButtonComponent } from 'app/shared/components/course-exam-archive-button/course-exam-archive-button.component';
+import { CourseExamArchiveButtonComponent } from 'app/shared/components/buttons/course-exam-archive-button/course-exam-archive-button.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
-import { MockRouter } from '../../../../../../../test/javascript/spec/helpers/mocks/mock-router';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MockProfileService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { CourseAccessStorageService } from 'app/core/course/shared/services/course-access-storage.service';
 
 describe('Course Management Tab Bar Component', () => {

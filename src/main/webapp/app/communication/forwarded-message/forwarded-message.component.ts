@@ -27,13 +27,14 @@ export class ForwardedMessageComponent implements AfterViewInit {
 
     sourceName: string | undefined = '';
     todayFlag?: string;
-    originalPostDetails = input<Posting>();
+    originalPostDetails = input<Posting | undefined>();
     messageContent = viewChild<ElementRef>('messageContent');
     isContentLong = false;
     showFullForwardedMessage = false;
     postingIsOfToday = false;
 
     protected viewButtonVisible = false;
+    hasOriginalPostBeenDeleted = input<boolean | undefined>();
 
     private cdr = inject(ChangeDetectorRef);
     private conversation: Conversation | undefined;
@@ -101,7 +102,7 @@ export class ForwardedMessageComponent implements AfterViewInit {
     }
 
     onTriggerNavigateToPost() {
-        if (this.originalPostDetails() === undefined) {
+        if (!this.originalPostDetails()) {
             return;
         }
         this.onNavigateToPost.emit(this.originalPostDetails()!);

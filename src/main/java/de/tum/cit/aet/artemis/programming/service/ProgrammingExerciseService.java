@@ -651,7 +651,7 @@ public class ProgrammingExerciseService {
         // we only update the build plan configuration if it has changed and is not null, otherwise we
         // do not have a valid exercise anymore
         if (updatedProgrammingExercise.getBuildConfig().getBuildPlanConfiguration() != null) {
-            if (!profileService.isLocalCiActive()) {
+            if (!profileService.isLocalCIActive()) {
                 continuousIntegrationService.get().deleteProject(updatedProgrammingExercise.getProjectKey());
                 continuousIntegrationService.get().createProjectForExercise(updatedProgrammingExercise);
                 continuousIntegrationService.get().recreateBuildPlansForExercise(updatedProgrammingExercise);

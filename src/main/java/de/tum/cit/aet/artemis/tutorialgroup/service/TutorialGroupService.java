@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.tutorialgroup.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.tutorialgroup.web.TutorialGroupResource.TutorialGroupImportErrors.MULTIPLE_REGISTRATIONS;
 import static jakarta.persistence.Persistence.getPersistenceUtil;
 
@@ -12,7 +11,6 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -26,13 +24,15 @@ import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.DeregisteredFromTutorialGroupNotification;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.RegisteredToTutorialGroupNotification;
+import de.tum.cit.aet.artemis.communication.service.CourseNotificationService;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationDTOService;
 import de.tum.cit.aet.artemis.communication.service.notifications.SingleUserNotificationService;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -43,6 +43,7 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistrationType;
@@ -54,7 +55,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupSessionRepos
 import de.tum.cit.aet.artemis.tutorialgroup.web.TutorialGroupResource.TutorialGroupImportErrors;
 import de.tum.cit.aet.artemis.tutorialgroup.web.TutorialGroupResource.TutorialGroupRegistrationImportDTO;
 
-@Profile(PROFILE_CORE)
+@Conditional(TutorialGroupEnabled.class)
 @Service
 public class TutorialGroupService {
 
@@ -74,10 +75,12 @@ public class TutorialGroupService {
 
     private final ConversationDTOService conversationDTOService;
 
+    private final CourseNotificationService courseNotificationService;
+
     public TutorialGroupService(SingleUserNotificationService singleUserNotificationService, TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository,
             TutorialGroupRepository tutorialGroupRepository, UserRepository userRepository, AuthorizationCheckService authorizationCheckService,
             TutorialGroupSessionRepository tutorialGroupSessionRepository, TutorialGroupChannelManagementService tutorialGroupChannelManagementService,
-            ConversationDTOService conversationDTOService) {
+            ConversationDTOService conversationDTOService, CourseNotificationService courseNotificationService) {
         this.tutorialGroupRegistrationRepository = tutorialGroupRegistrationRepository;
         this.tutorialGroupRepository = tutorialGroupRepository;
         this.userRepository = userRepository;
@@ -86,6 +89,7 @@ public class TutorialGroupService {
         this.tutorialGroupSessionRepository = tutorialGroupSessionRepository;
         this.tutorialGroupChannelManagementService = tutorialGroupChannelManagementService;
         this.conversationDTOService = conversationDTOService;
+        this.courseNotificationService = courseNotificationService;
     }
 
     /**
@@ -153,12 +157,10 @@ public class TutorialGroupService {
         else {
             sessions = tutorialGroupSessionRepository.findAllByTutorialGroupId(tutorialGroup.getId());
         }
-        sessions.stream()
-                .filter(tutorialGroupSession -> TutorialGroupSessionStatus.ACTIVE.equals(tutorialGroupSession.getStatus())
-                        && tutorialGroupSession.getEnd().isBefore(ZonedDateTime.now()))
-                .sorted(Comparator.comparing(TutorialGroupSession::getStart).reversed()).limit(3)
-                .map(tutorialGroupSession -> Optional.ofNullable(tutorialGroupSession.getAttendanceCount())).flatMap(Optional::stream).mapToInt(attendance -> attendance).average()
-                .ifPresentOrElse(value -> tutorialGroup.setAverageAttendance((int) Math.round(value)), () -> tutorialGroup.setAverageAttendance(null));
+        sessions.stream().filter(s -> s.getEnd().isBefore(ZonedDateTime.now())).filter(s -> TutorialGroupSessionStatus.ACTIVE.equals(s.getStatus()))
+                .filter(s -> s.getAttendanceCount() != null).sorted(Comparator.comparing(TutorialGroupSession::getStart).reversed()).limit(3)
+                .mapToInt(TutorialGroupSession::getAttendanceCount).average()
+                .ifPresentOrElse(v -> tutorialGroup.setAverageAttendance((int) Math.round(v)), () -> tutorialGroup.setAverageAttendance(null));
     }
 
     /**
@@ -211,10 +213,12 @@ public class TutorialGroupService {
             return; // No registration found, nothing to do.
         }
         tutorialGroupRegistrationRepository.delete(existingRegistration.get());
-        singleUserNotificationService.notifyStudentAboutDeregistrationFromTutorialGroup(tutorialGroup, student, responsibleUser);
-        if (tutorialGroup.getTeachingAssistant() != null && !responsibleUser.equals(tutorialGroup.getTeachingAssistant())) {
-            singleUserNotificationService.notifyTutorAboutDeregistrationFromTutorialGroup(tutorialGroup, student, responsibleUser);
-        }
+
+        var course = tutorialGroup.getCourse();
+        var deregisteredFromTutorialGroupNotification = new DeregisteredFromTutorialGroupNotification(course.getId(), course.getTitle(), course.getCourseIcon(),
+                tutorialGroup.getTitle(), tutorialGroup.getId(), responsibleUser.getName());
+        courseNotificationService.sendCourseNotification(deregisteredFromTutorialGroupNotification, List.of(student));
+
         tutorialGroupChannelManagementService.removeUsersFromTutorialGroupChannel(tutorialGroup, Set.of(student));
     }
 
@@ -243,10 +247,7 @@ public class TutorialGroupService {
         }
         TutorialGroupRegistration newRegistration = new TutorialGroupRegistration(student, tutorialGroup, registrationType);
         tutorialGroupRegistrationRepository.save(newRegistration);
-        singleUserNotificationService.notifyStudentAboutRegistrationToTutorialGroup(tutorialGroup, student, responsibleUser);
-        if (tutorialGroup.getTeachingAssistant() != null && !responsibleUser.equals(tutorialGroup.getTeachingAssistant())) {
-            singleUserNotificationService.notifyTutorAboutRegistrationToTutorialGroup(tutorialGroup, student, responsibleUser);
-        }
+        notifyStudentAboutRegistration(tutorialGroup, responsibleUser, student);
         tutorialGroupChannelManagementService.addUsersToTutorialGroupChannel(tutorialGroup, Set.of(student));
     }
 
@@ -261,14 +262,24 @@ public class TutorialGroupService {
 
         if (sendNotification && responsibleUser != null) {
             for (User student : studentsToRegister) {
-                singleUserNotificationService.notifyStudentAboutRegistrationToTutorialGroup(tutorialGroup, student, responsibleUser);
-            }
-
-            if (tutorialGroup.getTeachingAssistant() != null && !responsibleUser.equals(tutorialGroup.getTeachingAssistant())) {
-                singleUserNotificationService.notifyTutorAboutMultipleRegistrationsToTutorialGroup(tutorialGroup, studentsToRegister, responsibleUser);
+                notifyStudentAboutRegistration(tutorialGroup, responsibleUser, student);
             }
         }
         tutorialGroupChannelManagementService.addUsersToTutorialGroupChannel(tutorialGroup, students);
+    }
+
+    /**
+     * Notifies the student that they were registered to a tutorial group.
+     *
+     * @param tutorialGroup   the tutorial group the student was registered to
+     * @param responsibleUser the user that registered the student
+     * @param student         to notify
+     */
+    private void notifyStudentAboutRegistration(TutorialGroup tutorialGroup, User responsibleUser, User student) {
+        var course = tutorialGroup.getCourse();
+        var registeredFromTutorialGroupNotification = new RegisteredToTutorialGroupNotification(course.getId(), course.getTitle(), course.getCourseIcon(), tutorialGroup.getTitle(),
+                tutorialGroup.getId(), responsibleUser.getName());
+        courseNotificationService.sendCourseNotification(registeredFromTutorialGroupNotification, List.of(student));
     }
 
     /**
@@ -728,52 +739,80 @@ public class TutorialGroupService {
         };
     }
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public record TutorialGroupExportDTO(Long id, String title, String dayOfWeek, String startTime, String endTime, String location, String campus, String language,
+            String additionalInformation, Integer capacity, Boolean isOnline, List<StudentExportDTO> students /* optional, only set if selected */) {
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public record StudentExportDTO(String registrationNumber, String firstName, String lastName) {
+    }
+
     /**
-     * Exports the tutorial groups for a given course to a JSON string.
-     * Each tutorial group and its related information, including optional fields specified in the selectedFields list, are included in the export.
-     * The method utilizes helper methods to handle null checks and field assignments.
+     * Exports selected information about all tutorial groups in a given course.
+     * <p>
+     * This method retrieves tutorial groups for the specified course ID and maps each one
+     * to a {@link TutorialGroupExportDTO}. Only the fields explicitly listed in {@code selectedFields}
+     * are populated; all others remain {@code null}. Field names must match exactly with those
+     * defined in the corresponding frontend component (e.g., {@code tutorial-groups-export-button.component.ts}).
+     * <p>
+     * If the "Students" field is selected, the list of registered students is included using
+     * {@link StudentExportDTO}.
      *
-     * @param courseId       the ID of the course for which tutorial groups are to be exported
-     * @param selectedFields the list of fields to include in the JSON export
-     * @return a JSON string representing the exported tutorial groups and their details
-     * @throws JsonProcessingException if an error occurs during JSON processing
+     * @param courseId       the ID of the course whose tutorial groups should be exported
+     * @param selectedFields a list of field names to include in the export;
+     *                           valid values include: "ID", "Title", "Day of Week", "Start Time", "End Time",
+     *                           "Location", "Campus", "Language", "Additional Information", "Capacity",
+     *                           "Is Online", and "Students"
+     * @return a list of tutorial group DTOs with selectively populated fields
      */
-    public String exportTutorialGroupsToJSON(Long courseId, List<String> selectedFields) throws JsonProcessingException {
+    public List<TutorialGroupExportDTO> exportTutorialGroupInformation(Long courseId, List<String> selectedFields) {
         Set<TutorialGroup> tutorialGroups = tutorialGroupRepository.findAllByCourseIdWithTeachingAssistantRegistrationsAndSchedule(courseId);
 
-        List<Map<String, Object>> exportData = new ArrayList<>();
-        for (TutorialGroup tutorialGroup : tutorialGroups) {
-            Map<String, Object> groupData = new LinkedHashMap<>();
-            writeTutorialGroupJSON(groupData, tutorialGroup, selectedFields);
-            if (selectedFields.contains("Students")) {
-                if ((tutorialGroup.getRegistrations() != null) && (!tutorialGroup.getRegistrations().isEmpty())) {
-                    List<Map<String, Object>> studentsList = new ArrayList<>();
-                    for (TutorialGroupRegistration registration : tutorialGroup.getRegistrations()) {
-                        User student = registration.getStudent();
-                        studentsList.add(convertStudentToMap(student));
-                    }
-                    groupData.put("Students", studentsList);
-                }
-            }
-            exportData.add(groupData);
+        List<TutorialGroupExportDTO> exportData = new ArrayList<>();
+        for (TutorialGroup group : tutorialGroups) {
+            // NOTE: fields must be identical as defined in tutorial-groups-export-button.component.ts
+            // @formatter:off
+            TutorialGroupExportDTO tutorialGroupExportDTO = new TutorialGroupExportDTO(
+                selectedFields.contains("ID") ? group.getId() : null,
+                selectedFields.contains("Title") ? getCSVInput(group, "Title") : null,
+                selectedFields.contains("Day of Week") ? getCSVInput(group, "Day of Week") : null,
+                selectedFields.contains("Start Time") ? getCSVInput(group, "Start Time") : null,
+                selectedFields.contains("End Time") ? getCSVInput(group, "End Time") : null,
+                selectedFields.contains("Location") ? getCSVInput(group, "Location") : null,
+                selectedFields.contains("Campus") ? getCSVInput(group, "Campus") : null,
+                selectedFields.contains("Language") ? getCSVInput(group, "Language") : null,
+                selectedFields.contains("Additional Information") ? getCSVInput(group, "Additional Information") : null,
+                selectedFields.contains("Capacity") ? group.getCapacity() : null,
+                selectedFields.contains("Is Online") ? group.getIsOnline() : null,
+                selectedFields.contains("Students") ? convertStudents(group) : null
+            );
+            // @formatter:on
+            exportData.add(tutorialGroupExportDTO);
         }
 
-        ObjectMapper objectMapper = new ObjectMapper();
-        return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(exportData);
+        return exportData;
     }
 
-    private void writeTutorialGroupJSON(Map<String, Object> groupData, TutorialGroup tutorialGroup, List<String> selectedFields) {
-        for (String field : selectedFields) {
-            groupData.put(field, getCSVInput(tutorialGroup, field));
+    /**
+     * Converts the student registrations of the given tutorial group into a list of {@link StudentExportDTO}s.
+     * <p>
+     * Returns an empty list if there are no student registrations.
+     * Each student is mapped with their registration number, first name, and last name,
+     * using a fallback for {@code null} values via {@code getValueOrDefault}.
+     *
+     * @param group the tutorial group whose student registrations should be converted
+     * @return a list of student export DTOs; empty if no students are registered
+     */
+    private List<StudentExportDTO> convertStudents(TutorialGroup group) {
+        if (group.getRegistrations() == null || group.getRegistrations().isEmpty()) {
+            return List.of();
         }
-    }
 
-    private Map<String, Object> convertStudentToMap(User student) {
-        Map<String, Object> studentMap = new LinkedHashMap<>();
-        studentMap.put("RegistrationNumber", getValueOrDefault(student.getRegistrationNumber()));
-        studentMap.put("FirstName", getValueOrDefault(student.getFirstName()));
-        studentMap.put("LastName", getValueOrDefault(student.getLastName()));
-        return studentMap;
+        return group.getRegistrations().stream().map(registration -> {
+            var student = registration.getStudent();
+            return new StudentExportDTO(getValueOrDefault(student.getRegistrationNumber()), getValueOrDefault(student.getFirstName()), getValueOrDefault(student.getLastName()));
+        }).toList();
     }
 
     private String getValueOrDefault(Object value) {

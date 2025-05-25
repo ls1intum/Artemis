@@ -7,7 +7,7 @@ import { Submission } from 'app/exercise/shared/entities/submission/submission.m
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import dayjs from 'dayjs/esm';
 import { provideHttpClient } from '@angular/common/http';
-import { MockAccountService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('ProgrammingExerciseParticipation Service', () => {
     let service: ProgrammingExerciseParticipationService;

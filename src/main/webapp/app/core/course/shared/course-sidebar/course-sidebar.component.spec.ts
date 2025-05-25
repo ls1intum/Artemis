@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { Course, CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { NgbDropdown, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { NgClass, NgTemplateOutlet, SlicePipe } from '@angular/common';
@@ -16,12 +15,19 @@ import { CourseActionItem, CourseSidebarComponent, SidebarItem } from 'app/core/
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
-import { MockActivatedRoute } from '../../../../../../../test/javascript/spec/helpers/mocks/activated-route/mock-activated-route';
+import { SimpleChange, signal } from '@angular/core';
+import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { Course, CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
+import { LayoutService } from 'app/shared/breakpoints/layout.service';
+import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
+import { BehaviorSubject } from 'rxjs';
 
 describe('CourseSidebarComponent', () => {
     let component: CourseSidebarComponent;
     let fixture: ComponentFixture<CourseSidebarComponent>;
+    let layoutService: LayoutService;
+    let breakpointsSubject: BehaviorSubject<string[]>;
 
     const course1: Course = {
         id: 1,
@@ -60,7 +66,6 @@ describe('CourseSidebarComponent', () => {
             icon: faChartColumn,
             title: 'Statistics',
             translation: 'artemisApp.courseOverview.menu.statistics',
-            guidedTour: true,
             hidden: false,
         },
         {
@@ -114,6 +119,11 @@ describe('CourseSidebarComponent', () => {
             ],
         }).compileComponents();
 
+        // we have to set this up before we create the component because the signal is set up in the constructor
+        layoutService = TestBed.inject(LayoutService);
+        breakpointsSubject = new BehaviorSubject<string[]>([]);
+        jest.spyOn(layoutService, 'subscribeToLayoutChanges').mockReturnValue(breakpointsSubject.asObservable());
+
         fixture = TestBed.createComponent(CourseSidebarComponent);
         component = fixture.componentInstance;
 
@@ -125,10 +135,28 @@ describe('CourseSidebarComponent', () => {
         fixture.detectChanges();
     });
 
-    it('should initialize visible/hidden items on component initialization', () => {
-        const updateVisibleNavbarItemsSpy = jest.spyOn(component, 'updateVisibleNavbarItems');
+    it('should update canExpand when activeBreakpoints changes', () => {
+        expect(component.activeBreakpoints()).toEqual([]);
+        expect(component.canExpand()).toBeFalse();
+        layoutService.activeBreakpoints = [CustomBreakpointNames.sidebarExpandable];
+        fixture.detectChanges();
+        const isBreakpointActiveSpy = jest.spyOn(layoutService, 'isBreakpointActive');
 
-        component.ngOnInit();
+        breakpointsSubject.next([CustomBreakpointNames.sidebarExpandable]);
+        fixture.detectChanges();
+
+        expect(isBreakpointActiveSpy).toHaveBeenCalledExactlyOnceWith(CustomBreakpointNames.sidebarExpandable);
+        expect(component.canExpand()).toBeTrue();
+
+        layoutService.activeBreakpoints = [CustomBreakpointNames.small];
+        breakpointsSubject.next([CustomBreakpointNames.small]);
+        fixture.detectChanges();
+        expect(component.canExpand()).toBeFalse();
+    });
+
+    it('should initialize visible/hidden items on  sidebar update', () => {
+        const updateVisibleNavbarItemsSpy = jest.spyOn(component, 'updateVisibleNavbarItems');
+        component.ngOnChanges({ sidebarItems: new SimpleChange([], mockSidebarItems, true) });
 
         expect(updateVisibleNavbarItemsSpy).toHaveBeenCalledWith(window.innerHeight);
     });
@@ -160,8 +188,8 @@ describe('CourseSidebarComponent', () => {
     it('should calculate threshold based on sidebar items length', () => {
         const threshold = component.calculateThreshold();
 
-        // WINDOW_OFFSET = 300, ITEM_HEIGHT = 38, sidebarItems.length = 5
-        const expectedThreshold = 300 + 5 * 38;
+        // WINDOW_OFFSET = 225, ITEM_HEIGHT = 38, sidebarItems.length = 5
+        const expectedThreshold = 225 + 5 * 38;
 
         expect(threshold).toBe(expectedThreshold);
     });
@@ -220,6 +248,7 @@ describe('CourseSidebarComponent', () => {
 
     it('should emit toggleCollapseState when collapse chevron is clicked', () => {
         const toggleCollapseStateSpy = jest.spyOn(component.toggleCollapseState, 'emit');
+        component.canExpand = signal(true);
         fixture.detectChanges();
         const collapseButton = fixture.debugElement.query(By.css('.double-arrow'));
         expect(collapseButton).toBeTruthy();

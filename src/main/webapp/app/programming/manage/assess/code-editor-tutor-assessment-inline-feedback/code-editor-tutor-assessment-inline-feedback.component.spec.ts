@@ -2,10 +2,10 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { MockModule, MockProvider } from 'ng-mocks';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/programming/manage/assess/code-editor-tutor-assessment-inline-feedback/code-editor-tutor-assessment-inline-feedback.component';
-import { Feedback, FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FeedbackType, PRELIMINARY_FEEDBACK_IDENTIFIER } from 'app/assessment/shared/entities/feedback.model';
+import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, Feedback, FeedbackType, PRELIMINARY_FEEDBACK_IDENTIFIER } from 'app/assessment/shared/entities/feedback.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { By } from '@angular/platform-browser';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -36,8 +36,8 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
                 comp.readOnly = false;
                 comp.selectedFile = fileName;
                 comp.codeLine = codeLine;
-                sgiService = fixture.debugElement.injector.get(StructuredGradingCriterionService);
                 alertService = fixture.debugElement.injector.get(AlertService);
+                sgiService = TestBed.inject(StructuredGradingCriterionService);
             });
     });
 

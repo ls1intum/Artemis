@@ -6,7 +6,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { FeedbackItem } from 'app/exercise/feedback/item/feedback-item';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { TestBed } from '@angular/core/testing';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('ProgrammingFeedbackItemService', () => {
     let service: ProgrammingFeedbackItemService;

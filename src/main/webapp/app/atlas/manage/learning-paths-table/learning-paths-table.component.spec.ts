@@ -2,15 +2,17 @@ import '@angular/localize/init';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LearningPathsTableComponent } from 'app/atlas/manage/learning-paths-table/learning-paths-table.component';
 import { LearningPathApiService } from 'app/atlas/shared/services/learning-path-api.service';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { AlertService } from 'app/shared/service/alert.service';
-import { MockAlertService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-alert.service';
+import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { LearningPathInformationDTO } from 'app/atlas/shared/entities/learning-path.model';
 import { SearchResult, SearchTermPageableSearch } from 'app/shared/table/pageable-table';
 import { By } from '@angular/platform-browser';
+import { ScienceService } from 'app/shared/science/science.service';
+import { MockProvider } from 'ng-mocks';
 
 describe('LearningPathsTableComponent', () => {
     let component: LearningPathsTableComponent;
@@ -45,6 +47,7 @@ describe('LearningPathsTableComponent', () => {
                     useClass: MockTranslateService,
                 },
                 { provide: AlertService, useClass: MockAlertService },
+                MockProvider(ScienceService),
             ],
         }).compileComponents();
 

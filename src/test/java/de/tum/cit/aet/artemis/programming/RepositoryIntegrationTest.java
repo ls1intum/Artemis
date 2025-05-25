@@ -144,7 +144,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
                     + "on project testPluginSCA-Tests: An error has occurred in Checkstyle report generation. Failed during checkstyle"
                     + "configuration: Exception was thrown while processing C:\\Users\\Stefan\\jenkins-home\\xml-data\\build-dir\\STCTES"
                     + "TPLUGINSCA-SOLUTION-JOB1\\assignment\\src\\www\\testPluginSCA\\BubbleSort.java: MismatchedTokenException occurred"
-                    + "while parsing file C:\\Users\\Stefan\\gitlab-home\\xml-data\\build-dir\\STCTESTPLUGINSCA-SOLUTION-JOB1\\assignment\\"
+                    + "while parsing file C:\\Users\\Stefan\\home\\xml-data\\build-dir\\STCTESTPLUGINSCA-SOLUTION-JOB1\\assignment\\"
                     + "src\\www\\testPluginSCA\\BubbleSort.java. expecting EOF, found '}' -> [Help 1]");
 
     private ProgrammingExerciseStudentParticipation participation;

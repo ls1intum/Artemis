@@ -2,10 +2,10 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { Subject } from 'rxjs';
 import { By } from '@angular/platform-browser';
-import { MockSyncStorage } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
-import { triggerChanges } from '../../../../../../test/javascript/spec/helpers/utils/general.utils';
+import { triggerChanges } from 'test/helpers/utils/general-test.utils';
 import { ProgrammingExerciseInstructorStatusComponent } from 'app/programming/manage/status/programming-exercise-instructor-status.component';
 import { ProgrammingExerciseParticipationType } from 'app/programming/shared/entities/programming-exercise-participation.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -16,7 +16,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockDirective, MockPipe } from 'ng-mocks';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('ProgrammingExerciseInstructorStatusComponent', () => {
@@ -42,7 +42,7 @@ describe('ProgrammingExerciseInstructorStatusComponent', () => {
                 fixture = TestBed.createComponent(ProgrammingExerciseInstructorStatusComponent);
                 comp = fixture.componentInstance as ProgrammingExerciseInstructorStatusComponent;
 
-                participationWebsocketService = fixture.debugElement.injector.get(ParticipationWebsocketService);
+                participationWebsocketService = TestBed.inject(ParticipationWebsocketService);
 
                 subscribeForLatestResultStub = jest.spyOn(participationWebsocketService, 'subscribeForLatestResultOfParticipation');
                 latestResultSubject = new Subject();

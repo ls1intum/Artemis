@@ -8,9 +8,9 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import { ActivatedRouteSnapshot, Router, RouterStateSnapshot, provideRouter } from '@angular/router';
 import { TutorialGroupManagementResolve } from 'app/tutorialgroup/manage/service/tutorial-group-management-resolve.service';
 import { MockProvider } from 'ng-mocks';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { MockRouter } from '../../../../../../test/javascript/spec/helpers/mocks/mock-router';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
 
 describe('TutorialGroupManagementResolve', () => {
     let resolver: TutorialGroupManagementResolve;

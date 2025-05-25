@@ -19,7 +19,6 @@ import dayjs from 'dayjs/esm';
 import { NavigationEnd, Params, Router } from '@angular/router';
 import { MetisPostDTO } from 'app/communication/shared/entities/metis-post-dto.model';
 import { OneToOneChatService } from 'app/communication/conversations/service/one-to-one-chat.service';
-import { NotificationService } from 'app/core/notification/shared/notification.service';
 
 /**
  * NOTE: NOT INJECTED IN THE ROOT MODULE
@@ -34,7 +33,6 @@ export class MetisConversationService implements OnDestroy {
     private accountService = inject(AccountService);
     private alertService = inject(AlertService);
     private router = inject(Router);
-    private notificationService = inject(NotificationService);
 
     // Stores the conversation of the course where the current user is a member
     private conversationsOfUser: ConversationDTO[] = [];
@@ -65,12 +63,13 @@ export class MetisConversationService implements OnDestroy {
     constructor() {
         this.accountService.identity().then((user: User) => {
             this.userId = user.id!;
-        });
-
-        this.activeConversationSubscription = this.notificationService.newOrUpdatedMessage.subscribe((postDTO: MetisPostDTO) => {
-            if (postDTO.action === MetisPostAction.CREATE && postDTO.post.author?.id !== this.userId) {
-                this.handleNewMessage(postDTO.post.conversation?.id, postDTO.post.conversation?.lastMessageDate);
-            }
+            const conversationTopic = `/topic/user/${this.userId}/notifications/conversations`;
+            this.websocketService.subscribe(conversationTopic);
+            this.activeConversationSubscription = this.websocketService.receive(conversationTopic)?.subscribe((postDTO: MetisPostDTO) => {
+                if (postDTO.action === MetisPostAction.CREATE && postDTO.post.author?.id !== this.userId) {
+                    this.handleNewMessage(postDTO.post.conversation?.id, postDTO.post.conversation?.lastMessageDate);
+                }
+            });
         });
     }
 
@@ -150,6 +149,7 @@ export class MetisConversationService implements OnDestroy {
         if (indexOfCachedConversation !== -1) {
             this.conversationsOfUser[indexOfCachedConversation].lastMessageDate = dayjs();
             this.conversationsOfUser[indexOfCachedConversation].unreadMessagesCount = 0;
+            this._conversationsOfUser$.next(this.conversationsOfUser);
         }
         this.hasUnreadMessagesCheck();
     }
@@ -160,6 +160,13 @@ export class MetisConversationService implements OnDestroy {
             this.activeConversation.lastReadDate = dayjs();
             this.activeConversation.unreadMessagesCount = 0;
             this.activeConversation.hasUnreadMessage = false;
+            const indexOfConversationToUpdate = this.conversationsOfUser.findIndex((conversation) => conversation.id === this.activeConversation!.id);
+            if (indexOfConversationToUpdate !== -1) {
+                this.conversationsOfUser[indexOfConversationToUpdate].lastReadDate = dayjs();
+                this.conversationsOfUser[indexOfConversationToUpdate].unreadMessagesCount = 0;
+                this.conversationsOfUser[indexOfConversationToUpdate].hasUnreadMessage = false;
+                this._conversationsOfUser$.next(this.conversationsOfUser);
+            }
         }
     }
 
@@ -347,6 +354,7 @@ export class MetisConversationService implements OnDestroy {
 
     private updateUnread() {
         this.conversationsOfUser.forEach((conversation) => (conversation.hasUnreadMessage = !!conversation.unreadMessagesCount && conversation.unreadMessagesCount > 0));
+        this._conversationsOfUser$.next(this.conversationsOfUser);
     }
 
     private setIsLoading(value: boolean) {
@@ -456,7 +464,7 @@ export class MetisConversationService implements OnDestroy {
         }
     }
 
-    private handleNewMessage(conversationId: number | undefined, lastMessageDate: dayjs.Dayjs | undefined) {
+    handleNewMessage(conversationId: number | undefined, lastMessageDate: dayjs.Dayjs | undefined) {
         const conversationsCopy = [...this.conversationsOfUser];
         const indexOfCachedConversation = conversationsCopy.findIndex((cachedConversation) => cachedConversation.id === conversationId);
         if (indexOfCachedConversation !== -1) {
@@ -469,6 +477,7 @@ export class MetisConversationService implements OnDestroy {
             }
         }
         this.conversationsOfUser = conversationsCopy;
+        this._conversationsOfUser$.next(this.conversationsOfUser);
     }
 
     static getQueryParamsForConversation(conversationId: number): Params {
@@ -485,6 +494,14 @@ export class MetisConversationService implements OnDestroy {
         if (!course?.id) {
             return of();
         }
+
+        this.conversationsOfUser = this.conversationsOfUser.map((conversation) => {
+            conversation.hasUnreadMessage = false;
+            conversation.unreadMessagesCount = 0;
+            return conversation;
+        });
+
+        this._conversationsOfUser$.next(this.conversationsOfUser);
 
         return this.conversationService.markAllChannelsAsRead(course.id).pipe(
             catchError((errorResponse: HttpErrorResponse) => {

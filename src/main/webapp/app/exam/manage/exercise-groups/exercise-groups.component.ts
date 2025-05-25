@@ -32,7 +32,7 @@ import {
 import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
 import { ExerciseImportWrapperComponent } from 'app/exercise/import/exercise-import-wrapper/exercise-import-wrapper.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { PROFILE_LOCALCI, PROFILE_LOCALVC } from 'app/app.constants';
+import { MODULE_FEATURE_TEXT, PROFILE_LOCALCI } from 'app/app.constants';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
@@ -44,6 +44,7 @@ import { FileUploadExerciseGroupCellComponent } from './file-upload-exercise-cel
 import { LowerCasePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ExamExerciseRowButtonsComponent } from 'app/exercise/exam-exercise-row-buttons/exam-exercise-row-buttons.component';
+import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
 
 @Component({
     selector: 'jhi-exercise-groups',
@@ -62,6 +63,7 @@ import { ExamExerciseRowButtonsComponent } from 'app/exercise/exam-exercise-row-
         ExamExerciseRowButtonsComponent,
         LowerCasePipe,
         ArtemisTranslatePipe,
+        FeatureOverlayComponent,
     ],
 })
 export class ExerciseGroupsComponent implements OnInit {
@@ -86,8 +88,9 @@ export class ExerciseGroupsComponent implements OnInit {
     latestIndividualEndDate?: dayjs.Dayjs;
     exerciseGroupToExerciseTypesDict = new Map<number, ExerciseType[]>();
 
-    localVCEnabled = true;
     localCIEnabled = true;
+    textExerciseEnabled = false;
+    disabledExerciseTypes: string[] = [];
 
     // Icons
     faPlus = faPlus;
@@ -120,10 +123,11 @@ export class ExerciseGroupsComponent implements OnInit {
             },
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
         });
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
-            this.localCIEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALCI);
-        });
+        this.localCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
+        this.textExerciseEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_TEXT);
+        if (!this.textExerciseEnabled) {
+            this.disabledExerciseTypes.push(ExerciseType.TEXT);
+        }
     }
 
     /**
@@ -166,7 +170,7 @@ export class ExerciseGroupsComponent implements OnInit {
 
     /**
      * Delete the exercise group with the given id.
-     * @param exerciseGroupId {number}
+     * @param exerciseGroupId
      * @param event representation of users choices to delete the student repositories and base repositories
      */
     deleteExerciseGroup(exerciseGroupId: number, event: { [key: string]: boolean }) {
@@ -301,5 +305,9 @@ export class ExerciseGroupsComponent implements OnInit {
                 this.alertService.success('artemisApp.examManagement.exerciseGroup.importSuccessful');
             }
         });
+    }
+
+    protected isExerciseTypeDisabled(exerciseType: ExerciseType) {
+        return this.disabledExerciseTypes.includes(exerciseType);
     }
 }

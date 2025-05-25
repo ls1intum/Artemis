@@ -65,6 +65,9 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             """)
     List<ProgrammingExercise> findByCourseIdWithLatestResultForTemplateSolutionParticipations(@Param("courseId") long courseId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation" })
+    Optional<ProgrammingExercise> findWithTemplateParticipationById(long exerciseId);
+
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "teamAssignmentConfig", "categories", "auxiliaryRepositories",
             "submissionPolicy" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(long exerciseId);
@@ -629,6 +632,18 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     }
 
     /**
+     * Find a programming exercise by its id, including template participation.
+     *
+     * @param programmingExerciseId of the programming exercise.
+     * @return The programming exercise related to the given id
+     * @throws EntityNotFoundException the programming exercise could not be found.
+     */
+    @NotNull
+    default ProgrammingExercise findByIdWithTemplateParticipationElseThrow(long programmingExerciseId) throws EntityNotFoundException {
+        return getValueElseThrow(findWithTemplateParticipationById(programmingExerciseId), programmingExerciseId);
+    }
+
+    /**
      * Find a programming exercise by its id, including auxiliary repositories, template and solution participation and
      * their latest results.
      *
@@ -967,7 +982,6 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
         TutorParticipations(ProgrammingExercise_.TUTOR_PARTICIPATIONS),
         ExampleSubmissions(ProgrammingExercise_.EXAMPLE_SUBMISSIONS),
         Attachments(ProgrammingExercise_.ATTACHMENTS),
-        Posts(ProgrammingExercise_.POSTS),
         PlagiarismCases(ProgrammingExercise_.PLAGIARISM_CASES),
         PlagiarismDetectionConfig(ProgrammingExercise_.PLAGIARISM_DETECTION_CONFIG);
         // @formatter:on

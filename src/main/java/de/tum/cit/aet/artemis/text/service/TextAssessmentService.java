@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.text.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static org.hibernate.Hibernate.isInitialized;
 
 import java.util.List;
@@ -8,7 +7,7 @@ import java.util.Optional;
 
 import jakarta.annotation.Nullable;
 
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
@@ -28,9 +27,10 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.lti.api.LtiApi;
+import de.tum.cit.aet.artemis.text.config.TextEnabled;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
-@Profile(PROFILE_CORE)
+@Conditional(TextEnabled.class)
 @Service
 public class TextAssessmentService extends AssessmentService {
 

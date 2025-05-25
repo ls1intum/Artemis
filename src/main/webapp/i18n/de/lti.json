@@ -18,6 +18,16 @@
                 "iris": {
                     "header": "Iris hinzufügen",
                     "selector": "Bestätige, ob du eine Verknüpfung zu Iris hinzufügen willst"
+                },
+                "groupedContent": {
+                    "groupedExercises": {
+                        "header": "Gruppierung von Übungen aktivieren:",
+                        "selector": "Beim Auswählen mehrerer Übungen in der Tabelle werden diese gruppiert und in der Artemis-Seitenleiste in der Übungsansicht angezeigt."
+                    },
+                    "groupedLectures": {
+                        "header": "Gruppierung von Vorlesungen aktivieren:",
+                        "selector": "Beim Auswählen mehrerer Vorlesungen in der Tabelle werden diese gruppiert und in der Artemis-Seitenleiste in der Vorlesungsansicht angezeigt."
+                    }
                 }
             },
             "initializationError": "Die Initialisierung deines Benutzers wurde gestartet aber dein LTI-Konto wurde möglicherweise nicht korrekt erstellt. Bitte benachrichtige deine Übungsleitung, falls du dein Artemis-Passwort bisher nicht erhalten hast.",
@@ -53,6 +63,7 @@
             "jwkSetUri": "JWKSet URI",
             "customName": "Benutzerdefinierter Name",
             "exercises": "Aufgaben",
+            "lectures": "Vorlesungen",
             "startExercise": "<strong>Herzlich willkommen bei Artemis!</strong> Klicke auf den Button <i>Aufgabe starten</i>!",
             "ltiSuccessLoginRequired": "LTI Übung erfolgreich gestartet. Bitte melde dich als Nutzer:in {{user}} an.",
             "lti": "LTI",

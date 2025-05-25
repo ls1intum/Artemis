@@ -10,6 +10,8 @@ import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { PROFILE_ATHENA } from 'app/app.constants';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { ModelingFeedbackSuggestion, ProgrammingFeedbackSuggestion, TextFeedbackSuggestion } from 'app/assessment/shared/entities/feedback-suggestion.model';
+import { HttpParams } from '@angular/common/http';
+import { ModuleType } from 'app/assessment/shared/entities/athena.model';
 
 @Injectable({ providedIn: 'root' })
 export class AthenaService {
@@ -21,8 +23,8 @@ export class AthenaService {
     /**
      * Determine if the Athena service is available based on whether the corresponding profile is active
      */
-    public isEnabled(): Observable<boolean> {
-        return this.profileService.getProfileInfo().pipe(switchMap((profileInfo) => of(profileInfo.activeProfiles.includes(PROFILE_ATHENA))));
+    public isEnabled(): boolean {
+        return this.profileService.isProfileActive(PROFILE_ATHENA);
     }
 
     /**
@@ -31,17 +33,19 @@ export class AthenaService {
      * @param courseId The id of the course for which the feedback suggestion modules should be fetched
      * @param exercise The exercise for which the feedback suggestion modules should be fetched
      */
-    public getAvailableModules(courseId: number, exercise: Exercise): Observable<string[]> {
-        return this.isEnabled().pipe(
-            switchMap((isAthenaEnabled) => {
-                if (!isAthenaEnabled) {
-                    return of([] as string[]);
-                }
-                return this.http
-                    .get<string[]>(`${this.resourceUrl}/courses/${courseId}/${exercise.type}-exercises/available-modules`, { observe: 'response' })
-                    .pipe(switchMap((res: HttpResponse<string[]>) => of(res.body!)));
-            }),
-        );
+    public getAvailableModules(courseId: number, exercise: Exercise, moduleType?: ModuleType): Observable<string[]> {
+        if (!this.profileService.isProfileActive(PROFILE_ATHENA)) {
+            return of([] as string[]);
+        }
+
+        let params = new HttpParams();
+        if (moduleType) {
+            params = params.set('moduleType', moduleType);
+        }
+
+        return this.http
+            .get<string[]>(`${this.resourceUrl}/courses/${courseId}/${exercise.type}-exercises/available-modules`, { params, observe: 'response' })
+            .pipe(switchMap((res: HttpResponse<string[]>) => of(res.body!)));
     }
 
     /**
@@ -55,16 +59,13 @@ export class AthenaService {
         if (!exercise.feedbackSuggestionModule) {
             return of([]);
         }
-        return this.isEnabled().pipe(
-            switchMap((isAthenaEnabled) => {
-                if (!isAthenaEnabled) {
-                    return of([] as T[]);
-                }
-                return this.http
-                    .get<T[]>(`${this.resourceUrl}/${exercise.type}-exercises/${exercise.id}/submissions/${submissionId}/feedback-suggestions`, { observe: 'response' })
-                    .pipe(switchMap((res: HttpResponse<T[]>) => of(res.body!)));
-            }),
-        );
+        if (!this.profileService.isProfileActive(PROFILE_ATHENA)) {
+            return of([] as T[]);
+        }
+
+        return this.http
+            .get<T[]>(`${this.resourceUrl}/${exercise.type}-exercises/${exercise.id}/submissions/${submissionId}/feedback-suggestions`, { observe: 'response' })
+            .pipe(switchMap((res: HttpResponse<T[]>) => of(res.body!)));
     }
 
     /**

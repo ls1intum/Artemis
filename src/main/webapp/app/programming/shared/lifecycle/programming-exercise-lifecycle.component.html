@@ -205,7 +205,7 @@
         }
         <h6 jhiTranslate="artemisApp.assessment.feedback"></h6>
         @if ((isEditFieldDisplayedRecord()?.preliminaryFeedbackRequests || isEditFieldDisplayedRecord()?.manualFeedbackRequests || !isEditFieldDisplayedRecord()) && !isExamMode) {
-            @if (isAthenaEnabled$ | async) {
+            @if (isAthenaEnabled) {
                 <jhi-exercise-preliminary-feedback-options [exercise]="exercise" [dueDate]="exercise.dueDate" [readOnly]="readOnly" />
             } @else {
                 <div class="form-check">

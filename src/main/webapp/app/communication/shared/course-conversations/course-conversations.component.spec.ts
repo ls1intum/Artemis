@@ -2,10 +2,10 @@ import { CourseConversationsComponent } from 'app/communication/shared/course-co
 import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
 import { Conversation, ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { OneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
-import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../../../../../../test/javascript/spec/helpers/sample/conversationExampleModels';
+import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from 'test/helpers/sample/conversationExampleModels';
 import { MockComponent, MockInstance, MockPipe, MockProvider } from 'ng-mocks';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
-import { LoadingIndicatorContainerStubComponent } from '../../../../../../test/javascript/spec/helpers/stubs/shared/loading-indicator-container-stub.component';
+import { LoadingIndicatorContainerStubComponent } from 'test/helpers/stubs/shared/loading-indicator-container-stub.component';
 import { ConversationHeaderComponent } from 'app/communication/course-conversations-components/layout/conversation-header/conversation-header.component';
 import { CourseWideSearchComponent } from 'app/communication/course-conversations-components/course-wide-search/course-wide-search.component';
 import { ConversationMessagesComponent } from 'app/communication/course-conversations-components/layout/conversation-messages/conversation-messages.component';
@@ -14,18 +14,17 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import { BehaviorSubject, EMPTY, of } from 'rxjs';
 import { NgbModal, NgbModalRef, NgbModule, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ActivatedRoute, Params, Router, convertToParamMap } from '@angular/router';
-import { MockRouter } from '../../../../../../test/javascript/spec/helpers/mocks/mock-router';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MetisService } from 'app/communication/service/metis.service';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { CourseConversationsCodeOfConductComponent } from 'app/communication/course-conversations-components/code-of-conduct/course-conversations-code-of-conduct.component';
-import { MockMetisService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-metis-service.service';
-import { ButtonComponent } from 'app/shared/components/button/button.component';
+import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.service';
+import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
-import { getElement } from '../../../../../../test/javascript/spec/helpers/utils/general.utils';
+import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
 import { CourseOverviewService } from 'app/core/course/overview/services/course-overview.service';
 import { GroupChatCreateDialogComponent } from 'app/communication/course-conversations-components/group-chat-create-dialog/group-chat-create-dialog.component';
@@ -45,6 +44,7 @@ import {
     ChannelAction,
     ChannelsOverviewDialogComponent,
 } from 'app/communication/course-conversations-components/dialogs/channels-overview-dialog/channels-overview-dialog.component';
+import { ConversationGlobalSearchComponent } from 'app/communication/shared/conversation-global-search/conversation-global-search.component';
 
 const examples: (ConversationDTO | undefined)[] = [
     undefined,
@@ -86,6 +86,8 @@ examples.forEach((activeConversation) => {
         // Workaround for mocked components with viewChild: https://github.com/help-me-mom/ng-mocks/issues/8634
         MockInstance(CourseWideSearchComponent, 'content', signal(new ElementRef(document.createElement('div'))));
         MockInstance(CourseWideSearchComponent, 'messages', signal([new ElementRef(document.createElement('div'))]));
+        // @ts-ignore
+        MockInstance(ConversationGlobalSearchComponent, 'searchElement', signal([new ElementRef(document.createElement('div'))]));
         MockInstance(ConversationThreadSidebarComponent, 'threadContainer', signal(new ElementRef(document.createElement('div'))));
         const dummyTooltip = { close: jest.fn() } as unknown as NgbTooltip;
         MockInstance(ConversationThreadSidebarComponent, 'expandTooltip', signal(dummyTooltip));
@@ -105,6 +107,7 @@ examples.forEach((activeConversation) => {
                     MockComponent(ButtonComponent),
                     MockComponent(SidebarComponent),
                     MockComponent(CourseWideSearchComponent),
+                    MockComponent(ConversationGlobalSearchComponent),
                     MockComponent(SidebarAccordionComponent),
                     MockPipe(ArtemisTranslatePipe),
                     MockPipe(HtmlForMarkdownPipe),
@@ -324,28 +327,16 @@ examples.forEach((activeConversation) => {
             expect(acceptCodeOfConductSpy).toHaveBeenCalledOnce();
         });
 
-        it('should initialize the course-wide search text correctly', () => {
-            fixture.detectChanges();
-            const searchInput = getElement(fixture.debugElement, 'input[name=searchText]');
-            expect(searchInput.textContent).toBe('');
-        });
-
-        it('should update the course-wide search text correctly given an input', () => {
-            fixture.detectChanges();
-            const searchInput = getElement(fixture.debugElement, 'input[name=searchText]');
-            searchInput.value = 'test input';
-            searchInput.dispatchEvent(new Event('input'));
-            fixture.detectChanges();
-            expect(component.courseWideSearchTerm).toBe('test input');
-        });
-
         it('should set search text in the courseWideSearchConfig correctly', () => {
             fixture.detectChanges();
             component.initializeCourseWideSearchConfig();
-            component.courseWideSearchTerm = 'test';
-            component.onSearch();
+            component.onSearch({
+                searchTerm: 'test',
+                selectedAuthors: [],
+                selectedConversations: [],
+            });
             fixture.detectChanges();
-            expect(component.courseWideSearchConfig.searchTerm).toBe(component.courseWideSearchTerm);
+            expect(component.courseWideSearchConfig.searchTerm).toBe('test');
         });
 
         it('should toggle isNavbarCollapsed when toggleCollapseState is called', () => {
@@ -390,8 +381,11 @@ examples.forEach((activeConversation) => {
             const openSidebarSpy = jest.spyOn(courseSidebarService, 'openSidebar');
             fixture.detectChanges();
             component.isMobile = true;
-            component.courseWideSearchTerm = '';
-            component.onSearch();
+            component.onSearch({
+                searchTerm: '',
+                selectedAuthors: [],
+                selectedConversations: [],
+            });
             expect(openSidebarSpy).toHaveBeenCalled();
         });
 

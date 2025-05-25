@@ -4,7 +4,7 @@ import { map, take } from 'rxjs/operators';
 import { FileUploadSubmissionService } from 'app/fileupload/overview/file-upload-submission.service';
 import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('FileUploadSubmission Service', () => {

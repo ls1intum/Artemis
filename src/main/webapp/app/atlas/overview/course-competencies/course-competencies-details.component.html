@@ -9,7 +9,7 @@
 @if (competency) {
     <div class="mt-n3">
         <!-- HEADER INFORMATION START -->
-        <div class="course-info-bar">
+        <div class="mt-2 me-1 course-info-bar">
             <div class="row align-items-center">
                 <div class="general-info col">
                     <h3 class="mb-0">
@@ -59,16 +59,16 @@
                                         <jhi-exercise-unit [exerciseUnit]="lectureUnit" [course]="competency!.course!" />
                                     }
                                     @case (LectureUnitType.ATTACHMENT) {
-                                        <jhi-attachment-unit [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
+                                        <jhi-attachment-unit [courseId]="courseId!" [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
                                     }
                                     @case (LectureUnitType.VIDEO) {
-                                        <jhi-video-unit [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
+                                        <jhi-video-unit [courseId]="courseId!" [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
                                     }
                                     @case (LectureUnitType.TEXT) {
-                                        <jhi-text-unit [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
+                                        <jhi-text-unit [courseId]="courseId!" [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
                                     }
                                     @case (LectureUnitType.ONLINE) {
-                                        <jhi-online-unit [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
+                                        <jhi-online-unit [courseId]="courseId!" [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
                                     }
                                 }
                             </div>

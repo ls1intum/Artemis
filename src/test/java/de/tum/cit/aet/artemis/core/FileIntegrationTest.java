@@ -246,7 +246,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // Change order of units
         LectureUnit unit3 = lecture.getLectureUnits().get(2);
         lecture.getLectureUnits().remove(unit3);
-        lecture.getLectureUnits().add(0, unit3);
+        lecture.getLectureUnits().addFirst(unit3);
         lectureRepo.save(lecture);
 
         userUtilService.changeUser(TEST_PREFIX + "student1");
@@ -367,7 +367,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetAttachmentUnitAttachmentFilenameSanitization() throws Exception {
         Path tempFile = Files.createTempFile("dummy", ".pdf");
         byte[] dummyContent = "dummy pdf content".getBytes();
@@ -391,7 +391,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         String url = "/api/core/files/attachments/attachment-unit/" + attachmentUnit.getId() + "/" + unsanitizedFilename;
 
         try (MockedStatic<FilePathService> filePathServiceMock = Mockito.mockStatic(FilePathService.class)) {
-            filePathServiceMock.when(() -> FilePathService.actualPathForPublicPathOrThrow(Mockito.any(URI.class))).thenReturn(tempFile);
+            filePathServiceMock.when(() -> FilePathService.fileSystemPathForExternalUri(Mockito.any(URI.class), Mockito.eq(FilePathType.ATTACHMENT_UNIT))).thenReturn(tempFile);
 
             MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
 

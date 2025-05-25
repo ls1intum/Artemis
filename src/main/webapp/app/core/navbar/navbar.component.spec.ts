@@ -2,7 +2,9 @@ import { provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router, UrlSerializer } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { MockTranslateService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { expectedProfileInfo } from 'app/core/layouts/profiles/shared/profile.service.spec';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-key.pipe';
@@ -11,29 +13,25 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
-import { MockRouter } from '../../../../../test/javascript/spec/helpers/mocks/mock-router';
-import { MockSyncStorage } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
-import { MockRouterLinkActiveOptionsDirective, MockRouterLinkDirective } from '../../../../../test/javascript/spec/helpers/mocks/directive/mock-router-link.directive';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
+import { MockRouterLinkActiveOptionsDirective, MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { JhiConnectionWarningComponent } from 'app/shared/connection-warning/connection-warning.component';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { User } from 'app/core/user/user.model';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import dayjs from 'dayjs/esm';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
-import { MockActivatedRoute } from '../../../../../test/javascript/spec/helpers/mocks/activated-route/mock-activated-route';
+import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
 import { ThemeSwitchComponent } from 'app/core/theme/theme-switch.component';
-import { mockThemeSwitcherComponentViewChildren } from '../../../../../test/javascript/spec/helpers/mocks/mock-instance.helper';
-import { GuidedTourComponent } from 'app/core/guided-tour/guided-tour.component';
+import { mockThemeSwitcherComponentViewChildren } from 'test/helpers/mocks/mock-instance.helper';
 import { NavbarComponent } from 'app/core/navbar/navbar.component';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
-import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { ActiveMenuDirective } from 'app/core/navbar/active-menu.directive';
-import { NotificationSidebarComponent } from 'app/core/notification/notification-sidebar/notification-sidebar.component';
 import { LoadingNotificationComponent } from 'app/core/loading-notification/loading-notification.component';
 import { SystemNotificationComponent } from 'app/core/notification/system-notification/system-notification.component';
 
@@ -71,29 +69,11 @@ describe('NavbarComponent', () => {
         uri: '/course-management/1/programming-exercises/',
     } as MockBreadcrumb;
 
-    const activeModuleFeatures: string[] = []; // needs to be explicitly typed
-    const profileInfo = {
-        git: {
-            branch: 'code-button',
-            commit: {
-                id: {
-                    abbrev: '95ef2a',
-                },
-                time: '2022-11-20T20:35:01Z',
-                user: {
-                    name: 'Max Musterman',
-                },
-            },
-        },
-        activeProfiles: ['test'],
-        activeModuleFeatures,
-    } as ProfileInfo;
-
     // Workaround for an error with MockComponent(). You can remove this once https://github.com/help-me-mom/ng-mocks/issues/8634 is resolved.
     mockThemeSwitcherComponentViewChildren();
 
-    beforeEach(() => {
-        return TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             declarations: [
                 NavbarComponent,
                 MockDirective(HasAnyAuthorityDirective),
@@ -103,8 +83,6 @@ describe('NavbarComponent', () => {
                 MockRouterLinkActiveOptionsDirective,
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(FindLanguageFromKeyPipe),
-                MockComponent(NotificationSidebarComponent),
-                MockComponent(GuidedTourComponent),
                 MockComponent(LoadingNotificationComponent),
                 MockComponent(JhiConnectionWarningComponent),
                 MockComponent(SystemNotificationComponent),
@@ -115,24 +93,13 @@ describe('NavbarComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 MockProvider(UrlSerializer),
-                {
-                    provide: AccountService,
-                    useClass: MockAccountService,
-                },
+                { provide: AccountService, useClass: MockAccountService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useValue: router },
-                {
-                    provide: GuidedTourService,
-                    useValue: {
-                        getGuidedTourAvailabilityStream: () => of(false),
-                    },
-                },
-                {
-                    provide: ActivatedRoute,
-                    useValue: new MockActivatedRoute({ id: 123 }),
-                },
+                { provide: ProfileService, useClass: MockProfileService },
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute({ id: 123 }) },
             ],
         })
             .overrideComponent(NavbarComponent, {
@@ -140,16 +107,14 @@ describe('NavbarComponent', () => {
                     imports: [ThemeSwitchComponent],
                 },
             })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(NavbarComponent);
-                component = fixture.componentInstance;
-                examParticipationService = TestBed.inject(ExamParticipationService);
-                entityTitleService = fixture.debugElement.injector.get(EntityTitleService);
-                entityTitleServiceStub = jest
-                    .spyOn(entityTitleService, 'getTitle')
-                    .mockImplementation((type) => of('Test ' + type.substring(0, 1) + type.substring(1).toLowerCase()));
-            });
+            .compileComponents();
+        fixture = TestBed.createComponent(NavbarComponent);
+        component = fixture.componentInstance;
+        examParticipationService = TestBed.inject(ExamParticipationService);
+        entityTitleService = TestBed.inject(EntityTitleService);
+        entityTitleServiceStub = jest.spyOn(entityTitleService, 'getTitle').mockImplementation((type) => of('Test ' + type.substring(0, 1) + type.substring(1).toLowerCase()));
+        const profileService = TestBed.inject(ProfileService);
+        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(expectedProfileInfo);
     });
 
     afterEach(() => {
@@ -162,9 +127,9 @@ describe('NavbarComponent', () => {
     });
 
     it('should make api call when logged in user changes language', () => {
-        const languageService = fixture.debugElement.injector.get(TranslateService);
+        const languageService = TestBed.inject(TranslateService);
         const useSpy = jest.spyOn(languageService, 'use');
-        const accountService = fixture.debugElement.injector.get(AccountService);
+        const accountService = TestBed.inject(AccountService);
         const languageChangeSpy = jest.spyOn(accountService, 'updateLanguage');
 
         fixture.detectChanges();
@@ -175,9 +140,9 @@ describe('NavbarComponent', () => {
     });
 
     it('should not make api call when anonymous user changes language', () => {
-        const languageService = fixture.debugElement.injector.get(TranslateService);
+        const languageService = TestBed.inject(TranslateService);
         const useSpy = jest.spyOn(languageService, 'use');
-        const accountService = fixture.debugElement.injector.get(AccountService);
+        const accountService = TestBed.inject(AccountService);
         const languageChangeSpy = jest.spyOn(accountService, 'updateLanguage');
 
         fixture.detectChanges();
@@ -315,8 +280,8 @@ describe('NavbarComponent', () => {
     });
 
     it('should have correct git info', fakeAsync(() => {
-        const profileService: ProfileService = TestBed.inject(ProfileService);
-        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(profileInfo as any));
+        const profileService = TestBed.inject(ProfileService);
+        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(expectedProfileInfo);
 
         fixture.detectChanges();
 

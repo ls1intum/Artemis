@@ -26,6 +26,7 @@ import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { CommonModule } from '@angular/common';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
+import { CourseTitleBarActionsDirective } from 'app/core/course/shared/directives/course-title-bar-actions.directive';
 
 @Component({
     selector: 'jhi-faq',
@@ -43,6 +44,7 @@ import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-cate
         SortByDirective,
         SortDirective,
         CommonModule,
+        CourseTitleBarActionsDirective,
     ],
 })
 export class FaqComponent implements OnInit, OnDestroy {
@@ -106,14 +108,12 @@ export class FaqComponent implements OnInit, OnDestroy {
                 this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(course);
             }
         });
-        this.profileInfoSubscription = this.profileService.getProfileInfo().subscribe(async (profileInfo) => {
-            this.irisEnabled = profileInfo.activeProfiles.includes(PROFILE_IRIS);
-            if (this.irisEnabled) {
-                this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {
-                    this.faqIngestionEnabled = settings?.irisFaqIngestionSettings?.enabled || false;
-                });
-            }
-        });
+        this.irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
+        if (this.irisEnabled) {
+            this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {
+                this.faqIngestionEnabled = settings?.irisFaqIngestionSettings?.enabled || false;
+            });
+        }
     }
 
     ngOnDestroy(): void {

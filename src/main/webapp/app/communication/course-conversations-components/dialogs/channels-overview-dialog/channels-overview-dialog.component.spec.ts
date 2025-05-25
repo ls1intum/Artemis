@@ -1,12 +1,12 @@
 import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
-import { initializeDialog } from '../../../../../../../test/javascript/spec/helpers/dialog-test-helpers';
+import { initializeDialog } from 'test/helpers/dialog-test-helpers';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ChannelDTO, ChannelSubType } from 'app/communication/shared/entities/conversation/channel.model';
 import { EMPTY, of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-import { LoadingIndicatorContainerStubComponent } from '../../../../../../../test/javascript/spec/helpers/stubs/shared/loading-indicator-container-stub.component';
-import { generateExampleChannelDTO } from '../../../../../../../test/javascript/spec/helpers/sample/conversationExampleModels';
+import { LoadingIndicatorContainerStubComponent } from 'test/helpers/stubs/shared/loading-indicator-container-stub.component';
+import { generateExampleChannelDTO } from 'test/helpers/sample/conversationExampleModels';
 import { ChannelService } from 'app/communication/conversations/service/channel.service';
 import { ConversationService } from 'app/communication/conversations/service/conversation.service';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -14,7 +14,7 @@ import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import {
     ChannelAction,

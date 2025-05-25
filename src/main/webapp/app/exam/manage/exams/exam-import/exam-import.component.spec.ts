@@ -11,7 +11,7 @@ import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise
 import { ExamImportPagingService } from 'app/exam/manage/exams/exam-import/exam-import-paging.service';
 import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
 import { DifficultyBadgeComponent } from 'app/exercise/exercise-headers/difficulty-badge/difficulty-badge.component';
-import { ButtonComponent } from 'app/shared/components/button/button.component';
+import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortService } from 'app/shared/service/sort.service';
@@ -20,8 +20,11 @@ import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 import { UMLDiagramType } from '@ls1intum/apollon';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { MODULE_FEATURE_TEXT } from 'app/app.constants';
 
 describe('Exam Import Component', () => {
     let component: ExamImportComponent;
@@ -29,6 +32,8 @@ describe('Exam Import Component', () => {
     let activeModal: NgbActiveModal;
     let examManagementService: ExamManagementService;
     let alertService: AlertService;
+    let profileService: ProfileService;
+    let getProfileInfoStub: jest.SpyInstance;
 
     const exam1 = { id: 1 } as Exam;
 
@@ -60,6 +65,7 @@ describe('Exam Import Component', () => {
                 MockProvider(ExamManagementService),
                 MockProvider(AlertService),
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ProfileService, useClass: MockProfileService },
             ],
         })
             .compileComponents()
@@ -67,8 +73,13 @@ describe('Exam Import Component', () => {
                 fixture = TestBed.createComponent(ExamImportComponent);
                 component = fixture.componentInstance;
                 activeModal = TestBed.inject(NgbActiveModal);
-                examManagementService = fixture.debugElement.injector.get(ExamManagementService);
-                alertService = fixture.debugElement.injector.get(AlertService);
+                examManagementService = TestBed.inject(ExamManagementService);
+                alertService = TestBed.inject(AlertService);
+
+                profileService = TestBed.inject(ProfileService);
+
+                getProfileInfoStub = jest.spyOn(profileService, 'getProfileInfo');
+                getProfileInfoStub.mockReturnValue(of({ activeModuleFeatures: [MODULE_FEATURE_TEXT] }));
             });
     });
 

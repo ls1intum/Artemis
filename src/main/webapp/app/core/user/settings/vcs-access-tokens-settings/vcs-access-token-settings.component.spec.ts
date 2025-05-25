@@ -3,8 +3,8 @@ import { AccountService } from 'app/core/auth/account.service';
 import { of, throwError } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { User } from 'app/core/user/user.model';
-import { MockNgbModalService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-ngb-modal.service';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import dayjs from 'dayjs/esm';
@@ -150,25 +150,6 @@ describe('VcsAccessTokensSettingsComponent', () => {
         comp.deleteVcsAccessToken();
         expect(accountServiceMock.deleteUserVcsAccessToken).toHaveBeenCalled();
         expect(comp.currentUser!.vcsAccessToken).toBeUndefined();
-    });
-
-    it('should set wasCopied to true and back to false after 3 seconds on successful copy', () => {
-        comp.ngOnInit();
-
-        jest.useFakeTimers();
-        comp.onCopyFinished(true);
-        expect(comp.wasCopied).toBeTruthy();
-        jest.advanceTimersByTime(3000);
-        expect(comp.wasCopied).toBeFalsy();
-        jest.useRealTimers();
-    });
-
-    it('should not change wasCopied if copy is unsuccessful', () => {
-        comp.ngOnInit();
-        comp.onCopyFinished(false);
-
-        // Verify that wasCopied remains false
-        expect(comp.wasCopied).toBeFalsy();
     });
 
     function startTokenCreation() {
