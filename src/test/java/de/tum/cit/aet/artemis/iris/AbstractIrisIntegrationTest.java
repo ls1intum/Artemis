@@ -119,18 +119,15 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
         irisSettingsRepository.save(courseSettings);
     }
 
-    protected void disableIrisFor(Course course) {
+    protected void disableCourseChatFor(Course course) {
         var courseSettings = irisSettingsService.getDefaultSettingsFor(course);
-
-        deactivateSubSettings(courseSettings.getIrisProgrammingExerciseChatSettings());
-        deactivateSubSettings(courseSettings.getIrisTextExerciseChatSettings());
-        deactivateSubSettings(courseSettings.getIrisLectureChatSettings());
         deactivateSubSettings(courseSettings.getIrisCourseChatSettings());
-        deactivateSubSettings(courseSettings.getIrisCompetencyGenerationSettings());
-        deactivateSubSettings(courseSettings.getIrisLectureIngestionSettings());
-        deactivateSubSettings(courseSettings.getIrisFaqIngestionSettings());
-        deactivateSubSettings(courseSettings.getIrisTutorSuggestionSettings());
+        irisSettingsRepository.save(courseSettings);
+    }
 
+    protected void disableProgrammingExerciseChatFor(Course course) {
+        var courseSettings = irisSettingsService.getDefaultSettingsFor(course);
+        deactivateSubSettings(courseSettings.getIrisProgrammingExerciseChatSettings());
         irisSettingsRepository.save(courseSettings);
     }
 

@@ -549,7 +549,7 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
         boolean enabled = irisSettingsApi.isCourseChatEnabled(course.getId());
         assertThat(enabled).isTrue();
 
-        disableIrisFor(course);
+        disableCourseChatFor(course);
         course = courseRepository.findByIdElseThrow(course.getId());
 
         enabled = irisSettingsApi.isCourseChatEnabled(course.getId());
@@ -590,7 +590,7 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void isProgrammingExerciseChatEnabled_GlobalEnabled_CourseDisabled() throws Exception {
         activateIrisGlobally();
-        disableIrisFor(course);
+        disableProgrammingExerciseChatFor(course);
 
         ProgrammingExercise exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
 
