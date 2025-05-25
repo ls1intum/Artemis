@@ -118,17 +118,17 @@ class FilePathConverterTest {
         assertThat(uri).isEqualTo(URI.create("attachments/lecture/4/slides.pdf"));
 
         // SLIDE
-        path = FilePathConverter.getAttachmentUnitFileSystemPath().resolve(Path.of("4", "slide", "1", "slide1.pdf"));
+        path = FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(Path.of("4", "slide", "1", "slide1.pdf"));
         uri = FilePathConverter.externalUriForFileSystemPath(path, FilePathType.SLIDE, 1L);
         assertThat(uri).isEqualTo(URI.create("attachments/attachment-unit/4/slide/1/slide1.pdf"));
 
         // STUDENT_VERSION_SLIDES
-        path = FilePathConverter.getAttachmentUnitFileSystemPath().resolve(Path.of("4", "student", "notes.pdf"));
+        path = FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(Path.of("4", "student", "notes.pdf"));
         uri = FilePathConverter.externalUriForFileSystemPath(path, FilePathType.STUDENT_VERSION_SLIDES, 4L);
         assertThat(uri).isEqualTo(URI.create("attachments/attachment-unit/4/student/notes.pdf"));
 
         // ATTACHMENT_UNIT
-        path = FilePathConverter.getAttachmentUnitFileSystemPath().resolve(Path.of("4", "file.pdf"));
+        path = FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(Path.of("4", "file.pdf"));
         uri = FilePathConverter.externalUriForFileSystemPath(path, FilePathType.ATTACHMENT_UNIT, 4L);
         assertThat(uri).isEqualTo(URI.create("attachments/attachment-unit/4/file.pdf"));
 
@@ -162,17 +162,17 @@ class FilePathConverterTest {
     }
 
     @Test
-    void testFileSystemPathForExternalUriInvalidAttachmentUnit() {
+    void testFileSystemPathForExternalUriInvalidAttachmentVideoUnit() {
         assertThatExceptionOfType(FilePathParsingException.class)
                 .isThrownBy(() -> FilePathConverter.fileSystemPathForExternalUri(URI.create("attachments/attachment-unit/file.pdf"), FilePathType.ATTACHMENT_UNIT))
-                .withMessageContaining("attachmentUnitId");
+                .withMessageContaining("attachmentVideoUnitId");
     }
 
     @Test
     void testFileSystemPathForExternalUriInvalidSlide() {
         assertThatExceptionOfType(FilePathParsingException.class)
                 .isThrownBy(() -> FilePathConverter.fileSystemPathForExternalUri(URI.create("attachments/attachment-unit/4/slide/slide.jpg"), FilePathType.SLIDE))
-                .withMessageContaining("attachmentUnitId or slideId");
+                .withMessageContaining("attachmentVideoUnitId or slideId");
     }
 
     @Test
@@ -191,21 +191,21 @@ class FilePathConverterTest {
 
     @Test
     void testExternalUriForSlideFileSystemPathShouldThrowException() {
-        // Path too short, missing attachmentUnitId
+        // Path too short, missing attachmentVideoUnitId
         Path invalidPath = rootPath.resolve("attachments").resolve("attachment-unit").resolve("slide").resolve("1").resolve("slide1.pdf");
         assertThatExceptionOfType(FilePathParsingException.class).isThrownBy(() -> {
             // id is arbitrary here, since the path is invalid
             FilePathConverter.externalUriForFileSystemPath(invalidPath, FilePathType.SLIDE, 1L);
-        }).withMessageContaining("AttachmentUnit ID should be present here");
+        }).withMessageContaining("AttachmentVideoUnit ID should be present here");
     }
 
     @Test
     void testGetStudentVersionSlidesFileSystemPathShouldThrowException() {
-        // Path too short, missing attachmentUnitId
+        // Path too short, missing attachmentVideoUnitId
         Path invalidPath = Path.of("attachments", "attachment-unit", "student", "notes.pdf");
         assertThatExceptionOfType(FilePathParsingException.class)
                 .isThrownBy(() -> FilePathConverter.fileSystemPathForExternalUri((invalidPath.toUri()), FilePathType.STUDENT_VERSION_SLIDES))
-                .withMessageContaining("attachmentUnitId");
+                .withMessageContaining("attachmentVideoUnitId");
     }
 
     @Test
