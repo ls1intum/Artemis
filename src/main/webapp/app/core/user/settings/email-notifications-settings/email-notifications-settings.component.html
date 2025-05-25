@@ -12,8 +12,7 @@
                                 type="checkbox"
                                 [id]="'notification-' + type"
                                 [checked]="notificationSettings[type]"
-                                #cb
-                                (change)="updateSetting(type, cb.checked)"
+                                (change)="updateSetting(type, $event)"
                             />
                             <label class="form-check-label" [for]="'notification-' + type" jhiTranslate="{{ getNotificationTypeLabel(type) }}"> </label>
                         </div>

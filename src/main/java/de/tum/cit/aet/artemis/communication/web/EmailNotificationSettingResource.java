@@ -54,13 +54,9 @@ public class EmailNotificationSettingResource {
     @EnforceAtLeastStudent
     public ResponseEntity<EmailNotificationSetting> updateSetting(@PathVariable EmailNotificationType notificationType, @RequestBody UpdateEmailNotificationSettingDTO request) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        Boolean enabled = request.enabled();
-        if (enabled == null) {
-            return ResponseEntity.badRequest().build();
-        }
+        boolean enabled = request.enabled();
         try {
-            EmailNotificationType type = EmailNotificationType.valueOf(notificationType.toUpperCase());
-            return ResponseEntity.ok(emailNotificationSettingService.createOrUpdateSetting(user, type, enabled));
+            return ResponseEntity.ok(emailNotificationSettingService.createOrUpdateSetting(user, notificationType, enabled));
         }
         catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().build();

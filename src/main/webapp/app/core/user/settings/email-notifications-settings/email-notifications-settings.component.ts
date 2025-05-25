@@ -1,15 +1,15 @@
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { EmailNotificationSettingsService } from './email-notifications-settings.service';
-import { Component, OnInit } from '@angular/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { inject } from '@angular/core';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { FEATURE_PASSKEY } from 'app/app.constants';
 import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-email-notifications-settings',
@@ -17,14 +17,17 @@ import { onError } from 'app/shared/util/global.utils';
     templateUrl: './email-notifications-settings.component.html',
     styleUrls: ['../user-settings.scss'],
 })
-export class EmailNotificationsSettingsComponent implements OnInit {
+export class EmailNotificationsSettingsComponent implements OnInit, OnDestroy {
     protected readonly faSpinner = faSpinner;
- protected readonly   notificationTypes = ['NEW_LOGIN', 'NEW_PASSKEY_ADDED', 'VCS_TOKEN_EXPIRED', 'SSH_KEY_EXPIRED'];
+    protected readonly notificationTypes = ['NEW_LOGIN', 'NEW_PASSKEY_ADDED', 'VCS_TOKEN_EXPIRED', 'SSH_KEY_EXPIRED'];
     notificationSettings: { [key: string]: boolean } | null = null;
 
     private emailNotificationSettingsService = inject(EmailNotificationSettingsService);
     private profileService = inject(ProfileService);
     private alertService = inject(AlertService);
+
+    private getAllSub?: Subscription;
+    private updateSub?: Subscription;
 
     isPasskeyEnabled = false;
 
@@ -33,8 +36,13 @@ export class EmailNotificationsSettingsComponent implements OnInit {
         this.loadSettings();
     }
 
+    ngOnDestroy(): void {
+        this.getAllSub?.unsubscribe();
+        this.updateSub?.unsubscribe();
+    }
+
     loadSettings(): void {
-        this.emailNotificationSettingsService.getAll().subscribe({
+        this.getAllSub = this.emailNotificationSettingsService.getAll().subscribe({
             next: (settings: { [key: string]: boolean } | null) => {
                 this.notificationSettings = settings;
             },
@@ -44,8 +52,9 @@ export class EmailNotificationsSettingsComponent implements OnInit {
         });
     }
 
-    updateSetting(type: string, enabled: boolean): void {
-        this.emailNotificationSettingsService.update(type, enabled).subscribe({
+    updateSetting(type: string, event: Event): void {
+        const enabled = (event.target as HTMLInputElement).checked;
+        this.updateSub = this.emailNotificationSettingsService.update(type, enabled).subscribe({
             next: () => {
                 if (this.notificationSettings) {
                     this.notificationSettings[type] = enabled;

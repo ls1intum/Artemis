@@ -9,7 +9,6 @@ import java.util.Optional;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.communication.domain.EmailNotificationSetting;
 import de.tum.cit.aet.artemis.communication.domain.EmailNotificationType;
@@ -18,7 +17,6 @@ import de.tum.cit.aet.artemis.core.domain.User;
 
 @Profile(PROFILE_CORE)
 @Service
-@Transactional
 public class EmailNotificationSettingService {
 
     private final EmailNotificationSettingRepository emailNotificationSettingRepository;
@@ -33,7 +31,7 @@ public class EmailNotificationSettingService {
      * @param userId the ID of the user
      * @return a list of email notification settings
      */
-    public List<EmailNotificationSetting> getUserSettings(Long userId) {
+    public List<EmailNotificationSetting> getUserSettings(long userId) {
         return emailNotificationSettingRepository.findByUserId(userId);
     }
 
@@ -44,7 +42,7 @@ public class EmailNotificationSettingService {
      * @param notificationType the type of notification
      * @return an optional containing the setting if it exists
      */
-    public Optional<EmailNotificationSetting> getUserSetting(Long userId, EmailNotificationType notificationType) {
+    public Optional<EmailNotificationSetting> getUserSetting(long userId, EmailNotificationType notificationType) {
         return emailNotificationSettingRepository.findByUserIdAndNotificationType(userId, notificationType);
     }
 
@@ -83,7 +81,7 @@ public class EmailNotificationSettingService {
      * @param notificationType the type of notification
      * @return true if the notification is enabled or no setting exists, false otherwise
      */
-    public boolean isNotificationEnabled(Long userId, EmailNotificationType notificationType) {
+    public boolean isNotificationEnabled(long userId, EmailNotificationType notificationType) {
         // Default to true if no setting exists
         return emailNotificationSettingRepository.findByUserIdAndNotificationType(userId, notificationType).map(EmailNotificationSetting::getEnabled).orElse(true);
     }
@@ -97,7 +95,7 @@ public class EmailNotificationSettingService {
      * @param userId the ID of the user whose notification settings should be retrieved
      * @return a map of {@link EmailNotificationType} names to their enabled/disabled status
      */
-    public Map<String, Boolean> getAllUserSettingsAsMap(Long userId) {
+    public Map<String, Boolean> getAllUserSettingsAsMap(long userId) {
         List<EmailNotificationSetting> settings = getUserSettings(userId);
         Map<String, Boolean> result = new HashMap<>();
         for (EmailNotificationType type : EmailNotificationType.values()) {
