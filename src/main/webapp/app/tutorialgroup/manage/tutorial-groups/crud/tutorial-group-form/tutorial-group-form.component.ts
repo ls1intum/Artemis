@@ -75,13 +75,13 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy 
     taClick$ = new Subject<string>();
 
     campusAreLoading = false;
-    campus: Set<string>;
+    campus: string[];
     @ViewChild('campusInput', { static: true }) campusTypeAhead: NgbTypeahead;
     campusFocus$ = new Subject<string>();
     campusClick$ = new Subject<string>();
 
     languagesAreLoading = false;
-    languages: Set<string>;
+    languages: string[];
     @ViewChild('languageInput', { static: true }) languageTypeAhead: NgbTypeahead;
     languageFocus$ = new Subject<string>();
     languageClick$ = new Subject<string>();
@@ -228,23 +228,17 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy 
 
     campusSearch: OperatorFunction<string, readonly string[]> = (text$: Observable<string>) => {
         return this.mergeSearch$(text$, this.campusFocus$, this.campusClick$, this.campusTypeAhead).pipe(
-            map((term) => {
-                const campusArray = Array.from(this.campus);
-                return term === '' ? campusArray : campusArray.filter((campus) => campus.toLowerCase().indexOf(term.toLowerCase()) > -1);
-            }),
-        );
-    };
-
-    languageSearch: OperatorFunction<string, readonly string[]> = (text$: Observable<string>) => {
-        return this.mergeSearch$(text$, this.languageFocus$, this.languageClick$, this.languageTypeAhead).pipe(
-            map((term) => {
-                const languagesArray = Array.from(this.languages);
-                return term === '' ? languagesArray : languagesArray.filter((language) => language.toLowerCase().indexOf(term.toLowerCase()) > -1);
-            }),
+            map((term) => (term === '' ? this.campus : this.campus.filter((campus) => campus.toLowerCase().indexOf(term.toLowerCase()) > -1))),
         );
     };
 
     languageFormatter = (language: string) => language;
+
+    languageSearch: OperatorFunction<string, readonly string[]> = (text$: Observable<string>) => {
+        return this.mergeSearch$(text$, this.languageFocus$, this.languageClick$, this.languageTypeAhead).pipe(
+            map((term) => (term === '' ? this.languages : this.languages.filter((language) => language.toLowerCase().indexOf(term.toLowerCase()) > -1))),
+        );
+    };
 
     private mergeSearch$(text$: Observable<string>, focus$: Subject<string>, click$: Subject<string>, typeahead: NgbTypeahead) {
         const debouncedText$ = text$.pipe(debounceTime(200), distinctUntilChanged());
@@ -341,45 +335,45 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy 
 
     private getUniqueCampusValuesOfCourse() {
         return concat(
-            of(new Set<string>()), // default items
+            of([]), // default items
             this.tutorialGroupService.getUniqueCampusValues(this.course.id!).pipe(
                 catchError((res: HttpErrorResponse) => {
                     onError(this.alertService, res);
-                    return of(new Set<string>());
+                    return of([]);
                 }),
-                map((res: HttpResponse<Set<string>>) => res.body ?? new Set<string>()),
+                map((res: HttpResponse<string[]>) => res.body!),
                 finalize(() => {
                     this.campusAreLoading = false;
                 }),
                 takeUntil(this.ngUnsubscribe),
             ),
-        ).subscribe((campus: Set<string>) => {
+        ).subscribe((campus: string[]) => {
             this.campus = campus;
         });
     }
 
     private getUniqueLanguageValuesOfCourse() {
         return concat(
-            of(new Set<string>()), // default items
+            of([]), // default items
             this.tutorialGroupService.getUniqueLanguageValues(this.course.id!).pipe(
                 catchError((res: HttpErrorResponse) => {
                     onError(this.alertService, res);
-                    return of(new Set<string>());
+                    return of([]);
                 }),
-                map((res: HttpResponse<Set<string>>) => res.body ?? new Set<string>()),
+                map((res: HttpResponse<string[]>) => res.body!),
                 finalize(() => {
                     this.languagesAreLoading = false;
                 }),
                 takeUntil(this.ngUnsubscribe),
             ),
-        ).subscribe((languages: Set<string>) => {
+        ).subscribe((languages: string[]) => {
             this.languages = languages;
-            // default values for English & German - use Set methods
-            if (!languages.has('English')) {
-                this.languages.add('English');
+            // default values for English & German
+            if (!languages.includes('English')) {
+                this.languages.push('English');
             }
-            if (!languages.has('German')) {
-                this.languages.add('German');
+            if (!languages.includes('German')) {
+                this.languages.push('German');
             }
         });
     }

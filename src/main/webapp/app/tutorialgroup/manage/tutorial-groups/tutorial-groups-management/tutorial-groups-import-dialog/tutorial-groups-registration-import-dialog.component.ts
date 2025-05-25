@@ -1,5 +1,6 @@
 import { Component, ElementRef, OnDestroy, OnInit, ViewChild, inject, input } from '@angular/core';
 import { faBan, faCheck, faCircleNotch, faFileImport, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { TutorialGroupRegistrationImportDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-import-dto.model';
 import { cleanString } from 'app/shared/util/utils';
 import { ParseResult, parse } from 'papaparse';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -16,14 +17,13 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { titleRegex } from 'app/tutorialgroup/manage/tutorial-groups/crud/tutorial-group-form/tutorial-group-form.component';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
-import { TutorialGroupRegistrationImport } from 'app/tutorialgroup/generated';
 
 /**
  * Each row is a object with the structure
- *    {
- *        "Column Header 1": "foo",
- *        "Column Header 2": "bar"
- *    }
+ * 	{
+ * 		"Column Header 1": "foo",
+ * 		"Column Header 2": "bar"
+ * 	}
  */
 type ParsedCSVRow = { [header: string]: string };
 
@@ -62,10 +62,10 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
 
     courseId = input.required<number>();
 
-    registrationsDisplayedInTable: TutorialGroupRegistrationImport[] = [];
-    allRegistrations: TutorialGroupRegistrationImport[] = [];
-    notImportedRegistrations: TutorialGroupRegistrationImport[] = [];
-    importedRegistrations: TutorialGroupRegistrationImport[] = [];
+    registrationsDisplayedInTable: TutorialGroupRegistrationImportDTO[] = [];
+    allRegistrations: TutorialGroupRegistrationImportDTO[] = [];
+    notImportedRegistrations: TutorialGroupRegistrationImportDTO[] = [];
+    importedRegistrations: TutorialGroupRegistrationImportDTO[] = [];
 
     isCSVParsing = false;
     protected readonly CsvExample = CsvExample;
@@ -88,11 +88,9 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
     get statusHeaderControl() {
         return this.fixedPlaceForm.get('statusHeader');
     }
-
     get fixedPlaceValueControl() {
         return this.fixedPlaceForm.get('fixedPlaceValue');
     }
-
     get specifyFixedPlaceControl() {
         return this.fixedPlaceForm.get('specifyFixedPlace');
     }
@@ -191,7 +189,7 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
      * The column "title" is mandatory, all other columns are optional
      * @param csvFile File that contains one registration per row
      */
-    private async readRegistrationsFromCSVFile(csvFile: File): Promise<TutorialGroupRegistrationImport[]> {
+    private async readRegistrationsFromCSVFile(csvFile: File): Promise<TutorialGroupRegistrationImportDTO[]> {
         let csvRows: ParsedCSVRow[] = [];
         try {
             this.isCSVParsing = true;
@@ -241,9 +239,9 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
         // convert the 'raw' csv rows into a list of TutorialGroupImportDTOs
         const registrations = csvFixedPlaceRows
             .map((csvRow) => {
-                const registration: TutorialGroupRegistrationImport = {
+                const registration: TutorialGroupRegistrationImportDTO = {
                     title: csvRow[usedTitleHeader]?.trim() || '',
-                } as TutorialGroupRegistrationImport;
+                } as TutorialGroupRegistrationImportDTO;
                 registration.student = {
                     registrationNumber: csvRow[usedRegistrationNumberHeader]?.trim() || '',
                     login: csvRow[usedLoginHeader]?.trim() || '',
@@ -254,11 +252,11 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
                 registration.capacity = csvRow[usedCapacityHeader] ? Number(csvRow[usedCapacityHeader]) : undefined;
                 registration.language = csvRow[usedLanguageHeader]?.trim() || '';
                 registration.additionalInformation = csvRow[usedAdditionalInfoHeader]?.trim() || '';
-                registration.isOnline = Boolean(csvRow[usedIsOnlineHeader]?.trim().toLowerCase());
+                registration.isOnline = csvRow[usedIsOnlineHeader]?.trim().toLowerCase() || '';
 
                 return registration;
             })
-            .sort((a, b) => this.sortByTitle(a, b));
+            .sort((a, b) => a.title.localeCompare(b.title));
 
         this.performExtraDTOValidation(registrations);
         if (this.validationErrors && this.validationErrors.length > 0) {
@@ -280,7 +278,7 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
 
     import() {
         this.isImporting = true;
-        this.tutorialGroupService.import(this.courseId(), new Set(this.registrationsDisplayedInTable)).subscribe({
+        this.tutorialGroupService.import(this.courseId(), this.registrationsDisplayedInTable).subscribe({
             next: (res) => this.onSaveSuccess(res),
             error: () => this.onSaveError(),
         });
@@ -331,7 +329,7 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
         }
     }
 
-    performExtraDTOValidation(registrations: TutorialGroupRegistrationImport[]): void {
+    performExtraDTOValidation(registrations: TutorialGroupRegistrationImportDTO[]): void {
         const duplicatedRegistrationNumbers = this.duplicatedRegistrationNumbers(registrations);
         const maxLength = 1000;
         if (duplicatedRegistrationNumbers !== null) {
@@ -356,7 +354,6 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
         }
         return invalidList.length === 0 ? null : this.translateService.instant('artemisApp.tutorialGroupImportDialog.errorMessages.withoutTitle') + invalidList.join(', ');
     }
-
     titleRegexValidation(csvRows: ParsedCSVRow[]): string | null {
         const invalidList: number[] = [];
         for (const [i, row] of csvRows.entries()) {
@@ -392,8 +389,8 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
             : this.translateService.instant('artemisApp.tutorialGroupImportDialog.errorMessages.noIdentificationInformation') + invalidList.join(', ');
     }
 
-    duplicatedRegistrationNumbers(registrations: TutorialGroupRegistrationImport[]): string | null {
-        const duplicatedRegistrationNumbers: (string | undefined)[] = [];
+    duplicatedRegistrationNumbers(registrations: TutorialGroupRegistrationImportDTO[]): string | null {
+        const duplicatedRegistrationNumbers: string[] = [];
         const registrationNumbers = registrations.map((registration) => registration.student?.registrationNumber).filter((registrationNumber) => registrationNumber);
 
         const uniqueRegistrationNumbers = [...new Set(registrationNumbers)];
@@ -409,8 +406,8 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
             : this.translateService.instant('artemisApp.tutorialGroupImportDialog.errorMessages.duplicatedRegistrationNumbers') + duplicatedRegistrationNumbers.join(', ');
     }
 
-    duplicatedLogins(registrations: TutorialGroupRegistrationImport[]): string | null {
-        const duplicatedLogins: (string | undefined)[] = [];
+    duplicatedLogins(registrations: TutorialGroupRegistrationImportDTO[]): string | null {
+        const duplicatedLogins: string[] = [];
         const logins = registrations.map((registration) => registration.student?.login).filter((login) => login);
 
         const uniqueLogins = [...new Set(logins)];
@@ -447,13 +444,11 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
         this.activeModal.close();
     }
 
-    onSaveSuccess(registrations: HttpResponse<TutorialGroupRegistrationImport[]>) {
+    onSaveSuccess(registrations: HttpResponse<TutorialGroupRegistrationImportDTO[]>) {
         this.isImporting = false;
         this.isImportDone = true;
         this.registrationsDisplayedInTable = registrations.body ?? [];
-        this.registrationsDisplayedInTable = this.registrationsDisplayedInTable.sort((a, b) => {
-            return this.sortByTitle(a, b);
-        });
+        this.registrationsDisplayedInTable = this.registrationsDisplayedInTable.sort((a, b) => a.title.localeCompare(b.title));
         this.allRegistrations = this.registrationsDisplayedInTable;
         this.notImportedRegistrations = this.allRegistrations.filter((registration) => registration.importSuccessful !== true);
         this.importedRegistrations = this.allRegistrations.filter((registration) => registration.importSuccessful === true);
@@ -461,24 +456,16 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
         this.numberOfImportedRegistrations = this.importedRegistrations.length;
     }
 
-    private sortByTitle(a: TutorialGroupRegistrationImport, b: TutorialGroupRegistrationImport) {
-        if (a.title && b.title) {
-            return a.title.localeCompare(b.title);
-        } else {
-            return 0;
-        }
-    }
-
     onSaveError() {
         this.alertService.error('artemisApp.tutorialGroupImportDialog.errorMessages.genericErrorMessage');
         this.isImporting = false;
     }
 
-    wasImported(registration: TutorialGroupRegistrationImport): boolean {
+    wasImported(registration: TutorialGroupRegistrationImportDTO): boolean {
         return this.isImportDone && registration.importSuccessful === true;
     }
 
-    wasNotImported(registration: TutorialGroupRegistrationImport): boolean {
+    wasNotImported(registration: TutorialGroupRegistrationImportDTO): boolean {
         return this.isImportDone && registration.importSuccessful !== true;
     }
 
