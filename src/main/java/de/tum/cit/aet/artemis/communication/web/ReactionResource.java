@@ -71,7 +71,7 @@ public class ReactionResource {
      */
     @DeleteMapping("courses/{courseId}/postings/reactions/{reactionId}")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> deleteReaction(@PathVariable Long courseId, @PathVariable Long reactionId) {
+    public ResponseEntity<Void> deleteReaction(@PathVariable long courseId, @PathVariable long reactionId) {
         // NOTE: the service method handles authorization checks and throws an exception if the user is not allowed to delete the reaction
         reactionService.deleteReactionById(reactionId, courseId);
         return ResponseEntity.ok().build();
