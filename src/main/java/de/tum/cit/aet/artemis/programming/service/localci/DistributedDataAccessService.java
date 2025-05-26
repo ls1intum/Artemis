@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import com.hazelcast.cluster.Member;
 import com.hazelcast.collection.IQueue;
 import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.map.IMap;
 import com.hazelcast.topic.ITopic;
 
@@ -304,13 +305,6 @@ public class DistributedDataAccessService {
     }
 
     /**
-     * @return the address of the local Hazelcast member
-     */
-    public String getLocalMemberAddress() {
-        return hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
-    }
-
-    /**
      * Checks if the Hazelcast instance is active and operational.
      *
      * @return {@code true} if the Hazelcast instance has been initialized and is actively running,
@@ -321,11 +315,24 @@ public class DistributedDataAccessService {
     }
 
     /**
+     * @return the address of the local Hazelcast member
+     */
+    public String getLocalMemberAddress() {
+        if (!isInstanceRunning()) {
+            throw new HazelcastInstanceNotActiveException("Hazelcast instance is not running or has not been initialized.");
+        }
+        return hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
+    }
+
+    /**
      * Retrieves the members of the Hazelcast cluster.
      *
      * @return a stream of Hazelcast cluster members
      */
     public Stream<Member> getClusterMembers() {
+        if (!isInstanceRunning()) {
+            return Stream.empty();
+        }
         return hazelcastInstance.getCluster().getMembers().stream();
     }
 }
