@@ -60,6 +60,7 @@ import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPoli
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
+import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;

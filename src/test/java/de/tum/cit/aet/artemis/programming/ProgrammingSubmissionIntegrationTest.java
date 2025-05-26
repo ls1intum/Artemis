@@ -80,7 +80,6 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
 
         var dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
         doReturn(ObjectId.fromString(dummyHash)).when(gitService).getLastCommitHash(programmingExerciseStudentParticipation.getVcsRepositoryUri());
-        doReturn(ObjectId.fromString(dummyHash)).when(gitService).getLastCommitHash(participation.getVcsRepositoryUri());
     }
 
     @AfterEach
