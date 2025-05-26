@@ -95,7 +95,7 @@ export const routes: Routes = [
                 },
             },
             {
-                path: 'global-notifications',
+                path: 'notifications',
                 loadComponent: () =>
                     import('app/core/user/settings/global-notifications-settings/global-notifications-settings.component').then((m) => m.GlobalNotificationsSettingsComponent),
                 data: {
