@@ -4,12 +4,17 @@ import { VideoUnit } from 'app/lecture/shared/entities/lecture-unit/videoUnit.mo
 import urlParser from 'js-video-url-parser';
 import { faVideo } from '@fortawesome/free-solid-svg-icons';
 import { LectureUnitDirective } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.directive';
-import { VideoPlayerComponent } from 'app/lecture/shared/video-player/video-player.component';
+import { TranscriptSegment, VideoPlayerComponent } from 'app/lecture/shared/video-player/video-player.component';
 import { LectureUnitComponent } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.component';
 import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
 import { ScienceService } from 'app/shared/science/science.service';
 import { ScienceEventType } from 'app/shared/science/science.model';
 import { CommonModule } from '@angular/common';
+
+interface TranscriptResponse {
+    segments: TranscriptSegment[];
+    language: string;
+}
 
 @Component({
     selector: 'jhi-video-unit',
@@ -20,20 +25,17 @@ import { CommonModule } from '@angular/common';
 export class VideoUnitComponent extends LectureUnitDirective<VideoUnit> {
     protected readonly faVideo = faVideo;
 
-    private readonly videoUrlAllowList = [
-        RegExp('^https://live\\.rbg\\.tum\\.de/w/\\w+/\\d+(/(CAM|COMB|PRES))?\\?video_only=1$'),
-        RegExp('^https://edge\\.live\\.rbg\\.tum\\.de/.+\\.m3u8.*$'),
-    ];
+    private readonly videoUrlAllowList = [/^https:\/\/live\.rbg\.tum\.de\/w\/\w+\/\d+(\/(?:CAM|COMB|PRES))?\?video_only=1$/, /^https:\/\/edge\.live\.rbg\.tum\.de\/.+\.m3u8.*$/];
 
     readonly videoUrl = computed(() => {
         const source = this.lectureUnit().source;
-        if (source && (this.videoUrlAllowList.some((r) => r.test(source)) || (urlParser && urlParser.parse(source)))) {
+        if (source && (this.videoUrlAllowList.some((r) => r.test(source)) || urlParser?.parse(source))) {
             return source;
         }
         return undefined;
     });
 
-    readonly transcriptSegments = signal<any[]>([]);
+    readonly transcriptSegments = signal<TranscriptSegment[]>([]);
     private completionTimeout: NodeJS.Timeout;
 
     private readonly scienceService = inject(ScienceService);
@@ -57,7 +59,7 @@ export class VideoUnitComponent extends LectureUnitDirective<VideoUnit> {
 
     private fetchTranscript(): void {
         const lectureUnitId = this.lectureUnit().id;
-        this.http.get<any>(`/api/lecture/lecture-unit/${lectureUnitId}/transcript`).subscribe({
+        this.http.get<TranscriptResponse>(`/api/lecture/lecture-unit/${lectureUnitId}/transcript`).subscribe({
             next: (res) => {
                 this.transcriptSegments.set(res.segments || []);
             },

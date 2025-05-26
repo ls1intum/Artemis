@@ -4,13 +4,20 @@ import videojs from 'video.js';
 
 type VideoJsPlayer = ReturnType<typeof videojs>;
 
-interface TranscriptSegment {
+/**
+ * A transcript segment corresponding to a portion of the video.
+ */
+export interface TranscriptSegment {
     startTime: number;
     endTime: number;
     text: string;
     slideNumber?: number;
 }
 
+/**
+ * A transcript-synced video player component using Video.js.
+ * Allows highlighting transcript lines and seeking the video via the transcript.
+ */
 @Component({
     selector: 'jhi-video-player',
     standalone: true,
