@@ -900,7 +900,8 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     }
 
     private TemplateProgrammingExerciseParticipation addTemplateParticipationWithResult() {
-        programmingExerciseParticipation = programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise).getTemplateParticipation();
+        programmingExerciseParticipation = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise)
+                .getTemplateParticipation();
         Result r = programmingExerciseUtilService.addTemplateSubmissionWithResult(programmingExercise);
         r.successful(true).rated(true).score(100D).assessmentType(AssessmentType.AUTOMATIC).completionDate(null);
 
@@ -909,7 +910,8 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     }
 
     private SolutionProgrammingExerciseParticipation addSolutionParticipationWithResult(String login) {
-        programmingExerciseParticipation = programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise).getSolutionParticipation();
+        programmingExerciseParticipation = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise)
+                .getSolutionParticipation();
         Result result = this.programmingExerciseUtilService.addSolutionSubmissionWithResult(programmingExercise);
         ;
         result.successful(true).rated(true).score(100D).assessmentType(AssessmentType.AUTOMATIC).completionDate(null);
