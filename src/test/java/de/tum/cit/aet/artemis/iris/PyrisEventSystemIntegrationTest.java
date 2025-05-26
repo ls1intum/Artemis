@@ -349,21 +349,18 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testCustomInstructionsPassedToPipeline() {
-        // Set custom instructions in the exercise settings
-        var settings = irisSettingsRepository.findExerciseSettings(exercise.getId()).orElseThrow();
+    void testCustomInstructionsPassedToExerciseChatPipeline() {
         String testCustomInstructions = "Test custom instructions for the AI model";
+        var settings = irisSettingsRepository.findExerciseSettings(exercise.getId()).orElseThrow();
         settings.getIrisProgrammingExerciseChatSettings().setCustomInstructions(testCustomInstructions);
         irisSettingsRepository.save(settings);
 
         var irisSession = irisExerciseChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
 
-        // Create a failing submissions for the student to trigger the build failed event
         var result = createFailingSubmission(studentParticipation);
 
-        irisRequestMockProvider.mockBuildFailedRunResponse((dto) -> {
+        irisRequestMockProvider.mockBuildFailedRunResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
-            // Verify the custom instructions were passed to the DTO
             assertThat(dto.customInstructions()).isEqualTo(testCustomInstructions);
             pipelineDone.set(true);
         });
@@ -374,7 +371,6 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
 
         await().atMost(2, TimeUnit.SECONDS).until(() -> pipelineDone.get());
 
-        // Verify the custom instructions were passed to the pipeline service
         await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> verify(pyrisPipelineService, times(1)).executeExerciseChatPipeline(eq("default"), eq(testCustomInstructions),
                 eq(Optional.ofNullable((ProgrammingSubmission) result.getSubmission())), eq(exercise), eq(irisSession), eq(Optional.of("build_failed"))));
     }
@@ -382,77 +378,24 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCustomInstructionsPassedToCourseChatPipeline() {
-        // Set custom instructions in the course settings
-        var courseSettings = irisSettingsRepository.findCourseSettings(course.getId()).orElseThrow();
         String testCourseCustomInstructions = "Test course custom instructions for the AI model";
-        courseSettings.getIrisCourseChatSettings().setCustomInstructions(testCourseCustomInstructions);
-        irisSettingsRepository.save(courseSettings);
-
-        var irisSession = irisCourseChatSessionService.createSession(course, userUtilService.getUserByLogin(TEST_PREFIX + "student1"), false);
-
-        // Create a JoL event
-        var jolValue = 3;
-        irisRequestMockProvider.mockJolEventRunResponse((dto) -> {
-            assertThat(dto.settings().authenticationToken()).isNotNull();
-            // Verify the custom instructions were passed to the DTO
-            assertThat(dto.customInstructions()).isEqualTo(testCourseCustomInstructions);
-            pipelineDone.set(true);
-        });
-
-        // Set JoL to trigger the event
-        competencyJolService.setJudgementOfLearning(competency.getId(), userUtilService.getUserByLogin(TEST_PREFIX + "student1").getId(), (short) jolValue);
-
-        await().atMost(2, TimeUnit.SECONDS).until(() -> pipelineDone.get());
-
-        // Verify the custom instructions were passed to the pipeline service
-        verify(irisCourseChatSessionService, times(1)).onJudgementOfLearningSet(any(CompetencyJol.class));
-        verify(pyrisPipelineService, times(1)).executeCourseChatPipeline(eq("default"), eq(testCourseCustomInstructions), eq(irisSession), any(CompetencyJol.class));
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testCustomInstructionsPassedToExerciseEventPipeline() {
-        // Set custom instructions for exercise chat event
-        var settings = irisSettingsRepository.findExerciseSettings(exercise.getId()).orElseThrow();
-        String testCustomInstructions = "Custom instructions for exercise event";
-        settings.getIrisProgrammingExerciseChatSettings().setCustomInstructions(testCustomInstructions);
-        irisSettingsRepository.save(settings);
-
-        // Create session and trigger build failed event
-        var irisSession = irisExerciseChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
-        var result = createFailingSubmission(studentParticipation);
-        irisRequestMockProvider.mockBuildFailedRunResponse(dto -> {
-            assertThat(dto.customInstructions()).isEqualTo(testCustomInstructions);
-            pipelineDone.set(true);
-        });
-
-        pyrisEventService.trigger(new NewResultEvent(result));
-        await().atMost(2, TimeUnit.SECONDS).until(() -> pipelineDone.get());
-
-        verify(pyrisPipelineService, times(1)).executeExerciseChatPipeline(eq("default"), eq(testCustomInstructions),
-                eq(Optional.ofNullable((ProgrammingSubmission) result.getSubmission())), eq(exercise), eq(irisSession), eq(Optional.of("build_failed")));
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testCustomInstructionsPassedToCourseEventPipeline() {
-        // Set custom instructions for course chat event
         var courseSettings = irisSettingsRepository.findCourseSettings(course.getId()).orElseThrow();
-        String testCourseCustomInstructions = "Custom instructions for course event";
         courseSettings.getIrisCourseChatSettings().setCustomInstructions(testCourseCustomInstructions);
         irisSettingsRepository.save(courseSettings);
 
-        // Create session and trigger Jol event
         var irisSession = irisCourseChatSessionService.createSession(course, userUtilService.getUserByLogin(TEST_PREFIX + "student1"), false);
+
         irisRequestMockProvider.mockJolEventRunResponse(dto -> {
+            assertThat(dto.settings().authenticationToken()).isNotNull();
             assertThat(dto.customInstructions()).isEqualTo(testCourseCustomInstructions);
             pipelineDone.set(true);
         });
+
         competencyJolService.setJudgementOfLearning(competency.getId(), userUtilService.getUserByLogin(TEST_PREFIX + "student1").getId(), (short) 3);
 
         await().atMost(2, TimeUnit.SECONDS).until(() -> pipelineDone.get());
 
+        verify(irisCourseChatSessionService, times(1)).onJudgementOfLearningSet(any(CompetencyJol.class));
         verify(pyrisPipelineService, times(1)).executeCourseChatPipeline(eq("default"), eq(testCourseCustomInstructions), eq(irisSession), any(CompetencyJol.class));
     }
-
 }
