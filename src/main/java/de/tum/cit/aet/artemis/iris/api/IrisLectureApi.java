@@ -47,12 +47,11 @@ public class IrisLectureApi extends AbstractIrisApi {
     /**
      * Updates or creates the specified attachment video units in the Pyris database automatically if auto-ingestion is enabled.
      * <p>
-     * This method calls {@link PyrisWebhookService#autoUpdateAttachmentVideoUnitsInPyris(Long, List)}.
+     * This method calls {@link PyrisWebhookService#autoUpdateAttachmentVideoUnitsInPyris(List)}.
      *
-     * @param courseId                the ID of the course
      * @param newAttachmentVideoUnits the new attachment video units to be sent to Pyris
      */
-    public void autoUpdateAttachmentVideoUnitsInPyris(Long courseId, List<AttachmentVideoUnit> newAttachmentVideoUnits) {
-        pyrisWebhookService.autoUpdateAttachmentVideoUnitsInPyris(courseId, newAttachmentVideoUnits);
+    public void autoUpdateAttachmentVideoUnitsInPyris(List<AttachmentVideoUnit> newAttachmentVideoUnits) {
+        pyrisWebhookService.autoUpdateAttachmentVideoUnitsInPyris(newAttachmentVideoUnits);
     }
 }
