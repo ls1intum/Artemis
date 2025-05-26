@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.CourseService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.lti.api.LtiApi;
 
@@ -152,7 +153,7 @@ public class AdminCourseResource {
 
         if (file != null) {
             Path basePath = FilePathConverter.getCourseIconFilePath();
-            Path savePath = fileService.saveFile(file, basePath, FilePathType.COURSE_ICON, false);
+            Path savePath = FileUtil.saveFile(file, basePath, FilePathType.COURSE_ICON, false);
             createdCourse.setCourseIcon(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.COURSE_ICON, createdCourse.getId()).toString());
             createdCourse = courseRepository.save(createdCourse);
         }

@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.communication.domain;
 import java.util.HashSet;
 import java.util.Set;
 
+import jakarta.annotation.Nullable;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
@@ -32,14 +33,13 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 
 /**
- * A Post, i.e. start of a Metis thread.
+ * A message in the communication system which can be answered using {@link AnswerPost}.
  */
 @Entity
 @PostConstraints
 @Table(name = "post")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-// TODO: delete exercise_id, lecture_id and course_id in post table
 public class Post extends Posting {
 
     @Size(max = 200)
@@ -68,6 +68,7 @@ public class Post extends Posting {
     @Column(name = "display_priority", columnDefinition = "varchar(25) default 'NONE'")
     private DisplayPriority displayPriority = DisplayPriority.NONE;
 
+    // TODO: we should convert this to "Long plagiarismCaseId" to avoid performance issues. The plagiarism case is only needed in very specific cases, so do not load it by default!
     @OneToOne
     @JoinColumn(name = "plagiarism_case_id")
     @JsonIncludeProperties({ "id" })
@@ -210,6 +211,7 @@ public class Post extends Posting {
      */
     @JsonIgnore
     @Override
+    @Nullable
     public Course getCoursePostingBelongsTo() {
         if (this.plagiarismCase != null) {
             return this.plagiarismCase.getExercise().getCourseViaExerciseGroupOrCourseMember();
