@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription, combineLatest, of } from 'rxjs';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
@@ -18,8 +18,6 @@ import { ButtonComponent } from 'app/shared/components/buttons/button/button.com
     styleUrl: './course-practice-quiz.component.scss',
 })
 export class CoursePracticeQuizComponent implements OnInit, OnDestroy {
-    @Input() questions: QuizQuestion[] = [];
-
     readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
     readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
     readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
@@ -29,6 +27,7 @@ export class CoursePracticeQuizComponent implements OnInit, OnDestroy {
     private quizService = inject(CoursePracticeQuizService);
     private subscription: Subscription;
 
+    questions: QuizQuestion[];
     courseId: number;
     currentIndex = 0;
     selectedAnswerOptions = new Map<number, AnswerOption[]>();
