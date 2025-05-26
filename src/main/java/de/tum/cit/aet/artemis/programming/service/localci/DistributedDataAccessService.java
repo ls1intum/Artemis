@@ -319,7 +319,7 @@ public class DistributedDataAccessService {
      */
     public String getLocalMemberAddress() {
         if (!isInstanceRunning()) {
-            throw new HazelcastInstanceNotActiveException("Hazelcast instance is not running or has not been initialized.");
+            throw new HazelcastInstanceNotActiveException();
         }
         return hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
     }
