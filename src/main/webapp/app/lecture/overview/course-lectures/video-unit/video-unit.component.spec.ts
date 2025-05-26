@@ -112,7 +112,7 @@ describe('VideoUnitComponent', () => {
         expect(clearTimeoutSpy).toHaveBeenCalledOnce();
     });
 
-    it('should pass transcript segments to jhi-video-player for HLS (.m3u8) video', () => {
+    it('should fetch and pass transcript segments to jhi-video-player for HLS (.m3u8) video', () => {
         const hlsVideoUnit: VideoUnit = {
             ...videoUnit,
             source: 'https://tum.live/hls/streamId/playlist.m3u8?jwt=abc123',
@@ -124,17 +124,20 @@ describe('VideoUnitComponent', () => {
         ];
 
         fixture.componentRef.setInput('lectureUnit', hlsVideoUnit);
-        fixture.componentRef.setInput('transcriptSegments', mockTranscript);
         fixture.detectChanges();
 
         const lectureUnitToggleButton = fixture.debugElement.query(By.css('#lecture-unit-toggle-button'));
         lectureUnitToggleButton.nativeElement.click();
         fixture.detectChanges();
 
+        const req = httpMock.expectOne(`/api/lecture/lecture-unit/${hlsVideoUnit.id}/transcript`);
+        expect(req.request.method).toBe('GET');
+        req.flush({ segments: mockTranscript });
+        fixture.detectChanges();
+
         const videoPlayerEl = fixture.debugElement.query(By.css('jhi-video-player'));
         expect(videoPlayerEl).not.toBeNull();
 
-        // Verify that transcript segments are passed correctly
         const videoPlayerInstance = videoPlayerEl.componentInstance;
         expect(videoPlayerInstance.transcriptSegments).toEqual(mockTranscript);
     });
