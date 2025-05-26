@@ -197,7 +197,7 @@ public class LearningPathResource {
     @EnforceAtLeastStudent
     public ResponseEntity<LearningPathCompetencyGraphDTO> getLearningPathCompetencyGraph(@PathVariable long learningPathId) {
         log.debug("REST request to get competency graph for learning path with id: {}", learningPathId);
-        LearningPath learningPath = learningPathRepositoryService.findWithEagerCourseAndCompetenciesByIdElseThrow(learningPathId);
+        LearningPath learningPath = learningPathRepositoryService.findWithEagerUserAndCourseAndCompetenciesByIdElseThrow(learningPathId);
         User user = userRepository.getUser();
 
         checkLearningPathAccessElseThrow(Optional.of(learningPath.getCourse()), learningPath, Optional.of(user));
@@ -325,7 +325,7 @@ public class LearningPathResource {
     @EnforceAtLeastStudent
     public ResponseEntity<Set<CompetencyProgressForLearningPathDTO>> getCompetencyProgressForLearningPath(@PathVariable long learningPathId) {
         log.debug("REST request to get competency progress for learning path: {}", learningPathId);
-        final var learningPath = learningPathRepositoryService.findWithEagerCourseAndCompetenciesByIdElseThrow(learningPathId);
+        final var learningPath = learningPathRepositoryService.findWithEagerUserAndCourseAndCompetenciesByIdElseThrow(learningPathId);
 
         checkLearningPathAccessElseThrow(Optional.of(learningPath.getCourse()), learningPath, Optional.empty());
 
@@ -369,7 +369,7 @@ public class LearningPathResource {
     @EnforceAtLeastStudent
     public ResponseEntity<List<LearningPathNavigationObjectDTO>> getLearningObjectsForCompetency(@PathVariable long learningPathId, @PathVariable long competencyId) {
         log.debug("REST request to get learning objects for competency: {} in learning path: {}", competencyId, learningPathId);
-        final var learningPath = learningPathRepositoryService.findWithEagerCourseAndCompetenciesByIdElseThrow(learningPathId);
+        final var learningPath = learningPathRepositoryService.findWithEagerUserAndCourseAndCompetenciesByIdElseThrow(learningPathId);
         final var user = userRepository.getUserWithGroupsAndAuthoritiesAndLearnerProfile(learningPath.getCourse().getId());
 
         checkLearningPathAccessElseThrow(Optional.of(learningPath.getCourse()), learningPath, Optional.of(user));

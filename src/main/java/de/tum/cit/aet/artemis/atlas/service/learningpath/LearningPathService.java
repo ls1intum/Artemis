@@ -184,7 +184,7 @@ public class LearningPathService {
     public SearchResultPageDTO<LearningPathInformationDTO> getAllOfCourseOnPageWithSize(@NotNull SearchTermPageableSearchDTO<String> search, long courseId) {
         final var pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.LEARNING_PATH);
         final var searchTerm = search.getSearchTerm();
-        final Page<LearningPath> learningPathPage = learningPathRepository.findByLoginOrNameInCourse(searchTerm, courseId, pageable);
+        final Page<LearningPath> learningPathPage = learningPathRepository.findWithEagerUserByLoginOrNameInCourse(searchTerm, courseId, pageable);
         final List<LearningPathInformationDTO> contentDTOs = learningPathPage.getContent().stream().map(LearningPathInformationDTO::of).toList();
         return new SearchResultPageDTO<>(contentDTOs, learningPathPage.getTotalPages());
     }
@@ -256,7 +256,7 @@ public class LearningPathService {
      * @param learningPathId the id of the learning path
      */
     public void startLearningPathForCurrentUser(long learningPathId) {
-        final var learningPath = learningPathRepository.findByIdElseThrow(learningPathId);
+        final var learningPath = learningPathRepository.findWithEagerUserByIdElseThrow(learningPathId);
         final var currentUser = userRepository.getUser();
         if (!learningPath.getUser().equals(currentUser)) {
             throw new AccessForbiddenException("You are not allowed to start this learning path.");

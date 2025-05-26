@@ -21,7 +21,7 @@ import de.tum.cit.aet.artemis.atlas.repository.PrerequisiteRepository;
 @Service
 public class LearningPathRepositoryService {
 
-    protected final LearningPathRepository learningPathRepository;
+    private final LearningPathRepository learningPathRepository;
 
     private final CompetencyRepository competencyRepository;
 
@@ -53,6 +53,11 @@ public class LearningPathRepositoryService {
 
     public LearningPath findWithEagerCourseAndCompetenciesByIdElseThrow(long learningPathId) {
         final var learningPath = learningPathRepository.findWithEagerCourseByIdElseThrow(learningPathId);
+        return addTransientCompetencies(learningPath);
+    }
+
+    public LearningPath findWithEagerUserAndCourseAndCompetenciesByIdElseThrow(long learningPathId) {
+        final var learningPath = learningPathRepository.findWithEagerUserAndCourseByIdElseThrow(learningPathId);
         return addTransientCompetencies(learningPath);
     }
 

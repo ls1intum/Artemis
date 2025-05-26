@@ -45,16 +45,24 @@ public interface LearningPathRepository extends ArtemisJpaRepository<LearningPat
         return getValueElseThrow(findWithEagerCourseById(learningPathId), learningPathId);
     }
 
+    @EntityGraph(type = LOAD, attributePaths = { "user", "course" })
+    Optional<LearningPath> findWithEagerUserAndCourseById(long learningPathId);
+
+    default LearningPath findWithEagerUserAndCourseByIdElseThrow(long learningPathId) {
+        return getValueElseThrow(findWithEagerUserAndCourseById(learningPathId), learningPathId);
+    }
+
     @Query("""
             SELECT lp
             FROM LearningPath lp
+            LEFT JOIN FETCH lp.user
             WHERE (lp.course.id = :courseId)
                 AND (
                     lp.user.login LIKE %:searchTerm%
                     OR CONCAT(lp.user.firstName, ' ', lp.user.lastName) LIKE %:searchTerm%
                 )
             """)
-    Page<LearningPath> findByLoginOrNameInCourse(@Param("searchTerm") String searchTerm, @Param("courseId") long courseId, Pageable pageable);
+    Page<LearningPath> findWithEagerUserByLoginOrNameInCourse(@Param("searchTerm") String searchTerm, @Param("courseId") long courseId, Pageable pageable);
 
     @Query("""
             SELECT COUNT (learningPath)
