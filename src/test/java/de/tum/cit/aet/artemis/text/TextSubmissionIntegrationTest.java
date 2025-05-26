@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilServi
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionVersionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
@@ -98,8 +99,8 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 0, 1);
         Course course1 = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
         Course course2 = textExerciseUtilService.addCourseWithOneFinishedTextExercise();
-        releasedTextExercise = exerciseUtilService.findTextExerciseWithTitle(course1.getExercises(), "Text");
-        finishedTextExercise = exerciseUtilService.findTextExerciseWithTitle(course2.getExercises(), "Finished");
+        releasedTextExercise = ExerciseUtilService.findTextExerciseWithTitle(course1.getExercises(), "Text");
+        finishedTextExercise = ExerciseUtilService.findTextExerciseWithTitle(course2.getExercises(), "Finished");
         lateParticipation = participationUtilService.createAndSaveParticipationForExercise(finishedTextExercise, TEST_PREFIX + "student1");
         lateParticipation.setInitializationDate(ZonedDateTime.now().minusDays(2));
         participationRepository.save(lateParticipation);

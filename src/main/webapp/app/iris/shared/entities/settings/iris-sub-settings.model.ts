@@ -1,7 +1,7 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
 
 export enum IrisSubSettingsType {
-    CHAT = 'chat', // TODO: Rename to PROGRAMMING_EXERCISE_CHAT
+    PROGRAMMING_EXERCISE_CHAT = 'programming-exercise-chat',
     TEXT_EXERCISE_CHAT = 'text-exercise-chat',
     COURSE_CHAT = 'course-chat',
     LECTURE_INGESTION = 'lecture-ingestion',
@@ -20,15 +20,16 @@ export enum IrisEventType {
 export abstract class IrisSubSettings implements BaseEntity {
     id?: number;
     type: IrisSubSettingsType;
-    enabled = false;
+    enabled = true;
     allowedVariants?: string[];
     selectedVariant?: string;
     enabledForCategories?: string[];
     disabledProactiveEvents?: IrisEventType[];
+    customInstructions?: string;
 }
 
-export class IrisChatSubSettings extends IrisSubSettings {
-    type = IrisSubSettingsType.CHAT;
+export class IrisProgrammingExerciseChatSubSettings extends IrisSubSettings {
+    type = IrisSubSettingsType.PROGRAMMING_EXERCISE_CHAT;
     rateLimit?: number;
     rateLimitTimeframeHours?: number;
 }
@@ -53,12 +54,12 @@ export class IrisCourseChatSubSettings extends IrisSubSettings {
 
 export class IrisLectureIngestionSubSettings extends IrisSubSettings {
     type = IrisSubSettingsType.LECTURE_INGESTION;
-    autoIngestOnLectureAttachmentUpload: boolean;
+    autoIngestOnLectureAttachmentUpload: boolean = true;
 }
 
 export class IrisFaqIngestionSubSettings extends IrisSubSettings {
     type = IrisSubSettingsType.FAQ_INGESTION;
-    autoIngestOnFaqCreation: boolean;
+    autoIngestOnFaqCreation: boolean = true;
 }
 
 export class IrisCompetencyGenerationSubSettings extends IrisSubSettings {
