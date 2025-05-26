@@ -62,7 +62,7 @@ class LectureServiceTest extends AbstractSpringIntegrationIndependentTest {
         student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         editor = userUtilService.getUserByLogin(TEST_PREFIX + "editor1");
 
-        List<Course> courses = lectureUtilService.createCoursesWithExercisesAndLecturesAndLectureUnits(TEST_PREFIX, false, false, 0);
+        List<Course> courses = courseUtilService.createCoursesWithExercisesAndLecturesAndLectureUnits(TEST_PREFIX, false, false, 0);
         // always use the lecture and course with the smallest/largest ID, otherwise tests below related to search might fail (in a flaky way)
         course = courseRepository.findByIdWithLecturesAndLectureUnitsElseThrow(courses.stream().min(Comparator.comparingLong(DomainObject::getId)).orElseThrow().getId());
         lecture = course.getLectures().stream().min(Comparator.comparing(Lecture::getId)).orElseThrow();
@@ -114,7 +114,7 @@ class LectureServiceTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testPageableResults() {
-        // the database should contain 2 lectures (see createCoursesWithExercisesAndLecturesAndLectureUnits) both with the same title
+        // the database should contain 2 lectures (see courseUtilService.createCoursesWithExercisesAndLecturesAndLectureUnits) both with the same title
         // to enable a proper search after title, we change it
 
         // Use custom lecture name that is unique to test

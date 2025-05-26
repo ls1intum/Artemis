@@ -6,14 +6,34 @@
             "courseLearnerProfile": {
                 "title": "Course Learner Profile",
                 "selectCourse": "Select Course...",
-                "description": "Here, you are able to view and update your course specific learner profile.",
+                "description": "Here, you are able to view and update your course specific learner profile. These settings are used to calculate your learning progress and to better personalize your learning experience.",
                 "initialState": "Initial State",
                 "currentState": "Current State",
-                "aimForGradeOrBonus": "Aim for grade or additional knowledge",
-                "timeInvestment": "Time investment",
-                "repetitionIntensity": "Repetition Intensity",
-                "proficiency": "Proficiency",
-                "profileSaved": "Profile saved"
+                "aimForGradeOrBonus": {
+                    "label": "Aim for grade or additional knowledge",
+                    "description": "Choose the option that best describes your goal for this course."
+                },
+                "timeInvestment": {
+                    "label": "Time investment",
+                    "description": "Choose how much time you are willing to invest in this course."
+                },
+                "repetitionIntensity": {
+                    "label": "Repetition Intensity",
+                    "description": "Choose how much you are willing to repeat the course content."
+                },
+                "proficiency": {
+                    "label": "Proficiency",
+                    "description": "Artemis' estimation of your proficiency in this course."
+                },
+                "profileSaved": "Learner profile saved",
+                "invalidRange": "Values must be between 1 and 5",
+                "level": {
+                    "veryLow": "Very Low",
+                    "low": "Low",
+                    "medium": "Medium",
+                    "high": "High",
+                    "veryHigh": "Very High"
+                }
             }
         }
     }

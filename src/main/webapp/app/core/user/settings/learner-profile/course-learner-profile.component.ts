@@ -1,142 +1,243 @@
 import { NgClass } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faSave } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { LearnerProfileApiService } from 'app/learner-profile/service/learner-profile-api.service';
 import { CourseLearnerProfileDTO } from 'app/learner-profile/shared/entities/learner-profile.model';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
-import { DoubleSliderComponent } from 'app/shared/double-slider/double-slider.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
+import { SegmentedToggleComponent } from 'app/shared/segmented-toggle/segmented-toggle.component';
+import { COURSE_LEARNER_PROFILE_OPTIONS } from 'app/learner-profile/shared/entities/learner-profile-options.model';
+import { DoubleSliderComponent } from 'app/shared/double-slider/double-slider.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faSave } from '@fortawesome/free-solid-svg-icons';
 
+/**
+ * Component for managing course-specific learner profiles.
+ * This component allows users to view and modify their learning preferences for specific courses,
+ * including their aim for grades/bonus, time investment, and repetition intensity.
+ */
 @Component({
     selector: 'jhi-course-learner-profile',
     templateUrl: './course-learner-profile.component.html',
     styleUrls: ['./course-learner-profile.component.scss'],
-    imports: [DoubleSliderComponent, TranslateDirective, NgClass, ArtemisTranslatePipe, FaIconComponent, HelpIconComponent],
+    imports: [TranslateDirective, NgClass, SegmentedToggleComponent, DoubleSliderComponent, FaIconComponent],
 })
 export class CourseLearnerProfileComponent implements OnInit {
-    private alertService = inject(AlertService);
-    private learnerProfileAPIService = inject(LearnerProfileApiService);
-    protected translateService = inject(TranslateService);
+    private readonly alertService = inject(AlertService);
+    private readonly learnerProfileAPIService = inject(LearnerProfileApiService);
+    protected readonly translateService = inject(TranslateService);
 
-    /**
-     * Minimum value allowed for profile fields representing values on a Likert scale.
-     * Must be the same as in the server in CourseLearnerProfile.java
-     */
-    MIN_PROFILE_VALUE = 1;
+    /** Signal containing the list of course learner profiles for the current user */
+    public readonly courseLearnerProfiles = signal<CourseLearnerProfileDTO[]>([]);
 
-    /**
-     * Maximum value allowed for profile fields representing values on a Likert scale.
-     * Must be the same as in the server in CourseLearnerProfile.java
-     */
-    MAX_PROFILE_VALUE = 5;
+    /** Currently selected course ID, null if no course is selected */
+    activeCourseId: number | null = null;
 
+    /** Flag indicating whether the profile editing is disabled */
+    disabled = true;
+
+    /** Flag indicating whether any numeric value was changed */
+    editing = false;
+
+    // Icons
     faSave = faSave;
 
-    courseLearnerProfiles: CourseLearnerProfileDTO[] = []; // initialize empty array to avoid undefined error
-    activeCourseId: number;
+    /**
+     * Options mapped from shared options with translated labels.
+     */
+    protected readonly aimForGradeOrBonusOptions = COURSE_LEARNER_PROFILE_OPTIONS.map((option) => ({
+        label: this.translateService.instant(option.translationKey),
+        value: option.level,
+    }));
+    protected readonly timeInvestmentOptions = COURSE_LEARNER_PROFILE_OPTIONS.map((option) => ({
+        label: this.translateService.instant(option.translationKey),
+        value: option.level,
+    }));
+    protected readonly repetitionIntensityOptions = COURSE_LEARNER_PROFILE_OPTIONS.map((option) => ({
+        label: this.translateService.instant(option.translationKey),
+        value: option.level,
+    }));
 
-    disabled = true;
-    editing = false;
-    aimForGradeOrBonus = signal<number>(3);
-    timeInvestment = signal<number>(3);
-    repetitionIntensity = signal<number>(3);
-    proficiency = signal<number>(3);
-    initialAimForGradeOrBonus = 3;
-    initialTimeInvestment = 3;
-    initialRepetitionIntensity = 3;
-    initialProficiency = 3;
+    /** Default value for profile settings */
+    private readonly defaultProfileValue = CourseLearnerProfileDTO.MIN_VALUE;
 
-    async ngOnInit() {
+    /** Signals for course learner profile settings */
+    aimForGradeOrBonus = signal<number>(this.defaultProfileValue);
+    timeInvestment = signal<number>(this.defaultProfileValue);
+    repetitionIntensity = signal<number>(this.defaultProfileValue);
+    proficiency = signal<number>(CourseLearnerProfileDTO.MIN_VALUE);
+    initialProficiency = CourseLearnerProfileDTO.MIN_VALUE;
+
+    async ngOnInit(): Promise<void> {
         await this.loadProfiles();
     }
 
-    courseChanged(event: Event) {
-        const courseId: string = (<HTMLSelectElement>event.target).value;
+    /**
+     * Handles course selection change event.
+     * Updates the active course and loads its profile if a course is selected.
+     * @param event - The change event from the course selection dropdown
+     */
+    courseChanged(event: Event): void {
+        const select = event.target as HTMLSelectElement;
+        const courseId = select.value;
+        // Changing the active course. Discarding all unsaved changes.
         this.editing = false;
 
-        // courseId of -1 represents no course selected
-        if (courseId !== '-1') {
-            this.activeCourseId = Number(courseId);
-            this.disabled = false;
-            const courseLearnerProfile = this.getCourseLearnerProfile(this.activeCourseId);
-            if (!courseLearnerProfile) {
-                return;
-            }
-
-            this.updateProfileValues(courseLearnerProfile);
-        } else {
+        if (courseId === '-1') {
+            this.activeCourseId = null;
             this.disabled = true;
+            return;
         }
+
+        this.activeCourseId = Number(courseId);
+        this.disabled = false;
+        this.loadProfileForCourse(this.activeCourseId);
     }
 
-    updateProfileValues(courseLearnerProfile: CourseLearnerProfileDTO) {
-        // Update displayed values to new course
-        this.initialAimForGradeOrBonus = courseLearnerProfile.aimForGradeOrBonus;
-        this.initialTimeInvestment = courseLearnerProfile.timeInvestment;
-        this.initialRepetitionIntensity = courseLearnerProfile.repetitionIntensity;
-        this.initialProficiency = courseLearnerProfile.initialProficiency;
-        // update signals
-        this.aimForGradeOrBonus.set(courseLearnerProfile.aimForGradeOrBonus);
-        this.timeInvestment.set(courseLearnerProfile.timeInvestment);
-        this.repetitionIntensity.set(courseLearnerProfile.repetitionIntensity);
-        this.proficiency.set(courseLearnerProfile.proficiency);
-    }
-
-    getCourseLearnerProfile(courseId: number): CourseLearnerProfileDTO | undefined {
-        return this.courseLearnerProfiles.find((courseLearnerProfile) => {
-            if (courseLearnerProfile.courseId === courseId) {
-                return courseLearnerProfile;
-            }
-        });
-    }
-
-    update() {
-        const courseLearnerProfile = this.getCourseLearnerProfile(this.activeCourseId);
+    /**
+     * Loads the learner profile for a specific course.
+     * @param courseId - The ID of the course to load the profile for
+     */
+    private loadProfileForCourse(courseId: number): void {
+        const courseLearnerProfile = this.getCourseLearnerProfile(courseId);
         if (!courseLearnerProfile) {
             return;
         }
-        courseLearnerProfile.aimForGradeOrBonus = this.aimForGradeOrBonus();
-        courseLearnerProfile.timeInvestment = this.timeInvestment();
-        courseLearnerProfile.repetitionIntensity = this.repetitionIntensity();
-        courseLearnerProfile.initialProficiency = this.proficiency();
-        courseLearnerProfile.proficiency = this.proficiency();
 
-        // Try to update profile
-        this.learnerProfileAPIService.putUpdatedCourseLearnerProfile(courseLearnerProfile).then(
-            (courseLearnerProfile) => {
-                // update profile with response from server
-                const index = this.courseLearnerProfiles.findIndex((profile) => profile.id === courseLearnerProfile.id);
-                this.courseLearnerProfiles[index] = courseLearnerProfile;
-                this.updateProfileValues(courseLearnerProfile);
-
-                this.editing = false;
-
-                this.alertService.addAlert({
-                    type: AlertType.SUCCESS,
-                    message: 'Profile saved',
-                    translationKey: 'artemisApp.learnerProfile.courseLearnerProfile.profileSaved',
-                });
-            },
-            // Notify user of failure to update
-            (error: HttpErrorResponse) => {
-                const errorMessage = error.error ? error.error.title : error.headers?.get('x-artemisapp-alert');
-                if (errorMessage) {
-                    this.alertService.addAlert({
-                        type: AlertType.DANGER,
-                        message: errorMessage,
-                        disableTranslation: true,
-                    });
-                }
-            },
-        );
+        this.updateProfileValues(courseLearnerProfile);
     }
 
-    async loadProfiles() {
-        this.courseLearnerProfiles = await this.learnerProfileAPIService.getCourseLearnerProfilesForCurrentUser();
+    /**
+     * Updates the profile values in the component's signals.
+     * @param courseLearnerProfile - The course learner profile containing the values to update
+     */
+    private updateProfileValues(courseLearnerProfile: CourseLearnerProfileDTO): void {
+        this.aimForGradeOrBonus.set(courseLearnerProfile.aimForGradeOrBonus);
+        this.timeInvestment.set(courseLearnerProfile.timeInvestment);
+        this.repetitionIntensity.set(courseLearnerProfile.repetitionIntensity);
+        this.initialProficiency = courseLearnerProfile.initialProficiency;
+        this.proficiency.set(courseLearnerProfile.proficiency);
     }
+
+    /**
+     * Retrieves the learner profile for a specific course.
+     * @param courseId - The ID of the course to get the profile for
+     * @returns The course learner profile or undefined if not found
+     */
+    private getCourseLearnerProfile(courseId: number): CourseLearnerProfileDTO | undefined {
+        return this.courseLearnerProfiles().find((profile) => profile.courseId === courseId);
+    }
+
+    /**
+     * Loads all course learner profiles for the current user.
+     * Handles any errors that occur during the loading process.
+     */
+    private async loadProfiles(): Promise<void> {
+        try {
+            const profiles = await this.learnerProfileAPIService.getCourseLearnerProfilesForCurrentUser();
+            this.courseLearnerProfiles.set(profiles);
+        } catch (error) {
+            this.handleError(error);
+        }
+    }
+
+    /**
+     * Handles changes to any of the numeric profile values.
+     * Validates and saves the updated profile.
+     */
+    async onProfileSave(): Promise<void> {
+        if (!this.activeCourseId) return;
+
+        const courseLearnerProfile = this.getCourseLearnerProfile(this.activeCourseId);
+        if (!courseLearnerProfile) return;
+
+        // Create a new CourseLearnerProfileDTO object with the updated values
+        const updatedProfile = new CourseLearnerProfileDTO();
+        Object.assign(updatedProfile, {
+            ...courseLearnerProfile,
+            initialProficiency: this.proficiency(),
+            proficiency: this.proficiency(),
+        });
+
+        return this.updateAndValidateProfile(updatedProfile);
+    }
+
+    /**
+     * Handles changes to any of the profile toggles.
+     * Validates and saves the updated profile if valid.
+     */
+    async onToggleChange(): Promise<void> {
+        if (!this.activeCourseId) return;
+
+        const courseLearnerProfile = this.getCourseLearnerProfile(this.activeCourseId);
+        if (!courseLearnerProfile) return;
+
+        // Create a new CourseLearnerProfileDTO object with the updated values
+        const updatedProfile = new CourseLearnerProfileDTO();
+        Object.assign(updatedProfile, {
+            ...courseLearnerProfile,
+            aimForGradeOrBonus: this.aimForGradeOrBonus(),
+            timeInvestment: this.timeInvestment(),
+            repetitionIntensity: this.repetitionIntensity(),
+        });
+
+        return this.updateAndValidateProfile(updatedProfile);
+    }
+
+    private async updateAndValidateProfile(updatedProfile: CourseLearnerProfileDTO) {
+        if (!updatedProfile.isValid()) {
+            this.alertService.addAlert({
+                type: AlertType.DANGER,
+                message: `Values must be between ${CourseLearnerProfileDTO.MIN_VALUE} and ${CourseLearnerProfileDTO.MAX_VALUE}`,
+                translationKey: 'artemisApp.learnerProfile.courseLearnerProfile.invalidRange',
+            });
+            return;
+        }
+
+        // Save the updated profile
+        try {
+            const savedProfile = await this.learnerProfileAPIService.putUpdatedCourseLearnerProfile(updatedProfile);
+
+            // Changes successfully saved, therefore editing has ended.
+            this.editing = false;
+
+            // Update the profiles array using signal's update method
+            this.courseLearnerProfiles.update((profiles) => profiles.map((profile) => (profile.id === savedProfile.id ? savedProfile : profile)));
+
+            this.updateProfileValues(savedProfile);
+
+            this.alertService.closeAll();
+            this.alertService.addAlert({
+                type: AlertType.SUCCESS,
+                message: 'Profile saved',
+                translationKey: 'artemisApp.learnerProfile.courseLearnerProfile.profileSaved',
+            });
+        } catch (error) {
+            this.handleError(error);
+        }
+    }
+
+    /**
+     * Handles errors that occur during API calls or other operations.
+     * Displays appropriate error messages to the user.
+     * @param error - The error that occurred
+     */
+    private handleError(error: unknown): void {
+        let errorMessage: string;
+
+        if (error instanceof HttpErrorResponse) {
+            errorMessage = error.error?.title || error.headers?.get('x-artemisapp-alert') || 'An error occurred';
+        } else {
+            errorMessage = 'An unexpected error occurred';
+        }
+
+        this.alertService.addAlert({
+            type: AlertType.DANGER,
+            message: errorMessage,
+            disableTranslation: true,
+        });
+    }
+
+    protected readonly CourseLearnerProfileDTO = CourseLearnerProfileDTO;
 }

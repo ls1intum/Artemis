@@ -122,8 +122,8 @@ public class ArtemisPasskeyWebAuthnConfigurer {
 
             addAndroidApkKeyHashesToAllowedOrigins();
 
-            log.info("WebAuthn passkey authentication enabled with RP ID: {}", relyingPartyId);
-            log.info("Allowed origins: {}", allowedOrigins);
+            log.debug("WebAuthn passkey authentication enabled with RP ID: {}", relyingPartyId);
+            log.debug("Allowed origins: {}", allowedOrigins);
         }
         catch (URISyntaxException | MalformedURLException e) {
             throw new IllegalStateException("Invalid server URL configuration for WebAuthn: " + e.getMessage(), e);
