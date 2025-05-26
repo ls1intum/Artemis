@@ -239,9 +239,6 @@ public class SecurityConfiguration {
                     .requestMatchers("/.well-known/jwks.json").permitAll()
                     .requestMatchers("/.well-known/assetlinks.json").permitAll()
                     .requestMatchers("/.well-known/apple-app-site-association").permitAll()
-                    //get for transcripts
-                    .requestMatchers("/api/lecture/lecture-unit/*/transcript").permitAll()
-
                     // Prometheus endpoint protected by IP address.
                     .requestMatchers("/management/prometheus/**").access((authentication, context) -> new AuthorizationDecision(monitoringIpAddresses.contains(context.getRequest().getRemoteAddr())));
 
