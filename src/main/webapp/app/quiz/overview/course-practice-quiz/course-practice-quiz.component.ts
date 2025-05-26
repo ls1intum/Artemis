@@ -27,7 +27,7 @@ export class CoursePracticeQuizComponent implements OnInit, OnDestroy {
     private quizService = inject(CoursePracticeQuizService);
     private subscription: Subscription;
 
-    questions: QuizQuestion[];
+    questions: QuizQuestion[] = [];
     courseId: number;
     currentIndex = 0;
     selectedAnswerOptions = new Map<number, AnswerOption[]>();
