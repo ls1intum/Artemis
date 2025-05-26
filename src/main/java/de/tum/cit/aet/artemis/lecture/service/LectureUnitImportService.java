@@ -14,8 +14,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.FilePathType;
-import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
@@ -37,17 +37,14 @@ public class LectureUnitImportService {
 
     private final AttachmentRepository attachmentRepository;
 
-    private final FileService fileService;
-
     private final SlideSplitterService slideSplitterService;
 
     private final Optional<IrisLectureApi> irisLectureApi;
 
-    public LectureUnitImportService(LectureUnitRepository lectureUnitRepository, AttachmentRepository attachmentRepository, FileService fileService,
-            SlideSplitterService slideSplitterService, Optional<IrisLectureApi> irisLectureApi) {
+    public LectureUnitImportService(LectureUnitRepository lectureUnitRepository, AttachmentRepository attachmentRepository, SlideSplitterService slideSplitterService,
+            Optional<IrisLectureApi> irisLectureApi) {
         this.lectureUnitRepository = lectureUnitRepository;
         this.attachmentRepository = attachmentRepository;
-        this.fileService = fileService;
         this.slideSplitterService = slideSplitterService;
         this.irisLectureApi = irisLectureApi;
     }
@@ -165,7 +162,7 @@ public class LectureUnitImportService {
             filePathType = FilePathType.LECTURE_ATTACHMENT;
         }
         log.debug("Copying attachment file from {} to {}", oldPath, newPath);
-        Path savePath = fileService.copyExistingFileToTarget(oldPath, newPath, filePathType);
+        Path savePath = FileUtil.copyExistingFileToTarget(oldPath, newPath, filePathType);
         attachment.setLink(FilePathConverter.externalUriForFileSystemPath(savePath, filePathType, entityId).toString());
         return attachment;
     }

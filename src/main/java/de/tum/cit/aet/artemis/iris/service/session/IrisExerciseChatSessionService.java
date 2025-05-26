@@ -246,7 +246,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
             var needsIntervention = needsIntervention(listOfScores);
             if (needsIntervention) {
                 log.info("Scores in the last 3 submissions did not improve for user {}", studentParticipation.getParticipant().getName());
-                var participant = ((ProgrammingExerciseStudentParticipation) participation).getParticipant();
+                var participant = studentParticipation.getParticipant();
                 if (participant instanceof User user) {
                     var session = getCurrentSessionOrCreateIfNotExistsInternal(exercise, user, false);
                     CompletableFuture.runAsync(() -> requestAndHandleResponse(session, Optional.of(IrisEventType.PROGRESS_STALLED.name().toLowerCase())));

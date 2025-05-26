@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
@@ -99,7 +100,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
         activateIrisGlobally();
         activateIrisFor(course);
 
-        soloExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        soloExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         teamExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
         teamExercise.setMode(ExerciseMode.TEAM);
         programmingExerciseRepository.save(teamExercise);

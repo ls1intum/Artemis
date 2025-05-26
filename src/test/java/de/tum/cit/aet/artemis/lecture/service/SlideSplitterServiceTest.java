@@ -244,7 +244,6 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
             slide.setSlideNumber(i);
             slide.setAttachmentVideoUnit(testAttachmentVideoUnit);
 
-            // This stores a valid path that fileService.resolvePathToFileData() can resolve
             // The path is relative to the base path and should match what's expected
             slide.setSlideImagePath("temp/slide" + i + ".png");
             slideRepository.save(slide);

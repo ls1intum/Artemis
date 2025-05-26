@@ -64,7 +64,7 @@ public class ProgrammingUtilTestService {
     private SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
     @Autowired
-    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+    private ProgrammingExerciseParticipationUtilService programmingExerciseParticipationUtilService;
 
     @Autowired
     private ParticipationUtilService participationUtilService;
@@ -122,7 +122,7 @@ public class ProgrammingUtilTestService {
         doNothing().when(gitService).pullIgnoreConflicts(any(Repository.class));
         exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
         var savedExercise = exerciseRepository.save(exercise);
-        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(savedExercise);
+        programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(savedExercise);
         var templateParticipation = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(savedExercise.getId()).orElseThrow();
         templateParticipation.setRepositoryUri(templateRepoUri.toString());
         templateProgrammingExerciseParticipationRepository.save(templateParticipation);
@@ -183,7 +183,7 @@ public class ProgrammingUtilTestService {
         exercise.setBuildConfig(buildConfig);
         var savedExercise = exerciseRepository.save(exercise);
         savedExercise.setBuildConfig(buildConfig);
-        programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(savedExercise);
+        programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(savedExercise);
         var solutionParticipation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(savedExercise.getId()).orElseThrow();
         solutionParticipation.setRepositoryUri(solutionRepoUri.toString());
         solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);

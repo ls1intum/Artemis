@@ -28,7 +28,6 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.iris.dto.IngestionState;
 import de.tum.cit.aet.artemis.iris.exception.IrisInternalPyrisErrorException;
-import de.tum.cit.aet.artemis.iris.repository.IrisSettingsRepository;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionSettingsDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisFaqWebhookDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisWebhookFaqDeletionExecutionDTO;
@@ -61,8 +60,6 @@ public class PyrisWebhookService {
 
     private final IrisSettingsService irisSettingsService;
 
-    private final IrisSettingsRepository irisSettingsRepository;
-
     private final Optional<LectureRepositoryApi> lectureRepositoryApi;
 
     private final Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi;
@@ -71,11 +68,10 @@ public class PyrisWebhookService {
     private String artemisBaseUrl;
 
     public PyrisWebhookService(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, IrisSettingsService irisSettingsService,
-            IrisSettingsRepository irisSettingsRepository, Optional<LectureRepositoryApi> lectureRepositoryApi, Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi) {
+            Optional<LectureRepositoryApi> lectureRepositoryApi, Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi) {
         this.pyrisConnectorService = pyrisConnectorService;
         this.pyrisJobService = pyrisJobService;
         this.irisSettingsService = irisSettingsService;
-        this.irisSettingsRepository = irisSettingsRepository;
         this.lectureRepositoryApi = lectureRepositoryApi;
         this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
     }
@@ -227,9 +223,7 @@ public class PyrisWebhookService {
     public String deleteLectureFromPyrisDB(List<AttachmentVideoUnit> attachmentVideoUnits) {
         List<PyrisLectureUnitWebhookDTO> toUpdateAttachmentVideoUnits = new ArrayList<>();
         attachmentVideoUnits.stream().filter(unit -> unit.getAttachment().getAttachmentType() == AttachmentType.FILE && unit.getAttachment().getLink().endsWith(".pdf"))
-                .forEach(unit -> {
-                    toUpdateAttachmentVideoUnits.add(processAttachmentForDeletion(unit));
-                });
+                .forEach(unit -> toUpdateAttachmentVideoUnits.add(processAttachmentForDeletion(unit)));
         if (!toUpdateAttachmentVideoUnits.isEmpty()) {
             return executeLectureDeletionWebhook(toUpdateAttachmentVideoUnits);
         }
