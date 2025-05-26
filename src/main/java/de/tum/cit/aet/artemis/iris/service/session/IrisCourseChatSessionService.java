@@ -150,9 +150,9 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
         user.hasAcceptedExternalLLMUsageElseThrow();
         var session = getCurrentSessionOrCreateIfNotExistsInternal(course, user, false);
 
-        var settings = irisSettingsService.getCombinedIrisSettingsFor(course, false);
-        var variant = "default";
-        var customInstructions = settings.irisCourseChatSettings().customInstructions();
+        var settings = irisSettingsService.getCombinedIrisSettingsFor(course, false).irisCourseChatSettings();
+        var variant = settings.selectedVariant();
+        var customInstructions = settings.customInstructions();
 
         CompletableFuture.runAsync(() -> requestAndHandleResponse(session, variant, customInstructions, competencyJol));
     }

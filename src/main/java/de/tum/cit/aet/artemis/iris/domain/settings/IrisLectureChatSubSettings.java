@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.iris.domain.settings;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.IRIS_CUSTOM_INSTRUCTIONS_MAX_LENGTH;
+
 import jakarta.annotation.Nullable;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
@@ -39,6 +40,7 @@ public class IrisLectureChatSubSettings extends IrisSubSettings {
     @Column(name = "custom_instructions", length = IRIS_CUSTOM_INSTRUCTIONS_MAX_LENGTH)
     private String customInstructions;
 
+    @Nullable
     public Integer getRateLimit() {
         return rateLimit;
     }
