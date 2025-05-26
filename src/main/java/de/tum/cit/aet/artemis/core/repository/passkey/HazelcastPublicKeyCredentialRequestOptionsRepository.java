@@ -101,7 +101,10 @@ public class HazelcastPublicKeyCredentialRequestOptionsRepository implements Pub
         HttpSession session = request.getSession();
         session.setAttribute(this.attrName, options);
 
-        updateByRequestId(request, options);
+        if (session.getId() != null) {
+            authOptionsMap.put(session.getId(), options);
+        }
+        // updateByRequestId(request, options);
     }
 
     /**
@@ -156,7 +159,7 @@ public class HazelcastPublicKeyCredentialRequestOptionsRepository implements Pub
         // we found options with the old id (otherwise we would have returned null above), so we need to update the hazelcast map
         boolean hasSessionIdChanged = sessionId != null;
         if (hasSessionIdChanged) {
-            authOptionsMap.remove(requestedSessionId);
+            // authOptionsMap.remove(requestedSessionId);
             authOptionsMap.put(sessionId, options);
         }
 
