@@ -10,16 +10,9 @@ EduTelligence Suite
 
 EduTelligence is a comprehensive suite of AI-powered microservices designed to enhance Artemis with intelligent features. Some of the AI-powered services that integrate with Artemis are now part of this unified suite.
 
-For an overview of the EduTelligence suite and compatibility information, see:
+**Compatibility**: EduTelligence maintains compatibility with different versions of Artemis. Please refer to the `compatibility matrix <https://github.com/ls1intum/edutelligence#-artemis-compatibility>`_ to ensure you're using compatible versions for optimal integration and functionality.
 
-.. toctree::
-   :includehidden:
-   :maxdepth: 1
-
-   setup/edutelligence
-
-EduTelligence Services
-^^^^^^^^^^^^^^^^^^^^^^
+**Repository**: `https://github.com/ls1intum/edutelligence <https://github.com/ls1intum/edutelligence>`_
 
 .. toctree::
    :includehidden:
