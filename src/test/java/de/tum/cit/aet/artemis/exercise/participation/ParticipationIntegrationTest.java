@@ -79,6 +79,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
@@ -132,6 +133,9 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ProgrammingExerciseParticipationUtilService programmingExerciseParticipationUtilService;
 
     @Autowired
     private ParticipationUtilService participationUtilService;
@@ -344,7 +348,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
     void participateInTextExerciseAsStudentBeforeNormalDueDatePassed() throws Exception {
-        TextExercise examTextExercise = textExerciseUtilService.addCourseExamExerciseGroupWithOneTextExercise();
+        TextExercise examTextExercise = examUtilService.addCourseExamExerciseGroupWithOneTextExercise();
         examTextExercise.getExam().setStartDate(ZonedDateTime.now().minusHours(2));
         examTextExercise.getExam().setEndDate(ZonedDateTime.now().plusHours(1));
         examTestRepository.save(examTextExercise.getExam());
@@ -363,7 +367,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
     void participateInTextExerciseAsStudentAfterNormalDueDatePassed() throws Exception {
-        TextExercise examTextExercise = textExerciseUtilService.addCourseExamExerciseGroupWithOneTextExercise();
+        TextExercise examTextExercise = examUtilService.addCourseExamExerciseGroupWithOneTextExercise();
         examTextExercise.getExam().setStartDate(ZonedDateTime.now().minusHours(2));
         examTextExercise.getExam().setEndDate(ZonedDateTime.now().minusHours(1));
         examTestRepository.save(examTextExercise.getExam());
@@ -377,7 +381,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
     void participateInTextExerciseAsStudentAfterBeforeStartDatePassed() throws Exception {
-        TextExercise examTextExercise = textExerciseUtilService.addCourseExamExerciseGroupWithOneTextExercise();
+        TextExercise examTextExercise = examUtilService.addCourseExamExerciseGroupWithOneTextExercise();
         examTextExercise.getExam().setStartDate(ZonedDateTime.now().plusHours(1));
         examTextExercise.getExam().setEndDate(ZonedDateTime.now().plusHours(2));
         examTestRepository.save(examTextExercise.getExam());
@@ -393,7 +397,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     @WithMockUser(username = TEST_PREFIX + "student1")
     void participateInTextExerciseAsStudentAfterNormalDueDatePassedWithOngoingIndividualWorkingTime() throws Exception {
         String studentLogin = TEST_PREFIX + "student1";
-        TextExercise examTextExercise = textExerciseUtilService.addCourseExamExerciseGroupWithOneTextExercise();
+        TextExercise examTextExercise = examUtilService.addCourseExamExerciseGroupWithOneTextExercise();
         examTextExercise.getExam().setStartDate(ZonedDateTime.now().minusHours(2));
         examTextExercise.getExam().setEndDate(ZonedDateTime.now().minusHours(1));
         examTestRepository.save(examTextExercise.getExam());
@@ -421,7 +425,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     @WithMockUser(username = TEST_PREFIX + "student1")
     void participateInTextExerciseAsStudentAfterNormalDueDatePassedWithExpiredIndividualWorkingTime() throws Exception {
         String studentLogin = TEST_PREFIX + "student1";
-        TextExercise examTextExercise = textExerciseUtilService.addCourseExamExerciseGroupWithOneTextExercise();
+        TextExercise examTextExercise = examUtilService.addCourseExamExerciseGroupWithOneTextExercise();
         examTextExercise.getExam().setStartDate(ZonedDateTime.now().minusHours(3));
         examTextExercise.getExam().setEndDate(ZonedDateTime.now().minusHours(1));
         examTestRepository.save(examTextExercise.getExam());
@@ -544,7 +548,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     }
 
     private void prepareMocksForProgrammingExercise(String userLogin, boolean practiceMode) throws Exception {
-        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
         programmingExerciseTestService.setupRepositoryMocks(programmingExercise);
         var repo = new LocalRepository(defaultBranch);

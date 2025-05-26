@@ -25,6 +25,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.iris.AbstractIrisIntegrationTest;
 import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCompetencyGenerationSubSettings;
@@ -96,7 +97,7 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
     void initTestCase() throws JsonProcessingException {
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
         course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         var projectKey1 = programmingExercise.getProjectKey();
         programmingExercise.setTestRepositoryUri(localVCBaseUrl + "/git/" + projectKey1 + "/" + projectKey1.toLowerCase() + "-tests.git");
         programmingExercise.getBuildConfig().setBuildPlanConfiguration(new ObjectMapper().writeValueAsString(aeolusTemplateService.getDefaultWindfileFor(programmingExercise)));
@@ -517,7 +518,7 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
     void verifyDefaultExerciseSettingsState() {
         userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1); // Ensure instructor exists for course creation
         Course courseWithExercise = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        ProgrammingExercise newProgrammingExercise = exerciseUtilService.getFirstExerciseWithType(courseWithExercise, ProgrammingExercise.class);
+        ProgrammingExercise newProgrammingExercise = ExerciseUtilService.getFirstExerciseWithType(courseWithExercise, ProgrammingExercise.class);
 
         IrisExerciseSettings exerciseSettings = irisSettingsService.getDefaultSettingsFor(newProgrammingExercise);
 
@@ -544,7 +545,7 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void isCourseChatEnabled_GlobalEnabled_CourseEnabled() throws Exception {
+    void isCourseChatEnabled_GlobalEnabled_CourseEnabled() {
         activateIrisGlobally();
         activateIrisFor(course);
         course = courseRepository.findByIdElseThrow(course.getId());
@@ -555,7 +556,7 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void isCourseChatEnabled_GlobalEnabled_CourseDisabled() throws Exception {
+    void isCourseChatEnabled_GlobalEnabled_CourseDisabled() {
         activateIrisGlobally();
 
         boolean enabled = irisSettingsApi.isCourseChatEnabled(course.getId());
@@ -570,7 +571,7 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void isCourseChatEnabled_GlobalDisabled_CourseEnabled() throws Exception {
+    void isCourseChatEnabled_GlobalDisabled_CourseEnabled() {
         disableIrisGlobally();
         activateIrisFor(course);
 
@@ -585,7 +586,7 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void isProgrammingExerciseChatEnabled_GlobalEnabled_CourseEnabled_ExerciseEnabled() throws Exception {
+    void isProgrammingExerciseChatEnabled_GlobalEnabled_CourseEnabled_ExerciseEnabled() {
         activateIrisGlobally();
         activateIrisFor(course);
 
@@ -600,7 +601,7 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void isProgrammingExerciseChatEnabled_GlobalEnabled_CourseDisabled() throws Exception {
+    void isProgrammingExerciseChatEnabled_GlobalEnabled_CourseDisabled() {
         activateIrisGlobally();
         disableProgrammingExerciseChatFor(course);
 
@@ -618,7 +619,7 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void isProgrammingExerciseChatEnabled_GlobalEnabled_ExerciseDisabled() throws Exception {
+    void isProgrammingExerciseChatEnabled_GlobalEnabled_ExerciseDisabled() {
         activateIrisGlobally();
         activateIrisFor(course);
 
@@ -632,7 +633,7 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void isProgrammingExerciseChatEnabled_GlobalDisabled_ExerciseEnabled() throws Exception {
+    void isProgrammingExerciseChatEnabled_GlobalDisabled_ExerciseEnabled() {
         disableIrisGlobally();
 
         ProgrammingExercise exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);

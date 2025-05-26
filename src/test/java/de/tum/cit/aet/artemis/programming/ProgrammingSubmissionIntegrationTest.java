@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -63,13 +64,11 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     void init() {
         userUtilService.addUsers(TEST_PREFIX, 10, 2, 1, 2);
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
-        exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         exercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(exercise.getId()).orElseThrow();
-        programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(exercise);
-        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(exercise);
-        Result result = participationUtilService.addProgrammingParticipationWithResultForExercise(exercise, TEST_PREFIX + "student1");
-        ProgrammingExerciseStudentParticipation participation = (ProgrammingExerciseStudentParticipation) result.getSubmission().getParticipation();
-
+        programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(exercise);
+        programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(exercise);
+        participationUtilService.addProgrammingParticipationWithResultForExercise(exercise, TEST_PREFIX + "student1");
         exercise.setTestCasesChanged(true);
         programmingExerciseRepository.save(exercise);
 
@@ -120,7 +119,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     void triggerBuildStudentSubmissionNotFound() throws Exception {
         String login = TEST_PREFIX + "student1";
         Course course = modelingExerciseUtilService.addCourseWithDifferentModelingExercises();
-        ModelingExercise classExercise = exerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
+        ModelingExercise classExercise = ExerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
         ModelingSubmission modelingSubmission = ParticipationFactory
                 .generateModelingSubmission(TestResourceUtils.loadFileFromResources("test-data/model-submission/empty-class-diagram.json"), true);
         modelingSubmission = modelingExerciseUtilService.addModelingSubmission(classExercise, modelingSubmission, login);
@@ -444,7 +443,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     void triggerFailedBuildSubmissionNotFound() throws Exception {
         String login = TEST_PREFIX + "student1";
         Course course = modelingExerciseUtilService.addCourseWithDifferentModelingExercises();
-        ModelingExercise classExercise = exerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
+        ModelingExercise classExercise = ExerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
         ModelingSubmission modelingSubmission = ParticipationFactory
                 .generateModelingSubmission(TestResourceUtils.loadFileFromResources("test-data/model-submission/empty-class-diagram.json"), true);
         modelingSubmission = modelingExerciseUtilService.addModelingSubmission(classExercise, modelingSubmission, login);

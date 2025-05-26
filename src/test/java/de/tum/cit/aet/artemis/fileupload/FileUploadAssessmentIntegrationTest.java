@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.fileupload.dto.FileUploadAssessmentDTO;
@@ -59,7 +60,7 @@ class FileUploadAssessmentIntegrationTest extends AbstractFileUploadIntegrationT
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 2, 2, 0, 1);
         course = fileUploadExerciseUtilService.addCourseWithThreeFileUploadExercise();
-        afterReleaseFileUploadExercise = exerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "released");
+        afterReleaseFileUploadExercise = ExerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "released");
     }
 
     private List<Feedback> exerciseWithSGI() throws Exception {
@@ -93,7 +94,7 @@ class FileUploadAssessmentIntegrationTest extends AbstractFileUploadIntegrationT
 
         Course course = request.get("/api/core/courses/" + afterReleaseFileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-assessment-dashboard",
                 HttpStatus.OK, Course.class);
-        Exercise exercise = exerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "released");
+        Exercise exercise = ExerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "released");
         assertThat(exercise.getNumberOfAssessmentsOfCorrectionRounds()).hasSize(1);
         assertThat(exercise.getNumberOfAssessmentsOfCorrectionRounds()[0].inTime()).isEqualTo(1L);
     }
@@ -366,7 +367,7 @@ class FileUploadAssessmentIntegrationTest extends AbstractFileUploadIntegrationT
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getOwnAssessmentAsStudent() throws Exception {
-        FileUploadExercise assessedFileUploadExercise = exerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "assessed");
+        FileUploadExercise assessedFileUploadExercise = ExerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "assessed");
         FileUploadSubmission fileUploadSubmission = ParticipationFactory.generateFileUploadSubmission(true);
         fileUploadSubmission = fileUploadExerciseUtilService.saveFileUploadSubmissionWithResultAndAssessor(assessedFileUploadExercise, fileUploadSubmission,
                 TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
@@ -377,7 +378,7 @@ class FileUploadAssessmentIntegrationTest extends AbstractFileUploadIntegrationT
     @Test
     @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void getAssessmentOfOtherStudentAsStudent() throws Exception {
-        FileUploadExercise assessedFileUploadExercise = exerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "assessed");
+        FileUploadExercise assessedFileUploadExercise = ExerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "assessed");
         FileUploadSubmission fileUploadSubmission = ParticipationFactory.generateFileUploadSubmission(true);
         fileUploadSubmission = fileUploadExerciseUtilService.saveFileUploadSubmissionWithResultAndAssessor(assessedFileUploadExercise, fileUploadSubmission,
                 TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");

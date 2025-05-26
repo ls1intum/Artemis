@@ -30,8 +30,6 @@ import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.core.util.TestResourceUtils;
-import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
-import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
@@ -77,9 +75,6 @@ public class ModelingExerciseUtilService {
 
     @Autowired
     private FeedbackRepository feedbackRepo;
-
-    @Autowired
-    private ExamUtilService examUtilService;
 
     @Autowired
     private ParticipationUtilService participationUtilService;
@@ -133,29 +128,6 @@ public class ModelingExerciseUtilService {
      */
     public Course addCourseWithOneModelingExercise() {
         return addCourseWithOneModelingExercise("ClassDiagram");
-    }
-
-    /**
-     * Creates and saves a ModelingExercise. Also creates an active Course and an Exam with a mandatory ExerciseGroup the Modeling Exercise belongs to.
-     *
-     * @param title The title of the ModelingExercise
-     * @return The created ModelingExercise
-     */
-    public ModelingExercise addCourseExamExerciseGroupWithOneModelingExercise(String title) {
-        ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true);
-        ModelingExercise classExercise = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup);
-        classExercise.setTitle(title);
-        classExercise = modelingExerciseRepository.save(classExercise);
-        return classExercise;
-    }
-
-    /**
-     * Creates and saves a ModelingExercise. Also creates an active Course and an Exam with a mandatory ExerciseGroup the Modeling Exercise belongs to.
-     *
-     * @return The created ModelingExercise
-     */
-    public ModelingExercise addCourseExamExerciseGroupWithOneModelingExercise() {
-        return addCourseExamExerciseGroupWithOneModelingExercise("ClassDiagram");
     }
 
     /**

@@ -254,6 +254,9 @@ public class ProgrammingExerciseTestService {
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
     @Autowired
+    private ProgrammingExerciseParticipationUtilService programmingExerciseParticipationUtilService;
+
+    @Autowired
     private ParticipationUtilService participationUtilService;
 
     @Autowired
@@ -1294,8 +1297,8 @@ public class ProgrammingExerciseTestService {
         exercise.setMode(exerciseMode);
         exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
         programmingExerciseRepository.save(exercise);
-        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(exercise);
-        programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(exercise);
+        programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(exercise);
+        programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(exercise);
         return course;
     }
 
@@ -1735,8 +1738,8 @@ public class ProgrammingExerciseTestService {
         exercise.setProblemStatement(null);
         exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
         exercise = programmingExerciseRepository.save(exercise);
-        exercise = programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(exercise);
-        exercise = programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(exercise);
+        exercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(exercise);
+        exercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(exercise);
         exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exercise.getId()).orElseThrow();
     }
 
@@ -1763,8 +1766,8 @@ public class ProgrammingExerciseTestService {
         if (shouldIncludeBuildPlan) {
             buildPlanRepository.setBuildPlanForExercise("my build plan", exercise);
         }
-        exercise = programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(exercise);
-        exercise = programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(exercise);
+        exercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(exercise);
+        exercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(exercise);
         exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exercise.getId()).orElseThrow();
 
     }
@@ -1788,8 +1791,8 @@ public class ProgrammingExerciseTestService {
         // Create a programming exercise with solution, template, tests participation and build config
         exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
         exercise = programmingExerciseRepository.save(exercise);
-        exercise = programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(exercise);
-        exercise = programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(exercise);
+        exercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(exercise);
+        exercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(exercise);
         exercise.setProblemStatement("Lorem Ipsum");
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(exercise);
 
@@ -1885,8 +1888,8 @@ public class ProgrammingExerciseTestService {
 
         // Create a programming exercise with solution, template, and tests participations
         exercise = programmingExerciseRepository.save(exercise);
-        exercise = programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(exercise);
-        exercise = programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(exercise);
+        exercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(exercise);
+        exercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(exercise);
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(exercise);
 
         // Add student participation
@@ -2179,8 +2182,8 @@ public class ProgrammingExerciseTestService {
         exercise.setMode(TEAM);
         exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
         programmingExerciseRepository.save(exercise);
-        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(exercise);
-        programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(exercise);
+        programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(exercise);
+        programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(exercise);
     }
 
     // TEST

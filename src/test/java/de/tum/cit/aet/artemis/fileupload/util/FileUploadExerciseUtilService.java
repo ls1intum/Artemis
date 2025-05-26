@@ -84,6 +84,7 @@ public class FileUploadExerciseUtilService {
      * @return The created FileUploadExercise
      */
     public FileUploadExercise addCourseExamExerciseGroupWithOneFileUploadExercise(boolean startDateBeforeCurrentTime) {
+        // TODO: try to refactor this call to avoid using examUtilService here
         ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true, startDateBeforeCurrentTime);
         FileUploadExercise fileUploadExercise = FileUploadExerciseFactory.generateFileUploadExerciseForExam("pdf", exerciseGroup);
         return exerciseRepository.save(fileUploadExercise);

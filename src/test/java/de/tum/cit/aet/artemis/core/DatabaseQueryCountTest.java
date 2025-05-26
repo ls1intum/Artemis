@@ -55,7 +55,7 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationIndependentTest {
         // Tests the amount of DB calls for a 'realistic' call to courses/for-dashboard. We should aim to maintain or lower the amount of DB calls, and be aware if they increase
         // TODO: add team exercises, do not make all quizzes active
         // TODO: add 1. tutorial groups with a 2. tutorial group configuration, 3. competencies and 4. prerequisites and make sure those are not loaded in the database
-        var courses = lectureUtilService.createCoursesWithExercisesAndLecturesAndLectureUnits(TEST_PREFIX, true, true, NUMBER_OF_TUTORS);
+        var courses = courseUtilService.createCoursesWithExercisesAndLecturesAndLectureUnits(TEST_PREFIX, true, true, NUMBER_OF_TUTORS);
 
         assertThatDb(() -> {
             log.info("Start courses for dashboard call for multiple courses");
@@ -102,7 +102,8 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testExamQueryCount() throws Exception {
-        StudentExam studentExam = examUtilService.addStudentExamForActiveExamWithUser(TEST_PREFIX + "student1");
+        Course course = courseUtilService.addEmptyCourse();
+        StudentExam studentExam = examUtilService.addStudentExamForActiveExamWithUser(course, TEST_PREFIX + "student1");
 
         assertThatDb(() -> startWorkingOnExam(studentExam)).hasBeenCalledAtMostTimes(7);
         assertThatDb(() -> submitExam(studentExam)).hasBeenCalledAtMostTimes(3);

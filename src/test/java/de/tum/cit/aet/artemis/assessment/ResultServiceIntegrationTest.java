@@ -49,6 +49,7 @@ import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.fileupload.repository.FileUploadExerciseRepository;
@@ -151,7 +152,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
     void setupTest() {
         userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, 2, 0, 2);
         course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         ProgrammingExercise programmingExerciseWithStaticCodeAnalysis = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, true);
         // This is done to avoid proxy issues in the processNewResult method of the ResultService.
         solutionParticipation = solutionProgrammingExerciseRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
@@ -162,7 +163,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         Submission programmingSubmission = participationUtilService.addSubmission(programmingExerciseParticipation, new ProgrammingSubmission());
         participationUtilService.addSubmission(programmingExerciseStudentParticipation2, new ProgrammingSubmission());
         Course secondCourse = modelingExerciseUtilService.addCourseWithOneModelingExercise();
-        modelingExercise = exerciseUtilService.getFirstExerciseWithType(secondCourse, ModelingExercise.class);
+        modelingExercise = ExerciseUtilService.getFirstExerciseWithType(secondCourse, ModelingExercise.class);
         modelingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
         modelingExerciseRepository.save(modelingExercise);
         studentParticipation = participationUtilService.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "student2");
