@@ -13,6 +13,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -33,7 +34,7 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 4, 2, 0, 2);
         Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
-        programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
     }
 
     @Disabled // TODO enable - works isolated
@@ -42,7 +43,7 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
     void testStartParticipation() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
         Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        ProgrammingExercise programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        ProgrammingExercise programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         String projectKey = programmingExercise.getProjectKey();
         programmingExercise.setStartDate(ZonedDateTime.now().minusHours(1));
         // Set the branch to null to force the usage of LocalVCService#getDefaultBranch().

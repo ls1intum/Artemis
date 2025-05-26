@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
@@ -93,7 +94,7 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
 
         course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
         course = courseRepository.save(course);
-        exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         activateIrisGlobally();
         activateIrisFor(course);
         activateIrisFor(exercise);

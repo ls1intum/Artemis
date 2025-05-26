@@ -30,6 +30,7 @@ import de.tum.cit.aet.artemis.exercise.dto.TeamSearchUserDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
@@ -294,7 +295,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetTeam_BadRequest() throws Exception {
         Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        Exercise wrongExercise = exerciseUtilService.findProgrammingExerciseWithTitle(course.getExercises(), "Programming");
+        Exercise wrongExercise = ExerciseUtilService.findProgrammingExerciseWithTitle(course.getExercises(), "Programming");
 
         // Try getting a team with an exercise specified that does not match the exercise id param in the route
         Team team = teamUtilService.addTeamForExercise(wrongExercise, tutor);
@@ -497,9 +498,9 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, false, 5);
         Course course = courses.getFirst();
 
-        ProgrammingExercise programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        TextExercise textExercise = exerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
-        ModelingExercise modelingExercise = exerciseUtilService.getFirstExerciseWithType(course, ModelingExercise.class);
+        ProgrammingExercise programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        TextExercise textExercise = ExerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
+        ModelingExercise modelingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ModelingExercise.class);
 
         // make exercises team-based
         Stream.of(programmingExercise, textExercise, modelingExercise).forEach(exercise -> {
