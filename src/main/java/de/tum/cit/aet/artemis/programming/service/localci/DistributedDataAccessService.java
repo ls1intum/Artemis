@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -330,5 +332,23 @@ public class DistributedDataAccessService {
             return Stream.empty();
         }
         return hazelcastInstance.getCluster().getMembers().stream();
+    }
+
+    /**
+     * Retrieves the addresses of all members in the Hazelcast cluster.
+     *
+     * @return a set of addresses of all cluster members
+     */
+    public Set<String> getClusterMemberAddresses() {
+        return getClusterMembers().map(Member::getAddress).map(Object::toString).collect(Collectors.toSet());
+    }
+
+    /**
+     * Checks if there are no data members available in the cluster.
+     *
+     * @return {@code true} if all members in the cluster are lite members (i.e., no data members are available),
+     */
+    public boolean noDataMemberInClusterAvailable() {
+        return getClusterMembers().allMatch(Member::isLiteMember);
     }
 }

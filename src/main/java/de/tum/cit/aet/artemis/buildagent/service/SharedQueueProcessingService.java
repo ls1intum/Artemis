@@ -18,7 +18,6 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.stream.Collectors;
 
 import jakarta.annotation.PreDestroy;
 
@@ -33,7 +32,6 @@ import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import com.hazelcast.cluster.Member;
 import com.hazelcast.collection.ItemEvent;
 import com.hazelcast.collection.ItemListener;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
@@ -196,7 +194,7 @@ public class SharedQueueProcessingService {
      */
     @Scheduled(initialDelay = 60000, fixedRate = 60000) // 1 minute initial delay, 1 minute fixed rate
     public void updateBuildAgentInformation() {
-        if (noDataMemberInClusterAvailable()) {
+        if (distributedDataAccessService.noDataMemberInClusterAvailable()) {
             log.debug("There are only lite member in the cluster. Not updating build agent information.");
             return;
         }
@@ -215,7 +213,7 @@ public class SharedQueueProcessingService {
      * If so, process the next build job.
      */
     private void checkAvailabilityAndProcessNextBuild() {
-        if (noDataMemberInClusterAvailable() || distributedDataAccessService.getDistributedBuildJobQueue() == null) {
+        if (distributedDataAccessService.noDataMemberInClusterAvailable() || distributedDataAccessService.getDistributedBuildJobQueue() == null) {
             log.debug("There are only lite member in the cluster. Not processing build jobs.");
             return;
         }
@@ -277,10 +275,6 @@ public class SharedQueueProcessingService {
         }
     }
 
-    private boolean noDataMemberInClusterAvailable() {
-        return distributedDataAccessService.getClusterMembers().allMatch(Member::isLiteMember);
-    }
-
     private BuildJobQueueItem addToProcessingJobs() {
         BuildJobQueueItem buildJob = distributedDataAccessService.getDistributedBuildJobQueue().poll();
         if (buildJob != null) {
@@ -301,7 +295,7 @@ public class SharedQueueProcessingService {
     }
 
     private void removeOfflineNodes() {
-        Set<String> memberAddresses = distributedDataAccessService.getClusterMembers().map(member -> member.getAddress().toString()).collect(Collectors.toSet());
+        Set<String> memberAddresses = distributedDataAccessService.getClusterMemberAddresses();
         for (String key : distributedDataAccessService.getDistributedBuildAgentInformation().keySet()) {
             if (!memberAddresses.contains(key)) {
                 distributedDataAccessService.getDistributedBuildAgentInformation().remove(key);
