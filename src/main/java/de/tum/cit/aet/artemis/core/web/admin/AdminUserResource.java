@@ -21,6 +21,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -37,6 +38,7 @@ import de.tum.cit.aet.artemis.core.dto.pageablesearch.UserPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EmailAlreadyUsedException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.LoginAlreadyUsedException;
 import de.tum.cit.aet.artemis.core.repository.AuthorityRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -133,6 +135,36 @@ public class AdminUserResource {
             return ResponseEntity.created(new URI("/api/core/users/" + newUser.getLogin()))
                     .headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.created", newUser.getLogin())).body(newUser);
         }
+    }
+
+    /**
+     * PATCH users/:userId/activate : activate the user with the given login.
+     *
+     * @param userId the id of the user to activate
+     * @return the ResponseEntity with status 200 (OK) and with body the activated user, or with status 404 (Not Found)
+     */
+    @PatchMapping("users/{userId}/activate")
+    public ResponseEntity<UserDTO> activateUser(@PathVariable long userId) {
+        log.debug("REST request to activate User {}", userId);
+        return userRepository.findOneWithGroupsAndAuthoritiesById(userId).map(user -> {
+            userCreationService.activateUser(user);
+            return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.activated", user.getLogin())).body(new UserDTO(user));
+        }).orElseThrow(() -> new EntityNotFoundException("User", userId));
+    }
+
+    /**
+     * PATCH users/:userId/deactivate : deactivate the user with the given login.
+     *
+     * @param userId the id of the user to deactivate
+     * @return the ResponseEntity with status 200 (OK) and with body the deactivated user, or with status 404 (Not Found)
+     */
+    @PatchMapping("users/{userId}/deactivate")
+    public ResponseEntity<UserDTO> deactivateUser(@PathVariable long userId) {
+        log.debug("REST request to deactivate User {}", userId);
+        return userRepository.findOneWithGroupsAndAuthoritiesById(userId).map(user -> {
+            userCreationService.deactivateUser(user);
+            return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.deactivated", user.getLogin())).body(new UserDTO(user));
+        }).orElseThrow(() -> new EntityNotFoundException("User", userId));
     }
 
     /**

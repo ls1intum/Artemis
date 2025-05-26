@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
@@ -95,11 +96,11 @@ public class AttachmentResource {
 
         // Make sure that the original references are preserved.
         Attachment originalAttachment = attachmentRepository.findByIdOrElseThrow(attachment.getId());
-        attachment.setAttachmentUnit(originalAttachment.getAttachmentUnit());
+        attachment.setAttachmentVideoUnit(originalAttachment.getAttachmentVideoUnit());
 
         if (file != null) {
             Path basePath = FilePathConverter.getLectureAttachmentFileSystemPath().resolve(originalAttachment.getLecture().getId().toString());
-            Path savePath = fileService.saveFile(file, basePath, FilePathType.LECTURE_ATTACHMENT, true);
+            Path savePath = FileUtil.saveFile(file, basePath, FilePathType.LECTURE_ATTACHMENT, true);
             attachment.setLink(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.LECTURE_ATTACHMENT, originalAttachment.getLecture().getId()).toString());
             // Delete the old file
             URI oldPath = URI.create(originalAttachment.getLink());

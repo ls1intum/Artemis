@@ -1,11 +1,9 @@
 package de.tum.cit.aet.artemis.iris.domain.settings;
 
-import java.util.SortedSet;
-import java.util.TreeSet;
+import static de.tum.cit.aet.artemis.core.config.Constants.IRIS_CUSTOM_INSTRUCTIONS_MAX_LENGTH;
 
 import jakarta.annotation.Nullable;
 import jakarta.persistence.Column;
-import jakarta.persistence.Convert;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.validation.constraints.Min;
@@ -39,9 +37,8 @@ public class IrisLectureChatSubSettings extends IrisSubSettings {
     private Integer rateLimitTimeframeHours;
 
     @Nullable
-    @Column(name = "enabled_for_categories")
-    @Convert(converter = IrisListConverter.class)
-    private SortedSet<String> enabledForCategories = new TreeSet<>();
+    @Column(name = "custom_instructions", length = IRIS_CUSTOM_INSTRUCTIONS_MAX_LENGTH)
+    private String customInstructions;
 
     @Nullable
     public Integer getRateLimit() {
@@ -62,11 +59,11 @@ public class IrisLectureChatSubSettings extends IrisSubSettings {
     }
 
     @Nullable
-    public SortedSet<String> getEnabledForCategories() {
-        return enabledForCategories;
+    public String getCustomInstructions() {
+        return customInstructions;
     }
 
-    public void setEnabledForCategories(@Nullable SortedSet<String> enabledForCategories) {
-        this.enabledForCategories = enabledForCategories;
+    public void setCustomInstructions(@Nullable String customInstructions) {
+        this.customInstructions = customInstructions;
     }
 }
