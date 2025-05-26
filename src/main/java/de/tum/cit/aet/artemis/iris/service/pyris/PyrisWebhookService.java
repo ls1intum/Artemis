@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.Pyr
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureIngestionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
+import de.tum.cit.aet.artemis.lecture.api.LectureTranscriptionsRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.config.LectureApiNotPresentException;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
@@ -44,7 +45,6 @@ import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
-import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 
 @Service
 @Profile(PROFILE_IRIS)
@@ -62,20 +62,20 @@ public class PyrisWebhookService {
 
     private final Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi;
 
-    private final LectureTranscriptionRepository lectureTranscriptionRepository;
+    private final Optional<LectureTranscriptionsRepositoryApi> lectureTranscriptionsRepositoryApi;
 
     @Value("${server.url}")
     private String artemisBaseUrl;
 
     public PyrisWebhookService(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, IrisSettingsService irisSettingsService,
             Optional<LectureRepositoryApi> lectureRepositoryApi, Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi,
-            LectureTranscriptionRepository lectureTranscriptionRepository) {
+            Optional<LectureTranscriptionsRepositoryApi> lectureTranscriptionsRepositoryApi) {
         this.pyrisConnectorService = pyrisConnectorService;
         this.pyrisJobService = pyrisJobService;
         this.irisSettingsService = irisSettingsService;
         this.lectureRepositoryApi = lectureRepositoryApi;
         this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
-        this.lectureTranscriptionRepository = lectureTranscriptionRepository;
+        this.lectureTranscriptionsRepositoryApi = lectureTranscriptionsRepositoryApi;
     }
 
     private boolean lectureIngestionEnabled(Course course) {
@@ -116,7 +116,9 @@ public class PyrisWebhookService {
             lectureUnitLink = "";
         }
 
-        Optional<LectureTranscription> lectureTranscription = lectureTranscriptionRepository.findByLectureUnit_Id(attachmentVideoUnit.getId());
+        LectureTranscriptionsRepositoryApi transcriptionsRepositoryApi = lectureTranscriptionsRepositoryApi
+                .orElseThrow(() -> new LectureApiNotPresentException(LectureTranscriptionsRepositoryApi.class));
+        Optional<LectureTranscription> lectureTranscription = transcriptionsRepositoryApi.findByLectureUnit_Id(attachmentVideoUnit.getId());
         int version = attachmentVideoUnit.getAttachment() != null ? attachmentVideoUnit.getAttachment().getVersion() : 1;
 
         LectureUnitRepositoryApi api = lectureUnitRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureUnitRepositoryApi.class));

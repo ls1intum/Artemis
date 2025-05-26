@@ -27,7 +27,7 @@ describe('LectureTranscriptionService', () => {
         const lectureUnitId = 1;
         service.ingestTranscription(courseId, lectureId, lectureUnitId).subscribe(() => {});
 
-        const req = httpMock.expectOne({ method: 'PUT', url: `api/lecture/${lectureId}/lecture-unit/${lectureUnitId}/ingest-transcription` });
+        const req = httpMock.expectOne({ method: 'POST', url: `api/lecture/lectures/${lectureId}/lecture-units/${lectureUnitId}/ingest` });
         req.flush({});
     });
 
