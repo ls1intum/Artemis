@@ -6,6 +6,7 @@ import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -211,6 +212,18 @@ public class CourseUtilService {
      */
     public Course createCourse() {
         Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        return courseRepo.save(course);
+    }
+
+    /**
+     * Creates and saves a course with the given startDate and endDate.
+     *
+     * @param startDate The date on which the course should start
+     * @param endDate   The date on which the course should end
+     * @return The created course.
+     */
+    public Course createCourseWithStartDateAndEndDate(ZonedDateTime startDate, ZonedDateTime endDate) {
+        Course course = CourseFactory.generateCourse(null, startDate, endDate, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         return courseRepo.save(course);
     }
 
@@ -1373,5 +1386,46 @@ public class CourseUtilService {
         course.addExam(exam);
         examUtilService.addExerciseGroupsAndExercisesToExam(exam, withProgrammingExercise, withAllQuizQuestionTypes);
         return courseRepo.save(course);
+    }
+
+    /**
+     * Creates an active course that starts and ends relative to the current date in the given time zone.
+     *
+     * @param timezone      the time zone to base the course schedule on
+     * @param monthsToStart number of months before now the course should start
+     * @param monthsToEnd   number of months after now the course should end
+     * @return the created {@link Course}
+     * @throws IllegalArgumentException if {@code monthsToStart} or {@code monthsToEnd} have illegal values
+     */
+    public Course createActiveCourseInTimezone(ZoneId timezone, int monthsToStart, int monthsToEnd) {
+        if (monthsToStart <= 0 || monthsToEnd <= 0) {
+            throw new IllegalArgumentException("Months after start and months before end must be greater than zero");
+        }
+        ZonedDateTime now = ZonedDateTime.now(timezone).withDayOfMonth(1);
+        ZonedDateTime courseStart = now.minusMonths(monthsToStart);
+        ZonedDateTime courseEnd = now.plusMonths(monthsToEnd);
+        return createCourseWithStartDateAndEndDate(courseStart, courseEnd);
+    }
+
+    /**
+     * Creates a non-active course that starts and ends in the past relative to the current date in the given time zone.
+     *
+     * @param timezone      the time zone to base the course schedule on
+     * @param monthsToStart number of months before now the course should start
+     * @param monthsToEnd   number of months before now the course should end
+     * @return the created {@link Course}
+     * @throws IllegalArgumentException if {@code monthsToStart} or {@code monthsToEnd} have illegal values
+     */
+    public Course createNonActiveCourseInTimezone(ZoneId timezone, int monthsToStart, int monthsToEnd) {
+        if (monthsToStart <= 0 || monthsToEnd <= 0) {
+            throw new IllegalArgumentException("Months after start and end must be greater than zero");
+        }
+        if (monthsToStart <= monthsToEnd) {
+            throw new IllegalArgumentException("Months after start must be greater than months after end");
+        }
+        ZonedDateTime now = ZonedDateTime.now(timezone).withDayOfMonth(1);
+        ZonedDateTime courseStart = now.minusMonths(monthsToStart);
+        ZonedDateTime courseEnd = now.minusMonths(monthsToEnd);
+        return createCourseWithStartDateAndEndDate(courseStart, courseEnd);
     }
 }
