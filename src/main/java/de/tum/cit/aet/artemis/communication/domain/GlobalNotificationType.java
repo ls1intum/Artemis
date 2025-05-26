@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.communication.domain;
 
 /**
- * Enum representing the types of email notifications a user can receive.
+ * Enum representing the types of global notifications a user can receive.
  * Each constant corresponds to a specific security-related event or status change
  * for which the user may opt in or out of receiving email alerts.
  *

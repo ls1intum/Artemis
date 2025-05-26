@@ -10,7 +10,7 @@
             <column name="user_id" type="bigint">
                 <constraints nullable="false" foreignKeyName="fk_global_notification_setting_user_id" references="jhi_user(id)"/>
             </column>
-            <column name="global_notification_type" type="varchar(50)">
+            <column name="global_notification_type" type="ENUM('NEW_LOGIN', 'NEW_PASSKEY_ADDED', 'VCS_TOKEN_EXPIRED', 'SSH_KEY_EXPIRED')">
                 <constraints nullable="false"/>
             </column>
             <column name="enabled" type="boolean" defaultValueBoolean="true">
