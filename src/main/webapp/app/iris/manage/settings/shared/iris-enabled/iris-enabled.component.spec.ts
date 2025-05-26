@@ -49,7 +49,7 @@ describe('IrisEnabledComponent', () => {
         expect(comp).toBeDefined();
     });
 
-    it.each([IrisSubSettingsType.CHAT, IrisSubSettingsType.COMPETENCY_GENERATION])('should load exercise', async (subSettingstype) => {
+    it.each([IrisSubSettingsType.PROGRAMMING_EXERCISE_CHAT, IrisSubSettingsType.COMPETENCY_GENERATION])('should load exercise', async (subSettingstype) => {
         const getExerciseSettingsSpy = jest.spyOn(irisSettingsService, 'getUncombinedExerciseSettings').mockReturnValue(of(irisSettings));
         componentRef.setInput('exercise', exercise);
         componentRef.setInput('irisSubSettingsType', subSettingstype);
@@ -60,23 +60,26 @@ describe('IrisEnabledComponent', () => {
         expect(comp.irisSubSettings).toBeDefined();
     });
 
-    it.each([IrisSubSettingsType.CHAT, IrisSubSettingsType.COMPETENCY_GENERATION, IrisSubSettingsType.LECTURE_INGESTION])('should load course', async (subSettingstype) => {
-        const getExerciseSettingsSpy = jest.spyOn(irisSettingsService, 'getUncombinedCourseSettings').mockReturnValue(of(irisSettings));
-        componentRef.setInput('course', course);
-        componentRef.setInput('irisSubSettingsType', subSettingstype);
-        fixture.detectChanges();
-        expect(getExerciseSettingsSpy).toHaveBeenCalledOnce();
-        await Promise.resolve();
-        expect(comp.irisSettings).toBe(irisSettings);
-        expect(comp.irisSubSettings).toBeDefined();
-    });
+    it.each([IrisSubSettingsType.PROGRAMMING_EXERCISE_CHAT, IrisSubSettingsType.COMPETENCY_GENERATION, IrisSubSettingsType.LECTURE_INGESTION])(
+        'should load course',
+        async (subSettingstype) => {
+            const getExerciseSettingsSpy = jest.spyOn(irisSettingsService, 'getUncombinedCourseSettings').mockReturnValue(of(irisSettings));
+            componentRef.setInput('course', course);
+            componentRef.setInput('irisSubSettingsType', subSettingstype);
+            fixture.detectChanges();
+            expect(getExerciseSettingsSpy).toHaveBeenCalledOnce();
+            await Promise.resolve();
+            expect(comp.irisSettings).toBe(irisSettings);
+            expect(comp.irisSubSettings).toBeDefined();
+        },
+    );
 
     it('should set exercise enabled', async () => {
         const setSettingsSpy = jest.spyOn(irisSettingsService, 'setExerciseSettings').mockReturnValue(of(new HttpResponse({ body: null as any as IrisSettings })));
         componentRef.setInput('exercise', exercise);
-        componentRef.setInput('irisSubSettingsType', IrisSubSettingsType.CHAT);
+        componentRef.setInput('irisSubSettingsType', IrisSubSettingsType.PROGRAMMING_EXERCISE_CHAT);
         comp.irisSettings = irisSettings;
-        comp.irisSubSettings.set(irisSettings.irisChatSettings);
+        comp.irisSubSettings.set(irisSettings.irisProgrammingExerciseChatSettings);
 
         comp.setEnabled(true);
         expect(setSettingsSpy).toHaveBeenCalledOnce();
@@ -88,8 +91,8 @@ describe('IrisEnabledComponent', () => {
         const setSettingsSpy = jest.spyOn(irisSettingsService, 'setCourseSettings').mockReturnValue(of(new HttpResponse({ body: null as any as IrisSettings })));
         componentRef.setInput('course', course);
         comp.irisSettings = irisSettings;
-        componentRef.setInput('irisSubSettingsType', IrisSubSettingsType.CHAT);
-        comp.irisSubSettings.set(irisSettings.irisChatSettings);
+        componentRef.setInput('irisSubSettingsType', IrisSubSettingsType.PROGRAMMING_EXERCISE_CHAT);
+        comp.irisSubSettings.set(irisSettings.irisProgrammingExerciseChatSettings);
 
         comp.setEnabled(true);
         expect(setSettingsSpy).toHaveBeenCalledOnce();
@@ -121,7 +124,7 @@ describe('IrisEnabledComponent', () => {
 
     function assertIrisSubSettings(setSettingsSpy: jest.SpyInstance, expectedStatus: boolean) {
         expect(setSettingsSpy).toHaveBeenCalledOnce();
-        expect(comp.irisSettings!.irisChatSettings?.enabled).toBe(expectedStatus);
+        expect(comp.irisSettings!.irisProgrammingExerciseChatSettings?.enabled).toBe(expectedStatus);
         expect(comp.irisSettings!.irisTextExerciseChatSettings?.enabled).toBe(expectedStatus);
         expect(comp.irisSettings!.irisCourseChatSettings?.enabled).toBe(expectedStatus);
         expect(comp.irisSettings!.irisCompetencyGenerationSettings?.enabled).toBe(expectedStatus);
@@ -147,7 +150,7 @@ describe('IrisEnabledComponent', () => {
     it('should set irisSubSettings.enabled to true and someButNotAllSettingsEnabled to true when some but not all sub-settings are enabled', async () => {
         jest.spyOn(irisSettingsService, 'getUncombinedCourseSettings').mockReturnValue(
             of({
-                irisChatSettings: { type: IrisSubSettingsType.CHAT, enabled: true },
+                irisProgrammingExerciseChatSettings: { type: IrisSubSettingsType.PROGRAMMING_EXERCISE_CHAT, enabled: true },
                 irisTextExerciseChatSettings: { type: IrisSubSettingsType.TEXT_EXERCISE_CHAT, enabled: false },
                 irisCourseChatSettings: { type: IrisSubSettingsType.COURSE_CHAT, enabled: true },
                 irisCompetencyGenerationSettings: { type: IrisSubSettingsType.COMPETENCY_GENERATION, enabled: false },

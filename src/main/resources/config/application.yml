@@ -100,7 +100,7 @@ artemis:
                 bash:
                     default: "ghcr.io/ls1intum/artemis-bash-docker:v1.0.0"
                 c_plus_plus:
-                    default: "ghcr.io/ls1intum/artemis-cpp-docker:v1.1.1"
+                    default: "ghcr.io/ls1intum/artemis-cpp-docker:v1.1.2"
                 c_sharp:
                     default: "ghcr.io/ls1intum/artemis-csharp-docker:v1.0.1"
                 typescript:
@@ -227,7 +227,7 @@ spring:
     main:
         allow-bean-definition-overriding: false
         allow-circular-references: false
-        lazy-initialization: false # cannot set this because of static inject in FilePathService
+        lazy-initialization: true
     task:
         execution:
             thread-name-prefix: artemis-task-

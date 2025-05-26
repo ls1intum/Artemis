@@ -55,7 +55,7 @@ class ParticipationLifecycleServiceTest extends AbstractSpringIntegrationIndepen
 
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
         Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         participation = participationUtilService.addStudentParticipationForProgrammingExercise(this.programmingExercise, TEST_PREFIX + "student1");
     }
 
