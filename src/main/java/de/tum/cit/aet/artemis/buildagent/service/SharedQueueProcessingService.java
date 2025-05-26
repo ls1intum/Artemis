@@ -141,9 +141,9 @@ public class SharedQueueProcessingService {
 
         // Remove listener if already present
         if (this.listenerId != null) {
-            distributedDataAccessService.getDistributedQueuedJobs().removeItemListener(this.listenerId);
+            distributedDataAccessService.getDistributedBuildJobQueue().removeItemListener(this.listenerId);
         }
-        this.listenerId = this.distributedDataAccessService.getDistributedQueuedJobs().addItemListener(new QueuedBuildJobItemListener(), true);
+        this.listenerId = this.distributedDataAccessService.getDistributedBuildJobQueue().addItemListener(new QueuedBuildJobItemListener(), true);
 
         /*
          * Check every 10 seconds whether the node has at least one thread available for a new build job.
@@ -176,7 +176,7 @@ public class SharedQueueProcessingService {
         // check if Hazelcast is still active, before invoking this
         try {
             if (distributedDataAccessService.isInstanceRunning()) {
-                distributedDataAccessService.getDistributedQueuedJobs().removeItemListener(this.listenerId);
+                distributedDataAccessService.getDistributedBuildJobQueue().removeItemListener(this.listenerId);
             }
         }
         catch (HazelcastInstanceNotActiveException e) {
@@ -215,7 +215,7 @@ public class SharedQueueProcessingService {
      * If so, process the next build job.
      */
     private void checkAvailabilityAndProcessNextBuild() {
-        if (noDataMemberInClusterAvailable() || distributedDataAccessService.getDistributedQueuedJobs() == null) {
+        if (noDataMemberInClusterAvailable() || distributedDataAccessService.getDistributedBuildJobQueue() == null) {
             log.debug("There are only lite member in the cluster. Not processing build jobs.");
             return;
         }
@@ -230,14 +230,14 @@ public class SharedQueueProcessingService {
             return;
         }
 
-        if (distributedDataAccessService.getDistributedQueuedJobs().isEmpty() || isPaused.get()) {
+        if (distributedDataAccessService.getDistributedBuildJobQueue().isEmpty() || isPaused.get()) {
             return;
         }
         BuildJobQueueItem buildJob = null;
         instanceLock.lock();
         try {
             // Recheck conditions after acquiring the lock to ensure they are still valid
-            if (!nodeIsAvailable() || distributedDataAccessService.getDistributedQueuedJobs().isEmpty() || isPaused.get()) {
+            if (!nodeIsAvailable() || distributedDataAccessService.getDistributedBuildJobQueue().isEmpty() || isPaused.get()) {
                 return;
             }
 
@@ -265,7 +265,7 @@ public class SharedQueueProcessingService {
                     // TODO: we should try to run this job on a different build agent to avoid getting the same error again
                     buildJob = new BuildJobQueueItem(buildJob, new BuildAgentDTO("", "", ""), buildJob.retryCount() + 1);
                     log.info("Adding build job {} back to the queue with retry count {}", buildJob, buildJob.retryCount());
-                    distributedDataAccessService.getDistributedQueuedJobs().add(buildJob);
+                    distributedDataAccessService.getDistributedBuildJobQueue().add(buildJob);
                 }
                 localProcessingJobs.decrementAndGet();
             }
@@ -282,7 +282,7 @@ public class SharedQueueProcessingService {
     }
 
     private BuildJobQueueItem addToProcessingJobs() {
-        BuildJobQueueItem buildJob = distributedDataAccessService.getDistributedQueuedJobs().poll();
+        BuildJobQueueItem buildJob = distributedDataAccessService.getDistributedBuildJobQueue().poll();
         if (buildJob != null) {
             String hazelcastMemberAddress = distributedDataAccessService.getLocalMemberAddress();
 
@@ -340,7 +340,7 @@ public class SharedQueueProcessingService {
 
             ResultQueueItem resultQueueItem = new ResultQueueItem(buildResult, finishedJob, buildLogs, null);
             if (processResults.get()) {
-                distributedDataAccessService.getDistributedResultQueue().add(resultQueueItem);
+                distributedDataAccessService.getDistributedBuildResultQueue().add(resultQueueItem);
             }
             else {
                 log.info("Build agent is paused. Not adding build result to result queue for build job: {}", buildJob);
@@ -391,7 +391,7 @@ public class SharedQueueProcessingService {
 
             ResultQueueItem resultQueueItem = new ResultQueueItem(failedResult, job, buildLogs, ex);
             if (processResults.get()) {
-                distributedDataAccessService.getDistributedResultQueue().add(resultQueueItem);
+                distributedDataAccessService.getDistributedBuildResultQueue().add(resultQueueItem);
             }
             else {
                 log.info("Build agent is paused. Not adding build result to result queue for build job: {}", buildJob);
@@ -464,7 +464,7 @@ public class SharedQueueProcessingService {
         List<BuildJobQueueItem> runningBuildJobsAfterGracePeriod = distributedDataAccessService.getDistributedProcessingJobs().getAll(runningBuildJobIdsAfterGracePeriod).values()
                 .stream().toList();
         runningBuildJobIdsAfterGracePeriod.forEach(buildJobManagementService::cancelBuildJob);
-        distributedDataAccessService.getDistributedQueuedJobs().addAll(runningBuildJobsAfterGracePeriod);
+        distributedDataAccessService.getDistributedBuildJobQueue().addAll(runningBuildJobsAfterGracePeriod);
         log.info("Cancelled running build jobs and added them back to the queue with Ids {}", runningBuildJobIdsAfterGracePeriod);
         log.debug("Cancelled running build jobs: {}", runningBuildJobsAfterGracePeriod);
     }
@@ -487,7 +487,7 @@ public class SharedQueueProcessingService {
 
             // We remove the listener and scheduledTask first to avoid having multiple listeners and scheduled tasks running
             removeListenerAndCancelScheduledFuture();
-            listenerId = distributedDataAccessService.getDistributedQueuedJobs().addItemListener(new QueuedBuildJobItemListener(), true);
+            listenerId = distributedDataAccessService.getDistributedBuildJobQueue().addItemListener(new QueuedBuildJobItemListener(), true);
             scheduledFuture = taskScheduler.scheduleAtFixedRate(this::checkAvailabilityAndProcessNextBuild, Duration.ofSeconds(10));
 
             buildAgentInformationService.updateLocalBuildAgentInformation(isPaused.get());

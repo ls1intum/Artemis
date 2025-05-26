@@ -95,7 +95,7 @@ public class LocalCIResultProcessingService {
      */
     @EventListener(ApplicationReadyEvent.class)
     public void init() {
-        this.listenerId = distributedDataAccessService.getDistributedResultQueue().addItemListener(new ResultQueueListener(), true);
+        this.listenerId = distributedDataAccessService.getDistributedBuildResultQueue().addItemListener(new ResultQueueListener(), true);
     }
 
     /**
@@ -107,7 +107,7 @@ public class LocalCIResultProcessingService {
         // check if Hazelcast is still active, before invoking this
         try {
             if (distributedDataAccessService.isInstanceRunning()) {
-                distributedDataAccessService.getDistributedResultQueue().removeItemListener(this.listenerId);
+                distributedDataAccessService.getDistributedBuildResultQueue().removeItemListener(this.listenerId);
             }
         }
         catch (HazelcastInstanceNotActiveException e) {
@@ -121,7 +121,7 @@ public class LocalCIResultProcessingService {
     public void processResult() {
 
         // set lock to prevent multiple nodes from processing the same build job
-        ResultQueueItem resultQueueItem = distributedDataAccessService.getDistributedResultQueue().poll();
+        ResultQueueItem resultQueueItem = distributedDataAccessService.getDistributedBuildResultQueue().poll();
 
         if (resultQueueItem == null) {
             return;
