@@ -187,7 +187,7 @@ public class PyrisWebhookService {
      */
     public String addLectureUnitToPyrisDB(AttachmentVideoUnit attachmentVideoUnit) {
         if (lectureIngestionEnabled(attachmentVideoUnit.getLecture().getCourse())) {
-            if (!attachmentVideoUnit.getVideoSource().isEmpty() || (attachmentVideoUnit.getAttachment() != null
+            if ((attachmentVideoUnit.getVideoSource() != null && !attachmentVideoUnit.getVideoSource().isEmpty()) || (attachmentVideoUnit.getAttachment() != null
                     && (attachmentVideoUnit.getAttachment().getAttachmentType() == AttachmentType.FILE && attachmentVideoUnit.getAttachment().getLink().endsWith(".pdf")))) {
                 return executeLectureAdditionWebhook(processAttachmentVideoUnitForUpdate(attachmentVideoUnit), attachmentVideoUnit.getLecture().getCourse());
             }
