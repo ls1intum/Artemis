@@ -44,9 +44,10 @@
             <div class="description" jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.repetitionIntensity.description"></div>
             <jhi-segmented-toggle [options]="repetitionIntensityOptions" [(selected)]="repetitionIntensity" (selectedChange)="onToggleChange()" />
         </div>
-        <div class="col align-items-end">
+        <div class="col">
+            <div class="title" jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.proficiency.label"></div>
+            <div class="description" jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.proficiency.description"></div>
             <jhi-double-slider
-                [title]="translateService.instant('artemisApp.learnerProfile.courseLearnerProfile.proficiency.label')"
                 [step]="0.1"
                 [min]="CourseLearnerProfileDTO.MIN_VALUE"
                 [max]="CourseLearnerProfileDTO.MAX_VALUE"

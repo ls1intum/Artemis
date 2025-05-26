@@ -6,7 +6,6 @@ import { Component, input, model } from '@angular/core';
     styleUrls: ['./double-slider.component.scss'],
 })
 export class DoubleSliderComponent {
-    title = input.required<string>();
     initialValue = input.required<number>();
     min = input<number>(1);
     max = input<number>(5);
