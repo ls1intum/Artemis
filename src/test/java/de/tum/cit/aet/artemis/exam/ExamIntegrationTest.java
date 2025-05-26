@@ -1255,7 +1255,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
 
         assertThat(title).isEqualTo(exam.getTitle());
 
-        // Test for exams with titles with leading & trailing whitespaces
+        // Test for exams with titles with leading and trailing whitespaces
         examRepository.delete(exam);
         exam = ExamFactory.generateExam(course1);
 
@@ -1270,9 +1270,9 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
         examRepository.delete(exam);
         exam = ExamFactory.generateExam(course1);
 
-        // copy to effectively final variable
+        // copy to effectively final variable to be able to use it in a lambda expression
         final Exam finalExam = exam;
-        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> finalExam.setTitle(null));
+        assertThatExceptionOfType(NullPointerException.class).isThrownBy(() -> finalExam.setTitle(null));
     }
 
     @Test
@@ -1316,7 +1316,10 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetExamCorrectionRounds() throws Exception {
-        record CorrectionRoundsEntry(Integer correctionRounds, int actualCorrectionRounds) {
+        // This test tests if, once an exam has been created, the correction rounds attribute is correct.
+        // This test does not verify if creating the exam with the planned number of correction rounds
+        // actually is possible.
+        record CorrectionRoundsEntry(Integer plannedCorrectionRounds, int actualCorrectionRounds) {
         }
 
         List<CorrectionRoundsEntry> plannedCorrectionRoundsToActualCorrectionRounds = List.of(new CorrectionRoundsEntry(0, 0), new CorrectionRoundsEntry(1, 1),
@@ -1326,7 +1329,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
         for (var entry : plannedCorrectionRoundsToActualCorrectionRounds) {
 
             Exam exam = ExamFactory.generateExam(course1);
-            exam.setNumberOfCorrectionRoundsInExam(entry.correctionRounds);
+            exam.setNumberOfCorrectionRoundsInExam(entry.plannedCorrectionRounds);
             assertThat(exam.getNumberOfCorrectionRoundsInExam()).isEqualTo(entry.actualCorrectionRounds);
             exam = examRepository.save(exam);
 
@@ -1340,24 +1343,87 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testCreateExamCorrectionRounds() throws Exception {
-        // Correction round <= 0
+    void testCreateExamValidCorrectionRounds() throws Exception {
+        // Real exam - correction rounds = 1
         final Exam examA = ExamFactory.generateExam(course1);
         examA.setNumberOfCorrectionRoundsInExam(1);
         assertThat(examA.getNumberOfCorrectionRoundsInExam()).isEqualTo(1);
         URI createdExamURI = request.post("/api/exam/courses/" + course1.getId() + "/exams", examA, HttpStatus.CREATED);
         Exam receivedExam = request.get(String.valueOf(createdExamURI), HttpStatus.OK, Exam.class);
-        // TODO
+        assertThat(receivedExam.getNumberOfCorrectionRoundsInExam()).isEqualTo(1);
 
-        // Correction round >= 2
+        // Real exam - correction rounds = 2
         final Exam examB = ExamFactory.generateExam(course1);
-        examB.setNumberOfCorrectionRoundsInExam(3);
-        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exam-import", examB, HttpStatus.BAD_REQUEST, null);
+        examB.setNumberOfCorrectionRoundsInExam(2);
+        assertThat(examB.getNumberOfCorrectionRoundsInExam()).isEqualTo(2);
+        createdExamURI = request.post("/api/exam/courses/" + course1.getId() + "/exams", examB, HttpStatus.CREATED);
+        receivedExam = request.get(String.valueOf(createdExamURI), HttpStatus.OK, Exam.class);
+        assertThat(receivedExam.getNumberOfCorrectionRoundsInExam()).isEqualTo(2);
 
-        // Correction round != 0 for test exam
+        // Test exam - correction rounds = 0
         final Exam examC = ExamFactory.generateTestExam(course1);
-        examC.setNumberOfCorrectionRoundsInExam(1);
-        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exam-import", examC, HttpStatus.BAD_REQUEST, null);
+        examC.setNumberOfCorrectionRoundsInExam(0);
+        createdExamURI = request.post("/api/exam/courses/" + course1.getId() + "/exams", examC, HttpStatus.CREATED);
+        receivedExam = request.get(String.valueOf(createdExamURI), HttpStatus.OK, Exam.class);
+        assertThat(receivedExam.getNumberOfCorrectionRoundsInExam()).isEqualTo(0);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetCourseNameAsInstructor() throws Exception {
+        testGetCourseName(HttpStatus.CREATED);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetCourseNameAsTeachingAssistant() throws Exception {
+        testGetCourseName(HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "user1", roles = "USER")
+    void testGetCourseNameAsUser() throws Exception {
+        testGetCourseName(HttpStatus.FORBIDDEN);
+    }
+
+    void testGetCourseName(HttpStatus httpStatus) throws Exception {
+        // First we test for an actual name
+        {
+            final String testCourseName = "Course Name for Testing";
+            final Exam examA = ExamFactory.generateExam(course1);
+            examA.setCourseName(testCourseName);
+            assertThat(examA.getCourseName()).isEqualTo(testCourseName);
+            final URI createdExamURI = request.post("/api/exam/courses/" + course1.getId() + "/exams", examA, httpStatus);
+            if (httpStatus == HttpStatus.CREATED) {
+                Exam receivedExam = request.get(String.valueOf(createdExamURI), HttpStatus.OK, Exam.class);
+                assertThat(receivedExam.getCourseName()).isEqualTo(testCourseName);
+            }
+        }
+
+        // Here we test for null
+        {
+            final Exam examB = ExamFactory.generateExam(course1);
+            examB.setCourseName(null);
+            assertThat(examB.getCourseName()).isNull();
+            final URI createdExamURI = request.post("/api/exam/courses/" + course1.getId() + "/exams", examB, httpStatus);
+            if (httpStatus == HttpStatus.CREATED) {
+                Exam receivedExam = request.get(String.valueOf(createdExamURI), HttpStatus.OK, Exam.class);
+                assertThat(receivedExam.getCourseName()).isNull();
+            }
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = { 0, 1, 2, 5, 10, 20, 100, 1000 })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetQuizExamMaxPoints(int quizExamMaxPoints) throws Exception {
+        final Exam exam = ExamFactory.generateExam(course1);
+        exam.setQuizExamMaxPoints(quizExamMaxPoints);
+        assertThat(exam.getQuizExamMaxPoints()).isEqualTo(quizExamMaxPoints);
+
+        final URI createdExamURI = request.post("/api/exam/courses/" + course1.getId() + "/exams", exam, HttpStatus.CREATED);
+        final Exam receivedExam = request.get(String.valueOf(createdExamURI), HttpStatus.OK, Exam.class);
+        assertThat(receivedExam.getQuizExamMaxPoints()).isEqualTo(quizExamMaxPoints);
     }
 
     @Test

@@ -175,11 +175,7 @@ public class Exam extends DomainObject {
         return title;
     }
 
-    public void setTitle(String title) throws IllegalArgumentException {
-        if (title == null) {
-            throw new IllegalArgumentException("Title cannot be null");
-        }
-
+    public void setTitle(@NotNull String title) {
         this.title = title.strip();
     }
 
@@ -451,9 +447,9 @@ public class Exam extends DomainObject {
      * @return true, if students are allowed to see this exam, otherwise false, null if this cannot be determined
      */
     @JsonIgnore
-    public Boolean isVisibleToStudents() {
+    public Boolean isVisibleToStudents() throws IllegalStateException {
         if (visibleDate == null) {  // no visible date means the exam is configured wrongly and should not be visible!
-            return null;
+            throw new IllegalStateException("The exam " + this.title + " has no visible date set!");
         }
         return visibleDate.isBefore(ZonedDateTime.now());
     }
@@ -464,9 +460,9 @@ public class Exam extends DomainObject {
      * @return true, if the exam has started, otherwise false, null if this cannot be determined
      */
     @JsonIgnore
-    public Boolean isStarted() {
+    public Boolean isStarted() throws IllegalStateException {
         if (startDate == null) {   // no start date means the exam is configured wrongly and we cannot answer the question!
-            return null;
+            throw new IllegalStateException("The exam " + this.title + " has no start date set!");
         }
         return startDate.isBefore(ZonedDateTime.now());
     }
