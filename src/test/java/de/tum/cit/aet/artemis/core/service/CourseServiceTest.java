@@ -27,7 +27,9 @@ import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserDto;
+import de.tum.cit.aet.artemis.core.service.user.PasswordService;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
+import de.tum.cit.aet.artemis.core.user.util.UserFactory;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
@@ -74,6 +76,9 @@ class CourseServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     @Autowired
     private ConversationUtilService conversationUtilService;
+
+    @Autowired
+    private PasswordService passwordService;
 
     @BeforeEach
     void initTestCase() {
@@ -318,9 +323,38 @@ class CourseServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         }
         StudentDTO dto2 = new StudentDTO(null, null, null, null, null);
 
-        List<StudentDTO> registrationFailures = request.postListWithResponseBody("/api/core/courses/" + course1.getId() + "/" + user + "s", List.of(dto1, dto2), StudentDTO.class,
-                HttpStatus.OK);
-        assertThat(registrationFailures).containsExactly(dto2);
+        var failures = request.postListWithResponseBody("/api/core/courses/" + course1.getId() + "/" + user + "s", List.of(dto1, dto2), StudentDTO.class, HttpStatus.OK);
+        assertThat(failures).containsExactly(dto2);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testRegisterLdapEdgeCaseUserInCourse() throws Exception {
+        Course course1 = courseUtilService.createCourse();
+        course1.setStudentGroupName("student");
+        courseRepository.save(course1);
+
+        // Setup: the user already exists in the database, but does not have a registration number
+        String userName = "go42tum";
+        String registrationNumber = "1234567";
+        userUtilService.createAndSaveUser(userName, passwordService.hashPassword(UserFactory.USER_PASSWORD));
+
+        // setup mocks
+        var ldapUser1Dto = new LdapUserDto().firstName("Erika").lastName("Musterfrau").login(userName).email(userName + "@tum.de").registrationNumber(registrationNumber);
+
+        // the instructor searches for a registration number, so the user is not found in the database, but in the LDAP service, this should still work
+        StudentDTO dto1 = new StudentDTO(null, null, null, registrationNumber, null);
+        doReturn(Optional.of(ldapUser1Dto)).when(ldapUserService).findByRegistrationNumber(dto1.registrationNumber());
+        var failures = request.postListWithResponseBody("/api/core/courses/" + course1.getId() + "/students", List.of(dto1), StudentDTO.class, HttpStatus.OK);
+        assertThat(failures).isEmpty();
+
+        var student = userRepository.findOneWithGroupsAndAuthoritiesByLogin("go42tum");
+        assertThat(student).isPresent();
+        assertThat(student.get().getRegistrationNumber()).isEqualTo("1234567");
+        assertThat(student.get().getFirstName()).isEqualTo("Erika");
+        assertThat(student.get().getLastName()).isEqualTo("Musterfrau");
+        assertThat(student.get().getEmail()).isEqualTo(userName + "@tum.de");
+        assertThat(student.get().getGroups()).contains(course1.getStudentGroupName());
     }
 
     @Test
