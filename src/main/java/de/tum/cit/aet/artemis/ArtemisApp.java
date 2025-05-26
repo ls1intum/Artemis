@@ -3,8 +3,6 @@ package de.tum.cit.aet.artemis;
 import static de.tum.cit.aet.artemis.core.config.Constants.UPLOADS_FILE_PATH_DEFAULT;
 import static de.tum.cit.aet.artemis.core.config.Constants.UPLOADS_FILE_PATH_PROPERTY_NAME;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
@@ -25,7 +23,6 @@ import de.tum.cit.aet.artemis.core.config.LicenseConfiguration;
 import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
 import de.tum.cit.aet.artemis.core.config.TheiaConfiguration;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
-import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import tech.jhipster.config.DefaultProfileUtil;
 import tech.jhipster.config.JHipsterConstants;
 
@@ -90,46 +87,5 @@ public class ArtemisApp {
         String fileUploadPath = env.getProperty(UPLOADS_FILE_PATH_PROPERTY_NAME);
         // Set the file upload path for the FilePathConverter, use the default path "uploads" if not specified
         FilePathConverter.setFileUploadPath(Path.of(fileUploadPath == null ? UPLOADS_FILE_PATH_DEFAULT : fileUploadPath));
-        var buildProperties = context.getBean(BuildProperties.class);
-        var gitProperties = context.getBean(GitProperties.class);
-        logApplicationStartup(env, buildProperties, gitProperties);
-    }
-
-    private static void logApplicationStartup(Environment env, BuildProperties buildProperties, GitProperties gitProperties) {
-        String protocol = "http";
-        if (env.getProperty("server.ssl.key-store") != null) {
-            protocol = "https";
-        }
-        String serverPort = env.getProperty("server.port");
-        String version = buildProperties.getVersion();
-        String gitCommitId = gitProperties.getShortCommitId();
-        String gitBranch = gitProperties.getBranch();
-        String contextPath = env.getProperty("server.servlet.context-path");
-        if (StringUtils.isBlank(contextPath)) {
-            contextPath = "/";
-        }
-        String hostAddress = "localhost";
-        try {
-            hostAddress = InetAddress.getLocalHost().getHostAddress();
-        }
-        catch (UnknownHostException e) {
-            log.warn("The host name could not be determined, using `localhost` as fallback");
-        }
-        log.info("""
-
-                ----------------------------------------------------------
-                \t'{}' is running! Access URLs:
-                \tLocal:        {}://localhost:{}{}
-                \tExternal:     {}://{}:{}{}
-                \tProfiles:     {}
-                \tVersion:      {}
-                \tGit Commit:   {}
-                \tGit Branch:   {}
-                \tFull startup: {}
-                ----------------------------------------------------------
-
-                """, env.getProperty("spring.application.name"), protocol, serverPort, contextPath, protocol, hostAddress, serverPort, contextPath,
-                env.getActiveProfiles().length == 0 ? env.getDefaultProfiles() : env.getActiveProfiles(), version, gitCommitId, gitBranch,
-                TimeLogUtil.formatDurationFrom(appStart));
     }
 }
