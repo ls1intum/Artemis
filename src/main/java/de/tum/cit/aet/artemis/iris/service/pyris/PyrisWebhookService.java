@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -25,6 +26,7 @@ import de.tum.cit.aet.artemis.communication.domain.Faq;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.iris.dto.IngestionState;
 import de.tum.cit.aet.artemis.iris.exception.IrisInternalPyrisErrorException;
@@ -64,18 +66,21 @@ public class PyrisWebhookService {
 
     private final Optional<LectureTranscriptionsRepositoryApi> lectureTranscriptionsRepositoryApi;
 
+    private final InstanceMessageSendService instanceMessageSendService;
+
     @Value("${server.url}")
     private String artemisBaseUrl;
 
     public PyrisWebhookService(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, IrisSettingsService irisSettingsService,
             Optional<LectureRepositoryApi> lectureRepositoryApi, Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi,
-            Optional<LectureTranscriptionsRepositoryApi> lectureTranscriptionsRepositoryApi) {
+            Optional<LectureTranscriptionsRepositoryApi> lectureTranscriptionsRepositoryApi, @Lazy InstanceMessageSendService instanceMessageSendService) {
         this.pyrisConnectorService = pyrisConnectorService;
         this.pyrisJobService = pyrisJobService;
         this.irisSettingsService = irisSettingsService;
         this.lectureRepositoryApi = lectureRepositoryApi;
         this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
         this.lectureTranscriptionsRepositoryApi = lectureTranscriptionsRepositoryApi;
+        this.instanceMessageSendService = instanceMessageSendService;
     }
 
     private boolean lectureIngestionEnabled(Course course) {
@@ -154,12 +159,13 @@ public class PyrisWebhookService {
         if (course.isEmpty()) {
             return;
         }
+
         var settings = irisSettingsService.getCombinedIrisSettingsFor(course.get(), false).irisLectureIngestionSettings();
         if (!settings.enabled() || !settings.autoIngest()) {
             return;
         }
         for (AttachmentVideoUnit attachmentVideoUnit : newAttachmentVideoUnits) {
-            addLectureUnitToPyrisDB(attachmentVideoUnit);
+            instanceMessageSendService.sendLectureUnitAutoIngestionSchedule(attachmentVideoUnit.getId());
         }
     }
 

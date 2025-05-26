@@ -1,0 +1,59 @@
+package de.tum.cit.aet.artemis.iris.service;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE_AND_SCHEDULING;
+
+import java.time.ZonedDateTime;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ScheduledFuture;
+
+import org.springframework.context.annotation.Profile;
+import org.springframework.scheduling.TaskScheduler;
+import org.springframework.stereotype.Service;
+
+import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
+import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
+import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
+
+@Service
+@Profile(PROFILE_CORE_AND_SCHEDULING)
+public class IrisLectureUnitAutoIngestionService {
+
+    private static final long BACKOFF_TIME_MINUTES = 2;
+
+    IrisLectureApi irisLectureApi;
+
+    TaskScheduler taskScheduler;
+
+    LectureUnitRepository lectureUnitRepository;
+
+    private final Map<Long, ScheduledFuture<?>> scheduledIngestionTasks = new ConcurrentHashMap<>();
+
+    public IrisLectureUnitAutoIngestionService(IrisLectureApi irisLectureApi, TaskScheduler taskScheduler, LectureUnitRepository lectureUnitRepository) {
+        this.irisLectureApi = irisLectureApi;
+        this.taskScheduler = taskScheduler;
+        this.lectureUnitRepository = lectureUnitRepository;
+
+    }
+
+    public void scheduleLectureUnitAutoIngestion(Long lectureUnitId) {
+        cancelLectureUnitAutoIngestion(lectureUnitId);
+
+        LectureUnit unit = lectureUnitRepository.findByIdElseThrow(lectureUnitId);
+
+        if (unit instanceof AttachmentVideoUnit attachmentVideoUnit) {
+            ZonedDateTime triggerTime = ZonedDateTime.now().plusMinutes(BACKOFF_TIME_MINUTES);
+            ScheduledFuture<?> scheduledTask = this.taskScheduler.schedule(() -> irisLectureApi.addLectureUnitToPyrisDB(attachmentVideoUnit), triggerTime.toInstant());
+            scheduledIngestionTasks.put(lectureUnitId, scheduledTask);
+        }
+    }
+
+    public void cancelLectureUnitAutoIngestion(Long lectureUnitId) {
+        ScheduledFuture<?> scheduledTask = scheduledIngestionTasks.get(lectureUnitId);
+        if (scheduledTask != null) {
+            scheduledTask.cancel(false);
+            scheduledIngestionTasks.remove(lectureUnitId);
+        }
+    }
+}
