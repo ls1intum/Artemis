@@ -13,8 +13,6 @@ import org.springframework.boot.info.GitProperties;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import com.hazelcast.core.HazelcastInstance;
-
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDetailsDTO;
@@ -28,8 +26,6 @@ import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessS
 public class BuildAgentInformationService {
 
     private static final Logger log = org.slf4j.LoggerFactory.getLogger(BuildAgentInformationService.class);
-
-    private final HazelcastInstance hazelcastInstance;
 
     private final BuildAgentConfiguration buildAgentConfiguration;
 
@@ -45,9 +41,8 @@ public class BuildAgentInformationService {
     @Value("${artemis.continuous-integration.build-agent.display-name:}")
     private String buildAgentDisplayName;
 
-    public BuildAgentInformationService(HazelcastInstance hazelcastInstance, BuildAgentConfiguration buildAgentConfiguration, BuildAgentSshKeyService buildAgentSSHKeyService,
+    public BuildAgentInformationService(BuildAgentConfiguration buildAgentConfiguration, BuildAgentSshKeyService buildAgentSSHKeyService,
             DistributedDataAccessService distributedDataAccessService, GitProperties gitProperties) {
-        this.hazelcastInstance = hazelcastInstance;
         this.buildAgentConfiguration = buildAgentConfiguration;
         this.buildAgentSSHKeyService = buildAgentSSHKeyService;
         this.gitProperties = gitProperties;
