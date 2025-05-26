@@ -247,6 +247,7 @@ public abstract class Participation extends DomainObject implements Participatio
     /**
      * @deprecated This method is deprecated and will be removed in the future.
      *             We will investigate options to delete this method in a follow-up PR.
+     * @return all results of the participation, including illegal submissions
      */
     @Deprecated(forRemoval = true)
     @JsonIgnore
