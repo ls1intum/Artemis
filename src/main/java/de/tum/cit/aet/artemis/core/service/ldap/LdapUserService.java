@@ -96,6 +96,13 @@ public class LdapUserService {
         }
     }
 
+    /**
+     * Syncs the user details from the LDAP user DTO to the Artemis user entity.
+     * This method updates the first name, last name, email, and registration number of the user.
+     *
+     * @param user        the Artemis user entity to be updated
+     * @param ldapUserDto the LDAP user DTO containing the details to sync
+     */
     public static void syncUserDetails(User user, LdapUserDto ldapUserDto) {
         if (ldapUserDto != null) {
             if (ldapUserDto.getFirstName() != null) {
