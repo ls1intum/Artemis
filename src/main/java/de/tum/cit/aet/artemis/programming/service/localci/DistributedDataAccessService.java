@@ -28,8 +28,6 @@ import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
 
 /**
  * This service is used to access the distributed data structures in Hazelcast.
- * It provides methods to get the distributed queues and maps for build jobs, processing jobs, build results, and build agent information.
- * It also provides methods to get the size of the queues and maps, and to get the queued and processing jobs for a specific course or participation.
  * All data structures are created lazily, meaning they are only created when they are first accessed.
  */
 @Lazy
