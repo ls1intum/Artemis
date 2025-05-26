@@ -48,6 +48,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
+import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.dto.CourseForDashboardDTO;
@@ -137,6 +138,9 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @Autowired
     private CompetencyUtilService competencyUtilService;
 
+    @Autowired
+    private ConversationUtilService conversationUtilService;
+
     private Course course;
 
     private TextExercise textExercise;
@@ -184,7 +188,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         Course course = courseUtilService.createCourse();
         ZonedDateTime now = ZonedDateTime.now();
         TextExercise textExercise = textExerciseUtilService.createIndividualTextExercise(course, now, now, now);
-        Channel exerciseChannel = exerciseUtilService.addChannelToExercise(textExercise);
+        Channel exerciseChannel = conversationUtilService.addChannelToExercise(textExercise);
 
         request.delete("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.OK);
 
@@ -206,7 +210,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteExamTextExercise() throws Exception {
-        TextExercise textExercise = textExerciseUtilService.addCourseExamExerciseGroupWithOneTextExercise();
+        TextExercise textExercise = examUtilService.addCourseExamExerciseGroupWithOneTextExercise();
 
         request.delete("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.OK);
         assertThat(textExerciseRepository.findById(textExercise.getId())).isNotPresent();
@@ -886,7 +890,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
     private void testCourseAndExamFilters(String courseTitle) throws Exception {
         textExerciseUtilService.addCourseWithOneReleasedTextExercise(courseTitle);
-        textExerciseUtilService.addCourseExamExerciseGroupWithOneTextExercise(courseTitle + "-Morpork");
+        examUtilService.addCourseExamExerciseGroupWithOneTextExercise(courseTitle + "-Morpork");
         exerciseIntegrationTestService.testCourseAndExamFilters("/api/text/text-exercises", courseTitle);
     }
 
@@ -920,7 +924,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructorother1", roles = "INSTRUCTOR")
     void testInstructorGetsOnlyResultsFromOwningExams() throws Exception {
-        textExerciseUtilService.addCourseExamExerciseGroupWithOneTextExercise();
+        examUtilService.addCourseExamExerciseGroupWithOneTextExercise();
         final var search = pageableSearchUtilService.configureSearch("");
         final var result = request.getSearchResult("/api/text/text-exercises", HttpStatus.OK, TextExercise.class, pageableSearchUtilService.searchMapping(search));
         assertThat(result.getResultsOnPage()).isNullOrEmpty();
@@ -932,9 +936,9 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         String exerciseBaseTitle1 = "testInstructorGetResultsFromOwningExamsNotEmpty 1";
         String exerciseBaseTitle2 = "testInstructorGetResultsFromOwningExamsNotEmpty 2";
 
-        textExerciseUtilService.addCourseExamExerciseGroupWithOneTextExercise(exerciseBaseTitle1);
-        textExerciseUtilService.addCourseExamExerciseGroupWithOneTextExercise(exerciseBaseTitle2 + "Bachelor");
-        textExerciseUtilService.addCourseExamExerciseGroupWithOneTextExercise(exerciseBaseTitle2 + "Master");
+        examUtilService.addCourseExamExerciseGroupWithOneTextExercise(exerciseBaseTitle1);
+        examUtilService.addCourseExamExerciseGroupWithOneTextExercise(exerciseBaseTitle2 + "Bachelor");
+        examUtilService.addCourseExamExerciseGroupWithOneTextExercise(exerciseBaseTitle2 + "Master");
 
         final var searchText = pageableSearchUtilService.configureSearch(exerciseBaseTitle1);
         final var resultText = request.getSearchResult("/api/text/text-exercises", HttpStatus.OK, TextExercise.class, pageableSearchUtilService.searchMapping(searchText));

@@ -17,7 +17,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @Entity
 @DiscriminatorValue("TEXT_EXERCISE_CHAT")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class IrisTextExerciseChatSubSettings extends IrisSubSettings {
+public class IrisTextExerciseChatSubSettings extends IrisSubSettings implements HasEnabledCategories {
 
     @Nullable
     @Column(name = "rate_limit")
