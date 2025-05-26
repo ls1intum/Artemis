@@ -3,8 +3,8 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 
 @Injectable({ providedIn: 'root' })
-export class EmailNotificationSettingsService {
-    private resourceUrl = 'api/communication/email-notification-settings';
+export class GlobalNotificationSettingsService {
+    private resourceUrl = 'api/communication/global-notification-settings';
 
     private httpClient = inject(HttpClient);
 

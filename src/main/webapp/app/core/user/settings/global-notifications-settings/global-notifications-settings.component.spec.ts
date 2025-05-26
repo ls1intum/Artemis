@@ -2,8 +2,8 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { FormsModule } from '@angular/forms';
 import { of, throwError } from 'rxjs';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
-import { EmailNotificationsSettingsComponent } from './email-notifications-settings.component';
-import { EmailNotificationSettingsService } from './email-notifications-settings.service';
+import { GlobalNotificationsSettingsComponent } from './global-notifications-settings.component';
+import { GlobalNotificationSettingsService } from './global-notifications-settings.service';
 import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -11,9 +11,9 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import * as globalUtils from 'app/shared/util/global.utils';
 
-describe('EmailNotificationsSettingsComponent', () => {
-    let component: EmailNotificationsSettingsComponent;
-    let fixture: ComponentFixture<EmailNotificationsSettingsComponent>;
+describe('GlobalNotificationsSettingsComponent', () => {
+    let component: GlobalNotificationsSettingsComponent;
+    let fixture: ComponentFixture<GlobalNotificationsSettingsComponent>;
     let alertService: AlertService;
 
     const mockService = {
@@ -23,17 +23,17 @@ describe('EmailNotificationsSettingsComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [FormsModule, EmailNotificationsSettingsComponent],
+            imports: [FormsModule, GlobalNotificationsSettingsComponent],
             declarations: [MockDirective(TranslateDirective), MockPipe(ArtemisDatePipe)],
             providers: [
-                { provide: EmailNotificationSettingsService, useValue: mockService },
+                { provide: GlobalNotificationSettingsService, useValue: mockService },
                 MockProvider(ProfileService, { isModuleFeatureActive: jest.fn().mockReturnValue(true) }),
                 MockProvider(AlertService),
             ],
             schemas: [CUSTOM_ELEMENTS_SCHEMA],
         }).compileComponents();
 
-        fixture = TestBed.createComponent(EmailNotificationsSettingsComponent);
+        fixture = TestBed.createComponent(GlobalNotificationsSettingsComponent);
         component = fixture.componentInstance;
         alertService = TestBed.inject(AlertService);
     });
@@ -72,7 +72,7 @@ describe('EmailNotificationsSettingsComponent', () => {
 
     it('should generate the correct i18n label key', () => {
         const labelKey = component.getNotificationTypeLabel('SSH_KEY_EXPIRED');
-        expect(labelKey).toBe('artemisApp.userSettings.emailNotificationSettings.options.SSH_KEY_EXPIRED');
+        expect(labelKey).toBe('artemisApp.userSettings.globalNotificationSettings.options.SSH_KEY_EXPIRED');
     });
 
     it('should handle error when loading settings', () => {

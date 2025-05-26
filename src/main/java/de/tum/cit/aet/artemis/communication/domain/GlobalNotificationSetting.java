@@ -15,8 +15,8 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.User;
 
 @Entity
-@Table(name = "email_notification_setting", uniqueConstraints = @UniqueConstraint(columnNames = { "user_id", "email_notification_type" }))
-public class EmailNotificationSetting extends DomainObject {
+@Table(name = "global_notification_setting", uniqueConstraints = @UniqueConstraint(columnNames = { "user_id", "global_notification_type" }))
+public class GlobalNotificationSetting extends DomainObject {
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -25,8 +25,8 @@ public class EmailNotificationSetting extends DomainObject {
 
     @Enumerated(EnumType.STRING)
     @NotNull
-    @Column(name = "email_notification_type", nullable = false)
-    private EmailNotificationType notificationType;
+    @Column(name = "global_notification_type", nullable = false)
+    private GlobalNotificationType notificationType;
 
     @NotNull
     @Column(name = "enabled", nullable = false)
@@ -40,11 +40,11 @@ public class EmailNotificationSetting extends DomainObject {
         this.user = user;
     }
 
-    public EmailNotificationType getNotificationType() {
+    public GlobalNotificationType getNotificationType() {
         return notificationType;
     }
 
-    public void setNotificationType(EmailNotificationType notificationType) {
+    public void setNotificationType(GlobalNotificationType notificationType) {
         this.notificationType = notificationType;
     }
 

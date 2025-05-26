@@ -16,8 +16,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.communication.domain.EmailNotificationType;
-import de.tum.cit.aet.artemis.communication.repository.EmailNotificationSettingRepository;
+import de.tum.cit.aet.artemis.communication.domain.GlobalNotificationType;
+import de.tum.cit.aet.artemis.communication.repository.GlobalNotificationSettingRepository;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -34,14 +34,14 @@ public class UserSshPublicKeyExpiryNotificationService {
 
     private final MailSendingService mailSendingService;
 
-    private final EmailNotificationSettingRepository emailNotificationSettingRepository;
+    private final GlobalNotificationSettingRepository globalNotificationSettingRepository;
 
     public UserSshPublicKeyExpiryNotificationService(UserSshPublicKeyRepository userSshPublicKeyRepository, UserRepository userRepository, MailSendingService mailSendingService,
-            EmailNotificationSettingRepository emailNotificationSettingRepository) {
+            GlobalNotificationSettingRepository globalNotificationSettingRepository) {
         this.userSshPublicKeyRepository = userSshPublicKeyRepository;
         this.userRepository = userRepository;
         this.mailSendingService = mailSendingService;
-        this.emailNotificationSettingRepository = emailNotificationSettingRepository;
+        this.globalNotificationSettingRepository = globalNotificationSettingRepository;
     }
 
     /**
@@ -81,7 +81,7 @@ public class UserSshPublicKeyExpiryNotificationService {
      * @param key       the key which was added
      */
     public void notifyUserAboutExpiredSshKey(User recipient, UserSshPublicKey key) {
-        if (emailNotificationSettingRepository.isNotificationEnabled(recipient.getId(), EmailNotificationType.SSH_KEY_EXPIRED)) {
+        if (globalNotificationSettingRepository.isNotificationEnabled(recipient.getId(), GlobalNotificationType.SSH_KEY_EXPIRED)) {
             var contextVariables = new HashMap<String, Object>();
 
             contextVariables.put("sshKey", key);

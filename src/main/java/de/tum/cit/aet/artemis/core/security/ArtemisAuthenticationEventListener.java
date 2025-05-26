@@ -16,8 +16,8 @@ import org.springframework.security.authentication.event.AuthenticationSuccessEv
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
-import de.tum.cit.aet.artemis.communication.domain.EmailNotificationType;
-import de.tum.cit.aet.artemis.communication.repository.EmailNotificationSettingRepository;
+import de.tum.cit.aet.artemis.communication.domain.GlobalNotificationType;
+import de.tum.cit.aet.artemis.communication.repository.GlobalNotificationSettingRepository;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -47,13 +47,13 @@ public class ArtemisAuthenticationEventListener implements ApplicationListener<A
 
     private final MailSendingService mailSendingService;
 
-    private final EmailNotificationSettingRepository emailNotificationSettingRepository;
+    private final GlobalNotificationSettingRepository globalNotificationSettingRepository;
 
     public ArtemisAuthenticationEventListener(UserRepository userRepository, MailSendingService mailSendingService,
-            EmailNotificationSettingRepository emailNotificationSettingRepository) {
+            GlobalNotificationSettingRepository globalNotificationSettingRepository) {
         this.userRepository = userRepository;
         this.mailSendingService = mailSendingService;
-        this.emailNotificationSettingRepository = emailNotificationSettingRepository;
+        this.globalNotificationSettingRepository = globalNotificationSettingRepository;
     }
 
     /**
@@ -68,7 +68,7 @@ public class ArtemisAuthenticationEventListener implements ApplicationListener<A
         try {
             User recipient = userRepository.getUserByLoginElseThrow(authentication.getName());
 
-            if (!emailNotificationSettingRepository.isNotificationEnabled(recipient.getId(), EmailNotificationType.NEW_LOGIN)) {
+            if (!globalNotificationSettingRepository.isNotificationEnabled(recipient.getId(), GlobalNotificationType.NEW_LOGIN)) {
                 return;
             }
 

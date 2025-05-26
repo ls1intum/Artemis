@@ -18,8 +18,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.authentication.event.AuthenticationSuccessEvent;
 import org.springframework.security.core.Authentication;
 
-import de.tum.cit.aet.artemis.communication.domain.EmailNotificationType;
-import de.tum.cit.aet.artemis.communication.repository.EmailNotificationSettingRepository;
+import de.tum.cit.aet.artemis.communication.domain.GlobalNotificationType;
+import de.tum.cit.aet.artemis.communication.repository.GlobalNotificationSettingRepository;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -35,13 +35,13 @@ class ArtemisAuthenticationEventListenerTest {
     private MailSendingService mailSendingService;
 
     @Mock
-    private EmailNotificationSettingRepository emailNotificationSettingRepository;
+    private GlobalNotificationSettingRepository globalNotificationSettingRepository;
 
     private ArtemisAuthenticationEventListener listener;
 
     @BeforeEach
     void setUp() {
-        listener = new ArtemisAuthenticationEventListener(userRepository, mailSendingService, emailNotificationSettingRepository);
+        listener = new ArtemisAuthenticationEventListener(userRepository, mailSendingService, globalNotificationSettingRepository);
     }
 
     @Test
@@ -56,7 +56,7 @@ class ArtemisAuthenticationEventListenerTest {
         nonInternalUser.setId(1L);
 
         when(userRepository.getUserByLoginElseThrow(username)).thenReturn(nonInternalUser);
-        when(emailNotificationSettingRepository.isNotificationEnabled(nonInternalUser.getId(), EmailNotificationType.NEW_LOGIN)).thenReturn(true);
+        when(globalNotificationSettingRepository.isNotificationEnabled(nonInternalUser.getId(), GlobalNotificationType.NEW_LOGIN)).thenReturn(true);
 
         listener.onApplicationEvent(event);
 
@@ -75,7 +75,7 @@ class ArtemisAuthenticationEventListenerTest {
         nonInternalUser.setId(1L);
 
         when(userRepository.getUserByLoginElseThrow(username)).thenReturn(nonInternalUser);
-        when(emailNotificationSettingRepository.isNotificationEnabled(nonInternalUser.getId(), EmailNotificationType.NEW_LOGIN)).thenReturn(false);
+        when(globalNotificationSettingRepository.isNotificationEnabled(nonInternalUser.getId(), GlobalNotificationType.NEW_LOGIN)).thenReturn(false);
 
         listener.onApplicationEvent(event);
 

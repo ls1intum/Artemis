@@ -14,6 +14,6 @@ package de.tum.cit.aet.artemis.communication.domain;
  *
  * These notification types are used in user settings to control which email alerts the system should send.
  */
-public enum EmailNotificationType {
+public enum GlobalNotificationType {
     NEW_LOGIN, NEW_PASSKEY_ADDED, VCS_TOKEN_EXPIRED, SSH_KEY_EXPIRED
 }

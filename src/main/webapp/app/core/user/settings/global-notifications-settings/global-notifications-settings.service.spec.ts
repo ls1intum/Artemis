@@ -1,18 +1,18 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { EmailNotificationSettingsService } from './email-notifications-settings.service';
+import { GlobalNotificationSettingsService } from './global-notifications-settings.service';
 
-describe('EmailNotificationSettingsService', () => {
-    let service: EmailNotificationSettingsService;
+describe('GlobalNotificationSettingsService', () => {
+    let service: GlobalNotificationSettingsService;
     let httpMock: HttpTestingController;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [EmailNotificationSettingsService, provideHttpClient(), provideHttpClientTesting()],
+            providers: [GlobalNotificationSettingsService, provideHttpClient(), provideHttpClientTesting()],
         });
 
-        service = TestBed.inject(EmailNotificationSettingsService);
+        service = TestBed.inject(GlobalNotificationSettingsService);
         httpMock = TestBed.inject(HttpTestingController);
     });
 
@@ -32,7 +32,7 @@ describe('EmailNotificationSettingsService', () => {
             expect(settings).toEqual(mockSettings);
         });
 
-        const req = httpMock.expectOne('api/communication/email-notification-settings');
+        const req = httpMock.expectOne('api/communication/global-notification-settings');
         expect(req.request.method).toBe('GET');
         req.flush(mockSettings);
     });
@@ -45,7 +45,7 @@ describe('EmailNotificationSettingsService', () => {
             expect(response).toBeTruthy();
         });
 
-        const req = httpMock.expectOne(`api/communication/email-notification-settings/${type}`);
+        const req = httpMock.expectOne(`api/communication/global-notification-settings/${type}`);
         expect(req.request.method).toBe('PUT');
         expect(req.request.body).toEqual({ enabled });
         req.flush({});

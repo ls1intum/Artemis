@@ -138,7 +138,7 @@
                 "VCS_TOKEN_SETTINGS": "VCS Tokeneinstellungen",
                 "PASSKEYS": "Passkey-Einstellungen",
                 "IDE_PREFERENCES": "IDE Präferenzen",
-                "EMAIL_NOTIFICATIONS": "E-Mail Benachrichtigungen"
+                "GLOBAL_NOTIFICATIONS": "Benachrichtigungen"
             },
             "settingGroupNames": {
                 "weeklySummary": "Wöchentliche Zusammenfassung",
@@ -207,8 +207,8 @@
                 "assignUnassignTutorialGroupDescription": "Erhalte eine Mitteilung, wenn du als Tutor:in der Leitung einer Übungsgruppe zugewiesen oder entzogen wurdest",
                 "activityDescription": "Teile welche Features von Artemis du nutzt und wie du mit ihnen interagierst. Die Informationen sind für Administratoren zugänglich."
             },
-            "emailNotificationSettings": {
-                "title": "E-Mail Benachrichtigungen",
+            "globalNotificationSettings": {
+                "title": "Benachrichtigungen",
                 "description": "Du erhältst E-Mail-Benachrichtigungen für die folgenden sicherheitsbezogenen Aktivitäten. Verwalte deine Einstellungen unten.",
                 "options": {
                     "NEW_LOGIN": "Neuer Login",

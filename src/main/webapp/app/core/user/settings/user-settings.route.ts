@@ -95,11 +95,11 @@ export const routes: Routes = [
                 },
             },
             {
-                path: 'email-notifications',
+                path: 'global-notifications',
                 loadComponent: () =>
-                    import('app/core/user/settings/email-notifications-settings/email-notifications-settings.component').then((m) => m.EmailNotificationsSettingsComponent),
+                    import('app/core/user/settings/global-notifications-settings/global-notifications-settings.component').then((m) => m.GlobalNotificationsSettingsComponent),
                 data: {
-                    pageTitle: 'artemisApp.userSettings.categories.EMAIL_NOTIFICATIONS',
+                    pageTitle: 'artemisApp.userSettings.categories.GLOBAL_NOTIFICATIONS',
                 },
             },
         ],

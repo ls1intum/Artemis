@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { EmailNotificationSettingsService } from './email-notifications-settings.service';
+import { GlobalNotificationSettingsService } from './global-notifications-settings.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
@@ -13,15 +13,15 @@ import { Subscription } from 'rxjs';
 @Component({
     selector: 'jhi-email-notifications-settings',
     imports: [TranslateDirective, FaIconComponent, FormsModule],
-    templateUrl: './email-notifications-settings.component.html',
+    templateUrl: './global-notifications-settings.component.html',
     styleUrls: ['../user-settings.scss'],
 })
-export class EmailNotificationsSettingsComponent implements OnInit, OnDestroy {
+export class GlobalNotificationsSettingsComponent implements OnInit, OnDestroy {
     protected readonly faSpinner = faSpinner;
     protected readonly notificationTypes = ['NEW_LOGIN', 'NEW_PASSKEY_ADDED', 'VCS_TOKEN_EXPIRED', 'SSH_KEY_EXPIRED'];
     notificationSettings: { [key: string]: boolean } | null = null;
 
-    private emailNotificationSettingsService = inject(EmailNotificationSettingsService);
+    private globalNotificationSettingsService = inject(GlobalNotificationSettingsService);
     private profileService = inject(ProfileService);
     private alertService = inject(AlertService);
 
@@ -42,7 +42,7 @@ export class EmailNotificationsSettingsComponent implements OnInit, OnDestroy {
 
     loadSettings(): void {
         this.getAllSub?.unsubscribe();
-        this.getAllSub = this.emailNotificationSettingsService.getAll().subscribe({
+        this.getAllSub = this.globalNotificationSettingsService.getAll().subscribe({
             next: (settings: { [key: string]: boolean } | null) => {
                 this.notificationSettings = settings;
             },
@@ -54,7 +54,7 @@ export class EmailNotificationsSettingsComponent implements OnInit, OnDestroy {
 
     updateSetting(type: string, enabled: boolean): void {
         this.updateSub?.unsubscribe();
-        this.updateSub = this.emailNotificationSettingsService.update(type, enabled).subscribe({
+        this.updateSub = this.globalNotificationSettingsService.update(type, enabled).subscribe({
             next: () => {
                 if (this.notificationSettings) {
                     this.notificationSettings[type] = enabled;
@@ -65,7 +65,7 @@ export class EmailNotificationsSettingsComponent implements OnInit, OnDestroy {
     }
 
     getNotificationTypeLabel(type: string): string {
-        return `artemisApp.userSettings.emailNotificationSettings.options.${type}`;
+        return `artemisApp.userSettings.globalNotificationSettings.options.${type}`;
     }
 
     isSettingAvailable(type: string): boolean {

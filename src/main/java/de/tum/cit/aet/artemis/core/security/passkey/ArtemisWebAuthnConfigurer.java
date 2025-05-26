@@ -25,7 +25,7 @@ import org.springframework.security.web.webauthn.management.WebAuthnRelyingParty
 import org.springframework.security.web.webauthn.management.Webauthn4JRelyingPartyOperations;
 import org.springframework.security.web.webauthn.registration.PublicKeyCredentialCreationOptionsRepository;
 
-import de.tum.cit.aet.artemis.communication.repository.EmailNotificationSettingRepository;
+import de.tum.cit.aet.artemis.communication.repository.GlobalNotificationSettingRepository;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
@@ -84,13 +84,13 @@ public class ArtemisWebAuthnConfigurer<H extends HttpSecurityBuilder<H>> extends
 
     private final ApplicationEventPublisher eventPublisher;
 
-    private final EmailNotificationSettingRepository emailNotificationSettingRepository;
+    private final GlobalNotificationSettingRepository globalNotificationSettingRepository;
 
     public ArtemisWebAuthnConfigurer(HttpMessageConverter<Object> converter, JWTCookieService jwtCookieService, UserRepository userRepository,
             PublicKeyCredentialUserEntityRepository publicKeyCredentialUserEntityRepository, UserCredentialRepository userCredentialRepository,
             PublicKeyCredentialCreationOptionsRepository publicKeyCredentialCreationOptionsRepository,
             PublicKeyCredentialRequestOptionsRepository publicKeyCredentialRequestOptionsRepository, MailSendingService mailSendingService,
-            ApplicationEventPublisher eventPublisher, EmailNotificationSettingRepository emailNotificationSettingRepository) {
+            ApplicationEventPublisher eventPublisher, GlobalNotificationSettingRepository globalNotificationSettingRepository) {
         this.converter = converter;
         this.jwtCookieService = jwtCookieService;
         this.publicKeyCredentialUserEntityRepository = publicKeyCredentialUserEntityRepository;
@@ -100,7 +100,7 @@ public class ArtemisWebAuthnConfigurer<H extends HttpSecurityBuilder<H>> extends
         this.publicKeyCredentialRequestOptionsRepository = publicKeyCredentialRequestOptionsRepository;
         this.mailSendingService = mailSendingService;
         this.eventPublisher = eventPublisher;
-        this.emailNotificationSettingRepository = emailNotificationSettingRepository;
+        this.globalNotificationSettingRepository = globalNotificationSettingRepository;
     }
 
     /**
@@ -162,7 +162,7 @@ public class ArtemisWebAuthnConfigurer<H extends HttpSecurityBuilder<H>> extends
         createCredentialOptionsFilter.setCreationOptionsRepository(publicKeyCredentialCreationOptionsRepository);
 
         var webAuthnRegistrationFilter = new ArtemisWebAuthnRegistrationFilter(userCredentialRepository, rpOperations, mailSendingService, userRepository,
-                emailNotificationSettingRepository);
+                globalNotificationSettingRepository);
         webAuthnRegistrationFilter.setCreationOptionsRepository(publicKeyCredentialCreationOptionsRepository);
 
         var authOptionsFilter = new PublicKeyCredentialRequestOptionsFilter(rpOperations);

@@ -25,7 +25,7 @@ import org.springframework.security.web.webauthn.management.UserCredentialReposi
 import org.springframework.security.web.webauthn.registration.PublicKeyCredentialCreationOptionsRepository;
 import org.springframework.stereotype.Component;
 
-import de.tum.cit.aet.artemis.communication.repository.EmailNotificationSettingRepository;
+import de.tum.cit.aet.artemis.communication.repository.GlobalNotificationSettingRepository;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -62,7 +62,7 @@ public class ArtemisPasskeyWebAuthnConfigurer {
 
     private final ApplicationEventPublisher eventPublisher;
 
-    private final EmailNotificationSettingRepository emailNotificationSettingRepository;
+    private final GlobalNotificationSettingRepository globalNotificationSettingRepository;
 
     @Value("${" + Constants.PASSKEY_ENABLED_PROPERTY_NAME + ":false}")
     private boolean passkeyEnabled;
@@ -86,7 +86,7 @@ public class ArtemisPasskeyWebAuthnConfigurer {
             PublicKeyCredentialUserEntityRepository publicKeyCredentialUserEntityRepository, UserCredentialRepository userCredentialRepository,
             PublicKeyCredentialCreationOptionsRepository publicKeyCredentialCreationOptionsRepository,
             PublicKeyCredentialRequestOptionsRepository publicKeyCredentialRequestOptionsRepository, AndroidFingerprintService androidFingerprintService,
-            MailSendingService mailSendingService, ApplicationEventPublisher eventPublisher, EmailNotificationSettingRepository emailNotificationSettingRepository) {
+            MailSendingService mailSendingService, ApplicationEventPublisher eventPublisher, GlobalNotificationSettingRepository globalNotificationSettingRepository) {
         this.converter = converter;
         this.jwtCookieService = jwtCookieService;
         this.userRepository = userRepository;
@@ -97,7 +97,7 @@ public class ArtemisPasskeyWebAuthnConfigurer {
         this.androidFingerprintService = androidFingerprintService;
         this.mailSendingService = mailSendingService;
         this.eventPublisher = eventPublisher;
-        this.emailNotificationSettingRepository = emailNotificationSettingRepository;
+        this.globalNotificationSettingRepository = globalNotificationSettingRepository;
     }
 
     /**
@@ -162,7 +162,7 @@ public class ArtemisPasskeyWebAuthnConfigurer {
 
         WebAuthnConfigurer<HttpSecurity> webAuthnConfigurer = new ArtemisWebAuthnConfigurer<>(converter, jwtCookieService, userRepository, publicKeyCredentialUserEntityRepository,
                 userCredentialRepository, publicKeyCredentialCreationOptionsRepository, publicKeyCredentialRequestOptionsRepository, mailSendingService, eventPublisher,
-                emailNotificationSettingRepository);
+                globalNotificationSettingRepository);
 
         http.with(webAuthnConfigurer, configurer -> {
             configurer.allowedOrigins(allowedOrigins).rpId(relyingPartyId).rpName(relyingPartyName);

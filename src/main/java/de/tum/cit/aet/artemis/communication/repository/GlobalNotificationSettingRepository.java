@@ -14,28 +14,28 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.cit.aet.artemis.communication.domain.EmailNotificationSetting;
-import de.tum.cit.aet.artemis.communication.domain.EmailNotificationType;
+import de.tum.cit.aet.artemis.communication.domain.GlobalNotificationSetting;
+import de.tum.cit.aet.artemis.communication.domain.GlobalNotificationType;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 
 @Profile(PROFILE_CORE)
 @Repository
-public interface EmailNotificationSettingRepository extends ArtemisJpaRepository<EmailNotificationSetting, Long> {
+public interface GlobalNotificationSettingRepository extends ArtemisJpaRepository<GlobalNotificationSetting, Long> {
 
     @Query("""
             SELECT setting
-            FROM EmailNotificationSetting setting
+            FROM GlobalNotificationSetting setting
             WHERE setting.user.id = :userId
             """)
-    Set<EmailNotificationSetting> findByUserId(@Param("userId") long userId);
+    Set<GlobalNotificationSetting> findByUserId(@Param("userId") long userId);
 
     @Query("""
             SELECT setting
-            FROM EmailNotificationSetting setting
+            FROM GlobalNotificationSetting setting
             WHERE setting.user.id = :userId
                 AND setting.notificationType = :notificationType
             """)
-    Optional<EmailNotificationSetting> findByUserIdAndNotificationType(@Param("userId") long userId, @Param("notificationType") @NotNull EmailNotificationType notificationType);
+    Optional<GlobalNotificationSetting> findByUserIdAndNotificationType(@Param("userId") long userId, @Param("notificationType") @NotNull GlobalNotificationType notificationType);
 
     /**
      * Checks whether a specific notification is enabled for a given user.
@@ -45,24 +45,24 @@ public interface EmailNotificationSettingRepository extends ArtemisJpaRepository
      * @param type   the type of notification
      * @return true if the notification is enabled or no setting exists, false otherwise
      */
-    default boolean isNotificationEnabled(long userId, EmailNotificationType type) {
-        return findByUserIdAndNotificationType(userId, type).map(EmailNotificationSetting::getEnabled).orElse(true);
+    default boolean isNotificationEnabled(long userId, GlobalNotificationType type) {
+        return findByUserIdAndNotificationType(userId, type).map(GlobalNotificationSetting::getEnabled).orElse(true);
     }
 
     /**
      * Returns a map of email notification settings for a given user.
-     * Each entry in the map corresponds to an {@link EmailNotificationType}, with the key being the enum's {@code name()},
+     * Each entry in the map corresponds to an {@link GlobalNotificationType}, with the key being the enum's {@code name()},
      * and the value indicating whether notifications of that type are enabled.
      * If a setting is not explicitly defined for a type, it defaults to {@code true}.
      *
      * @param userId the ID of the user whose notification settings should be retrieved
-     * @return a map of {@link EmailNotificationType} names to their enabled/disabled status
+     * @return a map of {@link GlobalNotificationType} names to their enabled/disabled status
      */
     default Map<String, Boolean> getAllSettingsAsMap(long userId) {
-        Set<EmailNotificationSetting> settings = findByUserId(userId);
+        Set<GlobalNotificationSetting> settings = findByUserId(userId);
         Map<String, Boolean> result = new HashMap<>();
-        for (EmailNotificationType type : EmailNotificationType.values()) {
-            boolean enabled = settings.stream().filter(s -> s.getNotificationType() == type).findFirst().map(EmailNotificationSetting::getEnabled).orElse(true);
+        for (GlobalNotificationType type : GlobalNotificationType.values()) {
+            boolean enabled = settings.stream().filter(s -> s.getNotificationType() == type).findFirst().map(GlobalNotificationSetting::getEnabled).orElse(true);
             result.put(type.name(), enabled);
         }
         return result;
