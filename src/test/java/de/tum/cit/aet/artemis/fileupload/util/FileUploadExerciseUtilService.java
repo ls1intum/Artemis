@@ -86,6 +86,7 @@ public class FileUploadExerciseUtilService {
      * @return The created FileUploadExercise
      */
     public FileUploadExercise addCourseExamExerciseGroupWithOneFileUploadExercise(boolean startDateBeforeCurrentTime) {
+        // TODO: try to refactor this call to avoid using examUtilService here
         ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true, startDateBeforeCurrentTime);
         FileUploadExercise fileUploadExercise = FileUploadExerciseFactory.generateFileUploadExerciseForExam("pdf", exerciseGroup);
         return exerciseRepository.save(fileUploadExercise);
@@ -282,7 +283,7 @@ public class FileUploadExerciseUtilService {
         fileUploadSubmission = addFileUploadSubmission(fileUploadExercise, fileUploadSubmission, loginPrefix + "student1");
 
         // Create a dummy file
-        var uploadedFileDir = Path.of("./").resolve(FilePathConverter.buildFilePath(fileUploadExercise.getId(), fileUploadSubmission.getId()));
+        var uploadedFileDir = Path.of("./").resolve(FilePathConverter.buildFileUploadSubmissionPath(fileUploadExercise.getId(), fileUploadSubmission.getId()));
         var uploadedFilePath = Path.of(uploadedFileDir.toString(), filename);
         if (!Files.exists(uploadedFilePath)) {
             Files.createDirectories(uploadedFileDir);

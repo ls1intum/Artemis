@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.exercise.dto.ParticipationResultDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
+import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
 import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismCaseApi;
 import de.tum.cit.aet.artemis.plagiarism.api.dtos.PlagiarismMapping;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
@@ -67,18 +68,21 @@ public class CourseScoreCalculationService {
 
     private final Optional<PlagiarismCaseApi> plagiarismCaseApi;
 
+    private final Optional<IrisSettingsApi> irisSettingsApi;
+
     private final PresentationPointsCalculationService presentationPointsCalculationService;
 
     private final UserCourseNotificationStatusRepository userCourseNotificationStatusRepository;
 
     public CourseScoreCalculationService(StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository,
             Optional<PlagiarismCaseApi> plagiarismCaseApi, PresentationPointsCalculationService presentationPointsCalculationService,
-            UserCourseNotificationStatusRepository userCourseNotificationStatusRepository) {
+            UserCourseNotificationStatusRepository userCourseNotificationStatusRepository, Optional<IrisSettingsApi> irisSettingsApi) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.exerciseRepository = exerciseRepository;
         this.plagiarismCaseApi = plagiarismCaseApi;
         this.presentationPointsCalculationService = presentationPointsCalculationService;
         this.userCourseNotificationStatusRepository = userCourseNotificationStatusRepository;
+        this.irisSettingsApi = irisSettingsApi;
     }
 
     /**
@@ -213,12 +217,13 @@ public class CourseScoreCalculationService {
      * Get all the items needed for the CourseForDashboardDTO.
      * This includes scoresPerExerciseType and participationResults.
      *
-     * @param course       the course to calculate the items for.
-     * @param gradingScale the grading scale with the presentation configuration to use for calculating the presentation points.
-     * @param userId       the id of the students whose scores in the course will be calculated.
+     * @param course                            the course to calculate the items for.
+     * @param gradingScale                      the grading scale with the presentation configuration to use for calculating the presentation points.
+     * @param userId                            the id of the students whose scores in the course will be calculated.
+     * @param includeIrisCourseDashboardEnabled whether the enabled state of the course chat should be included in the CourseForDashboardDTO
      * @return the CourseForDashboardDTO containing all the mentioned items.
      */
-    public CourseForDashboardDTO getScoresAndParticipationResults(Course course, GradingScale gradingScale, long userId) {
+    public CourseForDashboardDTO getScoresAndParticipationResults(Course course, GradingScale gradingScale, long userId, boolean includeIrisCourseDashboardEnabled) {
         Set<StudentParticipation> gradedStudentParticipations = new HashSet<>();
         for (Exercise exercise : course.getExercises()) {
             exercise.setCourse(course);
@@ -274,7 +279,8 @@ public class CourseScoreCalculationService {
 
         return new CourseForDashboardDTO(course, totalScores, scoresPerExerciseType.get(ExerciseType.TEXT), scoresPerExerciseType.get(ExerciseType.PROGRAMMING),
                 scoresPerExerciseType.get(ExerciseType.MODELING), scoresPerExerciseType.get(ExerciseType.FILE_UPLOAD), scoresPerExerciseType.get(ExerciseType.QUIZ),
-                participationResults, userCourseNotificationStatusRepository.countUnseenCourseNotificationsForUserInCourse(userId, course.getId()));
+                participationResults, userCourseNotificationStatusRepository.countUnseenCourseNotificationsForUserInCourse(userId, course.getId()),
+                includeIrisCourseDashboardEnabled ? irisSettingsApi.map(api -> api.isCourseChatEnabled(course.getId())).orElse(false) : null);
     }
 
     /**

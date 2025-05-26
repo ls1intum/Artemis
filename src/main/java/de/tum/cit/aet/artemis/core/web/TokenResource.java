@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTFilter;
+import de.tum.cit.aet.artemis.core.security.jwt.JwtWithSource;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 
 @Profile(PROFILE_CORE)
@@ -52,14 +53,14 @@ public class TokenResource {
     @EnforceAtLeastStudent
     public ResponseEntity<String> convertCookieToToolToken(@RequestParam(name = "tool", required = true) ToolTokenType tool,
             @RequestParam(name = "as-cookie", defaultValue = "false") boolean asCookie, HttpServletRequest request, HttpServletResponse response) {
-        // remaining time in milliseconds
-        var jwtToken = JWTFilter.extractValidJwt(request, tokenProvider);
-        if (jwtToken == null) {
+        JwtWithSource jwtWithSource = JWTFilter.extractValidJwt(request, tokenProvider);
+
+        if (jwtWithSource == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
         // get validity of the token
-        long tokenRemainingTime = tokenProvider.getExpirationDate(jwtToken).getTime() - System.currentTimeMillis();
+        long tokenRemainingTime = tokenProvider.getExpirationDate(jwtWithSource.jwt()).getTime() - System.currentTimeMillis();
 
         // 1 day validity
         long maxDuration = Duration.ofDays(1).toMillis();

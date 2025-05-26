@@ -9,20 +9,27 @@ import jakarta.validation.constraints.NotNull;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.exception.FilePathParsingException;
-import de.tum.cit.aet.artemis.core.service.FileService;
 
 /**
- * Converter for generating and parsing file system paths and public URIs for different file types in Artemis.
+ * Converter for generating and parsing file system paths and external URIs for different file types in Artemis.
  * <p>
- * This converter provides static methods to convert between internal file system paths and public URIs,
+ * This converter provides static methods to convert between internal file system paths and external URIs,
  * as well as to generate base paths for various file storage locations (e.g., attachments, profile pictures, uploads).
  * The mapping is based on the {@link FilePathType} and the entity IDs associated with the files.
  * </p>
  */
-public class FilePathConverter {
+public final class FilePathConverter {
 
-    // TODO: we should convert this to a Path and use Path.resolve() below
-    private static String fileUploadPath;
+    /**
+     * The base path for file uploads, set from application properties.
+     * This is used as the root for all file storage locations.
+     * Must be initialized before any file path operations are performed, typically during application startup (see ArtemisApp.java).
+     */
+    @NotNull
+    private static Path fileUploadPath;
+
+    private FilePathConverter() {
+    }
 
     /**
      * Sets the base file upload path from the application properties.
@@ -30,7 +37,7 @@ public class FilePathConverter {
      *
      * @param fileUploadPath the base path for file uploads
      */
-    public static void setFileUploadPathStatic(@NotNull String fileUploadPath) {
+    public static void setFileUploadPath(@NotNull Path fileUploadPath) {
         FilePathConverter.fileUploadPath = fileUploadPath;
     }
 
@@ -39,7 +46,7 @@ public class FilePathConverter {
      */
     @NotNull
     public static Path getTempFilePath() {
-        return Path.of(fileUploadPath, "images", "temp");
+        return fileUploadPath.resolve("images").resolve("temp");
     }
 
     /**
@@ -47,7 +54,7 @@ public class FilePathConverter {
      */
     @NotNull
     public static Path getDragAndDropBackgroundFilePath() {
-        return Path.of(fileUploadPath, "images", "drag-and-drop", "backgrounds");
+        return fileUploadPath.resolve("images").resolve("drag-and-drop").resolve("backgrounds");
     }
 
     /**
@@ -55,7 +62,7 @@ public class FilePathConverter {
      */
     @NotNull
     public static Path getDragItemFilePath() {
-        return Path.of(fileUploadPath, "images", "drag-and-drop", "drag-items");
+        return fileUploadPath.resolve("images").resolve("drag-and-drop").resolve("drag-items");
     }
 
     /**
@@ -63,7 +70,7 @@ public class FilePathConverter {
      */
     @NotNull
     public static Path getCourseIconFilePath() {
-        return Path.of(fileUploadPath, "images", "course", "icons");
+        return fileUploadPath.resolve("images").resolve("course").resolve("icons");
     }
 
     /**
@@ -71,7 +78,7 @@ public class FilePathConverter {
      */
     @NotNull
     public static Path getProfilePictureFilePath() {
-        return Path.of(fileUploadPath, "images", "user", "profile-pictures");
+        return fileUploadPath.resolve("images").resolve("user").resolve("profile-pictures");
     }
 
     /**
@@ -79,7 +86,7 @@ public class FilePathConverter {
      */
     @NotNull
     public static Path getExamUserSignatureFilePath() {
-        return Path.of(fileUploadPath, "images", "exam-user", "signatures");
+        return fileUploadPath.resolve("images").resolve("exam-user").resolve("signatures");
     }
 
     /**
@@ -87,7 +94,7 @@ public class FilePathConverter {
      */
     @NotNull
     public static Path getStudentImageFilePath() {
-        return Path.of(fileUploadPath, "images", "exam-user");
+        return fileUploadPath.resolve("images").resolve("exam-user");
     }
 
     /**
@@ -95,15 +102,15 @@ public class FilePathConverter {
      */
     @NotNull
     public static Path getLectureAttachmentFileSystemPath() {
-        return Path.of(fileUploadPath, "attachments", "lecture");
+        return fileUploadPath.resolve("attachments").resolve("lecture");
     }
 
     /**
-     * @return the path to the attachment unit files directory
+     * @return the path to the attachment video unit files directory
      */
     @NotNull
-    public static Path getAttachmentUnitFileSystemPath() {
-        return Path.of(fileUploadPath, "attachments", "attachment-unit");
+    public static Path getAttachmentVideoUnitFileSystemPath() {
+        return fileUploadPath.resolve("attachments").resolve("attachment-unit");
     }
 
     /**
@@ -111,7 +118,7 @@ public class FilePathConverter {
      */
     @NotNull
     public static Path getFileUploadExercisesFilePath() {
-        return Path.of(fileUploadPath, "file-upload-exercises");
+        return fileUploadPath.resolve("file-upload-exercises");
     }
 
     /**
@@ -119,7 +126,7 @@ public class FilePathConverter {
      */
     @NotNull
     public static Path getMarkdownFilePath() {
-        return Path.of(fileUploadPath, "markdown");
+        return fileUploadPath.resolve("markdown");
     }
 
     /**
@@ -165,7 +172,7 @@ public class FilePathConverter {
             case LECTURE_ATTACHMENT -> getLectureAttachmentFileSystemPath(path, filename);
             case SLIDE -> getSlideFileSystemPath(path, filename);
             case STUDENT_VERSION_SLIDES -> getStudentVersionSlidesFileSystemPath(path, filename);
-            case ATTACHMENT_UNIT -> getAttachmentUnitFileSystemPath(path, filename);
+            case ATTACHMENT_UNIT -> getAttachmentVideoUnitFileSystemPath(path, filename);
             case FILE_UPLOAD_SUBMISSION -> fileSystemPathForFileUploadSubmissionExternalUri(externalUri, filename);
         };
     }
@@ -192,42 +199,42 @@ public class FilePathConverter {
     }
 
     /**
-     * Generates the path for an attachment unit file based on the provided path and filename.
+     * Generates the path for an attachment video unit file based on the provided path and filename.
      *
-     * @param path     the path to the attachment unit
+     * @param path     the path to the attachment video unit
      * @param filename the name of the file
      * @throws FilePathParsingException if the path cannot be parsed correctly
-     * @return the path to the attachment unit file
+     * @return the path to the attachment video unit file
      */
     @NotNull
-    private static Path getAttachmentUnitFileSystemPath(@NotNull Path path, @NotNull String filename) {
+    private static Path getAttachmentVideoUnitFileSystemPath(@NotNull Path path, @NotNull String filename) {
         try {
-            String attachmentUnitId = path.getName(2).toString();
-            Long.parseLong(attachmentUnitId);
-            return getAttachmentUnitFileSystemPath().resolve(Path.of(attachmentUnitId, filename));
+            String attachmentVideoUnitId = path.getName(2).toString();
+            Long.parseLong(attachmentVideoUnitId);
+            return getAttachmentVideoUnitFileSystemPath().resolve(Path.of(attachmentVideoUnitId, filename));
         }
         catch (IllegalArgumentException e) {
-            throw new FilePathParsingException("External URI does not contain correct attachmentUnitId: " + path, e);
+            throw new FilePathParsingException("External URI does not contain correct attachmentVideoUnitId: " + path, e);
         }
     }
 
     /**
-     * Generates the path for an attachment unit file based on the provided path and filename.
+     * Generates the path for an attachment video unit file based on the provided path and filename.
      *
-     * @param path     the path to the attachment unit as external URI
+     * @param path     the path to the attachment video unit as external URI
      * @param filename the name of the file
      * @throws FilePathParsingException if the path cannot be parsed correctly
-     * @return the path to the attachment unit file
+     * @return the path to the attachment video unit file
      */
     @NotNull
     private static Path getStudentVersionSlidesFileSystemPath(@NotNull Path path, @NotNull String filename) {
         try {
-            String attachmentUnitId = path.getName(2).toString();
-            Long.parseLong(attachmentUnitId);
-            return getAttachmentUnitFileSystemPath().resolve(Path.of(attachmentUnitId, "student", filename));
+            String attachmentVideoUnitId = path.getName(2).toString();
+            Long.parseLong(attachmentVideoUnitId);
+            return getAttachmentVideoUnitFileSystemPath().resolve(Path.of(attachmentVideoUnitId, "student", filename));
         }
         catch (IllegalArgumentException e) {
-            throw new FilePathParsingException("External URI does not contain correct attachmentUnitId: " + path, e);
+            throw new FilePathParsingException("External URI does not contain correct attachmentVideoUnitId: " + path, e);
         }
     }
 
@@ -241,14 +248,14 @@ public class FilePathConverter {
     @NotNull
     private static Path getSlideFileSystemPath(@NotNull Path path, @NotNull String filename) {
         try {
-            String attachmentUnitId = path.getName(2).toString();
+            String attachmentVideoUnitId = path.getName(2).toString();
             String slideId = path.getName(4).toString();
-            Long.parseLong(attachmentUnitId);
+            Long.parseLong(attachmentVideoUnitId);
             Long.parseLong(slideId);
-            return getAttachmentUnitFileSystemPath().resolve(Path.of(attachmentUnitId, "slide", slideId, filename));
+            return getAttachmentVideoUnitFileSystemPath().resolve(Path.of(attachmentVideoUnitId, "slide", slideId, filename));
         }
         catch (IllegalArgumentException e) {
-            throw new FilePathParsingException("External URI does not contain correct attachmentUnitId or slideId: " + path, e);
+            throw new FilePathParsingException("External URI does not contain correct attachmentVideoUnitId or slideId: " + path, e);
         }
     }
 
@@ -278,9 +285,9 @@ public class FilePathConverter {
         try {
             String expectedExerciseId = path.getName(1).toString();
             String expectedSubmissionId = path.getName(3).toString();
-            Long exerciseId = Long.parseLong(expectedExerciseId);
-            Long submissionId = Long.parseLong(expectedSubmissionId);
-            return buildFilePath(exerciseId, submissionId).resolve(filename);
+            long exerciseId = Long.parseLong(expectedExerciseId);
+            long submissionId = Long.parseLong(expectedSubmissionId);
+            return buildFileUploadSubmissionPath(exerciseId, submissionId).resolve(filename);
         }
         catch (IllegalArgumentException e) {
             throw new FilePathParsingException("External URI does not contain correct exerciseId or submissionId: " + externalUri, e);
@@ -294,7 +301,7 @@ public class FilePathConverter {
      * Example:
      *
      * <pre>
-     *     Path fileSystemPath = Path.of("uploads", "attachments", "lecture", "4", "slides.pdf");
+     *     Path fileSystemPath = Path.of("uploads").resolve("attachments").resolve("lecture").resolve("4").resolve("slides.pdf");
      *     URI externalUri = FilePathService.externalUriForFileSystemPath(fileSystemPath, FilePathType.LECTURE_ATTACHMENT, 4L);
      *     externalUri: attachments/lecture/4/slides.pdf
      * </pre>
@@ -312,7 +319,7 @@ public class FilePathConverter {
         String id = entityId == null ? Constants.FILEPATH_ID_PLACEHOLDER : entityId.toString();
 
         return switch (filePathType) {
-            case TEMPORARY -> URI.create(FileService.DEFAULT_FILE_SUBPATH + filename);
+            case TEMPORARY -> URI.create(FileUtil.DEFAULT_FILE_SUBPATH + filename);
             case DRAG_AND_DROP_BACKGROUND -> URI.create("drag-and-drop/backgrounds/" + id + "/" + filename);
             case DRAG_ITEM -> URI.create("drag-and-drop/drag-items/" + id + "/" + filename);
             case COURSE_ICON -> URI.create("course/icons/" + id + "/" + filename);
@@ -333,7 +340,7 @@ public class FilePathConverter {
      * Example:
      *
      * <pre>
-     *     Path fileSystemPath = Path.of("uploads", "attachments", "attachment-unit", "1", "slide", "3", "slide_17.png");
+     *     Path fileSystemPath = Path.of("uploads").resolve("attachments").resolve("attachment-unit").resolve("1").resolve("slide").resolve("3").resolve("slide_17.png");
      *     URI externalUri = FilePathService.externalUriForFileSystemPath(fileSystemPath, FilePathType.SLIDE, "3");
      *     externalUri: attachments/attachment-unit/1/slide/3/slide_17.png
      * </pre>
@@ -346,12 +353,12 @@ public class FilePathConverter {
     @NotNull
     private static URI externalUriForSlideFileSystemPath(@NotNull Path path, @NotNull String filename, @NotNull String id) {
         try {
-            final String expectedAttachmentUnitId = path.getName(path.getNameCount() - 4).toString();
-            final long attachmentUnitId = Long.parseLong(expectedAttachmentUnitId);
-            return URI.create("attachments/attachment-unit/" + attachmentUnitId + "/slide/" + id + "/" + filename);
+            final String expectedAttachmentVideoUnitId = path.getName(path.getNameCount() - 4).toString();
+            final long attachmentVideoUnitId = Long.parseLong(expectedAttachmentVideoUnitId);
+            return URI.create("attachments/attachment-unit/" + attachmentVideoUnitId + "/slide/" + id + "/" + filename);
         }
         catch (IllegalArgumentException e) {
-            throw new FilePathParsingException("Unexpected String in upload file path. AttachmentUnit ID should be present here: " + path, e);
+            throw new FilePathParsingException("Unexpected String in upload file path. AttachmentVideoUnit ID should be present here: " + path, e);
         }
     }
 
@@ -361,7 +368,7 @@ public class FilePathConverter {
      * Example:
      *
      * <pre>
-     *     Path fileSystemPath = Path.of("uploads", "file-upload-exercises", "1", "submissions", "2", "submission.pdf");
+     *     Path fileSystemPath = Path.of("uploads").resolve("file-upload-exercises").resolve("1").resolve("submissions").resolve("2").resolve("submission.pdf");
      *     URI externalUri = FilePathService.externalUriForFileSystemPath(fileSystemPath, FilePathType.FILE_UPLOAD_SUBMISSION, "2);
      *     externalUri: file-upload-exercises/1/submissions/2/submission.pdf
      * </pre>
@@ -391,7 +398,8 @@ public class FilePathConverter {
      * @param submissionId the id of the submission
      * @return path where submission for file upload exercise is stored
      */
-    public static Path buildFilePath(Long exerciseId, Long submissionId) {
-        return getFileUploadExercisesFilePath().resolve(exerciseId.toString()).resolve(submissionId.toString());
+    @NotNull
+    public static Path buildFileUploadSubmissionPath(long exerciseId, long submissionId) {
+        return getFileUploadExercisesFilePath().resolve(String.valueOf(exerciseId)).resolve(String.valueOf(submissionId));
     }
 }

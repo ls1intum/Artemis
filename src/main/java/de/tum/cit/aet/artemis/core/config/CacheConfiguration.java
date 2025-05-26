@@ -64,6 +64,7 @@ import tech.jhipster.config.JHipsterProperties;
 import tech.jhipster.config.cache.PrefixedKeyGenerator;
 
 @Profile({ PROFILE_CORE, PROFILE_BUILDAGENT })
+@Lazy(value = false)
 @Configuration
 @Lazy
 @EnableCaching

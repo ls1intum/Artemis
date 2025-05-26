@@ -76,9 +76,9 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.GitException;
-import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.ZipFileService;
+import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.File;
@@ -1214,7 +1214,7 @@ public class GitService extends AbstractGitService {
         var courseShortName = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
         var participation = (ProgrammingExerciseStudentParticipation) repo.getParticipation();
 
-        String repoName = FileService.sanitizeFilename(courseShortName + "-" + exercise.getTitle() + "-" + participation.getId());
+        String repoName = FileUtil.sanitizeFilename(courseShortName + "-" + exercise.getTitle() + "-" + participation.getId());
         if (hideStudentName) {
             repoName += "-student-submission.git";
         }

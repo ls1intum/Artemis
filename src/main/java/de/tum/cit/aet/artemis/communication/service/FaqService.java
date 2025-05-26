@@ -68,10 +68,9 @@ public class FaqService {
      * Automatically updates or ingests a specific FAQ into the Pyris system for a given course.
      * If the PyrisWebhookService is unavailable, the method does nothing.
      *
-     * @param courseId the ID of the course to which the FAQ belongs
-     * @param faq      the FAQ to be ingested or updated in Pyris
+     * @param faq the FAQ to be ingested or updated in Pyris
      */
-    public void autoIngestFaqsIntoPyris(Long courseId, Faq faq) {
+    public void autoIngestFaqIntoPyris(Faq faq) {
         if (pyrisFaqApi.isEmpty()) {
             return;
         }
@@ -80,6 +79,6 @@ public class FaqService {
             return;
         }
 
-        pyrisFaqApi.get().autoUpdateFaqInPyris(courseId, faq);
+        pyrisFaqApi.get().autoUpdateFaqInPyris(faq);
     }
 }

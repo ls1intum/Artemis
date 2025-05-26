@@ -29,11 +29,12 @@ public interface IrisSettingsRepository extends ArtemisJpaRepository<IrisSetting
     @Query("""
             SELECT irisSettings
             FROM IrisGlobalSettings irisSettings
-                LEFT JOIN FETCH irisSettings.irisChatSettings
+                LEFT JOIN FETCH irisSettings.irisProgrammingExerciseChatSettings
                 LEFT JOIN FETCH irisSettings.irisTextExerciseChatSettings
                 LEFT JOIN FETCH irisSettings.irisLectureIngestionSettings
                 LEFT JOIN FETCH irisSettings.irisCompetencyGenerationSettings
                 LEFT JOIN FETCH irisSettings.irisLectureChatSettings
+                LEFT JOIN FETCH irisSettings.irisTutorSuggestionSubSettings
             """)
     Set<IrisGlobalSettings> findAllGlobalSettings();
 
@@ -44,12 +45,13 @@ public interface IrisSettingsRepository extends ArtemisJpaRepository<IrisSetting
     @Query("""
             SELECT irisSettings
             FROM IrisCourseSettings irisSettings
-                LEFT JOIN FETCH irisSettings.irisChatSettings
+                LEFT JOIN FETCH irisSettings.irisProgrammingExerciseChatSettings
                 LEFT JOIN FETCH irisSettings.irisTextExerciseChatSettings
                 LEFT JOIN FETCH irisSettings.irisLectureIngestionSettings
                 LEFT JOIN FETCH irisSettings.irisCompetencyGenerationSettings
                 LEFT JOIN FETCH irisSettings.irisLectureChatSettings
                 LEFT JOIN FETCH irisSettings.irisFaqIngestionSettings
+                LEFT JOIN FETCH irisSettings.irisTutorSuggestionSettings
             WHERE irisSettings.courseId = :courseId
             """)
     Optional<IrisCourseSettings> findCourseSettings(@Param("courseId") long courseId);
@@ -63,9 +65,37 @@ public interface IrisSettingsRepository extends ArtemisJpaRepository<IrisSetting
     @Query("""
             SELECT irisSettings
             FROM IrisExerciseSettings irisSettings
-                LEFT JOIN FETCH irisSettings.irisChatSettings
+                LEFT JOIN FETCH irisSettings.irisProgrammingExerciseChatSettings
                 LEFT JOIN FETCH irisSettings.irisTextExerciseChatSettings
             WHERE irisSettings.exerciseId = :exerciseId
             """)
     Optional<IrisExerciseSettings> findExerciseSettings(@Param("exerciseId") long exerciseId);
+
+    /**
+     * Checks if the course chat is enabled for a given course ID, based on the global settings and the course settings.
+     * If both settings are not found, it defaults to true.
+     * If the course settings are not found, it returns the global settings value.
+     * If the global settings are not found, it returns the course settings value.
+     * If both are found, it returns true if both settings are enabled, otherwise false.
+     *
+     * @param courseId the ID of the course to check
+     * @return true if the course chat is enabled, false otherwise
+     */
+    @Query("""
+            SELECT CASE
+                       WHEN COALESCE(gps.enabled, TRUE) = TRUE
+                        AND COALESCE(cps.enabled, TRUE) = TRUE
+                       THEN TRUE
+                       ELSE FALSE
+                   END
+            FROM Course c
+            LEFT JOIN IrisCourseSettings   cs  ON cs.courseId = c.id
+            LEFT JOIN IrisGlobalSettings   gs  ON TRUE
+
+            LEFT JOIN gs.irisCourseChatSettings gps
+            LEFT JOIN cs.irisCourseChatSettings cps
+
+            WHERE c.id = :courseId
+            """)
+    Boolean isCourseChatEnabled(@Param("courseId") long courseId);
 }

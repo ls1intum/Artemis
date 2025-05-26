@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
-import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 
 /**
@@ -41,10 +41,10 @@ public class SlideUnhideExecutionService {
      */
     public void unhideSlide(Long slideId) {
         slideRepository.findById(slideId).ifPresent(slide -> {
-            AttachmentUnit attachmentUnit = slide.getAttachmentUnit();
+            AttachmentVideoUnit attachmentVideoUnit = slide.getAttachmentVideoUnit();
             Attachment attachment = null;
-            if (attachmentUnit != null) {
-                attachment = attachmentUnit.getAttachment();
+            if (attachmentVideoUnit != null) {
+                attachment = attachmentVideoUnit.getAttachment();
             }
 
             // Use repository method to handle transaction

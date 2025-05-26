@@ -40,12 +40,12 @@ public class IrisRateLimitService {
      */
     public IrisRateLimitInformation getRateLimitInformation(User user) {
         var globalSettings = irisSettingsService.getGlobalSettings();
-        var irisChatSettings = globalSettings.getIrisChatSettings();
-        int rateLimitTimeframeHours = Objects.requireNonNullElse(irisChatSettings.getRateLimitTimeframeHours(), 0);
+        var irisProgrammingExerciseChatSettings = globalSettings.getIrisProgrammingExerciseChatSettings();
+        int rateLimitTimeframeHours = Objects.requireNonNullElse(irisProgrammingExerciseChatSettings.getRateLimitTimeframeHours(), 0);
         var start = ZonedDateTime.now().minusHours(rateLimitTimeframeHours);
         var end = ZonedDateTime.now();
         var currentMessageCount = irisMessageRepository.countLlmResponsesOfUserWithinTimeframe(user.getId(), start, end);
-        var rateLimit = Objects.requireNonNullElse(irisChatSettings.getRateLimit(), -1);
+        var rateLimit = Objects.requireNonNullElse(irisProgrammingExerciseChatSettings.getRateLimit(), -1);
 
         return new IrisRateLimitInformation(currentMessageCount, rateLimit, rateLimitTimeframeHours);
     }

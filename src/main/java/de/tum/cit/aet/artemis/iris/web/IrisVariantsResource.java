@@ -49,7 +49,7 @@ public class IrisVariantsResource {
     public ResponseEntity<List<PyrisVariantDTO>> getAllVariants(@PathVariable("feature") String featureRaw) {
         var feature = IrisSubSettingsType.valueOf(featureRaw.toUpperCase().replace("-", "_"));
         try {
-            var variants = pyrisConnectorService.getOfferedVariants(feature);
+            var variants = pyrisConnectorService.getAvailableVariants(feature);
             return ResponseEntity.ok(variants);
         }
         catch (PyrisConnectorException e) {

@@ -160,7 +160,7 @@ public class PlagiarismAnswerPostService extends PostingService {
         // delete
         answerPostRepository.deleteById(answerPostId);
         preparePostForBroadcast(post);
-        broadcastForPost(new PostDTO(post, MetisCrudAction.UPDATE), course.getId(), null, null);
+        broadcastForPost(new PostDTO(post, MetisCrudAction.UPDATE), course.getId(), null);
     }
 
     /**

@@ -66,9 +66,9 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.En
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.CourseService;
-import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
@@ -147,8 +147,6 @@ public class QuizExerciseResource {
 
     private final QuizBatchRepository quizBatchRepository;
 
-    private final FileService fileService;
-
     private final ChannelService channelService;
 
     private final ChannelRepository channelRepository;
@@ -162,8 +160,8 @@ public class QuizExerciseResource {
             Optional<ExamDateApi> examDateApi, InstanceMessageSendService instanceMessageSendService, QuizStatisticService quizStatisticService,
             QuizExerciseImportService quizExerciseImportService, AuthorizationCheckService authCheckService, GroupNotificationService groupNotificationService,
             GroupNotificationScheduleService groupNotificationScheduleService, StudentParticipationRepository studentParticipationRepository, QuizBatchService quizBatchService,
-            QuizBatchRepository quizBatchRepository, FileService fileService, ChannelService channelService, ChannelRepository channelRepository,
-            QuizSubmissionService quizSubmissionService, QuizResultService quizResultService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi) {
+            QuizBatchRepository quizBatchRepository, ChannelService channelService, ChannelRepository channelRepository, QuizSubmissionService quizSubmissionService,
+            QuizResultService quizResultService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi) {
         this.quizExerciseService = quizExerciseService;
         this.quizMessagingService = quizMessagingService;
         this.quizExerciseRepository = quizExerciseRepository;
@@ -181,7 +179,6 @@ public class QuizExerciseResource {
         this.studentParticipationRepository = studentParticipationRepository;
         this.quizBatchService = quizBatchService;
         this.quizBatchRepository = quizBatchRepository;
-        this.fileService = fileService;
         this.channelService = channelService;
         this.channelRepository = channelRepository;
         this.quizSubmissionService = quizSubmissionService;
@@ -688,7 +685,7 @@ public class QuizExerciseResource {
         exerciseDeletionService.delete(quizExerciseId, false);
         quizExerciseService.cancelScheduledQuiz(quizExerciseId);
 
-        fileService.deleteFiles(imagesToDelete);
+        FileUtil.deleteFiles(imagesToDelete);
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, quizExercise.getTitle())).build();
     }

@@ -77,7 +77,7 @@ public class PyrisConnectorService {
      * @param feature The feature to get the variants for
      * @return A list of available Models as IrisVariantDTO
      */
-    public List<PyrisVariantDTO> getOfferedVariants(IrisSubSettingsType feature) throws PyrisConnectorException {
+    public List<PyrisVariantDTO> getAvailableVariants(IrisSubSettingsType feature) throws PyrisConnectorException {
         try {
             var response = restTemplate.getForEntity(pyrisUrl + "/api/v1/pipelines/" + feature.name() + "/variants", PyrisVariantDTO[].class);
             if (!response.getStatusCode().is2xxSuccessful() || !response.hasBody()) {
@@ -95,12 +95,11 @@ public class PyrisConnectorService {
      * Executes a pipeline with the given feature and variant
      *
      * @param feature      The feature name of the pipeline to execute
-     * @param variant      The variant of the feature to execute
      * @param executionDTO The DTO sent as a body for the execution
      * @param event        The event to be sent as a query parameter, if the pipeline is getting executed due to an event
      */
-    public void executePipeline(String feature, String variant, Object executionDTO, Optional<String> event) {
-        var endpoint = "/api/v1/pipelines/" + feature + "/" + variant + "/run";
+    public void executePipeline(String feature, Object executionDTO, Optional<String> event) {
+        var endpoint = "/api/v1/pipelines/" + feature + "/run";
         // Add event query parameter if present
         endpoint += event.map(e -> "?event=" + e).orElse("");
         try {
@@ -118,11 +117,10 @@ public class PyrisConnectorService {
     /**
      * This webhook adds a transcription to the Pyris system
      *
-     * @param variant      The variant of the feature to execute
      * @param executionDTO The DTO sent as a body for the execution
      */
-    public void executeTranscriptionAdditionWebhook(String variant, PyrisWebhookTranscriptionIngestionExecutionDTO executionDTO) {
-        var endpoint = "/api/v1/webhooks/transcriptions/" + variant;
+    public void executeTranscriptionAdditionWebhook(PyrisWebhookTranscriptionIngestionExecutionDTO executionDTO) {
+        var endpoint = "/api/v1/webhooks/transcriptions/ingest";
         try {
             restTemplate.postForEntity(pyrisUrl + endpoint, objectMapper.valueToTree(executionDTO), Void.class);
         }
@@ -159,11 +157,10 @@ public class PyrisConnectorService {
     /**
      * Executes a webhook and send lectures to the webhook with the given variant
      *
-     * @param variant      The variant of the feature to execute
      * @param executionDTO The DTO sent as a body for the execution
      */
-    public void executeLectureAddtionWebhook(String variant, PyrisWebhookLectureIngestionExecutionDTO executionDTO) {
-        var endpoint = "/api/v1/webhooks/lectures/" + variant;
+    public void executeLectureAdditionWebhook(PyrisWebhookLectureIngestionExecutionDTO executionDTO) {
+        var endpoint = "/api/v1/webhooks/lectures/ingest";
         try {
             restTemplate.postForEntity(pyrisUrl + endpoint, objectMapper.valueToTree(executionDTO), Void.class);
         }
@@ -251,7 +248,7 @@ public class PyrisConnectorService {
      * @param executionDTO The DTO sent as a body for the execution
      */
     public void executeFaqAdditionWebhook(PyrisFaqWebhookDTO toUpdateFaq, PyrisWebhookFaqIngestionExecutionDTO executionDTO) {
-        var endpoint = "/api/v1/webhooks/faqs";
+        var endpoint = "/api/v1/webhooks/faqs/ingest";
         try {
             restTemplate.postForEntity(pyrisUrl + endpoint, objectMapper.valueToTree(executionDTO), Void.class);
         }

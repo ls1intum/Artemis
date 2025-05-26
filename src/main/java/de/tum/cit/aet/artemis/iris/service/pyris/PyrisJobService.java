@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.FaqIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TranscriptionIngestionWebhookJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob;
 
 /**
  * The PyrisJobService class is responsible for managing Pyris jobs in the Artemis system.
@@ -95,6 +96,21 @@ public class PyrisJobService {
     public String addCourseChatJob(Long courseId, Long sessionId) {
         var token = generateJobIdToken();
         var job = new CourseChatJob(token, courseId, sessionId, null);
+        jobMap.put(token, job);
+        return token;
+    }
+
+    /**
+     * adds a tutor suggestion job to the job map
+     *
+     * @param postId    Id of the post the suggestion is created for
+     * @param courseId  Id of the course the post belongs to
+     * @param sessionId Id of the session the suggestion is created for
+     * @return the token of the job
+     */
+    public String addTutorSuggestionJob(Long postId, Long courseId, Long sessionId) {
+        var token = generateJobIdToken();
+        var job = new TutorSuggestionJob(token, postId, courseId, sessionId, null);
         jobMap.put(token, job);
         return token;
     }

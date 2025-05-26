@@ -210,7 +210,7 @@ public class DataExportExerciseCreationService {
             for (var submission : participation.getSubmissions()) {
                 createSubmissionCsvFile(submission, exerciseDir);
                 if (submission instanceof FileUploadSubmission fileUploadSubmission) {
-                    copyFileUploadSubmissionFile(FilePathConverter.buildFilePath(exercise.getId(), submission.getId()), exerciseDir, fileUploadSubmission);
+                    copyFileUploadSubmissionFile(FilePathConverter.buildFileUploadSubmissionPath(exercise.getId(), submission.getId()), exerciseDir, fileUploadSubmission);
                 }
                 else if (submission instanceof TextSubmission textSubmission) {
                     storeTextSubmissionContent(textSubmission, exerciseDir);

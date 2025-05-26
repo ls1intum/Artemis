@@ -144,7 +144,7 @@ class SubmissionExportIntegrationTest extends AbstractSpringIntegrationIndepende
 
         String[] parts = submission.getFilePath().split(Pattern.quote(File.separator));
         String fileName = parts[parts.length - 1];
-        File file = FilePathConverter.buildFilePath(exercise.getId(), submission.getId()).resolve(fileName).toFile();
+        File file = FilePathConverter.buildFileUploadSubmissionPath(exercise.getId(), submission.getId()).resolve(fileName).toFile();
 
         File parent = file.getParentFile();
         if (!parent.exists() && !parent.mkdirs()) {

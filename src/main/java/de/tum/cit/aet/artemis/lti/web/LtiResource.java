@@ -167,7 +167,6 @@ public class LtiResource {
                 yield ltiDeepLinkingService.performDeepLinking(idToken, clientRegistrationId, courseId, contentIds, resourceType);
             }
             case COMPETENCY, LEARNING_PATH, IRIS -> ltiDeepLinkingService.performDeepLinking(idToken, clientRegistrationId, courseId, null, resourceType);
-            default -> throw new BadRequestAlertException("Unsupported resource type provided: " + resourceType, "LTI", "invalidResourceType");
         };
 
         ObjectNode json = new ObjectMapper().createObjectNode();

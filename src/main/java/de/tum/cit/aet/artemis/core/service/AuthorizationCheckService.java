@@ -293,7 +293,7 @@ public class AuthorizationCheckService {
         if (!Boolean.TRUE.equals(course.isEnrollmentEnabled())) {
             return EnrollmentAuthorization.ENROLLMENT_STATUS;
         }
-        if (!Boolean.TRUE.equals(course.enrollmentIsActive())) {
+        if (!course.enrollmentIsActive()) {
             return EnrollmentAuthorization.ENROLLMENT_PERIOD;
         }
         Set<Organization> courseOrganizations = course.getOrganizations();

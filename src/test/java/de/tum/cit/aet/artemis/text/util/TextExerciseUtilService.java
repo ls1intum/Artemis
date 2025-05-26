@@ -29,7 +29,6 @@ import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
-import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
@@ -104,30 +103,10 @@ public class TextExerciseUtilService {
     private ParticipationTestRepository participationRepository;
 
     @Autowired
-    private ExamUtilService examUtilService;
-
-    @Autowired
     private ParticipationUtilService participationUtilService;
 
     @Autowired
     private UserUtilService userUtilService;
-
-    /**
-     * Creates and saves a TextExercise with feedback suggestions enabled.
-     *
-     * @param count expected size of TextBlock set
-     * @return Set of dummy TextBlocks
-     */
-    public Set<TextBlock> generateTextBlocks(int count) {
-        Set<TextBlock> textBlocks = new HashSet<>();
-        TextBlock textBlock;
-        for (int i = 0; i < count; i++) {
-            textBlock = new TextBlock();
-            textBlock.setText("TextBlock" + i);
-            textBlocks.add(textBlock);
-        }
-        return textBlocks;
-    }
 
     /**
      * Create an example text exercise
@@ -244,13 +223,11 @@ public class TextExerciseUtilService {
      *
      * @param textExercise The TextExercise to be renamed
      * @param title        The new title of the TextExercise
-     * @return The updated TextExercise
      */
-    public TextExercise renameTextExercise(TextExercise textExercise, String title) {
+    public void renameTextExercise(TextExercise textExercise, String title) {
         textExercise.setTitle(title);
         textExerciseRepository.save(textExercise);
 
-        return textExercise;
     }
 
     /**
@@ -260,41 +237,6 @@ public class TextExerciseUtilService {
      */
     public Course addCourseWithOneReleasedTextExercise() {
         return addCourseWithOneReleasedTextExercise("Text");
-    }
-
-    /**
-     * Creates and saves a Course with an Exam with one mandatory ExerciseGroup with one TextExercise.
-     *
-     * @param title The title of the created TextExercise
-     * @return The created TextExercise
-     */
-    public TextExercise addCourseExamExerciseGroupWithOneTextExercise(String title) {
-        ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true);
-        TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
-        if (title != null) {
-            textExercise.setTitle(title);
-        }
-        return exerciseRepository.save(textExercise);
-    }
-
-    /**
-     * Creates and saves a Course with an Exam with one mandatory ExerciseGroup with one TextExercise.
-     *
-     * @return The created TextExercise
-     */
-    public TextExercise addCourseExamExerciseGroupWithOneTextExercise() {
-        return addCourseExamExerciseGroupWithOneTextExercise(null);
-    }
-
-    /**
-     * Creates and saves a Course with an Exam with one mandatory ExerciseGroup with one TextExercise. The exam has a review date [now; now + 60min].
-     *
-     * @return The created TextExercise
-     */
-    public TextExercise addCourseExamWithReviewDatesExerciseGroupWithOneTextExercise() {
-        ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamWithReviewDatesAndCourse(true);
-        TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
-        return exerciseRepository.save(textExercise);
     }
 
     /**

@@ -189,7 +189,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
 
         expect(deleteSpy).toHaveBeenCalledOnce();
         const competencies = component['knowledgeAreaMap'].get(1)!.competencies!;
-        expect(competencies).toContainAllValues([c2, c3]);
+        expect(competencies).toIncludeAllMembers([c2, c3]);
         expect(competencies).toHaveLength(2);
     });
 
@@ -337,7 +337,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
 
         expect(deleteSpy).toHaveBeenCalledOnce();
         const knowledgeAreas = Array.from(component['knowledgeAreaMap'].values());
-        expect(knowledgeAreas).toContainAllValues([ka2, ka3]);
+        expect(knowledgeAreas).toIncludeAllMembers([ka2, ka3]);
         expect(knowledgeAreas).toHaveLength(2);
     });
 

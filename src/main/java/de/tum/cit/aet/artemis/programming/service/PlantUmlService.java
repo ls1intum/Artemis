@@ -36,6 +36,7 @@ public class PlantUmlService {
 
     private static final String LIGHT_THEME_FILE_NAME = "puml-theme-artemislight.puml";
 
+    // TODO: we should use a different directory and not the tmp directory
     private static final Path PATH_TMP_THEME = Path.of(System.getProperty("java.io.tmpdir"), "artemis-puml-theme");
 
     private final ResourceLoaderService resourceLoaderService;

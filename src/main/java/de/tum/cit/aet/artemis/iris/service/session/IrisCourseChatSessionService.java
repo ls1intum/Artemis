@@ -18,6 +18,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyJol;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -119,8 +120,11 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
     @Override
     public void requestAndHandleResponse(IrisCourseChatSession session) {
         var course = courseRepository.findByIdElseThrow(session.getCourseId());
-        var variant = irisSettingsService.getCombinedIrisSettingsFor(course, false).irisChatSettings().selectedVariant();
-        requestAndHandleResponse(session, variant, null);
+        var settings = irisSettingsService.getCombinedIrisSettingsFor(course, false).irisCourseChatSettings();
+        if (!settings.enabled()) {
+            throw new ConflictException("Iris is not enabled for this course", "Iris", "irisDisabled");
+        }
+        requestAndHandleResponse(session, settings.selectedVariant(), null);
     }
 
     private void requestAndHandleResponse(IrisCourseChatSession session, String variant, Object object) {

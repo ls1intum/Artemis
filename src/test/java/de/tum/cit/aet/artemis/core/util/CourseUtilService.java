@@ -46,7 +46,6 @@ import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.repository.ExerciseGroupRepository;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
-import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
@@ -63,7 +62,10 @@ import de.tum.cit.aet.artemis.fileupload.repository.FileUploadSubmissionReposito
 import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseFactory;
 import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseUtilService;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
+import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureFactory;
@@ -80,6 +82,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
@@ -87,6 +90,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
+import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 import de.tum.cit.aet.artemis.text.test_repository.TextSubmissionTestRepository;
 import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
@@ -195,6 +199,12 @@ public class CourseUtilService {
 
     @Autowired
     private GradingScaleUtilService gradingScaleUtilService;
+
+    @Autowired
+    private TextExerciseRepository textExerciseRepository;
+
+    @Autowired
+    private ProgrammingExerciseParticipationUtilService programmingExerciseParticipationUtilService;
 
     /**
      * Creates and saves a course (`id` is automatically generated).
@@ -308,11 +318,37 @@ public class CourseUtilService {
      */
     public List<Course> createCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(String userPrefix, boolean withParticipations, boolean withFiles,
             int numberOfTutorParticipations) throws IOException {
-        List<Course> courses = lectureUtilService.createCoursesWithExercisesAndLecturesAndLectureUnits(userPrefix, withParticipations, withFiles, numberOfTutorParticipations);
+        List<Course> courses = createCoursesWithExercisesAndLecturesAndLectureUnits(userPrefix, withParticipations, withFiles, numberOfTutorParticipations);
         return courses.stream().peek(course -> {
             List<Lecture> lectures = new ArrayList<>(course.getLectures());
             var competency = competencyUtilService.orElseThrow().createCompetency(course);
             lectures.replaceAll(lecture -> lectureUtilService.addCompetencyToLectureUnits(lecture, Set.of(competency)));
+            course.setLectures(new HashSet<>(lectures));
+        }).toList();
+    }
+
+    /**
+     * Creates and saves two Courses with Exercises of each type and two Lectures. For each Lecture, a LectureUnit of each type is added.
+     *
+     * @param userPrefix                  The prefix of the Course's user groups
+     * @param withParticipations          True, if 5 participations by student1 should be added for the Course's Exercises
+     * @param withFiles                   True, if the LectureUnit of type AttachmentVideoUnit should contain an Attachment with a link to an image file
+     * @param numberOfTutorParticipations The number of tutor participations to add to the ModelingExercise ("withParticipations" must be true for this to have an effect)
+     * @return A List of the created Courses
+     * @throws IOException If a file cannot be loaded from resources
+     */
+    public List<Course> createCoursesWithExercisesAndLecturesAndLectureUnits(String userPrefix, boolean withParticipations, boolean withFiles, int numberOfTutorParticipations)
+            throws IOException {
+        List<Course> courses = createCoursesWithExercisesAndLectures(userPrefix, withParticipations, withFiles, numberOfTutorParticipations);
+        return courses.stream().peek(course -> {
+            List<Lecture> lectures = new ArrayList<>(course.getLectures());
+            for (int i = 0; i < lectures.size(); i++) {
+                TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).stream().findFirst().orElseThrow();
+                TextUnit textUnit = lectureUtilService.createTextUnit();
+                AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnit(withFiles);
+                ExerciseUnit exerciseUnit = lectureUtilService.createExerciseUnit(textExercise);
+                lectures.set(i, lectureUtilService.addLectureUnitsToLecture(lectures.get(i), List.of(textUnit, attachmentVideoUnit, exerciseUnit)));
+            }
             course.setLectures(new HashSet<>(lectures));
         }).toList();
     }
@@ -924,8 +960,8 @@ public class CourseUtilService {
             programmingExercise.setBuildConfig(savedBuildConfig);
             programmingExercise = programmingExerciseRepository.save(programmingExercise);
             course.addExercises(programmingExercise);
-            programmingExercise = programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
-            programmingExercise = programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+            programmingExercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+            programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
 
             assertThat(programmingExercise.getPresentationScoreEnabled()).as("presentation score is enabled").isTrue();
         }
@@ -1138,7 +1174,7 @@ public class CourseUtilService {
                 for (int j = 1; j <= numberOfSubmissionPerExercise; j++) {
                     FileUploadSubmission submission = ParticipationFactory.generateFileUploadSubmissionWithFile(true, null);
                     var savedSubmission = fileUploadExerciseUtilService.saveFileUploadSubmission(fileUploadExercise, submission, userPrefix + "student" + j);
-                    var filePath = FilePathConverter.buildFilePath(fileUploadExercise.getId(), savedSubmission.getId()).resolve("file.pdf");
+                    var filePath = FilePathConverter.buildFileUploadSubmissionPath(fileUploadExercise.getId(), savedSubmission.getId()).resolve("file.pdf");
                     FileUtils.write(filePath.toFile(), "test content", Charset.defaultCharset());
                     savedSubmission.setFilePath(FilePathConverter.externalUriForFileSystemPath(filePath, FilePathType.FILE_UPLOAD_SUBMISSION, submission.getId()).toString());
                     fileUploadSubmissionRepo.save(savedSubmission);
@@ -1155,22 +1191,6 @@ public class CourseUtilService {
     }
 
     /**
-     * Creates and saves a new course.
-     *
-     * @param id        The id of the course.
-     * @param startDate The start date of the course.
-     * @param endDate   The end date of the course.
-     * @param exercises Exercises to be added to the course.
-     * @return Created and saved course.
-     */
-    public Course createAndSaveCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises) {
-        Course course = CourseFactory.generateCourse(id, startDate, endDate, exercises, "tumuser", "tutor", "editor", "instructor");
-        courseRepo.save(course);
-
-        return course;
-    }
-
-    /**
      * Creates and saves a course with one text, one modeling, and one file upload exercise. It also generates a submission for each exercise.
      *
      * @param userPrefix The prefix of the course user groups.
@@ -1182,14 +1202,14 @@ public class CourseUtilService {
         course.setEndDate(ZonedDateTime.now().minusMinutes(5));
         course = courseRepo.save(course);
 
-        var fileUploadExercise = exerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "FileUpload");
+        var fileUploadExercise = ExerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "FileUpload");
         fileUploadExerciseUtilService.createFileUploadSubmissionWithFile(userPrefix, fileUploadExercise, "uploaded-file.png");
 
-        var textExercise = exerciseUtilService.findTextExerciseWithTitle(course.getExercises(), "Text");
+        var textExercise = ExerciseUtilService.findTextExerciseWithTitle(course.getExercises(), "Text");
         var textSubmission = ParticipationFactory.generateTextSubmission("example text", Language.ENGLISH, true);
         textExerciseUtilService.saveTextSubmission(textExercise, textSubmission, userPrefix + "student1");
 
-        var modelingExercise = exerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "Modeling");
+        var modelingExercise = ExerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "Modeling");
         participationUtilService.createAndSaveParticipationForExercise(modelingExercise, userPrefix + "student1");
         String emptyActivityModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/empty-activity-diagram.json");
         ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(emptyActivityModel, true);

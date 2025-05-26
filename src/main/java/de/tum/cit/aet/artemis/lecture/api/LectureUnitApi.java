@@ -14,7 +14,6 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.repository.ExerciseUnitRepository;
-import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.service.LectureUnitImportService;
 import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
@@ -35,8 +34,8 @@ public class LectureUnitApi extends AbstractLectureApi {
 
     private final ExerciseUnitRepository exerciseUnitRepository;
 
-    public LectureUnitApi(LectureUnitService lectureUnitService, LectureUnitRepository lectureUnitRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository,
-            LectureUnitImportService lectureUnitImportService, ExerciseUnitRepository exerciseUnitRepository) {
+    public LectureUnitApi(LectureUnitService lectureUnitService, LectureUnitRepository lectureUnitRepository, LectureUnitImportService lectureUnitImportService,
+            ExerciseUnitRepository exerciseUnitRepository) {
         this.lectureUnitService = lectureUnitService;
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureUnitImportService = lectureUnitImportService;

@@ -4,6 +4,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -184,11 +185,13 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     @Autowired
     protected CourseTestRepository courseRepository;
 
+    private static final Path rootPath = Path.of("local", "upload");
+
     @BeforeAll
     static void setup() {
         // Set the static file upload path for all tests
         // This makes it a simple unit test that doesn't require a server start.
-        FilePathConverter.setFileUploadPathStatic("./local/uploads");
+        FilePathConverter.setFileUploadPath(rootPath);
     }
 
     @BeforeEach

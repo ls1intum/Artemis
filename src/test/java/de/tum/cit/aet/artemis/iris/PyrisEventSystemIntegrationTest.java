@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisEventType;
 import de.tum.cit.aet.artemis.iris.repository.IrisSettingsRepository;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisEventProcessingException;
@@ -99,7 +100,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
 
         course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         competency = competencyUtilService.createCompetency(course);
-        exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         String projectKey = exercise.getProjectKey();
         exercise.setProjectType(ProjectType.PLAIN_GRADLE);
         exercise.setTestRepositoryUri(localVCBaseUrl + "/git/" + projectKey + "/" + projectKey.toLowerCase() + "-tests.git");
@@ -241,7 +242,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
     void testShouldNotFireProgressStalledEventWithEventDisabled() {
         // Find settings for the current exercise
         var settings = irisSettingsRepository.findExerciseSettings(exercise.getId()).orElseThrow();
-        settings.getIrisChatSettings().setDisabledProactiveEvents(new TreeSet<>(Set.of(IrisEventType.PROGRESS_STALLED.name().toLowerCase())));
+        settings.getIrisProgrammingExerciseChatSettings().setDisabledProactiveEvents(new TreeSet<>(Set.of(IrisEventType.PROGRESS_STALLED.name().toLowerCase())));
         irisSettingsRepository.save(settings);
 
         createSubmissionWithScore(studentParticipation, 40);
@@ -255,7 +256,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
     void testShouldNotFireBuildFailedEventWhenEventSettingDisabled() {
         // Find settings for the current exercise
         var settings = irisSettingsRepository.findExerciseSettings(exercise.getId()).orElseThrow();
-        settings.getIrisChatSettings().setDisabledProactiveEvents(new TreeSet<>(Set.of(IrisEventType.BUILD_FAILED.name().toLowerCase())));
+        settings.getIrisProgrammingExerciseChatSettings().setDisabledProactiveEvents(new TreeSet<>(Set.of(IrisEventType.BUILD_FAILED.name().toLowerCase())));
         irisSettingsRepository.save(settings);
 
         irisExerciseChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));

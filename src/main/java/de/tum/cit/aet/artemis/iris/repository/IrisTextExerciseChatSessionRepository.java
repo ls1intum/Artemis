@@ -65,7 +65,7 @@ public interface IrisTextExerciseChatSessionRepository extends ArtemisJpaReposit
      * @param exerciseId the ID of the exercise to find the text exercise chat sessions for
      * @param userId     the ID of the user to find the text exercise chat sessions for
      * @param pageable   the pagination information
-     * @return a list of {@code IrisExerciseChatSession} with messages, or an empty list if no sessions are found
+     * @return a list of {@code IrisTextExerciseChatSession} with messages, or an empty list if no sessions are found
      */
     default List<IrisTextExerciseChatSession> findLatestByExerciseIdAndUserIdWithMessages(Long exerciseId, Long userId, Pageable pageable) {
         List<Long> ids = findSessionsByExerciseIdAndUserId(exerciseId, userId, pageable).stream().map(DomainObject::getId).toList();

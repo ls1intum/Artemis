@@ -18,9 +18,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.service.ArchivalReportEntry;
-import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.export.DataExportQuizExerciseCreationService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
@@ -40,14 +40,11 @@ public class QuizExerciseWithSubmissionsExportService {
 
     private final DataExportQuizExerciseCreationService dataExportQuizExerciseCreationService;
 
-    private final FileService fileService;
-
     public QuizExerciseWithSubmissionsExportService(QuizExerciseRepository quizExerciseRepository, MappingJackson2HttpMessageConverter springMvcJacksonConverter,
-            DataExportQuizExerciseCreationService dataExportQuizExerciseCreationService, FileService fileService) {
+            DataExportQuizExerciseCreationService dataExportQuizExerciseCreationService) {
         this.quizExerciseRepository = quizExerciseRepository;
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
         this.dataExportQuizExerciseCreationService = dataExportQuizExerciseCreationService;
-        this.fileService = fileService;
     }
 
     /**
@@ -65,7 +62,7 @@ public class QuizExerciseWithSubmissionsExportService {
         quizExercise.setCourse(null);
         quizExercise.setExerciseGroup(null);
         try {
-            fileService.writeObjectToJsonFile(quizExercise, objectMapper, exerciseExportDir.resolve("Exercise-Details-" + quizExercise.getSanitizedExerciseTitle() + ".json"));
+            FileUtil.writeObjectToJsonFile(quizExercise, objectMapper, exerciseExportDir.resolve("Exercise-Details-" + quizExercise.getSanitizedExerciseTitle() + ".json"));
         }
         catch (IOException e) {
             exportErrors.add("Failed to export quiz exercise details " + quizExercise.getTitle() + " with id " + quizExercise.getId() + " due to a JSON processing error.");
@@ -85,7 +82,7 @@ public class QuizExerciseWithSubmissionsExportService {
                 }
                 if (!imagesToExport.isEmpty()) {
                     var imagesDir = exerciseExportDir.resolve("images-for-drag-and-drop-question-" + dragAndDropQuestion.getId());
-                    fileService.createDirectory(imagesDir);
+                    FileUtil.createDirectory(imagesDir);
                     imagesToExport.forEach(path -> {
                         try {
                             FileUtils.copyFile(path.toFile(), imagesDir.resolve(path.getFileName()).toFile());

@@ -263,8 +263,6 @@ public final class Constants {
 
     public static final String USE_EXTERNAL = "useExternal";
 
-    public static final String PASSKEY_ENABLED = "passkeyEnabled";
-
     public static final String EXTERNAL_CREDENTIAL_PROVIDER = "externalCredentialProvider";
 
     public static final String EXTERNAL_PASSWORD_RESET_LINK_MAP = "externalPasswordResetLinkMap";
@@ -439,6 +437,16 @@ public final class Constants {
      * The name of the property used to enable or disable the passkey authentication functionality.
      */
     public static final String PASSKEY_ENABLED_PROPERTY_NAME = "artemis.user-management.passkey.enabled";
+
+    /**
+     * The name of the property used to define the directories for file uploads.
+     */
+    public static final String UPLOADS_FILE_PATH_PROPERTY_NAME = "artemis.file-upload-path";
+
+    /**
+     * The fallback value when no value for the uploads file path is defined.
+     */
+    public static final String UPLOADS_FILE_PATH_DEFAULT = "uploads";
 
     /**
      * Size of an unsigned tinyInt in SQL, that is used in the database

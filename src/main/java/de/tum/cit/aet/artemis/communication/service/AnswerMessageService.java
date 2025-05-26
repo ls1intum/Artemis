@@ -41,7 +41,6 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 
 @Profile(PROFILE_CORE)
@@ -70,8 +69,7 @@ public class AnswerMessageService extends PostingService {
             UserRepository userRepository, AnswerPostRepository answerPostRepository, ConversationMessageRepository conversationMessageRepository,
             ConversationService conversationService, ExerciseRepository exerciseRepository, SavedPostRepository savedPostRepository,
             WebsocketMessagingService websocketMessagingService, ConversationParticipantRepository conversationParticipantRepository,
-            ChannelAuthorizationService channelAuthorizationService, PostRepository postRepository, FeatureToggleService featureToggleService,
-            CourseNotificationService courseNotificationService) {
+            ChannelAuthorizationService channelAuthorizationService, PostRepository postRepository, CourseNotificationService courseNotificationService) {
         super(courseRepository, userRepository, exerciseRepository, authorizationCheckService, websocketMessagingService, conversationParticipantRepository, savedPostRepository);
         this.answerPostRepository = answerPostRepository;
         this.conversationMessageRepository = conversationMessageRepository;
@@ -250,7 +248,7 @@ public class AnswerMessageService extends PostingService {
         var savedPosts = savedPostRepository.findSavedPostByPostIdAndPostType(answerMessageId, PostingType.ANSWER);
         savedPostRepository.deleteAll(savedPosts);
 
-        broadcastForPost(new PostDTO(updatedMessage, MetisCrudAction.UPDATE), course.getId(), null, null);
+        broadcastForPost(new PostDTO(updatedMessage, MetisCrudAction.UPDATE), course.getId(), null);
     }
 
     /**

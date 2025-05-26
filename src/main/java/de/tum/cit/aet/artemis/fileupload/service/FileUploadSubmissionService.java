@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -211,13 +212,13 @@ public class FileUploadSubmissionService extends SubmissionService {
             var components = filename.split("\\\\");
             filename = components[components.length - 1];
         }
-        filename = FileService.sanitizeFilename(filename);
+        filename = FileUtil.sanitizeFilename(filename);
         // if the filename is now too short, we prepend "file"
         // this prevents potential problems when users call their file e.g. ßßß.pdf
         if (filename.length() < 5) {
             filename = "file" + filename;
         }
-        final Path dirPath = FilePathConverter.buildFilePath(exerciseId, submissionId);
+        final Path dirPath = FilePathConverter.buildFileUploadSubmissionPath(exerciseId, submissionId);
         final Path filePath = dirPath.resolve(filename);
         final File savedFile = filePath.toFile();
 

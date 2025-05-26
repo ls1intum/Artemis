@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserAttendanceCheckDTO;
@@ -90,7 +91,7 @@ public class ExamUserResource {
         if (signatureFile != null) {
             String oldPathString = examUser.getSigningImagePath();
             Path basePath = FilePathConverter.getExamUserSignatureFilePath();
-            Path savePath = fileService.saveFile(signatureFile, basePath, FilePathType.EXAM_USER_SIGNATURE, false);
+            Path savePath = FileUtil.saveFile(signatureFile, basePath, FilePathType.EXAM_USER_SIGNATURE, false);
             examUser.setSigningImagePath(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.EXAM_USER_SIGNATURE, examUser.getId()).toString());
 
             if (oldPathString != null) {

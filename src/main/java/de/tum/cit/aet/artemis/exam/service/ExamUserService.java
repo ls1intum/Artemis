@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.dto.ExamUsersNotFoundDTO;
@@ -132,10 +133,9 @@ public class ExamUserService {
 
             ExamUser examUser = examUserOptional.get();
             String oldPathString = examUser.getStudentImagePath();
-            MultipartFile studentImageFile = fileService.convertByteArrayToMultipart("student_image", ".png", examUserWithImageDTO.image().imageInBytes());
-            String externalUri = "/exam-user/" + examUser.getId() + "/" + studentImageFile.getOriginalFilename();
+            MultipartFile studentImageFile = FileUtil.convertByteArrayToMultipart("student_image", ".png", examUserWithImageDTO.image().imageInBytes());
             Path basePath = FilePathConverter.getStudentImageFilePath().resolve(examUser.getId().toString());
-            Path savedPath = fileService.saveFile(studentImageFile, basePath, FilePathType.EXAM_USER_IMAGE, true);
+            Path savedPath = FileUtil.saveFile(studentImageFile, basePath, FilePathType.EXAM_USER_IMAGE, true);
 
             examUser.setStudentImagePath(FilePathConverter.externalUriForFileSystemPath(savedPath, FilePathType.EXAM_USER_IMAGE, examUser.getId()).toString());
             examUserRepository.save(examUser);
@@ -157,9 +157,7 @@ public class ExamUserService {
      */
     public void deleteAvailableExamUserImages(ExamUser user) {
         Optional.ofNullable(user.getSigningImagePath()).map(URI::create).map(uri -> FilePathConverter.fileSystemPathForExternalUri(uri, FilePathType.EXAM_USER_SIGNATURE))
-                .ifPresent(path -> {
-                    fileService.schedulePathForDeletion(path, 0);
-                });
+                .ifPresent(path -> fileService.schedulePathForDeletion(path, 0));
 
         Optional.ofNullable(user.getStudentImagePath()).map(URI::create).map(uri -> FilePathConverter.fileSystemPathForExternalUri(uri, FilePathType.EXAM_USER_IMAGE))
                 .ifPresent(path -> fileService.schedulePathForDeletion(path, 0));

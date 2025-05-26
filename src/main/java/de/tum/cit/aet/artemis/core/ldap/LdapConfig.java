@@ -16,7 +16,7 @@ import org.springframework.security.ldap.SpringSecurityLdapTemplate;
 @Configuration
 @Lazy
 @Profile(PROFILE_LDAP)
-@EnableLdapRepositories(basePackages = "de.tum.cit.aet.artemis.core.ldap")
+@EnableLdapRepositories(basePackages = "de.tum.cit.aet.artemis.core.repository.ldap")
 public class LdapConfig {
 
     private static final Logger log = LoggerFactory.getLogger(LdapConfig.class);
