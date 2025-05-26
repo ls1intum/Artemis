@@ -900,7 +900,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         courseUtilService.enableMessagingForCourse(course);
         TextExercise exercise = textExerciseUtilService.createIndividualTextExercise(course, ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1),
                 ZonedDateTime.now().plusDays(1));
-        Channel exerciseChannel = exerciseUtilService.addChannelToExercise(exercise);
+        Channel exerciseChannel = conversationUtilService.addChannelToExercise(exercise);
 
         Channel returnedExerciseChannel = request.get("/api/communication/courses/" + course.getId() + "/exercises/" + exercise.getId() + "/channel", HttpStatus.OK, Channel.class);
 
