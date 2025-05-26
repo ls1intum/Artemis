@@ -1051,7 +1051,7 @@ public class ExamResource {
 
         Optional<User> optionalStudent = userRepository.findOneWithGroupsAndAuthoritiesByLogin(studentLogin);
         if (optionalStudent.isEmpty()) {
-            throw new EntityNotFoundException("User with login", studentLogin);
+            throw new EntityNotFoundException("User with login " + studentLogin + " does not exist");
         }
 
         var exam = examRepository.findWithExamUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
