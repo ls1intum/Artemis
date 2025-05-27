@@ -218,7 +218,8 @@
                 },
                 "viewPasskeySettings": "View Passkey Settings",
                 "viewVcsTokenSettings": "View VCS Token Settings",
-                "viewSshKeySettings": "View SSH Key Settings"
+                "viewSshKeySettings": "View SSH Key Settings",
+                "updateSuccess": "Notification setting updated successfully."
             }
         }
     }

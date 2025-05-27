@@ -18,6 +18,8 @@ export const GLOBAL_NOTIFICATION_TYPES = {
     SSH_KEY_EXPIRED: 'SSH_KEY_EXPIRED',
 } as const;
 
+export type GlobalNotificationType = keyof typeof GLOBAL_NOTIFICATION_TYPES;
+
 @Component({
     selector: 'jhi-email-notifications-settings',
     imports: [TranslateDirective, FaIconComponent, FormsModule, RouterLink],
@@ -68,13 +70,14 @@ export class GlobalNotificationsSettingsComponent implements OnInit, OnDestroy {
      * @param type - The notification type to update
      * @param enabled - Whether the notification should be enabled
      */
-    updateSetting(type: string, enabled: boolean): void {
+    updateSetting(type: GlobalNotificationType, enabled: boolean): void {
         this.updateSub?.unsubscribe();
         this.updateSub = this.globalNotificationSettingsService.update(type, enabled).subscribe({
             next: () => {
                 if (this.notificationSettings) {
                     this.notificationSettings[type] = enabled;
                 }
+                this.alertService.success('artemisApp.userSettings.globalNotificationSettings.updateSuccess');
             },
             error: (error) => onError(this.alertService, error),
         });
@@ -95,7 +98,7 @@ export class GlobalNotificationsSettingsComponent implements OnInit, OnDestroy {
      * @returns true if the notification type should be displayed
      */
     isSettingAvailable(type: string): boolean {
-        return type !== 'NEW_PASSKEY_ADDED' || this.isPasskeyEnabled;
+        return type !== GLOBAL_NOTIFICATION_TYPES.NEW_PASSKEY_ADDED || this.isPasskeyEnabled;
     }
 
     protected readonly GLOBAL_NOTIFICATION_TYPES = GLOBAL_NOTIFICATION_TYPES;

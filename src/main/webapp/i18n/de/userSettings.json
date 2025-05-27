@@ -218,7 +218,8 @@
                 },
                 "viewPasskeySettings": "Passkey-Einstellungen anzeigen",
                 "viewVcsTokenSettings": "VCS-Token-Einstellungen anzeigen",
-                "viewSshKeySettings": "SSH-Schlüssel-Einstellungen anzeigen"
+                "viewSshKeySettings": "SSH-Schlüssel-Einstellungen anzeigen",
+                "updateSuccess": "Benachrichtigungseinstellung erfolgreich aktualisiert."
             }
         }
     }
