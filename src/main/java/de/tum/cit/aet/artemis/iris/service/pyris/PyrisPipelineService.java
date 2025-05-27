@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -21,12 +22,18 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.api.LearningMetricsApi;
 import de.tum.cit.aet.artemis.atlas.config.AtlasNotPresentException;
+import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyJol;
+import de.tum.cit.aet.artemis.atlas.domain.competency.Prerequisite;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyJolDTO;
+import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
+import de.tum.cit.aet.artemis.atlas.repository.PrerequisiteRepository;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
@@ -47,6 +54,8 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisPostDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisUserDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 
@@ -76,12 +85,21 @@ public class PyrisPipelineService {
 
     private final UserRepository userRepository;
 
+    private final LectureRepository lectureRepository;
+
+    private final CompetencyRepository competencyRepository;
+
+    private final PrerequisiteRepository prerequisiteRepository;
+
+    private final ExamRepository examRepository;
+
     @Value("${server.url}")
     private String artemisBaseUrl;
 
     public PyrisPipelineService(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, PyrisDTOService pyrisDTOService,
             IrisChatWebsocketService irisChatWebsocketService, CourseRepository courseRepository, Optional<LearningMetricsApi> learningMetricsApi,
-            StudentParticipationRepository studentParticipationRepository, UserRepository userRepository) {
+            StudentParticipationRepository studentParticipationRepository, UserRepository userRepository, LectureRepository lectureRepository,
+            CompetencyRepository competencyRepository, PrerequisiteRepository prerequisiteRepository, ExamRepository examRepository) {
         this.pyrisConnectorService = pyrisConnectorService;
         this.pyrisJobService = pyrisJobService;
         this.pyrisDTOService = pyrisDTOService;
@@ -90,6 +108,10 @@ public class PyrisPipelineService {
         this.learningMetricsApi = learningMetricsApi;
         this.studentParticipationRepository = studentParticipationRepository;
         this.userRepository = userRepository;
+        this.lectureRepository = lectureRepository;
+        this.competencyRepository = competencyRepository;
+        this.prerequisiteRepository = prerequisiteRepository;
+        this.examRepository = examRepository;
     }
 
     /**
@@ -301,7 +323,18 @@ public class PyrisPipelineService {
      * @param studentId the id of the student
      */
     private Course loadCourseWithParticipationOfStudent(long courseId, long studentId) {
-        Course course = courseRepository.findWithEagerExercisesAndLecturesAndAttachmentsAndLectureUnitsAndCompetenciesAndExamsById(courseId).orElseThrow();
+        ZonedDateTime now = ZonedDateTime.now();
+        Course course = courseRepository.findWithEagerReleasedExercisesById(courseId, now).orElseThrow();
+        Set<Lecture> visibleLectures = lectureRepository.findAllVisibleByCourseIdWithEagerLectureUnits(courseId, now);
+        Set<Competency> competencies = competencyRepository.findAllByCourseId(courseId);
+        Set<Prerequisite> prerequisites = prerequisiteRepository.findAllByCourseId(courseId);
+        Set<Exam> visibleExams = examRepository.findAllVisibleByCourseId(courseId, now);
+        course.setLectures(visibleLectures);
+        course.setCompetencies(competencies);
+        course.setPrerequisites(prerequisites);
+        course.setExams(visibleExams);
+
+        // Course course = courseRepository.findWithEagerExercisesAndLecturesAndAttachmentsAndLectureUnitsAndCompetenciesAndExamsById(courseId).orElseThrow();
         List<StudentParticipation> participations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(studentId,
                 course.getExercises());
 
