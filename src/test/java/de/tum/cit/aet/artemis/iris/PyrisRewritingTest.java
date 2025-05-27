@@ -17,7 +17,6 @@ import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.iris.service.IrisRewritingService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisRewriteTextRequestDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.rewriting.RewritingVariant;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 @Profile(PROFILE_IRIS)
 class PyrisRewritingTest extends AbstractIrisIntegrationTest {
@@ -35,8 +34,6 @@ class PyrisRewritingTest extends AbstractIrisIntegrationTest {
 
     private Course course1;
 
-    private ProgrammingExercise exercise;
-
     @BeforeEach
     void initTestCase() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 0, 2);
@@ -44,7 +41,6 @@ class PyrisRewritingTest extends AbstractIrisIntegrationTest {
 
         this.course1 = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
 
-        this.exercise = exerciseUtilService.getFirstExerciseWithType(this.course1, ProgrammingExercise.class);
         userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
         userUtilService.createAndSaveUser(TEST_PREFIX + "tutor42");
         userUtilService.createAndSaveUser(TEST_PREFIX + "instructor42");

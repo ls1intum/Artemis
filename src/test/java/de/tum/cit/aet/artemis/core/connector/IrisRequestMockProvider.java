@@ -200,7 +200,7 @@ public class IrisRequestMockProvider {
     public void mockRewritingPipelineResponse(Consumer<PyrisRewritingPipelineExecutionDTO> responseConsumer) {
         // @formatter:off
         mockServer
-            .expect(ExpectedCount.once(), requestTo(pipelinesApiURL + "/rewriting/faq/run"))
+            .expect(ExpectedCount.once(), requestTo(pipelinesApiURL + "/rewriting/run"))
             .andExpect(method(HttpMethod.POST))
             .andRespond(request -> {
                 var mockRequest = (MockClientHttpRequest) request;
