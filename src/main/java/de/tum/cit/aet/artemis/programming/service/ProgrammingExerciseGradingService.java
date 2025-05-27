@@ -113,7 +113,7 @@ public class ProgrammingExerciseGradingService {
 
     private final FeedbackService feedbackService;
 
-    private final LearnerProfileApi learnerProfileApi;
+    private final Optional<LearnerProfileApi> learnerProfileApi;
 
     private final ProgrammingSubmissionService programmingSubmissionService;
 
@@ -128,7 +128,7 @@ public class ProgrammingExerciseGradingService {
             AuditEventRepository auditEventRepository, GroupNotificationService groupNotificationService, ResultService resultService, ExerciseDateService exerciseDateService,
             SubmissionPolicyService submissionPolicyService, ProgrammingExerciseRepository programmingExerciseRepository, BuildLogEntryService buildLogService,
             StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository, ProgrammingExerciseFeedbackCreationService feedbackCreationService,
-            FeedbackService feedbackService, Optional<LocalVCGitBranchService> localVCGitBranchService, LearnerProfileApi learnerProfileApi,
+            FeedbackService feedbackService, Optional<LocalVCGitBranchService> localVCGitBranchService, Optional<LearnerProfileApi> learnerProfileApi,
             ProgrammingSubmissionService programmingSubmissionService, ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.continuousIntegrationResultService = continuousIntegrationResultService;
@@ -319,17 +319,17 @@ public class ProgrammingExerciseGradingService {
                 submissionPolicyService.handleLockRepositoryPolicy(processedResult, (Participation) participation, policy);
             }
 
-            // Update course learner profile with received score and lines changed
-            int linesChangedInSubmission = programmingSubmissionService.calculateLinesChangedToPreviousSubmission(programmingSubmission);
-            ProgrammingExerciseGitDiffReport exerciseGitDiffReport = programmingExerciseGitDiffReportService.getOrCreateReportOfExercise(programmingExercise);
-            int linesChangedInSolution = exerciseGitDiffReport.getEntries().stream()
-                    .mapToInt((entry) -> ((entry.getPreviousLineCount() != null) ? entry.getPreviousLineCount() : 0) + ((entry.getLineCount() != null) ? entry.getLineCount() : 0))
-                    .sum();
-            double score = processedResult.getScore();
+            if (learnerProfileApi.isPresent()) {
+                // Update course learner profile with received score and lines changed
+                int linesChangedInSubmission = programmingSubmissionService.calculateLinesChangedToPreviousSubmission(programmingSubmission);
+                ProgrammingExerciseGitDiffReport exerciseGitDiffReport = programmingExerciseGitDiffReportService.getOrCreateReportOfExercise(programmingExercise);
+                int linesChangedInSolution = exerciseGitDiffReport.getEntries().stream().mapToInt(
+                        (entry) -> ((entry.getPreviousLineCount() != null) ? entry.getPreviousLineCount() : 0) + ((entry.getLineCount() != null) ? entry.getLineCount() : 0)).sum();
+                double score = processedResult.getScore();
 
-            learnerProfileApi.updateProficiency(((StudentParticipation) participation).getStudents(),
-                    participation.getProgrammingExercise().getCourseViaExerciseGroupOrCourseMember(), linesChangedInSubmission, linesChangedInSolution, score);
-
+                learnerProfileApi.get().updateProficiency(((StudentParticipation) participation).getStudents(),
+                        participation.getProgrammingExercise().getCourseViaExerciseGroupOrCourseMember(), linesChangedInSubmission, linesChangedInSolution, score);
+            }
             if (programmingSubmission.getLatestResult() != null && programmingSubmission.getLatestResult().isManual() && !((Participation) participation).isPracticeMode()) {
                 // Note: in this case, we do not want to save the processedResult, but we only want to update the latest semi-automatic one
                 Result updatedLatestSemiAutomaticResult = updateLatestSemiAutomaticResultWithNewAutomaticFeedback(programmingSubmission.getLatestResult().getId(), processedResult);
