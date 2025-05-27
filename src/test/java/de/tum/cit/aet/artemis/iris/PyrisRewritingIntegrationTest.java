@@ -95,5 +95,4 @@ class PyrisRewritingIntegrationTest extends AbstractIrisIntegrationTest {
         request.postWithoutResponseBody("/api/iris/courses/" + course.getId() + "/rewrite-text", requestDTO, HttpStatus.FORBIDDEN);
 
     }
-
 }
