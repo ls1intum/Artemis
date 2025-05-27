@@ -59,9 +59,7 @@ public interface CompetencyRepository extends ArtemisJpaRepository<Competency, L
             SELECT c
             FROM Competency c
             WHERE c.course.id = :courseId
-
             """)
-
     Set<Competency> findAllByCourseId(@Param("courseId") long courseId);
 
     default Competency findByIdWithLectureUnitsAndExercisesElseThrow(long competencyId) {

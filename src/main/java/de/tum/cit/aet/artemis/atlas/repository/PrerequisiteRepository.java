@@ -58,9 +58,7 @@ public interface PrerequisiteRepository extends ArtemisJpaRepository<Prerequisit
             SELECT p
             FROM Prerequisite p
             WHERE p.course.id = :courseId
-
             """)
-
     Set<Prerequisite> findAllByCourseId(@Param("courseId") long courseId);
 
     default Prerequisite findByIdWithLectureUnitsAndExercisesElseThrow(long competencyId) {

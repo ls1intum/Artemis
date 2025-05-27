@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.lecture.repository;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.Set;
 
@@ -77,14 +76,6 @@ public interface LectureUnitRepository extends ArtemisJpaRepository<LectureUnit,
             WHERE lu.id = :lectureUnitId
             """)
     Optional<LectureUnit> findByIdWithCompletedUsers(@Param("lectureUnitId") long lectureUnitId);
-
-    @Query("""
-            SELECT lu
-            FROM LectureUnit lu
-            WHERE lu.lecture.course.id = :courseId
-                        AND lu.lecture.visibleDate <=: now OR lu.lecture.visibleDate IS NULL
-            """)
-    Set<LectureUnit> findAllVisibleByCourseId(@Param("courseId") long courseId, @Param("now") ZonedDateTime now);
 
     /**
      * Finds a lecture unit by name, lecture title and course id. Currently, name duplicates are allowed but this method throws an exception if multiple lecture units with the
