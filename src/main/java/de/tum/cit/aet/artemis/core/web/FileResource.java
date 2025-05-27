@@ -66,6 +66,7 @@ import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.core.service.file.FileUploadService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.exam.api.ExamUserApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
@@ -167,7 +168,7 @@ public class FileResource {
     public ResponseEntity<String> saveMarkdownFile(@RequestParam(value = "file") MultipartFile file, @RequestParam(defaultValue = "false") boolean keepFileName)
             throws URISyntaxException {
         log.debug("REST request to upload file for markdown: {}", file.getOriginalFilename());
-        String publicPath = fileService.handleSaveFile(file, keepFileName, true).toString();
+        String publicPath = FileUtil.handleSaveFile(file, keepFileName, true).toString();
         String responsePath = getResponsePathFromPublicPathString(publicPath);
 
         // return path for getting the file
@@ -193,7 +194,7 @@ public class FileResource {
         if (file.getSize() > Constants.MAX_FILE_SIZE_COMMUNICATION) {
             throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE, "The file is too large. Maximum file size is " + Constants.MAX_FILE_SIZE_COMMUNICATION + " bytes.");
         }
-        var filePathInformation = fileService.handleSaveFileInConversation(file, courseId, conversationId);
+        var filePathInformation = FileUtil.handleSaveFileInConversation(file, courseId, conversationId);
         String publicPath = filePathInformation.publicPath().toString();
 
         fileUploadService.createFileUpload(publicPath, filePathInformation.serverPath().toString(), filePathInformation.filename(), conversationId,
@@ -497,7 +498,7 @@ public class FileResource {
             return FilePathConverter.fileSystemPathForExternalUri(URI.create(filePath), filePathType);
         }).toList();
 
-        Optional<byte[]> file = fileService.mergePdfFiles(attachmentLinks, api.getLectureTitle(lectureId));
+        Optional<byte[]> file = FileUtil.mergePdfFiles(attachmentLinks, api.getLectureTitle(lectureId));
         if (file.isEmpty()) {
             log.error("Failed to merge PDF lecture units for lecture with id {}", lectureId);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -733,7 +734,7 @@ public class FileResource {
             String contentType = lowerCaseFilename.endsWith("htm") || lowerCaseFilename.endsWith("html") || lowerCaseFilename.endsWith("svg") || lowerCaseFilename.endsWith("svgz")
                     ? "attachment"
                     : "inline";
-            String headerFilename = FileService.sanitizeFilename(replaceFilename.orElse(filename));
+            String headerFilename = FileUtil.sanitizeFilename(replaceFilename.orElse(filename));
             headers.setContentDisposition(ContentDisposition.builder(contentType).filename(headerFilename).build());
             headers.set("Filename", headerFilename);
 
@@ -840,7 +841,7 @@ public class FileResource {
      * @param filename the filename which is validated
      */
     private static void sanitizeFilenameElseThrow(String filename) {
-        String sanitizedFileName = FileService.sanitizeFilename(filename);
+        String sanitizedFileName = FileUtil.sanitizeFilename(filename);
         if (!sanitizedFileName.equals(filename)) {
             throw new EntityNotFoundException("The filename contains invalid characters. Only characters a-z, A-Z, 0-9, '_', '.' and '-' are allowed!");
         }

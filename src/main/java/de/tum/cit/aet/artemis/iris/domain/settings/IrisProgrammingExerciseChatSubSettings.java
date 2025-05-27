@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.iris.domain.settings;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.IRIS_CUSTOM_INSTRUCTIONS_MAX_LENGTH;
+
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -16,9 +18,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * Chat settings notably provide settings for the rate limit.
  */
 @Entity
-@DiscriminatorValue("CHAT")
+@DiscriminatorValue("PROGRAMMING_EXERCISE_CHAT")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class IrisChatSubSettings extends IrisSubSettings {
+public class IrisProgrammingExerciseChatSubSettings extends IrisSubSettings implements HasEnabledCategories {
 
     @Nullable
     @Column(name = "rate_limit")
@@ -35,6 +37,10 @@ public class IrisChatSubSettings extends IrisSubSettings {
     @Column(name = "disabled_proactive_events", nullable = false)
     @Convert(converter = IrisListConverter.class)
     private SortedSet<String> disabledProactiveEvents = new TreeSet<>();
+
+    @Nullable
+    @Column(name = "custom_instructions", length = IRIS_CUSTOM_INSTRUCTIONS_MAX_LENGTH)
+    private String customInstructions;
 
     @Nullable
     public Integer getRateLimit() {
@@ -54,10 +60,12 @@ public class IrisChatSubSettings extends IrisSubSettings {
         this.rateLimitTimeframeHours = rateLimitTimeframeHours;
     }
 
+    @Override
     public SortedSet<String> getEnabledForCategories() {
         return enabledForCategories;
     }
 
+    @Override
     public void setEnabledForCategories(SortedSet<String> enabledForCategories) {
         this.enabledForCategories = enabledForCategories;
     }
@@ -68,5 +76,14 @@ public class IrisChatSubSettings extends IrisSubSettings {
 
     public void setDisabledProactiveEvents(SortedSet<String> disabledProactiveEvents) {
         this.disabledProactiveEvents = disabledProactiveEvents;
+    }
+
+    @Nullable
+    public String getCustomInstructions() {
+        return customInstructions;
+    }
+
+    public void setCustomInstructions(@Nullable String customInstructions) {
+        this.customInstructions = customInstructions;
     }
 }

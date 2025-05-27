@@ -120,6 +120,32 @@ class IrisLectureChatMessageIntegrationTest extends AbstractIrisIntegrationTest 
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void sendOneMessageWithCustomInstructions() throws Exception {
+        String testCustomInstructions = "Please focus on grammar.";
+        var courseSettings = irisSettingsService.getRawIrisSettingsFor(lecture.getCourse());
+        courseSettings.getIrisLectureChatSettings().setCustomInstructions(testCustomInstructions);
+        irisSettingsService.saveIrisSettings(courseSettings);
+
+        // Prepare session and message
+        var irisSession = createSessionForUser("student1");
+        var messageToSend = createDefaultMockMessage(irisSession);
+        messageToSend.setMessageDifferentiator(12345);
+
+        // Mock Pyris response and assert customInstructions in DTO
+        irisRequestMockProvider.mockLectureChatResponse(dto -> {
+            assertThat(dto.customInstructions()).isEqualTo(testCustomInstructions);
+            pipelineDone.set(true);
+        });
+
+        // Send message
+        request.postWithoutResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, HttpStatus.CREATED);
+
+        // Await invocation
+        await().until(pipelineDone::get);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void sendOneMessageToWrongSession() throws Exception {
         createSessionForUser("student1");
         var irisSession = createSessionForUser("student2");
@@ -278,8 +304,8 @@ class IrisLectureChatMessageIntegrationTest extends AbstractIrisIntegrationTest 
         });
 
         var globalSettings = irisSettingsService.getGlobalSettings();
-        globalSettings.getIrisChatSettings().setRateLimit(1);
-        globalSettings.getIrisChatSettings().setRateLimitTimeframeHours(10);
+        globalSettings.getIrisProgrammingExerciseChatSettings().setRateLimit(1);
+        globalSettings.getIrisProgrammingExerciseChatSettings().setRateLimitTimeframeHours(10);
         irisSettingsService.saveIrisSettings(globalSettings);
 
         try {
@@ -295,8 +321,8 @@ class IrisLectureChatMessageIntegrationTest extends AbstractIrisIntegrationTest 
         }
         finally {
             // Reset to not interfere with other tests
-            globalSettings.getIrisChatSettings().setRateLimit(null);
-            globalSettings.getIrisChatSettings().setRateLimitTimeframeHours(null);
+            globalSettings.getIrisProgrammingExerciseChatSettings().setRateLimit(null);
+            globalSettings.getIrisProgrammingExerciseChatSettings().setRateLimitTimeframeHours(null);
             irisSettingsService.saveIrisSettings(globalSettings);
         }
     }

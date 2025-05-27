@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.security;
+package de.tum.cit.aet.artemis.core.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
@@ -10,11 +10,8 @@ import java.util.HashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Profile;
-import org.springframework.security.authentication.event.AuthenticationSuccessEvent;
-import org.springframework.security.core.Authentication;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.domain.GlobalNotificationType;
 import de.tum.cit.aet.artemis.communication.repository.GlobalNotificationSettingRepository;
@@ -29,8 +26,8 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
  * to users when they successfully log in.
  */
 @Profile(PROFILE_CORE)
-@Component
-public class ArtemisAuthenticationEventListener implements ApplicationListener<AuthenticationSuccessEvent> {
+@Service
+public class ArtemisSuccessfulLoginService {
 
     @Value("${artemis.user-management.password-reset.links.en:https://artemis.tum.de/account/reset/request}")
     private String passwordResetLinkEnUrl;
@@ -41,7 +38,7 @@ public class ArtemisAuthenticationEventListener implements ApplicationListener<A
     @Value("${server.url}")
     private URL artemisServerUrl;
 
-    private static final Logger log = LoggerFactory.getLogger(ArtemisAuthenticationEventListener.class);
+    private static final Logger log = LoggerFactory.getLogger(ArtemisSuccessfulLoginService.class);
 
     private final UserRepository userRepository;
 
@@ -49,7 +46,7 @@ public class ArtemisAuthenticationEventListener implements ApplicationListener<A
 
     private final GlobalNotificationSettingRepository globalNotificationSettingRepository;
 
-    public ArtemisAuthenticationEventListener(UserRepository userRepository, MailSendingService mailSendingService,
+    public ArtemisSuccessfulLoginService(UserRepository userRepository, MailSendingService mailSendingService,
             GlobalNotificationSettingRepository globalNotificationSettingRepository) {
         this.userRepository = userRepository;
         this.mailSendingService = mailSendingService;
@@ -59,14 +56,10 @@ public class ArtemisAuthenticationEventListener implements ApplicationListener<A
     /**
      * Handles successful authentication events.
      * Sends a login notification email to users when they successfully authenticate.
-     *
-     * @param event The authentication success event to process
      */
-    @Override
-    public void onApplicationEvent(AuthenticationSuccessEvent event) {
-        Authentication authentication = event.getAuthentication();
+    public void sendLoginEmail(String username) {
         try {
-            User recipient = userRepository.getUserByLoginElseThrow(authentication.getName());
+            User recipient = userRepository.getUserByLoginElseThrow(username);
 
             if (!globalNotificationSettingRepository.isNotificationEnabled(recipient.getId(), GlobalNotificationType.NEW_LOGIN)) {
                 return;
@@ -97,17 +90,7 @@ public class ArtemisAuthenticationEventListener implements ApplicationListener<A
             mailSendingService.buildAndSendAsync(recipient, "email.notification.login.title", "mail/notification/newLoginEmail", contextVariables);
         }
         catch (EntityNotFoundException ignored) {
-            log.error("User with login {} not found when trying to send newLoginEmail", authentication.getName());
+            log.error("User with login {} not found when trying to send newLoginEmail", username);
         }
-    }
-
-    /**
-     * Determines whether this listener supports asynchronous execution. Async not needed since email is sent asynchronously.
-     *
-     * @return false, indicating this listener should be executed synchronously
-     */
-    @Override
-    public boolean supportsAsyncExecution() {
-        return false;
     }
 }
