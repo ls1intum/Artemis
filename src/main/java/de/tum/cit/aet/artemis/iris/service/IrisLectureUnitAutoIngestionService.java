@@ -12,9 +12,9 @@ import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
+import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
-import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 
 @Service
 @Profile(PROFILE_CORE_AND_SCHEDULING_AND_IRIS)
@@ -26,21 +26,21 @@ public class IrisLectureUnitAutoIngestionService {
 
     private final TaskScheduler taskScheduler;
 
-    private final LectureUnitRepository lectureUnitRepository;
+    private final LectureUnitRepositoryApi lectureUnitRepositoryApi;
 
     private final Map<Long, ScheduledFuture<?>> scheduledIngestionTasks = new ConcurrentHashMap<>();
 
-    public IrisLectureUnitAutoIngestionService(IrisLectureApi irisLectureApi, TaskScheduler taskScheduler, LectureUnitRepository lectureUnitRepository) {
+    public IrisLectureUnitAutoIngestionService(IrisLectureApi irisLectureApi, TaskScheduler taskScheduler, LectureUnitRepositoryApi lectureUnitRepositoryApi) {
         this.irisLectureApi = irisLectureApi;
         this.taskScheduler = taskScheduler;
-        this.lectureUnitRepository = lectureUnitRepository;
+        this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
 
     }
 
     public void scheduleLectureUnitAutoIngestion(Long lectureUnitId) {
         cancelLectureUnitAutoIngestion(lectureUnitId);
 
-        LectureUnit unit = lectureUnitRepository.findByIdElseThrow(lectureUnitId);
+        LectureUnit unit = lectureUnitRepositoryApi.findByIdElseThrow(lectureUnitId);
 
         if (unit instanceof AttachmentVideoUnit attachmentVideoUnit) {
             ZonedDateTime triggerTime = ZonedDateTime.now().plusMinutes(BACKOFF_TIME_MINUTES);
