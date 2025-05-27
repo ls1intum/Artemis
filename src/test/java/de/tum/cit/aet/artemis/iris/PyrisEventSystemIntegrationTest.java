@@ -101,8 +101,6 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
         course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         competency = competencyUtilService.createCompetency(course);
         exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        // make exercise visible
-        exercise.setReleaseDate(null);
         String projectKey = exercise.getProjectKey();
         exercise.setProjectType(ProjectType.PLAIN_GRADLE);
         exercise.setTestRepositoryUri(localVCBaseUrl + "/git/" + projectKey + "/" + projectKey.toLowerCase() + "-tests.git");

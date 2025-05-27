@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisProgrammingExerciseChatSession;
@@ -86,7 +87,7 @@ public class PyrisPipelineService {
     private final UserRepository userRepository;
 
     // we cannot use the apis here in most cases as this leads to circular dependencies, so we use the repositories instead and ignore this class in the architecture tests
-    private final LectureRepository lectureRepository;
+    private final Optional<LectureRepository> lectureRepository;
 
     private final Optional<CompetencyRepository> competencyRepository;
 
@@ -94,13 +95,16 @@ public class PyrisPipelineService {
 
     private final Optional<ExamRepository> examRepository;
 
+    private final ExerciseRepository exerciseRepository;
+
     @Value("${server.url}")
     private String artemisBaseUrl;
 
     public PyrisPipelineService(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, PyrisDTOService pyrisDTOService,
             IrisChatWebsocketService irisChatWebsocketService, CourseRepository courseRepository, Optional<LearningMetricsApi> learningMetricsApi,
-            StudentParticipationRepository studentParticipationRepository, UserRepository userRepository, LectureRepository lectureRepository,
-            Optional<CompetencyRepository> competencyRepository, Optional<PrerequisitesApi> prerequisitesApi, Optional<ExamRepository> examRepository) {
+            StudentParticipationRepository studentParticipationRepository, UserRepository userRepository, Optional<LectureRepository> lectureRepository,
+            Optional<CompetencyRepository> competencyRepository, Optional<PrerequisitesApi> prerequisitesApi, Optional<ExamRepository> examRepository,
+            ExerciseRepository exerciseRepository) {
         this.pyrisConnectorService = pyrisConnectorService;
         this.pyrisJobService = pyrisJobService;
         this.pyrisDTOService = pyrisDTOService;
@@ -113,6 +117,7 @@ public class PyrisPipelineService {
         this.competencyRepository = competencyRepository;
         this.prerequisitesApi = prerequisitesApi;
         this.examRepository = examRepository;
+        this.exerciseRepository = exerciseRepository;
     }
 
     /**
@@ -325,8 +330,12 @@ public class PyrisPipelineService {
      */
     private Course loadCourseWithParticipationOfStudent(long courseId, long studentId) {
         ZonedDateTime now = ZonedDateTime.now();
-        Course course = courseRepository.findWithEagerReleasedExercisesById(courseId, now).orElseThrow();
-        Set<Lecture> visibleLectures = lectureRepository.findAllVisibleByCourseIdWithEagerLectureUnits(courseId, now);
+        Course course = courseRepository.findById(courseId).orElseThrow();
+        Set<Exercise> releasedExercises = exerciseRepository.findAllReleasedExercisesByCourseId(courseId, now);
+        Set<Lecture> visibleLectures = new HashSet<>();
+        if (lectureRepository.isPresent()) {
+            visibleLectures = lectureRepository.orElseThrow().findAllVisibleByCourseIdWithEagerLectureUnits(courseId, now);
+        }
         Set<Competency> competencies = new HashSet<>();
         if (competencyRepository.isPresent()) {
             competencies = competencyRepository.orElseThrow().findAllByCourseId(courseId);
@@ -339,6 +348,7 @@ public class PyrisPipelineService {
         if (examRepository.isPresent()) {
             visibleExams = examRepository.orElseThrow().findAllVisibleByCourseId(courseId, now);
         }
+        course.setExercises(releasedExercises);
         course.setLectures(visibleLectures);
         course.setCompetencies(competencies);
         course.setPrerequisites(prerequisites);

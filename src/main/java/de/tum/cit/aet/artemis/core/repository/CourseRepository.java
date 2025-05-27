@@ -109,15 +109,6 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "exercises", "exercises.categories", "exercises.teamAssignmentConfig" })
     Course findWithEagerExercisesById(long courseId);
 
-    @Query("""
-            SELECT c
-            FROM Course c
-                LEFT JOIN FETCH c.exercises exercises
-                WHERE c.id = :courseId
-                    AND (exercises.releaseDate <=:now  OR exercises.releaseDate IS NULL)
-            """)
-    Optional<Course> findWithEagerReleasedExercisesById(@Param("courseId") long courseId, @Param("now") ZonedDateTime now);
-
     @EntityGraph(type = LOAD, attributePaths = { "competencies", "prerequisites" })
     Optional<Course> findWithEagerCompetenciesAndPrerequisitesById(long courseId);
 
