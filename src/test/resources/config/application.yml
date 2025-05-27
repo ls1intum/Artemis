@@ -161,8 +161,9 @@ spring:
     mail:
         host: localhost
     main:
-        allow-bean-definition-overriding: true # TODO: we should deactivate this in the future
-        allow-circular-references: true # TODO: we should deactivate this in the future
+        allow-bean-definition-overriding: false
+        allow-circular-references: false
+        lazy-initialization: true
     messages:
         basename: i18n/messages
         cache-duration: PT1S # 1 second, see the ISO 8601 standard
@@ -247,7 +248,7 @@ management:
                 include: ["jhimetrics"]
     endpoint:
         jhimetrics:
-            enabled: true
+            access: read_only
     info:
         env:
             enabled: true

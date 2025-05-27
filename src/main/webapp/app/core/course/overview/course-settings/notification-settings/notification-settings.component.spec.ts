@@ -29,20 +29,28 @@ describe('NotificationSettingsComponent', () => {
     const courseId = 123;
 
     const mockPresets: CourseNotificationSettingPreset[] = [
-        new CourseNotificationSettingPreset('preset1', 1, {
-            newPostNotification: {
-                [CourseNotificationChannel.PUSH]: true,
-                [CourseNotificationChannel.EMAIL]: false,
-                [CourseNotificationChannel.WEBAPP]: true,
+        {
+            identifier: 'preset1',
+            typeId: 1,
+            presetMap: {
+                newPostNotification: {
+                    [CourseNotificationChannel.PUSH]: true,
+                    [CourseNotificationChannel.EMAIL]: false,
+                    [CourseNotificationChannel.WEBAPP]: true,
+                },
             },
-        }),
-        new CourseNotificationSettingPreset('preset2', 2, {
-            newPostNotification: {
-                [CourseNotificationChannel.PUSH]: false,
-                [CourseNotificationChannel.EMAIL]: true,
-                [CourseNotificationChannel.WEBAPP]: true,
+        },
+        {
+            identifier: 'preset2',
+            typeId: 2,
+            presetMap: {
+                newPostNotification: {
+                    [CourseNotificationChannel.PUSH]: false,
+                    [CourseNotificationChannel.EMAIL]: true,
+                    [CourseNotificationChannel.WEBAPP]: true,
+                },
             },
-        }),
+        },
     ];
 
     const mockNotificationTypes: Record<number, string> = {
@@ -71,7 +79,7 @@ describe('NotificationSettingsComponent', () => {
         } as unknown as jest.Mocked<CourseNotificationService>;
 
         courseNotificationSettingServiceMock = {
-            getSettingInfo: jest.fn().mockReturnValue(of(new HttpResponse({ body: mockSettingInfo }))),
+            getSettingInfo: jest.fn().mockReturnValue(of(mockSettingInfo)),
             setSettingPreset: jest.fn(),
             setSettingSpecification: jest.fn(),
         } as unknown as jest.Mocked<CourseNotificationSettingService>;
@@ -81,25 +89,19 @@ describe('NotificationSettingsComponent', () => {
         };
 
         await TestBed.configureTestingModule({
-            imports: [NotificationSettingsComponent],
+            imports: [
+                NotificationSettingsComponent,
+                MockDirective(TranslateDirective),
+                MockComponent(FaIconComponent),
+                MockComponent(CourseNotificationPresetPickerComponent),
+                MockComponent(CourseNotificationSettingSpecificationCardComponent),
+            ],
             providers: [
                 { provide: CourseNotificationService, useValue: courseNotificationServiceMock },
                 { provide: CourseNotificationSettingService, useValue: courseNotificationSettingServiceMock },
                 { provide: ActivatedRoute, useValue: activatedRouteMock },
             ],
-        })
-            .overrideComponent(NotificationSettingsComponent, {
-                remove: { imports: [TranslateDirective, FaIconComponent, CourseNotificationPresetPickerComponent, CourseNotificationSettingSpecificationCardComponent] },
-                add: {
-                    imports: [
-                        MockDirective(TranslateDirective),
-                        MockComponent(FaIconComponent),
-                        MockComponent(CourseNotificationPresetPickerComponent),
-                        MockComponent(CourseNotificationSettingSpecificationCardComponent),
-                    ],
-                },
-            })
-            .compileComponents();
+        }).compileComponents();
 
         fixture = TestBed.createComponent(NotificationSettingsComponent);
         component = fixture.componentInstance;
@@ -116,29 +118,38 @@ describe('NotificationSettingsComponent', () => {
     });
 
     it('should fetch setting info and notification info on initialization', () => {
-        expect(courseNotificationSettingServiceMock.getSettingInfo).toHaveBeenCalledWith(courseId);
+        expect(courseNotificationSettingServiceMock.getSettingInfo).toHaveBeenCalledWith(courseId, true);
         expect(courseNotificationServiceMock.getInfo).toHaveBeenCalled();
     });
 
-    it('should initialize values after receiving both info responses', () => {
+    it('should initialize values after receiving both info responses', fakeAsync(() => {
+        component['settingInfo'] = mockSettingInfo;
+        component['info'] = mockInfo;
+        component.initializeValues();
+        tick();
+
         expect(component['isLoading']).toBeFalse();
         expect(component['selectableSettingPresets']).toEqual(mockPresets);
         expect(component['selectedSettingPreset']).toEqual(mockPresets[0]);
         expect(component['notificationSpecifications']).toHaveLength(1);
-    });
+    }));
 
-    it('should update selected preset when presetSelected is called', fakeAsync(() => {
+    it('should update selected preset when presetSelected is called', () => {
+        component['settingInfo'] = mockSettingInfo;
+        component['info'] = mockInfo;
+        component.initializeValues();
+
         component.presetSelected(2);
 
         expect(component['selectedSettingPreset']).toEqual(mockPresets[1]);
+        expect(courseNotificationSettingServiceMock.setSettingPreset).toHaveBeenCalledWith(courseId, 2, mockPresets[1]);
+    });
 
-        expect(component['notificationSpecifications'][0].channelSetting).toEqual(mockPresets[1].presetMap['newPostNotification']);
+    it('should handle option changes correctly', () => {
+        component['settingInfo'] = mockSettingInfo;
+        component['info'] = mockInfo;
+        component.initializeValues();
 
-        tick(2000);
-        expect(courseNotificationSettingServiceMock.setSettingPreset).toHaveBeenCalledWith(courseId, 2);
-    }));
-
-    it('should handle option changes and queue them for upload', fakeAsync(() => {
         const mockSpecification = new CourseNotificationSettingSpecification('newPostNotification', 1, {
             [CourseNotificationChannel.PUSH]: false,
             [CourseNotificationChannel.EMAIL]: true,
@@ -148,14 +159,13 @@ describe('NotificationSettingsComponent', () => {
         component.optionChanged(mockSpecification);
 
         expect(component['selectedSettingPreset']).toBeUndefined();
-
-        expect(component['settingSpecificationsToUpload']).toContain(mockSpecification);
-
-        tick(5000);
-        expect(courseNotificationSettingServiceMock.setSettingSpecification).toHaveBeenCalledWith(courseId, [mockSpecification]);
-    }));
+        expect(courseNotificationSettingServiceMock.setSettingSpecification).toHaveBeenCalledWith(courseId, mockSpecification, mockPresets[0]);
+    });
 
     it('should render preset picker when not loading', () => {
+        component['settingInfo'] = mockSettingInfo;
+        component['info'] = mockInfo;
+        component.initializeValues();
         component['isLoading'] = false;
         fixture.detectChanges();
 
@@ -167,6 +177,9 @@ describe('NotificationSettingsComponent', () => {
     });
 
     it('should render specification cards when not loading', () => {
+        component['settingInfo'] = mockSettingInfo;
+        component['info'] = mockInfo;
+        component.initializeValues();
         component['isLoading'] = false;
         fixture.detectChanges();
 
@@ -177,7 +190,10 @@ describe('NotificationSettingsComponent', () => {
     });
 
     it('should correctly update specifications from notification map', () => {
-        const updateMethod = component['updateSpecificationArrayByNotificationMap'].bind(component);
+        component['info'] = {
+            notificationTypes: { 1: 'newPostNotification' },
+            presets: [],
+        };
 
         const testMap: CourseNotificationSettingsMap = {
             newPostNotification: {
@@ -187,12 +203,8 @@ describe('NotificationSettingsComponent', () => {
             },
         };
 
-        component['info'] = {
-            notificationTypes: { 1: 'newPostNotification' },
-            presets: [],
-        };
+        component['updateSpecificationArrayByNotificationMap'](testMap, true);
 
-        updateMethod(testMap, true);
         expect(component['notificationSpecifications']).toHaveLength(1);
         expect(component['notificationSpecifications'][0].identifier).toBe('newPostNotification');
         expect(component['notificationSpecifications'][0].typeId).toBe(1);
@@ -206,7 +218,8 @@ describe('NotificationSettingsComponent', () => {
             },
         };
 
-        updateMethod(testMapWithIds, false);
+        component['updateSpecificationArrayByNotificationMap'](testMapWithIds, false);
+
         expect(component['notificationSpecifications']).toHaveLength(1);
         expect(component['notificationSpecifications'][0].identifier).toBe('newPostNotification');
         expect(component['notificationSpecifications'][0].typeId).toBe(1);

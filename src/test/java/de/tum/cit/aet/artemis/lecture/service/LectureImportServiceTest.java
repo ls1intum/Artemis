@@ -47,14 +47,14 @@ class LectureImportServiceTest extends AbstractSpringIntegrationIndependentTest 
     @BeforeEach
     void initTestCase() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
-        List<Course> courses = lectureUtilService.createCoursesWithExercisesAndLecturesAndLectureUnits(TEST_PREFIX, false, true, 0);
-        Course course1 = this.courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(courses.getFirst().getId());
+        List<Course> courses = courseUtilService.createCoursesWithExercisesAndLecturesAndLectureUnits(TEST_PREFIX, false, true, 0);
+        Course course1 = courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(courses.getFirst().getId());
         long lecture1Id = course1.getLectures().stream().findFirst().orElseThrow().getId();
-        this.lecture1 = this.lectureRepository.findByIdWithAttachmentsAndLectureUnitsAndCompetenciesAndCompletionsElseThrow(lecture1Id);
-        this.course2 = courseUtilService.createCourse();
+        lecture1 = lectureRepository.findByIdWithAttachmentsAndLectureUnitsAndCompetenciesAndCompletionsElseThrow(lecture1Id);
+        course2 = courseUtilService.createCourse();
 
-        assertThat(this.lecture1.getLectureUnits()).isNotEmpty();
-        assertThat(this.lecture1.getAttachments()).isNotEmpty();
+        assertThat(lecture1.getLectureUnits()).isNotEmpty();
+        assertThat(lecture1.getAttachments()).isNotEmpty();
     }
 
     @AfterEach

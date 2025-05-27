@@ -16,6 +16,7 @@ import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
@@ -101,12 +102,17 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
      * @param event   Optional event to pass to the Pyris pipeline
      */
     public void requestAndHandleResponse(IrisTutorSuggestionSession session, Optional<String> event) {
+        var post = postRepository.findPostOrMessagePostByIdElseThrow(session.getPostId());
+        var course = post.getCoursePostingBelongsTo();
+
+        var settings = irisSettingsService.getCombinedIrisSettingsFor(course, false).irisTutorSuggestionSettings();
+        if (!settings.enabled()) {
+            throw new ConflictException("Tutor Suggestions are not enabled for this course", "Iris", "irisDisabled");
+        }
+
         var chatSession = (IrisTutorSuggestionSession) irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
 
-        var variant = "default";
-        var post = postRepository.findPostOrMessagePostByIdElseThrow(session.getPostId());
-
-        pyrisPipelineService.executeTutorSuggestionPipeline(variant, chatSession, event, post);
+        pyrisPipelineService.executeTutorSuggestionPipeline(settings.selectedVariant(), chatSession, event, post);
     }
 
     @Override
@@ -140,10 +146,10 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
         var session = (IrisTutorSuggestionSession) irisSessionRepository.findByIdWithMessagesAndContents(job.sessionId());
         IrisMessage savedMessage;
         IrisMessage savedSuggestion;
-        if (statusUpdate.suggestion() != null || statusUpdate.result() != null) {
-            if (statusUpdate.suggestion() != null) {
+        if (statusUpdate.artifact() != null || statusUpdate.result() != null) {
+            if (statusUpdate.artifact() != null) {
                 var suggestion = new IrisMessage();
-                suggestion.addContent(new IrisTextMessageContent(statusUpdate.suggestion()));
+                suggestion.addContent(new IrisTextMessageContent(statusUpdate.artifact()));
                 savedSuggestion = irisMessageService.saveMessage(suggestion, session, IrisMessageSender.ARTIFACT);
                 irisChatWebsocketService.sendMessage(session, savedSuggestion, statusUpdate.stages());
             }
