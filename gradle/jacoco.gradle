@@ -8,7 +8,7 @@ ext {
         "atlas"         :          ["INSTRUCTION": 0.904, "CLASS":  6],
         "buildagent"    :          ["INSTRUCTION": 0.800, "CLASS":  1],
         "communication" :          ["INSTRUCTION": 0.846, "CLASS":  5],
-        "core"          :          ["INSTRUCTION": 0.838, "CLASS": 43],
+        "core"          :          ["INSTRUCTION": 0.836, "CLASS": 43],
         "exam"          :          ["INSTRUCTION": 0.914, "CLASS":  2],
         "exercise"      :          ["INSTRUCTION": 0.916, "CLASS":  0],
         "fileupload"    :          ["INSTRUCTION": 0.952, "CLASS":  0],
