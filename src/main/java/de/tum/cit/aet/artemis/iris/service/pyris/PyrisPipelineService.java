@@ -334,7 +334,6 @@ public class PyrisPipelineService {
         course.setPrerequisites(prerequisites);
         course.setExams(visibleExams);
 
-        // Course course = courseRepository.findWithEagerExercisesAndLecturesAndAttachmentsAndLectureUnitsAndCompetenciesAndExamsById(courseId).orElseThrow();
         List<StudentParticipation> participations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(studentId,
                 course.getExercises());
 
