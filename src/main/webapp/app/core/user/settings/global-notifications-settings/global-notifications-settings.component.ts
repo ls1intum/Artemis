@@ -9,10 +9,11 @@ import { FEATURE_PASSKEY } from 'app/app.constants';
 import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { Subscription } from 'rxjs';
+import { RouterLink } from '@angular/router';
 
 @Component({
     selector: 'jhi-email-notifications-settings',
-    imports: [TranslateDirective, FaIconComponent, FormsModule],
+    imports: [TranslateDirective, FaIconComponent, FormsModule, RouterLink],
     templateUrl: './global-notifications-settings.component.html',
     styleUrls: ['../user-settings.scss'],
 })
@@ -32,6 +33,7 @@ export class GlobalNotificationsSettingsComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         this.isPasskeyEnabled = this.profileService.isModuleFeatureActive(FEATURE_PASSKEY);
+        this.isPasskeyEnabled = true;
         this.loadSettings();
     }
 

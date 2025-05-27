@@ -10,6 +10,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import * as globalUtils from 'app/shared/util/global.utils';
+import { RouterLink } from '@angular/router';
 
 describe('GlobalNotificationsSettingsComponent', () => {
     let component: GlobalNotificationsSettingsComponent;
@@ -24,7 +25,7 @@ describe('GlobalNotificationsSettingsComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [FormsModule, GlobalNotificationsSettingsComponent],
-            declarations: [MockDirective(TranslateDirective), MockPipe(ArtemisDatePipe)],
+            declarations: [MockDirective(TranslateDirective), MockPipe(ArtemisDatePipe), MockDirective(RouterLink)],
             providers: [
                 { provide: GlobalNotificationSettingsService, useValue: mockService },
                 MockProvider(ProfileService, { isModuleFeatureActive: jest.fn().mockReturnValue(true) }),

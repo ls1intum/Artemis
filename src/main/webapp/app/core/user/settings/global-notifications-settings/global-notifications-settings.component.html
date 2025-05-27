@@ -6,15 +6,30 @@
             @if (isSettingAvailable(type)) {
                 <div class="list-group-item">
                     <dt>
-                        <div class="form-check form-switch">
-                            <input
-                                type="checkbox"
-                                class="form-check-input"
-                                [id]="'notification-' + type"
-                                [(ngModel)]="notificationSettings[type]"
-                                (ngModelChange)="updateSetting(type, $event)"
-                            />
-                            <label class="form-check-label" [for]="'notification-' + type" jhiTranslate="{{ getNotificationTypeLabel(type) }}"> </label>
+                        <div class="form-check form-switch d-flex justify-content-between align-items-center">
+                            <div>
+                                <input
+                                    type="checkbox"
+                                    class="form-check-input"
+                                    [id]="'notification-' + type"
+                                    [(ngModel)]="notificationSettings[type]"
+                                    (ngModelChange)="updateSetting(type, $event)"
+                                />
+                                <label class="form-check-label" [for]="'notification-' + type" jhiTranslate="{{ getNotificationTypeLabel(type) }}"></label>
+                            </div>
+                            @if (type === 'NEW_PASSKEY_ADDED') {
+                                <a [routerLink]="['/user-settings', 'passkeys']" class="small text-end">
+                                    <span>View Passkey Settings</span>
+                                </a>
+                            } @else if (type === 'VCS_TOKEN_EXPIRED') {
+                                <a [routerLink]="['/user-settings', 'vcs-token']" class="small text-end">
+                                    <span>View VCS Token Settings</span>
+                                </a>
+                            } @else if (type === 'SSH_KEY_EXPIRED') {
+                                <a [routerLink]="['/user-settings', 'ssh']" class="small text-end">
+                                    <span>View SSH Key Settings</span>
+                                </a>
+                            }
                         </div>
                     </dt>
                 </div>
