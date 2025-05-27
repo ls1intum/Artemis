@@ -12,6 +12,7 @@
                                     type="checkbox"
                                     class="form-check-input"
                                     [id]="'notification-' + type"
+                                    [name]="'notification-' + type"
                                     [(ngModel)]="notificationSettings[type]"
                                     (ngModelChange)="updateSetting(type, $event)"
                                 />

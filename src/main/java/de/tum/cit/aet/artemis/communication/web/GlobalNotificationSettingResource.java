@@ -36,8 +36,9 @@ public class GlobalNotificationSettingResource {
     /**
      * Creates a new {@code GlobalNotificationSettingResource}.
      *
-     * @param globalNotificationSettingService business service used to create, update and read settings
-     * @param userRepository                   repository used to fetch the currently authenticated {@link User}
+     * @param globalNotificationSettingService    business service used to create, update and read settings
+     * @param globalNotificationSettingRepository repository used to fetch global notification settings
+     * @param userRepository                      repository used to fetch the currently authenticated {@link User}
      */
     public GlobalNotificationSettingResource(GlobalNotificationSettingService globalNotificationSettingService,
             GlobalNotificationSettingRepository globalNotificationSettingRepository, UserRepository userRepository) {
@@ -60,12 +61,7 @@ public class GlobalNotificationSettingResource {
     public ResponseEntity<GlobalNotificationSetting> updateSetting(@PathVariable GlobalNotificationType notificationType, @RequestBody UpdateGlobalNotificationSettingDTO request) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         boolean enabled = request.enabled();
-        try {
-            return ResponseEntity.ok(globalNotificationSettingService.createOrUpdateSetting(user, notificationType, enabled));
-        }
-        catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().build();
-        }
+        return ResponseEntity.ok(globalNotificationSettingService.createOrUpdateSetting(user, notificationType, enabled));
     }
 
     /**

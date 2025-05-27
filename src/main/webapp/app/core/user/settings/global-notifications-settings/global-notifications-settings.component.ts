@@ -11,6 +11,13 @@ import { onError } from 'app/shared/util/global.utils';
 import { Subscription } from 'rxjs';
 import { RouterLink } from '@angular/router';
 
+export const GLOBAL_NOTIFICATION_TYPES = {
+    NEW_LOGIN: 'NEW_LOGIN',
+    NEW_PASSKEY_ADDED: 'NEW_PASSKEY_ADDED',
+    VCS_TOKEN_EXPIRED: 'VCS_TOKEN_EXPIRED',
+    SSH_KEY_EXPIRED: 'SSH_KEY_EXPIRED',
+} as const;
+
 @Component({
     selector: 'jhi-email-notifications-settings',
     imports: [TranslateDirective, FaIconComponent, FormsModule, RouterLink],
@@ -19,8 +26,8 @@ import { RouterLink } from '@angular/router';
 })
 export class GlobalNotificationsSettingsComponent implements OnInit, OnDestroy {
     protected readonly faSpinner = faSpinner;
-    protected readonly notificationTypes = ['NEW_LOGIN', 'NEW_PASSKEY_ADDED', 'VCS_TOKEN_EXPIRED', 'SSH_KEY_EXPIRED'];
-    notificationSettings: { [key: string]: boolean } | null = null;
+    protected readonly notificationTypes = Object.values(GLOBAL_NOTIFICATION_TYPES);
+    protected notificationSettings: { [key: string]: boolean } | null = null;
 
     private globalNotificationSettingsService = inject(GlobalNotificationSettingsService);
     private profileService = inject(ProfileService);
@@ -29,11 +36,10 @@ export class GlobalNotificationsSettingsComponent implements OnInit, OnDestroy {
     private getAllSub?: Subscription;
     private updateSub?: Subscription;
 
-    isPasskeyEnabled = false;
+    protected isPasskeyEnabled = false;
 
     ngOnInit(): void {
         this.isPasskeyEnabled = this.profileService.isModuleFeatureActive(FEATURE_PASSKEY);
-        this.isPasskeyEnabled = true;
         this.loadSettings();
     }
 
@@ -42,6 +48,9 @@ export class GlobalNotificationsSettingsComponent implements OnInit, OnDestroy {
         this.updateSub?.unsubscribe();
     }
 
+    /**
+     * Loads all notification settings for the current user
+     */
     loadSettings(): void {
         this.getAllSub?.unsubscribe();
         this.getAllSub = this.globalNotificationSettingsService.getAll().subscribe({
@@ -54,6 +63,11 @@ export class GlobalNotificationsSettingsComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * Updates a specific notification setting
+     * @param type - The notification type to update
+     * @param enabled - Whether the notification should be enabled
+     */
     updateSetting(type: string, enabled: boolean): void {
         this.updateSub?.unsubscribe();
         this.updateSub = this.globalNotificationSettingsService.update(type, enabled).subscribe({
@@ -66,10 +80,20 @@ export class GlobalNotificationsSettingsComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * Gets the translation key for a notification type label
+     * @param type - The notification type
+     * @returns The translation key string
+     */
     getNotificationTypeLabel(type: string): string {
         return `artemisApp.userSettings.globalNotificationSettings.options.${type}`;
     }
 
+    /**
+     * Checks if a notification type should be available based on feature flags
+     * @param type - The notification type to check
+     * @returns true if the notification type should be displayed
+     */
     isSettingAvailable(type: string): boolean {
         return type !== 'NEW_PASSKEY_ADDED' || this.isPasskeyEnabled;
     }
