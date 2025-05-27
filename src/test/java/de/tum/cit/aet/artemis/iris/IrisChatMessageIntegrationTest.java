@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
@@ -99,7 +100,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
         activateIrisGlobally();
         activateIrisFor(course);
 
-        soloExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        soloExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         teamExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
         teamExercise.setMode(ExerciseMode.TEAM);
         programmingExerciseRepository.save(teamExercise);
@@ -185,6 +186,34 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void sendOneMessageTeamExercise() throws Exception {
         sendOneMessage(teamExercise, "student2", teamParticipation.getSubmissions().iterator().next().getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void sendOneMessageWithCustomInstructions() throws Exception {
+        // Set custom instructions for programming exercise chat
+        String testCustomInstructions = "Please focus on code style.";
+        var exerciseSettings = irisSettingsService.getRawIrisSettingsFor(soloExercise);
+        exerciseSettings.getIrisProgrammingExerciseChatSettings().setCustomInstructions(testCustomInstructions);
+        irisSettingsService.saveIrisSettings(exerciseSettings);
+
+        // Prepare session and message
+        long submissionId = soloParticipation.getSubmissions().iterator().next().getId();
+        var irisSession = irisExerciseChatSessionService.createChatSessionForProgrammingExercise(soloExercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        var messageToSend = createDefaultMockMessage(irisSession);
+        messageToSend.setMessageDifferentiator(123456789);
+
+        // Mock Pyris response and assert customInstructions in DTO
+        irisRequestMockProvider.mockProgrammingExerciseChatResponseExpectingSubmissionId(dto -> {
+            assertThat(dto.customInstructions()).isEqualTo(testCustomInstructions);
+            pipelineDone.set(true);
+        }, submissionId);
+
+        // Send message
+        request.postWithoutResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, HttpStatus.CREATED);
+
+        // Await invocation
+        await().until(pipelineDone::get);
     }
 
     private void sendOneMessage(ProgrammingExercise exercise, String studentLogin, long submissionId) throws Exception {

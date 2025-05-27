@@ -185,9 +185,8 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
         if (!settings.enabled()) {
             throw new ConflictException("Iris is not enabled for this exercise", "Iris", "irisDisabled");
         }
-
         var chatSession = (IrisProgrammingExerciseChatSession) irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
-        pyrisPipelineService.executeExerciseChatPipeline(settings.selectedVariant(), latestSubmission, exercise, chatSession, event);
+        pyrisPipelineService.executeExerciseChatPipeline(settings.selectedVariant(), settings.customInstructions(), latestSubmission, exercise, chatSession, event);
     }
 
     /**
@@ -247,7 +246,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
             var needsIntervention = needsIntervention(listOfScores);
             if (needsIntervention) {
                 log.info("Scores in the last 3 submissions did not improve for user {}", studentParticipation.getParticipant().getName());
-                var participant = ((ProgrammingExerciseStudentParticipation) participation).getParticipant();
+                var participant = studentParticipation.getParticipant();
                 if (participant instanceof User user) {
                     var session = getCurrentSessionOrCreateIfNotExistsInternal(exercise, user, false);
                     CompletableFuture.runAsync(() -> requestAndHandleResponse(session, Optional.of(IrisEventType.PROGRESS_STALLED.name().toLowerCase())));

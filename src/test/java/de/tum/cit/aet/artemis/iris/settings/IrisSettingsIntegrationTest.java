@@ -25,6 +25,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.iris.AbstractIrisIntegrationTest;
 import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCompetencyGenerationSubSettings;
@@ -32,6 +33,7 @@ import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseChatSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisExerciseSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisFaqIngestionSubSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisLectureChatSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisLectureIngestionSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisProgrammingExerciseChatSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSettings;
@@ -96,7 +98,7 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
     void initTestCase() throws JsonProcessingException {
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
         course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         var projectKey1 = programmingExercise.getProjectKey();
         programmingExercise.setTestRepositoryUri(localVCBaseUrl + "/git/" + projectKey1 + "/" + projectKey1.toLowerCase() + "-tests.git");
         programmingExercise.getBuildConfig().setBuildPlanConfiguration(new ObjectMapper().writeValueAsString(aeolusTemplateService.getDefaultWindfileFor(programmingExercise)));
@@ -180,6 +182,7 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
         loadedSettings1.getIrisCourseChatSettings().setEnabled(false);
         loadedSettings1.getIrisCompetencyGenerationSettings().setEnabled(false);
         loadedSettings1.getIrisLectureIngestionSettings().setEnabled(false);
+        loadedSettings1.getIrisLectureChatSettings().setEnabled(false);
         loadedSettings1.getIrisTutorSuggestionSettings().setEnabled(false);
 
         var updatedSettings = request.putWithResponseBody("/api/iris/courses/" + course.getId() + "/raw-iris-settings", loadedSettings1, IrisSettings.class, HttpStatus.OK);
@@ -193,6 +196,7 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
         assertThat(updatedSettings.getIrisCourseChatSettings().getId()).isEqualTo(loadedSettings1.getIrisCourseChatSettings().getId());
         assertThat(updatedSettings.getIrisCompetencyGenerationSettings().getId()).isEqualTo(loadedSettings1.getIrisCompetencyGenerationSettings().getId());
         assertThat(updatedSettings.getIrisLectureIngestionSettings().getId()).isEqualTo(loadedSettings1.getIrisLectureIngestionSettings().getId());
+        assertThat(updatedSettings.getIrisLectureChatSettings().getId()).isEqualTo(loadedSettings1.getIrisLectureChatSettings().getId());
         assertThat(updatedSettings.getIrisTutorSuggestionSettings().getId()).isEqualTo(loadedSettings1.getIrisTutorSuggestionSettings().getId());
     }
 
@@ -211,12 +215,15 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
         var competencyGenerationSubSettingsId = loadedSettings1.getIrisCompetencyGenerationSettings().getId();
         var lectureIngestionSubSettingsId = loadedSettings1.getIrisLectureIngestionSettings().getId();
         var tutorSuggestionSubSettingsId = loadedSettings1.getIrisTutorSuggestionSettings().getId();
+        var lectureChatSubSettingsId = loadedSettings1.getIrisLectureChatSettings().getId();
+
         loadedSettings1.setIrisProgrammingExerciseChatSettings(null);
         loadedSettings1.setIrisTextExerciseChatSettings(null);
         loadedSettings1.setIrisCourseChatSettings(null);
         loadedSettings1.setIrisCompetencyGenerationSettings(null);
         loadedSettings1.setIrisLectureIngestionSettings(null);
         loadedSettings1.setIrisTutorSuggestionSettings(null);
+        loadedSettings1.setIrisLectureChatSettings(null);
 
         var updatedSettings = request.putWithResponseBody("/api/iris/courses/" + course.getId() + "/raw-iris-settings", loadedSettings1, IrisSettings.class, HttpStatus.OK);
         var loadedSettings2 = request.get("/api/iris/courses/" + course.getId() + "/raw-iris-settings", HttpStatus.OK, IrisSettings.class);
@@ -230,6 +237,7 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
         assertThat(irisSubSettingsRepository.findById(competencyGenerationSubSettingsId)).isEmpty();
         assertThat(irisSubSettingsRepository.findById(lectureIngestionSubSettingsId)).isEmpty();
         assertThat(irisSubSettingsRepository.findById(tutorSuggestionSubSettingsId)).isEmpty();
+        assertThat(irisSubSettingsRepository.findById(lectureChatSubSettingsId)).isEmpty();
     }
 
     @Test
@@ -260,6 +268,10 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
         courseSettings.getIrisLectureIngestionSettings().setEnabled(true);
         courseSettings.getIrisLectureIngestionSettings().setSelectedVariant(null);
 
+        courseSettings.setIrisLectureChatSettings(new IrisLectureChatSubSettings());
+        courseSettings.getIrisLectureChatSettings().setEnabled(true);
+        courseSettings.getIrisLectureChatSettings().setSelectedVariant(null);
+
         courseSettings.setIrisTutorSuggestionSettings(new IrisTutorSuggestionSubSettings());
         courseSettings.getIrisTutorSuggestionSettings().setEnabled(true);
         courseSettings.getIrisTutorSuggestionSettings().setSelectedVariant(null);
@@ -268,9 +280,9 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
         var loadedSettings1 = request.get("/api/iris/courses/" + course.getId() + "/raw-iris-settings", HttpStatus.OK, IrisSettings.class);
 
         assertThat(updatedSettings).usingRecursiveComparison().ignoringFields("course").isEqualTo(loadedSettings1);
-        assertThat(loadedSettings1)
-                .usingRecursiveComparison().ignoringFields("id", "course", "irisProgrammingExerciseChatSettings.id", "irisTextExerciseChatSettings.id",
-                        "irisLectureIngestionSettings.id", "irisCompetencyGenerationSettings.id", "irisCourseChatSettings.id", "irisTutorSuggestionSettings.id")
+        assertThat(loadedSettings1).usingRecursiveComparison()
+                .ignoringFields("id", "course", "irisProgrammingExerciseChatSettings.id", "irisTextExerciseChatSettings.id", "irisLectureIngestionSettings.id",
+                        "irisCompetencyGenerationSettings.id", "irisCourseChatSettings.id", "irisLectureChatSettings.id", "irisTutorSuggestionSettings.id")
                 .isEqualTo(courseSettings);
     }
 
@@ -284,6 +296,7 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
         var loadedSettings1 = request.get("/api/iris/courses/" + course.getId() + "/raw-iris-settings", HttpStatus.OK, IrisSettings.class);
 
         loadedSettings1.getIrisProgrammingExerciseChatSettings().setDisabledProactiveEvents(new TreeSet<>(Set.of("PROGRESS_STALLED")));
+        loadedSettings1.getIrisLectureChatSettings().setCustomInstructions("Test lecture chat instructions");
 
         var updatedSettings = request.putWithResponseBody("/api/iris/courses/" + course.getId() + "/raw-iris-settings", loadedSettings1, IrisSettings.class, HttpStatus.OK);
         var loadedSettings2 = request.get("/api/iris/courses/" + course.getId() + "/raw-iris-settings", HttpStatus.OK, IrisSettings.class);
@@ -291,6 +304,7 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
         // Proactive events should have been updated
         assertThat(updatedSettings).isNotNull().usingRecursiveComparison().ignoringFields("course").isEqualTo(loadedSettings2);
         assertThat(updatedSettings.getIrisProgrammingExerciseChatSettings().getDisabledProactiveEvents()).containsExactly("PROGRESS_STALLED");
+        assertThat(updatedSettings.getIrisLectureChatSettings().getCustomInstructions()).isEqualTo("Test lecture chat instructions");
         assertThat(loadedSettings1).isNotNull().usingRecursiveComparison().ignoringFields("course").isEqualTo(loadedSettings2);
     }
 
@@ -319,6 +333,7 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
                 var loadedSettings = request.get("/api/iris/courses/" + course.getId() + "/raw-iris-settings", HttpStatus.OK, IrisSettings.class);
                 loadedSettings.getIrisProgrammingExerciseChatSettings().setEnabledForCategories(category);
                 loadedSettings.getIrisTextExerciseChatSettings().setEnabledForCategories(category);
+
                 request.putWithResponseBody("/api/iris/courses/" + course.getId() + "/raw-iris-settings", loadedSettings, IrisSettings.class, HttpStatus.OK);
             }
             else if (operation.equals("EXERCISE")) {
@@ -517,7 +532,7 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
     void verifyDefaultExerciseSettingsState() {
         userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1); // Ensure instructor exists for course creation
         Course courseWithExercise = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        ProgrammingExercise newProgrammingExercise = exerciseUtilService.getFirstExerciseWithType(courseWithExercise, ProgrammingExercise.class);
+        ProgrammingExercise newProgrammingExercise = ExerciseUtilService.getFirstExerciseWithType(courseWithExercise, ProgrammingExercise.class);
 
         IrisExerciseSettings exerciseSettings = irisSettingsService.getDefaultSettingsFor(newProgrammingExercise);
 
@@ -544,7 +559,7 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void isCourseChatEnabled_GlobalEnabled_CourseEnabled() throws Exception {
+    void isCourseChatEnabled_GlobalEnabled_CourseEnabled() {
         activateIrisGlobally();
         activateIrisFor(course);
         course = courseRepository.findByIdElseThrow(course.getId());
@@ -555,7 +570,7 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void isCourseChatEnabled_GlobalEnabled_CourseDisabled() throws Exception {
+    void isCourseChatEnabled_GlobalEnabled_CourseDisabled() {
         activateIrisGlobally();
 
         boolean enabled = irisSettingsApi.isCourseChatEnabled(course.getId());
@@ -570,7 +585,7 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void isCourseChatEnabled_GlobalDisabled_CourseEnabled() throws Exception {
+    void isCourseChatEnabled_GlobalDisabled_CourseEnabled() {
         disableIrisGlobally();
         activateIrisFor(course);
 
@@ -585,7 +600,7 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void isProgrammingExerciseChatEnabled_GlobalEnabled_CourseEnabled_ExerciseEnabled() throws Exception {
+    void isProgrammingExerciseChatEnabled_GlobalEnabled_CourseEnabled_ExerciseEnabled() {
         activateIrisGlobally();
         activateIrisFor(course);
 
@@ -600,7 +615,7 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void isProgrammingExerciseChatEnabled_GlobalEnabled_CourseDisabled() throws Exception {
+    void isProgrammingExerciseChatEnabled_GlobalEnabled_CourseDisabled() {
         activateIrisGlobally();
         disableProgrammingExerciseChatFor(course);
 
@@ -618,7 +633,7 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void isProgrammingExerciseChatEnabled_GlobalEnabled_ExerciseDisabled() throws Exception {
+    void isProgrammingExerciseChatEnabled_GlobalEnabled_ExerciseDisabled() {
         activateIrisGlobally();
         activateIrisFor(course);
 
@@ -632,7 +647,7 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void isProgrammingExerciseChatEnabled_GlobalDisabled_ExerciseEnabled() throws Exception {
+    void isProgrammingExerciseChatEnabled_GlobalDisabled_ExerciseEnabled() {
         disableIrisGlobally();
 
         ProgrammingExercise exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
@@ -641,5 +656,57 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
 
         boolean enabled = irisSettingsApi.isProgrammingExerciseChatEnabled(exercise.getId());
         assertThat(enabled).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateSettingsWithCustomInstructions() throws Exception {
+        activateIrisGlobally();
+        activateIrisFor(course);
+        course = courseRepository.findByIdElseThrow(course.getId());
+        programmingExercise = programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId());
+
+        // 1. Test custom instructions for course settings
+        var courseSettings = request.get("/api/iris/courses/" + course.getId() + "/raw-iris-settings", HttpStatus.OK, IrisSettings.class);
+
+        String programmingExerciseChatInstructions = "Programming chat instructions";
+        String textExerciseChatInstructions = "Text exercise chat instructions";
+        String courseChatSpecificInstructions = "Course-specific chat instructions";
+        String lectureChatInstructions = "Lecture chat instructions";
+
+        // Update chat settings with custom instructions
+        courseSettings.getIrisProgrammingExerciseChatSettings().setCustomInstructions(programmingExerciseChatInstructions);
+        courseSettings.getIrisTextExerciseChatSettings().setCustomInstructions(textExerciseChatInstructions);
+        courseSettings.getIrisCourseChatSettings().setCustomInstructions(courseChatSpecificInstructions);
+        courseSettings.getIrisLectureChatSettings().setCustomInstructions(lectureChatInstructions);
+
+        var updatedCourseSettings = request.putWithResponseBody("/api/iris/courses/" + course.getId() + "/raw-iris-settings", courseSettings, IrisSettings.class, HttpStatus.OK);
+        var loadedCourseSettings = request.get("/api/iris/courses/" + course.getId() + "/raw-iris-settings", HttpStatus.OK, IrisSettings.class);
+
+        // Verify that custom instructions were saved and can be retrieved
+        assertThat(loadedCourseSettings.getIrisProgrammingExerciseChatSettings().getCustomInstructions()).isEqualTo(programmingExerciseChatInstructions);
+        assertThat(loadedCourseSettings.getIrisTextExerciseChatSettings().getCustomInstructions()).isEqualTo(textExerciseChatInstructions);
+        assertThat(loadedCourseSettings.getIrisCourseChatSettings().getCustomInstructions()).isEqualTo(courseChatSpecificInstructions);
+        assertThat(loadedCourseSettings.getIrisLectureChatSettings().getCustomInstructions()).isEqualTo(lectureChatInstructions);
+
+        // 2. Test custom instructions for programming exercise settings
+        activateIrisFor(programmingExercise);
+        var exerciseSettings = request.get("/api/iris/exercises/" + programmingExercise.getId() + "/raw-iris-settings", HttpStatus.OK, IrisSettings.class);
+
+        programmingExerciseChatInstructions = "Updated programming chat instructions";
+        exerciseSettings.getIrisProgrammingExerciseChatSettings().setCustomInstructions(programmingExerciseChatInstructions);
+
+        var updatedExerciseSettings = request.putWithResponseBody("/api/iris/exercises/" + programmingExercise.getId() + "/raw-iris-settings", exerciseSettings, IrisSettings.class,
+                HttpStatus.OK);
+        var loadedExerciseSettings = request.get("/api/iris/exercises/" + programmingExercise.getId() + "/raw-iris-settings", HttpStatus.OK, IrisSettings.class);
+
+        // Verify that custom instructions were saved and can be retrieved
+        assertThat(loadedExerciseSettings.getIrisProgrammingExerciseChatSettings().getCustomInstructions()).isEqualTo(programmingExerciseChatInstructions);
+
+        // 3. Test that customInstructions appear correctly in combined settings
+        var combinedSettings = request.get("/api/iris/exercises/" + programmingExercise.getId() + "/iris-settings", HttpStatus.OK, IrisCombinedSettingsDTO.class);
+
+        // The exercise-specific setting should override the course-wide setting
+        assertThat(combinedSettings.irisProgrammingExerciseChatSettings().customInstructions()).isEqualTo(programmingExerciseChatInstructions);
     }
 }

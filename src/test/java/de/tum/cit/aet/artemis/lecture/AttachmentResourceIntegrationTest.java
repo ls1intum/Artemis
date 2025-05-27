@@ -15,6 +15,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
@@ -50,7 +51,7 @@ class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationIndepen
         attachment = LectureFactory.generateAttachment(null);
         attachment = attachmentRepository.save(attachment);
         var course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
-        textExercise = exerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
+        textExercise = ExerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
         lecture = new Lecture();
         lecture.setTitle("test");
         lecture.setDescription("test");
