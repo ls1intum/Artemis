@@ -115,7 +115,7 @@
                 "title": "Stay Secure with Passkeys",
                 "description": {
                     "howItWorks": "Your passkey is stored on your device and secured with biometrics or a PIN, making login fast and safe — without the need to remember a password.",
-                    "recommendation": "We recommend setting up a passkey now to enhance your account’s security and enjoy a seamless, passwordless login experience."
+                    "recommendation": "We recommend setting up a passkey now to enhance your account's security and enjoy a seamless, passwordless login experience."
                 },
                 "setupLater": "Set Up Later",
                 "setupPasskey": "Set Up Passkey",
@@ -209,13 +209,16 @@
             },
             "globalNotificationSettings": {
                 "title": "Notifications",
-                "description": "You’ll receive email notifications for the following security-related activities. Manage your preferences below.",
+                "description": "You'll receive email notifications for the following security-related activities. Manage your preferences below.",
                 "options": {
                     "NEW_LOGIN": "New Login",
                     "NEW_PASSKEY_ADDED": "New Passkey Added",
                     "VCS_TOKEN_EXPIRED": "VCS Token Expired",
                     "SSH_KEY_EXPIRED": "SSH Key Expired"
-                }
+                },
+                "viewPasskeySettings": "View Passkey Settings",
+                "viewVcsTokenSettings": "View VCS Token Settings",
+                "viewSshKeySettings": "View SSH Key Settings"
             }
         }
     }

@@ -215,7 +215,10 @@
                     "NEW_PASSKEY_ADDED": "Neuer Passkey hinzugefügt",
                     "VCS_TOKEN_EXPIRED": "VCS-Token abgelaufen",
                     "SSH_KEY_EXPIRED": "SSH-Schlüssel abgelaufen"
-                }
+                },
+                "viewPasskeySettings": "Passkey-Einstellungen anzeigen",
+                "viewVcsTokenSettings": "VCS-Token-Einstellungen anzeigen",
+                "viewSshKeySettings": "SSH-Schlüssel-Einstellungen anzeigen"
             }
         }
     }

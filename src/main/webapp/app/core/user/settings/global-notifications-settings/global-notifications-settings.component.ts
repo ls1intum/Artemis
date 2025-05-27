@@ -27,7 +27,7 @@ export const GLOBAL_NOTIFICATION_TYPES = {
 export class GlobalNotificationsSettingsComponent implements OnInit, OnDestroy {
     protected readonly faSpinner = faSpinner;
     protected readonly notificationTypes = Object.values(GLOBAL_NOTIFICATION_TYPES);
-    protected notificationSettings: { [key: string]: boolean } | null = null;
+    notificationSettings: { [key: string]: boolean } | null = null;
 
     private globalNotificationSettingsService = inject(GlobalNotificationSettingsService);
     private profileService = inject(ProfileService);
@@ -36,7 +36,7 @@ export class GlobalNotificationsSettingsComponent implements OnInit, OnDestroy {
     private getAllSub?: Subscription;
     private updateSub?: Subscription;
 
-    protected isPasskeyEnabled = false;
+    isPasskeyEnabled = false;
 
     ngOnInit(): void {
         this.isPasskeyEnabled = this.profileService.isModuleFeatureActive(FEATURE_PASSKEY);
@@ -97,4 +97,6 @@ export class GlobalNotificationsSettingsComponent implements OnInit, OnDestroy {
     isSettingAvailable(type: string): boolean {
         return type !== 'NEW_PASSKEY_ADDED' || this.isPasskeyEnabled;
     }
+
+    protected readonly GLOBAL_NOTIFICATION_TYPES = GLOBAL_NOTIFICATION_TYPES;
 }

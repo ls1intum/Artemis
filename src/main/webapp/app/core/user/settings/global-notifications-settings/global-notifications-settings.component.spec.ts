@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { FormsModule } from '@angular/forms';
 import { of, throwError } from 'rxjs';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
-import { GlobalNotificationsSettingsComponent } from './global-notifications-settings.component';
+import { GLOBAL_NOTIFICATION_TYPES, GlobalNotificationsSettingsComponent } from './global-notifications-settings.component';
 import { GlobalNotificationSettingsService } from './global-notifications-settings.service';
 import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -44,10 +44,10 @@ describe('GlobalNotificationsSettingsComponent', () => {
     });
 
     const mockSettings = {
-        NEW_LOGIN: true,
-        NEW_PASSKEY_ADDED: false,
-        VCS_TOKEN_EXPIRED: true,
-        SSH_KEY_EXPIRED: false,
+        [GLOBAL_NOTIFICATION_TYPES.NEW_LOGIN]: true,
+        [GLOBAL_NOTIFICATION_TYPES.NEW_PASSKEY_ADDED]: false,
+        [GLOBAL_NOTIFICATION_TYPES.VCS_TOKEN_EXPIRED]: true,
+        [GLOBAL_NOTIFICATION_TYPES.SSH_KEY_EXPIRED]: false,
     };
 
     it('should load notification settings on init', fakeAsync(() => {
@@ -64,15 +64,15 @@ describe('GlobalNotificationsSettingsComponent', () => {
         mockService.update.mockReturnValue(of({}));
         component.notificationSettings = { ...mockSettings };
 
-        component.updateSetting('NEW_LOGIN', false);
+        component.updateSetting(GLOBAL_NOTIFICATION_TYPES.NEW_LOGIN, false);
         tick();
 
-        expect(mockService.update).toHaveBeenCalledWith('NEW_LOGIN', false);
-        expect(component.notificationSettings?.NEW_LOGIN).toBeFalse();
+        expect(mockService.update).toHaveBeenCalledWith(GLOBAL_NOTIFICATION_TYPES.NEW_LOGIN, false);
+        expect(component.notificationSettings?.[GLOBAL_NOTIFICATION_TYPES.NEW_LOGIN]).toBeFalse();
     }));
 
     it('should generate the correct i18n label key', () => {
-        const labelKey = component.getNotificationTypeLabel('SSH_KEY_EXPIRED');
+        const labelKey = component.getNotificationTypeLabel(GLOBAL_NOTIFICATION_TYPES.SSH_KEY_EXPIRED);
         expect(labelKey).toBe('artemisApp.userSettings.globalNotificationSettings.options.SSH_KEY_EXPIRED');
     });
 
@@ -92,7 +92,7 @@ describe('GlobalNotificationsSettingsComponent', () => {
         mockService.update.mockReturnValue(throwError(() => error));
 
         component.notificationSettings = { ...mockSettings };
-        component.updateSetting('VCS_TOKEN_EXPIRED', false);
+        component.updateSetting(GLOBAL_NOTIFICATION_TYPES.VCS_TOKEN_EXPIRED, false);
         tick();
 
         expect(globalUtils.onError).toHaveBeenCalledWith(alertService, error);
@@ -100,18 +100,40 @@ describe('GlobalNotificationsSettingsComponent', () => {
 
     describe('isSettingAvailable', () => {
         it('should return true for types other than NEW_PASSKEY_ADDED', () => {
-            expect(component.isSettingAvailable('NEW_LOGIN')).toBeTrue();
-            expect(component.isSettingAvailable('SSH_KEY_EXPIRED')).toBeTrue();
+            expect(component.isSettingAvailable(GLOBAL_NOTIFICATION_TYPES.NEW_LOGIN)).toBeTrue();
+            expect(component.isSettingAvailable(GLOBAL_NOTIFICATION_TYPES.SSH_KEY_EXPIRED)).toBeTrue();
         });
 
         it('should return true for NEW_PASSKEY_ADDED if passkey is enabled', () => {
             component.isPasskeyEnabled = true;
-            expect(component.isSettingAvailable('NEW_PASSKEY_ADDED')).toBeTrue();
+            expect(component.isSettingAvailable(GLOBAL_NOTIFICATION_TYPES.NEW_PASSKEY_ADDED)).toBeTrue();
         });
 
         it('should return false for NEW_PASSKEY_ADDED if passkey is disabled', () => {
             component.isPasskeyEnabled = false;
-            expect(component.isSettingAvailable('NEW_PASSKEY_ADDED')).toBeFalse();
+            expect(component.isSettingAvailable(GLOBAL_NOTIFICATION_TYPES.NEW_PASSKEY_ADDED)).toBeFalse();
         });
+
+        it('should render correct links for special notification types', fakeAsync(() => {
+            mockService.getAll.mockReturnValue(of(mockSettings));
+
+            component.ngOnInit();
+            tick();
+            fixture.detectChanges();
+
+            const element: HTMLElement = fixture.nativeElement;
+            const links = element.querySelectorAll('a.small');
+
+            const routerLinks = Array.from(links).map((link) => link.getAttribute('ng-reflect-router-link'));
+
+            expect(routerLinks).toContain('/user-settings,passkeys');
+            expect(routerLinks).toContain('/user-settings,vcs-token');
+            expect(routerLinks).toContain('/user-settings,ssh');
+
+            const linkSpans = Array.from(links).map((link) => link.querySelector('span')?.getAttribute('jhiTranslate'));
+            expect(linkSpans).toContain('artemisApp.userSettings.globalNotificationSettings.viewPasskeySettings');
+            expect(linkSpans).toContain('artemisApp.userSettings.globalNotificationSettings.viewVcsTokenSettings');
+            expect(linkSpans).toContain('artemisApp.userSettings.globalNotificationSettings.viewSshKeySettings');
+        }));
     });
 });
