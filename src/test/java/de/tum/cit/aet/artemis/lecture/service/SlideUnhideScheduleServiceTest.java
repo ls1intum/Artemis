@@ -17,7 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.service.ScheduleService;
-import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.domain.SlideLifecycle;
 import de.tum.cit.aet.artemis.lecture.dto.SlideUnhideDTO;
@@ -39,7 +39,7 @@ class SlideUnhideScheduleServiceTest extends AbstractSpringIntegrationIndependen
     private LectureUtilService lectureUtilService;
 
     @Autowired
-    private SlideTestRepository slideTestRepository;
+    private SlideTestRepository slideRepository;
 
     private SlideUnhideScheduleService slideUnhideScheduleService;
 
@@ -51,19 +51,19 @@ class SlideUnhideScheduleServiceTest extends AbstractSpringIntegrationIndependen
         MockitoAnnotations.openMocks(this);
 
         // Create the service with SlideTestRepository instead of mocked SlideRepository
-        slideUnhideScheduleService = new SlideUnhideScheduleService(slideTestRepository, slideUnhideExecutionService, scheduleService);
+        slideUnhideScheduleService = new SlideUnhideScheduleService(slideRepository, slideUnhideExecutionService, scheduleService);
 
-        // AttachmentUnit with hidden slides
-        AttachmentUnit testAttachmentUnit = lectureUtilService.createAttachmentUnitWithSlidesAndFile(5, true);
-        testSlides = slideTestRepository.findAllByAttachmentUnitId(testAttachmentUnit.getId());
+        // AttachmentVideoUnit with hidden slides
+        AttachmentVideoUnit testAttachmentVideoUnit = lectureUtilService.createAttachmentVideoUnitWithSlidesAndFile(5, true);
+        testSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
 
         // Make slides have different hidden timestamps
         ZonedDateTime pastDate = ZonedDateTime.now().minusDays(2);
         ZonedDateTime futureDate = ZonedDateTime.now().plusDays(7);
         testSlides.get(1).setHidden(pastDate);
         testSlides.get(3).setHidden(futureDate);
-        slideTestRepository.save(testSlides.get(1));
-        slideTestRepository.save(testSlides.get(3));
+        slideRepository.save(testSlides.get(1));
+        slideRepository.save(testSlides.get(3));
     }
 
     @Test
@@ -88,7 +88,7 @@ class SlideUnhideScheduleServiceTest extends AbstractSpringIntegrationIndependen
         // Create a valid slide
         Slide slide = testSlides.getFirst();
         slide.setHidden(ZonedDateTime.now().plusDays(1));
-        slideTestRepository.save(slide);
+        slideRepository.save(slide);
 
         // Setup a DTO with a valid slide ID
         SlideUnhideDTO dto = new SlideUnhideDTO(slide.getId(), slide.getHidden());

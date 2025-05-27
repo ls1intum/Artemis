@@ -6,13 +6,13 @@
                     <span jhiTranslate="artemisApp.attachment.pdfPreview.title"></span>
                     @if (attachment()) {
                         {{ attachment()!.id! }}: {{ attachment()!.name! }}
-                    } @else if (attachmentUnit()) {
-                        {{ attachmentUnit()!.id! }}: {{ attachmentUnit()!.name! }}
+                    } @else if (attachmentVideoUnit()) {
+                        {{ attachmentVideoUnit()!.id! }}: {{ attachmentVideoUnit()!.name! }}
                     }
                 </h4>
             </div>
             <div class="d-flex-end text-end">
-                @if (attachmentUnit()) {
+                @if (attachmentVideoUnit()) {
                     @if (hasHiddenPages()) {
                         <button
                             class="btn btn-success text-truncate"
@@ -127,7 +127,7 @@
                 [currentPdfUrl]="currentPdfUrl()"
                 [isAppendingFile]="isAppendingFile()"
                 [hiddenPages]="hiddenPages()"
-                [isAttachmentUnit]="!!attachmentUnit()"
+                [isAttachmentVideoUnit]="!!attachmentVideoUnit()"
                 [updatedSelectedPages]="selectedPages()"
                 [orderedPages]="pageOrder()"
                 (selectedPagesOutput)="selectedPages.set($event)"

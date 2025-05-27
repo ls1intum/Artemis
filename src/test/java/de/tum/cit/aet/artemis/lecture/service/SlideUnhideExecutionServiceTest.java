@@ -17,9 +17,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
-import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
-import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentUnitTestRepository;
+import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.SlideTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -38,7 +38,7 @@ class SlideUnhideExecutionServiceTest extends AbstractSpringIntegrationIndepende
     private SlideTestRepository slideTestRepository;
 
     @Autowired
-    private AttachmentUnitTestRepository attachmentUnitRepository;
+    private AttachmentVideoUnitTestRepository attachmentVideoUnitTestRepository;
 
     private SlideUnhideExecutionService slideUnhideExecutionService;
 
@@ -55,9 +55,9 @@ class SlideUnhideExecutionServiceTest extends AbstractSpringIntegrationIndepende
         slideUnhideExecutionService = new SlideUnhideExecutionService(slideTestRepository, attachmentService);
 
         // Create test data
-        AttachmentUnit testAttachmentUnit = lectureUtilService.createAttachmentUnitWithSlidesAndFile(1, true);
-        testSlide = slideTestRepository.findAllByAttachmentUnitId(testAttachmentUnit.getId()).getFirst();
-        testAttachment = testAttachmentUnit.getAttachment();
+        AttachmentVideoUnit testAttachmentVideoUnit = lectureUtilService.createAttachmentVideoUnitWithSlidesAndFile(5, true);
+        testSlide = slideTestRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId()).getFirst();
+        testAttachment = testAttachmentVideoUnit.getAttachment();
 
         // Set up slide to be hidden
         testSlide.setHidden(ZonedDateTime.now().minusDays(1));
@@ -118,15 +118,15 @@ class SlideUnhideExecutionServiceTest extends AbstractSpringIntegrationIndepende
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
     void testUnhideSlide_withAttachmentUnitButNoAttachment() {
         // Create a slide with attachment unit but no attachment
-        AttachmentUnit unitWithoutAttachment = new AttachmentUnit();
+        AttachmentVideoUnit unitWithoutAttachment = new AttachmentVideoUnit();
         unitWithoutAttachment.setDescription("Test Unit Without Attachment");
 
         // Save the attachment unit
-        unitWithoutAttachment = attachmentUnitRepository.save(unitWithoutAttachment);
+        unitWithoutAttachment = attachmentVideoUnitTestRepository.save(unitWithoutAttachment);
 
         Slide slideWithUnitButNoAttachment = new Slide();
         slideWithUnitButNoAttachment.setHidden(ZonedDateTime.now());
-        slideWithUnitButNoAttachment.setAttachmentUnit(unitWithoutAttachment);
+        slideWithUnitButNoAttachment.setAttachmentVideoUnit(unitWithoutAttachment);
         slideWithUnitButNoAttachment.setSlideNumber(1);
         slideWithUnitButNoAttachment.setSlideImagePath("temp/placeholder.jpg"); // Set a valid slide image path
         slideWithUnitButNoAttachment = slideTestRepository.save(slideWithUnitButNoAttachment);

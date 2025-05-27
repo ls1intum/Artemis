@@ -13,6 +13,7 @@ import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
@@ -24,6 +25,7 @@ import org.springframework.security.web.webauthn.management.UserCredentialReposi
 import org.springframework.security.web.webauthn.registration.PublicKeyCredentialCreationOptionsRepository;
 import org.springframework.stereotype.Component;
 
+import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
@@ -55,6 +57,10 @@ public class ArtemisPasskeyWebAuthnConfigurer {
 
     private final AndroidFingerprintService androidFingerprintService;
 
+    private final MailSendingService mailSendingService;
+
+    private final ApplicationEventPublisher eventPublisher;
+
     @Value("${" + Constants.PASSKEY_ENABLED_PROPERTY_NAME + ":false}")
     private boolean passkeyEnabled;
 
@@ -76,7 +82,8 @@ public class ArtemisPasskeyWebAuthnConfigurer {
     public ArtemisPasskeyWebAuthnConfigurer(MappingJackson2HttpMessageConverter converter, JWTCookieService jwtCookieService, UserRepository userRepository,
             PublicKeyCredentialUserEntityRepository publicKeyCredentialUserEntityRepository, UserCredentialRepository userCredentialRepository,
             PublicKeyCredentialCreationOptionsRepository publicKeyCredentialCreationOptionsRepository,
-            PublicKeyCredentialRequestOptionsRepository publicKeyCredentialRequestOptionsRepository, AndroidFingerprintService androidFingerprintService) {
+            PublicKeyCredentialRequestOptionsRepository publicKeyCredentialRequestOptionsRepository, AndroidFingerprintService androidFingerprintService,
+            MailSendingService mailSendingService, ApplicationEventPublisher eventPublisher) {
         this.converter = converter;
         this.jwtCookieService = jwtCookieService;
         this.userRepository = userRepository;
@@ -85,6 +92,8 @@ public class ArtemisPasskeyWebAuthnConfigurer {
         this.publicKeyCredentialCreationOptionsRepository = publicKeyCredentialCreationOptionsRepository;
         this.publicKeyCredentialRequestOptionsRepository = publicKeyCredentialRequestOptionsRepository;
         this.androidFingerprintService = androidFingerprintService;
+        this.mailSendingService = mailSendingService;
+        this.eventPublisher = eventPublisher;
     }
 
     /**
@@ -113,8 +122,8 @@ public class ArtemisPasskeyWebAuthnConfigurer {
 
             addAndroidApkKeyHashesToAllowedOrigins();
 
-            log.info("WebAuthn passkey authentication enabled with RP ID: {}", relyingPartyId);
-            log.info("Allowed origins: {}", allowedOrigins);
+            log.debug("WebAuthn passkey authentication enabled with RP ID: {}", relyingPartyId);
+            log.debug("Allowed origins: {}", allowedOrigins);
         }
         catch (URISyntaxException | MalformedURLException e) {
             throw new IllegalStateException("Invalid server URL configuration for WebAuthn: " + e.getMessage(), e);
@@ -148,7 +157,7 @@ public class ArtemisPasskeyWebAuthnConfigurer {
         }
 
         WebAuthnConfigurer<HttpSecurity> webAuthnConfigurer = new ArtemisWebAuthnConfigurer<>(converter, jwtCookieService, userRepository, publicKeyCredentialUserEntityRepository,
-                userCredentialRepository, publicKeyCredentialCreationOptionsRepository, publicKeyCredentialRequestOptionsRepository);
+                userCredentialRepository, publicKeyCredentialCreationOptionsRepository, publicKeyCredentialRequestOptionsRepository, mailSendingService, eventPublisher);
 
         http.with(webAuthnConfigurer, configurer -> {
             configurer.allowedOrigins(allowedOrigins).rpId(relyingPartyId).rpName(relyingPartyName);
