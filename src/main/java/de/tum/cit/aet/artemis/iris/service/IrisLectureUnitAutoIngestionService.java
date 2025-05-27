@@ -22,11 +22,11 @@ public class IrisLectureUnitAutoIngestionService {
 
     private static final long BACKOFF_TIME_MINUTES = 2;
 
-    IrisLectureApi irisLectureApi;
+    private final IrisLectureApi irisLectureApi;
 
-    TaskScheduler taskScheduler;
+    private final TaskScheduler taskScheduler;
 
-    LectureUnitRepository lectureUnitRepository;
+    private final LectureUnitRepository lectureUnitRepository;
 
     private final Map<Long, ScheduledFuture<?>> scheduledIngestionTasks = new ConcurrentHashMap<>();
 
