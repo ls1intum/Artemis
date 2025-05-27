@@ -272,7 +272,7 @@ public class SlideSplitterService {
         String oldPath = slideEntity.getSlideImagePath();
         if (oldPath != null && !oldPath.isEmpty()) {
             Path originalPath = FilePathConverter.fileSystemPathForExternalUri(URI.create(oldPath), FilePathType.SLIDE);
-            String newFilename = fileNameWithOutExt + "_" + attachmentUnit.getId() + "_Slide_" + order + ".png";
+            String newFilename = fileNameWithOutExt + "_" + attachmentVideoUnit.getId() + "_Slide_" + order + ".png";
 
             try {
                 File existingFile = originalPath.toFile();

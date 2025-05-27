@@ -155,7 +155,8 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
         }
         else {
             if (filename.length() < 5) {
-                actualFilePath = FileUploadSubmission.buildFilePath(releasedFileUploadExercise.getId(), returnedSubmission.getId()).resolve(Path.of("file" + filename));
+                actualFilePath = FilePathConverter.buildFileUploadSubmissionPath(releasedFileUploadExercise.getId(), returnedSubmission.getId())
+                        .resolve(Path.of("file" + filename));
             }
             else if (filename.contains("\\")) {
                 actualFilePath = FilePathConverter.buildFileUploadSubmissionPath(releasedFileUploadExercise.getId(), returnedSubmission.getId()).resolve("file.png");
@@ -316,7 +317,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
         FileUploadSubmission submission = fileUploadExerciseUtilService.addFileUploadSubmission(releasedFileUploadExercise, submittedFileUploadSubmission,
                 TEST_PREFIX + "student1");
         fileUploadExerciseUtilService.addFileUploadSubmission(releasedFileUploadExercise, lateFileUploadSubmission, TEST_PREFIX + "student2"); // tests prioritizing in-time
-                                                                                                                                               // submissions over late
+        // submissions over late
         // submissions
 
         exerciseUtilService.updateExerciseDueDate(releasedFileUploadExercise.getId(), ZonedDateTime.now().minusHours(1));
