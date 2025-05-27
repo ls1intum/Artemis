@@ -40,6 +40,11 @@ public class IrisLectureUnitAutoIngestionService {
 
     }
 
+    /**
+     * Send the scheduling to the nodes.
+     *
+     * @param lectureUnitId the id of the lecture unit that should be auto ingested
+     */
     public void scheduleLectureUnitAutoIngestion(Long lectureUnitId) {
         cancelLectureUnitAutoIngestion(lectureUnitId);
 
@@ -52,6 +57,11 @@ public class IrisLectureUnitAutoIngestionService {
         }
     }
 
+    /**
+     * Send the scheduling for a lecture unit.
+     *
+     * @param lectureUnitId the id of the lecture unit that should no longer be auto ingested
+     */
     public void cancelLectureUnitAutoIngestion(Long lectureUnitId) {
         ScheduledFuture<?> scheduledTask = scheduledIngestionTasks.get(lectureUnitId);
         if (scheduledTask != null) {
