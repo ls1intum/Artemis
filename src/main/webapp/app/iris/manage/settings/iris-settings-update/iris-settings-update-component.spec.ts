@@ -5,7 +5,7 @@ import { IrisCourseSettings, IrisExerciseSettings, IrisGlobalSettings, IrisSetti
 import { mockSettings, mockVariants } from 'test/helpers/mocks/iris/mock-settings';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { IrisCommonSubSettingsUpdateComponent } from 'app/iris/manage/settings/iris-settings-update/iris-common-sub-settings-update/iris-common-sub-settings-update.component';
-import { ButtonComponent } from 'app/shared/components/button/button.component';
+import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { firstValueFrom, of } from 'rxjs';
 import { IrisCourseSettingsUpdateComponent } from 'app/iris/manage/settings/iris-course-settings-update/iris-course-settings-update.component';
@@ -13,14 +13,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockJhiTranslateDirective } from 'test/helpers/mocks/directive/mock-jhi-translate-directive.directive';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import {
-    IrisChatSubSettings,
-    IrisCompetencyGenerationSubSettings,
-    IrisCourseChatSubSettings,
-    IrisLectureChatSubSettings,
-    IrisLectureIngestionSubSettings,
-    IrisTextExerciseChatSubSettings,
-} from 'app/iris/shared/entities/settings/iris-sub-settings.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -96,56 +88,6 @@ describe('IrisSettingsUpdateComponent', () => {
         expect(labelElement).toBeTruthy();
         expect(getVariantsSpy).toHaveBeenCalled();
     }));
-
-    describe('fillEmptyIrisSubSettings', () => {
-        it('should do nothing if irisSettings is undefined', () => {
-            component.irisSettings = undefined;
-            component.fillEmptyIrisSubSettings();
-            expect(component.irisSettings).toBeUndefined();
-        });
-
-        it('should create each sub-setting if not defined', () => {
-            component.irisSettings = {} as IrisSettings;
-
-            component.fillEmptyIrisSubSettings();
-
-            expect(component.irisSettings).toBeDefined();
-            expect(component.irisSettings!.irisChatSettings).toBeInstanceOf(IrisChatSubSettings);
-            expect(component.irisSettings!.irisTextExerciseChatSettings).toBeInstanceOf(IrisTextExerciseChatSubSettings);
-            expect(component.irisSettings!.irisLectureChatSettings).toBeInstanceOf(IrisLectureChatSubSettings);
-            expect(component.irisSettings!.irisCourseChatSettings).toBeInstanceOf(IrisCourseChatSubSettings);
-            expect(component.irisSettings!.irisLectureIngestionSettings).toBeInstanceOf(IrisLectureIngestionSubSettings);
-            expect(component.irisSettings!.irisCompetencyGenerationSettings).toBeInstanceOf(IrisCompetencyGenerationSubSettings);
-        });
-
-        it('should preserve existing sub-settings and only create missing ones', () => {
-            const existingChatSettings = new IrisChatSubSettings();
-            existingChatSettings.enabled = true;
-            existingChatSettings.selectedVariant = 'existingVariant';
-
-            const existingLectureIngestionSettings = new IrisLectureIngestionSubSettings();
-            existingLectureIngestionSettings.autoIngestOnLectureAttachmentUpload = true;
-
-            component.irisSettings = {
-                irisChatSettings: existingChatSettings,
-                irisLectureIngestionSettings: existingLectureIngestionSettings,
-            } as IrisSettings;
-
-            component.fillEmptyIrisSubSettings();
-
-            expect(component.irisSettings!.irisChatSettings).toBe(existingChatSettings);
-            expect(component.irisSettings!.irisChatSettings!.enabled).toBeTrue();
-            expect(component.irisSettings!.irisChatSettings!.selectedVariant).toBe('existingVariant');
-
-            expect(component.irisSettings!.irisLectureIngestionSettings).toBe(existingLectureIngestionSettings);
-            expect(component.irisSettings!.irisLectureIngestionSettings!.autoIngestOnLectureAttachmentUpload).toBeTrue();
-
-            expect(component.irisSettings!.irisTextExerciseChatSettings).toBeInstanceOf(IrisTextExerciseChatSubSettings);
-            expect(component.irisSettings!.irisLectureChatSettings).toBeInstanceOf(IrisLectureChatSubSettings);
-            expect(component.irisSettings!.irisCourseChatSettings).toBeInstanceOf(IrisCourseChatSubSettings);
-            expect(component.irisSettings!.irisCompetencyGenerationSettings).toBeInstanceOf(IrisCompetencyGenerationSubSettings);
-        });
-    });
 
     describe('loadParentIrisSettingsObservable', () => {
         it('should call getGlobalSettings for COURSE', async () => {

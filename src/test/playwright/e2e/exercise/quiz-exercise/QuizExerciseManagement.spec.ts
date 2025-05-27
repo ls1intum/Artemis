@@ -16,10 +16,9 @@ test.describe('Quiz Exercise Management', { tag: '@fast' }, () => {
     });
 
     test.describe('Quiz Exercise Creation', () => {
-        test.beforeEach('Create quiz exercise', async ({ login, courseManagement, courseManagementExercises, quizExerciseCreation, toggleSidebar }) => {
+        test.beforeEach('Create quiz exercise', async ({ login, courseManagement, courseManagementExercises, quizExerciseCreation }) => {
             await login(admin, '/course-management/');
             await courseManagement.openExercisesOfCourse(course.id!);
-            await toggleSidebar();
             await courseManagementExercises.createQuizExercise();
             await quizExerciseCreation.setTitle('Quiz Exercise ' + generateUUID());
         });

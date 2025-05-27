@@ -13,10 +13,11 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisExerciseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisLectureChatSession;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisProgrammingExerciseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTextExerciseChatSession;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatBasedFeatureInterface;
 import de.tum.cit.aet.artemis.iris.service.session.IrisCourseChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisExerciseChatSessionService;
@@ -24,6 +25,7 @@ import de.tum.cit.aet.artemis.iris.service.session.IrisLectureChatSessionService
 import de.tum.cit.aet.artemis.iris.service.session.IrisRateLimitedFeatureInterface;
 import de.tum.cit.aet.artemis.iris.service.session.IrisSubFeatureInterface;
 import de.tum.cit.aet.artemis.iris.service.session.IrisTextExerciseChatSessionService;
+import de.tum.cit.aet.artemis.iris.service.session.IrisTutorSuggestionSessionService;
 
 /**
  * Service for managing Iris sessions.
@@ -42,14 +44,17 @@ public class IrisSessionService {
 
     private final IrisLectureChatSessionService irisLectureChatSessionService;
 
+    private final IrisTutorSuggestionSessionService irisTutorSuggestionSessionService;
+
     public IrisSessionService(UserRepository userRepository, IrisTextExerciseChatSessionService irisTextExerciseChatSessionService,
             IrisExerciseChatSessionService irisExerciseChatSessionService, IrisCourseChatSessionService irisCourseChatSessionService,
-            IrisLectureChatSessionService irisLectureChatSessionService) {
+            IrisLectureChatSessionService irisLectureChatSessionService, IrisTutorSuggestionSessionService irisTutorSuggestionSessionService) {
         this.userRepository = userRepository;
         this.irisTextExerciseChatSessionService = irisTextExerciseChatSessionService;
         this.irisExerciseChatSessionService = irisExerciseChatSessionService;
         this.irisCourseChatSessionService = irisCourseChatSessionService;
         this.irisLectureChatSessionService = irisLectureChatSessionService;
+        this.irisTutorSuggestionSessionService = irisTutorSuggestionSessionService;
     }
 
     /**
@@ -74,8 +79,10 @@ public class IrisSessionService {
         if (user == null) {
             user = userRepository.getUserWithGroupsAndAuthorities();
         }
-        user.hasAcceptedExternalLLMUsageElseThrow();
         var wrapper = getIrisSessionSubService(session);
+        if (session.shouldAcceptExternalLLMUsage()) {
+            user.hasAcceptedExternalLLMUsageElseThrow();
+        }
         wrapper.irisSubFeatureInterface.checkHasAccessTo(user, wrapper.irisSession);
     }
 
@@ -143,9 +150,11 @@ public class IrisSessionService {
     private <S extends IrisSession> IrisSubFeatureWrapper<S> getIrisSessionSubService(S session) {
         return switch (session) {
             case IrisTextExerciseChatSession chatSession -> (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisTextExerciseChatSessionService, chatSession);
-            case IrisExerciseChatSession chatSession -> (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisExerciseChatSessionService, chatSession);
+            case IrisProgrammingExerciseChatSession chatSession -> (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisExerciseChatSessionService, chatSession);
             case IrisCourseChatSession courseChatSession -> (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisCourseChatSessionService, courseChatSession);
             case IrisLectureChatSession lectureChatSession -> (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisLectureChatSessionService, lectureChatSession);
+            case IrisTutorSuggestionSession tutorSuggestionSession ->
+                (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisTutorSuggestionSessionService, tutorSuggestionSession);
             case null, default -> throw new BadRequestException("Unknown Iris session type " + session.getClass().getSimpleName());
         };
     }

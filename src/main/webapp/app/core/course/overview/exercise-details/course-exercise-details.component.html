@@ -184,8 +184,8 @@
                         <jhi-rating class="mt-2 alert alert-info" [result]="latestRatedResult" />
                     </div>
                 }
-                @if (exercise.type === PROGRAMMING && !exercise.exerciseGroup && irisSettings?.irisChatSettings?.enabled) {
-                    <jhi-exercise-chatbot-button [mode]="ChatServiceMode.EXERCISE" />
+                @if (exercise.type === PROGRAMMING && !exercise.exerciseGroup && irisSettings?.irisProgrammingExerciseChatSettings?.enabled) {
+                    <jhi-exercise-chatbot-button [mode]="ChatServiceMode.PROGRAMMING_EXERCISE" />
                 }
                 @if (plagiarismCaseInfo?.verdict === PlagiarismVerdict.NO_PLAGIARISM) {
                     <a class="btn btn-info btn-sm me-2" [routerLink]="['/courses', courseId, 'plagiarism-cases', plagiarismCaseInfo?.id]">
@@ -199,6 +199,7 @@
                 }
             </div>
         </div>
+        <jhi-competency-contribution [courseId]="courseId" [learningObjectId]="exerciseId" [isExercise]="true" />
         <jhi-lti-initializer />
     </div>
 }

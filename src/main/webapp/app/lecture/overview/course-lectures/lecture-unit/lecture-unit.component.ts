@@ -10,10 +10,11 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { CompetencyContributionComponent } from 'app/atlas/shared/competency-contribution/competency-contribution.component';
 
 @Component({
     selector: 'jhi-lecture-unit-card',
-    imports: [FontAwesomeModule, NgbCollapseModule, TranslateDirective, ArtemisTranslatePipe, ArtemisDatePipe, CommonModule, NgbTooltipModule],
+    imports: [FontAwesomeModule, NgbCollapseModule, TranslateDirective, ArtemisTranslatePipe, ArtemisDatePipe, CommonModule, NgbTooltipModule, CompetencyContributionComponent],
     templateUrl: './lecture-unit.component.html',
     styleUrl: './lecture-unit.component.scss',
 })
@@ -23,6 +24,8 @@ export class LectureUnitComponent {
     protected faDownload = faDownload;
     protected faSquareCheck = faSquareCheck;
     protected faSquare = faSquare;
+
+    courseId = input.required<number>();
 
     lectureUnit = input.required<LectureUnit>();
     icon = input.required<IconDefinition>();

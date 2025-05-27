@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyRelation;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Prerequisite;
 import de.tum.cit.aet.artemis.atlas.domain.competency.StandardizedCompetency;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyContributionDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyRelationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
@@ -467,5 +468,39 @@ public class CourseCompetencyService {
     private void removeCompetencyLectureUnitLinks(Set<CompetencyLectureUnitLink> lectureUnitLinks, CourseCompetency competency) {
         lectureUnitLinkRepository.deleteAll(lectureUnitLinks);
         competency.getLectureUnitLinks().removeAll(lectureUnitLinks);
+    }
+
+    /**
+     * Get the competency contributions for a user in an exercise.
+     *
+     * @param exerciseId The id of the exercise
+     * @param userId     The id of the user
+     * @return The list of competency contributions
+     */
+    public List<CompetencyContributionDTO> getCompetencyContributionsForExercise(long exerciseId, long userId) {
+        final var competencies = courseCompetencyRepository.findAllByExerciseIdWithExerciseLinks(exerciseId);
+        return competencies.stream().map(competency -> {
+            final var progress = competencyProgressRepository.findByCompetencyIdAndUserId(competency.getId(), userId);
+            final var mastery = progress.map(CompetencyProgressService::getMastery).orElse(0.0);
+            return new CompetencyContributionDTO(competency.getId(), competency.getTitle(),
+                    competency.getExerciseLinks().stream().findFirst().map(CompetencyExerciseLink::getWeight).orElse(0.0), mastery);
+        }).toList();
+    }
+
+    /**
+     * Get the competency contributions for a user in a lecture unit.
+     *
+     * @param lectureUnitId The id of the lecture unit
+     * @param userId        The id of the user
+     * @return The list of competency contributions
+     */
+    public List<CompetencyContributionDTO> getCompetencyContributionsForLectureUnit(long lectureUnitId, long userId) {
+        final var competencies = courseCompetencyRepository.findAllByLectureUnitIdWithLectureUnitLinks(lectureUnitId);
+        return competencies.stream().map(competency -> {
+            final var progress = competencyProgressRepository.findByCompetencyIdAndUserId(competency.getId(), userId);
+            final var master = progress.map(CompetencyProgressService::getMastery).orElse(0.0);
+            return new CompetencyContributionDTO(competency.getId(), competency.getTitle(),
+                    competency.getLectureUnitLinks().stream().findFirst().map(CompetencyLectureUnitLink::getWeight).orElse(0.0), master);
+        }).toList();
     }
 }

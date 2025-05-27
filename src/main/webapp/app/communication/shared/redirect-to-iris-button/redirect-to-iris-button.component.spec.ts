@@ -121,7 +121,7 @@ describe('RedirectToIrisButtonComponent', () => {
 
     it('should be disabled for exercise chats if Iris is disabled for the exercise', fakeAsync(() => {
         const disabledIrisSettings = mockSettings();
-        disabledIrisSettings.irisChatSettings!.enabled = false;
+        disabledIrisSettings.irisProgrammingExerciseChatSettings!.enabled = false;
         const getExerciseSettingsSpy = jest.spyOn(irisSettingsService, 'getCombinedExerciseSettings').mockReturnValue(of(disabledIrisSettings));
         jest.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
 
@@ -205,7 +205,7 @@ describe('RedirectToIrisButtonComponent', () => {
         expect(getSettingsSpy).toHaveBeenCalledOnce();
     }));
 
-    it('should not be displayed for general chats if the Student Course Analytics Dashboard is disabled', fakeAsync(() => {
+    it('should be displayed for general chats regardless whether Student Course Analytics Dashboard is disabled', fakeAsync(() => {
         const getExerciseSettingsSpy = jest.spyOn(irisSettingsService, 'getCombinedCourseSettings').mockReturnValue(of(irisSettings));
         jest.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
 
@@ -222,8 +222,8 @@ describe('RedirectToIrisButtonComponent', () => {
         component.ngOnInit();
         tick();
 
-        expect(component.irisEnabled()).toBeFalse();
-        expect(getExerciseSettingsSpy).toHaveBeenCalledTimes(0);
+        expect(component.irisEnabled()).toBeTrue();
+        expect(getExerciseSettingsSpy).toHaveBeenCalledOnce();
     }));
 
     it('should add the message as payload when redirectToIrisButton is pressed', fakeAsync(() => {
@@ -270,4 +270,42 @@ describe('RedirectToIrisButtonComponent', () => {
 
         jest.spyOn(component.metisConversationService, 'activeConversation$', 'get').mockReturnValue(of(mockChannelDTO));
     }
+
+    it('should ignore undefined conversations', fakeAsync(() => {
+        jest.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
+        const spyCheckIrisSettings = jest.spyOn(component as any, 'checkIrisSettings');
+        jest.spyOn(component.metisConversationService, 'activeConversation$', 'get').mockReturnValue(of(undefined));
+
+        component.ngOnInit();
+        tick();
+
+        expect(spyCheckIrisSettings).not.toHaveBeenCalled();
+    }));
+
+    it('should call checkIrisSettings on new conversation with different id', fakeAsync(() => {
+        jest.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
+        const spyCheckIrisSettings = jest.spyOn(component as any, 'checkIrisSettings');
+
+        const firstConversation = { id: 1, type: ConversationType.CHANNEL, subType: ChannelSubType.EXERCISE } as ConversationDTO;
+        const secondConversation = { id: 2, type: ConversationType.CHANNEL, subType: ChannelSubType.EXERCISE } as ConversationDTO;
+        jest.spyOn(component.metisConversationService, 'activeConversation$', 'get').mockReturnValue(of(firstConversation, secondConversation));
+
+        component.ngOnInit();
+        tick();
+
+        expect(spyCheckIrisSettings).toHaveBeenCalledTimes(2);
+    }));
+
+    it('should not call checkIrisSettings if conversation id stays the same', fakeAsync(() => {
+        jest.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
+        const spyCheckIrisSettings = jest.spyOn(component as any, 'checkIrisSettings');
+
+        const sameConversation = { id: 1, type: ConversationType.CHANNEL, subType: ChannelSubType.EXERCISE } as ConversationDTO;
+        jest.spyOn(component.metisConversationService, 'activeConversation$', 'get').mockReturnValue(of(sameConversation, sameConversation));
+
+        component.ngOnInit();
+        tick();
+
+        expect(spyCheckIrisSettings).toHaveBeenCalledOnce();
+    }));
 });

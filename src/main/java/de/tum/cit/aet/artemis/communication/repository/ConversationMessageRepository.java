@@ -1,11 +1,10 @@
 package de.tum.cit.aet.artemis.communication.repository;
 
 import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getAnsweredOrReactedSpecification;
-import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getAuthorSpecification;
 import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getConversationsSpecification;
 import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getCourseWideChannelsSpecification;
 import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getPinnedSpecification;
-import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getSearchTextSpecification;
+import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getSearchTextAndAuthorSpecification;
 import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getSortSpecification;
 import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getUnresolvedSpecification;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
@@ -53,9 +52,8 @@ public interface ConversationMessageRepository extends ArtemisJpaRepository<Post
     private Specification<Post> configureSearchSpecification(Specification<Post> specification, PostContextFilterDTO postContextFilter, long userId) {
         return specification
         // @formatter:off
-            .and(getSearchTextSpecification(postContextFilter.searchText()))
+            .and(getSearchTextAndAuthorSpecification(postContextFilter.searchText(), postContextFilter.authorIds()))
             .and(getCourseWideChannelsSpecification(Boolean.TRUE.equals(postContextFilter.filterToCourseWide()), postContextFilter.courseId()))
-            .and(getAuthorSpecification(postContextFilter.authorIds()))
             .and(getAnsweredOrReactedSpecification(Boolean.TRUE.equals(postContextFilter.filterToAnsweredOrReacted()), userId))
             .and(getUnresolvedSpecification(Boolean.TRUE.equals(postContextFilter.filterToUnresolved())))
             .and(getPinnedSpecification(Boolean.TRUE.equals(postContextFilter.pinnedOnly())))

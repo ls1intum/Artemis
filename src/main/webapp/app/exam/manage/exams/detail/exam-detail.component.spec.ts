@@ -19,7 +19,7 @@ import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { CourseExamArchiveButtonComponent } from 'app/shared/components/course-exam-archive-button/course-exam-archive-button.component';
+import { CourseExamArchiveButtonComponent } from 'app/shared/components/buttons/course-exam-archive-button/course-exam-archive-button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';

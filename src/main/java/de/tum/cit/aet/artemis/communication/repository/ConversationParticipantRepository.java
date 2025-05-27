@@ -147,6 +147,7 @@ public interface ConversationParticipantRepository extends ArtemisJpaRepository<
             WHERE conversationParticipant.conversation.id = :conversationId
                 AND conversationParticipant.user.id <> :senderId
                 AND conversationParticipant.unreadMessagesCount IS NOT NULL
+                AND conversationParticipant.isMuted = FALSE
             """)
     void incrementUnreadMessagesCountOfParticipants(@Param("conversationId") Long conversationId, @Param("senderId") Long senderId);
 

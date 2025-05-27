@@ -58,7 +58,7 @@ import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVcTest {
+class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVCTest {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseTemplateIntegrationTest.class);
 

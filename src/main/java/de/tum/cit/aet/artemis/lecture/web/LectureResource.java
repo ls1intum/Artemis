@@ -56,7 +56,7 @@ import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
-import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
@@ -219,25 +219,25 @@ public class LectureResource {
         long start = System.currentTimeMillis();
 
         var lectures = lectureRepository.findAllByCourseIdWithAttachmentsAndLectureUnits(courseId).stream().filter(Lecture::isVisibleToStudents).collect(Collectors.toSet());
-        Set<Long> attachmentUnitIds = lectures.stream().flatMap(lecture -> lecture.getLectureUnits().stream()).filter(lectureUnit -> lectureUnit instanceof AttachmentUnit)
-                .map(DomainObject::getId).collect(Collectors.toSet());
+        Set<Long> attachmentVideoUnitIds = lectures.stream().flatMap(lecture -> lecture.getLectureUnits().stream())
+                .filter(lectureUnit -> lectureUnit instanceof AttachmentVideoUnit).map(DomainObject::getId).collect(Collectors.toSet());
 
         // Load slides separately to avoid too large data exchange
-        Set<SlideDTO> slides = slideRepository.findVisibleSlidesByAttachmentUnits(attachmentUnitIds);
+        Set<SlideDTO> slides = slideRepository.findVisibleSlidesByAttachmentVideoUnits(attachmentVideoUnitIds);
 
-        // Group slides by attachment unit id to combine them into the DTOs
-        Map<Long, List<SlideDTO>> slidesByAttachmentUnitId = slides.stream().collect(Collectors.groupingBy(SlideDTO::attachmentUnitId));
+        // Group slides by attachment video unit id to combine them into the DTOs
+        Map<Long, List<SlideDTO>> slidesByAttachmentVideoUnitId = slides.stream().collect(Collectors.groupingBy(SlideDTO::attachmentVideoUnitId));
         // Convert visible lectures to DTOs (filtering active attachments) and add non hidden slides to the DTOs
         List<LectureDTO> lectureDTOs = lectures.stream().map(LectureDTO::from).sorted(Comparator.comparingLong(LectureDTO::id)).toList();
 
         lectureDTOs.forEach(lectureDTO -> {
-            for (AttachmentUnitDTO attachmentUnitDTO : lectureDTO.lectureUnits) {
-                List<SlideDTO> slidesForAttachmentUnit = slidesByAttachmentUnitId.get(attachmentUnitDTO.id);
-                if (slidesForAttachmentUnit != null) {
+            for (AttachmentVideoUnitDTO attachmentVideoUnitDTO : lectureDTO.lectureUnits) {
+                List<SlideDTO> slidesForAttachmentVideoUnit = slidesByAttachmentVideoUnitId.get(attachmentVideoUnitDTO.id);
+                if (slidesForAttachmentVideoUnit != null) {
                     // remove unnecessary fields from the slide DTOs
-                    var finalSlides = slidesForAttachmentUnit.stream().map(slideDTO -> new SlideDTO(slideDTO.id(), slideDTO.slideNumber(), null, null))
+                    var finalSlides = slidesForAttachmentVideoUnit.stream().map(slideDTO -> new SlideDTO(slideDTO.id(), slideDTO.slideNumber(), null, null))
                             .sorted(Comparator.comparingInt(SlideDTO::slideNumber)).toList();
-                    attachmentUnitDTO.slides.addAll(finalSlides);
+                    attachmentVideoUnitDTO.slides.addAll(finalSlides);
                 }
             }
         });
@@ -248,10 +248,10 @@ public class LectureResource {
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record LectureDTO(Long id, String title, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate, List<AttachmentDTO> attachments,
-            List<AttachmentUnitDTO> lectureUnits) {
+            List<AttachmentVideoUnitDTO> lectureUnits) {
 
         /**
-         * Converts a lecture to a DTO. Only the attachments and attachment units that are visible to students are included.
+         * Converts a lecture to a DTO. Only the attachments and attachment video units that are visible to students are included.
          *
          * @param lecture The lecture to convert
          * @return The converted lecture DTO
@@ -259,10 +259,11 @@ public class LectureResource {
         public static LectureDTO from(Lecture lecture) {
             // only attachments visible to students are included
             List<AttachmentDTO> attachmentDTOs = lecture.getAttachments().stream().filter(Attachment::isVisibleToStudents).map(AttachmentDTO::from).toList();
-            // only attachment units visible to students are included
-            List<AttachmentUnitDTO> attachmentUnitDTOs = lecture.getLectureUnits().stream().filter(lectureUnit -> lectureUnit instanceof AttachmentUnit)
-                    .map(lectureUnit -> (AttachmentUnit) lectureUnit).filter(AttachmentUnit::isVisibleToStudents).map(AttachmentUnitDTO::from).toList();
-            return new LectureDTO(lecture.getId(), lecture.getTitle(), lecture.getVisibleDate(), lecture.getStartDate(), lecture.getEndDate(), attachmentDTOs, attachmentUnitDTOs);
+            // only attachment video units visible to students are included
+            List<AttachmentVideoUnitDTO> attachmentVideoUnitDTOs = lecture.getLectureUnits().stream().filter(lectureUnit -> lectureUnit instanceof AttachmentVideoUnit)
+                    .map(lectureUnit -> (AttachmentVideoUnit) lectureUnit).filter(AttachmentVideoUnit::isVisibleToStudents).map(AttachmentVideoUnitDTO::from).toList();
+            return new LectureDTO(lecture.getId(), lecture.getTitle(), lecture.getVisibleDate(), lecture.getStartDate(), lecture.getEndDate(), attachmentDTOs,
+                    attachmentVideoUnitDTOs);
         }
     }
 
@@ -275,11 +276,11 @@ public class LectureResource {
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record AttachmentUnitDTO(Long id, String name, List<SlideDTO> slides, AttachmentDTO attachment, ZonedDateTime releaseDate, String type) {
+    public record AttachmentVideoUnitDTO(Long id, String name, List<SlideDTO> slides, AttachmentDTO attachment, ZonedDateTime releaseDate, String type) {
 
-        public static AttachmentUnitDTO from(AttachmentUnit attachmentUnit) {
-            return new AttachmentUnitDTO(attachmentUnit.getId(), attachmentUnit.getName(), new ArrayList<>(), AttachmentDTO.from(attachmentUnit.getAttachment()),
-                    attachmentUnit.getReleaseDate(), "attachment");
+        public static AttachmentVideoUnitDTO from(AttachmentVideoUnit attachmentVideoUnit) {
+            return new AttachmentVideoUnitDTO(attachmentVideoUnit.getId(), attachmentVideoUnit.getName(), new ArrayList<>(),
+                    AttachmentDTO.from(attachmentVideoUnit.getAttachment()), attachmentVideoUnit.getReleaseDate(), "attachment");
         }
     }
 
@@ -373,7 +374,7 @@ public class LectureResource {
     @EnforceAtLeastStudent
     public ResponseEntity<Lecture> getLectureWithDetails(@PathVariable Long lectureId) {
         log.debug("REST request to get lecture {} with details", lectureId);
-        Lecture lecture = lectureRepository.findByIdWithAttachmentsAndPostsAndLectureUnitsAndCompetenciesAndCompletionsElseThrow(lectureId);
+        Lecture lecture = lectureRepository.findByIdWithAttachmentsAndLectureUnitsAndCompetenciesAndCompletionsElseThrow(lectureId);
         if (competencyApi.isPresent()) {
             competencyApi.get().addCompetencyLinksToExerciseUnits(lecture);
         }
@@ -417,7 +418,6 @@ public class LectureResource {
             case null -> false;
             case ExerciseUnit exerciseUnit -> exerciseUnit.getExercise() != null && authCheckService.isAllowedToSeeLectureUnit(lectureUnit, user)
                     && exercisesWithAllInformationNeeded.contains(exerciseUnit.getExercise());
-            case AttachmentUnit attachmentUnit -> attachmentUnit.getAttachment() != null && authCheckService.isAllowedToSeeLectureUnit(lectureUnit, user);
             default -> authCheckService.isAllowedToSeeLectureUnit(lectureUnit, user);
         }).peek(lectureUnit -> {
             lectureUnit.setCompleted(lectureUnit.isCompletedFor(user));

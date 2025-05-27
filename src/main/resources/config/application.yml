@@ -37,9 +37,11 @@ artemis:
     external-system-request:
         batch-size: 50  # wait the time below after 50 requests
         batch-waiting-time: 30000   # in ms = 30s
-    iosAppId: "2J3C6P6X3N.de.tum.cit.artemis"
+    iosAppId: "T7PP2KY2B6.de.tum.cit.ase.artemis"
     androidAppPackage: "de.tum.cit.aet.artemis"
-    androidSha256CertFingerprints: "D2:E1:A6:6F:8C:00:55:97:9F:30:2F:3D:79:A9:5D:78:85:1F:C5:21:5A:7F:81:B3:BF:60:22:71:EF:6F:60:24"
+    androidSha256CertFingerprints:
+      release: "D2:E1:A6:6F:8C:00:55:97:9F:30:2F:3D:79:A9:5D:78:85:1F:C5:21:5A:7F:81:B3:BF:60:22:71:EF:6F:60:24"
+      debug: "7F:CB:99:74:19:30:15:4B:86:4B:8A:73:B0:09:94:52:19:F6:BD:90:6A:7C:16:B1:76:37:AF:74:B1:48:3B:6C"
 
     # activate the following line if you want to support push notifications for the mobile clients.
     # More information about the TUM hosted hermes service can be found here: https://github.com/ls1intum/Hermes
@@ -98,7 +100,7 @@ artemis:
                 bash:
                     default: "ghcr.io/ls1intum/artemis-bash-docker:v1.0.0"
                 c_plus_plus:
-                    default: "ghcr.io/ls1intum/artemis-cpp-docker:v1.1.1"
+                    default: "ghcr.io/ls1intum/artemis-cpp-docker:v1.1.2"
                 c_sharp:
                     default: "ghcr.io/ls1intum/artemis-csharp-docker:v1.0.1"
                 typescript:
@@ -122,10 +124,10 @@ artemis:
     compatible-versions:
       android:
         min: "2.0.0"
-        recommended: "2.0.0"
+        recommended: "2.1.0"
       ios:
         min: "2.0.0"
-        recommended: "2.0.0"
+        recommended: "2.1.0"
 
 
 
@@ -225,7 +227,7 @@ spring:
     main:
         allow-bean-definition-overriding: false
         allow-circular-references: false
-        lazy-initialization: false # cannot set this because of static inject in FilePathService
+        lazy-initialization: true
     task:
         execution:
             thread-name-prefix: artemis-task-

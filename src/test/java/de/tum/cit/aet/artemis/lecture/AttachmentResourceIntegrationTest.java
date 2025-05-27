@@ -15,6 +15,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
@@ -48,16 +49,17 @@ class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationIndepen
         userUtilService.addUsers(TEST_PREFIX, 0, 1, 0, 1);
 
         attachment = LectureFactory.generateAttachment(null);
-        attachment.setLink("temp/example.txt");
-
+        attachment = attachmentRepository.save(attachment);
         var course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
-        textExercise = exerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
+        textExercise = ExerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
         lecture = new Lecture();
         lecture.setTitle("test");
         lecture.setDescription("test");
         lecture.setCourse(course);
         lecture = lectureRepository.save(lecture);
         attachment.setLecture(lecture);
+        attachment.setLink("attachments/lecture/" + lecture.getId() + "/example.txt");
+        attachment = attachmentRepository.save(attachment);
     }
 
     @ParameterizedTest

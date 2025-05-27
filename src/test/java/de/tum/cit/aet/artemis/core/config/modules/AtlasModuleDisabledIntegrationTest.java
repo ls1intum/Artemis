@@ -7,12 +7,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasNotPresentException;
 import de.tum.cit.aet.artemis.core.service.export.DataExportScienceEventService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalVcSamlTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalVCSamlTest;
 
 /**
  * Test class to check behavior when the Atlas module is disabled.
  */
-class AtlasModuleDisabledIntegrationTest extends AbstractSpringIntegrationLocalVcSamlTest {
+class AtlasModuleDisabledIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
 
     @Autowired
     private DataExportScienceEventService dataExportScienceEventService;

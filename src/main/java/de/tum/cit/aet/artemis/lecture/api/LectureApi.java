@@ -10,6 +10,7 @@ import org.springframework.stereotype.Controller;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.service.LectureImportService;
 import de.tum.cit.aet.artemis.lecture.service.LectureService;
 
@@ -24,13 +25,16 @@ public class LectureApi extends AbstractLectureApi {
 
     private final LectureImportService lectureImportService;
 
-    public LectureApi(LectureService lectureService, LectureImportService lectureImportService) {
+    private final LectureRepository lectureRepository;
+
+    public LectureApi(LectureService lectureService, LectureImportService lectureImportService, LectureRepository lectureRepository) {
         this.lectureService = lectureService;
         this.lectureImportService = lectureImportService;
+        this.lectureRepository = lectureRepository;
     }
 
-    public void filterVisibleLecturesWithActiveAttachments(Course course, Set<Lecture> lecturesWithAttachments, User user) {
-        lectureService.filterVisibleLecturesWithActiveAttachments(course, lecturesWithAttachments, user);
+    public Set<Lecture> filterVisibleLecturesWithActiveAttachments(Course course, Set<Lecture> lecturesWithAttachments, User user) {
+        return lectureService.filterVisibleLecturesWithActiveAttachments(course, lecturesWithAttachments, user);
     }
 
     public Lecture importLecture(final Lecture importedLecture, final Course course, boolean importLectureUnits) {

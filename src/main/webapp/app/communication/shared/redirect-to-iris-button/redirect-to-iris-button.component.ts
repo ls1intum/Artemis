@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, inject, input, signal } from '@angular/co
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { IrisCourseSettings, IrisExerciseSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
-import { Subscription, catchError, of } from 'rxjs';
+import { Subscription, catchError, distinctUntilKeyChanged, filter, of } from 'rxjs';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { Router } from '@angular/router';
 import { NgClass } from '@angular/common';
@@ -33,6 +33,7 @@ export class RedirectToIrisButtonComponent implements OnInit, OnDestroy {
     router = inject(Router);
 
     private conversationServiceSubscription: Subscription;
+    private settingsSubscription: Subscription | undefined;
     private irisCombinedExerciseSettings: IrisExerciseSettings | undefined;
     private irisCombinedCourseSettings: IrisCourseSettings | undefined;
     channelSubTypeReferenceRouterLink = '';
@@ -48,13 +49,19 @@ export class RedirectToIrisButtonComponent implements OnInit, OnDestroy {
         if (!isIrisActive) {
             return;
         }
-        this.conversationServiceSubscription = this.metisConversationService.activeConversation$.subscribe((conversation) => {
-            this.checkIrisSettings(getAsChannelDTO(conversation));
-        });
+        this.conversationServiceSubscription = this.metisConversationService.activeConversation$
+            .pipe(
+                filter((conversation) => !!conversation),
+                distinctUntilKeyChanged('id'),
+            )
+            .subscribe((conversation) => {
+                this.checkIrisSettings(getAsChannelDTO(conversation));
+            });
     }
 
     ngOnDestroy(): void {
         this.conversationServiceSubscription?.unsubscribe();
+        this.settingsSubscription?.unsubscribe();
     }
 
     /**
@@ -76,7 +83,7 @@ export class RedirectToIrisButtonComponent implements OnInit, OnDestroy {
         if (cachedSettings) {
             this.setIrisStatus(extractEnabled(cachedSettings), channelDTO);
         } else {
-            fetchSettings()
+            this.settingsSubscription = fetchSettings()
                 .pipe(
                     catchError(() => {
                         this.setIrisStatus(false, channelDTO);
@@ -104,7 +111,7 @@ export class RedirectToIrisButtonComponent implements OnInit, OnDestroy {
         switch (channelDTO.subType) {
             case ChannelSubType.GENERAL: {
                 const course = this.course();
-                if (course?.studentCourseAnalyticsDashboardEnabled && course.id) {
+                if (course?.id) {
                     this.updateIrisStatus<IrisCourseSettings>(
                         this.irisCombinedCourseSettings,
                         () => this.irisSettingsService.getCombinedCourseSettings(course.id!),
@@ -137,7 +144,7 @@ export class RedirectToIrisButtonComponent implements OnInit, OnDestroy {
                     this.updateIrisStatus<IrisExerciseSettings>(
                         this.irisCombinedExerciseSettings,
                         () => this.irisSettingsService.getCombinedExerciseSettings(channelDTO.subTypeReferenceId!),
-                        (settings) => settings.irisChatSettings?.enabled,
+                        (settings) => settings.irisProgrammingExerciseChatSettings?.enabled,
                         channelDTO,
                         (settings) => (this.irisCombinedExerciseSettings = settings),
                     );

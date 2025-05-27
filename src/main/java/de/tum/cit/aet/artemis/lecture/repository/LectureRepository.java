@@ -38,6 +38,15 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
     @Query("""
             SELECT lecture
             FROM Lecture lecture
+            LEFT JOIN FETCH lecture.lectureUnits
+            WHERE lecture.course.id = :courseId
+                AND (lecture.visibleDate IS NULL OR lecture.visibleDate <= :now)
+            """)
+    Set<Lecture> findAllVisibleByCourseIdWithEagerLectureUnits(@Param("courseId") long courseId, @Param("now") ZonedDateTime now);
+
+    @Query("""
+            SELECT lecture
+            FROM Lecture lecture
                 LEFT JOIN FETCH lecture.attachments
             WHERE lecture.course.id = :courseId
             """)
@@ -57,7 +66,6 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
             SELECT lecture
             FROM Lecture lecture
                 LEFT JOIN FETCH lecture.attachments
-                LEFT JOIN FETCH lecture.posts
                 LEFT JOIN FETCH lecture.lectureUnits lu
                 LEFT JOIN FETCH lu.completedUsers cu
                 LEFT JOIN FETCH lu.competencyLinks cl
@@ -67,7 +75,7 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
                 LEFT JOIN FETCH ecl.competency
             WHERE lecture.id = :lectureId
             """)
-    Optional<Lecture> findByIdWithAttachmentsAndPostsAndLectureUnitsAndCompetenciesAndCompletions(@Param("lectureId") Long lectureId);
+    Optional<Lecture> findByIdWithAttachmentsAndLectureUnitsAndCompetenciesAndCompletions(@Param("lectureId") Long lectureId);
 
     @Query("""
             SELECT lecture
@@ -170,8 +178,8 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
     }
 
     @NotNull
-    default Lecture findByIdWithAttachmentsAndPostsAndLectureUnitsAndCompetenciesAndCompletionsElseThrow(Long lectureId) {
-        return getValueElseThrow(findByIdWithAttachmentsAndPostsAndLectureUnitsAndCompetenciesAndCompletions(lectureId), lectureId);
+    default Lecture findByIdWithAttachmentsAndLectureUnitsAndCompetenciesAndCompletionsElseThrow(Long lectureId) {
+        return getValueElseThrow(findByIdWithAttachmentsAndLectureUnitsAndCompetenciesAndCompletions(lectureId), lectureId);
     }
 
     @NotNull
