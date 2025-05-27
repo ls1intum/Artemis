@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.iris.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE_AND_SCHEDULING;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE_AND_SCHEDULING_AND_IRIS;
 
 import java.time.ZonedDateTime;
 import java.util.Map;
@@ -17,7 +17,7 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 
 @Service
-@Profile(PROFILE_CORE_AND_SCHEDULING)
+@Profile(PROFILE_CORE_AND_SCHEDULING_AND_IRIS)
 public class IrisLectureUnitAutoIngestionService {
 
     private static final long BACKOFF_TIME_MINUTES = 2;
