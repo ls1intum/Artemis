@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.lecture.api;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.time.ZonedDateTime;
 import java.util.Set;
 
 import org.springframework.context.annotation.Profile;
@@ -44,9 +43,5 @@ public class LectureApi extends AbstractLectureApi {
 
     public void delete(Lecture lecture, boolean updateCompetencyProgress) {
         lectureService.delete(lecture, updateCompetencyProgress);
-    }
-
-    public Set<Lecture> findAllVisibleByCourseIdWithEagerLectureUnits(long courseId, ZonedDateTime now) {
-        return lectureRepository.findAllVisibleByCourseIdWithEagerLectureUnits(courseId, now);
     }
 }
