@@ -180,7 +180,7 @@ Available features on each platform
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 | Save Message for later                               |                                      | |AVAILABLE|        | |AVAILABLE|         | |AVAILABLE|         |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
-| Forward Messages                                     |                                      | |AVAILABLE|        | |WIP|               | |AVAILABLE|         |
+| Forward Messages                                     |                                      | |AVAILABLE|        | |AVAILABLE|         | |AVAILABLE|         |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 | Choose to also send replies into main thread         |                                      | |WIP|              | |UNAVAILABLE|       | |PLANNED|           |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
@@ -190,7 +190,7 @@ Available features on each platform
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 |                                                                                                                                                              |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
-| **Markdown Textfield Options**                                                                                                                               |
+| **Markdown Text field Options**                                                                                                                              |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 | Tag other users                                      |                                      | |AVAILABLE|        | |AVAILABLE|         | |AVAILABLE|         |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
@@ -236,9 +236,11 @@ Available features on each platform
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 | Sort messages (ascending, descending)                |                                      | |AVAILABLE|        | |NOT PLANNED|       | |NOT PLANNED|       |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
-| Search for messages in chat                          |                                      | |AVAILABLE|        | |UNAVAILABLE|       | |AVAILABLE|         |
+| Search for messages in a specific chat               |                                      | |AVAILABLE|        | |UNAVAILABLE|       | |AVAILABLE|         |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
-| Search for messages across all chats                 |                                      | |AVAILABLE|        | |UNAVAILABLE|       | |WIP|               |
+| Search for messages across all chats                 |                                      | |AVAILABLE|        | |PLANNED|           | |UNAVAILABLE|       |
++------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
+| Apply filters while searching across all chats       |                                      | |AVAILABLE|        | |PLANNED|           | |UNAVAILABLE|       |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 | Open Profile info by clicking profile picture        |                                      | |PLANNED|          | |AVAILABLE|         | |AVAILABLE|         |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
@@ -324,13 +326,11 @@ Available features on each platform
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 | **Notifications**                                                                                                                                            |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
-| Notification overview for past notifications         |                                      | |AVAILABLE|        | |AVAILABLE|         | |UNAVAILABLE|       |
-+------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 | | Notification overview for past                     |                                      | |AVAILABLE|        | |AVAILABLE|         | |UNAVAILABLE|       |
 | | course specific notifications                      |                                      |                    |                     |                     |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
-| | Notification settings (unsubscribe/subscribe       |                                      | |AVAILABLE|        | |AVAILABLE|         | |AVAILABLE|         |
-| | to various notification types)                     |                                      |                    |                     |                     |
+| | Notification settings (unsubscribe/subscribe       |                                      | |AVAILABLE|        | |AVAILABLE|         | |UNAVAILABLE|       |
+| | to various course specific notification types)     |                                      |                    |                     |                     |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 
 .. note::
@@ -348,13 +348,22 @@ This section captures the most important features that are offered to any Artemi
 Search, Filter, and Sort Messages
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Global Search
+
+In the course communication, users can search for messages across all channels and conversations. The global search can be accessed anytime.
+To only receive results from a a specific conversation or a specific author, filters can be applied by using the keywords *in:* or *from:*
+or by selecting the respective filters from the dropdown menu. When accessing the global search from a conversation by clicking on the
+search icon in the top right corner, this conversation is automatically selected as filter.
+
+|global-search|
+
 On the course communication overview, a user can query *all* existing messages according to the following criteria and their
 possible combinations:
 
-* Text-based search
+* Text-based Search using the Global Search
     * Contents of Announcement-Message Title
     * Contents of Message Context
-* Message characteristics
+* Message Characteristics
     * Unresolved Messages
     * Own (messages current user has authored)
     * Reacted (messages current user has reacted or replied to)
@@ -362,8 +371,6 @@ possible combinations:
     * Creation Date
 
 A simplified version of this feature is available on the exercise and lecture details page as well.
-
-To search within a specific channel in the communications module, users can navigate to the desired channel and utilize the search bar located in that channel.
 
 Filter Pinned Messages within a Conversation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -620,4 +627,6 @@ As soon as the announcement is created, all participants who did not actively re
 .. |applied-pinned filter| image:: communication/applied-pinned-filtering.png
     :width: 1000
 .. |save-messages| image:: communication/save-message.png
+    :width: 1000
+.. |global-search| image:: communication/global-search.png
     :width: 1000
