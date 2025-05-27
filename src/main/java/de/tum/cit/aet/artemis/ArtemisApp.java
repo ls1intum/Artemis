@@ -20,6 +20,7 @@ import org.springframework.boot.autoconfigure.liquibase.LiquibaseProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.info.BuildProperties;
 import org.springframework.boot.info.GitProperties;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.core.env.Environment;
 
 import de.tum.cit.aet.artemis.core.config.ArtemisCompatibleVersionsConfiguration;
@@ -27,13 +28,17 @@ import de.tum.cit.aet.artemis.core.config.LicenseConfiguration;
 import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
 import de.tum.cit.aet.artemis.core.config.TheiaConfiguration;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
-import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import tech.jhipster.config.DefaultProfileUtil;
 import tech.jhipster.config.JHipsterConstants;
 
 @SpringBootApplication
 @EnableConfigurationProperties({ LiquibaseProperties.class, ProgrammingLanguageConfiguration.class, TheiaConfiguration.class, LicenseConfiguration.class,
         ArtemisCompatibleVersionsConfiguration.class })
+@ComponentScan(basePackages = { "de.tum.cit.aet.artemis.assessment", "de.tum.cit.aet.artemis.athena", "de.tum.cit.aet.artemis.atlas", "de.tum.cit.aet.artemis.buildagent",
+        "de.tum.cit.aet.artemis.communication", "de.tum.cit.aet.artemis.core", "de.tum.cit.aet.artemis.exam", "de.tum.cit.aet.artemis.exercise",
+        "de.tum.cit.aet.artemis.fileupload", "de.tum.cit.aet.artemis.iris", "de.tum.cit.aet.artemis.lecture", "de.tum.cit.aet.artemis.lti", "de.tum.cit.aet.artemis.modeling",
+        "de.tum.cit.aet.artemis.plagiarism", "de.tum.cit.aet.artemis.programming", "de.tum.cit.aet.artemis.quiz", "de.tum.cit.aet.artemis.text",
+        "de.tum.cit.aet.artemis.tutorialgroup" })
 public class ArtemisApp {
 
     private static final Logger log = LoggerFactory.getLogger(ArtemisApp.class);
