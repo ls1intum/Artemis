@@ -86,7 +86,6 @@ public class PyrisPipelineService {
 
     private final UserRepository userRepository;
 
-    // we cannot use the apis here in most cases as this leads to circular dependencies, so we use the repositories instead and ignore this class in the architecture tests
     private final Optional<LectureRepositoryApi> lectureRepositoryApi;
 
     private final Optional<CompetencyRepositoryApi> competencyRepositoryApi;
