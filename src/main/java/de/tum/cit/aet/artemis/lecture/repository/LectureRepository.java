@@ -36,11 +36,11 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
     Set<Lecture> findAllByCourseId(@Param("courseId") Long courseId);
 
     @Query("""
-                    SELECT lecture
-                    FROM Lecture lecture
-                    LEFT JOIN FETCH lecture.lectureUnits
-                    WHERE lecture.course.id = :courseId
-                        AND (lecture.visibleDate IS NULL OR lecture.visibleDate <= :now)
+            SELECT lecture
+            FROM Lecture lecture
+            LEFT JOIN FETCH lecture.lectureUnits
+            WHERE lecture.course.id = :courseId
+                AND (lecture.visibleDate IS NULL OR lecture.visibleDate <= :now)
             """)
     Set<Lecture> findAllVisibleByCourseIdWithEagerLectureUnits(@Param("courseId") long courseId, @Param("now") ZonedDateTime now);
 
