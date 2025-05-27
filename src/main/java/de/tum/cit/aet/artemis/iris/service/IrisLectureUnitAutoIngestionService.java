@@ -16,6 +16,9 @@ import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 
+/**
+ * Service to handle the scheduling of auto ingestion jobs for lecture units.
+ */
 @Service
 @Profile(PROFILE_CORE_AND_SCHEDULING_AND_IRIS)
 public class IrisLectureUnitAutoIngestionService {
