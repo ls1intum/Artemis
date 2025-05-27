@@ -278,7 +278,7 @@ public class CourseAccessResource {
     }
 
     /**
-     * GET /courses/:courseId/search-users : search users for a given course within all groups.
+     * GET /courses/:courseId/search-other-users : search users for a given course within all groups.
      *
      * @param courseId   the id of the course for which to search users
      * @param nameOfUser the name by which to search users
@@ -391,7 +391,7 @@ public class CourseAccessResource {
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found) or with status 403 (Forbidden)
      */
     @NotNull
-    public ResponseEntity<Void> addUserToCourseGroup(String userLogin, User instructorOrAdmin, Course course, String group) {
+    private ResponseEntity<Void> addUserToCourseGroup(String userLogin, User instructorOrAdmin, Course course, String group) {
         if (authCheckService.isAtLeastInstructorInCourse(course, instructorOrAdmin)) {
             Optional<User> userToAddToGroup = userRepository.findOneWithGroupsAndAuthoritiesByLogin(userLogin);
             if (userToAddToGroup.isEmpty()) {
@@ -477,7 +477,7 @@ public class CourseAccessResource {
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found) or with status 403 (Forbidden)
      */
     @NotNull
-    public ResponseEntity<Void> removeUserFromCourseGroup(String userLogin, User instructorOrAdmin, Course course, String group) {
+    private ResponseEntity<Void> removeUserFromCourseGroup(String userLogin, User instructorOrAdmin, Course course, String group) {
         if (!authCheckService.isAtLeastInstructorInCourse(course, instructorOrAdmin)) {
             throw new AccessForbiddenException();
         }
