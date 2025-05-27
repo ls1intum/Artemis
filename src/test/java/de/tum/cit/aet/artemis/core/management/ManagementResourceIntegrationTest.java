@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.core.repository.PersistenceAuditEventRepository;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
@@ -86,7 +87,7 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationLocalCI
     void toggleFeatures() throws Exception {
         // This setup only needed in this test case
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        var programmingExercise1 = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        var programmingExercise1 = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         var programmingExercise2 = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now(), ZonedDateTime.now().plusHours(2), course);
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise1, "admin");
         programmingExerciseUtilService.addProgrammingSubmission(programmingExercise1, new ProgrammingSubmission(), "admin");
