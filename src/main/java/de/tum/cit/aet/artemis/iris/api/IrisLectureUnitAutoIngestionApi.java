@@ -9,7 +9,7 @@ import de.tum.cit.aet.artemis.iris.service.IrisLectureUnitAutoIngestionService;
 
 @Profile(PROFILE_CORE_AND_SCHEDULING_AND_IRIS)
 @Controller
-public class IrisLectureUnitAutoIngestionApi {
+public class IrisLectureUnitAutoIngestionApi extends AbstractIrisApi {
 
     private final IrisLectureUnitAutoIngestionService irisLectureUnitAutoIngestionService;
 
