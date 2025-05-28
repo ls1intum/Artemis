@@ -128,7 +128,7 @@ jobs:
 
   # Check if the build has run successfully (PR)
   check-existing-build-for-pull-request:
-    name: Check Existing Build
+    name: Check Existing Build of Pull Request
     if: ${{ needs.determine-build-context.outputs.pr_number != '' }}
     needs: determine-build-context
     runs-on: ubuntu-latest
@@ -148,7 +148,7 @@ jobs:
 
   # Check if the build has run successfully (main or develop)
   check-existing-build-for-branch:
-    name: Check Existing Build for Main/Develop
+    name: Check Existing Build of main or develop branch
     if: ${{ needs.determine-build-context.outputs.is_main_or_develop == 'true' }}
     needs: determine-build-context
     runs-on: ubuntu-latest
