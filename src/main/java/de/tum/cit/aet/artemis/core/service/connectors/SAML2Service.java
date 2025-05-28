@@ -37,6 +37,8 @@ import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.UserNotActivatedException;
+import de.tum.cit.aet.artemis.core.security.jwt.AuthenticationMethod;
+import de.tum.cit.aet.artemis.core.service.ArtemisSuccessfulLoginService;
 import de.tum.cit.aet.artemis.core.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.core.service.user.UserService;
 
@@ -78,6 +80,8 @@ public class SAML2Service {
 
     private final Map<String, Pattern> extractionPatterns;
 
+    private final ArtemisSuccessfulLoginService artemisSuccessfulLoginService;
+
     /**
      * Constructs a new instance.
      *
@@ -87,13 +91,14 @@ public class SAML2Service {
      * @param userCreationService  The user creation service
      */
     public SAML2Service(final AuditEventRepository auditEventRepository, final UserRepository userRepository, final SAML2Properties properties,
-            final UserCreationService userCreationService, MailService mailService, UserService userService) {
+            final UserCreationService userCreationService, MailService mailService, UserService userService, ArtemisSuccessfulLoginService artemisSuccessfulLoginService) {
         this.auditEventRepository = auditEventRepository;
         this.userRepository = userRepository;
         this.properties = properties;
         this.userCreationService = userCreationService;
         this.mailService = mailService;
         this.userService = userService;
+        this.artemisSuccessfulLoginService = artemisSuccessfulLoginService;
 
         this.extractionPatterns = generateExtractionPatterns(properties);
     }
@@ -148,8 +153,10 @@ public class SAML2Service {
             throw new UserNotActivatedException("User was disabled.");
         }
 
-        auth = new UsernamePasswordAuthenticationToken(user.get().getLogin(), user.get().getPassword(), toGrantedAuthorities(user.get().getAuthorities()));
-        auditEventRepository.add(new AuditEvent(Instant.now(), user.get().getLogin(), "SAML2_AUTHENTICATION_SUCCESS", details));
+        String login = user.get().getLogin();
+        auth = new UsernamePasswordAuthenticationToken(login, user.get().getPassword(), toGrantedAuthorities(user.get().getAuthorities()));
+        auditEventRepository.add(new AuditEvent(Instant.now(), login, "SAML2_AUTHENTICATION_SUCCESS", details));
+        artemisSuccessfulLoginService.sendLoginEmail(login, AuthenticationMethod.SAML2);
         return auth;
     }
 

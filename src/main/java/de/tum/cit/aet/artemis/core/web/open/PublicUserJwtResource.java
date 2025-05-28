@@ -132,7 +132,6 @@ public class PublicUserJwtResource {
         try {
             authentication = saml2Service.get().handleAuthentication(authentication, principal);
             SecurityContextHolder.getContext().setAuthentication(authentication);
-            artemisSuccessfulLoginService.sendLoginEmail(authentication.getName(), AuthenticationMethod.SAML2);
         }
         catch (UserNotActivatedException e) {
             // If the exception is not caught, a 401 is returned.
