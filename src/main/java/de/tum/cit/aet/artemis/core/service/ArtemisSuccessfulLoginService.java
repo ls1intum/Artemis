@@ -27,6 +27,8 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 @Service
 public class ArtemisSuccessfulLoginService {
 
+    private static final Logger log = LoggerFactory.getLogger(ArtemisSuccessfulLoginService.class);
+
     @Value("${artemis.user-management.password-reset.links.en:https://artemis.tum.de/account/reset/request}")
     private String passwordResetLinkEnUrl;
 
@@ -35,8 +37,6 @@ public class ArtemisSuccessfulLoginService {
 
     @Value("${server.url}")
     private URL artemisServerUrl;
-
-    private static final Logger log = LoggerFactory.getLogger(ArtemisSuccessfulLoginService.class);
 
     private final UserRepository userRepository;
 
@@ -54,6 +54,7 @@ public class ArtemisSuccessfulLoginService {
      * @param username the username of the user who has successfully logged in
      */
     public void sendLoginEmail(String username) {
+        // TODO consider authentication type
         try {
             User recipient = userRepository.getUserByLoginElseThrow(username);
             var contextVariables = new HashMap<String, Object>();

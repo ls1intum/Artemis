@@ -6,14 +6,14 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-import org.springframework.context.ApplicationEventPublisher;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.converter.GenericHttpMessageConverter;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.server.ServletServerHttpResponse;
-import org.springframework.security.authentication.event.AuthenticationSuccessEvent;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
@@ -22,6 +22,7 @@ import org.springframework.security.web.savedrequest.SavedRequest;
 import org.springframework.util.Assert;
 
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
+import de.tum.cit.aet.artemis.core.service.ArtemisSuccessfulLoginService;
 
 /**
  * An {@link AuthenticationSuccessHandler}, that sets a JWT token in the response and writes a JSON response with the redirect
@@ -31,19 +32,21 @@ import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
  */
 public final class ArtemisHttpMessageConverterAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
 
+    private static final Logger log = LoggerFactory.getLogger(ArtemisHttpMessageConverterAuthenticationSuccessHandler.class);
+
     private HttpMessageConverter<Object> converter;
 
     private RequestCache requestCache = new HttpSessionRequestCache();
 
     private final JWTCookieService jwtCookieService;
 
-    private final ApplicationEventPublisher eventPublisher;
+    private final ArtemisSuccessfulLoginService artemisSuccessfulLoginService;
 
     public ArtemisHttpMessageConverterAuthenticationSuccessHandler(HttpMessageConverter<Object> converter, JWTCookieService jwtCookieService,
-            ApplicationEventPublisher eventPublisher) {
+            ArtemisSuccessfulLoginService artemisSuccessfulLoginService) {
         this.jwtCookieService = jwtCookieService;
         this.converter = converter;
-        this.eventPublisher = eventPublisher;
+        this.artemisSuccessfulLoginService = artemisSuccessfulLoginService;
     }
 
     /**
@@ -76,7 +79,7 @@ public final class ArtemisHttpMessageConverterAuthenticationSuccessHandler imple
         ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(rememberMe);
         response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
 
-        eventPublisher.publishEvent(new AuthenticationSuccessEvent(authentication));
+        artemisSuccessfulLoginService.sendLoginEmail(authentication.getName());
 
         this.converter.write(new AuthenticationSuccess(redirectUrl), MediaType.APPLICATION_JSON, new ServletServerHttpResponse(response));
     }
