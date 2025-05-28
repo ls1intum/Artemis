@@ -278,8 +278,9 @@ public class JWTFilter extends GenericFilterBean {
      */
     private static boolean isIgnoredUri(final String uri) {
         // /git/**: used by Git clients with a token mechanism
+        // /api/iris/public/pyris/** used by Pyris status callbacks with a token mechanism
         // /api/programming/public/programming-exercises/new-result: used by Jenkins to send test results back to Artemis,
         // uses a separate secret token.
-        return uri.startsWith("/git/") || "/api/programming/public/programming-exercises/new-result".equals(uri);
+        return uri.startsWith("/git/") || uri.startsWith("/api/iris/public/pyris/") || "/api/programming/public/programming-exercises/new-result".equals(uri);
     }
 }
