@@ -37,9 +37,7 @@ import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.UserNotActivatedException;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
-import de.tum.cit.aet.artemis.core.security.jwt.AuthenticationMethod;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
-import de.tum.cit.aet.artemis.core.service.ArtemisSuccessfulLoginService;
 import de.tum.cit.aet.artemis.core.service.connectors.SAML2Service;
 
 /**
@@ -56,15 +54,11 @@ public class PublicUserJwtResource {
 
     private final AuthenticationManager authenticationManager;
 
-    private final ArtemisSuccessfulLoginService artemisSuccessfulLoginService;
-
     private final Optional<SAML2Service> saml2Service;
 
-    public PublicUserJwtResource(JWTCookieService jwtCookieService, AuthenticationManager authenticationManager, ArtemisSuccessfulLoginService artemisSuccessfulLoginService,
-            Optional<SAML2Service> saml2Service) {
+    public PublicUserJwtResource(JWTCookieService jwtCookieService, AuthenticationManager authenticationManager, Optional<SAML2Service> saml2Service) {
         this.jwtCookieService = jwtCookieService;
         this.authenticationManager = authenticationManager;
-        this.artemisSuccessfulLoginService = artemisSuccessfulLoginService;
         this.saml2Service = saml2Service;
     }
 
@@ -96,9 +90,6 @@ public class PublicUserJwtResource {
 
             ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(rememberMe, tool);
             response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
-
-            // TODO: move this to the actual login implementations
-            artemisSuccessfulLoginService.sendLoginEmail(username, AuthenticationMethod.PASSWORD);
 
             return ResponseEntity.ok(Map.of("access_token", responseCookie.getValue()));
         }
