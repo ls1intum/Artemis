@@ -126,6 +126,9 @@ public class CompetencyService extends CourseCompetencyService {
      * @param lecture the lecture to augment the exercise unit links for
      */
     public void addCompetencyLinksToExerciseUnits(Lecture lecture) {
+        // TODO: double check if this is really necessary, loading data from a database in a for loop is not a good practice, in the worst case
+        // a lecture could have ten exercise units. I wonder if we can load all links in one query and then set them on the exercise units.
+        // I also wonder if we really need to load them with the competency
         var exerciseUnits = lecture.getLectureUnits().stream().filter(unit -> unit instanceof ExerciseUnit);
         exerciseUnits.forEach(unit -> {
             var exerciseUnit = (ExerciseUnit) unit;

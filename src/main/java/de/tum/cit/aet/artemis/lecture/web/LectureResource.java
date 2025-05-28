@@ -51,6 +51,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLecture.EnforceAtLeastStudentInLecture;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -371,7 +372,7 @@ public class LectureResource {
      * @return the ResponseEntity with status 200 (OK) and with body the lecture including posts, lecture units and competencies, or with status 404 (Not Found)
      */
     @GetMapping("lectures/{lectureId}/details")
-    @EnforceAtLeastStudent
+    @EnforceAtLeastStudentInLecture
     public ResponseEntity<Lecture> getLectureWithDetails(@PathVariable Long lectureId) {
         log.debug("REST request to get lecture {} with details", lectureId);
         Lecture lecture = lectureRepository.findByIdWithAttachmentsAndLectureUnitsAndCompetenciesAndCompletionsElseThrow(lectureId);
@@ -380,10 +381,9 @@ public class LectureResource {
         }
         Course course = lecture.getCourse();
         if (course == null) {
-            return ResponseEntity.badRequest().build();
+            throw new BadRequestAlertException("The course belonging to this lecture does not exist", ENTITY_NAME, "courseNotFound");
         }
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        authCheckService.checkIsAllowedToSeeLectureElseThrow(lecture, user);
         lecture = filterLectureContentForUser(lecture, user);
 
         return ResponseEntity.ok(lecture);
