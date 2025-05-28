@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.atlas.service.competency;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
@@ -126,19 +128,24 @@ public class CompetencyService extends CourseCompetencyService {
      * @param lecture the lecture to augment the exercise unit links for
      */
     public void addCompetencyLinksToExerciseUnits(Lecture lecture) {
-        // TODO: double check if this is really necessary, loading data from a database in a for loop is not a good practice, in the worst case
-        // a lecture could have ten exercise units. I wonder if we can load all links in one query and then set them on the exercise units.
-        // I also wonder if we really need to load them with the competency
-        var exerciseUnits = lecture.getLectureUnits().stream().filter(unit -> unit instanceof ExerciseUnit);
-        exerciseUnits.forEach(unit -> {
-            var exerciseUnit = (ExerciseUnit) unit;
+        List<ExerciseUnit> exerciseUnits = lecture.getLectureUnits().stream().filter(ExerciseUnit.class::isInstance).map(ExerciseUnit.class::cast)
+                .filter(unit -> unit.getExercise() != null).toList();
+
+        if (exerciseUnits.isEmpty()) {
+            return;
+        }
+
+        Set<Long> exerciseIds = exerciseUnits.stream().map(unit -> unit.getExercise().getId()).collect(Collectors.toSet());
+        Set<CompetencyExerciseLink> allCompetencyExerciseLinks = competencyExerciseLinkRepository.findByExerciseIdInWithCompetency(exerciseIds);
+
+        Map<Long, List<CompetencyExerciseLink>> linksByExerciseId = allCompetencyExerciseLinks.stream().collect(Collectors.groupingBy(link -> link.getExercise().getId()));
+
+        exerciseUnits.forEach(exerciseUnit -> {
             var exercise = exerciseUnit.getExercise();
-            if (exercise != null) {
-                var competencyExerciseLinks = competencyExerciseLinkRepository.findByExerciseIdWithCompetency(exercise.getId());
-                var competencyLectureUnitLinks = competencyExerciseLinks.stream().map(link -> new CompetencyLectureUnitLink(link.getCompetency(), exerciseUnit, link.getWeight()))
-                        .collect(Collectors.toSet());
-                exerciseUnit.setCompetencyLinks(competencyLectureUnitLinks);
-            }
+            List<CompetencyExerciseLink> competencyExerciseLinksForUnit = linksByExerciseId.getOrDefault(exercise.getId(), List.of());
+            Set<CompetencyLectureUnitLink> competencyLectureUnitLinks = competencyExerciseLinksForUnit.stream()
+                    .map(link -> new CompetencyLectureUnitLink(link.getCompetency(), exerciseUnit, link.getWeight())).collect(Collectors.toSet());
+            exerciseUnit.setCompetencyLinks(competencyLectureUnitLinks);
         });
     }
 }

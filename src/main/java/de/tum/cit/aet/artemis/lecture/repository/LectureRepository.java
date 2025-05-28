@@ -68,14 +68,10 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
             FROM Lecture lecture
                 LEFT JOIN FETCH lecture.attachments
                 LEFT JOIN FETCH lecture.lectureUnits lu
-                LEFT JOIN FETCH lu.competencyLinks cl
-                LEFT JOIN FETCH cl.competency
-                LEFT JOIN FETCH lu.exercise e
-                LEFT JOIN FETCH e.competencyLinks ecl
-                LEFT JOIN FETCH ecl.competency
+                LEFT JOIN FETCH lu.completedUsers cu
             WHERE lecture.id = :lectureId
             """)
-    Optional<Lecture> findByIdWithAttachmentsAndLectureUnitsAndCompetenciesAndCompletions(@Param("lectureId") Long lectureId);
+    Optional<Lecture> findByIdWithAttachmentsAndLectureUnitsAndCompletions(@Param("lectureId") Long lectureId);
 
     // TODO: this query loads too much data, we should reduce the number of left join fetches
     @Query("""
@@ -179,8 +175,8 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
     }
 
     @NotNull
-    default Lecture findByIdWithAttachmentsAndLectureUnitsAndCompetenciesAndCompletionsElseThrow(Long lectureId) {
-        return getValueElseThrow(findByIdWithAttachmentsAndLectureUnitsAndCompetenciesAndCompletions(lectureId), lectureId);
+    default Lecture findByIdWithAttachmentsAndLectureUnitsAndCompletionsElseThrow(Long lectureId) {
+        return getValueElseThrow(findByIdWithAttachmentsAndLectureUnitsAndCompletions(lectureId), lectureId);
     }
 
     @NotNull

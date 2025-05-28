@@ -375,7 +375,7 @@ public class LectureResource {
     @EnforceAtLeastStudentInLecture
     public ResponseEntity<Lecture> getLectureWithDetails(@PathVariable Long lectureId) {
         log.debug("REST request to get lecture {} with details", lectureId);
-        Lecture lecture = lectureRepository.findByIdWithAttachmentsAndLectureUnitsAndCompetenciesAndCompletionsElseThrow(lectureId);
+        Lecture lecture = lectureRepository.findByIdWithAttachmentsAndLectureUnitsAndCompletionsElseThrow(lectureId);
         if (competencyApi.isPresent()) {
             competencyApi.get().addCompetencyLinksToExerciseUnits(lecture);
         }
