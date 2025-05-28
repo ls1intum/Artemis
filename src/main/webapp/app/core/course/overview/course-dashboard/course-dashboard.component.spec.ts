@@ -116,4 +116,16 @@ describe('CourseDashboardComponent', () => {
         const noDataMessage = debugElement.query(By.css('[jhiTranslate="artemisApp.studentAnalyticsDashboard.competencyAccordion.noData"]'));
         expect(noDataMessage).toBeTruthy();
     });
+
+    it('should not load course metrics when studentCourseAnalyticsDashboardEnabled is false', () => {
+        const metricsSpy = jest.spyOn(component, 'loadMetrics');
+        component.ngOnInit();
+        expect(metricsSpy).not.toHaveBeenCalled();
+    });
+    it('should load course metrics when studentCourseAnalyticsDashboardEnabled is true', () => {
+        const metricsSpy = jest.spyOn(component, 'loadMetrics');
+        component.course = { id: 456, studentCourseAnalyticsDashboardEnabled: true, irisCourseChatEnabled: true, learningPathsEnabled: true };
+        component.ngOnInit();
+        expect(metricsSpy).toHaveBeenCalledOnce();
+    });
 });
