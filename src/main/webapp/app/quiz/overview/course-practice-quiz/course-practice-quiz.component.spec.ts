@@ -51,14 +51,16 @@ describe('CoursePracticeQuizComponent', () => {
                 {
                     provide: ActivatedRoute,
                     useValue: {
-                        parent: { params: of({ courseId: 1 }) },
+                        parent: {
+                            params: of({ courseId: 1 }),
+                        },
                     },
                 },
             ]);
 
         fixture = TestBed.createComponent(CoursePracticeQuizComponent);
         component = fixture.componentInstance;
-        component.questions = [question1, question2, question3];
+        component.questions.set([question1, question2, question3]);
         fixture.detectChanges();
     });
 
@@ -67,7 +69,7 @@ describe('CoursePracticeQuizComponent', () => {
     });
 
     it('should initiate', () => {
-        expect(component.courseId).toBe(1);
+        expect(component.courseId()).toBe(1);
     });
 
     it('should load questions on loadQuestions', () => {
@@ -76,31 +78,31 @@ describe('CoursePracticeQuizComponent', () => {
         jest.spyOn(quizService, 'getQuizQuestions').mockReturnValue(of(mockQuestions));
         component.loadQuestions(1);
         expect(quizService.getQuizQuestions).toHaveBeenCalledWith(1);
-        expect(component.questions).toEqual(mockQuestions);
+        expect(component.questions()).toEqual(mockQuestions);
     });
 
     it('should check for last question', () => {
-        component.questions = [question1, question2, question3];
-        component.currentIndex = 0;
-        expect(component.isLastQuestion).toBeFalse();
-        component.currentIndex = 2;
-        expect(component.isLastQuestion).toBeTrue();
+        component.questions.set([question1, question2, question3]);
+        component.currentIndex.set(0);
+        expect(component.isLastQuestion()).toBeFalse();
+        component.currentIndex.set(2);
+        expect(component.isLastQuestion()).toBeTrue();
     });
 
     it('should check for nextQuestion', () => {
-        component.currentIndex = 0;
+        component.currentIndex.set(0);
         component.nextQuestion();
-        expect(component.currentIndex).toBe(1);
-        component.currentIndex = 2;
+        expect(component.currentIndex()).toBe(1);
+        component.currentIndex.set(2);
         const spy = jest.spyOn(component, 'navigateToPractice');
         component.nextQuestion();
-        expect(spy).toHaveBeenCalled();
+        expect(spy).toHaveBeenCalledOnce();
     });
 
     it('should check for current question', () => {
-        component.questions = [question1, question2, question3];
-        component.currentIndex = 0;
-        expect(component.currentQuestion).toBe(question1);
+        component.questions.set([question1, question2, question3]);
+        component.currentIndex.set(0);
+        expect(component.currentQuestion()).toBe(question1);
     });
 
     it('should navigate to practice', () => {

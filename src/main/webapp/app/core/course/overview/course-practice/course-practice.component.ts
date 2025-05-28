@@ -1,6 +1,8 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { EMPTY } from 'rxjs';
 
 @Component({
     selector: 'jhi-course-practice',
@@ -8,19 +10,14 @@ import { ButtonComponent } from 'app/shared/components/buttons/button/button.com
     templateUrl: './course-practice.component.html',
     styleUrl: './course-practice.component.scss',
 })
-export class CoursePracticeComponent implements OnInit {
+export class CoursePracticeComponent {
     private router = inject(Router);
     private route = inject(ActivatedRoute);
 
-    courseId: number;
-
-    ngOnInit(): void {
-        this.route.parent?.params.subscribe((params) => {
-            this.courseId = Number(params['courseId']);
-        });
-    }
+    private readonly paramsSignal = toSignal(this.route.parent?.params ?? EMPTY);
+    private readonly courseId = computed(() => this.paramsSignal()?.['courseId']);
 
     public navigateToPractice(): void {
-        this.router.navigate(['courses', this.courseId, 'quiz']);
+        this.router.navigate(['courses', this.courseId(), 'quiz']);
     }
 }

@@ -1,7 +1,6 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subscription, combineLatest, of } from 'rxjs';
-import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
+import { QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import { CoursePracticeQuizService } from 'app/quiz/overview/service/course-practice-quiz.service';
 import { MultipleChoiceQuestionComponent } from 'app/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
 import { ShortAnswerQuestionComponent } from 'app/quiz/shared/questions/short-answer-question/short-answer-question.component';
@@ -10,14 +9,17 @@ import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
 import { ShortAnswerSubmittedText } from 'app/quiz/shared/entities/short-answer-submitted-text.model';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { EMPTY } from 'rxjs';
 
 @Component({
     selector: 'jhi-course-practice-quiz',
-    imports: [MultipleChoiceQuestionComponent, ShortAnswerQuestionComponent, DragAndDropQuestionComponent, ButtonComponent],
+    imports: [MultipleChoiceQuestionComponent, ShortAnswerQuestionComponent, DragAndDropQuestionComponent, ButtonComponent, TranslateDirective],
     templateUrl: './course-practice-quiz.component.html',
     styleUrl: './course-practice-quiz.component.scss',
 })
-export class CoursePracticeQuizComponent implements OnInit, OnDestroy {
+export class CoursePracticeQuizComponent {
     readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
     readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
     readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
@@ -25,73 +27,57 @@ export class CoursePracticeQuizComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);
     private router = inject(Router);
     private quizService = inject(CoursePracticeQuizService);
-    private subscription: Subscription;
 
-    questions: QuizQuestion[] = [];
-    courseId: number;
-    currentIndex = 0;
+    currentIndex = signal(0);
+    isLoading = signal(true);
+
+    private readonly paramsSignal = toSignal(this.route.parent?.params ?? EMPTY);
+    private readonly courseId = computed(() => this.paramsSignal()?.['courseId']);
+    private readonly quizQuestions = computed(() => {
+        const id = this.courseId();
+        return id ? this.quizService.getQuizQuestions(id) : EMPTY;
+    });
+    private readonly questionsSignal = toSignal(this.quizQuestions(), { initialValue: [] });
     selectedAnswerOptions = new Map<number, AnswerOption[]>();
     dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
     shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
-
-    ngOnInit(): void {
-        this.subscription = combineLatest([this.route.parent?.params ?? of({ courseId: undefined })]).subscribe(([params]) => {
-            this.courseId = params['courseId'];
-            this.loadQuestions(this.courseId);
-        });
-    }
-
-    ngOnDestroy(): void {
-        if (this.subscription) {
-            this.subscription.unsubscribe();
-        }
-    }
+    questions = this.questionsSignal;
 
     /**
-     * loads the quiz questions for the given course
-     * @param courseId
+     * checks if the current question is the last question
      */
-    loadQuestions(courseId: number): void {
-        this.quizService.getQuizQuestions(courseId).subscribe((questions) => {
-            this.questions = questions;
-        });
-    }
+    isLastQuestion = computed(() => {
+        if (this.questions().length === 0) {
+            return true;
+        }
+        return this.currentIndex() === this.questions().length - 1;
+    });
+
+    /**
+     * gets the current question
+     */
+    currentQuestion = computed(() => {
+        if (this.questions().length === 0 || this.currentIndex() < 0 || this.currentIndex() >= this.questions().length) {
+            throw new Error('No questions available or invalid question index');
+        }
+        return this.questions()[this.currentIndex()];
+    });
 
     /**
      * increments the current question index or navigates to the course practice page if the last question is reached
      */
     nextQuestion(): void {
-        if (this.isLastQuestion) {
+        if (this.isLastQuestion()) {
             this.navigateToPractice();
         } else {
-            this.currentIndex++;
+            this.currentIndex.set(this.currentIndex() + 1);
         }
-    }
-
-    /**
-     * checks if the current question is the last question
-     */
-    get isLastQuestion(): boolean {
-        if (this.questions.length === 0) {
-            return true;
-        }
-        return this.currentIndex === this.questions.length - 1;
-    }
-
-    /**
-     * gets the current question
-     */
-    get currentQuestion(): QuizQuestion {
-        if (this.questions.length === 0 || this.currentIndex < 0 || this.currentIndex >= this.questions.length) {
-            throw new Error('No questions available or invalid question index');
-        }
-        return this.questions[this.currentIndex];
     }
 
     /**
      * navigates to the course practice page
      */
     navigateToPractice(): void {
-        this.router.navigate(['courses', this.courseId, 'practice']);
+        this.router.navigate(['courses', this.courseId(), 'practice']);
     }
 }

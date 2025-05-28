@@ -15,7 +15,9 @@ describe('CoursePracticeComponent', () => {
             .provide({
                 provide: ActivatedRoute,
                 useValue: {
-                    parent: { params: of({ courseId: 1 }) },
+                    parent: {
+                        params: of({ courseId: 1 }),
+                    },
                 },
             });
 
@@ -29,7 +31,7 @@ describe('CoursePracticeComponent', () => {
     });
 
     it('should initiate', () => {
-        expect(component.courseId).toBe(1);
+        expect(component.courseId()).toBe(1);
     });
 
     it('should navigate to quiz', () => {
