@@ -35,6 +35,7 @@ import jakarta.validation.constraints.NotNull;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.CommitCommand;
 import org.eclipse.jgit.api.FetchCommand;
 import org.eclipse.jgit.api.Git;
@@ -1327,7 +1328,9 @@ public class GitService extends AbstractGitService {
     }
 
     public void cloneRepository(String sourceRepoUri, Path targetDir, boolean isBare) throws GitAPIException {
-        Git.cloneRepository().setURI(sourceRepoUri).setDirectory(targetDir.toFile()).setBare(isBare).call();
+        CloneCommand cloneCommand = Git.cloneRepository().setURI(sourceRepoUri).setDirectory(targetDir.toFile()).setBare(isBare);
+        authenticate(cloneCommand);
+        cloneCommand.call().close();
     }
 
     /**

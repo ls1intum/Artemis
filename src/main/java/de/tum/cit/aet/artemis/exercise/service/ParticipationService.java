@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.exercise.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -55,6 +56,7 @@ import de.tum.cit.aet.artemis.programming.service.UriService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.programming.service.localci.SharedQueueManagementService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCGitBranchService;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCVersionControlService;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
@@ -70,6 +72,9 @@ public class ParticipationService {
 
     @Value("${artemis.version-control.default-branch:main}")
     protected String defaultBranch;
+
+    @Value("${artemis.version-control.url}")
+    private URL localVCBaseUrl;
 
     private final GitService gitService;
 
@@ -478,15 +483,6 @@ public class ParticipationService {
         }
     }
 
-    /**
-     * Creates a student repository with a single commit containing the current state of the template repository.
-     * This method avoids copying the entire commit history from the template repository.
-     *
-     * @param programmingExercise the programming exercise
-     * @param sourceURL           the URI of the template repository
-     * @param participation       the participation to set up with the new repository
-     * @return the updated participation with repository URI set
-     */
     private ProgrammingExerciseStudentParticipation createStudentRepositoryWithSingleCommit(ProgrammingExercise programmingExercise, VcsRepositoryUri sourceURL,
             ProgrammingExerciseStudentParticipation participation) {
         // only execute this step if it has not yet been completed yet or if the repository uri is missing for some reason
@@ -494,11 +490,18 @@ public class ParticipationService {
             try {
                 final var projectKey = programmingExercise.getProjectKey();
                 final var targetRepositoryName = participation.addPracticePrefixIfTestRun(participation.getParticipantIdentifier());
-                VcsRepositoryUri studentRepoUri = localVCVersionControlService.buildStudentRepoPath(projectKey, targetRepositoryName, participation.getAttempt());
+
+                String username = null;
+                if (participation.getStudent().isPresent()) {
+                    username = participation.getParticipantIdentifier();
+
+                }
+
+                // not authorized students repo path
+                final var studentRepoPath = localVCVersionControlService.buildStudentRepoPath(projectKey, targetRepositoryName, participation.getAttempt());
 
                 try {
-                    // Create single commit student repo by copying working tree from template bare repo
-                    localVCVersionControlService.createSingleCommitStudentRepo(sourceURL, studentRepoUri);
+                    localVCVersionControlService.createSingleCommitStudentRepo(sourceURL, studentRepoPath);
                 }
                 catch (Exception e) {
                     log.error("Error while creating single commit student repo", e);
@@ -506,11 +509,8 @@ public class ParticipationService {
                 }
 
                 // Update the participation with the new repository URI
-                VcsRepositoryUri newRepoUri = studentRepoUri;
-                if (participation.getStudent().isPresent()) {
-                    newRepoUri = newRepoUri.withUser(participation.getParticipantIdentifier());
-                }
-
+                VcsRepositoryUri newRepoUri = new LocalVCRepositoryUri(studentRepoPath, localVCBaseUrl);
+                newRepoUri = newRepoUri.withUser(username);
                 participation.setRepositoryUri(newRepoUri.toString());
                 participation.setBranch(defaultBranch);
                 participation.setInitializationState(InitializationState.REPO_COPIED);

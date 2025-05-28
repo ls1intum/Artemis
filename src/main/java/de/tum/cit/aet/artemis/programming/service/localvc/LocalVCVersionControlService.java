@@ -1,8 +1,6 @@
 package de.tum.cit.aet.artemis.programming.service.localvc;
 
 import java.io.IOException;
-import java.net.URI;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -28,29 +26,17 @@ public class LocalVCVersionControlService {
 
     private final GitService gitService;
 
-    @Value("${artemis.version-control.url}")
-    private URL localVCBaseUrl;
+    @Value("${artemis.version-control.local-vcs-repo-path}")
+    private String localVCBasePath;
 
     public LocalVCVersionControlService(GitService gitService) {
         this.gitService = gitService;
     }
 
-    public void createSingleCommitStudentRepo(VcsRepositoryUri templateUri, VcsRepositoryUri studentUri) throws Exception {
-        log.info("Creating student repository from template: {} to target: {}", templateUri, studentUri);
-
+    public void createSingleCommitStudentRepo(VcsRepositoryUri templateUri, Path targetPath) throws Exception {
         // Create temporary directories
         Path tempTemplateWorkingDir = Files.createTempDirectory("localvc-template-working-");
         Path tempStudentWorkingDir = Files.createTempDirectory("localvc-student-working-");
-
-        // 这里假设 studentUri 是本地文件路径，比如 file:///... 或者绝对路径
-        URI targetURI = studentUri.getURI();
-        Path targetPath;
-        if (targetURI != null && "file".equalsIgnoreCase(targetURI.getScheme())) {
-            targetPath = Paths.get(targetURI);
-        }
-        else {
-            throw new IllegalArgumentException("Student repository target must be a local file path (file://...)");
-        }
 
         try {
             // Step 1: Clone source bare repo to temp working directory
@@ -64,7 +50,6 @@ public class LocalVCVersionControlService {
                 // Step 4: Commit copied files into new repo
                 log.debug("Committing copied files into target repository");
                 gitService.commitCopiedFilesIntoRepo(newRepo, tempStudentWorkingDir);
-                log.info("Successfully created student repository at: {}", studentUri);
             }
         }
         catch (Exception e) {
@@ -82,21 +67,14 @@ public class LocalVCVersionControlService {
         }
     }
 
-    /**
-     * Builds the URI for a student repository based on project key, repository name, and attempt.
-     *
-     * @param targetProjectKey     the project key
-     * @param targetRepositoryName the repository name
-     * @param attempt              the attempt number (null or 0 means first attempt)
-     * @return the URI for the student repository
-     */
-    public VcsRepositoryUri buildStudentRepoPath(String targetProjectKey, String targetRepositoryName, Integer attempt) {
+    public Path buildStudentRepoPath(String targetProjectKey, String targetRepositoryName, Integer attempt) {
+        String baseDir = localVCBasePath;
         targetRepositoryName = targetRepositoryName.toLowerCase();
         String targetProjectKeyLowerCase = targetProjectKey.toLowerCase();
         if (attempt != null && attempt > 0 && !targetRepositoryName.contains("practice-")) {
             targetProjectKeyLowerCase = targetProjectKeyLowerCase + attempt;
         }
-        final String targetRepoSlug = targetProjectKeyLowerCase + "-" + targetRepositoryName;
-        return new LocalVCRepositoryUri(targetProjectKeyLowerCase, targetRepoSlug, localVCBaseUrl);
+        final String targetRepoSlug = targetProjectKeyLowerCase + "-" + targetRepositoryName + ".git";
+        return Paths.get(baseDir, targetProjectKeyLowerCase, targetRepoSlug);
     }
 }
