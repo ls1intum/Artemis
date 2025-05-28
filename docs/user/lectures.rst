@@ -88,9 +88,8 @@ Lectures can be divided into lecture units, which can be of the following types:
 
     * **Text unit:** A text with markup.
     * **Exercise unit:** An exercise from the same course.
-    * **Video unit:** An embedded video stream or video from an external source.
+    * **Attachment Video unit:** A file that the student may download and an embedded video stream or video from an external source.
     * **Online unit:** A link to an external website.
-    * **Attachment unit:** A file that the student may download.
 
 Students see all released lecture units on the lecture details page.
 Clicking on a unit opens its contents.
@@ -108,12 +107,13 @@ Using the arrow buttons, the order of the lecture units can be changed.
 
 |units-management|
 
-Attachment Unit
-^^^^^^^^^^^^^^^
-An attachment unit consists of a name, file, and optionally a description and release date.
-Students complete this unit once they download the file.
+Attachment Video Unit
+^^^^^^^^^^^^^^^^^^^^^
+An attachment video unit consists of a name, file, an embedded video link, and optionally a description and release date.
+Artemis can convert the website link from common video sources to an embeddable URL using the arrow button.
+Students complete this unit when they watch the video for at least five minutes and download the attachment.
 
-|create-attachment-unit|
+|create-attachment-video-unit|
 
 Attachment Unit Management
 """"""""""""""""""""""""""
@@ -163,14 +163,6 @@ A text unit consists of a name, some rich-text content and optionally a release 
 Students complete this unit as soon as they open it.
 
 |create-text-unit|
-
-Video Unit
-^^^^^^^^^^
-A video unit consists of a name, an embeddable video link, and optionally a description and release date.
-Artemis can convert the website link from common video sources to an embeddable URL using the arrow button.
-Students complete this unit when they watch the video for at least five minutes.
-
-|create-video-unit|
 
 Competencies
 --------------
