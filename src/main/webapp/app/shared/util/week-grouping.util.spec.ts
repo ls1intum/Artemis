@@ -9,7 +9,7 @@ describe('WeekGroupingUtil', () => {
             { title: 'Item 2', id: 'i2', size: 'M' },
         ];
 
-        const groups = WeekGroupingUtil.getGroupedByWeek(items, 'noDate');
+        const groups = WeekGroupingUtil.getGroupedByWeek(items, 'lecture', 'noDate');
         expect(groups).toHaveLength(1);
         expect(groups[0].isNoDate).toBeTruthy();
         expect(groups[0].showDateHeader).toBeFalsy();
@@ -23,7 +23,7 @@ describe('WeekGroupingUtil', () => {
             { title: 'Other', id: 'i3', size: 'M', startDate: dayjs('2024-01-03') },
         ];
 
-        const groups = WeekGroupingUtil.getGroupedByWeek(items, 'current', 'item');
+        const groups = WeekGroupingUtil.getGroupedByWeek(items, 'lecture', 'current', 'item');
         expect(groups).toHaveLength(1);
         expect(groups[0].showDateHeader).toBeFalsy();
         expect(groups[0].items).toHaveLength(2);
@@ -40,7 +40,7 @@ describe('WeekGroupingUtil', () => {
             { title: 'Exercise 6', id: 'e6', size: 'M', startDate: dayjs('2024-01-07') },
         ];
 
-        const groups = WeekGroupingUtil.getGroupedByWeek(items, 'current', 'exercise');
+        const groups = WeekGroupingUtil.getGroupedByWeek(items, 'exercise', 'current', 'exercise');
         expect(groups).toHaveLength(1);
         expect(groups[0].items.map((i) => i.title)).toEqual(expect.arrayContaining(['Exercise 1', 'Exercise 2', 'Exercise 3', 'Exercise 4', 'Exercise 5', 'Exercise 6']));
     });
@@ -55,7 +55,7 @@ describe('WeekGroupingUtil', () => {
             { title: 'L6', id: 'w2', size: 'M', startDate: dayjs('2024-01-10') },
         ];
 
-        const groups = WeekGroupingUtil.getGroupedByWeek(items, 'current');
+        const groups = WeekGroupingUtil.getGroupedByWeek(items, 'lecture', 'current');
         expect(groups).toHaveLength(2);
 
         // First group should be Week 2 (Jan 8-14)
@@ -75,7 +75,7 @@ describe('WeekGroupingUtil', () => {
             startDate: dayjs(`2024-01-${d}`),
         }));
 
-        const [firstGroup] = WeekGroupingUtil.getGroupedByWeek(items, 'current');
+        const [firstGroup] = WeekGroupingUtil.getGroupedByWeek(items, 'lecture', 'current');
         expect(firstGroup.items.map((i) => i.title)).toEqual(['Item 06', 'Item 05', 'Item 04', 'Item 03', 'Item 02', 'Item 01']);
     });
 
@@ -99,15 +99,15 @@ describe('WeekGroupingUtil', () => {
             { title: 'No Date 2', id: 'n2', size: 'M' },
         ];
 
-        const currentGroups = WeekGroupingUtil.getGroupedByWeek(currentItems, 'current');
+        const currentGroups = WeekGroupingUtil.getGroupedByWeek(currentItems, 'lecture', 'current');
         expect(currentGroups).toHaveLength(1);
         expect(currentGroups[0].showDateHeader).toBeTruthy();
 
-        const futureGroups = WeekGroupingUtil.getGroupedByWeek(futureItems, 'future');
+        const futureGroups = WeekGroupingUtil.getGroupedByWeek(futureItems, 'lecture', 'future');
         expect(futureGroups).toHaveLength(1);
         expect(futureGroups[0].showDateHeader).toBeFalsy();
 
-        const noDateGroups = WeekGroupingUtil.getGroupedByWeek(noDateItems, 'noDate');
+        const noDateGroups = WeekGroupingUtil.getGroupedByWeek(noDateItems, 'lecture', 'noDate');
         expect(noDateGroups).toHaveLength(1);
         expect(noDateGroups[0].isNoDate).toBeTruthy();
         expect(noDateGroups[0].showDateHeader).toBeFalsy();
@@ -128,7 +128,7 @@ describe('WeekGroupingUtil', () => {
             { title: 'Week 9', id: 'c9', size: 'M' },
         ];
 
-        const currentGroups = WeekGroupingUtil.getGroupedByWeek(items, 'future');
+        const currentGroups = WeekGroupingUtil.getGroupedByWeek(items, 'lecture', 'future');
         expect(currentGroups).toHaveLength(3);
 
         expect(currentGroups[0].showDateHeader).toBeTruthy();
@@ -160,7 +160,7 @@ describe('WeekGroupingUtil', () => {
             { title: 'No Date 2', id: 'n2', size: 'M' },
         ];
 
-        const groups = WeekGroupingUtil.getGroupedByWeek(items, 'current');
+        const groups = WeekGroupingUtil.getGroupedByWeek(items, 'lecture', 'current');
 
         // Should have 7 groups (2 weeks per month for 3 months + 1 no-date group)
         expect(groups).toHaveLength(7);
@@ -173,5 +173,32 @@ describe('WeekGroupingUtil', () => {
         expect(groups[4].start!.format('YYYY-MM-DD')).toBe('2025-01-12'); // January week 2
         expect(groups[5].start!.format('YYYY-MM-DD')).toBe('2024-12-29'); // January week 1
         expect(groups[6].isNoDate).toBeTruthy();
+    });
+
+    it('returns a single group for non-exercise and non-lecture types', () => {
+        const items: SidebarCardElement[] = [
+            { title: 'Item 1', id: 'i1', size: 'M', startDate: dayjs('2024-01-01') },
+            { title: 'Item 2', id: 'i2', size: 'M', startDate: dayjs('2024-01-02') },
+            { title: 'Item 3', id: 'i3', size: 'M', startDate: dayjs('2024-01-03') },
+        ];
+
+        const groups = WeekGroupingUtil.getGroupedByWeek(items, 'conversation', 'current');
+        expect(groups).toHaveLength(1);
+        expect(groups[0].showDateHeader).toBeFalsy();
+        expect(groups[0].items).toHaveLength(3);
+    });
+
+    it('returns a single group when items count is below threshold', () => {
+        const items: SidebarCardElement[] = [
+            { title: 'Item 1', id: 'i1', size: 'M', startDate: dayjs('2024-01-01') },
+            { title: 'Item 2', id: 'i2', size: 'M', startDate: dayjs('2024-01-02') },
+            { title: 'Item 3', id: 'i3', size: 'M', startDate: dayjs('2024-01-03') },
+            { title: 'Item 4', id: 'i4', size: 'M', startDate: dayjs('2024-01-04') },
+        ];
+
+        const groups = WeekGroupingUtil.getGroupedByWeek(items, 'lecture', 'current');
+        expect(groups).toHaveLength(1);
+        expect(groups[0].showDateHeader).toBeFalsy();
+        expect(groups[0].items).toHaveLength(4);
     });
 });
