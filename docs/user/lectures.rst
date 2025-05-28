@@ -217,3 +217,24 @@ See :ref:`Adaptive Learning <adaptive-learning>` for more information.
    :width: 1000
 .. |automatic-unit-processing| image:: lectures/automatic-unit-processing.png
    :width: 1000
+
+
+Lecture Upload to Iris
+----------------------
+
+For Attachment Video Units that contain a lecture recording transcriptions can be generated using the supporting script
+according to the README.md under supporting_scripts/lecture-transcriptions.
+
+Those transcriptions can be uploaded to a specific lecture unit over an Admin page under this path "admin/lecture-transcription-ingestion".
+Under "Create" add the lecture id, the lecture unit id of the corresponding Attachment Video Unit and the generated transcriptions.
+
+|admin-page-transcription-upload|
+
+Either all Attachment Video Units of a lecture or specific Attachment Video Units can be sent to Iris, so that Iris can answer students questions based on the information.
+
+|send-all-lectures-to-iris|
+|send-one-unit-iris|
+
+After that Iris will process the attachment and the transcriptions from the Unit and will use the content to answer in the Iris chats.
+
+
