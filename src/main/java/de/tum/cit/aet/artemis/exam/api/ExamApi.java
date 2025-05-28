@@ -6,7 +6,6 @@ import org.springframework.stereotype.Controller;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamWithGradeDTO;
-import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.service.ExamService;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 
@@ -16,7 +15,7 @@ public class ExamApi extends AbstractExamApi {
 
     private final ExamService examService;
 
-    public ExamApi(ExamService examService, ExamRepository examRepository) {
+    public ExamApi(ExamService examService) {
         this.examService = examService;
     }
 
