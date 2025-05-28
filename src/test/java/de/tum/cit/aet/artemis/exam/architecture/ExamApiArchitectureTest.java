@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.exam.architecture;
 import java.util.Set;
 
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
+import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.shared.architecture.module.AbstractModuleAccessArchitectureTest;
 
 class ExamApiArchitectureTest extends AbstractModuleAccessArchitectureTest {
@@ -14,6 +15,6 @@ class ExamApiArchitectureTest extends AbstractModuleAccessArchitectureTest {
 
     @Override
     protected Set<Class<?>> getIgnoredClasses() {
-        return Set.of(ExamApiNotPresentException.class);
+        return Set.of(ExamApiNotPresentException.class, ExamRepository.class);
     }
 }

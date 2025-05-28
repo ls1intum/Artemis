@@ -281,7 +281,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
     breadcrumbTranslation: { [key: string]: string } = {
         new: 'global.generic.create',
-        process: 'artemisApp.attachmentUnit.createAttachmentUnits.pageTitle',
+        process: 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.pageTitle',
         verify_attendance: 'artemisApp.examManagement.examStudents.verifyChecks',
         create: 'global.generic.create',
         start: 'global.generic.start',
@@ -625,7 +625,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
             case 'ide':
             case 'text-units':
             case 'exercise-units':
-            case 'attachment-units':
+            case 'attachment-video-units':
             case 'video-units':
             case 'grading':
             case 'mc-question-statistic':

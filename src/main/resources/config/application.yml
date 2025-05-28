@@ -124,10 +124,10 @@ artemis:
     compatible-versions:
       android:
         min: "2.0.0"
-        recommended: "2.0.0"
+        recommended: "2.1.0"
       ios:
         min: "2.0.0"
-        recommended: "2.0.0"
+        recommended: "2.1.0"
 
 
 
@@ -227,7 +227,7 @@ spring:
     main:
         allow-bean-definition-overriding: false
         allow-circular-references: false
-        lazy-initialization: true # cannot set this because of static inject in FilePathService
+        lazy-initialization: true
     task:
         execution:
             thread-name-prefix: artemis-task-

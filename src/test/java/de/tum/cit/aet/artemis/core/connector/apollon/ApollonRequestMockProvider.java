@@ -72,12 +72,13 @@ public class ApollonRequestMockProvider {
     }
 
     /**
-     * Mocks /status api from Apollon. Currently used as a health check endpoint.
+     * Mocks /api/converter/status api from Apollon. Currently used as a health check endpoint.
      *
      * @param success Successful response or timeout.
      */
     public void mockStatus(boolean success) {
-        final ResponseActions responseActions = mockServerShortTimeout.expect(ExpectedCount.once(), requestTo(apollonConversionUrl + "/status")).andExpect(method(HttpMethod.GET));
+        final ResponseActions responseActions = mockServerShortTimeout.expect(ExpectedCount.once(), requestTo(apollonConversionUrl + "/api/converter/status"))
+                .andExpect(method(HttpMethod.GET));
 
         if (success) {
             responseActions.andRespond(withSuccess());
@@ -94,7 +95,7 @@ public class ApollonRequestMockProvider {
      * @param resource Resource that will be returned by the server
      */
     public void mockConvertModel(boolean success, Resource resource) {
-        final ResponseActions responseActions = mockServer.expect(ExpectedCount.once(), requestTo(apollonConversionUrl + "/pdf")).andExpect(method(HttpMethod.POST));
+        final ResponseActions responseActions = mockServer.expect(ExpectedCount.once(), requestTo(apollonConversionUrl + "/api/converter/pdf")).andExpect(method(HttpMethod.POST));
 
         if (success) {
             responseActions.andRespond(withSuccess().body(resource));

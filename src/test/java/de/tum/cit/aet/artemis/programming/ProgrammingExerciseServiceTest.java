@@ -9,6 +9,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 class ProgrammingExerciseServiceTest extends AbstractProgrammingIntegrationIndependentTest {
@@ -25,8 +26,8 @@ class ProgrammingExerciseServiceTest extends AbstractProgrammingIntegrationIndep
         var course1 = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         var course2 = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
 
-        programmingExercise1 = exerciseUtilService.getFirstExerciseWithType(course1, ProgrammingExercise.class);
-        programmingExercise2 = exerciseUtilService.getFirstExerciseWithType(course2, ProgrammingExercise.class);
+        programmingExercise1 = ExerciseUtilService.getFirstExerciseWithType(course1, ProgrammingExercise.class);
+        programmingExercise2 = ExerciseUtilService.getFirstExerciseWithType(course2, ProgrammingExercise.class);
 
         programmingExercise1.setReleaseDate(null);
         programmingExercise2.setReleaseDate(null);

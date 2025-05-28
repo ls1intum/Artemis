@@ -8,7 +8,7 @@ import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { Attachment } from 'app/lecture/shared/entities/attachment.model';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { LectureUnit, LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
-import { AttachmentUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentUnit.model';
+import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { onError } from 'app/shared/util/global.utils';
 import { finalize, tap } from 'rxjs/operators';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -24,8 +24,7 @@ import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settin
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgClass, UpperCasePipe } from '@angular/common';
 import { ExerciseUnitComponent } from '../exercise-unit/exercise-unit.component';
-import { AttachmentUnitComponent } from '../attachment-unit/attachment-unit.component';
-import { VideoUnitComponent } from '../video-unit/video-unit.component';
+import { AttachmentVideoUnitComponent } from '../attachment-video-unit/attachment-video-unit.component';
 import { TextUnitComponent } from '../text-unit/text-unit.component';
 import { OnlineUnitComponent } from '../online-unit/online-unit.component';
 import { CompetenciesPopoverComponent } from 'app/atlas/shared/competencies-popover/competencies-popover.component';
@@ -51,8 +50,7 @@ export interface LectureUnitCompletionEvent {
         TranslateDirective,
         NgClass,
         ExerciseUnitComponent,
-        AttachmentUnitComponent,
-        VideoUnitComponent,
+        AttachmentVideoUnitComponent,
         TextUnitComponent,
         OnlineUnitComponent,
         CompetenciesPopoverComponent,
@@ -135,7 +133,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
                         if (this.lectureUnits?.length) {
                             // Check if PDF attachments exist in lecture units
                             this.hasPdfLectureUnit =
-                                (<AttachmentUnit[]>this.lectureUnits.filter((unit) => unit.type === LectureUnitType.ATTACHMENT)).filter(
+                                (<AttachmentVideoUnit[]>this.lectureUnits.filter((unit) => unit.type === LectureUnitType.ATTACHMENT_VIDEO)).filter(
                                     (unit) => unit.attachment?.link?.split('.').pop()!.toLocaleLowerCase() === 'pdf',
                                 ).length > 0;
                         }
