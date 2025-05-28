@@ -207,8 +207,6 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             SELECT DISTINCT pe
             FROM ProgrammingExercise pe
                 LEFT JOIN FETCH pe.studentParticipations participation
-                LEFT JOIN FETCH participation.team team
-                LEFT JOIN FETCH team.students
             WHERE pe.releaseDate > :now
                 OR pe.buildAndTestStudentSubmissionsAfterDueDate > :now
                 OR pe.dueDate > :now
