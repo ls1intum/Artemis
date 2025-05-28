@@ -9,7 +9,6 @@ import org.springframework.security.web.webauthn.authentication.PublicKeyCredent
 import org.springframework.security.web.webauthn.authentication.WebAuthnAuthenticationFilter;
 
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
-import de.tum.cit.aet.artemis.core.service.ArtemisSuccessfulLoginService;
 
 /**
  * We want to set the custom {@link ArtemisHttpMessageConverterAuthenticationSuccessHandler} here to make sure the JWT token is set in the response
@@ -19,12 +18,12 @@ import de.tum.cit.aet.artemis.core.service.ArtemisSuccessfulLoginService;
 public class ArtemisWebAuthnAuthenticationFilter extends WebAuthnAuthenticationFilter {
 
     public ArtemisWebAuthnAuthenticationFilter(HttpMessageConverter<Object> converter, JWTCookieService jwtCookieService,
-            PublicKeyCredentialRequestOptionsRepository publicKeyCredentialRequestOptionsRepository, ArtemisSuccessfulLoginService artemisSuccessfulLoginService) {
+            PublicKeyCredentialRequestOptionsRepository publicKeyCredentialRequestOptionsRepository) {
         super();
         setSecurityContextRepository(new HttpSessionSecurityContextRepository());
         setRequestOptionsRepository(publicKeyCredentialRequestOptionsRepository);
         setAuthenticationFailureHandler(new AuthenticationEntryPointFailureHandler(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)));
-        setAuthenticationSuccessHandler(new ArtemisHttpMessageConverterAuthenticationSuccessHandler(converter, jwtCookieService, artemisSuccessfulLoginService));
+        setAuthenticationSuccessHandler(new ArtemisHttpMessageConverterAuthenticationSuccessHandler(converter, jwtCookieService));
     }
 
 }
