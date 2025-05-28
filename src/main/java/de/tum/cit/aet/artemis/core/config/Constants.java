@@ -160,6 +160,9 @@ public final class Constants {
     // Also, the value on the client side must match this value.
     public static final int COMPLAINT_TEXT_LIMIT = 65535;
 
+    // This value limits the amount of characters allowed for custom instructions in Iris sub-settings.
+    public static final int IRIS_CUSTOM_INSTRUCTIONS_MAX_LENGTH = 2048;
+
     public static final String SETUP_COMMIT_MESSAGE = "Setup";
 
     public static final String ENROLL_IN_COURSE = "ENROLL_IN_COURSE";
