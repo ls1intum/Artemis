@@ -25,6 +25,7 @@ describe('CourseDashboardComponent', () => {
     let component: CourseDashboardComponent;
     let fixture: ComponentFixture<CourseDashboardComponent>;
     let debugElement: DebugElement;
+    let courseStorageService: CourseStorageService;
 
     beforeEach(waitForAsync(() => {
         TestBed.configureTestingModule({
@@ -61,6 +62,7 @@ describe('CourseDashboardComponent', () => {
         fixture = TestBed.createComponent(CourseDashboardComponent);
         component = fixture.componentInstance;
         debugElement = fixture.debugElement;
+        courseStorageService = TestBed.inject(CourseStorageService);
         fixture.detectChanges();
         component.isLoading = false;
     });
@@ -119,12 +121,23 @@ describe('CourseDashboardComponent', () => {
 
     it('should not load course metrics when studentCourseAnalyticsDashboardEnabled is false', () => {
         const metricsSpy = jest.spyOn(component, 'loadMetrics');
+        jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({
+            id: 456,
+            studentCourseAnalyticsDashboardEnabled: false,
+            irisCourseChatEnabled: true,
+            learningPathsEnabled: true,
+        });
         component.ngOnInit();
         expect(metricsSpy).not.toHaveBeenCalled();
     });
     it('should load course metrics when studentCourseAnalyticsDashboardEnabled is true', () => {
         const metricsSpy = jest.spyOn(component, 'loadMetrics');
-        component.course = { id: 456, studentCourseAnalyticsDashboardEnabled: true, irisCourseChatEnabled: true, learningPathsEnabled: true };
+        jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({
+            id: 456,
+            studentCourseAnalyticsDashboardEnabled: true,
+            irisCourseChatEnabled: true,
+            learningPathsEnabled: true,
+        });
         component.ngOnInit();
         expect(metricsSpy).toHaveBeenCalledOnce();
     });
