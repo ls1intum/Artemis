@@ -1,17 +1,22 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static java.util.stream.Collectors.toMap;
 
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.atlas.api.CompetencyApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyRelationApi;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
@@ -21,15 +26,21 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
+import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
+import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 
 @Profile(PROFILE_CORE)
 @Service
@@ -49,8 +60,15 @@ public class LectureService {
 
     private final Optional<CompetencyRelationApi> competencyRelationApi;
 
+    private final Optional<CompetencyApi> competencyApi;
+
+    private final ExerciseService exerciseService;
+
+    private final LectureUnitRepository lectureUnitRepository;
+
     public LectureService(LectureRepository lectureRepository, AuthorizationCheckService authCheckService, ChannelRepository channelRepository, ChannelService channelService,
-            Optional<IrisLectureApi> irisLectureApi, Optional<CompetencyProgressApi> competencyProgressApi, Optional<CompetencyRelationApi> competencyRelationApi) {
+            Optional<IrisLectureApi> irisLectureApi, Optional<CompetencyProgressApi> competencyProgressApi, Optional<CompetencyRelationApi> competencyRelationApi,
+            Optional<CompetencyApi> competencyApi, ExerciseService exerciseService, LectureUnitRepository lectureUnitRepository) {
         this.lectureRepository = lectureRepository;
         this.authCheckService = authCheckService;
         this.channelRepository = channelRepository;
@@ -58,6 +76,9 @@ public class LectureService {
         this.irisLectureApi = irisLectureApi;
         this.competencyProgressApi = competencyProgressApi;
         this.competencyRelationApi = competencyRelationApi;
+        this.competencyApi = competencyApi;
+        this.exerciseService = exerciseService;
+        this.lectureUnitRepository = lectureUnitRepository;
     }
 
     /**
@@ -190,5 +211,59 @@ public class LectureService {
      */
     public void deleteLectureTranscriptionInPyris(LectureTranscription existingLectureTranscription) {
         irisLectureApi.ifPresent(webhookService -> webhookService.deleteLectureTranscription(existingLectureTranscription));
+    }
+
+    public Lecture getForDetails(long lectureId, User user) {
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureId);
+        Course course = lecture.getCourse();
+        if (course == null) {
+            throw new BadRequestAlertException("The course belonging to this lecture does not exist", "lecture", "courseNotFound");
+        }
+        Set<LectureUnitCompletion> completionsForLectureAndUser = lectureUnitRepository.findCompletionsForLectureAndUser(lectureId, user.getId());
+        Map<Long, LectureUnitCompletion> byUnit = completionsForLectureAndUser.stream().collect(toMap(cu -> cu.getLectureUnit().getId(), cu -> cu));
+
+        lecture.getLectureUnits().forEach(lu -> {
+            Set<LectureUnitCompletion> completions = new HashSet<>();
+            if (byUnit.containsKey(lu.getId())) {
+                completions.add(byUnit.get(lu.getId()));
+            }
+            lu.setCompletedUsers(completions);
+        });
+        competencyApi.ifPresent(api -> api.addCompetencyLinksToExerciseUnits(lecture));
+        return filterLectureContentForUser(lecture, user);
+
+    }
+
+    private Lecture filterLectureContentForUser(Lecture lecture, User user) {
+        lecture = filterActiveAttachments(lecture, user);
+
+        // The Objects::nonNull is needed here because the relationship lecture -> lecture units is ordered and
+        // hibernate sometimes adds nulls into the list of lecture units to keep the order
+        Set<Exercise> relatedExercises = lecture.getLectureUnits().stream().filter(Objects::nonNull).filter(lectureUnit -> lectureUnit instanceof ExerciseUnit)
+                .map(lectureUnit -> ((ExerciseUnit) lectureUnit).getExercise()).collect(Collectors.toSet());
+
+        Set<Exercise> exercisesUserIsAllowedToSee = exerciseService.filterOutExercisesThatUserShouldNotSee(relatedExercises, user);
+        Set<Exercise> exercisesWithAllInformationNeeded = exerciseService
+                .loadExercisesWithInformationForDashboard(exercisesUserIsAllowedToSee.stream().map(Exercise::getId).collect(Collectors.toSet()), user);
+
+        List<LectureUnit> lectureUnitsUserIsAllowedToSee = lecture.getLectureUnits().stream().filter(lectureUnit -> switch (lectureUnit) {
+            case null -> false;
+            case ExerciseUnit exerciseUnit -> exerciseUnit.getExercise() != null && authCheckService.isAllowedToSeeLectureUnit(lectureUnit, user)
+                    && exercisesWithAllInformationNeeded.contains(exerciseUnit.getExercise());
+            default -> authCheckService.isAllowedToSeeLectureUnit(lectureUnit, user);
+        }).peek(lectureUnit -> {
+            lectureUnit.setCompleted(lectureUnit.isCompletedFor(user));
+
+            if (lectureUnit instanceof ExerciseUnit) {
+                Exercise exercise = ((ExerciseUnit) lectureUnit).getExercise();
+                // we replace the exercise with one that contains all the information needed for correct display
+                exercisesWithAllInformationNeeded.stream().filter(exercise::equals).findAny().ifPresent(((ExerciseUnit) lectureUnit)::setExercise);
+                // re-add the competencies already loaded with the exercise unit
+                ((ExerciseUnit) lectureUnit).getExercise().setCompetencyLinks(exercise.getCompetencyLinks());
+            }
+        }).toList();
+
+        lecture.setLectureUnits(lectureUnitsUserIsAllowedToSee);
+        return lecture;
     }
 }

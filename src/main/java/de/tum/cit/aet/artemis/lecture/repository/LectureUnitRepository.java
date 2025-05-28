@@ -13,6 +13,7 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
+import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
 
 /**
  * Spring Data JPA repository for the Lecture Unit entity.
@@ -76,6 +77,15 @@ public interface LectureUnitRepository extends ArtemisJpaRepository<LectureUnit,
             WHERE lu.id = :lectureUnitId
             """)
     Optional<LectureUnit> findByIdWithCompletedUsers(@Param("lectureUnitId") long lectureUnitId);
+
+    @Query("""
+            SELECT cu
+            FROM LectureUnit lu
+              JOIN lu.completedUsers cu
+            WHERE lu.lecture.id = :lectureId
+              AND cu.user.id = :userId
+              """)
+    Set<LectureUnitCompletion> findCompletionsForLectureAndUser(@Param("lectureId") long lectureId, @Param("userId") long userId);
 
     /**
      * Finds a lecture unit by name, lecture title and course id. Currently, name duplicates are allowed but this method throws an exception if multiple lecture units with the

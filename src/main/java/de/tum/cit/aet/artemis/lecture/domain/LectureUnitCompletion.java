@@ -33,7 +33,7 @@ public class LectureUnitCompletion {
     @JsonIgnore
     private LectureUnitUserId id = new LectureUnitUserId();
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @MapsId("userId")
     @JsonIgnore
     private User user;

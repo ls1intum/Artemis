@@ -11,7 +11,6 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -54,13 +53,10 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLecture.EnforceAtLeastStudentInLecture;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
-import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
-import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
-import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.dto.SlideDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
@@ -375,18 +371,8 @@ public class LectureResource {
     @EnforceAtLeastStudentInLecture
     public ResponseEntity<Lecture> getLectureWithDetails(@PathVariable Long lectureId) {
         log.debug("REST request to get lecture {} with details", lectureId);
-        Lecture lecture = lectureRepository.findByIdWithAttachmentsAndLectureUnitsAndCompletionsElseThrow(lectureId);
-        if (competencyApi.isPresent()) {
-            competencyApi.get().addCompetencyLinksToExerciseUnits(lecture);
-        }
-        Course course = lecture.getCourse();
-        if (course == null) {
-            throw new BadRequestAlertException("The course belonging to this lecture does not exist", ENTITY_NAME, "courseNotFound");
-        }
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        lecture = filterLectureContentForUser(lecture, user);
-
-        return ResponseEntity.ok(lecture);
+        return ResponseEntity.ok(lectureService.getForDetails(lectureId, user));
     }
 
     /**
@@ -400,39 +386,6 @@ public class LectureResource {
     public ResponseEntity<String> getLectureTitle(@PathVariable Long lectureId) {
         final var title = lectureRepository.getLectureTitle(lectureId);
         return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);
-    }
-
-    private Lecture filterLectureContentForUser(Lecture lecture, User user) {
-        lecture = lectureService.filterActiveAttachments(lecture, user);
-
-        // The Objects::nonNull is needed here because the relationship lecture -> lecture units is ordered and
-        // hibernate sometimes adds nulls into the list of lecture units to keep the order
-        Set<Exercise> relatedExercises = lecture.getLectureUnits().stream().filter(Objects::nonNull).filter(lectureUnit -> lectureUnit instanceof ExerciseUnit)
-                .map(lectureUnit -> ((ExerciseUnit) lectureUnit).getExercise()).collect(Collectors.toSet());
-
-        Set<Exercise> exercisesUserIsAllowedToSee = exerciseService.filterOutExercisesThatUserShouldNotSee(relatedExercises, user);
-        Set<Exercise> exercisesWithAllInformationNeeded = exerciseService
-                .loadExercisesWithInformationForDashboard(exercisesUserIsAllowedToSee.stream().map(Exercise::getId).collect(Collectors.toSet()), user);
-
-        List<LectureUnit> lectureUnitsUserIsAllowedToSee = lecture.getLectureUnits().stream().filter(lectureUnit -> switch (lectureUnit) {
-            case null -> false;
-            case ExerciseUnit exerciseUnit -> exerciseUnit.getExercise() != null && authCheckService.isAllowedToSeeLectureUnit(lectureUnit, user)
-                    && exercisesWithAllInformationNeeded.contains(exerciseUnit.getExercise());
-            default -> authCheckService.isAllowedToSeeLectureUnit(lectureUnit, user);
-        }).peek(lectureUnit -> {
-            lectureUnit.setCompleted(lectureUnit.isCompletedFor(user));
-
-            if (lectureUnit instanceof ExerciseUnit) {
-                Exercise exercise = ((ExerciseUnit) lectureUnit).getExercise();
-                // we replace the exercise with one that contains all the information needed for correct display
-                exercisesWithAllInformationNeeded.stream().filter(exercise::equals).findAny().ifPresent(((ExerciseUnit) lectureUnit)::setExercise);
-                // re-add the competencies already loaded with the exercise unit
-                ((ExerciseUnit) lectureUnit).getExercise().setCompetencyLinks(exercise.getCompetencyLinks());
-            }
-        }).toList();
-
-        lecture.setLectureUnits(lectureUnitsUserIsAllowedToSee);
-        return lecture;
     }
 
     /**
