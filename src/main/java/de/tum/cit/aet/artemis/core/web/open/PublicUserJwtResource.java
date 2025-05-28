@@ -131,9 +131,10 @@ public class PublicUserJwtResource {
         try {
             authentication = saml2Service.get().handleAuthentication(authentication, principal);
             SecurityContextHolder.getContext().setAuthentication(authentication);
+            artemisSuccessfulLoginService.sendLoginEmail(authentication.getName());
         }
         catch (UserNotActivatedException e) {
-            // If the exception is not caught a 401 is returned.
+            // If the exception is not caught, a 401 is returned.
             // That does not match the actual reason and would trigger authentication in the client
             return ResponseEntity.status(HttpStatus.FORBIDDEN).header("X-artemisApp-error", e.getMessage()).build();
         }
@@ -157,7 +158,7 @@ public class PublicUserJwtResource {
     @EnforceNothing
     public ResponseEntity<Void> logout(HttpServletRequest request, HttpServletResponse response) throws ServletException {
         request.logout();
-        // Logout needs to build the same cookie (secure, httpOnly and sameSite='Lax') or browsers will ignore the header and not unset the cookie
+        // Logout needs to build the same cookie (secure, httpOnly and sameSite='Lax'), or browsers will ignore the header and not unset the cookie
         ResponseCookie responseCookie = jwtCookieService.buildLogoutCookie();
         response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
         return ResponseEntity.ok().build();
