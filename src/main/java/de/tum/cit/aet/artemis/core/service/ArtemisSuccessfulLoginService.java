@@ -17,6 +17,7 @@ import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingSer
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.security.jwt.AuthenticationMethod;
 
 /**
  * Listener for successful authentication events in the Artemis system.
@@ -53,7 +54,7 @@ public class ArtemisSuccessfulLoginService {
      *
      * @param username the username of the user who has successfully logged in
      */
-    public void sendLoginEmail(String username) {
+    public void sendLoginEmail(String username, AuthenticationMethod authenticationMethod) {
         // TODO consider authentication type
         try {
             User recipient = userRepository.getUserByLoginElseThrow(username);
