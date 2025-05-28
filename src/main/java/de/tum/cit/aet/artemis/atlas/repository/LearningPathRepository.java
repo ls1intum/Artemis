@@ -55,7 +55,7 @@ public interface LearningPathRepository extends ArtemisJpaRepository<LearningPat
     @Query("""
             SELECT lp
             FROM LearningPath lp
-            LEFT JOIN FETCH lp.user
+            JOIN FETCH lp.user
             WHERE (lp.course.id = :courseId)
                 AND (
                     lp.user.login LIKE %:searchTerm%
@@ -82,5 +82,5 @@ public interface LearningPathRepository extends ArtemisJpaRepository<LearningPat
             WHERE l.id = :learningPathId
                 AND clp.course.id = l.course.id
             """)
-    Optional<LearningPath> findWithUserAndLearnerProfileById(@Param("learningPathId") long learningPathId);
+    Optional<LearningPath> findWithEagerUserAndLearnerProfileById(@Param("learningPathId") long learningPathId);
 }
