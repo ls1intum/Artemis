@@ -56,7 +56,7 @@ export class PlagiarismSidebarComponent implements OnChanges {
     faArrowRight = faArrowRight;
 
     ngOnChanges(changes: SimpleChanges) {
-        if (changes.comparisons.currentValue !== changes.comparisons.previousValue) {
+        if (changes.comparisons?.currentValue !== changes.comparisons?.previousValue) {
             const comparisons: PlagiarismComparison<TextSubmissionElement>[] = changes.comparisons.currentValue;
 
             this.currentPage = 0;
