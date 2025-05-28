@@ -173,7 +173,6 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
      * Sends a message to Iris to provide a new suggestion based on the current context
      */
     sendMessageToIris(): void {
-        this.scrollToBottom('smooth');
         const message = this.newMessageTextContent;
         this.newMessageTextContent = '';
         this.chatService
@@ -194,7 +193,7 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
         this.messagesSubscription = this.chatService.currentMessages().subscribe((messages) => {
             if (messages.length !== this.messages?.length) {
                 this.suggestion = messages.findLast((m) => m.sender === IrisSender.ARTIFACT);
-                if (messages.last()?.sender === IrisSender.LLM) {
+                if (messages.last()?.sender === IrisSender.LLM || messages.last()?.sender === IrisSender.USER) {
                     this.scrollToBottom('smooth');
                 }
             }
