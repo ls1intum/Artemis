@@ -161,10 +161,6 @@ public class CourseAccessService {
         usersInGroup.forEach(user -> {
             // explicitly set the registration number
             user.setVisibleRegistrationNumber(user.getRegistrationNumber());
-            // remove some values which are not needed in the client
-            user.setActivationKey(null);
-            user.setLangKey(null);
-            user.setCreatedDate(null);
         });
         removeUserVariables(usersInGroup);
         return ResponseEntity.ok().body(usersInGroup);
