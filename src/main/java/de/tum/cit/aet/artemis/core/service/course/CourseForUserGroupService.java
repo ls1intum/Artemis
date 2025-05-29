@@ -29,6 +29,13 @@ public class CourseForUserGroupService {
         this.authCheckService = authCheckService;
     }
 
+    /**
+     * Fetches a list of courses for a user based on their groups.
+     *
+     * @param user       the user for whom to retrieve courses
+     * @param onlyActive whether to include only active courses (not finished)
+     * @return a list of courses that the user is associated with
+     */
     public List<Course> getCoursesForTutors(User user, boolean onlyActive) {
         List<Course> userCourses = courseRepository.findCoursesForAtLeastTutorWithGroups(user.getGroups(), authCheckService.isAdmin(user));
         if (onlyActive) {

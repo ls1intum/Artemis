@@ -24,6 +24,13 @@ public class CourseVisibleService {
         this.authCheckService = authCheckService;
     }
 
+    /**
+     * Checks if a course is visible for a user based on their role and the course's start date.
+     *
+     * @param user   the user for whom to check visibility
+     * @param course the course to check visibility for
+     * @return true if the course is visible for the user, false otherwise
+     */
     public boolean isCourseVisibleForUser(User user, Course course) {
         // Instructors and TAs see all courses that have not yet finished
         if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
