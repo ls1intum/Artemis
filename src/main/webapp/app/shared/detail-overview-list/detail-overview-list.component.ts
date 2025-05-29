@@ -76,7 +76,7 @@ export class DetailOverviewListComponent implements OnInit {
     protected readonly FeatureToggle = FeatureToggle;
     protected readonly ButtonSize = ButtonSize;
     protected readonly ProgrammingExerciseParticipationType = ProgrammingExerciseParticipationType;
-    protected readonly CHAT = IrisSubSettingsType.CHAT;
+    protected readonly CHAT = IrisSubSettingsType.PROGRAMMING_EXERCISE_CHAT;
 
     private readonly modelingExerciseService = inject(ModelingExerciseService);
     private readonly alertService = inject(AlertService);

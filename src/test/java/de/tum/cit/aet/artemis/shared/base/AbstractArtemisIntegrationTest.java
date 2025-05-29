@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationService;
+import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailService;
 import de.tum.cit.aet.artemis.communication.service.notifications.SingleUserNotificationService;
 import de.tum.cit.aet.artemis.communication.service.notifications.push_notifications.ApplePushNotificationService;
@@ -111,6 +112,9 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     protected MailService mailService;
 
     @MockitoSpyBean
+    protected MailSendingService mailSendingService;
+
+    @MockitoSpyBean
     protected FirebasePushNotificationService firebasePushNotificationService;
 
     @MockitoSpyBean
@@ -185,11 +189,13 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     @Autowired
     protected CourseTestRepository courseRepository;
 
+    private static final Path rootPath = Path.of("local", "upload");
+
     @BeforeAll
     static void setup() {
         // Set the static file upload path for all tests
         // This makes it a simple unit test that doesn't require a server start.
-        FilePathConverter.setFileUploadPath(Path.of("uploads"));
+        FilePathConverter.setFileUploadPath(rootPath);
     }
 
     @BeforeEach
