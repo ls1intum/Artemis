@@ -10,9 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.service.course.CourseAccessService;
-import de.tum.cit.aet.artemis.core.util.CourseUtilService;
+import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class CourseAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
@@ -23,10 +22,7 @@ class CourseAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
     private CourseAccessService courseAccessService;
 
     @Autowired
-    private CourseUtilService courseUtilService;
-
-    @Autowired
-    private CourseRepository courseRepository;
+    private CourseTestRepository courseRepository;
 
     @BeforeEach
     void initTestCase() {
