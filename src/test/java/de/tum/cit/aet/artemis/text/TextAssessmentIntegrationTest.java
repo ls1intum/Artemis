@@ -64,6 +64,7 @@ import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseFactory;
@@ -141,7 +142,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 2, 3, 0, 1);
         course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
-        textExercise = exerciseUtilService.findTextExerciseWithTitle(course.getExercises(), "Text");
+        textExercise = ExerciseUtilService.findTextExerciseWithTitle(course.getExercises(), "Text");
         textExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         exerciseRepository.save(textExercise);
         // every test indirectly uses the submission selection in Athena, so we mock it here

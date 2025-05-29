@@ -54,7 +54,7 @@ public class AndroidFingerprintService {
         boolean isDebugFingerprintAllowed = !profileService.isProductionActive() || isTestServer;
         if (isFingerprintValid(androidSha256CertFingerprintDebug) && isDebugFingerprintAllowed) {
             fingerprints.add(androidSha256CertFingerprintDebug);
-            log.warn("Added the Android debug fingerprint: {}", androidSha256CertFingerprintDebug);
+            log.debug("Added the Android debug fingerprint: {}", androidSha256CertFingerprintDebug);
         }
 
         return fingerprints;

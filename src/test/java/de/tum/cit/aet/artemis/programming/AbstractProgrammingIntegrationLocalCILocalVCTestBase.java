@@ -194,7 +194,7 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTestBase exten
         userTestRepository.save(instructor2);
 
         course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         projectKey1 = programmingExercise.getProjectKey();
         programmingExercise.setReleaseDate(ZonedDateTime.now().minusDays(1));
         programmingExercise.setProjectType(ProjectType.PLAIN_GRADLE);

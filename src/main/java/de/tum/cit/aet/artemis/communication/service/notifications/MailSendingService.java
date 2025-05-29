@@ -89,11 +89,9 @@ public class MailSendingService {
      * @param subjectKey                 The locale key of the subject
      * @param contentTemplate            The thymeleaf .html file path to render
      * @param additionalContextVariables The context variables for the template aside from the baseUrl and user
-     *
-     * @return true if mail was sent, false if not
      */
-    public boolean buildAndSendSync(User recipient, String subjectKey, String contentTemplate, Map<String, Object> additionalContextVariables) {
-        return buildAndSend(recipient, subjectKey, contentTemplate, additionalContextVariables);
+    public void buildAndSendSync(User recipient, String subjectKey, String contentTemplate, Map<String, Object> additionalContextVariables) {
+        buildAndSend(recipient, subjectKey, contentTemplate, additionalContextVariables);
     }
 
     /**
@@ -116,10 +114,8 @@ public class MailSendingService {
      * @param subjectKey                 The locale key of the subject
      * @param contentTemplate            The thymeleaf .html file path to render
      * @param additionalContextVariables The context variables for the template aside from the baseUrl and user
-     *
-     * @return true if mail was sent, false if not
      */
-    private boolean buildAndSend(User recipient, String subjectKey, String contentTemplate, Map<String, Object> additionalContextVariables) {
+    private void buildAndSend(User recipient, String subjectKey, String contentTemplate, Map<String, Object> additionalContextVariables) {
         String localeKey = recipient.getLangKey();
         if (localeKey == null) {
             localeKey = "en";
@@ -138,12 +134,11 @@ public class MailSendingService {
             content = templateEngine.process(contentTemplate, context);
         }
         catch (NoSuchMessageException | TemplateProcessingException ex) {
-            return false;
+            return;
         }
 
         executeSend(recipient, subject, content, false, true);
 
-        return true;
     }
 
     /**

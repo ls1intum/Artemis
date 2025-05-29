@@ -1,0 +1,52 @@
+<jhi-lecture-unit-card
+    [courseId]="courseId()"
+    [lectureUnit]="lectureUnit()"
+    [icon]="getAttachmentIcon()"
+    [showViewIsolatedButton]="hasAttachment()"
+    [showOriginalVersionButton]="!!lectureUnit().attachment?.studentVersion"
+    [viewIsolatedButtonLabel]="'artemisApp.attachmentVideoUnit.download'"
+    [viewIsolatedButtonIcon]="faDownload"
+    [isPresentationMode]="isPresentationMode()"
+    (onCompletion)="toggleCompletion($event)"
+    (onCollapse)="toggleCollapse($event)"
+    (onShowIsolated)="handleDownload()"
+    (onShowOriginalVersion)="handleOriginalVersion()"
+>
+    @if (lectureUnit().attachment?.uploadDate) {
+        <div>
+            <span class="font-weight-bold" jhiTranslate="artemisApp.attachmentVideoUnit.uploadDate">: </span>
+            {{ lectureUnit().attachment?.uploadDate | artemisDate }}
+        </div>
+    }
+    @if (lectureUnit().attachment?.version) {
+        <div>
+            <span class="font-weight-bold" jhiTranslate="artemisApp.attachmentVideoUnit.version">: </span>
+            {{ lectureUnit().attachment?.version }}
+        </div>
+    }
+    @if (lectureUnit().attachment?.link) {
+        <div>
+            <span class="font-weight-bold" jhiTranslate="artemisApp.attachmentVideoUnit.FileName">: </span>
+            {{ getFileName() }}
+        </div>
+    }
+
+    @if (lectureUnit()?.description) {
+        <div>
+            <hr />
+            {{ lectureUnit().description }}
+        </div>
+    }
+
+    @if (!!lectureUnit().attachment && !!videoUrl()) {
+        <hr />
+    }
+
+    @if (!!videoUrl()) {
+        <div class="video-player-container">
+            <div class="ratio ratio-16x9">
+                <iframe id="videoFrame" class="rounded" [src]="videoUrl() | safeResourceUrl" allow="fullscreen"></iframe>
+            </div>
+        </div>
+    }
+</jhi-lecture-unit-card>
