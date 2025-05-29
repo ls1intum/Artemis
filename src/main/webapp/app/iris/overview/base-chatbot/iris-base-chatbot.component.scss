@@ -180,18 +180,37 @@
         word-wrap: break-word;
         word-break: break-word;
 
-        ::ng-deep > span > p,
-        ::ng-deep > p {
-            margin-bottom: 0;
-        }
+        ::ng-deep {
+            > p,
+            > span > p {
+                margin-bottom: 7px;
+                &:last-child {
+                    margin-bottom: 0;
+                }
+            }
 
-        ::ng-deep > span > p:not(:last-child),
-        ::ng-deep > p:not(:last-child) {
-            margin-bottom: 7px;
-        }
+            > ol > li,
+            > ul > li,
+            > span > ol > li,
+            > span > ul > li {
+                > p {
+                    margin-bottom: 0;
+                }
+                &:not(:last-child) > p {
+                    margin-bottom: 7px;
+                }
+            }
 
-        ::ng-deep pre code {
-            line-height: 1;
+            > ol,
+            > ul,
+            > span > ol,
+            > span > ul {
+                margin-bottom: 7px;
+            }
+
+            pre code {
+                line-height: 1;
+            }
         }
     }
 }
