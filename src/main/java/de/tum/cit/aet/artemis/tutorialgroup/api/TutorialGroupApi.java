@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.tutorialgroup.api;
 
-import java.util.List;
+import java.time.ZoneId;
 import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
@@ -43,7 +43,7 @@ public class TutorialGroupApi extends AbstractTutorialGroupApi {
         tutorialGroupRepository.deleteById(id);
     }
 
-    public Set<CalendarEventDTO> getTutorialEventsForUserFallingIntoMonthsOrElseThrough(User user, List<String> monthKeys, String timeZone) {
-        return tutorialGroupService.getTutorialEventsForUserFallingIntoMonthsOrElseThrow(user, monthKeys, timeZone);
+    public Set<CalendarEventDTO> getTutorialEventsForUser(User user, ZoneId clientTimeZone) {
+        return tutorialGroupService.getTutorialEventsForUser(user, clientTimeZone);
     }
 }

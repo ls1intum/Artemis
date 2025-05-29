@@ -1,0 +1,42 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet id="20250526115600" author="marlonnienaber">
+        <createTable tableName="course_calendar_event">
+            <column autoIncrement="true" name="id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+
+            <column name="course_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="title" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="start_date" type="datetime(3)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="end_date" type="datetime(3)"/>
+
+            <column name="location" type="varchar(255)"/>
+
+            <column name="facilitator" type="varchar(255)"/>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseColumnNames="course_id"
+                baseTableName="course_calendar_event"
+                constraintName="fk_course_calendar_event_course_id"
+                deferrable="false"
+                initiallyDeferred="false"
+                onDelete="CASCADE"
+                onUpdate="RESTRICT"
+                referencedColumnNames="id"
+                referencedTableName="course"
+                validate="true"
+        />
+    </changeSet>
+</databaseChangeLog>
