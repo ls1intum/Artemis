@@ -38,6 +38,7 @@ public class LectureUnitCompletion {
     @JsonIgnore
     private User user;
 
+    // TODO: double check if this could lead to issues when using learning paths
     @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("lectureUnitId")
     @JsonIgnore

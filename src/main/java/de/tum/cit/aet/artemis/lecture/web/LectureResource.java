@@ -361,6 +361,7 @@ public class LectureResource {
      */
     @GetMapping("lectures/{lectureId}/details")
     @EnforceAtLeastStudentInLecture
+    // TODO: we should use a proper DTO here to avoid sending too much irrelevant data to the client
     public ResponseEntity<Lecture> getLectureWithDetails(@PathVariable Long lectureId) {
         log.debug("REST request to get lecture {} with details", lectureId);
         User user = userRepository.getUserWithGroupsAndAuthorities();

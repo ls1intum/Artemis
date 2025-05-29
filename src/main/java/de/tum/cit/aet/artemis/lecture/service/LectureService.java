@@ -237,7 +237,7 @@ public class LectureService {
      * @throws BadRequestAlertException if the lecture is not linked to a course
      */
     public Lecture getForDetails(long lectureId, User user) {
-        Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureId);
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsWithCompetencyLinksAndAttachmentsElseThrow(lectureId);
         Course course = lecture.getCourse();
         if (course == null) {
             throw new BadRequestAlertException("The course belonging to this lecture does not exist", "lecture", "courseNotFound");
@@ -268,7 +268,7 @@ public class LectureService {
      * <strong>Rationale:</strong> Ensures that only authorized and fully detailed content is shown to the user. It handles Hibernate’s quirks (e.g., null entries) and aligns with
      * access control and information completeness for the dashboard.
      *
-     * @param lecture the {@link Lecture} to filter
+     * @param lecture the {@link Lecture} to filter which includes lecture units (with competency links) and attachments
      * @param user    the user requesting access
      * @return the filtered {@link Lecture}
      */
@@ -292,7 +292,7 @@ public class LectureService {
             default -> authCheckService.isAllowedToSeeLectureUnit(lectureUnit, user);
         }).peek(lectureUnit -> {
             lectureUnit.setCompleted(lectureUnit.isCompletedFor(user));
-
+            // lecture units already contain the competency links, so we do not need to load them again
             if (lectureUnit instanceof ExerciseUnit exerciseUnit) {
                 Exercise exercise = exerciseUnit.getExercise();
                 // we replace the exercise with one that contains all the information needed for correct display

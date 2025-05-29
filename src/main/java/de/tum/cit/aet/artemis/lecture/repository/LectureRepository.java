@@ -168,6 +168,21 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
         return getValueElseThrow(findByIdWithLectureUnitsAndAttachments(lectureId), lectureId);
     }
 
+    @NotNull
+    default Lecture findByIdWithLectureUnitsWithCompetencyLinksAndAttachmentsElseThrow(Long lectureId) {
+        return getValueElseThrow(findByIdWithLectureUnitsWithCompetencyLinksAndAttachments(lectureId), lectureId);
+    }
+
+    @Query("""
+            SELECT lecture
+            FROM Lecture lecture
+                LEFT JOIN FETCH lecture.lectureUnits lu
+                LEFT JOIN FETCH lecture.attachments
+                LEFT JOIN FETCH lu.competencyLinks
+            WHERE lecture.id = :lectureId
+            """)
+    Optional<Lecture> findByIdWithLectureUnitsWithCompetencyLinksAndAttachments(@Param("lectureId") Long lectureId);
+
     @Query("""
             SELECT new de.tum.cit.aet.artemis.core.dto.CourseContentCountDTO(
                 COUNT(l.id),
