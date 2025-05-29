@@ -102,9 +102,14 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
         this.isTestServer = this.profileService.isTestServer();
         this.irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
 
-        this.courseParamsSubscription = this.activatedRoute.parent!.parent!.params.subscribe((params) => {
-            this.courseId = +params.courseId;
-        });
+        // As defined in courses.route.ts, the courseId is in the grand parent route of the lectureId route.
+        const grandParentRoute = this.activatedRoute.parent?.parent;
+        if (grandParentRoute) {
+            this.courseParamsSubscription = grandParentRoute.params.subscribe((params) => {
+                // Note: if courseId is not found, sub components cannot navigate properly
+                this.courseId = +params.courseId;
+            });
+        }
 
         this.paramsSubscription = this.activatedRoute.params.subscribe((params) => {
             this.lectureId = +params.lectureId;
