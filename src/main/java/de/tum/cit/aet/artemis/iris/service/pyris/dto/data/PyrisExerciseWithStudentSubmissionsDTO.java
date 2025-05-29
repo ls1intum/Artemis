@@ -19,7 +19,7 @@ import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PyrisExerciseWithStudentSubmissionsDTO(long id, String title, ExerciseType type, ExerciseMode mode, double maxPoints, double bonusPoints,
         DifficultyLevel difficultyLevel, Instant releaseDate, Instant dueDate, IncludedInOverallScore inclusionMode, boolean presentationScoreEnabled,
-        Set<PyrisStudentSubmissionDTO> submissions) {
+        Set<PyrisStudentSubmissionDTO> submissions, String problemStatement) {
 
     /**
      * Convert an exercise to a PyrisExerciseWithStudentSubmissionsDTO.
@@ -35,6 +35,6 @@ public record PyrisExerciseWithStudentSubmissionsDTO(long id, String title, Exer
 
         return new PyrisExerciseWithStudentSubmissionsDTO(exercise.getId(), exercise.getTitle(), exercise.getExerciseType(), exercise.getMode(), exercise.getMaxPoints(),
                 exercise.getBonusPoints(), exercise.getDifficulty(), toInstant(exercise.getReleaseDate()), toInstant(exercise.getDueDate()), exercise.getIncludedInOverallScore(),
-                Boolean.TRUE.equals(exercise.getPresentationScoreEnabled()), submissionDTOSet);
+                Boolean.TRUE.equals(exercise.getPresentationScoreEnabled()), submissionDTOSet, exercise.getProblemStatement());
     }
 }

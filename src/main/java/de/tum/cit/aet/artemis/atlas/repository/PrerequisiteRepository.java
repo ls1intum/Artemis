@@ -72,4 +72,24 @@ public interface PrerequisiteRepository extends ArtemisJpaRepository<Prerequisit
     long countByCourse(Course course);
 
     List<Prerequisite> findByCourseIdOrderById(long courseId);
+
+    @Query("""
+            SELECT p
+            FROM LearningPath lp
+                JOIN lp.course.prerequisites p
+            WHERE lp.id = :learningPathId
+            """)
+    Set<Prerequisite> findByLearningPathId(@Param("learningPathId") long learningPathId);
+
+    @Query("""
+            SELECT p
+            FROM LearningPath lp
+                JOIN lp.course.prerequisites p
+                LEFT JOIN FETCH p.lectureUnitLinks plul
+                LEFT JOIN FETCH plul.lectureUnit
+                LEFT JOIN FETCH p.exerciseLinks pel
+                LEFT JOIN FETCH pel.exercise
+            WHERE lp.id = :learningPathId
+            """)
+    Set<Prerequisite> findByLearningPathIdWithLectureUnitsAndExercises(@Param("learningPathId") long learningPathId);
 }
