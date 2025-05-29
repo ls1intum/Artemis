@@ -172,6 +172,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     exerciseDetailSections: DetailOverviewSection[];
 
+    private lastUpdateTime = 0;
+    private readonly UPDATE_DEBOUNCE_MS = 1000;
+
     ngOnInit() {
         this.isBuildPlanEditable = this.profileService.isProfileActive('jenkins');
 
@@ -607,14 +610,32 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     onParticipationChange(): void {
+        // Debounce rapid successive calls to prevent infinite loops
+        const now = Date.now();
+        if (now - this.lastUpdateTime < this.UPDATE_DEBOUNCE_MS) {
+            return;
+        }
+
+        const previousDiffInfo = this.repositoryDiffInformation;
+        const previousTemplateFiles = this.templateFileContentByPath;
+        const previousSolutionFiles = this.solutionFileContentByPath;
+
         this.fetchRepositoryFiles()
             .pipe(
                 switchMap(({ templateFiles, solutionFiles }) => {
                     return from(this.handleDiff(templateFiles, solutionFiles));
                 }),
                 tap(() => {
-                    // Update exercise details after diff processing is complete
-                    this.exerciseDetailSections = this.getExerciseDetails();
+                    // Update exercise details if any diff-related data has actually changed
+                    const diffDataChanged =
+                        this.repositoryDiffInformation !== previousDiffInfo ||
+                        this.templateFileContentByPath !== previousTemplateFiles ||
+                        this.solutionFileContentByPath !== previousSolutionFiles;
+
+                    if (diffDataChanged) {
+                        this.exerciseDetailSections = this.getExerciseDetails();
+                        this.lastUpdateTime = Date.now();
+                    }
                 }),
             )
             .subscribe({
