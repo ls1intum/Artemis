@@ -12,6 +12,7 @@ import { PostingMarkdownEditorComponent } from 'app/communication/posting-markdo
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
+import { DraftService } from 'app/communication/message/service/draft-message.service';
 
 @Component({
     selector: 'jhi-message-inline-input',
@@ -23,6 +24,8 @@ import { ConversationDTO } from 'app/communication/shared/entities/conversation/
 export class MessageInlineInputComponent extends PostingCreateEditDirective<Post | AnswerPost> implements OnInit, OnChanges {
     private localStorageService = inject(LocalStorageService);
     private accountService = inject(AccountService);
+    private draftService = inject(DraftService);
+
     course = input<Course>();
     activeConversation = input<ConversationDTO>();
 
@@ -38,14 +41,14 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
 
     ngOnChanges() {
         super.ngOnChanges();
-        this.initDraftHandling();
+        this.loadDraft();
     }
 
     private async loadCurrentUser(): Promise<void> {
         const account = await this.accountService.identity();
         if (account?.id) {
             this.currentUserId = account.id;
-            this.initDraftHandling();
+            this.loadDraft();
         }
     }
 
@@ -119,43 +122,22 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
         return `${this.DRAFT_KEY_PREFIX}${userId}_${conversationId}`;
     }
 
-    private initDraftHandling(): void {
-        this.loadDraft();
-        this.formGroup.get('content')?.valueChanges.subscribe((content) => {
-            if (content && content.trim()) {
-                this.saveDraft(content);
-            } else {
-                this.clearDraft();
-            }
-        });
-    }
-
     private saveDraft(content: string): void {
         const key = this.getDraftKey();
-        if (key && key !== '' && content && content.trim()) {
-            this.localStorageService.store(key, content);
-        } else if (key && key !== '') {
-            this.clearDraft();
-        }
+        this.draftService.saveDraft(key, content);
     }
 
     private loadDraft(): void {
         const key = this.getDraftKey();
-        if (key && key !== '') {
-            const draft = this.localStorageService.retrieve(key);
-            if (draft && draft.trim()) {
-                this.posting.content = draft;
-                this.resetFormGroup();
-            } else {
-                this.clearDraft();
-            }
+        const draft = this.draftService.loadDraft(key);
+        if (draft) {
+            this.posting.content = draft;
+            this.resetFormGroup();
         }
     }
 
     private clearDraft(): void {
         const key = this.getDraftKey();
-        if (key && key !== '') {
-            this.localStorageService.clear(key);
-        }
+        this.draftService.clearDraft(key);
     }
 }

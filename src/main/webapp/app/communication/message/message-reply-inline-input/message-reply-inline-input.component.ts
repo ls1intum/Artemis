@@ -10,6 +10,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { LocalStorageService } from 'ngx-webstorage';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { AccountService } from 'app/core/auth/account.service';
+import { DraftService } from 'app/communication/message/service/draft-message.service';
 
 @Component({
     selector: 'jhi-message-reply-inline-input',
@@ -21,6 +22,7 @@ import { AccountService } from 'app/core/auth/account.service';
 export class MessageReplyInlineInputComponent extends PostingCreateEditDirective<AnswerPost> implements OnInit, OnChanges {
     private localStorageService = inject(LocalStorageService);
     private accountService = inject(AccountService);
+    private draftService = inject(DraftService);
 
     warningDismissed = false;
     private readonly DRAFT_KEY_PREFIX = 'thread_draft_';
@@ -135,30 +137,20 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
 
     private saveDraft(content: string): void {
         const key = this.getDraftKey();
-        if (key && key !== '' && content && content.trim()) {
-            this.localStorageService.store(key, content);
-        } else if (key && key !== '') {
-            this.clearDraft();
-        }
+        this.draftService.saveDraft(key, content);
     }
 
     private loadDraft(): void {
         const key = this.getDraftKey();
-        if (key && key !== '') {
-            const draft = this.localStorageService.retrieve(key);
-            if (draft && draft.trim()) {
-                this.posting.content = draft;
-                this.resetFormGroup();
-            } else {
-                this.clearDraft();
-            }
+        const draft = this.draftService.loadDraft(key);
+        if (draft) {
+            this.posting.content = draft;
+            this.resetFormGroup();
         }
     }
 
     private clearDraft(): void {
         const key = this.getDraftKey();
-        if (key && key !== '') {
-            this.localStorageService.clear(key);
-        }
+        this.draftService.clearDraft(key);
     }
 }
