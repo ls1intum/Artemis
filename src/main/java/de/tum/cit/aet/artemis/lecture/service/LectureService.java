@@ -14,6 +14,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.hibernate.Hibernate;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -236,6 +237,7 @@ public class LectureService {
      * @return the filtered {@link Lecture} object
      * @throws BadRequestAlertException if the lecture is not linked to a course
      */
+    // TODO: use a DTO instead of the Lecture entity to avoid sending unnecessary data to the client
     public Lecture getForDetails(long lectureId, User user) {
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsWithCompetencyLinksAndAttachmentsElseThrow(lectureId);
         Course course = lecture.getCourse();
@@ -248,6 +250,11 @@ public class LectureService {
         lecture.getLectureUnits().forEach(lectureUnit -> {
             LectureUnitCompletion completion = byUnit.get(lectureUnit.getId());
             lectureUnit.setCompletedUsers(completion != null ? Set.of(completion) : Set.of());
+            lectureUnit.getCompetencyLinks().forEach(competencyLink -> {
+                if (competencyLink.getCompetency() != null && Hibernate.isInitialized(competencyLink.getCompetency())) {
+                    competencyLink.getCompetency().setCourse(null); // Avoid sending the course to the client multiple times in the response to save data
+                }
+            });
         });
         competencyApi.ifPresent(api -> api.addCompetencyLinksToExerciseUnits(lecture));
         return filterLectureContentForUser(lecture, user);
