@@ -12,8 +12,10 @@ import static java.util.stream.Collectors.toSet;
 import java.time.ZonedDateTime;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.function.ToDoubleFunction;
+import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Service;
@@ -35,6 +37,7 @@ import de.tum.cit.aet.artemis.exercise.dto.ExerciseInformationDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseMetricsRepository;
 import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.config.LectureApiNotPresentException;
+import edu.stanford.nlp.util.Sets;
 
 /**
  * Service class to access metrics regarding students' learning progress.
@@ -78,34 +81,53 @@ public class LearningMetricsService {
      * @return the metrics for the student in the course
      */
     public ExerciseStudentMetricsDTO getStudentExerciseMetrics(long userId, long courseId) {
-        final var exerciseInfo = exerciseMetricsRepository.findAllExerciseInformationByCourseId(courseId);
-        // generate map and remove exercises that are not yet started
         final Predicate<ExerciseInformationDTO> started = e -> e.start() != null && e.start().isBefore(ZonedDateTime.now());
-        final var exerciseInfoMap = exerciseInfo.stream().filter(started).collect(toMap(ExerciseInformationDTO::id, identity()));
+        // the database query should only return exercises that are started, i.e. have a start date in the past, however, we also filter in Java to ensure that to avoid exceptions
+        final var exerciseInfo = exerciseMetricsRepository.findAllStartedExerciseInformationByCourseId(courseId).stream().filter(started).collect(Collectors.toSet());
 
-        final var exerciseIds = exerciseInfoMap.keySet();
+        final var exerciseInfoMap = exerciseInfo.stream().collect(toMap(ExerciseInformationDTO::id, identity()));
 
-        final var categories = exerciseMetricsRepository.findCategoriesByExerciseIds(exerciseIds);
+        final var exerciseIds = exerciseInfo.stream().map(ExerciseInformationDTO::id).collect(toSet());
+
+        final Set<Entry<Long, String>> categories = !exerciseIds.isEmpty() ? exerciseMetricsRepository.findCategoriesByExerciseIds(exerciseIds) : Set.of();
         final var categoryMap = categories.stream().collect(groupingBy(Entry::getKey, mapping(Entry::getValue, toSet())));
 
-        final var averageScore = exerciseMetricsRepository.findAverageScore(exerciseIds);
+        final Set<ScoreDTO> averageScore = !exerciseIds.isEmpty() ? exerciseMetricsRepository.findAverageScore(exerciseIds) : Set.of();
         final var averageScoreMap = averageScore.stream().collect(toMap(ScoreDTO::exerciseId, ScoreDTO::score));
 
-        final var score = exerciseMetricsRepository.findScore(exerciseIds, userId);
+        final Set<ScoreDTO> score = !exerciseIds.isEmpty() ? exerciseMetricsRepository.findScore(exerciseIds, userId) : Set.of();
         final var scoreMap = score.stream().collect(toMap(ScoreDTO::exerciseId, ScoreDTO::score));
 
-        final var exerciseIdsWithDueDate = exerciseIds.stream().filter(exerciseInfoMap::containsKey).filter(id -> exerciseInfoMap.get(id).due() != null).collect(toSet());
-        final var latestSubmissions = exerciseMetricsRepository.findLatestSubmissionDates(exerciseIdsWithDueDate);
+        final Predicate<ExerciseInformationDTO> hasDueDate = exercise -> exercise.due() != null;
+
+        final var exerciseIdsWithDueDate = exerciseInfo.stream().filter(hasDueDate).map(ExerciseInformationDTO::id).collect(toSet());
+        final Set<ResourceTimestampDTO> latestSubmissions = !exerciseIdsWithDueDate.isEmpty() ? exerciseMetricsRepository.findLatestSubmissionDates(exerciseIdsWithDueDate)
+                : Set.of();
         final ToDoubleFunction<ResourceTimestampDTO> relativeTime = dto -> toRelativeTime(exerciseInfoMap.get(dto.id()).start(), exerciseInfoMap.get(dto.id()).due(),
                 dto.timestamp());
         final var averageLatestSubmissionMap = latestSubmissions.stream().collect(groupingBy(ResourceTimestampDTO::id, averagingDouble(relativeTime)));
 
-        final var latestSubmissionOfUser = exerciseMetricsRepository.findLatestSubmissionDatesForUser(exerciseIdsWithDueDate, userId);
+        final var individualExerciseIdsWithDueDate = exerciseInfo.stream().filter(ExerciseInformationDTO::isIndividual).filter(hasDueDate).map(ExerciseInformationDTO::id)
+                .collect(toSet());
+        final var teamExerciseIdsWithDueDate = exerciseInfo.stream().filter(ExerciseInformationDTO::isTeam).filter(hasDueDate).map(ExerciseInformationDTO::id).collect(toSet());
+
+        // we split the latest submissions into individual and team exercises, because otherwise the database queries would be significantly slower (using OR in the WHERE clause
+        // leads to a full table scan)
+        final Set<ResourceTimestampDTO> latestIndividualSubmissionOfUser = !individualExerciseIdsWithDueDate.isEmpty()
+                ? exerciseMetricsRepository.findLatestIndividualSubmissionDatesForUser(individualExerciseIdsWithDueDate, userId)
+                : Set.of();
+        final Set<ResourceTimestampDTO> latestTeamSubmissionOfUser = !teamExerciseIdsWithDueDate.isEmpty()
+                ? exerciseMetricsRepository.findLatestTeamSubmissionDatesForUser(teamExerciseIdsWithDueDate, userId)
+                : Set.of();
+        // combine both sets of latest submissions
+        final var latestSubmissionOfUser = Sets.union(latestIndividualSubmissionOfUser, latestTeamSubmissionOfUser);
         final var latestSubmissionMap = latestSubmissionOfUser.stream().collect(toMap(ResourceTimestampDTO::id, relativeTime::applyAsDouble));
 
-        final var completedExerciseIds = exerciseMetricsRepository.findAllCompletedExerciseIdsForUserByExerciseIds(userId, exerciseIds, MIN_SCORE_GREEN);
+        final Set<Long> completedExerciseIds = !exerciseIds.isEmpty()
+                ? exerciseMetricsRepository.findAllCompletedExerciseIdsForUserByExerciseIds(userId, exerciseIds, MIN_SCORE_GREEN)
+                : Set.of();
 
-        final var teamIds = exerciseMetricsRepository.findTeamIdsForUserByExerciseIds(userId, exerciseIds);
+        final Set<MapEntryLongLong> teamIds = !exerciseIds.isEmpty() ? exerciseMetricsRepository.findTeamIdsForUserByExerciseIds(userId, exerciseIds) : Set.of();
         final var teamIdMap = teamIds.stream().collect(toMap(MapEntryLongLong::key, MapEntryLongLong::value));
 
         return new ExerciseStudentMetricsDTO(exerciseInfoMap, categoryMap, averageScoreMap, scoreMap, averageLatestSubmissionMap, latestSubmissionMap, completedExerciseIds,
