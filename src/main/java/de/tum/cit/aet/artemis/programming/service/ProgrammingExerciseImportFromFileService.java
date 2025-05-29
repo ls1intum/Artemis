@@ -30,10 +30,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.ZipFileService;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
@@ -168,7 +168,7 @@ public class ProgrammingExerciseImportFromFileService {
         }
         try (var embeddedFiles = Files.list(embeddedFilesDir)) {
             for (Path file : embeddedFiles.toList()) {
-                Path targetPath = FilePathService.getMarkdownFilePath().resolve(file.getFileName());
+                Path targetPath = FilePathConverter.getMarkdownFilePath().resolve(file.getFileName());
                 if (!Files.exists(targetPath)) {
                     FileUtils.copyFile(file.toFile(), targetPath.toFile());
                 }

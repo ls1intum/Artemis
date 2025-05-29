@@ -5,6 +5,10 @@ Pyris Setup Guide
 
 .. contents::
 
+.. important::
+   Pyris is now part of the EduTelligence suite. Please check the `compatibility matrix <https://github.com/ls1intum/edutelligence#-artemis-compatibility>`_ 
+   to ensure you're using compatible versions of Artemis and EduTelligence.
+
 Prerequisites
 -------------
 
@@ -22,15 +26,16 @@ Prerequisites
 Local Environment Setup
 -----------------------
 
-1. **Clone the Pyris Repository**
+1. **Clone the EduTelligence Repository**
 
-   To get started with Pyris development, you need to clone the Pyris repository (`https://github.com/ls1intum/Pyris`) into a directory on your machine. For example, you can clone the repository into a folder called ``Pyris``.
+   To get started with Pyris development, you need to clone the EduTelligence repository (`https://github.com/ls1intum/edutelligence`) into a directory on your machine. Pyris is located in the `iris` subdirectory of the monorepo.
 
    Example command:
 
    .. code-block:: bash
 
-      git clone https://github.com/ls1intum/Pyris.git Pyris
+      git clone https://github.com/ls1intum/edutelligence.git
+      cd edutelligence/iris
 
 2. **Install Dependencies**
 
@@ -38,7 +43,7 @@ Local Environment Setup
 
    .. code-block:: bash
 
-      cd Pyris
+      cd iris
 
    Install the required Python packages:
 
@@ -50,13 +55,13 @@ Local Environment Setup
 
    - **Create an Application Configuration File**
 
-     Create an ``application.local.yml`` file in the root directory. This file includes configurations used by the application.
+     Create an ``application.local.yml`` file in the iris directory. This file includes configurations used by the application.
 
      Example command:
 
      .. code-block:: bash
 
-        cp Pyris/application.example.yml application.local.yml
+        cp application.example.yml application.local.yml
 
      Example ``application.local.yml``:
 
@@ -78,13 +83,13 @@ Local Environment Setup
 
    - **Create LLM Config File**
 
-     Create an ``llm_config.local.yml`` file in the root directory. This file includes a list of models with their configurations.
+     Create an ``llm_config.local.yml`` file in the iris directory. This file includes a list of models with their configurations.
 
      Example command:
 
      .. code-block:: bash
 
-        cp Pyris/llm_config.example.yml llm_config.local.yml
+        cp llm_config.example.yml llm_config.local.yml
 
      **Example OpenAI Configuration**
 
@@ -241,7 +246,7 @@ Using Docker
 **Prerequisites**
 
 - Ensure Docker and Docker Compose are installed on your machine.
-- Clone the Pyris repository to your local machine.
+- Clone the EduTelligence repository to your local machine.
 - Create the necessary configuration files as described in the previous section.
 
 **Docker Compose Files**

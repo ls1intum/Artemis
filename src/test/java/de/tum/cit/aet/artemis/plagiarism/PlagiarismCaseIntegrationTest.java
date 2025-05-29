@@ -20,8 +20,10 @@ import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismResult;
@@ -52,6 +54,9 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependent
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
 
+    @Autowired
+    private ExamUtilService examUtilService;
+
     private Course course;
 
     private TextExercise textExercise;
@@ -72,11 +77,11 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependent
         course = textExerciseUtilService.addCourseWithOneFinishedTextExercise();
 
         // We need at least 3 cases
-        textExercise = exerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
+        textExercise = ExerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
         coursePlagiarismCases = createPlagiarismCases(numberOfPlagiarismCases, textExercise);
         plagiarismCase1 = coursePlagiarismCases.getFirst();
 
-        examTextExercise = textExerciseUtilService.addCourseExamExerciseGroupWithOneTextExercise();
+        examTextExercise = examUtilService.addCourseExamExerciseGroupWithOneTextExercise();
         examPlagiarismCases = createPlagiarismCases(2, examTextExercise);
     }
 

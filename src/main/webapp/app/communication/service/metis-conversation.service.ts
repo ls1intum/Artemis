@@ -341,7 +341,7 @@ export class MetisConversationService implements OnDestroy {
 
     private hasUnreadMessagesCheck = (): void => {
         const hasNewMessages = this.conversationsOfUser.some((conversation) => {
-            return conversation?.unreadMessagesCount && conversation.unreadMessagesCount > 0;
+            return conversation?.unreadMessagesCount && conversation.unreadMessagesCount > 0 && !conversation.isMuted;
         });
         if (hasNewMessages !== this.hasUnreadMessages) {
             this.hasUnreadMessages = hasNewMessages;

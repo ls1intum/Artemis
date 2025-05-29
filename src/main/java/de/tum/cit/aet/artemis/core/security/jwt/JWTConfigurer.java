@@ -13,13 +13,19 @@ public class JWTConfigurer extends SecurityConfigurerAdapter<DefaultSecurityFilt
 
     private final TokenProvider tokenProvider;
 
+    private final JWTCookieService jwtCookieService;
+
+    private final long tokenValidityInSecondsForPasskey;
+
     /**
      * Constructs a JWTConfigurer with a specified token provider.
      *
      * @param tokenProvider the provider responsible for generating and validating JWT tokens.
      */
-    public JWTConfigurer(TokenProvider tokenProvider) {
+    public JWTConfigurer(TokenProvider tokenProvider, JWTCookieService jwtCookieService, long tokenValidityInSecondsForPasskey) {
         this.tokenProvider = tokenProvider;
+        this.jwtCookieService = jwtCookieService;
+        this.tokenValidityInSecondsForPasskey = tokenValidityInSecondsForPasskey;
     }
 
     /**
@@ -31,7 +37,7 @@ public class JWTConfigurer extends SecurityConfigurerAdapter<DefaultSecurityFilt
      */
     @Override
     public void configure(HttpSecurity http) {
-        JWTFilter customFilter = new JWTFilter(tokenProvider);
+        JWTFilter customFilter = new JWTFilter(tokenProvider, jwtCookieService, tokenValidityInSecondsForPasskey);
         // Adds the JWTFilter to the security chain before the UsernamePasswordAuthenticationFilter.
         // This ensures that the JWTFilter processes the request first to extract and validate JWTs.
         http.addFilterBefore(customFilter, UsernamePasswordAuthenticationFilter.class);

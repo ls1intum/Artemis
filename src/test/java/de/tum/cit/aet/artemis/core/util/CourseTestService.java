@@ -111,7 +111,6 @@ import de.tum.cit.aet.artemis.core.dto.UserPublicInfoDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.CustomAuditEventRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
-import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.export.CourseExamExportService;
 import de.tum.cit.aet.artemis.core.service.export.DataExportUtil;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
@@ -143,7 +142,6 @@ import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.fileupload.repository.FileUploadExerciseRepository;
 import de.tum.cit.aet.artemis.fileupload.util.ZipFileTestUtilService;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
-import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
 import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
 import de.tum.cit.aet.artemis.lti.test_repository.LtiPlatformConfigurationTestRepository;
@@ -158,6 +156,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.MockDelegate;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
@@ -275,13 +274,13 @@ public class CourseTestService {
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
     @Autowired
+    private ProgrammingExerciseParticipationUtilService programmingExerciseParticipationUtilService;
+
+    @Autowired
     private Optional<CompetencyUtilService> competencyUtilService; // Optional because it is not used in all tests
 
     @Autowired
     private Optional<PrerequisiteUtilService> prerequisiteUtilService; // Optional because it is not used in all tests
-
-    @Autowired
-    private LectureUtilService lectureUtilService;
 
     @Autowired
     private ParticipationUtilService participationUtilService;
@@ -553,8 +552,8 @@ public class CourseTestService {
                     final var templateRepoName = programmingExercise.generateRepositoryName(RepositoryType.TEMPLATE);
                     final var solutionRepoName = programmingExercise.generateRepositoryName(RepositoryType.SOLUTION);
                     final var testsRepoName = programmingExercise.generateRepositoryName(RepositoryType.TESTS);
-                    programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
-                    programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+                    programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+                    programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
                     mockDelegate.mockDeleteBuildPlan(projectKey, programmingExercise.getTemplateBuildPlanId(), false);
                     mockDelegate.mockDeleteBuildPlan(projectKey, programmingExercise.getSolutionBuildPlanId(), false);
                     mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
@@ -1078,7 +1077,7 @@ public class CourseTestService {
         String suffix = "getall";
         adjustUserGroupsToCustomGroups(suffix);
         // Note: with the suffix, we reduce the amount of courses loaded below to prevent test issues
-        List<Course> coursesCreated = lectureUtilService.createCoursesWithExercisesAndLecturesAndLectureUnits(userPrefix, true, false, NUMBER_OF_TUTORS);
+        List<Course> coursesCreated = courseUtilService.createCoursesWithExercisesAndLecturesAndLectureUnits(userPrefix, true, false, NUMBER_OF_TUTORS);
         for (var course : coursesCreated) {
             courseUtilService.updateCourseGroups(userPrefix, course, suffix);
         }
@@ -1312,7 +1311,7 @@ public class CourseTestService {
     // Tests that average rating and number of ratings are computed correctly in '/for-assessment-dashboard'
     public void testGetCourseForAssessmentDashboard_averageRatingComputedCorrectly() throws Exception {
         var testCourse = courseUtilService.createCoursesWithExercisesAndLectures(userPrefix, true, 5).getFirst();
-        var exercise = exerciseUtilService.getFirstExerciseWithType(testCourse, TextExercise.class);
+        var exercise = ExerciseUtilService.getFirstExerciseWithType(testCourse, TextExercise.class);
 
         int[] ratings = { 3, 4, 5 };
         for (int i = 0; i < ratings.length; i++) {
@@ -1322,7 +1321,7 @@ public class CourseTestService {
         }
 
         var responseCourse = request.get("/api/core/courses/" + testCourse.getId() + "/for-assessment-dashboard", HttpStatus.OK, Course.class);
-        var responseExercise = exerciseUtilService.getFirstExerciseWithType(responseCourse, TextExercise.class);
+        var responseExercise = ExerciseUtilService.getFirstExerciseWithType(responseCourse, TextExercise.class);
 
         // Ensure that average rating and number of ratings is computed correctly
         var averageRating = Arrays.stream(ratings).mapToDouble(Double::valueOf).sum() / ratings.length;
@@ -1830,7 +1829,7 @@ public class CourseTestService {
         course.setLearningPathsEnabled(true);
         course = courseRepo.save(course);
         testAddStudentOrTutorOrEditorOrInstructorToCourse(course, HttpStatus.OK);
-        course = courseRepo.findWithEagerLearningPathsAndLearningPathCompetenciesByIdElseThrow(course.getId());
+        course = courseRepo.findWithEagerLearningPathsByIdElseThrow(course.getId());
         assertThat(course.getLearningPaths()).isNotEmpty();
         // TODO check that the roles have changed accordingly
     }
@@ -1977,7 +1976,7 @@ public class CourseTestService {
     // Test
     public void testGetLockedSubmissionsForCourseAsTutor() throws Exception {
         Course course = modelingExerciseUtilService.addCourseWithDifferentModelingExercises();
-        ModelingExercise classExercise = exerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
+        ModelingExercise classExercise = ExerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
 
         List<Submission> lockedSubmissions = request.getList("/api/core/courses/" + course.getId() + "/locked-submissions", HttpStatus.OK, Submission.class);
         assertThat(lockedSubmissions).as("Locked Submissions is not null").isNotNull();
@@ -2515,7 +2514,7 @@ public class CourseTestService {
         course.setCourseArchivePath("some-archive-path");
         course = courseRepo.save(course);
 
-        final ProgrammingExercise courseExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        final ProgrammingExercise courseExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
 
         final var programmingExercise = programmingExerciseRepository.findWithEagerTemplateAndSolutionParticipationsById(courseExercise.getId()).orElseThrow();
         participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, userPrefix + "student1");
@@ -2612,7 +2611,7 @@ public class CourseTestService {
         var quizDetailsOptional = exerciseDetails.stream().filter(e -> e instanceof QuizExercise).findFirst();
         assertThat(quizDetailsOptional).isPresent();
 
-        var quizExercise = exerciseUtilService.getFirstExerciseWithType(returnedCourse, QuizExercise.class);
+        var quizExercise = ExerciseUtilService.getFirstExerciseWithType(returnedCourse, QuizExercise.class);
 
         var quizDetails = quizDetailsOptional.get();
         assertThat(quizDetails.getCategories()).hasSize(quizExercise.getCategories().size());
@@ -2844,6 +2843,7 @@ public class CourseTestService {
     // Test
     public void testGetCourseManagementDetailData() throws Exception {
         adjustUserGroupsToCustomGroups();
+        // TODO: we should use fixed dates here to avoid flakiness, e.g. mock the clock
         ZonedDateTime now = ZonedDateTime.now();
         // add courses with exercises
         var courses = courseUtilService.createCoursesWithExercisesAndLectures(userPrefix, true, 5);
@@ -3352,7 +3352,7 @@ public class CourseTestService {
         byte[] iconBytes = "icon".getBytes();
         MockMultipartFile iconFile = new MockMultipartFile("file", "icon.png", MediaType.APPLICATION_JSON_VALUE, iconBytes);
         Course savedCourseWithFile = request.putWithMultipartFile("/api/core/courses/" + savedCourse.getId(), savedCourse, "course", iconFile, Course.class, HttpStatus.OK, null);
-        Path path = FilePathService.fileSystemPathForExternalUri(URI.create(savedCourseWithFile.getCourseIcon()), FilePathType.COURSE_ICON);
+        Path path = FilePathConverter.fileSystemPathForExternalUri(URI.create(savedCourseWithFile.getCourseIcon()), FilePathType.COURSE_ICON);
 
         savedCourseWithFile.setCourseIcon(null);
         request.putWithMultipartFile("/api/core/courses/" + savedCourseWithFile.getId(), savedCourseWithFile, "course", null, Course.class, HttpStatus.OK, null);
