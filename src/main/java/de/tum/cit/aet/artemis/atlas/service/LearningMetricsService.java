@@ -111,10 +111,7 @@ public class LearningMetricsService {
         final Set<ScoreDTO> score = !exerciseIds.isEmpty() ? exerciseMetricsRepository.findScore(exerciseIds, userId) : Set.of();
         final var scoreMap = score.stream().collect(toMap(ScoreDTO::exerciseId, ScoreDTO::score));
 
-        // Predicate to check if an exercise has a due date.
         final Predicate<ExerciseInformationDTO> hasDueDate = exercise -> exercise.due() != null;
-
-        // Find all exercises with a due date.
         final var exerciseIdsWithDueDate = exerciseInfo.stream().filter(hasDueDate).map(ExerciseInformationDTO::id).collect(toSet());
 
         // Compute average relative submission times for all exercises with a due date.
