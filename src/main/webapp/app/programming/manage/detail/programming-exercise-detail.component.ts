@@ -736,7 +736,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         try {
             this.templateFileContentByPath = templateFiles;
             this.solutionFileContentByPath = solutionFiles;
-            //TODO: Add version check to avoid recomputing the diff if the files have not changed
             this.repositoryDiffInformation = await processRepositoryDiff(templateFiles, solutionFiles);
             // Set ready state to true when diff processing is complete
             this.diffReady = true;

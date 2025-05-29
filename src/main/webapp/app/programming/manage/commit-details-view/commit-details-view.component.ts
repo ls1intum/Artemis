@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
-import { Subscription, throwError } from 'rxjs';
+import { Subscription, forkJoin, of, throwError } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { CommitInfo } from 'app/programming/shared/entities/programming-submission.model';
 import dayjs from 'dayjs/esm';
@@ -25,8 +25,8 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
     isTemplate = false;
 
     errorWhileFetching = false;
-    leftCommitFileContentByPath: Map<string, string>;
-    rightCommitFileContentByPath: Map<string, string>;
+    leftCommitFileContentByPath: Map<string, string> = new Map<string, string>();
+    rightCommitFileContentByPath: Map<string, string> = new Map<string, string>();
     repositoryDiffInformation: RepositoryDiffInformation;
     commits: CommitInfo[] = [];
     currentCommit: CommitInfo;
@@ -34,15 +34,13 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
     repositoryType: RepositoryType;
     diffReady = false;
 
-    participationRepoFilesAtLeftCommitSubscription: Subscription;
-    participationRepoFilesAtRightCommitSubscription: Subscription;
+    participationRepoFilesSubscription: Subscription;
 
     paramSub: Subscription;
     participationSub: Subscription;
 
     ngOnDestroy(): void {
-        this.participationRepoFilesAtLeftCommitSubscription?.unsubscribe();
-        this.participationRepoFilesAtRightCommitSubscription?.unsubscribe();
+        this.participationRepoFilesSubscription?.unsubscribe();
         this.paramSub?.unsubscribe();
         this.participationSub?.unsubscribe();
     }
@@ -109,53 +107,47 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
     }
 
     /**
-     * Fetches the participation repository files for the left and right commit.
+     * Fetches the participation repository files for both left and right commits in parallel.
      * @private
      */
     private fetchParticipationRepoFiles() {
-        if (this.isTemplate) {
-            this.leftCommitFileContentByPath = new Map<string, string>();
-            this.fetchParticipationRepoFilesAtRightCommit();
-        } else {
-            this.participationRepoFilesAtLeftCommitSubscription = this.programmingExerciseParticipationService
-                .getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView(this.exerciseId, this.repositoryId, this.previousCommit.hash!, this.repositoryType)
-                .subscribe({
-                    next: (filesWithContent: Map<string, string>) => {
-                        this.leftCommitFileContentByPath = filesWithContent;
-                        this.fetchParticipationRepoFilesAtRightCommit();
-                    },
-                    error: () => {
-                        this.errorWhileFetching = true;
-                        this.leftCommitFileContentByPath = new Map<string, string>();
-                        this.rightCommitFileContentByPath = new Map<string, string>();
-                    },
-                });
-        }
-    }
-
-    /**
-     * Fetches the participation repository files for the right commit.
-     * @private
-     */
-    private async fetchParticipationRepoFilesAtRightCommit() {
         // Set ready state to false when starting diff processing
         this.diffReady = false;
 
-        this.participationRepoFilesAtRightCommitSubscription = this.programmingExerciseParticipationService
-            .getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView(this.exerciseId, this.repositoryId, this.currentCommit.hash!, this.repositoryType)
-            .subscribe({
-                next: async (filesWithContent: Map<string, string>) => {
-                    this.rightCommitFileContentByPath = filesWithContent;
-                    this.repositoryDiffInformation = await processRepositoryDiff(this.leftCommitFileContentByPath, this.rightCommitFileContentByPath);
+        const leftCommitObservable = this.isTemplate
+            ? of(new Map<string, string>())
+            : this.programmingExerciseParticipationService.getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView(
+                  this.exerciseId,
+                  this.repositoryId!,
+                  this.previousCommit.hash!,
+                  this.repositoryType,
+              );
 
-                    // Set ready state to true when diff processing is complete
-                    this.diffReady = true;
-                },
-                error: () => {
-                    this.errorWhileFetching = true;
-                    this.rightCommitFileContentByPath = new Map<string, string>();
-                    this.diffReady = false;
-                },
-            });
+        const rightCommitObservable = this.programmingExerciseParticipationService.getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView(
+            this.exerciseId,
+            this.repositoryId!,
+            this.currentCommit.hash!,
+            this.repositoryType,
+        );
+
+        this.participationRepoFilesSubscription = forkJoin({
+            leftFiles: leftCommitObservable,
+            rightFiles: rightCommitObservable,
+        }).subscribe({
+            next: async (result) => {
+                this.leftCommitFileContentByPath = result.leftFiles || new Map<string, string>();
+                this.rightCommitFileContentByPath = result.rightFiles || new Map<string, string>();
+                this.repositoryDiffInformation = await processRepositoryDiff(this.leftCommitFileContentByPath, this.rightCommitFileContentByPath);
+
+                // Set ready state to true when diff processing is complete
+                this.diffReady = true;
+            },
+            error: () => {
+                this.errorWhileFetching = true;
+                this.leftCommitFileContentByPath = new Map<string, string>();
+                this.rightCommitFileContentByPath = new Map<string, string>();
+                this.diffReady = false;
+            },
+        });
     }
 }

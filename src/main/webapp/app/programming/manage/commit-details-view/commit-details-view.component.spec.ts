@@ -294,8 +294,7 @@ describe('CommitDetailsViewComponent', () => {
 
         // Expect subscription to be unsubscribed
         expect(component.paramSub?.closed).toBeTrue();
-        expect(component.participationRepoFilesAtLeftCommitSubscription?.closed).toBeTrue();
-        expect(component.participationRepoFilesAtRightCommitSubscription?.closed).toBeTrue();
+        expect(component.participationRepoFilesSubscription?.closed).toBeTrue();
     });
 
     it('should handle files for template commit', () => {
@@ -316,7 +315,7 @@ describe('CommitDetailsViewComponent', () => {
 
         // Expect subscription to be unsubscribed
         expect(component.paramSub?.closed).toBeTrue();
-        expect(component.participationRepoFilesAtRightCommitSubscription?.closed).toBeTrue();
+        expect(component.participationRepoFilesSubscription?.closed).toBeTrue();
     });
 
     it('should handle new commits', () => {
@@ -341,8 +340,7 @@ describe('CommitDetailsViewComponent', () => {
 
         // Expect subscription to be unsubscribed
         expect(component.paramSub?.closed).toBeTrue();
-        expect(component.participationRepoFilesAtLeftCommitSubscription?.closed).toBeTrue();
-        expect(component.participationRepoFilesAtRightCommitSubscription?.closed).toBeTrue();
+        expect(component.participationRepoFilesSubscription?.closed).toBeTrue();
     });
 
     it('should handle error when retrieving commit info', () => {
@@ -383,8 +381,7 @@ describe('CommitDetailsViewComponent', () => {
 
         // Expect subscription to be unsubscribed
         expect(component.paramSub?.closed).toBeTrue();
-        expect(component.participationRepoFilesAtLeftCommitSubscription?.closed).toBeTrue();
-        expect(component.participationRepoFilesAtRightCommitSubscription?.closed).toBeTrue();
+        expect(component.participationRepoFilesSubscription?.closed).toBeTrue();
     });
 
     it('should handle error when fetching left repository files', () => {
@@ -410,8 +407,7 @@ describe('CommitDetailsViewComponent', () => {
 
         // Expect subscription to be unsubscribed
         expect(component.paramSub?.closed).toBeTrue();
-        expect(component.participationRepoFilesAtLeftCommitSubscription?.closed).toBeTrue();
-        expect(component.participationRepoFilesAtRightCommitSubscription?.closed).toBeTrue();
+        expect(component.participationRepoFilesSubscription?.closed).toBeTrue();
     });
 
     it('should handle error when fetching right repository files', () => {
@@ -446,7 +442,6 @@ describe('CommitDetailsViewComponent', () => {
 
         // Expect subscription to be unsubscribed
         expect(component.paramSub?.closed).toBeTrue();
-        expect(component.participationRepoFilesAtLeftCommitSubscription?.closed).toBeTrue();
-        expect(component.participationRepoFilesAtRightCommitSubscription?.closed).toBeTrue();
+        expect(component.participationRepoFilesSubscription?.closed).toBeTrue();
     });
 });
