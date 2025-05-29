@@ -67,8 +67,6 @@ class CourseOverviewServiceTest extends AbstractSpringIntegrationIndependentTest
         instructor.setGroups(groups);
         userRepository.save(instructor);
 
-        // TODO: investigate why this test fails
-
         var courses = courseOverviewService.getAllCoursesForManagementOverview(false);
         assertThat(courses).contains(instructorsCourse);
         assertThat(courses).contains(inactiveCourse);
