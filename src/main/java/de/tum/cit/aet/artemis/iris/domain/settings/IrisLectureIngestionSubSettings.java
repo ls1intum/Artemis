@@ -16,7 +16,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 public class IrisLectureIngestionSubSettings extends IrisSubSettings {
 
     @Column(name = "auto_ingest_on_lecture_attachment_upload")
-    private boolean autoIngestOnLectureAttachmentUpload;
+    private boolean autoIngestOnLectureAttachmentUpload = true;
 
     public boolean getAutoIngestOnLectureAttachmentUpload() {
         return autoIngestOnLectureAttachmentUpload;

@@ -28,7 +28,7 @@
                     }
                 },
                 "subSettings": {
-                    "chatSettings": "Chat Einstellungen",
+                    "exerciseChatSettings": "Programmieraufgaben Chat Einstellungen",
                     "textExerciseChatSettings": "Textaufgaben Chat Einstellungen",
                     "lectureChatSettings": "Vorlesungschat Einstellungen",
                     "courseChatSettings": "Kurs Chat Einstellungen",
@@ -85,6 +85,11 @@
                     "disabled": {
                         "course": "IRIS ist in den Kurs-IRIS-Einstellungen deaktiviert",
                         "global": "IRIS ist in den globalen IRIS-Einstellungen deaktiviert"
+                    },
+                    "customInstructions": {
+                        "title": "Benutzerdefinierte Anweisungen",
+                        "description": "Benutzerdefinierte Anweisungen, die der KI beim Generieren von Antworten zur Verfügung gestellt werden.",
+                        "placeholder": "Gib benutzerdefinierte Anweisungen für die KI ein (maximal 2048 Zeichen)"
                     }
                 },
                 "title": {
