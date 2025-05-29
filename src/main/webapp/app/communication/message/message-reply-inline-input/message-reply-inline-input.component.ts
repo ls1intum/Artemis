@@ -1,4 +1,4 @@
-import { Component, EventEmitter, OnChanges, OnInit, Output, SimpleChanges, ViewEncapsulation, inject, input } from '@angular/core';
+import { Component, EventEmitter, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, ViewEncapsulation, inject, input } from '@angular/core';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -11,6 +11,7 @@ import { LocalStorageService } from 'ngx-webstorage';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { DraftService } from 'app/communication/message/service/draft-message.service';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-message-reply-inline-input',
@@ -19,7 +20,7 @@ import { DraftService } from 'app/communication/message/service/draft-message.se
     encapsulation: ViewEncapsulation.None,
     imports: [FormsModule, ReactiveFormsModule, PostingMarkdownEditorComponent, TranslateDirective, PostingButtonComponent, ArtemisTranslatePipe],
 })
-export class MessageReplyInlineInputComponent extends PostingCreateEditDirective<AnswerPost> implements OnInit, OnChanges {
+export class MessageReplyInlineInputComponent extends PostingCreateEditDirective<AnswerPost> implements OnInit, OnChanges, OnDestroy {
     private localStorageService = inject(LocalStorageService);
     private accountService = inject(AccountService);
     private draftService = inject(DraftService);
@@ -27,6 +28,7 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
     warningDismissed = false;
     private readonly DRAFT_KEY_PREFIX = 'thread_draft_';
     private currentUserId: number | undefined;
+    private draftMessageSubscription?: Subscription;
 
     readonly activeConversation = input<ConversationDTO>();
 
@@ -65,6 +67,8 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
      * resets the answer post content
      */
     resetFormGroup(content: string | undefined = undefined): void {
+        this.draftMessageSubscription?.unsubscribe();
+
         if (content !== undefined) {
             this.posting.content = content;
         }
@@ -74,8 +78,8 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
             content: [this.posting.content, [Validators.required, Validators.maxLength(this.maxContentLength), PostContentValidationPattern]],
         });
 
-        // Subscribe to content changes to save drafts
-        this.formGroup.get('content')?.valueChanges.subscribe((content) => {
+        // Subscribe and store the subscription
+        this.draftMessageSubscription = this.formGroup.get('content')?.valueChanges.subscribe((content) => {
             if (content && content.trim()) {
                 this.saveDraft(content);
             } else {
@@ -152,5 +156,9 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
     private clearDraft(): void {
         const key = this.getDraftKey();
         this.draftService.clearDraft(key);
+    }
+
+    ngOnDestroy(): void {
+        this.draftMessageSubscription?.unsubscribe();
     }
 }

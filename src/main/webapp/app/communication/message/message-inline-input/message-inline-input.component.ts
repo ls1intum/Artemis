@@ -1,4 +1,4 @@
-import { Component, OnChanges, OnInit, ViewEncapsulation, inject, input } from '@angular/core';
+import { Component, OnChanges, OnDestroy, OnInit, ViewEncapsulation, inject, input } from '@angular/core';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Post } from 'app/communication/shared/entities/post.model';
@@ -13,6 +13,7 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { DraftService } from 'app/communication/message/service/draft-message.service';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-message-inline-input',
@@ -21,7 +22,7 @@ import { DraftService } from 'app/communication/message/service/draft-message.se
     encapsulation: ViewEncapsulation.None,
     imports: [FormsModule, ReactiveFormsModule, PostingMarkdownEditorComponent, TranslateDirective, PostingButtonComponent, ArtemisTranslatePipe],
 })
-export class MessageInlineInputComponent extends PostingCreateEditDirective<Post | AnswerPost> implements OnInit, OnChanges {
+export class MessageInlineInputComponent extends PostingCreateEditDirective<Post | AnswerPost> implements OnInit, OnChanges, OnDestroy {
     private localStorageService = inject(LocalStorageService);
     private accountService = inject(AccountService);
     private draftService = inject(DraftService);
@@ -32,6 +33,7 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
     warningDismissed = false;
     private readonly DRAFT_KEY_PREFIX = 'message_draft_';
     private currentUserId: number | undefined;
+    private draftMessageSubscription?: Subscription;
 
     ngOnInit(): void {
         super.ngOnInit();
@@ -56,13 +58,15 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
      * resets the answer post content
      */
     resetFormGroup(): void {
+        this.draftMessageSubscription?.unsubscribe();
+
         this.formGroup = this.formBuilder.group({
             // the pattern ensures that the content must include at least one non-whitespace character
             content: [this.posting.content, [Validators.required, Validators.maxLength(this.maxContentLength), PostContentValidationPattern]],
         });
 
         // Subscribe to content changes to save drafts
-        this.formGroup.get('content')?.valueChanges.subscribe((content) => {
+        this.draftMessageSubscription = this.formGroup.get('content')?.valueChanges.subscribe((content) => {
             if (content && content.trim()) {
                 this.saveDraft(content);
             } else {
@@ -139,5 +143,9 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
     private clearDraft(): void {
         const key = this.getDraftKey();
         this.draftService.clearDraft(key);
+    }
+
+    ngOnDestroy(): void {
+        this.draftMessageSubscription?.unsubscribe();
     }
 }
