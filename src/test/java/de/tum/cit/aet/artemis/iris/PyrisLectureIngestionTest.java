@@ -21,7 +21,6 @@ import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.repository.IrisSettingsRepository;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
-import de.tum.cit.aet.artemis.iris.service.pyris.PyrisStatusUpdateService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisWebhookService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureIngestionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
@@ -29,8 +28,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
-import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
-import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
+import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureFactory;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 
@@ -42,7 +40,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
     private PyrisWebhookService pyrisWebhookService;
 
     @Autowired
-    private LectureRepository lectureRepository;
+    private LectureTestRepository lectureRepository;
 
     @Autowired
     private UserUtilService userUtilService;
@@ -54,16 +52,10 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
     private LectureUtilService lectureUtilService;
 
     @Autowired
-    protected PyrisStatusUpdateService pyrisStatusUpdateService;
-
-    @Autowired
     protected PyrisJobService pyrisJobService;
 
     @Autowired
     protected IrisSettingsRepository irisSettingsRepository;
-
-    @Autowired
-    protected LectureUnitRepository lectureUnitRepository;
 
     private Attachment attachment;
 

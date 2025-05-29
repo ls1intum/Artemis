@@ -30,7 +30,6 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
-import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
@@ -45,7 +44,6 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateD
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
-import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 
 class IrisLectureChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
@@ -60,12 +58,6 @@ class IrisLectureChatMessageIntegrationTest extends AbstractIrisIntegrationTest 
 
     @Autowired
     private IrisMessageRepository irisMessageRepository;
-
-    @Autowired
-    private LectureRepository lectureRepository;
-
-    @Autowired
-    private StudentParticipationTestRepository studentParticipationRepository;
 
     @Autowired
     private CourseUtilService courseUtilService;
