@@ -23,7 +23,6 @@ import { AlertService } from 'app/shared/service/alert.service';
 @Component({
     selector: 'jhi-code-editor-tutor-assessment-inline-feedback',
     templateUrl: './code-editor-tutor-assessment-inline-feedback.component.html',
-    styleUrls: ['./code-editor-tutor-assessment-inline-feedback.component.scss'],
     imports: [
         FeedbackSuggestionBadgeComponent,
         TranslateDirective,

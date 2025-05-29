@@ -644,6 +644,15 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     List<TutorLeaderboardAssessmentsDTO> findTutorLeaderboardAssessmentByExamId(@Param("examId") long examId);
 
     /**
+     * Count the number of successful results of a specific assessment type for a given participation.
+     *
+     * @param participationId the id of the student participation
+     * @param assessmentType  the type of assessment (e.g. AUTOMATIC_ATHENA)
+     * @return number of successful results for the participation (0 if none)
+     */
+    int countByParticipationIdAndAssessmentTypeAndSuccessfulTrue(long participationId, AssessmentType assessmentType);
+
+    /**
      * This function is used for submitting a manual assessment/result.
      * It updates the completion date and saves the updated result in the database.
      *

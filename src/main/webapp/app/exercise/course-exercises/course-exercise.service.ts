@@ -118,6 +118,15 @@ export class CourseExerciseService {
     }
 
     /**
+     * Retrieves the number of successful AUTOMATIC_ATHENA feedback requests for the given participation.
+     * @param participationId - the ID of the participation
+     * @returns an Observable of the feedback request count
+     */
+    getAthenaFeedbackRequestCount(participationId: number): Observable<number> {
+        return this.http.get<number>(`api/exercise/participations/${participationId}/athena-feedback-request-count`);
+    }
+
+    /**
      * handle the given student participation by adding in the participationWebsocketService
      * @param participation - the participation to be handled
      */
