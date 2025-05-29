@@ -5,7 +5,6 @@ import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
 
 import java.time.ZonedDateTime;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -218,13 +217,24 @@ public class LectureService {
     }
 
     /**
-     * Returns a lecture with all lecture units and attachments for the given lectureId.
-     * The lecture is filtered for the given user, so that only the content the user is allowed to see is returned.
-     * The lecture units are also enriched with the completion information for the user.
+     * Retrieves a detailed {@link Lecture} for a given lecture ID and user.
+     * <p>
+     * This method:
+     * <ul>
+     * <li>Fetches the lecture with units and attachments.</li>
+     * <li>Ensures the lecture is linked to a valid course.</li>
+     * <li>Determines which lecture units the user has completed and updates them accordingly.</li>
+     * <li>Optionally enriches the lecture with competency links via the injected {@code competencyApi}.</li>
+     * <li>Filters the lecture content to match the user’s access rights.</li>
+     * </ul>
+     * <p>
+     * <strong>Rationale:</strong> Combines lecture details, user-specific completion data, and optional competencies into a user-tailored view. It enforces data integrity,
+     * supports optional enrichment, and ensures proper access control.
      *
-     * @param lectureId the id of the lecture to retrieve
-     * @param user      the user for which to filter the lecture content
-     * @return the lecture with all lecture units and attachments, filtered for the user
+     * @param lectureId the ID of the lecture
+     * @param user      the user requesting lecture details
+     * @return the filtered {@link Lecture} object
+     * @throws BadRequestAlertException if the lecture is not linked to a course
      */
     public Lecture getForDetails(long lectureId, User user) {
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureId);
@@ -235,15 +245,33 @@ public class LectureService {
         Set<LectureUnitCompletion> completionsForLectureAndUser = lectureUnitRepository.findCompletionsForLectureAndUser(lectureId, user.getId());
         Map<Long, LectureUnitCompletion> byUnit = completionsForLectureAndUser.stream().collect(toMap(cu -> cu.getLectureUnit().getId(), identity()));
 
-        lecture.getLectureUnits().forEach(lu -> {
-            LectureUnitCompletion completion = byUnit.get(lu.getId());
-            lu.setCompletedUsers(completion != null ? Set.of(completion) : Collections.emptySet());
+        lecture.getLectureUnits().forEach(lectureUnit -> {
+            LectureUnitCompletion completion = byUnit.get(lectureUnit.getId());
+            lectureUnit.setCompletedUsers(completion != null ? Set.of(completion) : Set.of());
         });
         competencyApi.ifPresent(api -> api.addCompetencyLinksToExerciseUnits(lecture));
         return filterLectureContentForUser(lecture, user);
-
     }
 
+    /**
+     * Filters a {@link Lecture} object’s content based on the user's access rights.
+     * <p>
+     * This method:
+     * <ul>
+     * <li>Filters out inactive attachments not visible to the user.</li>
+     * <li>Removes Hibernate-added {@code null} lecture units to maintain integrity.</li>
+     * <li>Collects exercises from the lecture units and filters out those the user should not see.</li>
+     * <li>Enriches permitted exercises with full details needed for the dashboard.</li>
+     * <li>Filters lecture units based on user permissions and updates each with completion status and competencies.</li>
+     * </ul>
+     * <p>
+     * <strong>Rationale:</strong> Ensures that only authorized and fully detailed content is shown to the user. It handles Hibernate’s quirks (e.g., null entries) and aligns with
+     * access control and information completeness for the dashboard.
+     *
+     * @param lecture the {@link Lecture} to filter
+     * @param user    the user requesting access
+     * @return the filtered {@link Lecture}
+     */
     private Lecture filterLectureContentForUser(Lecture lecture, User user) {
         lecture = filterActiveAttachments(lecture, user);
 
@@ -254,7 +282,6 @@ public class LectureService {
 
         Set<Long> exerciseIdsUserIsAllowedToSee = exerciseService.filterOutExercisesThatUserShouldNotSee(relatedExercises, user).stream().map(Exercise::getId)
                 .collect(Collectors.toSet());
-
         Map<Long, Exercise> exerciseIdToExercise = exerciseService.loadExercisesWithInformationForDashboard(exerciseIdsUserIsAllowedToSee, user).stream()
                 .collect(Collectors.toMap(Exercise::getId, Function.identity()));
 
