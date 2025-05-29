@@ -14,6 +14,9 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 
+/**
+ * Service for retrieving courses for the course management overview.
+ */
 @Service
 @Profile(PROFILE_CORE)
 public class CourseOverviewService {

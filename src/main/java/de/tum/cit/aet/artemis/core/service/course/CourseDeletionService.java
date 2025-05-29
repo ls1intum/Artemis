@@ -8,7 +8,6 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -36,6 +35,11 @@ import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupApi;
 import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupChannelManagementApi;
 import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupApiNotPresentException;
 
+/**
+ * Service for deleting a course and all its associated elements.
+ * This service handles the deletion of exercises, lectures, exams, grading scales, competencies, tutorial groups, conversations, notifications,
+ * and default user groups associated with the course.
+ */
 @Service
 @Profile(PROFILE_CORE)
 public class CourseDeletionService {
@@ -76,14 +80,12 @@ public class CourseDeletionService {
 
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
-    private final AuditEventRepository auditEventRepository;
-
     public CourseDeletionService(ExerciseDeletionService exerciseDeletionService, UserService userService, Optional<LectureApi> lectureApi,
             Optional<TutorialGroupApi> tutorialGroupApi, Optional<ExamDeletionApi> examDeletionApi, Optional<ExamRepositoryApi> examRepositoryApi,
             GradingScaleRepository gradingScaleRepository, Optional<CompetencyRelationApi> competencyRelationApi, Optional<PrerequisitesApi> prerequisitesApi,
             Optional<LearnerProfileApi> learnerProfileApi, Optional<IrisSettingsApi> irisSettingsApi, Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi,
             CourseNotificationRepository courseNotificationRepository, ConversationRepository conversationRepository, FaqRepository faqRepository,
-            CourseRepository courseRepository, Optional<CompetencyProgressApi> competencyProgressApi, AuditEventRepository auditEventRepository) {
+            CourseRepository courseRepository, Optional<CompetencyProgressApi> competencyProgressApi) {
         this.exerciseDeletionService = exerciseDeletionService;
         this.userService = userService;
         this.lectureApi = lectureApi;
@@ -101,7 +103,6 @@ public class CourseDeletionService {
         this.faqRepository = faqRepository;
         this.courseRepository = courseRepository;
         this.competencyProgressApi = competencyProgressApi;
-        this.auditEventRepository = auditEventRepository;
     }
 
     /**

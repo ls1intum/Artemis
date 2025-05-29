@@ -33,6 +33,10 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.user.UserService;
 
+/**
+ * Service for managing course access, including enrollment and unenrollment of users.
+ * This service provides methods to enroll and unenroll users in courses, as well as to manage user groups within courses.
+ */
 @Service
 @Profile(PROFILE_CORE)
 public class CourseAccessService {

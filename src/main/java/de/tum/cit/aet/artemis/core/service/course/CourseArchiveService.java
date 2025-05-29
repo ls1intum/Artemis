@@ -37,6 +37,10 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
+/**
+ * Service for archiving courses, which includes exporting course data and cleaning up exercises.
+ * This service is used to create a zip file containing student submissions for both course exercises and exams.
+ */
 @Service
 @Profile(PROFILE_CORE)
 public class CourseArchiveService {

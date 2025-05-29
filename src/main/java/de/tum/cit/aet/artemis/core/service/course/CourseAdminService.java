@@ -22,6 +22,10 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
 import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
 
+/**
+ * Service for administrative operations on courses.
+ * This service provides methods to retrieve information about the course that are only relevant for admins, such as the deletion summary.
+ */
 @Service
 @Profile(PROFILE_CORE)
 public class CourseAdminService {

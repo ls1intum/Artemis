@@ -11,6 +11,9 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 
+/**
+ * Service for determining whether a course is visible to a user.
+ */
 @Service
 @Profile(PROFILE_CORE)
 public class CourseVisibleService {

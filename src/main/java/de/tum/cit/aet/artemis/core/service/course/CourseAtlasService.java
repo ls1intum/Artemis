@@ -13,6 +13,10 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 
+/**
+ * Service for retrieving courses that are visible to users and have learning paths enabled.
+ * This is only used in the atlas module.
+ */
 @Service
 @Profile(PROFILE_CORE)
 public class CourseAtlasService {

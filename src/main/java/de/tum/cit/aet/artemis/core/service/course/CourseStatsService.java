@@ -49,6 +49,10 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
+/**
+ * Service for retrieving course statistics, such as active students, average scores, and other metrics.
+ * This service is used in the course management detail view and dashboard.
+ */
 @Service
 @Profile(PROFILE_CORE)
 public class CourseStatsService {

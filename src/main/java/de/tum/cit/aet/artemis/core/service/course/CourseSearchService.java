@@ -14,6 +14,9 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 
+/**
+ * Service for searching users in a course.
+ */
 @Service
 @Profile(PROFILE_CORE)
 public class CourseSearchService {

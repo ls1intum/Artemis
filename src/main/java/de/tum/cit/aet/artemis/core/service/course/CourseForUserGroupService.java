@@ -13,6 +13,9 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 
+/**
+ * Service for retrieving courses for a user based on their groups.
+ */
 @Service
 @Profile(PROFILE_CORE)
 public class CourseForUserGroupService {
