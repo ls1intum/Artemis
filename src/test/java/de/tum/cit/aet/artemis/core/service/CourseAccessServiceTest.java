@@ -15,7 +15,7 @@ import de.tum.cit.aet.artemis.core.service.course.CourseAccessService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
-public class CourseAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
+class CourseAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "courseAccessservice";
 

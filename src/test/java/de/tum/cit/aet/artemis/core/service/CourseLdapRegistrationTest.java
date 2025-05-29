@@ -3,8 +3,6 @@ package de.tum.cit.aet.artemis.core.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doReturn;
 
-import java.time.ZonedDateTime;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 
@@ -16,40 +14,23 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
-import de.tum.cit.aet.artemis.core.service.course.CourseService;
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserDto;
+import de.tum.cit.aet.artemis.core.service.ldap.LdapUserService;
 import de.tum.cit.aet.artemis.core.service.user.PasswordService;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserFactory;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
-import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
-import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
-import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
-import de.tum.cit.aet.artemis.programming.test_repository.BuildJobTestRepository;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
-class CourseServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
+class CourseLdapRegistrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "courseservice";
 
     @Autowired
-    private CourseService courseService;
-
-    @Autowired
     private UserTestRepository userRepository;
-
-    @Autowired
-    private SubmissionTestRepository submissionRepository;
-
-    @Autowired
-    private StudentParticipationTestRepository studentParticipationRepo;
-
-    @Autowired
-    private BuildJobTestRepository buildJobRepo;
 
     @Autowired
     private UserUtilService userUtilService;
@@ -58,95 +39,14 @@ class CourseServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
     private CourseUtilService courseUtilService;
 
     @Autowired
-    private ParticipationUtilService participationUtilService;
-
-    @Autowired
-    private ConversationUtilService conversationUtilService;
-
-    @Autowired
     private PasswordService passwordService;
+
+    @Autowired
+    private LdapUserService ldapUserService;
 
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 1);
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void testGetOverviewAsAdmin() {
-        // Minimal testcase: Admins always see all courses
-        // Add two courses, one not active
-        var course = courseUtilService.addEmptyCourse();
-        var inactiveCourse = courseUtilService.createCourse();
-        inactiveCourse.setEndDate(ZonedDateTime.now().minusDays(7));
-        courseRepository.save(inactiveCourse);
-
-        var courses = courseService.getAllCoursesForManagementOverview(false);
-        assertThat(courses).contains(inactiveCourse, course);
-
-        courses = courseService.getAllCoursesForManagementOverview(true);
-        assertThat(courses).contains(course);
-        assertThat(courses).doesNotContain(inactiveCourse);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetOverviewAsInstructor() {
-        // Testcase: Instructors see their courses
-        // Add three courses, containing one not active and one not belonging to the instructor
-        var course = courseUtilService.addEmptyCourse();
-        var inactiveCourse = courseUtilService.createCourse();
-        inactiveCourse.setEndDate(ZonedDateTime.now().minusDays(7));
-        inactiveCourse.setInstructorGroupName("test-instructors");
-        courseRepository.save(inactiveCourse);
-        var instructorsCourse = courseUtilService.createCourse();
-        instructorsCourse.setInstructorGroupName("test-instructors");
-        courseRepository.save(instructorsCourse);
-
-        var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
-        var groups = new HashSet<String>();
-        groups.add("test-instructors");
-        instructor.setGroups(groups);
-        userRepository.save(instructor);
-
-        // TODO: investigate why this test fails
-
-        var courses = courseService.getAllCoursesForManagementOverview(false);
-        assertThat(courses).contains(instructorsCourse);
-        assertThat(courses).contains(inactiveCourse);
-        assertThat(courses).doesNotContain(course);
-
-        courses = courseService.getAllCoursesForManagementOverview(true);
-        assertThat(courses).contains(instructorsCourse);
-        assertThat(courses).doesNotContain(inactiveCourse);
-        assertThat(courses).doesNotContain(course);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetOverviewAsStudent() {
-        // Testcase: Students should not see courses
-        // Add three courses, containing one not active and one not belonging to the student
-        courseUtilService.addEmptyCourse();
-        var inactiveCourse = courseUtilService.createCourse();
-        inactiveCourse.setEndDate(ZonedDateTime.now().minusDays(7));
-        inactiveCourse.setStudentGroupName("test-students");
-        courseRepository.save(inactiveCourse);
-        var instructorsCourse = courseUtilService.createCourse();
-        instructorsCourse.setStudentGroupName("test-students");
-        courseRepository.save(instructorsCourse);
-
-        var student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        var groups = new HashSet<String>();
-        groups.add("test-students");
-        student.setGroups(groups);
-        userRepository.save(student);
-
-        var courses = courseService.getAllCoursesForManagementOverview(false);
-        assertThat(courses).isEmpty();
-
-        courses = courseService.getAllCoursesForManagementOverview(true);
-        assertThat(courses).isEmpty();
     }
 
     @ParameterizedTest(name = "{displayName} [{index}]")

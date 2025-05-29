@@ -41,7 +41,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 @Profile(PROFILE_CORE)
 public class CourseArchiveService {
 
-    private final Logger log = LoggerFactory.getLogger(CourseArchiveService.class);
+    private static final Logger log = LoggerFactory.getLogger(CourseArchiveService.class);
 
     @Value("${artemis.course-archives-path}")
     private Path courseArchivesDirPath;

@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.core.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
@@ -15,14 +17,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.course.CourseStatsService;
-import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 
-public class CourseStatsServiceTest extends AbstractSpringIntegrationIndependentTest {
+class CourseStatsServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "coursestatsservice";
 
@@ -30,10 +33,13 @@ public class CourseStatsServiceTest extends AbstractSpringIntegrationIndependent
     private CourseStatsService courseStatsService;
 
     @Autowired
-    private UserUtilService userUtilService;
+    private ExerciseRepository exerciseRepository;
 
     @Autowired
-    private ExerciseRepository exerciseRepository;
+    private StudentParticipationRepository studentParticipationRepo;
+
+    @Autowired
+    private SubmissionRepository submissionRepository;
 
     @BeforeEach
     void initTestCase() {

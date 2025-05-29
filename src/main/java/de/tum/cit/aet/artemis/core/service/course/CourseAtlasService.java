@@ -1,19 +1,20 @@
 package de.tum.cit.aet.artemis.core.service.course;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
 import java.time.ZonedDateTime;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 
 @Service
-@Conditional(AtlasEnabled.class)
+@Profile(PROFILE_CORE)
 public class CourseAtlasService {
 
     private final CourseRepository courseRepository;
