@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -22,6 +23,11 @@ class CourseOverviewServiceTest extends AbstractSpringIntegrationIndependentTest
 
     @Autowired
     private UserTestRepository userRepository;
+
+    @BeforeEach
+    void initTestCase() {
+        userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 1);
+    }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
