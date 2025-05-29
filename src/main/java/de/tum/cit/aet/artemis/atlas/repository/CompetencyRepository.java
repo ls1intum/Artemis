@@ -73,4 +73,24 @@ public interface CompetencyRepository extends ArtemisJpaRepository<Competency, L
     long countByCourse(Course course);
 
     List<Competency> findByCourseIdOrderById(long courseId);
+
+    @Query("""
+            SELECT c
+            FROM LearningPath lp
+                JOIN lp.course.competencies c
+            WHERE lp.id = :learningPathId
+            """)
+    Set<Competency> findByLearningPathId(@Param("learningPathId") long learningPathId);
+
+    @Query("""
+            SELECT c
+            FROM LearningPath lp
+                JOIN lp.course.competencies c
+                LEFT JOIN FETCH c.lectureUnitLinks clul
+                LEFT JOIN FETCH clul.lectureUnit
+                LEFT JOIN FETCH c.exerciseLinks cel
+                LEFT JOIN FETCH cel.exercise
+            WHERE lp.id = :learningPathId
+            """)
+    Set<Competency> findByLearningPathIdWithLectureUnitsAndExercises(@Param("learningPathId") long learningPathId);
 }
