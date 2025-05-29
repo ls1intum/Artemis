@@ -9,6 +9,7 @@ import { PostingMarkdownEditorComponent } from 'app/communication/posting-markdo
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { LocalStorageService } from 'ngx-webstorage';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-message-reply-inline-input',
@@ -19,8 +20,11 @@ import { ConversationDTO } from 'app/communication/shared/entities/conversation/
 })
 export class MessageReplyInlineInputComponent extends PostingCreateEditDirective<AnswerPost> implements OnInit, OnChanges {
     private localStorageService = inject(LocalStorageService);
+    private accountService = inject(AccountService);
 
     warningDismissed = false;
+    private readonly DRAFT_KEY_PREFIX = 'thread_draft_';
+    private currentUserId: number | undefined;
 
     readonly activeConversation = input<ConversationDTO>();
 
@@ -29,6 +33,7 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
     ngOnInit(): void {
         super.ngOnInit();
         this.warningDismissed = !!this.localStorageService.retrieve('chatWarningDismissed');
+        void this.loadCurrentUser();
     }
 
     ngOnChanges(changes: SimpleChanges | void) {
@@ -43,6 +48,15 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
         }
 
         super.ngOnChanges();
+        this.loadDraft();
+    }
+
+    private async loadCurrentUser(): Promise<void> {
+        const account = await this.accountService.identity();
+        if (account?.id) {
+            this.currentUserId = account.id;
+            this.loadDraft();
+        }
     }
 
     /**
@@ -57,6 +71,15 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
             // the pattern ensures that the content must include at least one non-whitespace character
             content: [this.posting.content, [Validators.required, Validators.maxLength(this.maxContentLength), PostContentValidationPattern]],
         });
+
+        // Subscribe to content changes to save drafts
+        this.formGroup.get('content')?.valueChanges.subscribe((content) => {
+            if (content && content.trim()) {
+                this.saveDraft(content);
+            } else {
+                this.clearDraft();
+            }
+        });
     }
 
     /**
@@ -69,6 +92,7 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
             next: (answerPost: AnswerPost) => {
                 this.resetFormGroup('');
                 this.isLoading = false;
+                this.clearDraft();
                 this.onCreate.emit(answerPost);
             },
             error: () => {
@@ -86,6 +110,7 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
         this.metisService.updateAnswerPost(this.posting).subscribe({
             next: () => {
                 this.isLoading = false;
+                this.clearDraft();
             },
             error: () => {
                 this.isLoading = false;
@@ -96,5 +121,44 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
     closeAlert() {
         this.warningDismissed = true;
         this.localStorageService.store('chatWarningDismissed', true);
+    }
+
+    private getDraftKey(): string {
+        const userId = this.currentUserId;
+        const conversationId = this.activeConversation()?.id;
+        const postId = this.posting.post?.id;
+        if (!userId || !conversationId || !postId) {
+            return '';
+        }
+        return `${this.DRAFT_KEY_PREFIX}${userId}_${conversationId}_${postId}`;
+    }
+
+    private saveDraft(content: string): void {
+        const key = this.getDraftKey();
+        if (key && key !== '' && content && content.trim()) {
+            this.localStorageService.store(key, content);
+        } else if (key && key !== '') {
+            this.clearDraft();
+        }
+    }
+
+    private loadDraft(): void {
+        const key = this.getDraftKey();
+        if (key && key !== '') {
+            const draft = this.localStorageService.retrieve(key);
+            if (draft && draft.trim()) {
+                this.posting.content = draft;
+                this.resetFormGroup();
+            } else {
+                this.clearDraft();
+            }
+        }
+    }
+
+    private clearDraft(): void {
+        const key = this.getDraftKey();
+        if (key && key !== '') {
+            this.localStorageService.clear(key);
+        }
     }
 }
