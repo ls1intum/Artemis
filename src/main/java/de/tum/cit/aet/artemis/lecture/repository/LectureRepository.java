@@ -63,8 +63,6 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
     Set<Lecture> findAllByCourseIdWithAttachmentsAndLectureUnits(@Param("courseId") Long courseId);
 
     // TODO: this query loads too much data, we should reduce the number of left join fetches
-
-    // TODO: this query loads too much data, we should reduce the number of left join fetches
     @Query("""
             SELECT lecture
             FROM Lecture lecture

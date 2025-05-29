@@ -1,15 +1,18 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
 
 import java.time.ZonedDateTime;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Profile;
@@ -214,6 +217,15 @@ public class LectureService {
         irisLectureApi.ifPresent(webhookService -> webhookService.deleteLectureTranscription(existingLectureTranscription));
     }
 
+    /**
+     * Returns a lecture with all lecture units and attachments for the given lectureId.
+     * The lecture is filtered for the given user, so that only the content the user is allowed to see is returned.
+     * The lecture units are also enriched with the completion information for the user.
+     *
+     * @param lectureId the id of the lecture to retrieve
+     * @param user      the user for which to filter the lecture content
+     * @return the lecture with all lecture units and attachments, filtered for the user
+     */
     public Lecture getForDetails(long lectureId, User user) {
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureId);
         Course course = lecture.getCourse();
@@ -221,14 +233,11 @@ public class LectureService {
             throw new BadRequestAlertException("The course belonging to this lecture does not exist", "lecture", "courseNotFound");
         }
         Set<LectureUnitCompletion> completionsForLectureAndUser = lectureUnitRepository.findCompletionsForLectureAndUser(lectureId, user.getId());
-        Map<Long, LectureUnitCompletion> byUnit = completionsForLectureAndUser.stream().collect(toMap(cu -> cu.getLectureUnit().getId(), cu -> cu));
+        Map<Long, LectureUnitCompletion> byUnit = completionsForLectureAndUser.stream().collect(toMap(cu -> cu.getLectureUnit().getId(), identity()));
 
         lecture.getLectureUnits().forEach(lu -> {
-            Set<LectureUnitCompletion> completions = new HashSet<>();
-            if (byUnit.containsKey(lu.getId())) {
-                completions.add(byUnit.get(lu.getId()));
-            }
-            lu.setCompletedUsers(completions);
+            LectureUnitCompletion completion = byUnit.get(lu.getId());
+            lu.setCompletedUsers(completion != null ? Set.of(completion) : Collections.emptySet());
         });
         competencyApi.ifPresent(api -> api.addCompetencyLinksToExerciseUnits(lecture));
         return filterLectureContentForUser(lecture, user);
@@ -240,27 +249,32 @@ public class LectureService {
 
         // The Objects::nonNull is needed here because the relationship lecture -> lecture units is ordered and
         // hibernate sometimes adds nulls into the list of lecture units to keep the order
-        Set<Exercise> relatedExercises = lecture.getLectureUnits().stream().filter(Objects::nonNull).filter(lectureUnit -> lectureUnit instanceof ExerciseUnit)
-                .map(lectureUnit -> ((ExerciseUnit) lectureUnit).getExercise()).collect(Collectors.toSet());
+        Set<Exercise> relatedExercises = lecture.getLectureUnits().stream().filter(Objects::nonNull).filter(ExerciseUnit.class::isInstance).map(ExerciseUnit.class::cast)
+                .map(ExerciseUnit::getExercise).collect(Collectors.toSet());
 
-        Set<Exercise> exercisesUserIsAllowedToSee = exerciseService.filterOutExercisesThatUserShouldNotSee(relatedExercises, user);
-        Set<Exercise> exercisesWithAllInformationNeeded = exerciseService
-                .loadExercisesWithInformationForDashboard(exercisesUserIsAllowedToSee.stream().map(Exercise::getId).collect(Collectors.toSet()), user);
+        Set<Long> exerciseIdsUserIsAllowedToSee = exerciseService.filterOutExercisesThatUserShouldNotSee(relatedExercises, user).stream().map(Exercise::getId)
+                .collect(Collectors.toSet());
+
+        Map<Long, Exercise> exerciseIdToExercise = exerciseService.loadExercisesWithInformationForDashboard(exerciseIdsUserIsAllowedToSee, user).stream()
+                .collect(Collectors.toMap(Exercise::getId, Function.identity()));
 
         List<LectureUnit> lectureUnitsUserIsAllowedToSee = lecture.getLectureUnits().stream().filter(lectureUnit -> switch (lectureUnit) {
             case null -> false;
             case ExerciseUnit exerciseUnit -> exerciseUnit.getExercise() != null && authCheckService.isAllowedToSeeLectureUnit(lectureUnit, user)
-                    && exercisesWithAllInformationNeeded.contains(exerciseUnit.getExercise());
+                    && exerciseIdToExercise.containsKey(exerciseUnit.getExercise().getId());
             default -> authCheckService.isAllowedToSeeLectureUnit(lectureUnit, user);
         }).peek(lectureUnit -> {
             lectureUnit.setCompleted(lectureUnit.isCompletedFor(user));
 
-            if (lectureUnit instanceof ExerciseUnit) {
-                Exercise exercise = ((ExerciseUnit) lectureUnit).getExercise();
+            if (lectureUnit instanceof ExerciseUnit exerciseUnit) {
+                Exercise exercise = exerciseUnit.getExercise();
                 // we replace the exercise with one that contains all the information needed for correct display
-                exercisesWithAllInformationNeeded.stream().filter(exercise::equals).findAny().ifPresent(((ExerciseUnit) lectureUnit)::setExercise);
+                Exercise exerciseWithInfo = exerciseIdToExercise.get(exercise.getId());
+                if (exerciseWithInfo != null) {
+                    exerciseUnit.setExercise(exerciseWithInfo);
+                }
                 // re-add the competencies already loaded with the exercise unit
-                ((ExerciseUnit) lectureUnit).getExercise().setCompetencyLinks(exercise.getCompetencyLinks());
+                exerciseUnit.getExercise().setCompetencyLinks(exercise.getCompetencyLinks());
             }
         }).toList();
 
