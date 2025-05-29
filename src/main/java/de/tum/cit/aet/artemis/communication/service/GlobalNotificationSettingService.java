@@ -41,11 +41,20 @@ public class GlobalNotificationSettingService {
         }
         else {
             setting = new GlobalNotificationSetting();
-            setting.setUser(user);
+            setting.setUserId(user.getId());
             setting.setNotificationType(notificationType);
             setting.setEnabled(enabled);
         }
 
         return globalNotificationSettingRepository.save(setting);
+    }
+
+    /**
+     * Deletes all the global notifications of a user
+     *
+     * @param userId the ID of the user.
+     */
+    public void deleteAllByUserId(Long userId) {
+        globalNotificationSettingRepository.deleteAllByUserId(userId);
     }
 }

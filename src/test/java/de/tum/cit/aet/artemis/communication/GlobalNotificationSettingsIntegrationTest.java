@@ -14,6 +14,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.communication.domain.GlobalNotificationType;
 import de.tum.cit.aet.artemis.communication.repository.GlobalNotificationSettingRepository;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.service.user.UserService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class GlobalNotificationSettingsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -22,6 +23,9 @@ class GlobalNotificationSettingsIntegrationTest extends AbstractSpringIntegratio
 
     @Autowired
     private GlobalNotificationSettingRepository globalNotificationSettingRepository;
+
+    @Autowired
+    private UserService userService;
 
     private User testUser;
 
@@ -102,6 +106,22 @@ class GlobalNotificationSettingsIntegrationTest extends AbstractSpringIntegratio
         Map<String, Boolean> requestBody = new HashMap<>();
         requestBody.put("enabled", true);
         request.put("/api/communication/global-notification-settings/INVALID_TYPE", requestBody, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCascadeDeleteOnUserDeletion() throws Exception {
+        enableAllNotifications();
+
+        assertThat(globalNotificationSettingRepository.isNotificationEnabled(testUser.getId(), GlobalNotificationType.NEW_LOGIN)).isTrue();
+        assertThat(globalNotificationSettingRepository.isNotificationEnabled(testUser.getId(), GlobalNotificationType.NEW_PASSKEY_ADDED)).isTrue();
+
+        userService.softDeleteUser(testUser.getLogin());
+
+        assertThat(globalNotificationSettingRepository.findByUserIdAndNotificationType(testUser.getId(), GlobalNotificationType.NEW_LOGIN)).isEmpty();
+        assertThat(globalNotificationSettingRepository.findByUserIdAndNotificationType(testUser.getId(), GlobalNotificationType.NEW_PASSKEY_ADDED)).isEmpty();
+        assertThat(globalNotificationSettingRepository.findByUserIdAndNotificationType(testUser.getId(), GlobalNotificationType.VCS_TOKEN_EXPIRED)).isEmpty();
+        assertThat(globalNotificationSettingRepository.findByUserIdAndNotificationType(testUser.getId(), GlobalNotificationType.SSH_KEY_EXPIRED)).isEmpty();
     }
 
     private void enableAllNotifications() throws Exception {

@@ -10,9 +10,11 @@ import java.util.Set;
 import jakarta.validation.constraints.NotNull;
 
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.communication.domain.GlobalNotificationSetting;
 import de.tum.cit.aet.artemis.communication.domain.GlobalNotificationType;
@@ -25,14 +27,14 @@ public interface GlobalNotificationSettingRepository extends ArtemisJpaRepositor
     @Query("""
             SELECT setting
             FROM GlobalNotificationSetting setting
-            WHERE setting.user.id = :userId
+            WHERE setting.userId = :userId
             """)
     Set<GlobalNotificationSetting> findByUserId(@Param("userId") long userId);
 
     @Query("""
             SELECT setting
             FROM GlobalNotificationSetting setting
-            WHERE setting.user.id = :userId
+            WHERE setting.userId = :userId
                 AND setting.notificationType = :notificationType
             """)
     Optional<GlobalNotificationSetting> findByUserIdAndNotificationType(@Param("userId") long userId, @Param("notificationType") @NotNull GlobalNotificationType notificationType);
@@ -68,4 +70,7 @@ public interface GlobalNotificationSettingRepository extends ArtemisJpaRepositor
         return result;
     }
 
+    @Transactional
+    @Modifying
+    void deleteAllByUserId(Long userId);
 }
