@@ -28,7 +28,6 @@ import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
-import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 
 @Profile(PROFILE_CORE)
@@ -169,26 +168,5 @@ public class LectureService {
                 irisLectureApi.get().addLectureUnitToPyrisDB(attachmentVideoUnit);
             }
         }
-    }
-
-    /**
-     * Ingest the transcriptions in the Pyris system
-     *
-     * @param transcription       Transcription to be ingested
-     * @param course              The course containing the transcription
-     * @param lecture             The lecture containing the transcription
-     * @param attachmentVideoUnit The lecture unit containing the transcription
-     */
-    public void ingestTranscriptionInPyris(LectureTranscription transcription, Course course, Lecture lecture, AttachmentVideoUnit attachmentVideoUnit) {
-        irisLectureApi.ifPresent(webhookService -> webhookService.addTranscriptionsToPyrisDB(transcription, course, lecture, attachmentVideoUnit));
-    }
-
-    /**
-     * Deletes an existing Lecture transcription from the Pyris system. If the PyrisWebhookService is unavailable, the method does nothing.
-     *
-     * @param existingLectureTranscription the Lecture transcription to be removed from Pyris
-     */
-    public void deleteLectureTranscriptionInPyris(LectureTranscription existingLectureTranscription) {
-        irisLectureApi.ifPresent(webhookService -> webhookService.deleteLectureTranscription(existingLectureTranscription));
     }
 }

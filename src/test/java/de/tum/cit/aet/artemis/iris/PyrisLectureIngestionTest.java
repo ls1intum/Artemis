@@ -81,6 +81,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
         userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
         userUtilService.createAndSaveUser(TEST_PREFIX + "tutor42");
         userUtilService.createAndSaveUser(TEST_PREFIX + "instructor42");
+        activateIrisGlobally();
 
         int numberOfSlides = 2;
         AttachmentVideoUnit pdfAttachmentVideoUnitWithSlides = lectureUtilService.createAttachmentVideoUnitWithSlidesAndFile(numberOfSlides, true);
