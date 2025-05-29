@@ -183,6 +183,7 @@ public class ProgrammingPlagiarismDetectionService {
      */
     @NotNull
     private JPlagResult computeJPlagResult(ProgrammingExercise programmingExercise, float similarityThreshold, int minimumScore, int minimumSize) {
+        // TODO: Move minimumSize to configuration parameter in next refactoring
         long programmingExerciseId = programmingExercise.getId();
         final var targetPath = fileService.getTemporaryUniqueSubfolderPath(repoDownloadClonePath, 60);
         List<ProgrammingExerciseParticipation> participations = findStudentParticipationsForComparison(programmingExercise, minimumScore);
