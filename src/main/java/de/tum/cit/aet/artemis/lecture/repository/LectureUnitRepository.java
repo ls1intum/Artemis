@@ -81,10 +81,10 @@ public interface LectureUnitRepository extends ArtemisJpaRepository<LectureUnit,
     @Query("""
             SELECT cu
             FROM LectureUnit lu
-              JOIN lu.completedUsers cu
+                JOIN lu.completedUsers cu
             WHERE lu.lecture.id = :lectureId
-              AND cu.user.id = :userId
-              """)
+                AND cu.user.id = :userId
+            """)
     Set<LectureUnitCompletion> findCompletionsForLectureAndUser(@Param("lectureId") long lectureId, @Param("userId") long userId);
 
     /**

@@ -128,6 +128,7 @@ public class LectureService {
 
     /**
      * Search for all lectures fitting a {@link SearchTermPageableSearchDTO search query}. The result is paged.
+     * It only returns results for which the user (at least editor) has access to the course.
      *
      * @param search The search query defining the search term and the size of the returned page
      * @param user   The user for whom to fetch all available lectures

@@ -32,7 +32,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.atlas.api.CompetencyApi;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
@@ -53,7 +52,6 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLecture.EnforceAtLeastStudentInLecture;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
-import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -80,8 +78,6 @@ public class LectureResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    private final Optional<CompetencyApi> competencyApi;
-
     private final LectureRepository lectureRepository;
 
     private final LectureService lectureService;
@@ -94,25 +90,21 @@ public class LectureResource {
 
     private final UserRepository userRepository;
 
-    private final ExerciseService exerciseService;
-
     private final ChannelService channelService;
 
     private final ChannelRepository channelRepository;
 
     public LectureResource(LectureRepository lectureRepository, LectureService lectureService, LectureImportService lectureImportService, CourseRepository courseRepository,
-            UserRepository userRepository, AuthorizationCheckService authCheckService, ExerciseService exerciseService, ChannelService channelService,
-            ChannelRepository channelRepository, Optional<CompetencyApi> competencyApi, SlideRepository slideRepository) {
+            UserRepository userRepository, AuthorizationCheckService authCheckService, ChannelService channelService, ChannelRepository channelRepository,
+            SlideRepository slideRepository) {
         this.lectureRepository = lectureRepository;
         this.lectureService = lectureService;
         this.lectureImportService = lectureImportService;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
-        this.exerciseService = exerciseService;
         this.channelService = channelService;
         this.channelRepository = channelRepository;
-        this.competencyApi = competencyApi;
         this.slideRepository = slideRepository;
     }
 
