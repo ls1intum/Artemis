@@ -9,6 +9,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MapsId;
 import jakarta.persistence.Table;
@@ -37,7 +38,8 @@ public class LectureUnitCompletion {
     @JsonIgnore
     private User user;
 
-    @ManyToOne
+    // TODO: double check if this could lead to issues when using learning paths
+    @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("lectureUnitId")
     @JsonIgnore
     private LectureUnit lectureUnit;

@@ -83,6 +83,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     hasPdfLectureUnit: boolean;
     irisSettings?: IrisSettings;
     paramsSubscription: Subscription;
+    courseParamsSubscription: Subscription;
     isProduction = true;
     isTestServer = false;
     endsSameDay = false;
@@ -100,6 +101,15 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
         this.isProduction = this.profileService.isProduction();
         this.isTestServer = this.profileService.isTestServer();
         this.irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
+
+        // As defined in courses.route.ts, the courseId is in the grand parent route of the lectureId route.
+        const grandParentRoute = this.activatedRoute.parent?.parent;
+        if (grandParentRoute) {
+            this.courseParamsSubscription = grandParentRoute.params.subscribe((params) => {
+                // Note: if courseId is not found, sub components cannot navigate properly
+                this.courseId = +params.courseId;
+            });
+        }
 
         this.paramsSubscription = this.activatedRoute.params.subscribe((params) => {
             this.lectureId = +params.lectureId;
@@ -193,5 +203,6 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
 
     ngOnDestroy() {
         this.paramsSubscription?.unsubscribe();
+        this.courseParamsSubscription?.unsubscribe();
     }
 }
