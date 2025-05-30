@@ -22,6 +22,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
@@ -50,7 +51,7 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
         userUtilService.addEditor("other-editor-group", TEST_PREFIX + "other-editor");
         userUtilService.addStudent("other-student-group", TEST_PREFIX + "other-student");
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
-        programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExerciseId = programmingExercise.getId();
     }
 

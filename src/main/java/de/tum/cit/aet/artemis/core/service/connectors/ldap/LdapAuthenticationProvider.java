@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.core.service.connectors.ldap;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LDAP_ONLY;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LDAP;
 
 import java.util.HashSet;
 import java.util.Locale;
@@ -33,7 +33,7 @@ import de.tum.cit.aet.artemis.core.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 
 @Component
-@Profile(PROFILE_LDAP_ONLY)
+@Profile(PROFILE_LDAP)
 @Primary
 @ComponentScan("de.tum.cit.aet.artemis.*")
 public class LdapAuthenticationProvider extends ArtemisAuthenticationProviderImpl implements ArtemisAuthenticationProvider {
