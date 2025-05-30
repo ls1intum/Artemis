@@ -9,23 +9,20 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import com.hazelcast.cluster.Member;
-import com.hazelcast.collection.IQueue;
 import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.map.IMap;
 import com.hazelcast.topic.ITopic;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
+import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.DistributedQueue;
 
 /**
  * This service is used to access the distributed data structures in Hazelcast.
@@ -37,11 +34,13 @@ public class DistributedDataAccessService {
 
     private final HazelcastInstance hazelcastInstance;
 
-    private IQueue<BuildJobQueueItem> buildJobQueue;
+    private final DistributedDataProvider distributedDataProvider;
+
+    private DistributedQueue<BuildJobQueueItem> buildJobQueue;
 
     private IMap<String, BuildJobQueueItem> processingJobs;
 
-    private IQueue<ResultQueueItem> buildResultQueue;
+    private DistributedQueue<ResultQueueItem> buildResultQueue;
 
     private IMap<String, BuildAgentInformation> buildAgentInformation;
 
@@ -53,8 +52,9 @@ public class DistributedDataAccessService {
 
     private ITopic<String> resumeBuildAgentTopic;
 
-    public DistributedDataAccessService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
+    public DistributedDataAccessService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, DistributedDataProvider distributedDataProvider) {
         this.hazelcastInstance = hazelcastInstance;
+        this.distributedDataProvider = distributedDataProvider;
     }
 
     /**
@@ -64,9 +64,11 @@ public class DistributedDataAccessService {
      *
      * @return the distributed queue of build jobs.
      */
-    public IQueue<BuildJobQueueItem> getDistributedBuildJobQueue() {
+    public DistributedQueue<BuildJobQueueItem> getDistributedBuildJobQueue() {
         if (this.buildJobQueue == null) {
-            this.buildJobQueue = this.hazelcastInstance.getQueue("buildJobQueue");
+            // TODO check if thread safe for redisson get queue also to load lazy like this
+            // ( in case several instances are getting the same queue, will it behave like hazelcast?)
+            this.buildJobQueue = this.distributedDataProvider.getQueue("buildJobQueue");
         }
         return this.buildJobQueue;
     }
@@ -79,7 +81,7 @@ public class DistributedDataAccessService {
      */
     public List<BuildJobQueueItem> getQueuedJobs() {
         // NOTE: we should not use streams with IQueue directly, because it can be unstable, when many items are added at the same time and there is a slow network condition
-        return new ArrayList<>(getDistributedBuildJobQueue());
+        return getDistributedBuildJobQueue().getAll();
     }
 
     /**
@@ -136,9 +138,9 @@ public class DistributedDataAccessService {
      *
      * @return the distributed queue of build results
      */
-    public IQueue<ResultQueueItem> getDistributedBuildResultQueue() {
+    public DistributedQueue<ResultQueueItem> getDistributedBuildResultQueue() {
         if (this.buildResultQueue == null) {
-            this.buildResultQueue = this.hazelcastInstance.getQueue("buildResultQueue");
+            this.buildResultQueue = this.distributedDataProvider.getQueue("buildResultQueue");
         }
         return this.buildResultQueue;
     }
@@ -150,8 +152,9 @@ public class DistributedDataAccessService {
      * @return a list of build results
      */
     public List<ResultQueueItem> getBuildResultQueue() {
-        // NOTE: we should not use streams with IQueue directly, because it can be unstable, when many items are added at the same time and there is a slow network condition
-        return new ArrayList<>(getDistributedBuildResultQueue());
+        // NOTE: we should not use streams with DistributedQueue directly, because it can be unstable, when many items are added at the same time and there is a slow network
+        // condition
+        return getDistributedBuildResultQueue().getAll();
     }
 
     /**
@@ -316,22 +319,7 @@ public class DistributedDataAccessService {
      * @return the address of the local Hazelcast member
      */
     public String getLocalMemberAddress() {
-        if (!isInstanceRunning()) {
-            throw new HazelcastInstanceNotActiveException();
-        }
-        return hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
-    }
-
-    /**
-     * Retrieves the members of the Hazelcast cluster.
-     *
-     * @return a stream of Hazelcast cluster members
-     */
-    public Stream<Member> getClusterMembers() {
-        if (!isInstanceRunning()) {
-            return Stream.empty();
-        }
-        return hazelcastInstance.getCluster().getMembers().stream();
+        return distributedDataProvider.getLocalMemberAddress();
     }
 
     /**
@@ -340,7 +328,7 @@ public class DistributedDataAccessService {
      * @return a set of addresses of all cluster members
      */
     public Set<String> getClusterMemberAddresses() {
-        return getClusterMembers().map(Member::getAddress).map(Object::toString).collect(Collectors.toSet());
+        return distributedDataProvider.getClusterMemberAddresses();
     }
 
     /**
@@ -349,6 +337,6 @@ public class DistributedDataAccessService {
      * @return {@code true} if all members in the cluster are lite members (i.e., no data members are available),
      */
     public boolean noDataMemberInClusterAvailable() {
-        return getClusterMembers().allMatch(Member::isLiteMember);
+        return distributedDataProvider.noDataMemberInClusterAvailable();
     }
 }
