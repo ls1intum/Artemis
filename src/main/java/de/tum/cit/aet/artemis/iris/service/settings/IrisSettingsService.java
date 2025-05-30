@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
@@ -100,7 +101,7 @@ public class IrisSettingsService {
      */
     @Profile(PROFILE_CORE_AND_SCHEDULING)
     @EventListener
-    public void execute(ApplicationReadyEvent ignoredEvent) throws Exception {
+    public void execute(FullStartupEvent ignoredEvent) throws Exception {
         var allGlobalSettings = irisSettingsRepository.findAllGlobalSettings();
         if (allGlobalSettings.isEmpty()) {
             createInitialGlobalSettings();

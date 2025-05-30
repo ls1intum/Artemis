@@ -5,7 +5,6 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -33,7 +32,7 @@ public class SentryConfiguration {
     /**
      * init sentry with the correct package name and Artemis version
      */
-    @EventListener(ApplicationReadyEvent.class)
+    @EventListener(FullStartupEvent.class)
     public void init() {
         if (sentryDsn.isEmpty() || sentryDsn.get().isEmpty()) {
             log.info("Sentry is disabled: Provide a DSN to enable Sentry.");

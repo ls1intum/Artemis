@@ -26,6 +26,7 @@ import org.springframework.core.env.Environment;
 
 import de.tum.cit.aet.artemis.core.config.ArtemisCompatibleVersionsConfiguration;
 import de.tum.cit.aet.artemis.core.config.DeferredEagerBeanInitializer;
+import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 import de.tum.cit.aet.artemis.core.config.LicenseConfiguration;
 import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
 import de.tum.cit.aet.artemis.core.config.TheiaConfiguration;
@@ -88,6 +89,7 @@ public class ArtemisApp {
         var buildProperties = context.getBean(BuildProperties.class);
         var gitProperties = context.getBean(GitProperties.class);
         logApplicationStartup(env, buildProperties, gitProperties);
+        context.publishEvent(new FullStartupEvent());
         deferredEagerBeanInitialization(context);
     }
 
