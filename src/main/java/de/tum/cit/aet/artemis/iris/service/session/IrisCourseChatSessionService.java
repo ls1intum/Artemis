@@ -136,6 +136,12 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
         builder.withCourse(session.getCourseId());
     }
 
+    /**
+     * Handles the CompetencyJolSetEvent by checking if Iris is activated for the course and if the user has accepted external LLM usage.
+     * If both conditions are met, it retrieves or creates a session and sends the request to the LLM.
+     *
+     * @param competencyJolSetEvent The event containing the CompetencyJol
+     */
     public void handleCompetencyJolSetEvent(CompetencyJolSetEvent competencyJolSetEvent) {
         var competencyJol = competencyJolSetEvent.getEventObject();
         var course = competencyJol.getCompetency().getCourse();
