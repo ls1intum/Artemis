@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.core;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEST_BUILDAGENT;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -14,7 +15,7 @@ import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
  * We need this component to publish the FullStartupEvent in our tests as we publish it in the main method that is not run for the tests.
  */
 @Component
-@Profile(SPRING_PROFILE_TEST)
+@Profile({ SPRING_PROFILE_TEST, PROFILE_TEST_BUILDAGENT })
 public class TestFullStartupPublisher {
 
     private final ApplicationContext applicationContext;
