@@ -61,7 +61,6 @@ class PyrisRewritingTest extends AbstractIrisIntegrationTest {
     void callRewritingPipeline() throws Exception {
         irisRequestMockProvider.mockRewritingPipelineResponse(dto -> {
             assertThat(dto.toBeRewritten()).contains("test");
-            assertThat(dto.variant()).isEqualTo(RewritingVariant.FAQ);
         });
         PyrisRewriteTextRequestDTO requestDTO = new PyrisRewriteTextRequestDTO("test", RewritingVariant.FAQ);
         request.postWithoutResponseBody("/api/iris/courses/" + course.getId() + "/rewrite-text", requestDTO, HttpStatus.OK);
