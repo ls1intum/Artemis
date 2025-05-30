@@ -1,9 +1,8 @@
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
-import { AfterViewInit, Component, Input, OnInit, QueryList, ViewChildren } from '@angular/core';
+import { Component, OnInit, input, viewChildren } from '@angular/core';
 import { faCompress, faExpand, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import { ExpandableSectionComponent } from 'app/assessment/manage/assessment-instructions/expandable-section/expandable-section.component';
-import { delay, startWith } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -16,38 +15,26 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
     styleUrls: ['./structured-grading-instructions-assessment-layout.component.scss'],
     imports: [FaIconComponent, TranslateDirective, ExpandableSectionComponent, NgbTooltip, HelpIconComponent, HtmlForMarkdownPipe],
 })
-export class StructuredGradingInstructionsAssessmentLayoutComponent implements OnInit, AfterViewInit {
-    @Input() public criteria: GradingCriterion[];
-    @Input() readonly: boolean;
+export class StructuredGradingInstructionsAssessmentLayoutComponent implements OnInit {
+    public readonly criteria = input.required<GradingCriterion[]>();
+    readonly readonly = input<boolean>();
     allowDrop: boolean;
     // Icons
     faInfoCircle = faInfoCircle;
     faExpand = faExpand;
     faCompress = faCompress;
 
-    @ViewChildren(ExpandableSectionComponent) expandableSections: QueryList<ExpandableSectionComponent>;
-    collapseToggles: ExpandableSectionComponent[] = [];
+    readonly expandableSections = viewChildren(ExpandableSectionComponent);
 
     /**
      * OnInit set the allowDrop property to allow drop of SGI if not in readOnly mode
      */
     ngOnInit(): void {
-        this.allowDrop = !this.readonly;
-    }
-
-    ngAfterViewInit() {
-        this.expandableSections.changes
-            .pipe(
-                startWith([undefined]), // to catch the initial value
-                delay(0), // wait for all current async tasks to finish, which could change the query list using ngIf etc.
-            )
-            .subscribe(() => {
-                this.collectCollapsableSections();
-            });
+        this.allowDrop = !this.readonly();
     }
 
     collapseAll() {
-        this.collapseToggles.forEach((section) => {
+        this.expandableSections().forEach((section) => {
             if (!section.isCollapsed) {
                 section.toggleCollapsed();
             }
@@ -55,7 +42,7 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
     }
 
     expandAll() {
-        this.collapseToggles.forEach((section) => {
+        this.expandableSections().forEach((section) => {
             if (section.isCollapsed) {
                 section.toggleCollapsed();
             }
@@ -103,11 +90,5 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
      */
     disableDrag() {
         return this.allowDrop;
-    }
-
-    collectCollapsableSections() {
-        if (this.expandableSections) {
-            this.collapseToggles = this.expandableSections.toArray();
-        }
     }
 }

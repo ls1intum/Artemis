@@ -51,7 +51,9 @@ describe('ComplaintsForTutorComponent', () => {
                 course.maxComplaintResponseTextLimit = 26;
 
                 exercise = { id: 11, isAtLeastInstructor: true, course: course } as Exercise;
-                complaintsForTutorComponent.exercise = exercise;
+                fixture.componentRef.setInput('exercise', exercise);
+                fixture.componentRef.setInput('submission', undefined);
+                fixture.componentRef.setInput('complaint', undefined);
             });
     });
 
@@ -73,8 +75,8 @@ describe('ComplaintsForTutorComponent', () => {
         handledComplaint.complaintResponse.id = 1;
         handledComplaint.complaintResponse.responseText = 'gj';
         handledComplaint.complaintType = ComplaintType.COMPLAINT;
-        complaintsForTutorComponent.isAssessor = false;
-        complaintsForTutorComponent.complaint = handledComplaint;
+        fixture.componentRef.setInput('isAssessor', false);
+        fixture.componentRef.setInput('complaint', handledComplaint);
         fixture.detectChanges();
         // We need the tick as `ngModel` writes data asynchronously into the DOM!
         tick();
@@ -110,14 +112,14 @@ describe('ComplaintsForTutorComponent', () => {
             ),
         );
 
-        complaintsForTutorComponent.complaint = unhandledComplaint;
-        complaintsForTutorComponent.isAssessor = false;
+        fixture.componentRef.setInput('complaint', unhandledComplaint);
+        fixture.componentRef.setInput('isAssessor', false);
         fixture.detectChanges();
         // We need the tick as `ngModel` writes data asynchronously into the DOM!
         tick();
 
         expect(createLockStub).toHaveBeenCalledOnce();
-        expect(complaintsForTutorComponent.complaint).toEqual(freshlyCreatedComplaintResponse.complaint);
+        expect(complaintsForTutorComponent.complaint()).toEqual(freshlyCreatedComplaintResponse.complaint);
         expect(complaintsForTutorComponent.complaintResponse).toEqual(freshlyCreatedComplaintResponse);
         const lockButton = fixture.debugElement.query(By.css('#lockButton')).nativeElement;
         const lockDuration = fixture.debugElement.query(By.css('#lockDuration')).nativeElement;
@@ -156,14 +158,14 @@ describe('ComplaintsForTutorComponent', () => {
             ),
         );
 
-        complaintsForTutorComponent.isAssessor = false;
-        complaintsForTutorComponent.complaint = unhandledComplaint;
+        fixture.componentRef.setInput('isAssessor', false);
+        fixture.componentRef.setInput('complaint', unhandledComplaint);
         fixture.detectChanges();
         // We need the tick as `ngModel` writes data asynchronously into the DOM!
         tick();
 
         expect(createLockStub).toHaveBeenCalledOnce();
-        expect(complaintsForTutorComponent.complaint).toEqual(freshlyCreatedComplaintResponse.complaint);
+        expect(complaintsForTutorComponent.complaint()).toEqual(freshlyCreatedComplaintResponse.complaint);
         expect(complaintsForTutorComponent.complaintResponse).toEqual(freshlyCreatedComplaintResponse);
         const lockButton = fixture.debugElement.query(By.css('#lockButton')).nativeElement;
         const lockDuration = fixture.debugElement.query(By.css('#lockDuration')).nativeElement;
@@ -191,7 +193,7 @@ describe('ComplaintsForTutorComponent', () => {
         unhandledComplaint.complaintResponse.responseText = 'accepted';
         unhandledComplaint.complaintResponse.id = 1;
         complaintsForTutorComponent.complaintResponse = unhandledComplaint.complaintResponse;
-        complaintsForTutorComponent.complaint = unhandledComplaint;
+        fixture.componentRef.setInput('complaint', unhandledComplaint);
 
         const emitSpy = jest.spyOn(complaintsForTutorComponent.updateAssessmentAfterComplaint, 'emit');
 
@@ -218,7 +220,7 @@ describe('ComplaintsForTutorComponent', () => {
         unhandledComplaint.complaintResponse.responseText = 'rejected';
         unhandledComplaint.complaintResponse.id = 1;
         complaintsForTutorComponent.complaintResponse = unhandledComplaint.complaintResponse;
-        complaintsForTutorComponent.complaint = unhandledComplaint;
+        fixture.componentRef.setInput('complaint', unhandledComplaint);
 
         const freshlyCreatedComplaintResponse = new ComplaintResponse();
         freshlyCreatedComplaintResponse.id = 1;
@@ -265,8 +267,8 @@ describe('ComplaintsForTutorComponent', () => {
             ),
         );
 
-        complaintsForTutorComponent.isAssessor = false;
-        complaintsForTutorComponent.complaint = unhandledComplaint;
+        fixture.componentRef.setInput('isAssessor', false);
+        fixture.componentRef.setInput('complaint', unhandledComplaint);
 
         // Update fixture
         fixture.detectChanges();
@@ -316,8 +318,8 @@ describe('ComplaintsForTutorComponent', () => {
             ),
         );
 
-        complaintsForTutorComponent.isAssessor = false;
-        complaintsForTutorComponent.complaint = unhandledComplaint;
+        fixture.componentRef.setInput('isAssessor', false);
+        fixture.componentRef.setInput('complaint', unhandledComplaint);
 
         // Update fixture
         fixture.detectChanges();
@@ -355,7 +357,7 @@ describe('ComplaintsForTutorComponent', () => {
             newComplaintResponse.complaint = unhandledComplaint;
             newComplaintResponse.responseText = 'accepted';
 
-            complaintsForTutorComponent.complaint = unhandledComplaint;
+            fixture.componentRef.setInput('complaint', unhandledComplaint);
             complaintsForTutorComponent.complaintResponse = newComplaintResponse;
 
             complaintsForTutorComponent.isLoading = false;
