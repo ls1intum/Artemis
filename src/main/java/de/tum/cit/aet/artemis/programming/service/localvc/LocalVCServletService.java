@@ -139,12 +139,13 @@ public class LocalVCServletService {
     // Key: repositoryPath --> Value: Repository
     private final Map<String, Repository> repositories = new HashMap<>();
 
-    public LocalVCServletService(AuthenticationManager authenticationManager, UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            RepositoryAccessService repositoryAccessService, AuthorizationCheckService authorizationCheckService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, AuxiliaryRepositoryService auxiliaryRepositoryService,
-            ContinuousIntegrationTriggerService ciTriggerService, ProgrammingSubmissionService programmingSubmissionService,
-            ProgrammingSubmissionMessagingService programmingSubmissionMessagingService, ProgrammingExerciseTestCaseChangedService programmingExerciseTestCaseChangedService,
-            ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository, Optional<VcsAccessLogService> vcsAccessLogService) {
+    public LocalVCServletService(@Lazy AuthenticationManager authenticationManager, UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            @Lazy RepositoryAccessService repositoryAccessService, @Lazy AuthorizationCheckService authorizationCheckService,
+            @Lazy ProgrammingExerciseParticipationService programmingExerciseParticipationService, @Lazy AuxiliaryRepositoryService auxiliaryRepositoryService,
+            @Lazy ContinuousIntegrationTriggerService ciTriggerService, @Lazy ProgrammingSubmissionService programmingSubmissionService,
+            @Lazy ProgrammingSubmissionMessagingService programmingSubmissionMessagingService,
+            @Lazy ProgrammingExerciseTestCaseChangedService programmingExerciseTestCaseChangedService, ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository,
+            @Lazy Optional<VcsAccessLogService> vcsAccessLogService) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
