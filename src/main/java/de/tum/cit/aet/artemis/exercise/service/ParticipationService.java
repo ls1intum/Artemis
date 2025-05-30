@@ -490,13 +490,6 @@ public class ParticipationService {
             try {
                 final var projectKey = programmingExercise.getProjectKey();
                 final var targetRepositoryName = participation.addPracticePrefixIfTestRun(participation.getParticipantIdentifier());
-
-                String username = null;
-                if (participation.getStudent().isPresent()) {
-                    username = participation.getParticipantIdentifier();
-
-                }
-
                 // not authorized students repo path
                 final var studentRepoPath = localVCVersionControlService.buildStudentRepoPath(projectKey, targetRepositoryName, participation.getAttempt());
 
@@ -510,6 +503,7 @@ public class ParticipationService {
 
                 // Update the participation with the new repository URI
                 VcsRepositoryUri newRepoUri = new LocalVCRepositoryUri(studentRepoPath, localVCBaseUrl);
+                String username = participation.getParticipantIdentifier();
                 newRepoUri = newRepoUri.withUser(username);
                 participation.setRepositoryUri(newRepoUri.toString());
                 participation.setBranch(defaultBranch);

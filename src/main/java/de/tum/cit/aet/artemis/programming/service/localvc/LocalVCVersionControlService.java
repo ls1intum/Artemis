@@ -37,10 +37,11 @@ public class LocalVCVersionControlService {
         // Create temporary directories
         Path tempTemplateWorkingDir = Files.createTempDirectory("localvc-template-working-");
         Path tempStudentWorkingDir = Files.createTempDirectory("localvc-student-working-");
+        Path sourceBareRepoPath = gitService.getBareRepository(templateUri).getLocalPath().toAbsolutePath();
 
         try {
             // Step 1: Clone source bare repo to temp working directory
-            gitService.cloneRepository(templateUri.getURI().toString(), tempTemplateWorkingDir, false);
+            gitService.cloneRepository("file://" + sourceBareRepoPath, tempTemplateWorkingDir, false);
             // Step 2: Copy files from working copy (excluding .git) to student working dir
             log.debug("Copying files from template to student working directory: {}", tempStudentWorkingDir);
             gitService.copyFilesExcludingGit(tempTemplateWorkingDir, tempStudentWorkingDir);

@@ -62,6 +62,7 @@ import org.eclipse.jgit.lib.RefUpdate;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.filter.CommitTimeRevFilter;
 import org.eclipse.jgit.revwalk.filter.RevFilter;
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.RemoteConfig;
 import org.eclipse.jgit.transport.URIish;
@@ -1271,11 +1272,23 @@ public class GitService extends AbstractGitService {
         return Files.exists(localPath);
     }
 
-    public Repository createBareRepository(Path repositoryPath) throws IOException {
-        // Create the bare repository
-        String repoDir = repositoryPath.toFile().getAbsolutePath();
-        Repository newRepo = new Repository(repoDir, null);
-        newRepo.create(true);  // 'true' means create the .git folder if it doesn't exist
+    public void cloneRepository(String sourceRepoUri, Path targetDir, boolean isBare) throws GitAPIException {
+        CloneCommand cloneCommand = Git.cloneRepository().setURI(sourceRepoUri).setDirectory(targetDir.toFile()).setBare(isBare);
+        cloneCommand.call().close();
+    }
+
+    public Repository createBareRepository(Path targetPath) throws IOException {
+        Files.createDirectories(targetPath);
+
+        FileRepositoryBuilder builder = new FileRepositoryBuilder();
+        builder.setGitDir(targetPath.toFile()).readEnvironment() // Read git environment variables
+                .findGitDir()      // Setup the git directory
+                .setBare().setup();          // This is important - it initializes the FS
+
+        VcsRepositoryUri remoteUri = null;
+        Repository newRepo = new Repository(builder, targetPath, remoteUri);
+        newRepo.create(true);
+
         return newRepo;
     }
 
@@ -1325,12 +1338,6 @@ public class GitService extends AbstractGitService {
             // Cleanup temp working directory recursively
             FileUtils.deleteDirectory(tempWorkingDir.toFile());
         }
-    }
-
-    public void cloneRepository(String sourceRepoUri, Path targetDir, boolean isBare) throws GitAPIException {
-        CloneCommand cloneCommand = Git.cloneRepository().setURI(sourceRepoUri).setDirectory(targetDir.toFile()).setBare(isBare);
-        authenticate(cloneCommand);
-        cloneCommand.call().close();
     }
 
     /**
