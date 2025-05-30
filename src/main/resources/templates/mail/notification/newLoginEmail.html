@@ -17,7 +17,9 @@
     <p>
         <span th:text="#{email.notification.login.text(
             ${loginDate},
-            ${loginTime}
+            ${loginTime},
+            ${browser},
+            ${operatingSystem}
         )}">Someone logged into your Artemis account. If you have not logged in to Artemis, make sure to reset your login credentials</span>:
 
         <a th:href="${resetLink}" th:text="${resetLink}">User Account</a>
