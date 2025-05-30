@@ -22,8 +22,6 @@ import org.springframework.stereotype.Repository;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.config.audit.AuditEventConverter;
 import de.tum.cit.aet.artemis.core.domain.PersistentAuditEvent;
-import de.tum.cit.aet.artemis.core.security.jwt.AuthenticationMethod;
-import de.tum.cit.aet.artemis.core.service.ArtemisSuccessfulLoginService;
 
 /**
  * An implementation of Spring Boot's {@link AuditEventRepository}.
@@ -31,8 +29,6 @@ import de.tum.cit.aet.artemis.core.service.ArtemisSuccessfulLoginService;
 @Profile(PROFILE_CORE)
 @Repository
 public class CustomAuditEventRepository implements AuditEventRepository {
-
-    private static final Logger log = LoggerFactory.getLogger(CustomAuditEventRepository.class);
 
     private final boolean isSaml2Active;
 
@@ -51,14 +47,12 @@ public class CustomAuditEventRepository implements AuditEventRepository {
 
     private final AuditEventConverter auditEventConverter;
 
-    private final ArtemisSuccessfulLoginService artemisSuccessfulLoginService;
+    private static final Logger log = LoggerFactory.getLogger(CustomAuditEventRepository.class);
 
-    public CustomAuditEventRepository(Environment environment, PersistenceAuditEventRepository persistenceAuditEventRepository, AuditEventConverter auditEventConverter,
-            ArtemisSuccessfulLoginService artemisSuccessfulLoginService) {
+    public CustomAuditEventRepository(Environment environment, PersistenceAuditEventRepository persistenceAuditEventRepository, AuditEventConverter auditEventConverter) {
         this.persistenceAuditEventRepository = persistenceAuditEventRepository;
         this.auditEventConverter = auditEventConverter;
         this.isSaml2Active = Set.of(environment.getActiveProfiles()).contains(Constants.PROFILE_SAML2);
-        this.artemisSuccessfulLoginService = artemisSuccessfulLoginService;
     }
 
     @Override
@@ -74,10 +68,8 @@ public class CustomAuditEventRepository implements AuditEventRepository {
 
         if (!AUTHORIZATION_FAILURE.equals(eventType)) {
             if (isSaml2Active && AUTHENTICATION_SUCCESS.equals(eventType) && authentication == null) {
-                /**
-                 * If authentication is null, Auth is a success, and SAML2 profile is active => SAML2 authentication is running.
-                 * Logging is handled manually in {@link de.tum.cit.aet.artemis.core.service.connectors.SAML2Service#handleAuthentication}
-                 */
+                // If authentication is null, Auth is a success, and SAML2 profile is active => SAML2 authentication is running.
+                // Logging is handled manually.
                 return;
             }
 
@@ -85,31 +77,14 @@ public class CustomAuditEventRepository implements AuditEventRepository {
                 eventType = AUTHENTICATION_PASSKEY_SUCCESS;
             }
 
-            String username = event.getPrincipal();
             PersistentAuditEvent persistentAuditEvent = new PersistentAuditEvent();
-            persistentAuditEvent.setPrincipal(username);
+            persistentAuditEvent.setPrincipal(event.getPrincipal());
             persistentAuditEvent.setAuditEventType(eventType);
             persistentAuditEvent.setAuditEventDate(event.getTimestamp());
             Map<String, String> eventData = auditEventConverter.convertDataToStrings(event.getData());
             persistentAuditEvent.setData(truncate(eventData));
             persistenceAuditEventRepository.save(persistentAuditEvent);
-
-            AuthenticationMethod authenticationMethod = eventTypeToAuthenticationMethod(eventType);
-            if (authenticationMethod != null) {
-                artemisSuccessfulLoginService.sendLoginEmail(username, authenticationMethod);
-            }
         }
-    }
-
-    private AuthenticationMethod eventTypeToAuthenticationMethod(String eventType) {
-        if (AUTHENTICATION_SUCCESS.equals(eventType)) {
-            return AuthenticationMethod.PASSWORD;
-        }
-        else if (AUTHENTICATION_PASSKEY_SUCCESS.equals(eventType)) {
-            return AuthenticationMethod.PASSKEY;
-        }
-
-        return null;
     }
 
     /**
