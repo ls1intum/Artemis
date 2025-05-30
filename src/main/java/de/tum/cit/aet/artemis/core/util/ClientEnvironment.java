@@ -11,7 +11,7 @@ import de.tum.cit.aet.artemis.core.domain.Language;
 public record ClientEnvironment(Browser browser, OperatingSystem operatingSystem, ArtemisApp artemisApp) {
 
     /**
-     * This method provides a language-specific description for cases where the environment cannot be determined.
+     * Provides a language-specific description for cases where the environment cannot be determined.
      *
      * @param language the language in which the display name should be generated
      * @return a {@link String} representing the unknown environment display name
@@ -27,7 +27,7 @@ public record ClientEnvironment(Browser browser, OperatingSystem operatingSystem
     }
 
     /**
-     * The description includes the browser, operating system, or application type, depending on the available information.
+     * The EnvironmentInfo includes the browser, operating system, or application type, depending on the available information.
      * If none of these are available, it returns a language-specific description for an unknown environment {@link ClientEnvironment#getUnknownEnvironmentDisplayName}.
      *
      * @param language in which the environment information should be generated

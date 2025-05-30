@@ -144,7 +144,7 @@ public class HttpRequestUtils {
     /**
      * Extracts the client environment from the given {@link HttpServletRequest}.
      * <p>
-     * The method determines the browser, operating system, and application type (iOS or Android) based on the request headers.
+     * The method determines the browser, operating system, or application type (iOS or Android) based on the request headers.
      *
      * @param request the HTTP request
      * @return a {@link ClientEnvironment} object containing the detected client environment, or {@code null} if no environment can be determined
