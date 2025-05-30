@@ -268,10 +268,7 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
 
         this.courseNotificationSettingService
             .getSettingInfo(courseId)
-            .pipe(
-                map((response) => response.body),
-                filter((body): body is CourseNotificationSettingInfo => body !== null && body !== undefined),
-            )
+            .pipe(filter((settings): settings is CourseNotificationSettingInfo => !!settings))
             .subscribe({
                 next: (settings) => {
                     this.notificationSettings = settings;
