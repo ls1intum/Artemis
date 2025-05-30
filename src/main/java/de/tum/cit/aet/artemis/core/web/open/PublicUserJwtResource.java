@@ -99,7 +99,7 @@ public class PublicUserJwtResource {
             response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
 
             // TODO: move this to the actual login implementations
-            artemisSuccessfulLoginService.sendLoginEmail(username, AuthenticationMethod.PASSWORD, HttpRequestUtils.detectClientType(request));
+            artemisSuccessfulLoginService.sendLoginEmail(username, AuthenticationMethod.PASSWORD, HttpRequestUtils.getClientEnvironment(request));
 
             return ResponseEntity.ok(Map.of("access_token", responseCookie.getValue()));
         }

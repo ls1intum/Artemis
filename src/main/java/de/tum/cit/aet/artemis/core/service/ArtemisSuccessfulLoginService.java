@@ -57,7 +57,6 @@ public class ArtemisSuccessfulLoginService {
      * @param username the username of the user who has successfully logged in
      */
     public void sendLoginEmail(String username, AuthenticationMethod authenticationMethod, ClientEnvironment clientEnvironment) {
-        // TODO consider authentication type
         try {
             User recipient = userRepository.getUserByLoginElseThrow(username);
             Language language = Language.fromLanguageShortName(recipient.getLangKey());

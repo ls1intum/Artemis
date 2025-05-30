@@ -77,7 +77,7 @@ public final class ArtemisHttpMessageConverterAuthenticationSuccessHandler imple
         ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(rememberMe);
         response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
 
-        artemisSuccessfulLoginService.sendLoginEmail(authentication.getName(), AuthenticationMethod.PASSKEY, HttpRequestUtils.detectClientType(request));
+        artemisSuccessfulLoginService.sendLoginEmail(authentication.getName(), AuthenticationMethod.PASSKEY, HttpRequestUtils.getClientEnvironment(request));
 
         this.converter.write(new AuthenticationSuccess(redirectUrl), MediaType.APPLICATION_JSON, new ServletServerHttpResponse(response));
     }

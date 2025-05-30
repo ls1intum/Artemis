@@ -159,7 +159,7 @@ public class SAML2Service {
         String login = user.get().getLogin();
         auth = new UsernamePasswordAuthenticationToken(login, user.get().getPassword(), toGrantedAuthorities(user.get().getAuthorities()));
         auditEventRepository.add(new AuditEvent(Instant.now(), login, "SAML2_AUTHENTICATION_SUCCESS", details));
-        artemisSuccessfulLoginService.sendLoginEmail(login, AuthenticationMethod.SAML2, HttpRequestUtils.detectClientType(request));
+        artemisSuccessfulLoginService.sendLoginEmail(login, AuthenticationMethod.SAML2, HttpRequestUtils.getClientEnvironment(request));
         return auth;
     }
 

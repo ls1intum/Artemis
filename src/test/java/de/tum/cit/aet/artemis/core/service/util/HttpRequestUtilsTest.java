@@ -95,7 +95,7 @@ class HttpRequestUtilsTest {
             HttpServletRequest request = mock(HttpServletRequest.class);
             when(request.getHeader("User-Agent"))
                     .thenReturn("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36");
-            ClientEnvironment clientType = HttpRequestUtils.detectClientType(request);
+            ClientEnvironment clientType = HttpRequestUtils.getClientEnvironment(request);
             assertThat(clientType.browser().getDisplayName()).isEqualTo("Google Chrome");
         }
 
@@ -104,7 +104,7 @@ class HttpRequestUtilsTest {
             HttpServletRequest request = mock(HttpServletRequest.class);
             when(request.getHeader("User-Agent"))
                     .thenReturn("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Safari/605.1.15");
-            ClientEnvironment clientType = HttpRequestUtils.detectClientType(request);
+            ClientEnvironment clientType = HttpRequestUtils.getClientEnvironment(request);
             assertThat(clientType.browser().getDisplayName()).isEqualTo("Apple Safari");
         }
 
@@ -113,7 +113,7 @@ class HttpRequestUtilsTest {
             HttpServletRequest request = mock(HttpServletRequest.class);
             when(request.getHeader("User-Agent"))
                     .thenReturn("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 Edg/137.0.0.0");
-            ClientEnvironment clientType = HttpRequestUtils.detectClientType(request);
+            ClientEnvironment clientType = HttpRequestUtils.getClientEnvironment(request);
             assertThat(clientType.browser().getDisplayName()).isEqualTo("Microsoft Edge");
         }
 
@@ -121,7 +121,7 @@ class HttpRequestUtilsTest {
         void shouldDetectBrowser_whenUsingFirefox() {
             HttpServletRequest request = mock(HttpServletRequest.class);
             when(request.getHeader("User-Agent")).thenReturn("Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:137.0) Gecko/20100101 Firefox/137.0");
-            ClientEnvironment clientType = HttpRequestUtils.detectClientType(request);
+            ClientEnvironment clientType = HttpRequestUtils.getClientEnvironment(request);
             assertThat(clientType.browser().getDisplayName()).isEqualTo("Mozilla Firefox");
         }
 
@@ -130,7 +130,7 @@ class HttpRequestUtilsTest {
             HttpServletRequest request = mock(HttpServletRequest.class);
             when(request.getHeader("User-Agent")).thenReturn(
                     "Mozilla/5.0 (Linux; Android 13; SAMSUNG SM-G991B) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/18.0 Chrome/109.0.5414.87 Mobile Safari/537.36");
-            ClientEnvironment clientType = HttpRequestUtils.detectClientType(request);
+            ClientEnvironment clientType = HttpRequestUtils.getClientEnvironment(request);
             assertThat(clientType.browser().getDisplayName()).isEqualTo("Samsung Internet");
         }
 
@@ -139,7 +139,7 @@ class HttpRequestUtilsTest {
             HttpServletRequest request = mock(HttpServletRequest.class);
             when(request.getHeader("User-Agent"))
                     .thenReturn("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36 OPR/119.0.0.0");
-            ClientEnvironment clientType = HttpRequestUtils.detectClientType(request);
+            ClientEnvironment clientType = HttpRequestUtils.getClientEnvironment(request);
             assertThat(clientType.browser().getDisplayName()).isEqualTo("Opera");
         }
 
@@ -149,7 +149,7 @@ class HttpRequestUtilsTest {
             when(request.getHeader("User-Agent"))
                     .thenReturn("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36");
             when(request.getHeader("Sec-Ch-Ua")).thenReturn("\"Brave\";v=\"137\", \"Chromium\";v=\"137\", \"Not/A)Brand\";v=\"24\"");
-            ClientEnvironment clientType = HttpRequestUtils.detectClientType(request);
+            ClientEnvironment clientType = HttpRequestUtils.getClientEnvironment(request);
             assertThat(clientType.browser().getDisplayName()).isEqualTo("Brave");
         }
 
@@ -157,7 +157,7 @@ class HttpRequestUtilsTest {
         void shouldDetectIosApp() {
             HttpServletRequest request = mock(HttpServletRequest.class);
             when(request.getHeader("User-Agent")).thenReturn("Artemis/20250524013147 CFNetwork/3826.500.131 Darwin/24.5.0");
-            ClientEnvironment clientType = HttpRequestUtils.detectClientType(request);
+            ClientEnvironment clientType = HttpRequestUtils.getClientEnvironment(request);
             assertThat(clientType.browser().getDisplayName()).isEqualTo("iOS App");
         }
 
@@ -165,7 +165,7 @@ class HttpRequestUtilsTest {
         void shouldDetectAndroidApp() {
             HttpServletRequest request = mock(HttpServletRequest.class);
             when(request.getHeader("User-Agent")).thenReturn("ktor-client");
-            ClientEnvironment clientType = HttpRequestUtils.detectClientType(request);
+            ClientEnvironment clientType = HttpRequestUtils.getClientEnvironment(request);
             assertThat(clientType.browser().getDisplayName()).isEqualTo("Android App");
         }
 
@@ -173,7 +173,7 @@ class HttpRequestUtilsTest {
         void shouldNotFailOnUnknownUserAgent() {
             HttpServletRequest request = mock(HttpServletRequest.class);
             when(request.getHeader("User-Agent")).thenReturn(null);
-            ClientEnvironment clientType = HttpRequestUtils.detectClientType(request);
+            ClientEnvironment clientType = HttpRequestUtils.getClientEnvironment(request);
             assertThat(clientType).isNull();
         }
 

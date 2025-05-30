@@ -107,7 +107,7 @@ public class HttpRequestUtils {
         return null;
     }
 
-    public static ClientEnvironment detectClientType(@NotNull HttpServletRequest request) {
+    public static ClientEnvironment getClientEnvironment(@NotNull HttpServletRequest request) {
 
         String userAgent = request.getHeader(HttpHeaders.USER_AGENT);
 
@@ -123,18 +123,18 @@ public class HttpRequestUtils {
         Browser browserName = getBrowserName(userAgent);
         OperatingSystem operatingSystem = getOperatingSystem(userAgent);
         if (browserName != null) {
-            return new ClientEnvironment(browserName, operatingSystem);
+            return new ClientEnvironment(browserName, operatingSystem, null);
         }
-        //
-        // boolean isIosApp = hasIosAppName && hasCFNetwork;
-        // if (isIosApp) {
-        // return "iOS App";
-        // }
-        //
-        // boolean isAndroidApp = userAgent.contains("ktor-client");
-        // if (isAndroidApp) {
-        // return "Android App";
-        // }
+
+        boolean isIosApp = hasIosAppName && hasCFNetwork;
+        if (isIosApp) {
+            return new ClientEnvironment(null, null, ArtemisApp.IOS);
+        }
+
+        boolean isAndroidApp = userAgent.contains("ktor-client");
+        if (isAndroidApp) {
+            return new ClientEnvironment(null, null, ArtemisApp.ANROID);
+        }
 
         return null;
     }
