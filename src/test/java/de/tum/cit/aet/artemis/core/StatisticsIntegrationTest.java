@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
+import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.GraphType;
 import de.tum.cit.aet.artemis.core.domain.SpanType;
@@ -76,6 +77,9 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationIndependentTest
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
 
+    @Autowired
+    private ConversationUtilService conversationUtilService;
+
     private Course course;
 
     private TextExercise exercise;
@@ -103,7 +107,7 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationIndependentTest
         course.addExercises(exercise);
         textExerciseRepository.save(exercise);
         Post post = new Post();
-        post.setConversation(exerciseUtilService.addChannelToExercise(exercise));
+        post.setConversation(conversationUtilService.addChannelToExercise(exercise));
         post.setContent("Test Student Question 1");
         post.setVisibleForStudents(true);
         post.setCreationDate(ZonedDateTime.now().minusSeconds(11));
@@ -254,7 +258,7 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationIndependentTest
         participationUtilService.createParticipationSubmissionAndResult(firstTextExerciseId, student2, 10.0, 0.0, 100, true);
 
         Post post = new Post();
-        post.setConversation(exerciseUtilService.addChannelToExercise(textExercise));
+        post.setConversation(conversationUtilService.addChannelToExercise(textExercise));
         post.setContent("Test Student Question 1");
         post.setVisibleForStudents(true);
         post.setCreationDate(ZonedDateTime.now().minusHours(2));

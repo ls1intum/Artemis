@@ -44,8 +44,8 @@ public class PlagiarismPostApi extends AbstractPlagiarismApi {
         plagiarismAnswerPostService.preparePostAndBroadcast(updatedAnswerPost, course);
     }
 
-    public void broadcastForPost(PostDTO postDTO, Long courseId, Set<ConversationNotificationRecipientSummary> recipients, Set<User> mentionedUsers) {
-        plagiarismPostService.broadcastForPost(postDTO, courseId, recipients, mentionedUsers);
+    public void broadcastForPost(PostDTO postDTO, Long courseId, Set<ConversationNotificationRecipientSummary> recipients) {
+        plagiarismPostService.broadcastForPost(postDTO, courseId, recipients);
     }
 
     public void preCheckUserAndCourseForCommunicationOrMessaging(User user, Course course) {

@@ -42,8 +42,9 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.CourseService;
-import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.lti.api.LtiApi;
 
@@ -151,9 +152,9 @@ public class AdminCourseResource {
         Course createdCourse = courseRepository.save(course);
 
         if (file != null) {
-            Path basePath = FilePathService.getCourseIconFilePath();
-            Path savePath = fileService.saveFile(file, basePath, FilePathType.COURSE_ICON, false);
-            createdCourse.setCourseIcon(FilePathService.externalUriForFileSystemPath(savePath, FilePathType.COURSE_ICON, createdCourse.getId()).toString());
+            Path basePath = FilePathConverter.getCourseIconFilePath();
+            Path savePath = FileUtil.saveFile(file, basePath, FilePathType.COURSE_ICON, false);
+            createdCourse.setCourseIcon(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.COURSE_ICON, createdCourse.getId()).toString());
             createdCourse = courseRepository.save(createdCourse);
         }
 
@@ -180,7 +181,7 @@ public class AdminCourseResource {
 
         courseService.delete(course);
         if (course.getCourseIcon() != null) {
-            fileService.schedulePathForDeletion(FilePathService.fileSystemPathForExternalUri(URI.create(course.getCourseIcon()), FilePathType.COURSE_ICON), 0);
+            fileService.schedulePathForDeletion(FilePathConverter.fileSystemPathForExternalUri(URI.create(course.getCourseIcon()), FilePathType.COURSE_ICON), 0);
         }
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, Course.ENTITY_NAME, course.getTitle())).build();
     }
