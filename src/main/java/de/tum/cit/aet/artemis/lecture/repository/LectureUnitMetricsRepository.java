@@ -29,7 +29,7 @@ public interface LectureUnitMetricsRepository extends ArtemisJpaRepository<Lectu
     @Query("""
             SELECT new de.tum.cit.aet.artemis.atlas.dto.metrics.LectureUnitInformationDTO(lu.id, lu.lecture.id, lu.lecture.title, COALESCE(lu.name, a.name), lu.releaseDate, TYPE(lu))
             FROM LectureUnit lu
-                LEFT JOIN Attachment a ON a.attachmentUnit.id = lu.id
+                LEFT JOIN Attachment a ON a.attachmentVideoUnit.id = lu.id
             WHERE lu.lecture.course.id = :courseId
             """)
     Set<LectureUnitInformationDTO> findAllLectureUnitInformationByCourseId(@Param("courseId") long courseId);

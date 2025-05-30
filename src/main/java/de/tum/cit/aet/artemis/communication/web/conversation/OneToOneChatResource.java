@@ -23,7 +23,6 @@ import de.tum.cit.aet.artemis.communication.service.conversation.ConversationDTO
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
 import de.tum.cit.aet.artemis.communication.service.conversation.OneToOneChatService;
 import de.tum.cit.aet.artemis.communication.service.conversation.auth.OneToOneChatAuthorizationService;
-import de.tum.cit.aet.artemis.communication.service.notifications.SingleUserNotificationService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -48,18 +47,14 @@ public class OneToOneChatResource extends ConversationManagementResource {
 
     private final ConversationService conversationService;
 
-    private final SingleUserNotificationService singleUserNotificationService;
-
-    public OneToOneChatResource(SingleUserNotificationService singleUserNotificationService, OneToOneChatAuthorizationService oneToOneChatAuthorizationService,
-            ConversationDTOService conversationDTOService, UserRepository userRepository, CourseRepository courseRepository, OneToOneChatService oneToOneChatService,
-            ConversationService conversationService) {
+    public OneToOneChatResource(OneToOneChatAuthorizationService oneToOneChatAuthorizationService, ConversationDTOService conversationDTOService, UserRepository userRepository,
+            CourseRepository courseRepository, OneToOneChatService oneToOneChatService, ConversationService conversationService) {
         super(courseRepository);
         this.oneToOneChatAuthorizationService = oneToOneChatAuthorizationService;
         this.conversationDTOService = conversationDTOService;
         this.userRepository = userRepository;
         this.oneToOneChatService = oneToOneChatService;
         this.conversationService = conversationService;
-        this.singleUserNotificationService = singleUserNotificationService;
     }
 
     /**

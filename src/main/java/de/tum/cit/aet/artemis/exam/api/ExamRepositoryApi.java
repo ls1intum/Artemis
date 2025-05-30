@@ -62,4 +62,8 @@ public class ExamRepositoryApi extends AbstractExamApi {
         return examRepository.findByCourseIdWithExerciseGroupsAndExercises(courseId).stream().flatMap(e -> e.getExerciseGroups().stream()).filter(Objects::nonNull)
                 .map(ExerciseGroup::getExercises).flatMap(Collection::stream).collect(Collectors.toSet());
     }
+
+    public Set<Exam> findAllVisibleByCourseId(long courseId, ZonedDateTime now) {
+        return examRepository.findAllVisibleByCourseId(courseId, now);
+    }
 }
