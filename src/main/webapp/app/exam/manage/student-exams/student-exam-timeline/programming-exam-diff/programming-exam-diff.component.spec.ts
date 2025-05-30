@@ -19,7 +19,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { input } from '@angular/core';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 
 describe('ProgrammingExerciseExamDiffComponent', () => {
@@ -125,9 +124,7 @@ describe('ProgrammingExerciseExamDiffComponent', () => {
             programmingExercise: component.exercise,
         } as unknown as ProgrammingExerciseGitDiffReport;
         cachedDiffReports.set(JSON.stringify([1, 2]), expectedReport);
-        TestBed.runInInjectionContext(() => {
-            component.cachedDiffReports = input(cachedDiffReports);
-        });
+        fixture.componentRef.setInput('cachedDiffReports', cachedDiffReports);
         component.ngOnInit();
         component.exerciseIdSubject.update((subject) => {
             subject.next(1);
@@ -149,9 +146,7 @@ describe('ProgrammingExerciseExamDiffComponent', () => {
         const exercise = { id: 3 } as ProgrammingExercise;
         component.exercise.update(() => exercise);
         const cachedDiffReports = new Map<string, ProgrammingExerciseGitDiffReport>();
-        TestBed.runInInjectionContext(() => {
-            component.cachedDiffReports = input(cachedDiffReports);
-        });
+        fixture.componentRef.setInput('cachedDiffReports', cachedDiffReports);
         component.ngOnInit();
         component.exerciseIdSubject.update((subject) => {
             subject.next(1);

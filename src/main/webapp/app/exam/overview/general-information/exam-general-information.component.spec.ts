@@ -37,6 +37,8 @@ describe('ExamGeneralInformationComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(ExamGeneralInformationComponent);
                 component = fixture.componentInstance;
+                fixture.componentRef.setInput('exam', exam);
+                fixture.componentRef.setInput('studentExam', studentExam);
             });
     });
 
@@ -45,23 +47,14 @@ describe('ExamGeneralInformationComponent', () => {
     });
 
     it('should initialize', () => {
-        component.exam = exam;
+        fixture.componentRef.setInput('studentExam', {} as StudentExam);
         fixture.detectChanges();
         component.ngOnChanges();
         expect(fixture).toBeDefined();
         expect(component.examEndDate).toEqual(exam.endDate);
     });
 
-    it('should return undefined if the exam is not set', () => {
-        fixture.detectChanges();
-        component.ngOnChanges();
-        expect(fixture).toBeDefined();
-        expect(component.examEndDate).toBeUndefined();
-    });
-
     it('should return the start date plus the working time as the student exam end date', () => {
-        component.exam = exam;
-        component.studentExam = studentExam;
         fixture.detectChanges();
         component.ngOnChanges();
         expect(fixture).toBeDefined();
@@ -69,8 +62,8 @@ describe('ExamGeneralInformationComponent', () => {
     });
 
     it('should detect if the end date is on another day', () => {
-        component.exam = exam;
         exam.endDate = dayjs(exam.startDate).add(2, 'days');
+        fixture.componentRef.setInput('studentExam', {} as StudentExam);
         fixture.detectChanges();
         component.ngOnChanges();
         expect(fixture).toBeDefined();
@@ -78,8 +71,6 @@ describe('ExamGeneralInformationComponent', () => {
     });
 
     it('should detect if the working time extends to another day', () => {
-        component.exam = exam;
-        component.studentExam = studentExam;
         studentExam.workingTime = 24 * 60 * 60;
         fixture.detectChanges();
         component.ngOnChanges();
@@ -88,13 +79,11 @@ describe('ExamGeneralInformationComponent', () => {
     });
 
     it('should return false for exams that only last one day', () => {
-        component.exam = exam;
         fixture.detectChanges();
         component.ngOnChanges();
         expect(fixture).toBeDefined();
         expect(component.isExamOverMultipleDays).toBeFalse();
 
-        component.studentExam = studentExam;
         fixture.detectChanges();
         component.ngOnChanges();
         expect(fixture).toBeDefined();
@@ -103,8 +92,6 @@ describe('ExamGeneralInformationComponent', () => {
 
     it('should detect an TestExam and set the currentDate correctly', () => {
         exam.testExam = true;
-        component.exam = exam;
-        component.studentExam = studentExam;
         const minimumNowRange = dayjs();
         fixture.detectChanges();
         component.ngOnChanges();
@@ -116,7 +103,6 @@ describe('ExamGeneralInformationComponent', () => {
     });
 
     it('should detect an RealExam and not set the currentDate', () => {
-        component.exam = exam;
         fixture.detectChanges();
         component.ngOnChanges();
         expect(component.isTestExam).toBeFalse();
