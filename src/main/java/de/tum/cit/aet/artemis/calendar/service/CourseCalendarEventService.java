@@ -51,11 +51,14 @@ public class CourseCalendarEventService {
         }
 
         Set<CourseCalendarEvent> courseCalendarEvents = courseCalendarEventRepository.findAllByCourseIdsWithCourse(activeCourseIds);
+        // TODO: filter events based on whether user has the correct role in the course
 
         return courseCalendarEvents.stream().map(event -> new CalendarEventDTO(event, clientTimeZone)).collect(Collectors.toSet());
     }
 
-    public Set<CalendarEventDTO> createCourseCalendarEvents(List<CalendarEventDTO> calendarEventDTOs, Course course) {
+    public Set<CalendarEventDTO> createCourseCalendarEventsOrThrow(List<CalendarEventDTO> calendarEventDTOs, Course course) {
+        checkThatNoEventHasIdOrThrow(calendarEventDTOs);
+
         List<CourseCalendarEvent> courseCalendarEvents = new ArrayList<>();
         for (CalendarEventDTO dto : calendarEventDTOs) {
             CourseCalendarEvent event = new CourseCalendarEvent();
@@ -68,6 +71,7 @@ public class CourseCalendarEventService {
             courseCalendarEvents.add(event);
         }
         List<CourseCalendarEvent> savedEvents = courseCalendarEventRepository.saveAll(courseCalendarEvents);
+
         return savedEvents.stream().map(CalendarEventDTO::new).collect(Collectors.toSet());
     }
 
@@ -85,6 +89,15 @@ public class CourseCalendarEventService {
         return new CalendarEventDTO(courseCalendarEvent);
     }
 
+    public void deleteCourseCalendarEventOrThrow(Long courseCalendarEventId, Course course) {
+        CourseCalendarEvent courseCalendarEvent = courseCalendarEventRepository.findByIdElseThrow(courseCalendarEventId);
+        if (!courseCalendarEvent.getCourse().equals(course)) {
+            throw new BadRequestException("The calendar event does not belong to the specified course.");
+        }
+
+        courseCalendarEventRepository.delete(courseCalendarEvent);
+    }
+
     private Long checkIfValidIdAndExtractCourseCalendarEventIdOrThrow(String calendarEventDtoId) {
         String prefix = "course-";
         if (calendarEventDtoId == null || !calendarEventDtoId.startsWith(prefix)) {
@@ -96,6 +109,13 @@ public class CourseCalendarEventService {
         }
         catch (NumberFormatException ex) {
             throw new BadRequestException("Invalid ID format for CourseCalendarEvent: After 'course-' must follow a valid number");
+        }
+    }
+
+    private void checkThatNoEventHasIdOrThrow(List<CalendarEventDTO> calendarEventDTOs) {
+        boolean anyHasId = calendarEventDTOs.stream().anyMatch(dto -> dto.id() != null);
+        if (anyHasId) {
+            throw new BadRequestException("New calendar events must not have an id.");
         }
     }
 }

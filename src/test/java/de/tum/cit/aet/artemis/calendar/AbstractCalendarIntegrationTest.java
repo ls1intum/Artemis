@@ -72,16 +72,16 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
     User instructor;
 
     @Autowired
+    CourseCalendarEventRepository courseCalendarEventRepository;
+
+    @Autowired
+    CourseUtilService courseUtilService;
+
+    @Autowired
     private CourseCalendarEventUtilService courseCalendarEventUtilService;
 
     @Autowired
     private TutorialGroupUtilService tutorialGroupUtilService;
-
-    @Autowired
-    private CourseUtilService courseUtilService;
-
-    @Autowired
-    private CourseCalendarEventRepository courseCalendarEventRepository;
 
     @Autowired
     private TutorialGroupSessionRepository tutorialGroupSessionRepository;
@@ -146,7 +146,6 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
 
     void setupActiveCourseWithoutCourseWideEventsScenario() {
         course = courseUtilService.createActiveCourseInTimezone(ZoneId.of(TEST_TIMEZONE), 1, 3);
-
     }
 
     void setupUserNotPartOfAnyCourseScenario() {
@@ -210,5 +209,13 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
 
     String assembleURLForPostRequest(Long courseId) {
         return "/api/calendar/courses/" + courseId + "/course-calendar-events";
+    }
+
+    String assembleURLForPutRequest(Long courseId) {
+        return "/api/calendar/courses/" + courseId + "/course-calendar-event";
+    }
+
+    String assembleURLForDeleteRequest(Long courseId, Long eventId) {
+        return "/api/calendar/courses/" + courseId + "/course-calendar-event/" + eventId;
     }
 }

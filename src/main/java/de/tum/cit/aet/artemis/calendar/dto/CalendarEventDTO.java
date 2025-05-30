@@ -6,7 +6,6 @@ import java.time.ZonedDateTime;
 
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Null;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -14,8 +13,9 @@ import de.tum.cit.aet.artemis.calendar.domain.CourseCalendarEvent;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CalendarEventDTO(@Null String id, @NotNull String title, @Nullable String courseName, @NotNull ZonedDateTime startDate, @Nullable ZonedDateTime endDate,
-        @Nullable String location, @Nullable String facilitator) {
+public record CalendarEventDTO(@Nullable String id, @NotNull(message = "Calendar events must have a title.") String title, @Nullable String courseName,
+        @NotNull(message = "Calendar events must have a startDate.") ZonedDateTime startDate, @Nullable ZonedDateTime endDate, @Nullable String location,
+        @Nullable String facilitator) {
 
     public CalendarEventDTO(TutorialGroupSession session, ZoneId clientTimeZone) {
         this("tutorial-" + session.getId(), session.getTutorialGroup().getTitle(), session.getTutorialGroup().getCourse().getTitle(),

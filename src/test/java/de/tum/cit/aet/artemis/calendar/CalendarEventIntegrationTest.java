@@ -18,10 +18,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.calendar.domain.CourseCalendarEvent;
 import de.tum.cit.aet.artemis.calendar.dto.CalendarEventDTO;
+import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
 
 class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
+
+    // TODO: add error message asserts?
 
     @Nested
     class GetCalendarEvents {
@@ -290,9 +294,10 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
     @Nested
     class CreateCourseCalendarEvents {
 
+        // TODO: POST-DTO should not include a courseName? Or rather handle gracefully and document accordingly in javaDoc of endpoint
         @Test
         @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
-        void shouldReturnBadRequestForStudent() throws Exception {
+        void shouldReturnForbiddenForStudent() throws Exception {
             setupActiveCourseWithoutCourseWideEventsScenario();
 
             String URL = assembleURLForPostRequest(course.getId());
@@ -305,7 +310,7 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
 
         @Test
         @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
-        void shouldReturnBadRequestForTutor() throws Exception {
+        void shouldReturnForbiddenForTutor() throws Exception {
             setupActiveCourseWithoutCourseWideEventsScenario();
 
             String URL = assembleURLForPostRequest(course.getId());
@@ -318,7 +323,7 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
 
         @Test
         @WithMockUser(username = NOT_EDITOR_LOGIN, roles = "EDITOR")
-        void shouldReturnBadRequestForEditorWhenNotPartOfCourse() throws Exception {
+        void shouldReturnForbiddenForEditorWhenNotPartOfCourse() throws Exception {
             setupUserNotPartOfAnyCourseScenario();
 
             String URL = assembleURLForPostRequest(course.getId());
@@ -331,7 +336,7 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
 
         @Test
         @WithMockUser(username = NOT_INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
-        void shouldReturnBadRequestForInstructorWhenNotPartOfCourse() throws Exception {
+        void shouldReturnForbiddenForInstructorWhenNotPartOfCourse() throws Exception {
             setupUserNotPartOfAnyCourseScenario();
 
             String URL = assembleURLForPostRequest(course.getId());
@@ -437,7 +442,7 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
         }
 
         @Test
-        @WithMockUser(username = NOT_INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+        @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
         void shouldReturnNotFoundWhenCourseDoesNotExist() throws Exception {
             setupActiveCourseWithoutCourseWideEventsScenario();
 
@@ -572,10 +577,328 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
     @Nested
     class UpdateCourseCalendarEvents {
 
+        // TODO: PUT-DTO should not include a courseName? Or rather handle gracefully and document accordingly in javaDoc of endpoint
+        @Test
+        @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
+        void shouldReturnForbiddenForStudent() throws Exception {
+            setupActiveCourseScenario();
+
+            CourseCalendarEvent eventToChange = courseCalendarEvents.getFirst();
+            String URL = assembleURLForPutRequest(course.getId());
+
+            CalendarEventDTO body = new CalendarEventDTO("course-" + eventToChange.getId(), "New Title", course.getTitle(), eventToChange.getStartDate().plusDays(1),
+                    eventToChange.getEndDate().plusDays(1), "New Room", "New Facilitator");
+
+            request.putWithResponseBody(URL, body, CalendarEventDTO.class, HttpStatus.FORBIDDEN);
+        }
+
+        @Test
+        @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
+        void shouldReturnForbiddenForTutor() throws Exception {
+            setupActiveCourseScenario();
+
+            CourseCalendarEvent eventToChange = courseCalendarEvents.getFirst();
+            String URL = assembleURLForPutRequest(course.getId());
+
+            CalendarEventDTO body = new CalendarEventDTO("course-" + eventToChange.getId(), "New Title", course.getTitle(), eventToChange.getStartDate().plusDays(1),
+                    eventToChange.getEndDate().plusDays(1), "New Room", "New Facilitator");
+
+            request.putWithResponseBody(URL, body, CalendarEventDTO.class, HttpStatus.FORBIDDEN);
+        }
+
+        @Test
+        @WithMockUser(username = NOT_EDITOR_LOGIN, roles = "EDITOR")
+        void shouldReturnForbiddenForEditorWhenNotPartOfCourse() throws Exception {
+            setupUserNotPartOfAnyCourseScenario();
+
+            CourseCalendarEvent eventToChange = courseCalendarEvents.getFirst();
+            String URL = assembleURLForPutRequest(course.getId());
+
+            CalendarEventDTO body = new CalendarEventDTO("course-" + eventToChange.getId(), "New Title", course.getTitle(), eventToChange.getStartDate().plusDays(1),
+                    eventToChange.getEndDate().plusDays(1), "New Room", "New Facilitator");
+
+            request.putWithResponseBody(URL, body, CalendarEventDTO.class, HttpStatus.FORBIDDEN);
+        }
+
+        @Test
+        @WithMockUser(username = NOT_INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+        void shouldReturnForbiddenForInstructorWhenNotPartOfCourse() throws Exception {
+            setupUserNotPartOfAnyCourseScenario();
+
+            CourseCalendarEvent eventToChange = courseCalendarEvents.getFirst();
+            String URL = assembleURLForPutRequest(course.getId());
+
+            CalendarEventDTO body = new CalendarEventDTO("course-" + eventToChange.getId(), "New Title", course.getTitle(), eventToChange.getStartDate().plusDays(1),
+                    eventToChange.getEndDate().plusDays(1), "New Room", "New Facilitator");
+
+            request.putWithResponseBody(URL, body, CalendarEventDTO.class, HttpStatus.FORBIDDEN);
+        }
+
+        @Test
+        @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
+        void shouldUpdateEventForEditor() throws Exception {
+            setupActiveCourseScenario();
+
+            CourseCalendarEvent eventToChange = courseCalendarEvents.getFirst();
+            String URL = assembleURLForPutRequest(course.getId());
+
+            CalendarEventDTO expected = new CalendarEventDTO("course-" + eventToChange.getId(), "New Title", course.getTitle(), eventToChange.getStartDate().plusDays(1),
+                    eventToChange.getEndDate().plusDays(1), "New Room", "New Facilitator");
+
+            CalendarEventDTO actual = request.putWithResponseBody(URL, expected, CalendarEventDTO.class, HttpStatus.OK);
+
+            assertThat(actual).usingRecursiveComparison().withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class).isEqualTo(expected);
+        }
+
+        @Test
+        @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+        void shouldUpdateEventForInstructor() throws Exception {
+            setupActiveCourseScenario();
+
+            CourseCalendarEvent eventToChange = courseCalendarEvents.getFirst();
+            String URL = assembleURLForPutRequest(course.getId());
+
+            CalendarEventDTO expected = new CalendarEventDTO("course-" + eventToChange.getId(), "New Title", course.getTitle(), eventToChange.getStartDate().plusDays(1),
+                    eventToChange.getEndDate().plusDays(1), "New Room", "New Facilitator");
+
+            CalendarEventDTO actual = request.putWithResponseBody(URL, expected, CalendarEventDTO.class, HttpStatus.OK);
+
+            assertThat(actual).usingRecursiveComparison().withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class).isEqualTo(expected);
+        }
+
+        @Test
+        @WithMockUser(username = NOT_INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+        void shouldReturnNotFoundWhenCourseDoesNotExist() throws Exception {
+            setupActiveCourseScenario();
+
+            CourseCalendarEvent eventToChange = courseCalendarEvents.getFirst();
+            String URL = assembleURLForPutRequest(-1L);
+
+            CalendarEventDTO body = new CalendarEventDTO("course-" + eventToChange.getId(), "New Title", course.getTitle(), eventToChange.getStartDate().plusDays(1),
+                    eventToChange.getEndDate().plusDays(1), "New Room", "New Facilitator");
+
+            request.putWithResponseBody(URL, body, CalendarEventDTO.class, HttpStatus.NOT_FOUND);
+        }
+
+        // should return bad request when eventId malformed
+        // should return bad request when event does not exist
+
+        @Test
+        @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+        void shouldReturnBadRequestWhenEventHasNoId() throws Exception {
+            setupActiveCourseScenario();
+
+            CourseCalendarEvent eventToChange = courseCalendarEvents.getFirst();
+            String URL = assembleURLForPutRequest(course.getId());
+
+            CalendarEventDTO body = new CalendarEventDTO(null, "New Title", course.getTitle(), eventToChange.getStartDate().plusDays(1), eventToChange.getEndDate().plusDays(1),
+                    "New Room", "New Facilitator");
+
+            request.putWithResponseBody(URL, body, CalendarEventDTO.class, HttpStatus.BAD_REQUEST);
+        }
+
+        @Test
+        @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+        void shouldReturnBadRequestWhenEventHasNoTitle() throws Exception {
+            setupActiveCourseScenario();
+
+            CourseCalendarEvent eventToChange = courseCalendarEvents.getFirst();
+            String URL = assembleURLForPutRequest(course.getId());
+
+            CalendarEventDTO body = new CalendarEventDTO("course-" + eventToChange.getId(), null, course.getTitle(), eventToChange.getStartDate().plusDays(1),
+                    eventToChange.getEndDate().plusDays(1), "New Room", "New Facilitator");
+
+            request.putWithResponseBody(URL, body, CalendarEventDTO.class, HttpStatus.BAD_REQUEST);
+        }
+
+        @Test
+        @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+        void shouldOverwriteWithActualCourseNameWhenEventHasNoCourseName() throws Exception {
+            setupActiveCourseScenario();
+
+            CourseCalendarEvent eventToChange = courseCalendarEvents.getFirst();
+            String URL = assembleURLForPutRequest(course.getId());
+
+            CalendarEventDTO expected = new CalendarEventDTO("course-" + eventToChange.getId(), "New Title", null, eventToChange.getStartDate().plusDays(1),
+                    eventToChange.getEndDate().plusDays(1), "New Room", "New Facilitator");
+
+            CalendarEventDTO actual = request.putWithResponseBody(URL, expected, CalendarEventDTO.class, HttpStatus.OK);
+
+            assertThat(actual).usingRecursiveComparison().withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class).ignoringFields("courseName")
+                    .isEqualTo(expected);
+
+            assertThat(actual.courseName()).isEqualTo(course.getTitle());
+        }
+
+        @Test
+        @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+        void shouldReturnBadRequestWhenEventHasNoStartDate() throws Exception {
+            setupActiveCourseScenario();
+
+            CourseCalendarEvent eventToChange = courseCalendarEvents.getFirst();
+            String URL = assembleURLForPutRequest(course.getId());
+
+            CalendarEventDTO body = new CalendarEventDTO("course-" + eventToChange.getId(), "New Title", course.getTitle(), null, eventToChange.getEndDate().plusDays(1),
+                    "New Room", "New Facilitator");
+
+            request.putWithResponseBody(URL, body, CalendarEventDTO.class, HttpStatus.BAD_REQUEST);
+        }
+
+        @Test
+        @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+        void shouldUpdateEventWhenEventHasNoEndDate() throws Exception {
+            setupActiveCourseScenario();
+
+            CourseCalendarEvent eventToChange = courseCalendarEvents.getFirst();
+            String URL = assembleURLForPutRequest(course.getId());
+
+            CalendarEventDTO expected = new CalendarEventDTO("course-" + eventToChange.getId(), "New Title", course.getTitle(), eventToChange.getStartDate().plusDays(1), null,
+                    "New Room", "New Facilitator");
+
+            CalendarEventDTO actual = request.putWithResponseBody(URL, expected, CalendarEventDTO.class, HttpStatus.OK);
+
+            assertThat(actual).usingRecursiveComparison().withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class).isEqualTo(expected);
+        }
+
+        @Test
+        @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+        void shouldUpdateEventWhenEventHasNoLocation() throws Exception {
+            setupActiveCourseScenario();
+
+            CourseCalendarEvent eventToChange = courseCalendarEvents.getFirst();
+            String URL = assembleURLForPutRequest(course.getId());
+
+            CalendarEventDTO expected = new CalendarEventDTO("course-" + eventToChange.getId(), "New Title", course.getTitle(), eventToChange.getStartDate().plusDays(1),
+                    eventToChange.getEndDate().plusDays(1), null, "New Facilitator");
+
+            CalendarEventDTO actual = request.putWithResponseBody(URL, expected, CalendarEventDTO.class, HttpStatus.OK);
+
+            assertThat(actual).usingRecursiveComparison().withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class).isEqualTo(expected);
+        }
+
+        @Test
+        @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+        void shouldUpdateEventWhenEventHasNoFacilitator() throws Exception {
+            setupActiveCourseScenario();
+
+            CourseCalendarEvent eventToChange = courseCalendarEvents.getFirst();
+            String URL = assembleURLForPutRequest(course.getId());
+
+            CalendarEventDTO expected = new CalendarEventDTO("course-" + eventToChange.getId(), "New Title", course.getTitle(), eventToChange.getStartDate().plusDays(1),
+                    eventToChange.getEndDate().plusDays(1), "New Room", null);
+
+            CalendarEventDTO actual = request.putWithResponseBody(URL, expected, CalendarEventDTO.class, HttpStatus.OK);
+
+            assertThat(actual).usingRecursiveComparison().withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class).isEqualTo(expected);
+        }
+
+        // TODO: write a test that verifies correct format of response DTO-timestamps
     }
 
     @Nested
     class DeleteCourseCalendarEvents {
 
+        @Test
+        @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
+        void shouldReturnForbiddenForStudent() throws Exception {
+            setupActiveCourseScenario();
+
+            CourseCalendarEvent eventToDelete = courseCalendarEvents.getFirst();
+            String URL = assembleURLForDeleteRequest(course.getId(), eventToDelete.getId());
+
+            request.delete(URL, HttpStatus.FORBIDDEN);
+        }
+
+        @Test
+        @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
+        void shouldReturnForbiddenForTutor() throws Exception {
+            setupActiveCourseScenario();
+
+            CourseCalendarEvent eventToDelete = courseCalendarEvents.getFirst();
+            String URL = assembleURLForDeleteRequest(course.getId(), eventToDelete.getId());
+
+            request.delete(URL, HttpStatus.FORBIDDEN);
+        }
+
+        @Test
+        @WithMockUser(username = NOT_EDITOR_LOGIN, roles = "EDITOR")
+        void shouldReturnForbiddenForEditorWhenNotPartOfCourse() throws Exception {
+            setupUserNotPartOfAnyCourseScenario();
+
+            CourseCalendarEvent eventToDelete = courseCalendarEvents.getFirst();
+            String URL = assembleURLForDeleteRequest(course.getId(), eventToDelete.getId());
+
+            request.delete(URL, HttpStatus.FORBIDDEN);
+        }
+
+        @Test
+        @WithMockUser(username = NOT_INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+        void shouldReturnForbiddenForInstructorWhenNotPartOfCourse() throws Exception {
+            setupUserNotPartOfAnyCourseScenario();
+
+            CourseCalendarEvent eventToDelete = courseCalendarEvents.getFirst();
+            String URL = assembleURLForDeleteRequest(course.getId(), eventToDelete.getId());
+
+            request.delete(URL, HttpStatus.FORBIDDEN);
+        }
+
+        @Test
+        @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
+        void shouldDeleteEventForEditor() throws Exception {
+            setupActiveCourseScenario();
+
+            CourseCalendarEvent eventToDelete = courseCalendarEvents.getFirst();
+            String URL = assembleURLForDeleteRequest(course.getId(), eventToDelete.getId());
+
+            request.delete(URL, HttpStatus.NO_CONTENT);
+
+            assertThat(courseCalendarEventRepository.findById(eventToDelete.getId())).isEmpty();
+        }
+
+        @Test
+        @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+        void shouldDeleteEventForInstructor() throws Exception {
+            setupActiveCourseScenario();
+
+            CourseCalendarEvent eventToDelete = courseCalendarEvents.getFirst();
+            String URL = assembleURLForDeleteRequest(course.getId(), eventToDelete.getId());
+
+            request.delete(URL, HttpStatus.NO_CONTENT);
+
+            assertThat(courseCalendarEventRepository.findById(eventToDelete.getId())).isEmpty();
+        }
+
+        @Test
+        @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+        void shouldReturnNotFoundIfCourseDoesNotExist() throws Exception {
+            setupActiveCourseScenario();
+
+            CourseCalendarEvent eventToDelete = courseCalendarEvents.getFirst();
+            String URL = assembleURLForDeleteRequest(-1L, eventToDelete.getId());
+
+            request.delete(URL, HttpStatus.NOT_FOUND);
+        }
+
+        @Test
+        @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+        void shouldReturnNotFoundIfEventDoesNotExist() throws Exception {
+            setupActiveCourseScenario();
+
+            String URL = assembleURLForDeleteRequest(course.getId(), -1L);
+
+            request.delete(URL, HttpStatus.NOT_FOUND);
+        }
+
+        @Test
+        @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+        void shouldReturnBadRequestIfEventDoesNotBelongToCourse() throws Exception {
+            setupActiveCourseScenario();
+
+            CourseCalendarEvent eventToDelete = courseCalendarEvents.getFirst();
+            Course otherCourse = courseUtilService.createActiveCourseInTimezone(ZoneId.of(TEST_TIMEZONE), 2, 2);
+            String URL = assembleURLForDeleteRequest(otherCourse.getId(), eventToDelete.getId());
+
+            request.delete(URL, HttpStatus.BAD_REQUEST);
+        }
     }
 }

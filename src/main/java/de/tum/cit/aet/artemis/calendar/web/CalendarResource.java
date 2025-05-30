@@ -28,7 +28,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.calendar.dto.CalendarEventDTO;
-import de.tum.cit.aet.artemis.calendar.repository.CourseCalendarEventRepository;
 import de.tum.cit.aet.artemis.calendar.service.CalendarEventFilteringService;
 import de.tum.cit.aet.artemis.calendar.service.CourseCalendarEventService;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -58,19 +57,16 @@ public class CalendarResource {
 
     private final CourseCalendarEventService courseCalendarEventService;
 
-    private final CourseCalendarEventRepository courseCalendarEventRepository;
-
     private final CalendarEventFilteringService calendarEventFilteringService;
 
     public CalendarResource(UserRepository userRepository, TutorialGroupApi tutorialGroupApi, CourseRepository courseRepository,
-            AuthorizationCheckService authorizationCheckService, CourseCalendarEventService courseCalendarEventService, CourseCalendarEventRepository courseCalendarEventRepository,
+            AuthorizationCheckService authorizationCheckService, CourseCalendarEventService courseCalendarEventService,
             CalendarEventFilteringService calendarEventFilteringService) {
         this.userRepository = userRepository;
         this.tutorialGroupApi = tutorialGroupApi;
         this.courseRepository = courseRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.courseCalendarEventService = courseCalendarEventService;
-        this.courseCalendarEventRepository = courseCalendarEventRepository;
         this.calendarEventFilteringService = calendarEventFilteringService;
     }
 
@@ -90,10 +86,10 @@ public class CalendarResource {
         ZoneId clientTimeZone = calendarEventFilteringService.deserializeTimeZoneOrElseThrow(timeZone);
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
+
         Set<CalendarEventDTO> tutorialEventDTOs = tutorialGroupApi.getTutorialEventsForUser(user, clientTimeZone);
         Set<CalendarEventDTO> courseEventDTOs = courseCalendarEventService.getCourseEventsForUser(user, clientTimeZone);
         Set<CalendarEventDTO> calendarEventDTOs = Stream.concat(tutorialEventDTOs.stream(), courseEventDTOs.stream()).collect(Collectors.toSet());
-
         Set<CalendarEventDTO> filteredEventDTOs = calendarEventFilteringService.filterForEventsOverlappingMonths(calendarEventDTOs, months, clientTimeZone);
 
         Map<String, List<CalendarEventDTO>> eventDTOsByDay = filteredEventDTOs.stream().collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
@@ -102,16 +98,16 @@ public class CalendarResource {
 
     @PostMapping("courses/{courseId}/course-calendar-events")
     @EnforceAtLeastEditor
-    public ResponseEntity<Set<CalendarEventDTO>> createCourseCalendarEvent(@PathVariable Long courseId, @RequestBody @Valid List<CalendarEventDTO> calendarEventDtos) {
-        log.debug("REST request to create CourseCalendarEvents: {} in course: {}", calendarEventDtos, courseId);
+    public ResponseEntity<Set<CalendarEventDTO>> createCourseCalendarEvent(@PathVariable Long courseId, @RequestBody @Valid List<CalendarEventDTO> calendarEventDTOs) {
+        log.debug("REST request to create CourseCalendarEvents: {} in course: {}", calendarEventDTOs, courseId);
 
         Course course = courseRepository.findByIdElseThrow(courseId);
         User responsibleUser = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, responsibleUser);
 
-        Set<CalendarEventDTO> createdCalendarEventDtos = courseCalendarEventService.createCourseCalendarEvents(calendarEventDtos, course);
+        Set<CalendarEventDTO> createdCalendarEventDTOs = courseCalendarEventService.createCourseCalendarEventsOrThrow(calendarEventDTOs, course);
 
-        return ResponseEntity.ok(createdCalendarEventDtos);
+        return ResponseEntity.ok(createdCalendarEventDTOs);
     }
 
     @PutMapping("courses/{courseId}/course-calendar-event")
@@ -137,7 +133,7 @@ public class CalendarResource {
         User responsibleUser = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, responsibleUser);
 
-        courseCalendarEventRepository.deleteById(courseCalendarEventId);
+        courseCalendarEventService.deleteCourseCalendarEventOrThrow(courseCalendarEventId, course);
 
         return ResponseEntity.noContent().build();
     }
