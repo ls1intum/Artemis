@@ -16,7 +16,9 @@ import org.springframework.stereotype.Component;
 
 /**
  * This component initializes all lazy singleton beans after the application is ready.
- * It uses a thread pool to initialize the beans in parallel, which can help reduce startup time.
+ * This allows us to benefit from the lazy initialization of beans during startup, without comprising end user experience as beans are initialized before the first request is
+ * made..
+ * It uses parallel streams to initialize the beans in parallel.
  * The beans are initialized by accessing them, which triggers their initialization.
  */
 @Component
