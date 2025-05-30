@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
@@ -1358,16 +1359,35 @@ public class GitService extends AbstractGitService {
      * @throws Exception if any error occurs during cloning, copying, repository creation, or committing
      */
     public void createStudentRepository(VcsRepositoryUri templateUri, Path targetPath) throws Exception {
-        Path tempTemplateWorkingDir = Files.createTempDirectory("template-working-");
-        Path tempStudentWorkingDir = Files.createTempDirectory("student-working-");
+        Path tempTemplateWorkingDir = Paths.get(System.getProperty("java.io.tmpdir"), "template-working-" + UUID.randomUUID());
+        Path tempStudentWorkingDir = Paths.get(System.getProperty("java.io.tmpdir"), "student-working-" + UUID.randomUUID());
+
+        // Delete if exists
+        if (Files.exists(tempTemplateWorkingDir)) {
+            FileUtils.deleteDirectory(tempTemplateWorkingDir.toFile());
+        }
+        Files.createDirectories(tempTemplateWorkingDir);
+
+        if (Files.exists(tempStudentWorkingDir)) {
+            FileUtils.deleteDirectory(tempStudentWorkingDir.toFile());
+        }
+        Files.createDirectories(tempStudentWorkingDir);
 
         Repository repo = null;
 
         try {
-            if (Files.exists(tempTemplateWorkingDir)) {
-                FileUtils.deleteDirectory(tempTemplateWorkingDir.toFile());
+            try {
+                repo = getOrCheckoutRepository(templateUri, tempTemplateWorkingDir, true);
             }
-            repo = getOrCheckoutRepository(templateUri, tempTemplateWorkingDir, false);
+            catch (GitException e) {
+                if (e.getCause() instanceof TransportException && e.getCause().getMessage().contains("Nothing to fetch")) {
+                    log.warn("Nothing to fetch from remote repository, skipping pull.");
+                    repo = getOrCheckoutRepository(templateUri, tempTemplateWorkingDir, false);
+                }
+                else {
+                    throw e;
+                }
+            }
             log.debug("Copying files from template to student working directory: {}", tempStudentWorkingDir);
             copyFilesExcludingGit(tempTemplateWorkingDir, tempStudentWorkingDir);
             log.debug("Creating bare repository at target location: {}", targetPath);
