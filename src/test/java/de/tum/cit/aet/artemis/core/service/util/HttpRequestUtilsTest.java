@@ -198,7 +198,7 @@ class HttpRequestUtilsTest {
         }
 
         @Test
-        void shouldDetectWindowsOperatingSystem() {
+        void shouldDetectOperatingSystem_whenUsingWindows() {
             HttpServletRequest request = mock(HttpServletRequest.class);
             when(request.getHeader("Sec-Ch-Ua")).thenReturn("\"Chromium\";v=\"136\", \"Google Chrome\";v=\"136\", \"Not.A/Brand\";v=\"99\"");
             when(request.getHeader("User-Agent")).thenReturn("Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
@@ -208,7 +208,7 @@ class HttpRequestUtilsTest {
         }
 
         @Test
-        void shouldDetectMacOsOperatingSystem() {
+        void shouldDetectOperatingSystem_whenUsingMacOs() {
             HttpServletRequest request = mock(HttpServletRequest.class);
             when(request.getHeader("Sec-Ch-Ua")).thenReturn("\"Chromium\";v=\"136\", \"Google Chrome\";v=\"136\", \"Not.A/Brand\";v=\"99\"");
             when(request.getHeader("User-Agent")).thenReturn("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)");
@@ -218,7 +218,7 @@ class HttpRequestUtilsTest {
         }
 
         @Test
-        void shouldDetectLinuxOperatingSystem() {
+        void shouldDetectOperatingSystem_whenUsingLinux() {
             HttpServletRequest request = mock(HttpServletRequest.class);
             when(request.getHeader("Sec-Ch-Ua")).thenReturn("\"Chromium\";v=\"136\", \"Google Chrome\";v=\"136\", \"Not.A/Brand\";v=\"99\"");
             when(request.getHeader("User-Agent")).thenReturn("Mozilla/5.0 (X11; Linux x86_64)");
@@ -228,7 +228,7 @@ class HttpRequestUtilsTest {
         }
 
         @Test
-        void shouldDetectAndroidOperatingSystem() {
+        void shouldDetectOperatingSystem_whenUsingAndroid() {
             HttpServletRequest request = mock(HttpServletRequest.class);
             when(request.getHeader("Sec-Ch-Ua")).thenReturn("\"Chromium\";v=\"136\", \"Google Chrome\";v=\"136\", \"Not.A/Brand\";v=\"99\"");
             when(request.getHeader("User-Agent")).thenReturn("Mozilla/5.0 (Linux; Android 13; SM-G991B)");
@@ -238,7 +238,7 @@ class HttpRequestUtilsTest {
         }
 
         @Test
-        void shouldDetectIosOperatingSystem() {
+        void shouldDetectOperatingSystem_whenUsingIos() {
             HttpServletRequest request = mock(HttpServletRequest.class);
             when(request.getHeader("Sec-Ch-Ua")).thenReturn("\"Chromium\";v=\"136\", \"Google Chrome\";v=\"136\", \"Not.A/Brand\";v=\"99\"");
             when(request.getHeader("User-Agent")).thenReturn("Mozilla/5.0 (iPhone; CPU iPhone OS 15_5 like Mac OS X)");
@@ -248,7 +248,7 @@ class HttpRequestUtilsTest {
         }
 
         @Test
-        void shouldReturnNullForUnknownOperatingSystem() {
+        void shouldReturnNullForOperatingSystem_whenUsingUnknownUserAgent() {
             HttpServletRequest request = mock(HttpServletRequest.class);
             when(request.getHeader("User-Agent")).thenReturn("Unknown User-Agent");
             ClientEnvironment operatingSystem = HttpRequestUtils.getClientEnvironment(request);
