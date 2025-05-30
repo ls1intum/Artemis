@@ -38,8 +38,6 @@ import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
-import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
-import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.ParticipationVcsAccessTokenService;
 import de.tum.cit.aet.artemis.programming.service.UriService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
@@ -60,15 +58,11 @@ public class ParticipationService {
     @Value("${artemis.version-control.default-branch:main}")
     protected String defaultBranch;
 
-    private final GitService gitService;
-
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
     private final Optional<VersionControlService> versionControlService;
 
     private final Optional<LocalVCGitBranchService> localVCGitBranchService;
-
-    private final BuildLogEntryService buildLogEntryService;
 
     private final ParticipationRepository participationRepository;
 
@@ -86,16 +80,14 @@ public class ParticipationService {
 
     private final ParticipationVcsAccessTokenService participationVCSAccessTokenService;
 
-    public ParticipationService(GitService gitService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
-            Optional<LocalVCGitBranchService> localVCGitBranchService, BuildLogEntryService buildLogEntryService, ParticipationRepository participationRepository,
+    public ParticipationService(Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
+            Optional<LocalVCGitBranchService> localVCGitBranchService, ParticipationRepository participationRepository,
             StudentParticipationRepository studentParticipationRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, SubmissionRepository submissionRepository, TeamRepository teamRepository, UriService uriService,
             ParticipationVcsAccessTokenService participationVCSAccessTokenService) {
-        this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
         this.localVCGitBranchService = localVCGitBranchService;
-        this.buildLogEntryService = buildLogEntryService;
         this.participationRepository = participationRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
