@@ -9,6 +9,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,6 +24,7 @@ import de.tum.cit.aet.artemis.assessment.dto.BonusSourceResultDTO;
 import de.tum.cit.aet.artemis.assessment.dto.MaxAndReachablePointsDTO;
 import de.tum.cit.aet.artemis.assessment.dto.score.StudentScoresDTO;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
 import de.tum.cit.aet.artemis.assessment.repository.StudentScoreRepository;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.assessment.util.GradingScaleFactory;
@@ -53,6 +55,9 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
 
     @Autowired
     private ResultTestRepository resultRepository;
+
+    @Autowired
+    private ParticipantScoreRepository participantScoreRepository;
 
     @Autowired
     private GradingScaleRepository gradingScaleRepository;
@@ -140,10 +145,15 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
 
         // Test with null result set.
         Set<Result> results = studentParticipations.get(1).getResults();
+
+        // Clear participant scores before deleting results
+        for (Long id : studentParticipations.stream().map(StudentParticipation::getExercise).map(Exercise::getId).collect(Collectors.toSet())) {
+            participantScoreRepository.deleteAllByExerciseId(id);
+        }
+
         resultRepository.deleteAll(results);
 
         // Test with empty result set.
-        studentParticipations.get(2).setResults(Collections.emptySet());
         resultRepository.saveAll(studentParticipations.get(2).getResults());
 
         // Test with null score in result.
