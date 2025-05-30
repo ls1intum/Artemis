@@ -24,7 +24,7 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationU
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTest;
 
-public class ParticipationDeletionServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
+class ParticipationDeletionServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
 
     private static final String TEST_PREFIX = "participationdeletionservice";
 
