@@ -52,15 +52,15 @@ public class HttpRequestUtils {
         return Optional.ofNullable(ipAddress);
     }
 
+    @NotNull
+    private static String getHeaderValue(HttpServletRequest request, String headerName) {
+        String headerValue = request.getHeader(headerName);
+        return headerValue == null || headerValue.isEmpty() ? "" : headerValue;
+    }
+
     private static Browser getBrowserName(@NotNull HttpServletRequest request) {
-        String userAgent = request.getHeader(HttpHeaders.USER_AGENT);
-        if (userAgent == null || userAgent.isEmpty()) {
-            userAgent = "";
-        }
-        String secureClientHintsUserAgent = request.getHeader("Sec-Ch-Ua");
-        if (secureClientHintsUserAgent == null) {
-            secureClientHintsUserAgent = "";
-        }
+        String userAgent = getHeaderValue(request, HttpHeaders.USER_AGENT);
+        String secureClientHintsUserAgent = getHeaderValue(request, "Sec-Ch-Ua");
 
         if (secureClientHintsUserAgent.contains("Microsoft Edge")) {
             return Browser.MICROSOFT_EDGE;
@@ -95,14 +95,8 @@ public class HttpRequestUtils {
     }
 
     private static OperatingSystem getOperatingSystem(@NotNull HttpServletRequest request) {
-        String userAgent = request.getHeader(HttpHeaders.USER_AGENT);
-        if (userAgent == null || userAgent.isEmpty()) {
-            userAgent = "";
-        }
-        String secureClientHintsUserAgentPlatform = request.getHeader("Sec-Ch-Ua");
-        if (secureClientHintsUserAgentPlatform == null) {
-            secureClientHintsUserAgentPlatform = "";
-        }
+        String userAgent = getHeaderValue(request, HttpHeaders.USER_AGENT);
+        String secureClientHintsUserAgentPlatform = getHeaderValue(request, "Sec-Ch-Ua-Platform");
 
         if (userAgent.contains("Windows")) {
             return OperatingSystem.WINDOWS;
@@ -139,7 +133,6 @@ public class HttpRequestUtils {
 
         boolean hasCFNetwork = userAgent.contains("CFNetwork");
         boolean hasIosAppName = userAgent.contains("Artemis");
-
         boolean isIosApp = hasIosAppName && hasCFNetwork;
         if (isIosApp) {
             return new ClientEnvironment(null, null, ArtemisApp.IOS);
