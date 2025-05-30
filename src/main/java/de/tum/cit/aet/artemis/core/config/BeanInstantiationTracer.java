@@ -58,7 +58,6 @@ public class BeanInstantiationTracer implements InstantiationAwareBeanPostProces
 
     @Override
     public void onApplicationEvent(ApplicationReadyEvent event) {
-        // e.g. write to src/main/resources/beans.dot
         try (PrintWriter out = new PrintWriter("beans.dot")) {
             out.println("digraph beans {");
             for (Pair<String, String> edge : edges) {

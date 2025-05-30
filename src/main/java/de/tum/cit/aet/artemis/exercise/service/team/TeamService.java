@@ -27,7 +27,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.dto.TeamImportStrategyType;
 import de.tum.cit.aet.artemis.exercise.dto.TeamSearchUserDTO;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
-import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
+import de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService;
 import de.tum.cit.aet.artemis.exercise.web.TeamResource;
 
 @Profile(PROFILE_CORE)
@@ -39,12 +39,12 @@ public class TeamService {
 
     private final UserRepository userRepository;
 
-    private final ParticipationService participationService;
+    private final ParticipationDeletionService participationDeletionService;
 
-    public TeamService(TeamRepository teamRepository, UserRepository userRepository, ParticipationService participationService) {
+    public TeamService(TeamRepository teamRepository, UserRepository userRepository, ParticipationDeletionService participationDeletionService) {
         this.teamRepository = teamRepository;
         this.userRepository = userRepository;
-        this.participationService = participationService;
+        this.participationDeletionService = participationDeletionService;
     }
 
     /**
@@ -275,7 +275,7 @@ public class TeamService {
      */
     private TeamImportStrategy getTeamImportStrategy(TeamImportStrategyType importStrategyType) {
         return switch (importStrategyType) {
-            case PURGE_EXISTING -> new PurgeExistingStrategy(teamRepository, participationService);
+            case PURGE_EXISTING -> new PurgeExistingStrategy(teamRepository, participationDeletionService);
             case CREATE_ONLY -> new CreateOnlyStrategy(teamRepository);
         };
     }

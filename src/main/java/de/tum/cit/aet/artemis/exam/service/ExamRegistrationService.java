@@ -37,7 +37,7 @@ import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
-import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
+import de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService;
 
 /**
  * Service Implementation for registering students in the exam.
@@ -55,7 +55,7 @@ public class ExamRegistrationService {
 
     private final UserService userService;
 
-    private final ParticipationService participationService;
+    private final ParticipationDeletionService participationDeletionService;
 
     private final StudentExamRepository studentExamRepository;
 
@@ -75,14 +75,14 @@ public class ExamRegistrationService {
 
     private final StudentExamService studentExamService;
 
-    public ExamRegistrationService(ExamUserRepository examUserRepository, ExamRepository examRepository, UserService userService, ParticipationService participationService,
-            UserRepository userRepository, AuditEventRepository auditEventRepository, CourseRepository courseRepository, StudentExamRepository studentExamRepository,
-            StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authorizationCheckService, ExamUserService examUserService,
-            StudentExamService studentExamService) {
+    public ExamRegistrationService(ExamUserRepository examUserRepository, ExamRepository examRepository, UserService userService,
+            ParticipationDeletionService participationDeletionService, UserRepository userRepository, AuditEventRepository auditEventRepository, CourseRepository courseRepository,
+            StudentExamRepository studentExamRepository, StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authorizationCheckService,
+            ExamUserService examUserService, StudentExamService studentExamService) {
         this.examRepository = examRepository;
         this.userService = userService;
         this.userRepository = userRepository;
-        this.participationService = participationService;
+        this.participationDeletionService = participationDeletionService;
         this.auditEventRepository = auditEventRepository;
         this.courseRepository = courseRepository;
         this.studentExamRepository = studentExamRepository;
@@ -306,7 +306,7 @@ public class ExamRegistrationService {
         if (deleteParticipationsAndSubmission) {
             List<StudentParticipation> participations = studentParticipationRepository.findByStudentExamWithEagerSubmissions(studentExam);
             for (var participation : participations) {
-                participationService.delete(participation.getId(), true);
+                participationDeletionService.delete(participation.getId(), true);
             }
         }
 
