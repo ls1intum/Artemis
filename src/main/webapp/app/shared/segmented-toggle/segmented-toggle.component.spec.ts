@@ -16,7 +16,7 @@ describe('SegmentedToggleComponent', () => {
             imports: [SegmentedToggleComponent],
         }).compileComponents();
 
-        fixture = TestBed.createComponent(SegmentedToggleComponent);
+        fixture = TestBed.createComponent(SegmentedToggleComponent<number>);
         component = fixture.componentInstance;
         component.options = mockOptions;
         fixture.detectChanges();
