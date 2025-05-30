@@ -87,17 +87,13 @@ examples.forEach((activeConversation) => {
             // Mock CourseNotificationSettingService
             const notificationSettingService = TestBed.inject(CourseNotificationSettingService);
             jest.spyOn(notificationSettingService, 'getSettingInfo').mockReturnValue(
-                of(
-                    new HttpResponse({
-                        body: {
-                            selectedPreset: 1,
-                            notificationTypeChannels: {
-                                conversationMessage: { WEBAPP: true, EMAIL: false, PUSH: false },
-                                conversationMention: { WEBAPP: false, EMAIL: false, PUSH: false },
-                            },
-                        },
-                    }),
-                ),
+                of({
+                    selectedPreset: 1,
+                    notificationTypeChannels: {
+                        conversationMessage: { WEBAPP: true, EMAIL: false, PUSH: false },
+                        conversationMention: { WEBAPP: false, EMAIL: false, PUSH: false },
+                    },
+                }),
             );
 
             fixture.detectChanges();
@@ -253,17 +249,13 @@ examples.forEach((activeConversation) => {
             const notificationSettingService = TestBed.inject(CourseNotificationSettingService);
 
             jest.spyOn(notificationSettingService, 'getSettingInfo').mockReturnValue(
-                of(
-                    new HttpResponse({
-                        body: {
-                            selectedPreset: 3,
-                            notificationTypeChannels: {
-                                conversationMessage: { WEBAPP: false, EMAIL: false, PUSH: false },
-                                conversationMention: { WEBAPP: false, EMAIL: false, PUSH: false },
-                            },
-                        },
-                    }),
-                ),
+                of({
+                    selectedPreset: 3,
+                    notificationTypeChannels: {
+                        conversationMessage: { WEBAPP: false, EMAIL: false, PUSH: false },
+                        conversationMention: { WEBAPP: false, EMAIL: false, PUSH: false },
+                    },
+                }),
             );
 
             activeConversation.isMuted = false;
@@ -279,17 +271,13 @@ examples.forEach((activeConversation) => {
         it('should show muted notification message when conversation is muted', fakeAsync(() => {
             const notificationSettingService = TestBed.inject(CourseNotificationSettingService);
             jest.spyOn(notificationSettingService, 'getSettingInfo').mockReturnValue(
-                of(
-                    new HttpResponse({
-                        body: {
-                            selectedPreset: 1,
-                            notificationTypeChannels: {
-                                conversationMessage: { WEBAPP: true, EMAIL: true, PUSH: true },
-                                conversationMention: { WEBAPP: true, EMAIL: true, PUSH: true },
-                            },
-                        },
-                    }),
-                ),
+                of({
+                    selectedPreset: 1,
+                    notificationTypeChannels: {
+                        conversationMessage: { WEBAPP: true, EMAIL: true, PUSH: true },
+                        conversationMention: { WEBAPP: true, EMAIL: true, PUSH: true },
+                    },
+                }),
             );
 
             activeConversation.isMuted = true;
