@@ -20,10 +20,12 @@ import org.springframework.boot.autoconfigure.liquibase.LiquibaseProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.info.BuildProperties;
 import org.springframework.boot.info.GitProperties;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.core.env.Environment;
 
 import de.tum.cit.aet.artemis.core.config.ArtemisCompatibleVersionsConfiguration;
+import de.tum.cit.aet.artemis.core.config.DeferredEagerBeanInitializer;
 import de.tum.cit.aet.artemis.core.config.LicenseConfiguration;
 import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
 import de.tum.cit.aet.artemis.core.config.TheiaConfiguration;
@@ -86,6 +88,12 @@ public class ArtemisApp {
         var buildProperties = context.getBean(BuildProperties.class);
         var gitProperties = context.getBean(GitProperties.class);
         logApplicationStartup(env, buildProperties, gitProperties);
+        deferredEagerBeanInitialization(context);
+    }
+
+    private static void deferredEagerBeanInitialization(ConfigurableApplicationContext context) {
+        DeferredEagerBeanInitializer initializer = context.getBean(DeferredEagerBeanInitializer.class);
+        initializer.initializeDeferredEagerBeans();
     }
 
     private static void logApplicationStartup(Environment env, BuildProperties buildProperties, GitProperties gitProperties) {
