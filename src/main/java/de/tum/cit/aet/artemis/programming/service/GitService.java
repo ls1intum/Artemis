@@ -1275,17 +1275,12 @@ public class GitService extends AbstractGitService {
 
     /**
      * Creates a new bare Git repository at the specified target path.
-     * <p>
-     * A bare repository is a repository that does not have a working directory.
-     * It stores Git data but does not allow direct file modifications through
-     * the working tree. Bare repositories are typically used as remote repositories.
-     * </p>
      *
      * @param targetPath the file system path where the bare repository should be created
-     * @return the newly created {@link Repository} instance representing the bare repository
+     * @return the newly created Repository instance representing the bare repository
      * @throws IOException if an I/O error occurs during directory creation or repository setup
      */
-    public Repository createBareRepository(Path targetPath) throws IOException {
+    private Repository createBareRepository(Path targetPath) throws IOException {
         Files.createDirectories(targetPath);
 
         FileRepositoryBuilder builder = new FileRepositoryBuilder();
@@ -1307,7 +1302,7 @@ public class GitService extends AbstractGitService {
      * @param targetDir the target directory to copy to
      * @throws IOException if any IO error occurs during copying
      */
-    public void copyFilesExcludingGit(Path sourceDir, Path targetDir) throws IOException {
+    private void copyFilesExcludingGit(Path sourceDir, Path targetDir) throws IOException {
         try (Stream<Path> paths = Files.walk(sourceDir)) {
             paths.filter(path -> {
                 // Exclude .git directory and its contents
@@ -1322,10 +1317,6 @@ public class GitService extends AbstractGitService {
                             Files.createDirectories(targetPath);
                         }
                     }
-                    else {
-                        Files.createDirectories(targetPath.getParent());
-                        FileUtils.copyFile(sourcePath.toFile(), targetPath.toFile());
-                    }
                 }
                 catch (IOException e) {
                     throw new UncheckedIOException(e);
@@ -1337,68 +1328,24 @@ public class GitService extends AbstractGitService {
     /**
      * Commits all files from a source directory into a bare Git repository as a single commit.
      *
-     * <p>
-     * This method creates a temporary non-bare working directory by cloning the given bare repository,
-     * copies all files from the source directory (excluding any .git directory) into this working directory,
-     * stages and commits these files with a fixed commit message, and then pushes the commit back to the bare repository.
-     * </p>
-     *
      * @param bareRepo       the bare repository where the commit will be pushed
      * @param sourceFilesDir the source directory containing files to commit
      * @throws IOException     if an I/O error occurs during file operations or directory cleanup
      * @throws GitAPIException if a Git operation fails (clone, add, commit, push)
      */
-    public void commitCopiedFilesIntoRepo(Repository bareRepo, Path sourceFilesDir) throws IOException, GitAPIException {
-        // 1. Create temp working directory
+    private void commitCopiedFilesIntoRepo(Repository bareRepo, Path sourceFilesDir) throws IOException, GitAPIException {
         Path tempWorkingDir = Files.createTempDirectory("temp-working-copy");
 
         try {
-            // 2. Clone bare repo into temp working directory (non-bare)
             try (Git git = Git.cloneRepository().setURI(bareRepo.getDirectory().toURI().toString()).setDirectory(tempWorkingDir.toFile()).setBare(false).call()) {
-                try {
-                    // 3. Copy all files from sourceFilesDir into tempWorkingDir, excluding .git
-                    copyFilesExcludingGit(sourceFilesDir, tempWorkingDir);
-                    // 4. Stage all changes
-                    git.add().addFilepattern(".").call();
-                    // 5. Commit staged files
-                    GitService.commit(git).setMessage("Initial import without history").call();
-                    // 6. Push commit back to bare repo with authentication if needed
-                    pushCommand(git).setForce(true).call();
-                }
-                finally {
-                    git.close();
-                }
+                copyFilesExcludingGit(sourceFilesDir, tempWorkingDir);
+                git.add().addFilepattern(".").call();
+                GitService.commit(git).setMessage("Initial import without history").call();
+                pushCommand(git).setForce(true).call();
             }
         }
         finally {
-            // Cleanup temp working directory recursively
             FileUtils.deleteDirectory(tempWorkingDir.toFile());
-        }
-    }
-
-    /**
-     * Checks whether the Git repository at the specified path is empty.
-     *
-     * <p>
-     * This method determines emptiness by checking if the `.git` directory exists,
-     * and if it does, whether the repository has any commits in its history.
-     * </p>
-     *
-     * @param repoPath the path to the local Git repository (working directory)
-     * @return {@code true} if the repository is empty or invalid (no commits or no .git folder), {@code false} otherwise
-     */
-    private boolean isEmptyGitRepository(Path repoPath) {
-        Path gitDir = repoPath.resolve(".git");
-        if (!Files.exists(gitDir)) {
-            return true;
-        }
-        try (Git git = Git.open(repoPath.toFile())) {
-            Iterable<RevCommit> commits = git.log().call();
-            return !commits.iterator().hasNext();
-        }
-        catch (IOException | GitAPIException e) {
-            log.debug("Could not determine if repository is empty: {}", e.getMessage());
-            return true;
         }
     }
 
@@ -1406,38 +1353,21 @@ public class GitService extends AbstractGitService {
      * Creates a new student repository at the specified target path with a single initial commit
      * based on the contents of a given template repository.
      *
-     * <p>
-     * This method performs the following steps:
-     * <ol>
-     * <li>Creates temporary working directories for the template and student files.</li>
-     * <li>Clones or checks out the template repository into the temporary template working directory.
-     * If the directory does not exist or is empty, it forcibly pulls from the remote.</li>
-     * <li>Copies all files (excluding the `.git` directory) from the template working directory
-     * to the student working directory.</li>
-     * <li>Creates a new bare Git repository at the specified target path.</li>
-     * <li>Commits the copied files into the new bare repository as a single initial commit.</li>
-     * <li>Cleans up temporary directories and closes any opened repository resources.</li>
-     * </ol>
-     * </p>
-     *
      * @param templateUri the URI of the template Git repository to clone from
      * @param targetPath  the file system path where the new bare repository will be created
      * @throws Exception if any error occurs during cloning, copying, repository creation, or committing
      */
-    public void createSingleCommitStudentRepo(VcsRepositoryUri templateUri, Path targetPath) throws Exception {
+    public void createStudentRepository(VcsRepositoryUri templateUri, Path targetPath) throws Exception {
         Path tempTemplateWorkingDir = Files.createTempDirectory("template-working-");
         Path tempStudentWorkingDir = Files.createTempDirectory("student-working-");
 
         Repository repo = null;
 
         try {
-            if (!Files.exists(tempTemplateWorkingDir) || isEmptyGitRepository(tempTemplateWorkingDir)) {
+            if (Files.exists(tempTemplateWorkingDir)) {
                 FileUtils.deleteDirectory(tempTemplateWorkingDir.toFile());
-                repo = getOrCheckoutRepository(templateUri, tempTemplateWorkingDir, true);
             }
-            else {
-                repo = getOrCheckoutRepository(templateUri, tempTemplateWorkingDir, false);
-            }
+            repo = getOrCheckoutRepository(templateUri, tempTemplateWorkingDir, true);
             log.debug("Copying files from template to student working directory: {}", tempStudentWorkingDir);
             copyFilesExcludingGit(tempTemplateWorkingDir, tempStudentWorkingDir);
             log.debug("Creating bare repository at target location: {}", targetPath);
@@ -1467,23 +1397,6 @@ public class GitService extends AbstractGitService {
     /**
      * Constructs the filesystem path for a student's Git repository based on the project key,
      * repository name, and attempt number.
-     *
-     * <p>
-     * The path is constructed under the base local version control directory. The repository
-     * name is converted to lowercase. If an attempt number greater than zero is provided and
-     * the repository name does not already contain "practice-", the attempt number is appended
-     * to the project key in lowercase to differentiate multiple attempts.
-     * </p>
-     *
-     * <p>
-     * The resulting path follows the pattern:
-     *
-     * <pre>
-     *    {localVCBasePath}/{projectKeyLowerCase}{attempt?}/{projectKeyLowerCase}-{repositoryName}.git
-     * </pre>
-     *
-     * where `{attempt?}` is included only if the attempt is greater than zero and applicable.
-     * </p>
      *
      * @param targetProjectKey     the key of the project (e.g., course or exercise identifier)
      * @param targetRepositoryName the name of the target repository (will be lowercased)

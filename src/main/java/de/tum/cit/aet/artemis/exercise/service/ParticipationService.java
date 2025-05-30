@@ -265,8 +265,7 @@ public class ParticipationService {
      */
     private StudentParticipation startProgrammingExercise(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation) {
         // Step 1a) create the student repository (based on the template repository)
-        participation = createStudentRepositoryWithSingleCommit(exercise, exercise.getVcsTemplateRepositoryUri(), participation);
-
+        participation = createStudentRepository(exercise, exercise.getVcsTemplateRepositoryUri(), participation);
         return startProgrammingParticipation(participation);
     }
 
@@ -478,7 +477,7 @@ public class ParticipationService {
         }
     }
 
-    private ProgrammingExerciseStudentParticipation createStudentRepositoryWithSingleCommit(ProgrammingExercise programmingExercise, VcsRepositoryUri sourceURL,
+    private ProgrammingExerciseStudentParticipation createStudentRepository(ProgrammingExercise programmingExercise, VcsRepositoryUri sourceURL,
             ProgrammingExerciseStudentParticipation participation) {
         // only execute this step if it has not yet been completed yet or if the repository uri is missing for some reason
         if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_COPIED) || participation.getVcsRepositoryUri() == null) {
@@ -486,7 +485,7 @@ public class ParticipationService {
                 final var projectKey = programmingExercise.getProjectKey();
                 final var targetRepositoryName = participation.addPracticePrefixIfTestRun(participation.getParticipantIdentifier());
                 final var studentRepoPath = gitService.buildStudentRepoPath(projectKey, targetRepositoryName, participation.getAttempt());
-                gitService.createSingleCommitStudentRepo(sourceURL, studentRepoPath);
+                gitService.createStudentRepository(sourceURL, studentRepoPath);
 
                 VcsRepositoryUri newRepoUri = new LocalVCRepositoryUri(studentRepoPath, localVCBaseUrl);
                 String username = participation.getParticipantIdentifier();
