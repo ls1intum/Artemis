@@ -1367,7 +1367,7 @@ public class GitService extends AbstractGitService {
             if (Files.exists(tempTemplateWorkingDir)) {
                 FileUtils.deleteDirectory(tempTemplateWorkingDir.toFile());
             }
-            repo = getOrCheckoutRepository(templateUri, tempTemplateWorkingDir, true);
+            repo = getOrCheckoutRepository(templateUri, tempTemplateWorkingDir, false);
             log.debug("Copying files from template to student working directory: {}", tempStudentWorkingDir);
             copyFilesExcludingGit(tempTemplateWorkingDir, tempStudentWorkingDir);
             log.debug("Creating bare repository at target location: {}", targetPath);

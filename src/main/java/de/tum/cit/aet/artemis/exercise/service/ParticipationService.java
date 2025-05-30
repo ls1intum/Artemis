@@ -479,30 +479,27 @@ public class ParticipationService {
 
     private ProgrammingExerciseStudentParticipation createStudentRepository(ProgrammingExercise programmingExercise, VcsRepositoryUri sourceURL,
             ProgrammingExerciseStudentParticipation participation) {
-        // only execute this step if it has not yet been completed yet or if the repository uri is missing for some reason
-        if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_COPIED) || participation.getVcsRepositoryUri() == null) {
-            try {
-                final var projectKey = programmingExercise.getProjectKey();
-                final var targetRepositoryName = participation.addPracticePrefixIfTestRun(participation.getParticipantIdentifier());
-                final var studentRepoPath = gitService.buildStudentRepoPath(projectKey, targetRepositoryName, participation.getAttempt());
-                gitService.createStudentRepository(sourceURL, studentRepoPath);
-
-                VcsRepositoryUri newRepoUri = new LocalVCRepositoryUri(studentRepoPath, localVCBaseUrl);
-                String username = participation.getParticipantIdentifier();
-                newRepoUri = newRepoUri.withUser(username);
-                participation.setRepositoryUri(newRepoUri.toString());
-                participation.setBranch(defaultBranch);
-                participation.setInitializationState(InitializationState.REPO_COPIED);
-
-                return programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
-            }
-            catch (Exception e) {
-                log.error("Error while creating single commit student repository", e);
-                throw new GitException("Failed to create single-commit student repository", e);
-            }
-        }
-        else {
+        if (participation.getInitializationState().hasCompletedState(InitializationState.REPO_COPIED) && participation.getVcsRepositoryUri() != null) {
             return participation;
+        }
+        try {
+            final var projectKey = programmingExercise.getProjectKey();
+            final var targetRepositoryName = participation.addPracticePrefixIfTestRun(participation.getParticipantIdentifier());
+            final var studentRepoPath = gitService.buildStudentRepoPath(projectKey, targetRepositoryName, participation.getAttempt());
+            gitService.createStudentRepository(sourceURL, studentRepoPath);
+
+            VcsRepositoryUri newRepoUri = new LocalVCRepositoryUri(studentRepoPath, localVCBaseUrl);
+            String username = participation.getParticipantIdentifier();
+            newRepoUri = newRepoUri.withUser(username);
+            participation.setRepositoryUri(newRepoUri.toString());
+            participation.setBranch(defaultBranch);
+            participation.setInitializationState(InitializationState.REPO_COPIED);
+
+            return programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
+        }
+        catch (Exception e) {
+            log.error("Error while creating single commit student repository", e);
+            throw new GitException("Failed to create single-commit student repository", e);
         }
     }
 
