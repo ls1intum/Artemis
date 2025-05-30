@@ -54,7 +54,7 @@ public class ArtemisSuccessfulLoginService {
      *
      * @param username the username of the user who has successfully logged in
      */
-    public void sendLoginEmail(String username, AuthenticationMethod authenticationMethod) {
+    public void sendLoginEmail(String username, AuthenticationMethod authenticationMethod, String clientType) {
         // TODO consider authentication type
         try {
             User recipient = userRepository.getUserByLoginElseThrow(username);

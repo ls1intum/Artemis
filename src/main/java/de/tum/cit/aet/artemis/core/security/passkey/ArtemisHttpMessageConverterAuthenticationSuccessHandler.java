@@ -6,8 +6,6 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseCookie;
@@ -24,6 +22,7 @@ import org.springframework.util.Assert;
 import de.tum.cit.aet.artemis.core.security.jwt.AuthenticationMethod;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.service.ArtemisSuccessfulLoginService;
+import de.tum.cit.aet.artemis.core.util.HttpRequestUtils;
 
 /**
  * An {@link AuthenticationSuccessHandler}, that sets a JWT token in the response and writes a JSON response with the redirect
@@ -32,8 +31,6 @@ import de.tum.cit.aet.artemis.core.service.ArtemisSuccessfulLoginService;
  * Implementation Oriented at {@link org.springframework.security.web.authentication.HttpMessageConverterAuthenticationSuccessHandler}, see implementation for more information
  */
 public final class ArtemisHttpMessageConverterAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
-
-    private static final Logger log = LoggerFactory.getLogger(ArtemisHttpMessageConverterAuthenticationSuccessHandler.class);
 
     private HttpMessageConverter<Object> converter;
 
@@ -80,7 +77,7 @@ public final class ArtemisHttpMessageConverterAuthenticationSuccessHandler imple
         ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(rememberMe);
         response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
 
-        artemisSuccessfulLoginService.sendLoginEmail(authentication.getName(), AuthenticationMethod.PASSKEY);
+        artemisSuccessfulLoginService.sendLoginEmail(authentication.getName(), AuthenticationMethod.PASSKEY, HttpRequestUtils.detectClientType(request));
 
         this.converter.write(new AuthenticationSuccess(redirectUrl), MediaType.APPLICATION_JSON, new ServletServerHttpResponse(response));
     }

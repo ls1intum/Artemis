@@ -15,6 +15,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -41,6 +43,7 @@ import de.tum.cit.aet.artemis.core.security.jwt.AuthenticationMethod;
 import de.tum.cit.aet.artemis.core.service.ArtemisSuccessfulLoginService;
 import de.tum.cit.aet.artemis.core.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.core.service.user.UserService;
+import de.tum.cit.aet.artemis.core.util.HttpRequestUtils;
 
 /**
  * This class describes a service for SAML2 authentication.
@@ -117,7 +120,7 @@ public class SAML2Service {
      * @param principal    the principal, containing the user information
      * @return a new {@link UsernamePasswordAuthenticationToken} matching the SAML2 user
      */
-    public Authentication handleAuthentication(final Authentication originalAuth, final Saml2AuthenticatedPrincipal principal) {
+    public Authentication handleAuthentication(final Authentication originalAuth, final Saml2AuthenticatedPrincipal principal, final HttpServletRequest request) {
         Map<String, Object> details = originalAuth.getDetails() == null ? Map.of() : Map.of("details", originalAuth.getDetails());
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -156,7 +159,7 @@ public class SAML2Service {
         String login = user.get().getLogin();
         auth = new UsernamePasswordAuthenticationToken(login, user.get().getPassword(), toGrantedAuthorities(user.get().getAuthorities()));
         auditEventRepository.add(new AuditEvent(Instant.now(), login, "SAML2_AUTHENTICATION_SUCCESS", details));
-        artemisSuccessfulLoginService.sendLoginEmail(login, AuthenticationMethod.SAML2);
+        artemisSuccessfulLoginService.sendLoginEmail(login, AuthenticationMethod.SAML2, HttpRequestUtils.detectClientType(request));
         return auth;
     }
 
