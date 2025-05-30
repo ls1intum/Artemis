@@ -495,6 +495,26 @@ public class ParticipationResource {
     }
 
     /**
+     * GET /exercises/{participationId}/athena-feedback-request-count :
+     * Returns how many *successful* AUTOMATIC_ATHENA results the **current user** already has for this exercise.
+     *
+     * @param participationId the id of the participation
+     * @return the ResponseEntity with status 200 (OK) and with body the number of successful feedback requests
+     */
+    @GetMapping("participations/{participationId}/athena-feedback-request-count")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Integer> getAutomaticFeedbackRequestCount(@PathVariable long participationId) {
+
+        StudentParticipation participation = studentParticipationRepository.findByIdWithEagerTeamStudentsElseThrow(participationId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        this.checkAccessPermissionOwner(participation, user);
+
+        int count = resultRepository.countByParticipationIdAndAssessmentTypeAndSuccessfulTrue(participationId, AssessmentType.AUTOMATIC_ATHENA);
+
+        return ResponseEntity.ok(count);
+    }
+
+    /**
      * PUT /participations : Updates an existing participation.
      *
      * @param exerciseId    the id of the exercise, the participation belongs to

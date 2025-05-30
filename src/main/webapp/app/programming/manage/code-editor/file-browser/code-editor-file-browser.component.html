@@ -109,11 +109,13 @@
             [hasUnsavedChanges]="unsavedFiles && unsavedFiles.includes(item.value)"
             [hasError]="errorFiles && errorFiles.includes(item.value)"
             [disableActions]="disableActions || commitState === CommitState.CONFLICT"
+            [disableReopenFeedbackButton]="disableReopenFeedbackButton"
             (onSetRenamingNode)="setRenamingFile(item)"
             (onRenameNode)="onRenameFile($event)"
             (onNodeSelect)="handleNodeSelected(item)"
             (onDeleteNode)="openDeleteFileModal(item)"
             (onClearRenamingNode)="clearRenamingFile()"
+            (onReopenFeedbackNode)="reopenFeedback(item)"
         />
     }
     <!--new item-->
