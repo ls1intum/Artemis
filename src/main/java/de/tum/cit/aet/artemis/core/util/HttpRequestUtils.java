@@ -52,11 +52,36 @@ public class HttpRequestUtils {
         return Optional.ofNullable(ipAddress);
     }
 
-    private static boolean isBrowser(String userAgent) {
-        return userAgent.contains("Mozilla") || userAgent.contains("Chrome") || userAgent.contains("Safari") || userAgent.contains("Edge") || userAgent.contains("OPR") ||  // Opera
-                userAgent.contains("Trident") ||  // IE
-                userAgent.contains("Firefox") || userAgent.contains("Brave") || userAgent.contains("Vivaldi") || userAgent.contains("SamsungBrowser")
-                || userAgent.contains("DuckDuckGo");
+    private static String getBrowserName(String userAgent) {
+        if (userAgent.contains("Chrome") && !userAgent.contains("Chromium")) {
+            return "Google Chrome";
+        }
+        else if (userAgent.contains("Firefox")) {
+            return "Mozilla Firefox";
+        }
+        else if (userAgent.contains("Safari") && !userAgent.contains("Chrome")) {
+            return "Apple Safari";
+        }
+        else if (userAgent.contains("Edg")) {
+            return "Microsoft Edge";
+        }
+        else if (userAgent.contains("OPR") || userAgent.contains("Opera")) {
+            return "Opera";
+        }
+        else if (userAgent.contains("Brave")) {
+            return "Brave";
+        }
+        else if (userAgent.contains("Vivaldi")) {
+            return "Vivaldi";
+        }
+        else if (userAgent.contains("SamsungBrowser")) {
+            return "Samsung Internet";
+        }
+        else if (userAgent.contains("DuckDuckGo")) {
+            return "DuckDuckGo";
+        }
+
+        return null;
     }
 
     public static String detectClientType(@NotNull HttpServletRequest request) {
@@ -72,13 +97,14 @@ public class HttpRequestUtils {
         boolean hasCFNetwork = userAgent.contains("CFNetwork");
         boolean hasIosAppName = userAgent.contains("Artemis");
 
+        String browserName = getBrowserName(userAgent);
+        if (browserName != null) {
+            return browserName;
+        }
+
         boolean isIosApp = hasIosAppName && hasCFNetwork;
         if (isIosApp) {
             return "iOS App";
-        }
-
-        if (isBrowser(userAgent)) {
-            return "Browser";
         }
 
         boolean isAndroidApp = userAgent.contains("ktor-client");
