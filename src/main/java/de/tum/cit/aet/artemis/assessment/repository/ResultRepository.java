@@ -57,25 +57,23 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
             """)
     Optional<Result> findByIdWithEagerAssessor(@Param("resultId") long resultId);
 
-    List<Result> findByParticipationIdOrderByCompletionDateDesc(long participationId);
+    @EntityGraph(type = LOAD, attributePaths = "submission")
+    List<Result> findAllBySubmissionParticipationIdOrderByCompletionDateDesc(long participationId);
 
     @EntityGraph(type = LOAD, attributePaths = "submission")
-    List<Result> findAllByParticipationIdOrderByCompletionDateDesc(long participationId);
-
-    @EntityGraph(type = LOAD, attributePaths = "submission")
-    List<Result> findByParticipationExerciseIdOrderByCompletionDateAsc(long exerciseId);
+    List<Result> findBySubmissionParticipationExerciseIdOrderByCompletionDateAsc(long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "submission", "feedbacks" })
-    List<Result> findWithEagerSubmissionAndFeedbackByParticipationExerciseId(long exerciseId);
+    List<Result> findWithEagerSubmissionAndFeedbackBySubmissionParticipationExerciseId(long exerciseId);
 
     @Query("""
             SELECT DISTINCT r
             FROM Result r
-                LEFT JOIN TREAT (r.participation AS ProgrammingExerciseStudentParticipation) sp
+                LEFT JOIN TREAT(r.submission.participation AS ProgrammingExerciseStudentParticipation) sp
             WHERE r.completionDate = (
                     SELECT MAX(rr.completionDate)
                     FROM Result rr
-                        LEFT JOIN TREAT (rr.participation AS ProgrammingExerciseStudentParticipation) sp2
+                        LEFT JOIN TREAT(rr.submission.participation AS ProgrammingExerciseStudentParticipation) sp2
                     WHERE rr.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
                         AND sp2.exercise.id = :exerciseId
                         AND sp2.student = sp.student
@@ -105,9 +103,9 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
         return findResultsWithFeedbacksAndTestCaseByIdIn(ids);
     }
 
-    Optional<Result> findFirstByParticipationIdOrderByCompletionDateDesc(long participationId);
+    Optional<Result> findFirstBySubmissionParticipationIdOrderByCompletionDateDesc(long participationId);
 
-    Optional<Result> findFirstByParticipationIdAndAssessmentTypeOrderByCompletionDateDesc(long participationId, AssessmentType assessmentType);
+    Optional<Result> findFirstBySubmissionParticipationIdAndAssessmentTypeOrderByCompletionDateDesc(long participationId, AssessmentType assessmentType);
 
     @EntityGraph(type = LOAD, attributePaths = { "feedbacks", "feedbacks.testCase" })
     Optional<Result> findResultWithFeedbacksAndTestCasesById(long resultId);
@@ -121,7 +119,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
      *         or an empty {@code Optional} if no result is found
      */
     default Optional<Result> findFirstWithFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(long participationId) {
-        var resultOptional = findFirstByParticipationIdOrderByCompletionDateDesc(participationId);
+        var resultOptional = findFirstBySubmissionParticipationIdOrderByCompletionDateDesc(participationId);
         if (resultOptional.isEmpty()) {
             return Optional.empty();
         }
@@ -141,7 +139,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
      *         or an empty {@code Optional} if no result is found
      */
     default Optional<Result> findFirstWithSubmissionAndFeedbacksAndTestCasesByParticipationIdOrderByCompletionDateDesc(long participationId) {
-        var resultOptional = findFirstByParticipationIdOrderByCompletionDateDesc(participationId);
+        var resultOptional = findFirstBySubmissionParticipationIdOrderByCompletionDateDesc(participationId);
         if (resultOptional.isEmpty()) {
             return Optional.empty();
         }
@@ -152,7 +150,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     @EntityGraph(type = LOAD, attributePaths = "submission")
     Optional<Result> findResultWithSubmissionsById(long resultId);
 
-    Optional<Result> findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(long participationId, boolean rated);
+    Optional<Result> findFirstBySubmissionParticipationIdAndRatedOrderByCompletionDateDesc(long participationId, boolean rated);
 
     /**
      * Finds the first rated or unrated result by participation ID, including its submission, ordered by completion date in descending order.
@@ -164,7 +162,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
      *         or an empty {@code Optional} if no result is found
      */
     default Optional<Result> findFirstByParticipationIdAndRatedWithSubmissionOrderByCompletionDateDesc(long participationId, boolean rated) {
-        var resultOptional = findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(participationId, rated);
+        var resultOptional = findFirstBySubmissionParticipationIdAndRatedOrderByCompletionDateDesc(participationId, rated);
         if (resultOptional.isEmpty()) {
             return Optional.empty();
         }
@@ -205,7 +203,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 LEFT JOIN FETCH r.feedbacks
                 LEFT JOIN FETCH r.assessor
                 LEFT JOIN FETCH r.assessmentNote
-                LEFT JOIN FETCH TREAT (r.participation AS StudentParticipation ) p
+                LEFT JOIN FETCH TREAT(r.submission.participation AS StudentParticipation) p
                 LEFT JOIN FETCH p.team t
                 LEFT JOIN FETCH t.students
             WHERE r.id = :resultId
@@ -221,7 +219,8 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     @Query("""
             SELECT new de.tum.cit.aet.artemis.assessment.dto.dashboard.ResultCountDTO(r.rated, COUNT(r))
             FROM Result r
-                JOIN r.participation p
+                JOIN r.submission s
+                JOIN s.participation p
             WHERE r.completionDate IS NOT NULL
                 AND r.assessor IS NOT NULL
                 AND p.exercise.id IN :exerciseIds
@@ -240,7 +239,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
             FROM Result r
                 LEFT JOIN FETCH r.submission
                 LEFT JOIN FETCH r.feedbacks
-                LEFT JOIN FETCH TREAT (r.participation AS StudentParticipation ) p
+                LEFT JOIN FETCH TREAT (r.submission.participation AS StudentParticipation ) p
                 LEFT JOIN FETCH p.team t
                 LEFT JOIN FETCH t.students
             WHERE r.id = :resultId
@@ -268,7 +267,8 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     @Query("""
             SELECT COUNT(DISTINCT p)
             FROM StudentParticipation p
-                JOIN p.results r
+                JOIN p.submissions s
+                JOIN s.results r
                 JOIN p.exercise e
             WHERE e.id = :exerciseId
                 AND p.testRun = FALSE
@@ -336,7 +336,8 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     @Query("""
             SELECT COUNT(DISTINCT p)
             FROM Participation p
-                JOIN p.results r
+                JOIN p.submissions s
+                JOIN s.results r
             WHERE p.exercise.id = :exerciseId
                 AND r.assessor IS NOT NULL
                 AND r.assessmentType IN :types
@@ -349,7 +350,8 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     @Query("""
             SELECT COUNT(DISTINCT p)
             FROM Participation p
-                JOIN p.results r
+                JOIN p.submissions s
+                JOIN s.results r
             WHERE p.exercise.id = :exerciseId
                 AND r.assessor IS NOT NULL
                 AND r.assessmentType IN :types
@@ -430,7 +432,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
      * @param participationId the id of the participation to check.
      * @return true if a result for the given participation exists, false otherwise.
      */
-    boolean existsByParticipationId(long participationId);
+    boolean existsBySubmissionParticipationId(long participationId);
 
     /**
      * Checks if a result exists for the given submission ID.
@@ -446,7 +448,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
      * @param exerciseId id of an Exercise.
      * @return true if there is a result, false if not.
      */
-    boolean existsByParticipation_ExerciseId(long exerciseId);
+    boolean existsBySubmission_Participation_Exercise_Id(long exerciseId);
 
     /**
      * Use this method only for exams!
@@ -593,7 +595,8 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END)
             )
             FROM Result r
-                JOIN r.participation p
+                JOIN r.submission s
+                JOIN s.participation p
                 JOIN p.exercise e
                 JOIN r.assessor a
                 LEFT JOIN FETCH Rating rating ON rating.result = r
@@ -613,7 +616,8 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END)
             )
             FROM Result r
-                JOIN r.participation p
+                JOIN r.submission s
+                JOIN s.participation p
                 JOIN p.exercise e
                 JOIN r.assessor a
                 LEFT JOIN FETCH Rating rating ON rating.result = r
@@ -633,7 +637,8 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END)
             )
             FROM Result r
-                JOIN r.participation p
+                JOIN r.submission s
+                JOIN s.participation p
                 JOIN p.exercise e
                 JOIN e.exerciseGroup eg
                 JOIN eg.exam ex
@@ -687,8 +692,6 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
         Result savedResult = save(result);
         // Workaround to prevent the assessor or participant turning into a proxy object after saving
         savedResult.setAssessor(result.getAssessor());
-        // Workaround to prevent the team students of a student participation turning into a proxy object after saving
-        savedResult.setParticipation(result.getParticipation());
         return savedResult;
     }
 

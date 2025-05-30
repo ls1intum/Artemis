@@ -217,7 +217,6 @@ public class FileUploadExerciseUtilService {
         Result result = new Result();
         result.setAssessor(userUtilService.getUserByLogin(assessorLogin));
         result.setScore(100D);
-        result.setParticipation(participation);
         if (exercise.getReleaseDate() != null) {
             result.setCompletionDate(exercise.getReleaseDate());
         }
@@ -225,15 +224,14 @@ public class FileUploadExerciseUtilService {
             result.setCompletionDate(ZonedDateTime.now());
         }
         result.setFeedbacks(feedbacks);
+        result.setSubmission(fileUploadSubmission);
         result = resultRepo.save(result);
         for (Feedback feedback : feedbacks) {
             feedback.setResult(result);
         }
         result = resultRepo.save(result);
-        result.setSubmission(fileUploadSubmission);
         fileUploadSubmission.setParticipation(participation);
         fileUploadSubmission.addResult(result);
-        fileUploadSubmission.getParticipation().addResult(result);
         fileUploadSubmission = fileUploadSubmissionRepo.save(fileUploadSubmission);
         studentParticipationRepo.save(participation);
         return fileUploadSubmission;

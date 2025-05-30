@@ -14,7 +14,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -333,14 +332,12 @@ public class ExerciseResource {
             throw new AccessForbiddenException();
         }
 
-        List<StudentParticipation> participations = participationService.findByExerciseAndStudentId(exercise, user.getId());
+        List<StudentParticipation> participations = participationService.findByExerciseAndStudentIdWithSubmissionsAndResults(exercise, user.getId());
         // normally we only have one participation here (only in case of practice mode, there could be two)
         exercise.setStudentParticipations(new HashSet<>());
         for (StudentParticipation participation : participations) {
-            // load the 20 last results with submission here for the participation (avoid loading all results in case there are many, e.g. in excessive programming exercises)
-            var results = resultRepository.findLatestResultsForParticipation(participation.getId(), PageRequest.of(0, 20));
-            participation.setResults(exercise.filterResultsForStudents(results));
             // By filtering the results available yet, they can become null for the exercise.
+            exercise.filterResultsForStudents(participation);
             if (participation.getResults() != null) {
                 participation.getResults().forEach(Result::filterSensitiveInformation);
             }

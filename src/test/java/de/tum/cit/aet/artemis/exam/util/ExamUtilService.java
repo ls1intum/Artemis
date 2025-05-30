@@ -1129,7 +1129,6 @@ public class ExamUtilService {
         submissionRepository.save(submission);
         Result result = participationUtilService.generateResultWithScore(submission, studentExam.getUser(), 3.0);
         submission.addResult(result);
-        participation.addResult(result);
         studentParticipationRepo.save(participation);
         submissionRepository.save(submission);
 
@@ -1146,7 +1145,6 @@ public class ExamUtilService {
         submissionRepository.save(submission);
         result = participationUtilService.generateResultWithScore(submission, studentExam.getUser(), 3.0);
         submission.addResult(result);
-        participation.addResult(result);
         studentParticipationRepo.save(participation);
         submissionRepository.save(submission);
         exerciseRepository.save(exercise);
@@ -1162,7 +1160,6 @@ public class ExamUtilService {
         submissionRepository.save(submission);
         result = participationUtilService.generateResultWithScore(submission, studentExam.getUser(), 3.0);
         submission.addResult(result);
-        participation.addResult(result);
         studentParticipationRepo.save(participation);
         submissionRepository.save(submission);
         exerciseRepository.save(exercise);
@@ -1179,7 +1176,6 @@ public class ExamUtilService {
         exerciseRepository.save(exercise);
         result = participationUtilService.generateResultWithScore(submission, studentExam.getUser(), 3.0);
         submission.addResult(result);
-        participation.addResult(result);
         studentParticipationRepo.save(participation);
         submissionRepository.save(submission);
         // programming
@@ -1195,7 +1191,6 @@ public class ExamUtilService {
         submissionRepository.save(submission);
         result = participationUtilService.generateResultWithScore(submission, studentExam.getUser(), 3.0);
         submission.addResult(result);
-        participation.addResult(result);
         studentParticipationRepo.save(participation);
         submissionRepository.save(submission);
         exerciseRepository.save(exercise);

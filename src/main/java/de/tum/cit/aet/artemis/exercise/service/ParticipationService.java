@@ -628,11 +628,11 @@ public class ParticipationService {
      * @param studentId the id of student
      * @return the list of exercise participations belonging to exercise and student
      */
-    public List<StudentParticipation> findByExerciseAndStudentId(Exercise exercise, Long studentId) {
+    public List<StudentParticipation> findByExerciseAndStudentIdWithSubmissionsAndResults(Exercise exercise, Long studentId) {
         if (exercise.isTeamMode()) {
-            return studentParticipationRepository.findAllWithTeamStudentsByExerciseIdAndTeamStudentId(exercise.getId(), studentId);
+            return studentParticipationRepository.findAllWithTeamStudentsByExerciseIdAndTeamStudentIdWithSubmissionsAndResults(exercise.getId(), studentId);
         }
-        return studentParticipationRepository.findByExerciseIdAndStudentId(exercise.getId(), studentId);
+        return studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerResultsAndSubmissions(exercise.getId(), studentId);
     }
 
     /**

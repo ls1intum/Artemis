@@ -46,6 +46,7 @@ import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.GradingScaleService;
+import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -175,6 +176,8 @@ public class ParticipationResource {
 
     private final Optional<StudentExamApi> studentExamApi;
 
+    private final ResultService resultService;
+
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
@@ -187,7 +190,7 @@ public class ParticipationResource {
             ResultRepository resultRepository, ExerciseDateService exerciseDateService, InstanceMessageSendService instanceMessageSendService, QuizBatchService quizBatchService,
             SubmittedAnswerRepository submittedAnswerRepository, QuizSubmissionService quizSubmissionService, GradingScaleService gradingScaleService,
             ProgrammingExerciseCodeReviewFeedbackService programmingExerciseCodeReviewFeedbackService, Optional<TextFeedbackApi> textFeedbackApi,
-            ModelingExerciseFeedbackService modelingExerciseFeedbackService, Optional<StudentExamApi> studentExamApi) {
+            ModelingExerciseFeedbackService modelingExerciseFeedbackService, ResultService resultService, Optional<StudentExamApi> studentExamApi) {
         this.participationService = participationService;
         this.participationDeletionService = participationDeletionService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
@@ -214,6 +217,7 @@ public class ParticipationResource {
         this.programmingExerciseCodeReviewFeedbackService = programmingExerciseCodeReviewFeedbackService;
         this.textFeedbackApi = textFeedbackApi;
         this.modelingExerciseFeedbackService = modelingExerciseFeedbackService;
+        this.resultService = resultService;
         this.studentExamApi = studentExamApi;
     }
 
@@ -331,7 +335,6 @@ public class ParticipationResource {
         }
 
         participation = participationService.resumeProgrammingExercise(participation);
-        addLatestResultToParticipation(participation);
         participation.getExercise().filterSensitiveInformation();
         return ResponseEntity.ok().body(participation);
     }
@@ -482,21 +485,6 @@ public class ParticipationResource {
         }
         else {
             return programmingExercise.getDueDate() == null || now().isBefore(programmingExercise.getDueDate());
-        }
-    }
-
-    /**
-     * This makes sure the client can display the latest result immediately after loading this participation
-     *
-     * @param participation The participation to which the latest result should get added
-     */
-    private void addLatestResultToParticipation(StudentParticipation participation) {
-        // Load results of participation as they are not contained in the current object
-        participation = studentParticipationRepository.findByIdWithResultsElseThrow(participation.getId());
-
-        Result result = participation.findLatestLegalResult();
-        if (result != null) {
-            participation.setResults(Set.of(result));
         }
     }
 
@@ -653,11 +641,7 @@ public class ParticipationResource {
             participations = findParticipationWithLatestResults(exercise);
             participations.forEach(participation -> {
                 participation.setSubmissionCount(participation.getSubmissions().size());
-                if (participation.getResults() != null && !participation.getResults().isEmpty()
-                        && !(participation.getResults().stream().allMatch(result -> AssessmentType.AUTOMATIC_ATHENA.equals(result.getAssessmentType())))) {
-                    participation.setSubmissions(null);
-                }
-                else if (participation.getSubmissions() != null && !participation.getSubmissions().isEmpty()) {
+                if (participation.getSubmissions() != null && !participation.getSubmissions().isEmpty()) {
                     var lastLegalSubmission = participation.getSubmissions().stream().filter(submission -> submission.getType() != SubmissionType.ILLEGAL)
                             .max(Comparator.naturalOrder());
                     participation.setSubmissions(lastLegalSubmission.map(Set::of).orElse(Collections.emptySet()));
@@ -761,12 +745,6 @@ public class ParticipationResource {
         StudentParticipation participation = studentParticipationRepository.findByIdWithResultsElseThrow(participationId);
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
 
-        Result result = participation.getExercise().findLatestResultWithCompletionDate(participation);
-        Set<Result> results = new HashSet<>();
-        if (result != null) {
-            results.add(result);
-        }
-        participation.setResults(results);
         return new ResponseEntity<>(participation, HttpStatus.OK);
     }
 
@@ -841,17 +819,11 @@ public class ParticipationResource {
         if (quizExercise.isQuizEnded()) {
             // quiz has ended => get participation from database and add full quizExercise
             quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(quizExercise.getId());
-            StudentParticipation participation = participationForQuizWithResult(quizExercise, user.getLogin(), null);
+            StudentParticipation participation = participationForQuizWithSubmissionAndResult(quizExercise, user.getLogin(), null);
             if (participation == null) {
                 return null;
             }
-            // avoid problems due to bidirectional associations between submission and result during serialization
-            for (Result result : participation.getResults()) {
-                if (result.getSubmission() != null) {
-                    result.getSubmission().setResults(null);
-                    result.getSubmission().setParticipation(null);
-                }
-            }
+
             return new MappingJacksonValue(participation);
         }
         quizExercise.setQuizBatches(null); // not available here
@@ -863,11 +835,13 @@ public class ParticipationResource {
             quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(quizExercise.getId());
             quizExercise.setQuizBatches(quizBatch.stream().collect(Collectors.toSet()));
             quizExercise.filterForStudentsDuringQuiz();
-            StudentParticipation participation = participationForQuizWithResult(quizExercise, user.getLogin(), quizBatch.get());
+            StudentParticipation participation = participationForQuizWithSubmissionAndResult(quizExercise, user.getLogin(), quizBatch.get());
 
             // TODO: Duplicate
             Object responseDTO = null;
             if (participation != null) {
+                var submissions = submissionRepository.findAllWithResultsByParticipationIdOrderBySubmissionDateAsc(participation.getId());
+                participation.setSubmissions(new HashSet<>(submissions));
                 if (quizExercise.isQuizEnded()) {
                     responseDTO = StudentQuizParticipationWithSolutionsDTO.of(participation);
                 }
@@ -1000,7 +974,7 @@ public class ParticipationResource {
      */
     // TODO: we should move this method (and others related to quizzes) into a QuizParticipationService (or similar) to make this resource independent of specific quiz exercise
     // functionality
-    private StudentParticipation participationForQuizWithResult(QuizExercise quizExercise, String username, QuizBatch quizBatch) {
+    private StudentParticipation participationForQuizWithSubmissionAndResult(QuizExercise quizExercise, String username, QuizBatch quizBatch) {
         // try getting participation from database
         Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseAndStudentLoginAnyState(quizExercise, username);
 
@@ -1014,31 +988,21 @@ public class ParticipationResource {
             StudentParticipation participation = optionalParticipation.get();
             // add exercise
             participation.setExercise(quizExercise);
-            participation.setResults(new HashSet<>());
 
-            // add the appropriate result
+            // add the appropriate submission and result
             Result result = resultRepository.findFirstByParticipationIdAndRatedWithSubmissionOrderByCompletionDateDesc(participation.getId(), true).orElse(null);
             if (result != null) {
                 // find the submitted answers (they are NOT loaded eagerly anymore)
                 var quizSubmission = (QuizSubmission) result.getSubmission();
+                quizSubmission.setResults(List.of(result));
                 var submittedAnswers = submittedAnswerRepository.findBySubmission(quizSubmission);
                 quizSubmission.setSubmittedAnswers(submittedAnswers);
-                participation.addResult(result);
+                participation.setSubmissions(Set.of(quizSubmission));
             }
             return participation;
         }
-        else if (optionalParticipation.isEmpty()) {
-            return null;
-        }
 
-        StudentParticipation participation = optionalParticipation.get();
-        Optional<Submission> optionalSubmission = submissionRepository.findByParticipationIdOrderBySubmissionDateDesc(participation.getId());
-        if (optionalSubmission.isPresent()) {
-            Result result = new Result().submission(optionalSubmission.get());
-            participation.setResults(Set.of(result));
-        }
-
-        return participation;
+        return optionalParticipation.orElse(null);
     }
 
 }

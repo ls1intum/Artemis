@@ -109,7 +109,7 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         quizSubmission = quizSubmissionRepository.save(quizSubmission);
 
         // create result
-        Result result = new Result().participation(participation);
+        Result result = new Result();
         result.setRated(false);
         result.setAssessmentType(AssessmentType.AUTOMATIC);
         result.setCompletionDate(ZonedDateTime.now());
@@ -128,9 +128,6 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
 
         // save result to store score
         resultRepository.save(result);
-
-        // result.participation.exercise.quizQuestions turn into proxy objects after saving, so we need to set it again to prevent problems later on
-        result.setParticipation(participation);
 
         // add result to statistics
         quizStatisticService.recalculateStatistics(quizExercise);
@@ -169,7 +166,7 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
 
             participation.setInitializationState(InitializationState.FINISHED);
 
-            Result result = new Result().participation(participation);
+            Result result = new Result();
             result.setRated(true);
             result.setAssessmentType(AssessmentType.AUTOMATIC);
             result.setCompletionDate(quizSubmission.getSubmissionDate());
@@ -181,9 +178,6 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
             quizSubmissionRepository.save(quizSubmission);
             resultRepository.save(result);
             studentParticipationRepository.save(participation);
-
-            // avoid LazyInitializationException
-            participation.setResults(Set.of(result));
 
             var course = quizExercise.getCourseViaExerciseGroupOrCourseMember();
             sendQuizResultToUser(quizExerciseId, participation);

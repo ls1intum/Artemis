@@ -226,7 +226,8 @@ public class TeamResource {
 
         savedTeam.filterSensitiveInformation();
         savedTeam.getStudents().forEach(student -> student.setVisibleRegistrationNumber(student.getRegistrationNumber()));
-        var participationsOfSavedTeam = studentParticipationRepository.findAllWithTeamStudentsByExerciseIdAndTeamStudentId(exercise.getId(), savedTeam.getId());
+        var participationsOfSavedTeam = studentParticipationRepository.findAllWithTeamStudentsByExerciseIdAndTeamStudentIdWithSubmissionsAndResults(exercise.getId(),
+                savedTeam.getId());
         teamWebsocketService.sendTeamAssignmentUpdate(exercise, existingTeam.get(), savedTeam, participationsOfSavedTeam);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, team.getId().toString())).body(savedTeam);
     }
@@ -474,7 +475,6 @@ public class TeamResource {
         else {
             // for other tutors and for students: submissions not needed, hide results
             participations = studentParticipationRepository.findAllByCourseIdAndTeamShortName(course.getId(), teamShortName);
-            participations.forEach(participation -> participation.setResults(null));
         }
 
         // Set the submission count for all participations

@@ -7,7 +7,6 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -144,13 +143,19 @@ public class ProgrammingExerciseParticipationResource {
                 .orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
 
         hasAccessToParticipationElseThrow(participation);
-        if (shouldHideExamExerciseResults(participation)) {
-            participation.setResults(Set.of());
-        }
+        filterParticipationSubmissionResults(participation);
 
         // hide details that should not be shown to the students
         resultService.filterSensitiveInformationIfNecessary(participation, participation.getResults(), Optional.empty());
         return ResponseEntity.ok(participation);
+    }
+
+    private void filterParticipationSubmissionResults(ProgrammingExerciseStudentParticipation participation) {
+        if (shouldHideExamExerciseResults(participation)) {
+            participation.getSubmissions().forEach(submission -> {
+                submission.setResults(List.of());
+            });
+        }
     }
 
     /**
@@ -167,9 +172,7 @@ public class ProgrammingExerciseParticipationResource {
 
         // TODO: improve access checks to avoid fetching the user multiple times
         hasAccessToParticipationElseThrow(participation);
-        if (shouldHideExamExerciseResults(participation)) {
-            participation.setResults(Set.of());
-        }
+        filterParticipationSubmissionResults(participation);
 
         // hide details that should not be shown to the students
         resultService.filterSensitiveInformationIfNecessary(participation, participation.getResults(), Optional.empty());
@@ -211,7 +214,7 @@ public class ProgrammingExerciseParticipationResource {
     @GetMapping("programming-exercise-participations/{participationId}/has-result")
     @EnforceAtLeastStudent
     public ResponseEntity<Boolean> checkIfParticipationHashResult(@PathVariable Long participationId) {
-        boolean hasResult = resultRepository.existsByParticipationId(participationId);
+        boolean hasResult = resultRepository.existsBySubmissionParticipationId(participationId);
         return ResponseEntity.ok(hasResult);
     }
 
@@ -548,4 +551,5 @@ public class ProgrammingExerciseParticipationResource {
         }
         return false;
     }
+
 }

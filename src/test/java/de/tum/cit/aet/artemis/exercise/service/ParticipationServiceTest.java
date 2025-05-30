@@ -142,7 +142,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
         StudentParticipation participation = participationService.createParticipationWithEmptySubmissionIfNotExisting(programmingExercise, student.orElseThrow(),
                 SubmissionType.EXTERNAL);
 
-        List<Result> results = resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(participation.getId());
+        List<Result> results = resultRepository.findAllBySubmissionParticipationIdOrderByCompletionDateDesc(participation.getId());
 
         Map<Long, String> resultBuildJobMap = resultService.getLogsAvailabilityForResults(results, participation);
         assertThat(resultBuildJobMap).hasSize(0);
@@ -205,7 +205,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
                 continuousIntegrationService, localVCGitBranchService);
 
         StudentParticipation studentParticipationReceived = participationService.startPracticeMode(programmingExercise, participant,
-                Optional.of((StudentParticipation) gradedResult.getParticipation()), useGradedParticipation);
+                Optional.of((StudentParticipation) gradedResult.getSubmission().getParticipation()), useGradedParticipation);
 
         assertThat(studentParticipationReceived.isPracticeMode()).isTrue();
         assertThat(studentParticipationReceived.getExercise()).isEqualTo(programmingExercise);
