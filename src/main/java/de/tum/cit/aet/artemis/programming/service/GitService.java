@@ -1300,21 +1300,20 @@ public class GitService extends AbstractGitService {
     }
 
     /**
-     * Copies all files and directories from the source directory to the target directory,
-     * excluding any files or directories inside the ".git" folder.
-     * <p>
-     * This method recursively walks the source directory tree, filters out paths that
-     * contain ".git" in their path segments, and copies everything else to the target.
-     * Directories are created if they do not exist in the target location.
-     * </p>
+     * Copies all files and directories from sourceDir to targetDir,
+     * excluding the .git directory and its contents.
      *
-     * @param sourceDir the root source directory to copy from
-     * @param targetDir the root target directory to copy to
-     * @throws IOException if an I/O error occurs during walking or copying files
+     * @param sourceDir the source directory to copy from
+     * @param targetDir the target directory to copy to
+     * @throws IOException if any IO error occurs during copying
      */
     public void copyFilesExcludingGit(Path sourceDir, Path targetDir) throws IOException {
         try (Stream<Path> paths = Files.walk(sourceDir)) {
-            paths.filter(path -> !path.toString().contains(File.separator + ".git" + File.separator)).forEach(sourcePath -> {
+            paths.filter(path -> {
+                // Exclude .git directory and its contents
+                Path relativePath = sourceDir.relativize(path);
+                return !relativePath.startsWith(".git");
+            }).forEach(sourcePath -> {
                 try {
                     Path relative = sourceDir.relativize(sourcePath);
                     Path targetPath = targetDir.resolve(relative);
@@ -1329,7 +1328,7 @@ public class GitService extends AbstractGitService {
                     }
                 }
                 catch (IOException e) {
-                    throw new RuntimeException(e);
+                    throw new UncheckedIOException(e);
                 }
             });
         }
@@ -1397,7 +1396,8 @@ public class GitService extends AbstractGitService {
             Iterable<RevCommit> commits = git.log().call();
             return !commits.iterator().hasNext();
         }
-        catch (Exception e) {
+        catch (IOException | GitAPIException e) {
+            log.debug("Could not determine if repository is empty: {}", e.getMessage());
             return true;
         }
     }

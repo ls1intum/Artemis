@@ -485,18 +485,9 @@ public class ParticipationService {
             try {
                 final var projectKey = programmingExercise.getProjectKey();
                 final var targetRepositoryName = participation.addPracticePrefixIfTestRun(participation.getParticipantIdentifier());
-                // not authorized students repo path
                 final var studentRepoPath = gitService.buildStudentRepoPath(projectKey, targetRepositoryName, participation.getAttempt());
+                gitService.createSingleCommitStudentRepo(sourceURL, studentRepoPath);
 
-                try {
-                    gitService.createSingleCommitStudentRepo(sourceURL, studentRepoPath);
-                }
-                catch (Exception e) {
-                    log.error("Error while creating single commit student repo", e);
-                    throw new RuntimeException("Failed to create single commit student repository", e);
-                }
-
-                // Update the participation with the new repository URI
                 VcsRepositoryUri newRepoUri = new LocalVCRepositoryUri(studentRepoPath, localVCBaseUrl);
                 String username = participation.getParticipantIdentifier();
                 newRepoUri = newRepoUri.withUser(username);
