@@ -142,7 +142,15 @@ class HttpRequestUtilsTest {
             assertThat(clientType).isEqualTo("Opera");
         }
 
-        // TODO brave
+        @Test
+        void shouldDetectBrowser_whenUsingBrave() {
+            HttpServletRequest request = mock(HttpServletRequest.class);
+            when(request.getHeader("User-Agent"))
+                    .thenReturn("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36");
+            when(request.getHeader("Sec-Ch-Ua")).thenReturn("\"Brave\";v=\"137\", \"Chromium\";v=\"137\", \"Not/A)Brand\";v=\"24\"");
+            String clientType = HttpRequestUtils.detectClientType(request);
+            assertThat(clientType).isEqualTo("Brave");
+        }
 
         @Test
         void shouldDetectIosApp() {

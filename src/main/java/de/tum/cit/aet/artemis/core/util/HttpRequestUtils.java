@@ -72,6 +72,7 @@ public class HttpRequestUtils {
             return "Apple Safari";
         }
         else if (userAgent.contains("Brave")) {
+            // TODO fix brave detection, as it is currently detected as Chrome
             return "Brave";
         }
         else if (userAgent.contains("Vivaldi")) {
