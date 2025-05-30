@@ -90,12 +90,59 @@ class HttpRequestUtilsTest {
     class DetectClientTypeTests {
 
         @Test
-        void shouldDetectBrowser() {
+        void shouldDetectBrowser_whenUsingChrome() {
             HttpServletRequest request = mock(HttpServletRequest.class);
-            when(request.getHeader("User-Agent")).thenReturn("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3");
+            when(request.getHeader("User-Agent"))
+                    .thenReturn("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36");
             String clientType = HttpRequestUtils.detectClientType(request);
-            assertThat(clientType).isEqualTo("Browser");
+            assertThat(clientType).isEqualTo("Google Chrome");
         }
+
+        @Test
+        void shouldDetectBrowser_whenUsingSafari() {
+            HttpServletRequest request = mock(HttpServletRequest.class);
+            when(request.getHeader("User-Agent"))
+                    .thenReturn("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Safari/605.1.15");
+            String clientType = HttpRequestUtils.detectClientType(request);
+            assertThat(clientType).isEqualTo("Apple Safari");
+        }
+
+        @Test
+        void shouldDetectBrowser_whenUsingMicrosoftEdge() {
+            HttpServletRequest request = mock(HttpServletRequest.class);
+            when(request.getHeader("User-Agent"))
+                    .thenReturn("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 Edg/137.0.0.0");
+            String clientType = HttpRequestUtils.detectClientType(request);
+            assertThat(clientType).isEqualTo("Apple Safari");
+        }
+
+        @Test
+        void shouldDetectBrowser_whenUsingFirefox() {
+            HttpServletRequest request = mock(HttpServletRequest.class);
+            when(request.getHeader("User-Agent")).thenReturn("Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:137.0) Gecko/20100101 Firefox/137.0");
+            String clientType = HttpRequestUtils.detectClientType(request);
+            assertThat(clientType).isEqualTo("Mozilla Firefox");
+        }
+
+        @Test
+        void shouldDetectBrowser_whenUsingSamsungInternet() {
+            HttpServletRequest request = mock(HttpServletRequest.class);
+            when(request.getHeader("User-Agent")).thenReturn(
+                    "Mozilla/5.0 (Linux; Android 13; SAMSUNG SM-G991B) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/18.0 Chrome/109.0.5414.87 Mobile Safari/537.36");
+            String clientType = HttpRequestUtils.detectClientType(request);
+            assertThat(clientType).isEqualTo("Mozilla Firefox");
+        }
+
+        @Test
+        void shouldDetectBrowser_whenUsingOpera() {
+            HttpServletRequest request = mock(HttpServletRequest.class);
+            when(request.getHeader("User-Agent"))
+                    .thenReturn("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36 OPR/119.0.0.0");
+            String clientType = HttpRequestUtils.detectClientType(request);
+            assertThat(clientType).isEqualTo("Opera");
+        }
+
+        // TODO brave
 
         @Test
         void shouldDetectIosApp() {
