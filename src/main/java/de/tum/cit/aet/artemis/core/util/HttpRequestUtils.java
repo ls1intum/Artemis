@@ -124,6 +124,9 @@ public class HttpRequestUtils {
         if (userAgent.contains("Windows")) {
             return OperatingSystem.WINDOWS;
         }
+        else if (userAgent.contains("iPhone") || userAgent.contains("iPad") || userAgent.contains("iOS")) {
+            return OperatingSystem.IOS;
+        }
         else if (userAgent.contains("Macintosh") || userAgent.contains("Mac OS X")) {
             return OperatingSystem.MACOS;
         }
@@ -132,9 +135,6 @@ public class HttpRequestUtils {
         }
         else if (userAgent.contains("Android")) {
             return OperatingSystem.ANDROID;
-        }
-        else if (userAgent.contains("iPhone") || userAgent.contains("iPad") || userAgent.contains("iOS")) {
-            return OperatingSystem.IOS;
         }
 
         log.warn("Could not detect operating system from user agent: {}, secure user agent platform: {}", userAgent, secureClientHintsUserAgentPlatform);

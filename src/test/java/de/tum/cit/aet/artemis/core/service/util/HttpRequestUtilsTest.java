@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.core.util.ClientEnvironment;
 import de.tum.cit.aet.artemis.core.util.HttpRequestUtils;
+import de.tum.cit.aet.artemis.core.util.OperatingSystem;
 
 class HttpRequestUtilsTest {
 
@@ -194,6 +195,64 @@ class HttpRequestUtilsTest {
             when(request.getHeader("User-Agent")).thenReturn(null);
             ClientEnvironment clientEnvironment = HttpRequestUtils.getClientEnvironment(request);
             assertThat(clientEnvironment).isNull();
+        }
+
+        @Test
+        void shouldDetectWindowsOperatingSystem() {
+            HttpServletRequest request = mock(HttpServletRequest.class);
+            when(request.getHeader("Sec-Ch-Ua")).thenReturn("\"Chromium\";v=\"136\", \"Google Chrome\";v=\"136\", \"Not.A/Brand\";v=\"99\"");
+            when(request.getHeader("User-Agent")).thenReturn("Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
+            ClientEnvironment clientEnvironment = HttpRequestUtils.getClientEnvironment(request);
+            Assertions.assertNotNull(clientEnvironment);
+            assertThat(clientEnvironment.operatingSystem()).isEqualTo(OperatingSystem.WINDOWS);
+        }
+
+        @Test
+        void shouldDetectMacOsOperatingSystem() {
+            HttpServletRequest request = mock(HttpServletRequest.class);
+            when(request.getHeader("Sec-Ch-Ua")).thenReturn("\"Chromium\";v=\"136\", \"Google Chrome\";v=\"136\", \"Not.A/Brand\";v=\"99\"");
+            when(request.getHeader("User-Agent")).thenReturn("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)");
+            ClientEnvironment clientEnvironment = HttpRequestUtils.getClientEnvironment(request);
+            Assertions.assertNotNull(clientEnvironment);
+            assertThat(clientEnvironment.operatingSystem()).isEqualTo(OperatingSystem.MACOS);
+        }
+
+        @Test
+        void shouldDetectLinuxOperatingSystem() {
+            HttpServletRequest request = mock(HttpServletRequest.class);
+            when(request.getHeader("Sec-Ch-Ua")).thenReturn("\"Chromium\";v=\"136\", \"Google Chrome\";v=\"136\", \"Not.A/Brand\";v=\"99\"");
+            when(request.getHeader("User-Agent")).thenReturn("Mozilla/5.0 (X11; Linux x86_64)");
+            ClientEnvironment clientEnvironment = HttpRequestUtils.getClientEnvironment(request);
+            Assertions.assertNotNull(clientEnvironment);
+            assertThat(clientEnvironment.operatingSystem()).isEqualTo(OperatingSystem.LINUX);
+        }
+
+        @Test
+        void shouldDetectAndroidOperatingSystem() {
+            HttpServletRequest request = mock(HttpServletRequest.class);
+            when(request.getHeader("Sec-Ch-Ua")).thenReturn("\"Chromium\";v=\"136\", \"Google Chrome\";v=\"136\", \"Not.A/Brand\";v=\"99\"");
+            when(request.getHeader("User-Agent")).thenReturn("Mozilla/5.0 (Linux; Android 13; SM-G991B)");
+            ClientEnvironment clientEnvironment = HttpRequestUtils.getClientEnvironment(request);
+            Assertions.assertNotNull(clientEnvironment);
+            assertThat(clientEnvironment.operatingSystem()).isEqualTo(OperatingSystem.LINUX);
+        }
+
+        @Test
+        void shouldDetectIosOperatingSystem() {
+            HttpServletRequest request = mock(HttpServletRequest.class);
+            when(request.getHeader("Sec-Ch-Ua")).thenReturn("\"Chromium\";v=\"136\", \"Google Chrome\";v=\"136\", \"Not.A/Brand\";v=\"99\"");
+            when(request.getHeader("User-Agent")).thenReturn("Mozilla/5.0 (iPhone; CPU iPhone OS 15_5 like Mac OS X)");
+            ClientEnvironment clientEnvironment = HttpRequestUtils.getClientEnvironment(request);
+            Assertions.assertNotNull(clientEnvironment);
+            assertThat(clientEnvironment.operatingSystem()).isEqualTo(OperatingSystem.IOS);
+        }
+
+        @Test
+        void shouldReturnNullForUnknownOperatingSystem() {
+            HttpServletRequest request = mock(HttpServletRequest.class);
+            when(request.getHeader("User-Agent")).thenReturn("Unknown User-Agent");
+            ClientEnvironment operatingSystem = HttpRequestUtils.getClientEnvironment(request);
+            assertThat(operatingSystem).isNull();
         }
 
     }
