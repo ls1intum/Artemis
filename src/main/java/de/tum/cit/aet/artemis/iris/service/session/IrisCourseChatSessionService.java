@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyJol;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
@@ -25,11 +24,13 @@ import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
+import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisEventType;
 import de.tum.cit.aet.artemis.iris.repository.IrisCourseChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
+import de.tum.cit.aet.artemis.iris.service.pyris.event.CompetencyJolSetEvent;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 
@@ -135,19 +136,15 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
         builder.withCourse(session.getCourseId());
     }
 
-    /**
-     * Triggers the course chat in response to a new judgement of learning.
-     * If the course chat is not enabled for the course, nothing happens.
-     *
-     * @param competencyJol The judgement of learning instance to trigger the course chat for
-     */
-    public void onJudgementOfLearningSet(CompetencyJol competencyJol) {
+    public void handleCompetencyJolSetEvent(CompetencyJolSetEvent competencyJolSetEvent) {
+        var competencyJol = competencyJolSetEvent.getEventObject();
         var course = competencyJol.getCompetency().getCourse();
-        if (!irisSettingsService.isEnabledFor(IrisSubSettingsType.COURSE_CHAT, course)) {
+        var user = competencyJol.getUser();
+
+        if (!irisSettingsService.isActivatedFor(IrisEventType.JOL, course) || !user.hasAcceptedExternalLLMUsage()) {
             return;
         }
-        var user = competencyJol.getUser();
-        user.hasAcceptedExternalLLMUsageElseThrow();
+
         var session = getCurrentSessionOrCreateIfNotExistsInternal(course, user, false);
 
         var settings = irisSettingsService.getCombinedIrisSettingsFor(course, false).irisCourseChatSettings();

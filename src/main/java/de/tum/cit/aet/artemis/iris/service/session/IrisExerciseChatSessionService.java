@@ -36,8 +36,8 @@ import de.tum.cit.aet.artemis.iris.repository.IrisExerciseChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
-import de.tum.cit.aet.artemis.iris.service.pyris.PyrisEventProcessingException;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
+import de.tum.cit.aet.artemis.iris.service.pyris.event.NewResultEvent;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -190,47 +190,55 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
     }
 
     /**
-     * Handles the build failure event by sending a message to the student via Iris.
+     * Handles the new result event by checking if the user has accepted external LLM usage and
+     * if the participation is a student participation. If so, it checks if the build failed or if
+     * the student needs intervention based on their recent score trajectory.
      *
-     * @param result The result of the submission
+     * @param resultEvent The result event of the submission
      */
-    public void onBuildFailure(Result result) {
-        var submission = result.getSubmission();
-        if (submission instanceof ProgrammingSubmission programmingSubmission) {
-            var participation = programmingSubmission.getParticipation();
-            if (!(participation instanceof ProgrammingExerciseStudentParticipation studentParticipation)) {
-                return;
-            }
-            var exercise = validateExercise(participation.getExercise());
+    public void handleNewResultEvent(NewResultEvent resultEvent) {
+        var result = resultEvent.getEventObject();
+        var participation = result.getSubmission().getParticipation();
 
-            irisSettingsService.isActivatedForElseThrow(IrisEventType.BUILD_FAILED, exercise);
+        // Only support programming exercises that are not exam exercises
+        if (!(participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) || participation.getExercise().isExamExercise()) {
+            return;
+        }
 
-            var participant = studentParticipation.getParticipant();
-            if (participant instanceof User user) {
-                var session = getCurrentSessionOrCreateIfNotExistsInternal(exercise, user, false);
-                log.info("Build failed for user {}", user.getName());
-                CompletableFuture.runAsync(() -> requestAndHandleResponse(session, Optional.of(IrisEventType.BUILD_FAILED.name().toLowerCase())));
-            }
-            else {
-                throw new PyrisEventProcessingException("Build failure event is not supported for team participations");
-            }
+        // If the user has not accepted external LLM usage, or participation is of a team, we do not proceed
+        if (!studentParticipation.getStudent().map(User::hasAcceptedExternalLLMUsage).orElse(true)) {
+            return;
+        }
+
+        if (((ProgrammingSubmission) result.getSubmission()).isBuildFailed()) {
+            onBuildFailure(studentParticipation);
+        }
+        else {
+            onNewResult(studentParticipation);
         }
     }
 
     /**
-     * Informs Iris about a progress stall event, if the student has not improved their in the last 3 submissions.
-     *
-     * @param result The result of the submission
+     * Handles the build failure event by sending a message to the student via Iris.
      */
-    public void onNewResult(Result result) {
-        var participation = result.getSubmission().getParticipation();
-        if (!(participation instanceof ProgrammingExerciseStudentParticipation studentParticipation)) {
+    private void onBuildFailure(ProgrammingExerciseStudentParticipation studentParticipation) {
+        if (!irisSettingsService.isActivatedFor(IrisEventType.BUILD_FAILED, studentParticipation.getExercise())) {
             return;
         }
 
-        var exercise = validateExercise(participation.getExercise());
+        var user = studentParticipation.getStudent().orElseThrow();
+        var session = getCurrentSessionOrCreateIfNotExistsInternal(studentParticipation.getProgrammingExercise(), user, false);
+        log.info("Build failed for user {}", user.getName());
+        CompletableFuture.runAsync(() -> requestAndHandleResponse(session, Optional.of(IrisEventType.BUILD_FAILED.name().toLowerCase())));
+    }
 
-        irisSettingsService.isActivatedForElseThrow(IrisEventType.PROGRESS_STALLED, exercise);
+    /**
+     * Informs Iris about a progress stall event, if the student has not improved their in the last 3 submissions.
+     */
+    private void onNewResult(ProgrammingExerciseStudentParticipation studentParticipation) {
+        if (!irisSettingsService.isActivatedFor(IrisEventType.PROGRESS_STALLED, studentParticipation.getExercise())) {
+            return;
+        }
 
         var recentSubmissions = submissionRepository.findAllWithResultsByParticipationIdOrderBySubmissionDateAsc(studentParticipation.getId());
 
@@ -246,14 +254,9 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
             var needsIntervention = needsIntervention(listOfScores);
             if (needsIntervention) {
                 log.info("Scores in the last 3 submissions did not improve for user {}", studentParticipation.getParticipant().getName());
-                var participant = studentParticipation.getParticipant();
-                if (participant instanceof User user) {
-                    var session = getCurrentSessionOrCreateIfNotExistsInternal(exercise, user, false);
-                    CompletableFuture.runAsync(() -> requestAndHandleResponse(session, Optional.of(IrisEventType.PROGRESS_STALLED.name().toLowerCase())));
-                }
-                else {
-                    throw new PyrisEventProcessingException("Progress stalled event is not supported for team participations");
-                }
+                var user = studentParticipation.getStudent().orElseThrow();
+                var session = getCurrentSessionOrCreateIfNotExistsInternal(studentParticipation.getProgrammingExercise(), user, false);
+                CompletableFuture.runAsync(() -> requestAndHandleResponse(session, Optional.of(IrisEventType.PROGRESS_STALLED.name().toLowerCase())));
             }
         }
         else {
@@ -377,21 +380,6 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
     protected void setLLMTokenUsageParameters(LLMTokenUsageService.LLMTokenUsageBuilder builder, IrisProgrammingExerciseChatSession session) {
         var exercise = exerciseRepository.findByIdElseThrow(session.getExerciseId());
         builder.withCourse(exercise.getCourseViaExerciseGroupOrCourseMember().getId()).withExercise(exercise.getId());
-    }
-
-    /**
-     * Validates the exercise and throws an exception if it is not a programming exercise or an exam exercise.
-     *
-     * @param exercise The exercise to check
-     * @throws IrisUnsupportedExerciseTypeException if the exercise is not a programming exercise or an exam exercise
-     */
-    private ProgrammingExercise validateExercise(Exercise exercise) {
-        if (!(exercise instanceof ProgrammingExercise programmingExercise)) {
-            throw new IrisUnsupportedExerciseTypeException("Iris events are only supported for programming exercises");
-        }
-        checkIfExamExercise(exercise);
-
-        return programmingExercise;
     }
 
     /**
