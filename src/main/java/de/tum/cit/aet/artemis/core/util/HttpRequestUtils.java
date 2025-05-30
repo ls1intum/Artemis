@@ -52,67 +52,90 @@ public class HttpRequestUtils {
         return Optional.ofNullable(ipAddress);
     }
 
-    private static String getBrowserName(String userAgent) {
+    private static Browser getBrowserName(String userAgent) {
         if (userAgent.contains("Edg")) {
-            return "Microsoft Edge";
+            return Browser.MICROSOFT_EDGE;
         }
         else if (userAgent.contains("OPR") || userAgent.contains("Opera")) {
-            return "Opera";
+            return Browser.OPERA;
         }
         else if (userAgent.contains("SamsungBrowser")) {
-            return "Samsung Internet";
+            return Browser.SAMSUNG_INTERNET;
         }
         else if (userAgent.contains("Chrome") && !userAgent.contains("Chromium")) {
-            return "Google Chrome";
+            return Browser.GOOGLE_CHROME;
         }
         else if (userAgent.contains("Firefox")) {
-            return "Mozilla Firefox";
+            return Browser.MOZILLA_FIREFOX;
         }
         else if (userAgent.contains("Safari") && !userAgent.contains("Chrome")) {
-            return "Apple Safari";
+            return Browser.APPLE_SAFARI;
         }
         else if (userAgent.contains("Brave")) {
-            // TODO fix brave detection, as it is currently detected as Chrome
-            return "Brave";
+            // TODO fix as it is currently detected as Chrome
+            return Browser.BRAVE;
         }
         else if (userAgent.contains("Vivaldi")) {
-            return "Vivaldi";
+            return Browser.VIVALDI;
         }
         else if (userAgent.contains("DuckDuckGo")) {
-            return "DuckDuckGo";
+            return Browser.DUCKDUCKGO;
         }
 
+        log.warn("Could not detect browser name from user agent: {}", userAgent);
         return null;
     }
 
-    public static String detectClientType(@NotNull HttpServletRequest request) {
+    private static OperatingSystem getOperatingSystem(String userAgent) {
+        if (userAgent.contains("Windows")) {
+            return OperatingSystem.WINDOWS;
+        }
+        else if (userAgent.contains("Macintosh") || userAgent.contains("Mac OS X")) {
+            return OperatingSystem.MACOS;
+        }
+        else if (userAgent.contains("Linux")) {
+            return OperatingSystem.LINUX;
+        }
+        else if (userAgent.contains("Android")) {
+            return OperatingSystem.ANDROID;
+        }
+        else if (userAgent.contains("iPhone") || userAgent.contains("iPad") || userAgent.contains("iOS")) {
+            return OperatingSystem.IOS;
+        }
+
+        log.warn("Could not detect operating system from user agent: {}", userAgent);
+        return null;
+    }
+
+    public static ClientEnvironment detectClientType(@NotNull HttpServletRequest request) {
 
         String userAgent = request.getHeader(HttpHeaders.USER_AGENT);
 
         log.info("Detecting client type from user agent: {}", userAgent);
 
         if (userAgent == null || userAgent.isEmpty()) {
-            return "Unknown";
+            return null;
         }
 
         boolean hasCFNetwork = userAgent.contains("CFNetwork");
         boolean hasIosAppName = userAgent.contains("Artemis");
 
-        String browserName = getBrowserName(userAgent);
+        Browser browserName = getBrowserName(userAgent);
+        OperatingSystem operatingSystem = getOperatingSystem(userAgent);
         if (browserName != null) {
-            return browserName;
+            return new ClientEnvironment(browserName, operatingSystem);
         }
+        //
+        // boolean isIosApp = hasIosAppName && hasCFNetwork;
+        // if (isIosApp) {
+        // return "iOS App";
+        // }
+        //
+        // boolean isAndroidApp = userAgent.contains("ktor-client");
+        // if (isAndroidApp) {
+        // return "Android App";
+        // }
 
-        boolean isIosApp = hasIosAppName && hasCFNetwork;
-        if (isIosApp) {
-            return "iOS App";
-        }
-
-        boolean isAndroidApp = userAgent.contains("ktor-client");
-        if (isAndroidApp) {
-            return "Android App";
-        }
-
-        return "Unknown";
+        return null;
     }
 }

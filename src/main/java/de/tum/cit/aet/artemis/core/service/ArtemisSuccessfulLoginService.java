@@ -19,6 +19,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.jwt.AuthenticationMethod;
+import de.tum.cit.aet.artemis.core.util.ClientEnvironment;
 
 /**
  * Listener for successful authentication events in the Artemis system.
@@ -55,7 +56,7 @@ public class ArtemisSuccessfulLoginService {
      *
      * @param username the username of the user who has successfully logged in
      */
-    public void sendLoginEmail(String username, AuthenticationMethod authenticationMethod, String clientType) {
+    public void sendLoginEmail(String username, AuthenticationMethod authenticationMethod, ClientEnvironment clientEnvironment) {
         // TODO consider authentication type
         try {
             User recipient = userRepository.getUserByLoginElseThrow(username);
@@ -66,8 +67,9 @@ public class ArtemisSuccessfulLoginService {
             ZonedDateTime now = ZonedDateTime.now();
             contextVariables.put("loginDate", now.format(DateTimeFormatter.ofPattern("dd.MM.yyyy")));
             contextVariables.put("loginTime", now.format(DateTimeFormatter.ofPattern("HH:mm:ss")));
-            contextVariables.put("browser", clientType);
-            contextVariables.put("operatingSystem", "macOS"); // TODO
+            // TODO add null checks
+            contextVariables.put("browser", clientEnvironment.browser());
+            contextVariables.put("operatingSystem", clientEnvironment.operatingSystem());
 
             if (recipient.isInternal()) {
                 contextVariables.put("resetLink", artemisServerUrl.toString() + "/account/password");
