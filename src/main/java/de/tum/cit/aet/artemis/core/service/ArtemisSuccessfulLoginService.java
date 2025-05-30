@@ -64,6 +64,7 @@ public class ArtemisSuccessfulLoginService {
 
             String localeKey = recipient.getLangKey();
             if (localeKey == null) {
+                log.warn("User {} has no language set, using default language 'en'", username);
                 localeKey = "en";
             }
             Language language = Language.fromLanguageShortName(localeKey);
