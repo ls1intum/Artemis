@@ -2,8 +2,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SegmentedToggleComponent } from 'app/shared/segmented-toggle/segmented-toggle.component';
 
 describe('SegmentedToggleComponent', () => {
-    let component: SegmentedToggleComponent;
-    let fixture: ComponentFixture<SegmentedToggleComponent>;
+    let component: SegmentedToggleComponent<number>;
+    let fixture: ComponentFixture<SegmentedToggleComponent<number>>;
 
     const mockOptions = [
         { label: 'Option 1', value: 1 },

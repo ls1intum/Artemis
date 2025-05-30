@@ -36,7 +36,7 @@ import de.tum.cit.aet.artemis.core.service.CourseService;
 @RequestMapping("api/atlas/")
 public class CourseLearnerProfileResource {
 
-    private static final Logger log = LoggerFactory.getLogger(LearnerProfileResource.class);
+    private static final Logger log = LoggerFactory.getLogger(CourseLearnerProfileResource.class);
 
     private final UserRepository userRepository;
 
