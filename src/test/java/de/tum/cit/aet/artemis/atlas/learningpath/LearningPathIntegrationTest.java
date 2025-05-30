@@ -541,6 +541,10 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
         final var result = request.get("/api/atlas/learning-path/" + learningPath.getId() + "/navigation", HttpStatus.OK, LearningPathNavigationDTO.class);
 
+        assertThat(result.predecessorLearningObject()).isNotNull();
+        assertThat(result.currentLearningObject()).isNotNull();
+        assertThat(result.successorLearningObject()).isNotNull();
+
         assertThat(result.predecessorLearningObject().completed()).isTrue();
         assertThat(result.currentLearningObject().completed()).isFalse();
         assertThat(result.successorLearningObject().completed()).isFalse();
