@@ -7,6 +7,8 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 
+import jakarta.annotation.Nullable;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -56,7 +58,7 @@ public class ArtemisSuccessfulLoginService {
      *
      * @param username the username of the user who has successfully logged in
      */
-    public void sendLoginEmail(String username, AuthenticationMethod authenticationMethod, ClientEnvironment clientEnvironment) {
+    public void sendLoginEmail(String username, AuthenticationMethod authenticationMethod, @Nullable ClientEnvironment clientEnvironment) {
         try {
             User recipient = userRepository.getUserByLoginElseThrow(username);
             Language language = Language.fromLanguageShortName(recipient.getLangKey());
