@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
@@ -19,7 +20,6 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
-import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -59,7 +59,7 @@ public class FeatureToggleService {
     /**
      * Initialize relevant data from hazelcast
      */
-    @EventListener(FullStartupEvent.class)
+    @EventListener(ApplicationReadyEvent.class)
     public void init() {
         // The map will automatically be distributed between all instances by Hazelcast.
         features = hazelcastInstance.getMap("features");
