@@ -14,6 +14,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
+import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -58,21 +59,21 @@ public class ArtemisSuccessfulLoginService {
         // TODO consider authentication type
         try {
             User recipient = userRepository.getUserByLoginElseThrow(username);
+            Language language = Language.fromLanguageShortName(recipient.getLangKey());
+
             var contextVariables = new HashMap<String, Object>();
+            contextVariables.put("authenticationMethod", authenticationMethod.getEmailDisplayName(language));
             ZonedDateTime now = ZonedDateTime.now();
             contextVariables.put("loginDate", now.format(DateTimeFormatter.ofPattern("dd.MM.yyyy")));
             contextVariables.put("loginTime", now.format(DateTimeFormatter.ofPattern("HH:mm:ss")));
-
-            String localeKey = recipient.getLangKey();
-            if (localeKey == null) {
-                localeKey = "en";
-            }
+            contextVariables.put("browser", clientType);
+            contextVariables.put("operatingSystem", "macOS"); // TODO
 
             if (recipient.isInternal()) {
                 contextVariables.put("resetLink", artemisServerUrl.toString() + "/account/password");
             }
             else {
-                if (localeKey.equals("de")) {
+                if (language == Language.GERMAN) {
                     contextVariables.put("resetLink", passwordResetLinkDeUrl);
                 }
                 else {
