@@ -56,12 +56,11 @@ public class ProgrammingMessagingService {
 
     private final ParticipationRepository participationRepository;
 
-    private final ProgrammingSubmissionMessagingService programmingSubmissionMessagingService;
-
-    public ProgrammingMessagingService(GroupNotificationService groupNotificationService, WebsocketMessagingService websocketMessagingService,
+    // The GroupNotificationService has many dependencies. We cannot refactor it to avoid that. Therefore, we lazily inject it here, so it's only instantiated when needed, or our
+    // DeferredEagerInitialization kicks, but not on startup.
+    public ProgrammingMessagingService(@Lazy GroupNotificationService groupNotificationService, WebsocketMessagingService websocketMessagingService,
             ResultWebsocketService resultWebsocketService, Optional<LtiApi> ltiApi, TeamRepository teamRepository, Optional<PyrisEventApi> pyrisEventApi,
-            Optional<IrisSettingsApi> irisSettingsApi, ParticipationRepository participationRepository,
-            ProgrammingSubmissionMessagingService programmingSubmissionMessagingService) {
+            Optional<IrisSettingsApi> irisSettingsApi, ParticipationRepository participationRepository) {
         this.groupNotificationService = groupNotificationService;
         this.websocketMessagingService = websocketMessagingService;
         this.resultWebsocketService = resultWebsocketService;
@@ -70,7 +69,6 @@ public class ProgrammingMessagingService {
         this.pyrisEventApi = pyrisEventApi;
         this.irisSettingsApi = irisSettingsApi;
         this.participationRepository = participationRepository;
-        this.programmingSubmissionMessagingService = programmingSubmissionMessagingService;
     }
 
     private static String getSubmissionProcessingTopicForTAAndAbove(Long exerciseId) {
