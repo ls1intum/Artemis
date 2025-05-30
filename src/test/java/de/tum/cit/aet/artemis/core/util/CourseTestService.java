@@ -141,7 +141,7 @@ import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.fileupload.repository.FileUploadExerciseRepository;
 import de.tum.cit.aet.artemis.fileupload.util.ZipFileTestUtilService;
-import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
+import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
 import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
 import de.tum.cit.aet.artemis.lti.test_repository.LtiPlatformConfigurationTestRepository;
@@ -184,7 +184,7 @@ public class CourseTestService {
     private ExerciseTestRepository exerciseRepo;
 
     @Autowired
-    private LectureRepository lectureRepo;
+    private LectureTestRepository lectureRepo;
 
     @Autowired
     private ResultTestRepository resultRepo;
@@ -1829,7 +1829,7 @@ public class CourseTestService {
         course.setLearningPathsEnabled(true);
         course = courseRepo.save(course);
         testAddStudentOrTutorOrEditorOrInstructorToCourse(course, HttpStatus.OK);
-        course = courseRepo.findWithEagerLearningPathsAndLearningPathCompetenciesByIdElseThrow(course.getId());
+        course = courseRepo.findWithEagerLearningPathsByIdElseThrow(course.getId());
         assertThat(course.getLearningPaths()).isNotEmpty();
         // TODO check that the roles have changed accordingly
     }
@@ -3028,8 +3028,8 @@ public class CourseTestService {
 
         lifetimeOverviewStats = request.get("/api/core/courses/" + course2.getId() + "/statistics-lifetime-overview", HttpStatus.OK, List.class);
 
-        expectedLifetimeOverviewStats = Arrays.stream(new int[19]).boxed().collect(Collectors.toCollection(ArrayList::new));
-        expectedLifetimeOverviewStats.set(17, 1);
+        expectedLifetimeOverviewStats = Arrays.stream(new int[20]).boxed().collect(Collectors.toCollection(ArrayList::new));
+        expectedLifetimeOverviewStats.set(18, 1);
         assertThat(lifetimeOverviewStats).as("should only depict data until the end date of the course").isEqualTo(expectedLifetimeOverviewStats);
 
         course2.setStartDate(now.minusWeeks(2));
