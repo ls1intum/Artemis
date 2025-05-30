@@ -850,7 +850,7 @@ public class IrisSettingsService {
      * @param type     the type of the event
      * @return Whether the settings type is enabled
      */
-    private boolean isEventEnabledInSettings(IrisCombinedSettingsDTO settings, IrisEventType type) {
+    public static boolean isEventEnabledInSettings(IrisCombinedSettingsDTO settings, IrisEventType type) {
         return switch (type) {
             case PROGRESS_STALLED -> {
                 if (settings.irisProgrammingExerciseChatSettings().disabledProactiveEvents() != null) {

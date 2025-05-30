@@ -147,13 +147,18 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
         var course = competencyJol.getCompetency().getCourse();
         var user = competencyJol.getUser();
 
-        if (!irisSettingsService.isActivatedFor(IrisEventType.JOL, course) || !user.hasAcceptedExternalLLMUsage()) {
+        if (!user.hasAcceptedExternalLLMUsage()) {
+            return;
+        }
+
+        var combinedSettings = irisSettingsService.getCombinedIrisSettingsFor(course, false);
+        var settings = combinedSettings.irisCourseChatSettings();
+        if (!settings.enabled() || !IrisSettingsService.isEventEnabledInSettings(combinedSettings, IrisEventType.JOL)) {
             return;
         }
 
         var session = getCurrentSessionOrCreateIfNotExistsInternal(course, user, false);
 
-        var settings = irisSettingsService.getCombinedIrisSettingsFor(course, false).irisCourseChatSettings();
         var variant = settings.selectedVariant();
         var customInstructions = settings.customInstructions();
 
