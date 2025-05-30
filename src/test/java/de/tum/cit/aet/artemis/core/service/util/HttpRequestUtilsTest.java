@@ -7,9 +7,9 @@ import static org.mockito.Mockito.when;
 
 import jakarta.servlet.http.HttpServletRequest;
 
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.springframework.util.Assert;
 
 import de.tum.cit.aet.artemis.core.util.ClientEnvironment;
 import de.tum.cit.aet.artemis.core.util.HttpRequestUtils;
@@ -97,7 +97,7 @@ class HttpRequestUtilsTest {
             HttpServletRequest request = mock(HttpServletRequest.class);
             when(request.getHeader("Sec-Ch-Ua")).thenReturn("\"Chromium\";v=\"136\", \"Google Chrome\";v=\"136\", \"Not.A/Brand\";v=\"99\"");
             ClientEnvironment clientEnvironment = HttpRequestUtils.getClientEnvironment(request);
-            Assertions.assertNotNull(clientEnvironment);
+            Assert.notNull(clientEnvironment, "ClientEnvironment should not be null");
             assertThat(clientEnvironment.browser().getDisplayName()).isEqualTo("Google Chrome");
             assertThat(clientEnvironment.artemisApp()).isNull();
         }
@@ -108,7 +108,7 @@ class HttpRequestUtilsTest {
             when(request.getHeader("User-Agent"))
                     .thenReturn("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Safari/605.1.15");
             ClientEnvironment clientEnvironment = HttpRequestUtils.getClientEnvironment(request);
-            Assertions.assertNotNull(clientEnvironment);
+            Assert.notNull(clientEnvironment, "ClientEnvironment should not be null");
             assertThat(clientEnvironment.browser().getDisplayName()).isEqualTo("Apple Safari");
             assertThat(clientEnvironment.artemisApp()).isNull();
         }
@@ -118,7 +118,7 @@ class HttpRequestUtilsTest {
             HttpServletRequest request = mock(HttpServletRequest.class);
             when(request.getHeader("Sec-Ch-Ua")).thenReturn("\"Microsoft Edge\";v=\"137\", \"Chromium\";v=\"137\", \"Not/A)Brand\";v=\"24\"");
             ClientEnvironment clientEnvironment = HttpRequestUtils.getClientEnvironment(request);
-            Assertions.assertNotNull(clientEnvironment);
+            Assert.notNull(clientEnvironment, "ClientEnvironment should not be null");
             assertThat(clientEnvironment.browser().getDisplayName()).isEqualTo("Microsoft Edge");
             assertThat(clientEnvironment.artemisApp()).isNull();
         }
@@ -128,7 +128,7 @@ class HttpRequestUtilsTest {
             HttpServletRequest request = mock(HttpServletRequest.class);
             when(request.getHeader("User-Agent")).thenReturn("Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:137.0) Gecko/20100101 Firefox/137.0");
             ClientEnvironment clientEnvironment = HttpRequestUtils.getClientEnvironment(request);
-            Assertions.assertNotNull(clientEnvironment);
+            Assert.notNull(clientEnvironment, "ClientEnvironment should not be null");
             assertThat(clientEnvironment.browser().getDisplayName()).isEqualTo("Mozilla Firefox");
             assertThat(clientEnvironment.artemisApp()).isNull();
         }
@@ -139,7 +139,7 @@ class HttpRequestUtilsTest {
             when(request.getHeader("User-Agent")).thenReturn(
                     "Mozilla/5.0 (Linux; Android 13; SAMSUNG SM-G991B) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/18.0 Chrome/109.0.5414.87 Mobile Safari/537.36");
             ClientEnvironment clientEnvironment = HttpRequestUtils.getClientEnvironment(request);
-            Assertions.assertNotNull(clientEnvironment);
+            Assert.notNull(clientEnvironment, "ClientEnvironment should not be null");
             assertThat(clientEnvironment.browser().getDisplayName()).isEqualTo("Samsung Internet");
             assertThat(clientEnvironment.artemisApp()).isNull();
         }
@@ -150,7 +150,7 @@ class HttpRequestUtilsTest {
             when(request.getHeader("User-Agent"))
                     .thenReturn("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36 OPR/119.0.0.0");
             ClientEnvironment clientEnvironment = HttpRequestUtils.getClientEnvironment(request);
-            Assertions.assertNotNull(clientEnvironment);
+            Assert.notNull(clientEnvironment, "ClientEnvironment should not be null");
             assertThat(clientEnvironment.browser().getDisplayName()).isEqualTo("Opera");
             assertThat(clientEnvironment.artemisApp()).isNull();
         }
@@ -162,7 +162,7 @@ class HttpRequestUtilsTest {
                     .thenReturn("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36");
             when(request.getHeader("Sec-Ch-Ua")).thenReturn("\"Brave\";v=\"137\", \"Chromium\";v=\"137\", \"Not/A)Brand\";v=\"24\"");
             ClientEnvironment clientEnvironment = HttpRequestUtils.getClientEnvironment(request);
-            Assertions.assertNotNull(clientEnvironment);
+            Assert.notNull(clientEnvironment, "ClientEnvironment should not be null");
             assertThat(clientEnvironment.browser().getDisplayName()).isEqualTo("Brave");
             assertThat(clientEnvironment.artemisApp()).isNull();
         }
@@ -172,7 +172,7 @@ class HttpRequestUtilsTest {
             HttpServletRequest request = mock(HttpServletRequest.class);
             when(request.getHeader("User-Agent")).thenReturn("Artemis/20250524013147 CFNetwork/3826.500.131 Darwin/24.5.0");
             ClientEnvironment clientEnvironment = HttpRequestUtils.getClientEnvironment(request);
-            Assertions.assertNotNull(clientEnvironment);
+            Assert.notNull(clientEnvironment, "ClientEnvironment should not be null");
             assertThat(clientEnvironment.artemisApp().getDisplayName()).isEqualTo("iOS App");
             assertThat(clientEnvironment.browser()).isNull();
             assertThat(clientEnvironment.operatingSystem()).isNull();
@@ -183,7 +183,7 @@ class HttpRequestUtilsTest {
             HttpServletRequest request = mock(HttpServletRequest.class);
             when(request.getHeader("User-Agent")).thenReturn("ktor-client");
             ClientEnvironment clientEnvironment = HttpRequestUtils.getClientEnvironment(request);
-            Assertions.assertNotNull(clientEnvironment);
+            Assert.notNull(clientEnvironment, "ClientEnvironment should not be null");
             assertThat(clientEnvironment.artemisApp().getDisplayName()).isEqualTo("Android App");
             assertThat(clientEnvironment.browser()).isNull();
             assertThat(clientEnvironment.operatingSystem()).isNull();
@@ -203,7 +203,7 @@ class HttpRequestUtilsTest {
             when(request.getHeader("Sec-Ch-Ua")).thenReturn("\"Chromium\";v=\"136\", \"Google Chrome\";v=\"136\", \"Not.A/Brand\";v=\"99\"");
             when(request.getHeader("User-Agent")).thenReturn("Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
             ClientEnvironment clientEnvironment = HttpRequestUtils.getClientEnvironment(request);
-            Assertions.assertNotNull(clientEnvironment);
+            Assert.notNull(clientEnvironment, "ClientEnvironment should not be null");
             assertThat(clientEnvironment.operatingSystem()).isEqualTo(OperatingSystem.WINDOWS);
         }
 
@@ -213,7 +213,7 @@ class HttpRequestUtilsTest {
             when(request.getHeader("Sec-Ch-Ua")).thenReturn("\"Chromium\";v=\"136\", \"Google Chrome\";v=\"136\", \"Not.A/Brand\";v=\"99\"");
             when(request.getHeader("User-Agent")).thenReturn("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)");
             ClientEnvironment clientEnvironment = HttpRequestUtils.getClientEnvironment(request);
-            Assertions.assertNotNull(clientEnvironment);
+            Assert.notNull(clientEnvironment, "ClientEnvironment should not be null");
             assertThat(clientEnvironment.operatingSystem()).isEqualTo(OperatingSystem.MACOS);
         }
 
@@ -223,7 +223,7 @@ class HttpRequestUtilsTest {
             when(request.getHeader("Sec-Ch-Ua")).thenReturn("\"Chromium\";v=\"136\", \"Google Chrome\";v=\"136\", \"Not.A/Brand\";v=\"99\"");
             when(request.getHeader("User-Agent")).thenReturn("Mozilla/5.0 (X11; Linux x86_64)");
             ClientEnvironment clientEnvironment = HttpRequestUtils.getClientEnvironment(request);
-            Assertions.assertNotNull(clientEnvironment);
+            Assert.notNull(clientEnvironment, "ClientEnvironment should not be null");
             assertThat(clientEnvironment.operatingSystem()).isEqualTo(OperatingSystem.LINUX);
         }
 
@@ -233,7 +233,7 @@ class HttpRequestUtilsTest {
             when(request.getHeader("Sec-Ch-Ua")).thenReturn("\"Chromium\";v=\"136\", \"Google Chrome\";v=\"136\", \"Not.A/Brand\";v=\"99\"");
             when(request.getHeader("User-Agent")).thenReturn("Mozilla/5.0 (Linux; Android 13; SM-G991B)");
             ClientEnvironment clientEnvironment = HttpRequestUtils.getClientEnvironment(request);
-            Assertions.assertNotNull(clientEnvironment);
+            Assert.notNull(clientEnvironment, "ClientEnvironment should not be null");
             assertThat(clientEnvironment.operatingSystem()).isEqualTo(OperatingSystem.LINUX);
         }
 
@@ -243,7 +243,7 @@ class HttpRequestUtilsTest {
             when(request.getHeader("Sec-Ch-Ua")).thenReturn("\"Chromium\";v=\"136\", \"Google Chrome\";v=\"136\", \"Not.A/Brand\";v=\"99\"");
             when(request.getHeader("User-Agent")).thenReturn("Mozilla/5.0 (iPhone; CPU iPhone OS 15_5 like Mac OS X)");
             ClientEnvironment clientEnvironment = HttpRequestUtils.getClientEnvironment(request);
-            Assertions.assertNotNull(clientEnvironment);
+            Assert.notNull(clientEnvironment, "ClientEnvironment should not be null");
             assertThat(clientEnvironment.operatingSystem()).isEqualTo(OperatingSystem.IOS);
         }
 
