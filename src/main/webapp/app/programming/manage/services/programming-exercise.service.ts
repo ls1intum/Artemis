@@ -288,7 +288,7 @@ export class ProgrammingExerciseService {
         if (programmingExercise.templateParticipation) {
             const latestTemplateResult = this.getLatestResult(programmingExercise.templateParticipation);
             if (latestTemplateResult) {
-                programmingExercise.templateParticipation.results = [latestTemplateResult];
+                programmingExercise.templateParticipation.submissions!.last()!.results = [latestTemplateResult];
             }
             // This is needed to access the exercise in the result details
             programmingExercise.templateParticipation.programmingExercise = programmingExercise;
@@ -297,7 +297,7 @@ export class ProgrammingExerciseService {
         if (programmingExercise.solutionParticipation) {
             const latestSolutionResult = this.getLatestResult(programmingExercise.solutionParticipation);
             if (latestSolutionResult) {
-                programmingExercise.solutionParticipation.results = [latestSolutionResult];
+                programmingExercise.solutionParticipation.submissions!.last()!.results = [latestSolutionResult];
             }
             // This is needed to access the exercise in the result details
             programmingExercise.solutionParticipation.programmingExercise = programmingExercise;

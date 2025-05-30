@@ -5,7 +5,6 @@ import java.util.List;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.dto.BuildJobInterface;
@@ -39,21 +38,21 @@ public abstract class AbstractContinuousIntegrationResultService implements Cont
         result.setCompletionDate(buildResult.buildRunDate());
         // this only sets the score to a temporary value, the real score is calculated in the grading service
         result.setScore(buildResult.buildScore(), exercise.getCourseViaExerciseGroupOrCourseMember());
-        result.setParticipation((Participation) participation);
 
-        addFeedbackToResult(result, buildResult);
+        addFeedbackToResult(result, buildResult, exercise);
         return result;
     }
 
     /**
      * Converts build result details into feedback and stores it in the result object
      *
-     * @param result      the result for which the feedback should be added
-     * @param buildResult The build result
+     * @param result              the result for which the feedback should be added
+     * @param buildResult         The build result
+     * @param programmingExercise the programming exercise related to the result
+     *
      */
-    private void addFeedbackToResult(Result result, BuildResultNotification buildResult) {
+    private void addFeedbackToResult(Result result, BuildResultNotification buildResult, ProgrammingExercise programmingExercise) {
         final var jobs = buildResult.jobs();
-        final var programmingExercise = (ProgrammingExercise) result.getParticipation().getExercise();
 
         // 1) add feedback for failed and passed test cases
         addTestCaseFeedbacksToResult(result, jobs, programmingExercise);
