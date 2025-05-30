@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,16 +23,24 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 @Primary
 public interface CourseTestRepository extends CourseRepository {
 
-    @EntityGraph(type = LOAD, attributePaths = { "competencies", "prerequisites", "learningPaths", "learningPaths.competencies" })
-    Optional<Course> findWithEagerLearningPathsAndCompetenciesAndPrerequisitesById(long courseId);
-
-    @NotNull
-    default Course findWithEagerLearningPathsAndCompetenciesAndPrerequisitesByIdElseThrow(long courseId) {
-        return getValueElseThrow(findWithEagerLearningPathsAndCompetenciesAndPrerequisitesById(courseId), courseId);
-    }
-
     @Transactional
     @Modifying
     @Query("UPDATE Course c SET c.semester = NULL WHERE c.semester IS NOT NULL")
     void clearSemester();
+
+    @EntityGraph(type = LOAD, attributePaths = { "learningPaths" })
+    Optional<Course> findWithEagerLearningPathsById(@Param("courseId") long courseId);
+
+    @NotNull
+    default Course findWithEagerLearningPathsByIdElseThrow(long courseId) {
+        return getValueElseThrow(findWithEagerLearningPathsById(courseId), courseId);
+    }
+
+    @EntityGraph(type = LOAD, attributePaths = { "competencies", "prerequisites", "learningPaths" })
+    Optional<Course> findWithEagerCompetenciesAndPrerequisitesAndLearningPathsById(@Param("courseId") long courseId);
+
+    @NotNull
+    default Course findWithEagerCompetenciesAndPrerequisitesAndLearningPathsByIdElseThrow(long courseId) {
+        return getValueElseThrow(findWithEagerCompetenciesAndPrerequisitesAndLearningPathsById(courseId), courseId);
+    }
 }

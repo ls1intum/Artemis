@@ -399,6 +399,14 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
     @Cacheable(cacheNames = "examTitle", key = "#examId", unless = "#result == null")
     String getExamTitle(@Param("examId") long examId);
 
+    @Query("""
+            SELECT e
+            FROM Exam e
+            WHERE e.course.id = :courseId
+                AND e.visibleDate <= :now
+            """)
+    Set<Exam> findAllVisibleByCourseId(@Param("courseId") long courseId, @Param("now") ZonedDateTime now);
+
     /**
      * Get one exam by id with exercise groups.
      *

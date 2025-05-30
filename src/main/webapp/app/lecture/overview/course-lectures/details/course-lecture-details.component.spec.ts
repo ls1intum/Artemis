@@ -134,7 +134,12 @@ describe('CourseLectureDetailsComponent', () => {
                 {
                     provide: ActivatedRoute,
                     useValue: {
-                        params: of({ lectureId: '1', courseId: '1' }),
+                        params: of({ lectureId: '1' }),
+                        parent: {
+                            parent: {
+                                params: of({ courseId: '1' }),
+                            },
+                        },
                     },
                 },
                 MockProvider(Router),

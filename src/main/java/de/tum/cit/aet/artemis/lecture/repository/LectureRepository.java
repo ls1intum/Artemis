@@ -40,6 +40,15 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
     @Query("""
             SELECT lecture
             FROM Lecture lecture
+            LEFT JOIN FETCH lecture.lectureUnits
+            WHERE lecture.course.id = :courseId
+                AND (lecture.visibleDate IS NULL OR lecture.visibleDate <= :now)
+            """)
+    Set<Lecture> findAllVisibleByCourseIdWithEagerLectureUnits(@Param("courseId") long courseId, @Param("now") ZonedDateTime now);
+
+    @Query("""
+            SELECT lecture
+            FROM Lecture lecture
                 LEFT JOIN FETCH lecture.attachments
             WHERE lecture.course.id = :courseId
             """)
@@ -55,21 +64,7 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
             """)
     Set<Lecture> findAllByCourseIdWithAttachmentsAndLectureUnits(@Param("courseId") Long courseId);
 
-    @Query("""
-            SELECT lecture
-            FROM Lecture lecture
-                LEFT JOIN FETCH lecture.attachments
-                LEFT JOIN FETCH lecture.lectureUnits lu
-                LEFT JOIN FETCH lu.completedUsers cu
-                LEFT JOIN FETCH lu.competencyLinks cl
-                LEFT JOIN FETCH cl.competency
-                LEFT JOIN FETCH lu.exercise e
-                LEFT JOIN FETCH e.competencyLinks ecl
-                LEFT JOIN FETCH ecl.competency
-            WHERE lecture.id = :lectureId
-            """)
-    Optional<Lecture> findByIdWithAttachmentsAndLectureUnitsAndCompetenciesAndCompletions(@Param("lectureId") Long lectureId);
-
+    // TODO: this query loads too much data, we should reduce the number of left join fetches
     @Query("""
             SELECT lecture
             FROM Lecture lecture
@@ -171,14 +166,24 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
     }
 
     @NotNull
-    default Lecture findByIdWithAttachmentsAndLectureUnitsAndCompetenciesAndCompletionsElseThrow(Long lectureId) {
-        return getValueElseThrow(findByIdWithAttachmentsAndLectureUnitsAndCompetenciesAndCompletions(lectureId), lectureId);
-    }
-
-    @NotNull
     default Lecture findByIdWithLectureUnitsAndAttachmentsElseThrow(Long lectureId) {
         return getValueElseThrow(findByIdWithLectureUnitsAndAttachments(lectureId), lectureId);
     }
+
+    @NotNull
+    default Lecture findByIdWithLectureUnitsWithCompetencyLinksAndAttachmentsElseThrow(Long lectureId) {
+        return getValueElseThrow(findByIdWithLectureUnitsWithCompetencyLinksAndAttachments(lectureId), lectureId);
+    }
+
+    @Query("""
+            SELECT lecture
+            FROM Lecture lecture
+                LEFT JOIN FETCH lecture.lectureUnits lu
+                LEFT JOIN FETCH lecture.attachments
+                LEFT JOIN FETCH lu.competencyLinks
+            WHERE lecture.id = :lectureId
+            """)
+    Optional<Lecture> findByIdWithLectureUnitsWithCompetencyLinksAndAttachments(@Param("lectureId") Long lectureId);
 
     @Query("""
             SELECT new de.tum.cit.aet.artemis.core.dto.CourseContentCountDTO(

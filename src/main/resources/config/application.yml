@@ -228,7 +228,8 @@ spring:
     main:
         allow-bean-definition-overriding: false
         allow-circular-references: false
-        lazy-initialization: true
+        # TODO: implement a deferred initialization strategy where only core beans are initialized at startup and the all other module beans are initialized eager directly after startup
+        lazy-initialization: false
     task:
         execution:
             thread-name-prefix: artemis-task-

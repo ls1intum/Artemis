@@ -134,8 +134,8 @@ public class AuthorizationCheckService {
      */
     @CheckReturnValue
     public boolean isAtLeastEditorInCourse(long courseId) {
-        final var login = SecurityUtils.getCurrentUserLogin();
-        return login.filter(s -> userRepository.isAtLeastEditorInCourse(s, courseId)).isPresent();
+        final var userLogin = SecurityUtils.getCurrentUserLogin();
+        return userLogin.filter(login -> userRepository.isAtLeastEditorInCourse(login, courseId)).isPresent();
     }
 
     /**
@@ -249,8 +249,8 @@ public class AuthorizationCheckService {
      */
     @CheckReturnValue
     public boolean isAtLeastTeachingAssistantInCourse(long courseId) {
-        final var login = SecurityUtils.getCurrentUserLogin();
-        return login.filter(s -> userRepository.isAtLeastTeachingAssistantInCourse(s, courseId)).isPresent();
+        final var userLogin = SecurityUtils.getCurrentUserLogin();
+        return userLogin.filter(login -> userRepository.isAtLeastTeachingAssistantInCourse(login, courseId)).isPresent();
     }
 
     /**
@@ -407,8 +407,8 @@ public class AuthorizationCheckService {
      */
     @CheckReturnValue
     public boolean isAtLeastStudentInCourse(long courseId) {
-        final var login = SecurityUtils.getCurrentUserLogin();
-        return login.filter(s -> userRepository.isAtLeastStudentInCourse(s, courseId)).isPresent();
+        final var userLogin = SecurityUtils.getCurrentUserLogin();
+        return userLogin.filter(login -> userRepository.isAtLeastStudentInCourse(login, courseId)).isPresent();
     }
 
     /**
@@ -527,8 +527,8 @@ public class AuthorizationCheckService {
      */
     @CheckReturnValue
     public boolean isAtLeastInstructorInCourse(long courseId) {
-        final var login = SecurityUtils.getCurrentUserLogin();
-        return login.filter(s -> userRepository.isAtLeastInstructorInCourse(s, courseId)).isPresent();
+        final var userLogin = SecurityUtils.getCurrentUserLogin();
+        return userLogin.filter(login -> userRepository.isAtLeastInstructorInCourse(login, courseId)).isPresent();
     }
 
     /**
@@ -866,8 +866,8 @@ public class AuthorizationCheckService {
      */
     @CheckReturnValue
     public boolean isAtLeastStudentInExercise(long exerciseId) {
-        final var login = SecurityUtils.getCurrentUserLogin();
-        return login.filter(s -> userRepository.isAtLeastStudentInExercise(s, exerciseId)).isPresent();
+        final var userLogin = SecurityUtils.getCurrentUserLogin();
+        return userLogin.filter(login -> userRepository.isAtLeastStudentInExercise(login, exerciseId)).isPresent();
     }
 
     /**
@@ -878,8 +878,8 @@ public class AuthorizationCheckService {
      */
     @CheckReturnValue
     public boolean isAtLeastTeachingAssistantInExercise(long exerciseId) {
-        final var login = SecurityUtils.getCurrentUserLogin();
-        return login.filter(s -> userRepository.isAtLeastTeachingAssistantInExercise(s, exerciseId)).isPresent();
+        final var userLogin = SecurityUtils.getCurrentUserLogin();
+        return userLogin.filter(login -> userRepository.isAtLeastTeachingAssistantInExercise(login, exerciseId)).isPresent();
     }
 
     /**
@@ -902,8 +902,8 @@ public class AuthorizationCheckService {
      */
     @CheckReturnValue
     public boolean isAtLeastEditorInExercise(long exerciseId) {
-        final var login = SecurityUtils.getCurrentUserLogin();
-        return login.filter(s -> userRepository.isAtLeastEditorInExercise(s, exerciseId)).isPresent();
+        final var userLogin = SecurityUtils.getCurrentUserLogin();
+        return userLogin.filter(login -> userRepository.isAtLeastEditorInExercise(login, exerciseId)).isPresent();
     }
 
     /**
@@ -914,8 +914,8 @@ public class AuthorizationCheckService {
      */
     @CheckReturnValue
     public boolean isAtLeastInstructorInExercise(long exerciseId) {
-        final var login = SecurityUtils.getCurrentUserLogin();
-        return login.filter(s -> userRepository.isAtLeastInstructorInExercise(s, exerciseId)).isPresent();
+        final var userLogin = SecurityUtils.getCurrentUserLogin();
+        return userLogin.filter(login -> userRepository.isAtLeastInstructorInExercise(login, exerciseId)).isPresent();
     }
 
     /**
@@ -963,8 +963,8 @@ public class AuthorizationCheckService {
      */
     @CheckReturnValue
     public boolean isAtLeastStudentInLectureUnit(long lectureUnitId) {
-        final var login = SecurityUtils.getCurrentUserLogin();
-        return login.filter(s -> userRepository.isAtLeastStudentInLectureUnit(s, lectureUnitId)).isPresent();
+        final var userLogin = SecurityUtils.getCurrentUserLogin();
+        return userLogin.filter(login -> userRepository.isAtLeastStudentInLectureUnit(login, lectureUnitId)).isPresent();
     }
 
     /**
@@ -975,8 +975,8 @@ public class AuthorizationCheckService {
      */
     @CheckReturnValue
     public boolean isAtLeastTeachingAssistantInLectureUnit(long lectureUnitId) {
-        final var login = SecurityUtils.getCurrentUserLogin();
-        return login.filter(s -> userRepository.isAtLeastTeachingAssistantInLectureUnit(s, lectureUnitId)).isPresent();
+        final var userLogin = SecurityUtils.getCurrentUserLogin();
+        return userLogin.filter(login -> userRepository.isAtLeastTeachingAssistantInLectureUnit(login, lectureUnitId)).isPresent();
     }
 
     /**
@@ -987,8 +987,8 @@ public class AuthorizationCheckService {
      */
     @CheckReturnValue
     public boolean isAtLeastEditorInLectureUnit(long lectureUnitId) {
-        final var login = SecurityUtils.getCurrentUserLogin();
-        return login.filter(s -> userRepository.isAtLeastEditorInLectureUnit(s, lectureUnitId)).isPresent();
+        final var userLogin = SecurityUtils.getCurrentUserLogin();
+        return userLogin.filter(login -> userRepository.isAtLeastEditorInLectureUnit(login, lectureUnitId)).isPresent();
     }
 
     /**
@@ -999,8 +999,56 @@ public class AuthorizationCheckService {
      */
     @CheckReturnValue
     public boolean isAtLeastInstructorInLectureUnit(long lectureUnitId) {
-        final var login = SecurityUtils.getCurrentUserLogin();
-        return login.filter(s -> userRepository.isAtLeastInstructorInLectureUnit(s, lectureUnitId)).isPresent();
+        final var userLogin = SecurityUtils.getCurrentUserLogin();
+        return userLogin.filter(login -> userRepository.isAtLeastInstructorInLectureUnit(login, lectureUnitId)).isPresent();
+    }
+
+    /**
+     * Checks if the current user is at least an instructor in the given lecture.
+     *
+     * @param lectureId the id of the lecture that needs to be checked
+     * @return true if the user is at least an instructor in the course, false otherwise
+     */
+    @CheckReturnValue
+    public boolean isAtLeastStudentInLecture(long lectureId) {
+        final var userLogin = SecurityUtils.getCurrentUserLogin();
+        return userLogin.filter(login -> userRepository.isAtLeastStudentInLecture(login, lectureId)).isPresent();
+    }
+
+    /**
+     * Checks if the current user is at least an instructor in the given lecture.
+     *
+     * @param lectureId the id of the lecture that needs to be checked
+     * @return true if the user is at least an instructor in the course, false otherwise
+     */
+    @CheckReturnValue
+    public boolean isAtLeastTeachingAssistantInLecture(long lectureId) {
+        final var userLogin = SecurityUtils.getCurrentUserLogin();
+        return userLogin.filter(login -> userRepository.isAtLeastTeachingAssistantInLecture(login, lectureId)).isPresent();
+    }
+
+    /**
+     * Checks if the current user is at least an editor in the given lecture.
+     *
+     * @param lectureId the id of the lecture that needs to be checked
+     * @return true if the user is at least an instructor in the course, false otherwise
+     */
+    @CheckReturnValue
+    public boolean isAtLeastEditorInLecture(long lectureId) {
+        final var userLogin = SecurityUtils.getCurrentUserLogin();
+        return userLogin.filter(login -> userRepository.isAtLeastEditorInLecture(login, lectureId)).isPresent();
+    }
+
+    /**
+     * Checks if the current user is at least an instructor in the given lecture.
+     *
+     * @param lectureId the id of the lecture that needs to be checked
+     * @return true if the user is at least an instructor in the course, false otherwise
+     */
+    @CheckReturnValue
+    public boolean isAtLeastInstructorInLecture(long lectureId) {
+        final var userLogin = SecurityUtils.getCurrentUserLogin();
+        return userLogin.filter(login -> userRepository.isAtLeastInstructorInLecture(login, lectureId)).isPresent();
     }
 
     /**
@@ -1025,6 +1073,31 @@ public class AuthorizationCheckService {
     public void checkIsAtLeastRoleInLectureUnitElseThrow(Role role, long lectureUnitId) {
         if (!isAtLeastRoleInLectureUnit(role, lectureUnitId)) {
             throw new AccessForbiddenException("LectureUnit", lectureUnitId);
+        }
+    }
+
+    /**
+     * Checks if the current user has at least the given role in the given lecture.
+     *
+     * @param role      the role that should be checked
+     * @param lectureId the id of the lecture that needs to be checked
+     * @return true if the user has at least the role in the lecture, false otherwise
+     */
+    @CheckReturnValue
+    public boolean isAtLeastRoleInLecture(Role role, long lectureId) {
+        return switch (role) {
+            case ADMIN -> isAdmin();
+            case INSTRUCTOR -> isAtLeastInstructorInLecture(lectureId);
+            case EDITOR -> isAtLeastEditorInLecture(lectureId);
+            case TEACHING_ASSISTANT -> isAtLeastTeachingAssistantInLecture(lectureId);
+            case STUDENT -> isAtLeastStudentInLecture(lectureId);
+            case ANONYMOUS -> false;
+        };
+    }
+
+    public void checkIsAtLeastRoleInLectureElseThrow(Role role, long lectureId) {
+        if (!isAtLeastRoleInLecture(role, lectureId)) {
+            throw new AccessForbiddenException("Lecture", lectureId);
         }
     }
 }

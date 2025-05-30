@@ -35,6 +35,7 @@ public interface LectureUnitCompletionRepository extends ArtemisJpaRepository<Le
     @Query("""
             SELECT lectureUnitCompletion
             FROM LectureUnitCompletion lectureUnitCompletion
+                LEFT JOIN FETCH lectureUnitCompletion.lectureUnit
             WHERE lectureUnitCompletion.lectureUnit IN :lectureUnits
                 AND lectureUnitCompletion.user.id = :userId
             """)
