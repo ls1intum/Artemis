@@ -57,7 +57,6 @@ import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationServic
 import de.tum.cit.aet.artemis.programming.service.localci.SharedQueueManagementService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCGitBranchService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
-import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCVersionControlService;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 
@@ -114,16 +113,13 @@ public class ParticipationService {
 
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
-    private final LocalVCVersionControlService localVCVersionControlService;
-
     public ParticipationService(GitService gitService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
             Optional<LocalVCGitBranchService> localVCGitBranchService, BuildLogEntryService buildLogEntryService, ParticipationRepository participationRepository,
             StudentParticipationRepository studentParticipationRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, SubmissionRepository submissionRepository, TeamRepository teamRepository, UriService uriService,
             ResultService resultService, ParticipantScoreRepository participantScoreRepository, StudentScoreRepository studentScoreRepository,
             TeamScoreRepository teamScoreRepository, Optional<SharedQueueManagementService> localCISharedBuildJobQueueService,
-            ParticipationVcsAccessTokenService participationVCSAccessTokenService, Optional<CompetencyProgressApi> competencyProgressApi,
-            LocalVCVersionControlService localVCVersionControlService) {
+            ParticipationVcsAccessTokenService participationVCSAccessTokenService, Optional<CompetencyProgressApi> competencyProgressApi) {
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
@@ -143,7 +139,6 @@ public class ParticipationService {
         this.localCISharedBuildJobQueueService = localCISharedBuildJobQueueService;
         this.participationVCSAccessTokenService = participationVCSAccessTokenService;
         this.competencyProgressApi = competencyProgressApi;
-        this.localVCVersionControlService = localVCVersionControlService;
     }
 
     /**
@@ -491,10 +486,10 @@ public class ParticipationService {
                 final var projectKey = programmingExercise.getProjectKey();
                 final var targetRepositoryName = participation.addPracticePrefixIfTestRun(participation.getParticipantIdentifier());
                 // not authorized students repo path
-                final var studentRepoPath = localVCVersionControlService.buildStudentRepoPath(projectKey, targetRepositoryName, participation.getAttempt());
+                final var studentRepoPath = gitService.buildStudentRepoPath(projectKey, targetRepositoryName, participation.getAttempt());
 
                 try {
-                    localVCVersionControlService.createSingleCommitStudentRepo(sourceURL, studentRepoPath);
+                    gitService.createSingleCommitStudentRepo(sourceURL, studentRepoPath);
                 }
                 catch (Exception e) {
                     log.error("Error while creating single commit student repo", e);
