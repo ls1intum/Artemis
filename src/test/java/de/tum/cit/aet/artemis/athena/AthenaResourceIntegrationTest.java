@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
@@ -110,7 +111,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 0);
 
         var textCourse = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
-        textExercise = exerciseUtilService.findTextExerciseWithTitle(textCourse.getExercises(), "Text");
+        textExercise = ExerciseUtilService.findTextExerciseWithTitle(textCourse.getExercises(), "Text");
         textSubmission = ParticipationFactory.generateTextSubmission("This is a test sentence. This is a second test sentence. This is a third test sentence.", Language.ENGLISH,
                 true);
         var studentParticipation = ParticipationFactory.generateStudentParticipation(InitializationState.FINISHED, textExercise,
@@ -120,7 +121,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         textSubmissionRepository.save(textSubmission);
 
         var programmingCourse = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        programmingExercise = exerciseUtilService.findProgrammingExerciseWithTitle(programmingCourse.getExercises(), "Programming");
+        programmingExercise = ExerciseUtilService.findProgrammingExerciseWithTitle(programmingCourse.getExercises(), "Programming");
         // Allow manual results
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusDays(1));
@@ -134,7 +135,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         programmingSubmissionRepository.save(programmingSubmission);
 
         var modelingCourse = modelingExerciseUtilService.addCourseWithOneModelingExercise();
-        modelingExercise = exerciseUtilService.findModelingExerciseWithTitle(modelingCourse.getExercises(), "ClassDiagram");
+        modelingExercise = ExerciseUtilService.findModelingExerciseWithTitle(modelingCourse.getExercises(), "ClassDiagram");
         modelingSubmission = ParticipationFactory.generateModelingSubmission("", true);
         var modelingParticipation = ParticipationFactory.generateStudentParticipation(InitializationState.FINISHED, modelingExercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));

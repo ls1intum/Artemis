@@ -11,22 +11,27 @@ import de.tum.cit.aet.artemis.exercise.dto.ParticipationResultDTO;
  * Returned by the for-dashboard resources.
  * Contains a course (e.g. shown in the course-card.component) and different types of scores.
  *
- * @param course               the course
- * @param totalScores          the total scores for the course, including the total max and reachable points and the total scores of the currently logged in student (including
- *                                 total absolute and relative scores).
- * @param textScores           the scores for just the text exercises in the course, including the max and reachable points and the scores of the currently logged in student
- * @param programmingScores    the scores for just the programming exercises in the course, including the max and reachable points and the scores of the currently logged in student
- * @param modelingScores       the scores for just the modeling exercises in the course, including the max and reachable points and the scores of the currently logged in student
- * @param fileUploadScores     the scores for just the file upload exercises in the course, including the max and reachable points and the scores of the currently logged in student
- * @param quizScores           the scores for just the quiz exercises in the course, including the max and reachable points and the scores of the currently logged in student
- * @param participationResults the relevant result for each participation.
+ * @param course                  the course
+ * @param totalScores             the total scores for the course, including the total max and reachable points and the total scores of the currently logged in student (including
+ *                                    total absolute and relative scores).
+ * @param textScores              the scores for just the text exercises in the course, including the max and reachable points and the scores of the currently logged in student
+ * @param programmingScores       the scores for just the programming exercises in the course, including the max and reachable points and the scores of the currently logged in
+ *                                    student
+ * @param modelingScores          the scores for just the modeling exercises in the course, including the max and reachable points and the scores of the currently logged in student
+ * @param fileUploadScores        the scores for just the file upload exercises in the course, including the max and reachable points and the scores of the currently logged in
+ *                                    student
+ * @param quizScores              the scores for just the quiz exercises in the course, including the max and reachable points and the scores of the currently logged in student
+ * @param participationResults    the relevant result for each participation.
+ * @param courseNotificationCount the number of notifications for the course
+ * @param irisCourseChatEnabled   whether the Iris course chat is enabled for this course
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record CourseForDashboardDTO(Course course, CourseScoresDTO totalScores, CourseScoresDTO textScores, CourseScoresDTO programmingScores, CourseScoresDTO modelingScores,
-        CourseScoresDTO fileUploadScores, CourseScoresDTO quizScores, Set<ParticipationResultDTO> participationResults, Long courseNotificationCount) {
+        CourseScoresDTO fileUploadScores, CourseScoresDTO quizScores, Set<ParticipationResultDTO> participationResults, Long courseNotificationCount,
+        Boolean irisCourseChatEnabled) {
 
     public CourseForDashboardDTO(Course course, CourseScoresDTO totalScores, CourseScoresDTO textScores, CourseScoresDTO programmingScores, CourseScoresDTO modelingScores,
             CourseScoresDTO fileUploadScores, CourseScoresDTO quizScores, Set<ParticipationResultDTO> participationResults) {
-        this(course, totalScores, textScores, programmingScores, modelingScores, fileUploadScores, quizScores, participationResults, 0L);
+        this(course, totalScores, textScores, programmingScores, modelingScores, fileUploadScores, quizScores, participationResults, 0L, false);
     }
 }

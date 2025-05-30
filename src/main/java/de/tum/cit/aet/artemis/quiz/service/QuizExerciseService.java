@@ -39,9 +39,9 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.service.FilePathService;
-import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
@@ -82,13 +82,11 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
     private final ExerciseSpecificationService exerciseSpecificationService;
 
-    private final FileService fileService;
-
     private final ExerciseService exerciseService;
 
     public QuizExerciseService(QuizExerciseRepository quizExerciseRepository, ResultRepository resultRepository, QuizSubmissionRepository quizSubmissionRepository,
             InstanceMessageSendService instanceMessageSendService, QuizStatisticService quizStatisticService, QuizBatchService quizBatchService,
-            ExerciseSpecificationService exerciseSpecificationService, FileService fileService, DragAndDropMappingRepository dragAndDropMappingRepository,
+            ExerciseSpecificationService exerciseSpecificationService, DragAndDropMappingRepository dragAndDropMappingRepository,
             ShortAnswerMappingRepository shortAnswerMappingRepository, ExerciseService exerciseService) {
         super(dragAndDropMappingRepository, shortAnswerMappingRepository);
         this.quizExerciseRepository = quizExerciseRepository;
@@ -98,7 +96,6 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         this.quizStatisticService = quizStatisticService;
         this.quizBatchService = quizBatchService;
         this.exerciseSpecificationService = exerciseSpecificationService;
-        this.fileService = fileService;
         this.exerciseService = exerciseService;
     }
 
@@ -294,10 +291,10 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         }
 
         var allFilesToRemoveMerged = filesToRemove.entrySet().stream()
-                .flatMap(entry -> entry.getValue().stream().map(path -> FilePathService.fileSystemPathForExternalUri(URI.create(path), entry.getKey()))).filter(Objects::nonNull)
+                .flatMap(entry -> entry.getValue().stream().map(path -> FilePathConverter.fileSystemPathForExternalUri(URI.create(path), entry.getKey()))).filter(Objects::nonNull)
                 .toList();
 
-        fileService.deleteFiles(allFilesToRemoveMerged);
+        FileUtil.deleteFiles(allFilesToRemoveMerged);
     }
 
     private Map<FilePathType, Set<String>> getAllPathsFromDragAndDropQuestionsOfExercise(QuizExercise quizExercise) {
@@ -369,14 +366,13 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             for (Map.Entry<FilePathType, Set<String>> entry : exerciseFilePathsMap.entrySet()) {
                 FilePathType type = entry.getKey();
                 Set<String> paths = entry.getValue();
-                paths.forEach(FileService::sanitizeFilePathByCheckingForInvalidCharactersElseThrow);
-                paths.stream().filter(path -> Files.exists(FilePathService.fileSystemPathForExternalUri(URI.create(path), type))).forEach(path -> {
-                    URI intendedSubPath = type == FilePathType.DRAG_AND_DROP_BACKGROUND ? URI.create(FileService.BACKGROUND_FILE_SUBPATH)
-                            : URI.create(FileService.PICTURE_FILE_SUBPATH);
-                    FileService.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(URI.create(path), intendedSubPath);
+                paths.forEach(FileUtil::sanitizeFilePathByCheckingForInvalidCharactersElseThrow);
+                paths.stream().filter(path -> Files.exists(FilePathConverter.fileSystemPathForExternalUri(URI.create(path), type))).forEach(path -> {
+                    URI intendedSubPath = type == FilePathType.DRAG_AND_DROP_BACKGROUND ? URI.create(FileUtil.BACKGROUND_FILE_SUBPATH) : URI.create(FileUtil.PICTURE_FILE_SUBPATH);
+                    FileUtil.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(URI.create(path), intendedSubPath);
                 });
 
-                Set<String> newPaths = paths.stream().filter(filePath -> !Files.exists(FilePathService.fileSystemPathForExternalUri(URI.create(filePath), type)))
+                Set<String> newPaths = paths.stream().filter(filePath -> !Files.exists(FilePathConverter.fileSystemPathForExternalUri(URI.create(filePath), type)))
                         .collect(Collectors.toSet());
 
                 if (!newPaths.isEmpty()) {
@@ -415,7 +411,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         }
 
         question.setBackgroundFilePath(
-                saveDragAndDropImage(FilePathService.getDragAndDropBackgroundFilePath(), file, FilePathType.DRAG_AND_DROP_BACKGROUND, questionId).toString());
+                saveDragAndDropImage(FilePathConverter.getDragAndDropBackgroundFilePath(), file, FilePathType.DRAG_AND_DROP_BACKGROUND, questionId).toString());
     }
 
     /**
@@ -433,7 +429,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             throw new BadRequestAlertException("The file " + dragItem.getPictureFilePath() + " was not provided", ENTITY_NAME, null);
         }
 
-        dragItem.setPictureFilePath(saveDragAndDropImage(FilePathService.getDragItemFilePath(), file, FilePathType.DRAG_ITEM, entityId).toString());
+        dragItem.setPictureFilePath(saveDragAndDropImage(FilePathConverter.getDragItemFilePath(), file, FilePathType.DRAG_ITEM, entityId).toString());
     }
 
     /**
@@ -442,10 +438,10 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * @return the public path of the saved image
      */
     private URI saveDragAndDropImage(Path basePath, MultipartFile file, FilePathType filePathType, @Nullable Long entityId) throws IOException {
-        String sanitizedFilename = fileService.checkAndSanitizeFilename(file.getOriginalFilename());
-        Path savePath = basePath.resolve(fileService.generateFilename("dnd_image_", sanitizedFilename, true));
+        String sanitizedFilename = FileUtil.checkAndSanitizeFilename(file.getOriginalFilename());
+        Path savePath = basePath.resolve(FileUtil.generateFilename("dnd_image_", sanitizedFilename, true));
         FileUtils.copyToFile(file.getInputStream(), savePath.toFile());
-        return FilePathService.externalUriForFileSystemPath(savePath, filePathType, entityId);
+        return FilePathConverter.externalUriForFileSystemPath(savePath, filePathType, entityId);
     }
 
     /**
@@ -518,12 +514,12 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         for (var question : newQuizExercise.getQuizQuestions()) {
             if (question instanceof DragAndDropQuestion dragAndDropQuestion) {
                 URI publicPathUri = URI.create(dragAndDropQuestion.getBackgroundFilePath());
-                if (!Files.exists(FilePathService.fileSystemPathForExternalUri(publicPathUri, FilePathType.DRAG_AND_DROP_BACKGROUND))) {
+                if (!Files.exists(FilePathConverter.fileSystemPathForExternalUri(publicPathUri, FilePathType.DRAG_AND_DROP_BACKGROUND))) {
                     saveDndQuestionBackground(dragAndDropQuestion, fileMap, dragAndDropQuestion.getId());
                 }
                 for (DragItem dragItem : dragAndDropQuestion.getDragItems()) {
                     if (dragItem.getPictureFilePath() != null
-                            && !Files.exists(FilePathService.fileSystemPathForExternalUri(URI.create(dragItem.getPictureFilePath()), FilePathType.DRAG_ITEM))) {
+                            && !Files.exists(FilePathConverter.fileSystemPathForExternalUri(URI.create(dragItem.getPictureFilePath()), FilePathType.DRAG_ITEM))) {
                         saveDndDragItemPicture(dragItem, fileMap, dragItem.getId());
                     }
                 }

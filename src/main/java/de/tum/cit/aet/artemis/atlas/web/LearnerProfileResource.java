@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.atlas.web;
 import static de.tum.cit.aet.artemis.atlas.domain.profile.CourseLearnerProfile.MAX_PROFILE_VALUE;
 import static de.tum.cit.aet.artemis.atlas.domain.profile.CourseLearnerProfile.MIN_PROFILE_VALUE;
 
+import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -22,10 +23,13 @@ import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.profile.CourseLearnerProfile;
 import de.tum.cit.aet.artemis.atlas.dto.CourseLearnerProfileDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CourseLearnerProfileRepository;
+import de.tum.cit.aet.artemis.atlas.service.profile.CourseLearnerProfileService;
+import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.service.CourseService;
 
 @Conditional(AtlasEnabled.class)
 @RestController
@@ -38,29 +42,48 @@ public class LearnerProfileResource {
 
     private final CourseLearnerProfileRepository courseLearnerProfileRepository;
 
-    public LearnerProfileResource(UserRepository userRepository, CourseLearnerProfileRepository courseLearnerProfileRepository) {
+    private final CourseService courseService;
+
+    private final CourseLearnerProfileService courseLearnerProfileService;
+
+    public LearnerProfileResource(UserRepository userRepository, CourseLearnerProfileRepository courseLearnerProfileRepository, CourseService courseService,
+            CourseLearnerProfileService courseLearnerProfileService) {
         this.userRepository = userRepository;
         this.courseLearnerProfileRepository = courseLearnerProfileRepository;
+        this.courseService = courseService;
+        this.courseLearnerProfileService = courseLearnerProfileService;
     }
 
     /**
-     * GET course-learner-profiles : get a Map of a {@link de.tum.cit.aet.artemis.core.domain.Course} id
+     * GET course-learner-profiles : get a Set of a {@link de.tum.cit.aet.artemis.core.domain.Course} id
      * to the corresponding {@link CourseLearnerProfile} of the logged-in user.
      *
-     * @return The ResponseEntity with status 200 (OK) and with the body containing a map of DTOs, which contains per course profile data.
+     * @return The ResponseEntity with status 200 (OK) and with the body containing a set of DTOs, which contains per course profile data.
      */
     @GetMapping("course-learner-profiles")
     @EnforceAtLeastStudent
     public ResponseEntity<Set<CourseLearnerProfileDTO>> getCourseLearnerProfiles() {
-        User user = userRepository.getUser();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get all CourseLearnerProfiles of user {}", user.getLogin());
-        Set<CourseLearnerProfileDTO> courseLearnerProfiles = courseLearnerProfileRepository.findAllByLogin(user.getLogin()).stream().map(CourseLearnerProfileDTO::of)
-                .collect(Collectors.toSet());
-        return ResponseEntity.ok(courseLearnerProfiles);
+        Set<CourseLearnerProfile> courseLearnerProfiles = courseLearnerProfileRepository.findAllByLoginAndCourseActive(user.getLogin(), ZonedDateTime.now()).stream()
+                .filter(profile -> user.getGroups().contains(profile.getCourse().getStudentGroupName())).collect(Collectors.toSet());
+
+        Set<Course> coursesWithLearningPaths = courseService.findAllActiveForUserAndLearningPathsEnabled(user);
+
+        // This is needed, as there is no method that is executed everytime a user is added to a new course
+        Set<CourseLearnerProfile> newProfiles = coursesWithLearningPaths.stream()
+                .filter(course -> courseLearnerProfiles.stream().map(CourseLearnerProfile::getCourse).noneMatch(existingCourse -> existingCourse.equals(course)))
+                .map(course -> courseLearnerProfileService.createCourseLearnerProfile(course, user)).collect(Collectors.toSet());
+
+        courseLearnerProfiles.addAll(newProfiles);
+
+        Set<CourseLearnerProfileDTO> returnSet = courseLearnerProfiles.stream().map(CourseLearnerProfileDTO::of).collect(Collectors.toSet());
+
+        return ResponseEntity.ok(returnSet);
     }
 
     /**
-     * Validates that fields are within {@link #MIN_PROFILE_VALUE} and {@link #MAX_PROFILE_VALUE}.
+     * Validates that fields are within {@link CourseLearnerProfile#MIN_PROFILE_VALUE} and {@link CourseLearnerProfile#MAX_PROFILE_VALUE}.
      *
      * @param value     Value of the field
      * @param fieldName Field name

@@ -41,7 +41,7 @@ public class Channel extends Conversation {
      * What is the purpose of this channel? (not shown in header)
      */
     @Column(name = "description")
-    @Size(min = 1, max = 250)
+    @Size(min = 0, max = 250)
     @Nullable
     private String description;
 
@@ -49,7 +49,7 @@ public class Channel extends Conversation {
      * What is the current topic of this channel? (shown in header)
      */
     @Column(name = "topic")
-    @Size(min = 1, max = 250)
+    @Size(min = 0, max = 250)
     @Nullable
     private String topic;
 
@@ -134,7 +134,6 @@ public class Channel extends Conversation {
         this.description = description;
     }
 
-    @Nullable
     public boolean getIsPublic() {
         return isPublic;
     }
