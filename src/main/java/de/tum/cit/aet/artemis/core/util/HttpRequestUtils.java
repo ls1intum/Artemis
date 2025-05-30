@@ -52,8 +52,17 @@ public class HttpRequestUtils {
         return Optional.ofNullable(ipAddress);
     }
 
-    private static Browser getBrowserName(String userAgent) {
-        if (userAgent.contains("Edg")) {
+    private static Browser getBrowserName(@NotNull HttpServletRequest request) {
+        String userAgent = request.getHeader(HttpHeaders.USER_AGENT);
+        if (userAgent == null || userAgent.isEmpty()) {
+            userAgent = "";
+        }
+        String secureClientHintsUserAgent = request.getHeader("Sec-Ch-Ua");
+        if (secureClientHintsUserAgent == null) {
+            secureClientHintsUserAgent = "";
+        }
+
+        if (secureClientHintsUserAgent.contains("Microsoft Edge")) {
             return Browser.MICROSOFT_EDGE;
         }
         else if (userAgent.contains("OPR") || userAgent.contains("Opera")) {
@@ -62,7 +71,7 @@ public class HttpRequestUtils {
         else if (userAgent.contains("SamsungBrowser")) {
             return Browser.SAMSUNG_INTERNET;
         }
-        else if (userAgent.contains("Chrome") && !userAgent.contains("Chromium")) {
+        else if (secureClientHintsUserAgent.contains("Google Chrome")) {
             return Browser.GOOGLE_CHROME;
         }
         else if (userAgent.contains("Firefox")) {
@@ -71,8 +80,7 @@ public class HttpRequestUtils {
         else if (userAgent.contains("Safari") && !userAgent.contains("Chrome")) {
             return Browser.APPLE_SAFARI;
         }
-        else if (userAgent.contains("Brave")) {
-            // TODO fix as it is currently detected as Chrome
+        else if (secureClientHintsUserAgent.contains("Brave")) {
             return Browser.BRAVE;
         }
         else if (userAgent.contains("Vivaldi")) {
@@ -82,11 +90,20 @@ public class HttpRequestUtils {
             return Browser.DUCKDUCKGO;
         }
 
-        log.warn("Could not detect browser name from user agent: {}", userAgent);
+        log.warn("Could not detect browser name from user agent: {}, secure user agent: {}", userAgent, secureClientHintsUserAgent);
         return null;
     }
 
-    private static OperatingSystem getOperatingSystem(String userAgent) {
+    private static OperatingSystem getOperatingSystem(@NotNull HttpServletRequest request) {
+        String userAgent = request.getHeader(HttpHeaders.USER_AGENT);
+        if (userAgent == null || userAgent.isEmpty()) {
+            userAgent = "";
+        }
+        String secureClientHintsUserAgentPlatform = request.getHeader("Sec-Ch-Ua");
+        if (secureClientHintsUserAgentPlatform == null) {
+            secureClientHintsUserAgentPlatform = "";
+        }
+
         if (userAgent.contains("Windows")) {
             return OperatingSystem.WINDOWS;
         }
@@ -103,15 +120,18 @@ public class HttpRequestUtils {
             return OperatingSystem.IOS;
         }
 
-        log.warn("Could not detect operating system from user agent: {}", userAgent);
+        log.warn("Could not detect operating system from user agent: {}, secure user agent platform: {}", userAgent, secureClientHintsUserAgentPlatform);
         return null;
     }
 
     public static ClientEnvironment getClientEnvironment(@NotNull HttpServletRequest request) {
+        Browser browserName = getBrowserName(request);
+        OperatingSystem operatingSystem = getOperatingSystem(request);
+        if (browserName != null) {
+            return new ClientEnvironment(browserName, operatingSystem, null);
+        }
 
         String userAgent = request.getHeader(HttpHeaders.USER_AGENT);
-
-        log.info("Detecting client type from user agent: {}", userAgent);
 
         if (userAgent == null || userAgent.isEmpty()) {
             return null;
@@ -119,12 +139,6 @@ public class HttpRequestUtils {
 
         boolean hasCFNetwork = userAgent.contains("CFNetwork");
         boolean hasIosAppName = userAgent.contains("Artemis");
-
-        Browser browserName = getBrowserName(userAgent);
-        OperatingSystem operatingSystem = getOperatingSystem(userAgent);
-        if (browserName != null) {
-            return new ClientEnvironment(browserName, operatingSystem, null);
-        }
 
         boolean isIosApp = hasIosAppName && hasCFNetwork;
         if (isIosApp) {

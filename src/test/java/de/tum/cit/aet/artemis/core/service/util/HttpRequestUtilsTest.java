@@ -93,8 +93,7 @@ class HttpRequestUtilsTest {
         @Test
         void shouldDetectBrowser_whenUsingChrome() {
             HttpServletRequest request = mock(HttpServletRequest.class);
-            when(request.getHeader("User-Agent"))
-                    .thenReturn("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36");
+            when(request.getHeader("Sec-Ch-Ua")).thenReturn("\"Chromium\";v=\"136\", \"Google Chrome\";v=\"136\", \"Not.A/Brand\";v=\"99\"");
             ClientEnvironment clientEnvironment = HttpRequestUtils.getClientEnvironment(request);
             assertThat(clientEnvironment.browser().getDisplayName()).isEqualTo("Google Chrome");
         }
@@ -111,8 +110,7 @@ class HttpRequestUtilsTest {
         @Test
         void shouldDetectBrowser_whenUsingMicrosoftEdge() {
             HttpServletRequest request = mock(HttpServletRequest.class);
-            when(request.getHeader("User-Agent"))
-                    .thenReturn("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 Edg/137.0.0.0");
+            when(request.getHeader("Sec-Ch-Ua")).thenReturn("\"Microsoft Edge\";v=\"137\", \"Chromium\";v=\"137\", \"Not/A)Brand\";v=\"24\"");
             ClientEnvironment clientEnvironment = HttpRequestUtils.getClientEnvironment(request);
             assertThat(clientEnvironment.browser().getDisplayName()).isEqualTo("Microsoft Edge");
         }
