@@ -1324,7 +1324,8 @@ public class GitService extends AbstractGitService {
                         }
                     }
                     else {
-                        Files.copy(sourcePath, targetPath);
+                        Files.createDirectories(targetPath.getParent());
+                        FileUtils.copyFile(sourcePath.toFile(), targetPath.toFile());
                     }
                 }
                 catch (IOException e) {
