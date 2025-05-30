@@ -64,9 +64,9 @@ import de.tum.cit.aet.artemis.programming.repository.ParticipationVCSAccessToken
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.AuxiliaryRepositoryService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTestCaseChangedService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionMessagingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryAccessService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.programming.service.localvc.ssh.SshConstants;
@@ -104,7 +104,7 @@ public class LocalVCServletService {
 
     private final ProgrammingSubmissionMessagingService programmingSubmissionMessagingService;
 
-    private final ProgrammingTriggerService programmingTriggerService;
+    private final ProgrammingExerciseTestCaseChangedService programmingExerciseTestCaseChangedService;
 
     // TODO As soon as only LocalVC is supported, this Optional can be removed
     private final Optional<VcsAccessLogService> vcsAccessLogService;
@@ -143,7 +143,7 @@ public class LocalVCServletService {
             RepositoryAccessService repositoryAccessService, AuthorizationCheckService authorizationCheckService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, AuxiliaryRepositoryService auxiliaryRepositoryService,
             ContinuousIntegrationTriggerService ciTriggerService, ProgrammingSubmissionService programmingSubmissionService,
-            ProgrammingSubmissionMessagingService programmingSubmissionMessagingService, ProgrammingTriggerService programmingTriggerService,
+            ProgrammingSubmissionMessagingService programmingSubmissionMessagingService, ProgrammingExerciseTestCaseChangedService programmingExerciseTestCaseChangedService,
             ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository, Optional<VcsAccessLogService> vcsAccessLogService) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
@@ -155,7 +155,7 @@ public class LocalVCServletService {
         this.ciTriggerService = ciTriggerService;
         this.programmingSubmissionService = programmingSubmissionService;
         this.programmingSubmissionMessagingService = programmingSubmissionMessagingService;
-        this.programmingTriggerService = programmingTriggerService;
+        this.programmingExerciseTestCaseChangedService = programmingExerciseTestCaseChangedService;
         this.participationVCSAccessTokenRepository = participationVCSAccessTokenRepository;
         this.vcsAccessLogService = vcsAccessLogService;
     }
@@ -781,7 +781,7 @@ public class LocalVCServletService {
         if (repositoryType.equals(RepositoryType.TESTS)) {
             try {
                 // Set a flag to inform the instructor that the student results are now outdated.
-                programmingTriggerService.setTestCasesChanged(exercise.getId(), true);
+                programmingExerciseTestCaseChangedService.setTestCasesChanged(exercise.getId(), true);
             }
             catch (EntityNotFoundException e) {
                 throw new VersionControlException("Could not set test cases changed flag", e);
