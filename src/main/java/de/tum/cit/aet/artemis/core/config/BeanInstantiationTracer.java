@@ -16,6 +16,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
+import de.tum.cit.aet.artemis.core.PrintStartupBeansEvent;
 import de.tum.cit.aet.artemis.core.util.Pair;
 
 @Component
@@ -55,7 +56,7 @@ public class BeanInstantiationTracer implements InstantiationAwareBeanPostProces
         return bean;
     }
 
-    @EventListener(FullStartupEvent.class)
+    @EventListener(PrintStartupBeansEvent.class)
     public void printDependencyGraph() {
         try (PrintWriter out = new PrintWriter("beans.dot")) {
             out.println("digraph beans {");
