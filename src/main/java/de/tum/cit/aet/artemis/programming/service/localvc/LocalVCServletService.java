@@ -64,7 +64,7 @@ import de.tum.cit.aet.artemis.programming.repository.ParticipationVCSAccessToken
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.AuxiliaryRepositoryService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionMessagingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryAccessService;
@@ -102,7 +102,7 @@ public class LocalVCServletService {
 
     private final ProgrammingSubmissionService programmingSubmissionService;
 
-    private final ProgrammingMessagingService programmingMessagingService;
+    private final ProgrammingSubmissionMessagingService programmingSubmissionMessagingService;
 
     private final ProgrammingTriggerService programmingTriggerService;
 
@@ -143,7 +143,7 @@ public class LocalVCServletService {
             RepositoryAccessService repositoryAccessService, AuthorizationCheckService authorizationCheckService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, AuxiliaryRepositoryService auxiliaryRepositoryService,
             ContinuousIntegrationTriggerService ciTriggerService, ProgrammingSubmissionService programmingSubmissionService,
-            ProgrammingMessagingService programmingMessagingService, ProgrammingTriggerService programmingTriggerService,
+            ProgrammingSubmissionMessagingService programmingSubmissionMessagingService, ProgrammingTriggerService programmingTriggerService,
             ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository, Optional<VcsAccessLogService> vcsAccessLogService) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
@@ -154,7 +154,7 @@ public class LocalVCServletService {
         this.auxiliaryRepositoryService = auxiliaryRepositoryService;
         this.ciTriggerService = ciTriggerService;
         this.programmingSubmissionService = programmingSubmissionService;
-        this.programmingMessagingService = programmingMessagingService;
+        this.programmingSubmissionMessagingService = programmingSubmissionMessagingService;
         this.programmingTriggerService = programmingTriggerService;
         this.participationVCSAccessTokenRepository = participationVCSAccessTokenRepository;
         this.vcsAccessLogService = vcsAccessLogService;
@@ -776,7 +776,7 @@ public class LocalVCServletService {
         // Create a new submission for the solution repository.
         ProgrammingSubmission submission = getProgrammingSubmission(exercise, commitHash);
 
-        programmingMessagingService.notifyUserAboutSubmission(submission, exercise.getId());
+        programmingSubmissionMessagingService.notifyUserAboutSubmission(submission, exercise.getId());
 
         if (repositoryType.equals(RepositoryType.TESTS)) {
             try {
@@ -853,7 +853,7 @@ public class LocalVCServletService {
 
         // Remove unnecessary information from the new submission.
         submission.getParticipation().setSubmissions(null);
-        programmingMessagingService.notifyUserAboutSubmission(submission, participation.getExercise().getId());
+        programmingSubmissionMessagingService.notifyUserAboutSubmission(submission, participation.getExercise().getId());
     }
 
     private Commit extractCommitInfo(String commitHash, Repository repository) throws IOException, GitAPIException, VersionControlException {

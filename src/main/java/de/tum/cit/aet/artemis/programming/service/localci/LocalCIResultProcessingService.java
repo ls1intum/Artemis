@@ -48,6 +48,8 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionMessagingService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
 
 @Profile(PROFILE_LOCALCI)
@@ -65,6 +67,8 @@ public class LocalCIResultProcessingService {
 
     private final ProgrammingMessagingService programmingMessagingService;
 
+    private final ProgrammingSubmissionService programmingSubmissionService;
+
     private final BuildJobRepository buildJobRepository;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
@@ -79,13 +83,17 @@ public class LocalCIResultProcessingService {
 
     private final DistributedDataAccessService distributedDataAccessService;
 
+    private final ProgrammingSubmissionMessagingService programmingSubmissionMessagingService;
+
     private UUID listenerId;
 
     public LocalCIResultProcessingService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, ProgrammingExerciseGradingService programmingExerciseGradingService,
-            ProgrammingMessagingService programmingMessagingService, BuildJobRepository buildJobRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            ParticipationRepository participationRepository, ProgrammingTriggerService programmingTriggerService, BuildLogEntryService buildLogEntryService,
-            ProgrammingExerciseBuildStatisticsRepository programmingExerciseBuildStatisticsRepository, DistributedDataAccessService distributedDataAccessService) {
+            ProgrammingMessagingService programmingMessagingService, ProgrammingSubmissionService programmingSubmissionService, BuildJobRepository buildJobRepository,
+            ProgrammingExerciseRepository programmingExerciseRepository, ParticipationRepository participationRepository, ProgrammingTriggerService programmingTriggerService,
+            BuildLogEntryService buildLogEntryService, ProgrammingExerciseBuildStatisticsRepository programmingExerciseBuildStatisticsRepository,
+            DistributedDataAccessService distributedDataAccessService, ProgrammingSubmissionMessagingService programmingSubmissionMessagingService) {
         this.hazelcastInstance = hazelcastInstance;
+        this.programmingSubmissionService = programmingSubmissionService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.participationRepository = participationRepository;
         this.programmingExerciseGradingService = programmingExerciseGradingService;
@@ -95,6 +103,7 @@ public class LocalCIResultProcessingService {
         this.buildLogEntryService = buildLogEntryService;
         this.programmingExerciseBuildStatisticsRepository = programmingExerciseBuildStatisticsRepository;
         this.distributedDataAccessService = distributedDataAccessService;
+        this.programmingSubmissionMessagingService = programmingSubmissionMessagingService;
     }
 
     /**
@@ -198,7 +207,7 @@ public class LocalCIResultProcessingService {
                         programmingMessagingService.notifyUserAboutNewResult(result, programmingExerciseParticipation);
                     }
                     else {
-                        programmingMessagingService.notifyUserAboutSubmissionError((Participation) programmingExerciseParticipation,
+                        programmingSubmissionMessagingService.notifyUserAboutSubmissionError((Participation) programmingExerciseParticipation,
                                 new BuildTriggerWebsocketError("Result could not be processed", programmingExerciseParticipation.getId()));
                     }
 
