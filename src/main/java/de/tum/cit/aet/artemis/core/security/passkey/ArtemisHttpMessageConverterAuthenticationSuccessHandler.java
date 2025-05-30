@@ -2,9 +2,12 @@ package de.tum.cit.aet.artemis.core.security.passkey;
 
 import java.io.IOException;
 
+import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseCookie;
@@ -19,6 +22,7 @@ import org.springframework.security.web.savedrequest.SavedRequest;
 import org.springframework.util.Assert;
 
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
+import de.tum.cit.aet.artemis.core.service.ArtemisSuccessfulLoginService;
 
 /**
  * An {@link AuthenticationSuccessHandler}, that sets a JWT token in the response and writes a JSON response with the redirect
@@ -28,15 +32,21 @@ import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
  */
 public final class ArtemisHttpMessageConverterAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
 
+    private static final Logger log = LoggerFactory.getLogger(ArtemisHttpMessageConverterAuthenticationSuccessHandler.class);
+
     private HttpMessageConverter<Object> converter;
 
     private RequestCache requestCache = new HttpSessionRequestCache();
 
     private final JWTCookieService jwtCookieService;
 
-    public ArtemisHttpMessageConverterAuthenticationSuccessHandler(HttpMessageConverter<Object> converter, JWTCookieService jwtCookieService) {
+    private final ArtemisSuccessfulLoginService artemisSuccessfulLoginService;
+
+    public ArtemisHttpMessageConverterAuthenticationSuccessHandler(HttpMessageConverter<Object> converter, JWTCookieService jwtCookieService,
+            ArtemisSuccessfulLoginService artemisSuccessfulLoginService) {
         this.jwtCookieService = jwtCookieService;
         this.converter = converter;
+        this.artemisSuccessfulLoginService = artemisSuccessfulLoginService;
     }
 
     /**
@@ -60,7 +70,7 @@ public final class ArtemisHttpMessageConverterAuthenticationSuccessHandler imple
     }
 
     @Override
-    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
+    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
         final SavedRequest savedRequest = this.requestCache.getRequest(request, response);
         final String redirectUrl = (savedRequest != null) ? savedRequest.getRedirectUrl() : request.getContextPath() + "/";
         this.requestCache.removeRequest(request, response);

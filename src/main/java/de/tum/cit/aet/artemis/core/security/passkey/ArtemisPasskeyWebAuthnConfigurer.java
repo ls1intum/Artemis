@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.service.AndroidFingerprintService;
+import de.tum.cit.aet.artemis.core.service.ArtemisSuccessfulLoginService;
 import de.tum.cit.aet.artemis.core.util.AndroidApkKeyHashUtil;
 
 /**
@@ -58,6 +59,8 @@ public class ArtemisPasskeyWebAuthnConfigurer {
 
     private final MailSendingService mailSendingService;
 
+    private final ArtemisSuccessfulLoginService artemisSuccessfulLoginService;
+
     @Value("${" + Constants.PASSKEY_ENABLED_PROPERTY_NAME + ":false}")
     private boolean passkeyEnabled;
 
@@ -80,7 +83,7 @@ public class ArtemisPasskeyWebAuthnConfigurer {
             PublicKeyCredentialUserEntityRepository publicKeyCredentialUserEntityRepository, UserCredentialRepository userCredentialRepository,
             PublicKeyCredentialCreationOptionsRepository publicKeyCredentialCreationOptionsRepository,
             PublicKeyCredentialRequestOptionsRepository publicKeyCredentialRequestOptionsRepository, AndroidFingerprintService androidFingerprintService,
-            MailSendingService mailSendingService) {
+            MailSendingService mailSendingService, ArtemisSuccessfulLoginService artemisSuccessfulLoginService) {
         this.converter = converter;
         this.jwtCookieService = jwtCookieService;
         this.userRepository = userRepository;
@@ -90,6 +93,7 @@ public class ArtemisPasskeyWebAuthnConfigurer {
         this.publicKeyCredentialRequestOptionsRepository = publicKeyCredentialRequestOptionsRepository;
         this.androidFingerprintService = androidFingerprintService;
         this.mailSendingService = mailSendingService;
+        this.artemisSuccessfulLoginService = artemisSuccessfulLoginService;
     }
 
     /**
@@ -153,7 +157,8 @@ public class ArtemisPasskeyWebAuthnConfigurer {
         }
 
         WebAuthnConfigurer<HttpSecurity> webAuthnConfigurer = new ArtemisWebAuthnConfigurer<>(converter, jwtCookieService, userRepository, publicKeyCredentialUserEntityRepository,
-                userCredentialRepository, publicKeyCredentialCreationOptionsRepository, publicKeyCredentialRequestOptionsRepository, mailSendingService);
+                userCredentialRepository, publicKeyCredentialCreationOptionsRepository, publicKeyCredentialRequestOptionsRepository, mailSendingService,
+                artemisSuccessfulLoginService);
 
         http.with(webAuthnConfigurer, configurer -> {
             configurer.allowedOrigins(allowedOrigins).rpId(relyingPartyId).rpName(relyingPartyName);
