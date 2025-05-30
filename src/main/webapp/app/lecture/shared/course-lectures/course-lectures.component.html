@@ -11,7 +11,7 @@
         </div>
 
         @if (lectureSelected) {
-            <div class="vw-100 module-bg rounded-3">
+            <div [ngClass]="{ 'content-sidebar-width': !isCollapsed }" class="content-width module-bg rounded-3">
                 <router-outlet (deactivate)="onSubRouteDeactivate()" />
             </div>
         } @else {

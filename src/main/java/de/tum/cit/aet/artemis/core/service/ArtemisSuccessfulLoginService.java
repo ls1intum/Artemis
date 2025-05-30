@@ -50,6 +50,8 @@ public class ArtemisSuccessfulLoginService {
     /**
      * Handles successful authentication events.
      * Sends a login notification email to users when they successfully authenticate.
+     *
+     * @param username the username of the user who has successfully logged in
      */
     public void sendLoginEmail(String username) {
         try {
