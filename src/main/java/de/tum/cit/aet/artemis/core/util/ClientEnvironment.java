@@ -19,7 +19,7 @@ public record ClientEnvironment(Browser browser, OperatingSystem operatingSystem
         String appPrefix = "the Artemis ";
 
         if (language == Language.GERMAN) {
-            browserToOsConnection = "unter";
+            browserToOsConnection = " unter ";
             appPrefix = "der Artemis ";
         }
 
