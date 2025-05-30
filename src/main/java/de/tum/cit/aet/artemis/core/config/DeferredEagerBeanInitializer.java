@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
 /**
  * This component initializes all lazy singleton beans after the application is ready.
  * This allows us to benefit from the lazy initialization of beans during startup, without comprising end user experience as beans are initialized before the first request is
- * made..
+ * made.
  * It uses parallel streams to initialize the beans in parallel.
  * The beans are initialized by accessing them, which triggers their initialization.
  */
@@ -41,7 +41,7 @@ public class DeferredEagerBeanInitializer {
             return def.isSingleton() && def.isLazyInit();
         }).forEach(name -> {
             try {
-                // trigger initialization
+                // accessing the bean triggers initialization
                 context.getBean(name);
                 log.debug("Deferred eager initialization of bean {} completed", name);
             }
