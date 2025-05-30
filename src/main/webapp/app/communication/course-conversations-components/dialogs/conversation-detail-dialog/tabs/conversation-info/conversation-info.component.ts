@@ -9,7 +9,7 @@ import {
     GenericUpdateTextPropertyDialogComponent,
     GenericUpdateTextPropertyTranslationKeys,
 } from 'app/communication/course-conversations-components/generic-update-text-property-dialog/generic-update-text-property-dialog.component';
-import { EMPTY, Subject, debounceTime, distinctUntilChanged, from, map, takeUntil } from 'rxjs';
+import { EMPTY, Subject, debounceTime, distinctUntilChanged, filter, from, map, takeUntil } from 'rxjs';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -266,15 +266,19 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
             return;
         }
 
-        this.courseNotificationSettingService.getSettingInfo(courseId).subscribe({
-            next: (response) => {
-                if (response.body) {
-                    this.notificationSettings = response.body;
+        this.courseNotificationSettingService
+            .getSettingInfo(courseId)
+            .pipe(
+                map((response) => response.body),
+                filter((body): body is CourseNotificationSettingInfo => body !== null && body !== undefined),
+            )
+            .subscribe({
+                next: (settings) => {
+                    this.notificationSettings = settings;
                     this.checkNotificationStatus();
-                }
-            },
-            error: (error: HttpErrorResponse) => onError(this.alertService, error),
-        });
+                },
+                error: (error: HttpErrorResponse) => onError(this.alertService, error),
+            });
     }
 
     private checkNotificationStatus() {
