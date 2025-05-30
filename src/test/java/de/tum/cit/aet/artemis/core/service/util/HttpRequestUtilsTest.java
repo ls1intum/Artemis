@@ -106,6 +106,14 @@ class HttpRequestUtilsTest {
         }
 
         @Test
+        void shouldDetectAndroidApp() {
+            HttpServletRequest request = mock(HttpServletRequest.class);
+            when(request.getHeader("User-Agent")).thenReturn("ktor-client");
+            String clientType = HttpRequestUtils.detectClientType(request);
+            assertThat(clientType).isEqualTo("Android App");
+        }
+
+        @Test
         void shouldNotFailOnUnknownUserAgent() {
             HttpServletRequest request = mock(HttpServletRequest.class);
             when(request.getHeader("User-Agent")).thenReturn(null);

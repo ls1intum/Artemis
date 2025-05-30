@@ -81,6 +81,11 @@ public class HttpRequestUtils {
             return "Browser";
         }
 
+        boolean isAndroidApp = userAgent.contains("ktor-client");
+        if (isAndroidApp) {
+            return "Android App";
+        }
+
         return "Unknown";
     }
 }
