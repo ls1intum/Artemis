@@ -2,16 +2,15 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CoursePracticeQuizComponent } from './course-practice-quiz.component';
 import { ActivatedRoute, Router } from '@angular/router';
 import { QuizQuestion, QuizQuestionType } from '../../shared/entities/quiz-question.model';
-import { MultipleChoiceQuestion } from '../../shared/entities/multiple-choice-question.model';
-import { AnswerOption } from '../../shared/entities/answer-option.model';
-import { CoursePracticeQuizService } from '../service/course-practice-quiz.service';
 import { MockBuilder } from 'ng-mocks';
 import { of } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateModule } from '@ngx-translate/core';
+import { CoursePracticeQuizService } from 'app/quiz/overview/service/course-practice-quiz.service';
+import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 
-const question1: QuizQuestion = {
+const question1: DragAndDropQuestion = {
     id: 1,
     type: QuizQuestionType.DRAG_AND_DROP,
     points: 1,
@@ -19,11 +18,10 @@ const question1: QuizQuestion = {
     exportQuiz: false,
     randomizeOrder: true,
 };
-const question2: MultipleChoiceQuestion = {
+const question2: QuizQuestion = {
     id: 2,
     type: QuizQuestionType.MULTIPLE_CHOICE,
     points: 2,
-    answerOptions: [{ id: 1 } as AnswerOption],
     invalid: false,
     exportQuiz: false,
     randomizeOrder: true,
@@ -32,14 +30,17 @@ const question3: QuizQuestion = {
     id: 3,
     type: QuizQuestionType.SHORT_ANSWER,
     points: 3,
+    randomizeOrder: false,
     invalid: false,
     exportQuiz: false,
-    randomizeOrder: true,
 };
 
 describe('CoursePracticeQuizComponent', () => {
     let component: CoursePracticeQuizComponent;
     let fixture: ComponentFixture<CoursePracticeQuizComponent>;
+    let quizService: CoursePracticeQuizService;
+
+    const mockQuestions = [question1, question2, question3];
 
     beforeEach(async () => {
         await MockBuilder(CoursePracticeQuizComponent)
@@ -57,32 +58,32 @@ describe('CoursePracticeQuizComponent', () => {
                     },
                 },
             ]);
+        quizService = TestBed.inject(CoursePracticeQuizService);
+        jest.spyOn(quizService, 'getQuizQuestions').mockReturnValue(of([question1, question2, question3]));
 
         fixture = TestBed.createComponent(CoursePracticeQuizComponent);
         component = fixture.componentInstance;
-        component.questions.set([question1, question2, question3]);
         fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        jest.clearAllMocks();
     });
 
     it('should create', () => {
         expect(component).toBeTruthy();
     });
 
-    it('should initiate', () => {
+    it('should extract courseId from route params', () => {
         expect(component.courseId()).toBe(1);
     });
 
-    it('should load questions on loadQuestions', () => {
-        const quizService = TestBed.inject(CoursePracticeQuizService);
-        const mockQuestions = [question1, question2, question3];
-        jest.spyOn(quizService, 'getQuizQuestions').mockReturnValue(of(mockQuestions));
-        component.loadQuestions(1);
-        expect(quizService.getQuizQuestions).toHaveBeenCalledWith(1);
+    it('should load questions from service', () => {
+        expect(component.questionsSignal()).toEqual(mockQuestions);
         expect(component.questions()).toEqual(mockQuestions);
     });
 
     it('should check for last question', () => {
-        component.questions.set([question1, question2, question3]);
         component.currentIndex.set(0);
         expect(component.isLastQuestion()).toBeFalse();
         component.currentIndex.set(2);
@@ -99,8 +100,7 @@ describe('CoursePracticeQuizComponent', () => {
         expect(spy).toHaveBeenCalledOnce();
     });
 
-    it('should check for current question', () => {
-        component.questions.set([question1, question2, question3]);
+    it('should return the current question based on currentIndex', () => {
         component.currentIndex.set(0);
         expect(component.currentQuestion()).toBe(question1);
     });

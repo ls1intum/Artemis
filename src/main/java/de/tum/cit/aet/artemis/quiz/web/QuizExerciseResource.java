@@ -811,7 +811,7 @@ public class QuizExerciseResource {
     /**
      * Retrieves all the quiz questions belonging to a course that are released for practice
      *
-     * @param courseId the id of the course8 whose quiz questions should be retrieved
+     * @param courseId the id of the course whose quiz questions should be retrieved
      * @return a set of quiz questions from the specified course that are released for practice
      */
     @GetMapping("courses/{courseId}/quiz")

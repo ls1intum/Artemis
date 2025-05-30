@@ -26,11 +26,15 @@ describe('CoursePracticeComponent', () => {
         fixture.detectChanges();
     });
 
+    afterEach(() => {
+        jest.clearAllMocks();
+    });
+
     it('should create', () => {
         expect(component).toBeTruthy();
     });
 
-    it('should initiate', () => {
+    it('should extract courseId from route params', () => {
         expect(component.courseId()).toBe(1);
     });
 

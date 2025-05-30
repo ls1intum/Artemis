@@ -29,19 +29,17 @@ export class CoursePracticeQuizComponent {
     private quizService = inject(CoursePracticeQuizService);
 
     currentIndex = signal(0);
-    isLoading = signal(true);
 
-    private readonly paramsSignal = toSignal(this.route.parent?.params ?? EMPTY);
-    private readonly courseId = computed(() => this.paramsSignal()?.['courseId']);
-    private readonly quizQuestions = computed(() => {
-        const id = this.courseId();
-        return id ? this.quizService.getQuizQuestions(id) : EMPTY;
-    });
-    private readonly questionsSignal = toSignal(this.quizQuestions(), { initialValue: [] });
+    // Reactive chain for loading quiz questions based on the current route
+    paramsSignal = toSignal(this.route.parent?.params ?? EMPTY);
+    courseId = computed(() => this.paramsSignal()?.['courseId']);
+    quizQuestions = computed(() => (this.courseId() ? this.quizService.getQuizQuestions(this.courseId()) : EMPTY));
+    questionsSignal = toSignal(this.quizQuestions(), { initialValue: [] });
+    questions = computed(() => this.questionsSignal());
+
     selectedAnswerOptions = new Map<number, AnswerOption[]>();
     dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
     shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
-    questions = this.questionsSignal;
 
     /**
      * checks if the current question is the last question
@@ -57,8 +55,8 @@ export class CoursePracticeQuizComponent {
      * gets the current question
      */
     currentQuestion = computed(() => {
-        if (this.questions().length === 0 || this.currentIndex() < 0 || this.currentIndex() >= this.questions().length) {
-            throw new Error('No questions available or invalid question index');
+        if (this.questions().length === 0) {
+            return undefined;
         }
         return this.questions()[this.currentIndex()];
     });

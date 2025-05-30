@@ -14,8 +14,8 @@ export class CoursePracticeComponent {
     private router = inject(Router);
     private route = inject(ActivatedRoute);
 
-    private readonly paramsSignal = toSignal(this.route.parent?.params ?? EMPTY);
-    private readonly courseId = computed(() => this.paramsSignal()?.['courseId']);
+    paramsSignal = toSignal(this.route.parent?.params ?? EMPTY);
+    courseId = computed(() => this.paramsSignal()?.['courseId']);
 
     public navigateToPractice(): void {
         this.router.navigate(['courses', this.courseId(), 'quiz']);
