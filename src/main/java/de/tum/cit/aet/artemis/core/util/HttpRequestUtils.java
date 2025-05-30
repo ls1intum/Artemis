@@ -53,7 +53,16 @@ public class HttpRequestUtils {
     }
 
     private static String getBrowserName(String userAgent) {
-        if (userAgent.contains("Chrome") && !userAgent.contains("Chromium")) {
+        if (userAgent.contains("Edg")) {
+            return "Microsoft Edge";
+        }
+        else if (userAgent.contains("OPR") || userAgent.contains("Opera")) {
+            return "Opera";
+        }
+        else if (userAgent.contains("SamsungBrowser")) {
+            return "Samsung Internet";
+        }
+        else if (userAgent.contains("Chrome") && !userAgent.contains("Chromium")) {
             return "Google Chrome";
         }
         else if (userAgent.contains("Firefox")) {
@@ -62,20 +71,11 @@ public class HttpRequestUtils {
         else if (userAgent.contains("Safari") && !userAgent.contains("Chrome")) {
             return "Apple Safari";
         }
-        else if (userAgent.contains("Edg")) {
-            return "Microsoft Edge";
-        }
-        else if (userAgent.contains("OPR") || userAgent.contains("Opera")) {
-            return "Opera";
-        }
         else if (userAgent.contains("Brave")) {
             return "Brave";
         }
         else if (userAgent.contains("Vivaldi")) {
             return "Vivaldi";
-        }
-        else if (userAgent.contains("SamsungBrowser")) {
-            return "Samsung Internet";
         }
         else if (userAgent.contains("DuckDuckGo")) {
             return "DuckDuckGo";

@@ -113,7 +113,7 @@ class HttpRequestUtilsTest {
             when(request.getHeader("User-Agent"))
                     .thenReturn("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 Edg/137.0.0.0");
             String clientType = HttpRequestUtils.detectClientType(request);
-            assertThat(clientType).isEqualTo("Apple Safari");
+            assertThat(clientType).isEqualTo("Microsoft Edge");
         }
 
         @Test
@@ -130,7 +130,7 @@ class HttpRequestUtilsTest {
             when(request.getHeader("User-Agent")).thenReturn(
                     "Mozilla/5.0 (Linux; Android 13; SAMSUNG SM-G991B) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/18.0 Chrome/109.0.5414.87 Mobile Safari/537.36");
             String clientType = HttpRequestUtils.detectClientType(request);
-            assertThat(clientType).isEqualTo("Mozilla Firefox");
+            assertThat(clientType).isEqualTo("Samsung Internet");
         }
 
         @Test
