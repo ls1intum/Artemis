@@ -53,6 +53,7 @@ import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
+import de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
@@ -316,6 +317,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
 
         // Instructors should be able to fetch and push.
         localVCLocalCITestService.testFetchSuccessful(auxiliaryRepository.localGit, instructor1Login, projectKey1, auxiliaryRepositorySlug);
+        localVCLocalCITestService.testPushSuccessful(auxiliaryRepository.localGit, instructor1Login, projectKey1, auxiliaryRepositorySlug);
 
         localVCLocalCITestService.commitFile(auxiliaryRepository.localRepoFile.toPath(), auxiliaryRepository.localGit);
 
@@ -400,43 +402,40 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testFailedAccessVcsAccessLog() throws Exception {
-        var participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
         // Clear any existing logs before the test
         vcsAccessLogRepository.deleteAll();
 
-        // Test failed access attempts with wrong credentials (should succeed in logging)
+        // Test failed authentication attempts with wrong password - expect exceptions to be thrown
         try {
             localVCLocalCITestService.testFetchReturnsError(assignmentRepository.localGit, student1Login, "wrong-password", projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
         }
         catch (AssertionError e) {
-            // LocalVC might not throw exceptions in all cases, but still logs the access attempts
-            log.debug("No exception thrown for fetch with wrong credentials, but access may still be logged");
+            // If Git exceptions are not thrown as expected, we'll still check for logs
+            log.debug("Git operation may not have thrown exception as expected, but access should still be logged");
         }
 
         try {
             localVCLocalCITestService.testPushReturnsError(assignmentRepository.localGit, student1Login, "wrong-password", projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
         }
         catch (AssertionError e) {
-            // LocalVC might not throw exceptions in all cases, but still logs the access attempts
-            log.debug("No exception thrown for push with wrong credentials, but access may still be logged");
+            log.debug("Git operation may not have thrown exception as expected, but access should still be logged");
         }
 
-        // Test failed access attempts without credentials (should succeed in logging)
+        // Test failed authentication attempts with empty password
         try {
             localVCLocalCITestService.testFetchReturnsError(assignmentRepository.localGit, student1Login, "", projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
         }
         catch (AssertionError e) {
-            // LocalVC might not throw exceptions in all cases, but still logs the access attempts
-            log.debug("No exception thrown for fetch without credentials, but access may still be logged");
+            log.debug("Git operation may not have thrown exception as expected, but access should still be logged");
         }
 
         try {
             localVCLocalCITestService.testPushReturnsError(assignmentRepository.localGit, student1Login, "", projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
         }
         catch (AssertionError e) {
-            // LocalVC might not throw exceptions in all cases, but still logs the access attempts
-            log.debug("No exception thrown for push without credentials, but access may still be logged");
+            log.debug("Git operation may not have thrown exception as expected, but access should still be logged");
         }
 
         // Give the system a moment to process and log the access attempts
@@ -444,18 +443,26 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
 
         // Verify that the failed access attempts are logged
         var vcsAccessLogs = vcsAccessLogRepository.findAll();
-
-        // We expect at least some logs for failed authentication attempts
-        // Note: The exact number may vary based on how LocalVC handles different failure scenarios
         assertThat(vcsAccessLogs).isNotEmpty();
 
         // Filter logs for operations related to our test (by checking if they involve the test user)
         var testUserLogs = vcsAccessLogs.stream().filter(log -> log.getUser() != null && log.getUser().getLogin().equals(student1Login)).toList();
 
+        // We should have at least one failed access log for our test user
         assertThat(testUserLogs).isNotEmpty();
 
-        // Check that we have some access logs (success or failure) for our test user
+        // Verify that we have CLONE_FAIL entries (failed authentication attempts are logged as CLONE_FAIL)
+        var failedAccessLogs = testUserLogs.stream().filter(log -> log.getRepositoryActionType() == RepositoryActionType.CLONE_FAIL).toList();
+
+        assertThat(failedAccessLogs).isNotEmpty();
+
+        // Check that authentication mechanism is properly recorded
+        var passwordAuthLogs = failedAccessLogs.stream().filter(log -> log.getAuthenticationMechanism() == AuthenticationMechanism.PASSWORD).toList();
+
+        assertThat(passwordAuthLogs).isNotEmpty();
+
         log.info("Found {} VCS access logs for test user {}", testUserLogs.size(), student1Login);
+        log.info("Found {} failed access logs (CLONE_FAIL)", failedAccessLogs.size());
         testUserLogs.forEach(accessLog -> {
             log.info("VCS Access Log: action={}, user={}, authMechanism={}", accessLog.getRepositoryActionType(), accessLog.getUser().getLogin(),
                     accessLog.getAuthenticationMechanism());
