@@ -478,7 +478,7 @@ public class ParticipationService {
         }
     }
 
-    private ProgrammingExerciseStudentParticipation createStudentRepositoryWithSingleCommit(ProgrammingExercise programmingExercise, VcsRepositoryUri sourceURL,
+    private ProgrammingExerciseStudentParticipation createStudentRepository(ProgrammingExercise programmingExercise, VcsRepositoryUri sourceURL,
             ProgrammingExerciseStudentParticipation participation) {
         // only execute this step if it has not yet been completed yet or if the repository uri is missing for some reason
         if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_COPIED) || participation.getVcsRepositoryUri() == null) {
