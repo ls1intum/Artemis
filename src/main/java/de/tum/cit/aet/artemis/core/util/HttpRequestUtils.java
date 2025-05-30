@@ -52,12 +52,27 @@ public class HttpRequestUtils {
         return Optional.ofNullable(ipAddress);
     }
 
+    /**
+     * Retrieves the value of the specified header from the given {@link HttpServletRequest}.
+     *
+     * @param request    the HTTP request
+     * @param headerName to be retrieved
+     * @return the header value as a {@link String}, or an empty string if the header is not present
+     */
     @NotNull
     private static String getHeaderValue(HttpServletRequest request, String headerName) {
         String headerValue = request.getHeader(headerName);
         return headerValue == null || headerValue.isEmpty() ? "" : headerValue;
     }
 
+    /**
+     * Determines the browser name based on the {@code User-Agent} and {@code Sec-Ch-Ua} headers in the given {@link HttpServletRequest}.
+     * <p>
+     * Logs a warning if the browser name cannot be detected.
+     *
+     * @param request the HTTP request
+     * @return the detected {@link Browser}, or {@code null} if the browser cannot be determined
+     */
     private static Browser getBrowserName(@NotNull HttpServletRequest request) {
         String userAgent = getHeaderValue(request, HttpHeaders.USER_AGENT);
         String secureClientHintsUserAgent = getHeaderValue(request, "Sec-Ch-Ua");
@@ -94,6 +109,14 @@ public class HttpRequestUtils {
         return null;
     }
 
+    /**
+     * Determines the operating system based on the {@code User-Agent} and {@code Sec-Ch-Ua-Platform} headers in the given {@link HttpServletRequest}.
+     * <p>
+     * Logs a warning if the operating system cannot be detected.
+     *
+     * @param request the HTTP request
+     * @return the detected {@link OperatingSystem}, or {@code null} if the operating system cannot be determined
+     */
     private static OperatingSystem getOperatingSystem(@NotNull HttpServletRequest request) {
         String userAgent = getHeaderValue(request, HttpHeaders.USER_AGENT);
         String secureClientHintsUserAgentPlatform = getHeaderValue(request, "Sec-Ch-Ua-Platform");
@@ -118,6 +141,14 @@ public class HttpRequestUtils {
         return null;
     }
 
+    /**
+     * Extracts the client environment from the given {@link HttpServletRequest}.
+     * <p>
+     * The method determines the browser, operating system, and application type (iOS or Android) based on the request headers.
+     *
+     * @param request the HTTP request
+     * @return a {@link ClientEnvironment} object containing the detected client environment, or {@code null} if no environment can be determined
+     */
     public static ClientEnvironment getClientEnvironment(@NotNull HttpServletRequest request) {
         Browser browserName = getBrowserName(request);
         OperatingSystem operatingSystem = getOperatingSystem(request);
