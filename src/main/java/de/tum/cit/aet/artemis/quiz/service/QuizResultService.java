@@ -151,7 +151,7 @@ public class QuizResultService {
                 }
                 else {
                     // No rated result exists; create a new one
-                    Result result = new Result().participation(participation).rated(true).assessmentType(AssessmentType.AUTOMATIC).completionDate(ZonedDateTime.now());
+                    Result result = new Result().rated(true).assessmentType(AssessmentType.AUTOMATIC).completionDate(ZonedDateTime.now());
 
                     // Associate submission with result
                     result.setSubmission(quizSubmission);
@@ -160,19 +160,10 @@ public class QuizResultService {
                     quizSubmission.calculateAndUpdateScores(quizExercise.getQuizQuestions());
                     result.evaluateQuizSubmission(quizExercise);
 
-                    // Detach submission to maintain proper save order
-                    result.setSubmission(null);
-
                     // Save entities individually
                     submissionRepository.save(quizSubmission);
                     result = resultRepository.save(result);
 
-                    // Update participation with new result
-                    participation.addResult(result);
-                    studentParticipationRepository.save(participation);
-
-                    // Re-associate result with submission and save
-                    result.setSubmission(quizSubmission);
                     quizSubmission.addResult(result);
                     submissionRepository.save(quizSubmission);
 

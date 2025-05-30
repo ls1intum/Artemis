@@ -148,7 +148,10 @@ export class TextAssessmentService {
             params = params.set('correction-round', correctionRound.toString());
         }
         return this.http
-            .get<StudentParticipation>(`${this.RESOURCE_URL}/text-submissions/${submissionId}/for-assessment`, { observe: 'response', params })
+            .get<StudentParticipation>(`${this.RESOURCE_URL}/text-submissions/${submissionId}/for-assessment`, {
+                observe: 'response',
+                params,
+            })
             .pipe<HttpResponse<StudentParticipation>, StudentParticipation>(
                 // Wire up Result and Submission
                 tap((response: HttpResponse<StudentParticipation>) => {
@@ -215,12 +218,12 @@ export class TextAssessmentService {
 
         if (result.submission) {
             result.submission.submissionDate = convertDateFromServer(result.submission.submissionDate);
-        }
-        if (result.participation) {
-            result.participation.initializationDate = convertDateFromServer(result.participation.initializationDate);
-            result.participation.individualDueDate = convertDateFromServer(result.participation.individualDueDate);
-            if (result.participation.exercise) {
-                this.accountService.setAccessRightsForExercise(result.participation.exercise);
+            if (result.submission.participation) {
+                result.submission.participation.initializationDate = convertDateFromServer(result.submission.participation.initializationDate);
+                result.submission.participation.individualDueDate = convertDateFromServer(result.submission.participation.individualDueDate);
+                if (result.submission.participation.exercise) {
+                    this.accountService.setAccessRightsForExercise(result.submission.participation.exercise);
+                }
             }
         }
 
@@ -256,9 +259,7 @@ export class TextAssessmentService {
     private static reconnectResultsParticipation(participation: Participation, submission: Submission, result: Result) {
         setLatestSubmissionResult(submission, getLatestSubmissionResult(submission));
         submission.participation = participation;
-        participation.results = submission.results!;
         result.submission = submission;
-        result.participation = participation;
         // Make sure Feedbacks Array is initialized
         result.feedbacks = result.feedbacks || [];
     }

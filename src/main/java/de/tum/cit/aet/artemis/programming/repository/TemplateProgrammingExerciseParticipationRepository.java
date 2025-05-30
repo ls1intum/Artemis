@@ -35,7 +35,8 @@ public interface TemplateProgrammingExerciseParticipationRepository
     @Query("""
             SELECT p
             FROM TemplateProgrammingExerciseParticipation p
-                LEFT JOIN FETCH p.results r
+                LEFT JOIN FETCH p.submissions s
+                LEFT JOIN FETCH s.results r
                 LEFT JOIN FETCH p.programmingExercise e
             WHERE p.buildPlanId = :buildPlanId
             """)
@@ -54,7 +55,7 @@ public interface TemplateProgrammingExerciseParticipationRepository
         return getValueElseThrow(findByRepositoryUri(repositoryUri));
     }
 
-    @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks", "results.feedbacks.testCase", "submissions" })
+    @EntityGraph(type = LOAD, attributePaths = { "submissions", "submissions.results", "submissions.results.feedbacks", "submissions.results.feedbacks.testCase" })
     Optional<TemplateProgrammingExerciseParticipation> findWithEagerResultsAndFeedbacksAndTestCasesAndSubmissionsByProgrammingExerciseId(long exerciseId);
 
     @NotNull
