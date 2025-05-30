@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.calendar.dto;
 
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 
 import jakarta.annotation.Nullable;
@@ -24,7 +25,15 @@ public record CalendarEventDTO(@Null String id, @NotNull String title, @Nullable
 
     public CalendarEventDTO(CourseCalendarEvent courseCalendarEvent, ZoneId clientTimeZone) {
         this("course-" + courseCalendarEvent.getId(), courseCalendarEvent.getTitle(), courseCalendarEvent.getCourse().getTitle(),
-                courseCalendarEvent.getStartDate().withZoneSameInstant(clientTimeZone), courseCalendarEvent.getEndDate().withZoneSameInstant(clientTimeZone),
-                courseCalendarEvent.getLocation(), courseCalendarEvent.getFacilitator());
+                courseCalendarEvent.getStartDate().withZoneSameInstant(clientTimeZone),
+                courseCalendarEvent.getEndDate() == null ? null : courseCalendarEvent.getEndDate().withZoneSameInstant(clientTimeZone), courseCalendarEvent.getLocation(),
+                courseCalendarEvent.getFacilitator());
+    }
+
+    public CalendarEventDTO(CourseCalendarEvent courseCalendarEvent) {
+        this("course-" + courseCalendarEvent.getId(), courseCalendarEvent.getTitle(), courseCalendarEvent.getCourse().getTitle(),
+                courseCalendarEvent.getStartDate().withZoneSameInstant(ZoneOffset.UTC),
+                courseCalendarEvent.getEndDate() == null ? null : courseCalendarEvent.getEndDate().withZoneSameInstant(ZoneOffset.UTC), courseCalendarEvent.getLocation(),
+                courseCalendarEvent.getFacilitator());
     }
 }

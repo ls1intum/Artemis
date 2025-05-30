@@ -5,7 +5,6 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -56,25 +55,9 @@ public class CourseCalendarEventService {
         return courseCalendarEvents.stream().map(event -> new CalendarEventDTO(event, clientTimeZone)).collect(Collectors.toSet());
     }
 
-    public Set<CalendarEventDTO> createCourseCalendarEventsOrThrow(List<CalendarEventDTO> calendarEventDTOs, Course course) {
-        if (calendarEventDTOs == null || calendarEventDTOs.isEmpty()) {
-            throw new BadRequestException("No calendar events provided");
-        }
-
-        ZoneId clientTimeZone = calendarEventDTOs.getFirst().startDate().getZone();
-        boolean existsInconsistentStartZone = calendarEventDTOs.stream().map(dto -> dto.startDate().getZone()).anyMatch(zone -> !zone.equals(clientTimeZone));
-        boolean existsInconsistentEndZone = calendarEventDTOs.stream().map(CalendarEventDTO::endDate).filter(Objects::nonNull).map(ZonedDateTime::getZone)
-                .anyMatch(zone -> !zone.equals(clientTimeZone));
-        if (existsInconsistentStartZone || existsInconsistentEndZone) {
-            throw new BadRequestException("All dates must have a consistent time zone.");
-        }
-
+    public Set<CalendarEventDTO> createCourseCalendarEvents(List<CalendarEventDTO> calendarEventDTOs, Course course) {
         List<CourseCalendarEvent> courseCalendarEvents = new ArrayList<>();
         for (CalendarEventDTO dto : calendarEventDTOs) {
-            if (dto.id() != null) {
-                throw new BadRequestException("A new CourseCalendarEvent must not have an id");
-            }
-
             CourseCalendarEvent event = new CourseCalendarEvent();
             event.setCourse(course);
             event.setTitle(dto.title());
@@ -85,33 +68,21 @@ public class CourseCalendarEventService {
             courseCalendarEvents.add(event);
         }
         List<CourseCalendarEvent> savedEvents = courseCalendarEventRepository.saveAll(courseCalendarEvents);
-
-        return savedEvents.stream().map(event -> new CalendarEventDTO(event, clientTimeZone)).collect(Collectors.toSet());
+        return savedEvents.stream().map(CalendarEventDTO::new).collect(Collectors.toSet());
     }
 
     public CalendarEventDTO updateCourseCalendarEventOrThrow(CalendarEventDTO calendarEventDTO) {
         Long courseCalendarEventId = checkIfValidIdAndExtractCourseCalendarEventIdOrThrow(calendarEventDTO.id());
         CourseCalendarEvent courseCalendarEvent = courseCalendarEventRepository.findByIdElseThrow(courseCalendarEventId);
-        String title = calendarEventDTO.title();
-        if (title == null) {
-            throw new BadRequestException("A CourseCalendarEvent must have a title");
-        }
-        ZonedDateTime startDate = calendarEventDTO.startDate();
-        if (startDate == null) {
-            throw new BadRequestException("A CourseCalendarEvent must have a startDate");
-        }
-        ZoneId clientTimeZone = calendarEventDTO.startDate().getZone();
-        ZonedDateTime endDate = calendarEventDTO.endDate();
-        if (endDate != null && !endDate.getZone().equals(clientTimeZone)) {
-            throw new BadRequestException("The startDate and endDate of a CourseCalendarEvent must be in the same time zone");
-        }
+
         courseCalendarEvent.setTitle(calendarEventDTO.title());
         courseCalendarEvent.setStartDate(calendarEventDTO.startDate());
         courseCalendarEvent.setEndDate(calendarEventDTO.endDate());
         courseCalendarEvent.setLocation(calendarEventDTO.location());
         courseCalendarEvent.setFacilitator(calendarEventDTO.facilitator());
         courseCalendarEventRepository.save(courseCalendarEvent);
-        return new CalendarEventDTO(courseCalendarEvent, clientTimeZone);
+
+        return new CalendarEventDTO(courseCalendarEvent);
     }
 
     private Long checkIfValidIdAndExtractCourseCalendarEventIdOrThrow(String calendarEventDtoId) {

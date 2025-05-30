@@ -6,7 +6,6 @@ import java.time.YearMonth;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -34,7 +33,6 @@ import de.tum.cit.aet.artemis.calendar.service.CalendarEventFilteringService;
 import de.tum.cit.aet.artemis.calendar.service.CourseCalendarEventService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -102,20 +100,6 @@ public class CalendarResource {
         return ResponseEntity.ok(eventDTOsByDay);
     }
 
-    @PostMapping("courses/{courseId}/course-calendar-event")
-    @EnforceAtLeastEditor
-    public ResponseEntity<CalendarEventDTO> createCourseCalendarEvent(@PathVariable Long courseId, @RequestBody @Valid CalendarEventDTO calendarEventDTO) {
-        log.debug("REST request to create CourseCalendarEvent: {} in course: {}", calendarEventDTO, courseId);
-
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        User responsibleUser = userRepository.getUserWithGroupsAndAuthorities();
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, responsibleUser);
-
-        Set<CalendarEventDTO> createdCalendarEventDtoSet = courseCalendarEventService.createCourseCalendarEventsOrThrow(List.of(calendarEventDTO), course);
-        Optional<CalendarEventDTO> createdCalendarEventDto = createdCalendarEventDtoSet.stream().findFirst();
-        return createdCalendarEventDto.map(ResponseEntity::ok).orElseThrow(() -> new InternalServerErrorException("Unexpected error while creating CourseCalendarEvent"));
-    }
-
     @PostMapping("courses/{courseId}/course-calendar-events")
     @EnforceAtLeastEditor
     public ResponseEntity<Set<CalendarEventDTO>> createCourseCalendarEvent(@PathVariable Long courseId, @RequestBody @Valid List<CalendarEventDTO> calendarEventDtos) {
@@ -125,7 +109,7 @@ public class CalendarResource {
         User responsibleUser = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, responsibleUser);
 
-        Set<CalendarEventDTO> createdCalendarEventDtos = courseCalendarEventService.createCourseCalendarEventsOrThrow(calendarEventDtos, course);
+        Set<CalendarEventDTO> createdCalendarEventDtos = courseCalendarEventService.createCourseCalendarEvents(calendarEventDtos, course);
 
         return ResponseEntity.ok(createdCalendarEventDtos);
     }

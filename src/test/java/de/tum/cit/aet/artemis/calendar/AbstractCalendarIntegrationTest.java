@@ -140,12 +140,13 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
         tutorialGroup = tutorialGroupUtilService.createTutorialGroup(course.getId(), "Test Tutorial Group", "", 10, false, "Garching", "English", tutor,
                 new HashSet<>(Set.of(student)));
         tutorialGroupSessions = tutorialGroupUtilService.createTutorialGroupSessions(tutorialGroup, course, false);
-        ;
+
         courseCalendarEvents = courseCalendarEventUtilService.createCourseCalendarEvents(course);
     }
 
     void setupActiveCourseWithoutCourseWideEventsScenario() {
         course = courseUtilService.createActiveCourseInTimezone(ZoneId.of(TEST_TIMEZONE), 1, 3);
+
     }
 
     void setupUserNotPartOfAnyCourseScenario() {
@@ -207,7 +208,7 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
         return "/api/calendar/calendar-events?monthKeys=" + monthKeys + "&timeZone=" + timeZone;
     }
 
-    String assembleURLForPostRequest(Long courseId, boolean createMultiple) {
-        return "api/calendar/courses/" + courseId + "/course-calendar-event" + (createMultiple ? "s" : "");
+    String assembleURLForPostRequest(Long courseId) {
+        return "/api/calendar/courses/" + courseId + "/course-calendar-events";
     }
 }
