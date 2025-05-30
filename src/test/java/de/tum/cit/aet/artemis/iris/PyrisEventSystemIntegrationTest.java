@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisEventType;
 import de.tum.cit.aet.artemis.iris.repository.IrisSettingsRepository;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisEventProcessingException;
@@ -99,7 +100,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
 
         course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         competency = competencyUtilService.createCompetency(course);
-        exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         String projectKey = exercise.getProjectKey();
         exercise.setProjectType(ProjectType.PLAIN_GRADLE);
         exercise.setTestRepositoryUri(localVCBaseUrl + "/git/" + projectKey + "/" + projectKey.toLowerCase() + "-tests.git");
@@ -194,8 +195,8 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
 
         await().atMost(2, TimeUnit.SECONDS).until(() -> pipelineDone.get());
 
-        verify(pyrisPipelineService, times(1)).executeExerciseChatPipeline(eq("default"), eq(Optional.ofNullable((ProgrammingSubmission) result.getSubmission())), eq(exercise),
-                eq(irisSession), eq(Optional.of("progress_stalled")));
+        verify(pyrisPipelineService, times(1)).executeExerciseChatPipeline(eq("default"), any(), eq(Optional.ofNullable((ProgrammingSubmission) result.getSubmission())),
+                eq(exercise), eq(irisSession), eq(Optional.of("progress_stalled")));
     }
 
     @Test
@@ -215,7 +216,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
 
         await().atMost(2, TimeUnit.SECONDS).until(() -> pipelineDone.get());
 
-        await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> verify(pyrisPipelineService, times(1)).executeExerciseChatPipeline(eq("default"),
+        await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> verify(pyrisPipelineService, times(1)).executeExerciseChatPipeline(eq("default"), any(),
                 eq(Optional.ofNullable((ProgrammingSubmission) result.getSubmission())), eq(exercise), eq(irisSession), eq(Optional.of("build_failed"))));
     }
 
@@ -233,7 +234,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
         await().atMost(2, TimeUnit.SECONDS).until(() -> pipelineDone.get());
 
         verify(irisCourseChatSessionService, times(1)).onJudgementOfLearningSet(any(CompetencyJol.class));
-        verify(pyrisPipelineService, times(1)).executeCourseChatPipeline(eq("default"), eq(irisSession), any(CompetencyJol.class));
+        verify(pyrisPipelineService, times(1)).executeCourseChatPipeline(eq("default"), any(), eq(irisSession), any(CompetencyJol.class));
     }
 
     @Test
@@ -241,7 +242,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
     void testShouldNotFireProgressStalledEventWithEventDisabled() {
         // Find settings for the current exercise
         var settings = irisSettingsRepository.findExerciseSettings(exercise.getId()).orElseThrow();
-        settings.getIrisChatSettings().setDisabledProactiveEvents(new TreeSet<>(Set.of(IrisEventType.PROGRESS_STALLED.name().toLowerCase())));
+        settings.getIrisProgrammingExerciseChatSettings().setDisabledProactiveEvents(new TreeSet<>(Set.of(IrisEventType.PROGRESS_STALLED.name().toLowerCase())));
         irisSettingsRepository.save(settings);
 
         createSubmissionWithScore(studentParticipation, 40);
@@ -255,7 +256,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
     void testShouldNotFireBuildFailedEventWhenEventSettingDisabled() {
         // Find settings for the current exercise
         var settings = irisSettingsRepository.findExerciseSettings(exercise.getId()).orElseThrow();
-        settings.getIrisChatSettings().setDisabledProactiveEvents(new TreeSet<>(Set.of(IrisEventType.BUILD_FAILED.name().toLowerCase())));
+        settings.getIrisProgrammingExerciseChatSettings().setDisabledProactiveEvents(new TreeSet<>(Set.of(IrisEventType.BUILD_FAILED.name().toLowerCase())));
         irisSettingsRepository.save(settings);
 
         irisExerciseChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
@@ -287,7 +288,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
 
         await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
             verify(irisExerciseChatSessionService, times(2)).onNewResult(any(Result.class));
-            verify(pyrisPipelineService, never()).executeExerciseChatPipeline(any(), any(), any(), any(), any());
+            verify(pyrisPipelineService, never()).executeExerciseChatPipeline(any(), any(), any(), any(), any(), any());
         });
     }
 
@@ -302,7 +303,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
         pyrisEventService.trigger(new NewResultEvent(result));
 
         verify(irisExerciseChatSessionService, timeout(2000).times(1)).onNewResult(any(Result.class));
-        verify(pyrisPipelineService, after(2000).never()).executeExerciseChatPipeline(any(), any(), any(), any(), any());
+        verify(pyrisPipelineService, after(2000).never()).executeExerciseChatPipeline(any(), any(), any(), any(), any(), any());
     }
 
     @Test
@@ -317,7 +318,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
         pyrisEventService.trigger(new NewResultEvent(result));
 
         verify(irisExerciseChatSessionService, timeout(2000).times(1)).onNewResult(result);
-        verify(pyrisPipelineService, after(2000).never()).executeExerciseChatPipeline(any(), any(), any(), any(), any());
+        verify(pyrisPipelineService, after(2000).never()).executeExerciseChatPipeline(any(), any(), any(), any(), any(), any());
     }
 
     @Test
@@ -346,4 +347,55 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
                 .withMessageStartingWith("Progress stalled event is not supported for team participations");
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCustomInstructionsPassedToExerciseChatPipeline() {
+        String testCustomInstructions = "Test custom instructions for the AI model";
+        var settings = irisSettingsRepository.findExerciseSettings(exercise.getId()).orElseThrow();
+        settings.getIrisProgrammingExerciseChatSettings().setCustomInstructions(testCustomInstructions);
+        irisSettingsRepository.save(settings);
+
+        var irisSession = irisExerciseChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+
+        var result = createFailingSubmission(studentParticipation);
+
+        irisRequestMockProvider.mockBuildFailedRunResponse(dto -> {
+            assertThat(dto.settings().authenticationToken()).isNotNull();
+            assertThat(dto.customInstructions()).isEqualTo(testCustomInstructions);
+            pipelineDone.set(true);
+        });
+
+        pyrisEventService.trigger(new NewResultEvent(result));
+
+        await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> verify(irisExerciseChatSessionService, times(1)).onBuildFailure(eq(result)));
+
+        await().atMost(2, TimeUnit.SECONDS).until(() -> pipelineDone.get());
+
+        await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> verify(pyrisPipelineService, times(1)).executeExerciseChatPipeline(eq("default"), eq(testCustomInstructions),
+                eq(Optional.ofNullable((ProgrammingSubmission) result.getSubmission())), eq(exercise), eq(irisSession), eq(Optional.of("build_failed"))));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCustomInstructionsPassedToCourseChatPipeline() {
+        String testCourseCustomInstructions = "Test course custom instructions for the AI model";
+        var courseSettings = irisSettingsRepository.findCourseSettings(course.getId()).orElseThrow();
+        courseSettings.getIrisCourseChatSettings().setCustomInstructions(testCourseCustomInstructions);
+        irisSettingsRepository.save(courseSettings);
+
+        var irisSession = irisCourseChatSessionService.createSession(course, userUtilService.getUserByLogin(TEST_PREFIX + "student1"), false);
+
+        irisRequestMockProvider.mockJolEventRunResponse(dto -> {
+            assertThat(dto.settings().authenticationToken()).isNotNull();
+            assertThat(dto.customInstructions()).isEqualTo(testCourseCustomInstructions);
+            pipelineDone.set(true);
+        });
+
+        competencyJolService.setJudgementOfLearning(competency.getId(), userUtilService.getUserByLogin(TEST_PREFIX + "student1").getId(), (short) 3);
+
+        await().atMost(2, TimeUnit.SECONDS).until(() -> pipelineDone.get());
+
+        verify(irisCourseChatSessionService, times(1)).onJudgementOfLearningSet(any(CompetencyJol.class));
+        verify(pyrisPipelineService, times(1)).executeCourseChatPipeline(eq("default"), eq(testCourseCustomInstructions), eq(irisSession), any(CompetencyJol.class));
+    }
 }

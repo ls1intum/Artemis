@@ -3,7 +3,7 @@ buildscript {
         classpath "com.diffplug.spotless:spotless-plugin-gradle:${spotless_plugin_version}"
         // This is required so that the latest version of the liquibase gradle plugin works
         classpath("org.liquibase:liquibase-core:${liquibase_version}") {
-            exclude group: 'com.opencsv', module: 'opencsv'
+            exclude group: "com.opencsv", module: "opencsv"
         }
     }
 }
@@ -28,7 +28,7 @@ plugins {
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "8.1.0"
+version = "8.1.3"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -292,7 +292,7 @@ dependencies {
     implementation "commons-lang:commons-lang:2.6"
 
     implementation("org.liquibase:liquibase-core:${liquibase_version}") {
-        exclude group: 'com.opencsv', module: 'opencsv'
+        exclude group: "com.opencsv", module: "opencsv"
     }
 
     implementation "org.springframework.boot:spring-boot-starter-validation:${spring_boot_version}"
@@ -327,7 +327,7 @@ dependencies {
 
     // passkey functionality to simplify login
     implementation "com.webauthn4j:webauthn4j-spring-security-core:0.11.2.RELEASE"
-    implementation 'com.webauthn4j:webauthn4j-core:0.29.2.RELEASE'
+    implementation "com.webauthn4j:webauthn4j-core:0.29.2.RELEASE"
 
     implementation "org.springframework.security:spring-security-config:${spring_security_version}"
     implementation "org.springframework.security:spring-security-data:${spring_security_version}"
@@ -453,7 +453,7 @@ dependencies {
     testRuntimeOnly "org.junit.platform:junit-platform-launcher:${junit_platform_version}"
 }
 
-// we have to apply the test.gradle file after the dependencies block, otherwise we get the error  Cannot change dependencies of dependency configuration ':mockitoAgent' after it has been resolved
+// we have to apply the test.gradle file after the dependencies block, otherwise we get the error  Cannot change dependencies of dependency configuration ":mockitoAgent" after it has been resolved
 apply from: "gradle/test.gradle"
 
 
@@ -489,8 +489,8 @@ checkstyle {
 }
 
 gradleLint {
-    rules  = ['dependency-parentheses']
-//    criticalRules = ['unused-dependency'] // <-- this will fail the build in the event of a violation
+    rules  = ["dependency-parentheses"]
+//    criticalRules = ["unused-dependency"] // <-- this will fail the build in the event of a violation
 }
 
 
