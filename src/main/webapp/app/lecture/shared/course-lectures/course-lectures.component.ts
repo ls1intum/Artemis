@@ -100,7 +100,7 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
     navigateToLecture() {
         const upcomingLecture = this.courseOverviewService.getUpcomingLecture(this.course?.lectures);
         const lastSelectedLecture = this.getLastSelectedLecture();
-        const lectureId = this.route.firstChild?.snapshot.params.lectureId;
+        const lectureId = this.route.firstChild?.snapshot?.params?.lectureId;
         if (!lectureId && lastSelectedLecture) {
             this.router.navigate([lastSelectedLecture], { relativeTo: this.route, replaceUrl: true });
         } else if (!lectureId && upcomingLecture) {

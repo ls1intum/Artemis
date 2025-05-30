@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -427,19 +426,6 @@ public class TextExerciseResource {
         if (textExercise.isExamExercise()) {
             ExamAccessApi api = examAccessApi.orElseThrow(() -> new ExamApiNotPresentException(ExamAccessApi.class));
             api.checkIfAllowedToGetExamResult(textExercise, participation, user);
-        }
-
-        // if no results, check if there are really no results or the relation to results was not updated yet
-        if (participation.getResults().isEmpty()) {
-            List<Result> results = resultRepository.findByParticipationIdOrderByCompletionDateDesc(participation.getId());
-            participation.setResults(new HashSet<>(results));
-        }
-
-        if (!ExerciseDateService.isAfterAssessmentDueDate(textExercise) && !authCheckService.isAtLeastTeachingAssistantForExercise(textExercise, user)) {
-            // We want to have the preliminary feedback before the assessment due date too
-            Set<Result> athenaResults = participation.getResults().stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA)
-                    .collect(Collectors.toSet());
-            participation.setResults(athenaResults);
         }
 
         Set<Submission> submissions = participation.getSubmissions();
