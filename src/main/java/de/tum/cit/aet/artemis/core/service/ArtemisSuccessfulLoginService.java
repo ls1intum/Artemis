@@ -61,7 +61,12 @@ public class ArtemisSuccessfulLoginService {
     public void sendLoginEmail(String username, AuthenticationMethod authenticationMethod, @Nullable ClientEnvironment clientEnvironment) {
         try {
             User recipient = userRepository.getUserByLoginElseThrow(username);
-            Language language = Language.fromLanguageShortName(recipient.getLangKey());
+
+            String localeKey = recipient.getLangKey();
+            if (localeKey == null) {
+                localeKey = "en";
+            }
+            Language language = Language.fromLanguageShortName(localeKey);
 
             var contextVariables = new HashMap<String, Object>();
             contextVariables.put("authenticationMethod", authenticationMethod.getEmailDisplayName(language));
