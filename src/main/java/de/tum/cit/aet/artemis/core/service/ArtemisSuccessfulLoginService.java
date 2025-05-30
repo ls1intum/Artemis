@@ -68,9 +68,9 @@ public class ArtemisSuccessfulLoginService {
             ZonedDateTime now = ZonedDateTime.now();
             contextVariables.put("loginDate", now.format(DateTimeFormatter.ofPattern("dd.MM.yyyy")));
             contextVariables.put("loginTime", now.format(DateTimeFormatter.ofPattern("HH:mm:ss")));
-            // TODO add null checks
-            contextVariables.put("browser", clientEnvironment.browser());
-            contextVariables.put("operatingSystem", clientEnvironment.operatingSystem());
+
+            String environmentInfo = clientEnvironment != null ? clientEnvironment.getEnvironmentInfo(language) : ClientEnvironment.getUnknownEnvironmentDisplayName(language);
+            contextVariables.put("requestOrigin", environmentInfo);
 
             if (recipient.isInternal()) {
                 contextVariables.put("resetLink", artemisServerUrl.toString() + "/account/password");
