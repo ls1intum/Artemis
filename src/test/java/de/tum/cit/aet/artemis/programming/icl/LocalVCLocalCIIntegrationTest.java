@@ -404,8 +404,9 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
     void testFailedAccessVcsAccessLog() throws Exception {
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
-        // Clear any existing logs before the test
+        // Clear any existing logs before the test and flush to ensure cleanup
         vcsAccessLogRepository.deleteAll();
+        vcsAccessLogRepository.flush();
 
         // Test failed authentication attempts with wrong password - expect exceptions to be thrown
         try {
@@ -438,8 +439,14 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
             log.debug("Git operation may not have thrown exception as expected, but access should still be logged");
         }
 
-        // Give the system a moment to process and log the access attempts
-        Thread.sleep(500);
+        // Wait for the system to process and log the access attempts
+        await().until(() -> {
+            var logs = vcsAccessLogRepository.findAll();
+            var testUserLogs = logs.stream().filter(log -> log.getUser() != null && log.getUser().getLogin().equals(student1Login)).toList();
+            var failedLogs = testUserLogs.stream().filter(log -> log.getRepositoryActionType() == RepositoryActionType.CLONE_FAIL).toList();
+            log.debug("Waiting for logs: found {} total logs, {} for test user, {} failed logs", logs.size(), testUserLogs.size(), failedLogs.size());
+            return !failedLogs.isEmpty();
+        });
 
         // Verify that the failed access attempts are logged
         var vcsAccessLogs = vcsAccessLogRepository.findAll();
