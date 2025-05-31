@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
@@ -58,6 +59,7 @@ public class ArtemisSuccessfulLoginService {
      *
      * @param username the username of the user who has successfully logged in
      */
+    @Async
     public void sendLoginEmail(String username, AuthenticationMethod authenticationMethod, @Nullable ClientEnvironment clientEnvironment) {
         try {
             User recipient = userRepository.getUserByLoginElseThrow(username);
