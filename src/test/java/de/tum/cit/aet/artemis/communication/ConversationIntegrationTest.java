@@ -606,7 +606,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
 
     private List<Long> createExerciseAndExamAndLectureChannels(Course course, ZonedDateTime visibleFrom, String userLoginWithoutPrefix) {
         TextExercise textExercise = textExerciseUtilService.createIndividualTextExercise(course, visibleFrom, visibleFrom, visibleFrom);
-        Channel exerciseChannel = exerciseUtilService.addChannelToExercise(textExercise);
+        Channel exerciseChannel = conversationUtilService.addChannelToExercise(textExercise);
         addUsersToConversation(exerciseChannel.getId(), userLoginWithoutPrefix);
 
         Exam exam = examUtilService.addExam(course, visibleFrom, visibleFrom, visibleFrom);

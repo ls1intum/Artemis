@@ -134,7 +134,6 @@ public class Channel extends Conversation {
         this.description = description;
     }
 
-    @Nullable
     public boolean getIsPublic() {
         return isPublic;
     }

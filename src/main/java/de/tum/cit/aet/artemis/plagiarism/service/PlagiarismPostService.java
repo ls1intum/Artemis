@@ -132,7 +132,7 @@ public class PlagiarismPostService extends PostingService {
         Post updatedPost = postRepository.save(existingPost);
 
         preparePostForBroadcast(updatedPost);
-        broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course.getId(), null, null);
+        broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course.getId(), null);
         return updatedPost;
     }
 
@@ -184,7 +184,7 @@ public class PlagiarismPostService extends PostingService {
         // delete
         postRepository.deleteById(postId);
         preparePostForBroadcast(post);
-        broadcastForPost(new PostDTO(post, MetisCrudAction.DELETE), course.getId(), null, null);
+        broadcastForPost(new PostDTO(post, MetisCrudAction.DELETE), course.getId(), null);
     }
 
     /**

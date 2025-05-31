@@ -1,6 +1,6 @@
 {
     "name": "artemis",
-    "version": "8.1.0",
+    "version": "8.1.4",
     "description": "Interactive Learning with Individual Feedback",
     "private": true,
     "license": "MIT",
@@ -111,6 +111,7 @@
         "semver": "7.7.2",
         "tough-cookie": "5.1.2",
         "vite": "6.3.5",
+        "webpack": "5.99.9",
         "webpack-dev-middleware": "7.4.2",
         "webpack-dev-server": "5.2.1",
         "word-wrap": "1.2.5",
@@ -177,8 +178,8 @@
         "weak-napi": "2.0.2"
     },
     "engines": {
-        "node": ">=22.14.0",
-        "npm": ">=11.1.0"
+        "node": ">=22.16.0",
+        "npm": ">=10.9.2"
     },
     "scripts": {
         "build": "npm run webapp:prod --",
