@@ -149,4 +149,26 @@ public interface TutorialGroupRepository extends ArtemisJpaRepository<TutorialGr
     }
 
     Long countByCourse(Course course);
+
+    @Query("""
+                    SELECT DISTINCT tg.id
+                    FROM TutorialGroup tg
+                        JOIN tg.course c
+                        LEFT JOIN tg.registrations r
+                        LEFT JOIN r.student s
+                        LEFT JOIN tg.teachingAssistant ta
+                    WHERE (
+                        c.studentGroupName IN :userGroups
+                        OR c.teachingAssistantGroupName IN :userGroups
+                        OR c.editorGroupName IN :userGroups
+                        OR c.instructorGroupName IN :userGroups
+                    )
+                    AND (
+                        (c.startDate IS NULL OR c.startDate <= :now)
+                        AND (c.endDate IS NULL OR c.endDate >= :now)
+                    )
+                    AND (s.id = :userId OR ta.id = :userId)
+            """)
+    Set<Long> findTutorialGroupIdsWhereUserParticipatesFromActiveCourses(@Param("userId") Long userId, @Param("userGroups") Set<String> userGroups,
+            @Param("now") ZonedDateTime now);
 }
