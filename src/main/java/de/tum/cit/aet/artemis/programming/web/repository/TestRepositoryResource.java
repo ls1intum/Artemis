@@ -45,7 +45,6 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryAccessService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
-import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCGitBranchService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCServletService;
 
 /**
@@ -56,13 +55,10 @@ import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCServletService;
 @RequestMapping("api/programming/")
 public class TestRepositoryResource extends RepositoryResource {
 
-    private final Optional<LocalVCGitBranchService> localVCGitBranchService;
-
     public TestRepositoryResource(ProfileService profileService, UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService,
             RepositoryService repositoryService, ProgrammingExerciseRepository programmingExerciseRepository, RepositoryAccessService repositoryAccessService,
-            Optional<LocalVCServletService> localVCServletService, Optional<LocalVCGitBranchService> localVCGitBranchService) {
+            Optional<LocalVCServletService> localVCServletService) {
         super(profileService, userRepository, authCheckService, gitService, repositoryService, programmingExerciseRepository, repositoryAccessService, localVCServletService);
-        this.localVCGitBranchService = localVCGitBranchService;
     }
 
     @Override
@@ -94,8 +90,7 @@ public class TestRepositoryResource extends RepositoryResource {
 
     @Override
     String getOrRetrieveBranchOfDomainObject(Long exerciseId) {
-        ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        return localVCGitBranchService.orElseThrow().getOrRetrieveBranchOfExercise(exercise);
+        return programmingExerciseRepository.findBranchByExerciseId(exerciseId);
     }
 
     @Override

@@ -145,7 +145,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         competency = competencyUtilService.createCompetency(course);
 
         programmingExerciseTestService.setupTestUsers(TEST_PREFIX, 0, 0, 0, 0);
-        programmingExerciseTestService.setup(this, versionControlService, localVCGitBranchService);
+        programmingExerciseTestService.setup(this, versionControlService);
     }
 
     @Override
