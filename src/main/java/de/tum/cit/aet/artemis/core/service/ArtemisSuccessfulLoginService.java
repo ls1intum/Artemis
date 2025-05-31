@@ -35,10 +35,10 @@ public class ArtemisSuccessfulLoginService {
 
     private static final Logger log = LoggerFactory.getLogger(ArtemisSuccessfulLoginService.class);
 
-    @Value("${artemis.user-management.password-reset.links.en:https://artemis.tum.de/account/reset/request}")
+    @Value("${artemis.user-management.password-reset.links.en:${server.url}/account/reset/request}")
     private String passwordResetLinkEnUrl;
 
-    @Value("${artemis.user-management.password-reset.links.de:https://artemis.tum.de/account/reset/request}")
+    @Value("${artemis.user-management.password-reset.links.de:${server.url}/account/reset/request}")
     private String passwordResetLinkDeUrl;
 
     @Value("${server.url}")
