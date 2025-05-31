@@ -12,6 +12,7 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 
 import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.DistributedMap;
 import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.DistributedQueue;
 
 @Service
@@ -28,10 +29,10 @@ public class HazelcastDistributedDataProvider implements DistributedDataProvider
         return new HazelcastDistributedQueue<>(hazelcastInstance.getQueue(name));
     }
 
-    // @Override
-    // public <K, V> DistributedMap<K, V> getMap(String name) {
-    // return new HazelcastDistributedMap<>(hazelcastInstance.getMap(name));
-    // }
+    @Override
+    public <K, V> DistributedMap<K, V> getMap(String name) {
+        return new HazelcastDistributedMap<>(hazelcastInstance.getMap(name));
+    }
     //
     // @Override
     // public <T> DistributedTopic<T> getTopic(String name) {

@@ -15,13 +15,13 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
 import com.hazelcast.topic.ITopic;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
 import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.DistributedMap;
 import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.DistributedQueue;
 
 /**
@@ -38,13 +38,13 @@ public class DistributedDataAccessService {
 
     private DistributedQueue<BuildJobQueueItem> buildJobQueue;
 
-    private IMap<String, BuildJobQueueItem> processingJobs;
+    private DistributedMap<String, BuildJobQueueItem> processingJobs;
 
     private DistributedQueue<ResultQueueItem> buildResultQueue;
 
-    private IMap<String, BuildAgentInformation> buildAgentInformation;
+    private DistributedMap<String, BuildAgentInformation> buildAgentInformation;
 
-    private IMap<String, ZonedDateTime> dockerImageCleanupInfo;
+    private DistributedMap<String, ZonedDateTime> dockerImageCleanupInfo;
 
     private ITopic<String> canceledBuildJobsTopic;
 
@@ -98,9 +98,9 @@ public class DistributedDataAccessService {
      *
      * @return the distributed map of processing jobs
      */
-    public IMap<String, BuildJobQueueItem> getDistributedProcessingJobs() {
+    public DistributedMap<String, BuildJobQueueItem> getDistributedProcessingJobs() {
         if (this.processingJobs == null) {
-            this.processingJobs = this.hazelcastInstance.getMap("processingJobs");
+            this.processingJobs = this.distributedDataProvider.getMap("processingJobs");
         }
         return this.processingJobs;
     }
@@ -179,9 +179,9 @@ public class DistributedDataAccessService {
      *
      * @return the distributed map of build agent information
      */
-    public IMap<String, BuildAgentInformation> getDistributedBuildAgentInformation() {
+    public DistributedMap<String, BuildAgentInformation> getDistributedBuildAgentInformation() {
         if (this.buildAgentInformation == null) {
-            this.buildAgentInformation = this.hazelcastInstance.getMap("buildAgentInformation");
+            this.buildAgentInformation = this.distributedDataProvider.getMap("buildAgentInformation");
         }
         return this.buildAgentInformation;
     }
@@ -194,7 +194,7 @@ public class DistributedDataAccessService {
      */
     public Map<String, BuildAgentInformation> getBuildAgentInformationMap() {
         // NOTE: we should not use streams with IMap directly, because it can be unstable, when many items are added at the same time and there is a slow network condition
-        return new HashMap<>(getDistributedBuildAgentInformation());
+        return getDistributedBuildAgentInformation().getMapCopy();
     }
 
     /**
@@ -222,9 +222,9 @@ public class DistributedDataAccessService {
      *
      * @return the distributed map of docker image cleanup info
      */
-    public IMap<String, ZonedDateTime> getDistributedDockerImageCleanupInfo() {
+    public DistributedMap<String, ZonedDateTime> getDistributedDockerImageCleanupInfo() {
         if (this.dockerImageCleanupInfo == null) {
-            this.dockerImageCleanupInfo = this.hazelcastInstance.getMap("dockerImageCleanupInfo");
+            this.dockerImageCleanupInfo = this.distributedDataProvider.getMap("dockerImageCleanupInfo");
         }
         return this.dockerImageCleanupInfo;
     }
@@ -237,7 +237,7 @@ public class DistributedDataAccessService {
      */
     public Map<String, ZonedDateTime> getDockerImageCleanupInfoMap() {
         // NOTE: we should not use streams with IMap directly, because it can be unstable, when many items are added at the same time and there is a slow network condition
-        return new HashMap<>(getDistributedDockerImageCleanupInfo());
+        return new HashMap<>(getDistributedDockerImageCleanupInfo().getMapCopy());
     }
 
     /**
@@ -312,7 +312,7 @@ public class DistributedDataAccessService {
      *         {@code false} if the instance has not been initialized or is no longer running
      */
     public boolean isInstanceRunning() {
-        return hazelcastInstance != null && hazelcastInstance.getLifecycleService().isRunning();
+        return distributedDataProvider.isInstanceRunning();
     }
 
     /**
