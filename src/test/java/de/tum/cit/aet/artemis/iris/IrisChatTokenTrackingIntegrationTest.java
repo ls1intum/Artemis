@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.iris;
 
+import static de.tum.cit.aet.artemis.iris.utils.IrisLLMMock.getMockLLMCosts;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.awaitility.Awaitility.await;
@@ -203,14 +204,6 @@ class IrisChatTokenTrackingIntegrationTest extends AbstractIrisIntegrationTest {
             assertThat(usage.getCostPerMillionOutputTokens()).isCloseTo(expectedCost.costPerMillionOutputToken(), Offset.offset(0.01f));
             assertThat(usage.getServicePipelineId()).isEqualTo(expectedCost.pipelineId());
         }
-    }
-
-    private List<LLMRequest> getMockLLMCosts() {
-        List<LLMRequest> costs = new ArrayList<>();
-        for (int i = 0; i < 5; i++) {
-            costs.add(new LLMRequest("test-llm", i * 10 + 5, i * 0.5f, i * 3 + 5, i * 0.12f, "IRIS_CHAT_EXERCISE_MESSAGE"));
-        }
-        return costs;
     }
 
     private IrisMessage createDefaultMockMessage(IrisSession irisSession) {
