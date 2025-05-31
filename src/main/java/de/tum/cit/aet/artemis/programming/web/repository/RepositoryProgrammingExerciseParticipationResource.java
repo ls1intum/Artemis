@@ -60,7 +60,6 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipati
 import de.tum.cit.aet.artemis.programming.service.RepositoryAccessService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryParticipationService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
-import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCGitBranchService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCServletService;
 
 /**
@@ -85,14 +84,12 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
     private final RepositoryParticipationService repositoryParticipationService;
 
-    private final Optional<LocalVCGitBranchService> localVCGitBranchService;
-
     public RepositoryProgrammingExerciseParticipationResource(ProfileService profileService, UserRepository userRepository, AuthorizationCheckService authCheckService,
             ParticipationAuthorizationCheckService participationAuthCheckService, GitService gitService, RepositoryService repositoryService,
             ProgrammingExerciseParticipationService participationService, ProgrammingExerciseRepository programmingExerciseRepository,
             ParticipationRepository participationRepository, BuildLogEntryService buildLogService, ProgrammingSubmissionRepository programmingSubmissionRepository,
             SubmissionPolicyRepository submissionPolicyRepository, RepositoryAccessService repositoryAccessService, Optional<LocalVCServletService> localVCServletService,
-            RepositoryParticipationService repositoryParticipationService, Optional<LocalVCGitBranchService> localVCGitBranchService) {
+            RepositoryParticipationService repositoryParticipationService) {
         super(profileService, userRepository, authCheckService, gitService, repositoryService, programmingExerciseRepository, repositoryAccessService, localVCServletService);
         this.participationAuthCheckService = participationAuthCheckService;
         this.participationService = participationService;
@@ -101,7 +98,6 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         this.participationRepository = participationRepository;
         this.submissionPolicyRepository = submissionPolicyRepository;
         this.repositoryParticipationService = repositoryParticipationService;
-        this.localVCGitBranchService = localVCGitBranchService;
     }
 
     /**
@@ -175,11 +171,10 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             throw new IllegalArgumentException();
         }
         else if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
-            return localVCGitBranchService.orElseThrow().getOrRetrieveBranchOfParticipation(studentParticipation);
+            return studentParticipation.getBranch();
         }
         else {
-            ProgrammingExercise programmingExercise = programmingExerciseRepository.getProgrammingExerciseFromParticipation(programmingParticipation);
-            return localVCGitBranchService.orElseThrow().getOrRetrieveBranchOfExercise(programmingExercise);
+            return programmingExerciseRepository.findBranchByExerciseId(participation.getExercise().getId());
         }
     }
 
