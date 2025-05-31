@@ -163,11 +163,7 @@ class SlideUnhideServiceTest extends AbstractSpringIntegrationIndependentTest {
         slideToUnhide.setHidden(ZonedDateTime.now());
         slideRepository.save(slideToUnhide);
 
-        // This method no longer exists in the new implementation
-        // slideUnhideService.unhideSlide(slideToUnhide.getId());
-
-        // Instead, directly test handleSlideHiddenUpdate with a past date
-        // which will trigger an immediate unhide
+        // Test handleSlideHiddenUpdate with a past date which will trigger an immediate unhide
         slideToUnhide.setHidden(ZonedDateTime.now().minusDays(1));
         slideUnhideService.handleSlideHiddenUpdate(slideToUnhide);
 
