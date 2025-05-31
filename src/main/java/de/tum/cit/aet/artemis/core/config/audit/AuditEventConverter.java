@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import org.springframework.boot.actuate.audit.AuditEvent;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.util.Pair;
 import org.springframework.security.web.authentication.WebAuthenticationDetails;
@@ -19,6 +20,7 @@ import de.tum.cit.aet.artemis.core.domain.PersistentAuditEvent;
 
 @Profile(PROFILE_CORE)
 @Component
+@Lazy
 public class AuditEventConverter {
 
     /**

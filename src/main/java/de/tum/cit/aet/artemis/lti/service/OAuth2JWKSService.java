@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.keygen.Base64StringKeyGenerator;
 import org.springframework.security.crypto.keygen.StringKeyGenerator;
@@ -31,6 +32,7 @@ import com.nimbusds.jose.jwk.RSAKey;
  * This Service is responsible to manage JWKs for all OAuth2 ClientRegistrations.
  * On initialisation, each ClientRegistration gets assigned a fresh generated RSAKey.
  */
+@Lazy
 @Service
 @Profile(PROFILE_LTI)
 public class OAuth2JWKSService {

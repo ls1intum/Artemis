@@ -7,6 +7,7 @@ import java.util.Optional;
 
 import jakarta.validation.constraints.NotNull;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.stereotype.Repository;
@@ -19,6 +20,7 @@ import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
  * Repository for managing LtiPlatformConfiguration entities.
  */
 @Profile(PROFILE_LTI)
+@Lazy
 @Repository
 public interface LtiPlatformConfigurationRepository extends ArtemisJpaRepository<LtiPlatformConfiguration, Long> {
 

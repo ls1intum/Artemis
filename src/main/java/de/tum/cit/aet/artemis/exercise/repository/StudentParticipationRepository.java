@@ -17,6 +17,7 @@ import java.util.stream.Stream;
 
 import jakarta.validation.constraints.NotNull;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -46,6 +47,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizSubmittedAnswerCount;
  * Spring Data JPA repository for the Participation entity.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Repository
 public interface StudentParticipationRepository extends ArtemisJpaRepository<StudentParticipation, Long> {
 

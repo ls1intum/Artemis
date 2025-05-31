@@ -6,6 +6,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Repository;
@@ -15,6 +16,7 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Repository
 public interface UserSshPublicKeyRepository extends ArtemisJpaRepository<UserSshPublicKey, Long> {
 

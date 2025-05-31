@@ -10,6 +10,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +24,7 @@ import de.tum.cit.aet.artemis.atlas.dto.standardizedCompetency.StandardizedCompe
 import de.tum.cit.aet.artemis.atlas.repository.KnowledgeAreaRepository;
 import de.tum.cit.aet.artemis.atlas.repository.StandardizedCompetencyRepository;
 
+@Lazy
 @Service
 @Profile(SPRING_PROFILE_TEST)
 @Conditional(AtlasEnabled.class)

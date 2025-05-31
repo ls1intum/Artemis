@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.programming.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -10,6 +11,7 @@ import de.tum.cit.aet.artemis.programming.dto.BuildPlanCheckoutDirectoriesDTO;
 import de.tum.cit.aet.artemis.programming.dto.CheckoutDirectoriesDTO;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class RepositoryCheckoutService {
 

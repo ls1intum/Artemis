@@ -12,6 +12,7 @@ import jakarta.validation.constraints.NotNull;
 
 import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -42,6 +43,7 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
  * Service used to check whether user is authorized to perform actions on the entity.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class AuthorizationCheckService {
 

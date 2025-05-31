@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
@@ -23,6 +24,7 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
  * Service for triggering plagiarism checks.
  */
 @Conditional(PlagiarismEnabled.class)
+@Lazy
 @Service
 public class PlagiarismDetectionService {
 

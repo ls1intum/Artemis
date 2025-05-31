@@ -10,6 +10,7 @@ import jakarta.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -41,7 +42,7 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.web.AbstractSubmissionResource;
-import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismApi;
+import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismAccessApi;
 import de.tum.cit.aet.artemis.text.config.TextEnabled;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
@@ -54,6 +55,7 @@ import de.tum.cit.aet.artemis.text.service.TextSubmissionService;
  * REST controller for managing TextSubmission.
  */
 @Conditional(TextEnabled.class)
+@Lazy
 @RestController
 @RequestMapping("api/text/")
 public class TextSubmissionResource extends AbstractSubmissionResource {
@@ -80,14 +82,14 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
 
     private final Optional<ExamSubmissionApi> examSubmissionApi;
 
-    private final Optional<PlagiarismApi> plagiarismApi;
+    private final Optional<PlagiarismAccessApi> plagiarismAccessApi;
 
     private final ExerciseDateService exerciseDateService;
 
     public TextSubmissionResource(SubmissionRepository submissionRepository, TextSubmissionRepository textSubmissionRepository, ExerciseRepository exerciseRepository,
             TextExerciseRepository textExerciseRepository, AuthorizationCheckService authCheckService, TextSubmissionService textSubmissionService, UserRepository userRepository,
             StudentParticipationRepository studentParticipationRepository, GradingCriterionRepository gradingCriterionRepository, TextAssessmentService textAssessmentService,
-            Optional<ExamSubmissionApi> examSubmissionApi, Optional<PlagiarismApi> plagiarismApi, ExerciseDateService exerciseDateService) {
+            Optional<ExamSubmissionApi> examSubmissionApi, Optional<PlagiarismAccessApi> plagiarismAccessApi, ExerciseDateService exerciseDateService) {
         super(submissionRepository, authCheckService, userRepository, exerciseRepository, textSubmissionService, studentParticipationRepository);
         this.textSubmissionRepository = textSubmissionRepository;
         this.exerciseRepository = exerciseRepository;
@@ -98,7 +100,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.textAssessmentService = textAssessmentService;
         this.examSubmissionApi = examSubmissionApi;
-        this.plagiarismApi = plagiarismApi;
+        this.plagiarismAccessApi = plagiarismAccessApi;
         this.exerciseDateService = exerciseDateService;
     }
 
@@ -293,7 +295,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
      * @param textSubmission the text submission to check
      */
     private void checkPotentialPlagiarismCaseForStudent(TextSubmission textSubmission) {
-        plagiarismApi.ifPresent(api -> {
+        plagiarismAccessApi.ifPresent(api -> {
             boolean wasNotified = api.wasUserNotifiedByInstructor(textSubmission, userRepository.getUser().getLogin());
             if (!wasNotified) {
                 throw new AccessForbiddenException("The user has not yet been notified about a plagiarism case.");

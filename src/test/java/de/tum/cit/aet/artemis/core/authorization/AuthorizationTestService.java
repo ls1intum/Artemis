@@ -16,6 +16,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
@@ -33,6 +34,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 /**
  * This service is used to check if the authorization annotations are used correctly.
  */
+@Lazy
 @Service
 @Profile(SPRING_PROFILE_TEST)
 public class AuthorizationTestService {

@@ -10,6 +10,7 @@ import jakarta.annotation.Nullable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -17,6 +18,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public abstract class InternalUrlService {
 

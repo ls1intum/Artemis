@@ -27,7 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.TaskScheduler;
@@ -47,6 +47,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
 import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
+import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
@@ -55,6 +56,7 @@ import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessS
  * Includes functionality for processing build jobs from the shared build job queue.
  */
 @Profile(PROFILE_BUILDAGENT)
+@Lazy
 @Service
 public class SharedQueueProcessingService {
 
@@ -131,10 +133,10 @@ public class SharedQueueProcessingService {
     /**
      * Initialize relevant data from hazelcast
      */
-    @EventListener(ApplicationReadyEvent.class)
+    @EventListener(FullStartupEvent.class)
     public void init() {
         if (!buildAgentShortName.matches("^[a-z0-9-]+$")) {
-            String errorMessage = "Build agent short name must not be empty and only contain lowercase letters, numbers and hyphens."
+            String errorMessage = "Build agent s    hort name must not be empty and only contain lowercase letters, numbers and hyphens."
                     + " Build agent short name should be changed in the application properties under 'artemis.continuous-integration.build-agent.short-name'.";
             log.error(errorMessage);
             throw new IllegalArgumentException(errorMessage);
@@ -510,7 +512,7 @@ public class SharedQueueProcessingService {
     private boolean nodeIsAvailable() {
         var buildExecutorService = buildAgentConfiguration.getBuildExecutor();
         if (buildExecutorService == null) {
-            log.error("buildExecutorService is null!");
+            log.warn("build node is not available yet because buildExecutorService is null!");
             return false;
         }
         log.debug("Currently processing jobs on this node: {}, active threads in Pool: {}, maximum pool size of thread executor : {}", localProcessingJobs.get(),

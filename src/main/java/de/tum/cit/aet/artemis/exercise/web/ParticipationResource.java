@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -82,6 +83,7 @@ import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckService;
+import de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -111,6 +113,7 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
  * REST controller for managing Participation.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @RestController
 @RequestMapping("api/exercise/")
 public class ParticipationResource {
@@ -120,6 +123,8 @@ public class ParticipationResource {
     private static final String ENTITY_NAME = "participation";
 
     private final ParticipationService participationService;
+
+    private final ParticipationDeletionService participationDeletionService;
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
@@ -176,9 +181,9 @@ public class ParticipationResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    public ParticipationResource(ParticipationService participationService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
-            CourseRepository courseRepository, QuizExerciseRepository quizExerciseRepository, ExerciseRepository exerciseRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
+    public ParticipationResource(ParticipationService participationService, ParticipationDeletionService participationDeletionService,
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, CourseRepository courseRepository, QuizExerciseRepository quizExerciseRepository,
+            ExerciseRepository exerciseRepository, ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
             ParticipationAuthorizationCheckService participationAuthCheckService, UserRepository userRepository, StudentParticipationRepository studentParticipationRepository,
             AuditEventRepository auditEventRepository, TeamRepository teamRepository, FeatureToggleService featureToggleService,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, SubmissionRepository submissionRepository,
@@ -187,6 +192,7 @@ public class ParticipationResource {
             ProgrammingExerciseCodeReviewFeedbackService programmingExerciseCodeReviewFeedbackService, Optional<TextFeedbackApi> textFeedbackApi,
             ModelingExerciseFeedbackService modelingExerciseFeedbackService, ResultService resultService, Optional<StudentExamApi> studentExamApi) {
         this.participationService = participationService;
+        this.participationDeletionService = participationDeletionService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.courseRepository = courseRepository;
@@ -896,7 +902,7 @@ public class ParticipationResource {
         var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_PARTICIPATION, logMessage);
         auditEventRepository.add(auditEvent);
         log.info(logMessage);
-        participationService.delete(participation.getId(), true);
+        participationDeletionService.delete(participation.getId(), true);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, "participation", name)).build();
     }
 
@@ -916,7 +922,7 @@ public class ParticipationResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         checkAccessPermissionAtLeastInstructor(participation, user);
         log.info("Clean up participation with build plan {} by {}", participation.getBuildPlanId(), principal.getName());
-        participationService.cleanupBuildPlan(participation);
+        participationDeletionService.cleanupBuildPlan(participation);
         return ResponseEntity.ok().body(participation);
     }
 

@@ -7,6 +7,7 @@ import java.util.Optional;
 
 import jakarta.validation.constraints.NotNull;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -21,6 +22,7 @@ import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
  * Spring Data JPA repository for the Attachment Unit entity.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Repository
 public interface AttachmentVideoUnitRepository extends ArtemisJpaRepository<AttachmentVideoUnit, Long> {
 

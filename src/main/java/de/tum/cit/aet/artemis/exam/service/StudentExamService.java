@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
@@ -78,6 +79,7 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
  * Service Implementation for managing StudentExam.
  */
 @Conditional(ExamEnabled.class)
+@Lazy
 @Service
 public class StudentExamService {
 

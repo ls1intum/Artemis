@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 
 import jakarta.annotation.Nullable;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -46,6 +47,7 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class StatisticsService {
 

@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.security.core.Authentication;
@@ -27,6 +28,7 @@ import de.tum.cit.aet.artemis.core.domain.PersistentAuditEvent;
  * An implementation of Spring Boot's {@link AuditEventRepository}.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Repository
 public class CustomAuditEventRepository implements AuditEventRepository {
 

@@ -18,6 +18,7 @@ import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
@@ -43,6 +44,7 @@ import edu.stanford.nlp.util.Sets;
  * Service class to access metrics regarding students' learning progress.
  */
 @Conditional(AtlasEnabled.class)
+@Lazy
 @Service
 public class LearningMetricsService {
 

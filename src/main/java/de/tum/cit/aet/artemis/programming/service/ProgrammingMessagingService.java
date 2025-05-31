@@ -1,9 +1,7 @@
 package de.tum.cit.aet.artemis.programming.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.EXERCISE_TOPIC_ROOT;
-import static de.tum.cit.aet.artemis.core.config.Constants.NEW_SUBMISSION_TOPIC;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROGRAMMING_SUBMISSION_TOPIC;
 import static de.tum.cit.aet.artemis.core.config.Constants.SUBMISSION_PROCESSING;
 import static de.tum.cit.aet.artemis.core.config.Constants.SUBMISSION_PROCESSING_TOPIC;
 
@@ -11,6 +9,7 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -22,7 +21,6 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.exercise.dto.SubmissionDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
@@ -32,12 +30,11 @@ import de.tum.cit.aet.artemis.lti.api.LtiApi;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildRunState;
 import de.tum.cit.aet.artemis.programming.dto.SubmissionProcessingDTO;
-import de.tum.cit.aet.artemis.programming.exception.BuildTriggerWebsocketError;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class ProgrammingMessagingService {
 
@@ -59,7 +56,9 @@ public class ProgrammingMessagingService {
 
     private final ParticipationRepository participationRepository;
 
-    public ProgrammingMessagingService(GroupNotificationService groupNotificationService, WebsocketMessagingService websocketMessagingService,
+    // The GroupNotificationService has many dependencies. We cannot refactor it to avoid that. Therefore, we lazily inject it here, so it's only instantiated when needed, or our
+    // DeferredEagerInitialization kicks, but not on startup.
+    public ProgrammingMessagingService(@Lazy GroupNotificationService groupNotificationService, WebsocketMessagingService websocketMessagingService,
             ResultWebsocketService resultWebsocketService, Optional<LtiApi> ltiApi, TeamRepository teamRepository, Optional<PyrisEventApi> pyrisEventApi,
             Optional<IrisSettingsApi> irisSettingsApi, ParticipationRepository participationRepository) {
         this.groupNotificationService = groupNotificationService;
@@ -70,10 +69,6 @@ public class ProgrammingMessagingService {
         this.pyrisEventApi = pyrisEventApi;
         this.irisSettingsApi = irisSettingsApi;
         this.participationRepository = participationRepository;
-    }
-
-    private static String getExerciseTopicForTAAndAbove(long exerciseId) {
-        return EXERCISE_TOPIC_ROOT + exerciseId + PROGRAMMING_SUBMISSION_TOPIC;
     }
 
     private static String getSubmissionProcessingTopicForTAAndAbove(Long exerciseId) {
@@ -98,53 +93,6 @@ public class ProgrammingMessagingService {
         websocketMessagingService.sendMessage(getProgrammingExerciseAllExerciseBuildsTriggeredTopic(programmingExercise.getId()), BuildRunState.COMPLETED);
         // Send a notification to the client to inform the instructor about the completed builds.
         groupNotificationService.notifyEditorAndInstructorGroupsAboutBuildRunUpdate(programmingExercise);
-    }
-
-    /**
-     * Notify user on a new programming submission.
-     *
-     * @param submission ProgrammingSubmission
-     * @param exerciseId used to build the correct topic
-     */
-    public void notifyUserAboutSubmission(ProgrammingSubmission submission, Long exerciseId) {
-        var submissionDTO = SubmissionDTO.of(submission, false, null, null);
-        if (submission.getParticipation() instanceof StudentParticipation studentParticipation) {
-            if (studentParticipation.getParticipant() instanceof Team team) {
-                // eager load the team with students so their information can be used for the messages below
-                studentParticipation.setParticipant(teamRepository.findWithStudentsByIdElseThrow(team.getId()));
-            }
-            studentParticipation.getStudents().forEach(user -> websocketMessagingService.sendMessageToUser(user.getLogin(), NEW_SUBMISSION_TOPIC, submissionDTO));
-        }
-
-        // send an update to tutors, editors and instructors about submissions for template and solution participations
-        if (!(submission.getParticipation() instanceof StudentParticipation)) {
-            var topicDestination = getExerciseTopicForTAAndAbove(exerciseId);
-            websocketMessagingService.sendMessage(topicDestination, submissionDTO);
-        }
-    }
-
-    public void notifyUserAboutSubmissionError(ProgrammingSubmission submission, BuildTriggerWebsocketError error) {
-        notifyUserAboutSubmissionError(submission.getParticipation(), error);
-    }
-
-    /**
-     * Notifies the user (or all users of the team) about a submission error
-     *
-     * @param participation the participation for which the submission error should be reported
-     * @param error         the submission error wrapped in an object
-     */
-    public void notifyUserAboutSubmissionError(Participation participation, BuildTriggerWebsocketError error) {
-        if (participation instanceof StudentParticipation studentParticipation) {
-            if (studentParticipation.getParticipant() instanceof Team team) {
-                // eager load the team with students so their information can be used for the messages below
-                studentParticipation.setParticipant(teamRepository.findWithStudentsByIdElseThrow(team.getId()));
-            }
-            studentParticipation.getStudents().forEach(user -> websocketMessagingService.sendMessageToUser(user.getLogin(), NEW_SUBMISSION_TOPIC, error));
-        }
-
-        if (participation != null && participation.getExercise() != null) {
-            websocketMessagingService.sendMessage(getExerciseTopicForTAAndAbove(participation.getExercise().getId()), error);
-        }
     }
 
     /**

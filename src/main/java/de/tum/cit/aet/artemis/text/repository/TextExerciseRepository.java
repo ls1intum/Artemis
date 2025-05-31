@@ -9,6 +9,7 @@ import java.util.Set;
 import jakarta.validation.constraints.NotNull;
 
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -24,6 +25,7 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
  * Spring Data JPA repository for the TextExercise entity.
  */
 @Conditional(TextEnabled.class)
+@Lazy
 @Repository
 public interface TextExerciseRepository extends ArtemisJpaRepository<TextExercise, Long>, JpaSpecificationExecutor<TextExercise> {
 

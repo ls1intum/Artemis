@@ -35,6 +35,7 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -46,6 +47,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeatureServ
 /**
  * Sets the features provided for the different programming languages when using the local CI system.
  */
+@Lazy
 @Service
 @Profile(PROFILE_LOCALCI)
 public class LocalCIProgrammingLanguageFeatureService extends ProgrammingLanguageFeatureService {

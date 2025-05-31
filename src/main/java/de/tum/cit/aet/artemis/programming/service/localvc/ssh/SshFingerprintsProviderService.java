@@ -13,6 +13,7 @@ import org.apache.sshd.common.keyprovider.KeyPairProvider;
 import org.apache.sshd.server.SshServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Service;
  * Service responsible for providing SSH fingerprints of the SSH server running in Artemis.
  */
 @Profile(PROFILE_LOCALVC)
+@Lazy
 @Service
 public class SshFingerprintsProviderService {
 
