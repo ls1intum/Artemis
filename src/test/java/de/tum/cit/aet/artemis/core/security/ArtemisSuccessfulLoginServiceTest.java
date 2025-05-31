@@ -59,6 +59,6 @@ class ArtemisSuccessfulLoginServiceTest extends AbstractSpringIntegrationIndepen
 
         artemisSuccessfulLoginService.sendLoginEmail(username, AuthenticationMethod.PASSWORD, null);
 
-        verify(mailSendingService, never()).buildAndSendAsync(any(User.class), anyString(), anyString(), anyMap());
+        await().atMost(5, SECONDS).untilAsserted(() -> verify(mailSendingService, never()).buildAndSendAsync(any(User.class), anyString(), anyString(), anyMap()));
     }
 }
