@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, SimpleChanges, ViewEncapsulation, inject } from '@angular/core';
+import { Component, OnChanges, SimpleChanges, ViewEncapsulation, inject, input } from '@angular/core';
 import { TextSubmissionService } from 'app/text/overview/service/text-submission.service';
 import { PlagiarismSubmission } from 'app/plagiarism/shared/entities/PlagiarismSubmission';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
@@ -32,14 +32,14 @@ export class TextSubmissionViewerComponent implements OnChanges {
     private repositoryService = inject(CodeEditorRepositoryFileService);
     private textSubmissionService = inject(TextSubmissionService);
 
-    @Input() exercise: ProgrammingExercise | TextExercise;
-    @Input() matches: Map<string, FromToElement[]>;
-    @Input() plagiarismSubmission: PlagiarismSubmission<TextSubmissionElement>;
-    @Input() hideContent: boolean;
-    @Input() fileSelectedSubject!: Subject<TextPlagiarismFileElement>;
-    @Input() isLockFilesEnabled: boolean;
-    @Input() showFilesSubject!: Subject<boolean>;
-    @Input() dropdownHoverSubject!: Subject<TextPlagiarismFileElement>;
+    readonly exercise = input<ProgrammingExercise | TextExercise>(undefined!);
+    readonly matches = input<Map<string, FromToElement[]>>(undefined!);
+    readonly plagiarismSubmission = input<PlagiarismSubmission<TextSubmissionElement>>(undefined!);
+    readonly hideContent = input<boolean>(undefined!);
+    readonly fileSelectedSubject = input.required<Subject<TextPlagiarismFileElement>>();
+    readonly isLockFilesEnabled = input<boolean>(undefined!);
+    readonly showFilesSubject = input.required<Subject<boolean>>();
+    readonly dropdownHoverSubject = input.required<Subject<TextPlagiarismFileElement>>();
 
     /**
      * Name of the currently selected file.
@@ -92,10 +92,10 @@ export class TextSubmissionViewerComponent implements OnChanges {
     ngOnChanges(changes: SimpleChanges): void {
         if (changes.plagiarismSubmission) {
             const currentPlagiarismSubmission: PlagiarismSubmission<TextSubmissionElement> = changes.plagiarismSubmission.currentValue;
-            if (!this.hideContent) {
+            if (!this.hideContent()) {
                 this.loading = true;
 
-                if (this.exercise.type === ExerciseType.PROGRAMMING) {
+                if (this.exercise().type === ExerciseType.PROGRAMMING) {
                     this.loadProgrammingExercise(currentPlagiarismSubmission);
                 } else {
                     this.loadTextExercise(currentPlagiarismSubmission);
@@ -188,7 +188,7 @@ export class TextSubmissionViewerComponent implements OnChanges {
         if (TEXT_FILE_EXTENSIONS.includes(fileExtension)) {
             this.binaryFile = false;
 
-            const domain: DomainChange = [DomainType.PARTICIPATION, { id: this.plagiarismSubmission.submissionId }];
+            const domain: DomainChange = [DomainType.PARTICIPATION, { id: this.plagiarismSubmission().submissionId }];
             this.repositoryService.getFileForPlagiarismView(file, domain).subscribe({
                 next: ({ fileContent }) => {
                     this.loading = false;
@@ -208,15 +208,15 @@ export class TextSubmissionViewerComponent implements OnChanges {
      * Downloads the currently selected file with a friendly name consisting of the exercises short name, the student login and the filename.
      */
     downloadCurrentFile() {
-        this.repositoryService.downloadFile(this.currentFile, this.exercise.shortName + '_' + this.plagiarismSubmission.studentLogin + '_' + this.currentFile);
+        this.repositoryService.downloadFile(this.currentFile, this.exercise().shortName + '_' + this.plagiarismSubmission().studentLogin + '_' + this.currentFile);
     }
 
     getMatchesForCurrentFile() {
-        return this.matches.get(this.currentFile || 'none') || [];
+        return this.matches().get(this.currentFile || 'none') || [];
     }
 
     private hasMatch(file: string): boolean {
-        return this.matches.has(file);
+        return this.matches().has(file);
     }
 
     insertMatchTokens(fileContent: string): string {
@@ -234,7 +234,7 @@ export class TextSubmissionViewerComponent implements OnChanges {
             return escape(fileContent);
         }
 
-        if (this.exercise?.type === ExerciseType.PROGRAMMING) {
+        if (this.exercise()?.type === ExerciseType.PROGRAMMING) {
             return this.buildFileContentWithHighlightedMatchesAsWholeLines(fileContent, matches);
         }
         return this.buildFileContentWithHighlightedMatches(fileContent, matches);

@@ -3,37 +3,37 @@
         <div class="plagiarism-run-details-stats-item">
             <div class="plagiarism-run-details-label" jhiTranslate="artemisApp.plagiarism.numberOfDetectedSubmissions"></div>
             <div class="plagiarism-run-details-info">
-                {{ plagiarismResultStats?.numberOfDetectedSubmissions }}
+                {{ plagiarismResultStats()?.numberOfDetectedSubmissions }}
             </div>
         </div>
         <div class="plagiarism-run-details-stats-item">
             <div class="plagiarism-run-details-label" jhiTranslate="artemisApp.plagiarism.averageSimilarity"></div>
             <div class="plagiarism-run-details-info">
-                {{ plagiarismResultStats?.averageSimilarity?.toFixed(2) + ' %' }}
+                {{ plagiarismResultStats()?.averageSimilarity?.toFixed(2) + ' %' }}
             </div>
         </div>
         <div class="plagiarism-run-details-stats-item">
             <div class="plagiarism-run-details-label" jhiTranslate="artemisApp.plagiarism.maximalSimilarity"></div>
             <div class="plagiarism-run-details-info">
-                {{ plagiarismResultStats?.maximalSimilarity?.toFixed(2) + ' %' }}
+                {{ plagiarismResultStats()?.maximalSimilarity?.toFixed(2) + ' %' }}
             </div>
         </div>
         <div class="plagiarism-run-details-stats-item">
             <div class="plagiarism-run-details-label" jhiTranslate="artemisApp.plagiarism.duration"></div>
             <div class="plagiarism-run-details-info duration">
-                {{ plagiarismResult?.duration | date: 'HH:mm:ss' : 'GMT' }}
+                {{ plagiarismResult()?.duration | date: 'HH:mm:ss' : 'GMT' }}
             </div>
         </div>
         <div class="plagiarism-run-details-stats-item">
             <div class="plagiarism-run-details-label" jhiTranslate="artemisApp.plagiarism.startedAt"></div>
             <div class="plagiarism-run-details-info">
-                {{ plagiarismResult?.createdDate?.toLocaleString() | date: 'dd.MM.YY HH:mm' : 'GMT' }}
+                {{ plagiarismResult()?.createdDate?.toLocaleString() | date: 'dd.MM.YY HH:mm' : 'GMT' }}
             </div>
         </div>
         <div class="plagiarism-run-details-stats-item">
             <div class="plagiarism-run-details-label" jhiTranslate="artemisApp.plagiarism.startedBy"></div>
             <div class="plagiarism-run-details-info">
-                {{ plagiarismResultStats?.createdBy ?? 'unknown' }}
+                {{ plagiarismResultStats()?.createdBy ?? 'unknown' }}
             </div>
         </div>
     </div>
