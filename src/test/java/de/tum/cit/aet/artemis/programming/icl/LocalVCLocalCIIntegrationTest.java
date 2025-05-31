@@ -828,6 +828,22 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         exam.setStartDate(now.minusMinutes(30));
         examRepository.save(exam);
 
+        // student1 should not be able to fetch or push.
+        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.localGit, student1Login, projectKey1, assignmentRepositorySlug);
+        localVCLocalCITestService.testPushReturnsError(assignmentRepository.localGit, student1Login, projectKey1, assignmentRepositorySlug, FORBIDDEN);
+        // tutor1 should be able to fetch but not push.
+        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.localGit, tutor1Login, projectKey1, assignmentRepositorySlug);
+        localVCLocalCITestService.testPushReturnsError(assignmentRepository.localGit, tutor1Login, projectKey1, assignmentRepositorySlug, FORBIDDEN);
+        // instructor1 should be able to fetch and push.
+        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.localGit, instructor1Login, projectKey1, assignmentRepositorySlug);
+        localVCLocalCITestService.testPushSuccessful(assignmentRepository.localGit, instructor1Login, projectKey1, assignmentRepositorySlug);
+
+        // Grace period is over.
+        exam.setGracePeriod(0);
+        examRepository.save(exam);
+        studentExam.setExam(exam);
+        studentExamRepository.save(studentExam);
+
         // student1 should be able to fetch and push.
         localVCLocalCITestService.testFetchSuccessful(assignmentRepository.localGit, student1Login, projectKey1, assignmentRepositorySlug);
         String commitHash = localVCLocalCITestService.commitFile(assignmentRepository.localRepoFile.toPath(), assignmentRepository.localGit);
