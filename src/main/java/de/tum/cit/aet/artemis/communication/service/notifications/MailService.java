@@ -39,6 +39,8 @@ public class MailService {
 
     private static final String REASON = "reason";
 
+    private static final String BUILD_AGENT_NAME = "buildAgentName";
+
     @Value("${server.url}")
     private URL artemisServerUrl;
 
@@ -133,5 +135,19 @@ public class MailService {
     public void sendSuccessfulDataExportsEmailToAdmin(User admin, Set<DataExport> dataExports) {
         log.debug("Sending successful creation of data exports email to admin email address '{}'", admin.getEmail());
         sendSuccessfulDataExportsEmailToAdmin(admin, "mail/successfulDataExportsAdminEmail", "email.successfulDataExportCreationsAdmin.title", dataExports);
+    }
+
+    /**
+     * Sends an email to admin users about a build agent paused itself.
+     *
+     * @param admin          the admin user to notify
+     * @param buildAgentName the name of the build agent that was paused
+     */
+    public void sendBuildAgentSelfPausedEmailToAdmin(User admin, String buildAgentName) {
+        log.debug("Sending build agent self paused email to admin email address '{}'", admin.getEmail());
+        Locale locale = Locale.forLanguageTag(admin.getLangKey());
+        Context context = createBaseContext(admin, locale);
+        context.setVariable(BUILD_AGENT_NAME, buildAgentName);
+        prepareTemplateAndSendEmail(admin, "mail/buildAgentSelfPausedEmail", "email.buildAgent.SelfPaused.title", context);
     }
 }
