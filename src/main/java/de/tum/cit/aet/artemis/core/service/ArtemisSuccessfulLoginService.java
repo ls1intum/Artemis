@@ -54,9 +54,11 @@ public class ArtemisSuccessfulLoginService {
         String defaultPasswordResetLink = artemisServerUrl + "/account/reset/request";
         String configurationPlaceholder = "<link>";
         if (passwordResetLinkEnUrl == null || passwordResetLinkEnUrl.isEmpty() || passwordResetLinkEnUrl.equals(configurationPlaceholder)) {
+            log.info("No password reset link configured for English, using default link {}", defaultPasswordResetLink);
             passwordResetLinkEnUrl = defaultPasswordResetLink;
         }
         if (passwordResetLinkDeUrl == null || passwordResetLinkDeUrl.isEmpty() || passwordResetLinkDeUrl.equals(configurationPlaceholder)) {
+            log.info("No password reset link configured for German, using default link {}", defaultPasswordResetLink);
             passwordResetLinkDeUrl = defaultPasswordResetLink;
         }
     }
