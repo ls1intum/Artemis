@@ -6,7 +6,7 @@ package de.tum.cit.aet.artemis.core.util;
  */
 public enum ArtemisApp {
 
-    IOS("iOS App"), ANROID("Android App");
+    IOS("iOS App"), ANDROID("Android App");
 
     private final String displayName;
 

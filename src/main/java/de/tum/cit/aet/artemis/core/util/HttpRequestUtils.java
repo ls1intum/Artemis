@@ -164,14 +164,16 @@ public class HttpRequestUtils {
 
         boolean hasCFNetwork = userAgent.contains("CFNetwork");
         boolean hasIosAppName = userAgent.contains("Artemis");
+        // expecting a format like "Artemis/20250524013147 CFNetwork/3826.500.131 Darwin/24.5.0" for the iOS app user agent
         boolean isIosApp = hasIosAppName && hasCFNetwork;
         if (isIosApp) {
             return new ClientEnvironment(null, null, ArtemisApp.IOS);
         }
 
+        // the Android app appears to use https://ktor.io/
         boolean isAndroidApp = userAgent.contains("ktor-client");
         if (isAndroidApp) {
-            return new ClientEnvironment(null, null, ArtemisApp.ANROID);
+            return new ClientEnvironment(null, null, ArtemisApp.ANDROID);
         }
 
         return null;
