@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, ViewEncapsulation, computed, effect, input, output, viewChild } from '@angular/core';
-import { ProgrammingExerciseGitDiffEntry } from 'app/programming/shared/entities/programming-exercise-git-diff-entry.model';
 import { MonacoDiffEditorComponent } from 'app/shared/monaco-editor/diff-editor/monaco-diff-editor.component';
+import { DiffInformation } from 'app/programming/shared/utils/diff.utils';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
@@ -12,19 +12,19 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 })
 export class GitDiffFileComponent {
     readonly monacoDiffEditor = viewChild.required(MonacoDiffEditorComponent);
-    readonly diffForTemplateAndSolution = input<boolean>(false);
-    readonly diffEntries = input.required<ProgrammingExerciseGitDiffEntry[]>();
-    readonly originalFileContent = input<string>();
-    readonly originalFilePath = input<string>();
-    readonly modifiedFileContent = input<string>();
-    readonly modifiedFilePath = input<string>();
+    readonly diffInformation = input.required<DiffInformation>();
     readonly allowSplitView = input<boolean>(true);
     readonly onDiffReady = output<boolean>();
-    readonly fileUnchanged = computed(() => this.originalFileContent() === this.modifiedFileContent());
+    readonly fileUnchanged = computed(() => this.diffInformation().originalFileContent === this.diffInformation().modifiedFileContent);
 
     constructor() {
         effect(() => {
-            this.monacoDiffEditor().setFileContents(this.originalFileContent(), this.originalFilePath(), this.modifiedFileContent(), this.modifiedFilePath());
+            this.monacoDiffEditor().setFileContents(
+                this.diffInformation().originalFileContent,
+                this.diffInformation().modifiedFileContent,
+                this.diffInformation().originalPath,
+                this.diffInformation().modifiedPath,
+            );
         });
     }
 }

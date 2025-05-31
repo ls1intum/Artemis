@@ -1,22 +1,22 @@
 <span jhiTranslate="artemisApp.programmingExercise.diffReport.shortDescription"></span>
 <div class="fw-bold">
     <jhi-git-diff-line-stat
-        [addedLineCount]="detail.data.addedLineCount"
-        [removedLineCount]="detail.data.removedLineCount"
+        [addedLineCount]="addedLineCount"
+        [removedLineCount]="removedLineCount"
         ngbTooltip="{{ 'artemisApp.programmingExercise.diffReport.lineStatTooltipDetailPage' | artemisTranslate }}"
         placement="right"
     />
 </div>
-@if (detail.data.addedLineCount > 0 || detail.data.removedLineCount > 0) {
+@if (addedLineCount > 0 || removedLineCount > 0) {
     <div class="mt-1">
         <jhi-button
             [featureToggle]="FeatureToggle.ProgrammingExercises"
-            [isLoading]="detail.data.isLoadingDiffReport ?? false"
+            [isLoading]="false"
             [btnSize]="ButtonSize.SMALL"
             [icon]="faCodeCompare"
             [title]="'artemisApp.programmingExercise.diffReport.button'"
             [tooltip]="'artemisApp.programmingExercise.diffReport.tooltip'"
-            (onClick)="showGitDiff(detail.data.gitDiffReport)"
+            (onClick)="showGitDiff()"
             [btnType]="WARNING"
             [tooltipPlacement]="TooltipPlacement.RIGHT"
         />
