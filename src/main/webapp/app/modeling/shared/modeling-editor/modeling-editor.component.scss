@@ -43,6 +43,8 @@ $draggable-width: 15px;
 }
 
 .apollon-container {
+    display: flex;
+    flex: 1;
     height: 100%;
     min-height: 750px;
     overflow: hidden;

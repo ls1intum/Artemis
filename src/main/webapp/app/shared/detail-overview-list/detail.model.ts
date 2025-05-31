@@ -3,7 +3,7 @@ import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/en
 import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/solution-programming-exercise-participation.model';
 import { DetailType } from 'app/shared/detail-overview-list/detail-overview-list.component';
 import { SafeHtml } from '@angular/platform-browser';
-import { UMLDiagramType, UMLModel } from '@ls1intum/apollon';
+import { UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import dayjs from 'dayjs/esm';
 import { IrisSubSettingsType } from 'app/iris/shared/entities/settings/iris-sub-settings.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
