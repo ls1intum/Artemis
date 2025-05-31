@@ -9,11 +9,14 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import jakarta.validation.constraints.NotNull;
 
@@ -190,11 +193,19 @@ public class ProgrammingPlagiarismDetectionService {
         log.info("Download repositories for JPlag for programming exercise {} to compare {} participations", programmingExerciseId, participations.size());
 
         if (participations.size() < 2) {
-            throw new BadRequestAlertException("Insufficient amount of valid and long enough submissions available for comparison", "Plagiarism Check", "notEnoughSubmissions");
+            throw new BadRequestAlertException("Insufficient amount of valid submissions available for comparison after applying minimum score filter", "Plagiarism Check",
+                    "notEnoughSubmissions");
         }
 
         List<Repository> repositories = downloadRepositories(programmingExercise, participations, targetPath.toString(), minimumSize);
         log.info("Downloading repositories done for programming exercise {}", programmingExerciseId);
+
+        // Check if we have enough repositories after filtering
+        if (repositories.size() < 2) {
+            throw new BadRequestAlertException(
+                    "Insufficient amount of valid and long enough submissions available for comparison after applying minimum score and minimum size filters", "Plagiarism Check",
+                    "notEnoughSubmissions");
+        }
 
         final var projectKey = programmingExercise.getProjectKey();
         final var repoFolder = targetPath.resolve(projectKey).toFile();
@@ -370,21 +381,106 @@ public class ProgrammingPlagiarismDetectionService {
         var templateRepo = cloneTemplateRepository(programmingExercise, targetPath);
         templateRepo.ifPresent(downloadedRepositories::add);
 
-        participations.parallelStream().forEach(participation -> {
+        List<Repository> studentRepositories = participations.parallelStream().map(participation -> {
             try {
-                var progressMessage = "Downloading repositories: " + (downloadedRepositories.size() + 1) + "/" + maxRepositories;
-                plagiarismWebsocketService.notifyInstructorAboutPlagiarismState(topic, PlagiarismCheckState.RUNNING, List.of(progressMessage));
-
                 Repository repo = gitService.getOrCheckoutRepositoryForJPlag(participation, targetPath);
                 gitService.resetToOriginHead(repo); // start with clean state
-                downloadedRepositories.add(repo);
+
+                // Check if repository meets minimum size requirement
+                if (minimumSize > 0) {
+                    boolean meetsMinimumSize = meetsMinimumSize(repo, programmingExercise, minimumSize);
+
+                    if (meetsMinimumSize) {
+                        log.debug("Repository {} meets minimum size requirement ({} tokens), including in plagiarism check", participation.getVcsRepositoryUri(), minimumSize);
+                        return repo;
+                    }
+                    else {
+                        log.info("Repository {} does not meet minimum size requirement ({} tokens), excluding from plagiarism check", participation.getVcsRepositoryUri(),
+                                minimumSize);
+                        // Clean up the repository since we won't use it
+                        try {
+                            deleteTempLocalRepository(repo);
+                        }
+                        catch (Exception e) {
+                            log.warn("Failed to delete filtered repository {}: {}", repo.getLocalPath(), e.getMessage());
+                        }
+                        return null;
+                    }
+                }
+                else {
+                    // If no minimum size is specified, include all repositories
+                    return repo;
+                }
             }
             catch (GitException | GitAPIException | InvalidPathException ex) {
                 log.error("Clone student repository {} in exercise '{}' did not work as expected: {}", participation.getVcsRepositoryUri(), programmingExercise.getTitle(),
                         ex.getMessage());
+                return null;
             }
-        });
+        }).filter(Objects::nonNull).toList();
+
+        downloadedRepositories.addAll(studentRepositories);
+
+        // Update progress message
+        var progressMessage = "Processing repositories: " + downloadedRepositories.size() + " valid out of " + maxRepositories + " total";
+        plagiarismWebsocketService.notifyInstructorAboutPlagiarismState(topic, PlagiarismCheckState.RUNNING, List.of(progressMessage));
+
+        log.info("Downloaded and filtered {} repositories out of {} participations for exercise {} (minimum token size: {} tokens, minimum score: {})",
+                downloadedRepositories.size(), participations.size(), programmingExercise.getId(), minimumSize, minimumScore);
 
         return downloadedRepositories;
+    }
+
+    /**
+     * Checks if a repository meets the minimum size requirement by counting tokens in relevant files.
+     * Returns true as soon as the minimum size is reached.
+     * Returns true in case of any errors to be inclusive.
+     *
+     * @param repository          The repository to check
+     * @param programmingExercise The programming exercise
+     * @param minimumSize         The minimum number of tokens required
+     * @return true if the repository meets the minimum size requirement or if there are any errors
+     */
+    private boolean meetsMinimumSize(Repository repository, ProgrammingExercise programmingExercise, int minimumSize) {
+        try {
+            Path repoPath = repository.getLocalPath();
+            if (!Files.exists(repoPath) || !Files.isDirectory(repoPath)) {
+                log.warn("Repository path does not exist or is not a directory: {}", repoPath);
+                return true;
+            }
+
+            Set<String> fileExtensions = programmingExercise.getProgrammingLanguage().getFileExtensions().stream().map(ext -> "." + ext).collect(Collectors.toSet());
+
+            try (Stream<Path> paths = Files.walk(repoPath)) {
+                return paths.filter(Files::isRegularFile).filter(path -> {
+                    String fileName = path.getFileName().toString().toLowerCase();
+                    return fileExtensions.stream().anyMatch(fileName::endsWith);
+                }).anyMatch(path -> {
+                    try {
+                        String content = Files.readString(path);
+                        String[] tokens = content.split("[\\s\\n\\r\\t{}();,=+\\-*/<>!&|\\[\\]]+");
+
+                        int count = 0;
+                        for (String token : tokens) {
+                            if (!token.trim().isEmpty()) {
+                                count++;
+                                if (count >= minimumSize) {
+                                    return true;
+                                }
+                            }
+                        }
+                        return false;
+                    }
+                    catch (IOException e) {
+                        log.warn("Failed to read file {}: {}", path, e.getMessage());
+                        return true;
+                    }
+                });
+            }
+        }
+        catch (IOException e) {
+            log.warn("Failed to check repository size {}: {}", repository.getLocalPath(), e.getMessage());
+            return true;
+        }
     }
 }
