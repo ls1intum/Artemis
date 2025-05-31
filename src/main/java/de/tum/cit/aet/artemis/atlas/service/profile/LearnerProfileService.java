@@ -42,4 +42,14 @@ public class LearnerProfileService {
     public void deleteProfile(User user) {
         learnerProfileRepository.deleteByUser(user);
     }
+
+    /**
+     * Find a learner profile by its ID with all necessary relations initialized
+     *
+     * @param id the ID of the learner profile
+     * @return the initialized learner profile or null if not found
+     */
+    public LearnerProfile findByIdInitialized(Long id) {
+        return learnerProfileRepository.findByIdInitialized(id).orElse(null);
+    }
 }
