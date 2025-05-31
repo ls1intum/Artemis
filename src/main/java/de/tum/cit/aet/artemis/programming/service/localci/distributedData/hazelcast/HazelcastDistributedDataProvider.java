@@ -14,6 +14,7 @@ import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.DistributedMap;
 import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.DistributedQueue;
+import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.DistributedTopic;
 
 @Service
 public class HazelcastDistributedDataProvider implements DistributedDataProvider {
@@ -33,11 +34,11 @@ public class HazelcastDistributedDataProvider implements DistributedDataProvider
     public <K, V> DistributedMap<K, V> getMap(String name) {
         return new HazelcastDistributedMap<>(hazelcastInstance.getMap(name));
     }
-    //
-    // @Override
-    // public <T> DistributedTopic<T> getTopic(String name) {
-    // return new HazelcastDistributedTopic<>(hazelcastInstance.getTopic(name));
-    // }
+
+    @Override
+    public <T> DistributedTopic<T> getTopic(String name) {
+        return new HazelcastDistributedTopic<>(hazelcastInstance.getTopic(name));
+    }
 
     /**
      * Checks if the Hazelcast instance is active and operational.

@@ -151,14 +151,14 @@ public class SharedQueueProcessingService {
          */
         scheduledFuture = taskScheduler.scheduleAtFixedRate(this::checkAvailabilityAndProcessNextBuild, Duration.ofSeconds(10));
 
-        distributedDataAccessService.getPauseBuildAgentTopic().addMessageListener(message -> {
-            if (buildAgentShortName.equals(message.getMessageObject())) {
+        distributedDataAccessService.getPauseBuildAgentTopic().addMessageListener(buildAgentName -> {
+            if (buildAgentShortName.equals(buildAgentName)) {
                 pauseBuildAgent();
             }
         });
 
-        distributedDataAccessService.getResumeBuildAgentTopic().addMessageListener(message -> {
-            if (buildAgentShortName.equals(message.getMessageObject())) {
+        distributedDataAccessService.getResumeBuildAgentTopic().addMessageListener(buildAgentName -> {
+            if (buildAgentShortName.equals(buildAgentName)) {
                 resumeBuildAgent();
             }
         });

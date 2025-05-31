@@ -10,12 +10,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.topic.ITopic;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
@@ -23,16 +19,15 @@ import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
 import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.DistributedMap;
 import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.DistributedQueue;
+import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.DistributedTopic;
 
 /**
- * This service is used to access the distributed data structures in Hazelcast.
+ * This service is used to access the distributed data structures.
  * All data structures are created lazily, meaning they are only created when they are first accessed.
  */
 @Service
 @Profile({ PROFILE_LOCALCI, PROFILE_BUILDAGENT })
 public class DistributedDataAccessService {
-
-    private final HazelcastInstance hazelcastInstance;
 
     private final DistributedDataProvider distributedDataProvider;
 
@@ -46,14 +41,13 @@ public class DistributedDataAccessService {
 
     private DistributedMap<String, ZonedDateTime> dockerImageCleanupInfo;
 
-    private ITopic<String> canceledBuildJobsTopic;
+    private DistributedTopic<String> canceledBuildJobsTopic;
 
-    private ITopic<String> pauseBuildAgentTopic;
+    private DistributedTopic<String> pauseBuildAgentTopic;
 
-    private ITopic<String> resumeBuildAgentTopic;
+    private DistributedTopic<String> resumeBuildAgentTopic;
 
-    public DistributedDataAccessService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, DistributedDataProvider distributedDataProvider) {
-        this.hazelcastInstance = hazelcastInstance;
+    public DistributedDataAccessService(DistributedDataProvider distributedDataProvider) {
         this.distributedDataProvider = distributedDataProvider;
     }
 
@@ -66,8 +60,6 @@ public class DistributedDataAccessService {
      */
     public DistributedQueue<BuildJobQueueItem> getDistributedBuildJobQueue() {
         if (this.buildJobQueue == null) {
-            // TODO check if thread safe for redisson get queue also to load lazy like this
-            // ( in case several instances are getting the same queue, will it behave like hazelcast?)
             this.buildJobQueue = this.distributedDataProvider.getQueue("buildJobQueue");
         }
         return this.buildJobQueue;
@@ -244,9 +236,9 @@ public class DistributedDataAccessService {
      * @return ITopic for canceled build jobs
      *         The topic is initialized lazily the first time this method is called if it is still null.
      */
-    public ITopic<String> getCanceledBuildJobsTopic() {
+    public DistributedTopic<String> getCanceledBuildJobsTopic() {
         if (this.canceledBuildJobsTopic == null) {
-            this.canceledBuildJobsTopic = this.hazelcastInstance.getTopic("canceledBuildJobsTopic");
+            this.canceledBuildJobsTopic = this.distributedDataProvider.getTopic("canceledBuildJobsTopic");
         }
         return this.canceledBuildJobsTopic;
     }
@@ -255,9 +247,9 @@ public class DistributedDataAccessService {
      * @return ITopic for pausing build agents
      *         The topic is initialized lazily the first time this method is called if it is still null.
      */
-    public ITopic<String> getPauseBuildAgentTopic() {
+    public DistributedTopic<String> getPauseBuildAgentTopic() {
         if (this.pauseBuildAgentTopic == null) {
-            this.pauseBuildAgentTopic = this.hazelcastInstance.getTopic("pauseBuildAgentTopic");
+            this.pauseBuildAgentTopic = this.distributedDataProvider.getTopic("pauseBuildAgentTopic");
         }
         return this.pauseBuildAgentTopic;
     }
@@ -266,9 +258,9 @@ public class DistributedDataAccessService {
      * @return ITopic for resuming build agents
      *         The topic is initialized lazily the first time this method is called if it is still null.
      */
-    public ITopic<String> getResumeBuildAgentTopic() {
+    public DistributedTopic<String> getResumeBuildAgentTopic() {
         if (this.resumeBuildAgentTopic == null) {
-            this.resumeBuildAgentTopic = this.hazelcastInstance.getTopic("resumeBuildAgentTopic");
+            this.resumeBuildAgentTopic = this.distributedDataProvider.getTopic("resumeBuildAgentTopic");
         }
         return this.resumeBuildAgentTopic;
     }
@@ -306,9 +298,9 @@ public class DistributedDataAccessService {
     }
 
     /**
-     * Checks if the Hazelcast instance is active and operational.
+     * Checks if the instance is active and operational.
      *
-     * @return {@code true} if the Hazelcast instance has been initialized and is actively running,
+     * @return {@code true} if the instance has been initialized and is actively running,
      *         {@code false} if the instance has not been initialized or is no longer running
      */
     public boolean isInstanceRunning() {
@@ -316,14 +308,14 @@ public class DistributedDataAccessService {
     }
 
     /**
-     * @return the address of the local Hazelcast member
+     * @return the address of the local member
      */
     public String getLocalMemberAddress() {
         return distributedDataProvider.getLocalMemberAddress();
     }
 
     /**
-     * Retrieves the addresses of all members in the Hazelcast cluster.
+     * Retrieves the addresses of all members in the cluster.
      *
      * @return a set of addresses of all cluster members
      */
