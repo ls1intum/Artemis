@@ -18,7 +18,6 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationService;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -185,8 +184,6 @@ public class ProgrammingMessagingService {
 
     /**
      * Notify Iris about the submission status for the given result and student participation.
-     * Only notifies if the user has accepted Iris, the exercise is not an exam exercise, and the exercise chat is enabled in the exercise settings
-     * NOTE: we check those settings early to prevent unnecessary database queries and exceptions later on in most cases. More sophisticated checks are done in the Iris service.
      * <p>
      * If the submission was successful, Iris will be informed about the successful submission.
      * If the submission failed, Iris will be informed about the submission failure.
@@ -196,22 +193,15 @@ public class ProgrammingMessagingService {
      * @param studentParticipation the student participation for which Iris should be informed about the submission status
      */
     private void notifyIrisAboutSubmissionStatus(Result result, ProgrammingExerciseStudentParticipation studentParticipation) {
-        if (studentParticipation.getParticipant() instanceof User user) {
-            pyrisEventApi.ifPresent(eventApi -> {
-                final var exercise = studentParticipation.getExercise();
-                if (user.hasAcceptedExternalLLMUsage() && !exercise.isExamExercise()
-                        && irisSettingsApi.map(api -> api.isProgrammingExerciseChatEnabled(exercise.getId())).orElse(false)) {
-                    // Inform event service about the new result
-                    try {
-                        // This is done asynchronously to prevent blocking the current thread
-                        eventApi.trigger(new NewResultEvent(result));
-                    }
-                    catch (Exception e) {
-                        log.error("Could not trigger service for result {}", result.getId(), e);
-                    }
-                }
-            });
-        }
+        pyrisEventApi.ifPresent(eventApi -> {
+            // Inform event service about the new result
+            try {
+                eventApi.trigger(new NewResultEvent(result));
+            }
+            catch (Exception e) {
+                log.error("Could not trigger service for result {}", result.getId(), e);
+            }
+        });
     }
 
     /**
