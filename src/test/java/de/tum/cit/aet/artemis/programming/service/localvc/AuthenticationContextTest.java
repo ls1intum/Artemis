@@ -11,7 +11,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.apache.sshd.server.session.ServerSession;
 import org.junit.jupiter.api.Test;
 
-class AuthenticationContextTest {
+import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationIndependentTest;
+
+class AuthenticationContextTest extends AbstractProgrammingIntegrationIndependentTest {
 
     @Test
     void testSessionContext_getIpAddress() {

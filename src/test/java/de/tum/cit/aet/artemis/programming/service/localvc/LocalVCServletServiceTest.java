@@ -28,14 +28,13 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.repository.ParticipationVCSAccessTokenRepository;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.AuxiliaryRepositoryService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
@@ -43,6 +42,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryAccessService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTriggerService;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 
 @ExtendWith(MockitoExtension.class)
@@ -52,10 +52,10 @@ class LocalVCServletServiceTest {
     private AuthenticationManager authenticationManager;
 
     @Mock
-    private UserRepository userRepository;
+    private UserTestRepository userRepository;
 
     @Mock
-    private ProgrammingExerciseRepository programmingExerciseRepository;
+    private ProgrammingExerciseTestRepository programmingExerciseRepository;
 
     @Mock
     private RepositoryAccessService repositoryAccessService;
