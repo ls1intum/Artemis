@@ -64,7 +64,7 @@ public class LocalCIEventListenerService {
      */
     @EventListener(ApplicationReadyEvent.class)
     public void init() {
-        distributedDataAccessService.getDistributedQueuedJobs().addItemListener(new QueuedBuildJobItemListener(), true);
+        distributedDataAccessService.getDistributedBuildJobQueue().addItemListener(new QueuedBuildJobItemListener(), true);
         distributedDataAccessService.getDistributedProcessingJobs().addEntryListener(new ProcessingBuildJobItemListener(), true);
         distributedDataAccessService.getDistributedBuildAgentInformation().addEntryListener(new BuildAgentListener(), true);
     }
