@@ -425,8 +425,8 @@ public class ProgrammingPlagiarismDetectionService {
         var progressMessage = "Processing repositories: " + downloadedRepositories.size() + " valid out of " + maxRepositories + " total";
         plagiarismWebsocketService.notifyInstructorAboutPlagiarismState(topic, PlagiarismCheckState.RUNNING, List.of(progressMessage));
 
-        log.info("Downloaded and filtered {} repositories out of {} participations for exercise {} (minimum token size: {} tokens, minimum score: {})",
-                downloadedRepositories.size(), participations.size(), programmingExercise.getId(), minimumSize, minimumScore);
+        log.info("Downloaded and filtered {} repositories out of {} participations for exercise {} (minimum token size: {} tokens)", downloadedRepositories.size(),
+                participations.size(), programmingExercise.getId(), minimumSize);
 
         return downloadedRepositories;
     }
