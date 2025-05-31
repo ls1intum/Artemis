@@ -9,9 +9,10 @@ export class DraftService {
     private localStorageService = inject(LocalStorageService);
 
     saveDraft(key: string, content: string): void {
+        const trimmedContent = content.trim();
         if (key && key !== '' && content && content.trim()) {
             const draftData: DraftData = {
-                content,
+                content: trimmedContent,
                 timestamp: Date.now(),
             };
             this.localStorageService.store(key, JSON.stringify(draftData));
@@ -26,7 +27,14 @@ export class DraftService {
             if (raw) {
                 try {
                     const draftData: DraftData = JSON.parse(raw);
-                    if (typeof draftData === 'object') {
+                    if (
+                        typeof draftData === 'object' &&
+                        draftData !== null &&
+                        'content' in draftData &&
+                        'timestamp' in draftData &&
+                        typeof draftData.content === 'string' &&
+                        typeof draftData.timestamp === 'number'
+                    ) {
                         // Check expiry
                         if (Date.now() - draftData.timestamp > DRAFT_EXPIRY_MS) {
                             this.clearDraft(key);
