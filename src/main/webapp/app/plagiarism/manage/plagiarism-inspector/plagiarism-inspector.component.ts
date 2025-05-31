@@ -383,13 +383,24 @@ export class PlagiarismInspectorComponent implements OnInit {
         }
     }
 
+    getMinimumSizeLabel() {
+        switch (this.exercise.type) {
+            case ExerciseType.PROGRAMMING: {
+                return 'artemisApp.plagiarism.minimumTokenCount';
+            }
+            case ExerciseType.TEXT: {
+                return 'artemisApp.plagiarism.minimumSize';
+            }
+        }
+    }
+
     /**
      * Return the translation identifier of the minimum size tooltip for the current exercise type.
      */
     getMinimumSizeTooltip() {
         switch (this.exercise.type) {
             case ExerciseType.PROGRAMMING: {
-                return 'artemisApp.plagiarism.minimumSizeTooltipProgrammingExercise';
+                return 'artemisApp.plagiarism.minimumTokenCountTooltipProgrammingExercise';
             }
             case ExerciseType.TEXT: {
                 return 'artemisApp.plagiarism.minimumSizeTooltipTextExercise';
