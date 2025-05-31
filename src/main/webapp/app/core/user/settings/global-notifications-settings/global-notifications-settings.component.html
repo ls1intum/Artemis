@@ -1,0 +1,44 @@
+<h1 jhiTranslate="artemisApp.userSettings.globalNotificationSettings.title"></h1>
+<p class="text-muted" jhiTranslate="artemisApp.userSettings.globalNotificationSettings.description"></p>
+@if (notificationSettings) {
+    <div class="list-group d-block">
+        @for (type of notificationTypes; track type) {
+            @if (isSettingAvailable(type)) {
+                <div class="list-group-item">
+                    <dt>
+                        <div class="form-check form-switch d-flex justify-content-between align-items-center">
+                            <div>
+                                <input
+                                    type="checkbox"
+                                    class="form-check-input"
+                                    [id]="'notification-' + type"
+                                    [name]="'notification-' + type"
+                                    [(ngModel)]="notificationSettings[type]"
+                                    (ngModelChange)="updateSetting(type, $event)"
+                                />
+                                <label class="form-check-label" [for]="'notification-' + type" jhiTranslate="{{ getNotificationTypeLabel(type) }}"></label>
+                            </div>
+                            @if (type === GLOBAL_NOTIFICATION_TYPES.NEW_PASSKEY_ADDED) {
+                                <a [routerLink]="['/user-settings', 'passkeys']" class="small text-end">
+                                    <span jhiTranslate="artemisApp.userSettings.globalNotificationSettings.viewPasskeySettings"></span>
+                                </a>
+                            } @else if (type === GLOBAL_NOTIFICATION_TYPES.VCS_TOKEN_EXPIRED) {
+                                <a [routerLink]="['/user-settings', 'vcs-token']" class="small text-end">
+                                    <span jhiTranslate="artemisApp.userSettings.globalNotificationSettings.viewVcsTokenSettings"></span>
+                                </a>
+                            } @else if (type === GLOBAL_NOTIFICATION_TYPES.SSH_KEY_EXPIRED) {
+                                <a [routerLink]="['/user-settings', 'ssh']" class="small text-end">
+                                    <span jhiTranslate="artemisApp.userSettings.globalNotificationSettings.viewSshKeySettings"></span>
+                                </a>
+                            }
+                        </div>
+                    </dt>
+                </div>
+            }
+        }
+    </div>
+} @else {
+    <div class="d-flex justify-content-center">
+        <fa-icon [icon]="faSpinner" animation="spin" />
+    </div>
+}
