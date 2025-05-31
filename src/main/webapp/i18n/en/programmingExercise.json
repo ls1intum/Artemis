@@ -664,11 +664,11 @@
                 "lineStatBetweenSubmissionsPreviousSubmissionLabel": " and the previous submission with commit hash <span class=\"font-italic text-info\"> {{ previousCommitHash }} </span>",
                 "lineStatBetweenSubmissionsTemplateLabel": "and the template",
                 "lineStatTooltipExamTimeline": "Unfiltered lines that were added and removed when comparing the current and the previous submission.",
-                "lineStatTooltipFullReportExamTimeline": "Filtered lines that were added and removed when comparing the current and the previous submission. This excludes empty lines.",
-                "lineStatTooltipFullEntryExamTimeline": "Filtered lines that were added and removed when comparing the current and the previous submission of this file. This excludes empty lines.",
+                "lineStatTooltipFullReportExamTimeline": "Filtered lines that were added and removed when comparing the current and the previous submission.",
+                "lineStatTooltipFullEntryExamTimeline": "Filtered lines that were added and removed when comparing the current and the previous submission of this file.",
                 "lineStatTooltipDetailPage": "Unfiltered lines that were added and removed when comparing the template and solution repositories",
-                "lineStatTooltipFullReport": "Filtered lines that were added and removed when comparing the template and solution repositories. This excludes empty lines.",
-                "lineStatTooltipFullEntry": "Filtered lines that were added and removed when comparing the template and solution versions of this file. This excludes empty lines."
+                "lineStatTooltipFullReport": "Filtered lines that were added and removed when comparing the template and solution repositories.",
+                "lineStatTooltipFullEntry": "Filtered lines that were added and removed when comparing the template and solution versions of this file."
             },
             "projectTypes": {
                 "PLAIN_GRADLE": "Gradle",
