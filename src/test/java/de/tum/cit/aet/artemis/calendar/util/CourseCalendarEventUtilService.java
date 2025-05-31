@@ -44,6 +44,10 @@ public class CourseCalendarEventUtilService {
             event.setTitle("Weekly Session " + (i + 1));
             event.setStartDate(eventStart);
             event.setEndDate(eventEnd);
+            event.setVisibleToStudents(true);
+            event.setVisibleToTutors(true);
+            event.setVisibleToEditors(true);
+            event.setVisibleToInstructors(true);
             events.add(event);
         }
         return courseCalendarEventRepository.saveAll(events);

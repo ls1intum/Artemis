@@ -15,7 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import com.fasterxml.jackson.core.type.TypeReference;
 
 import de.tum.cit.aet.artemis.calendar.domain.CourseCalendarEvent;
-import de.tum.cit.aet.artemis.calendar.dto.CalendarEventDTO;
+import de.tum.cit.aet.artemis.calendar.dto.CalendarEventReadDTO;
 import de.tum.cit.aet.artemis.calendar.repository.CourseCalendarEventRepository;
 import de.tum.cit.aet.artemis.calendar.util.CourseCalendarEventUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -52,7 +52,7 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
 
     static final String TEST_TIMEZONE = "Europe/Berlin";
 
-    static final TypeReference<Map<String, List<CalendarEventDTO>>> GET_EVENTS_RETURN_TYPE = new TypeReference<Map<String, List<CalendarEventDTO>>>() {
+    static final TypeReference<Map<String, List<CalendarEventReadDTO>>> GET_EVENTS_RETURN_TYPE = new TypeReference<Map<String, List<CalendarEventReadDTO>>>() {
     };
 
     Course course;

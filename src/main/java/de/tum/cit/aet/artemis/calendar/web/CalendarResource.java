@@ -27,7 +27,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.calendar.dto.CalendarEventDTO;
+import de.tum.cit.aet.artemis.calendar.dto.CalendarEventReadDTO;
+import de.tum.cit.aet.artemis.calendar.dto.CalendarEventWriteDTO;
 import de.tum.cit.aet.artemis.calendar.service.CalendarEventFilteringService;
 import de.tum.cit.aet.artemis.calendar.service.CourseCalendarEventService;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -80,48 +81,49 @@ public class CalendarResource {
      */
     @GetMapping("calendar-events")
     @EnforceAtLeastStudent
-    public ResponseEntity<Map<String, List<CalendarEventDTO>>> getCalendarEventsOfMonths(@RequestParam List<String> monthKeys, @RequestParam String timeZone) {
+    public ResponseEntity<Map<String, List<CalendarEventReadDTO>>> getCalendarEventsOfMonths(@RequestParam List<String> monthKeys, @RequestParam String timeZone) {
         log.debug("REST request to get calendar events falling into: {}", monthKeys);
         Set<YearMonth> months = calendarEventFilteringService.deserializeMonthKeysOrElseThrow(monthKeys);
         ZoneId clientTimeZone = calendarEventFilteringService.deserializeTimeZoneOrElseThrow(timeZone);
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
-        Set<CalendarEventDTO> tutorialEventDTOs = tutorialGroupApi.getTutorialEventsForUser(user, clientTimeZone);
-        Set<CalendarEventDTO> courseEventDTOs = courseCalendarEventService.getCourseEventsForUser(user, clientTimeZone);
-        Set<CalendarEventDTO> calendarEventDTOs = Stream.concat(tutorialEventDTOs.stream(), courseEventDTOs.stream()).collect(Collectors.toSet());
-        Set<CalendarEventDTO> filteredEventDTOs = calendarEventFilteringService.filterForEventsOverlappingMonths(calendarEventDTOs, months, clientTimeZone);
+        Set<CalendarEventReadDTO> tutorialEventReadDTOs = tutorialGroupApi.getTutorialEventsForUser(user, clientTimeZone);
+        Set<CalendarEventReadDTO> courseEventReadDTOs = courseCalendarEventService.getCourseEventsForUser(user, clientTimeZone);
+        Set<CalendarEventReadDTO> calendarEventReadDTOS = Stream.concat(tutorialEventReadDTOs.stream(), courseEventReadDTOs.stream()).collect(Collectors.toSet());
+        Set<CalendarEventReadDTO> filteredDTOs = calendarEventFilteringService.filterForEventsOverlappingMonths(calendarEventReadDTOS, months, clientTimeZone);
 
-        Map<String, List<CalendarEventDTO>> eventDTOsByDay = filteredEventDTOs.stream().collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
-        return ResponseEntity.ok(eventDTOsByDay);
+        Map<String, List<CalendarEventReadDTO>> calendarEventReadDTOSByDay = filteredDTOs.stream().collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
+        return ResponseEntity.ok(calendarEventReadDTOSByDay);
     }
 
     @PostMapping("courses/{courseId}/course-calendar-events")
     @EnforceAtLeastEditor
-    public ResponseEntity<Set<CalendarEventDTO>> createCourseCalendarEvent(@PathVariable Long courseId, @RequestBody @Valid List<CalendarEventDTO> calendarEventDTOs) {
-        log.debug("REST request to create CourseCalendarEvents: {} in course: {}", calendarEventDTOs, courseId);
+    public ResponseEntity<Set<CalendarEventWriteDTO>> createCourseCalendarEvents(@PathVariable Long courseId,
+            @RequestBody @Valid List<CalendarEventWriteDTO> calendarEventWriteDTOs) {
+        log.debug("REST request to create CourseCalendarEvents: {} in course: {}", calendarEventWriteDTOs, courseId);
 
         Course course = courseRepository.findByIdElseThrow(courseId);
         User responsibleUser = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, responsibleUser);
 
-        Set<CalendarEventDTO> createdCalendarEventDTOs = courseCalendarEventService.createCourseCalendarEventsOrThrow(calendarEventDTOs, course);
+        Set<CalendarEventWriteDTO> createdCalendarEventWriteDTOs = courseCalendarEventService.createCourseCalendarEventsOrThrow(calendarEventWriteDTOs, course);
 
-        return ResponseEntity.ok(createdCalendarEventDTOs);
+        return ResponseEntity.ok(createdCalendarEventWriteDTOs);
     }
 
     @PutMapping("courses/{courseId}/course-calendar-event")
     @EnforceAtLeastEditor
-    public ResponseEntity<CalendarEventDTO> updateCourseCalendarEvent(@PathVariable Long courseId, @Valid @RequestBody CalendarEventDTO calendarEventDTO) {
-        log.debug("REST request to update CourseCalendarEvent: {}", calendarEventDTO);
+    public ResponseEntity<CalendarEventWriteDTO> updateCourseCalendarEvent(@PathVariable Long courseId, @Valid @RequestBody CalendarEventWriteDTO calendarEventWriteDTO) {
+        log.debug("REST request to update CourseCalendarEvent: {}", calendarEventWriteDTO);
 
         Course course = courseRepository.findByIdElseThrow(courseId);
         User responsibleUser = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, responsibleUser);
 
-        CalendarEventDTO updatedCalendarEventDTO = courseCalendarEventService.updateCourseCalendarEventOrThrow(calendarEventDTO);
+        CalendarEventWriteDTO updatedCalendarEventWriteDTO = courseCalendarEventService.updateCourseCalendarEventOrThrow(calendarEventWriteDTO);
 
-        return ResponseEntity.ok(updatedCalendarEventDTO);
+        return ResponseEntity.ok(updatedCalendarEventWriteDTO);
     }
 
     @DeleteMapping("courses/{courseId}/course-calendar-event/{courseCalendarEventId}")

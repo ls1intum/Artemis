@@ -14,18 +14,18 @@ import jakarta.ws.rs.BadRequestException;
 
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.calendar.dto.CalendarEventDTO;
+import de.tum.cit.aet.artemis.calendar.dto.CalendarEventReadDTO;
 
 @Service
 public class CalendarEventFilteringService {
 
-    public Set<CalendarEventDTO> filterForEventsOverlappingMonths(Set<CalendarEventDTO> eventDTOs, Set<YearMonth> months, ZoneId clientZone) {
+    public Set<CalendarEventReadDTO> filterForEventsOverlappingMonths(Set<CalendarEventReadDTO> eventDTOs, Set<YearMonth> months, ZoneId clientZone) {
         return eventDTOs.stream().filter(eventDTO -> months.stream().anyMatch(month -> areMonthAndEventOverlapping(month, eventDTO, clientZone))).collect(Collectors.toSet());
     }
 
-    private boolean areMonthAndEventOverlapping(YearMonth month, CalendarEventDTO calendarEventDTO, ZoneId clientZone) {
-        ZonedDateTime eventStart = calendarEventDTO.startDate();
-        ZonedDateTime eventEnd = calendarEventDTO.endDate();
+    private boolean areMonthAndEventOverlapping(YearMonth month, CalendarEventReadDTO calendarEventReadDTO, ZoneId clientZone) {
+        ZonedDateTime eventStart = calendarEventReadDTO.startDate();
+        ZonedDateTime eventEnd = calendarEventReadDTO.endDate();
         ZonedDateTime monthStart = ZonedDateTime.of(month.atDay(1), LocalTime.MIDNIGHT, clientZone).withZoneSameInstant(ZoneOffset.UTC);
         ZonedDateTime monthEnd = ZonedDateTime.of(month.atEndOfMonth(), LocalTime.of(23, 59, 59, 999_000_000), clientZone).withZoneSameInstant(ZoneOffset.UTC);
 

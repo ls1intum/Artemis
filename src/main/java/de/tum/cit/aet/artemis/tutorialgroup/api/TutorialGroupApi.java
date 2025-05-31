@@ -6,7 +6,7 @@ import java.util.Set;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Controller;
 
-import de.tum.cit.aet.artemis.calendar.dto.CalendarEventDTO;
+import de.tum.cit.aet.artemis.calendar.dto.CalendarEventReadDTO;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
@@ -43,7 +43,7 @@ public class TutorialGroupApi extends AbstractTutorialGroupApi {
         tutorialGroupRepository.deleteById(id);
     }
 
-    public Set<CalendarEventDTO> getTutorialEventsForUser(User user, ZoneId clientTimeZone) {
+    public Set<CalendarEventReadDTO> getTutorialEventsForUser(User user, ZoneId clientTimeZone) {
         return tutorialGroupService.getTutorialEventsForUser(user, clientTimeZone);
     }
 }

@@ -40,6 +40,18 @@ public class CourseCalendarEvent extends DomainObject {
     @Column(name = "facilitator")
     private String facilitator;
 
+    @Column(name = "visible_to_students")
+    private boolean visibleToStudents;
+
+    @Column(name = "visible_to_tutors")
+    private boolean visibleToTutors;
+
+    @Column(name = "visible_to_editors")
+    private boolean visibleToEditors;
+
+    @Column(name = "visible_to_instructors")
+    private boolean visibleToInstructors;
+
     public Course getCourse() {
         return course;
     }
@@ -86,5 +98,37 @@ public class CourseCalendarEvent extends DomainObject {
 
     public void setFacilitator(String facilitator) {
         this.facilitator = facilitator;
+    }
+
+    public boolean isVisibleToStudents() {
+        return visibleToStudents;
+    }
+
+    public void setVisibleToStudents(boolean visibleToStudents) {
+        this.visibleToStudents = visibleToStudents;
+    }
+
+    public boolean isVisibleToTutors() {
+        return visibleToTutors;
+    }
+
+    public void setVisibleToTutors(boolean visibleToTutors) {
+        this.visibleToTutors = visibleToTutors;
+    }
+
+    public boolean isVisibleToEditors() {
+        return visibleToEditors;
+    }
+
+    public void setVisibleToEditors(boolean visibleToEditors) {
+        this.visibleToEditors = visibleToEditors;
+    }
+
+    public boolean isVisibleToInstructors() {
+        return visibleToInstructors;
+    }
+
+    public void setVisibleToInstructors(boolean visibleToInstructors) {
+        this.visibleToInstructors = visibleToInstructors;
     }
 }
