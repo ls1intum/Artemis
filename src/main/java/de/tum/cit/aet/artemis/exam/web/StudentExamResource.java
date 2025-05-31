@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.context.annotation.Conditional;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -783,7 +784,7 @@ public class StudentExamResource {
         final var ipAddress = !storeSessionDataInStudentExamSession ? null : HttpRequestUtils.getIpAddressFromRequest(request).orElse(null);
         final String browserFingerprint = !storeSessionDataInStudentExamSession ? null : request.getHeader("X-Artemis-Client-Fingerprint");
         final String instanceId = !storeSessionDataInStudentExamSession ? null : request.getHeader("X-Artemis-Client-Instance-ID");
-        final String userAgent = !storeSessionDataInStudentExamSession ? null : request.getHeader("User-Agent");
+        final String userAgent = !storeSessionDataInStudentExamSession ? null : request.getHeader(HttpHeaders.USER_AGENT);
         ExamSession examSession = this.examSessionService.startExamSession(studentExam, browserFingerprint, userAgent, instanceId, ipAddress);
         examSession.hideDetails();
         examSession.setInitialSession(this.examSessionService.checkExamSessionIsInitial(studentExam.getId()));
