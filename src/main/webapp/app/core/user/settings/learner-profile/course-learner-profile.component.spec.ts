@@ -42,6 +42,8 @@ describe('CourseLearnerProfileComponent', () => {
     clp1.aimForGradeOrBonus = 2;
     clp1.timeInvestment = 2;
     clp1.repetitionIntensity = 2;
+    clp1.proficiency = 2;
+    clp1.initialProficiency = 2;
 
     const clp2 = new CourseLearnerProfileDTO();
     clp2.id = 2;
@@ -50,6 +52,8 @@ describe('CourseLearnerProfileComponent', () => {
     clp2.aimForGradeOrBonus = 1;
     clp2.timeInvestment = 1;
     clp2.repetitionIntensity = 1;
+    clp2.proficiency = 3;
+    clp2.initialProficiency = 3;
     const profiles = [clp1, clp2];
 
     beforeEach(async () => {

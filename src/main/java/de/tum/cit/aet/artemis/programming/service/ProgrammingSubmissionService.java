@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROGRAMMING_GRACE_PERIOD_SECONDS;
 import static de.tum.cit.aet.artemis.core.config.Constants.SETUP_COMMIT_MESSAGE;
 
+import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -647,5 +648,26 @@ public class ProgrammingSubmissionService extends SubmissionService {
         submission.setCommitHash(latestHash.getName());
         submission.setSubmissionDate(ZonedDateTime.now());
         submissionRepository.save(submission);
+    }
+
+    /**
+     * Calculates the lines changed between a give submission and its predecessor.
+     *
+     * @param programmingSubmission Base programming submission
+     * @return The lines changed
+     */
+    public int calculateLinesChangedToPreviousSubmission(ProgrammingSubmission programmingSubmission) {
+        Optional<Submission> previousSubmission = submissionRepository.findFirstByParticipationIdAndSubmissionDateBeforeOrderBySubmissionDateDesc(
+                programmingSubmission.getParticipation().getId(), programmingSubmission.getSubmissionDate());
+        return previousSubmission.map((prevSub) -> {
+            try {
+                return programmingExerciseGitDiffReportService.generateReportForSubmissions(programmingSubmission, (ProgrammingSubmission) prevSub).getEntries().stream().mapToInt(
+                        (entry) -> ((entry.getPreviousLineCount() != null) ? entry.getPreviousLineCount() : 0) + ((entry.getLineCount() != null) ? entry.getLineCount() : 0)).sum();
+            }
+            catch (IOException e) {
+                log.error("Could not retrieve diff between submissions.");
+                return 0;
+            }
+        }).orElseGet(() -> 0);
     }
 }

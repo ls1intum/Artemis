@@ -1,6 +1,12 @@
 <!-- Header section with title -->
 <div class="d-flex justify-content-between">
     <h2 jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.title"></h2>
+    @if (editing) {
+        <button type="button" class="btn btn-primary" id="apply-changes-button" (click)="onProfileSave()">
+            <fa-icon class="ng" [icon]="faSave" />
+            <span jhiTranslate="artemisApp.userSettings.saveChanges"></span>
+        </button>
+    }
 </div>
 <hr />
 
@@ -37,6 +43,18 @@
             <div class="title" jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.repetitionIntensity.label"></div>
             <div class="description" jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.repetitionIntensity.description"></div>
             <jhi-segmented-toggle [options]="repetitionIntensityOptions" [(selected)]="repetitionIntensity" (selectedChange)="onToggleChange()" />
+        </div>
+        <div class="col">
+            <div class="title" jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.proficiency.label"></div>
+            <div class="description" jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.proficiency.description"></div>
+            <jhi-double-slider
+                [step]="0.1"
+                [min]="CourseLearnerProfileDTO.MIN_VALUE"
+                [max]="CourseLearnerProfileDTO.MAX_VALUE"
+                [initialValue]="initialProficiency"
+                [(currentValue)]="proficiency"
+                (currentValueChange)="this.editing = true"
+            />
         </div>
     </div>
 </div>

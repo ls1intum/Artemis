@@ -47,4 +47,8 @@ public class LearnerProfileApi extends AbstractAtlasApi {
     public void deleteProfile(User user) {
         learnerProfileService.deleteProfile(user);
     }
+
+    public void updateProficiency(Set<User> users, Course course, int linesChanged, int linesChangedInTemplate, double score) {
+        courseLearnerProfileService.updateProficiency(users, course, linesChanged, linesChangedInTemplate, score);
+    }
 }
