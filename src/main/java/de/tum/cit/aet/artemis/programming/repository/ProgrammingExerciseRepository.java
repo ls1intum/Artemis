@@ -129,22 +129,37 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     @EntityGraph(type = LOAD, attributePaths = "submissionPolicy")
     List<ProgrammingExercise> findWithSubmissionPolicyByProjectKey(String projectKey);
 
+    @EntityGraph(type = LOAD, attributePaths = "buildConfig")
+    List<ProgrammingExercise> findWithBuildConfigByProjectKey(String projectKey);
+
+    @EntityGraph(type = LOAD, attributePaths = { "submissionPolicy", "buildConfig" })
+    List<ProgrammingExercise> findWithSubmissionPolicyAndBuildConfigByProjectKey(String projectKey);
+
     /**
      * Finds one programming exercise including its submission policy by the exercise's project key.
      *
      * @param projectKey           the project key of the programming exercise.
      * @param withSubmissionPolicy whether the submission policy should be included in the result.
+     * @param withBuildConfig      whether the build policy should be included in the result.
      * @return the programming exercise.
      * @throws EntityNotFoundException if no programming exercise or multiple exercises with the given project key exist.
      */
-    default ProgrammingExercise findOneByProjectKeyOrThrow(String projectKey, boolean withSubmissionPolicy) throws EntityNotFoundException {
+    default ProgrammingExercise findOneByProjectKeyOrThrow(String projectKey, boolean withSubmissionPolicy, boolean withBuildConfig) throws EntityNotFoundException {
         List<ProgrammingExercise> exercises;
-        if (withSubmissionPolicy) {
+
+        if (withSubmissionPolicy && withBuildConfig) {
+            exercises = findWithSubmissionPolicyAndBuildConfigByProjectKey(projectKey);
+        }
+        else if (withSubmissionPolicy) {
             exercises = findWithSubmissionPolicyByProjectKey(projectKey);
+        }
+        else if (withBuildConfig) {
+            exercises = findWithBuildConfigByProjectKey(projectKey);
         }
         else {
             exercises = findAllByProjectKey(projectKey);
         }
+
         if (exercises.size() != 1) {
             throw new EntityNotFoundException("No exercise or multiple exercises found for the given project key: " + projectKey);
         }
@@ -152,9 +167,23 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     }
 
     /**
-     * Get a programmingExercise with template participation, each with the latest result and feedbacks.
-     * NOTICE: this query is quite expensive because it loads all feedback and test cases, and it includes sub queries to retrieve the latest result
-     * IMPORTANT: you should generally avoid using this query except you really need all information!!
+     * Finds one programming exercise including its submission policy by the exercise's project key.
+     *
+     * @param projectKey           the project key of the programming exercise.
+     * @param withSubmissionPolicy whether the submission policy should be included in the result.
+     * @return the programming exercise.
+     * @throws EntityNotFoundException if no programming exercise or multiple exercises with the given project key
+     *                                     exist.
+     */
+    default ProgrammingExercise findOneByProjectKeyOrThrow(String projectKey, boolean withSubmissionPolicy) throws EntityNotFoundException {
+        return findOneByProjectKeyOrThrow(projectKey, withSubmissionPolicy, false);
+    }
+
+    /**
+     * Get a programmingExercise with template participation, each with the latest result and feedbacks. NOTICE: this
+     * query is quite expensive because it loads all feedback and test cases, and it includes sub queries to retrieve
+     * the latest result IMPORTANT: you should generally avoid using this query except you really need all
+     * information!!
      *
      * @param exerciseId the id of the exercise that should be fetched.
      * @return the exercise with the given ID, if found.
@@ -174,9 +203,10 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     Optional<ProgrammingExercise> findWithTemplateParticipationLatestResultFeedbackTestCasesById(@Param("exerciseId") long exerciseId);
 
     /**
-     * Get a programmingExercise with solution participation, each with the latest result and feedbacks.
-     * NOTICE: this query is quite expensive because it loads all feedback and test cases, and it includes sub queries to retrieve the latest result
-     * IMPORTANT: you should generally avoid using this query except you really need all information!!
+     * Get a programmingExercise with solution participation, each with the latest result and feedbacks. NOTICE: this
+     * query is quite expensive because it loads all feedback and test cases, and it includes sub queries to retrieve
+     * the latest result IMPORTANT: you should generally avoid using this query except you really need all
+     * information!!
      *
      * @param exerciseId the id of the exercise that should be fetched.
      * @return the exercise with the given ID, if found.
@@ -377,8 +407,8 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     List<ProgrammingExercise> findAllByDueDateAfterDateWithTestsAfterDueDateWithoutBuildStudentSubmissionsDate(@Param("now") ZonedDateTime now);
 
     /**
-     * Returns the programming exercises that are part of an exam with an end date after than the provided date.
-     * This method also fetches the exercise group and exam.
+     * Returns the programming exercises that are part of an exam with an end date after than the provided date. This
+     * method also fetches the exercise group and exam.
      *
      * @param dateTime ZonedDatetime object.
      * @return List<ProgrammingExercise> (can be empty)
@@ -393,9 +423,9 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     List<ProgrammingExercise> findAllWithEagerExamByExamEndDateAfterDate(@Param("dateTime") ZonedDateTime dateTime);
 
     /**
-     * In distinction to other exercise types, students can have multiple submissions in a programming exercise.
-     * We therefore have to check here that a submission exists, that was submitted before the due date.
-     * Should be used for exam dashboard to ignore test run submissions.
+     * In distinction to other exercise types, students can have multiple submissions in a programming exercise. We
+     * therefore have to check here that a submission exists, that was submitted before the due date. Should be used for
+     * exam dashboard to ignore test run submissions.
      *
      * @param exerciseId the exercise id we are interested in
      * @return the number of distinct submissions belonging to the exercise id
@@ -412,9 +442,9 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     long countLegalSubmissionsByExerciseIdSubmittedIgnoreTestRunSubmissions(@Param("exerciseId") long exerciseId);
 
     /**
-     * In distinction to other exercise types, students can have multiple submissions in a programming exercise.
-     * We therefore have to check here that a submission exists, that was submitted before the due date.
-     * Should be used for exam dashboard to ignore test run submissions.
+     * In distinction to other exercise types, students can have multiple submissions in a programming exercise. We
+     * therefore have to check here that a submission exists, that was submitted before the due date. Should be used for
+     * exam dashboard to ignore test run submissions.
      *
      * @param exerciseIds the exercise ids we are interested in
      * @return list of exercises with the count of distinct submissions belonging to the exercise id
@@ -435,9 +465,9 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     List<ExerciseMapEntryDTO> countSubmissionsByExerciseIdsSubmittedIgnoreTestRun(@Param("exerciseIds") Set<Long> exerciseIds);
 
     /**
-     * In distinction to other exercise types, students can have multiple submissions in a programming exercise.
-     * We therefore have to check here that a submission exists, that was submitted before the due date.
-     * Should be used for exam dashboard to ignore test run submissions.
+     * In distinction to other exercise types, students can have multiple submissions in a programming exercise. We
+     * therefore have to check here that a submission exists, that was submitted before the due date. Should be used for
+     * exam dashboard to ignore test run submissions.
      *
      * @param exerciseId the exercise id we are interested in
      * @return the number of distinct submissions belonging to the exercise id that are assessed
@@ -457,12 +487,13 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     long countAssessmentsByExerciseIdSubmittedIgnoreTestRunSubmissions(@Param("exerciseId") long exerciseId);
 
     /**
-     * In distinction to other exercise types, students can have multiple submissions in a programming exercise.
-     * We therefore have to check here if any submission of the student was submitted before the due date.
+     * In distinction to other exercise types, students can have multiple submissions in a programming exercise. We
+     * therefore have to check here if any submission of the student was submitted before the due date.
      *
      * @param examId the exam id we are interested in
-     * @return the number of the latest submissions belonging to a participation belonging to the exam id, which have the submitted flag set to true and the submission date before
-     *         the exercise due date, or no exercise due date at all (only exercises with manual or semi-automatic correction are considered)
+     * @return the number of the latest submissions belonging to a participation belonging to the exam id, which have
+     *         the submitted flag set to true and the submission date before the exercise due date, or no exercise due date at
+     *         all (only exercises with manual or semi-automatic correction are considered)
      */
     @Query("""
             SELECT COUNT (DISTINCT p)
@@ -475,12 +506,12 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     long countLegalSubmissionsByExamIdSubmitted(@Param("examId") long examId);
 
     /**
-     * In distinction to other exercise types, students can have multiple submissions in a programming exercise.
-     * We therefore have to check here if any submission of the student was submitted before the due date.
+     * In distinction to other exercise types, students can have multiple submissions in a programming exercise. We
+     * therefore have to check here if any submission of the student was submitted before the due date.
      *
      * @param exerciseIds the exercise ids of the course we are interested in
-     * @return the number of submissions belonging to the course id, which have the submitted flag set to true (only exercises with manual or semi-automatic correction are
-     *         considered)
+     * @return the number of submissions belonging to the course id, which have the submitted flag set to true (only
+     *         exercises with manual or semi-automatic correction are considered)
      */
     @Query("""
             SELECT COUNT (DISTINCT p)
@@ -541,7 +572,8 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     long countByTitleAndExerciseGroupExamCourse(String shortName, Course course);
 
     /**
-     * Find a programming exercise by its id, with grading criteria loaded, and throw an EntityNotFoundException if it cannot be found
+     * Find a programming exercise by its id, with grading criteria loaded, and throw an EntityNotFoundException if it
+     * cannot be found
      *
      * @param exerciseId of the programming exercise.
      * @return The programming exercise related to the given id
@@ -577,8 +609,8 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     }
 
     /**
-     * Find a programming exercise by its id and fetch related plagiarism detection config and team config.
-     * Throws an EntityNotFoundException if the exercise cannot be found.
+     * Find a programming exercise by its id and fetch related plagiarism detection config and team config. Throws an
+     * EntityNotFoundException if the exercise cannot be found.
      *
      * @param programmingExerciseId of the programming exercise.
      * @return The programming exercise related to the given id
@@ -589,7 +621,8 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     }
 
     /**
-     * Find a programming exercise with auxiliary repositories by its id and throw an EntityNotFoundException if it cannot be found
+     * Find a programming exercise with auxiliary repositories by its id and throw an EntityNotFoundException if it
+     * cannot be found
      *
      * @param programmingExerciseId of the programming exercise.
      * @return The programming exercise related to the given id
@@ -600,7 +633,8 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     }
 
     /**
-     * Find a programming exercise with auxiliary repositories competencies, and buildConfig by its id and throw an {@link EntityNotFoundException} if it cannot be found
+     * Find a programming exercise with auxiliary repositories competencies, and buildConfig by its id and throw an
+     * {@link EntityNotFoundException} if it cannot be found
      *
      * @param programmingExerciseId of the programming exercise.
      * @return The programming exercise related to the given id
@@ -611,7 +645,8 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     }
 
     /**
-     * Find a programming exercise with the submission policy by its id and throw an EntityNotFoundException if it cannot be found
+     * Find a programming exercise with the submission policy by its id and throw an EntityNotFoundException if it
+     * cannot be found
      *
      * @param programmingExerciseId of the programming exercise.
      * @return The programming exercise related to the given id
@@ -676,7 +711,8 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     }
 
     /**
-     * Find a programming exercise by its id, with eagerly loaded template and solution participation and auxiliary repositories
+     * Find a programming exercise by its id, with eagerly loaded template and solution participation and auxiliary
+     * repositories
      *
      * @param programmingExerciseId of the programming exercise.
      * @return The programming exercise related to the given id
@@ -689,8 +725,8 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
 
     /**
      * @param exerciseId the exercise we are interested in
-     * @return the number of programming submissions which should be assessed
-     *         We don't need to check for the submission date, because students cannot participate in programming exercises with manual assessment after their due date
+     * @return the number of programming submissions which should be assessed We don't need to check for the submission
+     *         date, because students cannot participate in programming exercises with manual assessment after their due date
      */
     default long countLegalSubmissionsByExerciseIdSubmitted(long exerciseId) {
         return countLegalSubmissionsByExerciseIdSubmittedIgnoreTestRunSubmissions(exerciseId);
@@ -698,15 +734,16 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
 
     /**
      * @param exerciseId the exercise we are interested in
-     * @return the number of assessed programming submissions
-     *         We don't need to check for the submission date, because students cannot participate in programming exercises with manual assessment after their due date
+     * @return the number of assessed programming submissions We don't need to check for the submission date, because
+     *         students cannot participate in programming exercises with manual assessment after their due date
      */
     default long countAssessmentsByExerciseIdSubmitted(long exerciseId) {
         return countAssessmentsByExerciseIdSubmittedIgnoreTestRunSubmissions(exerciseId);
     }
 
     /**
-     * Find a programming exercise by its id, with eagerly loaded template and solution participation, team assignment config and categories
+     * Find a programming exercise by its id, with eagerly loaded template and solution participation, team assignment
+     * config and categories
      *
      * @param programmingExerciseId of the programming exercise.
      * @return The programming exercise related to the given id
@@ -718,7 +755,8 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     }
 
     /**
-     * Find a programming exercise by its id, with eagerly loaded template and solution participation, team assignment config, categories and build config
+     * Find a programming exercise by its id, with eagerly loaded template and solution participation, team assignment
+     * config, categories and build config
      *
      * @param programmingExerciseId of the programming exercise.
      * @return The programming exercise related to the given id
@@ -754,7 +792,8 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     }
 
     /**
-     * Find a programming exercise by its id, with eagerly loaded objects required for the creation of a programming exercise.
+     * Find a programming exercise by its id, with eagerly loaded objects required for the creation of a programming
+     * exercise.
      *
      * @param programmingExerciseId of the programming exercise.
      * @return The programming exercise related to the given id
@@ -768,8 +807,8 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     /**
      * Saves the given programming exercise to the database.
      * <p>
-     * When saving a programming exercise Hibernates returns an exercise with references to proxy objects.
-     * Thus, we need to load the objects referenced by the programming exercise again.
+     * When saving a programming exercise Hibernates returns an exercise with references to proxy objects. Thus, we need
+     * to load the objects referenced by the programming exercise again.
      *
      * @param exercise The programming exercise that should be saved.
      * @return The saved programming exercise.
@@ -780,12 +819,12 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     }
 
     /**
-     * Find a programming exercise by its id, with eagerly loaded template and solution participation,
-     * including the latest result with feedback and test cases.
+     * Find a programming exercise by its id, with eagerly loaded template and solution participation, including the
+     * latest result with feedback and test cases.
      * <p>
-     * NOTICE: this query is quite expensive because it loads all feedback and test cases,
-     * and it includes sub queries to retrieve the latest result
-     * IMPORTANT: you should generally avoid using this query except you really need all information!!
+     * NOTICE: this query is quite expensive because it loads all feedback and test cases, and it includes sub queries
+     * to retrieve the latest result IMPORTANT: you should generally avoid using this query except you really need all
+     * information!!
      *
      * @param programmingExerciseId of the programming exercise.
      * @return The programming exercise related to the given id
@@ -813,10 +852,10 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     }
 
     /**
-     * Retrieves the associated ProgrammingExercise for a given ProgrammingExerciseParticipation.
-     * If the ProgrammingExercise is not already loaded, it is fetched from the database and linked
-     * to the specified participation. This method handles different types of participation
-     * (template, solution, student) to optimize database queries and avoid performance bottlenecks.
+     * Retrieves the associated ProgrammingExercise for a given ProgrammingExerciseParticipation. If the
+     * ProgrammingExercise is not already loaded, it is fetched from the database and linked to the specified
+     * participation. This method handles different types of participation (template, solution, student) to optimize
+     * database queries and avoid performance bottlenecks.
      *
      * @param participation the programming exercise participation object; must not be null
      * @return the linked ProgrammingExercise, or null if not found or the participation is not initialized
@@ -844,9 +883,9 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
 
     /**
      * Retrieves the associated ProgrammingExercise with the build config for a given ProgrammingExerciseParticipation.
-     * If the ProgrammingExercise is not already loaded, it is fetched from the database and linked
-     * to the specified participation. This method handles different types of participation
-     * (template, solution, student) to optimize database queries and avoid performance bottlenecks.
+     * If the ProgrammingExercise is not already loaded, it is fetched from the database and linked to the specified
+     * participation. This method handles different types of participation (template, solution, student) to optimize
+     * database queries and avoid performance bottlenecks.
      *
      * @param participation the programming exercise participation object; must not be null
      * @return the linked ProgrammingExercise, or null if not found or the participation is not initialized
@@ -887,9 +926,8 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     }
 
     /**
-     * Validate the programming exercise title.
-     * 1. Check presence and length of exercise title
-     * 2. Find forbidden patterns in exercise title
+     * Validate the programming exercise title. 1. Check presence and length of exercise title 2. Find forbidden
+     * patterns in exercise title
      *
      * @param programmingExercise Programming exercise to be validated
      * @param course              Course of the programming exercise
@@ -915,11 +953,9 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     }
 
     /**
-     * Validates the course and programming exercise short name.
-     * 1. Check presence and length of exercise short name
-     * 2. Check presence and length of course short name
-     * 3. Find forbidden patterns in exercise short name
-     * 4. Check that the short name doesn't already exist withing course or exam exercises
+     * Validates the course and programming exercise short name. 1. Check presence and length of exercise short name 2.
+     * Check presence and length of course short name 3. Find forbidden patterns in exercise short name 4. Check that
+     * the short name doesn't already exist withing course or exam exercises
      *
      * @param programmingExercise Programming exercise to be validated
      * @param course              Course of the programming exercise
@@ -952,9 +988,8 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     }
 
     /**
-     * Validate the general course settings.
-     * 1. Validate the title
-     * 2. Validate the course and programming exercise short name.
+     * Validate the general course settings. 1. Validate the title 2. Validate the course and programming exercise short
+     * name.
      *
      * @param programmingExercise Programming exercise to be validated
      * @param course              Course of the programming exercise
@@ -965,8 +1000,8 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     }
 
     /**
-     * Fetch options for the {@link ProgrammingExercise} entity.
-     * Each option specifies an entity or a collection of entities to fetch eagerly when using a dynamic fetching query.
+     * Fetch options for the {@link ProgrammingExercise} entity. Each option specifies an entity or a collection of
+     * entities to fetch eagerly when using a dynamic fetching query.
      */
     enum ProgrammingExerciseFetchOptions implements FetchOptions {
 
