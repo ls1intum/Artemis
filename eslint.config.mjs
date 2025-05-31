@@ -75,6 +75,8 @@ export default tseslint.config(
                 Buffer: 'readonly',
                 getComputedStyle: 'readonly',
                 MarkdownIt: 'readonly',
+                console: 'readonly',
+                btoa: 'readonly',
             },
         },
         plugins: {
