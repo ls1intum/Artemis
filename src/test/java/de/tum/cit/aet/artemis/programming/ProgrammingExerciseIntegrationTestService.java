@@ -12,10 +12,12 @@ import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyBoolean;
 import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -94,8 +96,10 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus;
 import de.tum.cit.aet.artemis.plagiarism.domain.text.TextPlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismResultDTO;
+import de.tum.cit.aet.artemis.plagiarism.service.ProgrammingPlagiarismDetectionService;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -212,6 +216,9 @@ public class ProgrammingExerciseIntegrationTestService {
 
     @Autowired
     private ProgrammingUtilTestService programmingUtilTestService;
+
+    @Autowired
+    private ProgrammingPlagiarismDetectionService programmingPlagiarismDetectionService;
 
     private Course course;
 
@@ -674,7 +681,7 @@ public class ProgrammingExerciseIntegrationTestService {
         params.add("deleteStudentReposBuildPlans", "true");
         params.add("deleteBaseReposBuildPlans", "true");
 
-        for (final var planName : List.of("student1", "student2", TEMPLATE.getName(), SOLUTION.getName())) {
+        for (final var planName : List.of("student1", "student2", TEMPLATE.getName(), SOLUTION.getName(), RepositoryType.TESTS.getName())) {
             mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(), false);
         }
         mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
@@ -1696,15 +1703,15 @@ public class ProgrammingExerciseIntegrationTestService {
         assertThat(result.plagiarismResult().getExercise().getId()).isEqualTo(programmingExercise.getId());
 
         PlagiarismComparison<?> comparison = result.plagiarismResult().getComparisons().iterator().next();
-        assertThat(comparison.getSimilarity()).isEqualTo(expectedSimilarity, Offset.offset(0.0001));
+        assertThat(comparison.getSimilarity()).isEqualTo(expectedSimilarity, Offset.offset(0.00001));
         assertThat(comparison.getStatus()).isEqualTo(PlagiarismStatus.NONE);
         assertThat(comparison.getMatches()).hasSize(1);
 
         // verify plagiarism result stats
         var stats = result.plagiarismResultStats();
         assertThat(stats.numberOfDetectedSubmissions()).isEqualTo(2);
-        assertThat(stats.averageSimilarity()).isEqualTo(expectedSimilarity, Offset.offset(0.0001));
-        assertThat(stats.maximalSimilarity()).isEqualTo(expectedSimilarity, Offset.offset(0.0001));
+        assertThat(stats.averageSimilarity()).isEqualTo(expectedSimilarity, Offset.offset(0.00001));
+        assertThat(stats.maximalSimilarity()).isEqualTo(expectedSimilarity, Offset.offset(0.00001));
     }
 
     private void prepareTwoStudentAndOneInstructorRepositoriesForPlagiarismChecks(ProgrammingExercise programmingExercise) throws IOException, GitAPIException {
@@ -1774,19 +1781,55 @@ public class ProgrammingExerciseIntegrationTestService {
                 }
                 """;
 
-        Files.createDirectories(plagiarismChecksTestReposDir.toPath().resolve(projectKey));
-        Path file1 = Files.createFile(plagiarismChecksTestReposDir.toPath().resolve(projectKey).resolve("1-Submission1.java"));
-        FileUtils.writeStringToFile(file1.toFile(), exampleProgram, StandardCharsets.UTF_8);
-        Path file2 = Files.createFile(plagiarismChecksTestReposDir.toPath().resolve(projectKey).resolve("2-Submission2.java"));
-        FileUtils.writeStringToFile(file2.toFile(), exampleProgram, StandardCharsets.UTF_8);
+        // Create temporary directories for the mock repositories with proper JPlag structure
+        Path tempDir = Files.createTempDirectory("plagiarism-test-repos");
+        Path projectDir = tempDir.resolve(projectKey);
+        Files.createDirectories(projectDir);
 
-        doReturn(plagiarismChecksTestReposDir.toPath()).when(fileService).getTemporaryUniqueSubfolderPath(any(Path.class), eq(60L));
+        // Create repository directories with simpler names that work with both test cases
+        Path repo1Dir = projectDir.resolve("1-Submission1.java");
+        Path repo2Dir = projectDir.resolve("2-Submission2.java");
+
+        Files.createDirectories(repo1Dir);
+        Files.createDirectories(repo2Dir);
+
+        // Write Java files with the expected names for the test
+        Files.write(repo1Dir.resolve("1-Submission1.java"), exampleProgram.getBytes(StandardCharsets.UTF_8));
+        Files.write(repo2Dir.resolve("2-Submission2.java"), exampleProgram.getBytes(StandardCharsets.UTF_8));
+
+        // Create mock repositories pointing to these directories
+        de.tum.cit.aet.artemis.programming.domain.Repository mockRepo1 = mock(de.tum.cit.aet.artemis.programming.domain.Repository.class);
+        when(mockRepo1.getLocalPath()).thenReturn(repo1Dir);
+
+        de.tum.cit.aet.artemis.programming.domain.Repository mockRepo2 = mock(de.tum.cit.aet.artemis.programming.domain.Repository.class);
+        when(mockRepo2.getLocalPath()).thenReturn(repo2Dir);
+
+        // Mock all Git service methods that the plagiarism detection service uses
+        doAnswer(invocation -> {
+            ProgrammingExerciseParticipation participation = invocation.getArgument(0);
+            // Get all student participations for this exercise
+            var studentParticipations = programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId()).stream()
+                    .filter(p -> p.getParticipant() != null && p.getParticipant().getName() != null && !p.getParticipant().getName().contains("instructor"))
+                    .sorted((p1, p2) -> p1.getId().compareTo(p2.getId())).toList();
+
+            if (!studentParticipations.isEmpty() && participation.getId().equals(studentParticipations.get(0).getId())) {
+                return mockRepo1;
+            }
+            else if (studentParticipations.size() > 1 && participation.getId().equals(studentParticipations.get(1).getId())) {
+                return mockRepo2;
+            }
+            else {
+                // For any other participation (including instructors), return the first repo as fallback
+                return mockRepo1;
+            }
+        }).when(gitService).getOrCheckoutRepositoryForJPlag(any(ProgrammingExerciseParticipation.class), anyString());
+
+        // Mock the other required methods
+        doNothing().when(gitService).resetToOriginHead(any());
+        doNothing().when(gitService).deleteLocalRepository(any(de.tum.cit.aet.artemis.programming.domain.Repository.class));
+
+        doReturn(tempDir).when(fileService).getTemporaryUniqueSubfolderPath(any(Path.class), eq(60L));
         doReturn(null).when(uriService).getRepositorySlugFromRepositoryUri(any());
-
-        var repository1 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile.toPath(), null);
-        var repository2 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile2.toPath(), null);
-        doReturn(repository1).when(gitService).getOrCheckoutRepository(eq(participation1.getVcsRepositoryUri()), anyString(), anyBoolean());
-        doReturn(repository2).when(gitService).getOrCheckoutRepository(eq(participation2.getVcsRepositoryUri()), anyString(), anyBoolean());
     }
 
     void testGetPlagiarismResult() throws Exception {
