@@ -8,6 +8,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 
 import jakarta.annotation.Nullable;
+import jakarta.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,10 +36,10 @@ public class ArtemisSuccessfulLoginService {
 
     private static final Logger log = LoggerFactory.getLogger(ArtemisSuccessfulLoginService.class);
 
-    @Value("${artemis.user-management.password-reset.links.en:${server.url}/account/reset/request}")
+    @Value("${artemis.user-management.password-reset.links.en}")
     private String passwordResetLinkEnUrl;
 
-    @Value("${artemis.user-management.password-reset.links.de:${server.url}/account/reset/request}")
+    @Value("${artemis.user-management.password-reset.links.de}")
     private String passwordResetLinkDeUrl;
 
     @Value("${server.url}")
@@ -47,6 +48,18 @@ public class ArtemisSuccessfulLoginService {
     private final UserRepository userRepository;
 
     private final MailSendingService mailSendingService;
+
+    @PostConstruct
+    public void init() {
+        String defaultPasswordResetLink = artemisServerUrl + "/account/reset/request";
+        String configurationPlaceholder = "<link>";
+        if (passwordResetLinkEnUrl == null || passwordResetLinkEnUrl.isEmpty() || passwordResetLinkEnUrl.equals(configurationPlaceholder)) {
+            passwordResetLinkEnUrl = defaultPasswordResetLink;
+        }
+        if (passwordResetLinkDeUrl == null || passwordResetLinkDeUrl.isEmpty() || passwordResetLinkDeUrl.equals(configurationPlaceholder)) {
+            passwordResetLinkDeUrl = defaultPasswordResetLink;
+        }
+    }
 
     public ArtemisSuccessfulLoginService(UserRepository userRepository, MailSendingService mailSendingService) {
         this.userRepository = userRepository;
