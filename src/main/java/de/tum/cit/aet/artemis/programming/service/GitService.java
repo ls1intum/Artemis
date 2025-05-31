@@ -10,6 +10,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -21,10 +22,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import jakarta.annotation.Nullable;
@@ -61,6 +64,7 @@ import org.eclipse.jgit.lib.RefUpdate;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.filter.CommitTimeRevFilter;
 import org.eclipse.jgit.revwalk.filter.RevFilter;
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.RemoteConfig;
 import org.eclipse.jgit.transport.URIish;
@@ -1268,6 +1272,166 @@ public class GitService extends AbstractGitService {
     public boolean repositoryAlreadyExists(VcsRepositoryUri repoUri) {
         Path localPath = getDefaultLocalPathOfRepo(repoUri);
         return Files.exists(localPath);
+    }
+
+    /**
+     * Creates a new bare Git repository at the specified target path.
+     *
+     * @param targetPath the file system path where the bare repository should be created
+     * @return the newly created Repository instance representing the bare repository
+     * @throws IOException if an I/O error occurs during directory creation or repository setup
+     */
+    private Repository createBareRepository(Path targetPath) throws IOException {
+        Files.createDirectories(targetPath);
+
+        FileRepositoryBuilder builder = new FileRepositoryBuilder();
+        builder.setGitDir(targetPath.toFile()).readEnvironment() // Read git environment variables
+                .findGitDir()      // Setup the git directory
+                .setBare().setup();          // This is important - it initializes the FS
+
+        Repository newRepo = new Repository(builder, targetPath, null);
+        newRepo.create(true);
+
+        return newRepo;
+    }
+
+    /**
+     * Copies all files and directories from sourceDir to targetDir,
+     * excluding the .git directory and its contents.
+     *
+     * @param sourceDir the source directory to copy from
+     * @param targetDir the target directory to copy to
+     * @throws IOException if any IO error occurs during copying
+     */
+    private void copyFilesExcludingGit(Path sourceDir, Path targetDir) throws IOException {
+        try (Stream<Path> paths = Files.walk(sourceDir)) {
+            paths.filter(path -> {
+                // Exclude .git directory and its contents
+                Path relativePath = sourceDir.relativize(path);
+                return !relativePath.startsWith(".git");
+            }).forEach(sourcePath -> {
+                try {
+                    Path relative = sourceDir.relativize(sourcePath);
+                    Path targetPath = targetDir.resolve(relative);
+                    if (Files.isDirectory(sourcePath)) {
+                        if (!Files.exists(targetPath)) {
+                            Files.createDirectories(targetPath);
+                        }
+                    }
+                }
+                catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+            });
+        }
+    }
+
+    /**
+     * Commits all files from a source directory into a bare Git repository as a single commit.
+     *
+     * @param bareRepo       the bare repository where the commit will be pushed
+     * @param sourceFilesDir the source directory containing files to commit
+     * @throws IOException     if an I/O error occurs during file operations or directory cleanup
+     * @throws GitAPIException if a Git operation fails (clone, add, commit, push)
+     */
+    private void commitCopiedFilesIntoRepo(Repository bareRepo, Path sourceFilesDir) throws IOException, GitAPIException {
+        Path tempWorkingDir = Files.createTempDirectory("temp-working-copy");
+
+        try {
+            try (Git git = Git.cloneRepository().setURI(bareRepo.getDirectory().toURI().toString()).setDirectory(tempWorkingDir.toFile()).setBare(false).call()) {
+                copyFilesExcludingGit(sourceFilesDir, tempWorkingDir);
+                git.add().addFilepattern(".").call();
+                GitService.commit(git).setMessage("Initial import without history").call();
+                pushCommand(git).setForce(true).call();
+            }
+        }
+        finally {
+            FileUtils.deleteDirectory(tempWorkingDir.toFile());
+        }
+    }
+
+    /**
+     * Creates a new student repository at the specified target path with a single initial commit
+     * based on the contents of a given template repository.
+     *
+     * @param templateUri the URI of the template Git repository to clone from
+     * @param targetPath  the file system path where the new bare repository will be created
+     * @throws Exception if any error occurs during cloning, copying, repository creation, or committing
+     */
+    public void createStudentRepository(VcsRepositoryUri templateUri, Path targetPath) throws Exception {
+        Path tempTemplateWorkingDir = Paths.get(System.getProperty("java.io.tmpdir"), "template-working-" + UUID.randomUUID());
+        Path tempStudentWorkingDir = Paths.get(System.getProperty("java.io.tmpdir"), "student-working-" + UUID.randomUUID());
+
+        // Delete if exists
+        if (Files.exists(tempTemplateWorkingDir)) {
+            FileUtils.deleteDirectory(tempTemplateWorkingDir.toFile());
+        }
+        Files.createDirectories(tempTemplateWorkingDir);
+
+        if (Files.exists(tempStudentWorkingDir)) {
+            FileUtils.deleteDirectory(tempStudentWorkingDir.toFile());
+        }
+        Files.createDirectories(tempStudentWorkingDir);
+
+        Repository repo = null;
+
+        try {
+            try {
+                repo = getOrCheckoutRepository(templateUri, tempTemplateWorkingDir, true);
+            }
+            catch (GitException e) {
+                if (e.getCause() instanceof TransportException && e.getCause().getMessage().contains("Nothing to fetch")) {
+                    log.warn("Nothing to fetch from remote repository, skipping pull.");
+                    repo = getOrCheckoutRepository(templateUri, tempTemplateWorkingDir, false);
+                }
+                else {
+                    throw e;
+                }
+            }
+            log.debug("Copying files from template to student working directory: {}", tempStudentWorkingDir);
+            copyFilesExcludingGit(tempTemplateWorkingDir, tempStudentWorkingDir);
+            log.debug("Creating bare repository at target location: {}", targetPath);
+            try (Repository bareRepo = createBareRepository(targetPath)) {
+                log.debug("Committing copied files into target repository");
+                commitCopiedFilesIntoRepo(bareRepo, tempStudentWorkingDir);
+            }
+        }
+        catch (Exception e) {
+            log.error("Failed to create student repository", e);
+            throw new GitException("Failed to create single-commit student repository", e);
+        }
+        finally {
+            if (repo != null) {
+                repo.close();
+            }
+            try {
+                FileUtils.deleteDirectory(tempTemplateWorkingDir.toFile());
+                FileUtils.deleteDirectory(tempStudentWorkingDir.toFile());
+            }
+            catch (IOException e) {
+                log.warn("Failed to clean up temporary directories", e);
+            }
+        }
+    }
+
+    /**
+     * Constructs the filesystem path for a student's Git repository based on the project key,
+     * repository name, and attempt number.
+     *
+     * @param targetProjectKey     the key of the project (e.g., course or exercise identifier)
+     * @param targetRepositoryName the name of the target repository (will be lowercased)
+     * @param attempt              the attempt number; if greater than zero, appended to project key unless repository name contains "practice-"
+     * @return the constructed {@link Path} to the student's repository directory
+     */
+    public Path buildStudentRepoPath(String targetProjectKey, String targetRepositoryName, Integer attempt) {
+        String baseDir = localVCBasePath;
+        targetRepositoryName = targetRepositoryName.toLowerCase();
+        String targetProjectKeyLowerCase = targetProjectKey.toLowerCase();
+        if (attempt != null && attempt > 0 && !targetRepositoryName.contains("practice-")) {
+            targetProjectKeyLowerCase = targetProjectKeyLowerCase + attempt;
+        }
+        final String targetRepoSlug = targetProjectKeyLowerCase + "-" + targetRepositoryName + ".git";
+        return Paths.get(baseDir, targetProjectKeyLowerCase, targetRepoSlug);
     }
 
     /**
