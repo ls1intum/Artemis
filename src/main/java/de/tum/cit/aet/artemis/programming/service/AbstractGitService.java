@@ -187,6 +187,17 @@ public abstract class AbstractGitService {
         }
     }
 
+    /**
+     * Opens an existing bare repository from the filesystem. Avoids write operations for git settings necessry for new repositories
+     * and ensures that the repository is set up correctly with the specified default branch.
+     *
+     * @param localPath         The path to the local repository directory, not null.
+     * @param bareRepositoryUri The URI of the bare repository, not null.
+     * @param defaultBranch     The name of the default branch to be checked out, not null.
+     * @return The configured Repository instance.
+     * @throws IOException             If an I/O error occurs during repository initialization or configuration.
+     * @throws InvalidRefNameException If the provided default branch name is invalid.
+     */
     @NotNull
     public static Repository getExistingBareRepository(Path localPath, VcsRepositoryUri bareRepositoryUri, String defaultBranch) throws IOException, InvalidRefNameException {
         // Open the repository from the filesystem

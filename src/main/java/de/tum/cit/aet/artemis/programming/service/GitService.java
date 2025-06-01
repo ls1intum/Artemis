@@ -975,6 +975,16 @@ public class GitService extends AbstractGitService {
         }
     }
 
+    /**
+     * Retrieves an existing bare JGit repository based on a remote repository URI. This method is functional only when LocalVC is active.
+     * It checks if the repository already exists in the local file system and returns it if available.
+     * If the repository does not exist, it attempts to create it using the provided branch.
+     *
+     * @param repositoryUri The URI of the remote VCS repository, not null.
+     * @param branch        The branch to be used for the bare repository, typically the default branch.
+     * @return The initialized bare Repository instance.
+     * @throws GitException If the repository cannot be created due to I/O errors or invalid reference names.
+     */
     public Repository getExistingBareRepository(VcsRepositoryUri repositoryUri, String branch) {
         var localRepoUri = new LocalVCRepositoryUri(repositoryUri.toString());
         var localPath = localRepoUri.getLocalRepositoryPath(localVCBasePath);
