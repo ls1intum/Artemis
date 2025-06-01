@@ -35,7 +35,11 @@ export class RatingComponent implements OnInit, OnChanges {
     }
 
     loadRating() {
-        if (!this.result?.id || !this.result.participation || !this.accountService.isOwnerOfParticipation(this.result.participation as StudentParticipation)) {
+        if (
+            !this.result?.id ||
+            !this.result.submission?.participation ||
+            !this.accountService.isOwnerOfParticipation(this.result.submission.participation as StudentParticipation)
+        ) {
             return;
         }
         this.ratingService.getRating(this.result.id).subscribe((rating) => {
