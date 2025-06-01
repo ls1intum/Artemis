@@ -53,14 +53,14 @@ public enum AuthenticationMethod {
     }
 
     /**
-     * Returns the email display name of the authentication method based on the provided language.
+     * Returns the email displayName of the authentication method based on the provided language.
      *
      * @param language the {@link Language} code
      * @return the localized display name
      */
     public String getEmailDisplayName(Language language) {
         return switch (this) {
-            case PASSKEY -> "Passkey";
+            case PASSKEY -> language == Language.GERMAN ? "Passkey" : "passkey";
             case PASSWORD -> language == Language.GERMAN ? "Passwort" : "password";
             case SAML2 -> "SAML2";
         };

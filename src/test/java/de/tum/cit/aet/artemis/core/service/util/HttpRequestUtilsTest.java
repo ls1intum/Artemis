@@ -15,7 +15,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.http.HttpHeaders;
-import org.springframework.util.Assert;
 
 import de.tum.cit.aet.artemis.core.util.ArtemisApp;
 import de.tum.cit.aet.artemis.core.util.Browser;
@@ -135,7 +134,7 @@ class HttpRequestUtilsTest {
 
             ClientEnvironment clientEnvironment = HttpRequestUtils.getClientEnvironment(request);
 
-            Assert.notNull(clientEnvironment, "ClientEnvironment should not be null");
+            assertThat(clientEnvironment).isNotNull();
             assertThat(clientEnvironment.browser()).isEqualTo(expectedBrowser);
             assertThat(clientEnvironment.artemisApp()).isNull();
         }
@@ -157,7 +156,7 @@ class HttpRequestUtilsTest {
 
             ClientEnvironment clientEnvironment = HttpRequestUtils.getClientEnvironment(request);
 
-            Assert.notNull(clientEnvironment, "ClientEnvironment should not be null");
+            assertThat(clientEnvironment).isNotNull();
             assertThat(clientEnvironment.artemisApp()).isEqualTo(expectedArtemisApp);
             assertThat(clientEnvironment.browser()).isNull();
             assertThat(clientEnvironment.operatingSystem()).isNull();
@@ -192,7 +191,8 @@ class HttpRequestUtilsTest {
 
             ClientEnvironment clientEnvironment = HttpRequestUtils.getClientEnvironment(request);
 
-            Assert.notNull(clientEnvironment, "ClientEnvironment should not be null");
+            assertThat(clientEnvironment).isNotNull();
+            assertThat(clientEnvironment.operatingSystem()).isNotNull();
             assertThat(clientEnvironment.operatingSystem()).isEqualTo(expectedOperatingSystem);
         }
 

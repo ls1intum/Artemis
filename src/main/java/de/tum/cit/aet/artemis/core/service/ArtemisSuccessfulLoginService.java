@@ -88,7 +88,7 @@ public class ArtemisSuccessfulLoginService {
             contextVariables.put("authenticationMethod", authenticationMethod.getEmailDisplayName(language));
             ZonedDateTime now = ZonedDateTime.now();
             contextVariables.put("loginDate", now.format(DateTimeFormatter.ofPattern("dd.MM.yyyy")));
-            contextVariables.put("loginTime", now.format(DateTimeFormatter.ofPattern("HH:mm:ss")));
+            contextVariables.put("loginTime", now.format(DateTimeFormatter.ofPattern("HH:mm:ss '('VV')'")));
 
             String environmentInfo = clientEnvironment != null ? clientEnvironment.getEnvironmentInfo(language) : ClientEnvironment.getUnknownEnvironmentDisplayName(language);
             contextVariables.put("requestOrigin", environmentInfo);

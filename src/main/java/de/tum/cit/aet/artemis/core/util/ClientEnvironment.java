@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.core.util;
 
+import jakarta.annotation.Nullable;
+
 import de.tum.cit.aet.artemis.core.domain.Language;
 
 /**
@@ -8,7 +10,7 @@ import de.tum.cit.aet.artemis.core.domain.Language;
  * This class is used to provide information about the environment from which a request originates.
  * Usually either browser and operating system or the Artemis app are available.
  */
-public record ClientEnvironment(Browser browser, OperatingSystem operatingSystem, ArtemisApp artemisApp) {
+public record ClientEnvironment(@Nullable Browser browser, @Nullable OperatingSystem operatingSystem, @Nullable ArtemisApp artemisApp) {
 
     /**
      * Provides a language-specific description for cases where the environment cannot be determined.

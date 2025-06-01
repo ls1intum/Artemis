@@ -156,9 +156,9 @@ public final class HttpRequestUtils {
             return new ClientEnvironment(browserName, operatingSystem, null);
         }
 
-        String userAgent = request.getHeader(HttpHeaders.USER_AGENT);
+        String userAgent = getHeaderValue(request, HttpHeaders.USER_AGENT);
 
-        if (userAgent == null || userAgent.isEmpty()) {
+        if (userAgent.isEmpty()) {
             return null;
         }
 
