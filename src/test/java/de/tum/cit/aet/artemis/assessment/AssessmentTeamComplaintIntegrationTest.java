@@ -98,7 +98,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
         exerciseUtilService.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(1));
 
         // 2 complaints are allowed, the course is created with 3 max team complaints
-        complaintUtilService.addTeamComplaints(team, modelingAssessment.getParticipation(), 2, ComplaintType.COMPLAINT);
+        complaintUtilService.addTeamComplaints(team, modelingAssessment.getSubmission(), 2, ComplaintType.COMPLAINT);
 
         request.post(resourceUrl, complaintRequest, HttpStatus.CREATED);
 
@@ -110,7 +110,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
     @Test
     @WithMockUser(username = "team1" + TEST_PREFIX + "1")
     void submitComplaintAboutModelingAssessment_complaintLimitReached() throws Exception {
-        complaintUtilService.addTeamComplaints(team, modelingAssessment.getParticipation(), 3, ComplaintType.COMPLAINT);
+        complaintUtilService.addTeamComplaints(team, modelingAssessment.getSubmission(), 3, ComplaintType.COMPLAINT);
 
         request.post(resourceUrl, complaintRequest, HttpStatus.BAD_REQUEST);
 
@@ -124,7 +124,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
     void requestMoreFeedbackAboutModelingAssessment_noLimit() throws Exception {
         exerciseUtilService.updateExerciseDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(2));
         exerciseUtilService.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(1));
-        complaintUtilService.addTeamComplaints(team, modelingAssessment.getParticipation(), 5, ComplaintType.MORE_FEEDBACK);
+        complaintUtilService.addTeamComplaints(team, modelingAssessment.getSubmission(), 5, ComplaintType.MORE_FEEDBACK);
 
         request.post(resourceUrl, complaintRequest, HttpStatus.CREATED);
 
@@ -185,7 +185,6 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
         participationUtilService.checkFeedbackCorrectlyStored(modelingAssessment.getFeedbacks(), storedResult.getFeedbacks(), FeedbackType.MANUAL);
         assertThat(storedResult.getSubmission()).isEqualTo(modelingAssessment.getSubmission());
         assertThat(storedResult.getAssessor()).isEqualTo(modelingAssessment.getAssessor());
-        assertThat(storedResult.getParticipation()).isEqualTo(modelingAssessment.getParticipation());
         assertThat(storedResult.getFeedbacks()).containsExactlyInAnyOrderElementsOf(modelingAssessment.getFeedbacks());
         final String[] ignoringFields = { "feedbacks", "submission", "participation", "assessor" };
         assertThat(storedResult).as("only feedbacks are changed in the result").usingRecursiveComparison().ignoringFields(ignoringFields).isEqualTo(modelingAssessment);
@@ -219,7 +218,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
         Result receivedResult = request.putWithResponseBody("/api/modeling/modeling-submissions/" + modelingSubmission.getId() + "/assessment-after-complaint", assessmentUpdate,
                 Result.class, HttpStatus.OK);
 
-        assertThat(((StudentParticipation) receivedResult.getParticipation()).getStudent()).as("student is hidden in response").isEmpty();
+        assertThat(((StudentParticipation) receivedResult.getSubmission().getParticipation()).getStudent()).as("student is hidden in response").isEmpty();
         Complaint storedComplaint = complaintRepo.findByResultId(modelingAssessment.getId()).orElseThrow();
         assertThat(storedComplaint.isAccepted()).as("complaint is accepted").isTrue();
         Result resultOfComplaint = storedComplaint.getResult();

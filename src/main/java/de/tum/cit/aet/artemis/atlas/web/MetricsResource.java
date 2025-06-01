@@ -14,6 +14,7 @@ import de.tum.cit.aet.artemis.atlas.dto.metrics.StudentMetricsDTO;
 import de.tum.cit.aet.artemis.atlas.service.LearningMetricsService;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
+import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 
 @Conditional(AtlasEnabled.class)
 @RestController
@@ -40,9 +41,11 @@ public class MetricsResource {
     @GetMapping("course/{courseId}/student")
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<StudentMetricsDTO> getCourseMetricsForUser(@PathVariable long courseId) {
+        long start = System.nanoTime();
         final var userId = userRepository.getUserIdElseThrow(); // won't throw exception since EnforceRoleInResource checks existence of user
         log.debug("REST request to get the metrics for the user with id {} in the course with id {}", userId, courseId);
         final var studentMetrics = learningMetricsService.getStudentCourseMetrics(userId, courseId);
+        log.info("Metrics for user with id {} in course with id {} fetched in {}", userId, courseId, TimeLogUtil.formatDurationFrom(start));
         return ResponseEntity.ok(studentMetrics);
     }
 }
