@@ -14,10 +14,13 @@ import jakarta.validation.constraints.NotNull;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.RefUpdate;
 import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.transport.URIish;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,6 +65,26 @@ public class LocalRepository {
         refUpdate.setForceUpdate(true);
         refUpdate.link("refs/heads/" + defaultBranch);
 
+        // Read JavaDoc for more information
+        StoredConfig gitRepoConfig = repository.getConfig();
+        gitRepoConfig.setInt(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTO, 0);
+        gitRepoConfig.setBoolean(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTODETACH, false);
+        gitRepoConfig.setInt(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTOPACKLIMIT, 0);
+        gitRepoConfig.setBoolean(ConfigConstants.CONFIG_RECEIVE_SECTION, null, ConfigConstants.CONFIG_KEY_AUTOGC, false);
+
+        // disable symlinks to avoid security issues such as remote code execution
+        gitRepoConfig.setBoolean(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_SYMLINKS, false);
+        gitRepoConfig.setBoolean(ConfigConstants.CONFIG_COMMIT_SECTION, null, ConfigConstants.CONFIG_KEY_GPGSIGN, false);
+        gitRepoConfig.setString(ConfigConstants.CONFIG_BRANCH_SECTION, defaultBranch, ConfigConstants.CONFIG_REMOTE_SECTION, "origin");
+        gitRepoConfig.setString(ConfigConstants.CONFIG_BRANCH_SECTION, defaultBranch, ConfigConstants.CONFIG_MERGE_SECTION, "refs/heads/" + defaultBranch);
+
+        if (bare) {
+            // Important for new / empty repositories so the default branch is set correctly.
+            repository.updateRef(Constants.HEAD).link("refs/heads/" + defaultBranch);
+        }
+
+        gitRepoConfig.save();
+
         return git;
     }
 
@@ -90,6 +113,14 @@ public class LocalRepository {
 
         // Push the initial commit to the origin (bare or not)
         workingCopyGitRepo.push().setRemote("origin").setPushAll().call();
+
+        // Reopen to avoid potential caching issues
+        bareGitRepo.close();
+        bareGitRepo = Git.wrap(new FileRepositoryBuilder().setGitDir(bareGitRepoFile).build());
+
+        workingCopyGitRepo.close();
+        workingCopyGitRepo = Git.wrap(new FileRepositoryBuilder().setGitDir(workingCopyGitRepoFile).build());
+
         log.info("Configured local repository with one commit, working copy at {} and origin repository at {}", workingCopyGitRepoFile, bareGitRepoFile);
     }
 

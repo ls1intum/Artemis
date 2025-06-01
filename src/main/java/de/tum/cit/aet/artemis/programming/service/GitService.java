@@ -1025,8 +1025,14 @@ public class GitService extends AbstractGitService {
         Repository sourceRepo = getExistingBareRepository(sourceRepoUri, sourceBranch);
 
         if (log.isDebugEnabled()) {
-            // Log how many commits the source rpeository has
+            // Log how many commits the source repository has
             try (RevWalk walk = new RevWalk(sourceRepo)) {
+                ObjectId headId = sourceRepo.resolve("refs/heads/" + sourceBranch + "^{tree}");
+                if (headId == null) {
+                    log.error("Source repository {} has no HEAD reference", sourceRepoUri);
+                }
+                RevCommit headCommit = walk.parseCommit(headId);
+                walk.markStart(headCommit);
                 int commitCount = 0;
                 for (RevCommit ignored : walk) {
                     commitCount++;
@@ -1050,6 +1056,8 @@ public class GitService extends AbstractGitService {
             ObjectId headId = sourceRepo.resolve("refs/heads/" + sourceBranch + "^{tree}");
             log.debug("found HEAD tree {} in source repository {}", headId, sourceRepoUri);
             RevWalk walk = new RevWalk(sourceRepo);
+            RevCommit headCommit = walk.parseCommit(headId);
+            walk.markStart(headCommit);
 
             RevTree headTree = walk.parseTree(headId);
 
