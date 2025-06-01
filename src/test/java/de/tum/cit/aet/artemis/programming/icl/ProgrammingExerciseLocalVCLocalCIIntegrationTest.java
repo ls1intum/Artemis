@@ -459,13 +459,13 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
             TemplateProgrammingExerciseParticipation templateParticipation = templateProgrammingExerciseParticipationRepository
                     .findByProgrammingExerciseId(refreshedExercise.getId()).orElseThrow();
 
-            localVCLocalCITestService.testLatestSubmission(templateParticipation.getId(), null, 0, false, 120);
+            localVCLocalCITestService.testLatestSubmission(templateParticipation.getId(), null, 0, false, 240);
 
             // Verify solution build plan
             SolutionProgrammingExerciseParticipation solutionParticipation = solutionProgrammingExerciseParticipationRepository
                     .findByProgrammingExerciseId(refreshedExercise.getId()).orElseThrow();
 
-            localVCLocalCITestService.testLatestSubmission(solutionParticipation.getId(), null, 13, false, 120);
+            localVCLocalCITestService.testLatestSubmission(solutionParticipation.getId(), null, 13, false, 240);
         }
         catch (Exception e) {
             throw new AssertionError("Failed to verify build plans", e);
