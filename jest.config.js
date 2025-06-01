@@ -14,13 +14,14 @@ const esModules = [
     '@angular/service-worker',
     '@ctrl/ngx-emoji-mart',
     '@danielmoncada/angular-datetime-picker',
-    '@siemens/ngx-datatable',
     '@fortawesome/angular-fontawesome',
     '@ls1intum/apollon',
     '@ng-bootstrap/ng-bootstrap',
     '@ngx-translate/core',
     '@ngx-translate/http-loader',
+    '@primeuix',
     '@sentry/angular',
+    '@siemens/ngx-datatable',
     '@swimlane/ngx-charts',
     '@swimlane/ngx-graph',
     'collapse-white-space',
@@ -46,15 +47,15 @@ const esModules = [
     'franc-min',
     'internmap',
     'lodash-es',
+    'markdown-it-github-alerts',
     'monaco-editor',
     'n-gram',
     'ngx-device-detector',
     'ngx-infinite-scroll',
     'ngx-webstorage',
+    'primeng',
     'rxjs/operators',
     'trigram-utils',
-    'primeng',
-    '@primeuix'
 ].join('|');
 
 const {
