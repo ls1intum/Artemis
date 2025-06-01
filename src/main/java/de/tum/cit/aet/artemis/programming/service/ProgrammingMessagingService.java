@@ -171,7 +171,7 @@ public class ProgrammingMessagingService {
      * @param participation the participation for which the result was created.
      */
     public void notifyUserAboutNewResult(Result result, ProgrammingExerciseParticipation participation) {
-        log.debug("Send result to client over websocket. Result: {}, Submission: {}, Participation: {}", result, result.getSubmission(), result.getParticipation());
+        log.debug("Send result to client over websocket. Result: {}, Submission: {}, Participation: {}", result, result.getSubmission(), result.getSubmission().getParticipation());
         // notify user via websocket
         resultWebsocketService.broadcastNewResult((Participation) participation, result);
 
@@ -199,7 +199,8 @@ public class ProgrammingMessagingService {
         if (studentParticipation.getParticipant() instanceof User user) {
             pyrisEventApi.ifPresent(eventApi -> {
                 final var exercise = studentParticipation.getExercise();
-                if (user.hasAcceptedExternalLLMUsage() && !exercise.isExamExercise() && irisSettingsApi.get().isExerciseChatEnabled(exercise.getId())) {
+                if (user.hasAcceptedExternalLLMUsage() && !exercise.isExamExercise()
+                        && irisSettingsApi.map(api -> api.isProgrammingExerciseChatEnabled(exercise.getId())).orElse(false)) {
                     // Inform event service about the new result
                     try {
                         // This is done asynchronously to prevent blocking the current thread

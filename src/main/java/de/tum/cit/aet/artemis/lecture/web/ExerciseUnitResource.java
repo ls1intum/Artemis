@@ -52,7 +52,7 @@ public class ExerciseUnitResource {
     /**
      * POST /lectures/:lectureId/exercise-units : creates a new exercise unit.
      *
-     * @param lectureId    the id of the lecture to which the attachment unit should be added
+     * @param lectureId    the id of the lecture to which the attachment video unit should be added
      * @param exerciseUnit the exercise unit that should be created
      * @return the ResponseEntity with status 201 (Created) and with body the new exercise unit
      * @throws URISyntaxException if the Location URI syntax is incorrect

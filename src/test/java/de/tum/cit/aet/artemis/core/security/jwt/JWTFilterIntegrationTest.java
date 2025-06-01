@@ -12,11 +12,14 @@ import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
+import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.core.Authentication;
 import org.springframework.test.web.servlet.MockMvc;
@@ -64,6 +67,15 @@ class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndependentTest 
     @BeforeEach
     void setup() {
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "/git/EXERCISEID/exerciseid-studentLogin.git/info/refs", "/git/EXERCISEID/exerciseid-studentLogin.git/git-upload-pack", })
+    void shouldIgnoreSpecialUris(String uri) {
+        final MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setRequestURI(uri);
+
+        assertThat(JWTFilter.extractValidJwt(request, null)).isNull();
     }
 
     /**

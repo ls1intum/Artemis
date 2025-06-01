@@ -393,7 +393,7 @@ public class UserService {
 
     /**
      * Searches the (optional) LDAP service for a user with the given unique user identifier (e.g. login, email, registration number) and supplier function
-     * and returns a new Artemis user. Also creates the user in the external user management, in case this is activated
+     * and returns a new Artemis user.
      * Note: this method should only be used if the user does not yet exist in the database
      *
      * @param userIdentifier       the userIdentifier of the user (e.g. login, email, registration number)
@@ -410,11 +410,12 @@ public class UserService {
                 LdapUserDto ldapUser = ldapUserOptional.get();
                 log.info("Ldap User {} has login: {}", ldapUser.getFirstName() + " " + ldapUser.getFirstName(), ldapUser.getLogin());
 
-                // handle edge case, the user already exists in Artemis, but for some reason does not have a registration number, or it is wrong
+                // handle edge case, the user already exists in Artemis, but for some reason the values differ
                 if (StringUtils.hasText(ldapUser.getLogin())) {
-                    var existingUser = userRepository.findOneByLogin(ldapUser.getLogin());
+                    // load the user with groups and authorities because they might be needed later
+                    var existingUser = userRepository.findOneWithGroupsAndAuthoritiesByLogin(ldapUser.getLogin());
                     if (existingUser.isPresent()) {
-                        existingUser.get().setRegistrationNumber(ldapUser.getRegistrationNumber());
+                        LdapUserService.syncUserDetails(existingUser.get(), ldapUser);
                         saveUser(existingUser.get());
                         return existingUser;
                     }
@@ -423,7 +424,8 @@ public class UserService {
                 // Use empty password, so that we don't store the credentials of external users in the Artemis DB
                 User user = userCreationService.createUser(ldapUser.getLogin(), "", null, ldapUser.getFirstName(), ldapUser.getLastName(), ldapUser.getEmail(),
                         ldapUser.getRegistrationNumber(), null, "en", false);
-                return Optional.of(user);
+                // load the user with groups and authorities because they might be needed later
+                return userRepository.findOneWithGroupsAndAuthoritiesById(user.getId());
             }
             else {
                 log.warn("Ldap User with userIdentifier '{}' not found", userIdentifier);

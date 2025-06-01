@@ -21,38 +21,43 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 public interface RatingCleanupRepository extends ArtemisJpaRepository<Rating, Long> {
 
     /**
-     * Deletes {@link Rating} entries where the associated {@link Result} has no submission and no participation.
+     * Deletes {@link Rating} entries where the associated {@link Result} has no submission
+     * or its submission has no participation.
      *
      * @return the number of deleted entities
      */
     @Modifying
     @Transactional // ok because of delete
     @Query("""
-            DELETE
-            FROM Rating rt
-            WHERE rt.result IN (
-                SELECT r
-                FROM Result r
-                WHERE r.submission IS NULL
-                    AND r.participation IS NULL
-                )
+            DELETE FROM Rating rt
+                WHERE rt.result.id IN (
+                    SELECT r.id
+                    FROM Result r
+                        LEFT JOIN r.submission s
+                        LEFT JOIN s.participation p
+                    WHERE s IS NULL
+                        OR p IS NULL
+            )
             """)
     int deleteOrphanRating();
 
     /**
-     * Counts {@link Rating} entries where the associated {@link Result} has no submission and no participation.
+     * Counts {@link Rating} entries where the associated {@link Result} has no submission
+     * or its submission has no participation.
      *
      * @return the number of entities that would be deleted
      */
     @Query("""
             SELECT COUNT(rt)
-            FROM Rating rt
-            WHERE rt.result IN (
-                SELECT r
-                FROM Result r
-                WHERE r.submission IS NULL
-                    AND r.participation IS NULL
-                )
+                FROM Rating rt
+                WHERE rt.result.id IN (
+                    SELECT r.id
+                    FROM Result r
+                        LEFT JOIN r.submission     s
+                        LEFT JOIN s.participation  p
+                    WHERE s IS NULL
+                        OR p IS NULL
+            )
             """)
     int countOrphanRating();
 }
