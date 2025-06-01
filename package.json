@@ -186,7 +186,7 @@
         "clean-www": "rimraf build/resources/main/static/app/{src,build/}",
         "compile:ts": "npm run prebuild && tsc --project tsconfig.app.json",
         "compile:ts:tests": "npm run prebuild && tsc --project tsconfig.spec.json",
-        "check-module-coverage": "node supporting_scripts/code-coverage/module-coverage-client/check-module-coverage.js",
+        "check-module-coverage": "node supporting_scripts/code-coverage/module-coverage-client/check-client-module-coverage.mjs",
         "lint": "eslint",
         "lint:fix": "eslint --fix",
         "postinstall": "husky && patch-package && node src/main/webapp/app/lecture/manage/pdf-preview/pdfjs_copy_worker_script.mjs",
