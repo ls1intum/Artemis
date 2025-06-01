@@ -138,46 +138,51 @@ const moduleThresholds = {
 const metrics = ['statements', 'branches', 'functions', 'lines'];
 let failed = false;
 
-for (const [mod, thresholds] of Object.entries(moduleThresholds)) {
-    const prefix = `src/main/webapp/app/${mod}/`;
-    const agg = {
+const evaluateAndPrintMetrics = (module, aggregatedMetrics, thresholds) => {
+    console.log(`\nModule: ${module}`);
+    for (const metric of metrics) {
+        const { total, covered } = aggregatedMetrics[metric];
+        const percentage = total > 0 ? (covered / total) * 100 : 0;
+        const threshold = thresholds[metric];
+        const pass = Math.round(percentage * 100) / 100 >= threshold;
+        console.log(`  ${pass ? '✅' : '❌'} ${metric.padEnd(10)} : ${percentage.toFixed(2)}%  (need ≥ ${threshold}%)`);
+        if (!pass) failed = true;
+    }
+    process.exit(failed ? 1 : 0);
+
+};
+
+for (const [module, thresholds] of Object.entries(moduleThresholds)) {
+    const prefix = `src/main/webapp/app/${module}/`;
+    const aggregatedMetrics = {
         statements: { total: 0, covered: 0 },
         branches:   { total: 0, covered: 0 },
         functions:  { total: 0, covered: 0 },
         lines:      { total: 0, covered: 0 },
     };
 
-    for (const [filePath, m] of Object.entries(summary)) {
+    for (const [filePath, metricsData] of Object.entries(summary)) {
         if (filePath === 'total') continue;
         if (!filePath.includes(prefix)) continue;
-        if (!m || typeof m !== 'object') {
+        if (!metricsData || typeof metricsData !== 'object') {
             console.warn(`⚠️  Invalid coverage data for file: ${filePath}`);
             continue;
             }
         for (const metric of metrics) {
-            if (!m[metric] || typeof m[metric].total !== 'number' || typeof m[metric].covered !== 'number') {
-                console.warn(`⚠️  Missing or invalid ${metric} data for file: ${filePath}`);
+            if (!metricsData[metric] || typeof metricsData[metric].total !== 'number' || typeof metricsData[metric].covered !== 'number') {
+                console.error(`❌  Missing or invalid ${metric} data for file: ${filePath}`);
                 continue;
             }
-            agg[metric].total   += m[metric].total;
-            agg[metric].covered += m[metric].covered;
+            aggregatedMetrics[metric].total   += metricsData[metric].total;
+            aggregatedMetrics[metric].covered += metricsData[metric].covered;
         }
     }
 
-    if (agg.statements.total === 0) {
-        console.warn(`⚠️  no files found for module "${mod}" (looking for "${prefix}")`);
+    if (aggregatedMetrics.statements.total === 0) {
+        console.warn(`⚠️  no files found for module "${module}" (looking for "${prefix}")`);
         continue;
     }
 
-    console.log(`\nModule: ${mod}`);
-    for (const metric of metrics) {
-        const { total, covered } = agg[metric];
-        const pct = total > 0 ? (covered / total) * 100 : 0;
-        const threshold = thresholds[metric];
-        const pass = Math.round(pct * 100) / 100 >= threshold;
-        console.log(`  ${pass ? '✅' : '❌'} ${metric.padEnd(10)} : ${pct.toFixed(2)}%  (need ≥ ${threshold}%)`);
-        if (!pass) failed = true;
-    }
+    evaluateAndPrintMetrics(module, aggregatedMetrics, thresholds);
 }
 
-process.exit(failed ? 1 : 0);

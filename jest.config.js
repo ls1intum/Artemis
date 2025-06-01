@@ -100,7 +100,7 @@ module.exports = {
             lines: 89.22,
         },
     },
-    // json-summary reporter is used by the module coverage check script
+    // 'json-summary' reporter is used by supporting_scripts/code-coverage/module-coverage-client/check-client-module-coverage.mjs
     coverageReporters: ['clover', 'json', 'lcov', 'text-summary','json-summary'],
     setupFilesAfterEnv: ['<rootDir>/src/test/javascript/spec/jest-test-setup.ts', 'jest-extended/all'],
     moduleFileExtensions: ['ts', 'html', 'js', 'json', 'mjs'],
