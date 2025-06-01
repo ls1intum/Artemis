@@ -136,9 +136,9 @@ const moduleThresholds = {
 
 
 const metrics = ['statements', 'branches', 'functions', 'lines'];
-let failed = false;
 
 const evaluateAndPrintMetrics = (module, aggregatedMetrics, thresholds) => {
+    let failed = false;
     console.log(`\nModule: ${module}`);
     for (const metric of metrics) {
         const { total, covered } = aggregatedMetrics[metric];
@@ -148,9 +148,11 @@ const evaluateAndPrintMetrics = (module, aggregatedMetrics, thresholds) => {
         console.log(`  ${pass ? '✅' : '❌'} ${metric.padEnd(10)} : ${percentage.toFixed(2)}%  (need ≥ ${threshold}%)`);
         if (!pass) failed = true;
     }
-    process.exit(failed ? 1 : 0);
+    return failed;
 
 };
+
+let anyModuleFailed = false;
 
 for (const [module, thresholds] of Object.entries(moduleThresholds)) {
     const prefix = `src/main/webapp/app/${module}/`;
@@ -183,6 +185,11 @@ for (const [module, thresholds] of Object.entries(moduleThresholds)) {
         continue;
     }
 
-    evaluateAndPrintMetrics(module, aggregatedMetrics, thresholds);
+    const moduleFailed = evaluateAndPrintMetrics(module, aggregatedMetrics, thresholds);
+    if (moduleFailed) {
+        anyModuleFailed = true;
+    }
+
 }
+process.exit(anyModuleFailed ? 1 : 0);
 
