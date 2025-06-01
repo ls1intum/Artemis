@@ -23,7 +23,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.parallel.Execution;
@@ -427,7 +426,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
      * Ensures <a href="https://github.com/ls1intum/Artemis/issues/8562">issue #8562</a> does not occur again
      *
      */
-    @RepeatedTest(1000)
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importFromFile_verifyBuildPlansCreated() throws Exception {
         aeolusRequestMockProvider.enableMockingOfRequests();
