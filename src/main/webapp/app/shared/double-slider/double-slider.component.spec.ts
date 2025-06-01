@@ -10,7 +10,6 @@ describe('DoubleSliderComponent', () => {
     const currentValue = signal(2);
     const min = 1;
     const max = 5;
-    const title = 'Test title';
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({}).compileComponents();
@@ -22,7 +21,6 @@ describe('DoubleSliderComponent', () => {
         fixture.componentRef.setInput('initialValue', initialValue);
         fixture.componentRef.setInput('min', min);
         fixture.componentRef.setInput('max', max);
-        fixture.componentRef.setInput('title', title);
     });
 
     afterEach(() => {
