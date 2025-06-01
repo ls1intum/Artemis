@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.calendar;
 
 import java.time.YearMonth;
 import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -15,7 +14,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 
-import de.tum.cit.aet.artemis.calendar.dto.CalendarEventDTO;
+import de.tum.cit.aet.artemis.calendar.domain.CourseCalendarEvent;
+import de.tum.cit.aet.artemis.calendar.dto.CalendarEventReadDTO;
+import de.tum.cit.aet.artemis.calendar.repository.CourseCalendarEventRepository;
+import de.tum.cit.aet.artemis.calendar.util.CourseCalendarEventUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
@@ -36,15 +38,21 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
 
     static final String TUTOR_LOGIN = TEST_PREFIX + "tutor";
 
+    static final String EDITOR_LOGIN = TEST_PREFIX + "editor";
+
+    static final String INSTRUCTOR_LOGIN = TEST_PREFIX + "instructor";
+
     static final String NOT_STUDENT_LOGIN = TEST_PREFIX + "notstudent";
 
-    static final String NOT_TUTOR_LOGIN = TEST_PREFIX + "nottutor";
+    static final String NOT_EDITOR_LOGIN = TEST_PREFIX + "noteditor";
 
-    private static final String URL_WITHOUT_QUERY_PARAMETERS = "/api/calendar/calendar-events";
+    static final String NOT_INSTRUCTOR_LOGIN = TEST_PREFIX + "notinstructor";
 
-    static final String TEST_TIMEZONE = "Europe/Berlin";
+    static final String TEST_TIMEZONE_STRING = "Europe/Berlin";
 
-    static final TypeReference<Map<ZonedDateTime, List<CalendarEventDTO>>> GET_EVENTS_RETURN_TYPE = new TypeReference<Map<ZonedDateTime, List<CalendarEventDTO>>>() {
+    static final ZoneId TEST_TIMEZONE = ZoneId.of(TEST_TIMEZONE_STRING);
+
+    static final TypeReference<Map<String, List<CalendarEventReadDTO>>> GET_EVENTS_RETURN_TYPE = new TypeReference<Map<String, List<CalendarEventReadDTO>>>() {
     };
 
     Course course;
@@ -53,12 +61,24 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
 
     List<TutorialGroupSession> tutorialGroupSessions;
 
+    List<CourseCalendarEvent> courseCalendarEvents;
+
     User student;
 
     User tutor;
 
+    User editor;
+
+    User instructor;
+
     @Autowired
-    private CourseUtilService courseUtilService;
+    CourseCalendarEventRepository courseCalendarEventRepository;
+
+    @Autowired
+    CourseUtilService courseUtilService;
+
+    @Autowired
+    private CourseCalendarEventUtilService courseCalendarEventUtilService;
 
     @Autowired
     private TutorialGroupUtilService tutorialGroupUtilService;
@@ -79,55 +99,101 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
     void createUsers() {
         userUtilService.addStudent("tumuser", TEST_PREFIX + "student");
         userUtilService.addTeachingAssistant("tutor", TEST_PREFIX + "tutor");
+        userUtilService.addEditor("editor", TEST_PREFIX + "editor");
+        userUtilService.addInstructor("instructor", TEST_PREFIX + "instructor");
         student = userUtilService.getUserByLogin(STUDENT_LOGIN);
         tutor = userUtilService.getUserByLogin(TUTOR_LOGIN);
+        editor = userUtilService.getUserByLogin(EDITOR_LOGIN);
+        instructor = userUtilService.getUserByLogin(INSTRUCTOR_LOGIN);
     }
 
     @AfterEach
     void cleanUp() {
-        tutorialGroupSessionRepository.deleteAll(tutorialGroupSessions);
-        tutorialGroupRepository.deleteById(tutorialGroup.getId());
-        courseRepository.deleteById(course.getId());
-        userRepository.deleteById(student.getId());
-        userRepository.deleteById(tutor.getId());
+        if (courseCalendarEvents != null) {
+            courseCalendarEventRepository.deleteAll(courseCalendarEvents);
+            courseCalendarEvents = null;
+        }
+        if (tutorialGroupSessions != null) {
+            tutorialGroupSessionRepository.deleteAll(tutorialGroupSessions);
+            tutorialGroupSessions = null;
+        }
+        if (tutorialGroup != null) {
+            tutorialGroupRepository.deleteById(tutorialGroup.getId());
+            tutorialGroup = null;
+        }
+        if (course != null) {
+            courseRepository.deleteById(course.getId());
+            course = null;
+        }
+        if (student != null) {
+            userRepository.deleteById(student.getId());
+            student = null;
+        }
+        if (tutor != null) {
+            userRepository.deleteById(tutor.getId());
+            tutor = null;
+        }
     }
 
-    void setupActiveCourseWithParticipatedGroupAndActiveSessionsScenario() {
-        course = courseUtilService.createActiveCourseInTimezone(ZoneId.of(TEST_TIMEZONE), 1, 3);
+    void setupActiveCourseScenario() {
+        course = courseUtilService.createActiveCourseInTimezone(ZoneId.of(TEST_TIMEZONE_STRING), 1, 3);
         tutorialGroup = tutorialGroupUtilService.createTutorialGroup(course.getId(), "Test Tutorial Group", "", 10, false, "Garching", "English", tutor,
                 new HashSet<>(Set.of(student)));
-        tutorialGroupSessions = tutorialGroupUtilService.createActiveTutorialGroupSessions(tutorialGroup, course, 12);
+        tutorialGroupSessions = tutorialGroupUtilService.createTutorialGroupSessions(tutorialGroup, course, false);
+
+        courseCalendarEvents = courseCalendarEventUtilService.createCourseCalendarEvents(course);
+    }
+
+    void setupActiveCourseWithoutCourseWideEventsScenario() {
+        course = courseUtilService.createActiveCourseInTimezone(ZoneId.of(TEST_TIMEZONE_STRING), 1, 3);
+    }
+
+    void setupActiveCourseWithMutualExclusiveCourseCalendarEventVisibilityScenario() {
+        course = courseUtilService.createActiveCourseInTimezone(ZoneId.of(TEST_TIMEZONE_STRING), 1, 3);
+        tutorialGroup = tutorialGroupUtilService.createTutorialGroup(course.getId(), "Test Tutorial Group", "", 10, false, "Garching", "English", tutor,
+                new HashSet<>(Set.of(student)));
+        tutorialGroupSessions = tutorialGroupUtilService.createTutorialGroupSessions(tutorialGroup, course, false);
+
+        courseCalendarEvents = courseCalendarEventUtilService.createCourseCalendarEventsWithMutualExclusiveVisibility(course);
     }
 
     void setupUserNotPartOfAnyCourseScenario() {
-        course = courseUtilService.createActiveCourseInTimezone(ZoneId.of(TEST_TIMEZONE), 1, 3);
+        course = courseUtilService.createActiveCourseInTimezone(ZoneId.of(TEST_TIMEZONE_STRING), 1, 3);
         userUtilService.addStudent("notstudent", TEST_PREFIX + "notstudent");
         userUtilService.addTeachingAssistant("nottutor", TEST_PREFIX + "nottutor");
+        userUtilService.addEditor("noteditor", TEST_PREFIX + "noteditor");
+        userUtilService.addInstructor("notinstructor", TEST_PREFIX + "notinstructor");
         tutorialGroup = tutorialGroupUtilService.createTutorialGroup(course.getId(), "Test Tutorial Group", "", 10, false, "Garching", "English", tutor,
                 new HashSet<>(Set.of(student)));
-        tutorialGroupSessions = tutorialGroupUtilService.createActiveTutorialGroupSessions(tutorialGroup, course, 12);
+        tutorialGroupSessions = tutorialGroupUtilService.createTutorialGroupSessions(tutorialGroup, course, false);
+        ;
+        courseCalendarEvents = courseCalendarEventUtilService.createCourseCalendarEvents(course);
     }
 
     void setupNonActiveCourseScenario() {
-        course = courseUtilService.createNonActiveCourseInTimezone(ZoneId.of(TEST_TIMEZONE), 6, 2);
+        course = courseUtilService.createNonActiveCourseInTimezone(ZoneId.of(TEST_TIMEZONE_STRING), 6, 2);
         tutorialGroup = tutorialGroupUtilService.createTutorialGroup(course.getId(), "Test Tutorial Group", "", 10, false, "Garching", "English", tutor,
                 new HashSet<>(Set.of(student)));
-        tutorialGroupSessions = tutorialGroupUtilService.createActiveTutorialGroupSessions(tutorialGroup, course, 12);
+        tutorialGroupSessions = tutorialGroupUtilService.createTutorialGroupSessions(tutorialGroup, course, false);
+        ;
+        courseCalendarEvents = courseCalendarEventUtilService.createCourseCalendarEvents(course);
     }
 
     void setupActiveCourseWithoutParticipatedTutorialGroupScenario() {
-        course = courseUtilService.createActiveCourseInTimezone(ZoneId.of(TEST_TIMEZONE), 1, 3);
+        course = courseUtilService.createActiveCourseInTimezone(ZoneId.of(TEST_TIMEZONE_STRING), 1, 3);
         userUtilService.addTeachingAssistant("tutor", TEST_PREFIX + "othertutor");
         User otherTutor = userRepository.getUserByLoginElseThrow(TEST_PREFIX + "othertutor");
         tutorialGroup = tutorialGroupUtilService.createTutorialGroup(course.getId(), "Test Tutorial Group", "", 10, false, "Garching", "English", otherTutor, new HashSet<>());
-        tutorialGroupSessions = tutorialGroupUtilService.createActiveTutorialGroupSessions(tutorialGroup, course, 12);
+        tutorialGroupSessions = tutorialGroupUtilService.createTutorialGroupSessions(tutorialGroup, course, false);
+        courseCalendarEvents = courseCalendarEventUtilService.createCourseCalendarEvents(course);
     }
 
-    void setupActiveCourseWithParticipatedGroupAndActiveAndCancelledSessionsScenario() {
-        course = courseUtilService.createActiveCourseInTimezone(ZoneId.of(TEST_TIMEZONE), 1, 3);
+    void setupActiveCourseWithCancelledTutorialGroupSessionsScenario() {
+        course = courseUtilService.createActiveCourseInTimezone(ZoneId.of(TEST_TIMEZONE_STRING), 1, 3);
         tutorialGroup = tutorialGroupUtilService.createTutorialGroup(course.getId(), "Test Tutorial Group", "", 10, false, "Garching", "English", tutor,
                 new HashSet<>(Set.of(student)));
-        tutorialGroupSessions = tutorialGroupUtilService.createActiveAndCancelledTutorialGroupSessions(tutorialGroup, course, 12, 2);
+        tutorialGroupSessions = tutorialGroupUtilService.createTutorialGroupSessions(tutorialGroup, course, true);
+        courseCalendarEvents = courseCalendarEventUtilService.createCourseCalendarEvents(course);
     }
 
     String getMonthsSpanningCurrentTestCourseAsMonthKeys() {
@@ -142,7 +208,23 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
         return String.join(",", monthStrings);
     }
 
-    String assembleURL(String monthKeys) {
-        return URL_WITHOUT_QUERY_PARAMETERS + "?monthKeys=" + monthKeys + "&timeZone=" + TEST_TIMEZONE;
+    String assembleURLForGetRequest(String monthKeys) {
+        return "/api/calendar/calendar-events?monthKeys=" + monthKeys + "&timeZone=" + TEST_TIMEZONE_STRING;
+    }
+
+    String assembleURLForGetRequest(String monthKeys, String timeZone) {
+        return "/api/calendar/calendar-events?monthKeys=" + monthKeys + "&timeZone=" + timeZone;
+    }
+
+    String assembleURLForPostRequest(Long courseId) {
+        return "/api/calendar/courses/" + courseId + "/course-calendar-events";
+    }
+
+    String assembleURLForPutRequest(Long courseId) {
+        return "/api/calendar/courses/" + courseId + "/course-calendar-event";
+    }
+
+    String assembleURLForDeleteRequest(Long courseId, Long eventId) {
+        return "/api/calendar/courses/" + courseId + "/course-calendar-event/" + eventId;
     }
 }

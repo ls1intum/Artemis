@@ -5,12 +5,9 @@ import static jakarta.persistence.Persistence.getPersistenceUtil;
 
 import java.io.IOException;
 import java.io.StringWriter;
-import java.time.LocalTime;
-import java.time.YearMonth;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -26,7 +23,6 @@ import java.util.stream.Collectors;
 
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
-import jakarta.ws.rs.BadRequestException;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
@@ -36,12 +32,11 @@ import org.springframework.util.StringUtils;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.calendar.dto.CalendarEventDTO;
+import de.tum.cit.aet.artemis.calendar.dto.CalendarEventReadDTO;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.DeregisteredFromTutorialGroupNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.RegisteredToTutorialGroupNotification;
 import de.tum.cit.aet.artemis.communication.service.CourseNotificationService;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationDTOService;
-import de.tum.cit.aet.artemis.communication.service.notifications.SingleUserNotificationService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -66,8 +61,6 @@ import de.tum.cit.aet.artemis.tutorialgroup.web.TutorialGroupResource.TutorialGr
 @Service
 public class TutorialGroupService {
 
-    private final SingleUserNotificationService singleUserNotificationService;
-
     private final TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository;
 
     private final UserRepository userRepository;
@@ -84,15 +77,14 @@ public class TutorialGroupService {
 
     private final CourseNotificationService courseNotificationService;
 
-    public TutorialGroupService(SingleUserNotificationService singleUserNotificationService, TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository,
-            TutorialGroupRepository tutorialGroupRepository, UserRepository userRepository, AuthorizationCheckService authorizationCheckService,
-            TutorialGroupSessionRepository tutorialGroupSessionRepository, TutorialGroupChannelManagementService tutorialGroupChannelManagementService,
-            ConversationDTOService conversationDTOService, CourseNotificationService courseNotificationService) {
+    public TutorialGroupService(TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository, TutorialGroupRepository tutorialGroupRepository,
+            UserRepository userRepository, AuthorizationCheckService authorizationCheckService, TutorialGroupSessionRepository tutorialGroupSessionRepository,
+            TutorialGroupChannelManagementService tutorialGroupChannelManagementService, ConversationDTOService conversationDTOService,
+            CourseNotificationService courseNotificationService) {
         this.tutorialGroupRegistrationRepository = tutorialGroupRegistrationRepository;
         this.tutorialGroupRepository = tutorialGroupRepository;
         this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
-        this.singleUserNotificationService = singleUserNotificationService;
         this.tutorialGroupSessionRepository = tutorialGroupSessionRepository;
         this.tutorialGroupChannelManagementService = tutorialGroupChannelManagementService;
         this.conversationDTOService = conversationDTOService;
@@ -951,20 +943,13 @@ public class TutorialGroupService {
      * <li>User is registered for the course of the tutorial group of the session</li>
      * <li>The course of the tutorial group of the session is active</li>
      * <li>User participates in the tutorial group of the session (either as student or tutor)</li>
-     * <li>The session overlaps with at least one {@code monthKey}, if any are given</li>
      * </ol>
      *
-     * @param user      the user for which the DTOs should be retrieved
-     * @param monthKeys a list of ISO 8601 formatted strings representing months
-     * @param timeZone  the client's time zone as IANA time zone ID
+     * @param user           the user for which the DTOs should be retrieved
+     * @param clientTimeZone the client's time zone
      * @return a set of {@code CalendarEventDTO}s representing {@code TutorialGroupSession}s relevant for user
-     * @throws BadRequestException if the monthKeys or the timeZone are formatted incorrectly.
      */
-    public Set<CalendarEventDTO> getTutorialEventsForUserFallingIntoMonthsOrElseThrow(User user, List<String> monthKeys, String timeZone) {
-        Set<YearMonth> months = deserializeMonthKeysOrElseThrow(monthKeys);
-
-        ZoneId clientTimeZone = deserializeTimeZoneOrElseThrow(timeZone);
-
+    public Set<CalendarEventReadDTO> getTutorialEventsForUser(User user, ZoneId clientTimeZone) {
         ZonedDateTime now = ZonedDateTime.now(clientTimeZone).withZoneSameInstant(ZoneOffset.UTC);
         Set<Long> participatedTutorialGroupIds = tutorialGroupRepository.findTutorialGroupIdsWhereUserParticipatesFromActiveCourses(user.getId(), user.getGroups(), now);
         if (participatedTutorialGroupIds.isEmpty()) {
@@ -974,46 +959,6 @@ public class TutorialGroupService {
         Set<TutorialGroupSession> activeSessionsFromParticipatedGroups = tutorialGroupSessionRepository
                 .findAllActiveByTutorialGroupIdsWithGroupAndCourseAndAssistant(participatedTutorialGroupIds);
 
-        Set<TutorialGroupSession> sessionsOverlappingMonthKeys = monthKeys.isEmpty() ? activeSessionsFromParticipatedGroups
-                : filterForSessionsOverlappingMonths(activeSessionsFromParticipatedGroups, months, clientTimeZone);
-
-        return sessionsOverlappingMonthKeys.stream().map(CalendarEventDTO::new).collect(Collectors.toSet());
-    }
-
-    private Set<TutorialGroupSession> filterForSessionsOverlappingMonths(Set<TutorialGroupSession> sessions, Set<YearMonth> months, ZoneId clientZone) {
-        return sessions.stream().filter(session -> months.stream().anyMatch(month -> areMonthAndSessionOverlapping(month, session, clientZone))).collect(Collectors.toSet());
-    }
-
-    private boolean areMonthAndSessionOverlapping(YearMonth month, TutorialGroupSession tutorialGroupSession, ZoneId clientZone) {
-        ZonedDateTime sessionStart = tutorialGroupSession.getStart();
-        ZonedDateTime sessionEnd = tutorialGroupSession.getEnd();
-        ZonedDateTime monthStart = ZonedDateTime.of(month.atDay(1), LocalTime.MIDNIGHT, clientZone).withZoneSameInstant(ZoneOffset.UTC);
-        ZonedDateTime monthEnd = ZonedDateTime.of(month.atEndOfMonth(), LocalTime.of(23, 59, 59, 999_000_000), clientZone).withZoneSameInstant(ZoneOffset.UTC);
-
-        boolean sessionStartFallsIntoMonth = firstIsBeforeOrEqualSecond(monthStart, sessionStart) && firstIsBeforeOrEqualSecond(sessionStart, monthEnd);
-        boolean sessionEndFallsIntoMonth = firstIsBeforeOrEqualSecond(monthStart, sessionEnd) && firstIsBeforeOrEqualSecond(sessionEnd, monthEnd);
-        return sessionStartFallsIntoMonth || sessionEndFallsIntoMonth;
-    }
-
-    private boolean firstIsBeforeOrEqualSecond(ZonedDateTime first, ZonedDateTime second) {
-        return first.isBefore(second) || first.isEqual(second);
-    }
-
-    private Set<YearMonth> deserializeMonthKeysOrElseThrow(List<String> monthKeys) {
-        try {
-            return monthKeys.stream().map(YearMonth::parse).collect(Collectors.toSet());
-        }
-        catch (DateTimeParseException exception) {
-            throw new BadRequestException("Invalid monthKey format. Expected format: YYYY-MM.");
-        }
-    }
-
-    private ZoneId deserializeTimeZoneOrElseThrow(String timeZone) {
-        try {
-            return ZoneId.of(timeZone);
-        }
-        catch (Exception exception) {
-            throw new BadRequestException("Invalid time zone format. Expected IANA time zone ID.");
-        }
+        return activeSessionsFromParticipatedGroups.stream().map(session -> new CalendarEventReadDTO(session, clientTimeZone)).collect(Collectors.toSet());
     }
 }

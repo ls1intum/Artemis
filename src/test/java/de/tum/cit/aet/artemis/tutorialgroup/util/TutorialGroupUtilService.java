@@ -6,8 +6,8 @@ import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -181,62 +181,34 @@ public class TutorialGroupUtilService {
     }
 
     /**
-     * Creates a list of weekly {@link TutorialGroupSession} instances for the given {@link TutorialGroup},
-     * starting one week after the course's start date. All sessions are marked as active and span two hours each.
+     * Creates a list {@link TutorialGroupSession} instances for the given {@link TutorialGroup},
+     * starting 5 days after the course's start date. All sessions span two hours each.
+     * Repeats weekly until the course's end date.
      *
-     * @param tutorialGroup    the tutorial group to which the sessions belong
-     * @param course           the course associated with the tutorial group
-     * @param numberOfSessions the number of sessions to create
+     * @param tutorialGroup            the tutorial group to which the sessions belong
+     * @param course                   the course associated with the tutorial group
+     * @param includeCancelledSessions indicates whether the first two sessions should be cancelled
      * @return the created {@link TutorialGroupSession} instances
-     * @throws IllegalArgumentException if {@code numberOfSessions} has illegal value
+     * @throws IllegalArgumentException if the course has no start or end date
      */
-    public List<TutorialGroupSession> createActiveTutorialGroupSessions(TutorialGroup tutorialGroup, Course course, int numberOfSessions) {
-        if (numberOfSessions <= 0) {
-            throw new IllegalArgumentException("Number of active sessions must be greater than zero");
+    public List<TutorialGroupSession> createTutorialGroupSessions(TutorialGroup tutorialGroup, Course course, boolean includeCancelledSessions) {
+        if (course.getStartDate() == null || course.getEndDate() == null) {
+            throw new IllegalArgumentException("Course must have a start and end date");
         }
-        ZonedDateTime courseStart = course.getStartDate();
-        ZonedDateTime firstSessionStart = courseStart.plusWeeks(1).withHour(12).withMinute(0).withSecond(0).withNano(0);
-        ZonedDateTime firstSessionEnd = firstSessionStart.plusHours(2);
-        return createWeeklyTutorialGroupSessions(tutorialGroup.getId(), firstSessionStart, firstSessionEnd, numberOfSessions, 0);
-    }
-
-    /**
-     * Creates a list of weekly {@link TutorialGroupSession} instances for the specified {@link TutorialGroup},
-     * starting one week after the start date of the given {@link Course}. A subset of the sessions will be marked as
-     * {@code CANCELLED}, the rest as {@code ACTIVE}. Sessions are spaced one week apart and each lasts two hours.
-     *
-     * @param tutorialGroup             the tutorial group to which the sessions belong
-     * @param course                    the course associated with the tutorial group
-     * @param numberOfSessions          the total number of sessions to create
-     * @param numberOfCancelledSessions the number of sessions to mark as cancelled
-     * @return the created {@link TutorialGroupSession} instances
-     * @throws IllegalArgumentException if {@code numberOfSessions} or {@code numberOfCancelledSessions} have illegal values
-     */
-    public List<TutorialGroupSession> createActiveAndCancelledTutorialGroupSessions(TutorialGroup tutorialGroup, Course course, int numberOfSessions,
-            int numberOfCancelledSessions) {
-        if (numberOfSessions <= 0) {
-            throw new IllegalArgumentException("Total number of sessions must be greater than zero");
-        }
-        if (numberOfCancelledSessions <= 0 || numberOfCancelledSessions > numberOfSessions) {
-            throw new IllegalArgumentException("Number of cancelled sessions must be greater than zero and smaller or equal to total number of sessions");
-        }
-        ZonedDateTime courseStart = course.getStartDate();
-        ZonedDateTime firstSessionStart = courseStart.plusWeeks(1).withHour(12).withMinute(0).withSecond(0).withNano(0);
-        ZonedDateTime firstSessionEnd = firstSessionStart.plusHours(2);
-        return createWeeklyTutorialGroupSessions(tutorialGroup.getId(), firstSessionStart, firstSessionEnd, numberOfSessions, numberOfCancelledSessions);
-    }
-
-    private List<TutorialGroupSession> createWeeklyTutorialGroupSessions(Long tutorialGroupId, ZonedDateTime firstSessionStart, ZonedDateTime firstSessionEnd, int repetitionCount,
-            int numberOfCancelledSessions) {
-        List<TutorialGroupSession> sessions = new LinkedList<>();
-        for (int i = 0; i < repetitionCount; i++) {
-            ZonedDateTime sessionStart = firstSessionStart.plusWeeks(i);
-            ZonedDateTime sessionEnd = firstSessionEnd.plusWeeks(i);
-
-            boolean shouldCancel = i < numberOfCancelledSessions;
-            TutorialGroupSession session = createIndividualTutorialGroupSession(tutorialGroupId, sessionStart, sessionEnd, null,
-                    shouldCancel ? TutorialGroupSessionStatus.CANCELLED : TutorialGroupSessionStatus.ACTIVE, shouldCancel ? "Cancelled for test purposes" : null);
-
+        List<TutorialGroupSession> sessions = new ArrayList<>();
+        ZonedDateTime start = course.getStartDate().plusDays(5).withHour(12).withMinute(0).withSecond(0).withNano(0);
+        ZonedDateTime endDate = course.getEndDate();
+        for (int i = 0; !start.plusWeeks(i).isAfter(endDate); i++) {
+            ZonedDateTime sessionStart = start.plusWeeks(i);
+            ZonedDateTime sessionEnd = sessionStart.plusHours(2);
+            TutorialGroupSessionStatus sessionStatus;
+            if (includeCancelledSessions) {
+                sessionStatus = i < 2 ? TutorialGroupSessionStatus.CANCELLED : TutorialGroupSessionStatus.ACTIVE;
+            }
+            else {
+                sessionStatus = TutorialGroupSessionStatus.ACTIVE;
+            }
+            TutorialGroupSession session = createIndividualTutorialGroupSession(tutorialGroup.getId(), sessionStart, sessionEnd, null, sessionStatus, null);
             sessions.add(session);
         }
         return sessions;

@@ -2,28 +2,43 @@ package de.tum.cit.aet.artemis.calendar.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
+import java.time.YearMonth;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import jakarta.validation.Valid;
 import jakarta.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.calendar.dto.CalendarEventDTO;
+import de.tum.cit.aet.artemis.calendar.dto.CalendarEventReadDTO;
+import de.tum.cit.aet.artemis.calendar.dto.CalendarEventWriteDTO;
+import de.tum.cit.aet.artemis.calendar.service.CalendarEventFilteringService;
+import de.tum.cit.aet.artemis.calendar.service.CourseCalendarEventService;
+import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupApi;
 
 @Profile(PROFILE_CORE)
@@ -37,9 +52,23 @@ public class CalendarResource {
 
     private final TutorialGroupApi tutorialGroupApi;
 
-    public CalendarResource(UserRepository userRepository, TutorialGroupApi tutorialGroupApi) {
+    private final CourseRepository courseRepository;
+
+    private final AuthorizationCheckService authorizationCheckService;
+
+    private final CourseCalendarEventService courseCalendarEventService;
+
+    private final CalendarEventFilteringService calendarEventFilteringService;
+
+    public CalendarResource(UserRepository userRepository, TutorialGroupApi tutorialGroupApi, CourseRepository courseRepository,
+            AuthorizationCheckService authorizationCheckService, CourseCalendarEventService courseCalendarEventService,
+            CalendarEventFilteringService calendarEventFilteringService) {
         this.userRepository = userRepository;
         this.tutorialGroupApi = tutorialGroupApi;
+        this.courseRepository = courseRepository;
+        this.authorizationCheckService = authorizationCheckService;
+        this.courseCalendarEventService = courseCalendarEventService;
+        this.calendarEventFilteringService = calendarEventFilteringService;
     }
 
     /**
@@ -48,15 +77,67 @@ public class CalendarResource {
      * @param monthKeys a list of ISO 8601 formatted strings representing months
      * @param timeZone  the clients time zone as IANA time zone ID
      * @return ResponseEntity with status 200 (OK) and body containing a map of calendar-events keyed by day (all timestamps in UTC format)
-     * @throws BadRequestException {@code 400 (Bad Request)} if the monthKeys or the timeZone are formatted incorrectly.
+     * @throws BadRequestException {@code 400 (Bad Request)} if the monthKeys are empty or formatted incorrectly or if the timeZone is formatted incorrectly.
      */
     @GetMapping("calendar-events")
     @EnforceAtLeastStudent
-    public ResponseEntity<Map<ZonedDateTime, List<CalendarEventDTO>>> getCalendarEventsOfMonths(@RequestParam List<String> monthKeys, @RequestParam String timeZone) {
+    public ResponseEntity<Map<String, List<CalendarEventReadDTO>>> getCalendarEventsOfMonths(@RequestParam List<String> monthKeys, @RequestParam String timeZone) {
         log.debug("REST request to get calendar events falling into: {}", monthKeys);
+        Set<YearMonth> months = calendarEventFilteringService.deserializeMonthKeysOrElseThrow(monthKeys);
+        ZoneId clientTimeZone = calendarEventFilteringService.deserializeTimeZoneOrElseThrow(timeZone);
+
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        Set<CalendarEventDTO> calendarEventDTOs = tutorialGroupApi.getTutorialEventsForUserFallingIntoMonthsOrElseThrough(user, monthKeys, timeZone);
-        Map<ZonedDateTime, List<CalendarEventDTO>> eventDTOsByDay = calendarEventDTOs.stream().collect(Collectors.groupingBy(dto -> dto.start().truncatedTo(ChronoUnit.DAYS)));
-        return ResponseEntity.ok(eventDTOsByDay);
+
+        Set<CalendarEventReadDTO> tutorialEventReadDTOs = tutorialGroupApi.getTutorialEventsForUser(user, clientTimeZone);
+        Set<CalendarEventReadDTO> courseEventReadDTOs = courseCalendarEventService.getCourseEventsForUser(user, clientTimeZone);
+        Set<CalendarEventReadDTO> calendarEventReadDTOS = Stream.concat(tutorialEventReadDTOs.stream(), courseEventReadDTOs.stream()).collect(Collectors.toSet());
+        Set<CalendarEventReadDTO> filteredDTOs = calendarEventFilteringService.filterForEventsOverlappingMonths(calendarEventReadDTOS, months, clientTimeZone);
+
+        Map<String, List<CalendarEventReadDTO>> calendarEventReadDTOSByDay = filteredDTOs.stream().collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
+        return ResponseEntity.ok(calendarEventReadDTOSByDay);
+    }
+
+    // mention courseName handling
+    @PostMapping("courses/{courseId}/course-calendar-events")
+    @EnforceAtLeastEditor
+    public ResponseEntity<Set<CalendarEventWriteDTO>> createCourseCalendarEvents(@PathVariable Long courseId,
+            @RequestBody @Valid List<CalendarEventWriteDTO> calendarEventWriteDTOs) {
+        log.debug("REST request to create CourseCalendarEvents: {} in course: {}", calendarEventWriteDTOs, courseId);
+
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        User responsibleUser = userRepository.getUserWithGroupsAndAuthorities();
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, responsibleUser);
+        Set<CalendarEventWriteDTO> createdCalendarEventWriteDTOs = courseCalendarEventService.createCourseCalendarEventsOrThrow(calendarEventWriteDTOs, course);
+
+        return ResponseEntity.ok(createdCalendarEventWriteDTOs);
+    }
+
+    // mention courseName handling
+    @PutMapping("courses/{courseId}/course-calendar-event")
+    @EnforceAtLeastEditor
+    public ResponseEntity<CalendarEventWriteDTO> updateCourseCalendarEvent(@PathVariable Long courseId, @Valid @RequestBody CalendarEventWriteDTO calendarEventWriteDTO) {
+        log.debug("REST request to update CourseCalendarEvent: {}", calendarEventWriteDTO);
+
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        User responsibleUser = userRepository.getUserWithGroupsAndAuthorities();
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, responsibleUser);
+        // TODO: add validation that at least one role is visible
+        CalendarEventWriteDTO updatedCalendarEventWriteDTO = courseCalendarEventService.updateCourseCalendarEventOrThrow(calendarEventWriteDTO);
+
+        return ResponseEntity.ok(updatedCalendarEventWriteDTO);
+    }
+
+    @DeleteMapping("courses/{courseId}/course-calendar-event/{courseCalendarEventId}")
+    @EnforceAtLeastEditor
+    public ResponseEntity<Void> deleteCourseCalendarEvent(@PathVariable Long courseId, @PathVariable Long courseCalendarEventId) {
+        log.debug("REST request to delete CourseCalendarEvent {} from course {}", courseCalendarEventId, courseId);
+
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        User responsibleUser = userRepository.getUserWithGroupsAndAuthorities();
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, responsibleUser);
+
+        courseCalendarEventService.deleteCourseCalendarEventOrThrow(courseCalendarEventId, course);
+
+        return ResponseEntity.noContent().build();
     }
 }
