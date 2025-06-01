@@ -39,7 +39,6 @@
     // 4. Run the OpenAPI generator to generate the complete TypeScript files for the Angular client
     // 5. Post-process the generated files to remove leading underscores and numeric suffixes from method names
     // 6. Remove unused imports from the generated TypeScript files to satisfy our tsconfig.
-    // 7. Move the generated files to the correct module with ts-morph
 
     openApiGenerate {
         generatorName = "typescript-angular"
@@ -57,11 +56,11 @@
         description = 'Prune invalid $ref nodes and drop operations (and empty paths) with missing schemas'
 
         doLast {
-            def root       = project.rootDir
-            def inputFile  = file("$root/openapi/openapi.yaml")
+            def root = project.rootDir
+            def inputFile = file("$root/openapi/openapi.yaml")
             def outputFile = file("$root/openapi/openapi.yaml")
-            def yaml       = new Yaml()
-            def spec       = yaml.load(inputFile.text) as Map<String, Object>
+            def yaml = new Yaml()
+            def spec = yaml.load(inputFile.text) as Map<String, Object>
             def components = (spec.components ?: [:]) as Map<String, Map<String, Object>>
 
             // 1) Define a recursive function to prune invalid $ref nodes in the spec
@@ -144,6 +143,7 @@
             println "✔ Pruned spec written to $outputFile"
 
         }
+    }
 
     tasks.register('postProcessTsFiles') {
         description = 'Remove leading underscores and numeric suffixes from OpenAPI TS methods, and add // @ts-nocheck'
@@ -152,11 +152,6 @@
             def genDir = file("$project.rootDir/src/main/webapp/app/openapi")
             fileTree(dir: genDir, include: '**/*.ts').each { File tsFile ->
                 def content = tsFile.text
-
-//                // 1) Prepend ts-nocheck if missing
-//                if (!content.startsWith('// @ts-nocheck')) {
-//                    content = "// @ts-nocheck\n" + content
-//                }
 
                 // 2) Strip leading underscores on public methods
                 content = content.replaceAll(
@@ -175,11 +170,6 @@
         }
     }
 
-
-
-//    tasks.named('pruneOpenApiSpec') {
-//        dependsOn tasks.named('generateOpenApiDocs')
-//    }
 
     tasks.named('openApiGenerate') {
         finalizedBy 'postProcessTsFiles'
@@ -202,4 +192,3 @@
     tasks.named('postProcessTsFiles') {
         finalizedBy 'cleanUnusedImports'
     }
-
