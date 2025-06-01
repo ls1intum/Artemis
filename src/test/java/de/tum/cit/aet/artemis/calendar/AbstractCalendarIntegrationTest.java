@@ -44,13 +44,13 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
 
     static final String NOT_STUDENT_LOGIN = TEST_PREFIX + "notstudent";
 
-    static final String NOT_TUTOR_LOGIN = TEST_PREFIX + "nottutor";
-
     static final String NOT_EDITOR_LOGIN = TEST_PREFIX + "noteditor";
 
     static final String NOT_INSTRUCTOR_LOGIN = TEST_PREFIX + "notinstructor";
 
-    static final String TEST_TIMEZONE = "Europe/Berlin";
+    static final String TEST_TIMEZONE_STRING = "Europe/Berlin";
+
+    static final ZoneId TEST_TIMEZONE = ZoneId.of(TEST_TIMEZONE_STRING);
 
     static final TypeReference<Map<String, List<CalendarEventReadDTO>>> GET_EVENTS_RETURN_TYPE = new TypeReference<Map<String, List<CalendarEventReadDTO>>>() {
     };
@@ -136,7 +136,7 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
     }
 
     void setupActiveCourseScenario() {
-        course = courseUtilService.createActiveCourseInTimezone(ZoneId.of(TEST_TIMEZONE), 1, 3);
+        course = courseUtilService.createActiveCourseInTimezone(ZoneId.of(TEST_TIMEZONE_STRING), 1, 3);
         tutorialGroup = tutorialGroupUtilService.createTutorialGroup(course.getId(), "Test Tutorial Group", "", 10, false, "Garching", "English", tutor,
                 new HashSet<>(Set.of(student)));
         tutorialGroupSessions = tutorialGroupUtilService.createTutorialGroupSessions(tutorialGroup, course, false);
@@ -145,11 +145,20 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
     }
 
     void setupActiveCourseWithoutCourseWideEventsScenario() {
-        course = courseUtilService.createActiveCourseInTimezone(ZoneId.of(TEST_TIMEZONE), 1, 3);
+        course = courseUtilService.createActiveCourseInTimezone(ZoneId.of(TEST_TIMEZONE_STRING), 1, 3);
+    }
+
+    void setupActiveCourseWithMutualExclusiveCourseCalendarEventVisibilityScenario() {
+        course = courseUtilService.createActiveCourseInTimezone(ZoneId.of(TEST_TIMEZONE_STRING), 1, 3);
+        tutorialGroup = tutorialGroupUtilService.createTutorialGroup(course.getId(), "Test Tutorial Group", "", 10, false, "Garching", "English", tutor,
+                new HashSet<>(Set.of(student)));
+        tutorialGroupSessions = tutorialGroupUtilService.createTutorialGroupSessions(tutorialGroup, course, false);
+
+        courseCalendarEvents = courseCalendarEventUtilService.createCourseCalendarEventsWithMutualExclusiveVisibility(course);
     }
 
     void setupUserNotPartOfAnyCourseScenario() {
-        course = courseUtilService.createActiveCourseInTimezone(ZoneId.of(TEST_TIMEZONE), 1, 3);
+        course = courseUtilService.createActiveCourseInTimezone(ZoneId.of(TEST_TIMEZONE_STRING), 1, 3);
         userUtilService.addStudent("notstudent", TEST_PREFIX + "notstudent");
         userUtilService.addTeachingAssistant("nottutor", TEST_PREFIX + "nottutor");
         userUtilService.addEditor("noteditor", TEST_PREFIX + "noteditor");
@@ -162,7 +171,7 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
     }
 
     void setupNonActiveCourseScenario() {
-        course = courseUtilService.createNonActiveCourseInTimezone(ZoneId.of(TEST_TIMEZONE), 6, 2);
+        course = courseUtilService.createNonActiveCourseInTimezone(ZoneId.of(TEST_TIMEZONE_STRING), 6, 2);
         tutorialGroup = tutorialGroupUtilService.createTutorialGroup(course.getId(), "Test Tutorial Group", "", 10, false, "Garching", "English", tutor,
                 new HashSet<>(Set.of(student)));
         tutorialGroupSessions = tutorialGroupUtilService.createTutorialGroupSessions(tutorialGroup, course, false);
@@ -171,7 +180,7 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
     }
 
     void setupActiveCourseWithoutParticipatedTutorialGroupScenario() {
-        course = courseUtilService.createActiveCourseInTimezone(ZoneId.of(TEST_TIMEZONE), 1, 3);
+        course = courseUtilService.createActiveCourseInTimezone(ZoneId.of(TEST_TIMEZONE_STRING), 1, 3);
         userUtilService.addTeachingAssistant("tutor", TEST_PREFIX + "othertutor");
         User otherTutor = userRepository.getUserByLoginElseThrow(TEST_PREFIX + "othertutor");
         tutorialGroup = tutorialGroupUtilService.createTutorialGroup(course.getId(), "Test Tutorial Group", "", 10, false, "Garching", "English", otherTutor, new HashSet<>());
@@ -180,7 +189,7 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
     }
 
     void setupActiveCourseWithCancelledTutorialGroupSessionsScenario() {
-        course = courseUtilService.createActiveCourseInTimezone(ZoneId.of(TEST_TIMEZONE), 1, 3);
+        course = courseUtilService.createActiveCourseInTimezone(ZoneId.of(TEST_TIMEZONE_STRING), 1, 3);
         tutorialGroup = tutorialGroupUtilService.createTutorialGroup(course.getId(), "Test Tutorial Group", "", 10, false, "Garching", "English", tutor,
                 new HashSet<>(Set.of(student)));
         tutorialGroupSessions = tutorialGroupUtilService.createTutorialGroupSessions(tutorialGroup, course, true);
@@ -200,7 +209,7 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
     }
 
     String assembleURLForGetRequest(String monthKeys) {
-        return "/api/calendar/calendar-events?monthKeys=" + monthKeys + "&timeZone=" + TEST_TIMEZONE;
+        return "/api/calendar/calendar-events?monthKeys=" + monthKeys + "&timeZone=" + TEST_TIMEZONE_STRING;
     }
 
     String assembleURLForGetRequest(String monthKeys, String timeZone) {

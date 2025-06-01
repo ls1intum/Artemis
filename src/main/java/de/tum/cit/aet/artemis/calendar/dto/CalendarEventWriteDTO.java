@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.calendar.dto;
 
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 
 import jakarta.annotation.Nullable;
@@ -16,8 +15,7 @@ public record CalendarEventWriteDTO(@Nullable String id, @NotNull(message = "Cal
         @Nullable String facilitator, boolean visibleToStudents, boolean visibleToTutors, boolean visibleToEditors, boolean visibleToInstructors) {
 
     public CalendarEventWriteDTO(CourseCalendarEvent event) {
-        this("course-" + event.getId(), event.getTitle(), event.getCourse().getTitle(), event.getStartDate().withZoneSameInstant(ZoneOffset.UTC),
-                event.getEndDate() == null ? null : event.getEndDate().withZoneSameInstant(ZoneOffset.UTC), event.getLocation(), event.getFacilitator(),
-                event.isVisibleToStudents(), event.isVisibleToTutors(), event.isVisibleToEditors(), event.isVisibleToInstructors());
+        this("course-" + event.getId(), event.getTitle(), event.getCourse().getTitle(), event.getStartDate(), event.getEndDate() == null ? null : event.getEndDate(),
+                event.getLocation(), event.getFacilitator(), event.isVisibleToStudents(), event.isVisibleToTutors(), event.isVisibleToEditors(), event.isVisibleToInstructors());
     }
 }

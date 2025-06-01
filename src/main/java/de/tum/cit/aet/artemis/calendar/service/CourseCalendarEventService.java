@@ -72,6 +72,7 @@ public class CourseCalendarEventService {
 
     public Set<CalendarEventWriteDTO> createCourseCalendarEventsOrThrow(List<CalendarEventWriteDTO> calendarEventWriteDTOs, Course course) {
         checkThatNoEventHasIdOrThrow(calendarEventWriteDTOs);
+        checkThatAllEventsAreAtLeastVisibleToOneUserGroupOrThrow(calendarEventWriteDTOs);
 
         List<CourseCalendarEvent> courseCalendarEvents = new ArrayList<>();
         for (CalendarEventWriteDTO dto : calendarEventWriteDTOs) {
@@ -96,6 +97,7 @@ public class CourseCalendarEventService {
     public CalendarEventWriteDTO updateCourseCalendarEventOrThrow(CalendarEventWriteDTO calendarEventWriteDTO) {
         Long courseCalendarEventId = checkIfValidIdAndExtractCourseCalendarEventIdOrThrow(calendarEventWriteDTO.id());
         CourseCalendarEvent courseCalendarEvent = courseCalendarEventRepository.findByIdElseThrow(courseCalendarEventId);
+        checkThatEventIsAtLeastVisibleToOneUserGroupOrThrow(calendarEventWriteDTO);
 
         courseCalendarEvent.setTitle(calendarEventWriteDTO.title());
         courseCalendarEvent.setStartDate(calendarEventWriteDTO.startDate());
@@ -137,7 +139,19 @@ public class CourseCalendarEventService {
     private void checkThatNoEventHasIdOrThrow(List<CalendarEventWriteDTO> calendarEventWriteDTOS) {
         boolean anyHasId = calendarEventWriteDTOS.stream().anyMatch(dto -> dto.id() != null);
         if (anyHasId) {
-            throw new BadRequestException("New calendar events must not have an id.");
+            throw new BadRequestException("Each new calendar events must not have an id.");
+        }
+    }
+
+    private void checkThatAllEventsAreAtLeastVisibleToOneUserGroupOrThrow(List<CalendarEventWriteDTO> calendarEventWriteDTOS) {
+        calendarEventWriteDTOS.forEach(this::checkThatEventIsAtLeastVisibleToOneUserGroupOrThrow);
+    }
+
+    private void checkThatEventIsAtLeastVisibleToOneUserGroupOrThrow(CalendarEventWriteDTO calendarEventWriteDTO) {
+        boolean isVisibleToNoUserGroup = !calendarEventWriteDTO.visibleToStudents() && !calendarEventWriteDTO.visibleToTutors() && !calendarEventWriteDTO.visibleToEditors()
+                && !calendarEventWriteDTO.visibleToInstructors();
+        if (isVisibleToNoUserGroup) {
+            throw new BadRequestException("Each calendar event must be visible to at least one user group.");
         }
     }
 }

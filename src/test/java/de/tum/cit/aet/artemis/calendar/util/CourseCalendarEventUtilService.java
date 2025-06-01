@@ -52,4 +52,28 @@ public class CourseCalendarEventUtilService {
         }
         return courseCalendarEventRepository.saveAll(events);
     }
+
+    public List<CourseCalendarEvent> createCourseCalendarEventsWithMutualExclusiveVisibility(Course course) {
+        if (course.getStartDate() == null || course.getEndDate() == null) {
+            throw new IllegalArgumentException("Course must have a start and end date");
+        }
+        List<CourseCalendarEvent> events = new ArrayList<>();
+        ZonedDateTime firstSessionStart = course.getStartDate().plusDays(5).withHour(10).withMinute(0);
+        ZonedDateTime endDate = course.getEndDate();
+        for (int i = 0; !firstSessionStart.plusWeeks(i).isAfter(endDate); i++) {
+            ZonedDateTime eventStart = firstSessionStart.plusWeeks(i);
+            ZonedDateTime eventEnd = eventStart.plusHours(2);
+            CourseCalendarEvent event = new CourseCalendarEvent();
+            event.setCourse(course);
+            event.setTitle("Weekly Session " + (i + 1));
+            event.setStartDate(eventStart);
+            event.setEndDate(eventEnd);
+            event.setVisibleToStudents(i % 4 == 0);
+            event.setVisibleToTutors(i % 4 == 1);
+            event.setVisibleToEditors(i % 4 == 2);
+            event.setVisibleToInstructors(i % 4 == 3);
+            events.add(event);
+        }
+        return courseCalendarEventRepository.saveAll(events);
+    }
 }

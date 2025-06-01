@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.calendar;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.YearMonth;
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Comparator;
 import java.util.List;
@@ -21,12 +20,11 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.calendar.domain.CourseCalendarEvent;
 import de.tum.cit.aet.artemis.calendar.dto.CalendarEventReadDTO;
 import de.tum.cit.aet.artemis.calendar.dto.CalendarEventWriteDTO;
+import de.tum.cit.aet.artemis.calendar.util.TimestampFormatAssert;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
 
 class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
-
-    // TODO: add error message asserts?
 
     @Nested
     class GetCalendarEvents {
@@ -108,8 +106,8 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
             Map<String, List<CalendarEventReadDTO>> actual = request.get(URL, HttpStatus.OK, GET_EVENTS_RETURN_TYPE);
 
             List<CalendarEventReadDTO> expectedTutorialEvents = tutorialGroupSessions.stream().filter(session -> session.getStatus() == TutorialGroupSessionStatus.ACTIVE)
-                    .map(session -> new CalendarEventReadDTO(session, ZoneId.of(TEST_TIMEZONE))).toList();
-            List<CalendarEventReadDTO> expectedCourseEvents = courseCalendarEvents.stream().map(event -> new CalendarEventReadDTO(event, ZoneId.of(TEST_TIMEZONE))).toList();
+                    .map(session -> new CalendarEventReadDTO(session, TEST_TIMEZONE)).toList();
+            List<CalendarEventReadDTO> expectedCourseEvents = courseCalendarEvents.stream().map(event -> new CalendarEventReadDTO(event, TEST_TIMEZONE)).toList();
             Map<String, List<CalendarEventReadDTO>> expected = Stream.concat(expectedTutorialEvents.stream(), expectedCourseEvents.stream())
                     .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
@@ -126,8 +124,7 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
             String URL = assembleURLForGetRequest(monthKeys);
             Map<String, List<CalendarEventReadDTO>> actual = request.get(URL, HttpStatus.OK, GET_EVENTS_RETURN_TYPE);
 
-            List<CalendarEventReadDTO> expectedCourseEvents = courseCalendarEvents.stream().limit(4).map(event -> new CalendarEventReadDTO(event, ZoneId.of(TEST_TIMEZONE)))
-                    .toList();
+            List<CalendarEventReadDTO> expectedCourseEvents = courseCalendarEvents.stream().limit(4).map(event -> new CalendarEventReadDTO(event, TEST_TIMEZONE)).toList();
             Map<String, List<CalendarEventReadDTO>> expected = expectedCourseEvents.stream().collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
             assertThat(actual).usingRecursiveComparison().withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class).ignoringCollectionOrder()
@@ -143,8 +140,7 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
             String URL = assembleURLForGetRequest(monthKeys);
             Map<String, List<CalendarEventReadDTO>> actual = request.get(URL, HttpStatus.OK, GET_EVENTS_RETURN_TYPE);
 
-            List<CalendarEventReadDTO> expectedCourseEvents = courseCalendarEvents.stream().limit(4).map(event -> new CalendarEventReadDTO(event, ZoneId.of(TEST_TIMEZONE)))
-                    .toList();
+            List<CalendarEventReadDTO> expectedCourseEvents = courseCalendarEvents.stream().limit(4).map(event -> new CalendarEventReadDTO(event, TEST_TIMEZONE)).toList();
             Map<String, List<CalendarEventReadDTO>> expected = expectedCourseEvents.stream().collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
             assertThat(actual).usingRecursiveComparison().withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class).ignoringCollectionOrder()
@@ -160,10 +156,8 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
             String URL = assembleURLForGetRequest(monthKeys);
             Map<String, List<CalendarEventReadDTO>> actual = request.get(URL, HttpStatus.OK, GET_EVENTS_RETURN_TYPE);
 
-            List<CalendarEventReadDTO> expectedTutorialEvents = tutorialGroupSessions.stream().limit(4).map(session -> new CalendarEventReadDTO(session, ZoneId.of(TEST_TIMEZONE)))
-                    .toList();
-            List<CalendarEventReadDTO> expectedCourseEvents = courseCalendarEvents.stream().limit(4).map(event -> new CalendarEventReadDTO(event, ZoneId.of(TEST_TIMEZONE)))
-                    .toList();
+            List<CalendarEventReadDTO> expectedTutorialEvents = tutorialGroupSessions.stream().limit(4).map(session -> new CalendarEventReadDTO(session, TEST_TIMEZONE)).toList();
+            List<CalendarEventReadDTO> expectedCourseEvents = courseCalendarEvents.stream().limit(4).map(event -> new CalendarEventReadDTO(event, TEST_TIMEZONE)).toList();
             Map<String, List<CalendarEventReadDTO>> expected = Stream.concat(expectedTutorialEvents.stream(), expectedCourseEvents.stream())
                     .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
@@ -180,10 +174,8 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
             String URL = assembleURLForGetRequest(monthKeys);
             Map<String, List<CalendarEventReadDTO>> actual = request.get(URL, HttpStatus.OK, GET_EVENTS_RETURN_TYPE);
 
-            List<CalendarEventReadDTO> expectedTutorialEvents = tutorialGroupSessions.stream().limit(4).map(session -> new CalendarEventReadDTO(session, ZoneId.of(TEST_TIMEZONE)))
-                    .toList();
-            List<CalendarEventReadDTO> expectedCourseEvents = courseCalendarEvents.stream().limit(4).map(event -> new CalendarEventReadDTO(event, ZoneId.of(TEST_TIMEZONE)))
-                    .toList();
+            List<CalendarEventReadDTO> expectedTutorialEvents = tutorialGroupSessions.stream().limit(4).map(session -> new CalendarEventReadDTO(session, TEST_TIMEZONE)).toList();
+            List<CalendarEventReadDTO> expectedCourseEvents = courseCalendarEvents.stream().limit(4).map(event -> new CalendarEventReadDTO(event, TEST_TIMEZONE)).toList();
             Map<String, List<CalendarEventReadDTO>> expected = Stream.concat(expectedTutorialEvents.stream(), expectedCourseEvents.stream())
                     .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
@@ -200,8 +192,7 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
             String URL = assembleURLForGetRequest(monthKeys);
             Map<String, List<CalendarEventReadDTO>> actual = request.get(URL, HttpStatus.OK, GET_EVENTS_RETURN_TYPE);
 
-            List<CalendarEventReadDTO> expectedCourseEvents = courseCalendarEvents.stream().limit(4).map(event -> new CalendarEventReadDTO(event, ZoneId.of(TEST_TIMEZONE)))
-                    .toList();
+            List<CalendarEventReadDTO> expectedCourseEvents = courseCalendarEvents.stream().limit(4).map(event -> new CalendarEventReadDTO(event, TEST_TIMEZONE)).toList();
             Map<String, List<CalendarEventReadDTO>> expected = expectedCourseEvents.stream().collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
             assertThat(actual).usingRecursiveComparison().withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class).ignoringCollectionOrder()
@@ -217,8 +208,7 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
             String URL = assembleURLForGetRequest(monthKeys);
             Map<String, List<CalendarEventReadDTO>> actual = request.get(URL, HttpStatus.OK, GET_EVENTS_RETURN_TYPE);
 
-            List<CalendarEventReadDTO> expectedCourseEvents = courseCalendarEvents.stream().limit(4).map(event -> new CalendarEventReadDTO(event, ZoneId.of(TEST_TIMEZONE)))
-                    .toList();
+            List<CalendarEventReadDTO> expectedCourseEvents = courseCalendarEvents.stream().limit(4).map(event -> new CalendarEventReadDTO(event, TEST_TIMEZONE)).toList();
             Map<String, List<CalendarEventReadDTO>> expected = expectedCourseEvents.stream().collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
             assertThat(actual).usingRecursiveComparison().withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class).ignoringCollectionOrder()
@@ -234,10 +224,8 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
             String URL = assembleURLForGetRequest(monthKeys);
             Map<String, List<CalendarEventReadDTO>> actual = request.get(URL, HttpStatus.OK, GET_EVENTS_RETURN_TYPE);
 
-            List<CalendarEventReadDTO> expectedTutorialEvents = tutorialGroupSessions.stream().limit(8).map(session -> new CalendarEventReadDTO(session, ZoneId.of(TEST_TIMEZONE)))
-                    .toList();
-            List<CalendarEventReadDTO> expectedCourseEvents = courseCalendarEvents.stream().limit(8).map(event -> new CalendarEventReadDTO(event, ZoneId.of(TEST_TIMEZONE)))
-                    .toList();
+            List<CalendarEventReadDTO> expectedTutorialEvents = tutorialGroupSessions.stream().limit(8).map(session -> new CalendarEventReadDTO(session, TEST_TIMEZONE)).toList();
+            List<CalendarEventReadDTO> expectedCourseEvents = courseCalendarEvents.stream().limit(8).map(event -> new CalendarEventReadDTO(event, TEST_TIMEZONE)).toList();
             Map<String, List<CalendarEventReadDTO>> expected = Stream.concat(expectedTutorialEvents.stream(), expectedCourseEvents.stream())
                     .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
@@ -254,10 +242,8 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
             String URL = assembleURLForGetRequest(monthKeys);
             Map<String, List<CalendarEventReadDTO>> actual = request.get(URL, HttpStatus.OK, GET_EVENTS_RETURN_TYPE);
 
-            List<CalendarEventReadDTO> expectedTutorialEvents = tutorialGroupSessions.stream().limit(8).map(session -> new CalendarEventReadDTO(session, ZoneId.of(TEST_TIMEZONE)))
-                    .toList();
-            List<CalendarEventReadDTO> expectedCourseEvents = courseCalendarEvents.stream().limit(8).map(event -> new CalendarEventReadDTO(event, ZoneId.of(TEST_TIMEZONE)))
-                    .toList();
+            List<CalendarEventReadDTO> expectedTutorialEvents = tutorialGroupSessions.stream().limit(8).map(session -> new CalendarEventReadDTO(session, TEST_TIMEZONE)).toList();
+            List<CalendarEventReadDTO> expectedCourseEvents = courseCalendarEvents.stream().limit(8).map(event -> new CalendarEventReadDTO(event, TEST_TIMEZONE)).toList();
             Map<String, List<CalendarEventReadDTO>> expected = Stream.concat(expectedTutorialEvents.stream(), expectedCourseEvents.stream())
                     .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
@@ -274,8 +260,7 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
             String URL = assembleURLForGetRequest(monthKeys);
             Map<String, List<CalendarEventReadDTO>> actual = request.get(URL, HttpStatus.OK, GET_EVENTS_RETURN_TYPE);
 
-            List<CalendarEventReadDTO> expectedCourseEvents = courseCalendarEvents.stream().limit(8).map(event -> new CalendarEventReadDTO(event, ZoneId.of(TEST_TIMEZONE)))
-                    .toList();
+            List<CalendarEventReadDTO> expectedCourseEvents = courseCalendarEvents.stream().limit(8).map(event -> new CalendarEventReadDTO(event, TEST_TIMEZONE)).toList();
             Map<String, List<CalendarEventReadDTO>> expected = expectedCourseEvents.stream().collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
             assertThat(actual).usingRecursiveComparison().withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class).ignoringCollectionOrder()
@@ -291,21 +276,101 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
             String URL = assembleURLForGetRequest(monthKeys);
             Map<String, List<CalendarEventReadDTO>> actual = request.get(URL, HttpStatus.OK, GET_EVENTS_RETURN_TYPE);
 
-            List<CalendarEventReadDTO> expectedCourseEvents = courseCalendarEvents.stream().limit(8).map(event -> new CalendarEventReadDTO(event, ZoneId.of(TEST_TIMEZONE)))
-                    .toList();
+            List<CalendarEventReadDTO> expectedCourseEvents = courseCalendarEvents.stream().limit(8).map(event -> new CalendarEventReadDTO(event, TEST_TIMEZONE)).toList();
             Map<String, List<CalendarEventReadDTO>> expected = expectedCourseEvents.stream().collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
             assertThat(actual).usingRecursiveComparison().withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class).ignoringCollectionOrder()
                     .isEqualTo(expected);
         }
 
-        // TODO: write a test that verifies correct format of response DTO-timestamps
+        @Test
+        @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
+        void shouldReturnNoCalendarEventsNotVisibleToStudentsForStudent() throws Exception {
+            setupActiveCourseWithMutualExclusiveCourseCalendarEventVisibilityScenario();
+
+            String monthKeys = getMonthsSpanningCurrentTestCourseAsMonthKeys();
+            String URL = assembleURLForGetRequest(monthKeys);
+            Map<String, List<CalendarEventReadDTO>> actual = request.get(URL, HttpStatus.OK, GET_EVENTS_RETURN_TYPE);
+
+            List<CalendarEventReadDTO> expectedTutorialEvents = tutorialGroupSessions.stream().map(session -> new CalendarEventReadDTO(session, TEST_TIMEZONE)).toList();
+            List<CalendarEventReadDTO> expectedCourseEvents = courseCalendarEvents.stream().filter(CourseCalendarEvent::isVisibleToStudents)
+                    .map(event -> new CalendarEventReadDTO(event, TEST_TIMEZONE)).toList();
+            Map<String, List<CalendarEventReadDTO>> expected = Stream.concat(expectedTutorialEvents.stream(), expectedCourseEvents.stream())
+                    .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
+
+            assertThat(actual).usingRecursiveComparison().withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class).ignoringCollectionOrder()
+                    .isEqualTo(expected);
+        }
+
+        @Test
+        @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
+        void shouldReturnNoCalendarEventsNotVisibleToTutorForTutor() throws Exception {
+            setupActiveCourseWithMutualExclusiveCourseCalendarEventVisibilityScenario();
+
+            String monthKeys = getMonthsSpanningCurrentTestCourseAsMonthKeys();
+            String URL = assembleURLForGetRequest(monthKeys);
+            Map<String, List<CalendarEventReadDTO>> actual = request.get(URL, HttpStatus.OK, GET_EVENTS_RETURN_TYPE);
+
+            List<CalendarEventReadDTO> expectedTutorialEvents = tutorialGroupSessions.stream().map(session -> new CalendarEventReadDTO(session, TEST_TIMEZONE)).toList();
+            List<CalendarEventReadDTO> expectedCourseEvents = courseCalendarEvents.stream().filter(CourseCalendarEvent::isVisibleToTutors)
+                    .map(event -> new CalendarEventReadDTO(event, TEST_TIMEZONE)).toList();
+            Map<String, List<CalendarEventReadDTO>> expected = Stream.concat(expectedTutorialEvents.stream(), expectedCourseEvents.stream())
+                    .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
+
+            assertThat(actual).usingRecursiveComparison().withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class).ignoringCollectionOrder()
+                    .isEqualTo(expected);
+        }
+
+        @Test
+        @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
+        void shouldReturnNoCalendarEventsNotVisibleToEditorForEditor() throws Exception {
+            setupActiveCourseWithMutualExclusiveCourseCalendarEventVisibilityScenario();
+
+            String monthKeys = getMonthsSpanningCurrentTestCourseAsMonthKeys();
+            String URL = assembleURLForGetRequest(monthKeys);
+            Map<String, List<CalendarEventReadDTO>> actual = request.get(URL, HttpStatus.OK, GET_EVENTS_RETURN_TYPE);
+
+            List<CalendarEventReadDTO> expectedCourseEvents = courseCalendarEvents.stream().filter(CourseCalendarEvent::isVisibleToEditors)
+                    .map(event -> new CalendarEventReadDTO(event, TEST_TIMEZONE)).toList();
+            Map<String, List<CalendarEventReadDTO>> expected = expectedCourseEvents.stream().collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
+
+            assertThat(actual).usingRecursiveComparison().withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class).ignoringCollectionOrder()
+                    .isEqualTo(expected);
+        }
+
+        @Test
+        @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+        void shouldReturnNoCalendarEventsNotVisibleToInstructorForInstructor() throws Exception {
+            setupActiveCourseWithMutualExclusiveCourseCalendarEventVisibilityScenario();
+
+            String monthKeys = getMonthsSpanningCurrentTestCourseAsMonthKeys();
+            String URL = assembleURLForGetRequest(monthKeys);
+            Map<String, List<CalendarEventReadDTO>> actual = request.get(URL, HttpStatus.OK, GET_EVENTS_RETURN_TYPE);
+
+            List<CalendarEventReadDTO> expectedCourseEvents = courseCalendarEvents.stream().filter(CourseCalendarEvent::isVisibleToInstructors)
+                    .map(event -> new CalendarEventReadDTO(event, TEST_TIMEZONE)).toList();
+            Map<String, List<CalendarEventReadDTO>> expected = expectedCourseEvents.stream().collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
+
+            assertThat(actual).usingRecursiveComparison().withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class).ignoringCollectionOrder()
+                    .isEqualTo(expected);
+        }
+
+        @Test
+        @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
+        void shouldReturnEventsWithIso8601ZonedTimestamps() throws Exception {
+            setupActiveCourseScenario();
+
+            String monthKeys = YearMonth.now().minusMonths(1).toString();
+            String URL = assembleURLForGetRequest(monthKeys);
+            String response = request.get(URL, HttpStatus.OK, String.class);
+
+            TimestampFormatAssert.assertThat(response).hasIso8601OffsetTimestamps("startDate", "endDate");
+        }
     }
 
     @Nested
     class CreateCourseCalendarEvents {
 
-        // TODO: POST-DTO should not include a courseName? Or rather handle gracefully and document accordingly in javaDoc of endpoint
         @Test
         @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
         void shouldReturnForbiddenForStudent() throws Exception {
@@ -581,13 +646,46 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
                     .isEqualTo(expected);
         }
 
-        // TODO: write a test that verifies correct format of response DTO-timestamps
+        @Test
+        @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+        void shouldReturnBadRequestWhenEventNotVisibleToAtLeastOneUserGroup() throws Exception {
+            setupActiveCourseWithoutCourseWideEventsScenario();
+
+            String URL = assembleURLForPostRequest(course.getId());
+
+            CalendarEventWriteDTO expected1 = new CalendarEventWriteDTO(null, "Lecture X", course.getTitle(), course.getStartDate().plusDays(4),
+                    course.getStartDate().plusDays(4).plusHours(2), "Auditorium", "Dr. X", true, true, true, true);
+
+            CalendarEventWriteDTO expected2 = new CalendarEventWriteDTO(null, "Lab Y", course.getTitle(), course.getStartDate().plusDays(5),
+                    course.getStartDate().plusDays(5).plusHours(3), "Lab A", "Dr. Y", false, false, false, false);
+
+            CalendarEventWriteDTO expected3 = new CalendarEventWriteDTO(null, "Panel Z", course.getTitle(), course.getStartDate().plusDays(6),
+                    course.getStartDate().plusDays(6).plusHours(1), "Hall B", "Dr. Z", true, true, true, true);
+
+            List<CalendarEventWriteDTO> requestBody = List.of(expected1, expected2, expected3);
+            request.postSetWithResponseBody(URL, requestBody, CalendarEventWriteDTO.class, HttpStatus.BAD_REQUEST);
+        }
+
+        @Test
+        @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+        void shouldReturnEventsWithIso8601UtcTimestamps() throws Exception {
+            setupActiveCourseWithoutCourseWideEventsScenario();
+
+            String URL = assembleURLForPostRequest(course.getId());
+
+            CalendarEventWriteDTO expected = new CalendarEventWriteDTO(null, "Test Event", course.getTitle(), course.getStartDate().plusDays(2),
+                    course.getStartDate().plusDays(2).plusHours(2), "Room A1", "Prof. Test", true, false, false, true);
+
+            List<CalendarEventWriteDTO> requestBody = List.of(expected);
+            String response = request.postWithResponseBodyString(URL, requestBody, HttpStatus.OK);
+
+            TimestampFormatAssert.assertThat(response).hasIso8601UtcTimestamps("startDate", "endDate");
+        }
     }
 
     @Nested
     class UpdateCourseCalendarEvents {
 
-        // TODO: PUT-DTO should not include a courseName? Or rather handle gracefully and document accordingly in javaDoc of endpoint
         @Test
         @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
         void shouldReturnForbiddenForStudent() throws Exception {
@@ -690,8 +788,47 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
             request.putWithResponseBody(URL, body, CalendarEventWriteDTO.class, HttpStatus.NOT_FOUND);
         }
 
-        // should return bad request when eventId malformed
-        // should return bad request when event does not exist
+        @Test
+        @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+        void shouldReturnBadRequestWhenEventIdMalformed() throws Exception {
+            setupActiveCourseScenario();
+
+            CourseCalendarEvent eventToChange = courseCalendarEvents.getFirst();
+            String URL = assembleURLForPutRequest(course.getId());
+
+            CalendarEventWriteDTO body = new CalendarEventWriteDTO(eventToChange.getId().toString(), "New Title", course.getTitle(), eventToChange.getStartDate().plusDays(1),
+                    eventToChange.getEndDate().plusDays(1), "New Room", "New Facilitator", false, false, false, false);
+
+            request.putWithResponseBody(URL, body, CalendarEventWriteDTO.class, HttpStatus.BAD_REQUEST);
+        }
+
+        @Test
+        @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+        void shouldReturnNotFoundWhenEventDoesNotExist() throws Exception {
+            setupActiveCourseScenario();
+
+            CourseCalendarEvent eventToChange = courseCalendarEvents.getFirst();
+            String URL = assembleURLForPutRequest(course.getId());
+
+            CalendarEventWriteDTO body = new CalendarEventWriteDTO("course-" + -1, "New Title", course.getTitle(), eventToChange.getStartDate().plusDays(1),
+                    eventToChange.getEndDate().plusDays(1), "New Room", "New Facilitator", false, false, false, false);
+
+            request.putWithResponseBody(URL, body, CalendarEventWriteDTO.class, HttpStatus.NOT_FOUND);
+        }
+
+        @Test
+        @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+        void shouldReturnBadRequestWhenEventNotVisibleToAtLeastOneUserGroup() throws Exception {
+            setupActiveCourseScenario();
+
+            CourseCalendarEvent eventToChange = courseCalendarEvents.getFirst();
+            String URL = assembleURLForPutRequest(course.getId());
+
+            CalendarEventWriteDTO body = new CalendarEventWriteDTO("course-" + eventToChange.getId(), "New Title", course.getTitle(), eventToChange.getStartDate().plusDays(1),
+                    eventToChange.getEndDate().plusDays(1), "New Room", "New Facilitator", false, false, false, false);
+
+            request.putWithResponseBody(URL, body, CalendarEventWriteDTO.class, HttpStatus.BAD_REQUEST);
+        }
 
         @Test
         @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
@@ -802,7 +939,21 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
             assertThat(actual).usingRecursiveComparison().withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class).isEqualTo(expected);
         }
 
-        // TODO: write a test that verifies correct format of response DTO-timestamps
+        @Test
+        @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+        void shouldReturnEventsWithIso8601UtcTimestamps() throws Exception {
+            setupActiveCourseScenario();
+
+            CourseCalendarEvent eventToChange = courseCalendarEvents.getFirst();
+            String URL = assembleURLForPutRequest(course.getId());
+
+            CalendarEventWriteDTO expected = new CalendarEventWriteDTO("course-" + eventToChange.getId(), "New Title", course.getTitle(), eventToChange.getStartDate().plusDays(1),
+                    eventToChange.getEndDate().plusDays(1), "New Room", "New Facilitator", false, true, false, true);
+
+            String response = request.putWithResponseBody(URL, expected, String.class, HttpStatus.OK);
+
+            TimestampFormatAssert.assertThat(response).hasIso8601UtcTimestamps("startDate", "endDate");
+        }
     }
 
     @Nested
@@ -905,7 +1056,7 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
             setupActiveCourseScenario();
 
             CourseCalendarEvent eventToDelete = courseCalendarEvents.getFirst();
-            Course otherCourse = courseUtilService.createActiveCourseInTimezone(ZoneId.of(TEST_TIMEZONE), 2, 2);
+            Course otherCourse = courseUtilService.createActiveCourseInTimezone(TEST_TIMEZONE, 2, 2);
             String URL = assembleURLForDeleteRequest(otherCourse.getId(), eventToDelete.getId());
 
             request.delete(URL, HttpStatus.BAD_REQUEST);

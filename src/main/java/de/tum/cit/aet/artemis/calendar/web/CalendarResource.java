@@ -97,6 +97,7 @@ public class CalendarResource {
         return ResponseEntity.ok(calendarEventReadDTOSByDay);
     }
 
+    // mention courseName handling
     @PostMapping("courses/{courseId}/course-calendar-events")
     @EnforceAtLeastEditor
     public ResponseEntity<Set<CalendarEventWriteDTO>> createCourseCalendarEvents(@PathVariable Long courseId,
@@ -106,12 +107,12 @@ public class CalendarResource {
         Course course = courseRepository.findByIdElseThrow(courseId);
         User responsibleUser = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, responsibleUser);
-
         Set<CalendarEventWriteDTO> createdCalendarEventWriteDTOs = courseCalendarEventService.createCourseCalendarEventsOrThrow(calendarEventWriteDTOs, course);
 
         return ResponseEntity.ok(createdCalendarEventWriteDTOs);
     }
 
+    // mention courseName handling
     @PutMapping("courses/{courseId}/course-calendar-event")
     @EnforceAtLeastEditor
     public ResponseEntity<CalendarEventWriteDTO> updateCourseCalendarEvent(@PathVariable Long courseId, @Valid @RequestBody CalendarEventWriteDTO calendarEventWriteDTO) {
@@ -120,7 +121,7 @@ public class CalendarResource {
         Course course = courseRepository.findByIdElseThrow(courseId);
         User responsibleUser = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, responsibleUser);
-
+        // TODO: add validation that at least one role is visible
         CalendarEventWriteDTO updatedCalendarEventWriteDTO = courseCalendarEventService.updateCourseCalendarEventOrThrow(calendarEventWriteDTO);
 
         return ResponseEntity.ok(updatedCalendarEventWriteDTO);
