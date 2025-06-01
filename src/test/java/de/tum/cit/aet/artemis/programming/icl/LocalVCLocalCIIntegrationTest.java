@@ -294,7 +294,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         AuxiliaryRepository auxRepo = new AuxiliaryRepository();
         auxRepo.setName("auxiliary");
         auxRepo.setCheckoutDirectory("aux");
-        auxRepo.setRepositoryUri(localVCBaseUrl + "/git/" + projectKey1 + "/" + auxiliaryRepositorySlug + ".git");
+        auxRepo.setRepositoryUri(localVCBaseUri + "/git/" + projectKey1 + "/" + auxiliaryRepositorySlug + ".git");
         auxiliaryRepositoryRepository.save(auxRepo);
         auxRepo.setExercise(programmingExercise);
         auxiliaryRepositories.add(auxRepo);

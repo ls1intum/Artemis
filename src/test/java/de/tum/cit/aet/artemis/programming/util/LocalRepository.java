@@ -114,8 +114,10 @@ public class LocalRepository {
         workingCopyGitRepo.push().setRemote("origin").call();
     }
 
+    // This method tries to build a valid, but unique (random) LocalVCRepositoryUri from the given base path and local repository file name.
     private static Path getRepoPath(@NotNull Path repoBasePath, @NotNull String localRepoFileName) {
-        return repoBasePath.resolve("git").resolve(getTempPrefix(8)).resolve(localRepoFileName);
+        var tempPrefix = getTempPrefix(6);
+        return repoBasePath.resolve("git").resolve(tempPrefix).resolve(tempPrefix + "-" + localRepoFileName + ".git");
     }
 
     private static final String CHARACTERS = "abcdefghijklmnopqrstuvwxyz0123456789";

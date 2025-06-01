@@ -14,7 +14,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_THEIA;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
-import java.net.URL;
+import java.net.URI;
 import java.nio.file.Path;
 import java.util.Set;
 
@@ -169,7 +169,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     protected CompetencyProgressApi competencyProgressApi;
 
     @Value("${artemis.version-control.url}")
-    protected URL localVCBaseUrl;
+    protected URI localVCBaseUri;
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
     protected String localVCBasePath;

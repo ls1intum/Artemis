@@ -341,12 +341,12 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         String login1 = "ab123git";
         String login2 = "git123ab";
 
-        LocalVCRepositoryUri studentAssignmentRepositoryUri1 = new LocalVCRepositoryUri(projectKey1, projectKey1.toLowerCase() + "-" + login1, localVCBaseUrl);
-        LocalVCRepositoryUri studentAssignmentRepositoryUri2 = new LocalVCRepositoryUri(projectKey1, projectKey1.toLowerCase() + "-" + login2, localVCBaseUrl);
+        LocalVCRepositoryUri studentAssignmentRepositoryUri1 = new LocalVCRepositoryUri(projectKey1, projectKey1.toLowerCase() + "-" + login1, localVCBaseUri);
+        LocalVCRepositoryUri studentAssignmentRepositoryUri2 = new LocalVCRepositoryUri(projectKey1, projectKey1.toLowerCase() + "-" + login2, localVCBaseUri);
 
         // assert that the URIs are correct
-        assertThat(studentAssignmentRepositoryUri1.getURI().toString()).isEqualTo(localVCBaseUrl + "/git/" + projectKey1 + "/" + projectKey1.toLowerCase() + "-" + login1 + ".git");
-        assertThat(studentAssignmentRepositoryUri2.getURI().toString()).isEqualTo(localVCBaseUrl + "/git/" + projectKey1 + "/" + projectKey1.toLowerCase() + "-" + login2 + ".git");
+        assertThat(studentAssignmentRepositoryUri1.getURI().toString()).isEqualTo(localVCBaseUri + "/git/" + projectKey1 + "/" + projectKey1.toLowerCase() + "-" + login1 + ".git");
+        assertThat(studentAssignmentRepositoryUri2.getURI().toString()).isEqualTo(localVCBaseUri + "/git/" + projectKey1 + "/" + projectKey1.toLowerCase() + "-" + login2 + ".git");
 
         // assert that the folder names are correct
         assertThat(studentAssignmentRepositoryUri1.folderNameForRepositoryUri()).isEqualTo("/" + projectKey1 + "/" + projectKey1.toLowerCase() + "-" + login1);
