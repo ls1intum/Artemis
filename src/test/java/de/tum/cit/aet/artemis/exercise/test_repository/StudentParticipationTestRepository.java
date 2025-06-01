@@ -29,21 +29,19 @@ public interface StudentParticipationTestRepository extends StudentParticipation
     @Query("""
             SELECT p
             FROM StudentParticipation p
-                LEFT JOIN FETCH p.results r
-                LEFT JOIN FETCH r.submission rs
                 LEFT JOIN FETCH p.submissions s
+                LEFT JOIN FETCH s.results r
                 LEFT JOIN FETCH r.assessor
             WHERE p.id = :participationId
                 AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
-                AND (rs.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR rs.type IS NULL)
             """)
     Optional<StudentParticipation> findWithEagerLegalSubmissionsAndResultsAssessorsById(@Param("participationId") long participationId);
 
     @Query("""
             SELECT p
             FROM Participation p
-                LEFT JOIN FETCH p.results r
-                LEFT JOIN FETCH r.submission s
+                LEFT JOIN FETCH p.submissions s
+                LEFT JOIN FETCH s.results r
                 LEFT JOIN FETCH r.feedbacks
             WHERE p.id = :participationId
                 AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
