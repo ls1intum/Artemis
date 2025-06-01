@@ -14,13 +14,14 @@ const esModules = [
     '@angular/service-worker',
     '@ctrl/ngx-emoji-mart',
     '@danielmoncada/angular-datetime-picker',
-    '@siemens/ngx-datatable',
     '@fortawesome/angular-fontawesome',
     '@ls1intum/apollon',
     '@ng-bootstrap/ng-bootstrap',
     '@ngx-translate/core',
     '@ngx-translate/http-loader',
+    '@primeuix',
     '@sentry/angular',
+    '@siemens/ngx-datatable',
     '@swimlane/ngx-charts',
     '@swimlane/ngx-graph',
     'collapse-white-space',
@@ -46,15 +47,15 @@ const esModules = [
     'franc-min',
     'internmap',
     'lodash-es',
+    'markdown-it-github-alerts',
     'monaco-editor',
     'n-gram',
     'ngx-device-detector',
     'ngx-infinite-scroll',
     'ngx-webstorage',
+    'primeng',
     'rxjs/operators',
     'trigram-utils',
-    'primeng',
-    '@primeuix'
 ].join('|');
 
 const {
@@ -93,10 +94,10 @@ module.exports = {
     coverageThreshold: {
         global: {
             // TODO: in the future, the following values should increase to at least 90%
-            statements: 89.13,
-            branches: 75.16,
+            statements: 89.14,
+            branches: 75.18,
             functions: 82.94,
-            lines: 89.20,
+            lines: 89.22,
         },
     },
     // json-summary reporter is used by the module coverage check script

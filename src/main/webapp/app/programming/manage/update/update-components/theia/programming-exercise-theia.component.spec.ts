@@ -33,7 +33,6 @@ describe('ProgrammingExerciseTheiaComponent', () => {
                     useValue: theiaServiceMock,
                 },
             ],
-            schemas: [],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ProgrammingExerciseTheiaComponent);
