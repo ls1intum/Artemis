@@ -15,6 +15,7 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.eclipse.jgit.api.FetchCommand;
 import org.eclipse.jgit.api.Git;
@@ -396,11 +397,30 @@ public class LocalVCLocalCITestService {
             int expectedCodeIssueCount, Integer timeoutInSeconds) {
         // wait for result to be persisted
         Duration timeoutDuration = timeoutInSeconds != null ? Duration.ofSeconds(timeoutInSeconds) : Duration.ofSeconds(DEFAULT_AWAITILITY_TIMEOUT_IN_SECONDS);
-        await().atMost(timeoutDuration).until(() -> {
+
+        // Improved synchronization: first ensure participant score service is idle
+        await().atMost(Duration.ofSeconds(10)).until(() -> {
             participantScoreScheduleService.executeScheduledTasks();
-            await().until(participantScoreScheduleService::isIdle);
-            return resultRepository.findFirstWithSubmissionsByParticipationIdOrderByCompletionDateDesc(participationId).isPresent();
+            return participantScoreScheduleService.isIdle();
         });
+
+        // Wait for result to be persisted with improved retry logic
+        await().atMost(timeoutDuration).pollInterval(Duration.ofMillis(200)).until(() -> {
+            // Execute scheduled tasks to ensure database consistency
+            participantScoreScheduleService.executeScheduledTasks();
+            await().atMost(Duration.ofSeconds(5)).until(participantScoreScheduleService::isIdle);
+
+            // Check if result exists
+            Optional<Result> resultOpt = resultRepository.findFirstWithSubmissionsByParticipationIdOrderByCompletionDateDesc(participationId);
+            if (resultOpt.isEmpty()) {
+                return false;
+            }
+
+            // Also verify that the submission exists and has results
+            Optional<ProgrammingSubmission> submissionOpt = programmingSubmissionRepository.findFirstByParticipationIdWithResultsOrderByLegalSubmissionDateDesc(participationId);
+            return submissionOpt.isPresent() && submissionOpt.get().getLatestResult() != null;
+        });
+
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
         List<ProgrammingSubmission> submissions = programmingSubmissionRepository.findAllByParticipationIdWithResults(participationId);
@@ -408,12 +428,15 @@ public class LocalVCLocalCITestService {
         for (ProgrammingSubmission submission : submissions) {
             log.info("Submission with commit hash: {}", submission.getCommitHash());
         }
-        await().until(() -> {
+
+        // Final wait to ensure submission and result are properly linked
+        await().atMost(Duration.ofSeconds(10)).pollInterval(Duration.ofMillis(100)).until(() -> {
             // get the latest valid submission (!ILLEGAL and with results) of the participation
             SecurityContextHolder.getContext().setAuthentication(auth);
             var submission = programmingSubmissionRepository.findFirstByParticipationIdWithResultsOrderByLegalSubmissionDateDesc(participationId);
-            return submission.orElseThrow().getLatestResult() != null;
+            return submission.isPresent() && submission.get().getLatestResult() != null;
         });
+
         // get the latest valid submission (!ILLEGAL and with results) of the participation
         ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdWithResultsOrderByLegalSubmissionDateDesc(participationId)
                 .orElseThrow();

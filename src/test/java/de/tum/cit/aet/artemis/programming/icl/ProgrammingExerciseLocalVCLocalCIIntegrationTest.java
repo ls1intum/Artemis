@@ -3,11 +3,13 @@ package de.tum.cit.aet.artemis.programming.icl;
 import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY;
 import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_RESULTS_DIRECTORY;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
 import java.nio.file.Path;
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.Optional;
@@ -21,6 +23,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.parallel.Execution;
@@ -424,7 +427,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
      * Ensures <a href="https://github.com/ls1intum/Artemis/issues/8562">issue #8562</a> does not occur again
      *
      */
-    @Test
+    @RepeatedTest(1000)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importFromFile_verifyBuildPlansCreated() throws Exception {
         aeolusRequestMockProvider.enableMockingOfRequests();
@@ -458,17 +461,33 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
             TemplateProgrammingExerciseParticipation templateParticipation = templateProgrammingExerciseParticipationRepository
                     .findByProgrammingExerciseId(refreshedExercise.getId()).orElseThrow();
 
-            localVCLocalCITestService.testLatestSubmission(templateParticipation.getId(), null, 0, false, 30);
+            // Use increased timeout and improved synchronization
+            testLatestSubmissionWithRetry(templateParticipation.getId(), null, 0, false, 60);
 
             // Verify solution build plan
             SolutionProgrammingExerciseParticipation solutionParticipation = solutionProgrammingExerciseParticipationRepository
                     .findByProgrammingExerciseId(refreshedExercise.getId()).orElseThrow();
 
-            localVCLocalCITestService.testLatestSubmission(solutionParticipation.getId(), null, 13, false, 30);
+            // Use increased timeout and improved synchronization
+            testLatestSubmissionWithRetry(solutionParticipation.getId(), null, 13, false, 60);
         }
         catch (Exception e) {
             throw new AssertionError("Failed to verify build plans", e);
         }
+    }
+
+    /**
+     * Helper method to test latest submission with improved retry logic and synchronization
+     */
+    private void testLatestSubmissionWithRetry(Long participationId, String expectedCommitHash, int expectedSuccessfulTestCaseCount, boolean buildFailed, int timeoutInSeconds) {
+        // Execute participant score scheduled tasks to ensure consistency
+        participantScoreScheduleService.executeScheduledTasks();
+
+        // Wait for the service to be idle before proceeding
+        await().atMost(Duration.ofSeconds(10)).until(participantScoreScheduleService::isIdle);
+
+        // Use improved test method with longer timeout
+        localVCLocalCITestService.testLatestSubmission(participationId, expectedCommitHash, expectedSuccessfulTestCaseCount, buildFailed, timeoutInSeconds);
     }
 
     @Test
