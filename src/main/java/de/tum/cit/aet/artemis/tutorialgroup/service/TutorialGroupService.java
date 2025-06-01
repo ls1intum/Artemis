@@ -937,7 +937,7 @@ public class TutorialGroupService {
     }
 
     /**
-     * Retrieves {@code TutorialGroupSession}s as {@code CalendarEventDTO}s fulfilling the following criteria:
+     * Retrieves {@code TutorialGroupSession}s as {@code CalendarEventReadDTO}s fulfilling the following criteria:
      *
      * <ol>
      * <li>User is registered for the course of the tutorial group of the session</li>
@@ -947,7 +947,7 @@ public class TutorialGroupService {
      *
      * @param user           the user for which the DTOs should be retrieved
      * @param clientTimeZone the client's time zone
-     * @return a set of {@code CalendarEventDTO}s representing {@code TutorialGroupSession}s relevant for user
+     * @return a set of {@code CalendarEventReadDTO}s representing {@code TutorialGroupSession}s relevant for user
      */
     public Set<CalendarEventReadDTO> getTutorialEventsForUser(User user, ZoneId clientTimeZone) {
         ZonedDateTime now = ZonedDateTime.now(clientTimeZone).withZoneSameInstant(ZoneOffset.UTC);

@@ -19,6 +19,7 @@ import de.tum.cit.aet.artemis.calendar.dto.CalendarEventWriteDTO;
 import de.tum.cit.aet.artemis.calendar.repository.CourseCalendarEventRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 
 @Service
@@ -34,16 +35,16 @@ public class CourseCalendarEventService {
     }
 
     /**
-     * Retrieves {@code CourseCalendarEvent}s as {@code CalendarEventDTO}s fulfilling the following criteria:
-     *
+     * Retrieves {@code CourseCalendarEvent}s as {@code CalendarEventReadDTO}s fulfilling the following criteria:
      * <ol>
      * <li>User is registered for the course of the event</li>
      * <li>The course of the event is active</li>
+     * <li>The event is flagged as visible for at least one of the user's groups</li>
      * </ol>
      *
      * @param user           the user for which the DTOs should be retrieved
      * @param clientTimeZone the client's time zone
-     * @return a set of {@code CalendarEventDTO}s representing {@code CourseCalendarEvent}s relevant for the user
+     * @return a set of {@code CalendarEventReadDTO}s representing {@code CourseCalendarEvent}s relevant for the user
      */
     public Set<CalendarEventReadDTO> getCourseEventsForUser(User user, ZoneId clientTimeZone) {
         ZonedDateTime now = ZonedDateTime.now(clientTimeZone).withZoneSameInstant(ZoneOffset.UTC);
@@ -70,8 +71,17 @@ public class CourseCalendarEventService {
         return visibleEvents.stream().map(event -> new CalendarEventReadDTO(event, clientTimeZone)).collect(Collectors.toSet());
     }
 
+    /**
+     * Creates and persists {@link CourseCalendarEvent}s for the given course from the provided set of {@link CalendarEventWriteDTO}s.
+     *
+     * @param calendarEventWriteDTOs the list of DTOs to create
+     * @param course                 the course to associate the new {@link CourseCalendarEvent}s with
+     * @return a set of {@link CalendarEventWriteDTO}s representing the saved events
+     * @throws BadRequestException if any DTO contains an ID or courseName (fields are set automatically) or is not visible to at least one user group
+     */
     public Set<CalendarEventWriteDTO> createCourseCalendarEventsOrThrow(List<CalendarEventWriteDTO> calendarEventWriteDTOs, Course course) {
         checkThatNoEventHasIdOrThrow(calendarEventWriteDTOs);
+        checkThatNoEventHasACourseNameOrThrow(calendarEventWriteDTOs);
         checkThatAllEventsAreAtLeastVisibleToOneUserGroupOrThrow(calendarEventWriteDTOs);
 
         List<CourseCalendarEvent> courseCalendarEvents = new ArrayList<>();
@@ -94,9 +104,17 @@ public class CourseCalendarEventService {
         return savedEvents.stream().map(CalendarEventWriteDTO::new).collect(Collectors.toSet());
     }
 
-    public CalendarEventWriteDTO updateCourseCalendarEventOrThrow(CalendarEventWriteDTO calendarEventWriteDTO) {
-        Long courseCalendarEventId = checkIfValidIdAndExtractCourseCalendarEventIdOrThrow(calendarEventWriteDTO.id());
-        CourseCalendarEvent courseCalendarEvent = courseCalendarEventRepository.findByIdElseThrow(courseCalendarEventId);
+    /**
+     * Updates an existing {@link CourseCalendarEvent} based on the data in the provided {@link CalendarEventWriteDTO}.
+     *
+     * @param calendarEventWriteDTO the DTO containing updated calendar event data
+     * @return a {@link CalendarEventWriteDTO} representing the updated event
+     * @throws BadRequestException     if the id of the DTO is invalid, if the DTO has a courseName (the field is set automatically according to its current course) or if the
+     *                                     updated event is supposed to not be visible to any user group
+     * @throws EntityNotFoundException if no event corresponding to the DTO's id exists
+     */
+    public CalendarEventWriteDTO updateCourseCalendarEventOrThrow(CourseCalendarEvent courseCalendarEvent, CalendarEventWriteDTO calendarEventWriteDTO) {
+        checkThatEventHasNoCourseNameOrThrow(calendarEventWriteDTO);
         checkThatEventIsAtLeastVisibleToOneUserGroupOrThrow(calendarEventWriteDTO);
 
         courseCalendarEvent.setTitle(calendarEventWriteDTO.title());
@@ -113,21 +131,12 @@ public class CourseCalendarEventService {
         return new CalendarEventWriteDTO(courseCalendarEvent);
     }
 
-    public void deleteCourseCalendarEventOrThrow(Long courseCalendarEventId, Course course) {
-        CourseCalendarEvent courseCalendarEvent = courseCalendarEventRepository.findByIdElseThrow(courseCalendarEventId);
-        if (!courseCalendarEvent.getCourse().equals(course)) {
-            throw new BadRequestException("The calendar event does not belong to the specified course.");
-        }
-
-        courseCalendarEventRepository.delete(courseCalendarEvent);
-    }
-
-    private Long checkIfValidIdAndExtractCourseCalendarEventIdOrThrow(String calendarEventDtoId) {
+    public Long checkIfValidIdAndExtractCourseCalendarEventIdOrThrow(String calendarEventId) {
         String prefix = "course-";
-        if (calendarEventDtoId == null || !calendarEventDtoId.startsWith(prefix)) {
+        if (calendarEventId == null || !calendarEventId.startsWith(prefix)) {
             throw new BadRequestException("Invalid ID format for CourseCalendarEvent: must start with 'course-'");
         }
-        String numericPart = calendarEventDtoId.substring(prefix.length());
+        String numericPart = calendarEventId.substring(prefix.length());
         try {
             return Long.parseLong(numericPart);
         }
@@ -139,7 +148,18 @@ public class CourseCalendarEventService {
     private void checkThatNoEventHasIdOrThrow(List<CalendarEventWriteDTO> calendarEventWriteDTOS) {
         boolean anyHasId = calendarEventWriteDTOS.stream().anyMatch(dto -> dto.id() != null);
         if (anyHasId) {
-            throw new BadRequestException("Each new calendar events must not have an id.");
+            throw new BadRequestException("New calendar events must not have an id, since ids are assigned automatically.");
+        }
+    }
+
+    private void checkThatNoEventHasACourseNameOrThrow(List<CalendarEventWriteDTO> calendarEventWriteDTOS) {
+        calendarEventWriteDTOS.forEach(this::checkThatEventHasNoCourseNameOrThrow);
+    }
+
+    private void checkThatEventHasNoCourseNameOrThrow(CalendarEventWriteDTO calendarEventWriteDTO) {
+        boolean hasCourseName = calendarEventWriteDTO.courseName() != null;
+        if (hasCourseName) {
+            throw new BadRequestException("Each calendar events must not have a courseName, since it is assigned automatically.");
         }
     }
 

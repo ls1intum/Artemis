@@ -55,6 +55,8 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
     static final TypeReference<Map<String, List<CalendarEventReadDTO>>> GET_EVENTS_RETURN_TYPE = new TypeReference<Map<String, List<CalendarEventReadDTO>>>() {
     };
 
+    static final String PUT_REQUEST_URL = "/api/calendar/course-calendar-event";
+
     Course course;
 
     TutorialGroup tutorialGroup;
@@ -220,11 +222,7 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
         return "/api/calendar/courses/" + courseId + "/course-calendar-events";
     }
 
-    String assembleURLForPutRequest(Long courseId) {
-        return "/api/calendar/courses/" + courseId + "/course-calendar-event";
-    }
-
-    String assembleURLForDeleteRequest(Long courseId, Long eventId) {
-        return "/api/calendar/courses/" + courseId + "/course-calendar-event/" + eventId;
+    String assembleURLForDeleteRequest(String eventId) {
+        return "/api/calendar/course-calendar-event/" + eventId;
     }
 }

@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.calendar.repository;
 
+import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.data.jpa.repository.Query;
@@ -13,10 +14,18 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 public interface CourseCalendarEventRepository extends ArtemisJpaRepository<CourseCalendarEvent, Long> {
 
     @Query("""
-                SELECT e
-                FROM CourseCalendarEvent e
-                    JOIN FETCH e.course c
-                WHERE c.id IN :courseIds
+            SELECT e
+            FROM CourseCalendarEvent e
+                JOIN FETCH e.course c
+            WHERE c.id IN :courseIds
             """)
     Set<CourseCalendarEvent> findAllByCourseIdsWithCourse(@Param("courseIds") Set<Long> courseIds);
+
+    @Query("""
+            SELECT e
+            FROM CourseCalendarEvent e
+                JOIN FETCH e.course
+            WHERE e.id = :id
+            """)
+    Optional<CourseCalendarEvent> findByIdWithCourse(@Param("id") Long id);
 }
