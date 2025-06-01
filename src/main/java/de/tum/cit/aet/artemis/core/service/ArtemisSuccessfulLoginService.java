@@ -49,7 +49,7 @@ public class ArtemisSuccessfulLoginService {
     private final MailSendingService mailSendingService;
 
     @PostConstruct
-    public void init() {
+    public void ensurePasswordResetLinksAreInitializedProperly() {
         String defaultPasswordResetLink = artemisServerUrl + "/account/reset/request";
         String configurationPlaceholder = "<link>";
         if (passwordResetLinkEnUrl == null || passwordResetLinkEnUrl.isEmpty() || passwordResetLinkEnUrl.equals(configurationPlaceholder)) {

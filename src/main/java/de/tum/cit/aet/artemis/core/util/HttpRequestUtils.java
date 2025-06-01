@@ -12,7 +12,7 @@ import org.springframework.http.HttpHeaders;
 import inet.ipaddr.IPAddress;
 import inet.ipaddr.IPAddressString;
 
-public class HttpRequestUtils {
+public final class HttpRequestUtils {
 
     private static final Logger log = LoggerFactory.getLogger(HttpRequestUtils.class);
 
@@ -130,11 +130,11 @@ public class HttpRequestUtils {
         else if (userAgent.contains("Macintosh") || userAgent.contains("Mac OS X")) {
             return OperatingSystem.MACOS;
         }
-        else if (userAgent.contains("Linux")) {
-            return OperatingSystem.LINUX;
-        }
         else if (userAgent.contains("Android")) {
             return OperatingSystem.ANDROID;
+        }
+        else if (userAgent.contains("Linux")) {
+            return OperatingSystem.LINUX;
         }
 
         log.warn("Could not detect operating system from user agent: {}, secure user agent platform: {}", userAgent, secureClientHintsUserAgentPlatform);

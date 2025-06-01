@@ -40,7 +40,7 @@ class ArtemisSuccessfulLoginServiceTest extends AbstractSpringIntegrationIndepen
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "INSTRUCTOR")
-    void shouldSendEmailToUserOnSuccessfulAuthentication() throws EntityNotFoundException {
+    void shouldSendEmailToUserWhenServiceMethodIsInvoked() throws EntityNotFoundException {
         String username = TEST_PREFIX + "student1";
 
         User user = userTestRepository.findOneByLogin(username).get();
