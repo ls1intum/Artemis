@@ -323,12 +323,18 @@ public class ProgrammingExerciseGradingService {
                 // Update course learner profile with received score and lines changed
                 int linesChangedInSubmission = programmingSubmissionService.calculateLinesChangedToPreviousSubmission(programmingSubmission);
                 ProgrammingExerciseGitDiffReport exerciseGitDiffReport = programmingExerciseGitDiffReportService.getOrCreateReportOfExercise(programmingExercise);
-                int linesChangedInSolution = exerciseGitDiffReport.getEntries().stream().mapToInt(
-                        (entry) -> ((entry.getPreviousLineCount() != null) ? entry.getPreviousLineCount() : 0) + ((entry.getLineCount() != null) ? entry.getLineCount() : 0)).sum();
-                double score = processedResult.getScore();
 
-                learnerProfileApi.get().updateProficiency(((StudentParticipation) participation).getStudents(),
-                        participation.getProgrammingExercise().getCourseViaExerciseGroupOrCourseMember(), linesChangedInSubmission, linesChangedInSolution, score);
+                // Diff report might be null if it can't be created
+                if (exerciseGitDiffReport != null) {
+
+                    int linesChangedInSolution = exerciseGitDiffReport.getEntries().stream().mapToInt(
+                            (entry) -> ((entry.getPreviousLineCount() != null) ? entry.getPreviousLineCount() : 0) + ((entry.getLineCount() != null) ? entry.getLineCount() : 0))
+                            .sum();
+                    double score = processedResult.getScore();
+
+                    learnerProfileApi.get().updateProficiency(((StudentParticipation) participation).getStudents(),
+                            participation.getProgrammingExercise().getCourseViaExerciseGroupOrCourseMember(), linesChangedInSubmission, linesChangedInSolution, score);
+                }
             }
             if (programmingSubmission.getLatestResult() != null && programmingSubmission.getLatestResult().isManual() && !((Participation) participation).isPracticeMode()) {
                 // Note: in this case, we do not want to save the processedResult, but we only want to update the latest semi-automatic one
