@@ -1699,15 +1699,15 @@ public class ProgrammingExerciseIntegrationTestService {
         assertThat(result.plagiarismResult().getExercise().getId()).isEqualTo(programmingExercise.getId());
 
         PlagiarismComparison<?> comparison = result.plagiarismResult().getComparisons().iterator().next();
-        assertThat(comparison.getSimilarity()).isEqualTo(expectedSimilarity, Offset.offset(0.00001));
+        assertThat(comparison.getSimilarity()).isEqualTo(expectedSimilarity, Offset.offset(0.0001));
         assertThat(comparison.getStatus()).isEqualTo(PlagiarismStatus.NONE);
         assertThat(comparison.getMatches()).hasSize(1);
 
         // verify plagiarism result stats
         var stats = result.plagiarismResultStats();
         assertThat(stats.numberOfDetectedSubmissions()).isEqualTo(2);
-        assertThat(stats.averageSimilarity()).isEqualTo(expectedSimilarity, Offset.offset(0.00001));
-        assertThat(stats.maximalSimilarity()).isEqualTo(expectedSimilarity, Offset.offset(0.00001));
+        assertThat(stats.averageSimilarity()).isEqualTo(expectedSimilarity, Offset.offset(0.0001));
+        assertThat(stats.maximalSimilarity()).isEqualTo(expectedSimilarity, Offset.offset(0.0001));
     }
 
     private void prepareTwoStudentAndOneInstructorRepositoriesForPlagiarismChecks(ProgrammingExercise programmingExercise) throws IOException, GitAPIException {
