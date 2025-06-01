@@ -52,19 +52,27 @@ import org.eclipse.jgit.api.errors.InvalidRefNameException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.api.errors.NoHeadException;
 import org.eclipse.jgit.api.errors.TransportException;
+import org.eclipse.jgit.lib.CommitBuilder;
 import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.FileMode;
 import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.ObjectInserter;
+import org.eclipse.jgit.lib.ObjectLoader;
 import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.RefUpdate;
+import org.eclipse.jgit.lib.TreeFormatter;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevTree;
+import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.revwalk.filter.CommitTimeRevFilter;
 import org.eclipse.jgit.revwalk.filter.RevFilter;
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.RemoteConfig;
-import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
+import org.eclipse.jgit.treewalk.TreeWalk;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -460,17 +468,6 @@ public class GitService extends AbstractGitService {
         return cachedRepositories.containsKey(localPath);
     }
 
-    /**
-     * Combine all commits of the given repository into one.
-     *
-     * @param repoUri of the repository to combine.
-     * @throws GitAPIException If the checkout fails
-     */
-    public void combineAllCommitsOfRepositoryIntoOne(VcsRepositoryUri repoUri) throws GitAPIException {
-        Repository exerciseRepository = getOrCheckoutRepository(repoUri, true);
-        combineAllCommitsIntoInitialCommit(exerciseRepository);
-    }
-
     public Path getDefaultLocalPathOfRepo(VcsRepositoryUri targetUrl) {
         return getLocalPathOfRepo(repoClonePath, targetUrl);
     }
@@ -579,35 +576,6 @@ public class GitService extends AbstractGitService {
             log.debug("commitAndPush -> Push {}", repo.getLocalPath());
             setRemoteUrl(repo);
             pushCommand(git).call();
-        }
-    }
-
-    /**
-     * The remote uri of the target repo is still the uri of the source repo.
-     * We need to change it to the uri of the target repo.
-     * The content to be copied then gets pushed to the new repo.
-     *
-     * @param targetRepo    Local target repo
-     * @param targetRepoUri URI of targets repo
-     * @param oldBranch     default branch that was used when the exercise was created (might differ from the default branch of a participation)
-     * @throws GitAPIException if the repo could not be pushed
-     */
-    public void pushSourceToTargetRepo(Repository targetRepo, VcsRepositoryUri targetRepoUri, String oldBranch) throws GitAPIException {
-        try (Git git = new Git(targetRepo)) {
-            // overwrite the old remote uri with the target uri
-            git.remoteSetUrl().setRemoteName(REMOTE_NAME).setRemoteUri(new URIish(getGitUriAsString(targetRepoUri))).call();
-            log.debug("pushSourceToTargetRepo -> Push {}", targetRepoUri.getURI());
-
-            if (!defaultBranch.equals(oldBranch)) {
-                targetRepo.getConfig().unsetSection(ConfigConstants.CONFIG_BRANCH_SECTION, oldBranch);
-                git.branchRename().setNewName(defaultBranch).setOldName(oldBranch).call();
-            }
-
-            // push the source content to the new remote
-            pushCommand(git).call();
-        }
-        catch (URISyntaxException e) {
-            log.error("Error while pushing to remote target: ", e);
         }
     }
 
@@ -814,11 +782,11 @@ public class GitService extends AbstractGitService {
     /**
      * Stager Task #6: Combine all commits after last instructor commit
      *
-     * @param repository          Local Repository Object.
-     * @param programmingExercise ProgrammingExercise associated with this repo.
-     * @param overwriteMain       If false keeps main and creates squash commit in separate branch, if true squashes main
+     * @param repository             Local Repository Object.
+     * @param programmingExercise    ProgrammingExercise associated with this repo.
+     * @param overwriteDefaultBranch If false keeps the default branch and creates squash commit in separate branch, if true squashes the default branch
      */
-    public void combineAllStudentCommits(Repository repository, ProgrammingExercise programmingExercise, boolean overwriteMain) {
+    public void combineAllStudentCommits(Repository repository, ProgrammingExercise programmingExercise, boolean overwriteDefaultBranch) {
         try (Git studentGit = new Git(repository)) {
             setRemoteUrl(repository);
             // Get last commit hash from template repo
@@ -831,7 +799,7 @@ public class GitService extends AbstractGitService {
             }
 
             // checkout own local "diff" branch to keep main as is
-            if (!overwriteMain) {
+            if (!overwriteDefaultBranch) {
                 studentGit.checkout().setCreateBranch(true).setName("diff").call();
             }
 
@@ -963,9 +931,23 @@ public class GitService extends AbstractGitService {
 
     /**
      * Retrieves a bare JGit repository based on a remote repository URI. This method is functional only when LocalVC is active.
+     * It uses the default branch, also see {@link #getBareRepository(VcsRepositoryUri, String)} for more details.
+     *
+     * @param repositoryUri The URI of the remote VCS repository, not null.
+     * @return The initialized bare Repository instance.
+     * @throws GitException If the repository cannot be created due to I/O errors or invalid reference names.
+     */
+    @NotNull
+    public Repository getBareRepository(VcsRepositoryUri repositoryUri) {
+        return getBareRepository(repositoryUri, defaultBranch);
+    }
+
+    /**
+     * Retrieves a bare JGit repository based on a remote repository URI. This method is functional only when LocalVC is active.
      * It translates a remote repository URI into a local repository path, attempting to create a repository at this location.
      *
      * @param repositoryUri The URI of the remote VCS repository, not null.
+     * @param branch        The branch to be used for the bare repository, typically the default branch.
      * @return The initialized bare Repository instance.
      * @throws GitException If the repository cannot be created due to I/O errors or invalid reference names.
      *
@@ -979,8 +961,7 @@ public class GitService extends AbstractGitService {
      *                          Note: This method requires that LocalVC is actively managing the local version control environment to operate correctly.
      *                          </p>
      */
-    @NotNull
-    public Repository getBareRepository(VcsRepositoryUri repositoryUri) {
+    public Repository getBareRepository(VcsRepositoryUri repositoryUri, String branch) {
         var localRepoUri = new LocalVCRepositoryUri(repositoryUri.toString());
         var localPath = localRepoUri.getLocalRepositoryPath(localVCBasePath);
         // Check if the repository is already cached in the server's session.
@@ -989,7 +970,7 @@ public class GitService extends AbstractGitService {
             return cachedRepository;
         }
         try {
-            var repository = linkRepositoryForExistingGit(localPath, repositoryUri, defaultBranch, true);
+            var repository = linkRepositoryForExistingGit(localPath, repositoryUri, branch, true);
             cachedBareRepositories.put(localPath, repository);
             return repository;
         }
@@ -997,6 +978,133 @@ public class GitService extends AbstractGitService {
             log.error("Could not create the bare repository with uri {}", repositoryUri, e);
             throw new GitException("Could not create the bare repository", e);
         }
+    }
+
+    /**
+     * Creates a new bare Git repository at the specified target location,
+     * containing a single commit that includes all files from the source repository.
+     * <p>
+     * The history of the source repository is not preserved; instead, a new commit is created
+     * with a fresh tree built from the source repository's latest state. The commit's author and
+     * committer information is taken from the first commit of the source repository.
+     * <p>
+     * This method avoids cloning the source repository and directly works with its object database for performance reasons.
+     *
+     * @param sourceRepoUri the URI of the source bare repository to copy from
+     * @param targetRepoUri the URI where the new bare repository will be created
+     * @param sourceBranch  the name of the branch to copy (e.g., "main" or "master")
+     * @return a Repository object representing the newly created bare repository
+     * @throws IOException if there is an error accessing the repositories or creating the new commit
+     */
+    public Repository copyBareRepository(VcsRepositoryUri sourceRepoUri, VcsRepositoryUri targetRepoUri, String sourceBranch) throws IOException {
+
+        Repository sourceRepo = getBareRepository(sourceRepoUri, sourceBranch);
+
+        // Initialize new bare repository
+        var localTargetRepoUri = new LocalVCRepositoryUri(targetRepoUri.toString());
+        var localTargetPath = localTargetRepoUri.getLocalRepositoryPath(localVCBasePath);
+        try (org.eclipse.jgit.lib.Repository targetRepo = FileRepositoryBuilder.create(localTargetPath.toFile())) {
+
+            targetRepo.create(true); // true for bare
+            ObjectInserter inserter = targetRepo.newObjectInserter();
+
+            // Get the HEAD tree of the source
+            ObjectId headId = sourceRepo.resolve("refs/heads/" + sourceBranch + "^{tree}");
+            RevWalk walk = new RevWalk(sourceRepo);
+            RevTree headTree = walk.parseTree(headId);
+
+            // Get PersonIdent from the very first commit
+            ObjectId branchHead = sourceRepo.resolve("refs/heads/" + sourceBranch);
+            // TODO: consider to have a back up here, e.g. the first instructor of the course
+            PersonIdent personIdent = getFirstCommitPersonIdent(sourceRepo, branchHead);
+
+            // Walk the tree, insert blobs into target repo, and build a new tree
+            ObjectId newTreeId = buildCleanTreeFromSource(sourceRepo, inserter, headTree);
+            inserter.flush();
+
+            // Create commit with the clean tree
+            CommitBuilder commitBuilder = new CommitBuilder();
+            commitBuilder.setTreeId(newTreeId);
+            commitBuilder.setMessage("Set up template for exercise");
+
+            // Set author and committer information based on the first commit in the source repo
+            commitBuilder.setAuthor(personIdent);
+            commitBuilder.setCommitter(personIdent);
+            ObjectId newCommitId = inserter.insert(commitBuilder);
+            inserter.flush();
+
+            // Update refs/heads/main in new bare repo
+            RefUpdate refUpdate = targetRepo.updateRef("refs/heads/" + sourceBranch);
+            refUpdate.setNewObjectId(newCommitId);
+            refUpdate.setForceUpdate(true);
+            refUpdate.update();
+
+            return getBareRepository(targetRepoUri);
+        }
+    }
+
+    /**
+     * Retrieves the PersonIdent (author) from the first (root) commit of the specified branch.
+     * <p>
+     * This method walks through the commit history of the provided branch and returns
+     * the PersonIdent (author) of the commit that has no parents (i.e., the very first commit).
+     * <p>
+     * Note: If the branch is empty or no commits are found, an IOException is thrown.
+     *
+     * @param repo       the JGit repository object to read from
+     * @param branchHead the ObjectId representing the branch head (e.g., resolve("refs/heads/main"))
+     * @return the PersonIdent of the author of the first commit in the branch
+     * @throws IOException if the first commit cannot be found or a repository error occurs
+     */
+    private PersonIdent getFirstCommitPersonIdent(Repository repo, ObjectId branchHead) throws IOException {
+        try (RevWalk walk = new RevWalk(repo)) {
+            walk.markStart(walk.parseCommit(branchHead));
+
+            for (RevCommit commit : walk) {
+                if (commit.getParentCount() == 0) {
+                    return commit.getAuthorIdent();
+                }
+            }
+        }
+        throw new IOException("First commit not found");
+    }
+
+    /**
+     * Builds a clean tree from the source repository's tree, copying blobs and subtrees.
+     *
+     * @param sourceRepo The source repository from which to copy the tree.
+     * @param inserter   The ObjectInserter to insert objects into the target repository.
+     * @param sourceTree The source tree to copy from.
+     * @return The ObjectId of the newly created clean tree in the target repository.
+     * @throws IOException If an I/O error occurs during the copying process.
+     */
+    private ObjectId buildCleanTreeFromSource(Repository sourceRepo, ObjectInserter inserter, RevTree sourceTree) throws IOException {
+        TreeWalk treeWalk = new TreeWalk(sourceRepo);
+        treeWalk.addTree(sourceTree);
+        treeWalk.setRecursive(false);
+
+        TreeFormatter treeFormatter = new TreeFormatter();
+
+        while (treeWalk.next()) {
+            ObjectId objectId = treeWalk.getObjectId(0);
+            FileMode mode = treeWalk.getFileMode(0);
+            String name = treeWalk.getNameString();
+
+            if (mode == FileMode.TREE) {
+                // Recursively copy subtrees
+                RevTree subTree = new RevWalk(sourceRepo).parseTree(objectId);
+                ObjectId newSubTreeId = buildCleanTreeFromSource(sourceRepo, inserter, subTree);
+                treeFormatter.append(name, FileMode.TREE, newSubTreeId);
+            }
+            else {
+                // Read blob from source and insert into target
+                ObjectLoader loader = sourceRepo.open(objectId);
+                ObjectId newBlobId = inserter.insert(Constants.OBJ_BLOB, loader.getBytes());
+                treeFormatter.append(name, mode, newBlobId);
+            }
+        }
+
+        return inserter.insert(treeFormatter);
     }
 
     private static class FileAndDirectoryFilter implements IOFileFilter {
@@ -1110,41 +1218,6 @@ public class GitService extends AbstractGitService {
         try (Git git = new Git(repo)) {
             Status status = git.status().call();
             return status.isClean();
-        }
-    }
-
-    /**
-     * Combines all commits in the selected repo into the first commit, keeping its commit message. Executes a hard reset to remote before the combine to avoid conflicts.
-     *
-     * @param repo to combine commits for
-     * @throws GitAPIException       on io errors or git exceptions.
-     * @throws IllegalStateException if there is no commit in the git repository.
-     */
-    public void combineAllCommitsIntoInitialCommit(Repository repo) throws IllegalStateException, GitAPIException {
-        try (Git git = new Git(repo)) {
-            resetToOriginHead(repo);
-            List<RevCommit> commits = StreamSupport.stream(git.log().call().spliterator(), false).toList();
-            RevCommit firstCommit = commits.getLast();
-            // If there is a first commit, combine all other commits into it.
-            if (firstCommit != null) {
-                git.reset().setMode(ResetCommand.ResetType.SOFT).setRef(firstCommit.getId().getName()).call();
-                git.add().addFilepattern(".").call();
-                GitService.commit(git).setAmend(true).setMessage(firstCommit.getFullMessage()).call();
-                log.debug("combineAllCommitsIntoInitialCommit -> Push {}", repo.getLocalPath());
-                pushCommand(git).setForce(true).call();
-            }
-            else {
-                // Normally there always has to be a commit, so we throw an error in case none can be found.
-                throw new IllegalStateException();
-            }
-        }
-        // This exception occurs when there was no change to the repo and a commit is done, so it is ignored.
-        catch (JGitInternalException ex) {
-            log.debug("Did not combine the repository {} as there were no changes to commit. Exception: {}", repo, ex.getMessage());
-        }
-        catch (GitAPIException ex) {
-            log.error("Could not combine repository {} due to exception:", repo, ex);
-            throw ex;
         }
     }
 

@@ -17,7 +17,6 @@ import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyBoolean;
 import static org.mockito.Mockito.anyString;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.eq;
@@ -415,9 +414,6 @@ public class ProgrammingExerciseTestService {
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepository.localRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(solutionRepoTestUrl, true);
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(auxRepository.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(auxRepoTestUrl, true);
-
-        doNothing().when(gitService).pushSourceToTargetRepo(any(), any(), any());
-        doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(any());
 
         // we need separate mocks with VcsRepositoryUri here because MockFileRepositoryUri and VcsRepositoryUri do not seem to be compatible here
         mockDelegate.mockGetRepositorySlugFromRepositoryUri(exerciseRepoName, exerciseRepoTestUrl);

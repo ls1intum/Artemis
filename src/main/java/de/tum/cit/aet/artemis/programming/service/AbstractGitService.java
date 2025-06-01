@@ -146,9 +146,10 @@ public abstract class AbstractGitService {
      *                                     <p>
      *                                     References:
      *                                     <ul>
-     *                                     <li>https://stackoverflow.com/questions/45266021/java-jgit-files-delete-fails-to-delete-a-file-but-file-delete-succeeds</li>
-     *                                     <li>https://git-scm.com/docs/git-gc</li>
-     *                                     <li>https://www.eclipse.org/lists/jgit-dev/msg03734.html</li>
+     *                                     <li><a href="https://stackoverflow.com/questions/45266021/java-jgit-files-delete-fails-to-delete-a-file-but-file-delete-succeeds">JGit
+     *                                     Files.delete() fails to delete a file, but file.delete() succeeds</a></li>
+     *                                     <li><a href="https://git-scm.com/docs/git-gc">Git garbage collection</a></li>
+     *                                     <li><a href="https://www.eclipse.org/lists/jgit-dev/msg03734.html">How to completely disable auto GC in JGit</a></li>
      *                                     </ul>
      *                                     </p>
      */
