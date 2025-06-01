@@ -78,7 +78,6 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.dto.RepositoryExportOptionsDTO;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
-import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
@@ -174,9 +173,6 @@ public class ProgrammingExerciseIntegrationTestService {
     @Autowired
     // this will be a MockitoSpyBean because it was configured as MockitoSpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
     private GitService gitService;
-
-    @Autowired
-    private UserTestRepository userRepository;
 
     @Autowired
     private UserUtilService userUtilService;
@@ -1794,8 +1790,8 @@ public class ProgrammingExerciseIntegrationTestService {
         Files.createDirectories(repo2Dir);
 
         // Write Java files with the expected names for the test
-        Files.write(repo1Dir.resolve("1-Submission1.java"), exampleProgram.getBytes(StandardCharsets.UTF_8));
-        Files.write(repo2Dir.resolve("2-Submission2.java"), exampleProgram.getBytes(StandardCharsets.UTF_8));
+        FileUtils.writeByteArrayToFile(repo1Dir.resolve("1-Submission1.java").toFile(), exampleProgram.getBytes(StandardCharsets.UTF_8));
+        FileUtils.writeByteArrayToFile(repo2Dir.resolve("2-Submission2.java").toFile(), exampleProgram.getBytes(StandardCharsets.UTF_8));
 
         // Create mock repositories pointing to these directories
         de.tum.cit.aet.artemis.programming.domain.Repository mockRepo1 = mock(de.tum.cit.aet.artemis.programming.domain.Repository.class);
