@@ -945,21 +945,16 @@ public class GitService extends AbstractGitService {
     /**
      * Retrieves a bare JGit repository based on a remote repository URI. This method is functional only when LocalVC is active.
      * It translates a remote repository URI into a local repository path, attempting to create a repository at this location.
+     * This method delegates the creation of the repository to {@code linkRepositoryForExistingGit}, which sets up the repository without a working
+     * directory (bare repository).
+     * <p>
+     * It handles exceptions related to repository creation by throwing a {@code GitException}, providing a more specific error context.
+     * Note: This method requires that LocalVC is actively managing the local version control environment to operate correctly.
      *
      * @param repositoryUri The URI of the remote VCS repository, not null.
      * @param branch        The branch to be used for the bare repository, typically the default branch.
      * @return The initialized bare Repository instance.
      * @throws GitException If the repository cannot be created due to I/O errors or invalid reference names.
-     *
-     *                          <p>
-     *                          This method delegates the creation of the repository to {@code linkRepositoryForExistingGit}, which sets up the repository
-     *                          without a working directory (bare repository). It handles exceptions related to repository creation by throwing
-     *                          a {@code GitException}, providing a more specific error context.
-     *                          </p>
-     *
-     *                          <p>
-     *                          Note: This method requires that LocalVC is actively managing the local version control environment to operate correctly.
-     *                          </p>
      */
     public Repository getBareRepository(VcsRepositoryUri repositoryUri, String branch) {
         var localRepoUri = new LocalVCRepositoryUri(repositoryUri.toString());
@@ -971,6 +966,25 @@ public class GitService extends AbstractGitService {
         }
         try {
             var repository = linkRepositoryForExistingGit(localPath, repositoryUri, branch, true);
+            cachedBareRepositories.put(localPath, repository);
+            return repository;
+        }
+        catch (IOException | InvalidRefNameException e) {
+            log.error("Could not create the bare repository with uri {}", repositoryUri, e);
+            throw new GitException("Could not create the bare repository", e);
+        }
+    }
+
+    public Repository getExistingBareRepository(VcsRepositoryUri repositoryUri, String branch) {
+        var localRepoUri = new LocalVCRepositoryUri(repositoryUri.toString());
+        var localPath = localRepoUri.getLocalRepositoryPath(localVCBasePath);
+        // Check if the repository is already cached in the server's session.
+        Repository cachedRepository = cachedBareRepositories.get(localPath);
+        if (cachedRepository != null) {
+            return cachedRepository;
+        }
+        try {
+            var repository = getExistingBareRepository(localPath, repositoryUri, branch);
             cachedBareRepositories.put(localPath, repository);
             return repository;
         }
@@ -998,7 +1012,7 @@ public class GitService extends AbstractGitService {
      */
     public Repository copyBareRepository(VcsRepositoryUri sourceRepoUri, VcsRepositoryUri targetRepoUri, String sourceBranch) throws IOException {
 
-        Repository sourceRepo = getBareRepository(sourceRepoUri, sourceBranch);
+        Repository sourceRepo = getExistingBareRepository(sourceRepoUri, sourceBranch);
 
         // Initialize new bare repository
         var localTargetRepoUri = new LocalVCRepositoryUri(targetRepoUri.toString());
