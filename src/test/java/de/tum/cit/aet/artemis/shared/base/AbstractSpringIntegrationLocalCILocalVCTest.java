@@ -282,11 +282,6 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     }
 
     @Override
-    public void mockRetrieveArtifacts(ProgrammingExerciseStudentParticipation participation) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
     public void mockFetchCommitInfo(String projectKey1, String repositorySlug, String hash) {
         // Not implemented for local VC and local CI
     }

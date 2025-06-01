@@ -431,11 +431,6 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTest extends Abstra
     }
 
     @Override
-    public void mockRetrieveArtifacts(ProgrammingExerciseStudentParticipation participation) {
-        // Not needed for this test
-    }
-
-    @Override
     public void mockFetchCommitInfo(String projectKey, String repositorySlug, String hash) {
         // Not needed for this test
     }

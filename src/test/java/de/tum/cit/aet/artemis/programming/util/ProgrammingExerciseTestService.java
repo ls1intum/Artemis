@@ -2066,7 +2066,6 @@ public class ProgrammingExerciseTestService {
 
         assertThat(team.getStudents()).as("Students were correctly added to team").hasSize(NUMBER_OF_STUDENTS).hasSameSizeAs(students);
 
-        // Set up mockRetrieveArtifacts requests for start participation
         mockDelegate.mockConnectorRequestsForStartParticipation(exercise, team.getParticipantIdentifier(), team.getStudents(), true);
 
         // Add a new student to the team
@@ -2098,7 +2097,6 @@ public class ProgrammingExerciseTestService {
 
         assertThat(team.getStudents()).as("Students were correctly added to team").hasSize(NUMBER_OF_STUDENTS).hasSameSizeAs(students);
 
-        // Set up mockRetrieveArtifacts requests for start participation
         mockDelegate.mockConnectorRequestsForStartParticipation(exercise, team.getParticipantIdentifier(), team.getStudents(), true);
 
         // Remove the first student from the team

@@ -114,11 +114,6 @@ public abstract class AbstractSpringIntegrationLocalVCSamlTest extends AbstractA
     }
 
     @Override
-    public void mockRetrieveArtifacts(ProgrammingExerciseStudentParticipation participation) {
-        // Not needed for this test
-    }
-
-    @Override
     public void mockFetchCommitInfo(String projectKey, String repositorySlug, String hash) {
         // Not needed for this test
     }

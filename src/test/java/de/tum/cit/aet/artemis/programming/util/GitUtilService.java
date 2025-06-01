@@ -314,6 +314,7 @@ public class GitUtilService {
         return new VcsRepositoryUri(Path.of(getCompleteRepoPathStringByType(repo)).toFile());
     }
 
+    @Deprecated(forRemoval = true, since = "8.1.4")
     public static final class MockFileRepositoryUri extends VcsRepositoryUri {
 
         public MockFileRepositoryUri(File file) {

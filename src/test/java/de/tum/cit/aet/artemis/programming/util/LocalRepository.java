@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.programming.service.GitService;
  * In the case of using LocalVC with LocalCI, LocalVC contains the origin repositories,
  * they are just not kept in an external system, but rather in another folder that belongs to Artemis.
  */
+@Deprecated(forRemoval = true, since = "8.1.4")
 public class LocalRepository {
 
     public File localRepoFile;
