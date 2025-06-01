@@ -30,10 +30,10 @@ const moduleThresholds = {
         lines:      91.78,
     },
     buildagent: {
-        statements: 90.00,
-        branches:   80.00,
-        functions:  85.00,
-        lines:      90.00,
+        statements: 93.16,
+        branches:   82.93,
+        functions:  88.07,
+        lines:      93.04,
     },
     communication: {
         statements: 92.08,
