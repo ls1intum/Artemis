@@ -211,12 +211,14 @@ public class ProgrammingExerciseResultTestService {
         feedback.setText("feedback1");
         feedback.setCredits(10.0);
 
-        var resultsWithFeedback = resultRepository.findAllWithEagerFeedbackByAssessorIsNotNullAndParticipation_ExerciseIdAndCompletionDateIsNotNull(programmingExercise.getId());
+        var resultsWithFeedback = resultRepository
+                .findAllWithEagerFeedbackByAssessorIsNotNullAndSubmission_Participation_ExerciseIdAndCompletionDateIsNotNull(programmingExercise.getId());
         var semiAutoResult = resultsWithFeedback.stream().filter(result -> result.getAssessmentType() == AssessmentType.SEMI_AUTOMATIC).findAny().orElseThrow();
         participationUtilService.addFeedbackToResult(feedback, semiAutoResult);
 
         // Assert that the results have been created successfully.
-        resultsWithFeedback = resultRepository.findAllWithEagerFeedbackByAssessorIsNotNullAndParticipation_ExerciseIdAndCompletionDateIsNotNull(programmingExercise.getId());
+        resultsWithFeedback = resultRepository
+                .findAllWithEagerFeedbackByAssessorIsNotNullAndSubmission_Participation_ExerciseIdAndCompletionDateIsNotNull(programmingExercise.getId());
         assertThat(resultsWithFeedback).hasSize(3);
         assertThat(resultsWithFeedback).filteredOn(result -> result.getAssessmentType() == AssessmentType.MANUAL).hasSize(2);
         assertThat(resultsWithFeedback).filteredOn(result -> result.getAssessmentType() == AssessmentType.SEMI_AUTOMATIC).hasSize(1);
@@ -226,7 +228,8 @@ public class ProgrammingExerciseResultTestService {
         postResult(buildResultNotification);
 
         // Retrieve updated results
-        var updatedResults = resultRepository.findAllWithEagerFeedbackByAssessorIsNotNullAndParticipation_ExerciseIdAndCompletionDateIsNotNull(programmingExercise.getId());
+        var updatedResults = resultRepository
+                .findAllWithEagerFeedbackByAssessorIsNotNullAndSubmission_Participation_ExerciseIdAndCompletionDateIsNotNull(programmingExercise.getId());
         assertThat(updatedResults).containsExactlyInAnyOrderElementsOf(resultsWithFeedback);
 
         var semiAutoResultId = semiAutoResult.getId();

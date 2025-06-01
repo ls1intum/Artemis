@@ -659,11 +659,11 @@ public class ParticipationService {
      * @param studentId the id of student
      * @return the list of exercise participations belonging to exercise and student
      */
-    public List<StudentParticipation> findByExerciseAndStudentId(Exercise exercise, Long studentId) {
+    public List<StudentParticipation> findByExerciseAndStudentIdWithSubmissionsAndResults(Exercise exercise, Long studentId) {
         if (exercise.isTeamMode()) {
-            return studentParticipationRepository.findAllWithTeamStudentsByExerciseIdAndTeamStudentId(exercise.getId(), studentId);
+            return studentParticipationRepository.findAllWithTeamStudentsByExerciseIdAndTeamStudentIdWithSubmissionsAndResults(exercise.getId(), studentId);
         }
-        return studentParticipationRepository.findByExerciseIdAndStudentId(exercise.getId(), studentId);
+        return studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerResultsAndSubmissions(exercise.getId(), studentId);
     }
 
     /**
@@ -824,7 +824,7 @@ public class ParticipationService {
      */
     public void deleteResultsAndSubmissionsOfParticipation(Long participationId, boolean deleteParticipantScores) {
         log.debug("Request to delete all results and submissions of participation with id : {}", participationId);
-        var participation = participationRepository.findByIdWithResultsAndSubmissionsResults(participationId)
+        var participation = participationRepository.findByIdWithSubmissionsResults(participationId)
                 .orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
 
         // delete the participant score with the combination (exerciseId, studentId) or (exerciseId, teamId)
@@ -839,7 +839,6 @@ public class ParticipationService {
         resultsToBeDeleted.addAll(participation.getResults());
         // By removing the participation, the ResultListener will ignore this result instead of scheduling a participant score update
         // This is okay here, because we delete the whole participation (no older results will exist for the score)
-        resultsToBeDeleted.forEach(participation::removeResult);
         resultsToBeDeleted.forEach(result -> resultService.deleteResult(result, false));
         // Delete all submissions for this participation
         submissions.forEach(submission -> {

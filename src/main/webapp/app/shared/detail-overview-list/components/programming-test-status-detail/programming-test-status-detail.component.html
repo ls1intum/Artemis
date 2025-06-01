@@ -12,7 +12,7 @@
                 class="me-2"
             />
         }
-        @if (detail.data.participation.results?.length) {
+        @if (detail.data.participation.submissions?.first()?.results?.length) {
             <jhi-programming-exercise-instructor-status
                 class="repository-status-icon me-2"
                 [participationType]="detail.data.type"

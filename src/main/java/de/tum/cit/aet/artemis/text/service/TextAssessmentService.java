@@ -71,12 +71,10 @@ public class TextAssessmentService extends AssessmentService {
         else {
             // We are the first ones to open assess this submission, we want to lock it.
             result = new Result();
-            result.setParticipation(participation);
-
+            result.setSubmission(textSubmission);
             resultService.createNewRatedManualResult(result);
             result.setCompletionDate(null);
             result = resultRepository.save(result);
-            result.setSubmission(textSubmission);
             textSubmission.addResult(result);
             submissionRepository.save(textSubmission);
         }
@@ -89,8 +87,5 @@ public class TextAssessmentService extends AssessmentService {
         if (textSubmission.getBlocks() == null || !isInitialized(textSubmission.getBlocks()) || textSubmission.getBlocks().isEmpty()) {
             textBlockService.computeTextBlocksForSubmissionBasedOnSyntax(textSubmission);
         }
-
-        // Remove participation after storing in database because submission already has the participation set
-        result.setParticipation(null);
     }
 }
