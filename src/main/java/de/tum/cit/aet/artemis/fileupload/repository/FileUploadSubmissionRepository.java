@@ -44,7 +44,8 @@ public interface FileUploadSubmissionRepository extends ArtemisJpaRepository<Fil
      * @param submissionId the id of the file upload submission that should be loaded from the database
      * @return the file upload submission with its result, the feedback list of the result, the assessor of the result, its participation and all results of the participation
      */
-    @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks", "results.assessor", "results.assessmentNote", "participation", "participation.results" })
+    @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks", "results.assessor", "results.assessmentNote", "participation",
+            "participation.submissions.results" })
     Optional<FileUploadSubmission> findWithResultsFeedbacksAssessorAssessmentNoteAndParticipationResultsById(long submissionId);
 
     @Query("""

@@ -98,15 +98,15 @@ describe('HeaderParticipationPage', () => {
 
     it('should display achieved points accordingly', () => {
         component.exercise.maxPoints = 100;
-        component.participation = { results: [] } as StudentParticipation;
+        component.participation = { submissions: [{ results: [] }] } as StudentParticipation;
         component.ngOnChanges();
         expect(component.achievedPoints).toBeUndefined();
 
-        component.participation = { results: [{ score: 42 } as Result] } as StudentParticipation;
+        component.participation = { submissions: [{ results: [{ score: 42 } as Result] }] } as StudentParticipation;
         component.ngOnChanges();
         expect(component.achievedPoints).toBeUndefined();
 
-        component.participation = { results: [{ score: 42, rated: true } as Result] } as StudentParticipation;
+        component.participation = { submissions: [{ results: [{ score: 42, rated: true } as Result] }] } as StudentParticipation;
         component.ngOnChanges();
         expect(component.achievedPoints).toBe(42);
     });
@@ -119,7 +119,7 @@ describe('HeaderParticipationPage', () => {
         const resultWithLowerId = { id: 1, score: 80, rated: true, completionDate: laterDate } as Result;
         const resultWithHigherId = { id: 2, score: 50, rated: true, completionDate: earlierDate } as Result;
 
-        component.participation = { results: [resultWithHigherId, resultWithLowerId] } as StudentParticipation;
+        component.participation = { submissions: [{ results: [resultWithHigherId, resultWithLowerId] }] } as StudentParticipation;
 
         component.ngOnChanges();
         expect(component.achievedPoints).toBe(80);
