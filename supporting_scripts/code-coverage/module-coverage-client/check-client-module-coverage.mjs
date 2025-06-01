@@ -14,7 +14,13 @@ if (!fs.existsSync(summaryPath)) {
     process.exit(1);
 }
 
-const summary = JSON.parse(fs.readFileSync(summaryPath, 'utf-8'));
+let summary;
+try {
+ summary = JSON.parse(fs.readFileSync(summaryPath, 'utf-8'));
+} catch (error) {
+    console.error('❌ Failed to parse coverage-summary.json:', error);
+    process.exit(1);
+}
 
 const moduleThresholds = {
     assessment: {
@@ -144,7 +150,15 @@ for (const [mod, thresholds] of Object.entries(moduleThresholds)) {
     for (const [filePath, m] of Object.entries(summary)) {
         if (filePath === 'total') continue;
         if (!filePath.includes(prefix)) continue;
+        if (!m || typeof m !== 'object') {
+            console.warn(`⚠️  Invalid coverage data for file: ${filePath}`);
+            continue;
+            }
         for (const metric of metrics) {
+            if (!m[metric] || typeof m[metric].total !== 'number' || typeof m[metric].covered !== 'number') {
+                console.warn(`⚠️  Missing or invalid ${metric} data for file: ${filePath}`);
+                continue;
+            }
             agg[metric].total   += m[metric].total;
             agg[metric].covered += m[metric].covered;
         }
