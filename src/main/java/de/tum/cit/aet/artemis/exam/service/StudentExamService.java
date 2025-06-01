@@ -642,7 +642,7 @@ public class StudentExamService {
             // One optimization could be that we load all participations per exercise once (or per exercise) into a large list (10 * 2000 = 20.000 participations) and then check if
             // those participations exist in Java, however this might lead to memory issues and might be more difficult to program (and more difficult to understand)
             // TODO: directly check in the database if the entry exists for the student, exercise and InitializationState.INITIALIZED
-            var studentParticipations = participationService.findByExerciseAndStudentId(exercise, student.getId());
+            var studentParticipations = studentParticipationRepository.findByExerciseIdAndStudentId(exercise.getId(), student.getId());
             // we start the exercise if no participation was found that was already fully initialized
             if (studentExam.isTestExam() || studentParticipations.stream().noneMatch(studentParticipation -> studentParticipation.getParticipant().equals(student)
                     && studentParticipation.getInitializationState() != null && studentParticipation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED))) {

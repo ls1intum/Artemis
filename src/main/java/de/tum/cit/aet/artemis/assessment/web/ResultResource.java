@@ -172,7 +172,7 @@ public class ResultResource {
     public ResponseEntity<List<Feedback>> getResultDetails(@PathVariable Long participationId, @PathVariable Long resultId) {
         log.debug("REST request to get details of Result : {}", resultId);
         Result result = resultRepository.findByIdWithEagerFeedbacksElseThrow(resultId);
-        Participation participation = result.getParticipation();
+        Participation participation = result.getSubmission().getParticipation();
         if (!participation.getId().equals(participationId)) {
             throw new BadRequestAlertException("participationId of the path does not match the participationId of the participation corresponding to the result " + resultId + " !",
                     "participationId", "400");
@@ -195,7 +195,7 @@ public class ResultResource {
     public ResponseEntity<Map<Long, String>> getBuildJobIdsForResultsOfParticipation(@PathVariable long participationId) {
         log.debug("REST request to get build job ids for results of participation : {}", participationId);
         Participation participation = participationRepository.findByIdElseThrow(participationId);
-        List<Result> results = resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(participationId);
+        List<Result> results = resultRepository.findAllBySubmissionParticipationIdOrderByCompletionDateDesc(participationId);
 
         Map<Long, String> resultBuildJobMap = resultService.getLogsAvailabilityForResults(results, participation);
 
@@ -237,7 +237,8 @@ public class ResultResource {
     public ResponseEntity<Result> createResultForExternalSubmission(@PathVariable Long exerciseId, @RequestParam String studentLogin, @RequestBody Result result)
             throws URISyntaxException {
         log.debug("REST request to create Result for External Submission for Exercise : {}", exerciseId);
-        if (result.getParticipation() != null && result.getParticipation().getExercise() != null && !result.getParticipation().getExercise().getId().equals(exerciseId)) {
+        if (result.getSubmission() != null && result.getSubmission().getParticipation() != null && result.getSubmission().getParticipation().getExercise() != null
+                && !result.getSubmission().getParticipation().getExercise().getId().equals(exerciseId)) {
             throw new BadRequestAlertException("exerciseId in RequestBody doesnt match exerciseId in path!", "Exercise", "400");
         }
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
@@ -282,7 +283,6 @@ public class ResultResource {
         // Create a participation and a submitted empty submission if they do not exist yet
         StudentParticipation participation = participationService.createParticipationWithEmptySubmissionIfNotExisting(exercise, student.get(), SubmissionType.EXTERNAL);
         Submission submission = participationRepository.findByIdWithLegalSubmissionsElseThrow(participation.getId()).findLatestSubmission().orElseThrow();
-        result.setParticipation(participation);
         result.setSubmission(submission);
 
         // Create a new manual result which can be rated or unrated depending on what was specified in the create form
