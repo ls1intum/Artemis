@@ -75,7 +75,6 @@ class Lti13LaunchFilterTest {
     @Mock
     private HttpServletResponse httpResponse;
 
-    @Mock
     private MockHttpServletRequest httpRequest;
 
     @Mock
