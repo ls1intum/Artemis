@@ -32,7 +32,7 @@ public class CustomLti13Configurer extends Lti13Configurer {
     private static final String LOGIN_INITIATION_PATH = "/initiate-login";
 
     /** Base path for LTI 1.3 API endpoints. */
-    public static final String LTI13_BASE_PATH = "api/lti/public/lti13";
+    public static final String LTI13_BASE_PATH = "/api/lti/public/lti13";
 
     /** Full path for LTI 1.3 login. */
     public static final String LTI13_LOGIN_PATH = LTI13_BASE_PATH + LOGIN_PATH;
@@ -55,7 +55,7 @@ public class CustomLti13Configurer extends Lti13Configurer {
     private final DistributedStateAuthorizationRequestRepository stateRepository;
 
     public CustomLti13Configurer(DistributedStateAuthorizationRequestRepository stateRepository) {
-        super.ltiPath("/" + LTI13_BASE_PATH);
+        super.ltiPath(LTI13_BASE_PATH);
         super.loginInitiationPath(LOGIN_INITIATION_PATH);
         super.loginPath(LOGIN_PATH);
         this.stateRepository = stateRepository;
@@ -75,7 +75,7 @@ public class CustomLti13Configurer extends Lti13Configurer {
         // https://www.imsglobal.org/spec/security/v1p0/#step-3-authentication-response
         OAuth2LoginAuthenticationFilter defaultLoginFilter = configureLoginFilter(clientRegistrationRepository(http), oidcLaunchFlowAuthenticationProvider,
                 authorizationRequestRepository);
-        http.addFilterAfter(new Lti13LaunchFilter(defaultLoginFilter, "/" + LTI13_LOGIN_PATH, lti13Service(http)), JWTFilter.class);
+        http.addFilterAfter(new Lti13LaunchFilter(defaultLoginFilter, LTI13_LOGIN_PATH, lti13Service(http)), JWTFilter.class);
     }
 
     protected Lti13Service lti13Service(HttpSecurity http) {

@@ -19,9 +19,11 @@ import java.util.Map;
 import java.util.Optional;
 
 import jakarta.servlet.FilterChain;
+import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletMapping;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.MappingMatch;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,6 +33,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.stubbing.Answer;
 import org.springframework.http.HttpStatus;
+import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -39,6 +42,7 @@ import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+import org.springframework.web.util.WebUtils;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -72,7 +76,7 @@ class Lti13LaunchFilterTest {
     private HttpServletResponse httpResponse;
 
     @Mock
-    private HttpServletRequest httpRequest;
+    private MockHttpServletRequest httpRequest;
 
     @Mock
     private SecurityContext securityContext;
@@ -104,20 +108,37 @@ class Lti13LaunchFilterTest {
         launchFilter = new Lti13LaunchFilter(defaultFilter, CustomLti13Configurer.LTI13_LOGIN_PATH, lti13Service);
         SecurityContextHolder.setContext(securityContext);
         doReturn(authentication).when(securityContext).getAuthentication();
-        doReturn(CustomLti13Configurer.LTI13_LOGIN_PATH).when(httpRequest).getServletPath();
 
+        // Initialize a real MockHttpServletRequest
+        httpRequest = new MockHttpServletRequest();
+
+        // Set servlet path (this was previously mocked via getServletPath())
+        httpRequest.setServletPath(CustomLti13Configurer.LTI13_LOGIN_PATH);
+
+        // Set attributes (previously mocked getAttribute)
+        HttpServletMapping mapping = mock(HttpServletMapping.class);
+        doReturn(MappingMatch.EXACT).when(mapping).getMappingMatch();
+        httpRequest.setAttribute(RequestDispatcher.INCLUDE_MAPPING, mapping);
+
+        // Simulate the INCLUDE_REQUEST_URI_ATTRIBUTE used by Spring (was mocked)
+        httpRequest.setAttribute(WebUtils.INCLUDE_REQUEST_URI_ATTRIBUTE, CustomLti13Configurer.LTI13_LOGIN_PATH);
+
+        // Initialize OIDC idToken and claims
         doReturn(idTokenClaims).when(idToken).getClaims();
         OidcUser oidcUser = mock(OidcUser.class);
         doReturn(idToken).when(oidcUser).getIdToken();
         doReturn(idTokenClaims).when(oidcUser).getClaims();
 
+        // Answer for getClaim to map keys to idTokenClaims
         Answer<Object> getClaimAnswer = invocation -> idTokenClaims.get((String) invocation.getArguments()[0]);
         doAnswer(getClaimAnswer).when(idToken).getClaim(any());
         doAnswer(getClaimAnswer).when(oidcUser).getClaim(any());
+
+        // OIDC authentication token setup
         oidcToken = new OidcAuthenticationToken(oidcUser, null, "some-registration", "some-state");
 
+        // Setup for the test targetLinkUri and platform configuration
         targetLinkUri = "https://any-artemis-domain.org/course/123/exercise/1234";
-
         ltiPlatformConfiguration = new LtiPlatformConfiguration();
         ltiPlatformConfiguration.setRegistrationId("client-registration");
     }
@@ -127,7 +148,7 @@ class Lti13LaunchFilterTest {
         if (closeable != null) {
             closeable.close();
         }
-        reset(defaultFilter, lti13Service, responseWriter, filterChain, httpResponse, httpRequest, securityContext, authentication, idToken);
+        reset(defaultFilter, lti13Service, responseWriter, filterChain, httpResponse, securityContext, authentication, idToken);
     }
 
     private void initValidIdToken() {
@@ -179,7 +200,6 @@ class Lti13LaunchFilterTest {
     @Test
     void authenticatedLogin_oauth2AuthenticationException() throws Exception {
         doReturn(true).when(authentication).isAuthenticated();
-        doReturn(CustomLti13Configurer.LTI13_LOGIN_PATH).when(httpRequest).getServletPath();
         doThrow(new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_REQUEST))).when(defaultFilter).attemptAuthentication(any(), any());
 
         launchFilter.doFilter(httpRequest, httpResponse, filterChain);
@@ -192,7 +212,6 @@ class Lti13LaunchFilterTest {
     @Test
     void authenticatedLogin_noAuthenticationTokenReturned() throws Exception {
         doReturn(true).when(authentication).isAuthenticated();
-        doReturn(CustomLti13Configurer.LTI13_LOGIN_PATH).when(httpRequest).getServletPath();
         doReturn(null).when(defaultFilter).attemptAuthentication(any(), any());
 
         launchFilter.doFilter(httpRequest, httpResponse, filterChain);
@@ -205,7 +224,6 @@ class Lti13LaunchFilterTest {
     @Test
     void authenticatedLogin_serviceLaunchFailed() throws Exception {
         doReturn(true).when(authentication).isAuthenticated();
-        doReturn(CustomLti13Configurer.LTI13_LOGIN_PATH).when(httpRequest).getServletPath();
         doThrow(new RuntimeException("something")).when(lti13Service).performLaunch(any(), any());
 
         launchFilter.doFilter(httpRequest, httpResponse, filterChain);
@@ -222,7 +240,6 @@ class Lti13LaunchFilterTest {
         doReturn(false).when(authentication).isAuthenticated();
         doThrow(new LtiEmailAlreadyInUseException()).when(lti13Service).performLaunch(any(), any());
 
-        doReturn(CustomLti13Configurer.LTI13_LOGIN_PATH).when(httpRequest).getServletPath();
         doReturn(oidcToken).when(defaultFilter).attemptAuthentication(any(), any());
 
         JsonNode responseJsonBody = getMockJsonObject(false);
@@ -239,7 +256,6 @@ class Lti13LaunchFilterTest {
         doReturn(false).when(authentication).isAuthenticated();
         doThrow(new LtiEmailAlreadyInUseException()).when(lti13Service).startDeepLinking(any(), any());
 
-        doReturn(CustomLti13Configurer.LTI13_LOGIN_PATH).when(httpRequest).getServletPath();
         doReturn(oidcToken).when(defaultFilter).attemptAuthentication(any(), any());
         initValidTokenForDeepLinking();
 
@@ -253,7 +269,6 @@ class Lti13LaunchFilterTest {
     }
 
     private JsonNode getMockJsonObject(boolean isDeepLinkingRequest) throws IOException, ServletException {
-        doReturn(CustomLti13Configurer.LTI13_LOGIN_PATH).when(httpRequest).getServletPath();
         doReturn(oidcToken).when(defaultFilter).attemptAuthentication(any(), any());
         doReturn(responseWriter).when(httpResponse).getWriter();
         if (isDeepLinkingRequest) {
