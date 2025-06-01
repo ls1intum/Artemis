@@ -1,8 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { DebugElement, input, runInInjectionContext } from '@angular/core';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { PostComponent } from 'app/communication/post/post.component';
+import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { getElement } from 'test/helpers/utils/general-test.utils';
 import { PostingFooterComponent } from 'app/communication/posting-footer/posting-footer.component';
 import { PostingHeaderComponent } from 'app/communication/posting-header/posting-header.component';
@@ -52,6 +53,8 @@ import { ConversationService } from 'app/communication/conversations/service/con
 import { MockConversationService } from 'test/helpers/mocks/service/mock-conversation.service';
 import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
 import { CourseWideSearchConfig } from 'app/communication/course-conversations-components/course-wide-search/course-wide-search.component';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('PostComponent', () => {
     let component: PostComponent;
@@ -81,8 +84,10 @@ describe('PostComponent', () => {
         };
 
         return TestBed.configureTestingModule({
-            imports: [MockDirective(NgbTooltip), OverlayModule, MockModule(BrowserAnimationsModule)],
+            imports: [NgbTooltip, OverlayModule, MockModule(BrowserAnimationsModule)],
             providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 provideRouter([]),
                 { provide: MetisService, useClass: MockMetisService },
                 { provide: Router, useClass: MockRouter },
@@ -98,10 +103,10 @@ describe('PostComponent', () => {
                 PostComponent,
                 FaIconComponent, // we want to test the type of rendered icons, therefore we cannot mock the component
                 MockPipe(HtmlForMarkdownPipe),
-                MockComponent(PostingHeaderComponent),
-                MockComponent(PostingContentComponent),
-                MockComponent(PostingFooterComponent),
-                MockComponent(AnswerPostCreateEditModalComponent),
+                PostingHeaderComponent,
+                PostingContentComponent,
+                PostingFooterComponent,
+                AnswerPostCreateEditModalComponent,
                 MockRouterLinkDirective,
                 MockQueryParamsDirective,
                 TranslatePipeMock,
@@ -126,6 +131,9 @@ describe('PostComponent', () => {
                     },
                 } as RouterState;
                 router.setRouterState(mockRouterState);
+                global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+                    return new MockResizeObserver(callback);
+                });
             });
     });
 
