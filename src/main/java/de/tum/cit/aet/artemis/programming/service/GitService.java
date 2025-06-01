@@ -1021,8 +1021,22 @@ public class GitService extends AbstractGitService {
      * @throws IOException if there is an error accessing the repositories or creating the new commit
      */
     public Repository copyBareRepository(VcsRepositoryUri sourceRepoUri, VcsRepositoryUri targetRepoUri, String sourceBranch) throws IOException {
-
+        log.debug("copy bare repository from {} to {} for source branch {}", sourceRepoUri, targetRepoUri, sourceBranch);
         Repository sourceRepo = getExistingBareRepository(sourceRepoUri, sourceBranch);
+
+        if (log.isDebugEnabled()) {
+            // Log how many commits the source rpeository has
+            try (RevWalk walk = new RevWalk(sourceRepo)) {
+                int commitCount = 0;
+                for (RevCommit ignored : walk) {
+                    commitCount++;
+                }
+                log.debug("Source repository {} has {} commits", sourceRepoUri, commitCount);
+                if (commitCount == 0) {
+                    log.error("Source repository {} is empty, no commits to copy. This operation will fail", sourceRepoUri);
+                }
+            }
+        }
 
         // Initialize new bare repository
         var localTargetRepoUri = new LocalVCRepositoryUri(targetRepoUri.toString());
@@ -1034,7 +1048,9 @@ public class GitService extends AbstractGitService {
 
             // Get the HEAD tree of the source
             ObjectId headId = sourceRepo.resolve("refs/heads/" + sourceBranch + "^{tree}");
+            log.debug("found HEAD tree {} in source repository {}", headId, sourceRepoUri);
             RevWalk walk = new RevWalk(sourceRepo);
+
             RevTree headTree = walk.parseTree(headId);
 
             // Get PersonIdent from the very first commit
@@ -1044,6 +1060,7 @@ public class GitService extends AbstractGitService {
 
             // Walk the tree, insert blobs into target repo, and build a new tree
             ObjectId newTreeId = buildCleanTreeFromSource(sourceRepo, inserter, headTree);
+            log.debug("found newTreeId {} for target repository {}", newTreeId, targetRepoUri);
             inserter.flush();
 
             // Create commit with the clean tree

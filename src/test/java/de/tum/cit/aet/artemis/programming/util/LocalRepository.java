@@ -19,6 +19,8 @@ import org.eclipse.jgit.lib.RefUpdate;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.transport.URIish;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import de.tum.cit.aet.artemis.programming.service.GitService;
 
@@ -27,8 +29,11 @@ import de.tum.cit.aet.artemis.programming.service.GitService;
  * In the case of using LocalVC with LocalCI, LocalVC contains the origin repositories,
  * they are just not kept in an external system, but rather in another folder that belongs to Artemis.
  */
-// @Deprecated(forRemoval = true, since = "8.1.4")
+// TODO we should NOT use this class anymore for server tests and instead write proper integration tests that use the LocalVC service and the Artemis server API without mocking
+// repositories
 public class LocalRepository {
+
+    private static final Logger log = LoggerFactory.getLogger(LocalRepository.class);
 
     public File workingCopyGitRepoFile;
 
@@ -44,8 +49,20 @@ public class LocalRepository {
         this.defaultBranch = defaultBranch;
     }
 
-    public static Git initialize(File filePath, String defaultBranch, boolean bare) throws GitAPIException {
-        return Git.init().setDirectory(filePath).setInitialBranch(defaultBranch).setBare(bare).call();
+    public static Git initialize(File filePath, String defaultBranch, boolean bare) throws GitAPIException, IOException {
+
+        Files.createDirectories(filePath.toPath());
+
+        // Create a bare local repository with JGit.
+        Git git = Git.init().setDirectory(filePath).setInitialBranch(defaultBranch).setBare(bare).call();
+
+        // Change the default branch to the Artemis default branch.
+        Repository repository = git.getRepository();
+        RefUpdate refUpdate = repository.getRefDatabase().newUpdate(Constants.HEAD, false);
+        refUpdate.setForceUpdate(true);
+        refUpdate.link("refs/heads/" + defaultBranch);
+
+        return git;
     }
 
     /**
@@ -63,7 +80,17 @@ public class LocalRepository {
         bareGitRepoFile = getRepoPath(repoBasePath, originRepoFileName).toFile();
         bareGitRepo = initialize(bareGitRepoFile, defaultBranch, originIsBare);
 
-        workingCopyGitRepo.remoteAdd().setName("origin").setUri(new URIish(String.valueOf(bareGitRepoFile))).call();
+        workingCopyGitRepo.remoteAdd().setName("origin").setUri(new URIish(bareGitRepoFile.toURI().toString())).call();
+
+        // Add an initial commit directly in the local working copy
+        File readme = new File(workingCopyGitRepoFile, "README.md");
+        Files.write(readme.toPath(), "Initial commit".getBytes());
+        workingCopyGitRepo.add().addFilepattern("README.md").call();
+        workingCopyGitRepo.commit().setMessage("Initial commit").call();
+
+        // Push the initial commit to the origin (bare or not)
+        workingCopyGitRepo.push().setRemote("origin").setPushAll().call();
+        log.info("Configured local repository with one commit, working copy at {} and origin repository at {}", workingCopyGitRepoFile, bareGitRepoFile);
     }
 
     /**
