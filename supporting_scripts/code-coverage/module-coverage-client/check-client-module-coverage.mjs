@@ -29,17 +29,71 @@ const moduleThresholds = {
         functions:  85.42,
         lines:      91.78,
     },
+    buildagent: {
+        statements: 90.00,
+        branches:   80.00,
+        functions:  85.00,
+        lines:      90.00,
+    },
+    communication: {
+        statements: 92.08,
+        branches:   77.28,
+        functions:  88.21,
+        lines:      92.38,
+    },
     core: {
         statements: 88.98,
         branches:   70.76,
         functions:  80.75,
         lines:      89.01,
     },
+    exam: {
+        statements: 91.31,
+        branches:   78.07,
+        functions:  83.65,
+        lines:      91.54,
+    },
     exercise: {
         statements: 88.49,
         branches:   78.98,
         functions:  80.22,
         lines:      88.58,
+    },
+    fileupload: {
+        statements: 92.57,
+        branches:   76.58,
+        functions:  84.62,
+        lines:      93.21,
+    },
+    iris: {
+        statements: 86.09,
+        branches:   67.62,
+        functions:  85.30,
+        lines:      86.66,
+    },
+    lecture: {
+        statements: 92.19,
+        branches:   79.31,
+        functions:  86.91,
+        lines:      92.30,
+    },
+    lti: {
+        statements: 93.67,
+        branches:   86.96,
+        functions:  88.89,
+        lines:      93.45,
+    },
+    modeling: {
+        statements: 87.00,
+        branches:   73.50,
+        functions:  81.82,
+        lines:      87.19,
+    },
+    plagiarism: {
+        statements: 91.88,
+        branches:   81.91,
+        functions:  85.31,
+        lines:      91.91,
     },
     programming: {
         statements: 88.67,
@@ -53,47 +107,17 @@ const moduleThresholds = {
         functions:  78.74,
         lines:      86.34,
     },
-    fileupload: {
-        statements: 92.57,
-        branches:   76.58,
-        functions:  84.62,
-        lines:      93.21,
+    shared: {
+        statements: 85.77,
+        branches:   71.12,
+        functions:  83.55,
+        lines:      85.57,
     },
     text: {
         statements: 87.99,
         branches:   72.37,
         functions:  84.17,
         lines:      88.38,
-    },
-    modeling: {
-        statements: 87.00,
-        branches:   73.50,
-        functions:  81.82,
-        lines:      87.19,
-    },
-    communication: {
-        statements: 92.08,
-        branches:   77.28,
-        functions:  88.21,
-        lines:      92.38,
-    },
-    plagiarism: {
-        statements: 91.88,
-        branches:   81.91,
-        functions:  85.31,
-        lines:      91.91,
-    },
-    iris: {
-        statements: 86.09,
-        branches:   67.62,
-        functions:  85.30,
-        lines:      86.66,
-    },
-    lti: {
-        statements: 93.67,
-        branches:   86.96,
-        functions:  88.89,
-        lines:      93.45,
     },
     tutorialgroup: {
         statements: 91.05,
@@ -102,6 +126,7 @@ const moduleThresholds = {
         lines:      90.92,
     },
 };
+
 
 
 const metrics = ['statements', 'branches', 'functions', 'lines'];
