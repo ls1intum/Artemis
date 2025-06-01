@@ -140,13 +140,13 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeature;
 import de.tum.cit.aet.artemis.programming.service.UriService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.build_plan.JenkinsBuildPlanUtils;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCGitBranchService;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTaskTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
-import de.tum.cit.aet.artemis.programming.util.GitUtilService.MockFileRepositoryUri;
 
 /**
  * Note: this class should be independent of the actual VCS and CIS and contains common test logic for scenarios:
@@ -161,6 +161,12 @@ public class ProgrammingExerciseTestService {
 
     @Value("${artemis.version-control.default-branch:main}")
     protected String defaultBranch;
+
+    @Value("${artemis.version-control.local-vcs-repo-path}")
+    private String localVCRepoPath;
+
+    @Value("${artemis.course-archives-path}")
+    private Path courseArchivesDirPath;
 
     @Autowired
     private RequestUtilService request;
@@ -206,9 +212,6 @@ public class ProgrammingExerciseTestService {
 
     @Autowired(required = false)
     private AutomaticProgrammingExerciseCleanupService automaticProgrammingExerciseCleanupService;
-
-    @Value("${artemis.course-archives-path}")
-    private Path courseArchivesDirPath;
 
     @Autowired
     private CourseExamExportService courseExamExportService;
@@ -264,6 +267,12 @@ public class ProgrammingExerciseTestService {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private ProgrammingExerciseTestRepository programmingExerciseTestRepository;
+
+    @Autowired
+    private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
     public Course course;
 
     public ProgrammingExercise exercise;
@@ -307,12 +316,6 @@ public class ProgrammingExerciseTestService {
 
     private String userPrefix;
 
-    @Autowired
-    private ProgrammingExerciseTestRepository programmingExerciseTestRepository;
-
-    @Autowired
-    private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
-
     public void setupTestUsers(String userPrefix, int additionalStudents, int additionalTutors, int additionalEditors, int additionalInstructors) {
         this.userPrefix = userPrefix;
         userUtilService.addUsers(userPrefix, NUMBER_OF_STUDENTS + additionalStudents, additionalTutors + 1, additionalEditors + 1, additionalInstructors + 1);
@@ -339,16 +342,16 @@ public class ProgrammingExerciseTestService {
         examExercise = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup);
         exercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
 
-        exerciseRepo.configureRepos("exerciseLocalRepo", "exerciseOriginRepo");
-        testRepo.configureRepos("testLocalRepo", "testOriginRepo");
-        solutionRepo.configureRepos("solutionLocalRepo", "solutionOriginRepo");
-        auxRepo.configureRepos("auxLocalRepo", "auxOriginRepo");
-        sourceExerciseRepo.configureRepos("sourceExerciseLocalRepo", "sourceExerciseOriginRepo");
-        sourceTestRepo.configureRepos("sourceTestLocalRepo", "sourceTestOriginRepo");
-        sourceSolutionRepo.configureRepos("sourceSolutionLocalRepo", "sourceSolutionOriginRepo");
-        sourceAuxRepo.configureRepos("sourceAuxLocalRepo", "sourceAuxOriginRepo");
-        studentRepo.configureRepos("studentRepo", "studentOriginRepo");
-        studentTeamRepo.configureRepos("studentTeamRepo", "studentTeamOriginRepo");
+        exerciseRepo.configureRepos(Path.of(localVCRepoPath), "exerciseLocalRepo", "exerciseOriginRepo");
+        testRepo.configureRepos(Path.of(localVCRepoPath), "testLocalRepo", "testOriginRepo");
+        solutionRepo.configureRepos(Path.of(localVCRepoPath), "solutionLocalRepo", "solutionOriginRepo");
+        auxRepo.configureRepos(Path.of(localVCRepoPath), "auxLocalRepo", "auxOriginRepo");
+        sourceExerciseRepo.configureRepos(Path.of(localVCRepoPath), "sourceExerciseLocalRepo", "sourceExerciseOriginRepo");
+        sourceTestRepo.configureRepos(Path.of(localVCRepoPath), "sourceTestLocalRepo", "sourceTestOriginRepo");
+        sourceSolutionRepo.configureRepos(Path.of(localVCRepoPath), "sourceSolutionLocalRepo", "sourceSolutionOriginRepo");
+        sourceAuxRepo.configureRepos(Path.of(localVCRepoPath), "sourceAuxLocalRepo", "sourceAuxOriginRepo");
+        studentRepo.configureRepos(Path.of(localVCRepoPath), "studentRepo", "studentOriginRepo");
+        studentTeamRepo.configureRepos(Path.of(localVCRepoPath), "studentTeamRepo", "studentTeamOriginRepo");
 
         setupRepositoryMocks(exercise, exerciseRepo, solutionRepo, testRepo, auxRepo);
         setupRepositoryMocksParticipant(exercise, userPrefix + STUDENT_LOGIN, studentRepo);
@@ -397,25 +400,25 @@ public class ProgrammingExerciseTestService {
      */
     public void setupRepositoryMocks(String projectKey, LocalRepository exerciseRepository, String exerciseRepoName, LocalRepository solutionRepository, String solutionRepoName,
             LocalRepository testRepository, String testRepoName, LocalRepository auxRepository, String auxRepoName) throws Exception {
-        var exerciseRepoTestUrl = new MockFileRepositoryUri(exerciseRepository.originRepoFile);
-        var testRepoTestUrl = new MockFileRepositoryUri(testRepository.originRepoFile);
-        var solutionRepoTestUrl = new MockFileRepositoryUri(solutionRepository.originRepoFile);
-        var auxRepoTestUrl = new MockFileRepositoryUri(auxRepository.originRepoFile);
+        var exerciseRepoTestUrl = new LocalVCRepositoryUri(exerciseRepository.bareGitRepoFile.getPath());
+        var testRepoTestUrl = new LocalVCRepositoryUri(testRepository.bareGitRepoFile.getPath());
+        var solutionRepoTestUrl = new LocalVCRepositoryUri(solutionRepository.bareGitRepoFile.getPath());
+        var auxRepoTestUrl = new LocalVCRepositoryUri(auxRepository.bareGitRepoFile.getPath());
 
         doReturn(exerciseRepoTestUrl).when(versionControlService).getCloneRepositoryUri(projectKey, exerciseRepoName);
         doReturn(testRepoTestUrl).when(versionControlService).getCloneRepositoryUri(projectKey, testRepoName);
         doReturn(solutionRepoTestUrl).when(versionControlService).getCloneRepositoryUri(projectKey, solutionRepoName);
         doReturn(auxRepoTestUrl).when(versionControlService).getCloneRepositoryUri(projectKey, auxRepoName);
 
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(exerciseRepository.localRepoFile.toPath(), null)).when(gitService)
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(exerciseRepository.workingCopyGitRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(exerciseRepoTestUrl, true);
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepository.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(testRepoTestUrl,
-                true);
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepository.localRepoFile.toPath(), null)).when(gitService)
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepository.workingCopyGitRepoFile.toPath(), null)).when(gitService)
+                .getOrCheckoutRepository(testRepoTestUrl, true);
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepository.workingCopyGitRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(solutionRepoTestUrl, true);
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(auxRepository.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(auxRepoTestUrl, true);
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(auxRepository.workingCopyGitRepoFile.toPath(), null)).when(gitService)
+                .getOrCheckoutRepository(auxRepoTestUrl, true);
 
-        // we need separate mocks with VcsRepositoryUri here because MockFileRepositoryUri and VcsRepositoryUri do not seem to be compatible here
         mockDelegate.mockGetRepositorySlugFromRepositoryUri(exerciseRepoName, exerciseRepoTestUrl);
         mockDelegate.mockGetRepositorySlugFromRepositoryUri(testRepoName, testRepoTestUrl);
         mockDelegate.mockGetRepositorySlugFromRepositoryUri(solutionRepoName, solutionRepoTestUrl);
@@ -444,10 +447,10 @@ public class ProgrammingExerciseTestService {
     public void setupRepositoryMocksParticipant(ProgrammingExercise exercise, String participantName, LocalRepository studentRepo, boolean practiceMode) throws Exception {
         final var projectKey = exercise.getProjectKey();
         String participantRepoName = projectKey.toLowerCase() + "-" + (practiceMode ? "practice-" : "") + participantName;
-        var participantRepoTestUrl = ParticipationFactory.getMockFileRepositoryUri(studentRepo);
+        var participantRepoTestUrl = ParticipationFactory.getRepositoryUri(studentRepo);
         doReturn(participantRepoTestUrl).when(versionControlService).getCloneRepositoryUri(projectKey, participantRepoName);
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(participantRepoTestUrl,
-                true);
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService)
+                .getOrCheckoutRepository(participantRepoTestUrl, true);
         mockDelegate.mockGetRepositorySlugFromRepositoryUri(participantRepoName, participantRepoTestUrl);
         mockDelegate.mockGetProjectKeyFromRepositoryUri(projectKey, participantRepoTestUrl);
         mockDelegate.mockGetRepositoryPathFromRepositoryUri(projectKey + "/" + participantRepoName, participantRepoTestUrl);
@@ -745,7 +748,7 @@ public class ProgrammingExerciseTestService {
 
     private AuxiliaryRepository addAuxiliaryRepositoryToProgrammingExercise(ProgrammingExercise sourceExercise) {
         AuxiliaryRepository repository = programmingExerciseUtilService.addAuxiliaryRepositoryToExercise(sourceExercise);
-        var url = versionControlService.getCloneRepositoryUri(sourceExercise.getProjectKey(), new MockFileRepositoryUri(sourceAuxRepo.originRepoFile).toString());
+        var url = versionControlService.getCloneRepositoryUri(sourceExercise.getProjectKey(), new LocalVCRepositoryUri(sourceAuxRepo.bareGitRepoFile.getPath()).toString());
         repository.setRepositoryUri(url.toString());
         return auxiliaryRepositoryRepository.save(repository);
     }
@@ -1224,7 +1227,7 @@ public class ProgrammingExerciseTestService {
         assertThat(testRepoCommits).hasSize(2);
 
         assertThat(testRepoCommits.getFirst().getFullMessage()).isEqualTo("Update the structure oracle file.");
-        List<DiffEntry> changes = getChanges(testRepo.localGit.getRepository(), testRepoCommits.getFirst());
+        List<DiffEntry> changes = getChanges(testRepo.workingCopyGitRepo.getRepository(), testRepoCommits.getFirst());
         assertThat(changes).hasSize(1);
         assertThat(changes.getFirst().getChangeType()).isEqualTo(DiffEntry.ChangeType.MODIFY);
         assertThat(changes.getFirst().getOldPath()).endsWith("test.json");
@@ -1474,7 +1477,7 @@ public class ProgrammingExerciseTestService {
     }
 
     private void setupAuxRepoMock(AuxiliaryRepository auxiliaryRepository) throws GitAPIException {
-        Repository repository = gitService.getExistingCheckedOutRepositoryByLocalPath(auxRepo.localRepoFile.toPath(), null);
+        Repository repository = gitService.getExistingCheckedOutRepositoryByLocalPath(auxRepo.workingCopyGitRepoFile.toPath(), null);
 
         doReturn(repository).when(gitService).getOrCheckoutRepository(eq(auxiliaryRepository.getVcsRepositoryUri()), anyString(), anyBoolean());
         doReturn(repository).when(gitService).getOrCheckoutRepository(eq(auxiliaryRepository.getVcsRepositoryUri()), (Path) any(), anyBoolean());
@@ -1711,18 +1714,18 @@ public class ProgrammingExerciseTestService {
     private File exportProgrammingExerciseInstructorMaterial(HttpStatus expectedStatus, boolean mockRepos) throws Exception {
         if (mockRepos) {
             // Mock template repo
-            Repository templateRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(exerciseRepo.localRepoFile.toPath(), null);
+            Repository templateRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(exerciseRepo.workingCopyGitRepoFile.toPath(), null);
             createAndCommitDummyFileInLocalRepository(exerciseRepo, "Template.java");
             doReturn(templateRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.TEMPLATE)), any(Path.class), anyBoolean());
             doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
 
             // Mock solution repo
-            Repository solutionRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.localRepoFile.toPath(), null);
+            Repository solutionRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.workingCopyGitRepoFile.toPath(), null);
             createAndCommitDummyFileInLocalRepository(solutionRepo, "Solution.java");
             doReturn(solutionRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.SOLUTION)), any(Path.class), anyBoolean());
 
             // Mock tests repo
-            Repository testsRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.localRepoFile.toPath(), null);
+            Repository testsRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.workingCopyGitRepoFile.toPath(), null);
             createAndCommitDummyFileInLocalRepository(testRepo, "Tests.java");
             doReturn(testsRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.TESTS)), any(Path.class), anyBoolean());
         }
@@ -1770,7 +1773,7 @@ public class ProgrammingExerciseTestService {
 
     private void setupMockRepo(LocalRepository localRepo, RepositoryType repoType, String fileName) throws GitAPIException, IOException {
         VcsRepositoryUri vcsUrl = exercise.getRepositoryURL(repoType);
-        Repository repository = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.localRepoFile.toPath(), null);
+        Repository repository = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.workingCopyGitRepoFile.toPath(), null);
 
         createAndCommitDummyFileInLocalRepository(localRepo, fileName);
         doReturn(repository).when(gitService).getOrCheckoutRepository(eq(vcsUrl), anyString(), anyBoolean());
@@ -1797,22 +1800,22 @@ public class ProgrammingExerciseTestService {
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, userPrefix + STUDENT_LOGIN);
 
         // Mock student repo
-        Repository studentRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepo.localRepoFile.toPath(), null);
+        Repository studentRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepo.workingCopyGitRepoFile.toPath(), null);
         createAndCommitDummyFileInLocalRepository(studentRepo, "HelloWorld.java");
         doReturn(studentRepository).when(gitService).getOrCheckoutRepository(eq(participation.getVcsRepositoryUri()), any(Path.class), anyBoolean());
 
         // Mock template repo
-        Repository templateRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(exerciseRepo.localRepoFile.toPath(), null);
+        Repository templateRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(exerciseRepo.workingCopyGitRepoFile.toPath(), null);
         createAndCommitDummyFileInLocalRepository(exerciseRepo, "Template.java");
         doReturn(templateRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.TEMPLATE)), any(Path.class), anyBoolean());
 
         // Mock solution repo
-        Repository solutionRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.localRepoFile.toPath(), null);
+        Repository solutionRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.workingCopyGitRepoFile.toPath(), null);
         createAndCommitDummyFileInLocalRepository(solutionRepo, "Solution.java");
         doReturn(solutionRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.SOLUTION)), any(Path.class), anyBoolean());
 
         // Mock tests repo
-        Repository testsRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.localRepoFile.toPath(), null);
+        Repository testsRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.workingCopyGitRepoFile.toPath(), null);
         createAndCommitDummyFileInLocalRepository(testRepo, "Tests.java");
         doReturn(testsRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.TESTS)), any(Path.class), anyBoolean());
 
@@ -1893,22 +1896,22 @@ public class ProgrammingExerciseTestService {
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, userPrefix + STUDENT_LOGIN);
 
         // Mock student repo
-        Repository studentRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepo.localRepoFile.toPath(), null);
+        Repository studentRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepo.workingCopyGitRepoFile.toPath(), null);
         createAndCommitDummyFileInLocalRepository(studentRepo, "HelloWorld.java");
         doReturn(studentRepository).when(gitService).getOrCheckoutRepository(eq(participation.getVcsRepositoryUri()), any(Path.class), anyBoolean());
 
         // Mock template repo
-        Repository templateRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(exerciseRepo.localRepoFile.toPath(), null);
+        Repository templateRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(exerciseRepo.workingCopyGitRepoFile.toPath(), null);
         createAndCommitDummyFileInLocalRepository(exerciseRepo, "Template.java");
         doReturn(templateRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.TEMPLATE)), any(Path.class), anyBoolean());
 
         // Mock solution repo
-        Repository solutionRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.localRepoFile.toPath(), null);
+        Repository solutionRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.workingCopyGitRepoFile.toPath(), null);
         createAndCommitDummyFileInLocalRepository(solutionRepo, "Solution.java");
         doReturn(solutionRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.SOLUTION)), any(Path.class), anyBoolean());
 
         // Mock tests repo
-        Repository testsRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.localRepoFile.toPath(), null);
+        Repository testsRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.workingCopyGitRepoFile.toPath(), null);
         createAndCommitDummyFileInLocalRepository(testRepo, "Tests.java");
         doReturn(testsRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.TESTS)), any(Path.class), anyBoolean());
     }
@@ -1956,7 +1959,7 @@ public class ProgrammingExerciseTestService {
             setupRepositoryMocks(exercise);
             for (var ignored : exam.getExamUsers()) {
                 var repo = new LocalRepository(defaultBranch);
-                repo.configureRepos("studentRepo", "studentOriginRepo");
+                repo.configureRepos(Path.of(localVCRepoPath), "studentRepo", "studentOriginRepo");
                 // setupRepositoryMocksParticipant(exercise, examUser.getUser().getLogin(), repo);
                 studentRepos.add(repo);
             }
@@ -1987,12 +1990,12 @@ public class ProgrammingExerciseTestService {
      * @throws GitAPIException when git can't add or commit the file
      */
     private void createAndCommitDummyFileInLocalRepository(LocalRepository localRepository, String filename) throws IOException, GitAPIException {
-        var file = Path.of(localRepository.localRepoFile.toPath().toString(), filename);
+        var file = Path.of(localRepository.workingCopyGitRepoFile.toPath().toString(), filename);
         if (!Files.exists(file)) {
             Files.createFile(file);
         }
-        localRepository.localGit.add().addFilepattern(file.getFileName().toString()).call();
-        GitService.commit(localRepository.localGit).setMessage("Added testfile").call();
+        localRepository.workingCopyGitRepo.add().addFilepattern(file.getFileName().toString()).call();
+        GitService.commit(localRepository.workingCopyGitRepo).setMessage("Added testfile").call();
     }
 
     // Test
@@ -2027,12 +2030,12 @@ public class ProgrammingExerciseTestService {
             var team = setupTeam(user);
             participation = participationUtilService.addTeamParticipationForProgrammingExercise(exercise, team);
             // prepare for the mock scenario, so that the empty commit will work properly
-            participation.setRepositoryUri(ParticipationFactory.getMockFileRepositoryUri(studentTeamRepo).getURI().toString());
+            participation.setRepositoryUri(ParticipationFactory.getRepositoryUri(studentTeamRepo).getURI().toString());
         }
         else {
             participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, user.getParticipantIdentifier());
             // prepare for the mock scenario, so that the empty commit will work properly
-            participation.setRepositoryUri(ParticipationFactory.getMockFileRepositoryUri(studentRepo).getURI().toString());
+            participation.setRepositoryUri(ParticipationFactory.getRepositoryUri(studentRepo).getURI().toString());
         }
 
         ProgrammingSubmission submission = new ProgrammingSubmission();
@@ -2138,8 +2141,8 @@ public class ProgrammingExerciseTestService {
     public void copyRepository_testNotCreatedError() throws Exception {
         Team team = setupTeamForBadRequestForStartExercise();
 
-        var participantRepoTestUrl = ParticipationFactory.getMockFileRepositoryUri(studentTeamRepo);
-        final var teamLocalPath = studentTeamRepo.localRepoFile.toPath();
+        var participantRepoTestUrl = ParticipationFactory.getRepositoryUri(studentTeamRepo);
+        final var teamLocalPath = studentTeamRepo.workingCopyGitRepoFile.toPath();
         doReturn(teamLocalPath).when(gitService).getDefaultLocalPathOfRepo(participantRepoTestUrl);
         doReturn(defaultBranch).when(localVCGitBranchService).getOrRetrieveBranchOfExercise(exercise);
         doThrow(new CanceledException("Checkout got interrupted!")).when(gitService).getOrCheckoutRepositoryIntoTargetDirectory(any(), any(), anyBoolean());

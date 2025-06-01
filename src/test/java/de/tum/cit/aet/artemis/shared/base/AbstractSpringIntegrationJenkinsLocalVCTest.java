@@ -30,6 +30,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.parallel.ResourceLock;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
@@ -72,6 +73,7 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTest extends Abstra
     @MockitoSpyBean
     protected JenkinsService continuousIntegrationService;
 
+    // TODO: we should remove @MockitoSpyBean here and use @Autowired instead
     @MockitoSpyBean
     protected LocalVCService versionControlService;
 
@@ -98,6 +100,9 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTest extends Abstra
 
     @MockitoSpyBean
     protected GroupNotificationScheduleService groupNotificationScheduleService;
+
+    @Value("${artemis.version-control.local-vcs-repo-path}")
+    protected String localVCRepoPath;
 
     @AfterEach
     @Override

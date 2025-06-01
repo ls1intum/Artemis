@@ -82,6 +82,9 @@ public class LocalVCLocalCITestService {
     @Value("${artemis.version-control.url}")
     private URL localVCBaseUrl;
 
+    @Value("${artemis.version-control.local-vcs-repo-path}")
+    private String localVCRepoPath;
+
     @Value("${artemis.version-control.default-branch:main}")
     protected String defaultBranch;
 
@@ -173,7 +176,7 @@ public class LocalVCLocalCITestService {
     public LocalRepository createAndConfigureLocalRepository(String projectKey, String repositorySlug) throws GitAPIException, IOException, URISyntaxException {
         Path localRepositoryFolder = createRepositoryFolderInTempDirectory(projectKey, repositorySlug);
         LocalRepository repository = new LocalRepository(defaultBranch);
-        repository.configureRepos("localRepo", localRepositoryFolder);
+        repository.configureRepos(Path.of(localVCRepoPath), "localRepo", localRepositoryFolder);
         return repository;
     }
 

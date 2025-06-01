@@ -20,6 +20,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.parallel.ResourceLock;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.saml2.provider.service.registration.RelyingPartyRegistrationRepository;
 import org.springframework.test.context.ActiveProfiles;
@@ -44,6 +45,9 @@ public abstract class AbstractSpringIntegrationLocalVCSamlTest extends AbstractA
 
     @Autowired
     protected PasswordService passwordService;
+
+    @Value("${artemis.version-control.local-vcs-repo-path}")
+    protected String localVCRepoPath;
 
     // NOTE: this has to be a MockitoBean, because the class cannot be instantiated in the tests
     @MockitoBean

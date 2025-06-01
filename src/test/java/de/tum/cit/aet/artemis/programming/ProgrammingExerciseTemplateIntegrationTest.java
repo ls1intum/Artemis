@@ -192,10 +192,10 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
         exercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
 
-        exerciseRepo.configureRepos("exerciseLocalRepo", "exerciseOriginRepo");
-        testRepo.configureRepos("testLocalRepo", "testOriginRepo");
-        solutionRepo.configureRepos("solutionLocalRepo", "solutionOriginRepo");
-        auxRepo.configureRepos("auxLocalRepo", "auxOriginRepo");
+        exerciseRepo.configureRepos(Path.of(localVCRepoPath), "exerciseLocalRepo", "exerciseOriginRepo");
+        testRepo.configureRepos(Path.of(localVCRepoPath), "testLocalRepo", "testOriginRepo");
+        solutionRepo.configureRepos(Path.of(localVCRepoPath), "solutionLocalRepo", "solutionOriginRepo");
+        auxRepo.configureRepos(Path.of(localVCRepoPath), "auxLocalRepo", "auxOriginRepo");
 
         programmingExerciseTestService.setup(this, versionControlService, localVCGitBranchService);
         programmingExerciseTestService.setupRepositoryMocks(exercise, exerciseRepo, solutionRepo, testRepo, auxRepo);
@@ -293,7 +293,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
     private int invokeMaven() throws MavenInvocationException {
         InvocationRequest mvnRequest = new DefaultInvocationRequest();
         mvnRequest.setJavaHome(java17Home);
-        mvnRequest.setPomFile(testRepo.localRepoFile);
+        mvnRequest.setPomFile(testRepo.workingCopyGitRepoFile);
         mvnRequest.addArgs(List.of("clean", "test"));
         mvnRequest.setShowVersion(true);
 
@@ -305,7 +305,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
     }
 
     private int invokeGradle() {
-        try (ProjectConnection connector = GradleConnector.newConnector().forProjectDirectory(testRepo.localRepoFile).useBuildDistribution().connect()) {
+        try (ProjectConnection connector = GradleConnector.newConnector().forProjectDirectory(testRepo.workingCopyGitRepoFile).useBuildDistribution().connect()) {
             BuildLauncher launcher = connector.newBuild();
             launcher.setJavaHome(java17Home);
             String[] tasks = new String[] { "clean", "test" };
@@ -321,14 +321,14 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
     }
 
     private void moveAssignmentSourcesOf(LocalRepository localRepository) throws IOException {
-        Path sourceSrc = localRepository.localRepoFile.toPath().resolve("src");
-        Path assignment = testRepo.localRepoFile.toPath().resolve("assignment");
+        Path sourceSrc = localRepository.workingCopyGitRepoFile.toPath().resolve("src");
+        Path assignment = testRepo.workingCopyGitRepoFile.toPath().resolve("assignment");
         Files.createDirectories(assignment);
         FileUtils.moveDirectory(sourceSrc.toFile(), assignment.resolve("src").toFile());
     }
 
     private Map<TestResult, Integer> readTestReports(String testResultPath) {
-        File reportFolder = testRepo.localRepoFile.toPath().resolve(testResultPath).toFile();
+        File reportFolder = testRepo.workingCopyGitRepoFile.toPath().resolve(testResultPath).toFile();
         assertThat(reportFolder).as("test reports generated").matches(SurefireReportParser::hasReportFiles, "the report folder should contain test reports");
 
         // Note that the locale does not have any effect on parsing and is only used in some other methods

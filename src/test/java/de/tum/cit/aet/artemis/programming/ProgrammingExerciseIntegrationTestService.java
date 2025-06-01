@@ -110,6 +110,7 @@ import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryReposito
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.UriService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
@@ -137,6 +138,9 @@ public class ProgrammingExerciseIntegrationTestService {
 
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
+
+    @Value("${artemis.version-control.local-vcs-repo-path}")
+    private String localVCRepoPath;
 
     @Autowired
     // this will be a MockitoSpyBean because it was configured as MockitoSpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
@@ -1403,7 +1407,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void importProgrammingExercise_updatesTestCaseIds() throws Exception {
-        doReturn(new GitUtilService.MockFileRepositoryUri(remoteRepoFile)).when(versionControlService).getCloneRepositoryUri(anyString(), anyString());
+        doReturn(new LocalVCRepositoryUri(remoteRepoFile.getPath())).when(versionControlService).getCloneRepositoryUri(anyString(), anyString());
 
         programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(programmingExercise.getId());
         var tests = programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
@@ -2260,7 +2264,7 @@ public class ProgrammingExerciseIntegrationTestService {
             LocalRepository localRepository = new LocalRepository("main");
             var studentLogin = testPrefix + "student1";
             try {
-                localRepository.configureRepos("testLocalRepo", "testOriginRepo");
+                localRepository.configureRepos(Path.of(localVCRepoPath), "testLocalRepo", "testOriginRepo");
                 return programmingUtilTestService.setupSubmission(files, exercise, localRepository, studentLogin);
             }
             catch (Exception e) {
@@ -2290,7 +2294,7 @@ public class ProgrammingExerciseIntegrationTestService {
 
             var studentLogin = testPrefix + "student1";
             try {
-                localRepository.configureRepos("testLocalRepo", "testOriginRepo");
+                localRepository.configureRepos(Path.of(localVCRepoPath), "testLocalRepo", "testOriginRepo");
                 return programmingUtilTestService.setupSubmission(files, exercise, localRepository, studentLogin);
             }
             catch (Exception e) {
