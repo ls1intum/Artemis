@@ -71,7 +71,6 @@ describe('CreateTextUnitComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-            schemas: [],
         }).compileComponents();
 
         createTextUnitComponentFixture = TestBed.createComponent(CreateTextUnitComponent);
