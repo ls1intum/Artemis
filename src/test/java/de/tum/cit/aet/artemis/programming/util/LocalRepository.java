@@ -6,7 +6,10 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Random;
 import java.util.stream.StreamSupport;
+
+import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
@@ -54,10 +57,10 @@ public class LocalRepository {
      * @param originIsBare       Whether the origin repository should be bare or not. Set this to false only if you need to create files in the origin repository.
      */
     public void configureRepos(Path repoBasePath, String localRepoFileName, String originRepoFileName, boolean originIsBare) throws Exception {
-        workingCopyGitRepoFile = repoBasePath.resolve(localRepoFileName).toFile();
+        workingCopyGitRepoFile = getRepoPath(repoBasePath, localRepoFileName).toFile();
         workingCopyGitRepo = initialize(workingCopyGitRepoFile, defaultBranch, false);
 
-        bareGitRepoFile = repoBasePath.resolve(originRepoFileName).toFile();
+        bareGitRepoFile = getRepoPath(repoBasePath, originRepoFileName).toFile();
         bareGitRepo = initialize(bareGitRepoFile, defaultBranch, originIsBare);
 
         workingCopyGitRepo.remoteAdd().setName("origin").setUri(new URIish(String.valueOf(bareGitRepoFile))).call();
@@ -86,7 +89,7 @@ public class LocalRepository {
      */
     public void configureRepos(Path repoBasePath, String localRepoFileName, Path originRepositoryFolder) throws IOException, GitAPIException, URISyntaxException {
 
-        Path localRepoPath = repoBasePath.resolve(localRepoFileName);
+        Path localRepoPath = getRepoPath(repoBasePath, localRepoFileName);
         workingCopyGitRepoFile = localRepoPath.toFile();
         workingCopyGitRepo = initialize(workingCopyGitRepoFile, defaultBranch, false);
 
@@ -109,6 +112,22 @@ public class LocalRepository {
         workingCopyGitRepo.add().addFilepattern("test.txt").call();
         GitService.commit(workingCopyGitRepo).setMessage("Initial commit").call();
         workingCopyGitRepo.push().setRemote("origin").call();
+    }
+
+    private static Path getRepoPath(@NotNull Path repoBasePath, @NotNull String localRepoFileName) {
+        return repoBasePath.resolve("git").resolve(getTempPrefix(8)).resolve(localRepoFileName);
+    }
+
+    private static final String CHARACTERS = "abcdefghijklmnopqrstuvwxyz0123456789";
+
+    private static String getTempPrefix(int length) {
+        Random random = new Random();
+        StringBuilder prefix = new StringBuilder(length);
+        for (int i = 0; i < length; i++) {
+            int index = random.nextInt(CHARACTERS.length());
+            prefix.append(CHARACTERS.charAt(index));
+        }
+        return prefix.toString();
     }
 
     public void resetLocalRepo() throws IOException {
