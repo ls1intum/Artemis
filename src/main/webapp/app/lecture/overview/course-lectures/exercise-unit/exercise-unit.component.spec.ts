@@ -17,7 +17,6 @@ describe('ExerciseUnitComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             declarations: [ExerciseUnitComponent, MockComponent(CourseExerciseRowComponent)],
-            schemas: [],
         })
             .compileComponents()
             .then(() => {
