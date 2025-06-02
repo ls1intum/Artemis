@@ -63,7 +63,7 @@ public class CourseCalendarEventUtilService {
      * @return the list of persisted {@link CourseCalendarEvent}s events
      * @throws IllegalArgumentException if the course has no start or end date or spans less than 26 days (such that at least one event visible to each user group is created)
      */
-    public List<CourseCalendarEvent> createCourseCalendarEventsWithMutualExclusiveVisibility(Course course) {
+    public List<CourseCalendarEvent> createCourseCalendarEventsWithMutuallyExclusiveVisibility(Course course) {
         if (course.getStartDate() == null || course.getEndDate() == null) {
             throw new IllegalArgumentException("Course must have a start and end date");
         }

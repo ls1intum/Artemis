@@ -28,4 +28,8 @@ public interface CourseCalendarEventRepository extends ArtemisJpaRepository<Cour
             WHERE e.id = :id
             """)
     Optional<CourseCalendarEvent> findByIdWithCourse(@Param("id") Long id);
+
+    default CourseCalendarEvent findByIdWithCourseElseThrow(Long courseId) {
+        return getValueElseThrow(findByIdWithCourse(courseId), courseId);
+    }
 }

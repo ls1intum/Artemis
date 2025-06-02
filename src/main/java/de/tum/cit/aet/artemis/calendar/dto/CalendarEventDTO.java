@@ -9,6 +9,9 @@ import jakarta.validation.constraints.NotNull;
 import de.tum.cit.aet.artemis.calendar.domain.CourseCalendarEvent;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
 
+/**
+ * A DTO used to display calendar events in the calendar feature
+ */
 public record CalendarEventDTO(@Nullable String id, @NotNull String title, @NotNull String courseName, @NotNull ZonedDateTime startDate, @Nullable ZonedDateTime endDate,
         @Nullable String location, @Nullable String facilitator) {
 

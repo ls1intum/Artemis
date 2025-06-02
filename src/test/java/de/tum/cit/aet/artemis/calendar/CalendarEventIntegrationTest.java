@@ -21,7 +21,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.calendar.domain.CourseCalendarEvent;
 import de.tum.cit.aet.artemis.calendar.dto.CalendarEventDTO;
-import de.tum.cit.aet.artemis.calendar.dto.CalendarEventManageDTO;
+import de.tum.cit.aet.artemis.calendar.dto.CourseCalendarEventDTO;
 import de.tum.cit.aet.artemis.calendar.util.TimestampFormatAssert;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
 
@@ -62,7 +62,7 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
         }
 
         @Test
-        @WithMockUser(username = NOT_STUDENT_LOGIN, roles = "USER")
+        @WithMockUser(username = NOT_INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
         void shouldReturnNoEventsWhenUserNotPartOfAnyCourse() throws Exception {
             setupUserNotPartOfAnyCourseScenario();
 
@@ -429,9 +429,9 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
             setupActiveCourseScenario();
 
             String URL = assembleURLForCourseCalendarEventsGetRequest(course.getId());
-            List<CalendarEventManageDTO> actual = request.get(URL, HttpStatus.OK, GET_COURSE_CALENDAR_EVENTS_RETURN_TYPE);
+            List<CourseCalendarEventDTO> actual = request.get(URL, HttpStatus.OK, GET_COURSE_CALENDAR_EVENTS_RETURN_TYPE);
 
-            List<CalendarEventManageDTO> expected = courseCalendarEvents.stream().map(CalendarEventManageDTO::new).toList();
+            List<CourseCalendarEventDTO> expected = courseCalendarEvents.stream().map(CourseCalendarEventDTO::new).toList();
 
             assertThat(actual).usingRecursiveComparison().withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class).isEqualTo(expected);
         }
@@ -442,9 +442,9 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
             setupActiveCourseScenario();
 
             String URL = assembleURLForCourseCalendarEventsGetRequest(course.getId());
-            List<CalendarEventManageDTO> actual = request.get(URL, HttpStatus.OK, GET_COURSE_CALENDAR_EVENTS_RETURN_TYPE);
+            List<CourseCalendarEventDTO> actual = request.get(URL, HttpStatus.OK, GET_COURSE_CALENDAR_EVENTS_RETURN_TYPE);
 
-            List<CalendarEventManageDTO> expected = courseCalendarEvents.stream().map(CalendarEventManageDTO::new).toList();
+            List<CourseCalendarEventDTO> expected = courseCalendarEvents.stream().map(CourseCalendarEventDTO::new).toList();
 
             assertThat(actual).usingRecursiveComparison().withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class).isEqualTo(expected);
         }
@@ -455,9 +455,9 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
             setupActiveCourseWithoutCourseWideEventsScenario();
 
             String URL = assembleURLForCourseCalendarEventsGetRequest(course.getId());
-            List<CalendarEventManageDTO> actual = request.get(URL, HttpStatus.OK, GET_COURSE_CALENDAR_EVENTS_RETURN_TYPE);
+            List<CourseCalendarEventDTO> actual = request.get(URL, HttpStatus.OK, GET_COURSE_CALENDAR_EVENTS_RETURN_TYPE);
 
-            List<CalendarEventManageDTO> expected = List.of();
+            List<CourseCalendarEventDTO> expected = List.of();
 
             assertThat(actual).usingRecursiveComparison().withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class).isEqualTo(expected);
         }
@@ -482,7 +482,7 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
 
             String URL = assembleURLForPostRequest(course.getId());
 
-            List<CalendarEventManageDTO> body = List.of(new CalendarEventManageDTO(null, "Test Event", null, course.getStartDate().plusDays(2),
+            List<CourseCalendarEventDTO> body = List.of(new CourseCalendarEventDTO(null, "Test Event", null, course.getStartDate().plusDays(2),
                     course.getStartDate().plusDays(2).plusHours(2), "Room A1", "Dr. Test", true, true, true, true));
 
             request.postWithResponseBody(URL, body, Set.class, HttpStatus.FORBIDDEN);
@@ -495,7 +495,7 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
 
             String URL = assembleURLForPostRequest(course.getId());
 
-            List<CalendarEventManageDTO> body = List.of(new CalendarEventManageDTO(null, "Test Event", null, course.getStartDate().plusDays(2),
+            List<CourseCalendarEventDTO> body = List.of(new CourseCalendarEventDTO(null, "Test Event", null, course.getStartDate().plusDays(2),
                     course.getStartDate().plusDays(2).plusHours(2), "Room A1", "Dr. Test", true, true, true, true));
             request.postWithResponseBody(URL, body, Set.class, HttpStatus.FORBIDDEN);
         }
@@ -507,7 +507,7 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
 
             String URL = assembleURLForPostRequest(course.getId());
 
-            List<CalendarEventManageDTO> body = List.of(new CalendarEventManageDTO(null, "Test Event", null, course.getStartDate().plusDays(2),
+            List<CourseCalendarEventDTO> body = List.of(new CourseCalendarEventDTO(null, "Test Event", null, course.getStartDate().plusDays(2),
                     course.getStartDate().plusDays(2).plusHours(2), "Room A1", "Dr. Test", true, true, true, true));
             request.postWithResponseBody(URL, body, Set.class, HttpStatus.FORBIDDEN);
         }
@@ -519,7 +519,7 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
 
             String URL = assembleURLForPostRequest(course.getId());
 
-            List<CalendarEventManageDTO> body = List.of(new CalendarEventManageDTO(null, "Test Event", null, course.getStartDate().plusDays(2),
+            List<CourseCalendarEventDTO> body = List.of(new CourseCalendarEventDTO(null, "Test Event", null, course.getStartDate().plusDays(2),
                     course.getStartDate().plusDays(2).plusHours(2), "Room A1", "Dr. Test", true, true, true, true));
             request.postWithResponseBody(URL, body, Set.class, HttpStatus.FORBIDDEN);
         }
@@ -531,14 +531,14 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
 
             String URL = assembleURLForPostRequest(course.getId());
 
-            CalendarEventManageDTO expected = new CalendarEventManageDTO(null, "Test Event", null, course.getStartDate().plusDays(2),
+            CourseCalendarEventDTO expected = new CourseCalendarEventDTO(null, "Test Event", null, course.getStartDate().plusDays(2),
                     course.getStartDate().plusDays(2).plusHours(2), "Room A1", "Dr. Test", true, true, true, true);
 
-            List<CalendarEventManageDTO> requestBody = List.of(expected);
-            Set<CalendarEventManageDTO> response = request.postSetWithResponseBody(URL, requestBody, CalendarEventManageDTO.class, HttpStatus.OK);
+            List<CourseCalendarEventDTO> requestBody = List.of(expected);
+            Set<CourseCalendarEventDTO> response = request.postSetWithResponseBody(URL, requestBody, CourseCalendarEventDTO.class, HttpStatus.OK);
 
             assertThat(response).hasSize(1);
-            CalendarEventManageDTO actual = response.iterator().next();
+            CourseCalendarEventDTO actual = response.iterator().next();
 
             assertThat(actual).usingRecursiveComparison().withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class)
                     .ignoringFields("id", "courseName").isEqualTo(expected);
@@ -552,14 +552,14 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
 
             String URL = assembleURLForPostRequest(course.getId());
 
-            CalendarEventManageDTO expected = new CalendarEventManageDTO(null, "Test Event", null, course.getStartDate().plusDays(2),
+            CourseCalendarEventDTO expected = new CourseCalendarEventDTO(null, "Test Event", null, course.getStartDate().plusDays(2),
                     course.getStartDate().plusDays(2).plusHours(2), "Room A1", "Dr. Test", true, true, true, true);
 
-            List<CalendarEventManageDTO> requestBody = List.of(expected);
-            Set<CalendarEventManageDTO> response = request.postSetWithResponseBody(URL, requestBody, CalendarEventManageDTO.class, HttpStatus.OK);
+            List<CourseCalendarEventDTO> requestBody = List.of(expected);
+            Set<CourseCalendarEventDTO> response = request.postSetWithResponseBody(URL, requestBody, CourseCalendarEventDTO.class, HttpStatus.OK);
 
             assertThat(response).hasSize(1);
-            CalendarEventManageDTO actual = response.iterator().next();
+            CourseCalendarEventDTO actual = response.iterator().next();
 
             assertThat(actual).usingRecursiveComparison().withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class)
                     .ignoringFields("id", "courseName").isEqualTo(expected);
@@ -573,17 +573,17 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
 
             String URL = assembleURLForPostRequest(course.getId());
 
-            CalendarEventManageDTO expected1 = new CalendarEventManageDTO(null, "Lecture A", null, course.getStartDate().plusDays(1),
+            CourseCalendarEventDTO expected1 = new CourseCalendarEventDTO(null, "Lecture A", null, course.getStartDate().plusDays(1),
                     course.getStartDate().plusDays(1).plusHours(2), "Room 101", "Prof. A", true, true, true, true);
 
-            CalendarEventManageDTO expected2 = new CalendarEventManageDTO(null, "Workshop B", null, course.getStartDate().plusDays(2),
+            CourseCalendarEventDTO expected2 = new CourseCalendarEventDTO(null, "Workshop B", null, course.getStartDate().plusDays(2),
                     course.getStartDate().plusDays(2).plusHours(3), "Room 102", "Prof. B", true, true, true, true);
 
-            CalendarEventManageDTO expected3 = new CalendarEventManageDTO(null, "Q&A Session", null, course.getStartDate().plusDays(3),
+            CourseCalendarEventDTO expected3 = new CourseCalendarEventDTO(null, "Q&A Session", null, course.getStartDate().plusDays(3),
                     course.getStartDate().plusDays(3).plusHours(1), "Room 103", "Prof. C", true, true, true, true);
 
-            List<CalendarEventManageDTO> requestBody = List.of(expected1, expected2, expected3);
-            Set<CalendarEventManageDTO> response = request.postSetWithResponseBody(URL, requestBody, CalendarEventManageDTO.class, HttpStatus.OK);
+            List<CourseCalendarEventDTO> requestBody = List.of(expected1, expected2, expected3);
+            Set<CourseCalendarEventDTO> response = request.postSetWithResponseBody(URL, requestBody, CourseCalendarEventDTO.class, HttpStatus.OK);
 
             assertThat(response).hasSize(3);
 
@@ -591,7 +591,7 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
                     .usingRecursiveFieldByFieldElementComparator(RecursiveComparisonConfiguration.builder().withIgnoredFields("id", "courseName")
                             .withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class).build())
                     .containsExactlyInAnyOrder(expected1, expected2, expected3);
-            assertThat(response).extracting(CalendarEventManageDTO::courseName).containsOnly(course.getTitle());
+            assertThat(response).extracting(CourseCalendarEventDTO::courseName).containsOnly(course.getTitle());
         }
 
         @Test
@@ -601,17 +601,17 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
 
             String URL = assembleURLForPostRequest(course.getId());
 
-            CalendarEventManageDTO expected1 = new CalendarEventManageDTO(null, "Lecture X", null, course.getStartDate().plusDays(4),
+            CourseCalendarEventDTO expected1 = new CourseCalendarEventDTO(null, "Lecture X", null, course.getStartDate().plusDays(4),
                     course.getStartDate().plusDays(4).plusHours(2), "Auditorium", "Dr. X", true, true, true, true);
 
-            CalendarEventManageDTO expected2 = new CalendarEventManageDTO(null, "Lab Y", null, course.getStartDate().plusDays(5), course.getStartDate().plusDays(5).plusHours(3),
+            CourseCalendarEventDTO expected2 = new CourseCalendarEventDTO(null, "Lab Y", null, course.getStartDate().plusDays(5), course.getStartDate().plusDays(5).plusHours(3),
                     "Lab A", "Dr. Y", true, true, true, true);
 
-            CalendarEventManageDTO expected3 = new CalendarEventManageDTO(null, "Panel Z", null, course.getStartDate().plusDays(6), course.getStartDate().plusDays(6).plusHours(1),
+            CourseCalendarEventDTO expected3 = new CourseCalendarEventDTO(null, "Panel Z", null, course.getStartDate().plusDays(6), course.getStartDate().plusDays(6).plusHours(1),
                     "Hall B", "Dr. Z", true, true, true, true);
 
-            List<CalendarEventManageDTO> requestBody = List.of(expected1, expected2, expected3);
-            Set<CalendarEventManageDTO> response = request.postSetWithResponseBody(URL, requestBody, CalendarEventManageDTO.class, HttpStatus.OK);
+            List<CourseCalendarEventDTO> requestBody = List.of(expected1, expected2, expected3);
+            Set<CourseCalendarEventDTO> response = request.postSetWithResponseBody(URL, requestBody, CourseCalendarEventDTO.class, HttpStatus.OK);
 
             assertThat(response).hasSize(3);
 
@@ -619,7 +619,7 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
                     .usingRecursiveFieldByFieldElementComparator(RecursiveComparisonConfiguration.builder().withIgnoredFields("id", "courseName")
                             .withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class).build())
                     .containsExactlyInAnyOrder(expected1, expected2, expected3);
-            assertThat(response).extracting(CalendarEventManageDTO::courseName).containsOnly(course.getTitle());
+            assertThat(response).extracting(CourseCalendarEventDTO::courseName).containsOnly(course.getTitle());
         }
 
         @Test
@@ -629,9 +629,9 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
 
             String URL = assembleURLForPostRequest(-1L);
 
-            List<CalendarEventManageDTO> body = List.of(new CalendarEventManageDTO(null, "Test Event", null, course.getStartDate().plusDays(2),
+            List<CourseCalendarEventDTO> body = List.of(new CourseCalendarEventDTO(null, "Test Event", null, course.getStartDate().plusDays(2),
                     course.getStartDate().plusDays(2).plusHours(2), "Room A1", "Dr. Test", true, true, true, true));
-            request.postWithResponseBody(URL, body, CalendarEventManageDTO.class, HttpStatus.NOT_FOUND);
+            request.postWithResponseBody(URL, body, CourseCalendarEventDTO.class, HttpStatus.NOT_FOUND);
         }
 
         @Test
@@ -641,9 +641,9 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
 
             String URL = assembleURLForPostRequest(course.getId());
 
-            List<CalendarEventManageDTO> body = List.of(new CalendarEventManageDTO("calendar-1", "Test Event", null, course.getStartDate().plusDays(2),
+            List<CourseCalendarEventDTO> body = List.of(new CourseCalendarEventDTO("calendar-1", "Test Event", null, course.getStartDate().plusDays(2),
                     course.getStartDate().plusDays(2).plusHours(2), "Room A1", "Dr. Test", true, true, true, true));
-            request.postWithResponseBody(URL, body, CalendarEventManageDTO.class, HttpStatus.BAD_REQUEST);
+            request.postWithResponseBody(URL, body, CourseCalendarEventDTO.class, HttpStatus.BAD_REQUEST);
         }
 
         @Test
@@ -653,9 +653,9 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
 
             String URL = assembleURLForPostRequest(course.getId());
 
-            List<CalendarEventManageDTO> body = List.of(new CalendarEventManageDTO(null, null, null, course.getStartDate().plusDays(2),
+            List<CourseCalendarEventDTO> body = List.of(new CourseCalendarEventDTO(null, null, null, course.getStartDate().plusDays(2),
                     course.getStartDate().plusDays(2).plusHours(2), "Room A1", "Dr. Test", true, true, true, true));
-            request.postWithResponseBody(URL, body, CalendarEventManageDTO.class, HttpStatus.BAD_REQUEST);
+            request.postWithResponseBody(URL, body, CourseCalendarEventDTO.class, HttpStatus.BAD_REQUEST);
         }
 
         @Test
@@ -665,11 +665,11 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
 
             String URL = assembleURLForPostRequest(course.getId());
 
-            CalendarEventManageDTO expected = new CalendarEventManageDTO(null, "Test Event", "Test Name", course.getStartDate().plusDays(2),
+            CourseCalendarEventDTO expected = new CourseCalendarEventDTO(null, "Test Event", "Test Name", course.getStartDate().plusDays(2),
                     course.getStartDate().plusDays(2).plusHours(2), "Room A1", "Dr. Test", true, false, false, true);
 
-            List<CalendarEventManageDTO> requestBody = List.of(expected);
-            request.postSetWithResponseBody(URL, requestBody, CalendarEventManageDTO.class, HttpStatus.BAD_REQUEST);
+            List<CourseCalendarEventDTO> requestBody = List.of(expected);
+            request.postSetWithResponseBody(URL, requestBody, CourseCalendarEventDTO.class, HttpStatus.BAD_REQUEST);
         }
 
         @Test
@@ -679,9 +679,9 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
 
             String URL = assembleURLForPostRequest(course.getId());
 
-            List<CalendarEventManageDTO> body = List.of(
-                    new CalendarEventManageDTO(null, "Test Event", null, null, course.getStartDate().plusDays(2).plusHours(2), "Room A1", "Dr. Test", true, false, false, true));
-            request.postWithResponseBody(URL, body, CalendarEventManageDTO.class, HttpStatus.BAD_REQUEST);
+            List<CourseCalendarEventDTO> body = List.of(
+                    new CourseCalendarEventDTO(null, "Test Event", null, null, course.getStartDate().plusDays(2).plusHours(2), "Room A1", "Dr. Test", true, false, false, true));
+            request.postWithResponseBody(URL, body, CourseCalendarEventDTO.class, HttpStatus.BAD_REQUEST);
         }
 
         @Test
@@ -691,15 +691,15 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
 
             String URL = assembleURLForPostRequest(course.getId());
 
-            CalendarEventManageDTO expected = new CalendarEventManageDTO(null, "Test Event", null, course.getStartDate().plusDays(2), null, "Room A1", "Dr. Test", true, false,
+            CourseCalendarEventDTO expected = new CourseCalendarEventDTO(null, "Test Event", null, course.getStartDate().plusDays(2), null, "Room A1", "Dr. Test", true, false,
                     false, true);
 
-            List<CalendarEventManageDTO> requestBody = List.of(expected);
-            Set<CalendarEventManageDTO> response = request.postSetWithResponseBody(URL, requestBody, CalendarEventManageDTO.class, HttpStatus.OK);
+            List<CourseCalendarEventDTO> requestBody = List.of(expected);
+            Set<CourseCalendarEventDTO> response = request.postSetWithResponseBody(URL, requestBody, CourseCalendarEventDTO.class, HttpStatus.OK);
 
             assertThat(response).hasSize(1);
 
-            CalendarEventManageDTO actual = response.iterator().next();
+            CourseCalendarEventDTO actual = response.iterator().next();
 
             assertThat(actual).usingRecursiveComparison().withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class)
                     .ignoringFields("id", "courseName").isEqualTo(expected);
@@ -713,14 +713,14 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
 
             String URL = assembleURLForPostRequest(course.getId());
 
-            CalendarEventManageDTO expected = new CalendarEventManageDTO(null, "Test Event", null, course.getStartDate().plusDays(2),
+            CourseCalendarEventDTO expected = new CourseCalendarEventDTO(null, "Test Event", null, course.getStartDate().plusDays(2),
                     course.getStartDate().plusDays(2).plusHours(2), null, "Dr. Test", true, false, false, true);
 
-            List<CalendarEventManageDTO> requestBody = List.of(expected);
-            Set<CalendarEventManageDTO> response = request.postSetWithResponseBody(URL, requestBody, CalendarEventManageDTO.class, HttpStatus.OK);
+            List<CourseCalendarEventDTO> requestBody = List.of(expected);
+            Set<CourseCalendarEventDTO> response = request.postSetWithResponseBody(URL, requestBody, CourseCalendarEventDTO.class, HttpStatus.OK);
 
             assertThat(response).hasSize(1);
-            CalendarEventManageDTO actual = response.iterator().next();
+            CourseCalendarEventDTO actual = response.iterator().next();
 
             assertThat(actual).usingRecursiveComparison().withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class)
                     .ignoringFields("id", "courseName").isEqualTo(expected);
@@ -734,14 +734,14 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
 
             String URL = assembleURLForPostRequest(course.getId());
 
-            CalendarEventManageDTO expected = new CalendarEventManageDTO(null, "Test Event", null, course.getStartDate().plusDays(2),
+            CourseCalendarEventDTO expected = new CourseCalendarEventDTO(null, "Test Event", null, course.getStartDate().plusDays(2),
                     course.getStartDate().plusDays(2).plusHours(2), "Room A1", null, true, false, false, true);
 
-            List<CalendarEventManageDTO> requestBody = List.of(expected);
-            Set<CalendarEventManageDTO> response = request.postSetWithResponseBody(URL, requestBody, CalendarEventManageDTO.class, HttpStatus.OK);
+            List<CourseCalendarEventDTO> requestBody = List.of(expected);
+            Set<CourseCalendarEventDTO> response = request.postSetWithResponseBody(URL, requestBody, CourseCalendarEventDTO.class, HttpStatus.OK);
 
             assertThat(response).hasSize(1);
-            CalendarEventManageDTO actual = response.iterator().next();
+            CourseCalendarEventDTO actual = response.iterator().next();
 
             assertThat(actual).usingRecursiveComparison().withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class)
                     .ignoringFields("id", "courseName").isEqualTo(expected);
@@ -755,17 +755,17 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
 
             String URL = assembleURLForPostRequest(course.getId());
 
-            CalendarEventManageDTO expected1 = new CalendarEventManageDTO(null, "Lecture X", null, course.getStartDate().plusDays(4),
+            CourseCalendarEventDTO expected1 = new CourseCalendarEventDTO(null, "Lecture X", null, course.getStartDate().plusDays(4),
                     course.getStartDate().plusDays(4).plusHours(2), "Auditorium", "Dr. X", true, true, true, true);
 
-            CalendarEventManageDTO expected2 = new CalendarEventManageDTO(null, "Lab Y", null, course.getStartDate().plusDays(5), course.getStartDate().plusDays(5).plusHours(3),
+            CourseCalendarEventDTO expected2 = new CourseCalendarEventDTO(null, "Lab Y", null, course.getStartDate().plusDays(5), course.getStartDate().plusDays(5).plusHours(3),
                     "Lab A", "Dr. Y", false, false, false, false);
 
-            CalendarEventManageDTO expected3 = new CalendarEventManageDTO(null, "Panel Z", null, course.getStartDate().plusDays(6), course.getStartDate().plusDays(6).plusHours(1),
+            CourseCalendarEventDTO expected3 = new CourseCalendarEventDTO(null, "Panel Z", null, course.getStartDate().plusDays(6), course.getStartDate().plusDays(6).plusHours(1),
                     "Hall B", "Dr. Z", true, true, true, true);
 
-            List<CalendarEventManageDTO> requestBody = List.of(expected1, expected2, expected3);
-            request.postSetWithResponseBody(URL, requestBody, CalendarEventManageDTO.class, HttpStatus.BAD_REQUEST);
+            List<CourseCalendarEventDTO> requestBody = List.of(expected1, expected2, expected3);
+            request.postSetWithResponseBody(URL, requestBody, CourseCalendarEventDTO.class, HttpStatus.BAD_REQUEST);
         }
 
         @Test
@@ -775,10 +775,10 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
 
             String URL = assembleURLForPostRequest(course.getId());
 
-            CalendarEventManageDTO expected = new CalendarEventManageDTO(null, "Test Event", null, course.getStartDate().plusDays(2),
+            CourseCalendarEventDTO expected = new CourseCalendarEventDTO(null, "Test Event", null, course.getStartDate().plusDays(2),
                     course.getStartDate().plusDays(2).plusHours(2), "Room A1", "Prof. Test", true, false, false, true);
 
-            List<CalendarEventManageDTO> requestBody = List.of(expected);
+            List<CourseCalendarEventDTO> requestBody = List.of(expected);
             String response = request.postWithResponseBodyString(URL, requestBody, HttpStatus.OK);
 
             TimestampFormatAssert.assertThat(response).hasIso8601UtcTimestamps("startDate", "endDate");
@@ -795,10 +795,10 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
 
             CourseCalendarEvent eventToChange = courseCalendarEvents.getFirst();
 
-            CalendarEventManageDTO body = new CalendarEventManageDTO("course-" + eventToChange.getId(), "New Title", null, eventToChange.getStartDate().plusDays(1),
+            CourseCalendarEventDTO body = new CourseCalendarEventDTO("course-" + eventToChange.getId(), "New Title", null, eventToChange.getStartDate().plusDays(1),
                     eventToChange.getEndDate().plusDays(1), "New Room", "New Facilitator", true, false, false, true);
 
-            request.putWithResponseBody(PUT_REQUEST_URL, body, CalendarEventManageDTO.class, HttpStatus.FORBIDDEN);
+            request.putWithResponseBody(PUT_REQUEST_URL, body, CourseCalendarEventDTO.class, HttpStatus.FORBIDDEN);
         }
 
         @Test
@@ -808,10 +808,10 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
 
             CourseCalendarEvent eventToChange = courseCalendarEvents.getFirst();
 
-            CalendarEventManageDTO body = new CalendarEventManageDTO("course-" + eventToChange.getId(), "New Title", null, eventToChange.getStartDate().plusDays(1),
+            CourseCalendarEventDTO body = new CourseCalendarEventDTO("course-" + eventToChange.getId(), "New Title", null, eventToChange.getStartDate().plusDays(1),
                     eventToChange.getEndDate().plusDays(1), "New Room", "New Facilitator", true, false, false, true);
 
-            request.putWithResponseBody(PUT_REQUEST_URL, body, CalendarEventManageDTO.class, HttpStatus.FORBIDDEN);
+            request.putWithResponseBody(PUT_REQUEST_URL, body, CourseCalendarEventDTO.class, HttpStatus.FORBIDDEN);
         }
 
         @Test
@@ -821,10 +821,10 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
 
             CourseCalendarEvent eventToChange = courseCalendarEvents.getFirst();
 
-            CalendarEventManageDTO body = new CalendarEventManageDTO("course-" + eventToChange.getId(), "New Title", null, eventToChange.getStartDate().plusDays(1),
+            CourseCalendarEventDTO body = new CourseCalendarEventDTO("course-" + eventToChange.getId(), "New Title", null, eventToChange.getStartDate().plusDays(1),
                     eventToChange.getEndDate().plusDays(1), "New Room", "New Facilitator", true, false, false, true);
 
-            request.putWithResponseBody(PUT_REQUEST_URL, body, CalendarEventManageDTO.class, HttpStatus.FORBIDDEN);
+            request.putWithResponseBody(PUT_REQUEST_URL, body, CourseCalendarEventDTO.class, HttpStatus.FORBIDDEN);
         }
 
         @Test
@@ -834,10 +834,10 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
 
             CourseCalendarEvent eventToChange = courseCalendarEvents.getFirst();
 
-            CalendarEventManageDTO body = new CalendarEventManageDTO("course-" + eventToChange.getId(), "New Title", null, eventToChange.getStartDate().plusDays(1),
+            CourseCalendarEventDTO body = new CourseCalendarEventDTO("course-" + eventToChange.getId(), "New Title", null, eventToChange.getStartDate().plusDays(1),
                     eventToChange.getEndDate().plusDays(1), "New Room", "New Facilitator", false, false, false, true);
 
-            request.putWithResponseBody(PUT_REQUEST_URL, body, CalendarEventManageDTO.class, HttpStatus.FORBIDDEN);
+            request.putWithResponseBody(PUT_REQUEST_URL, body, CourseCalendarEventDTO.class, HttpStatus.FORBIDDEN);
         }
 
         @Test
@@ -847,10 +847,10 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
 
             CourseCalendarEvent eventToChange = courseCalendarEvents.getFirst();
 
-            CalendarEventManageDTO expected = new CalendarEventManageDTO("course-" + eventToChange.getId(), "New Title", null, eventToChange.getStartDate().plusDays(1),
+            CourseCalendarEventDTO expected = new CourseCalendarEventDTO("course-" + eventToChange.getId(), "New Title", null, eventToChange.getStartDate().plusDays(1),
                     eventToChange.getEndDate().plusDays(1), "New Room", "New Facilitator", false, true, false, true);
 
-            CalendarEventManageDTO actual = request.putWithResponseBody(PUT_REQUEST_URL, expected, CalendarEventManageDTO.class, HttpStatus.OK);
+            CourseCalendarEventDTO actual = request.putWithResponseBody(PUT_REQUEST_URL, expected, CourseCalendarEventDTO.class, HttpStatus.OK);
 
             assertThat(actual).usingRecursiveComparison().withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class).ignoringFields("courseName")
                     .isEqualTo(expected);
@@ -864,10 +864,10 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
 
             CourseCalendarEvent eventToChange = courseCalendarEvents.getFirst();
 
-            CalendarEventManageDTO expected = new CalendarEventManageDTO("course-" + eventToChange.getId(), "New Title", null, eventToChange.getStartDate().plusDays(1),
+            CourseCalendarEventDTO expected = new CourseCalendarEventDTO("course-" + eventToChange.getId(), "New Title", null, eventToChange.getStartDate().plusDays(1),
                     eventToChange.getEndDate().plusDays(1), "New Room", "New Facilitator", false, true, false, true);
 
-            CalendarEventManageDTO actual = request.putWithResponseBody(PUT_REQUEST_URL, expected, CalendarEventManageDTO.class, HttpStatus.OK);
+            CourseCalendarEventDTO actual = request.putWithResponseBody(PUT_REQUEST_URL, expected, CourseCalendarEventDTO.class, HttpStatus.OK);
 
             assertThat(actual).usingRecursiveComparison().withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class).ignoringFields("courseName")
                     .isEqualTo(expected);
@@ -881,10 +881,10 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
 
             CourseCalendarEvent eventToChange = courseCalendarEvents.getFirst();
 
-            CalendarEventManageDTO body = new CalendarEventManageDTO(eventToChange.getId().toString(), "New Title", null, eventToChange.getStartDate().plusDays(1),
+            CourseCalendarEventDTO body = new CourseCalendarEventDTO(eventToChange.getId().toString(), "New Title", null, eventToChange.getStartDate().plusDays(1),
                     eventToChange.getEndDate().plusDays(1), "New Room", "New Facilitator", false, false, false, false);
 
-            request.putWithResponseBody(PUT_REQUEST_URL, body, CalendarEventManageDTO.class, HttpStatus.BAD_REQUEST);
+            request.putWithResponseBody(PUT_REQUEST_URL, body, CourseCalendarEventDTO.class, HttpStatus.BAD_REQUEST);
         }
 
         @Test
@@ -894,10 +894,10 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
 
             CourseCalendarEvent eventToChange = courseCalendarEvents.getFirst();
 
-            CalendarEventManageDTO body = new CalendarEventManageDTO("course-" + -1, "New Title", null, eventToChange.getStartDate().plusDays(1),
+            CourseCalendarEventDTO body = new CourseCalendarEventDTO("course-" + -1, "New Title", null, eventToChange.getStartDate().plusDays(1),
                     eventToChange.getEndDate().plusDays(1), "New Room", "New Facilitator", false, false, false, false);
 
-            request.putWithResponseBody(PUT_REQUEST_URL, body, CalendarEventManageDTO.class, HttpStatus.NOT_FOUND);
+            request.putWithResponseBody(PUT_REQUEST_URL, body, CourseCalendarEventDTO.class, HttpStatus.NOT_FOUND);
         }
 
         @Test
@@ -907,10 +907,10 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
 
             CourseCalendarEvent eventToChange = courseCalendarEvents.getFirst();
 
-            CalendarEventManageDTO body = new CalendarEventManageDTO("course-" + eventToChange.getId(), "New Title", null, eventToChange.getStartDate().plusDays(1),
+            CourseCalendarEventDTO body = new CourseCalendarEventDTO("course-" + eventToChange.getId(), "New Title", null, eventToChange.getStartDate().plusDays(1),
                     eventToChange.getEndDate().plusDays(1), "New Room", "New Facilitator", false, false, false, false);
 
-            request.putWithResponseBody(PUT_REQUEST_URL, body, CalendarEventManageDTO.class, HttpStatus.BAD_REQUEST);
+            request.putWithResponseBody(PUT_REQUEST_URL, body, CourseCalendarEventDTO.class, HttpStatus.BAD_REQUEST);
         }
 
         @Test
@@ -920,10 +920,10 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
 
             CourseCalendarEvent eventToChange = courseCalendarEvents.getFirst();
 
-            CalendarEventManageDTO body = new CalendarEventManageDTO(null, "New Title", null, eventToChange.getStartDate().plusDays(1), eventToChange.getEndDate().plusDays(1),
+            CourseCalendarEventDTO body = new CourseCalendarEventDTO(null, "New Title", null, eventToChange.getStartDate().plusDays(1), eventToChange.getEndDate().plusDays(1),
                     "New Room", "New Facilitator", false, true, false, true);
 
-            request.putWithResponseBody(PUT_REQUEST_URL, body, CalendarEventManageDTO.class, HttpStatus.BAD_REQUEST);
+            request.putWithResponseBody(PUT_REQUEST_URL, body, CourseCalendarEventDTO.class, HttpStatus.BAD_REQUEST);
         }
 
         @Test
@@ -933,10 +933,10 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
 
             CourseCalendarEvent eventToChange = courseCalendarEvents.getFirst();
 
-            CalendarEventManageDTO body = new CalendarEventManageDTO("course-" + eventToChange.getId(), null, null, eventToChange.getStartDate().plusDays(1),
+            CourseCalendarEventDTO body = new CourseCalendarEventDTO("course-" + eventToChange.getId(), null, null, eventToChange.getStartDate().plusDays(1),
                     eventToChange.getEndDate().plusDays(1), "New Room", "New Facilitator", false, true, false, true);
 
-            request.putWithResponseBody(PUT_REQUEST_URL, body, CalendarEventManageDTO.class, HttpStatus.BAD_REQUEST);
+            request.putWithResponseBody(PUT_REQUEST_URL, body, CourseCalendarEventDTO.class, HttpStatus.BAD_REQUEST);
         }
 
         @Test
@@ -946,10 +946,10 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
 
             CourseCalendarEvent eventToChange = courseCalendarEvents.getFirst();
 
-            CalendarEventManageDTO body = new CalendarEventManageDTO("course-" + eventToChange.getId(), "New Title", "New Name", eventToChange.getStartDate().plusDays(1),
+            CourseCalendarEventDTO body = new CourseCalendarEventDTO("course-" + eventToChange.getId(), "New Title", "New Name", eventToChange.getStartDate().plusDays(1),
                     eventToChange.getEndDate().plusDays(1), "New Room", "New Facilitator", false, true, false, true);
 
-            request.putWithResponseBody(PUT_REQUEST_URL, body, CalendarEventManageDTO.class, HttpStatus.BAD_REQUEST);
+            request.putWithResponseBody(PUT_REQUEST_URL, body, CourseCalendarEventDTO.class, HttpStatus.BAD_REQUEST);
         }
 
         @Test
@@ -959,10 +959,10 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
 
             CourseCalendarEvent eventToChange = courseCalendarEvents.getFirst();
 
-            CalendarEventManageDTO body = new CalendarEventManageDTO("course-" + eventToChange.getId(), "New Title", null, null, eventToChange.getEndDate().plusDays(1), "New Room",
+            CourseCalendarEventDTO body = new CourseCalendarEventDTO("course-" + eventToChange.getId(), "New Title", null, null, eventToChange.getEndDate().plusDays(1), "New Room",
                     "New Facilitator", false, true, false, true);
 
-            request.putWithResponseBody(PUT_REQUEST_URL, body, CalendarEventManageDTO.class, HttpStatus.BAD_REQUEST);
+            request.putWithResponseBody(PUT_REQUEST_URL, body, CourseCalendarEventDTO.class, HttpStatus.BAD_REQUEST);
         }
 
         @Test
@@ -972,10 +972,10 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
 
             CourseCalendarEvent eventToChange = courseCalendarEvents.getFirst();
 
-            CalendarEventManageDTO expected = new CalendarEventManageDTO("course-" + eventToChange.getId(), "New Title", null, eventToChange.getStartDate().plusDays(1), null,
+            CourseCalendarEventDTO expected = new CourseCalendarEventDTO("course-" + eventToChange.getId(), "New Title", null, eventToChange.getStartDate().plusDays(1), null,
                     "New Room", "New Facilitator", false, true, false, true);
 
-            CalendarEventManageDTO actual = request.putWithResponseBody(PUT_REQUEST_URL, expected, CalendarEventManageDTO.class, HttpStatus.OK);
+            CourseCalendarEventDTO actual = request.putWithResponseBody(PUT_REQUEST_URL, expected, CourseCalendarEventDTO.class, HttpStatus.OK);
 
             assertThat(actual).usingRecursiveComparison().withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class).ignoringFields("courseName")
                     .isEqualTo(expected);
@@ -989,10 +989,10 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
 
             CourseCalendarEvent eventToChange = courseCalendarEvents.getFirst();
 
-            CalendarEventManageDTO expected = new CalendarEventManageDTO("course-" + eventToChange.getId(), "New Title", null, eventToChange.getStartDate().plusDays(1),
+            CourseCalendarEventDTO expected = new CourseCalendarEventDTO("course-" + eventToChange.getId(), "New Title", null, eventToChange.getStartDate().plusDays(1),
                     eventToChange.getEndDate().plusDays(1), null, "New Facilitator", false, true, false, true);
 
-            CalendarEventManageDTO actual = request.putWithResponseBody(PUT_REQUEST_URL, expected, CalendarEventManageDTO.class, HttpStatus.OK);
+            CourseCalendarEventDTO actual = request.putWithResponseBody(PUT_REQUEST_URL, expected, CourseCalendarEventDTO.class, HttpStatus.OK);
 
             assertThat(actual).usingRecursiveComparison().withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class).ignoringFields("courseName")
                     .isEqualTo(expected);
@@ -1006,10 +1006,10 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
 
             CourseCalendarEvent eventToChange = courseCalendarEvents.getFirst();
 
-            CalendarEventManageDTO expected = new CalendarEventManageDTO("course-" + eventToChange.getId(), "New Title", null, eventToChange.getStartDate().plusDays(1),
+            CourseCalendarEventDTO expected = new CourseCalendarEventDTO("course-" + eventToChange.getId(), "New Title", null, eventToChange.getStartDate().plusDays(1),
                     eventToChange.getEndDate().plusDays(1), "New Room", null, false, true, false, true);
 
-            CalendarEventManageDTO actual = request.putWithResponseBody(PUT_REQUEST_URL, expected, CalendarEventManageDTO.class, HttpStatus.OK);
+            CourseCalendarEventDTO actual = request.putWithResponseBody(PUT_REQUEST_URL, expected, CourseCalendarEventDTO.class, HttpStatus.OK);
 
             assertThat(actual).usingRecursiveComparison().withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class).ignoringFields("courseName")
                     .isEqualTo(expected);
@@ -1023,7 +1023,7 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
 
             CourseCalendarEvent eventToChange = courseCalendarEvents.getFirst();
 
-            CalendarEventManageDTO expected = new CalendarEventManageDTO("course-" + eventToChange.getId(), "New Title", null, eventToChange.getStartDate().plusDays(1),
+            CourseCalendarEventDTO expected = new CourseCalendarEventDTO("course-" + eventToChange.getId(), "New Title", null, eventToChange.getStartDate().plusDays(1),
                     eventToChange.getEndDate().plusDays(1), "New Room", "New Facilitator", false, true, false, true);
 
             String response = request.putWithResponseBody(PUT_REQUEST_URL, expected, String.class, HttpStatus.OK);

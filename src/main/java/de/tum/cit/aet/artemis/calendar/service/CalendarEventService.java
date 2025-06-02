@@ -55,7 +55,7 @@ public class CalendarEventService {
      * @return the corresponding {@link ZoneId}
      * @throws BadRequestException if the input has a wrong format
      */
-    public ZoneId deserializeTimeZoneOrElseThrow(String timeZone) {
+    public ZoneId deserializeZoneIdOrElseThrow(String timeZone) {
         try {
             return ZoneId.of(timeZone);
         }

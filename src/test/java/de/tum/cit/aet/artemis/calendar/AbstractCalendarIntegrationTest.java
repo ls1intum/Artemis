@@ -16,7 +16,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 
 import de.tum.cit.aet.artemis.calendar.domain.CourseCalendarEvent;
 import de.tum.cit.aet.artemis.calendar.dto.CalendarEventDTO;
-import de.tum.cit.aet.artemis.calendar.dto.CalendarEventManageDTO;
+import de.tum.cit.aet.artemis.calendar.dto.CourseCalendarEventDTO;
 import de.tum.cit.aet.artemis.calendar.repository.CourseCalendarEventRepository;
 import de.tum.cit.aet.artemis.calendar.util.CourseCalendarEventUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -43,8 +43,6 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
 
     static final String INSTRUCTOR_LOGIN = TEST_PREFIX + "instructor";
 
-    static final String NOT_STUDENT_LOGIN = TEST_PREFIX + "notstudent";
-
     static final String NOT_EDITOR_LOGIN = TEST_PREFIX + "noteditor";
 
     static final String NOT_INSTRUCTOR_LOGIN = TEST_PREFIX + "notinstructor";
@@ -56,7 +54,7 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
     static final TypeReference<Map<String, List<CalendarEventDTO>>> GET_CALENDAR_EVENTS_RETURN_TYPE = new TypeReference<Map<String, List<CalendarEventDTO>>>() {
     };
 
-    static final TypeReference<List<CalendarEventManageDTO>> GET_COURSE_CALENDAR_EVENTS_RETURN_TYPE = new TypeReference<List<CalendarEventManageDTO>>() {
+    static final TypeReference<List<CourseCalendarEventDTO>> GET_COURSE_CALENDAR_EVENTS_RETURN_TYPE = new TypeReference<List<CourseCalendarEventDTO>>() {
     };
 
     static final String PUT_REQUEST_URL = "/api/calendar/course-calendar-event";
@@ -141,6 +139,14 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
         }
     }
 
+    /**
+     * Creates a scenario that includes:
+     * <ul>
+     * <li>an active {@link Course} of which {@code student}, {@code tutor}, {@code editor}, and {@code instructor} are part representing the user group their name indicates.</li>
+     * <li>one {@link TutorialGroup} with weekly {@link TutorialGroupSession}s of which {@code tutor} and {@code student} are part of.</li>
+     * <li>a series of weekly {@link CourseCalendarEvent}s that are visible to all user groups of the course.</li>
+     * </ul>
+     */
     void setupActiveCourseScenario() {
         course = courseUtilService.createActiveCourseInTimezone(ZoneId.of(TEST_TIMEZONE_STRING), 1, 3);
         tutorialGroup = tutorialGroupUtilService.createTutorialGroup(course.getId(), "Test Tutorial Group", "", 10, false, "Garching", "English", tutor,
@@ -150,10 +156,23 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
         courseCalendarEvents = courseCalendarEventUtilService.createCourseCalendarEvents(course);
     }
 
+    /**
+     * Creates a scenario that includes:
+     * <ul>
+     * <li>an active {@link Course} of which {@code student}, {@code tutor}, {@code editor}, and {@code instructor} are part representing the user group their name indicates.</li>
+     * </ul>
+     */
     void setupActiveCourseWithoutCourseWideEventsScenario() {
         course = courseUtilService.createActiveCourseInTimezone(ZoneId.of(TEST_TIMEZONE_STRING), 1, 3);
     }
 
+    /**
+     * Creates a scenario that includes:
+     * <ul>
+     * <li>an active {@link Course} of which {@code student}, {@code tutor}, {@code editor}, and {@code instructor} are part representing the user group their name indicates.</li>
+     * <li>two {@link CourseCalendarEvent}s spanning multiple days (first: 2 days | second: 3 days) that are visible to all user groups of the course.</li>
+     * </ul>
+     */
     void setupActiveCourseWithCourseCalendarEventsSpanningMultipleDaysScenario() {
         course = courseUtilService.createActiveCourseInTimezone(ZoneId.of(TEST_TIMEZONE_STRING), 1, 1);
         CourseCalendarEvent event1 = new CourseCalendarEvent();
@@ -178,37 +197,66 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
         courseCalendarEvents = List.of(event1, event2);
     }
 
+    /**
+     * Creates a scenario that includes:
+     * <ul>
+     * <li>an active {@link Course} of which {@code student}, {@code tutor}, {@code editor}, and {@code instructor} are part representing the user group their name indicates.</li>
+     * <li>one {@link TutorialGroup} with weekly {@link TutorialGroupSession}s of which {@code tutor} and {@code student} are part of.</li>
+     * <li>a series of weekly {@link CourseCalendarEvent}s with visibility alternating between the different user groups of the course.</li>
+     * </ul>
+     */
     void setupActiveCourseWithMutualExclusiveVisibilityForCourseCalendarEventScenario() {
         course = courseUtilService.createActiveCourseInTimezone(ZoneId.of(TEST_TIMEZONE_STRING), 1, 3);
         tutorialGroup = tutorialGroupUtilService.createTutorialGroup(course.getId(), "Test Tutorial Group", "", 10, false, "Garching", "English", tutor,
                 new HashSet<>(Set.of(student)));
         tutorialGroupSessions = tutorialGroupUtilService.createTutorialGroupSessions(tutorialGroup, course, false);
 
-        courseCalendarEvents = courseCalendarEventUtilService.createCourseCalendarEventsWithMutualExclusiveVisibility(course);
+        courseCalendarEvents = courseCalendarEventUtilService.createCourseCalendarEventsWithMutuallyExclusiveVisibility(course);
     }
 
+    /**
+     * Creates a scenario that includes:
+     * <ul>
+     * <li>an active {@link Course}.</li>
+     * <li>an editor and instructor with usernames {@code NOT_EDITOR_LOGIN} and {@code NOT_INSTRUCTOR_LOGIN} that are not part of the course.</li>
+     * <li>one {@link TutorialGroup} with weekly {@link TutorialGroupSession}s of which {@code tutor} and {@code student} are part of.</li>
+     * <li>a series of weekly {@link CourseCalendarEvent}s that are visible to all user groups of the course.</li>
+     * </ul>
+     */
     void setupUserNotPartOfAnyCourseScenario() {
         course = courseUtilService.createActiveCourseInTimezone(ZoneId.of(TEST_TIMEZONE_STRING), 1, 3);
-        userUtilService.addStudent("notstudent", TEST_PREFIX + "notstudent");
-        userUtilService.addTeachingAssistant("nottutor", TEST_PREFIX + "nottutor");
         userUtilService.addEditor("noteditor", TEST_PREFIX + "noteditor");
         userUtilService.addInstructor("notinstructor", TEST_PREFIX + "notinstructor");
         tutorialGroup = tutorialGroupUtilService.createTutorialGroup(course.getId(), "Test Tutorial Group", "", 10, false, "Garching", "English", tutor,
                 new HashSet<>(Set.of(student)));
         tutorialGroupSessions = tutorialGroupUtilService.createTutorialGroupSessions(tutorialGroup, course, false);
-        ;
         courseCalendarEvents = courseCalendarEventUtilService.createCourseCalendarEvents(course);
     }
 
+    /**
+     * Creates a scenario that includes:
+     * <ul>
+     * <li>an inactive {@link Course}.</li>
+     * <li>one {@link TutorialGroup} with weekly {@link TutorialGroupSession}s of which {@code tutor} and {@code student} are part of.</li>
+     * <li>a series of weekly {@link CourseCalendarEvent}s that are visible to all user groups of the course.</li>
+     * </ul>
+     */
     void setupNonActiveCourseScenario() {
         course = courseUtilService.createNonActiveCourseInTimezone(ZoneId.of(TEST_TIMEZONE_STRING), 6, 2);
         tutorialGroup = tutorialGroupUtilService.createTutorialGroup(course.getId(), "Test Tutorial Group", "", 10, false, "Garching", "English", tutor,
                 new HashSet<>(Set.of(student)));
         tutorialGroupSessions = tutorialGroupUtilService.createTutorialGroupSessions(tutorialGroup, course, false);
-        ;
         courseCalendarEvents = courseCalendarEventUtilService.createCourseCalendarEvents(course);
     }
 
+    /**
+     * Creates a scenario that includes:
+     * <ul>
+     * <li>an active {@link Course}.</li>
+     * <li>one {@link TutorialGroup} with weekly {@link TutorialGroupSession}s of which {@code tutor} and {@code student} are <u><b>not</b></u> part of.</li>
+     * <li>a series of weekly {@link CourseCalendarEvent}s that are visible to all user groups of the course.</li>
+     * </ul>
+     */
     void setupActiveCourseWithoutParticipatedTutorialGroupScenario() {
         course = courseUtilService.createActiveCourseInTimezone(ZoneId.of(TEST_TIMEZONE_STRING), 1, 3);
         userUtilService.addTeachingAssistant("tutor", TEST_PREFIX + "othertutor");
@@ -218,6 +266,15 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
         courseCalendarEvents = courseCalendarEventUtilService.createCourseCalendarEvents(course);
     }
 
+    /**
+     * Creates a scenario that includes:
+     * <ul>
+     * <li>an active {@link Course}.</li>
+     * <li>one {@link TutorialGroup} with weekly {@link TutorialGroupSession}s of which <u><b>the first two are cancelled</b></u>. The {@code tutor} and {@code student} are part of
+     * the group.</li>
+     * <li>a series of weekly {@link CourseCalendarEvent}s that are visible to all user groups of the course.</li>
+     * </ul>
+     */
     void setupActiveCourseWithCancelledTutorialGroupSessionsScenario() {
         course = courseUtilService.createActiveCourseInTimezone(ZoneId.of(TEST_TIMEZONE_STRING), 1, 3);
         tutorialGroup = tutorialGroupUtilService.createTutorialGroup(course.getId(), "Test Tutorial Group", "", 10, false, "Garching", "English", tutor,
