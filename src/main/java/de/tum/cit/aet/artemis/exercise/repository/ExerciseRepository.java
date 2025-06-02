@@ -77,6 +77,14 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     @Query("""
             SELECT e
             FROM Exercise e
+            WHERE e.course.id = :courseId
+                AND (e.releaseDate <=:now  OR e.releaseDate IS NULL)
+             """)
+    Set<Exercise> findAllReleasedExercisesByCourseId(@Param("courseId") long courseId, @Param("now") ZonedDateTime now);
+
+    @Query("""
+            SELECT e
+            FROM Exercise e
                 LEFT JOIN FETCH e.competencyLinks cl
                 LEFT JOIN FETCH cl.competency
             WHERE e.id = :exerciseId
@@ -348,7 +356,6 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     @Query("""
             SELECT DISTINCT e
             FROM Exercise e
-                LEFT JOIN FETCH e.posts
                 LEFT JOIN FETCH e.categories
                 LEFT JOIN FETCH e.submissionPolicy
             WHERE e.id = :exerciseId

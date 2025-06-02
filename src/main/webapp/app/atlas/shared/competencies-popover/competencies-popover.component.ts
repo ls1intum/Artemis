@@ -14,12 +14,9 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
     imports: [TranslateDirective, RouterLink, NgbPopover, FaIconComponent],
 })
 export class CompetenciesPopoverComponent implements OnInit {
-    @Input()
-    courseId: number;
-    @Input()
-    competencyLinks: CompetencyLectureUnitLink[] = [];
-    @Input()
-    navigateTo: 'competencyManagement' | 'courseCompetencies' = 'courseCompetencies';
+    @Input() courseId: number;
+    @Input() competencyLinks: CompetencyLectureUnitLink[] = [];
+    @Input() navigateTo: 'competencyManagement' | 'courseCompetencies' = 'courseCompetencies';
 
     navigationArray: string[] = [];
 

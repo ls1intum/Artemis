@@ -46,7 +46,7 @@ public class AeolusBuildScriptGenerationService extends BuildScriptGenerationSer
 
     @Override
     public String getScript(ProgrammingExercise programmingExercise) throws JsonProcessingException {
-        if (!profileService.isLocalCiActive()) {
+        if (!profileService.isLocalCIActive()) {
             return null;
         }
         Windfile windfile = programmingExercise.getBuildConfig().getWindfile();

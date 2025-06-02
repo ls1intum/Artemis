@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges, input } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges, input, signal } from '@angular/core';
 import { OneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { faPeopleGroup } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -35,18 +35,23 @@ export class SidebarCardItemComponent implements OnInit, OnChanges {
     otherUser: any;
 
     readonly faPeopleGroup = faPeopleGroup;
+    readonly shouldDisplayUnreadCount = signal<boolean>(false);
 
     formattedUnreadCount: string = '';
 
     ngOnInit(): void {
         this.formattedUnreadCount = this.getFormattedUnreadCount();
         this.extractMessageUser();
+        this.updateShouldDisplayUnreadCount();
     }
 
     ngOnChanges(changes: SimpleChanges): void {
         // Recompute unread count string if value changes
         if (changes['unreadCount']) {
             this.formattedUnreadCount = this.getFormattedUnreadCount();
+        }
+        if (changes['sidebarItem']) {
+            this.updateShouldDisplayUnreadCount();
         }
     }
 
@@ -58,6 +63,10 @@ export class SidebarCardItemComponent implements OnInit, OnChanges {
             return '99+';
         }
         return this.unreadCount().toString() || '';
+    }
+
+    protected updateShouldDisplayUnreadCount(): void {
+        this.shouldDisplayUnreadCount.set(!this.sidebarItem.conversation?.isMuted);
     }
 
     /**

@@ -12,6 +12,7 @@ import {
     input,
     model,
     output,
+    signal,
     viewChild,
 } from '@angular/core';
 import { Post } from 'app/communication/shared/entities/post.model';
@@ -41,6 +42,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ForwardedMessageComponent } from 'app/communication/forwarded-message/forwarded-message.component';
+import { CourseWideSearchConfig } from 'app/communication/course-conversations-components/course-wide-search/course-wide-search.component';
 
 @Component({
     selector: 'jhi-post',
@@ -86,7 +88,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     // if the post is previewed in the create/edit modal,
     // we need to pass the ref in order to close it when navigating to the previewed post via post title
     modalRef = input<NgbModalRef | undefined>(undefined);
-    searchQuery = input<string>('');
+    searchConfig = input<CourseWideSearchConfig | undefined>(undefined);
     showAnswers = model<boolean>(false);
 
     openThread = output<void>();
@@ -97,7 +99,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     static activeDropdownPost: PostComponent | undefined = undefined;
 
     showReactionSelector = false;
-    displayInlineInput = false;
+    displayInlineInput = signal(false);
     routerLink: RouteComponents;
     queryParams = {};
     showAnnouncementIcon = false;
@@ -257,9 +259,21 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     }
 
     updateShowSearchResultInAnswersHint() {
-        const searchQuery = this.searchQuery()?.toLowerCase();
-        if (!searchQuery) {
+        const searchConfig = this.searchConfig();
+        if (!searchConfig || !this.posting.answers) {
             this.showSearchResultInAnswersHint = false;
+            return;
+        }
+
+        const searchQuery = searchConfig.searchTerm.toLowerCase();
+        if (!searchQuery) {
+            const selectedAuthorIds = searchConfig.selectedAuthors.map((author) => author.id);
+            const isSearchAuthorInAnswers =
+                this.posting.answers?.some((answer) => {
+                    const answerAuthorId = answer.author?.id;
+                    return selectedAuthorIds.includes(answerAuthorId);
+                }) ?? false;
+            this.showSearchResultInAnswersHint = isSearchAuthorInAnswers;
             return;
         }
 
@@ -368,6 +382,10 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
                 });
             }
         }
+    }
+
+    protected setDisplayInlineInput(active: boolean) {
+        this.displayInlineInput.set(active);
     }
 
     private assignPostingToPost() {

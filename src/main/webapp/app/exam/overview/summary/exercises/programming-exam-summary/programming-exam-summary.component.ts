@@ -12,7 +12,7 @@ import { ExerciseCacheService } from 'app/exercise/services/exercise-cache.servi
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Router } from '@angular/router';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { CodeButtonComponent } from 'app/shared/components/code-button/code-button.component';
+import { CodeButtonComponent } from 'app/shared/components/buttons/code-button/code-button.component';
 import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
@@ -56,13 +56,17 @@ export class ProgrammingExamSummaryComponent implements OnInit {
 
     ngOnInit() {
         this.routerLink = this.router.url;
-        this.result = this.participation.results?.[0];
+        this.participation.exercise = this.exercise;
+        this.result = this.participation.submissions![0].results![0];
+        // TODO this is not a a perfect solution.
+        this.result.submission = this.submission;
+        this.result.submission.participation = this.participation;
         this.commitHash = this.submission?.commitHash?.slice(0, 11);
         this.isInCourseManagement = this.router.url.includes('course-management');
         const isBuilding = false;
         const missingResultInfo = MissingResultInformation.NONE;
 
-        const templateStatus = evaluateTemplateStatus(this.exercise, this.participation, this.participation.results?.[0], isBuilding, missingResultInfo);
+        const templateStatus = evaluateTemplateStatus(this.exercise, this.participation, this.result, isBuilding, missingResultInfo);
 
         if (this.result) {
             this.feedbackComponentParameters = prepareFeedbackComponentParameters(

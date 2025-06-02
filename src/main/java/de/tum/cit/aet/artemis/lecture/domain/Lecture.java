@@ -20,9 +20,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonIncludeProperties;
 
-import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 
@@ -59,11 +57,6 @@ public class Lecture extends DomainObject {
     @JsonIgnoreProperties("lecture")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private List<LectureUnit> lectureUnits = new ArrayList<>();
-
-    @OneToMany(mappedBy = "lecture", cascade = CascadeType.REMOVE, orphanRemoval = true)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonIncludeProperties({ "id" })
-    private Set<Post> posts = new HashSet<>();
 
     @ManyToOne
     @JsonIgnoreProperties(value = { "lectures", "exercises", "posts" }, allowSetters = true)
@@ -139,14 +132,6 @@ public class Lecture extends DomainObject {
     public void addLectureUnit(LectureUnit lectureUnit) {
         this.lectureUnits.add(lectureUnit);
         lectureUnit.setLecture(this);
-    }
-
-    public Set<Post> getPosts() {
-        return posts;
-    }
-
-    public void setPosts(Set<Post> posts) {
-        this.posts = posts;
     }
 
     public Course getCourse() {

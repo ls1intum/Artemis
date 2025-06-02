@@ -8,7 +8,7 @@ import { CompetencyFormComponent } from 'app/atlas/manage/forms/competency/compe
 
 import { CreateCourseCompetencyComponent } from 'app/atlas/manage/create/create-course-competency.component';
 import { CourseCompetencyFormData } from 'app/atlas/manage/forms/course-competency-form.component';
-import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({

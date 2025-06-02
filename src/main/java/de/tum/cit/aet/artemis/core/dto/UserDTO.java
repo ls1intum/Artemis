@@ -71,6 +71,16 @@ public class UserDTO extends AuditingEntityDTO {
 
     private ZonedDateTime vcsAccessTokenExpiryDate;
 
+    /**
+     * True if
+     * <ul>
+     * <li>No passkey has been registered for this user yet</li>
+     * <li>and the passkey feature is enabled</li>
+     * <li>and <code>artemis.user-management.passkey.ask-users-to-setup</code> is set to true</li>
+     * </ul>
+     */
+    private boolean askToSetupPasskey = false;
+
     private ZonedDateTime externalLLMUsageAccepted;
 
     public UserDTO() {
@@ -233,6 +243,14 @@ public class UserDTO extends AuditingEntityDTO {
 
     public ZonedDateTime getVcsAccessTokenExpiryDate() {
         return vcsAccessTokenExpiryDate;
+    }
+
+    public void setAskToSetupPasskey(boolean askToSetupPasskey) {
+        this.askToSetupPasskey = askToSetupPasskey;
+    }
+
+    public boolean getAskToSetupPasskey() {
+        return askToSetupPasskey;
     }
 
     @Override

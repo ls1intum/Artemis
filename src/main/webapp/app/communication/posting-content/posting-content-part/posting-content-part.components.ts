@@ -44,7 +44,37 @@ export class PostingContentPartComponent implements OnInit, OnChanges {
     hasClickedUserReference = false;
 
     // Only allow certain html tags and attributes
-    allowedHtmlTags: string[] = ['a', 'b', 'br', 'blockquote', 'code', 'del', 'em', 'i', 'ins', 'mark', 'p', 'pre', 'small', 's', 'span', 'strong', 'sub', 'sup'];
+
+    allowedHtmlTags: string[] = [
+        'a',
+        'b',
+        'br',
+        'blockquote',
+        'code',
+        'del',
+        'em',
+        'hr',
+        'h1',
+        'h2',
+        'h3',
+        'h4',
+        'h5',
+        'h6',
+        'i',
+        'ins',
+        'li',
+        'mark',
+        'p',
+        'pre',
+        'small',
+        's',
+        'span',
+        'strong',
+        'sub',
+        'sup',
+        'ul',
+        'ol',
+    ];
     allowedHtmlAttributes: string[] = ['href'];
 
     // icons
@@ -81,38 +111,19 @@ export class PostingContentPartComponent implements OnInit, OnChanges {
 
     /**
      * Processes content before and after any reference (user/channel/etc.)
-     * to escape markdown-specific characters like lists (e.g., 1., -).
      */
     processContent() {
         if (this.postingContentPart()?.contentBeforeReference) {
-            this.processedContentBeforeReference = this.escapeNumberedList(this.postingContentPart()?.contentBeforeReference || '');
-            this.processedContentBeforeReference = this.escapeUnorderedList(this.processedContentBeforeReference);
+            this.processedContentBeforeReference = this.normalizeSpacing(this.postingContentPart()?.contentBeforeReference || '');
         }
 
         if (this.postingContentPart()?.contentAfterReference) {
-            this.processedContentAfterReference = this.escapeNumberedList(this.postingContentPart()?.contentAfterReference || '');
-            this.processedContentAfterReference = this.escapeUnorderedList(this.processedContentAfterReference);
+            this.processedContentAfterReference = this.normalizeSpacing(this.postingContentPart()?.contentAfterReference || '');
         }
     }
 
-    /**
-     * Escapes numbered list markdown (e.g., "1. item") to prevent incorrect rendering.
-     *
-     * @param content The raw markdown content
-     * @returns Processed content with escaped numbered lists
-     */
-    escapeNumberedList(content: string): string {
-        return content.replace(/^(\s*\d+)\. /gm, '$1\\.  ');
-    }
-
-    /**
-     * Escapes unordered list markdown (e.g., "- item") to prevent unintended list rendering.
-     *
-     * @param content The raw markdown content
-     * @returns Processed content with escaped dashes
-     */
-    escapeUnorderedList(content: string): string {
-        return content.replace(/^(- )/gm, '\\$1');
+    normalizeSpacing(content: string): string {
+        return content.replace(/\n{3,}/g, '\n\n');
     }
 
     /**

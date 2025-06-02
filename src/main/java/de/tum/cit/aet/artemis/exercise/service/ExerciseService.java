@@ -534,9 +534,9 @@ public class ExerciseService {
         Map<Long, Double> averageScoreById = new HashMap<>();
         if (!lastFivePastExercises.isEmpty()) {
             // Calculate the average score for all five exercises at once
-            var averageScore = participantScoreRepository.findAverageScoreForExercises(lastFivePastExercises);
-            for (var element : averageScore) {
-                averageScoreById.put((Long) element.get("exerciseId"), (Double) element.get("averageScore"));
+            var averageScoreForExercises = participantScoreRepository.findAverageScoreForExercises(lastFivePastExercises);
+            for (var averageScoreForExercise : averageScoreForExercises) {
+                averageScoreById.put(averageScoreForExercise.exerciseId(), averageScoreForExercise.averageScore());
             }
         }
 
@@ -677,7 +677,7 @@ public class ExerciseService {
         // update the grading criteria to re-calculate the results considering the updated usage limits
         gradingCriterionRepository.saveAll(exercise.getGradingCriteria());
 
-        List<Result> results = resultRepository.findWithEagerSubmissionAndFeedbackByParticipationExerciseId(exercise.getId());
+        List<Result> results = resultRepository.findWithEagerSubmissionAndFeedbackBySubmissionParticipationExerciseId(exercise.getId());
 
         // add example submission results that belong exercise
         if (!exercise.getExampleSubmissions().isEmpty()) {

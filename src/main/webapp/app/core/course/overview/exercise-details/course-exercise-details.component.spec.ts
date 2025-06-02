@@ -24,7 +24,7 @@ import { ExerciseDetailsStudentActionsComponent } from 'app/core/course/overview
 import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
 import { ResultHistoryComponent } from 'app/exercise/result-history/result-history.component';
 import { SubmissionResultStatusComponent } from 'app/core/course/overview/submission-result-status/submission-result-status.component';
-import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button/exercise-action-button.component';
+import { ExerciseActionButtonComponent } from 'app/shared/components/buttons/exercise-action-button/exercise-action-button.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -242,13 +242,15 @@ describe('CourseExerciseDetailsComponent', () => {
     it('should have student participations', fakeAsync(() => {
         const studentParticipation = new StudentParticipation();
         studentParticipation.student = new User(99);
-        studentParticipation.submissions = [new TextSubmission()];
-        studentParticipation.type = ParticipationType.STUDENT;
-        studentParticipation.id = 42;
         const result = new Result();
         result.id = 1;
         result.completionDate = dayjs();
-        studentParticipation.results = [result];
+        const submission = new TextSubmission();
+        submission.results = [result];
+        studentParticipation.submissions = [submission];
+        studentParticipation.type = ParticipationType.STUDENT;
+        studentParticipation.id = 42;
+
         studentParticipation.exercise = exercise;
 
         const exerciseDetail = { exercise: { ...exercise, studentParticipations: [studentParticipation] }, plagiarismCaseInfo: plagiarismCaseInfo };
@@ -262,7 +264,8 @@ describe('CourseExerciseDetailsComponent', () => {
         mergeStudentParticipationMock.mockReturnValue([studentParticipation]);
         const changedParticipation = cloneDeep(studentParticipation);
         const changedResult = { ...result, id: 2 };
-        changedParticipation.results = [changedResult];
+
+        changedParticipation.submissions![0].results = [changedResult];
         subscribeForParticipationChangesMock.mockReturnValue(new BehaviorSubject<Participation | undefined>(changedParticipation));
 
         fixture.detectChanges();
@@ -276,7 +279,7 @@ describe('CourseExerciseDetailsComponent', () => {
         expect(comp.courseId).toBe(1);
         expect(comp.studentParticipations?.[0].exercise?.id).toBe(exercise.id);
         expect(comp.exercise!.id).toBe(exercise.id);
-        expect(comp.exercise!.studentParticipations![0].results![0]).toStrictEqual(changedResult);
+        expect(comp.exercise!.studentParticipations![0].submissions![0].results![0]).toStrictEqual(changedResult);
         expect(comp.plagiarismCaseInfo).toEqual(plagiarismCaseInfo);
         expect(comp.hasMoreResults).toBeFalse();
         expect(comp.exerciseRatedBadge(result)).toBe('bg-info');
@@ -408,7 +411,7 @@ describe('CourseExerciseDetailsComponent', () => {
 
         mergeStudentParticipationMock.mockReturnValue([newParticipation]);
 
-        participationWebsocketBehaviorSubject.next({ ...newParticipation, exercise: programmingExercise, results: [] });
+        participationWebsocketBehaviorSubject.next({ ...newParticipation, exercise: programmingExercise });
     }));
 
     it.each<[string[]]>([[[]], [[PROFILE_IRIS]]])(

@@ -112,7 +112,6 @@ public class TextExerciseFeedbackService {
         automaticResult.setScore(0.0);
         automaticResult.setSuccessful(null);
         automaticResult.setSubmission(textSubmission);
-        automaticResult.setParticipation(participation);
         try {
             // This broadcast signals the client that feedback is being generated, does not save empty result
             this.resultWebsocketService.broadcastNewResult(participation, automaticResult);
@@ -177,7 +176,6 @@ public class TextExerciseFeedbackService {
             // but since we do not differentiate for athena feedback we use it to indicate a failed generation
             automaticResult.setSuccessful(false);
             automaticResult.setCompletionDate(null);
-            participation.addResult(automaticResult); // for proper change detection
             // This broadcast signals the client that feedback generation failed, does not save empty result
             this.resultWebsocketService.broadcastNewResult(participation, automaticResult);
         }

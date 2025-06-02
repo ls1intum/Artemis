@@ -1,6 +1,7 @@
 from os import chmod, makedirs, path
 from typing import Tuple, List
 from xml.etree import ElementTree as Et
+import re
 
 from testUtils.junit.TestSuite import TestSuite
 
@@ -16,14 +17,33 @@ class Junit:
 
     def toXml(self, outputPath: str) -> None:
         suiteXml: Et.Element = self.suite.toXml()
+
+        # remove ANSI colour codes
+        for element in suiteXml.iter():
+            for key, value in element.attrib.items():
+                if isinstance(value, str):
+                    element.attrib[key] = self.strip_ansi_codes(value)
+            if element.text:
+                element.text = self.strip_ansi_codes(element.text)
+
         root: Et.Element = Et.Element("testsuites")
         root.append(suiteXml)
         root.extend(self.additionalSuites)
         tree: Et.ElementTree = Et.ElementTree(root)
         self.createOutputPath(outputPath)
         tree.write(outputPath, xml_declaration=True)
-        # Ensure nobody can edit our results:
         chmod(outputPath, 0o644)
+
+    @staticmethod
+    def strip_ansi_codes(text: str) -> str:
+        """Removes ANSI colour codes from the text"""
+        ansi_escape_pattern = re.compile(
+            r'(?:\x1B|\x9B)'  # ESC or CSI
+            r'[\[\]()#;?]*'  # Intermediate bytes
+            r'(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?'  # Parameter bytes
+            r'[0-9A-ORZcf-nqry=><~]')  # Final byte
+
+        return ansi_escape_pattern.sub('', text)
 
     @staticmethod
     def createOutputPath(outputPath: str) -> None:

@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyProgress;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyRelation;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.RelationType;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyContributionDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyRelationDTO;
@@ -75,12 +76,11 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
 
         // result
         Result result = ParticipationFactory.generateResult(rated, scoreAwarded);
-        result.setParticipation(studentParticipation);
         result.setCompletionDate(ZonedDateTime.now());
+        result.setSubmission(submission);
         result = resultRepository.save(result);
 
         submission.addResult(result);
-        result.setSubmission(submission);
         submissionRepository.save(submission);
 
         return result;
@@ -320,7 +320,7 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
             assertThat(studentCompetencyProgress1.getProgress()).isEqualTo(22);
             assertThat(studentCompetencyProgress1.getConfidence()).isEqualTo(0.75);
 
-            lectureUnitService.setLectureUnitCompletion(attachmentUnitRepository.findById(attachmentUnitOfLectureOne.getId()).orElseThrow(), student1, true);
+            lectureUnitService.setLectureUnitCompletion(attachmentVideoUnitRepository.findById(attachmentVideoUnitOfLectureOne.getId()).orElseThrow(), student1, true);
 
             CompetencyProgress studentCompetencyProgress2 = request.get(
                     "/api/atlas/courses/" + course.getId() + "/course-competencies/" + courseCompetency.getId() + "/student-progress?refresh=false", HttpStatus.OK,
@@ -549,6 +549,45 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
 
         var relations = competencyRelationRepository.findAllWithHeadAndTailByCourseId(course.getId());
         assertThat(relations).isEmpty();
+    }
+
+    @Nested
+    class GetCompetencyContribution {
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void shouldGetCompetencyContributionsForExercise() throws Exception {
+            User student1 = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+            Result textResult = createTextExerciseParticipationSubmissionAndResult(textExercise, student1, textExercise.getMaxPoints(), 0.0, 90, true);
+            studentScoreUtilService.createStudentScore(textExercise, student1, textResult);
+
+            var contributions = request.getList("/api/atlas/exercises/" + textExercise.getId() + "/contributions", HttpStatus.OK, CompetencyContributionDTO.class);
+
+            assertThat(contributions).hasSize(1);
+            assertThat(contributions.getFirst().competencyId()).isEqualTo(courseCompetency.getId());
+            assertThat(contributions.getFirst().title()).isEqualTo(courseCompetency.getTitle());
+            assertThat(contributions.getFirst().weight()).isEqualTo(1);
+            assertThat(contributions.getFirst().mastery()).isEqualTo(0);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void shouldGetCompetencyContributionsForLectureUnit() throws Exception {
+            User student1 = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+            final var lectureUnit = lectureUtilService.createTextUnit();
+            final var lecture = lectureUtilService.createLecture(course, ZonedDateTime.now().minusDays(1));
+            lectureUtilService.addLectureUnitsToLecture(lecture, List.of(lectureUnit));
+            lectureUtilService.completeLectureUnitForUser(lectureUnit, student1);
+            competencyUtilService.linkLectureUnitToCompetency(courseCompetency, lectureUnit);
+
+            var contributions = request.getList("/api/atlas/lecture-units/" + lectureUnit.getId() + "/contributions", HttpStatus.OK, CompetencyContributionDTO.class);
+
+            assertThat(contributions).hasSize(1);
+            assertThat(contributions.getFirst().competencyId()).isEqualTo(courseCompetency.getId());
+            assertThat(contributions.getFirst().title()).isEqualTo(courseCompetency.getTitle());
+            assertThat(contributions.getFirst().weight()).isEqualTo(1);
+            assertThat(contributions.getFirst().mastery()).isEqualTo(0);
+        }
     }
 
     @Nested

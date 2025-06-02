@@ -13,7 +13,7 @@ import dayjs from 'dayjs/esm';
 
 import { CourseSidebarComponent } from 'app/core/course/shared/course-sidebar/course-sidebar.component';
 import { CourseTitleBarComponent } from 'app/core/course/shared/course-title-bar/course-title-bar.component';
-import { CourseExamArchiveButtonComponent } from 'app/shared/components/course-exam-archive-button/course-exam-archive-button.component';
+import { CourseExamArchiveButtonComponent } from 'app/shared/components/buttons/course-exam-archive-button/course-exam-archive-button.component';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -34,7 +34,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { AfterViewInit, Component, ElementRef, EventEmitter, TemplateRef, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, TemplateRef, ViewChild } from '@angular/core';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/shared/tab-bar/tab-bar';
 import { CourseManagementContainerComponent } from 'app/core/course/manage/course-management-container/course-management-container.component';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
@@ -217,12 +217,33 @@ describe('CourseManagementContainerComponent', () => {
                 profileService = TestBed.inject(ProfileService);
                 courseSidebarService = TestBed.inject(CourseSidebarService);
                 router = TestBed.inject(Router);
-                findSpy = jest.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
+                findSpy = jest.spyOn(courseService, 'find').mockReturnValue(
+                    of(
+                        new HttpResponse({
+                            body: course1,
+                            headers: new HttpHeaders(),
+                        }),
+                    ),
+                );
                 metisConversationService = fixture.debugElement.injector.get(MetisConversationService);
 
-                findOneForDashboardSpy = jest.spyOn(courseService, 'findOneForDashboard').mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
+                findOneForDashboardSpy = jest.spyOn(courseService, 'findOneForDashboard').mockReturnValue(
+                    of(
+                        new HttpResponse({
+                            body: course1,
+                            headers: new HttpHeaders(),
+                        }),
+                    ),
+                );
 
-                jest.spyOn(courseService, 'findAllForDropdown').mockReturnValue(of(new HttpResponse({ body: coursesDropdown, headers: new HttpHeaders() })));
+                jest.spyOn(courseService, 'findAllForDropdown').mockReturnValue(
+                    of(
+                        new HttpResponse({
+                            body: coursesDropdown,
+                            headers: new HttpHeaders(),
+                        }),
+                    ),
+                );
 
                 getDeletionSummarySpy = jest.spyOn(courseAdminService, 'getDeletionSummary').mockReturnValue(
                     of(
@@ -254,10 +275,8 @@ describe('CourseManagementContainerComponent', () => {
                 jest.spyOn(metisConversationService, 'course', 'get').mockReturnValue(course);
                 jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(course1);
                 jest.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
-                component.courseBody = { nativeElement: { scrollTop: 123 } } as ElementRef<HTMLElement>;
             });
     }));
-
     afterEach(() => {
         component.ngOnDestroy();
         jest.restoreAllMocks();
@@ -470,10 +489,11 @@ describe('CourseManagementContainerComponent', () => {
 
     it('should render controls if child has configuration', () => {
         const stubSubComponent = TestBed.createComponent(ControlsTestingComponent);
-        component.onSubRouteActivate(stubSubComponent.componentInstance);
         fixture.detectChanges();
+        component.courseBody()!.nativeElement = { scrollTop: 123 } as HTMLElement;
+        component.onSubRouteActivate(stubSubComponent.componentInstance);
         stubSubComponent.detectChanges();
-        expect(component.courseBody.nativeElement.scrollTop).toBe(0);
+        expect(component.courseBody()?.nativeElement.scrollTop).toBe(0);
 
         const expectedButton = fixture.debugElement.query(By.css('#test-button'));
         expect(expectedButton).not.toBeNull();
@@ -794,10 +814,10 @@ describe('CourseManagementContainerComponent', () => {
             expect(component.studentViewLink()).toEqual(['/courses', '123', 'statistics']);
         });
 
-        it('should default to exercises link when URL does not match any condition', () => {
+        it('should default to dashboard link when URL does not match any condition', () => {
             jest.spyOn(router, 'url', 'get').mockReturnValue('courses/123/iris-settings');
             component.determineStudentViewLink();
-            expect(component.studentViewLink()).toEqual(['/courses', '123', 'exercises']);
+            expect(component.studentViewLink()).toEqual(['/courses', '123', 'dashboard']);
         });
     });
 });

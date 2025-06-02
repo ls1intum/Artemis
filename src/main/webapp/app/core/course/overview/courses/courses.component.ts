@@ -39,16 +39,16 @@ import { addPublicFilePrefix } from 'app/app.constants';
     ],
 })
 export class CoursesComponent implements OnInit, OnDestroy {
+    protected readonly faPenAlt = faPenAlt;
+    protected readonly faArrowDownAZ = faArrowDownAZ;
+    protected readonly faArrowUpAZ = faArrowUpAZ;
+    protected readonly faDoorOpen = faDoorOpen;
+
     private courseService = inject(CourseManagementService);
     private teamService = inject(TeamService);
     private websocketService = inject(WebsocketService);
     private router = inject(Router);
     private courseAccessStorageService = inject(CourseAccessStorageService);
-
-    protected readonly faPenAlt = faPenAlt;
-    protected readonly faArrowDownAZ = faArrowDownAZ;
-    protected readonly faArrowUpAZ = faArrowUpAZ;
-    protected readonly faDoorOpen = faDoorOpen;
 
     courses: Course[];
     public nextRelevantCourse?: Course;

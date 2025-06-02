@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyRelation;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Prerequisite;
 import de.tum.cit.aet.artemis.atlas.domain.competency.StandardizedCompetency;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyContributionDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyRelationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
@@ -248,11 +249,6 @@ public class CourseCompetencyService {
         }
         courseCompetencyRepository.saveAll(idToImportedCompetency.values().stream().map(CompetencyWithTailRelationDTO::competency).toList());
 
-        if (course.getLearningPathsEnabled()) {
-            var importedCompetencies = idToImportedCompetency.values().stream().map(CompetencyWithTailRelationDTO::competency).toList();
-            learningPathService.linkCompetenciesToLearningPathsOfCourse(importedCompetencies, course.getId());
-        }
-
         if (importOptions.importRelations()) {
             var originalCompetencyIds = idToImportedCompetency.keySet();
             var relations = competencyRelationRepository.findAllByHeadCompetencyIdInAndTailCompetencyIdIn(originalCompetencyIds, originalCompetencyIds);
@@ -307,16 +303,11 @@ public class CourseCompetencyService {
 
         List<CourseCompetency> importedCompetencies = courseCompetencyRepository.saveAll(competenciesToCreate);
 
-        if (course.getLearningPathsEnabled()) {
-            learningPathService.linkCompetenciesToLearningPathsOfCourse(importedCompetencies, course.getId());
-        }
-
         return importedCompetencies;
     }
 
     /**
      * Creates a new competency and links it to a course and lecture units.
-     * If learning paths are enabled, the competency is also linked to the learning paths of the course.
      *
      * @param competencyToCreate the competency to create
      * @param course             the course to link the competency to
@@ -326,10 +317,6 @@ public class CourseCompetencyService {
     public <C extends CourseCompetency> C createCourseCompetency(C competencyToCreate, Course course) {
         competencyToCreate.setCourse(course);
         var persistedCompetency = courseCompetencyRepository.save(competencyToCreate);
-
-        if (course.getLearningPathsEnabled()) {
-            learningPathService.linkCompetencyToLearningPathsOfCourse(persistedCompetency, course.getId());
-        }
 
         return persistedCompetency;
     }
@@ -352,10 +339,6 @@ public class CourseCompetencyService {
             createdCompetency = courseCompetencyRepository.save(createdCompetency);
 
             createdCompetencies.add(createdCompetency);
-        }
-
-        if (course.getLearningPathsEnabled()) {
-            learningPathService.linkCompetenciesToLearningPathsOfCourse(createdCompetencies, course.getId());
         }
 
         return createdCompetencies;
@@ -444,10 +427,6 @@ public class CourseCompetencyService {
         exerciseService.removeCompetency(courseCompetency.getExerciseLinks(), courseCompetency);
         removeCompetencyLectureUnitLinks(courseCompetency.getLectureUnitLinks(), courseCompetency);
 
-        if (course.getLearningPathsEnabled()) {
-            learningPathService.removeLinkedCompetencyFromLearningPathsOfCourse(courseCompetency, course.getId());
-        }
-
         courseCompetencyRepository.deleteById(courseCompetency.getId());
     }
 
@@ -467,5 +446,39 @@ public class CourseCompetencyService {
     private void removeCompetencyLectureUnitLinks(Set<CompetencyLectureUnitLink> lectureUnitLinks, CourseCompetency competency) {
         lectureUnitLinkRepository.deleteAll(lectureUnitLinks);
         competency.getLectureUnitLinks().removeAll(lectureUnitLinks);
+    }
+
+    /**
+     * Get the competency contributions for a user in an exercise.
+     *
+     * @param exerciseId The id of the exercise
+     * @param userId     The id of the user
+     * @return The list of competency contributions
+     */
+    public List<CompetencyContributionDTO> getCompetencyContributionsForExercise(long exerciseId, long userId) {
+        final var competencies = courseCompetencyRepository.findAllByExerciseIdWithExerciseLinks(exerciseId);
+        return competencies.stream().map(competency -> {
+            final var progress = competencyProgressRepository.findByCompetencyIdAndUserId(competency.getId(), userId);
+            final var mastery = progress.map(CompetencyProgressService::getMastery).orElse(0.0);
+            return new CompetencyContributionDTO(competency.getId(), competency.getTitle(),
+                    competency.getExerciseLinks().stream().findFirst().map(CompetencyExerciseLink::getWeight).orElse(0.0), mastery);
+        }).toList();
+    }
+
+    /**
+     * Get the competency contributions for a user in a lecture unit.
+     *
+     * @param lectureUnitId The id of the lecture unit
+     * @param userId        The id of the user
+     * @return The list of competency contributions
+     */
+    public List<CompetencyContributionDTO> getCompetencyContributionsForLectureUnit(long lectureUnitId, long userId) {
+        final var competencies = courseCompetencyRepository.findAllByLectureUnitIdWithLectureUnitLinks(lectureUnitId);
+        return competencies.stream().map(competency -> {
+            final var progress = competencyProgressRepository.findByCompetencyIdAndUserId(competency.getId(), userId);
+            final var master = progress.map(CompetencyProgressService::getMastery).orElse(0.0);
+            return new CompetencyContributionDTO(competency.getId(), competency.getTitle(),
+                    competency.getLectureUnitLinks().stream().findFirst().map(CompetencyLectureUnitLink::getWeight).orElse(0.0), master);
+        }).toList();
     }
 }

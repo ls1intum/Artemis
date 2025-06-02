@@ -8,7 +8,7 @@ import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
-import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { CourseCompetencyFormData } from 'app/atlas/manage/forms/course-competency-form.component';
@@ -55,7 +55,6 @@ describe('CreatePrerequisite', () => {
                     },
                 },
             ],
-            schemas: [],
         })
             .compileComponents()
             .then(() => {

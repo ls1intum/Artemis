@@ -62,7 +62,7 @@ import de.tum.cit.aet.artemis.plagiarism.domain.text.TextSubmissionElement;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismComparisonRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVcTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTest;
 import de.tum.cit.aet.artemis.text.domain.TextBlock;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
@@ -70,7 +70,7 @@ import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
-class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVcTest {
+class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
 
     private static final String TEST_PREFIX = "cleanup";
 
@@ -200,7 +200,6 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVcTest
         var nonOrphanTextBlock = createTextBlockForFeedback(nonOrphanFeedback);
 
         Result nonOrphanResult = new Result();
-        nonOrphanResult.setParticipation(submission.getParticipation());
         nonOrphanResult.setSubmission(submission);
         nonOrphanFeedback.setResult(nonOrphanResult);
         nonOrphanResult = resultRepository.save(nonOrphanResult);
@@ -363,10 +362,8 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVcTest
         var oldStudentParticipation = participationUtilService.createAndSaveParticipationForExercise(oldExercise, student.getLogin());
         var oldSubmission = participationUtilService.addSubmission(oldStudentParticipation, ParticipationFactory.generateProgrammingSubmission(true));
         var oldResult1 = participationUtilService.generateResult(oldSubmission, instructor);
-        oldResult1.setParticipation(oldStudentParticipation);
         oldResult1.setRated(false);
         var oldResult2 = participationUtilService.generateResult(oldSubmission, instructor);
-        oldResult2.setParticipation(oldStudentParticipation);
         oldResult2.setRated(false);
 
         var oldFeedback1 = createFeedbackWithLinkedLongFeedback();
@@ -394,10 +391,8 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVcTest
         var newStudentParticipation = participationUtilService.createAndSaveParticipationForExercise(newExercise, student.getLogin());
         var newSubmission = participationUtilService.addSubmission(newStudentParticipation, ParticipationFactory.generateProgrammingSubmission(true));
         var newResult1 = participationUtilService.generateResult(newSubmission, instructor);
-        newResult1.setParticipation(newStudentParticipation);
         newResult1.setRated(false);
         var newResult2 = participationUtilService.generateResult(newSubmission, instructor);
-        newResult2.setParticipation(newStudentParticipation);
         newResult2.setRated(false);
 
         var newFeedback1 = createFeedbackWithLinkedLongFeedback();
@@ -462,9 +457,7 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVcTest
         var oldStudentParticipation = participationUtilService.createAndSaveParticipationForExercise(oldExercise, student.getLogin());
         var oldSubmission = participationUtilService.addSubmission(oldStudentParticipation, ParticipationFactory.generateProgrammingSubmission(true));
         var oldResult1 = participationUtilService.generateResult(oldSubmission, instructor); // should be deleted, with all associated entities
-        oldResult1.setParticipation(oldStudentParticipation);
         var oldResult2 = participationUtilService.generateResult(oldSubmission, instructor);
-        oldResult2.setParticipation(oldStudentParticipation);
 
         var oldFeedback1 = createFeedbackWithLinkedLongFeedback();
         var oldTextBlock1 = createTextBlockForFeedback(oldFeedback1);
@@ -491,9 +484,7 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVcTest
         var newStudentParticipation = participationUtilService.createAndSaveParticipationForExercise(newExercise, student.getLogin());
         var newSubmission = participationUtilService.addSubmission(newStudentParticipation, ParticipationFactory.generateProgrammingSubmission(true));
         var newResult1 = participationUtilService.generateResult(newSubmission, instructor); // should not be deleted, with all associated entities
-        newResult1.setParticipation(newStudentParticipation);
         var newResult2 = participationUtilService.generateResult(newSubmission, instructor);
-        newResult2.setParticipation(newStudentParticipation);
 
         var newFeedback1 = createFeedbackWithLinkedLongFeedback();
         var newTextBlock1 = createTextBlockForFeedback(newFeedback1);
