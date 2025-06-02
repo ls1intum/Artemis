@@ -1027,11 +1027,11 @@ public class GitService extends AbstractGitService {
         if (log.isDebugEnabled()) {
             // Log how many commits the source repository has
             try (RevWalk walk = new RevWalk(sourceRepo)) {
-                ObjectId headId = sourceRepo.resolve("refs/heads/" + sourceBranch + "^{tree}");
-                if (headId == null) {
-                    log.error("Source repository {} has no HEAD reference", sourceRepoUri);
+                ObjectId debugCommitId = sourceRepo.resolve("refs/heads/" + sourceBranch + "^{commit}");
+                if (debugCommitId == null) {
+                    log.error("Source repo [{}] has no branch [{}]", sourceRepoUri, sourceBranch);
                 }
-                RevCommit headCommit = walk.parseCommit(headId);
+                RevCommit headCommit = walk.parseCommit(debugCommitId);
                 walk.markStart(headCommit);
                 int commitCount = 0;
                 for (RevCommit ignored : walk) {
@@ -1053,13 +1053,16 @@ public class GitService extends AbstractGitService {
             ObjectInserter inserter = targetRepo.newObjectInserter();
 
             // Get the HEAD tree of the source
-            ObjectId headId = sourceRepo.resolve("refs/heads/" + sourceBranch + "^{tree}");
-            log.debug("found HEAD tree {} in source repository {}", headId, sourceRepoUri);
+            ObjectId commitId = sourceRepo.resolve("refs/heads/" + sourceBranch + "^{commit}");
+            if (commitId == null) {
+                throw new IOException("Branch " + sourceBranch + " not found in " + sourceRepoUri);
+            }
+            RevTree headTree;
             RevWalk walk = new RevWalk(sourceRepo);
-            RevCommit headCommit = walk.parseCommit(headId);
+            RevCommit headCommit = walk.parseCommit(commitId);
             walk.markStart(headCommit);
 
-            RevTree headTree = walk.parseTree(headId);
+            headTree = headCommit.getTree();
 
             // Get PersonIdent from the very first commit
             ObjectId branchHead = sourceRepo.resolve("refs/heads/" + sourceBranch);
