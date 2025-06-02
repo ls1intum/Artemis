@@ -12,6 +12,8 @@ artemis:
       enabled: false
     exam:
       enabled: false
+    calendar:
+      enabled: false
     plagiarism:
       enabled: false
     text:
