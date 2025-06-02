@@ -22,6 +22,7 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
     let fixture: ComponentFixture<ExerciseFeedbackSuggestionOptionsComponent>;
     let athenaService: AthenaService;
     let profileService: ProfileService;
+    let getProfileInfoSub: jest.SpyInstance;
     const pastDueDate = dayjs().subtract(1, 'hour');
     const futureDueDate = dayjs().add(1, 'hour');
 
@@ -41,6 +42,7 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
         component = fixture.componentInstance;
         athenaService = TestBed.inject(AthenaService);
         profileService = TestBed.inject(ProfileService);
+        getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
     });
 
     it('should initialize with available modules', async () => {
@@ -125,7 +127,8 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
         component.availableAthenaModules = ['Module1', 'Module2'];
         jest.spyOn(athenaService, 'getAvailableModules').mockReturnValue(of(component.availableAthenaModules));
         component.exercise = { type: ExerciseType.PROGRAMMING, dueDate: futureDueDate, assessmentType: AssessmentType.SEMI_AUTOMATIC } as Exercise;
-        profileService.setActiveProfiles(PROFILE_ATHENA);
+        getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
+        getProfileInfoSub.mockReturnValue({ activeProfiles: [PROFILE_ATHENA] } as ProfileInfo);
         fixture.detectChanges();
 
         // assume a module is chosen, hence, the controls are active

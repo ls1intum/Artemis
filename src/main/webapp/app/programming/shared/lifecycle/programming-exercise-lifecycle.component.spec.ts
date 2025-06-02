@@ -21,6 +21,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProfileService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
 import { AthenaService } from 'app/assessment/shared/services/athena.service';
 import { PROFILE_ATHENA } from '../../../app.constants';
+import { ProfileInfo } from '../../../core/layouts/profiles/profile-info.model';
 
 describe('ProgrammingExerciseLifecycleComponent', () => {
     let comp: ProgrammingExerciseLifecycleComponent;
@@ -33,6 +34,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
     let exercise: ProgrammingExercise;
     let athenaService: AthenaService;
     let profileService: ProfileService;
+    let getProfileInfoSub: jest.SpyInstance;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -78,6 +80,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
 
         athenaService = TestBed.inject(AthenaService);
         profileService = TestBed.inject(ProfileService);
+        getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
     });
 
     afterEach(() => {
@@ -395,7 +398,8 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
     });
 
     it('should render ExercisePreliminaryFeedbackOptionsComponent when preliminary feedback requests are set', fakeAsync(() => {
-        profileService.setActiveProfiles([PROFILE_ATHENA]);
+        getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
+        getProfileInfoSub.mockReturnValue({ activeProfiles: [PROFILE_ATHENA] } as ProfileInfo);
 
         comp.exercise = exercise;
         fixture.componentRef.setInput('isEditFieldDisplayedRecord', { preliminaryFeedbackRequests: true });
