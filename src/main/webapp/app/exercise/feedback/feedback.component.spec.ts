@@ -49,7 +49,15 @@ describe('FeedbackComponent', () => {
     };
 
     const makeFeedbackItem = (item: FeedbackItem) => {
-        return Object.assign({ type: 'Reviewer', credits: 0, title: undefined, positive: undefined } as FeedbackItem, item);
+        return Object.assign(
+            {
+                type: 'Reviewer',
+                credits: 0,
+                title: undefined,
+                positive: undefined,
+            } as FeedbackItem,
+            item,
+        );
     };
 
     const generateSCAFeedbackPair = (
@@ -193,11 +201,13 @@ describe('FeedbackComponent', () => {
         comp.exercise = exercise;
         comp.result = {
             id: 89,
-            participation: {
-                id: 55,
-                type: ParticipationType.PROGRAMMING,
-                participantIdentifier: 'student42',
-                repositoryUri: 'https://artemis.tum.de/projects/somekey/repos/somekey-student42',
+            submission: {
+                participation: {
+                    id: 55,
+                    type: ParticipationType.PROGRAMMING,
+                    participantIdentifier: 'student42',
+                    repositoryUri: 'https://artemis.tum.de/projects/somekey/repos/somekey-student42',
+                },
             },
         } as Result;
         buildLogService = TestBed.inject(BuildLogService);
@@ -217,7 +227,7 @@ describe('FeedbackComponent', () => {
 
     it('should set the exercise from the participation if available', () => {
         comp.exercise = undefined;
-        comp.result.participation!.exercise = exercise;
+        comp.result.submission!.participation!.exercise = exercise;
 
         comp.ngOnInit();
 
@@ -238,7 +248,7 @@ describe('FeedbackComponent', () => {
     it('should set the exercise type from a programming participation if not available otherwise', () => {
         comp.exerciseType = undefined as any;
         comp.exercise = undefined;
-        comp.result.participation!.type = ParticipationType.PROGRAMMING;
+        comp.result.submission!.participation!.type = ParticipationType.PROGRAMMING;
 
         comp.ngOnInit();
 
@@ -250,6 +260,7 @@ describe('FeedbackComponent', () => {
         comp.exerciseType = ExerciseType.PROGRAMMING;
         comp.result.feedbacks = feedbacks;
         comp.result.submission = {
+            ...comp.result.submission,
             type: SubmissionType.MANUAL,
             commitHash: '123456789ab',
         } as ProgrammingSubmission;
@@ -278,29 +289,18 @@ describe('FeedbackComponent', () => {
         comp.ngOnInit();
 
         expect(getFeedbackDetailsForResultStub).toHaveBeenCalledOnce();
-        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(comp.result.participation!.id!, comp.result);
-        expect(comp.isLoading).toBeFalse();
-    });
-
-    it('should try to retrieve build logs if the exercise type is PROGRAMMING and no submission was provided.', () => {
-        comp.exerciseType = ExerciseType.PROGRAMMING;
-
-        comp.ngOnInit();
-
-        expect(buildlogsStub).toHaveBeenCalledOnce();
-        expect(buildlogsStub).toHaveBeenCalledWith(comp.result.participation!.id, comp.result.id);
-        expect(comp.buildLogs).toBeArrayOfSize(0);
+        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(comp.result.submission!.participation!.id!, comp.result);
         expect(comp.isLoading).toBeFalse();
     });
 
     it('should try to retrieve build logs if the exercise type is PROGRAMMING and a submission was provided which was marked with build failed.', () => {
         comp.exerciseType = ExerciseType.PROGRAMMING;
-        comp.result.submission = generateProgrammingSubmission(true);
+        comp.result.submission = { ...comp.result.submission, buildFailed: true } as ProgrammingSubmission;
 
         comp.ngOnInit();
 
         expect(buildlogsStub).toHaveBeenCalledOnce();
-        expect(buildlogsStub).toHaveBeenCalledWith(comp.result.participation!.id, comp.result.id);
+        expect(buildlogsStub).toHaveBeenCalledWith(comp.result.submission!.participation!.id, comp.result.id);
         expect(comp.buildLogs).toBeArrayOfSize(0);
         expect(comp.isLoading).toBeFalse();
     });
@@ -329,26 +329,27 @@ describe('FeedbackComponent', () => {
 
     it('fetchBuildLogs should suppress 403 error', () => {
         comp.exerciseType = ExerciseType.PROGRAMMING;
+        comp.result.submission = { ...comp.result.submission, buildFailed: true } as ProgrammingSubmission;
         const response = new HttpErrorResponse({ status: 403 });
         buildlogsStub.mockReturnValue(throwError(() => response));
 
         comp.ngOnInit();
 
         expect(buildlogsStub).toHaveBeenCalledOnce();
-        expect(buildlogsStub).toHaveBeenCalledWith(comp.result.participation!.id, comp.result.id);
+        expect(buildlogsStub).toHaveBeenCalledWith(comp.result.submission!.participation!.id, comp.result.id);
         expect(comp.loadingFailed).toBeFalse();
         expect(comp.isLoading).toBeFalse();
     });
 
     it('fetchBuildLogs should not suppress errors with status other than 403', () => {
         comp.exerciseType = ExerciseType.PROGRAMMING;
+        comp.result.submission = { ...comp.result.submission, buildFailed: true } as ProgrammingSubmission;
         const response = new HttpErrorResponse({ status: 500 });
         buildlogsStub.mockReturnValue(throwError(() => response));
-
         comp.ngOnInit();
 
         expect(buildlogsStub).toHaveBeenCalledOnce();
-        expect(buildlogsStub).toHaveBeenCalledWith(comp.result.participation!.id, comp.result.id);
+        expect(buildlogsStub).toHaveBeenCalledWith(comp.result.submission!.participation!.id, comp.result.id);
         expect(comp.loadingFailed).toBeTrue();
         expect(comp.isLoading).toBeFalse();
     });

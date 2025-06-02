@@ -161,7 +161,7 @@ export class FeedbackComponent implements OnInit, OnChanges {
 
         this.commitHash = this.getCommitHash().slice(0, 11);
 
-        this.isOnlyCompilationTested = isOnlyCompilationTested(this.result, evaluateTemplateStatus(this.exercise, this.result.participation, this.result, false));
+        this.isOnlyCompilationTested = isOnlyCompilationTested(this.result, evaluateTemplateStatus(this.exercise, this.result.submission?.participation, this.result, false));
     }
 
     /**
@@ -183,7 +183,7 @@ export class FeedbackComponent implements OnInit, OnChanges {
      * Sets up the information related to the exercise.
      */
     private initializeExerciseInformation() {
-        this.exercise ??= this.result.participation?.exercise;
+        this.exercise ??= this.result.submission?.participation?.exercise;
         if (this.exercise) {
             this.course = getCourseFromExercise(this.exercise);
         }
@@ -193,7 +193,7 @@ export class FeedbackComponent implements OnInit, OnChanges {
         }
 
         // In case the exerciseType is not set, we try to set it back if the participation is from a programming exercise
-        if (!this.exerciseType && isProgrammingExerciseParticipation(this.result?.participation)) {
+        if (!this.exerciseType && isProgrammingExerciseParticipation(this.result?.submission?.participation)) {
             this.exerciseType = ExerciseType.PROGRAMMING;
         }
 
@@ -214,7 +214,7 @@ export class FeedbackComponent implements OnInit, OnChanges {
                         feedbacks.forEach((feedback) => (feedback.result = this.result));
                         return of(feedbacks);
                     } else {
-                        return this.resultService.getFeedbackDetailsForResult(this.result.participation!.id!, this.result).pipe(map((response) => response.body));
+                        return this.resultService.getFeedbackDetailsForResult(this.result.submission!.participation!.id!, this.result).pipe(map((response) => response.body));
                     }
                 }),
                 switchMap((feedbacks: Feedback[] | undefined | null) => {
@@ -230,14 +230,14 @@ export class FeedbackComponent implements OnInit, OnChanges {
                         }
                     }
 
-                    // If we don't receive a submission or the submission is marked with buildFailed, fetch the build logs.
+                    // If the submission is marked with buildFailed, fetch the build logs.
                     if (
                         this.result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA &&
                         this.exerciseType === ExerciseType.PROGRAMMING &&
-                        this.result.participation &&
-                        (!this.result.submission || (this.result.submission as ProgrammingSubmission).buildFailed)
+                        this.result.submission?.participation &&
+                        (this.result.submission as ProgrammingSubmission).buildFailed
                     ) {
-                        return this.fetchAndSetBuildLogs(this.result.participation.id!, this.result.id);
+                        return this.fetchAndSetBuildLogs(this.result.submission.participation.id!, this.result.id);
                     }
 
                     if (this.showScoreChart) {
@@ -245,7 +245,7 @@ export class FeedbackComponent implements OnInit, OnChanges {
                     }
 
                     if (isStudentParticipation(this.result)) {
-                        this.badge = ResultService.evaluateBadge(this.result.participation!, this.result);
+                        this.badge = ResultService.evaluateBadge(this.result.submission!.participation!, this.result);
                     }
 
                     return of(null);
