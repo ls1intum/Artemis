@@ -15,7 +15,7 @@ import { ExamParticipationActions, TextDifferenceType } from '../../support/page
 import { ExamNavigationBar } from '../../support/pageobjects/exam/ExamNavigationBar';
 import textExerciseTemplate from '../../fixtures/exercise/text/template.json';
 import { GitExerciseParticipation } from '../../support/pageobjects/exercises/programming/GitExerciseParticipation';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { GitCloneMethod } from '../../support/pageobjects/exercises/programming/ProgrammingExerciseOverviewPage';
 import { SshEncryptionAlgorithm } from '../../support/pageobjects/exercises/programming/GitClient';
 
