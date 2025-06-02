@@ -36,7 +36,7 @@ public class DeferredEagerBeanInitializer {
 
     public void initializeDeferredEagerBeans() {
         DefaultListableBeanFactory bf = (DefaultListableBeanFactory) context.getBeanFactory();
-        Arrays.stream(bf.getBeanDefinitionNames()).parallel().filter(name -> {
+        Arrays.stream(bf.getBeanDefinitionNames()).filter(name -> {
             BeanDefinition def = bf.getBeanDefinition(name);
             return def.isSingleton() && def.isLazyInit();
         }).forEach(name -> {
