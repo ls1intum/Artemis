@@ -60,7 +60,7 @@ public class PublicPyrisStatusUpdateResource {
     }
 
     /**
-     * POST public/pyris/pipelines/tutor-chat/runs/:runId/status : Set the status of an exercise chat job
+     * POST public/pyris/pipelines/programming-exercise-chat/runs/:runId/status : Set the status of an exercise chat job
      * <p>
      * Uses custom token based authentication.
      *
@@ -71,7 +71,7 @@ public class PublicPyrisStatusUpdateResource {
      * @throws AccessForbiddenException if the token is invalid
      * @return a {@link ResponseEntity} with status {@code 200 (OK)}
      */
-    @PostMapping("pipelines/tutor-chat/runs/{runId}/status") // TODO: Rename this to 'programming-exercise-chat' with next breaking Pyris version
+    @PostMapping("pipelines/programming-exercise-chat/runs/{runId}/status")
     @EnforceNothing
     public ResponseEntity<Void> setStatusOfJob(@PathVariable String runId, @RequestBody PyrisChatStatusUpdateDTO statusUpdateDTO, HttpServletRequest request) {
         var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, ExerciseChatJob.class);

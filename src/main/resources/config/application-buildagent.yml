@@ -97,8 +97,8 @@ management:
             show-details: never
         probes:
             enabled: false
-    jhimetrics:
-        enabled: false
+        jhimetrics:
+            access: none
     metrics:
         enable:
             all: false

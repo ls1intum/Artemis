@@ -174,7 +174,7 @@ public class LtiDeepLinkingService {
      * Prepares a content item pointing to the learning path of the course.
      */
     private List<LtiContentItem> populateLearningPathsContentItems(long courseId) {
-        boolean hasLearningPaths = courseRepository.findWithEagerLearningPathsAndLearningPathCompetenciesByIdElseThrow(courseId).getLearningPathsEnabled();
+        boolean hasLearningPaths = courseRepository.findByIdElseThrow(courseId).getLearningPathsEnabled();
         if (hasLearningPaths) {
             String launchUrl = buildContentUrl(courseId, "learning-path");
             return List.of(createSingleUnitContentItem(launchUrl));

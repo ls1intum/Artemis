@@ -116,7 +116,7 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
 
     /** END WIP */
 
-        // WARNING: Don't initialize variables in the declaration block. The method initializeProperties is responsible for this task.
+    // WARNING: Don't initialize variables in the declaration block. The method initializeProperties is responsible for this task.
     selectedFile?: string;
     unsavedFilesValue: { [fileName: string]: string }; // {[fileName]: fileContent}
     fileBadges: { [fileName: string]: FileBadge[] };
@@ -337,6 +337,15 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
      */
     canDeactivate() {
         return _isEmpty(this.unsavedFiles);
+    }
+
+    /**
+     * Returns the feedbacks for the current submission or an empty array if no feedbacks are available.
+     */
+    feedbackForSubmission(): Feedback[] {
+        const submission = this.participation?.submissions?.[0];
+        const result = submission?.results?.[0];
+        return this.showInlineFeedback && result?.feedbacks ? result.feedbacks : [];
     }
 
     /**

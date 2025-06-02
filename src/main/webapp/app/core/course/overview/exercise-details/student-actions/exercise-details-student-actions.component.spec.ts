@@ -464,7 +464,16 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         ],
         [
             {
-                studentParticipations: [{ initializationState: InitializationState.FINISHED, results: [{ rated: true }] }],
+                studentParticipations: [
+                    {
+                        initializationState: InitializationState.FINISHED,
+                        submissions: [
+                            {
+                                results: [{ rated: true }],
+                            },
+                        ],
+                    },
+                ],
                 type: ExerciseType.TEXT,
                 dueDate: dayjs().subtract(1, 'day'),
             } as Exercise,
@@ -473,7 +482,11 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
             true,
         ],
         [
-            { studentParticipations: [{ initializationState: InitializationState.FINISHED, results: [{ rated: true }] }], type: ExerciseType.TEXT, dueDate: undefined } as Exercise,
+            {
+                studentParticipations: [{ initializationState: InitializationState.FINISHED, submissions: [{ results: [{ rated: true }] }] }],
+                type: ExerciseType.TEXT,
+                dueDate: undefined,
+            } as Exercise,
             true,
             'viewResults',
             true,
