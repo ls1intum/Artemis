@@ -112,8 +112,7 @@
         "webpack-dev-middleware": "7.4.2",
         "webpack-dev-server": "5.2.1",
         "word-wrap": "1.2.5",
-        "ws": "8.18.2",
-        "yargs-parser": "22.0.0"
+        "ws": "8.18.2"
     },
     "devDependencies": {
         "@analogjs/vite-plugin-angular": "1.17.1",
