@@ -143,7 +143,7 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
     public void calculateAllResults(long quizExerciseId) {
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
         log.info("Calculating results for quiz {}", quizExercise.getId());
-        studentParticipationRepository.findByExerciseIdWithEagerSubmissions(quizExercise.getId()).forEach(participation -> {
+        studentParticipationRepository.findByQuizExerciseIdWithSubmissionsAndAnswers(quizExercise.getId()).forEach(participation -> {
             participation.setExercise(quizExercise);
             Optional<QuizSubmission> quizSubmissionOptional = quizSubmissionRepository.findWithEagerSubmittedAnswersByParticipationId(participation.getId()).stream().findFirst();
 
@@ -196,6 +196,7 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         // TODO: we should convert this into a DTO instead of removing data from the entity
         var user = participation.getParticipantIdentifier();
         // removeUnnecessaryObjectsBeforeSendingToClient(participation);
+        log.info("Sending quiz result to user {}", user);
         StudentQuizParticipationWithSolutionsDTO participationDTO = StudentQuizParticipationWithSolutionsDTO.of(participation);
         websocketMessagingService.sendMessageToUser(user, "/topic/exercise/" + quizExerciseId + "/participation", participationDTO);
     }
