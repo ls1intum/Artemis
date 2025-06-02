@@ -552,7 +552,7 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             FROM ProgrammingExerciseBuildConfig b
             WHERE b.programmingExercise.id = :exerciseId
             """)
-    String findBranchByExerciseId(@Param("exerciseId") Long exerciseId);
+    String findBranchByExerciseId(@Param("exerciseId") long exerciseId);
 
     /**
      * Find a programming exercise by its id, with grading criteria loaded, and throw an EntityNotFoundException if it cannot be found

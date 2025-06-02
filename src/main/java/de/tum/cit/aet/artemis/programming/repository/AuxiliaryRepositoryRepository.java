@@ -35,5 +35,5 @@ public interface AuxiliaryRepositoryRepository extends ArtemisJpaRepository<Auxi
             FROM AuxiliaryRepository a
             WHERE a.id = :auxiliaryRepositoryId
             """)
-    String findBranchByRepoId(@Param("auxiliaryRepositoryId") Long auxiliaryRepositoryId);
+    String findBranchByRepoId(@Param("auxiliaryRepositoryId") long auxiliaryRepositoryId);
 }
