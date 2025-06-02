@@ -344,15 +344,12 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      * subscribe to any outstanding websocket channels
      */
     subscribeToWebsocketChannels() {
-        alert('Subscribing to websocket channels for quiz participation');
         if (!this.participationChannel) {
             this.participationChannel = '/user/topic/exercise/' + this.quizId + '/participation';
             // TODO: subscribe for new results instead if this is what we are actually interested in
             // participation channel => react to new results
             this.websocketService.subscribe(this.participationChannel);
-            alert('Subscribed to participation channel: ' + this.participationChannel);
             this.websocketService.receive(this.participationChannel).subscribe((changedParticipation: StudentParticipation) => {
-                alert('Received participation update');
                 if (changedParticipation && this.quizExercise && changedParticipation.exercise!.id === this.quizExercise.id) {
                     if (this.waitingForQuizStart) {
                         // only apply completely if quiz hasn't started to prevent jumping ui during participation
@@ -690,7 +687,6 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      * This method only handles the update of the quiz after the quiz has ended
      */
     showQuizResultAfterQuizEnd(participation: StudentParticipation) {
-        alert('Received participation update');
         const quizExercise = participation.exercise as QuizExercise;
         if (participation.submissions?.first() !== undefined && quizExercise.quizEnded) {
             // quiz has ended and results are available
