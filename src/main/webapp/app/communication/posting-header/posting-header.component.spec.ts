@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MetisService } from 'app/communication/service/metis.service';
 import { DebugElement, Injector, input, runInInjectionContext } from '@angular/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
+import { MockModule, MockPipe } from 'ng-mocks';
 import { getElement } from 'test/helpers/utils/general-test.utils';
 import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.service';
 import { PostingHeaderComponent } from 'app/communication/posting-header/posting-header.component';
@@ -34,7 +34,7 @@ describe('PostingHeaderComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule), MockDirective(NgbTooltip)],
+            imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule), NgbTooltip],
             providers: [
                 FormBuilder,
                 { provide: MetisService, useClass: MockMetisService },
@@ -46,10 +46,10 @@ describe('PostingHeaderComponent', () => {
                 FaIconComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
-                MockComponent(PostingMarkdownEditorComponent),
-                MockComponent(PostingButtonComponent),
-                MockComponent(ConfirmIconComponent),
-                MockComponent(ProfilePictureComponent),
+                PostingMarkdownEditorComponent,
+                PostingButtonComponent,
+                ConfirmIconComponent,
+                ProfilePictureComponent,
             ],
         }).compileComponents();
 
