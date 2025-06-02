@@ -51,7 +51,7 @@ class PyrisRewritingIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void callRewritingPipeline_shouldSucceed() throws Exception {
-        var requestDTO = new PyrisRewriteTextRequestDTO("test", RewritingVariant.FAQ);
+        PyrisRewriteTextRequestDTO requestDTO = new PyrisRewriteTextRequestDTO("test", RewritingVariant.FAQ);
         irisRequestMockProvider.mockRewritingPipelineResponse(dto -> {
         });
 
@@ -59,7 +59,7 @@ class PyrisRewritingIntegrationTest extends AbstractIrisIntegrationTest {
 
         String jobId = "testJobId";
         String userLogin = TEST_PREFIX + "tutor1";
-        var userId = userUtilService.getUserByLogin(userLogin).getId();
+        Long userId = userUtilService.getUserByLogin(userLogin).getId();
 
         RewritingJob job = new RewritingJob(jobId, course.getId(), userId);
         List<PyrisStageDTO> stages = List.of(new PyrisStageDTO("Generating Rewriting", 10, PyrisStageState.DONE, null));
@@ -86,7 +86,7 @@ class PyrisRewritingIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void callRewritingPipelineAsStudent_shouldThrowForbidden() throws Exception {
-        var requestDTO = new PyrisRewriteTextRequestDTO("irrelevant", RewritingVariant.FAQ);
+        PyrisRewriteTextRequestDTO requestDTO = new PyrisRewriteTextRequestDTO("irrelevant", RewritingVariant.FAQ);
         irisRequestMockProvider.mockRewritingPipelineResponse(dto -> {
         });
         request.postWithoutResponseBody("/api/iris/courses/" + course.getId() + "/rewrite-text", requestDTO, HttpStatus.FORBIDDEN);
