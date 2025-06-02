@@ -25,6 +25,7 @@ import { NgModel } from '@angular/forms';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
+import { signal } from '@angular/core';
 
 describe('FileUploadExerciseUpdateComponent', () => {
     let comp: FileUploadExerciseUpdateComponent;
@@ -147,7 +148,7 @@ describe('FileUploadExerciseUpdateComponent', () => {
 
         it('should calculate valid sections', () => {
             const calculateValidSpy = jest.spyOn(comp, 'calculateFormSectionStatus');
-            comp.exerciseTitleChannelNameComponent = { titleChannelNameComponent: { formValidChanges: new Subject() } } as ExerciseTitleChannelNameComponent;
+            comp.exerciseTitleChannelNameComponent = { titleChannelNameComponent: { isValid: signal(false) } } as ExerciseTitleChannelNameComponent;
             comp.teamConfigFormGroupComponent = { formValidChanges: new Subject() } as TeamConfigFormGroupComponent;
             comp.bonusPoints = { valueChanges: new Subject(), valid: true } as unknown as NgModel;
             comp.points = { valueChanges: new Subject(), valid: true } as unknown as NgModel;
@@ -157,7 +158,6 @@ describe('FileUploadExerciseUpdateComponent', () => {
             expect(comp.titleChannelNameComponentSubscription).toBeDefined();
 
             comp.exerciseTitleChannelNameComponent.titleChannelNameComponent.isValid.set(true);
-            comp.exerciseTitleChannelNameComponent.titleChannelNameComponent.formValidChanges.next(true);
             expect(calculateValidSpy).toHaveBeenCalledOnce();
             expect(comp.formStatusSections).toBeDefined();
             expect(comp.formStatusSections[0].valid).toBeTrue();

@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectionStrategy, Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, OnDestroy, OnInit, ViewChild, effect, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
@@ -137,10 +137,22 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
         return this.textExercise.id == undefined ? EditType.CREATE : EditType.UPDATE;
     }
 
+    constructor() {
+        effect(() => {
+            this.updateFormSectionsOnIsValidChange();
+        });
+    }
+
+    /**
+     * Triggers {@link calculateFormSectionStatus} whenever a relevant signal changes
+     */
+    private updateFormSectionsOnIsValidChange() {
+        this.exerciseTitleChannelNameComponent.titleChannelNameComponent.isValid();
+
+        this.calculateFormSectionStatus();
+    }
+
     ngAfterViewInit() {
-        this.titleChannelNameComponentSubscription = this.exerciseTitleChannelNameComponent.titleChannelNameComponent.formValidChanges.subscribe(() =>
-            this.calculateFormSectionStatus(),
-        );
         this.pointsSubscription = this.points?.valueChanges?.subscribe(() => this.calculateFormSectionStatus());
         this.bonusPointsSubscription = this.bonusPoints?.valueChanges?.subscribe(() => this.calculateFormSectionStatus());
         this.plagiarismSubscription = this.exerciseUpdatePlagiarismComponent?.formValidChanges.subscribe(() => this.calculateFormSectionStatus());

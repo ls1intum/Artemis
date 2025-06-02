@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild, computed, effect, input, model, output, signal, viewChild } from '@angular/core';
 import { ControlContainer, FormsModule, NgForm, NgModel } from '@angular/forms';
-import { Subject, Subscription } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CustomNotIncludedInValidatorDirective } from '../../validators/custom-not-included-in-validator.directive';
@@ -34,11 +34,6 @@ export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnIn
     channelNameChange = output<string>();
 
     isValid = signal<boolean>(false);
-
-    /**
-     * @deprecated Use {@link isValid} instead.
-     */
-    formValidChanges = new Subject();
 
     fieldTitleSubscription?: Subscription;
     fieldChannelNameSubscription?: Subscription;

@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectionStrategy, Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, OnDestroy, OnInit, ViewChild, effect, inject } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
@@ -122,6 +122,21 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnDestr
         return this.fileUploadExercise.id == undefined ? EditType.CREATE : EditType.UPDATE;
     }
 
+    constructor() {
+        effect(() => {
+            this.updateFormSectionsOnIsValidChange();
+        });
+    }
+
+    /**
+     * Triggers {@link calculateFormSectionStatus} whenever a relevant signal changes
+     */
+    private updateFormSectionsOnIsValidChange() {
+        this.exerciseTitleChannelNameComponent.titleChannelNameComponent.isValid();
+
+        this.calculateFormSectionStatus();
+    }
+
     /**
      * Initializes information relevant to file upload exercise
      */
@@ -151,9 +166,6 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnDestr
     }
 
     ngAfterViewInit() {
-        this.titleChannelNameComponentSubscription = this.exerciseTitleChannelNameComponent.titleChannelNameComponent.formValidChanges.subscribe(() =>
-            this.calculateFormSectionStatus(),
-        );
         this.pointsSubscription = this.points?.valueChanges?.subscribe(() => this.calculateFormSectionStatus());
         this.bonusPointsSubscription = this.bonusPoints?.valueChanges?.subscribe(() => this.calculateFormSectionStatus());
         this.teamSubscription = this.teamConfigFormGroupComponent.formValidChanges.subscribe(() => this.calculateFormSectionStatus());

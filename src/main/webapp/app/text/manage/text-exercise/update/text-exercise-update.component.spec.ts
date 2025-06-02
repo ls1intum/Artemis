@@ -26,7 +26,8 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { ExerciseUpdatePlagiarismComponent } from 'app/plagiarism/manage/exercise-update-plagiarism/exercise-update-plagiarism.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MockProfileService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { signal } from '@angular/core';
 
 describe('TextExercise Management Update Component', () => {
     let comp: TextExerciseUpdateComponent;
@@ -205,7 +206,7 @@ describe('TextExercise Management Update Component', () => {
 
         it('should calculate valid sections', () => {
             const calculateValidSpy = jest.spyOn(comp, 'calculateFormSectionStatus');
-            comp.exerciseTitleChannelNameComponent = { titleChannelNameComponent: { formValidChanges: new Subject() } } as ExerciseTitleChannelNameComponent;
+            comp.exerciseTitleChannelNameComponent = { titleChannelNameComponent: { isValid: signal(false) } } as ExerciseTitleChannelNameComponent;
             comp.exerciseUpdatePlagiarismComponent = {
                 formValidChanges: new Subject(),
                 formValid: true,
@@ -219,7 +220,6 @@ describe('TextExercise Management Update Component', () => {
             expect(comp.titleChannelNameComponentSubscription).toBeDefined();
 
             comp.exerciseTitleChannelNameComponent.titleChannelNameComponent.isValid.set(true);
-            comp.exerciseTitleChannelNameComponent.titleChannelNameComponent.formValidChanges.next(true);
             expect(calculateValidSpy).toHaveBeenCalledOnce();
             expect(comp.formSectionStatus).toBeDefined();
             expect(comp.formSectionStatus[0].valid).toBeTrue();

@@ -303,7 +303,7 @@ describe('ModelingExerciseUpdateComponent', () => {
     it('should subscribe and unsubscribe to input element changes', () => {
         const calculateValidSpy = jest.spyOn(comp, 'calculateFormSectionStatus');
         comp.modelingExercise = { startDate: dayjs(), dueDate: dayjs(), assessmentDueDate: dayjs(), releaseDate: dayjs() } as ModelingExercise;
-        comp.exerciseTitleChannelNameComponent = { titleChannelNameComponent: { formValidChanges: new Subject(), isValid: signal(true) } } as ExerciseTitleChannelNameComponent;
+        comp.exerciseTitleChannelNameComponent = { titleChannelNameComponent: { isValid: signal(true) } } as ExerciseTitleChannelNameComponent;
         comp.teamConfigFormGroupComponent = { formValidChanges: new Subject(), formValid: true } as TeamConfigFormGroupComponent;
         comp.bonusPoints = { valueChanges: new Subject(), valid: true } as any as NgModel;
         comp.points = { valueChanges: new Subject(), valid: true } as any as NgModel;
@@ -313,7 +313,7 @@ describe('ModelingExerciseUpdateComponent', () => {
         (comp.points.valueChanges as Subject<boolean>).next(false);
         (comp.bonusPoints.valueChanges as Subject<boolean>).next(false);
         comp.teamConfigFormGroupComponent.formValidChanges.next(false);
-        comp.exerciseTitleChannelNameComponent.titleChannelNameComponent.formValidChanges.next(false);
+        comp.exerciseTitleChannelNameComponent.titleChannelNameComponent.isValid.set(false);
         expect(calculateValidSpy).toHaveBeenCalledTimes(4);
 
         comp.ngOnDestroy();
