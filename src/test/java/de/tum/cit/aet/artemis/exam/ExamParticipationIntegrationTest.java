@@ -538,7 +538,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         int participationCounter = 0;
         List<Exercise> exercisesInExam = exam.getExerciseGroups().stream().map(ExerciseGroup::getExercises).flatMap(Collection::stream).toList();
         for (var exercise : exercisesInExam) {
-            List<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdAndTestRunWithEagerLegalSubmissionsResult(exercise.getId(), false);
+            List<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdAndTestRunWithEagerSubmissionsResult(exercise.getId(), false);
             exercise.setStudentParticipations(new HashSet<>(participations));
             participationCounter += exercise.getStudentParticipations().size();
         }
@@ -807,7 +807,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         int participationCounter = 0;
         List<Exercise> exercisesInExam = exam.getExerciseGroups().stream().map(ExerciseGroup::getExercises).flatMap(Collection::stream).toList();
         for (var exercise : exercisesInExam) {
-            List<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdAndTestRunWithEagerLegalSubmissionsResult(exercise.getId(), false);
+            List<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdAndTestRunWithEagerSubmissionsResult(exercise.getId(), false);
             exercise.setStudentParticipations(new HashSet<>(participations));
             participationCounter += exercise.getStudentParticipations().size();
         }

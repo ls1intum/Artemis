@@ -834,13 +834,13 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         assertThat(firstSubmittedManualResult.getSubmission().getParticipation()).isEqualTo(studentParticipation);
 
         // verify that the relationship between student participation,
-        var databaseRelationshipStateOfResultsOverParticipation = studentParticipationRepository.findWithEagerLegalSubmissionsAndResultsAssessorsById(studentParticipation.getId());
+        var databaseRelationshipStateOfResultsOverParticipation = studentParticipationRepository.findWithEagerSubmissionsAndResultsAssessorsById(studentParticipation.getId());
         assertThat(databaseRelationshipStateOfResultsOverParticipation).isPresent();
         var fetchedParticipation = databaseRelationshipStateOfResultsOverParticipation.get();
 
         assertThat(fetchedParticipation.getSubmissions()).hasSize(3);
         assertThat(fetchedParticipation.findLatestSubmission()).contains(submissionWithoutFirstAssessment);
-        assertThat(fetchedParticipation.findLatestLegalResult()).isEqualTo(firstSubmittedManualResult);
+        assertThat(fetchedParticipation.findLatestResult()).isEqualTo(firstSubmittedManualResult);
 
         var databaseRelationshipStateOfResultsOverSubmission = studentParticipationRepository
                 .findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exercise.getId());
@@ -870,7 +870,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         assertThat(submissionWithoutSecondAssessment.getLatestResult().getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
 
         // verify that the relationship between student participation,
-        databaseRelationshipStateOfResultsOverParticipation = studentParticipationRepository.findWithEagerLegalSubmissionsAndResultsAssessorsById(studentParticipation.getId());
+        databaseRelationshipStateOfResultsOverParticipation = studentParticipationRepository.findWithEagerSubmissionsAndResultsAssessorsById(studentParticipation.getId());
         assertThat(databaseRelationshipStateOfResultsOverParticipation).isPresent();
         fetchedParticipation = databaseRelationshipStateOfResultsOverParticipation.get();
 

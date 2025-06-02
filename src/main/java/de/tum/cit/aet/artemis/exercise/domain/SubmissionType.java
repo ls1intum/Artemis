@@ -31,8 +31,4 @@ public enum SubmissionType {
      * Submission that was added through the add external submission dialogue.
      */
     EXTERNAL,
-    /**
-     * Submission of an exam programming exercise that is submitted before the exercise start date or after the individual exercise end date.
-     */
-    ILLEGAL
 }
