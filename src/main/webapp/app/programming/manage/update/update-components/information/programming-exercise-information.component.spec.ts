@@ -38,7 +38,6 @@ describe('ProgrammingExerciseInformationComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-            schemas: [],
         }).compileComponents();
         fixture = TestBed.createComponent(ProgrammingExerciseInformationComponent);
         comp = fixture.componentInstance;
