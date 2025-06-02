@@ -21,7 +21,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.parallel.Execution;
@@ -30,8 +29,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
@@ -50,7 +47,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.dto.CheckoutDirectoriesDTO;
-import de.tum.cit.aet.artemis.programming.service.localci.LocalCITriggerService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
@@ -95,13 +91,6 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
 
     @Autowired
     private ProgrammingExerciseImportTestService programmingExerciseImportTestService;
-
-    @Autowired
-    private ApplicationContext applicationContext;
-
-    // Mock the LocalCITriggerService to avoid actual Docker builds
-    @MockBean
-    private LocalCITriggerService localCITriggerService;
 
     @BeforeAll
     void setupAll() {
@@ -179,7 +168,6 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
     void testCreateProgrammingExercise() throws Exception {
         ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
         newExercise.setProjectType(ProjectType.PLAIN_GRADLE);
-        newExercise.setTestRepositoryUri(localVCBaseUrl + "/git/" + newExercise.getProjectKey() + "/" + newExercise.getProjectKey().toLowerCase() + "-tests.git");
         newExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, newExercise, 1)));
         newExercise.getCompetencyLinks().forEach(link -> link.getCompetency().setCourse(null));
 
@@ -437,7 +425,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
      *
      * This test verifies that build plans are triggered during exercise import from file.
      */
-    @RepeatedTest(20)
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importFromFile_verifyBuildPlansCreated() throws Exception {
         aeolusRequestMockProvider.enableMockingOfRequests();
