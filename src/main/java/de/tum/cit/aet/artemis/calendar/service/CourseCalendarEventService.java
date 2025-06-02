@@ -98,8 +98,9 @@ public class CourseCalendarEventService {
     }
 
     /**
-     * Updates an existing {@link CourseCalendarEvent} based on the data provided by th given {@link CourseCalendarEventDTO}.
+     * Updates the given {@link CourseCalendarEvent} based on the data provided by th given {@link CourseCalendarEventDTO}.
      *
+     * @param courseCalendarEvent    the event to update
      * @param courseCalendarEventDTO the DTO containing updated calendar event data
      * @return a DTO representing the updated event
      */

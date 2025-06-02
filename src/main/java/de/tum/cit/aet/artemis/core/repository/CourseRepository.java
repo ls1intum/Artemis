@@ -168,7 +168,7 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
                 LEFT JOIN FETCH course.courseCalendarEvents
             WHERE course.id = :courseId
             """)
-    Optional<Course> findWithEagerCourseCalendarEventsById(long courseId);
+    Optional<Course> findWithEagerCourseCalendarEventsById(@Param("courseId") long courseId);
 
     default Course findWithEagerCourseCalendarEventsByIdElseThrow(long courseId) throws EntityNotFoundException {
         return getValueElseThrow(findWithEagerCourseCalendarEventsById(courseId), courseId);

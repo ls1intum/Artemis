@@ -372,7 +372,6 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
             CalendarEventDTO expectedDTO2 = new CalendarEventDTO("course-" + firstEvent.getId() + "-1", firstEvent.getTitle(), course.getTitle(),
                     firstEvent.getStartDate().plusDays(1).toLocalDate().atStartOfDay(timezone), firstEvent.getEndDate(), firstEvent.getLocation(), firstEvent.getFacilitator());
             CourseCalendarEvent secondEvent = courseCalendarEvents.get(1);
-            System.out.println("second event start: " + secondEvent.getStartDate());
             CalendarEventDTO expectedDTO3 = new CalendarEventDTO("course-" + secondEvent.getId() + "-0", secondEvent.getTitle(), course.getTitle(), secondEvent.getStartDate(),
                     secondEvent.getStartDate().toLocalDate().atTime(LocalTime.MAX).withNano(999_999_999).atZone(timezone), secondEvent.getLocation(), secondEvent.getFacilitator());
             CalendarEventDTO expectedDTO4 = new CalendarEventDTO("course-" + secondEvent.getId() + "-1", secondEvent.getTitle(), course.getTitle(),
