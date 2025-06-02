@@ -156,7 +156,7 @@ describe('FileUploadExerciseUpdateComponent', () => {
             comp.ngAfterViewInit();
             expect(comp.titleChannelNameComponentSubscription).toBeDefined();
 
-            comp.exerciseTitleChannelNameComponent.titleChannelNameComponent.formValid = true;
+            comp.exerciseTitleChannelNameComponent.titleChannelNameComponent.isValid.set(true);
             comp.exerciseTitleChannelNameComponent.titleChannelNameComponent.formValidChanges.next(true);
             expect(calculateValidSpy).toHaveBeenCalledOnce();
             expect(comp.formStatusSections).toBeDefined();

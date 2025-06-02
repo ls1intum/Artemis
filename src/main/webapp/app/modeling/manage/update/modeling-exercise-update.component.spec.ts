@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { Subject, of } from 'rxjs';
 import { ActivatedRoute, Router, UrlSegment } from '@angular/router';
+import { signal } from '@angular/core';
 
 import { ModelingExerciseUpdateComponent } from 'app/modeling/manage/update/modeling-exercise-update.component';
 import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-exercise.service';
@@ -302,7 +303,7 @@ describe('ModelingExerciseUpdateComponent', () => {
     it('should subscribe and unsubscribe to input element changes', () => {
         const calculateValidSpy = jest.spyOn(comp, 'calculateFormSectionStatus');
         comp.modelingExercise = { startDate: dayjs(), dueDate: dayjs(), assessmentDueDate: dayjs(), releaseDate: dayjs() } as ModelingExercise;
-        comp.exerciseTitleChannelNameComponent = { titleChannelNameComponent: { formValidChanges: new Subject(), formValid: true } } as ExerciseTitleChannelNameComponent;
+        comp.exerciseTitleChannelNameComponent = { titleChannelNameComponent: { formValidChanges: new Subject(), isValid: signal(true) } } as ExerciseTitleChannelNameComponent;
         comp.teamConfigFormGroupComponent = { formValidChanges: new Subject(), formValid: true } as TeamConfigFormGroupComponent;
         comp.bonusPoints = { valueChanges: new Subject(), valid: true } as any as NgModel;
         comp.points = { valueChanges: new Subject(), valid: true } as any as NgModel;

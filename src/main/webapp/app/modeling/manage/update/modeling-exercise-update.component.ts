@@ -229,7 +229,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
         this.formSectionStatus = [
             {
                 title: 'artemisApp.exercise.sections.general',
-                valid: Boolean(this.exerciseTitleChannelNameComponent?.titleChannelNameComponent.formValid),
+                valid: Boolean(this.exerciseTitleChannelNameComponent?.titleChannelNameComponent.isValid()),
             },
             { title: 'artemisApp.exercise.sections.mode', valid: Boolean(this.teamConfigFormGroupComponent?.formValid) },
             { title: 'artemisApp.exercise.sections.problem', valid: true, empty: !this.modelingExercise.problemStatement },

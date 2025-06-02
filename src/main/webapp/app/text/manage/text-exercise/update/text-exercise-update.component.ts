@@ -228,7 +228,7 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
             this.formSectionStatus = [
                 {
                     title: 'artemisApp.exercise.sections.general',
-                    valid: this.exerciseTitleChannelNameComponent.titleChannelNameComponent.formValid,
+                    valid: this.exerciseTitleChannelNameComponent.titleChannelNameComponent.isValid(),
                 },
                 { title: 'artemisApp.exercise.sections.mode', valid: this.teamConfigFormGroupComponent.formValid },
                 { title: 'artemisApp.exercise.sections.problem', valid: true, empty: !this.textExercise.problemStatement },
