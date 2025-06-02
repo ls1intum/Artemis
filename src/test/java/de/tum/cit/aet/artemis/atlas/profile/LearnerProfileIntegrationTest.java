@@ -25,6 +25,8 @@ class LearnerProfileIntegrationTest extends AbstractAtlasIntegrationTest {
 
     private static final String STUDENT1_OF_COURSE = TEST_PREFIX + "student1";
 
+    private Course course;
+
     @BeforeEach
     void setupTestScenario() {
         userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, 1, 1, 1);
@@ -33,7 +35,8 @@ class LearnerProfileIntegrationTest extends AbstractAtlasIntegrationTest {
         userUtilService.createAndSaveUser(TEST_PREFIX + "student1337");
         userUtilService.createAndSaveUser(TEST_PREFIX + "instructor1337");
 
-        Course course = courseUtilService.createCourseWithUserPrefix(TEST_PREFIX);
+        course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+
         learnerProfileUtilService.createCourseLearnerProfileForUsers(TEST_PREFIX, Set.of(course));
     }
 
@@ -91,7 +94,6 @@ class LearnerProfileIntegrationTest extends AbstractAtlasIntegrationTest {
     void shouldUpdateLearnerProfile() throws Exception {
 
         CourseLearnerProfile courseLearnerProfile = courseLearnerProfileRepository.findAllByLoginAndCourseActive(STUDENT1_OF_COURSE, ZonedDateTime.now()).stream().findAny().get();
-        var course = courseLearnerProfile.getCourse();
         CourseLearnerProfileDTO dto = new CourseLearnerProfileDTO(courseLearnerProfile.getId(), course.getId(), course.getTitle(),
                 (courseLearnerProfile.getAimForGradeOrBonus()) % 4 + 1, (courseLearnerProfile.getTimeInvestment()) % 4 + 1, (courseLearnerProfile.getRepetitionIntensity()) % 4 + 1,
                 courseLearnerProfile.getProficiency() % 4 + 1, courseLearnerProfile.getInitialProficiency() % 4 + 1);
@@ -111,4 +113,38 @@ class LearnerProfileIntegrationTest extends AbstractAtlasIntegrationTest {
         User user = userTestRepository.getUserWithGroupsAndAuthorities(STUDENT1_OF_COURSE);
         assertThat(Hibernate.isInitialized(user.getLearnerProfile())).isFalse();
     }
+
+    @Test
+    @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
+    void shouldUpdateProficiency() {
+        User user = userTestRepository.getUserWithGroupsAndAuthorities(STUDENT1_OF_COURSE);
+
+        // Increase proficiency after solving an Exercise with minimal changes
+        CourseLearnerProfile courseLearnerProfile = courseLearnerProfileRepository.findAllByLoginAndCourseActive(STUDENT1_OF_COURSE, ZonedDateTime.now()).stream().findAny().get();
+
+        double proficiency = courseLearnerProfile.getProficiency();
+        double initialProficiency = courseLearnerProfile.getInitialProficiency();
+
+        courseLearnerProfileService.updateProficiency(Set.of(user), course, 1, 100, 1);
+
+        // Fetch updated object
+        courseLearnerProfile = courseLearnerProfileRepository.findAllByLoginAndCourseActive(STUDENT1_OF_COURSE, ZonedDateTime.now()).stream().findAny().get();
+
+        assertThat(courseLearnerProfile.getProficiency()).isGreaterThan(proficiency);
+        assertThat(courseLearnerProfile.getInitialProficiency()).isEqualTo(initialProficiency);
+
+        // Decrease proficiency after failing to progress with large changes.
+
+        proficiency = courseLearnerProfile.getProficiency();
+
+        courseLearnerProfileService.updateProficiency(Set.of(user), course, 100, 1, 0);
+
+        // Fetch updated object
+        courseLearnerProfile = courseLearnerProfileRepository.findAllByLoginAndCourseActive(STUDENT1_OF_COURSE, ZonedDateTime.now()).stream().findAny().get();
+
+        assertThat(courseLearnerProfile.getProficiency()).isLessThan(proficiency);
+        assertThat(courseLearnerProfile.getInitialProficiency()).isEqualTo(initialProficiency);
+
+    }
+
 }
