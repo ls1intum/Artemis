@@ -414,7 +414,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
             preliminaryFeedbackRequests: true,
         });
         comp.isExamMode = false;
-        jest.spyOn(athenaService, 'isEnabled').mockReturnValue(of(false));
+        jest.spyOn(athenaService, 'isEnabled').mockReturnValue(false);
 
         tick();
         fixture.detectChanges();

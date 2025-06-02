@@ -14,8 +14,8 @@ import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { By } from '@angular/platform-brisAthenaEnabledowser';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { By } from '@angular/platform-browser';
 
 describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
     let component: ExerciseFeedbackSuggestionOptionsComponent;
