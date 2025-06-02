@@ -41,17 +41,15 @@ describe('ExercisePreliminaryFeedbackOptionsComponent', () => {
         expect(component.modulesAvailable).toBeTruthy();
     });
 
-    it('should set isAthenaEnabled$ with the result from athenaService', async () => {
+    it('should set isAthenaEnabled with the result from athenaService', async () => {
         jest.spyOn(athenaService, 'getAvailableModules').mockReturnValue(of());
-        jest.spyOn(athenaService, 'isEnabled').mockReturnValue(of(true));
+        jest.spyOn(athenaService, 'isEnabled').mockReturnValue(true);
         fixture.componentRef.setInput('exercise', { type: ExerciseType.TEXT, dueDate: futureDueDate, preliminaryFeedbackModule: undefined } as Exercise);
 
         await component.ngOnInit();
 
-        expect(component.isAthenaEnabled$).toBeDefined();
-        component.isAthenaEnabled$.subscribe((result) => {
-            expect(result).toBeTrue();
-        });
+        expect(component.isAthenaEnabled).toBeDefined();
+        expect(component.isAthenaEnabled).toBeTrue();
     });
 
     it('should disable input controls for programming exercises with automatic assessment type or read-only', () => {
