@@ -19,8 +19,10 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.dto.SubmissionProcessingDTO;
 import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
-import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.map.listener.MapEntryEvent;
+import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.map.listener.MapEntryAddedEvent;
 import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.map.listener.MapEntryListener;
+import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.map.listener.MapEntryRemovedEvent;
+import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.map.listener.MapEntryUpdatedEvent;
 import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.queue.listener.QueueItemListener;
 
 /**
@@ -136,7 +138,7 @@ public class LocalCIEventListenerService {
     private class ProcessingBuildJobItemListener implements MapEntryListener<String, BuildJobQueueItem> {
 
         @Override
-        public void entryAdded(MapEntryEvent<String, BuildJobQueueItem> event) {
+        public void entryAdded(MapEntryAddedEvent<String, BuildJobQueueItem> event) {
             log.debug("CIBuildJobQueueItem added to processing jobs: {}", event.value());
             localCIQueueWebsocketService.sendProcessingJobsOverWebsocket(event.value().courseId());
             buildJobRepository.updateBuildJobStatusWithBuildStartDate(event.value().id(), BuildStatus.BUILDING, event.value().jobTimingInfo().buildStartDate());
@@ -145,32 +147,32 @@ public class LocalCIEventListenerService {
         }
 
         @Override
-        public void entryRemoved(MapEntryEvent<String, BuildJobQueueItem> event) {
+        public void entryRemoved(MapEntryRemovedEvent<String, BuildJobQueueItem> event) {
             log.debug("CIBuildJobQueueItem removed from processing jobs: {}", event.oldValue());
             localCIQueueWebsocketService.sendProcessingJobsOverWebsocket(event.oldValue().courseId());
         }
 
         @Override
-        public void entryUpdated(MapEntryEvent<String, BuildJobQueueItem> event) {
+        public void entryUpdated(MapEntryUpdatedEvent<String, BuildJobQueueItem> event) {
         }
     }
 
     private class BuildAgentListener implements MapEntryListener<String, BuildAgentInformation> {
 
         @Override
-        public void entryAdded(MapEntryEvent<String, BuildAgentInformation> event) {
+        public void entryAdded(MapEntryAddedEvent<String, BuildAgentInformation> event) {
             log.debug("Build agent added: {}", event.value());
             localCIQueueWebsocketService.sendBuildAgentInformationOverWebsocket(event.value().buildAgent().name());
         }
 
         @Override
-        public void entryRemoved(MapEntryEvent<String, BuildAgentInformation> event) {
+        public void entryRemoved(MapEntryRemovedEvent<String, BuildAgentInformation> event) {
             log.debug("Build agent removed: {}", event.oldValue());
             localCIQueueWebsocketService.sendBuildAgentInformationOverWebsocket(event.oldValue().buildAgent().name());
         }
 
         @Override
-        public void entryUpdated(MapEntryEvent<String, BuildAgentInformation> event) {
+        public void entryUpdated(MapEntryUpdatedEvent<String, BuildAgentInformation> event) {
             log.debug("Build agent updated: {}", event.value());
             localCIQueueWebsocketService.sendBuildAgentInformationOverWebsocket(event.value().buildAgent().name());
         }

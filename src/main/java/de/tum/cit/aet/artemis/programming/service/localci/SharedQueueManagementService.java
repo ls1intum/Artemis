@@ -35,8 +35,10 @@ import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
-import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.map.listener.MapEntryEvent;
+import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.map.listener.MapEntryAddedEvent;
 import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.map.listener.MapEntryListener;
+import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.map.listener.MapEntryRemovedEvent;
+import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.map.listener.MapEntryUpdatedEvent;
 
 /**
  * Includes methods for managing and retrieving the shared build job queue and build agent information. Also contains methods for cancelling build jobs.
@@ -360,19 +362,19 @@ public class SharedQueueManagementService {
     class BuildAgentListener implements MapEntryListener<String, BuildAgentInformation> {
 
         @Override
-        public void entryAdded(MapEntryEvent<String, BuildAgentInformation> event) {
+        public void entryAdded(MapEntryAddedEvent<String, BuildAgentInformation> event) {
             log.debug("Build agent added: {}", event.value());
             updateBuildAgentCapacity();
         }
 
         @Override
-        public void entryRemoved(MapEntryEvent<String, BuildAgentInformation> event) {
+        public void entryRemoved(MapEntryRemovedEvent<String, BuildAgentInformation> event) {
             log.debug("Build agent removed: {}", event.oldValue());
             updateBuildAgentCapacity();
         }
 
         @Override
-        public void entryUpdated(MapEntryEvent<String, BuildAgentInformation> event) {
+        public void entryUpdated(MapEntryUpdatedEvent<String, BuildAgentInformation> event) {
             log.debug("Build agent updated: {}", event.value());
             updateBuildAgentCapacity();
         }

@@ -13,8 +13,10 @@ import com.hazelcast.map.listener.EntryRemovedListener;
 import com.hazelcast.map.listener.EntryUpdatedListener;
 
 import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.map.DistributedMap;
-import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.map.listener.MapEntryEvent;
+import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.map.listener.MapEntryAddedEvent;
 import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.map.listener.MapEntryListener;
+import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.map.listener.MapEntryRemovedEvent;
+import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.map.listener.MapEntryUpdatedEvent;
 
 public class HazelcastDistributedMap<K, V> implements DistributedMap<K, V> {
 
@@ -89,18 +91,18 @@ public class HazelcastDistributedMap<K, V> implements DistributedMap<K, V> {
 
             @Override
             public void entryAdded(EntryEvent<K, V> event) {
-                listener.entryAdded(new MapEntryEvent<>(event.getKey(), event.getValue(), event.getOldValue()));
+                listener.entryAdded(new MapEntryAddedEvent<>(event.getKey(), event.getValue()));
             }
 
             @Override
             public void entryRemoved(EntryEvent<K, V> event) {
-                listener.entryRemoved(new MapEntryEvent<>(event.getKey(), event.getValue(), event.getOldValue()));
+                listener.entryRemoved(new MapEntryRemovedEvent<>(event.getKey(), event.getOldValue()));
 
             }
 
             @Override
             public void entryUpdated(EntryEvent<K, V> event) {
-                listener.entryUpdated(new MapEntryEvent<>(event.getKey(), event.getValue(), event.getOldValue()));
+                listener.entryUpdated(new MapEntryUpdatedEvent<>(event.getKey(), event.getValue(), event.getOldValue()));
 
             }
         }

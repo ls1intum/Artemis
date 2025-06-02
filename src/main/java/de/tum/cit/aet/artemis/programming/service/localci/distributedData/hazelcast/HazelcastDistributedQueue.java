@@ -76,13 +76,13 @@ public class HazelcastDistributedQueue<T> implements DistributedQueue<T> {
         ItemListener<T> hazelcastListener = new ItemListener<>() {
 
             @Override
-            public void itemAdded(ItemEvent<T> item) {
-                listener.itemAdded(item.getItem());
+            public void itemAdded(ItemEvent<T> event) {
+                listener.itemAdded(event.getItem());
             }
 
             @Override
-            public void itemRemoved(ItemEvent<T> item) {
-                listener.itemRemoved(item.getItem());
+            public void itemRemoved(ItemEvent<T> event) {
+                listener.itemRemoved(event.getItem());
             }
         };
         return queue.addItemListener(hazelcastListener, true);
