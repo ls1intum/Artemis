@@ -397,12 +397,12 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
             preliminaryFeedbackRequests: true,
         });
         comp.isExamMode = false;
-        jest.spyOn(athenaService, 'isEnabled').mockReturnValue(of(true));
+        jest.spyOn(athenaService, 'isEnabled').mockReturnValue(true);
 
         tick();
         fixture.detectChanges();
 
-        expect(comp.isAthenaEnabled$).toBeDefined();
+        expect(comp.isAthenaEnabled).toBeDefined();
 
         const preliminaryFeedbackElement = fixture.debugElement.nativeElement.querySelector('jhi-exercise-preliminary-feedback-options');
         expect(preliminaryFeedbackElement).toBeTruthy();
@@ -414,7 +414,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
             preliminaryFeedbackRequests: true,
         });
         comp.isExamMode = false;
-        jest.spyOn(athenaService, 'isEnabled').mockReturnValue(of(false));
+        jest.spyOn(athenaService, 'isEnabled').mockReturnValue(false);
 
         tick();
         fixture.detectChanges();
