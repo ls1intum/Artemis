@@ -444,12 +444,12 @@ public class Exam extends DomainObject {
     /**
      * check if students are allowed to see this exam
      *
-     * @return true, if students are allowed to see this exam, otherwise false, null if this cannot be determined
+     * @return true, if students are allowed to see this exam, otherwise false
      */
     @JsonIgnore
-    public Boolean isVisibleToStudents() throws IllegalStateException {
+    public boolean isVisibleToStudents() {
         if (visibleDate == null) {  // no visible date means the exam is configured wrongly and should not be visible!
-            throw new IllegalStateException("The exam " + this.title + " has no visible date set!");
+            return false;
         }
         return visibleDate.isBefore(ZonedDateTime.now());
     }
@@ -457,12 +457,12 @@ public class Exam extends DomainObject {
     /**
      * check if the exam has started
      *
-     * @return true, if the exam has started, otherwise false, null if this cannot be determined
+     * @return true, if the exam has started, otherwise false
      */
     @JsonIgnore
-    public Boolean isStarted() throws IllegalStateException {
+    public boolean isStarted() {
         if (startDate == null) {   // no start date means the exam is configured wrongly and we cannot answer the question!
-            throw new IllegalStateException("The exam " + this.title + " has no start date set!");
+            return false;
         }
         return startDate.isBefore(ZonedDateTime.now());
     }
@@ -473,7 +473,7 @@ public class Exam extends DomainObject {
      * @return true, if the results are published, false if not published or not set!
      */
     @JsonIgnore
-    public Boolean resultsPublished() {
+    public boolean resultsPublished() {
         if (publishResultsDate == null) {
             return false;
         }

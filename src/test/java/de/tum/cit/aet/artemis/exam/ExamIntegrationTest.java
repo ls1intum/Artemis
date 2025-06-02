@@ -39,6 +39,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+
 import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
@@ -1265,14 +1268,6 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
         final var title2 = request.get("/api/exam/exams/" + exam.getId() + "/title", HttpStatus.OK, String.class);
 
         assertThat(title2).isEqualTo("Test Exam title");
-
-        // Test for exams with a null title
-        examRepository.delete(exam);
-        exam = ExamFactory.generateExam(course1);
-
-        // copy to effectively final variable to be able to use it in a lambda expression
-        final Exam finalExam = exam;
-        assertThatExceptionOfType(NullPointerException.class).isThrownBy(() -> finalExam.setTitle(null));
     }
 
     @Test
@@ -1282,122 +1277,61 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "user1", roles = "USER")
-    void testGetExamExaminerAsUser() throws Exception {
-        testGetExamExaminer(HttpStatus.FORBIDDEN);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testGetExamExaminerAsTeachingAssistant() throws Exception {
-        testGetExamExaminer(HttpStatus.FORBIDDEN);
-    }
-
-    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetExamExaminerAsInstructor() throws Exception {
-        testGetExamExaminer(HttpStatus.OK);
-    }
-
-    private void testGetExamExaminer(HttpStatus httpStatus) throws Exception {
+    void testGetExamExaminer() throws Exception {
         final var examinerName = "Prof. Dr. Stephan Krusche";
         Exam exam = ExamFactory.generateExam(course1);
         exam.setExaminer(examinerName);
         assertThat(exam.getExaminer()).isEqualTo(examinerName);
-        exam = examRepository.save(exam);
-
-        final Exam requestedExam = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId(), httpStatus, Exam.class);
-
-        if (httpStatus == HttpStatus.OK) {
-            assertThat(requestedExam.getExaminer()).isEqualTo(examinerName);
-        }
+        final URI createdExamURI = request.post("/api/exam/courses/" + course1.getId() + "/exams", exam, HttpStatus.CREATED);
+        final Exam requestedExam = request.get(String.valueOf(createdExamURI), HttpStatus.OK, Exam.class);
+        assertThat(requestedExam.getExaminer()).isEqualTo(examinerName);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetExamCorrectionRounds() throws Exception {
-        // This test tests if, once an exam has been created, the correction rounds attribute is correct.
-        // This test does not verify if creating the exam with the planned number of correction rounds
-        // actually is possible.
-        record CorrectionRoundsEntry(Integer plannedCorrectionRounds, int actualCorrectionRounds) {
-        }
-
-        List<CorrectionRoundsEntry> plannedCorrectionRoundsToActualCorrectionRounds = List.of(new CorrectionRoundsEntry(0, 0), new CorrectionRoundsEntry(1, 1),
-                new CorrectionRoundsEntry(2, 2), new CorrectionRoundsEntry(3, 3), new CorrectionRoundsEntry(4, 4), new CorrectionRoundsEntry(5, 5),
-                new CorrectionRoundsEntry(null, 1));
-
-        for (var entry : plannedCorrectionRoundsToActualCorrectionRounds) {
-
-            Exam exam = ExamFactory.generateExam(course1);
-            exam.setNumberOfCorrectionRoundsInExam(entry.plannedCorrectionRounds);
-            assertThat(exam.getNumberOfCorrectionRoundsInExam()).isEqualTo(entry.actualCorrectionRounds);
-            exam = examRepository.save(exam);
-
-            final Exam requestedExam = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK, Exam.class);
-            assertThat(requestedExam.getNumberOfCorrectionRoundsInExam()).isEqualTo(entry.actualCorrectionRounds);
-
-            examRepository.delete(exam);
-        }
-
+    void testCreateExamWithNullCorrectionRounds() throws Exception {
+        testCreateExamWithCorrectionRoundsAndExpectedCreationStatus(false, null, 1, HttpStatus.CREATED);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testCreateExamValidCorrectionRounds() throws Exception {
+    void testCreateExamWithValidCorrectionRounds() throws Exception {
         // Real exam - correction rounds = 1
-        final Exam examA = ExamFactory.generateExam(course1);
-        examA.setNumberOfCorrectionRoundsInExam(1);
-        assertThat(examA.getNumberOfCorrectionRoundsInExam()).isEqualTo(1);
-        URI createdExamURI = request.post("/api/exam/courses/" + course1.getId() + "/exams", examA, HttpStatus.CREATED);
-        Exam receivedExam = request.get(String.valueOf(createdExamURI), HttpStatus.OK, Exam.class);
-        assertThat(receivedExam.getNumberOfCorrectionRoundsInExam()).isEqualTo(1);
+        testCreateExamWithCorrectionRoundsAndExpectedCreationStatus(false, 1, 1, HttpStatus.CREATED);
 
         // Real exam - correction rounds = 2
-        final Exam examB = ExamFactory.generateExam(course1);
-        examB.setNumberOfCorrectionRoundsInExam(2);
-        assertThat(examB.getNumberOfCorrectionRoundsInExam()).isEqualTo(2);
-        createdExamURI = request.post("/api/exam/courses/" + course1.getId() + "/exams", examB, HttpStatus.CREATED);
-        receivedExam = request.get(String.valueOf(createdExamURI), HttpStatus.OK, Exam.class);
-        assertThat(receivedExam.getNumberOfCorrectionRoundsInExam()).isEqualTo(2);
+        testCreateExamWithCorrectionRoundsAndExpectedCreationStatus(false, 2, 2, HttpStatus.CREATED);
 
         // Test exam - correction rounds = 0
-        final Exam examC = ExamFactory.generateTestExam(course1);
-        examC.setNumberOfCorrectionRoundsInExam(0);
-        createdExamURI = request.post("/api/exam/courses/" + course1.getId() + "/exams", examC, HttpStatus.CREATED);
-        receivedExam = request.get(String.valueOf(createdExamURI), HttpStatus.OK, Exam.class);
-        assertThat(receivedExam.getNumberOfCorrectionRoundsInExam()).isEqualTo(0);
+        testCreateExamWithCorrectionRoundsAndExpectedCreationStatus(true, 0, 0, HttpStatus.CREATED);
+    }
+
+    void testCreateExamWithCorrectionRoundsAndExpectedCreationStatus(boolean isTestExam, Integer plannedCorrectionRounds, int actualCorrectionRounds, HttpStatus expectedStatus)
+            throws Exception {
+        final Exam exam = isTestExam ? ExamFactory.generateTestExam(course1) : ExamFactory.generateExam(course1);
+        exam.setNumberOfCorrectionRoundsInExam(plannedCorrectionRounds);
+        assertThat(exam.getNumberOfCorrectionRoundsInExam()).isEqualTo(actualCorrectionRounds);
+        final URI createdExamURI = request.post("/api/exam/courses/" + course1.getId() + "/exams", exam, expectedStatus);
+
+        if (expectedStatus == HttpStatus.CREATED) {
+            final Exam receivedExam = request.get(String.valueOf(createdExamURI), HttpStatus.OK, Exam.class);
+            assertThat(receivedExam.getNumberOfCorrectionRoundsInExam()).isEqualTo(actualCorrectionRounds);
+        }
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetCourseNameAsInstructor() throws Exception {
-        testGetCourseName(HttpStatus.CREATED);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testGetCourseNameAsTeachingAssistant() throws Exception {
-        testGetCourseName(HttpStatus.FORBIDDEN);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "user1", roles = "USER")
-    void testGetCourseNameAsUser() throws Exception {
-        testGetCourseName(HttpStatus.FORBIDDEN);
-    }
-
-    void testGetCourseName(HttpStatus httpStatus) throws Exception {
+    void testGetCourseName() throws Exception {
         // First we test for an actual name
         {
             final String testCourseName = "Course Name for Testing";
             final Exam examA = ExamFactory.generateExam(course1);
             examA.setCourseName(testCourseName);
             assertThat(examA.getCourseName()).isEqualTo(testCourseName);
-            final URI createdExamURI = request.post("/api/exam/courses/" + course1.getId() + "/exams", examA, httpStatus);
-            if (httpStatus == HttpStatus.CREATED) {
-                Exam receivedExam = request.get(String.valueOf(createdExamURI), HttpStatus.OK, Exam.class);
-                assertThat(receivedExam.getCourseName()).isEqualTo(testCourseName);
-            }
+            final URI createdExamURI = request.post("/api/exam/courses/" + course1.getId() + "/exams", examA, HttpStatus.CREATED);
+            Exam receivedExam = request.get(String.valueOf(createdExamURI), HttpStatus.OK, Exam.class);
+            assertThat(receivedExam.getCourseName()).isEqualTo(testCourseName);
         }
 
         // Here we test for null
@@ -1405,25 +1339,195 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
             final Exam examB = ExamFactory.generateExam(course1);
             examB.setCourseName(null);
             assertThat(examB.getCourseName()).isNull();
-            final URI createdExamURI = request.post("/api/exam/courses/" + course1.getId() + "/exams", examB, httpStatus);
-            if (httpStatus == HttpStatus.CREATED) {
-                Exam receivedExam = request.get(String.valueOf(createdExamURI), HttpStatus.OK, Exam.class);
-                assertThat(receivedExam.getCourseName()).isNull();
-            }
+            final URI createdExamURI = request.post("/api/exam/courses/" + course1.getId() + "/exams", examB, HttpStatus.CREATED);
+            Exam receivedExam = request.get(String.valueOf(createdExamURI), HttpStatus.OK, Exam.class);
+            assertThat(receivedExam.getCourseName()).isNull();
         }
     }
 
     @ParameterizedTest
     @ValueSource(ints = { 0, 1, 2, 5, 10, 20, 100, 1000 })
+    void testQuizExamMaxPoints(int quizExamMaxPoints) throws Exception {
+        /* quizExamMaxPoints is a @Transient field, thus not stored in the DB, and it's getter */
+        // First a simple unit test
+        {
+            Exam exam = new Exam();
+            exam.setQuizExamMaxPoints(quizExamMaxPoints);
+            assertThat(exam.getQuizExamMaxPoints()).isEqualTo(quizExamMaxPoints);
+        }
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
+
+        // Next a test if the serialization includes the quizExamMaxPoints
+        {
+            final Exam exam = new Exam();
+            exam.setQuizExamMaxPoints(quizExamMaxPoints);
+
+            String json = objectMapper.writeValueAsString(exam);
+
+            assertThat(json).contains("\"quizExamMaxPoints\":" + quizExamMaxPoints);
+        }
+
+        // Now a test if the deserialization sets the quizExamMaxPoints
+        {
+            String json = "{ \"quizExamMaxPoints\": %d }".formatted(quizExamMaxPoints);
+
+            Exam exam = objectMapper.readValue(json, Exam.class);
+            assertThat(exam.getQuizExamMaxPoints()).isEqualTo(quizExamMaxPoints);
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = { 1, 2, 60, 5 * 60, 5 * 24 * 60 * 60 })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetQuizExamMaxPoints(int quizExamMaxPoints) throws Exception {
+    void testIsVisibleToStudents(int beforeSeconds) throws Exception {
         final Exam exam = ExamFactory.generateExam(course1);
-        exam.setQuizExamMaxPoints(quizExamMaxPoints);
-        assertThat(exam.getQuizExamMaxPoints()).isEqualTo(quizExamMaxPoints);
+        exam.setVisibleDate(ZonedDateTime.now().minusSeconds(beforeSeconds));
+        assertThat(exam.isVisibleToStudents()).isTrue();
 
         final URI createdExamURI = request.post("/api/exam/courses/" + course1.getId() + "/exams", exam, HttpStatus.CREATED);
         final Exam receivedExam = request.get(String.valueOf(createdExamURI), HttpStatus.OK, Exam.class);
-        assertThat(receivedExam.getQuizExamMaxPoints()).isEqualTo(quizExamMaxPoints);
+        assertThat(receivedExam.isVisibleToStudents()).isTrue();
+
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = { 5, 60, 5 * 60, 3 * 60 * 60, 5 * 24 * 60 * 60 })
+    /* We don't want to test with too small values, or else the test might become flaky */
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testIsNotVisibleToStudents(int afterSeconds) throws Exception {
+        final Exam exam = ExamFactory.generateExam(course1);
+        final var visibleDate = ZonedDateTime.now().plusSeconds(afterSeconds);
+        exam.setVisibleDate(visibleDate);
+        assertThat(exam.isVisibleToStudents()).isFalse();
+
+        final int workingTimeSeconds = 1000;
+        exam.setStartDate(visibleDate.plusMinutes(5));
+        exam.setEndDate(visibleDate.plusMinutes(5).plusSeconds(workingTimeSeconds));
+        exam.setWorkingTime(workingTimeSeconds);
+
+        final URI createdExamURI = request.post("/api/exam/courses/" + course1.getId() + "/exams", exam, HttpStatus.CREATED);
+        final Exam receivedExam = request.get(String.valueOf(createdExamURI), HttpStatus.OK, Exam.class);
+        assertThat(receivedExam.isVisibleToStudents()).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testVisibleToStudentsDateIncorrectlyConfigured() throws Exception {
+        // First we test if the domain object works as expected, i.e., a unit test
+        Exam exam = ExamFactory.generateExam(course1);
+        exam.setVisibleDate(null);
+        assertThat(exam.isVisibleToStudents()).isFalse();
+
+        // Now we check if creation fails
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams", exam, HttpStatus.BAD_REQUEST, null);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testIncorrectlyConfiguredExamIsStarted() throws Exception {
+        Exam exam = ExamFactory.generateExam(course1);
+        exam.setStartDate(null);
+        assertThat(exam.isStarted()).isFalse();
+
+        // Check that creation fails
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams", exam, HttpStatus.BAD_REQUEST, null);
+    }
+
+    @Test
+    void testIsAfterLastStudentExamEnded() {
+        // initialize start, end and work times
+        final var timeNow = ZonedDateTime.now();
+        final var timeExamStart = timeNow.minusMinutes(60);
+        final int examWorkingTime = 3000;  // 50 minutes
+        final var timeExamEnd = timeExamStart.plusSeconds(examWorkingTime);
+
+        // Check if it works for an exam without any student exams - should default to regular end time
+        {
+            Exam noParticipationsExam = examUtilService.addExam(course1);
+            noParticipationsExam.setStartDate(timeExamStart);
+            noParticipationsExam.setEndDate(timeExamEnd);
+            noParticipationsExam.setWorkingTime(examWorkingTime);
+
+            assertThat(noParticipationsExam.isAfterLatestStudentExamEnd()).isTrue();
+        }
+
+        // Regular exam where no student has a time advantage
+        {
+            Exam regularExam = examUtilService.addExam(course1);
+            regularExam.setStartDate(timeExamStart);
+            regularExam.setEndDate(timeExamEnd);
+            regularExam.setWorkingTime(examWorkingTime);
+
+            var studentExam1 = examUtilService.addStudentExamWithUser(regularExam, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+            var studentExam2 = examUtilService.addStudentExamWithUser(regularExam, userUtilService.getUserByLogin(TEST_PREFIX + "student2"));
+            var studentExam3 = examUtilService.addStudentExamWithUser(regularExam, userUtilService.getUserByLogin(TEST_PREFIX + "student3"));
+            var studentExam4 = examUtilService.addStudentExamWithUser(regularExam, userUtilService.getUserByLogin(TEST_PREFIX + "student4"));
+            regularExam.addStudentExam(studentExam1);
+            regularExam.addStudentExam(studentExam2);
+            regularExam.addStudentExam(studentExam3);
+            regularExam.addStudentExam(studentExam4);
+
+            assertThat(regularExam.isAfterLatestStudentExamEnd()).isTrue();
+        }
+
+        // Exam where some students have a time advantage, but not enough to trigger the threshold
+        {
+            Exam exam = examUtilService.addExam(course1);
+            exam.setStartDate(timeExamStart);
+            exam.setEndDate(timeExamEnd);
+            exam.setWorkingTime(examWorkingTime);
+
+            var studentExam1 = examUtilService.addStudentExamWithUser(exam, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+            var studentExam2 = examUtilService.addStudentExamWithUserAndWorkingTime(exam, userUtilService.getUserByLogin(TEST_PREFIX + "student2"), examWorkingTime + 120);
+            var studentExam3 = examUtilService.addStudentExamWithUser(exam, userUtilService.getUserByLogin(TEST_PREFIX + "student3"));
+            var studentExam4 = examUtilService.addStudentExamWithUserAndWorkingTime(exam, userUtilService.getUserByLogin(TEST_PREFIX + "student4"), examWorkingTime + 240);
+            exam.addStudentExam(studentExam1);
+            exam.addStudentExam(studentExam2);
+            exam.addStudentExam(studentExam3);
+            exam.addStudentExam(studentExam4);
+
+            assertThat(exam.isAfterLatestStudentExamEnd()).isTrue();
+        }
+
+        // Exam where some students have a time advantage, and at least one student still has time to work
+        {
+            Exam exam = examUtilService.addExam(course1);
+            exam.setStartDate(timeExamStart);
+            exam.setEndDate(timeExamEnd);
+            exam.setWorkingTime(examWorkingTime);
+
+            var studentExam1 = examUtilService.addStudentExamWithUser(exam, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+            var studentExam2 = examUtilService.addStudentExamWithUserAndWorkingTime(exam, userUtilService.getUserByLogin(TEST_PREFIX + "student2"), examWorkingTime + 120);
+            var studentExam3 = examUtilService.addStudentExamWithUserAndWorkingTime(exam, userUtilService.getUserByLogin(TEST_PREFIX + "student3"), examWorkingTime + 300);
+            var studentExam4 = examUtilService.addStudentExamWithUserAndWorkingTime(exam, userUtilService.getUserByLogin(TEST_PREFIX + "student4"), examWorkingTime + 1500);
+            exam.addStudentExam(studentExam1);
+            exam.addStudentExam(studentExam2);
+            exam.addStudentExam(studentExam3);
+            exam.addStudentExam(studentExam4);
+
+            assertThat(exam.isAfterLatestStudentExamEnd()).isFalse();
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testHasExamArchivePathBranchesAsInstructor() throws Exception {
+        testHasExamArchivePath(null, false);
+        testHasExamArchivePath("", false);
+        testHasExamArchivePath("Path", true);
+        testHasExamArchivePath("Very long exam archive path", true);
+    }
+
+    void testHasExamArchivePath(String examArchivePath, boolean expectExamArchivePath) throws Exception {
+        Exam exam = ExamFactory.generateExam(course1);
+        exam.setExamArchivePath(examArchivePath);
+
+        examRepository.save(exam);
+
+        final Exam receivedExam = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK, Exam.class);
+        assertThat(receivedExam.hasExamArchive()).isEqualTo(expectExamArchivePath);
     }
 
     @Test
