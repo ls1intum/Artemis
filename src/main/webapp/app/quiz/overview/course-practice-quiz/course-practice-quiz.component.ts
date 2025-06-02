@@ -10,12 +10,11 @@ import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mappi
 import { ShortAnswerSubmittedText } from 'app/quiz/shared/entities/short-answer-submitted-text.model';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { EMPTY } from 'rxjs';
 
 @Component({
     selector: 'jhi-course-practice-quiz',
-    imports: [MultipleChoiceQuestionComponent, ShortAnswerQuestionComponent, DragAndDropQuestionComponent, ButtonComponent, TranslateDirective],
+    imports: [MultipleChoiceQuestionComponent, ShortAnswerQuestionComponent, DragAndDropQuestionComponent, ButtonComponent],
     templateUrl: './course-practice-quiz.component.html',
     styleUrl: './course-practice-quiz.component.scss',
 })
@@ -33,10 +32,8 @@ export class CoursePracticeQuizComponent {
     // Reactive chain for loading quiz questions based on the current route
     paramsSignal = toSignal(this.route.parent?.params ?? EMPTY);
     courseId = computed(() => this.paramsSignal()?.['courseId']);
-    //quizQuestions = computed(() => (this.courseId() ? this.quizService.getQuizQuestions(this.courseId()) : EMPTY));
-    questionsSignal2 = toSignal(this.quizService.getQuizQuestions(this.courseId()) ?? EMPTY, { initialValue: [] });
-    //questionsSignal = toSignal(this.quizQuestions(), { initialValue: [] });
-    questions = computed(() => this.questionsSignal2());
+    questionsSignal = toSignal(this.quizService.getQuizQuestions(this.courseId()) ?? EMPTY, { initialValue: [] });
+    questions = computed(() => this.questionsSignal());
 
     selectedAnswerOptions = new Map<number, AnswerOption[]>();
     dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
