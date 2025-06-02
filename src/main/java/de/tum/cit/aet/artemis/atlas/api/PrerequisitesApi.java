@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.atlas.api;
 
+import java.util.Set;
+
 import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Controller;
 
@@ -24,5 +26,9 @@ public class PrerequisitesApi extends AbstractAtlasApi {
 
     public void deleteAll(Iterable<Prerequisite> prerequisites) {
         prerequisiteRepository.deleteAll(prerequisites);
+    }
+
+    public Set<Prerequisite> findAllByCourseId(long courseId) {
+        return prerequisiteRepository.findAllByCourseId(courseId);
     }
 }

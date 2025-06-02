@@ -9,7 +9,7 @@ import { SecuredImageComponent } from 'app/shared/image/secured-image.component'
 import dayjs from 'dayjs/esm';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { CourseExamArchiveButtonComponent } from 'app/shared/components/course-exam-archive-button/course-exam-archive-button.component';
+import { CourseExamArchiveButtonComponent } from 'app/shared/components/buttons/course-exam-archive-button/course-exam-archive-button.component';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { CourseDetailDoughnutChartComponent } from 'app/core/course/manage/detail/course-detail-doughnut-chart.component';
@@ -28,7 +28,7 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { FullscreenComponent } from 'app/modeling/shared/fullscreen/fullscreen.component';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
-import { IrisGlobalSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
+import { IrisCourseSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
 
 describe('Course Management Detail Component', () => {
     let component: CourseDetailComponent;
@@ -127,7 +127,7 @@ describe('Course Management Detail Component', () => {
     it('should make iris settings call when instructor', async () => {
         jest.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles: ['iris'] } as ProfileInfo);
         courseDataSubject.next({ course: { ...course, isAtLeastInstructor: true } });
-        const irisSpy = jest.spyOn(irisSettingsService, 'getGlobalSettings').mockReturnValue(of({} as IrisGlobalSettings));
+        const irisSpy = jest.spyOn(irisSettingsService, 'getUncombinedCourseSettings').mockReturnValue(of({} as IrisCourseSettings));
         await component.ngOnInit();
         expect(irisSpy).toHaveBeenCalledOnce();
     });
@@ -135,7 +135,7 @@ describe('Course Management Detail Component', () => {
     it('should not make iris settings call when not instructor', async () => {
         jest.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles: ['iris'] } as ProfileInfo);
         courseDataSubject.next({ course: { ...course, isAtLeastEditor: true } });
-        const irisSpy = jest.spyOn(irisSettingsService, 'getGlobalSettings');
+        const irisSpy = jest.spyOn(irisSettingsService, 'getUncombinedCourseSettings');
         await component.ngOnInit();
         expect(irisSpy).not.toHaveBeenCalled();
     });

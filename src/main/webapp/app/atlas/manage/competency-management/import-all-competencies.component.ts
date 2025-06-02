@@ -4,7 +4,7 @@ import { Column, ImportComponent } from 'app/shared/import/import.component';
 
 import { CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
 import { NgbPagination, NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
-import { ButtonComponent } from 'app/shared/components/button/button.component';
+import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';

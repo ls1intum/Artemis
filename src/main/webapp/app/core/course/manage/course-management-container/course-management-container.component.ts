@@ -23,7 +23,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { CourseExamArchiveButtonComponent } from 'app/shared/components/course-exam-archive-button/course-exam-archive-button.component';
+import { CourseExamArchiveButtonComponent } from 'app/shared/components/buttons/course-exam-archive-button/course-exam-archive-button.component';
 import { CourseSidebarComponent, SidebarItem } from 'app/core/course/shared/course-sidebar/course-sidebar.component';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { BaseCourseContainerComponent } from 'app/core/course/shared/course-base-container/course-base-container.component';
@@ -49,7 +49,7 @@ import { CourseManagementExercisesComponent } from 'app/core/course/manage/exerc
 import { LectureComponent } from 'app/lecture/manage/lecture/lecture.component';
 import { CourseManagementStatisticsComponent } from 'app/core/course/manage/statistics/course-management-statistics.component';
 import { CourseConversationsComponent } from 'app/communication/shared/course-conversations/course-conversations.component';
-import { ButtonSize } from 'app/shared/components/button/button.component';
+import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
 import { Course, isCommunicationEnabled } from 'app/core/course/shared/entities/course.model';
 import { CourseDeletionSummaryDTO } from 'app/core/course/shared/entities/course-deletion-summary.model';
 
@@ -185,7 +185,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
             { urlPart: 'course-statistics', targetPath: [...baseStudentPath, 'statistics'] },
         ];
 
-        const defaultPath = [...baseStudentPath, 'exercises'];
+        const defaultPath = [...baseStudentPath, 'dashboard'];
 
         const matchedRoute = routeMappings.find((route) => {
             if (route.matcher) {

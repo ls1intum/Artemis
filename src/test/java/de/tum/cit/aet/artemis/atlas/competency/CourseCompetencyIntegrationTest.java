@@ -76,12 +76,11 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
 
         // result
         Result result = ParticipationFactory.generateResult(rated, scoreAwarded);
-        result.setParticipation(studentParticipation);
         result.setCompletionDate(ZonedDateTime.now());
+        result.setSubmission(submission);
         result = resultRepository.save(result);
 
         submission.addResult(result);
-        result.setSubmission(submission);
         submissionRepository.save(submission);
 
         return result;
@@ -321,7 +320,7 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
             assertThat(studentCompetencyProgress1.getProgress()).isEqualTo(22);
             assertThat(studentCompetencyProgress1.getConfidence()).isEqualTo(0.75);
 
-            lectureUnitService.setLectureUnitCompletion(attachmentUnitRepository.findById(attachmentUnitOfLectureOne.getId()).orElseThrow(), student1, true);
+            lectureUnitService.setLectureUnitCompletion(attachmentVideoUnitRepository.findById(attachmentVideoUnitOfLectureOne.getId()).orElseThrow(), student1, true);
 
             CompetencyProgress studentCompetencyProgress2 = request.get(
                     "/api/atlas/courses/" + course.getId() + "/course-competencies/" + courseCompetency.getId() + "/student-progress?refresh=false", HttpStatus.OK,

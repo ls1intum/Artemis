@@ -22,6 +22,7 @@ artemis:
       passkey:
         enabled: false
 
+    checked-out-repos-path: ./checked-out-repos # The directory to which repositories temporarily get cloned for the build job execution
     repo-clone-path: ./repos
     repo-download-clone-path: ./repos-download
     version-control:
@@ -96,8 +97,8 @@ management:
             show-details: never
         probes:
             enabled: false
-    jhimetrics:
-        enabled: false
+        jhimetrics:
+            access: none
     metrics:
         enable:
             all: false

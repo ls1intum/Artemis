@@ -6,7 +6,6 @@ import static com.tngtech.archunit.core.domain.JavaClass.Predicates.type;
 import static com.tngtech.archunit.core.domain.properties.CanBeAnnotated.Predicates.annotatedWith;
 import static com.tngtech.archunit.core.domain.properties.HasType.Predicates.rawType;
 import static com.tngtech.archunit.lang.SimpleConditionEvent.violated;
-import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 
 import java.util.Optional;
 import java.util.Set;
@@ -235,10 +234,10 @@ public abstract class AbstractModuleRepositoryArchitectureTest extends AbstractA
                 for (JavaField field : testClass.getAllFields()) {
                     JavaType fieldType = field.getRawType();
 
-                    if (isRepository(fieldType)) {
+                    if (field.getRawType().isAnnotatedWith(Repository.class)) {
                         JavaClass repositoryClass = fieldType.toErasure();
 
-                        if (!repositoryClass.getSubclasses().isEmpty()) {
+                        if (!repositoryClass.getSubclasses().isEmpty() && !isDeclaredInProdClass(testClass, repositoryClass)) {
                             String message = String.format("Test class %s uses repository %s which has subclasses: %s", testClass.getName(), repositoryClass.getName(),
                                     repositoryClass.getSubclasses());
                             events.add(SimpleConditionEvent.violated(testClass, message));
@@ -247,28 +246,39 @@ public abstract class AbstractModuleRepositoryArchitectureTest extends AbstractA
                 }
             }
 
-            private boolean isRepository(JavaType javaType) {
-                JavaClass javaClass = javaType.toErasure();
-                // Check if the type is a repository by seeing if it implements JpaRepository
-                return javaClass.isAssignableTo(JpaRepository.class);
-                // Alternatively, if your repositories are in a specific package, you can use:
-                // return javaClass.getPackageName().startsWith("com.yourapp.repositories");
+            private boolean isDeclaredInProdClass(JavaClass testClass, JavaClass repositoryClass) {
+                return testClass.getRawSuperclass().map(sc -> sc.getFields().stream().anyMatch(field -> field.getRawType().isAssignableTo(repositoryClass.reflect())))
+                        .orElse(false);
             }
         };
     }
 
+    protected Set<String> enforceStructureOfTestRepositoriesExclusions() {
+        return Set.of();
+    }
+
     @Test
     void enforceStructureOfTestRepositories() {
-        var excludedRepositories = Set.of("de.tum.cit.aet.artemis.lti.test_repository.OnlineCourseConfigurationTestRepository"); // OnlineCourseConfigurationTestRepository does not
         // have an accompanying production repository
-        classes().that().resideInAPackage("..test_repository..").should().beInterfaces().andShould().beAssignableTo(JpaRepository.class)
-                .andShould(new ArchCondition<>("extend a repository from production code with matching name excluding last 'Test'") {
+        classesOfThisModuleThat().resideInAPackage("..test_repository..")
+                .should(new ArchCondition<>("extend a repository from production code with matching name excluding last 'Test'") {
 
                     @Override
                     public void check(JavaClass javaClass, ConditionEvents events) {
-                        if (excludedRepositories.contains(javaClass.getName())) {
+                        if (enforceStructureOfTestRepositoriesExclusions().contains(javaClass.getName())) {
                             return;
                         }
+
+                        if (!javaClass.isInterface()) {
+                            events.add(SimpleConditionEvent.violated(javaClass, "Test repository " + javaClass.getSimpleName() + " is not an interface"));
+                            return;
+                        }
+
+                        if (!javaClass.isAssignableTo(JpaRepository.class)) {
+                            events.add(SimpleConditionEvent.violated(javaClass, "Test repository " + javaClass.getSimpleName() + " does not extend JpaRepository"));
+                            return;
+                        }
+
                         String testClassName = javaClass.getSimpleName();
                         String productionClassName = replaceLast(testClassName, "Test", "");
                         boolean matchesProductionClass = productionClasses.stream().anyMatch(productionClass -> productionClass.getSimpleName().equals(productionClassName));
@@ -281,7 +291,7 @@ public abstract class AbstractModuleRepositoryArchitectureTest extends AbstractA
                                     SimpleConditionEvent.violated(javaClass, "Test repository " + testClassName + " does not extend production repository " + productionClassName));
                         }
                     }
-                }).check(testClasses);
+                }).allowEmptyShould(true).check(testClasses);
     }
 
     /**
