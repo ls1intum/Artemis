@@ -21,14 +21,14 @@ plugins {
     id "com.google.cloud.tools.jib" version "3.4.5"
     id "com.gorylenko.gradle-git-properties" version "2.5.0"
     id "io.spring.dependency-management" version "1.1.7"
-    id "nebula.lint" version "20.5.8"
+    id "nebula.lint" version "20.6.0"
     id "org.liquibase.gradle" version "${liquibase_plugin_version}"
     id "org.owasp.dependencycheck" version "12.1.1"
     id "org.springframework.boot" version "${spring_boot_version}"
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "8.1.3"
+version = "8.1.4"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -269,7 +269,7 @@ dependencies {
     implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${fasterxml_version}"
 
     // Avoid outdated version of netty to prevent security issues
-    implementation("net.minidev:json-smart") { version { 				strictly "2.5.2" } }
+    implementation("net.minidev:json-smart") { version {strictly "2.5.2" } }
 
 
     // Required for synchronization between nodes and build agents (LocalCI)
@@ -316,7 +316,7 @@ dependencies {
     implementation "org.springframework.ldap:spring-ldap-core:3.3.0"
 
     implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:${spring_cloud_version}"
-    implementation "org.springframework.cloud:spring-cloud-starter-config:4.2.2"
+    implementation "org.springframework.cloud:spring-cloud-starter-config:${spring_cloud_version}"
     implementation "org.springframework.cloud:spring-cloud-commons:${spring_cloud_version}"
 
     // required by the Websocket Broker Connection in WebsocketConfiguration (due to multi node setup support)
@@ -359,7 +359,7 @@ dependencies {
     implementation "org.bouncycastle:bcprov-jdk18on:1.80"
 
     implementation "com.mysql:mysql-connector-j:${mysql_version}"
-    implementation "org.postgresql:postgresql:42.7.5"
+    implementation "org.postgresql:postgresql:42.7.6"
 
     implementation "org.zalando:problem-spring-web:0.29.1"
     implementation "org.zalando:jackson-datatype-problem:0.27.1"
