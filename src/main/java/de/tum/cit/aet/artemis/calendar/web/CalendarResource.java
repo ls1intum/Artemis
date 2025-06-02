@@ -110,6 +110,8 @@ public class CalendarResource {
         return ResponseEntity.ok(calendarEventReadDTOsByDay);
     }
 
+    // TODO: implement GET endpoint retrieving CourseCalendarEvents for a specific course
+
     /**
      * POST /courses/:courseId/course-calendar-events : creates {@link CourseCalendarEvent} for the given {@link CalendarEventWriteDTO}s
      * and associated them to the {@link Course} identified by courseId.

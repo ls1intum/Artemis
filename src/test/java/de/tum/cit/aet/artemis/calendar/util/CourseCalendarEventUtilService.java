@@ -24,7 +24,7 @@ public class CourseCalendarEventUtilService {
 
     /**
      * Creates and persists weekly course calendar events starting 5 days after the course's start date.
-     * The events span the full duration of the course.
+     * The events repeat during the full duration of the course.
      *
      * @param course the course for which to create calendar events
      * @return the list of persisted {@link CourseCalendarEvent}s events
@@ -56,7 +56,8 @@ public class CourseCalendarEventUtilService {
 
     /**
      * Creates and persists weekly course calendar events starting 5 days after the course's start date.
-     * The events span the full duration of the course. Each event is visible to either students, tutors, editors or instructors.
+     * The events repeat during the full duration of the course. Each event is visible to either students,
+     * tutors, editors or instructors.
      *
      * @param course the course for which to create calendar events
      * @return the list of persisted {@link CourseCalendarEvent}s events

@@ -150,7 +150,31 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
         course = courseUtilService.createActiveCourseInTimezone(ZoneId.of(TEST_TIMEZONE_STRING), 1, 3);
     }
 
-    void setupActiveCourseWithMutualExclusiveCourseCalendarEventVisibilityScenario() {
+    void setupActiveCourseWithCourseCalendarEventsSpanningMultipleDaysScenario() {
+        course = courseUtilService.createActiveCourseInTimezone(ZoneId.of(TEST_TIMEZONE_STRING), 1, 1);
+        CourseCalendarEvent event1 = new CourseCalendarEvent();
+        event1.setCourse(course);
+        event1.setTitle("Session 1");
+        event1.setStartDate(course.getStartDate());
+        event1.setEndDate(course.getStartDate().plusDays(1));
+        event1.setVisibleToStudents(true);
+        event1.setVisibleToTutors(true);
+        event1.setVisibleToEditors(true);
+        event1.setVisibleToInstructors(true);
+        CourseCalendarEvent event2 = new CourseCalendarEvent();
+        event2.setCourse(course);
+        event2.setTitle("Session 1");
+        event2.setStartDate(course.getStartDate().plusDays(5));
+        event2.setEndDate(course.getStartDate().plusDays(7));
+        event2.setVisibleToStudents(true);
+        event2.setVisibleToTutors(true);
+        event2.setVisibleToEditors(true);
+        event2.setVisibleToInstructors(true);
+        courseCalendarEventRepository.saveAll(Set.of(event1, event2));
+        courseCalendarEvents = List.of(event1, event2);
+    }
+
+    void setupActiveCourseWithMutualExclusiveVisibilityForCourseCalendarEventScenario() {
         course = courseUtilService.createActiveCourseInTimezone(ZoneId.of(TEST_TIMEZONE_STRING), 1, 3);
         tutorialGroup = tutorialGroupUtilService.createTutorialGroup(course.getId(), "Test Tutorial Group", "", 10, false, "Garching", "English", tutor,
                 new HashSet<>(Set.of(student)));

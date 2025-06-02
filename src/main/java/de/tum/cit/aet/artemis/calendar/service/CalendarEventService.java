@@ -110,6 +110,7 @@ public class CalendarEventService {
         }
 
         HashSet<CalendarEventReadDTO> splitEvents = new HashSet<>();
+        int currentSplitId = 0;
         LocalDate currentDay = start.toLocalDate();
         LocalDate endDay = end.toLocalDate();
         ZoneId zone = start.getZone();
@@ -119,8 +120,10 @@ public class CalendarEventService {
 
             ZonedDateTime currentEnd = currentDay.equals(end.toLocalDate()) ? end : currentDay.atTime(LocalTime.MAX).withNano(999_999_999).atZone(zone);
 
-            splitEvents.add(new CalendarEventReadDTO(event.id(), event.title(), event.courseName(), currentStart, currentEnd, event.location(), event.facilitator()));
+            splitEvents.add(new CalendarEventReadDTO(event.id() + "-" + currentSplitId, event.title(), event.courseName(), currentStart, currentEnd, event.location(),
+                    event.facilitator()));
 
+            currentSplitId++;
             currentDay = currentDay.plusDays(1);
         }
 
