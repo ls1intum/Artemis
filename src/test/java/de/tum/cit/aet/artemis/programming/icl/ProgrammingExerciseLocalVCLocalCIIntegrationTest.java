@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_DOCKER_CONTA
 import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_RESULTS_DIRECTORY;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
@@ -33,6 +32,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
@@ -94,6 +94,9 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
 
     @Autowired
     private ProgrammingExerciseImportTestService programmingExerciseImportTestService;
+
+    @MockitoBean
+    private LocalCITriggerService localCITriggerService;
 
     @BeforeAll
     void setupAll() {
@@ -431,10 +434,6 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
     @RepeatedTest(20)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importFromFile_verifyBuildPlansCreated() throws Exception {
-        // Manual spy creation
-        LocalCITriggerService spyService = spy(localCITriggerService);
-        // Use ReflectionTestUtils or similar to inject the spy where needed
-
         aeolusRequestMockProvider.enableMockingOfRequests();
         aeolusRequestMockProvider.mockFailedGenerateBuildPlan(AeolusTarget.CLI);
 
@@ -447,8 +446,8 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
                 .findByProgrammingExerciseId(importResult.importedExercise().getId()).orElseThrow();
 
         // Verify that triggerBuild was called for both template and solution participations
-        verify(spyService, timeout(5000).times(1)).triggerBuild(eq(templateParticipation));
-        verify(spyService, timeout(5000).times(1)).triggerBuild(eq(solutionParticipation));
+        verify(localCITriggerService, timeout(5000).times(1)).triggerBuild(eq(templateParticipation));
+        verify(localCITriggerService, timeout(5000).times(1)).triggerBuild(eq(solutionParticipation));
     }
 
     @Test
