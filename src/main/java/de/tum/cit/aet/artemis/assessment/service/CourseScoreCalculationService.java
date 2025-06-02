@@ -264,7 +264,8 @@ public class CourseScoreCalculationService {
         // Get participation results (used in course-statistics.component).
         Set<ParticipationResultDTO> participationResults = new HashSet<>();
         for (StudentParticipation studentParticipation : gradedStudentParticipations) {
-            if (studentParticipation.getResults() != null && !studentParticipation.getResults().isEmpty()) {
+            var results = studentParticipation.getResults();
+            if (results != null && !results.isEmpty()) {
                 Result result = getResultForParticipation(studentParticipation, studentParticipation.getIndividualDueDate());
                 var participationResult = new ParticipationResultDTO(result.getScore(), result.isRated(), studentParticipation.getId());
                 participationResults.add(participationResult);
