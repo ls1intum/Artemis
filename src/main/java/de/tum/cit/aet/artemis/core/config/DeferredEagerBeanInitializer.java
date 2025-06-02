@@ -34,6 +34,10 @@ public class DeferredEagerBeanInitializer {
         this.context = context;
     }
 
+    /**
+     * Initializes all lazy singleton beans in the application context.
+     * This method should be called after the application is fully started to not block the startup process.
+     */
     public void initializeDeferredEagerBeans() {
         DefaultListableBeanFactory bf = (DefaultListableBeanFactory) context.getBeanFactory();
         Arrays.stream(bf.getBeanDefinitionNames()).filter(name -> {

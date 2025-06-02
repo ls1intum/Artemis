@@ -56,6 +56,10 @@ public class BeanInstantiationTracer implements InstantiationAwareBeanPostProces
         return bean;
     }
 
+    /**
+     * Prints the bean instantiation graph for the startup to a DOT file.
+     * This file can be used to visualize the dependencies between beans using tools like Graphviz.
+     */
     @EventListener(PrintStartupBeansEvent.class)
     public void printDependencyGraph() {
         try (PrintWriter out = new PrintWriter("beans.dot")) {
