@@ -23,11 +23,11 @@ public class CourseCalendarEventUtilService {
     private CourseCalendarEventRepository courseCalendarEventRepository;
 
     /**
-     * Creates and persists weekly course calendar events starting 5 days after the course's start date.
+     * Creates and persists weekly {@link CourseCalendarEvent}s starting 5 days after the course's start date.
      * The events repeat during the full duration of the course.
      *
-     * @param course the course for which to create calendar events
-     * @return the list of persisted {@link CourseCalendarEvent}s events
+     * @param course the course for which to create the events
+     * @return the list of persisted events
      * @throws IllegalArgumentException if the course has no start or end date
      */
     public List<CourseCalendarEvent> createCourseCalendarEvents(Course course) {
@@ -55,12 +55,12 @@ public class CourseCalendarEventUtilService {
     }
 
     /**
-     * Creates and persists weekly course calendar events starting 5 days after the course's start date.
+     * Creates and persists weekly {@link CourseCalendarEvent}s starting 5 days after the course's start date.
      * The events repeat during the full duration of the course. Each event is visible to either students,
      * tutors, editors or instructors.
      *
-     * @param course the course for which to create calendar events
-     * @return the list of persisted {@link CourseCalendarEvent}s events
+     * @param course the course for which to create the events
+     * @return the list of persisted events
      * @throws IllegalArgumentException if the course has no start or end date or spans less than 26 days (such that at least one event visible to each user group is created)
      */
     public List<CourseCalendarEvent> createCourseCalendarEventsWithMutuallyExclusiveVisibility(Course course) {

@@ -43,7 +43,7 @@ public class CourseCalendarEventService {
      *
      * @param user           the user for which the DTOs should be retrieved
      * @param clientTimeZone the client's time zone
-     * @return a set of {@code CalendarEventDTO}s representing {@code CourseCalendarEvent}s relevant for the user
+     * @return the retrieved calendar events
      */
     public Set<CalendarEventDTO> getCourseEventsForUser(User user, ZoneId clientTimeZone) {
         ZonedDateTime now = ZonedDateTime.now(clientTimeZone).withZoneSameInstant(ZoneOffset.UTC);
@@ -71,11 +71,11 @@ public class CourseCalendarEventService {
     }
 
     /**
-     * Creates and persists {@link CourseCalendarEvent}s for the given course from the provided set of {@link CourseCalendarEventDTO}s.
+     * Creates and persists {@link CourseCalendarEvent}s for the given {@link Course} from the provided set of {@link CourseCalendarEventDTO}s.
      *
      * @param courseCalendarEventDTOS the list of DTOs to create
-     * @param course                  the course to associate the new {@link CourseCalendarEvent}s with
-     * @return a set of {@link CourseCalendarEventDTO}s representing the saved events
+     * @param course                  the course the new events should be related to
+     * @return a set of DTOs representing the saved events
      */
     public Set<CourseCalendarEventDTO> createCourseCalendarEventsElseThrow(List<CourseCalendarEventDTO> courseCalendarEventDTOS, Course course) {
         List<CourseCalendarEvent> courseCalendarEvents = new ArrayList<>();
@@ -98,10 +98,10 @@ public class CourseCalendarEventService {
     }
 
     /**
-     * Updates an existing {@link CourseCalendarEvent} based on the data in the provided {@link CourseCalendarEventDTO}.
+     * Updates an existing {@link CourseCalendarEvent} based on the data provided by th given {@link CourseCalendarEventDTO}.
      *
      * @param courseCalendarEventDTO the DTO containing updated calendar event data
-     * @return a {@link CourseCalendarEventDTO} representing the updated event
+     * @return a DTO representing the updated event
      */
     public CourseCalendarEventDTO updateCourseCalendarEventElseThrow(CourseCalendarEvent courseCalendarEvent, CourseCalendarEventDTO courseCalendarEventDTO) {
         courseCalendarEvent.setTitle(courseCalendarEventDTO.title());
@@ -118,10 +118,10 @@ public class CourseCalendarEventService {
     }
 
     /**
-     * Validates a {@link CalendarEventDTO} 's id and extracts the id of a {@link CourseCalendarEvent} from it.
+     * Validates a {@link CalendarEventDTO}'s id and extracts the id of a {@link CourseCalendarEvent} from it.
      *
      * @param calendarEventId the id string to validate and parse. The expected format consists of a "course-" prefix followed by a non-negative long (e.g., "course-12")
-     * @return the extracted numeric id as a {@link Long}
+     * @return the extracted id
      * @throws BadRequestException if the format of calendarEventId is invalid
      */
     public Long checkIfValidIdAndExtractCourseCalendarEventIdOrThrow(String calendarEventId) {
@@ -139,7 +139,7 @@ public class CourseCalendarEventService {
     }
 
     /**
-     * Validates that all id fields of the given calendar event DTOs are set to null.
+     * Validates that all id fields of the given {@link CourseCalendarEventDTO}s are set to null.
      *
      * @param courseCalendarEventDTOS the list of DTOs to check
      * @throws BadRequestException if any DTO has a non-null id
@@ -152,7 +152,7 @@ public class CourseCalendarEventService {
     }
 
     /**
-     * Validates that all courseName fields of the given calendar event DTOs are set to null.
+     * Validates that all courseName fields of the given {@link CourseCalendarEventDTO}s are set to null.
      *
      * @param courseCalendarEventDTOs the list of DTOs to check
      * @throws BadRequestException if any DTO has a non-null courseName
@@ -162,7 +162,7 @@ public class CourseCalendarEventService {
     }
 
     /**
-     * Validates that the courseName fields of the given calendar event DTO is set to null.
+     * Validates that the courseName fields of the given {@link CourseCalendarEventDTO} is set to null.
      *
      * @param courseCalendarEventDTO the list of DTO to check
      * @throws BadRequestException if the DTO has a non-null courseName
@@ -175,7 +175,7 @@ public class CourseCalendarEventService {
     }
 
     /**
-     * Validates that each of the given DTOs is visible to at least one of the following user groups: students, tutors, editors, or instructors.
+     * Validates that each of the given {@link CourseCalendarEventDTO}s is visible to at least one of the following user groups: students, tutors, editors, or instructors.
      *
      * @param courseCalendarEventDTOs the list of DTOs to check
      * @throws BadRequestException if any of the DTOs is visible to none of the user groups.
@@ -185,7 +185,7 @@ public class CourseCalendarEventService {
     }
 
     /**
-     * Validates that the given DTO is visible to at least one of the following user groups: students, tutors, editors, or instructors.
+     * Validates that the given {@link CourseCalendarEventDTO} is visible to at least one of the following user groups: students, tutors, editors, or instructors.
      *
      * @param courseCalendarEventDTO the DTO to check
      * @throws BadRequestException if the DTO is visible to none of the user groups.

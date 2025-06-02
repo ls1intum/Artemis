@@ -10,7 +10,7 @@ import de.tum.cit.aet.artemis.calendar.domain.CourseCalendarEvent;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
 
 /**
- * A DTO used to display calendar events in the calendar feature
+ * A DTO used to display calendar events in the calendar feature. It can be derived from both {@link CourseCalendarEvent}s and {@link TutorialGroupSession}s.
  */
 public record CalendarEventDTO(@Nullable String id, @NotNull String title, @NotNull String courseName, @NotNull ZonedDateTime startDate, @Nullable ZonedDateTime endDate,
         @Nullable String location, @Nullable String facilitator) {

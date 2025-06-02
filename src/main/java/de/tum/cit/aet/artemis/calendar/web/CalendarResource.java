@@ -79,11 +79,11 @@ public class CalendarResource {
     }
 
     /**
-     * GET /calendar-events : gets all calendar-events relevant to the user falling into the requested month
+     * GET /calendar-events : gets all {@link CalendarEventDTO}s relevant to the user falling into the requested month
      *
      * @param monthKeys a list of ISO 8601 formatted strings representing months
      * @param timeZone  the clients time zone as IANA time zone ID
-     * @return {@code 200 (OK)} with a map of {@link CalendarEventDTO}s keyed by day as body. All timestamps of the DTOs are in ISO 8601 format with timezone offset according
+     * @return {@code 200 (OK)} with a map of DTOs keyed by day as body. All timestamps of the DTOs are in ISO 8601 format with timezone offset according
      *         to the provided timezone.
      * @throws BadRequestException      {@code 400 (Bad Request)} if the monthKeys are empty or formatted incorrectly or if the timeZone is formatted incorrectly.
      * @throws AccessForbiddenException {@code 403 (Forbidden)} if the user does not have at least student role
@@ -109,10 +109,10 @@ public class CalendarResource {
     }
 
     /**
-     * GET /courses/{courseId}/calendar-events : gets all calendar-events related to the {@link Course} identified by courseId
+     * GET /courses/{courseId}/calendar-events : gets all {@link CourseCalendarEventDTO}s related to the {@link Course} identified by courseId
      *
      * @param courseId the id of the course for which to get the events
-     * @return {@code 200 (OK)} with a list of {@link CalendarEventDTO}s as body. All timestamps of the DTOs are in ISO 8601 format in UTC timezone.
+     * @return {@code 200 (OK)} with a list of DTOs as body. All timestamps of the DTOs are in ISO 8601 format in UTC timezone.
      * @throws EntityNotFoundException  {@code 404 (Not Found)} if no course exists for the provided courseId
      * @throws AccessForbiddenException {@code 403 (Forbidden)} if the user does not have at least editor role or is not editor or instructor of the course.
      */
@@ -136,10 +136,10 @@ public class CalendarResource {
      *
      * @param courseId                the id identifying the course to which the new event is supposed to be associated to
      * @param courseCalendarEventDTOS a list of DTOs representing the events that should be created
-     * @return {@code 200 (OK)} with a set of {@link CourseCalendarEventDTO} representing the created events as body.
+     * @return {@code 200 (OK)} with a set of DTOs representing the created events as body.
      * @throws BadRequestException      {@code 400 (Bad Request)} if any course has an id or courseName (fields will be set automatically) or is visible to none of the course's
      *                                      user groups
-     * @throws EntityNotFoundException  {@code 404 (Not Found)} if no {@link Course} is identified by courseId
+     * @throws EntityNotFoundException  {@code 404 (Not Found)} if no course is identified by courseId
      * @throws AccessForbiddenException {@code 403 (Forbidden)} if the user does not have at least student editor role and is not editor or instructor of the course
      */
     @PostMapping("courses/{courseId}/course-calendar-events")
@@ -164,12 +164,13 @@ public class CalendarResource {
      * PUT /course-calendar-event : updates a {@link CourseCalendarEvent} according to the given {@link CourseCalendarEventDTO}s.
      *
      * @param courseCalendarEventDTO a DTO representing the events that should be updated
-     * @return {@code 200 (OK)} with a {@link CourseCalendarEventDTO} representing the updated event as body.
-     * @throws BadRequestException      {@code 400 (Bad Request)} if the DTO has a wrongly formatted id, has a courseName (will be set automatically
-     *                                      according to the course of the event) or if the updated event is supposed to be visible to none of the course's user groups.
-     * @throws EntityNotFoundException  {@code 404 (Not Found)} if no {@link CourseCalendarEvent} corresponding to the DTO's id exists
-     * @throws AccessForbiddenException {@code 403 (Forbidden)} if the user does not have at least editor role and is not editor or instructor of the course associated to
-     *                                      the event
+     * @return {@code 200 (OK)} with a DTO representing the updated event as body.
+     * @throws BadRequestException      {@code 400 (Bad Request)} if the DTO has a wrongly formatted id, has a courseName (will be set
+     *                                      automatically according to the course of the event) or if the updated event is supposed to be visible to none of the
+     *                                      course's user groups.
+     * @throws EntityNotFoundException  {@code 404 (Not Found)} if no event corresponding to the DTO's id exists
+     * @throws AccessForbiddenException {@code 403 (Forbidden)} if the user does not have at least editor role and is not editor
+     *                                      or instructor of the course associated to the event
      */
     @PutMapping("course-calendar-event")
     @EnforceAtLeastEditor
@@ -195,7 +196,7 @@ public class CalendarResource {
      * @param calendarEventId the id of the calendar event to delete
      * @return {@code 204 (No Content)}
      * @throws BadRequestException      {@code 400 (Bad Request)} if the DTO has a wrongly formatted id (expected format: "course-{courseCalendarEventId}")
-     * @throws EntityNotFoundException  {@code 404 (Not Found)} if no {@link CourseCalendarEvent} is identified by DTO's id
+     * @throws EntityNotFoundException  {@code 404 (Not Found)} if no event exists corresponding to the DTO's id
      * @throws AccessForbiddenException {@code 403 (Forbidden)} if the user does not have at least student editor role and is not editor or instructor of the course associated to
      *                                      the event
      */

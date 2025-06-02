@@ -30,7 +30,7 @@ public class CalendarEventService {
      * Deserializes a list of month keys into a set of {@link YearMonth} objects.
      *
      * @param monthKeys the list of month strings in YYYY-MM format
-     * @return a set of parsed {@link YearMonth} objects
+     * @return the set of parsed objects
      * @throws BadRequestException if the list is empty or contains invalid format
      */
     public Set<YearMonth> deserializeMonthKeysOrElseThrow(List<String> monthKeys) {
@@ -52,7 +52,7 @@ public class CalendarEventService {
      * Deserializes a time zone string into a {@link ZoneId}.
      *
      * @param timeZone an IANA time zone ID as string
-     * @return the corresponding {@link ZoneId}
+     * @return the parsed object
      * @throws BadRequestException if the input has a wrong format
      */
     public ZoneId deserializeZoneIdOrElseThrow(String timeZone) {
@@ -65,12 +65,12 @@ public class CalendarEventService {
     }
 
     /**
-     * Filters the given calendar events to include only those that overlap with the specified months.
+     * Filters the given {@link CalendarEventDTO}s to include only those that overlap with the specified {@link YearMonth}.
      *
      * @param eventDTOs      the set of calendar events to filter
-     * @param months         the set of {@link YearMonth} values to check for overlap
+     * @param months         a set of months to check for overlap
      * @param clientTimeZone used to accurately compute month boundaries in the client's timezone when checking for overlaps
-     * @return a set of {@link CalendarEventDTO}s that overlap with at least one of the given months
+     * @return the filtered calendar events
      */
     public Set<CalendarEventDTO> filterForEventsOverlappingMonths(Set<CalendarEventDTO> eventDTOs, Set<YearMonth> months, ZoneId clientTimeZone) {
         return eventDTOs.stream().filter(eventDTO -> months.stream().anyMatch(month -> areMonthAndEventOverlapping(month, eventDTO, clientTimeZone))).collect(Collectors.toSet());
@@ -92,10 +92,10 @@ public class CalendarEventService {
     }
 
     /**
-     * Loops through all events and splits events that span multiple days into several events each covering one day.
+     * Loops through the given {@link CalendarEventDTO}s and splits events that span multiple days into several events each covering one day.
      *
-     * @param eventDTOs the set of calendar events to filter
-     * @return a set of {@link CalendarEventDTO}s including all unsplit events and the splitting results
+     * @param eventDTOs the set of calendar events to process
+     * @return a set including all unsplit events and the splitting results
      */
     public Set<CalendarEventDTO> splitEventsSpanningMultipleDaysIfNecessary(Set<CalendarEventDTO> eventDTOs) {
         return eventDTOs.stream().flatMap(event -> splitEventAcrossDaysIfNecessary(event).stream()).collect(Collectors.toSet());

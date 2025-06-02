@@ -80,7 +80,7 @@ public class TutorialGroupUtilService {
     }
 
     /**
-     * Creates and saves a TutorialGroupSession for the TutorialGroup with the given ID,
+     * Creates and saves a {@link TutorialGroupSession} for the {@link TutorialGroup} with the given ID,
      * allowing customization of the session status and status explanation.
      *
      * @param tutorialGroupId   The ID of the TutorialGroup
@@ -89,7 +89,7 @@ public class TutorialGroupUtilService {
      * @param attendanceCount   The attendance count of the TutorialGroupSession (can be null)
      * @param status            The status of the TutorialGroupSession (e.g., ACTIVE, CANCELLED)
      * @param statusExplanation An explanation for the session's status, used especially if cancelled
-     * @return The created TutorialGroupSession
+     * @return The created session
      */
     public TutorialGroupSession createIndividualTutorialGroupSession(Long tutorialGroupId, ZonedDateTime start, ZonedDateTime end, Integer attendanceCount,
             TutorialGroupSessionStatus status, String statusExplanation) {
@@ -188,7 +188,7 @@ public class TutorialGroupUtilService {
      * @param tutorialGroup            the tutorial group to which the sessions belong
      * @param course                   the course associated with the tutorial group
      * @param includeCancelledSessions indicates whether the first two sessions should be cancelled
-     * @return the created {@link TutorialGroupSession} instances
+     * @return the created sessions
      * @throws IllegalArgumentException if the course has no start or end date
      */
     public List<TutorialGroupSession> createTutorialGroupSessions(TutorialGroup tutorialGroup, Course course, boolean includeCancelledSessions) {

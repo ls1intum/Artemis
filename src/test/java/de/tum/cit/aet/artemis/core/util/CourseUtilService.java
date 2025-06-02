@@ -1361,12 +1361,12 @@ public class CourseUtilService {
     }
 
     /**
-     * Creates an active course that starts and ends relative to the current date in the given time zone.
+     * Creates an active {@link Course} that starts and ends relative to the current date in the given time zone.
      *
      * @param timezone      the time zone to base the course schedule on
      * @param monthsToStart number of months before now the course should start
      * @param monthsToEnd   number of months after now the course should end
-     * @return the created {@link Course}
+     * @return the created course
      * @throws IllegalArgumentException if {@code monthsToStart} or {@code monthsToEnd} have illegal values
      */
     public Course createActiveCourseInTimezone(ZoneId timezone, int monthsToStart, int monthsToEnd) {
@@ -1380,13 +1380,13 @@ public class CourseUtilService {
     }
 
     /**
-     * Creates a non-active course that starts and ends in the past relative to the current date in the given time zone.
+     * Creates a non-active {@link Course} that starts and ends in the past relative to the current date in the given time zone.
      *
      * @param timezone      the time zone to base the course schedule on
      * @param monthsToStart number of months before now the course should start
      * @param monthsToEnd   number of months before now the course should end
-     * @return the created {@link Course}
-     * @throws IllegalArgumentException if {@code monthsToStart} or {@code monthsToEnd} have illegal values
+     * @return the created course
+     * @throws IllegalArgumentException if monthsToStart or monthsToEnd have illegal values
      */
     public Course createNonActiveCourseInTimezone(ZoneId timezone, int monthsToStart, int monthsToEnd) {
         if (monthsToStart <= 0 || monthsToEnd <= 0) {
