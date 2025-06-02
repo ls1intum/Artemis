@@ -136,7 +136,7 @@ public class SharedQueueProcessingService {
     @EventListener(FullStartupEvent.class)
     public void init() {
         if (!buildAgentShortName.matches("^[a-z0-9-]+$")) {
-            String errorMessage = "Build agent s    hort name must not be empty and only contain lowercase letters, numbers and hyphens."
+            String errorMessage = "Build agent short name must not be empty and only contain lowercase letters, numbers and hyphens."
                     + " Build agent short name should be changed in the application properties under 'artemis.continuous-integration.build-agent.short-name'.";
             log.error(errorMessage);
             throw new IllegalArgumentException(errorMessage);
