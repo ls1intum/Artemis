@@ -29,7 +29,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.core.service.CourseService;
+import de.tum.cit.aet.artemis.core.service.course.CourseAtlasService;
 
 @Conditional(AtlasEnabled.class)
 @RestController
@@ -42,15 +42,15 @@ public class CourseLearnerProfileResource {
 
     private final CourseLearnerProfileRepository courseLearnerProfileRepository;
 
-    private final CourseService courseService;
+    private final CourseAtlasService courseAtlasService;
 
     private final CourseLearnerProfileService courseLearnerProfileService;
 
-    public CourseLearnerProfileResource(UserRepository userRepository, CourseLearnerProfileRepository courseLearnerProfileRepository, CourseService courseService,
+    public CourseLearnerProfileResource(UserRepository userRepository, CourseLearnerProfileRepository courseLearnerProfileRepository, CourseAtlasService courseAtlasService,
             CourseLearnerProfileService courseLearnerProfileService) {
         this.userRepository = userRepository;
         this.courseLearnerProfileRepository = courseLearnerProfileRepository;
-        this.courseService = courseService;
+        this.courseAtlasService = courseAtlasService;
         this.courseLearnerProfileService = courseLearnerProfileService;
     }
 
@@ -68,7 +68,7 @@ public class CourseLearnerProfileResource {
         Set<CourseLearnerProfile> courseLearnerProfiles = courseLearnerProfileRepository.findAllByLoginAndCourseActive(user.getLogin(), ZonedDateTime.now()).stream()
                 .filter(profile -> user.getGroups().contains(profile.getCourse().getStudentGroupName())).collect(Collectors.toSet());
 
-        Set<Course> coursesWithLearningPaths = courseService.findAllActiveForUserAndLearningPathsEnabled(user);
+        Set<Course> coursesWithLearningPaths = courseAtlasService.findAllActiveForUserAndLearningPathsEnabled(user);
 
         // This is needed, as there is no method that is executed everytime a user is added to a new course
         Set<CourseLearnerProfile> newProfiles = coursesWithLearningPaths.stream()
