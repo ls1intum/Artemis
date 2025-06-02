@@ -361,19 +361,19 @@ public class SharedQueueManagementService {
 
         @Override
         public void entryAdded(MapEntryEvent<String, BuildAgentInformation> event) {
-            log.debug("Build agent added: {}", event.getValue());
+            log.debug("Build agent added: {}", event.value());
             updateBuildAgentCapacity();
         }
 
         @Override
         public void entryRemoved(MapEntryEvent<String, BuildAgentInformation> event) {
-            log.debug("Build agent removed: {}", event.getOldValue());
+            log.debug("Build agent removed: {}", event.oldValue());
             updateBuildAgentCapacity();
         }
 
         @Override
         public void entryUpdated(MapEntryEvent<String, BuildAgentInformation> event) {
-            log.debug("Build agent updated: {}", event.getValue());
+            log.debug("Build agent updated: {}", event.value());
             updateBuildAgentCapacity();
         }
     }

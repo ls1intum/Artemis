@@ -10,8 +10,6 @@ public interface DistributedQueue<T> {
 
     boolean add(T item);
 
-    // boolean offer(T item);
-
     T poll();
 
     T peek();
