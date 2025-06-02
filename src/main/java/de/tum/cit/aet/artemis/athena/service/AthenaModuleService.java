@@ -93,6 +93,7 @@ public class AthenaModuleService {
      *
      * @param course       The course for which the modules should be retrieved
      * @param exerciseType The exercise type for which the modules should be retrieved
+     * @param moduleType   the optional module type to filter the available modules
      * @return The list of available Athena text modules for the course
      * @throws NetworkingException is thrown in case the modules can't be fetched from Athena
      */

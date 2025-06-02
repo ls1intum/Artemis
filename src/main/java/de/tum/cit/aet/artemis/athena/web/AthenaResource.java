@@ -210,7 +210,8 @@ public class AthenaResource {
     /**
      * GET courses/{courseId}/text-exercises/available-modules : Get all available Athena modules for a text exercise in the course
      *
-     * @param courseId the id of the course the text exercise belongs to
+     * @param courseId   the id of the course the text exercise belongs to
+     * @param moduleType the optional module type to filter the available modules
      * @return 200 Ok if successful with the modules as body
      */
     @GetMapping("courses/{courseId}/text-exercises/available-modules")
@@ -222,7 +223,8 @@ public class AthenaResource {
     /**
      * GET courses/{courseId}/programming-exercises/available-modules : Get all available Athena modules for a programming exercise in the course
      *
-     * @param courseId the id of the course the programming exercise belongs to
+     * @param courseId   the id of the course the programming exercise belongs to
+     * @param moduleType the optional module type to filter the available modules
      * @return 200 Ok if successful with the modules as body
      */
     @GetMapping("courses/{courseId}/programming-exercises/available-modules")
@@ -234,7 +236,8 @@ public class AthenaResource {
     /**
      * GET courses/{courseId}/modeling-exercises/available-modules : Get all available Athena modules for a modeling exercise in the course
      *
-     * @param courseId the id of the course the modeling exercise belongs to
+     * @param courseId   the id of the course the modeling exercise belongs to
+     * @param moduleType the optional module type to filter the available modules
      * @return 200 Ok if successful with the modules as body
      */
     @GetMapping("courses/{courseId}/modeling-exercises/available-modules")
