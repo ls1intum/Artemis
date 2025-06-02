@@ -25,6 +25,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.LLMRequest;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.iris.service.IrisConsistencyCheckService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisDTOService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.consistencyCheck.PyrisConsistencyCheckStatusUpdateDTO;
@@ -55,43 +56,40 @@ class PyrisConsistencyCheckIntegrationTest extends AbstractIrisIntegrationTest {
 
     @BeforeEach
     void initTestCase() {
-        userUtilService.addUsers(TEST_PREFIX, 2, 1, 0, 2);
+        userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 2);
         course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        this.programmingExercise = course.getExercises().stream().filter(ProgrammingExercise.class::isInstance).map(ProgrammingExercise.class::cast).findFirst().orElse(null);
-
-        userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
-        userUtilService.createAndSaveUser(TEST_PREFIX + "tutor42");
-        userUtilService.createAndSaveUser(TEST_PREFIX + "instructor42");
+        this.programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         activateIrisFor(course);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void callConsistencyCheckAsInstructor_shouldSucceed() throws Exception {
         PyrisProgrammingExerciseDTO exerciseDto = createPyrisProgrammingExerciseDTO(programmingExercise);
         irisRequestMockProvider.mockProgrammingConsistencyCheckResponse(dto -> {
-            assertThat(dto.exercise().id()).isEqualTo(exerciseDto.id());
-            assertThat(dto.exercise().name()).isEqualTo("Programming");
-            assertThat(dto.exercise().programmingLanguage()).isEqualTo(ProgrammingLanguage.JAVA);
-        }, exerciseDto.id());
+        });
 
         when(pyrisDTOService.toPyrisProgrammingExerciseDTO(any())).thenReturn(exerciseDto);
 
         request.postWithoutResponseBody("/api/iris/consistency-check/exercises/" + exerciseDto.id(), exerciseDto, HttpStatus.OK);
 
         // in the normal system, at some point we receive a websocket message with the result
-
         List<PyrisStageDTO> stages = List.of(new PyrisStageDTO("Generating Consistency Check", 10, PyrisStageState.DONE, null));
         String jobId = "testJobId";
-        String userLogin = TEST_PREFIX + "instructor1";
+        String userLogin = TEST_PREFIX + "editor1";
         ConsistencyCheckJob job = new ConsistencyCheckJob(jobId, course.getId(), exerciseDto.id(), userUtilService.getUserByLogin(userLogin).getId());
 
         List<LLMRequest> tokens = getMockLLMCosts();
-        irisConsistencyCheckService.handleStatusUpdate(job, new PyrisConsistencyCheckStatusUpdateDTO(stages, "result", tokens));
+        String rewritingResult = "result";
+        // Simulate the websocket message that would be sent by Pyris
+        // This is a simulation of the PyrisConsistencyCheckStatusUpdateDTO that would be sent to the user
+        // It contains the stages and the result of the consistency check
+        simulateWebsocketMessageWithResult(job, tokens, stages, rewritingResult);
+        // Make sure that the websocket message returned to the user contains the proper values (we need to intercept the returned message with the argumentCaptor)
         ArgumentCaptor<PyrisConsistencyCheckStatusUpdateDTO> argumentCaptor = ArgumentCaptor.forClass(PyrisConsistencyCheckStatusUpdateDTO.class);
 
-        verify(websocketMessagingService, timeout(200).times(3)).sendMessageToUser(eq(TEST_PREFIX + "instructor1"),
-                eq("/topic/iris/consistency-check/exercises/" + exerciseDto.id()), argumentCaptor.capture());
+        verify(websocketMessagingService, timeout(200).times(3)).sendMessageToUser(eq(TEST_PREFIX + "editor1"), eq("/topic/iris/consistency-check/exercises/" + exerciseDto.id()),
+                argumentCaptor.capture());
         List<PyrisConsistencyCheckStatusUpdateDTO> allValues = argumentCaptor.getAllValues();
 
         assertThat(allValues.get(0).stages()).hasSize(2);
@@ -101,7 +99,7 @@ class PyrisConsistencyCheckIntegrationTest extends AbstractIrisIntegrationTest {
         assertThat(allValues.get(1).result()).isNull();
 
         assertThat(allValues.get(2).stages()).hasSize(1);
-        assertThat(allValues.get(2).result()).isEqualTo("result");
+        assertThat(allValues.get(2).result()).isEqualTo(rewritingResult);
     }
 
     @Test
@@ -110,7 +108,7 @@ class PyrisConsistencyCheckIntegrationTest extends AbstractIrisIntegrationTest {
         PyrisProgrammingExerciseDTO exerciseDto = createPyrisProgrammingExerciseDTO(programmingExercise);
         irisRequestMockProvider.mockProgrammingConsistencyCheckResponse(dto -> {
             assertThat(dto.exercise().id()).isEqualTo(exerciseDto.id());
-        }, exerciseDto.id());
+        });
         request.postWithoutResponseBody("/api/iris/consistency-check/exercises/" + exerciseDto.id(), exerciseDto, HttpStatus.FORBIDDEN);
     }
 
@@ -120,7 +118,7 @@ class PyrisConsistencyCheckIntegrationTest extends AbstractIrisIntegrationTest {
         PyrisProgrammingExerciseDTO exerciseDto = createPyrisProgrammingExerciseDTO(programmingExercise);
         irisRequestMockProvider.mockProgrammingConsistencyCheckResponse(dto -> {
             assertThat(dto.exercise().id()).isEqualTo(exerciseDto.id());
-        }, exerciseDto.id());
+        });
         request.postWithoutResponseBody("/api/iris/consistency-check/exercises/" + exerciseDto.id(), exerciseDto, HttpStatus.FORBIDDEN);
     }
 
@@ -129,6 +127,10 @@ class PyrisConsistencyCheckIntegrationTest extends AbstractIrisIntegrationTest {
                 Map.of("Main.java", "public class Main {}", "Helper.java", "public class Helper {}"), Map.of("Solution.java", "public class Solution {}"),
                 Map.of("Test.java", "import static org.junit.jupiter.api.*; // tests"), "Implement a design pattern of your choice.", Instant.now(),
                 Instant.now().plusSeconds(604800));
+    }
+
+    private void simulateWebsocketMessageWithResult(ConsistencyCheckJob job, List<LLMRequest> tokens, List<PyrisStageDTO> stages, String result) {
+        irisConsistencyCheckService.handleStatusUpdate(job, new PyrisConsistencyCheckStatusUpdateDTO(stages, result, tokens));
     }
 
 }

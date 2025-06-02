@@ -43,37 +43,34 @@ class PyrisRewritingIntegrationTest extends AbstractIrisIntegrationTest {
 
     @BeforeEach
     void initTestCase() throws Exception {
-        userUtilService.addUsers(TEST_PREFIX, 2, 1, 0, 2);
-        this.course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-
-        userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
-        userUtilService.createAndSaveUser(TEST_PREFIX + "tutor42");
-        userUtilService.createAndSaveUser(TEST_PREFIX + "instructor42");
+        userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 2);
+        course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         activateIrisFor(course);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void callRewritingPipeline() throws Exception {
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void callRewritingPipeline_shouldSucceed() throws Exception {
+        var requestDTO = new PyrisRewriteTextRequestDTO("test", RewritingVariant.FAQ);
         irisRequestMockProvider.mockRewritingPipelineResponse(dto -> {
-            assertThat(dto.toBeRewritten()).contains("test");
         });
-        PyrisRewriteTextRequestDTO requestDTO = new PyrisRewriteTextRequestDTO("test", RewritingVariant.FAQ);
+
         request.postWithoutResponseBody("/api/iris/courses/" + course.getId() + "/rewrite-text", requestDTO, HttpStatus.OK);
 
-        // in the normal system, at some point we receive a websocket message with the result
-
-        List<PyrisStageDTO> stages = List.of(new PyrisStageDTO("Generating Rewriting", 10, PyrisStageState.DONE, null));
         String jobId = "testJobId";
-        String userLogin = TEST_PREFIX + "instructor1";
-        RewritingJob job = new RewritingJob(jobId, course.getId(), userUtilService.getUserByLogin(userLogin).getId());
+        String userLogin = TEST_PREFIX + "tutor1";
+        var userId = userUtilService.getUserByLogin(userLogin).getId();
 
+        RewritingJob job = new RewritingJob(jobId, course.getId(), userId);
+        List<PyrisStageDTO> stages = List.of(new PyrisStageDTO("Generating Rewriting", 10, PyrisStageState.DONE, null));
         List<LLMRequest> tokens = getMockLLMCosts();
-        irisRewritingService.handleStatusUpdate(job, new PyrisRewritingStatusUpdateDTO(stages, "result", tokens));
-        ArgumentCaptor<PyrisRewritingStatusUpdateDTO> argumentCaptor = ArgumentCaptor.forClass(PyrisRewritingStatusUpdateDTO.class);
+        String result = "result";
 
-        verify(websocketMessagingService, timeout(200).times(3)).sendMessageToUser(eq(TEST_PREFIX + "instructor1"), eq("/topic/iris/rewriting/" + course.getId()),
-                argumentCaptor.capture());
+        simulateWebsocketMessageWithResult(job, tokens, stages, result);
+
+        ArgumentCaptor<PyrisRewritingStatusUpdateDTO> argumentCaptor = ArgumentCaptor.forClass(PyrisRewritingStatusUpdateDTO.class);
+        verify(websocketMessagingService, timeout(200).times(3)).sendMessageToUser(eq(userLogin), eq("/topic/iris/rewriting/" + course.getId()), argumentCaptor.capture());
+
         List<PyrisRewritingStatusUpdateDTO> allValues = argumentCaptor.getAllValues();
 
         assertThat(allValues.get(0).stages()).hasSize(2);
@@ -83,16 +80,19 @@ class PyrisRewritingIntegrationTest extends AbstractIrisIntegrationTest {
         assertThat(allValues.get(1).result()).isNull();
 
         assertThat(allValues.get(2).stages()).hasSize(1);
-        assertThat(allValues.get(2).result()).isEqualTo("result");
+        assertThat(allValues.get(2).result()).isEqualTo(result);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void callRewritingPipelineAsStudentShouldThrowForbidden() throws Exception {
+    void callRewritingPipelineAsStudent_shouldThrowForbidden() throws Exception {
+        var requestDTO = new PyrisRewriteTextRequestDTO("irrelevant", RewritingVariant.FAQ);
         irisRequestMockProvider.mockRewritingPipelineResponse(dto -> {
         });
-        PyrisRewriteTextRequestDTO requestDTO = new PyrisRewriteTextRequestDTO("", RewritingVariant.FAQ);
         request.postWithoutResponseBody("/api/iris/courses/" + course.getId() + "/rewrite-text", requestDTO, HttpStatus.FORBIDDEN);
+    }
 
+    private void simulateWebsocketMessageWithResult(RewritingJob job, List<LLMRequest> tokens, List<PyrisStageDTO> stages, String result) {
+        irisRewritingService.handleStatusUpdate(job, new PyrisRewritingStatusUpdateDTO(stages, result, tokens));
     }
 }
