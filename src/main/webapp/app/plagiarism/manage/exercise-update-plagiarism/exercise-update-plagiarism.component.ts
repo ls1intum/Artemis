@@ -16,12 +16,12 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 export class ExerciseUpdatePlagiarismComponent implements OnInit, OnDestroy, AfterViewInit {
     readonly exercise = input<Exercise>(undefined!);
     readonly fieldCPCEnabled = viewChild<NgModel>('continuous_plagiarism_control_enabled');
-    readonly fieldThreshhold = viewChild<NgModel>('exercise.plagiarismDetectionConfig!.similarityThreshol');
+    readonly fieldThreshold = viewChild<NgModel>('exercise.plagiarismDetectionConfig!.similarityThreshol');
     readonly fieldMinScore = viewChild<NgModel>('exercise.plagiarismDetectionConfig.minimumScore');
     readonly fieldMinSize = viewChild<NgModel>('exercise.plagiarismDetectionConfig.minimumSize');
     readonly fieldResponsePeriod = viewChild<NgModel>('exercise.plagiarismDetectionConfig!.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod');
     fieldCPCEnabledSubscription?: Subscription;
-    fieldTreshholdSubscription?: Subscription;
+    fieldThresholdSubscription?: Subscription;
     fieldMinScoreSubscription?: Subscription;
     fieldMinSizeSubscription?: Subscription;
     fieldResponsePeriodSubscription?: Subscription;
