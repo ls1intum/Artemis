@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.exercise.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -28,6 +29,7 @@ import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.exception.GitException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -54,6 +56,7 @@ import de.tum.cit.aet.artemis.programming.service.UriService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.programming.service.localci.SharedQueueManagementService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCGitBranchService;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 
@@ -68,6 +71,9 @@ public class ParticipationService {
 
     @Value("${artemis.version-control.default-branch:main}")
     protected String defaultBranch;
+
+    @Value("${artemis.version-control.url}")
+    private URL localVCBaseUrl;
 
     private final GitService gitService;
 
@@ -259,8 +265,7 @@ public class ParticipationService {
      */
     private StudentParticipation startProgrammingExercise(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation) {
         // Step 1a) create the student repository (based on the template repository)
-        participation = copyRepository(exercise, exercise.getVcsTemplateRepositoryUri(), participation);
-
+        participation = createStudentRepository(exercise, exercise.getVcsTemplateRepositoryUri(), participation);
         return startProgrammingParticipation(participation);
     }
 
@@ -469,6 +474,32 @@ public class ParticipationService {
         }
         else {
             return participation;
+        }
+    }
+
+    private ProgrammingExerciseStudentParticipation createStudentRepository(ProgrammingExercise programmingExercise, VcsRepositoryUri sourceURL,
+            ProgrammingExerciseStudentParticipation participation) {
+        if (participation.getInitializationState().hasCompletedState(InitializationState.REPO_COPIED) && participation.getVcsRepositoryUri() != null) {
+            return participation;
+        }
+        try {
+            final var projectKey = programmingExercise.getProjectKey();
+            final var targetRepositoryName = participation.addPracticePrefixIfTestRun(participation.getParticipantIdentifier());
+            final var studentRepoPath = gitService.buildStudentRepoPath(projectKey, targetRepositoryName, participation.getAttempt());
+            gitService.createStudentRepository(sourceURL, studentRepoPath);
+
+            VcsRepositoryUri newRepoUri = new LocalVCRepositoryUri(studentRepoPath, localVCBaseUrl);
+            String username = participation.getParticipantIdentifier();
+            newRepoUri = newRepoUri.withUser(username);
+            participation.setRepositoryUri(newRepoUri.toString());
+            participation.setBranch(defaultBranch);
+            participation.setInitializationState(InitializationState.REPO_COPIED);
+
+            return programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
+        }
+        catch (Exception e) {
+            log.error("Error while creating single commit student repository", e);
+            throw new GitException("Failed to create single-commit student repository", e);
         }
     }
 
