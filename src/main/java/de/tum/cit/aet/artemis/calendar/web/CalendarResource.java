@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.calendar.web;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.time.YearMonth;
 import java.time.ZoneId;
 import java.util.List;
@@ -15,7 +13,7 @@ import jakarta.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.calendar.config.CalendarEnabled;
 import de.tum.cit.aet.artemis.calendar.domain.CourseCalendarEvent;
 import de.tum.cit.aet.artemis.calendar.dto.CalendarEventDTO;
 import de.tum.cit.aet.artemis.calendar.dto.CourseCalendarEventDTO;
@@ -45,7 +44,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupApi;
 
-@Profile(PROFILE_CORE)
+@Conditional(CalendarEnabled.class)
 @RestController
 @RequestMapping("api/calendar/")
 public class CalendarResource {

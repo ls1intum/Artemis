@@ -3,13 +3,16 @@ package de.tum.cit.aet.artemis.calendar.repository;
 import java.util.Optional;
 import java.util.Set;
 
+import org.springframework.context.annotation.Conditional;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import de.tum.cit.aet.artemis.calendar.config.CalendarEnabled;
 import de.tum.cit.aet.artemis.calendar.domain.CourseCalendarEvent;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 
+@Conditional(CalendarEnabled.class)
 @Repository
 public interface CourseCalendarEventRepository extends ArtemisJpaRepository<CourseCalendarEvent, Long> {
 

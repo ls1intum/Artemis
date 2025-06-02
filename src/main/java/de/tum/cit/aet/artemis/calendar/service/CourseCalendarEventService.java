@@ -11,8 +11,10 @@ import java.util.stream.Collectors;
 
 import jakarta.ws.rs.BadRequestException;
 
+import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.calendar.config.CalendarEnabled;
 import de.tum.cit.aet.artemis.calendar.domain.CourseCalendarEvent;
 import de.tum.cit.aet.artemis.calendar.dto.CalendarEventDTO;
 import de.tum.cit.aet.artemis.calendar.dto.CourseCalendarEventDTO;
@@ -21,6 +23,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 
+@Conditional(CalendarEnabled.class)
 @Service
 public class CourseCalendarEventService {
 
