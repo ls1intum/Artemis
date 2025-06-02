@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.programming.service.localci.distributedData.api;
+package de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.map;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-import com.hazelcast.map.listener.MapListener;
+import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.map.listener.MapEntryListener;
 
 public interface DistributedMap<K, V> {
 
@@ -34,5 +34,5 @@ public interface DistributedMap<K, V> {
 
     void unlock(K key);
 
-    UUID addEntryListener(MapListener listener, boolean includeValue);
+    UUID addEntryListener(MapEntryListener<K, V> listener);
 }

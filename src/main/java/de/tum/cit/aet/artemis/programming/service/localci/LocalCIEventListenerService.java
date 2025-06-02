@@ -12,12 +12,6 @@ import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import com.hazelcast.collection.ItemEvent;
-import com.hazelcast.collection.ItemListener;
-import com.hazelcast.map.listener.EntryAddedListener;
-import com.hazelcast.map.listener.EntryRemovedListener;
-import com.hazelcast.map.listener.EntryUpdatedListener;
-
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
@@ -25,6 +19,9 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.dto.SubmissionProcessingDTO;
 import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
+import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.map.listener.MapEntryEvent;
+import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.map.listener.MapEntryListener;
+import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.queue.listener.QueueItemListener;
 
 /**
  * Central listener service for handling LocalCI events.
@@ -64,9 +61,9 @@ public class LocalCIEventListenerService {
      */
     @EventListener(ApplicationReadyEvent.class)
     public void init() {
-        distributedDataAccessService.getDistributedBuildJobQueue().addItemListener(new QueuedBuildJobItemListener(), true);
-        distributedDataAccessService.getDistributedProcessingJobs().addEntryListener(new ProcessingBuildJobItemListener(), true);
-        distributedDataAccessService.getDistributedBuildAgentInformation().addEntryListener(new BuildAgentListener(), true);
+        distributedDataAccessService.getDistributedBuildJobQueue().addItemListener(new QueuedBuildJobItemListener());
+        distributedDataAccessService.getDistributedProcessingJobs().addEntryListener(new ProcessingBuildJobItemListener());
+        distributedDataAccessService.getDistributedBuildAgentInformation().addEntryListener(new BuildAgentListener());
     }
 
     /**
@@ -123,23 +120,23 @@ public class LocalCIEventListenerService {
         return queuedJobs.stream().anyMatch(job -> job.id().equals(buildJobId));
     }
 
-    private class QueuedBuildJobItemListener implements ItemListener<BuildJobQueueItem> {
+    private class QueuedBuildJobItemListener implements QueueItemListener<BuildJobQueueItem> {
 
         @Override
-        public void itemAdded(ItemEvent<BuildJobQueueItem> event) {
-            localCIQueueWebsocketService.sendQueuedJobsOverWebsocket(event.getItem().courseId());
+        public void itemAdded(BuildJobQueueItem item) {
+            localCIQueueWebsocketService.sendQueuedJobsOverWebsocket(item.courseId());
         }
 
         @Override
-        public void itemRemoved(ItemEvent<BuildJobQueueItem> event) {
-            localCIQueueWebsocketService.sendQueuedJobsOverWebsocket(event.getItem().courseId());
+        public void itemRemoved(BuildJobQueueItem item) {
+            localCIQueueWebsocketService.sendQueuedJobsOverWebsocket(item.courseId());
         }
     }
 
-    private class ProcessingBuildJobItemListener implements EntryAddedListener<Long, BuildJobQueueItem>, EntryRemovedListener<Long, BuildJobQueueItem> {
+    private class ProcessingBuildJobItemListener implements MapEntryListener<String, BuildJobQueueItem> {
 
         @Override
-        public void entryAdded(com.hazelcast.core.EntryEvent<Long, BuildJobQueueItem> event) {
+        public void entryAdded(MapEntryEvent<String, BuildJobQueueItem> event) {
             log.debug("CIBuildJobQueueItem added to processing jobs: {}", event.getValue());
             localCIQueueWebsocketService.sendProcessingJobsOverWebsocket(event.getValue().courseId());
             buildJobRepository.updateBuildJobStatusWithBuildStartDate(event.getValue().id(), BuildStatus.BUILDING, event.getValue().jobTimingInfo().buildStartDate());
@@ -149,29 +146,32 @@ public class LocalCIEventListenerService {
         }
 
         @Override
-        public void entryRemoved(com.hazelcast.core.EntryEvent<Long, BuildJobQueueItem> event) {
+        public void entryRemoved(MapEntryEvent<String, BuildJobQueueItem> event) {
             log.debug("CIBuildJobQueueItem removed from processing jobs: {}", event.getOldValue());
             localCIQueueWebsocketService.sendProcessingJobsOverWebsocket(event.getOldValue().courseId());
         }
-    }
-
-    private class BuildAgentListener
-            implements EntryAddedListener<String, BuildAgentInformation>, EntryRemovedListener<String, BuildAgentInformation>, EntryUpdatedListener<String, BuildAgentInformation> {
 
         @Override
-        public void entryAdded(com.hazelcast.core.EntryEvent<String, BuildAgentInformation> event) {
+        public void entryUpdated(MapEntryEvent<String, BuildJobQueueItem> event) {
+        }
+    }
+
+    private class BuildAgentListener implements MapEntryListener<String, BuildAgentInformation> {
+
+        @Override
+        public void entryAdded(MapEntryEvent<String, BuildAgentInformation> event) {
             log.debug("Build agent added: {}", event.getValue());
             localCIQueueWebsocketService.sendBuildAgentInformationOverWebsocket(event.getValue().buildAgent().name());
         }
 
         @Override
-        public void entryRemoved(com.hazelcast.core.EntryEvent<String, BuildAgentInformation> event) {
+        public void entryRemoved(MapEntryEvent<String, BuildAgentInformation> event) {
             log.debug("Build agent removed: {}", event.getOldValue());
             localCIQueueWebsocketService.sendBuildAgentInformationOverWebsocket(event.getOldValue().buildAgent().name());
         }
 
         @Override
-        public void entryUpdated(com.hazelcast.core.EntryEvent<String, BuildAgentInformation> event) {
+        public void entryUpdated(MapEntryEvent<String, BuildAgentInformation> event) {
             log.debug("Build agent updated: {}", event.getValue());
             localCIQueueWebsocketService.sendBuildAgentInformationOverWebsocket(event.getValue().buildAgent().name());
         }

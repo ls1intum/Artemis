@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.context.annotation.Profile;
@@ -17,9 +18,9 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
 import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.DistributedDataProvider;
-import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.DistributedMap;
-import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.DistributedQueue;
 import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.DistributedTopic;
+import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.map.DistributedMap;
+import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.queue.DistributedQueue;
 
 /**
  * This service is used to access the distributed data structures.
@@ -47,8 +48,9 @@ public class DistributedDataAccessService {
 
     private DistributedTopic<String> resumeBuildAgentTopic;
 
-    public DistributedDataAccessService(DistributedDataProvider distributedDataProvider) {
-        this.distributedDataProvider = distributedDataProvider;
+    public DistributedDataAccessService(Optional<DistributedDataProvider> distributedDataProvider) {
+        this.distributedDataProvider = distributedDataProvider.orElseThrow(() -> new IllegalStateException(
+                "DistributedDataProvider is not available. " + "Please ensure that the application is running with the correct profile (e.g., hazelcast or redisson)."));
     }
 
     /**

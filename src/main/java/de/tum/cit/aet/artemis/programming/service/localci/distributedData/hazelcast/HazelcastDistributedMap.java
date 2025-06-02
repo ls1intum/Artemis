@@ -6,10 +6,15 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import com.hazelcast.core.EntryEvent;
 import com.hazelcast.map.IMap;
-import com.hazelcast.map.listener.MapListener;
+import com.hazelcast.map.listener.EntryAddedListener;
+import com.hazelcast.map.listener.EntryRemovedListener;
+import com.hazelcast.map.listener.EntryUpdatedListener;
 
-import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.DistributedMap;
+import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.map.DistributedMap;
+import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.map.listener.MapEntryEvent;
+import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.map.listener.MapEntryListener;
 
 public class HazelcastDistributedMap<K, V> implements DistributedMap<K, V> {
 
@@ -79,7 +84,26 @@ public class HazelcastDistributedMap<K, V> implements DistributedMap<K, V> {
     }
 
     @Override
-    public UUID addEntryListener(MapListener listener, boolean includeValue) {
-        return map.addEntryListener(listener, includeValue);
+    public UUID addEntryListener(MapEntryListener<K, V> listener) {
+        class HazelcastMapEntryListener implements EntryAddedListener<K, V>, EntryRemovedListener<K, V>, EntryUpdatedListener<K, V> {
+
+            @Override
+            public void entryAdded(EntryEvent<K, V> event) {
+                listener.entryAdded(new MapEntryEvent<>(event.getKey(), event.getValue(), event.getOldValue()));
+            }
+
+            @Override
+            public void entryRemoved(EntryEvent<K, V> event) {
+                listener.entryRemoved(new MapEntryEvent<>(event.getKey(), event.getValue(), event.getOldValue()));
+
+            }
+
+            @Override
+            public void entryUpdated(EntryEvent<K, V> event) {
+                listener.entryUpdated(new MapEntryEvent<>(event.getKey(), event.getValue(), event.getOldValue()));
+
+            }
+        }
+        return map.addEntryListener(new HazelcastMapEntryListener(), true);
     }
 }

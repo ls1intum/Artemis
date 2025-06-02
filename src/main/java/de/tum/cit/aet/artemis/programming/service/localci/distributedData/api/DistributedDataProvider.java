@@ -2,6 +2,9 @@ package de.tum.cit.aet.artemis.programming.service.localci.distributedData.api;
 
 import java.util.Set;
 
+import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.map.DistributedMap;
+import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.queue.DistributedQueue;
+
 public interface DistributedDataProvider {
 
     <T> DistributedQueue<T> getQueue(String name);

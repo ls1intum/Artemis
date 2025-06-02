@@ -5,12 +5,20 @@ import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
-import com.hazelcast.collection.IQueue;
-import com.hazelcast.collection.ItemListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.DistributedQueue;
+import com.hazelcast.collection.IQueue;
+import com.hazelcast.collection.ItemEvent;
+import com.hazelcast.collection.ItemListener;
+import com.hazelcast.core.HazelcastInstanceNotActiveException;
+
+import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.queue.DistributedQueue;
+import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.queue.listener.QueueItemListener;
 
 public class HazelcastDistributedQueue<T> implements DistributedQueue<T> {
+
+    private static final Logger log = LoggerFactory.getLogger(HazelcastDistributedQueue.class);
 
     private final IQueue<T> queue;
 
@@ -21,11 +29,6 @@ public class HazelcastDistributedQueue<T> implements DistributedQueue<T> {
     @Override
     public boolean add(T item) {
         return queue.add(item);
-    }
-
-    @Override
-    public boolean offer(T item) {
-        return queue.offer(item);
     }
 
     @Override
@@ -69,12 +72,29 @@ public class HazelcastDistributedQueue<T> implements DistributedQueue<T> {
     }
 
     @Override
-    public UUID addItemListener(ItemListener<T> addedItemListener, boolean includeValue) {
-        return queue.addItemListener(addedItemListener, includeValue);
+    public UUID addItemListener(QueueItemListener<T> listener) {
+        ItemListener<T> hazelcastListener = new ItemListener<>() {
+
+            @Override
+            public void itemAdded(ItemEvent<T> item) {
+                listener.itemAdded(item.getItem());
+            }
+
+            @Override
+            public void itemRemoved(ItemEvent<T> item) {
+                listener.itemRemoved(item.getItem());
+            }
+        };
+        return queue.addItemListener(hazelcastListener, true);
     }
 
     @Override
     public void removeItemListener(UUID registrationId) {
-        queue.removeItemListener(registrationId);
+        try {
+            queue.removeItemListener(registrationId);
+        }
+        catch (HazelcastInstanceNotActiveException e) {
+            log.error("Could not remove listener from queue '{}' as hazelcast instance is not active.", queue.getName(), e);
+        }
     }
 }

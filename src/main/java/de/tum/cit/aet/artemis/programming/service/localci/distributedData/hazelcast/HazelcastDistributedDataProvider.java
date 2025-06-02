@@ -12,9 +12,9 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 
 import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.DistributedDataProvider;
-import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.DistributedMap;
-import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.DistributedQueue;
 import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.DistributedTopic;
+import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.map.DistributedMap;
+import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.queue.DistributedQueue;
 
 @Service
 public class HazelcastDistributedDataProvider implements DistributedDataProvider {

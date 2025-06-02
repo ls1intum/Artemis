@@ -32,10 +32,6 @@ import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import com.hazelcast.collection.ItemEvent;
-import com.hazelcast.collection.ItemListener;
-import com.hazelcast.core.HazelcastInstanceNotActiveException;
-
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
@@ -46,6 +42,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
+import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.queue.listener.QueueItemListener;
 
 /**
  * Includes functionality for processing build jobs from the shared build job queue.
@@ -141,7 +138,7 @@ public class SharedQueueProcessingService {
         if (this.listenerId != null) {
             distributedDataAccessService.getDistributedBuildJobQueue().removeItemListener(this.listenerId);
         }
-        this.listenerId = this.distributedDataAccessService.getDistributedBuildJobQueue().addItemListener(new QueuedBuildJobItemListener(), true);
+        this.listenerId = this.distributedDataAccessService.getDistributedBuildJobQueue().addItemListener(new QueuedBuildJobItemListener());
 
         /*
          * Check every 10 seconds whether the node has at least one thread available for a new build job.
@@ -171,14 +168,8 @@ public class SharedQueueProcessingService {
     }
 
     private void removeListener() {
-        // check if Hazelcast is still active, before invoking this
-        try {
-            if (distributedDataAccessService.isInstanceRunning()) {
-                distributedDataAccessService.getDistributedBuildJobQueue().removeItemListener(this.listenerId);
-            }
-        }
-        catch (HazelcastInstanceNotActiveException e) {
-            log.error("Failed to remove listener from SharedQueueProcessingService as Hazelcast instance is not active any more.");
+        if (distributedDataAccessService.isInstanceRunning()) {
+            distributedDataAccessService.getDistributedBuildJobQueue().removeItemListener(this.listenerId);
         }
     }
 
@@ -481,7 +472,7 @@ public class SharedQueueProcessingService {
 
             // We remove the listener and scheduledTask first to avoid having multiple listeners and scheduled tasks running
             removeListenerAndCancelScheduledFuture();
-            listenerId = distributedDataAccessService.getDistributedBuildJobQueue().addItemListener(new QueuedBuildJobItemListener(), true);
+            listenerId = distributedDataAccessService.getDistributedBuildJobQueue().addItemListener(new QueuedBuildJobItemListener());
             scheduledFuture = taskScheduler.scheduleAtFixedRate(this::checkAvailabilityAndProcessNextBuild, Duration.ofSeconds(10));
 
             buildAgentInformationService.updateLocalBuildAgentInformation(isPaused.get());
@@ -508,18 +499,18 @@ public class SharedQueueProcessingService {
                 && buildExecutorService.getQueue().isEmpty();
     }
 
-    public class QueuedBuildJobItemListener implements ItemListener<BuildJobQueueItem> {
+    public class QueuedBuildJobItemListener implements QueueItemListener<BuildJobQueueItem> {
 
         @Override
-        public void itemAdded(ItemEvent<BuildJobQueueItem> event) {
-            log.debug("CIBuildJobQueueItem added to queue: {}", event.getItem());
+        public void itemAdded(BuildJobQueueItem item) {
+            log.debug("CIBuildJobQueueItem added to queue: {}", item);
             log.debug("Current queued items: {}", distributedDataAccessService.getQueuedJobsSize());
             checkAvailabilityAndProcessNextBuild();
         }
 
         @Override
-        public void itemRemoved(ItemEvent<BuildJobQueueItem> event) {
-            log.debug("CIBuildJobQueueItem removed from queue: {}", event.getItem());
+        public void itemRemoved(BuildJobQueueItem item) {
+            log.debug("CIBuildJobQueueItem removed from queue: {}", item);
         }
     }
 }
