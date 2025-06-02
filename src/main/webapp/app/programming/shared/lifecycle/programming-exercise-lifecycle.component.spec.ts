@@ -20,6 +20,7 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
 import { AthenaService } from 'app/assessment/shared/services/athena.service';
+import { PROFILE_ATHENA } from '../../../app.constants';
 
 describe('ProgrammingExerciseLifecycleComponent', () => {
     let comp: ProgrammingExerciseLifecycleComponent;
@@ -31,6 +32,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
     const exampleSolutionPublicationDate = dayjs().add(9, 'days');
     let exercise: ProgrammingExercise;
     let athenaService: AthenaService;
+    let profileService: ProfileService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -75,6 +77,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         });
 
         athenaService = TestBed.inject(AthenaService);
+        profileService = TestBed.inject(ProfileService);
     });
 
     afterEach(() => {
@@ -392,17 +395,16 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
     });
 
     it('should render ExercisePreliminaryFeedbackOptionsComponent when preliminary feedback requests are set', fakeAsync(() => {
+        profileService.setActiveProfiles([PROFILE_ATHENA]);
+
         comp.exercise = exercise;
-        fixture.componentRef.setInput('isEditFieldDisplayedRecord', {
-            preliminaryFeedbackRequests: true,
-        });
+        fixture.componentRef.setInput('isEditFieldDisplayedRecord', { preliminaryFeedbackRequests: true });
         comp.isExamMode = false;
-        jest.spyOn(athenaService, 'isEnabled').mockReturnValue(true);
 
         tick();
         fixture.detectChanges();
 
-        expect(comp.isAthenaEnabled).toBeDefined();
+        expect(comp.isAthenaEnabled).toBeTrue();
 
         const preliminaryFeedbackElement = fixture.debugElement.nativeElement.querySelector('jhi-exercise-preliminary-feedback-options');
         expect(preliminaryFeedbackElement).toBeTruthy();

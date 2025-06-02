@@ -31,10 +31,7 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
                 { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: () => '1' } } } },
                 MockDirective(TranslateDirective),
                 { provide: TranslateService, useClass: MockTranslateService },
-                {
-                    provide: ProfileService,
-                    useClass: MockProfileService,
-                },
+                { provide: ProfileService, useClass: MockProfileService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -124,11 +121,11 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
         expect(component.exercise.feedbackSuggestionModule).toBeUndefined();
     });
 
-    it('should toggle feedback requests and set the module for text exercises', () => {
+    it('should toggle feedback requests and set the module for programming exercises', () => {
         component.availableAthenaModules = ['Module1', 'Module2'];
         jest.spyOn(athenaService, 'getAvailableModules').mockReturnValue(of(component.availableAthenaModules));
         component.exercise = { type: ExerciseType.PROGRAMMING, dueDate: futureDueDate, assessmentType: AssessmentType.SEMI_AUTOMATIC } as Exercise;
-
+        profileService.setActiveProfiles(PROFILE_ATHENA);
         fixture.detectChanges();
 
         // assume a module is chosen, hence, the controls are active
