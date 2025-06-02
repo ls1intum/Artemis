@@ -32,7 +32,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
@@ -49,7 +48,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.dto.CheckoutDirectoriesDTO;
-import de.tum.cit.aet.artemis.programming.service.localci.LocalCITriggerService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
@@ -94,9 +92,6 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
 
     @Autowired
     private ProgrammingExerciseImportTestService programmingExerciseImportTestService;
-
-    @MockitoBean
-    private LocalCITriggerService localCITriggerService;
 
     @BeforeAll
     void setupAll() {
