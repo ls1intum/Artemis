@@ -16,7 +16,7 @@ import { GradingSystemService } from 'app/assessment/manage/grading-system/gradi
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/shared/tab-bar/tab-bar';
 import { ChartCategoryFilter } from 'app/shared/chart/chart-category-filter';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
-import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { ScoreType } from 'app/shared/constants/score-type.constants';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
@@ -26,12 +26,13 @@ import { Subject, Subscription } from 'rxjs';
 import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { ExerciseScoresChartComponent } from 'app/core/course/overview/visualizations/exercise-scores-chart/exercise-scores-chart.component';
 import { KeyValuePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ScoresStorageService } from 'app/core/course/manage/course-scores/scores-storage.service';
 import { CourseScores } from 'app/core/course/manage/course-scores/course-scores';
+import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 
 const QUIZ_EXERCISE_COLOR = '#17a2b8';
 const PROGRAMMING_EXERCISE_COLOR = '#fd7e14';
@@ -346,7 +347,8 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
                     this.pushToData(exercise, series);
                 } else {
                     exercise.studentParticipations.forEach((participation: StudentParticipation) => {
-                        if (participation.id && participation.results?.length) {
+                        const results = getAllResultsOfAllSubmissions(participation.submissions);
+                        if (participation.id && results.length) {
                             const participationResult: ParticipationResultDTO | undefined = this.scoresStorageService.getStoredParticipationResult(participation.id);
                             if (participationResult?.rated) {
                                 const roundedParticipationScore = roundValueSpecifiedByCourseSettings(participationResult.score!, this.course);

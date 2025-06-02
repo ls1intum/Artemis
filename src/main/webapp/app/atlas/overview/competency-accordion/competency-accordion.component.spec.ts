@@ -24,7 +24,6 @@ describe('CompetencyAccordionComponent', () => {
         TestBed.configureTestingModule({
             declarations: [CompetencyAccordionComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), MockComponent(CompetencyRingsComponent)],
             providers: [MockProvider(TranslateService)],
-            schemas: [],
         })
             .compileComponents()
             .then(() => {
@@ -48,9 +47,9 @@ describe('CompetencyAccordionComponent', () => {
 
     it('should calculate lecture progress', () => {
         const before = dayjs().subtract(1, 'day');
-        const lectureUnitInformation0: LectureUnitInformation = { lectureTitle: '', name: '', type: LectureUnitType.ATTACHMENT, id: 0, lectureId: 21, releaseDate: before };
+        const lectureUnitInformation0: LectureUnitInformation = { lectureTitle: '', name: '', type: LectureUnitType.ATTACHMENT_VIDEO, id: 0, lectureId: 21, releaseDate: before };
         const lectureUnitInformation1: LectureUnitInformation = { lectureTitle: '', name: '', type: LectureUnitType.TEXT, id: 1, lectureId: 21, releaseDate: before };
-        const lectureUnitInformation2: LectureUnitInformation = { lectureTitle: '', name: '', type: LectureUnitType.VIDEO, id: 2, lectureId: 21, releaseDate: before };
+        const lectureUnitInformation2: LectureUnitInformation = { lectureTitle: '', name: '', type: LectureUnitType.ONLINE, id: 2, lectureId: 21, releaseDate: before };
         const lectureUnitStudentMetricsDTO: LectureUnitStudentMetricsDTO = {
             lectureUnitInformation: { 0: lectureUnitInformation0, 1: lectureUnitInformation1, 2: lectureUnitInformation2 },
             completed: [0, 2],

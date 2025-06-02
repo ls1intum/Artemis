@@ -12,6 +12,7 @@ import { MockComponent, MockProvider } from 'ng-mocks';
 import { CompetencyContributionComponent } from 'app/atlas/shared/competency-contribution/competency-contribution.component';
 import { CompetencyContributionCardDTO } from 'app/atlas/shared/entities/competency.model';
 import { of } from 'rxjs';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 describe('TextUnitComponent', () => {
     let scienceService: ScienceService;
@@ -45,6 +46,7 @@ describe('TextUnitComponent', () => {
                 },
                 { provide: ScienceService, useClass: MockScienceService },
                 MockProvider(CourseCompetencyService),
+                MockProvider(ProfileService),
             ],
         }).compileComponents();
 

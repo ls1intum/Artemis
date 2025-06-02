@@ -35,9 +35,11 @@ import de.tum.cit.aet.artemis.communication.domain.conversation.OneToOneChat;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewAnnouncementNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewMentionNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewPostNotification;
+import de.tum.cit.aet.artemis.communication.dto.CreatePostDTO;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.PostContextFilterDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostDTO;
+import de.tum.cit.aet.artemis.communication.dto.UpdatePostingDTO;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
 import de.tum.cit.aet.artemis.communication.repository.PostRepository;
@@ -90,20 +92,24 @@ public class ConversationMessagingService extends PostingService {
     /**
      * Creates a new message in a conversation
      *
-     * @param courseId   the id where the conversation is located
-     * @param newMessage the message to be created includes the conversation id
+     * @param courseId the id where the conversation is located
+     * @param message  the post to be created includes the conversation id
      * @return the created message and associated data
      */
-    public CreatedConversationMessage createMessage(Long courseId, Post newMessage) {
+    public CreatedConversationMessage createMessage(Long courseId, CreatePostDTO message) {
         var author = this.userRepository.getUserWithGroupsAndAuthorities();
+
+        var newMessage = message.toEntity();
         newMessage.setAuthor(author);
         newMessage.setDisplayPriority(DisplayPriority.NONE);
 
-        var conversationId = newMessage.getConversation().getId();
+        var conversationId = message.conversation().id();
 
         var conversation = conversationService.isMemberOrCreateForCourseWideElseThrow(conversationId, author, Optional.empty())
                 .orElse(conversationService.loadConversationWithParticipantsIfGroupChat(conversationId));
         log.debug("      createMessage:conversationService.isMemberOrCreateForCourseWideElseThrow DONE");
+
+        newMessage.setConversation(conversation);
 
         var course = preCheckUserAndCourseForMessaging(author, courseId);
 
@@ -155,7 +161,7 @@ public class ConversationMessagingService extends PostingService {
         if (createdConversationMessage.completeConversation() instanceof Channel channel && channel.getIsCourseWide()) {
             // We don't need the list of participants for course-wide channels. We can delay the db query and send the WS messages first
             if (conversationService.isChannelVisibleToStudents(channel)) {
-                broadcastForPost(postDTO, course.getId(), null, null);
+                broadcastForPost(postDTO, course.getId(), null);
             }
             log.debug("      broadcastForPost DONE");
 
@@ -175,7 +181,7 @@ public class ConversationMessagingService extends PostingService {
                 }
             }
 
-            broadcastForPost(postDTO, course.getId(), recipientSummaries, createdConversationMessage.mentionedUsers());
+            broadcastForPost(postDTO, course.getId(), recipientSummaries);
 
             log.debug("      broadcastForPost DONE");
         }
@@ -303,10 +309,10 @@ public class ConversationMessagingService extends PostingService {
      * @param messagePost post to update
      * @return updated post that was persisted
      */
-    public Post updateMessage(Long courseId, Long postId, Post messagePost) {
+    public Post updateMessage(Long courseId, Long postId, UpdatePostingDTO messagePost) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         // check
-        if (messagePost.getId() == null || !Objects.equals(messagePost.getId(), postId)) {
+        if (!Objects.equals(messagePost.id(), postId)) {
             throw new BadRequestAlertException("Invalid id", METIS_POST_ENTITY_NAME, "idnull");
         }
 
@@ -314,11 +320,11 @@ public class ConversationMessagingService extends PostingService {
         Conversation conversation = mayUpdateOrDeleteMessageElseThrow(existingMessage, user);
         var course = preCheckUserAndCourseForMessaging(user, courseId);
 
-        parseUserMentions(course, messagePost.getContent());
+        parseUserMentions(course, messagePost.content());
 
         // update: allow overwriting of values only for depicted fields
-        existingMessage.setContent(messagePost.getContent());
-        existingMessage.setTitle(messagePost.getTitle());
+        existingMessage.setContent(messagePost.content());
+        existingMessage.setTitle(messagePost.title());
         existingMessage.setUpdatedDate(ZonedDateTime.now());
 
         Post updatedPost = conversationMessageRepository.save(existingMessage);
@@ -326,7 +332,7 @@ public class ConversationMessagingService extends PostingService {
 
         // emit a post update via websocket
         preparePostForBroadcast(updatedPost);
-        broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course.getId(), null, null);
+        broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course.getId(), null);
 
         return updatedPost;
     }
@@ -358,7 +364,7 @@ public class ConversationMessagingService extends PostingService {
 
         conversationService.notifyAllConversationMembersAboutUpdate(conversation);
         preparePostForBroadcast(post);
-        broadcastForPost(new PostDTO(post, MetisCrudAction.DELETE), course.getId(), null, null);
+        broadcastForPost(new PostDTO(post, MetisCrudAction.DELETE), course.getId(), null);
     }
 
     /**
@@ -390,7 +396,7 @@ public class ConversationMessagingService extends PostingService {
         message.getConversation().hideDetails();
         preparePostForBroadcast(message);
         preparePostForBroadcast(updatedMessage);
-        broadcastForPost(new PostDTO(message, MetisCrudAction.UPDATE), course.getId(), null, null);
+        broadcastForPost(new PostDTO(message, MetisCrudAction.UPDATE), course.getId(), null);
         return updatedMessage;
     }
 

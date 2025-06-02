@@ -24,6 +24,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -35,6 +36,7 @@ import de.tum.cit.aet.artemis.assessment.util.GradingCriterionUtil;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
+import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
@@ -45,11 +47,15 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseFactory;
 
 class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTest {
+
+    @Autowired
+    private ConversationUtilService conversationUtilService;
 
     private static final String TEST_PREFIX = "fileuploaderxercise";
 
@@ -230,9 +236,9 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getFileUploadExercise() throws Exception {
         Course course = fileUploadExerciseUtilService.addCourseWithThreeFileUploadExercise();
-        FileUploadExercise fileUploadExercise = exerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "released");
+        FileUploadExercise fileUploadExercise = ExerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "released");
 
-        exerciseUtilService.addChannelToExercise(fileUploadExercise);
+        conversationUtilService.addChannelToExercise(fileUploadExercise);
 
         FileUploadExercise receivedFileUploadExercise = request.get("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.OK, FileUploadExercise.class);
 
@@ -289,14 +295,14 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetFileUploadExercise_setGradingInstructionFeedbackUsed() throws Exception {
         Course course = fileUploadExerciseUtilService.addCourseWithThreeFileUploadExercise();
-        FileUploadExercise fileUploadExercise = exerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "released");
+        FileUploadExercise fileUploadExercise = ExerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "released");
         gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(fileUploadExercise);
         gradingCriterionRepository.saveAll(gradingCriteria);
         Feedback feedback = new Feedback();
         feedback.setGradingInstruction(GradingCriterionUtil.findAnyInstructionWhere(gradingCriteria, instruction -> true).orElseThrow());
         feedbackRepository.save(feedback);
 
-        exerciseUtilService.addChannelToExercise(fileUploadExercise);
+        conversationUtilService.addChannelToExercise(fileUploadExercise);
 
         FileUploadExercise receivedFileUploadExercise = request.get("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.OK, FileUploadExercise.class);
 
@@ -318,7 +324,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     void testDeleteFileUploadExerciseWithChannel() throws Exception {
         Course course = fileUploadExerciseUtilService.addCourseWithFileUploadExercise();
         FileUploadExercise fileUploadExercise = fileUploadExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
-        Channel exerciseChannel = exerciseUtilService.addChannelToExercise(fileUploadExercise);
+        Channel exerciseChannel = conversationUtilService.addChannelToExercise(fileUploadExercise);
 
         request.delete("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.OK);
 
@@ -378,7 +384,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateFileUploadExercise_asInstructor() throws Exception {
         Course course = fileUploadExerciseUtilService.addCourseWithThreeFileUploadExercise();
-        FileUploadExercise fileUploadExercise = exerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "released");
+        FileUploadExercise fileUploadExercise = ExerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "released");
         final ZonedDateTime dueDate = ZonedDateTime.now().plusDays(10);
         fileUploadExercise.setDueDate(dueDate);
         fileUploadExercise.setAssessmentDueDate(ZonedDateTime.now().plusDays(11));
@@ -400,7 +406,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateFileUploadExerciseFails_InstructorNotInGroup() throws Exception {
         Course course = fileUploadExerciseUtilService.addCourseWithThreeFileUploadExercise();
-        FileUploadExercise fileUploadExercise = exerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "released");
+        FileUploadExercise fileUploadExercise = ExerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "released");
         fileUploadExercise.setDueDate(ZonedDateTime.now().plusDays(10));
         fileUploadExercise.setAssessmentDueDate(ZonedDateTime.now().plusDays(11));
         course.setInstructorGroupName("new-instructor-group-name");
@@ -533,7 +539,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testReEvaluateAndUpdateFileUploadExercise() throws Exception {
         Course course = fileUploadExerciseUtilService.addCourseWithThreeFileUploadExercise();
-        FileUploadExercise fileUploadExercise = exerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "released");
+        FileUploadExercise fileUploadExercise = ExerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "released");
         Set<GradingCriterion> gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(fileUploadExercise);
         gradingCriterionRepository.saveAll(gradingCriteria);
 
@@ -562,7 +568,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testReEvaluateAndUpdateFileUploadExercise_shouldDeleteFeedbacks() throws Exception {
         Course course = fileUploadExerciseUtilService.addCourseWithThreeFileUploadExercise();
-        FileUploadExercise fileUploadExercise = exerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "released");
+        FileUploadExercise fileUploadExercise = ExerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "released");
         Set<GradingCriterion> gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(fileUploadExercise);
         gradingCriterionRepository.saveAll(gradingCriteria);
 
@@ -586,7 +592,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testReEvaluateAndUpdateFileUploadExercise_isNotAtLeastInstructorInCourse_forbidden() throws Exception {
         Course course = fileUploadExerciseUtilService.addCourseWithThreeFileUploadExercise();
-        FileUploadExercise fileUploadExercise = exerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "released");
+        FileUploadExercise fileUploadExercise = ExerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "released");
         course.setInstructorGroupName("test");
         courseRepository.save(course);
 
@@ -598,7 +604,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testReEvaluateAndUpdateFileUploadExercise_isNotSameGivenExerciseIdInRequestBody_conflict() throws Exception {
         Course course = fileUploadExerciseUtilService.addCourseWithThreeFileUploadExercise();
-        FileUploadExercise fileUploadExercise = exerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "released");
+        FileUploadExercise fileUploadExercise = ExerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "released");
         FileUploadExercise fileUploadExerciseToBeConflicted = fileUploadExerciseRepository.findByIdElseThrow(fileUploadExercise.getId());
         fileUploadExerciseToBeConflicted.setId(123456789L);
         request.putWithResponseBody("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId() + "/re-evaluate", fileUploadExerciseToBeConflicted,
@@ -609,7 +615,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testReEvaluateAndUpdateFileUploadExercise_notFound() throws Exception {
         Course course = fileUploadExerciseUtilService.addCourseWithThreeFileUploadExercise();
-        FileUploadExercise fileUploadExercise = exerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "released");
+        FileUploadExercise fileUploadExercise = ExerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "released");
 
         request.putWithResponseBody("/api/fileupload/file-upload-exercises/" + 123456789 + "/re-evaluate", fileUploadExercise, FileUploadExercise.class, HttpStatus.NOT_FOUND);
     }

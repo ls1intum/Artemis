@@ -11,30 +11,35 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { CompetencyContributionCardDTO } from 'app/atlas/shared/entities/competency.model';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 describe('CompetencyContributionComponent', () => {
     let component: CompetencyContributionComponent;
     let fixture: ComponentFixture<CompetencyContributionComponent>;
-    let service: CourseCompetencyService;
+    let courseCompetencyService: CourseCompetencyService;
     let getCompetencyContributionsForExerciseStub: jest.SpyInstance;
     let getCompetencyContributionsForLectureUnitStub: jest.SpyInstance;
+    let profileService: ProfileService;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [CompetencyContributionComponent, MockDirective(TranslateDirective), MockComponent(CompetencyContributionCardComponent), MockModule(CarouselModule)],
-            providers: [MockProvider(CourseCompetencyService), MockProvider(AlertService)],
+            providers: [MockProvider(CourseCompetencyService), MockProvider(AlertService), MockProvider(ProfileService)],
         }).compileComponents();
 
         fixture = TestBed.createComponent(CompetencyContributionComponent);
         component = fixture.componentInstance;
 
-        service = TestBed.inject(CourseCompetencyService);
+        courseCompetencyService = TestBed.inject(CourseCompetencyService);
         getCompetencyContributionsForExerciseStub = jest
-            .spyOn(service, 'getCompetencyContributionsForExercise')
+            .spyOn(courseCompetencyService, 'getCompetencyContributionsForExercise')
             .mockReturnValue(of({} as HttpResponse<CompetencyContributionCardDTO[]>));
         getCompetencyContributionsForLectureUnitStub = jest
-            .spyOn(service, 'getCompetencyContributionsForLectureUnit')
+            .spyOn(courseCompetencyService, 'getCompetencyContributionsForLectureUnit')
             .mockReturnValue(of({} as HttpResponse<CompetencyContributionCardDTO[]>));
+
+        profileService = TestBed.inject(ProfileService);
+        jest.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
     });
 
     afterEach(() => {

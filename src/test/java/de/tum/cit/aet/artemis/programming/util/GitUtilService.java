@@ -41,12 +41,16 @@ public class GitUtilService {
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
 
-    // Note: the first string has to be same as artemis.repo-clone-path (see src/test/resources/config/application-artemis.yml) because here local git repos will be cloned
-    private final Path localPath = Path.of(".", "repos", "server-integration-test").resolve("test-repository").normalize();
+    @Value("${artemis.repo-clone-path}")
+    private String repoClonePath;
 
     private final Path remotePath = Files.createTempDirectory("remotegittest").resolve("scm/test-repository");
 
     public GitUtilService() throws IOException {
+    }
+
+    private Path getLocalPath() {
+        return Path.of(repoClonePath).resolve("test-repository").normalize();
     }
 
     public enum FILES {
@@ -104,7 +108,7 @@ public class GitUtilService {
             GitService.commit(remoteGit).setMessage("initial commit").call();
 
             // clone remote repository
-            Git localGit = Git.cloneRepository().setURI(remotePath.toString()).setDirectory(localPath.toFile()).call();
+            Git localGit = Git.cloneRepository().setURI(remotePath.toString()).setDirectory(getLocalPath().toFile()).call();
 
             reinitializeLocalRepository();
             reinitializeRemoteRepository();
@@ -118,7 +122,7 @@ public class GitUtilService {
     }
 
     public void reinitializeLocalRepository() throws IOException {
-        localRepo = initializeRepo(localPath);
+        localRepo = initializeRepo(getLocalPath());
     }
 
     public void reinitializeRemoteRepository() throws IOException {
@@ -140,7 +144,7 @@ public class GitUtilService {
         }
 
         try {
-            tryToDeleteDirectory(localPath);
+            tryToDeleteDirectory(getLocalPath());
             localRepo = null;
             tryToDeleteDirectory(remotePath);
             remoteRepo = null;
@@ -303,7 +307,7 @@ public class GitUtilService {
     }
 
     public String getCompleteRepoPathStringByType(REPOS repo) {
-        return repo == REPOS.LOCAL ? localPath.toString() : remotePath.toString();
+        return repo == REPOS.LOCAL ? getLocalPath().toString() : remotePath.toString();
     }
 
     public VcsRepositoryUri getRepoUriByType(REPOS repo) {

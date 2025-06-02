@@ -1,8 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { DebugElement, input, runInInjectionContext } from '@angular/core';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { PostComponent } from 'app/communication/post/post.component';
+import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { getElement } from 'test/helpers/utils/general-test.utils';
 import { PostingFooterComponent } from 'app/communication/posting-footer/posting-footer.component';
 import { PostingHeaderComponent } from 'app/communication/posting-header/posting-header.component';
@@ -10,7 +11,7 @@ import { PostingContentComponent } from 'app/communication/posting-content/posti
 import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.service';
 import { MetisService } from 'app/communication/service/metis.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { DisplayPriority, PageType } from 'app/communication/metis.util';
+import { DisplayPriority, PageType, SortDirection } from 'app/communication/metis.util';
 import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
 import { OverlayModule } from '@angular/cdk/overlay';
 import {
@@ -51,6 +52,9 @@ import { AnswerPost } from 'app/communication/shared/entities/answer-post.model'
 import { ConversationService } from 'app/communication/conversations/service/conversation.service';
 import { MockConversationService } from 'test/helpers/mocks/service/mock-conversation.service';
 import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
+import { CourseWideSearchConfig } from 'app/communication/course-conversations-components/course-wide-search/course-wide-search.component';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('PostComponent', () => {
     let component: PostComponent;
@@ -62,15 +66,28 @@ describe('PostComponent', () => {
     let metisServiceGetPageTypeStub: jest.SpyInstance;
     let router: MockRouter;
     let mainContainer: HTMLElement;
+    let searchConfig: CourseWideSearchConfig;
 
     beforeEach(() => {
         mainContainer = document.createElement('div');
         mainContainer.classList.add('posting-infinite-scroll-container');
         document.body.appendChild(mainContainer);
 
+        searchConfig = {
+            searchTerm: '',
+            selectedConversations: [],
+            selectedAuthors: [],
+            filterToCourseWide: false,
+            filterToUnresolved: false,
+            filterToAnsweredOrReacted: false,
+            sortingOrder: SortDirection.ASCENDING,
+        };
+
         return TestBed.configureTestingModule({
-            imports: [MockDirective(NgbTooltip), OverlayModule, MockModule(BrowserAnimationsModule)],
+            imports: [NgbTooltip, OverlayModule, MockModule(BrowserAnimationsModule)],
             providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 provideRouter([]),
                 { provide: MetisService, useClass: MockMetisService },
                 { provide: Router, useClass: MockRouter },
@@ -86,10 +103,10 @@ describe('PostComponent', () => {
                 PostComponent,
                 FaIconComponent, // we want to test the type of rendered icons, therefore we cannot mock the component
                 MockPipe(HtmlForMarkdownPipe),
-                MockComponent(PostingHeaderComponent),
-                MockComponent(PostingContentComponent),
-                MockComponent(PostingFooterComponent),
-                MockComponent(AnswerPostCreateEditModalComponent),
+                PostingHeaderComponent,
+                PostingContentComponent,
+                PostingFooterComponent,
+                AnswerPostCreateEditModalComponent,
                 MockRouterLinkDirective,
                 MockQueryParamsDirective,
                 TranslatePipeMock,
@@ -114,6 +131,9 @@ describe('PostComponent', () => {
                     },
                 } as RouterState;
                 router.setRouterState(mockRouterState);
+                global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+                    return new MockResizeObserver(callback);
+                });
             });
     });
 
@@ -522,7 +542,15 @@ describe('PostComponent', () => {
 
         runInInjectionContext(fixture.debugElement.injector, () => {
             component.posting = testPost;
-            component.searchQuery = input<string>('answer');
+            component.searchConfig = input<CourseWideSearchConfig>({
+                searchTerm: 'answer',
+                selectedConversations: [],
+                selectedAuthors: [],
+                filterToCourseWide: false,
+                filterToUnresolved: false,
+                filterToAnsweredOrReacted: false,
+                sortingOrder: SortDirection.ASCENDING,
+            });
             component.showSearchResultInAnswersHint = false;
             component.ngOnChanges();
 
@@ -535,7 +563,8 @@ describe('PostComponent', () => {
 
         runInInjectionContext(fixture.debugElement.injector, () => {
             component.posting = testPost;
-            component.searchQuery = input<string>('answer');
+            searchConfig.searchTerm = 'answer';
+            component.searchConfig = input<CourseWideSearchConfig>(searchConfig);
             component.showSearchResultInAnswersHint = false;
             component.ngOnChanges();
 
@@ -548,7 +577,8 @@ describe('PostComponent', () => {
 
         runInInjectionContext(fixture.debugElement.injector, () => {
             component.posting = testPost;
-            component.searchQuery = input<string>('base');
+            searchConfig.searchTerm = 'base';
+            component.searchConfig = input<CourseWideSearchConfig>(searchConfig);
             component.showSearchResultInAnswersHint = true;
             component.ngOnChanges();
 
@@ -561,11 +591,26 @@ describe('PostComponent', () => {
 
         runInInjectionContext(fixture.debugElement.injector, () => {
             component.posting = testPost;
-            component.searchQuery = input<string>('');
+            component.searchConfig = input<CourseWideSearchConfig>(searchConfig);
             component.showSearchResultInAnswersHint = true;
             component.ngOnChanges();
 
             expect(component.showSearchResultInAnswersHint).toBeFalse();
+        });
+    });
+
+    // update to true when selected author is in answers
+    it('should update showSearchResultInAnswersHint to true for selected author in answers', () => {
+        const testPost = { id: 123, content: 'Base Post', answers: [{ content: 'Answer', author: { id: 1, internal: true } }] };
+
+        runInInjectionContext(fixture.debugElement.injector, () => {
+            component.posting = testPost;
+            searchConfig.selectedAuthors = [{ id: 1 }];
+            component.searchConfig = input<CourseWideSearchConfig>(searchConfig);
+            component.showSearchResultInAnswersHint = true;
+            component.ngOnChanges();
+
+            expect(component.showSearchResultInAnswersHint).toBeTrue();
         });
     });
 });

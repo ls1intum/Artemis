@@ -20,7 +20,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { TeamSubmissionSyncComponent } from 'app/exercise/team-submission-sync/team-submission-sync.component';
 import { TeamParticipateInfoBoxComponent } from 'app/exercise/team/team-participate/team-participate-info-box.component';
 import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
-import { ButtonComponent, ButtonType } from 'app/shared/components/button/button.component';
+import { ButtonComponent, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL, AUTOSAVE_TEAM_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
 import { faExclamationTriangle, faGripLines, faTimeline } from '@fortawesome/free-solid-svg-icons';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
@@ -259,7 +259,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                         }
 
                         if (latestResult) {
-                            latestResult.participation = submission.participation; // Attach participation if result exists
+                            latestResult.submission = submission; // Attach submission if result exists
                         }
                         return latestResult; // Return the latest result (or undefined if no results)
                     })
@@ -330,7 +330,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
         // reconnect participation <--> result
         if (getLatestSubmissionResult(modelingSubmission)) {
-            modelingSubmission.participation!.results = [getLatestSubmissionResult(modelingSubmission)!];
+            modelingSubmission.results = [getLatestSubmissionResult(modelingSubmission)!];
         }
         this.participation = modelingSubmission.participation as StudentParticipation;
         this.isOwnerOfParticipation = this.accountService.isOwnerOfParticipation(this.participation);

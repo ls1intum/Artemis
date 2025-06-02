@@ -6,6 +6,7 @@ import { SidebarCardDirective } from 'app/shared/sidebar/directive/sidebar-card.
 import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
 import { NgbCollapseModule, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { ActivatedRoute, RouterModule } from '@angular/router';
@@ -31,6 +32,7 @@ describe('SidebarAccordionComponent', () => {
                 SearchFilterComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(SearchFilterComponent),
+                MockPipe(ArtemisDatePipe),
             ],
             providers: [
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
@@ -45,16 +47,16 @@ describe('SidebarAccordionComponent', () => {
 
         component.groupedData = {
             current: {
-                entityData: [{ title: 'Title 1', type: 'Type A', id: 1, size: 'M', conversation: { unreadMessagesCount: 1 } }],
+                entityData: [{ title: 'Title 1', type: 'Type A', id: 1, size: 'M', conversation: { unreadMessagesCount: 2, isMuted: false } }],
             },
             past: {
-                entityData: [{ title: 'Title 2', type: 'Type B', id: 2, size: 'M', conversation: { unreadMessagesCount: 0 } }],
+                entityData: [{ title: 'Title 2', type: 'Type B', id: 2, size: 'M', conversation: { unreadMessagesCount: 5, isMuted: false } }],
             },
             future: {
-                entityData: [{ title: 'Title 3', type: 'Type C', id: 3, size: 'M', conversation: { unreadMessagesCount: 1 } }],
+                entityData: [{ title: 'Title 3', type: 'Type C', id: 3, size: 'M', conversation: { unreadMessagesCount: 4, isMuted: true } }],
             },
             noDate: {
-                entityData: [{ title: 'Title 4', type: 'Type D', id: 4, size: 'M', conversation: { unreadMessagesCount: 0 } }],
+                entityData: [{ title: 'Title 4', type: 'Type D', id: 4, size: 'M', conversation: { unreadMessagesCount: 3, isMuted: true } }],
             },
         };
         component.routeParams = { exerciseId: 3 };
@@ -153,9 +155,15 @@ describe('SidebarAccordionComponent', () => {
     });
 
     it('should calculate unread messages of each group correctly', () => {
-        expect(component.totalUnreadMessagesPerGroup['current']).toBe(1);
-        expect(component.totalUnreadMessagesPerGroup['past']).toBe(0);
-        expect(component.totalUnreadMessagesPerGroup['future']).toBe(1);
+        expect(component.totalUnreadMessagesPerGroup['current']).toBe(2);
+        expect(component.totalUnreadMessagesPerGroup['past']).toBe(5);
+        expect(component.totalUnreadMessagesPerGroup['future']).toBe(0);
         expect(component.totalUnreadMessagesPerGroup['noDate']).toBe(0);
+    });
+
+    it('should use the week grouping utility for grouping items', () => {
+        const result = component.getGroupedByWeek('current');
+        expect(result).toBeDefined();
+        expect(Array.isArray(result)).toBeTruthy();
     });
 });

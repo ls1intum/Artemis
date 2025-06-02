@@ -651,7 +651,7 @@ public class ProgrammingExerciseService {
         // we only update the build plan configuration if it has changed and is not null, otherwise we
         // do not have a valid exercise anymore
         if (updatedProgrammingExercise.getBuildConfig().getBuildPlanConfiguration() != null) {
-            if (!profileService.isLocalCiActive()) {
+            if (!profileService.isLocalCIActive()) {
                 continuousIntegrationService.get().deleteProject(updatedProgrammingExercise.getProjectKey());
                 continuousIntegrationService.get().createProjectForExercise(updatedProgrammingExercise);
                 continuousIntegrationService.get().recreateBuildPlansForExercise(updatedProgrammingExercise);
@@ -887,7 +887,7 @@ public class ProgrammingExerciseService {
     public boolean hasAtLeastOneStudentResult(ProgrammingExercise programmingExercise) {
         // Is true if the exercise is released and has at least one result.
         // We can't use the resultService here due to a circular dependency issue.
-        return resultRepository.existsByParticipation_ExerciseId(programmingExercise.getId());
+        return resultRepository.existsBySubmission_Participation_Exercise_Id(programmingExercise.getId());
     }
 
     /**

@@ -147,7 +147,7 @@ public class ProgrammingTriggerService {
         // Also, if the programming exercise has no results yet, there is no point in setting test cases changed to *true*.
         // It is only relevant when there are student submissions that should get an updated result.
 
-        boolean resultsExist = resultRepository.existsByParticipation_ExerciseId(programmingExercise.getId());
+        boolean resultsExist = resultRepository.existsBySubmission_Participation_Exercise_Id(programmingExercise.getId());
 
         if (testCasesChanged == programmingExercise.getTestCasesChanged() || (!resultsExist && testCasesChanged)) {
             return;
@@ -195,7 +195,7 @@ public class ProgrammingTriggerService {
         var index = 0;
         for (var participation : participations) {
             // Execute requests in batches when using an external build system.
-            if (!profileService.isLocalCiActive() && index > 0 && index % externalSystemRequestBatchSize == 0) {
+            if (!profileService.isLocalCIActive() && index > 0 && index % externalSystemRequestBatchSize == 0) {
                 try {
                     log.info("Sleep for {}s during triggerBuild", externalSystemRequestBatchWaitingTime / 1000);
                     Thread.sleep(externalSystemRequestBatchWaitingTime);

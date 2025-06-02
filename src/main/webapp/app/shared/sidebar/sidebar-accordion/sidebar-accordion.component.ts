@@ -6,8 +6,10 @@ import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
 import { NgClass, TitleCasePipe } from '@angular/common';
 import { SidebarCardDirective } from '../directive/sidebar-card.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
 import { AccordionGroups, ChannelTypeIcons, CollapseState, SidebarCardElement, SidebarItemShowAlways, SidebarTypes } from 'app/shared/types/sidebar';
+import { WeekGroup, WeekGroupingUtil } from 'app/shared/util/week-grouping.util';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { Subject, takeUntil } from 'rxjs';
 
@@ -15,7 +17,7 @@ import { Subject, takeUntil } from 'rxjs';
     selector: 'jhi-sidebar-accordion',
     templateUrl: './sidebar-accordion.component.html',
     styleUrls: ['./sidebar-accordion.component.scss'],
-    imports: [FaIconComponent, NgbCollapse, NgClass, SidebarCardDirective, TitleCasePipe, ArtemisTranslatePipe, SearchFilterPipe],
+    imports: [FaIconComponent, NgbCollapse, NgClass, SidebarCardDirective, TitleCasePipe, ArtemisTranslatePipe, ArtemisDatePipe, SearchFilterPipe],
 })
 export class SidebarAccordionComponent implements OnChanges, OnInit, OnDestroy {
     protected readonly Object = Object;
@@ -94,6 +96,10 @@ export class SidebarAccordionComponent implements OnChanges, OnInit, OnDestroy {
         }
     }
 
+    private shouldCountUnreadMessages(item: SidebarCardElement): boolean {
+        return !!item.conversation?.unreadMessagesCount && item.conversation?.isMuted === false;
+    }
+
     calculateUnreadMessagesOfGroup(): void {
         if (!this.groupedData) {
             this.totalUnreadMessagesPerGroup = {};
@@ -102,7 +108,7 @@ export class SidebarAccordionComponent implements OnChanges, OnInit, OnDestroy {
 
         Object.keys(this.groupedData).forEach((groupKey) => {
             this.totalUnreadMessagesPerGroup[groupKey] = this.groupedData[groupKey].entityData
-                .filter((item: SidebarCardElement) => item.conversation?.unreadMessagesCount)
+                .filter((item: SidebarCardElement) => this.shouldCountUnreadMessages(item))
                 .reduce((sum, item) => sum + (item.conversation?.unreadMessagesCount || 0), 0);
         });
     }
@@ -110,5 +116,9 @@ export class SidebarAccordionComponent implements OnChanges, OnInit, OnDestroy {
     toggleGroupCategoryCollapse(groupCategoryKey: string) {
         this.collapseState[groupCategoryKey] = !this.collapseState[groupCategoryKey];
         localStorage.setItem('sidebar.accordion.collapseState.' + this.storageId + '.byCourse.' + this.courseId, JSON.stringify(this.collapseState));
+    }
+
+    getGroupedByWeek(groupKey: string): WeekGroup[] {
+        return WeekGroupingUtil.getGroupedByWeek(this.groupedData[groupKey].entityData, this.storageId, groupKey, this.searchValue);
     }
 }

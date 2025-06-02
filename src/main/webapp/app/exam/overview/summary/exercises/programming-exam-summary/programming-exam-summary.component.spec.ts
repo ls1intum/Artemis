@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExamSummaryComponent } from 'app/exam/overview/summary/exercises/programming-exam-summary/programming-exam-summary.component';
-import { CodeButtonComponent } from 'app/shared/components/code-button/code-button.component';
+import { CodeButtonComponent } from 'app/shared/components/buttons/code-button/code-button.component';
 import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
@@ -81,11 +81,13 @@ const feedback = {
 
 const result = {
     id: 89,
-    participation: {
-        id: 55,
-        type: ParticipationType.PROGRAMMING,
-        participantIdentifier: 'student42',
-        repositoryUri: 'https://artemis.tum.de/projects/somekey/repos/somekey-student42',
+    submission: {
+        participation: {
+            id: 55,
+            type: ParticipationType.PROGRAMMING,
+            participantIdentifier: 'student42',
+            repositoryUri: 'https://artemis.tum.de/projects/somekey/repos/somekey-student42',
+        },
     },
     feedbacks: [feedback],
     assessmentType: AssessmentType.MANUAL,
@@ -112,7 +114,9 @@ describe('ProgrammingExamSummaryComponent', () => {
                 component = fixture.componentInstance;
 
                 component.exercise = programmingExercise;
-                programmingParticipation.results = [result];
+                programmingSubmission.results = [result];
+                programmingSubmission.participation = programmingParticipation;
+                programmingParticipation.submissions = [programmingSubmission];
                 component.participation = programmingParticipation;
                 component.submission = programmingSubmission;
                 component.exam = exam;

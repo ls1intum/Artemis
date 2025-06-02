@@ -1,6 +1,6 @@
 import { Component, input, viewChild } from '@angular/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ButtonSize, ButtonType } from 'app/shared/components/button/button.component';
+import { ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { Popover } from 'primeng/popover';

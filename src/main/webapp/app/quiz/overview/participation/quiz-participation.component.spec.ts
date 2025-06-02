@@ -27,7 +27,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { QuizParticipationService } from 'app/quiz/overview/service/quiz-participation.service';
-import { ButtonComponent } from 'app/shared/components/button/button.component';
+import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
@@ -432,7 +432,8 @@ describe('QuizParticipationComponent', () => {
                 scoreInPoints: 1,
             };
             const result: Result = { submission: quizSubmission };
-            const participation: StudentParticipation = { exercise: quizExerciseForResults, results: [result] };
+            quizSubmission.results = [result];
+            const participation: StudentParticipation = { exercise: quizExerciseForResults, submissions: [quizSubmission] };
             component.showQuizResultAfterQuizEnd(participation);
 
             expect(participationSpy).toHaveBeenCalledWith(quizExercise.id);
@@ -491,8 +492,9 @@ describe('QuizParticipationComponent', () => {
                 submittedAnswers: [],
             };
             const result: Result = { id: 1, submission };
+            submission.results = [result];
             const endedQuizExercise = { ...quizExercise, quizEnded: true };
-            const participation: StudentParticipation = { exercise: endedQuizExercise, results: [result] };
+            const participation: StudentParticipation = { exercise: endedQuizExercise, submissions: [submission] };
 
             component.quizExercise = quizExercise;
             component.updateParticipationFromServer(participation);

@@ -1,6 +1,6 @@
 import { EventEmitter } from '@angular/core';
 import { Observable } from 'rxjs';
-import { ButtonType } from 'app/shared/components/button/button.component';
+import { ButtonType } from 'app/shared/components/buttons/button/button.component';
 
 /**
  * Defines the type of the action handled by delete dialog

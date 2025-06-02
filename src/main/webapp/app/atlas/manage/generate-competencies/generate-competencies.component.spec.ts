@@ -1,8 +1,8 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockDirective, MockProvider } from 'ng-mocks';
 import { CompetencyFormControlsWithViewed, GenerateCompetenciesComponent } from 'app/atlas/manage/generate-competencies/generate-competencies.component';
-import { ButtonComponent } from 'app/shared/components/button/button.component';
+import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { FormControl, FormGroup } from '@angular/forms';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -18,7 +18,7 @@ import { Competency, CompetencyTaxonomy } from 'app/atlas/shared/entities/compet
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { CompetencyRecommendationDetailComponent } from 'app/atlas/manage/generate-competencies/competency-recommendation-detail.component';
-import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 import { CourseDescriptionFormComponent } from 'app/atlas/manage/generate-competencies/course-description-form.component';
@@ -27,6 +27,8 @@ import { CourseManagementService } from 'app/core/course/manage/services/course-
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { CourseDescriptionFormStubComponent } from 'test/helpers/stubs/atlas/course-description-form-stub.component';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('GenerateCompetenciesComponent', () => {
     let fixture: ComponentFixture<GenerateCompetenciesComponent>;
@@ -40,15 +42,17 @@ describe('GenerateCompetenciesComponent', () => {
             imports: [GenerateCompetenciesComponent],
             declarations: [
                 CourseDescriptionFormStubComponent,
-                MockComponent(CompetencyRecommendationDetailComponent),
-                MockComponent(DocumentationButtonComponent),
-                MockComponent(CourseDescriptionFormComponent),
+                CompetencyRecommendationDetailComponent,
+                DocumentationButtonComponent,
+                CourseDescriptionFormComponent,
                 ButtonComponent,
-                MockPipe(ArtemisTranslatePipe),
+                ArtemisTranslatePipe,
                 MockDirective(FeatureToggleDirective),
-                MockDirective(TranslateDirective),
+                TranslateDirective,
             ],
             providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute({ courseId: 1 }) },
                 { provide: Router, useClass: MockRouter },
                 {
@@ -59,12 +63,12 @@ describe('GenerateCompetenciesComponent', () => {
                         unsubscribe: jest.fn(),
                     },
                 },
-                MockProvider(CourseDescriptionFormComponent),
+                CourseDescriptionFormComponent,
                 MockProvider(CourseManagementService),
                 MockProvider(CourseCompetencyService),
                 MockProvider(CompetencyService),
-                MockProvider(AlertService),
-                MockProvider(ArtemisTranslatePipe),
+                AlertService,
+                ArtemisTranslatePipe,
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         })
