@@ -89,7 +89,6 @@ describe('CompetencyManagementComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-            schemas: [],
         }).compileComponents();
 
         courseCompetencyApiService = TestBed.inject(CourseCompetencyApiService);
