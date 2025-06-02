@@ -16,7 +16,7 @@ import { Subject, Subscription } from 'rxjs';
 import { DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { SortService } from 'app/shared/service/sort.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
-import { IngestionState } from 'app/lecture/shared/entities/lecture-unit/attachmentUnit.model';
+import { IngestionState } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { NgClass } from '@angular/common';
@@ -26,6 +26,9 @@ import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { CourseTitleBarTitleComponent } from 'app/core/course/shared/course-title-bar-title/course-title-bar-title.component';
+import { CourseTitleBarTitleDirective } from 'app/core/course/shared/directives/course-title-bar-title.directive';
+import { CourseTitleBarActionsDirective } from 'app/core/course/shared/directives/course-title-bar-actions.directive';
 
 export enum LectureDateFilter {
     PAST = 'filterPast',
@@ -51,6 +54,9 @@ export enum LectureDateFilter {
         DeleteButtonDirective,
         ArtemisDatePipe,
         HtmlForMarkdownPipe,
+        CourseTitleBarTitleComponent,
+        CourseTitleBarTitleDirective,
+        CourseTitleBarActionsDirective,
     ],
 })
 export class LectureComponent implements OnInit, OnDestroy {

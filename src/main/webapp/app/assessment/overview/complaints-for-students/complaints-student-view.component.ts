@@ -66,9 +66,6 @@ export class ComplaintsStudentViewComponent implements OnInit {
         const participation = this.participation();
         const result = this.result();
         if (participation && result?.completionDate) {
-            // Make sure results and participation are connected
-            result.participation = participation;
-
             if (participation.submissions && participation.submissions.length > 0) {
                 this.submission = participation.submissions.sort((a, b) => b.id! - a.id!)[0];
             }

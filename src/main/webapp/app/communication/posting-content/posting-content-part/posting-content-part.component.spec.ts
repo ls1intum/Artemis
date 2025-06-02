@@ -196,12 +196,12 @@ describe('PostingContentPartComponent', () => {
                 } as PostingContentPart);
                 fixture.detectChanges();
 
-                // should display attachment unit file name to user
+                // should display attachment video unit file name to user
                 const referenceLink = getElement(debugElement, '.reference');
                 expect(referenceLink).not.toBeNull();
                 expect(referenceLink.innerHTML).toInclude(referenceStr);
 
-                // on click should open referenced attachment unit within new tab
+                // on click should open referenced attachment video unit within new tab
                 referenceLink.click();
                 expect(openAttachmentSpy).toHaveBeenCalledOnce();
                 expect(openAttachmentSpy).toHaveBeenCalledWith(attachmentURL);
@@ -219,7 +219,7 @@ describe('PostingContentPartComponent', () => {
                 } as PostingContentPart);
                 fixture.detectChanges();
 
-                // should display attachment unit slide name and link to user
+                // should display attachment video unit slide name and link to user
                 const referenceLink = getElement(debugElement, '.reference');
                 expect(referenceLink).not.toBeNull();
                 expect(referenceLink.innerHTML).toInclude(referenceStr);
@@ -228,7 +228,7 @@ describe('PostingContentPartComponent', () => {
 
                 const enlargeImageSpy = jest.spyOn(component, 'enlargeImage');
 
-                // on click should open referenced attachment unit slide
+                // on click should open referenced attachment video unit slide
                 referenceLink.click();
                 expect(enlargeImageSpy).toHaveBeenCalledOnce();
                 expect(enlargeImageSpy).toHaveBeenCalledWith(imageURL);
@@ -280,10 +280,46 @@ describe('PostingContentPartComponent', () => {
         });
     });
 
-    describe('Content processing', () => {
-        it('should process content before and after reference with escaped numbered and unordered lists', () => {
-            const contentBefore = '1. This is a numbered list\n2. Another item\n- This is an unordered list';
-            const contentAfter = '1. Numbered again\n- Unordered again';
+    describe('Component internals', () => {
+        it('should define the correct allowedHtmlTags', () => {
+            const expectedTags = [
+                'a',
+                'b',
+                'br',
+                'blockquote',
+                'code',
+                'del',
+                'em',
+                'hr',
+                'h1',
+                'h2',
+                'h3',
+                'h4',
+                'h5',
+                'h6',
+                'i',
+                'ins',
+                'li',
+                'mark',
+                'p',
+                'pre',
+                'small',
+                's',
+                'span',
+                'strong',
+                'sub',
+                'sup',
+                'ul',
+                'ol',
+            ];
+            expect(component['allowedHtmlTags']).toEqual(expectedTags);
+        });
+    });
+
+    describe('Content processing (spacing only)', () => {
+        it('should process content and normalize excessive line breaks before and after reference', () => {
+            const contentBefore = 'Line 1\n\n\nLine 2\n\n\n\nLine 3';
+            const contentAfter = 'A\n\n\nB';
             runInInjectionContext(fixture.debugElement.injector, () => {
                 component.postingContentPart = input<PostingContentPart>({
                     contentBeforeReference: contentBefore,
@@ -296,35 +332,30 @@ describe('PostingContentPartComponent', () => {
 
                 component.processContent();
 
-                expect(component.processedContentBeforeReference).toBe('1\\.  This is a numbered list\n2\\.  Another item\n\\- This is an unordered list');
-                expect(component.processedContentAfterReference).toBe('1\\.  Numbered again\n\\- Unordered again');
+                expect(component.processedContentBeforeReference).toBe('Line 1\n\nLine 2\n\nLine 3');
+                expect(component.processedContentAfterReference).toBe('A\n\nB');
             });
         });
 
-        it('should escape numbered lists correctly', () => {
-            const content = '1. First item\n2. Second item\n3. Third item';
-            const escapedContent = component.escapeNumberedList(content);
-            expect(escapedContent).toBe('1\\.  First item\n2\\.  Second item\n3\\.  Third item');
+        it('should not alter already correct line spacing', () => {
+            const content = 'Paragraph one.\n\nParagraph two.\nLine continues.';
+            const result = component.normalizeSpacing(content);
+            expect(result).toBe(content);
         });
 
-        it('should escape unordered lists correctly', () => {
-            const content = '- First item\n- Second item\n- Third item';
-            const escapedContent = component.escapeUnorderedList(content);
-            expect(escapedContent).toBe('\\- First item\n\\- Second item\n\\- Third item');
+        it('should collapse 3 or more newlines to exactly 2', () => {
+            const content = 'A\n\n\n\nB\n\n\n\n\nC';
+            const expected = 'A\n\nB\n\nC';
+            expect(component.normalizeSpacing(content)).toBe(expected);
         });
 
-        it('should not escape text without numbered or unordered lists', () => {
-            const content = 'This is just a paragraph.\nAnother paragraph.';
-            const escapedNumbered = component.escapeNumberedList(content);
-            const escapedUnordered = component.escapeUnorderedList(content);
-            expect(escapedNumbered).toBe(content);
-            expect(escapedUnordered).toBe(content);
+        it('should leave single linebreaks untouched', () => {
+            const content = 'Line 1\nLine 2\nLine 3';
+            expect(component.normalizeSpacing(content)).toBe(content);
         });
 
-        it('should handle mixed numbered and unordered lists in content', () => {
-            const content = '1. Numbered item\n- Unordered item\n2. Another numbered item\n- Another unordered item';
-            const escapedContent = component.escapeNumberedList(component.escapeUnorderedList(content));
-            expect(escapedContent).toBe('1\\.  Numbered item\n\\- Unordered item\n2\\.  Another numbered item\n\\- Another unordered item');
+        it('should handle empty input gracefully', () => {
+            expect(component.normalizeSpacing('')).toBe('');
         });
     });
 
@@ -366,6 +397,104 @@ describe('PostingContentPartComponent', () => {
                 const icon = getElement(debugElement, 'fa-icon');
                 expect(icon).not.toBeNull();
                 expect(icon.innerHTML).toInclude('fa fa-message');
+            });
+        });
+    });
+
+    describe('Markdown structure rendering', () => {
+        it('should render ordered and unordered lists', () => {
+            const content = `1. First Number \n 2. Second number \n * First point \n * Second Point`;
+
+            runInInjectionContext(fixture.debugElement.injector, () => {
+                component.postingContentPart = input<PostingContentPart>({
+                    contentBeforeReference: content,
+                } as PostingContentPart);
+                fixture.detectChanges();
+
+                const olItems = debugElement.nativeElement.querySelectorAll('ol > li');
+                const ulItems = debugElement.nativeElement.querySelectorAll('ul > li');
+
+                expect(olItems).toHaveLength(2);
+                expect(ulItems).toHaveLength(2);
+            });
+        });
+
+        it('should render unordered lists with both possible inputs', () => {
+            const content = `- First Input A \n - First Input B \n * Second Input A \n * Second Input B`;
+
+            runInInjectionContext(fixture.debugElement.injector, () => {
+                component.postingContentPart = input<PostingContentPart>({
+                    contentBeforeReference: content,
+                } as PostingContentPart);
+                fixture.detectChanges();
+
+                const ulItems = debugElement.nativeElement.querySelectorAll('ul > li');
+
+                expect(ulItems).toHaveLength(4);
+            });
+        });
+
+        it('should render bold and italic text correctly', () => {
+            const content = '**bold** und *italic*';
+            runInInjectionContext(fixture.debugElement.injector, () => {
+                component.postingContentPart = input<PostingContentPart>({
+                    contentBeforeReference: content,
+                } as PostingContentPart);
+                fixture.detectChanges();
+
+                const strong = debugElement.nativeElement.querySelector('strong');
+                const em = debugElement.nativeElement.querySelector('em');
+
+                expect(strong).not.toBeNull();
+                expect(strong.textContent).toBe('bold');
+                expect(em).not.toBeNull();
+                expect(em.textContent).toBe('italic');
+            });
+        });
+
+        it('should render paragraphs', () => {
+            const content = 'Paragraph One.\n\nParagraph Two.';
+            runInInjectionContext(fixture.debugElement.injector, () => {
+                component.postingContentPart = input<PostingContentPart>({
+                    contentBeforeReference: content,
+                } as PostingContentPart);
+                fixture.detectChanges();
+
+                const paragraphs = getElements(debugElement, '.markdown-preview p');
+                expect(paragraphs).toHaveLength(2);
+            });
+        });
+
+        it('should render single paragraph', () => {
+            const content = 'Paragraph One.\nParagraph Two.';
+            runInInjectionContext(fixture.debugElement.injector, () => {
+                component.postingContentPart = input<PostingContentPart>({
+                    contentBeforeReference: content,
+                } as PostingContentPart);
+                fixture.detectChanges();
+
+                const paragraphs = getElements(debugElement, '.markdown-preview p');
+                expect(paragraphs).toHaveLength(1);
+            });
+        });
+
+        it('should render multiple markdown elements from full example', () => {
+            const content = `**Have a good day** \n 1. Point 1\n 2. Point 2 \n * Point A \n * Point B \n \n A normal p element`;
+            runInInjectionContext(fixture.debugElement.injector, () => {
+                component.postingContentPart = input<PostingContentPart>({
+                    contentBeforeReference: content,
+                } as PostingContentPart);
+                fixture.detectChanges();
+
+                const boldText = debugElement.nativeElement.querySelector('strong');
+                const olItems = debugElement.nativeElement.querySelectorAll('ol > li');
+                const ulItems = debugElement.nativeElement.querySelectorAll('ul > li');
+                const paragraphs = debugElement.nativeElement.querySelectorAll('p');
+
+                expect(boldText).not.toBeNull();
+                expect(olItems).toHaveLength(2);
+                expect(ulItems).toHaveLength(2);
+                expect(paragraphs.length).toBeGreaterThanOrEqual(2);
             });
         });
     });

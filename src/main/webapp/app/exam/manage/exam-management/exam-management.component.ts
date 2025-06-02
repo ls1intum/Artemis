@@ -22,12 +22,26 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
 import { ExamStatusComponent } from '../exam-status/exam-status.component';
+import { CourseTitleBarTitleDirective } from 'app/core/course/shared/directives/course-title-bar-title.directive';
+import { CourseTitleBarActionsDirective } from 'app/core/course/shared/directives/course-title-bar-actions.directive';
+import { CourseTitleBarTitleComponent } from 'app/core/course/shared/course-title-bar-title/course-title-bar-title.component';
 
 @Component({
     selector: 'jhi-exam-management',
     templateUrl: './exam-management.component.html',
     styleUrls: ['./exam-management.component.scss'],
-    imports: [TranslateDirective, DocumentationButtonComponent, FaIconComponent, RouterLink, SortDirective, SortByDirective, ExamStatusComponent],
+    imports: [
+        TranslateDirective,
+        DocumentationButtonComponent,
+        FaIconComponent,
+        RouterLink,
+        SortDirective,
+        SortByDirective,
+        ExamStatusComponent,
+        CourseTitleBarTitleDirective,
+        CourseTitleBarActionsDirective,
+        CourseTitleBarTitleComponent,
+    ],
 })
 export class ExamManagementComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);
