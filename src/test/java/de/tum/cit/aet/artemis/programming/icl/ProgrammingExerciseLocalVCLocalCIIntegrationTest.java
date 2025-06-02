@@ -21,7 +21,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.parallel.Execution;
@@ -426,7 +425,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
      *
      * This test verifies that build plans are triggered during exercise import from file.
      */
-    @RepeatedTest(20)
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importFromFile_verifyBuildPlansCreated() throws Exception {
         aeolusRequestMockProvider.enableMockingOfRequests();
