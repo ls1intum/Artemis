@@ -42,24 +42,27 @@ public class CourseLearnerProfileService {
      * @param user   the user for which the profile is created
      * @return Saved CourseLearnerProfile
      */
-    public CourseLearnerProfile createCourseLearnerProfile(Course course, User user) {
+    public CourseLearnerProfile getOrCreateCourseLearnerProfile(Course course, User user) {
 
         if (user.getLearnerProfile() == null) {
             learnerProfileService.createProfile(user);
         }
 
-        var courseProfile = new CourseLearnerProfile();
-        courseProfile.setCourse(course);
+        return courseLearnerProfileRepository.findByLoginAndCourse(user.getLogin(), course).orElseGet(() -> {
 
-        // Initialize values in the middle of Likert scale
-        courseProfile.setAimForGradeOrBonus(3);
-        courseProfile.setRepetitionIntensity(3);
-        courseProfile.setTimeInvestment(3);
+            var courseProfile = new CourseLearnerProfile();
+            courseProfile.setCourse(course);
 
-        var learnerProfile = learnerProfileRepository.findByUserElseThrow(user);
-        courseProfile.setLearnerProfile(learnerProfile);
+            // Initialize values in the middle of Likert scale
+            courseProfile.setAimForGradeOrBonus(3);
+            courseProfile.setRepetitionIntensity(3);
+            courseProfile.setTimeInvestment(3);
 
-        return courseLearnerProfileRepository.save(courseProfile);
+            var learnerProfile = learnerProfileRepository.findByUserElseThrow(user);
+            courseProfile.setLearnerProfile(learnerProfile);
+
+            return courseLearnerProfileRepository.save(courseProfile);
+        });
     }
 
     /**
@@ -69,7 +72,7 @@ public class CourseLearnerProfileService {
      * @param users  the users for which the profiles are created with eagerly loaded learner profiles
      * @return A List of saved CourseLearnerProfiles
      */
-    public List<CourseLearnerProfile> createCourseLearnerProfiles(Course course, Set<User> users) {
+    public List<CourseLearnerProfile> getOrCreateCourseLearnerProfiles(Course course, Set<User> users) {
 
         users.stream().filter(user -> user.getLearnerProfile() == null).forEach(learnerProfileService::createProfile);
 

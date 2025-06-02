@@ -29,11 +29,11 @@ public class LearnerProfileApi extends AbstractAtlasApi {
     }
 
     public void createCourseLearnerProfile(Course course, User user) {
-        courseLearnerProfileService.createCourseLearnerProfile(course, user);
+        courseLearnerProfileService.getOrCreateCourseLearnerProfile(course, user);
     }
 
     public void createCourseLearnerProfiles(Course course, Set<User> students) {
-        courseLearnerProfileService.createCourseLearnerProfiles(course, students);
+        courseLearnerProfileService.getOrCreateCourseLearnerProfiles(course, students);
     }
 
     public void deleteCourseLearnerProfile(Course course, User user) {

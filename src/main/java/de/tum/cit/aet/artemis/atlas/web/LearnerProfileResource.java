@@ -73,7 +73,7 @@ public class LearnerProfileResource {
         // This is needed, as there is no method that is executed everytime a user is added to a new course
         Set<CourseLearnerProfile> newProfiles = coursesWithLearningPaths.stream()
                 .filter(course -> courseLearnerProfiles.stream().map(CourseLearnerProfile::getCourse).noneMatch(existingCourse -> existingCourse.equals(course)))
-                .map(course -> courseLearnerProfileService.createCourseLearnerProfile(course, user)).collect(Collectors.toSet());
+                .map(course -> courseLearnerProfileService.getOrCreateCourseLearnerProfile(course, user)).collect(Collectors.toSet());
 
         courseLearnerProfiles.addAll(newProfiles);
 
