@@ -82,10 +82,9 @@ public class AthenaHealthIndicator implements HealthIndicator {
     private Map<String, Object> getAdditionalInfoForModules(AthenaHealthResponse athenaHealthResponse) {
         var additionalModuleInfo = new HashMap<String, Object>();
         var modules = athenaHealthResponse.modules();
-        // keys are module names, values are description maps
-        modules.forEach((key, value) -> {
-            var moduleHealth = new AthenaModuleHealth(value.type(), value.healthy(), value.url());
-            additionalModuleInfo.put(key, moduleHealthToString(moduleHealth));
+        modules.forEach((moduleName, descriptionMap) -> {
+            var moduleHealth = new AthenaModuleHealth(descriptionMap.type(), descriptionMap.healthy(), descriptionMap.url());
+            additionalModuleInfo.put(moduleName, moduleHealthToString(moduleHealth));
         });
         return additionalModuleInfo;
     }

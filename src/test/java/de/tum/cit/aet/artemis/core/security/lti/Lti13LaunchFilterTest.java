@@ -110,16 +110,10 @@ class Lti13LaunchFilterTest {
 
         // Initialize a real MockHttpServletRequest
         httpRequest = new MockHttpServletRequest();
-
-        // Set servlet path (this was previously mocked via getServletPath())
         httpRequest.setServletPath(CustomLti13Configurer.LTI13_LOGIN_PATH);
-
-        // Set attributes (previously mocked getAttribute)
         HttpServletMapping mapping = mock(HttpServletMapping.class);
         doReturn(MappingMatch.EXACT).when(mapping).getMappingMatch();
         httpRequest.setAttribute(RequestDispatcher.INCLUDE_MAPPING, mapping);
-
-        // Simulate the INCLUDE_REQUEST_URI_ATTRIBUTE used by Spring (was mocked)
         httpRequest.setAttribute(WebUtils.INCLUDE_REQUEST_URI_ATTRIBUTE, CustomLti13Configurer.LTI13_LOGIN_PATH);
 
         // Initialize OIDC idToken and claims

@@ -43,11 +43,11 @@ public class MessageSpecs {
         return (root, query, criteriaBuilder) -> {
             boolean hasText = searchText != null && !searchText.isBlank();
             boolean hasAuthors = authorIds != null && authorIds.length > 0;
-            // no author ids and no search text means no filtering, return all posts
+            // no author ids and no search text means no filtering
             if (!hasText && !hasAuthors) {
                 return null;
             }
-            // if only search text is given, use the search text specification
+            // if only a search text is given, use the search text specification
             if (hasText && !hasAuthors) {
                 return getSearchTextSpecification(searchText).toPredicate(root, query, criteriaBuilder);
             }
