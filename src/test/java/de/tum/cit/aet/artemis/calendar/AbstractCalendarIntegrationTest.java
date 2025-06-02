@@ -15,7 +15,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import com.fasterxml.jackson.core.type.TypeReference;
 
 import de.tum.cit.aet.artemis.calendar.domain.CourseCalendarEvent;
-import de.tum.cit.aet.artemis.calendar.dto.CalendarEventReadDTO;
+import de.tum.cit.aet.artemis.calendar.dto.CalendarEventDTO;
+import de.tum.cit.aet.artemis.calendar.dto.CalendarEventManageDTO;
 import de.tum.cit.aet.artemis.calendar.repository.CourseCalendarEventRepository;
 import de.tum.cit.aet.artemis.calendar.util.CourseCalendarEventUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -52,7 +53,10 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
 
     static final ZoneId TEST_TIMEZONE = ZoneId.of(TEST_TIMEZONE_STRING);
 
-    static final TypeReference<Map<String, List<CalendarEventReadDTO>>> GET_EVENTS_RETURN_TYPE = new TypeReference<Map<String, List<CalendarEventReadDTO>>>() {
+    static final TypeReference<Map<String, List<CalendarEventDTO>>> GET_CALENDAR_EVENTS_RETURN_TYPE = new TypeReference<Map<String, List<CalendarEventDTO>>>() {
+    };
+
+    static final TypeReference<List<CalendarEventManageDTO>> GET_COURSE_CALENDAR_EVENTS_RETURN_TYPE = new TypeReference<List<CalendarEventManageDTO>>() {
     };
 
     static final String PUT_REQUEST_URL = "/api/calendar/course-calendar-event";
@@ -234,11 +238,11 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
         return String.join(",", monthStrings);
     }
 
-    String assembleURLForGetRequest(String monthKeys) {
-        return "/api/calendar/calendar-events?monthKeys=" + monthKeys + "&timeZone=" + TEST_TIMEZONE_STRING;
+    String assembleURLForCourseCalendarEventsGetRequest(Long courseId) {
+        return "/api/calendar/courses/" + courseId + "/course-calendar-events";
     }
 
-    String assembleURLForGetRequest(String monthKeys, String timeZone) {
+    String assembleURLForCalendarEventsGetRequest(String monthKeys, String timeZone) {
         return "/api/calendar/calendar-events?monthKeys=" + monthKeys + "&timeZone=" + timeZone;
     }
 

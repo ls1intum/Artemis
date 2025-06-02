@@ -17,7 +17,7 @@ import jakarta.ws.rs.BadRequestException;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.calendar.domain.CourseCalendarEvent;
-import de.tum.cit.aet.artemis.calendar.dto.CalendarEventReadDTO;
+import de.tum.cit.aet.artemis.calendar.dto.CalendarEventDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
 
 /**
@@ -70,15 +70,15 @@ public class CalendarEventService {
      * @param eventDTOs      the set of calendar events to filter
      * @param months         the set of {@link YearMonth} values to check for overlap
      * @param clientTimeZone used to accurately compute month boundaries in the client's timezone when checking for overlaps
-     * @return a set of {@link CalendarEventReadDTO}s that overlap with at least one of the given months
+     * @return a set of {@link CalendarEventDTO}s that overlap with at least one of the given months
      */
-    public Set<CalendarEventReadDTO> filterForEventsOverlappingMonths(Set<CalendarEventReadDTO> eventDTOs, Set<YearMonth> months, ZoneId clientTimeZone) {
+    public Set<CalendarEventDTO> filterForEventsOverlappingMonths(Set<CalendarEventDTO> eventDTOs, Set<YearMonth> months, ZoneId clientTimeZone) {
         return eventDTOs.stream().filter(eventDTO -> months.stream().anyMatch(month -> areMonthAndEventOverlapping(month, eventDTO, clientTimeZone))).collect(Collectors.toSet());
     }
 
-    private boolean areMonthAndEventOverlapping(YearMonth month, CalendarEventReadDTO calendarEventReadDTO, ZoneId clientZone) {
-        ZonedDateTime eventStart = calendarEventReadDTO.startDate();
-        ZonedDateTime eventEnd = calendarEventReadDTO.endDate();
+    private boolean areMonthAndEventOverlapping(YearMonth month, CalendarEventDTO calendarEventDTO, ZoneId clientZone) {
+        ZonedDateTime eventStart = calendarEventDTO.startDate();
+        ZonedDateTime eventEnd = calendarEventDTO.endDate();
         ZonedDateTime monthStart = ZonedDateTime.of(month.atDay(1), LocalTime.MIDNIGHT, clientZone).withZoneSameInstant(ZoneOffset.UTC);
         ZonedDateTime monthEnd = ZonedDateTime.of(month.atEndOfMonth(), LocalTime.of(23, 59, 59, 999_000_000), clientZone).withZoneSameInstant(ZoneOffset.UTC);
 
@@ -95,13 +95,13 @@ public class CalendarEventService {
      * Loops through all events and splits events that span multiple days into several events each covering one day.
      *
      * @param eventDTOs the set of calendar events to filter
-     * @return a set of {@link CalendarEventReadDTO}s including all unsplit events and the splitting results
+     * @return a set of {@link CalendarEventDTO}s including all unsplit events and the splitting results
      */
-    public Set<CalendarEventReadDTO> splitEventsSpanningMultipleDaysIfNecessary(Set<CalendarEventReadDTO> eventDTOs) {
+    public Set<CalendarEventDTO> splitEventsSpanningMultipleDaysIfNecessary(Set<CalendarEventDTO> eventDTOs) {
         return eventDTOs.stream().flatMap(event -> splitEventAcrossDaysIfNecessary(event).stream()).collect(Collectors.toSet());
     }
 
-    private Set<CalendarEventReadDTO> splitEventAcrossDaysIfNecessary(CalendarEventReadDTO event) {
+    private Set<CalendarEventDTO> splitEventAcrossDaysIfNecessary(CalendarEventDTO event) {
         ZonedDateTime start = event.startDate();
         ZonedDateTime end = event.endDate();
 
@@ -109,7 +109,7 @@ public class CalendarEventService {
             return Set.of(event);
         }
 
-        HashSet<CalendarEventReadDTO> splitEvents = new HashSet<>();
+        HashSet<CalendarEventDTO> splitEvents = new HashSet<>();
         int currentSplitId = 0;
         LocalDate currentDay = start.toLocalDate();
         LocalDate endDay = end.toLocalDate();
@@ -120,8 +120,8 @@ public class CalendarEventService {
 
             ZonedDateTime currentEnd = currentDay.equals(end.toLocalDate()) ? end : currentDay.atTime(LocalTime.MAX).withNano(999_999_999).atZone(zone);
 
-            splitEvents.add(new CalendarEventReadDTO(event.id() + "-" + currentSplitId, event.title(), event.courseName(), currentStart, currentEnd, event.location(),
-                    event.facilitator()));
+            splitEvents.add(
+                    new CalendarEventDTO(event.id() + "-" + currentSplitId, event.title(), event.courseName(), currentStart, currentEnd, event.location(), event.facilitator()));
 
             currentSplitId++;
             currentDay = currentDay.plusDays(1);

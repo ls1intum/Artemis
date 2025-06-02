@@ -16,7 +16,7 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 
 @Entity
 @Table(name = "course_calendar_event")
-public class CourseCalendarEvent extends DomainObject {
+public class CourseCalendarEvent extends DomainObject implements Comparable<CourseCalendarEvent> {
 
     @ManyToOne
     @JoinColumn(name = "course_id", nullable = false)
@@ -130,5 +130,10 @@ public class CourseCalendarEvent extends DomainObject {
 
     public void setVisibleToInstructors(boolean visibleToInstructors) {
         this.visibleToInstructors = visibleToInstructors;
+    }
+
+    @Override
+    public int compareTo(CourseCalendarEvent o) {
+        return startDate.compareTo(o.startDate);
     }
 }

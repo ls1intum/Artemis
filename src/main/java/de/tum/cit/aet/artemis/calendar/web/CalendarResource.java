@@ -28,8 +28,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.calendar.domain.CourseCalendarEvent;
-import de.tum.cit.aet.artemis.calendar.dto.CalendarEventReadDTO;
-import de.tum.cit.aet.artemis.calendar.dto.CalendarEventWriteDTO;
+import de.tum.cit.aet.artemis.calendar.dto.CalendarEventDTO;
+import de.tum.cit.aet.artemis.calendar.dto.CalendarEventManageDTO;
 import de.tum.cit.aet.artemis.calendar.repository.CourseCalendarEventRepository;
 import de.tum.cit.aet.artemis.calendar.service.CalendarEventService;
 import de.tum.cit.aet.artemis.calendar.service.CourseCalendarEventService;
@@ -85,14 +85,14 @@ public class CalendarResource {
      *
      * @param monthKeys a list of ISO 8601 formatted strings representing months
      * @param timeZone  the clients time zone as IANA time zone ID
-     * @return {@code 200 (OK)} with a map of {@link CalendarEventReadDTO}s keyed by day as body. All timestamps of the DTOs are in ISO 8601 format with timezone offset according
+     * @return {@code 200 (OK)} with a map of {@link CalendarEventDTO}s keyed by day as body. All timestamps of the DTOs are in ISO 8601 format with timezone offset according
      *         to the provided timezone.
      * @throws BadRequestException      {@code 400 (Bad Request)} if the monthKeys are empty or formatted incorrectly or if the timeZone is formatted incorrectly.
      * @throws AccessForbiddenException {@code 403 (Forbidden)} if the user does not have at least student role
      */
     @GetMapping("calendar-events")
     @EnforceAtLeastStudent
-    public ResponseEntity<Map<String, List<CalendarEventReadDTO>>> getCalendarEventsOfMonths(@RequestParam List<String> monthKeys, @RequestParam String timeZone) {
+    public ResponseEntity<Map<String, List<CalendarEventDTO>>> getCalendarEventsOverlappingMonths(@RequestParam List<String> monthKeys, @RequestParam String timeZone) {
         log.debug("REST request to get calendar events falling into: {}", monthKeys);
 
         Set<YearMonth> months = calendarEventService.deserializeMonthKeysOrElseThrow(monthKeys);
@@ -100,25 +100,45 @@ public class CalendarResource {
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
-        Set<CalendarEventReadDTO> tutorialEventReadDTOs = tutorialGroupApi.getTutorialEventsForUser(user, clientTimeZone);
-        Set<CalendarEventReadDTO> courseEventReadDTOs = courseCalendarEventService.getCourseEventsForUser(user, clientTimeZone);
-        Set<CalendarEventReadDTO> calendarEventReadDTOS = Stream.concat(tutorialEventReadDTOs.stream(), courseEventReadDTOs.stream()).collect(Collectors.toSet());
-        Set<CalendarEventReadDTO> filteredDTOs = calendarEventService.filterForEventsOverlappingMonths(calendarEventReadDTOS, months, clientTimeZone);
-        Set<CalendarEventReadDTO> splitDTOs = calendarEventService.splitEventsSpanningMultipleDaysIfNecessary(filteredDTOs);
+        Set<CalendarEventDTO> tutorialEventReadDTOs = tutorialGroupApi.getTutorialEventsForUser(user, clientTimeZone);
+        Set<CalendarEventDTO> courseEventReadDTOs = courseCalendarEventService.getCourseEventsForUser(user, clientTimeZone);
+        Set<CalendarEventDTO> calendarEventDTOS = Stream.concat(tutorialEventReadDTOs.stream(), courseEventReadDTOs.stream()).collect(Collectors.toSet());
+        Set<CalendarEventDTO> filteredDTOs = calendarEventService.filterForEventsOverlappingMonths(calendarEventDTOS, months, clientTimeZone);
+        Set<CalendarEventDTO> splitDTOs = calendarEventService.splitEventsSpanningMultipleDaysIfNecessary(filteredDTOs);
 
-        Map<String, List<CalendarEventReadDTO>> calendarEventReadDTOsByDay = splitDTOs.stream().collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
+        Map<String, List<CalendarEventDTO>> calendarEventReadDTOsByDay = splitDTOs.stream().collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
         return ResponseEntity.ok(calendarEventReadDTOsByDay);
     }
 
-    // TODO: implement GET endpoint retrieving CourseCalendarEvents for a specific course
+    /**
+     * GET /courses/{courseId}/calendar-events : gets all calendar-events related to the {@link Course} identified by courseId
+     *
+     * @param courseId the id of the course for which to get the events
+     * @return {@code 200 (OK)} with a list of {@link CalendarEventDTO}s as body. All timestamps of the DTOs are in ISO 8601 format in UTC timezone.
+     * @throws EntityNotFoundException  {@code 404 (Not Found)} if no course exists for the provided courseId
+     * @throws AccessForbiddenException {@code 403 (Forbidden)} if the user does not have at least editor role or is not editor or instructor of the course.
+     */
+    @GetMapping("courses/{courseId}/course-calendar-events")
+    @EnforceAtLeastEditor
+    public ResponseEntity<List<CalendarEventManageDTO>> getCalendarEventsForCourse(@PathVariable Long courseId) {
+        log.debug("REST request to get calendar events for course with id: {}", courseId);
+
+        Course course = courseRepository.findWithEagerCourseCalendarEventsByIdElseThrow(courseId);
+        User responsibleUser = userRepository.getUserWithGroupsAndAuthorities();
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, responsibleUser);
+
+        List<CalendarEventManageDTO> courseCalendarEventDTOs = course.getCourseCalendarEvents().stream().map(CalendarEventManageDTO::new).toList();
+
+        return ResponseEntity.ok(courseCalendarEventDTOs);
+    }
 
     /**
-     * POST /courses/:courseId/course-calendar-events : creates {@link CourseCalendarEvent} for the given {@link CalendarEventWriteDTO}s
+     * POST /courses/:courseId/course-calendar-events : creates {@link CourseCalendarEvent} for the given {@link CalendarEventManageDTO}s
      * and associated them to the {@link Course} identified by courseId.
      *
-     * @param courseId               the id identifying the course to which the new event is supposed to be associated to
-     * @param calendarEventWriteDTOs a list of DTOs representing the events that should be created
-     * @return {@code 200 (OK)} with a set of {@link CalendarEventWriteDTO} representing the created events as body.
+     * @param courseId                the id identifying the course to which the new event is supposed to be associated to
+     * @param calendarEventManageDTOS a list of DTOs representing the events that should be created
+     * @return {@code 200 (OK)} with a set of {@link CalendarEventManageDTO} representing the created events as body.
      * @throws BadRequestException      {@code 400 (Bad Request)} if any course has an id or courseName (fields will be set automatically) or is visible to none of the course's
      *                                      user groups
      * @throws EntityNotFoundException  {@code 404 (Not Found)} if no {@link Course} is identified by courseId
@@ -126,24 +146,24 @@ public class CalendarResource {
      */
     @PostMapping("courses/{courseId}/course-calendar-events")
     @EnforceAtLeastEditor
-    public ResponseEntity<Set<CalendarEventWriteDTO>> createCourseCalendarEvents(@PathVariable Long courseId,
-            @RequestBody @Valid List<CalendarEventWriteDTO> calendarEventWriteDTOs) {
-        log.debug("REST request to create CourseCalendarEvents: {} in course: {}", calendarEventWriteDTOs, courseId);
+    public ResponseEntity<Set<CalendarEventManageDTO>> createCourseCalendarEvents(@PathVariable Long courseId,
+            @RequestBody @Valid List<CalendarEventManageDTO> calendarEventManageDTOS) {
+        log.debug("REST request to create CourseCalendarEvents: {} in course: {}", calendarEventManageDTOS, courseId);
 
         Course course = courseRepository.findByIdElseThrow(courseId);
         User responsibleUser = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, responsibleUser);
 
-        Set<CalendarEventWriteDTO> createdCalendarEventWriteDTOs = courseCalendarEventService.createCourseCalendarEventsOrThrow(calendarEventWriteDTOs, course);
+        Set<CalendarEventManageDTO> createdCalendarEventManageDTOS = courseCalendarEventService.createCourseCalendarEventsOrThrow(calendarEventManageDTOS, course);
 
-        return ResponseEntity.ok(createdCalendarEventWriteDTOs);
+        return ResponseEntity.ok(createdCalendarEventManageDTOS);
     }
 
     /**
-     * PUT /course-calendar-event : updates a {@link CourseCalendarEvent} according to the given {@link CalendarEventWriteDTO}s.
+     * PUT /course-calendar-event : updates a {@link CourseCalendarEvent} according to the given {@link CalendarEventManageDTO}s.
      *
-     * @param calendarEventWriteDTO a DTO representing the events that should be updated
-     * @return {@code 200 (OK)} with a {@link CalendarEventWriteDTO} representing the updated event as body.
+     * @param calendarEventManageDTO a DTO representing the events that should be updated
+     * @return {@code 200 (OK)} with a {@link CalendarEventManageDTO} representing the updated event as body.
      * @throws BadRequestException      {@code 400 (Bad Request)} if the DTO has a wrongly formatted id, has a courseName (will be set automatically
      *                                      according to the course of the event) or if the updated event is supposed to be visible to none of the course's user groups.
      * @throws EntityNotFoundException  {@code 404 (Not Found)} if no {@link CourseCalendarEvent} is identified by DTO's id
@@ -152,18 +172,18 @@ public class CalendarResource {
      */
     @PutMapping("course-calendar-event")
     @EnforceAtLeastEditor
-    public ResponseEntity<CalendarEventWriteDTO> updateCourseCalendarEvent(@Valid @RequestBody CalendarEventWriteDTO calendarEventWriteDTO) {
-        log.debug("REST request to update CourseCalendarEvent: {}", calendarEventWriteDTO);
+    public ResponseEntity<CalendarEventManageDTO> updateCourseCalendarEvent(@Valid @RequestBody CalendarEventManageDTO calendarEventManageDTO) {
+        log.debug("REST request to update CourseCalendarEvent: {}", calendarEventManageDTO);
 
-        Long courseCalendarEventId = courseCalendarEventService.checkIfValidIdAndExtractCourseCalendarEventIdOrThrow(calendarEventWriteDTO.id());
+        Long courseCalendarEventId = courseCalendarEventService.checkIfValidIdAndExtractCourseCalendarEventIdOrThrow(calendarEventManageDTO.id());
         CourseCalendarEvent event = courseCalendarEventRepository.findByIdWithCourse(courseCalendarEventId).orElseThrow(EntityNotFoundException::new);
         Course course = event.getCourse();
         User responsibleUser = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, responsibleUser);
 
-        CalendarEventWriteDTO updatedCalendarEventWriteDTO = courseCalendarEventService.updateCourseCalendarEventOrThrow(event, calendarEventWriteDTO);
+        CalendarEventManageDTO updatedCalendarEventManageDTO = courseCalendarEventService.updateCourseCalendarEventOrThrow(event, calendarEventManageDTO);
 
-        return ResponseEntity.ok(updatedCalendarEventWriteDTO);
+        return ResponseEntity.ok(updatedCalendarEventManageDTO);
     }
 
     /**

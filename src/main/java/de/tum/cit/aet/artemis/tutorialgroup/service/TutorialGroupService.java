@@ -32,7 +32,7 @@ import org.springframework.util.StringUtils;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.calendar.dto.CalendarEventReadDTO;
+import de.tum.cit.aet.artemis.calendar.dto.CalendarEventDTO;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.DeregisteredFromTutorialGroupNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.RegisteredToTutorialGroupNotification;
 import de.tum.cit.aet.artemis.communication.service.CourseNotificationService;
@@ -949,7 +949,7 @@ public class TutorialGroupService {
      * @param clientTimeZone the client's time zone
      * @return a set of {@code CalendarEventReadDTO}s representing {@code TutorialGroupSession}s relevant for user
      */
-    public Set<CalendarEventReadDTO> getTutorialEventsForUser(User user, ZoneId clientTimeZone) {
+    public Set<CalendarEventDTO> getTutorialEventsForUser(User user, ZoneId clientTimeZone) {
         ZonedDateTime now = ZonedDateTime.now(clientTimeZone).withZoneSameInstant(ZoneOffset.UTC);
         Set<Long> participatedTutorialGroupIds = tutorialGroupRepository.findTutorialGroupIdsWhereUserParticipatesFromActiveCourses(user.getId(), user.getGroups(), now);
         if (participatedTutorialGroupIds.isEmpty()) {
@@ -959,6 +959,6 @@ public class TutorialGroupService {
         Set<TutorialGroupSession> activeSessionsFromParticipatedGroups = tutorialGroupSessionRepository
                 .findAllActiveByTutorialGroupIdsWithGroupAndCourseAndAssistant(participatedTutorialGroupIds);
 
-        return activeSessionsFromParticipatedGroups.stream().map(session -> new CalendarEventReadDTO(session, clientTimeZone)).collect(Collectors.toSet());
+        return activeSessionsFromParticipatedGroups.stream().map(session -> new CalendarEventDTO(session, clientTimeZone)).collect(Collectors.toSet());
     }
 }

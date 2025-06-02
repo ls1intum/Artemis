@@ -162,6 +162,18 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
             """)
     Optional<Course> findWithEagerOrganizationsAndCompetenciesAndPrerequisitesAndLearningPaths(@Param("courseId") long courseId);
 
+    @Query("""
+            SELECT DISTINCT course
+            FROM Course course
+                LEFT JOIN FETCH course.courseCalendarEvents
+            WHERE course.id = :courseId
+            """)
+    Optional<Course> findWithEagerCourseCalendarEventsById(long courseId);
+
+    default Course findWithEagerCourseCalendarEventsByIdElseThrow(long courseId) throws EntityNotFoundException {
+        return getValueElseThrow(findWithEagerCourseCalendarEventsById(courseId), courseId);
+    }
+
     @EntityGraph(type = LOAD, attributePaths = { "onlineCourseConfiguration", "tutorialGroupsConfiguration" })
     Course findWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationById(long courseId);
 

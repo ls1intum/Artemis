@@ -8,6 +8,8 @@ import static de.tum.cit.aet.artemis.core.config.Constants.SHORT_NAME_PATTERN;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.regex.Matcher;
 
 import jakarta.persistence.CascadeType;
@@ -238,7 +240,7 @@ public class Course extends DomainObject {
 
     @OneToMany(mappedBy = "course", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties(value = "course")
-    private Set<CourseCalendarEvent> courseCalendarEvents = new HashSet<>();
+    private SortedSet<CourseCalendarEvent> courseCalendarEvents = new TreeSet<>();
 
     // NOTE: Helpers variable names must be different from Getter name, so that Jackson ignores the @Transient annotation, but Hibernate still respects it
     @Transient
@@ -1040,7 +1042,7 @@ public class Course extends DomainObject {
         return courseCalendarEvents;
     }
 
-    public void setCourseCalendarEvents(Set<CourseCalendarEvent> courseCalendarEvents) {
+    public void setCourseCalendarEvents(SortedSet<CourseCalendarEvent> courseCalendarEvents) {
         this.courseCalendarEvents = courseCalendarEvents;
     }
 }
