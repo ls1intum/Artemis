@@ -153,6 +153,7 @@ import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.MockDelegate;
@@ -1041,7 +1042,7 @@ public class CourseTestService {
         Result gradedResult = participationUtilService.addProgrammingParticipationWithResultForExercise(programmingExercise, userPrefix + "student3");
         gradedResult.completionDate(ZonedDateTime.now().minusHours(3)).assessmentType(AssessmentType.AUTOMATIC).score(42D);
         resultRepo.save(gradedResult);
-        StudentParticipation gradedParticipation = (StudentParticipation) gradedResult.getParticipation();
+        StudentParticipation gradedParticipation = (StudentParticipation) gradedResult.getSubmission().getParticipation();
         gradedParticipation.setInitializationState(InitializationState.FINISHED);
         participationRepository.save(gradedParticipation);
         programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(gradedResult, gradedParticipation, "asdf");
@@ -1049,7 +1050,8 @@ public class CourseTestService {
                 student);
         practiceParticipation.setPracticeMode(true);
         participationRepository.save(practiceParticipation);
-        Result practiceResult = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(1), practiceParticipation);
+        Submission practiceSubmission = participationUtilService.addSubmission(practiceParticipation, new ProgrammingSubmission());
+        Result practiceResult = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(1), practiceSubmission);
         practiceResult.setRated(false);
         resultRepo.save(practiceResult);
         programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(practiceResult, practiceParticipation, "ghjk");
@@ -2927,8 +2929,6 @@ public class CourseTestService {
         complaint.setResult(result1);
         complaint = complaintRepo.save(complaint);
 
-        complaint.getResult().setParticipation(null);
-
         // Accept Complaint and update Assessment
         ComplaintResponse complaintResponse = complaintUtilService.createInitialEmptyResponse(userPrefix + "tutor2", complaint);
         complaintResponse.getComplaint().setAccepted(false);
@@ -2959,8 +2959,6 @@ public class CourseTestService {
         Complaint feedbackRequest = new Complaint().complaintType(ComplaintType.MORE_FEEDBACK);
         feedbackRequest.setResult(result2);
         feedbackRequest = complaintRepo.save(feedbackRequest);
-
-        feedbackRequest.getResult().setParticipation(null);
 
         ComplaintResponse feedbackResponse = complaintUtilService.createInitialEmptyResponse(userPrefix + "tutor2", feedbackRequest);
         feedbackResponse.getComplaint().setAccepted(true);

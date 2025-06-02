@@ -28,7 +28,6 @@ describe('AttachmentVideoUnitFormComponent', () => {
                 MockComponent(CompetencySelectionComponent),
             ],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
-            schemas: [],
         }).compileComponents();
 
         attachmentVideoUnitFormComponentFixture = TestBed.createComponent(AttachmentVideoUnitFormComponent);
