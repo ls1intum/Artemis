@@ -19,7 +19,7 @@ describe('ExercisePreliminaryFeedbackOptionsComponent', () => {
         TestBed.configureTestingModule({
             providers: [
                 MockProvider(AthenaService, {
-                    isEnabled: () => of(true),
+                    isEnabled: () => true,
                 }),
                 { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: () => '1' } } } },
             ],
