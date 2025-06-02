@@ -217,7 +217,6 @@ describe('TextExercise Management Update Component', () => {
 
             comp.ngOnInit();
             comp.ngAfterViewInit();
-            expect(comp.titleChannelNameComponentSubscription).toBeDefined();
 
             comp.exerciseTitleChannelNameComponent.titleChannelNameComponent.isValid.set(true);
             expect(calculateValidSpy).toHaveBeenCalledOnce();
@@ -228,7 +227,6 @@ describe('TextExercise Management Update Component', () => {
             expect(calculateValidSpy).toHaveBeenCalledTimes(2);
 
             comp.ngOnDestroy();
-            expect(comp.titleChannelNameComponentSubscription?.closed).toBeTrue();
         });
     });
 

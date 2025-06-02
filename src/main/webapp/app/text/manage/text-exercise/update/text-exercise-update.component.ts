@@ -123,7 +123,6 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     formSectionStatus: FormSectionStatus[];
 
     // subcriptions
-    titleChannelNameComponentSubscription?: Subscription;
     pointsSubscription?: Subscription;
     bonusPointsSubscription?: Subscription;
     plagiarismSubscription?: Subscription;
@@ -148,6 +147,8 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
      */
     private updateFormSectionsOnIsValidChange() {
         this.exerciseTitleChannelNameComponent.titleChannelNameComponent.isValid();
+
+        // console.log("triggered updateFormSectionsOnIsValidChange");
 
         this.calculateFormSectionStatus();
     }
@@ -228,7 +229,6 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     }
 
     ngOnDestroy() {
-        this.titleChannelNameComponentSubscription?.unsubscribe();
         this.pointsSubscription?.unsubscribe();
         this.bonusPointsSubscription?.unsubscribe();
         this.plagiarismSubscription?.unsubscribe();
