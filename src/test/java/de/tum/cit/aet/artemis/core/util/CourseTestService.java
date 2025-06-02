@@ -141,7 +141,7 @@ import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.fileupload.repository.FileUploadExerciseRepository;
 import de.tum.cit.aet.artemis.fileupload.util.ZipFileTestUtilService;
-import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
+import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
 import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
 import de.tum.cit.aet.artemis.lti.test_repository.LtiPlatformConfigurationTestRepository;
@@ -153,6 +153,7 @@ import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.MockDelegate;
@@ -184,7 +185,7 @@ public class CourseTestService {
     private ExerciseTestRepository exerciseRepo;
 
     @Autowired
-    private LectureRepository lectureRepo;
+    private LectureTestRepository lectureRepo;
 
     @Autowired
     private ResultTestRepository resultRepo;
@@ -1041,7 +1042,7 @@ public class CourseTestService {
         Result gradedResult = participationUtilService.addProgrammingParticipationWithResultForExercise(programmingExercise, userPrefix + "student3");
         gradedResult.completionDate(ZonedDateTime.now().minusHours(3)).assessmentType(AssessmentType.AUTOMATIC).score(42D);
         resultRepo.save(gradedResult);
-        StudentParticipation gradedParticipation = (StudentParticipation) gradedResult.getParticipation();
+        StudentParticipation gradedParticipation = (StudentParticipation) gradedResult.getSubmission().getParticipation();
         gradedParticipation.setInitializationState(InitializationState.FINISHED);
         participationRepository.save(gradedParticipation);
         programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(gradedResult, gradedParticipation, "asdf");
@@ -1049,7 +1050,8 @@ public class CourseTestService {
                 student);
         practiceParticipation.setPracticeMode(true);
         participationRepository.save(practiceParticipation);
-        Result practiceResult = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(1), practiceParticipation);
+        Submission practiceSubmission = participationUtilService.addSubmission(practiceParticipation, new ProgrammingSubmission());
+        Result practiceResult = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(1), practiceSubmission);
         practiceResult.setRated(false);
         resultRepo.save(practiceResult);
         programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(practiceResult, practiceParticipation, "ghjk");
@@ -1829,7 +1831,7 @@ public class CourseTestService {
         course.setLearningPathsEnabled(true);
         course = courseRepo.save(course);
         testAddStudentOrTutorOrEditorOrInstructorToCourse(course, HttpStatus.OK);
-        course = courseRepo.findWithEagerLearningPathsAndLearningPathCompetenciesByIdElseThrow(course.getId());
+        course = courseRepo.findWithEagerLearningPathsByIdElseThrow(course.getId());
         assertThat(course.getLearningPaths()).isNotEmpty();
         // TODO check that the roles have changed accordingly
     }
@@ -2927,8 +2929,6 @@ public class CourseTestService {
         complaint.setResult(result1);
         complaint = complaintRepo.save(complaint);
 
-        complaint.getResult().setParticipation(null);
-
         // Accept Complaint and update Assessment
         ComplaintResponse complaintResponse = complaintUtilService.createInitialEmptyResponse(userPrefix + "tutor2", complaint);
         complaintResponse.getComplaint().setAccepted(false);
@@ -2959,8 +2959,6 @@ public class CourseTestService {
         Complaint feedbackRequest = new Complaint().complaintType(ComplaintType.MORE_FEEDBACK);
         feedbackRequest.setResult(result2);
         feedbackRequest = complaintRepo.save(feedbackRequest);
-
-        feedbackRequest.getResult().setParticipation(null);
 
         ComplaintResponse feedbackResponse = complaintUtilService.createInitialEmptyResponse(userPrefix + "tutor2", feedbackRequest);
         feedbackResponse.getComplaint().setAccepted(true);
@@ -3028,8 +3026,8 @@ public class CourseTestService {
 
         lifetimeOverviewStats = request.get("/api/core/courses/" + course2.getId() + "/statistics-lifetime-overview", HttpStatus.OK, List.class);
 
-        expectedLifetimeOverviewStats = Arrays.stream(new int[19]).boxed().collect(Collectors.toCollection(ArrayList::new));
-        expectedLifetimeOverviewStats.set(17, 1);
+        expectedLifetimeOverviewStats = Arrays.stream(new int[20]).boxed().collect(Collectors.toCollection(ArrayList::new));
+        expectedLifetimeOverviewStats.set(18, 1);
         assertThat(lifetimeOverviewStats).as("should only depict data until the end date of the course").isEqualTo(expectedLifetimeOverviewStats);
 
         course2.setStartDate(now.minusWeeks(2));

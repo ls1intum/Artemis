@@ -8,7 +8,7 @@ ext {
         "atlas"         :          ["INSTRUCTION": 0.904, "CLASS":  6],
         "buildagent"    :          ["INSTRUCTION": 0.800, "CLASS":  1],
         "communication" :          ["INSTRUCTION": 0.846, "CLASS":  5],
-        "core"          :          ["INSTRUCTION": 0.841, "CLASS": 42],
+        "core"          :          ["INSTRUCTION": 0.839, "CLASS": 42],
         "exam"          :          ["INSTRUCTION": 0.914, "CLASS":  2],
         "exercise"      :          ["INSTRUCTION": 0.916, "CLASS":  0],
         "fileupload"    :          ["INSTRUCTION": 0.952, "CLASS":  0],
@@ -18,7 +18,7 @@ ext {
         "modeling"      :          ["INSTRUCTION": 0.932, "CLASS":  0],
         "plagiarism"    :          ["INSTRUCTION": 0.903, "CLASS":  1],
         "programming"   :          ["INSTRUCTION": 0.781, "CLASS": 16],
-        "quiz"          :          ["INSTRUCTION": 0.891, "CLASS":  7],
+        "quiz"          :          ["INSTRUCTION": 0.889, "CLASS":  7],
         "text"          :          ["INSTRUCTION": 0.949, "CLASS":  1],
         "tutorialgroup" :          ["INSTRUCTION": 0.915, "CLASS":  1],
     ]

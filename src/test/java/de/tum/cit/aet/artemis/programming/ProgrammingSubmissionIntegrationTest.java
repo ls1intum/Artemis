@@ -84,6 +84,10 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(exercise);
         programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(exercise);
         participationUtilService.addProgrammingParticipationWithResultForExercise(exercise, TEST_PREFIX + "student1");
+
+        Result result = participationUtilService.addProgrammingParticipationWithResultForExercise(exercise, TEST_PREFIX + "student1");
+        ProgrammingExerciseStudentParticipation participation = (ProgrammingExerciseStudentParticipation) result.getSubmission().getParticipation();
+
         exercise.setTestCasesChanged(true);
         programmingExerciseRepository.save(exercise);
 
@@ -95,6 +99,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
 
         var dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
         doReturn(ObjectId.fromString(dummyHash)).when(gitService).getLastCommitHash(programmingExerciseStudentParticipation.getVcsRepositoryUri());
+        doReturn(ObjectId.fromString(dummyHash)).when(gitService).getLastCommitHash(participation.getVcsRepositoryUri());
     }
 
     @AfterEach
@@ -103,12 +108,12 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void triggerBuildStudent() throws Exception {
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
         doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
 
-        String login = TEST_PREFIX + "student1";
+        String login = TEST_PREFIX + "student2";
         StudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, login);
         final var programmingExerciseParticipation = ((ProgrammingExerciseParticipation) participation);
         jenkinsRequestMockProvider.mockTriggerBuild(programmingExerciseParticipation.getProgrammingExercise().getProjectKey(), programmingExerciseParticipation.getBuildPlanId(),
@@ -147,7 +152,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     void triggerBuildInstructor() throws Exception {
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
         doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
-        String login = TEST_PREFIX + "student1";
+        String login = TEST_PREFIX + "student2";
         StudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, login);
         final var programmingExerciseParticipation = ((ProgrammingExerciseParticipation) participation);
         jenkinsRequestMockProvider.mockTriggerBuild(programmingExerciseParticipation.getProgrammingExercise().getProjectKey(), programmingExerciseParticipation.getBuildPlanId(),
@@ -294,9 +299,9 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void triggerBuildForParticipationsInstructorEmpty() throws Exception {
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
-        String login1 = TEST_PREFIX + "student1";
-        String login2 = TEST_PREFIX + "student2";
-        String login3 = TEST_PREFIX + "student3";
+        String login1 = TEST_PREFIX + "student2";
+        String login2 = TEST_PREFIX + "student3";
+        String login3 = TEST_PREFIX + "student4";
         ProgrammingExerciseStudentParticipation participation1 = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, login1);
         participationUtilService.addStudentParticipationForProgrammingExercise(exercise, login2);
         ProgrammingExerciseStudentParticipation participation3 = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, login3);
@@ -359,15 +364,15 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void triggerFailedBuildResultPresentInCIOk() throws Exception {
-        var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        var user = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
         var submission = new ProgrammingSubmission();
         submission.setSubmissionDate(ZonedDateTime.now().minusMinutes(4));
         submission.setSubmitted(true);
         submission.setCommitHash(TestConstants.COMMIT_HASH_STRING);
         submission.setType(SubmissionType.MANUAL);
-        submission = programmingExerciseUtilService.addProgrammingSubmission(exercise, submission, TEST_PREFIX + "student1");
+        submission = programmingExerciseUtilService.addProgrammingSubmission(exercise, submission, user.getLogin());
         var optionalParticipation = participationRepository.findById(submission.getParticipation().getId());
         assertThat(optionalParticipation).isPresent();
         final var participation = optionalParticipation.get();
@@ -394,16 +399,16 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void triggerFailedBuildSubmissionNotLatestButLastGradedNotFound() throws Exception {
-        var participation = createExerciseWithSubmissionAndParticipation();
+        var participation = createExerciseWithSubmissionAndParticipation(TEST_PREFIX + "student1");
 
         String url = "/api/programming/programming-submissions/" + participation.getId() + "/trigger-failed-build?lastGraded=true";
         request.postWithoutLocation(url, null, HttpStatus.NOT_FOUND, null);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void triggerFailedBuild_CIException() throws Exception {
-        var participation = createExerciseWithSubmissionAndParticipation();
+        var participation = createExerciseWithSubmissionAndParticipation(TEST_PREFIX + "student2");
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
         var repoUri = uriService.getRepositorySlugFromRepositoryUri(participation.getVcsRepositoryUri());
         doReturn(participation.getVcsRepositoryUri()).when(versionControlService).getCloneRepositoryUri(exercise.getProjectKey(), repoUri);
@@ -412,13 +417,12 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         request.postWithoutLocation(url, null, HttpStatus.OK, null);
     }
 
-    private ProgrammingExerciseStudentParticipation createExerciseWithSubmissionAndParticipation() {
-        var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+    private ProgrammingExerciseStudentParticipation createExerciseWithSubmissionAndParticipation(String login) {
         exercise.setDueDate(ZonedDateTime.now().minusDays(1));
         exercise = programmingExerciseRepository.save(exercise);
         var submission = new ProgrammingSubmission();
         submission.setType(SubmissionType.MANUAL);
-        submission = programmingExerciseUtilService.addProgrammingSubmission(exercise, submission, user.getLogin());
+        submission = programmingExerciseUtilService.addProgrammingSubmission(exercise, submission, login);
         var optionalParticipation = participationRepository.findById(submission.getParticipation().getId());
         assertThat(optionalParticipation).isPresent();
         var participation = optionalParticipation.get();
@@ -538,11 +542,9 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         exercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         exercise = programmingExerciseRepository.save(exercise);
         exerciseUtilService.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
-        Result result = participationUtilService.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusHours(1).minusMinutes(30),
-                programmingExerciseStudentParticipation);
+        Result result = participationUtilService.addResultToSubmission(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusHours(1).minusMinutes(30), submission);
 
         result.setSubmission(submission);
-        submission.addResult(result);
         submission.setParticipation(programmingExerciseStudentParticipation);
         submission = submissionRepository.save(submission);
         var submissions = submissionRepository.findAll();
@@ -597,11 +599,9 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         submission.setParticipation(programmingExerciseStudentParticipation);
         submission = submissionRepository.save(submission);
 
-        Result result = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(1).minusMinutes(30),
-                programmingExerciseStudentParticipation);
+        Result result = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(1).minusMinutes(30), submission);
 
         result.setSubmission(submission);
-        submission.addResult(result);
         submission.setParticipation(programmingExerciseStudentParticipation);
         submission = submissionRepository.save(submission);
 
@@ -621,10 +621,8 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testLockAndGetProgrammingSubmissionWithoutManualResult() throws Exception {
-        var result = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(1).minusMinutes(30),
-                programmingExerciseStudentParticipation);
-        var submission = programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(result, programmingExerciseStudentParticipation,
-                "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d");
+        final var submission = programmingExerciseUtilService.createProgrammingSubmission(programmingExerciseStudentParticipation, true, "1");
+        participationUtilService.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null);
         exercise.setAssessmentType(AssessmentType.AUTOMATIC);
         exercise = programmingExerciseRepository.save(exercise);
         exerciseUtilService.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
@@ -661,10 +659,9 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         exerciseUtilService.addGradingInstructionsToExercise(exercise);
         programmingExerciseRepository.save(exercise);
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
-        var newResult = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(2), programmingExerciseStudentParticipation);
-        programmingExerciseStudentParticipation.addResult(newResult);
-        var submission = programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(newResult, programmingExerciseStudentParticipation,
-                "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d");
+
+        final var submission = programmingExerciseUtilService.createProgrammingSubmission(programmingExerciseStudentParticipation, false, "1");
+        participationUtilService.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null);
 
         exerciseUtilService.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
 

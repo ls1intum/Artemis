@@ -129,7 +129,6 @@ public class ModelingExerciseFeedbackService {
             log.error("Could not generate feedback for exercise ID: {} and participation ID: {}", modelingExercise.getId(), participation.getId(), e);
             automaticResult.setSuccessful(false);
             automaticResult.setCompletionDate(null);
-            participation.addResult(automaticResult);
             this.resultWebsocketService.broadcastNewResult(participation, automaticResult);
             throw new InternalServerErrorException("Something went wrong... AI Feedback could not be generated");
         }
@@ -149,7 +148,6 @@ public class ModelingExerciseFeedbackService {
         result.setScore(0.0);
         result.setSuccessful(null);
         result.setSubmission(submission);
-        result.setParticipation(participation);
         return result;
     }
 

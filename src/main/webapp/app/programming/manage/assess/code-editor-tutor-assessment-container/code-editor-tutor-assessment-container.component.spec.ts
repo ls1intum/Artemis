@@ -13,7 +13,6 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { By } from '@angular/platform-browser';
 import { MockComponent } from 'ng-mocks';
 import { RepositoryFileService } from 'app/programming/shared/services/repository.service';
-import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { ProgrammingAssessmentManualResultService } from 'app/programming/manage/assess/manual-result/programming-assessment-manual-result.service';
@@ -88,7 +87,6 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     const user = <User>{ id: 99, groups: ['instructorGroup'] };
     const result: Result = {
         feedbacks: [new Feedback()],
-        participation: new StudentParticipation(),
         score: 80,
         successful: true,
         submission: new ProgrammingSubmission(),
@@ -113,7 +111,6 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     } as unknown as ProgrammingExercise;
 
     const participation: ProgrammingExerciseStudentParticipation = new ProgrammingExerciseStudentParticipation();
-    participation.results = [result];
     participation.exercise = exercise;
     participation.id = 1;
     participation.student = { login: 'student1' } as User;
@@ -125,6 +122,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     submission.participation = participation;
     submission.id = 1234;
     submission.latestResult = result;
+    participation.submissions = [submission];
 
     const unassessedSubmission = new ProgrammingSubmission();
     unassessedSubmission.id = 12;
