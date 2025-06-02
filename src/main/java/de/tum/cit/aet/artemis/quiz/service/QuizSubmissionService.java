@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
+import de.tum.cit.aet.artemis.quiz.dto.participation.StudentQuizParticipationWithSolutionsDTO;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
 
@@ -142,7 +143,7 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
     public void calculateAllResults(long quizExerciseId) {
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
         log.info("Calculating results for quiz {}", quizExercise.getId());
-        studentParticipationRepository.findByExerciseId(quizExercise.getId()).forEach(participation -> {
+        studentParticipationRepository.findByExerciseIdWithEagerSubmissions(quizExercise.getId()).forEach(participation -> {
             participation.setExercise(quizExercise);
             Optional<QuizSubmission> quizSubmissionOptional = quizSubmissionRepository.findWithEagerSubmittedAnswersByParticipationId(participation.getId()).stream().findFirst();
 
@@ -194,8 +195,9 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
     private void sendQuizResultToUser(long quizExerciseId, StudentParticipation participation) {
         // TODO: we should convert this into a DTO instead of removing data from the entity
         var user = participation.getParticipantIdentifier();
-        removeUnnecessaryObjectsBeforeSendingToClient(participation);
-        websocketMessagingService.sendMessageToUser(user, "/topic/exercise/" + quizExerciseId + "/participation", participation);
+        // removeUnnecessaryObjectsBeforeSendingToClient(participation);
+        StudentQuizParticipationWithSolutionsDTO participationDTO = StudentQuizParticipationWithSolutionsDTO.of(participation);
+        websocketMessagingService.sendMessageToUser(user, "/topic/exercise/" + quizExerciseId + "/participation", participationDTO);
     }
 
     // TODO: Use a DTO instead of removing data from the entity
