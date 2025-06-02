@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.quiz.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -177,6 +178,9 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
             quizSubmissionRepository.save(quizSubmission);
             resultRepository.save(result);
             studentParticipationRepository.save(participation);
+
+            quizSubmission.setResults(List.of(result));
+            participation.setSubmissions(Set.of(quizSubmission));
 
             var course = quizExercise.getCourseViaExerciseGroupOrCourseMember();
             sendQuizResultToUser(quizExerciseId, participation);
