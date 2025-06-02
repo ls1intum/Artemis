@@ -133,7 +133,6 @@ public class SingleUserNotificationService {
      */
     public void saturateExerciseWithResultAndStudentParticipationForGivenUserForEmail(Exercise exercise, User recipient, Result result) {
         StudentParticipation studentParticipationForEmail = new StudentParticipation();
-        studentParticipationForEmail.setResults(Set.of(result));
         studentParticipationForEmail.setParticipant(recipient);
         exercise.setStudentParticipations(Set.of(studentParticipationForEmail));
     }
