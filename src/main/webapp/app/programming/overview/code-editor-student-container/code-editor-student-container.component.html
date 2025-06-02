@@ -17,11 +17,7 @@
             </div>
         </nav>
     }
-    @if (isIllegalSubmission) {
-        <div class="row-container">
-            <span class="badge bg-danger" jhiTranslate="artemisApp.assessment.assessmentIllegalSubmission"></span>
-        </div>
-    }
+
     @if (!loadingParticipation && !participationCouldNotBeFetched) {
         <jhi-code-editor-container
             [editable]="!repositoryIsLocked"

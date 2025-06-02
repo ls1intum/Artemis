@@ -42,20 +42,6 @@ public final class Constants {
      */
     public static final String ARTEMIS_FILE_PATH_PREFIX = "/api/core/files/";
 
-    /**
-     * This constant determines how many seconds after the exercise due dates submissions will still be considered rated.
-     * Submissions after the grace period exceeded will be flagged as illegal.
-     * <p>
-     * This is needed because locking programming exercise repositories might take up to 60 seconds,
-     * especially for exercises with many participants.
-     * If the student was able to successfully push their solution, this solution should still be graded, even if
-     * the push was a few seconds late.
-     * <p>
-     * Have a look at isAllowedToSubmit(ProgrammingExerciseStudentParticipation, User, ProgrammingSubmission) in
-     * de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService
-     */
-    public static final int PROGRAMMING_GRACE_PERIOD_SECONDS = 60;
-
     public static final String FILEPATH_ID_PLACEHOLDER = "PLACEHOLDER_FOR_ID";
 
     public static final String EXERCISE_TOPIC_ROOT = "/topic/exercise/";

@@ -629,7 +629,7 @@ public class ExamService {
             participation.setSubmissionCount(participation.getSubmissions().size());
 
             // only include the latest submission
-            Optional<Submission> optionalLatestSubmission = participation.findLatestLegalOrIllegalSubmission();
+            Optional<Submission> optionalLatestSubmission = participation.findLatestSubmission();
             if (optionalLatestSubmission.isPresent()) {
                 Submission latestSubmission = optionalLatestSubmission.get();
                 latestSubmission.setParticipation(null);
@@ -1170,7 +1170,7 @@ public class ExamService {
         StatsForDashboardDTO stats = new StatsForDashboardDTO();
 
         final long numberOfSubmissions = submissionRepository.countByExamIdSubmittedSubmissionsIgnoreTestRuns(examId)
-                + programmingExerciseRepository.countLegalSubmissionsByExamIdSubmitted(examId);
+                + programmingExerciseRepository.countSubmissionsByExamIdSubmitted(examId);
         stats.setNumberOfSubmissions(new DueDateStat(numberOfSubmissions, 0));
 
         DueDateStat[] numberOfAssessmentsOfCorrectionRounds = resultRepository.countNumberOfFinishedAssessmentsForExamForCorrectionRounds(examId,

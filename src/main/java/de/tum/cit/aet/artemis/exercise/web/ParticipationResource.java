@@ -72,7 +72,6 @@ import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
-import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -385,7 +384,7 @@ public class ParticipationResource {
             }
         }
         else if (exercise instanceof ProgrammingExercise) {
-            if (participation.findLatestLegalResult() == null) {
+            if (participation.findLatestResult() == null) {
                 throw new BadRequestAlertException("You need to submit at least once and have the build results", "participation", "noSubmissionExists", true);
             }
         }
@@ -636,9 +635,8 @@ public class ParticipationResource {
             participations.forEach(participation -> {
                 participation.setSubmissionCount(participation.getSubmissions().size());
                 if (participation.getSubmissions() != null && !participation.getSubmissions().isEmpty()) {
-                    var lastLegalSubmission = participation.getSubmissions().stream().filter(submission -> submission.getType() != SubmissionType.ILLEGAL)
-                            .max(Comparator.naturalOrder());
-                    participation.setSubmissions(lastLegalSubmission.map(Set::of).orElse(Collections.emptySet()));
+                    var lastSubmission = participation.getSubmissions().stream().max(Comparator.naturalOrder());
+                    participation.setSubmissions(lastSubmission.map(Set::of).orElse(Collections.emptySet()));
                 }
             });
         }

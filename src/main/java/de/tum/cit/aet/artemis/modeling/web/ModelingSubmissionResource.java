@@ -340,7 +340,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      * @throws ExamApiNotPresentException if the exam access API is required but not present
      */
     private ValidationResult validateParticipation(long participationId) {
-        var studentParticipation = studentParticipationRepository.findByIdWithLegalSubmissionsResultsFeedbackElseThrow(participationId);
+        var studentParticipation = studentParticipationRepository.findByIdWithSubmissionsResultsFeedbackElseThrow(participationId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
         var exercise = studentParticipation.getExercise();
 
