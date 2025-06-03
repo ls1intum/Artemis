@@ -34,7 +34,7 @@
                 "description": "Hier kannst du dein Feedback-Lernprofil einsehen und aktualisieren. Diese Einstellungen werden verwendet, um deine Feedback-Erfahrung zu personalisieren.",
                 "alternativeStandard": {
                     "label": "Alternative vs. Standard",
-                    "description": "Wähle, ob du Feedback bevorzugst, das alternative und kreative Lösungen erkundet, oder Feedback, das auf den Standardansätzen und der häufigsten, am verbreitetsten Lösungen basiert.",
+                    "description": "Wähle, ob du Feedback bevorzugst, das alternative und kreative Lösungen erkundet, oder Feedback, das auf den Standardansätzen und den häufigsten, am weitesten verbreiteten Lösungen basiert.",
                     "level": {
                         "alternative": "Alternative",
                         "balanced": "Balanced",
@@ -43,7 +43,7 @@
                 },
                 "followupSummary": {
                     "label": "Follow-up vs. Zusammenfassung",
-                    "description": "Wähle, ob du Feedback bevorzugst, das mit einer Follow-up-Frage endet (um weitere Gedanken und Reflexionen zu fördern) oder mit einem Zusammenfassung/Abschluss (um das Feedback klar abzuschließen).",
+                    "description": "Wähle, ob du Feedback bevorzugst, das mit einer Follow-up-Frage endet (um weitere Gedanken und Reflexionen zu fördern) oder mit einer Zusammenfassung/einem Abschluss (um das Feedback klar abzuschließen).",
                     "level": {
                         "followup": "Follow-up",
                         "balanced": "Balanced",

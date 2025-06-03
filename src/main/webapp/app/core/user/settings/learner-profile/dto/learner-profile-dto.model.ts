@@ -1,3 +1,10 @@
+export interface LearnerProfileData {
+    id?: number;
+    feedbackAlternativeStandard?: number;
+    feedbackFollowupSummary?: number;
+    feedbackBriefDetailed?: number;
+}
+
 export class LearnerProfileDTO {
     /**
      * Minimum value allowed for profile fields representing values on a Likert scale.
@@ -15,11 +22,28 @@ export class LearnerProfileDTO {
     public feedbackFollowupSummary: number;
     public feedbackBriefDetailed: number;
 
-    constructor(data: any) {
-        this.id = data.id;
-        this.feedbackAlternativeStandard = data.feedbackAlternativeStandard;
-        this.feedbackFollowupSummary = data.feedbackFollowupSummary;
-        this.feedbackBriefDetailed = data.feedbackBriefDetailed;
+    constructor(data: LearnerProfileData) {
+        if (!data) {
+            throw new Error('LearnerProfileDTO: data parameter cannot be null or undefined');
+        }
+
+        // Initialize with default values
+        this.id = data.id ?? 0;
+        this.feedbackAlternativeStandard = this.validateAndGetValue(data.feedbackAlternativeStandard, 'feedbackAlternativeStandard');
+        this.feedbackFollowupSummary = this.validateAndGetValue(data.feedbackFollowupSummary, 'feedbackFollowupSummary');
+        this.feedbackBriefDetailed = this.validateAndGetValue(data.feedbackBriefDetailed, 'feedbackBriefDetailed');
+    }
+
+    private validateAndGetValue(value: number | undefined, fieldName: string): number {
+        if (value === undefined || value === null) {
+            return LearnerProfileDTO.MIN_VALUE;
+        }
+
+        if (!this.isValueInRange(value)) {
+            return LearnerProfileDTO.MIN_VALUE;
+        }
+
+        return value;
     }
 
     public isValid(): boolean {

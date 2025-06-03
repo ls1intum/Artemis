@@ -107,16 +107,49 @@ public class AthenaFeedbackSuggestionsService {
     }
 
     /**
-     * Extract the learner profile from a submission if it's a student participation
+     * Extract the learner profile from a submission if it's a student participation.
+     * This method handles the extraction of learner profile information from a submission,
+     * with proper error handling and logging.
      *
      * @param submission the submission to extract the profile from
      * @return the learner profile or null if not available
      */
     private LearnerProfile extractLearnerProfile(Submission submission) {
-        if (submission.getParticipation() instanceof StudentParticipation studentParticipation) {
-            return studentParticipation.getStudent().map(User::getLearnerProfile).map(lp -> learnerProfileApi.findByIdInitialized(lp.getId())).orElse(null);
+        if (submission == null) {
+            log.debug("Cannot extract learner profile: submission is null");
+            return null;
         }
-        return null;
+
+        if (!(submission.getParticipation() instanceof StudentParticipation studentParticipation)) {
+            log.debug("Cannot extract learner profile: submission is not from a student participation");
+            return null;
+        }
+
+        // Get the student from the participation
+        var studentOpt = studentParticipation.getStudent();
+        if (studentOpt.isEmpty()) {
+            log.debug("Cannot extract learner profile: no student found in participation");
+            return null;
+        }
+
+        var student = studentOpt.get();
+        var learnerProfile = student.getLearnerProfile();
+        if (learnerProfile == null) {
+            log.debug("Cannot extract learner profile: student has no learner profile");
+            return null;
+        }
+
+        try {
+            var initializedProfile = learnerProfileApi.findById(learnerProfile.getId());
+            if (initializedProfile == null) {
+                log.warn("Learner profile with ID {} not found in database", learnerProfile.getId());
+            }
+            return initializedProfile;
+        }
+        catch (Exception e) {
+            log.error("Error retrieving learner profile for student {}: {}", student.getId(), e.getMessage());
+            return null;
+        }
     }
 
     /**

@@ -44,12 +44,12 @@ public class LearnerProfileService {
     }
 
     /**
-     * Find a learner profile by its ID with all necessary relations initialized
+     * Find a learner profile by its ID
      *
      * @param id the ID of the learner profile
-     * @return the initialized learner profile or null if not found
+     * @return the learner profile or null if not found
      */
-    public LearnerProfile findByIdInitialized(Long id) {
-        return learnerProfileRepository.findByIdInitialized(id).orElse(null);
+    public LearnerProfile findById(Long id) {
+        return learnerProfileRepository.findById(id).orElse(null);
     }
 }

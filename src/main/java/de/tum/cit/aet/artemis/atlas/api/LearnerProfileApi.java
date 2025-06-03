@@ -50,13 +50,13 @@ public class LearnerProfileApi extends AbstractAtlasApi {
     }
 
     /**
-     * Get an initialized learner profile by its ID
+     * Get a learner profile by its ID
      *
      * @param id the ID of the learner profile
-     * @return the initialized learner profile or null if not found
+     * @return the learner profile or null if not found
      */
-    public LearnerProfile findByIdInitialized(Long id) {
-        return learnerProfileService.findByIdInitialized(id);
+    public LearnerProfile findById(Long id) {
+        return learnerProfileService.findById(id);
     }
 
 }
