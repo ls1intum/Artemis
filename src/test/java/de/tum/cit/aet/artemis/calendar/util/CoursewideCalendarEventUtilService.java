@@ -7,7 +7,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -19,8 +18,11 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 @Profile(SPRING_PROFILE_TEST)
 public class CoursewideCalendarEventUtilService {
 
-    @Autowired
-    private CoursewideCalendarEventRepository coursewideCalendarEventRepository;
+    private final CoursewideCalendarEventRepository coursewideCalendarEventRepository;
+
+    public CoursewideCalendarEventUtilService(CoursewideCalendarEventRepository coursewideCalendarEventRepository) {
+        this.coursewideCalendarEventRepository = coursewideCalendarEventRepository;
+    }
 
     /**
      * Creates and persists weekly {@link CoursewideCalendarEvent}s starting 5 days after the course's start date.

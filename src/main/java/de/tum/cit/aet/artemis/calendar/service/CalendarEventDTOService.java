@@ -81,7 +81,8 @@ public class CalendarEventDTOService {
 
         boolean eventStartFallsIntoMonth = firstIsBeforeOrEqualSecond(monthStart, eventStart) && firstIsBeforeOrEqualSecond(eventStart, monthEnd);
         boolean eventEndFallsIntoMonth = firstIsBeforeOrEqualSecond(monthStart, eventEnd) && firstIsBeforeOrEqualSecond(eventEnd, monthEnd);
-        return eventStartFallsIntoMonth || eventEndFallsIntoMonth;
+        boolean eventWrapsMonth = eventStart.isBefore(monthStart) && monthEnd.isBefore(eventEnd);
+        return eventStartFallsIntoMonth || eventEndFallsIntoMonth || eventWrapsMonth;
     }
 
     private boolean firstIsBeforeOrEqualSecond(ZonedDateTime first, ZonedDateTime second) {
