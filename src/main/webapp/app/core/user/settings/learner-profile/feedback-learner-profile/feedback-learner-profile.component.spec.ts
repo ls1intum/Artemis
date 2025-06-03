@@ -1,8 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FeedbackLearnerProfileComponent } from './feedback-learner-profile.component';
 import { LearnerProfileApiService } from '../learner-profile-api.service';
-import { AlertService } from 'app/shared/service/alert.service';
-import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { LearnerProfileDTO } from '../dto/learner-profile-dto.model';
@@ -14,7 +12,6 @@ describe('FeedbackLearnerProfileComponent', () => {
     let component: FeedbackLearnerProfileComponent;
     let fixture: ComponentFixture<FeedbackLearnerProfileComponent>;
     let learnerProfileApiService: LearnerProfileApiService;
-    let alertService: AlertService;
 
     const mockProfile = new LearnerProfileDTO({
         id: 1,
@@ -26,19 +23,12 @@ describe('FeedbackLearnerProfileComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [FeedbackLearnerProfileComponent],
-            providers: [
-                { provide: AlertService, useClass: MockAlertService },
-                { provide: TranslateService, useClass: MockTranslateService },
-                MockProvider(LearnerProfileApiService),
-                provideHttpClient(),
-                provideHttpClientTesting(),
-            ],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, MockProvider(LearnerProfileApiService), provideHttpClient(), provideHttpClientTesting()],
         }).compileComponents();
 
         fixture = TestBed.createComponent(FeedbackLearnerProfileComponent);
         component = fixture.componentInstance;
         learnerProfileApiService = TestBed.inject(LearnerProfileApiService);
-        alertService = TestBed.inject(AlertService);
 
         jest.spyOn(learnerProfileApiService, 'getLearnerProfileForCurrentUser').mockResolvedValue(mockProfile);
         jest.spyOn(learnerProfileApiService, 'putUpdatedLearnerProfile');
