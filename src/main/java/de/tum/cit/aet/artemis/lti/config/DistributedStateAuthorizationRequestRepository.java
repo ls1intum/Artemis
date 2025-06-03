@@ -30,7 +30,7 @@ import com.hazelcast.core.HazelcastInstance;
  */
 @Component
 @Profile(PROFILE_LTI)
-class DistributedStateAuthorizationRequestRepository implements AuthorizationRequestRepository<OAuth2AuthorizationRequest> {
+public class DistributedStateAuthorizationRequestRepository implements AuthorizationRequestRepository<OAuth2AuthorizationRequest> {
 
     private static final Logger log = LoggerFactory.getLogger(DistributedStateAuthorizationRequestRepository.class);
 
