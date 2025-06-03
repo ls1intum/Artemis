@@ -36,7 +36,6 @@ describe('ProgrammingExerciseModeComponent', () => {
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
-            schemas: [],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ProgrammingExerciseModeComponent);

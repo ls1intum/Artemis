@@ -61,7 +61,6 @@ describe('ApollonDiagramDetail Component', () => {
                 { provide: CourseManagementService, useClass: MockCourseManagementService },
                 { provide: ProfileService, useClass: MockProfileService },
             ],
-            schemas: [],
         })
             .overrideTemplate(ApollonDiagramDetailComponent, '')
             .compileComponents()
