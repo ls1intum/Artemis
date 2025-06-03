@@ -77,7 +77,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             SELECT DISTINCT p
             FROM StudentParticipation p
                  LEFT JOIN FETCH p.submissions s
-                 LEFT JOIN TREAT(s as AbstractQuizSubmission) qs
+                 LEFT JOIN TREAT(s AS QuizSubmission) qs
                  LEFT JOIN FETCH qs.submittedAnswers sa
             WHERE p.exercise.id = :exerciseId
                 AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
