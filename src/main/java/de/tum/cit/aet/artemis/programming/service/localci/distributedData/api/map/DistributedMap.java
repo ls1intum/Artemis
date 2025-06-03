@@ -7,6 +7,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.map.listener.MapEntryListener;
+import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.map.listener.MapListener;
 
 public interface DistributedMap<K, V> {
 
@@ -103,4 +104,12 @@ public interface DistributedMap<K, V> {
      * @return a unique identifier for the listener, which can be used to remove it later
      */
     UUID addEntryListener(MapEntryListener<K, V> listener);
+
+    /**
+     * Adds a listener that will be notified of changes to the map.
+     *
+     * @param listener the listener to add
+     * @return a unique identifier for the listener, which can be used to remove it later
+     */
+    UUID addEntryListener(MapListener listener);
 }

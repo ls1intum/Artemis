@@ -15,6 +15,7 @@ import com.hazelcast.core.HazelcastInstanceNotActiveException;
 
 import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.queue.DistributedQueue;
 import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.queue.listener.QueueItemListener;
+import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.queue.listener.QueueListener;
 
 public class HazelcastDistributedQueue<T> implements DistributedQueue<T> {
 
@@ -73,7 +74,7 @@ public class HazelcastDistributedQueue<T> implements DistributedQueue<T> {
 
     @Override
     public UUID addItemListener(QueueItemListener<T> listener) {
-        ItemListener<T> hazelcastListener = new ItemListener<>() {
+        return queue.addItemListener(new ItemListener<T>() {
 
             @Override
             public void itemAdded(ItemEvent<T> event) {
@@ -84,8 +85,23 @@ public class HazelcastDistributedQueue<T> implements DistributedQueue<T> {
             public void itemRemoved(ItemEvent<T> event) {
                 listener.itemRemoved(event.getItem());
             }
-        };
-        return queue.addItemListener(hazelcastListener, true);
+        }, true);
+    }
+
+    @Override
+    public UUID addListener(QueueListener listener) {
+        return queue.addItemListener(new ItemListener<>() {
+
+            @Override
+            public void itemAdded(ItemEvent<T> item) {
+                listener.itemAdded();
+            }
+
+            @Override
+            public void itemRemoved(ItemEvent<T> item) {
+                listener.itemRemoved();
+            }
+        }, false);
     }
 
     @Override

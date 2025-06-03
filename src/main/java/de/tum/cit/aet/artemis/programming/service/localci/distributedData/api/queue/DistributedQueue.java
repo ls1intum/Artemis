@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.UUID;
 
 import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.queue.listener.QueueItemListener;
+import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.queue.listener.QueueListener;
 
 public interface DistributedQueue<T> {
 
@@ -78,6 +79,14 @@ public interface DistributedQueue<T> {
      * @return a unique identifier for the registration, which can be used to remove the listener later
      */
     UUID addItemListener(QueueItemListener<T> listener);
+
+    /**
+     * Adds a listener that will be notified when items are added or removed from the queue.
+     *
+     * @param listener the listener to add
+     * @return a unique identifier for the registration, which can be used to remove the listener later
+     */
+    UUID addListener(QueueListener listener);
 
     /**
      * Removes a previously registered item listener using its unique identifier.

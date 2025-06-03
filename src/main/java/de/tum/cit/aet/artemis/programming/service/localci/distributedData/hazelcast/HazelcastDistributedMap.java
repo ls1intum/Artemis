@@ -17,6 +17,7 @@ import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.ma
 import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.map.listener.MapEntryListener;
 import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.map.listener.MapEntryRemovedEvent;
 import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.map.listener.MapEntryUpdatedEvent;
+import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.map.listener.MapListener;
 
 public class HazelcastDistributedMap<K, V> implements DistributedMap<K, V> {
 
@@ -97,15 +98,35 @@ public class HazelcastDistributedMap<K, V> implements DistributedMap<K, V> {
             @Override
             public void entryRemoved(EntryEvent<K, V> event) {
                 listener.entryRemoved(new MapEntryRemovedEvent<>(event.getKey(), event.getOldValue()));
-
             }
 
             @Override
             public void entryUpdated(EntryEvent<K, V> event) {
                 listener.entryUpdated(new MapEntryUpdatedEvent<>(event.getKey(), event.getValue(), event.getOldValue()));
-
             }
         }
         return map.addEntryListener(new HazelcastMapEntryListener(), true);
+    }
+
+    @Override
+    public UUID addEntryListener(MapListener listener) {
+        class HazelcastMapEntryListener implements EntryAddedListener<K, V>, EntryRemovedListener<K, V>, EntryUpdatedListener<K, V> {
+
+            @Override
+            public void entryAdded(EntryEvent event) {
+                listener.entryAdded();
+            }
+
+            @Override
+            public void entryRemoved(EntryEvent event) {
+                listener.entryRemoved();
+            }
+
+            @Override
+            public void entryUpdated(EntryEvent event) {
+                listener.entryUpdated();
+            }
+        }
+        return map.addEntryListener(new HazelcastMapEntryListener(), false);
     }
 }
