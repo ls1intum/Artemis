@@ -7,7 +7,7 @@ import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AlertService } from 'app/shared/service/alert.service';
-import { ButtonSize } from 'app/shared/components/button/button.component';
+import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
 import { DomainService } from 'app/programming/shared/code-editor/services/code-editor-domain.service';
 import { ExerciseType, IncludedInOverallScore, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -278,6 +278,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             this.manualResult!.submission = this.submission;
         }
         this.participation = submission.participation!;
+        this.participation.submissions = [this.submission];
         this.exercise = this.participation.exercise as ProgrammingExercise;
         /**
          * CARE: Setting access rights for exercises should not happen this way and is a workaround.
@@ -499,7 +500,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             .subscribe({
                 next: (result: Result) => {
                     assessmentAfterComplaint.onSuccess();
-                    this.participation.results![0] = this.manualResult = result;
+                    this!.submission!.results![0] = this.manualResult = result;
                     this.alertService.closeAll();
                     this.alertService.success('artemisApp.assessment.messages.updateAfterComplaintSuccessful');
                 },
@@ -604,10 +605,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     private handleSaveOrSubmitSuccessWithAlert(response: HttpResponse<Result>, translationKey: string): void {
-        if (!this.participation.results) {
-            this.participation.results = [];
-        }
-        this.participation.results[0] = this.manualResult = response.body!;
+        this.submission!.results![0] = this.manualResult = response.body!;
         this.alertService.closeAll();
         this.alertService.success(translationKey);
         this.saveBusy = this.submitBusy = false;

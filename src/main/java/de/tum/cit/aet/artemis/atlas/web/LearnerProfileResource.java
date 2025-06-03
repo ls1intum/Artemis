@@ -1,6 +1,9 @@
 package de.tum.cit.aet.artemis.atlas.web;
 
-import java.util.Map;
+import static de.tum.cit.aet.artemis.atlas.domain.profile.CourseLearnerProfile.MAX_PROFILE_VALUE;
+import static de.tum.cit.aet.artemis.atlas.domain.profile.CourseLearnerProfile.MIN_PROFILE_VALUE;
+
+import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -20,25 +23,18 @@ import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.profile.CourseLearnerProfile;
 import de.tum.cit.aet.artemis.atlas.dto.CourseLearnerProfileDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CourseLearnerProfileRepository;
+import de.tum.cit.aet.artemis.atlas.service.profile.CourseLearnerProfileService;
+import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.service.course.CourseAtlasService;
 
 @Conditional(AtlasEnabled.class)
 @RestController
 @RequestMapping("api/atlas/")
 public class LearnerProfileResource {
-
-    /**
-     * Minimum value allowed for profile fields representing values on a Likert scale.
-     */
-    private static final int MIN_PROFILE_VALUE = 1;
-
-    /**
-     * Maximum value allowed for profile fields representing values on a Likert scale.
-     */
-    private static final int MAX_PROFILE_VALUE = 5;
 
     private static final Logger log = LoggerFactory.getLogger(LearnerProfileResource.class);
 
@@ -46,41 +42,61 @@ public class LearnerProfileResource {
 
     private final CourseLearnerProfileRepository courseLearnerProfileRepository;
 
-    public LearnerProfileResource(UserRepository userRepository, CourseLearnerProfileRepository courseLearnerProfileRepository) {
+    private final CourseAtlasService courseAtlasService;
+
+    private final CourseLearnerProfileService courseLearnerProfileService;
+
+    public LearnerProfileResource(UserRepository userRepository, CourseLearnerProfileRepository courseLearnerProfileRepository, CourseAtlasService courseAtlasService,
+            CourseLearnerProfileService courseLearnerProfileService) {
         this.userRepository = userRepository;
         this.courseLearnerProfileRepository = courseLearnerProfileRepository;
+        this.courseAtlasService = courseAtlasService;
+        this.courseLearnerProfileService = courseLearnerProfileService;
     }
 
     /**
-     * GET /learner-profiles/course-learner-profiles : get a Map of a {@link de.tum.cit.aet.artemis.core.domain.Course} id
+     * GET course-learner-profiles : get a Set of a {@link de.tum.cit.aet.artemis.core.domain.Course} id
      * to the corresponding {@link CourseLearnerProfile} of the logged-in user.
      *
-     * @return The ResponseEntity with status 200 (OK) and with the body containing a map of DTOs, which contains per course profile data.
+     * @return The ResponseEntity with status 200 (OK) and with the body containing a set of DTOs, which contains per course profile data.
      */
     @GetMapping("course-learner-profiles")
     @EnforceAtLeastStudent
-    public ResponseEntity<Map<Long, CourseLearnerProfileDTO>> getCourseLearnerProfiles() {
-        User user = userRepository.getUser();
+    public ResponseEntity<Set<CourseLearnerProfileDTO>> getCourseLearnerProfiles() {
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get all CourseLearnerProfiles of user {}", user.getLogin());
-        Map<Long, CourseLearnerProfileDTO> result = courseLearnerProfileRepository.findAllByLogin(user.getLogin()).stream()
-                .collect(Collectors.toMap(profile -> profile.getCourse().getId(), CourseLearnerProfileDTO::of));
-        return ResponseEntity.ok(result);
+        Set<CourseLearnerProfile> courseLearnerProfiles = courseLearnerProfileRepository.findAllByLoginAndCourseActive(user.getLogin(), ZonedDateTime.now()).stream()
+                .filter(profile -> user.getGroups().contains(profile.getCourse().getStudentGroupName())).collect(Collectors.toSet());
+
+        Set<Course> coursesWithLearningPaths = courseAtlasService.findAllActiveForUserAndLearningPathsEnabled(user);
+
+        // This is needed, as there is no method that is executed everytime a user is added to a new course
+        Set<CourseLearnerProfile> newProfiles = coursesWithLearningPaths.stream()
+                .filter(course -> courseLearnerProfiles.stream().map(CourseLearnerProfile::getCourse).noneMatch(existingCourse -> existingCourse.equals(course)))
+                .map(course -> courseLearnerProfileService.createCourseLearnerProfile(course, user)).collect(Collectors.toSet());
+
+        courseLearnerProfiles.addAll(newProfiles);
+
+        Set<CourseLearnerProfileDTO> returnSet = courseLearnerProfiles.stream().map(CourseLearnerProfileDTO::of).collect(Collectors.toSet());
+
+        return ResponseEntity.ok(returnSet);
     }
 
     /**
-     * Validates that fields are within {@link #MIN_PROFILE_VALUE} and {@link #MAX_PROFILE_VALUE}.
+     * Validates that fields are within {@link CourseLearnerProfile#MIN_PROFILE_VALUE} and {@link CourseLearnerProfile#MAX_PROFILE_VALUE}.
      *
      * @param value     Value of the field
      * @param fieldName Field name
      */
     private void validateProfileField(int value, String fieldName) {
         if (value < MIN_PROFILE_VALUE || value > MAX_PROFILE_VALUE) {
-            throw new BadRequestAlertException(fieldName + " field is outside valid bounds", CourseLearnerProfile.ENTITY_NAME, fieldName.toLowerCase() + "OutOfBounds", true);
+            String message = String.format("%s (%d) is outside valid bounds [%d, %d]", fieldName, value, MIN_PROFILE_VALUE, MAX_PROFILE_VALUE);
+            throw new BadRequestAlertException(message, CourseLearnerProfile.ENTITY_NAME, fieldName.toLowerCase() + "OutOfBounds", true);
         }
     }
 
     /**
-     * PUT /learner-profiles/course-learner-profiles/{courseLearnerProfileId} : update fields in a {@link CourseLearnerProfile}.
+     * PUT course-learner-profiles/{courseLearnerProfileId} : update fields in a {@link CourseLearnerProfile}.
      *
      * @param courseLearnerProfileId  ID of the CourseLearnerProfile
      * @param courseLearnerProfileDTO {@link CourseLearnerProfileDTO} object from the request body.
@@ -98,9 +114,7 @@ public class LearnerProfileResource {
                     true);
         }
 
-        Set<CourseLearnerProfile> clps = courseLearnerProfileRepository.findAllByLogin(user.getLogin());
-        Optional<CourseLearnerProfile> optionalCourseLearnerProfile = clps.stream()
-                .filter(clp -> clp.getId() == courseLearnerProfileId && clp.getCourse().getId() == courseLearnerProfileDTO.courseId()).findFirst();
+        Optional<CourseLearnerProfile> optionalCourseLearnerProfile = courseLearnerProfileRepository.findByLoginAndId(user.getLogin(), courseLearnerProfileId);
 
         if (optionalCourseLearnerProfile.isEmpty()) {
             throw new BadRequestAlertException("CourseLearnerProfile not found.", CourseLearnerProfile.ENTITY_NAME, "courseLearnerProfileNotFound", true);
@@ -115,7 +129,7 @@ public class LearnerProfileResource {
         updateProfile.setTimeInvestment(courseLearnerProfileDTO.timeInvestment());
         updateProfile.setRepetitionIntensity(courseLearnerProfileDTO.repetitionIntensity());
 
-        CourseLearnerProfile result = courseLearnerProfileRepository.save(updateProfile);
-        return ResponseEntity.ok(CourseLearnerProfileDTO.of(result));
+        courseLearnerProfileRepository.save(updateProfile);
+        return ResponseEntity.ok(CourseLearnerProfileDTO.of(updateProfile));
     }
 }

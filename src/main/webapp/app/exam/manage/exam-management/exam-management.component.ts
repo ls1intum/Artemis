@@ -15,19 +15,33 @@ import { EventManager } from 'app/shared/service/event-manager.service';
 import { faClipboard, faEye, faFileImport, faListAlt, faPlus, faSort, faThList, faTimes, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
-import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
 import { ExamStatusComponent } from '../exam-status/exam-status.component';
+import { CourseTitleBarTitleDirective } from 'app/core/course/shared/directives/course-title-bar-title.directive';
+import { CourseTitleBarActionsDirective } from 'app/core/course/shared/directives/course-title-bar-actions.directive';
+import { CourseTitleBarTitleComponent } from 'app/core/course/shared/course-title-bar-title/course-title-bar-title.component';
 
 @Component({
     selector: 'jhi-exam-management',
     templateUrl: './exam-management.component.html',
     styleUrls: ['./exam-management.component.scss'],
-    imports: [TranslateDirective, DocumentationButtonComponent, FaIconComponent, RouterLink, SortDirective, SortByDirective, ExamStatusComponent],
+    imports: [
+        TranslateDirective,
+        DocumentationButtonComponent,
+        FaIconComponent,
+        RouterLink,
+        SortDirective,
+        SortByDirective,
+        ExamStatusComponent,
+        CourseTitleBarTitleDirective,
+        CourseTitleBarActionsDirective,
+        CourseTitleBarTitleComponent,
+    ],
 })
 export class ExamManagementComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);

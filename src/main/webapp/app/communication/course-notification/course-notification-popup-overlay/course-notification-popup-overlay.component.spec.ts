@@ -222,4 +222,70 @@ describe('CourseNotificationPopupOverlayComponent', () => {
 
         expect(collapseOverlayClickedSpy).toHaveBeenCalledOnce();
     });
+
+    it('should clear all notifications when clearAllNotifications is called', fakeAsync(() => {
+        const mockNotification1 = createMockNotification(1, 101);
+        const mockNotification2 = createMockNotification(2, 102);
+        componentAsAny.notifications = [mockNotification1, mockNotification2];
+        componentAsAny.isExpanded = true;
+        fixture.detectChanges();
+
+        component.clearAllNotifications();
+        tick(0); // Process the setTimeout
+
+        expect(componentAsAny.notifications).toHaveLength(0);
+        expect(componentAsAny.isExpanded).toBeFalse();
+    }));
+
+    it('should do nothing when clearAllNotifications is called and isExpanded is false', () => {
+        const mockNotification = createMockNotification(1, 101);
+        componentAsAny.notifications = [mockNotification];
+        componentAsAny.isExpanded = false;
+        fixture.detectChanges();
+
+        const setNotificationStatusSpy = jest.spyOn(courseNotificationService, 'setNotificationStatus');
+        const setNotificationStatusInMapSpy = jest.spyOn(courseNotificationService, 'setNotificationStatusInMap');
+        const decreaseNotificationCountBySpy = jest.spyOn(courseNotificationService, 'decreaseNotificationCountBy');
+
+        component.clearAllNotifications();
+
+        expect(setNotificationStatusSpy).not.toHaveBeenCalled();
+        expect(setNotificationStatusInMapSpy).not.toHaveBeenCalled();
+        expect(decreaseNotificationCountBySpy).not.toHaveBeenCalled();
+        expect(componentAsAny.notifications).toHaveLength(1);
+    });
+
+    it('should mark all notifications as seen on server when clearAllNotifications is called', fakeAsync(() => {
+        const mockNotification1 = createMockNotification(1, 101);
+        const mockNotification2 = createMockNotification(2, 101);
+        const mockNotification3 = createMockNotification(3, 102);
+        componentAsAny.notifications = [mockNotification1, mockNotification2, mockNotification3];
+        componentAsAny.isExpanded = true;
+        fixture.detectChanges();
+
+        component.clearAllNotifications();
+        tick(0);
+
+        expect(courseNotificationService.setNotificationStatus).toHaveBeenCalledWith(101, [1, 2], CourseNotificationViewingStatus.SEEN);
+        expect(courseNotificationService.setNotificationStatusInMap).toHaveBeenCalledWith(101, [1, 2], CourseNotificationViewingStatus.SEEN);
+        expect(courseNotificationService.decreaseNotificationCountBy).toHaveBeenCalledWith(101, 2);
+
+        expect(courseNotificationService.setNotificationStatus).toHaveBeenCalledWith(102, [3], CourseNotificationViewingStatus.SEEN);
+        expect(courseNotificationService.setNotificationStatusInMap).toHaveBeenCalledWith(102, [3], CourseNotificationViewingStatus.SEEN);
+        expect(courseNotificationService.decreaseNotificationCountBy).toHaveBeenCalledWith(102, 1);
+    }));
+
+    it('should trigger clearAllNotifications when clicking the clear button', () => {
+        const mockNotification = createMockNotification(1, 101);
+        componentAsAny.notifications = [mockNotification];
+        componentAsAny.isExpanded = true;
+        fixture.detectChanges();
+
+        const clearAllNotificationsSpy = jest.spyOn(component, 'clearAllNotifications');
+
+        const clearButton = fixture.debugElement.queryAll(By.css('.btn-outline-primary'))[1];
+        clearButton.nativeElement.click();
+
+        expect(clearAllNotificationsSpy).toHaveBeenCalledOnce();
+    });
 });

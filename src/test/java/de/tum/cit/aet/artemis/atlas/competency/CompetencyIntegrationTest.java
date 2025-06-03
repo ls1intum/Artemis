@@ -110,7 +110,7 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
     }
 
     @Override
-    List<? extends CourseCompetency> getAllFilteredCall(long courseId, HttpStatus expectedStatus) throws Exception {
+    List<? extends CourseCompetency> getAllFilteredCall(long courseId, HttpStatus expectedStatus) {
         throw new UnsupportedOperationException("Not implemented for competencies");
     }
 

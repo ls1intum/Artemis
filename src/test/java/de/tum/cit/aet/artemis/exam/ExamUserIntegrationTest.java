@@ -109,7 +109,7 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
         exam1 = examUtilService.addExerciseGroupsAndExercisesToExam(exam1, false);
         exam1 = examRepository.save(exam1);
 
-        programmingExerciseTestService.setup(this, versionControlService, localVCGitBranchService);
+        programmingExerciseTestService.setup(this, versionControlService);
     }
 
     @AfterEach
@@ -156,7 +156,6 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
         });
     }
 
-    @Disabled // TODO hazelcast caching issue - see CacheConfiguration
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUploadExamUserImages() throws Exception {

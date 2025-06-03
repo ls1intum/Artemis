@@ -9,6 +9,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,6 +24,8 @@ import de.tum.cit.aet.artemis.assessment.dto.BonusSourceResultDTO;
 import de.tum.cit.aet.artemis.assessment.dto.MaxAndReachablePointsDTO;
 import de.tum.cit.aet.artemis.assessment.dto.score.StudentScoresDTO;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
+import de.tum.cit.aet.artemis.assessment.repository.StudentScoreRepository;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.assessment.util.GradingScaleFactory;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -54,6 +57,9 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
     private ResultTestRepository resultRepository;
 
     @Autowired
+    private ParticipantScoreRepository participantScoreRepository;
+
+    @Autowired
     private GradingScaleRepository gradingScaleRepository;
 
     @Autowired
@@ -67,8 +73,12 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
 
     private Course course;
 
+    @Autowired
+    private StudentScoreRepository studentScoreRepository;
+
     @BeforeEach
     void init() {
+        studentScoreRepository.deleteAll();
         userUtilService.addUsers(TEST_PREFIX, 2, 2, 0, 1);
         course = courseUtilService.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(TEST_PREFIX, false);
     }
@@ -135,10 +145,15 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
 
         // Test with null result set.
         Set<Result> results = studentParticipations.get(1).getResults();
+
+        // Clear participant scores before deleting results
+        for (Long id : studentParticipations.stream().map(StudentParticipation::getExercise).map(Exercise::getId).collect(Collectors.toSet())) {
+            participantScoreRepository.deleteAllByExerciseId(id);
+        }
+
         resultRepository.deleteAll(results);
 
         // Test with empty result set.
-        studentParticipations.get(2).setResults(Collections.emptySet());
         resultRepository.saveAll(studentParticipations.get(2).getResults());
 
         // Test with null score in result.
@@ -154,9 +169,9 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         StudentScoresDTO studentScoresDTO = courseScoreCalculationService.calculateCourseScoreForStudent(course, null, student.getId(), studentParticipations,
                 new MaxAndReachablePointsDTO(25.0, 5.0, 0.0), List.of());
         if (withDueDate) {
-            assertThat(studentScoresDTO.absoluteScore()).isEqualTo(2.1);
-            assertThat(studentScoresDTO.relativeScore()).isEqualTo(8.4);
-            assertThat(studentScoresDTO.currentRelativeScore()).isEqualTo(42.0);
+            assertThat(studentScoresDTO.absoluteScore()).isEqualTo(6.6);
+            assertThat(studentScoresDTO.relativeScore()).isEqualTo(26.4);
+            assertThat(studentScoresDTO.currentRelativeScore()).isEqualTo(132.0);
         }
         else {
             assertThat(studentScoresDTO.absoluteScore()).isEqualTo(4.6);
@@ -187,7 +202,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
 
         User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
-        CourseForDashboardDTO courseForDashboard = courseScoreCalculationService.getScoresAndParticipationResults(course, null, student.getId());
+        CourseForDashboardDTO courseForDashboard = courseScoreCalculationService.getScoresAndParticipationResults(course, null, student.getId(), false);
         assertThat(courseForDashboard.course()).isEqualTo(course);
         CourseScoresDTO totalCourseScores = courseForDashboard.totalScores();
         assertThat(totalCourseScores.maxPoints()).isZero();
@@ -207,7 +222,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         Course pastCourse = courseUtilService.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(TEST_PREFIX, true);
         User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
-        CourseForDashboardDTO courseForDashboard = courseScoreCalculationService.getScoresAndParticipationResults(pastCourse, null, student.getId());
+        CourseForDashboardDTO courseForDashboard = courseScoreCalculationService.getScoresAndParticipationResults(pastCourse, null, student.getId(), false);
         assertThat(courseForDashboard.course()).isEqualTo(pastCourse);
         CourseScoresDTO totalCourseScores = courseForDashboard.totalScores();
         assertThat(totalCourseScores.maxPoints()).isEqualTo(5.0);
@@ -243,14 +258,12 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
 
         User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
-        pastCourse.getExercises().forEach(exercise -> {
-            exercise.getStudentParticipations().forEach(participation -> {
-                participation.setPresentationScore(100.0);
-                studentParticipationRepository.save(participation);
-            });
-        });
+        pastCourse.getExercises().forEach(exercise -> exercise.getStudentParticipations().forEach(participation -> {
+            participation.setPresentationScore(100.0);
+            studentParticipationRepository.save(participation);
+        }));
 
-        CourseForDashboardDTO courseForDashboard = courseScoreCalculationService.getScoresAndParticipationResults(pastCourse, gradingScale, student.getId());
+        CourseForDashboardDTO courseForDashboard = courseScoreCalculationService.getScoresAndParticipationResults(pastCourse, gradingScale, student.getId(), false);
         assertThat(courseForDashboard.course()).isEqualTo(pastCourse);
         CourseScoresDTO totalCourseScores = courseForDashboard.totalScores();
         assertThat(totalCourseScores.maxPoints()).isEqualTo(8.0);

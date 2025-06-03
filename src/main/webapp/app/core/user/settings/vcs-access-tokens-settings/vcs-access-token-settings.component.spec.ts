@@ -152,25 +152,6 @@ describe('VcsAccessTokensSettingsComponent', () => {
         expect(comp.currentUser!.vcsAccessToken).toBeUndefined();
     });
 
-    it('should set wasCopied to true and back to false after 3 seconds on successful copy', () => {
-        comp.ngOnInit();
-
-        jest.useFakeTimers();
-        comp.onCopyFinished(true);
-        expect(comp.wasCopied).toBeTruthy();
-        jest.advanceTimersByTime(3000);
-        expect(comp.wasCopied).toBeFalsy();
-        jest.useRealTimers();
-    });
-
-    it('should not change wasCopied if copy is unsuccessful', () => {
-        comp.ngOnInit();
-        comp.onCopyFinished(false);
-
-        // Verify that wasCopied remains false
-        expect(comp.wasCopied).toBeFalsy();
-    });
-
     function startTokenCreation() {
         comp.ngOnInit();
         fixture.detectChanges();

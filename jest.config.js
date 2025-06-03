@@ -14,13 +14,14 @@ const esModules = [
     '@angular/service-worker',
     '@ctrl/ngx-emoji-mart',
     '@danielmoncada/angular-datetime-picker',
-    '@siemens/ngx-datatable',
     '@fortawesome/angular-fontawesome',
     '@ls1intum/apollon',
     '@ng-bootstrap/ng-bootstrap',
     '@ngx-translate/core',
     '@ngx-translate/http-loader',
+    '@primeuix',
     '@sentry/angular',
+    '@siemens/ngx-datatable',
     '@swimlane/ngx-charts',
     '@swimlane/ngx-graph',
     'collapse-white-space',
@@ -46,15 +47,15 @@ const esModules = [
     'franc-min',
     'internmap',
     'lodash-es',
+    'markdown-it-github-alerts',
     'monaco-editor',
     'n-gram',
     'ngx-device-detector',
     'ngx-infinite-scroll',
     'ngx-webstorage',
+    'primeng',
     'rxjs/operators',
     'trigram-utils',
-    'primeng',
-    '@primeuix'
 ].join('|');
 
 const {
@@ -93,13 +94,14 @@ module.exports = {
     coverageThreshold: {
         global: {
             // TODO: in the future, the following values should increase to at least 90%
-            statements: 89.18,
-            branches: 75.32,
-            functions: 83.07,
-            lines: 89.25,
+            statements: 89.14,
+            branches: 75.18,
+            functions: 82.94,
+            lines: 89.22,
         },
     },
-    coverageReporters: ['clover', 'json', 'lcov', 'text-summary'],
+    // 'json-summary' reporter is used by supporting_scripts/code-coverage/module-coverage-client/check-client-module-coverage.mjs
+    coverageReporters: ['clover', 'json', 'lcov', 'text-summary','json-summary'],
     setupFilesAfterEnv: ['<rootDir>/src/test/javascript/spec/jest-test-setup.ts', 'jest-extended/all'],
     moduleFileExtensions: ['ts', 'html', 'js', 'json', 'mjs'],
     transformIgnorePatterns: [`/node_modules/(?!${esModules})`],

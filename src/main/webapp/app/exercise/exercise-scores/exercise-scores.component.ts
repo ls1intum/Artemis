@@ -31,14 +31,14 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
 import { ExternalSubmissionButtonComponent } from '../external-submission/external-submission-button.component';
-import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button/exercise-action-button.component';
+import { ExerciseActionButtonComponent } from 'app/shared/components/buttons/exercise-action-button/exercise-action-button.component';
 import { ExerciseScoresExportButtonComponent } from './export-button/exercise-scores-export-button.component';
 import { ProgrammingAssessmentRepoExportButtonComponent } from 'app/programming/manage/assess/repo-export/export-button/programming-assessment-repo-export-button.component';
 import { SubmissionExportButtonComponent } from 'app/exercise/submission-export/button/submission-export-button.component';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { ResultComponent } from '../result/result.component';
-import { CodeButtonComponent } from 'app/shared/components/code-button/code-button.component';
+import { CodeButtonComponent } from 'app/shared/components/buttons/code-button/code-button.component';
 import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
 import { ManageAssessmentButtonsComponent } from './manage-assessment-buttons/manage-assessment-buttons.component';
 import { DecimalPipe, KeyValuePipe } from '@angular/common';
@@ -46,6 +46,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 
 /**
  * Filter properties for a result
@@ -209,22 +210,21 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     private handleNewParticipations(participationsResponse: HttpResponse<Participation[]>) {
         this.participations = participationsResponse.body ?? [];
         this.participations.forEach((participation) => {
-            participation.results?.forEach((result, index) => {
-                participation.results![index].durationInMinutes = dayjs(result.completionDate).diff(participation.initializationDate, 'seconds');
+            const results = getAllResultsOfAllSubmissions(participation.submissions);
+            results?.forEach((result, index) => {
+                result.durationInMinutes = dayjs(result.completionDate).diff(participation.initializationDate, 'seconds');
             });
             // sort the results from old to new.
             // the result of the first correction round will be at index 0,
             // the result of a complaints or the second correction at index 1.
-            participation.results?.sort((result1, result2) => (result1.id ?? 0) - (result2.id ?? 0));
-            const resultsWithoutAthena = participation.results?.filter((result) => result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA);
+            results?.sort((result1, result2) => (result1.id ?? 0) - (result2.id ?? 0));
+            const resultsWithoutAthena = results?.filter((result) => result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA);
             if (resultsWithoutAthena?.length != 0) {
                 if (resultsWithoutAthena?.[0].submission) {
                     participation.submissions = [resultsWithoutAthena?.[0].submission];
-                } else if (participation.results?.[0].submission) {
-                    participation.submissions = [participation.results?.[0].submission];
+                } else if (results?.[0].submission) {
+                    participation.submissions = [results?.[0].submission];
                 }
-            } else {
-                participation.results = undefined;
             }
         });
         this.filteredParticipations = this.filterByScoreRange(this.participations);
@@ -256,7 +256,8 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
      * @param filterProp the filter that should be used to determine if the participation should be included or excluded
      */
     filterParticipationsByProp = (participation: Participation, filterProp = this.resultCriteria.filterProp): boolean => {
-        const latestResult = participation.results?.last();
+        const results = getAllResultsOfAllSubmissions(participation.submissions);
+        const latestResult = results?.last();
         switch (filterProp) {
             case FilterProp.SUCCESSFUL:
                 return !!latestResult?.successful;
@@ -395,13 +396,15 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         // If the range to filter against is [90%, 100%], a score of 100% also satisfies this range
         if (this.rangeFilter.upperBound === 100) {
             filterFunction = (participation: Participation) => {
-                const result = participation.results?.last();
+                const results = getAllResultsOfAllSubmissions(participation.submissions);
+                const result = results?.last();
                 return !!result?.score && result?.score >= this.rangeFilter!.lowerBound && result.score <= this.rangeFilter!.upperBound;
             };
         } else {
             // For any other range, the score must be strictly below the upper bound
             filterFunction = (participation: Participation) => {
-                const result = participation.results?.last();
+                const results = getAllResultsOfAllSubmissions(participation.submissions);
+                const result = results?.last();
                 return result?.score !== undefined && result.score >= this.rangeFilter!.lowerBound && result.score < this.rangeFilter!.upperBound;
             };
         }

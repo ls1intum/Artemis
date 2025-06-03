@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.programming.repository.BuildLogEntryRepository;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTest;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
@@ -78,6 +79,9 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
     @Autowired
+    private ProgrammingExerciseParticipationUtilService programmingExerciseParticipationUtilService;
+
+    @Autowired
     private ExerciseUtilService exerciseUtilService;
 
     @Autowired
@@ -94,8 +98,8 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
     void init() {
         userUtilService.addUsers(TEST_PREFIX, 3, 0, 0, 1);
         Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        this.programmingExercise = exerciseUtilService.findProgrammingExerciseWithTitle(course.getExercises(), "Programming");
-        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        this.programmingExercise = ExerciseUtilService.findProgrammingExerciseWithTitle(course.getExercises(), "Programming");
+        programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
         // TODO: is this actually needed?
         closeable = MockitoAnnotations.openMocks(this);
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
@@ -116,8 +120,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateParticipationForExternalSubmission() throws Exception {
         Optional<User> student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "student1");
-        participationUtilService.mockCreationOfExerciseParticipation(false, null, programmingExercise, uriService, versionControlService, continuousIntegrationService,
-                localVCGitBranchService);
+        participationUtilService.mockCreationOfExerciseParticipation(false, null, programmingExercise, uriService, versionControlService, continuousIntegrationService);
 
         StudentParticipation participation = participationService.createParticipationWithEmptySubmissionIfNotExisting(programmingExercise, student.orElseThrow(),
                 SubmissionType.EXTERNAL);
@@ -133,13 +136,12 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetBuildJobsForResultsOfParticipation() throws Exception {
         Optional<User> student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "student1");
-        participationUtilService.mockCreationOfExerciseParticipation(false, null, programmingExercise, uriService, versionControlService, continuousIntegrationService,
-                localVCGitBranchService);
+        participationUtilService.mockCreationOfExerciseParticipation(false, null, programmingExercise, uriService, versionControlService, continuousIntegrationService);
 
         StudentParticipation participation = participationService.createParticipationWithEmptySubmissionIfNotExisting(programmingExercise, student.orElseThrow(),
                 SubmissionType.EXTERNAL);
 
-        List<Result> results = resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(participation.getId());
+        List<Result> results = resultRepository.findAllBySubmissionParticipationIdOrderByCompletionDateDesc(participation.getId());
 
         Map<Long, String> resultBuildJobMap = resultService.getLogsAvailabilityForResults(results, participation);
         assertThat(resultBuildJobMap).hasSize(0);
@@ -155,8 +157,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void canStartExerciseWithPracticeParticipationAfterDueDateChange() throws URISyntaxException {
         Participant participant = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        participationUtilService.mockCreationOfExerciseParticipation(false, null, programmingExercise, uriService, versionControlService, continuousIntegrationService,
-                localVCGitBranchService);
+        participationUtilService.mockCreationOfExerciseParticipation(false, null, programmingExercise, uriService, versionControlService, continuousIntegrationService);
 
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
         exerciseUtilService.updateExerciseDueDate(programmingExercise.getId(), ZonedDateTime.now().minusHours(1));
@@ -199,10 +200,10 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
         Result gradedResult = participationUtilService.addProgrammingParticipationWithResultForExercise(programmingExercise, TEST_PREFIX + "student1");
 
         participationUtilService.mockCreationOfExerciseParticipation(useGradedParticipation, gradedResult, programmingExercise, uriService, versionControlService,
-                continuousIntegrationService, localVCGitBranchService);
+                continuousIntegrationService);
 
         StudentParticipation studentParticipationReceived = participationService.startPracticeMode(programmingExercise, participant,
-                Optional.of((StudentParticipation) gradedResult.getParticipation()), useGradedParticipation);
+                Optional.of((StudentParticipation) gradedResult.getSubmission().getParticipation()), useGradedParticipation);
 
         assertThat(studentParticipationReceived.isPracticeMode()).isTrue();
         assertThat(studentParticipationReceived.getExercise()).isEqualTo(programmingExercise);
@@ -216,17 +217,17 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDeleteParticipation_removesBuildLogEntries() {
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
-        var programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        var programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
 
         // Setup: Create participation, submission and build log entries for template, solution and student
-        var templateParticipation = programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise).getTemplateParticipation();
+        var templateParticipation = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise).getTemplateParticipation();
         var templateSubmission = programmingExerciseUtilService.createProgrammingSubmission(templateParticipation, true);
         BuildLogEntry buildLogEntryTemplate = new BuildLogEntry(ZonedDateTime.now(), "Some sample build log");
         var templateSavedBuildLogs = buildLogEntryService.saveBuildLogs(List.of(buildLogEntryTemplate), templateSubmission);
         templateSubmission.setBuildLogEntries(templateSavedBuildLogs);
         programmingSubmissionRepository.save(templateSubmission);
 
-        var solutionParticipation = programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise).getSolutionParticipation();
+        var solutionParticipation = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise).getSolutionParticipation();
         var solutionSubmission = programmingExerciseUtilService.createProgrammingSubmission(solutionParticipation, true);
         BuildLogEntry buildLogEntrySolution = new BuildLogEntry(ZonedDateTime.now(), "Some sample build log");
         var solutionSavedBuildLogs = buildLogEntryService.saveBuildLogs(List.of(buildLogEntrySolution), solutionSubmission);
