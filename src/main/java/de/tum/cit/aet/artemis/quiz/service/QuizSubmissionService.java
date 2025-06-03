@@ -194,7 +194,6 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
 
     private void sendQuizResultToUser(long quizExerciseId, StudentParticipation participation) {
         var user = participation.getParticipantIdentifier();
-        log.info("Sending quiz result to user {}", user);
         StudentQuizParticipationWithSolutionsDTO participationDTO = StudentQuizParticipationWithSolutionsDTO.of(participation);
         websocketMessagingService.sendMessageToUser(user, "/topic/exercise/" + quizExerciseId + "/participation", participationDTO);
     }
