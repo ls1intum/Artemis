@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.calendar;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.time.LocalTime;
 import java.time.YearMonth;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -22,6 +21,7 @@ import de.tum.cit.aet.artemis.calendar.domain.CoursewideCalendarEvent;
 import de.tum.cit.aet.artemis.calendar.dto.CalendarEventDTO;
 import de.tum.cit.aet.artemis.calendar.dto.CoursewideCalendarEventDTO;
 import de.tum.cit.aet.artemis.calendar.util.TimestampFormatAssert;
+import de.tum.cit.aet.artemis.core.util.DateUtil;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
 
 class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
@@ -352,16 +352,15 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
             CoursewideCalendarEvent firstEvent = coursewideCalendarEvents.get(0);
             ZoneId timezone = firstEvent.getStartDate().getZone();
             CalendarEventDTO expectedDTO1 = new CalendarEventDTO("course-" + firstEvent.getId() + "-0", firstEvent.getTitle(), course.getTitle(), firstEvent.getStartDate(),
-                    firstEvent.getStartDate().toLocalDate().atTime(LocalTime.MAX).withNano(999_999_999).atZone(timezone), firstEvent.getLocation(), firstEvent.getFacilitator());
+                    firstEvent.getStartDate().toLocalDate().atTime(DateUtil.END_OF_DAY).atZone(timezone), firstEvent.getLocation(), firstEvent.getFacilitator());
             CalendarEventDTO expectedDTO2 = new CalendarEventDTO("course-" + firstEvent.getId() + "-1", firstEvent.getTitle(), course.getTitle(),
                     firstEvent.getStartDate().plusDays(1).toLocalDate().atStartOfDay(timezone), firstEvent.getEndDate(), firstEvent.getLocation(), firstEvent.getFacilitator());
             CoursewideCalendarEvent secondEvent = coursewideCalendarEvents.get(1);
             CalendarEventDTO expectedDTO3 = new CalendarEventDTO("course-" + secondEvent.getId() + "-0", secondEvent.getTitle(), course.getTitle(), secondEvent.getStartDate(),
-                    secondEvent.getStartDate().toLocalDate().atTime(LocalTime.MAX).withNano(999_999_999).atZone(timezone), secondEvent.getLocation(), secondEvent.getFacilitator());
+                    secondEvent.getStartDate().toLocalDate().atTime(DateUtil.END_OF_DAY).atZone(timezone), secondEvent.getLocation(), secondEvent.getFacilitator());
             CalendarEventDTO expectedDTO4 = new CalendarEventDTO("course-" + secondEvent.getId() + "-1", secondEvent.getTitle(), course.getTitle(),
                     secondEvent.getStartDate().plusDays(1).toLocalDate().atStartOfDay(timezone),
-                    secondEvent.getStartDate().plusDays(1).toLocalDate().atTime(LocalTime.MAX).withNano(999_999_999).atZone(timezone), secondEvent.getLocation(),
-                    secondEvent.getFacilitator());
+                    secondEvent.getStartDate().plusDays(1).toLocalDate().atTime(DateUtil.END_OF_DAY).atZone(timezone), secondEvent.getLocation(), secondEvent.getFacilitator());
             CalendarEventDTO expectedDTO5 = new CalendarEventDTO("course-" + secondEvent.getId() + "-2", secondEvent.getTitle(), course.getTitle(),
                     secondEvent.getStartDate().plusDays(2).toLocalDate().atStartOfDay(timezone), secondEvent.getEndDate(), secondEvent.getLocation(), secondEvent.getFacilitator());
 

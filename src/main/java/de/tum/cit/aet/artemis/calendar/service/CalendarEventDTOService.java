@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.calendar.config.CalendarEnabled;
 import de.tum.cit.aet.artemis.calendar.dto.CalendarEventDTO;
+import de.tum.cit.aet.artemis.core.util.DateUtil;
 
 @Conditional(CalendarEnabled.class)
 @Service
@@ -116,7 +117,7 @@ public class CalendarEventDTOService {
         while (!currentDay.isAfter(endDay)) {
             ZonedDateTime currentStart = currentDay.equals(start.toLocalDate()) ? start : currentDay.atStartOfDay(zone);
 
-            ZonedDateTime currentEnd = currentDay.equals(end.toLocalDate()) ? end : currentDay.atTime(LocalTime.MAX).withNano(999_999_999).atZone(zone);
+            ZonedDateTime currentEnd = currentDay.equals(end.toLocalDate()) ? end : currentDay.atTime(DateUtil.END_OF_DAY).atZone(zone);
 
             splitEvents.add(
                     new CalendarEventDTO(event.id() + "-" + currentSplitId, event.title(), event.courseName(), currentStart, currentEnd, event.location(), event.facilitator()));

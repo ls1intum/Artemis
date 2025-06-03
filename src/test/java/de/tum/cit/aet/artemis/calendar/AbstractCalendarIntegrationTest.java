@@ -36,6 +36,30 @@ import de.tum.cit.aet.artemis.tutorialgroup.util.TutorialGroupUtilService;
 
 public abstract class AbstractCalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
+    @Autowired
+    private CoursewideCalendarEventUtilService coursewideCalendarEventUtilService;
+
+    @Autowired
+    private TutorialGroupUtilService tutorialGroupUtilService;
+
+    @Autowired
+    private TutorialGroupSessionRepository tutorialGroupSessionRepository;
+
+    @Autowired
+    private TutorialGroupTestRepository tutorialGroupRepository;
+
+    @Autowired
+    private CourseTestRepository courseRepository;
+
+    @Autowired
+    private UserTestRepository userRepository;
+
+    @Autowired
+    CoursewideCalendarEventRepository coursewideCalendarEventRepository;
+
+    @Autowired
+    CourseUtilService courseUtilService;
+
     static final String TEST_PREFIX = "calendarevent";
 
     static final String STUDENT_LOGIN = TEST_PREFIX + "student";
@@ -79,30 +103,6 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
     User editor;
 
     User instructor;
-
-    @Autowired
-    CoursewideCalendarEventRepository coursewideCalendarEventRepository;
-
-    @Autowired
-    CourseUtilService courseUtilService;
-
-    @Autowired
-    private CoursewideCalendarEventUtilService coursewideCalendarEventUtilService;
-
-    @Autowired
-    private TutorialGroupUtilService tutorialGroupUtilService;
-
-    @Autowired
-    private TutorialGroupSessionRepository tutorialGroupSessionRepository;
-
-    @Autowired
-    private TutorialGroupTestRepository tutorialGroupRepository;
-
-    @Autowired
-    private CourseTestRepository courseRepository;
-
-    @Autowired
-    private UserTestRepository userRepository;
 
     @BeforeEach
     void createUsers() {
