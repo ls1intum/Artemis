@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.atlas.web;
 import static de.tum.cit.aet.artemis.atlas.domain.profile.CourseLearnerProfile.MAX_PROFILE_VALUE;
 import static de.tum.cit.aet.artemis.atlas.domain.profile.CourseLearnerProfile.MIN_PROFILE_VALUE;
 
-import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -65,17 +64,13 @@ public class LearnerProfileResource {
     public ResponseEntity<Set<CourseLearnerProfileDTO>> getCourseLearnerProfiles() {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get all CourseLearnerProfiles of user {}", user.getLogin());
-        Set<CourseLearnerProfile> courseLearnerProfiles = courseLearnerProfileRepository.findAllByLoginAndCourseActive(user.getLogin(), ZonedDateTime.now()).stream()
-                .filter(profile -> user.getGroups().contains(profile.getCourse().getStudentGroupName())).collect(Collectors.toSet());
 
         Set<Course> coursesWithLearningPaths = courseService.findAllActiveForUserAndLearningPathsEnabled(user);
 
-        // This is needed, as there is no method that is executed everytime a user is added to a new course
-        Set<CourseLearnerProfile> newProfiles = coursesWithLearningPaths.stream()
-                .filter(course -> courseLearnerProfiles.stream().map(CourseLearnerProfile::getCourse).noneMatch(existingCourse -> existingCourse.equals(course)))
-                .map(course -> courseLearnerProfileService.getOrCreateCourseLearnerProfile(course, user)).collect(Collectors.toSet());
+        Set<CourseLearnerProfile> courseLearnerProfiles = courseLearnerProfileService.getOrCreateByCourses(user, coursesWithLearningPaths)
+                // Only display profiles for courses a user is currently a student in
 
-        courseLearnerProfiles.addAll(newProfiles);
+                .stream().filter(courseLearnerProfile -> user.getGroups().contains(courseLearnerProfile.getCourse().getStudentGroupName())).collect(Collectors.toSet());
 
         Set<CourseLearnerProfileDTO> returnSet = courseLearnerProfiles.stream().map(CourseLearnerProfileDTO::of).collect(Collectors.toSet());
 

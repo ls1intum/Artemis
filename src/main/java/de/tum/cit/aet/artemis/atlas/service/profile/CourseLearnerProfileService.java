@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.atlas.service.profile;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -48,21 +49,43 @@ public class CourseLearnerProfileService {
             learnerProfileService.createProfile(user);
         }
 
-        return courseLearnerProfileRepository.findByLoginAndCourse(user.getLogin(), course).orElseGet(() -> {
+        return courseLearnerProfileRepository.findByLoginAndCourse(user.getLogin(), course)
+                .orElseGet(() -> courseLearnerProfileRepository.save(createCourseLearnerProfile(user, course)));
+    }
 
-            var courseProfile = new CourseLearnerProfile();
-            courseProfile.setCourse(course);
+    /**
+     * Gets all {@link CourseLearnerProfile}s for the given Set of {@link Course}s.
+     * If there exists no profile for a course, a profile is created.
+     *
+     * @param user    The user for which to get the profiles
+     * @param courses The courses corresponding to the profiles
+     * @return A Set of CourseLearnerProfiles
+     */
+    public Set<CourseLearnerProfile> getOrCreateByCourses(User user, Set<Course> courses) {
 
-            // Initialize values in the middle of Likert scale
-            courseProfile.setAimForGradeOrBonus(3);
-            courseProfile.setRepetitionIntensity(3);
-            courseProfile.setTimeInvestment(3);
+        return courses.stream().map(course -> {
+            Optional<CourseLearnerProfile> courseLearnerProfileOptional = courseLearnerProfileRepository.findByLoginAndCourse(user.getLogin(), course);
+            CourseLearnerProfile courseLearnerProfile = courseLearnerProfileOptional.orElseGet(() -> createCourseLearnerProfile(user, course));
+            // Course field is lazily initialized.
+            // This allows further users of the object to interact with the course without fetching it again.
+            courseLearnerProfile.setCourse(course);
+            return courseLearnerProfile;
+        }).collect(Collectors.toSet());
+    }
 
-            var learnerProfile = learnerProfileRepository.findByUserElseThrow(user);
-            courseProfile.setLearnerProfile(learnerProfile);
+    private CourseLearnerProfile createCourseLearnerProfile(User user, Course course) {
+        var courseProfile = new CourseLearnerProfile();
+        courseProfile.setCourse(course);
 
-            return courseLearnerProfileRepository.save(courseProfile);
-        });
+        // Initialize values in the middle of Likert scale
+        courseProfile.setAimForGradeOrBonus(3);
+        courseProfile.setRepetitionIntensity(3);
+        courseProfile.setTimeInvestment(3);
+
+        var learnerProfile = learnerProfileRepository.findByUserElseThrow(user);
+        courseProfile.setLearnerProfile(learnerProfile);
+
+        return courseProfile;
     }
 
     /**
@@ -76,19 +99,9 @@ public class CourseLearnerProfileService {
 
         users.stream().filter(user -> user.getLearnerProfile() == null).forEach(learnerProfileService::createProfile);
 
-        Set<CourseLearnerProfile> courseProfiles = users.stream().map(user -> courseLearnerProfileRepository.findByLoginAndCourse(user.getLogin(), course).orElseGet(() -> {
-
-            var courseProfile = new CourseLearnerProfile();
-            courseProfile.setCourse(course);
-            courseProfile.setLearnerProfile(learnerProfileRepository.findByUserElseThrow(user));
-
-            // Initialize values in the middle of Likert scale
-            courseProfile.setAimForGradeOrBonus(3);
-            courseProfile.setRepetitionIntensity(3);
-            courseProfile.setTimeInvestment(3);
-
-            return courseProfile;
-        })).collect(Collectors.toSet());
+        Set<CourseLearnerProfile> courseProfiles = users.stream()
+                .map(user -> courseLearnerProfileRepository.findByLoginAndCourse(user.getLogin(), course).orElseGet(() -> createCourseLearnerProfile(user, course)))
+                .collect(Collectors.toSet());
 
         return courseLearnerProfileRepository.saveAll(courseProfiles);
     }

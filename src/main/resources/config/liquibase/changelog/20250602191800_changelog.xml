@@ -2,10 +2,10 @@
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
-    <changeSet id="20250602191700" author="n0w0rk">
+    <changeSet id="20250602191800" author="n0w0rk">
         <!-- In this migration we want to remove duplicated course learner Profiles. -->
 
-        <!-- We select all -->
+        <!-- We delete all course learner profiles wich have duplicates with a higher id-->
         <sql dbms="mysql, postgresql, h2">
             DELETE
             FROM course_learner_profile
@@ -17,4 +17,22 @@
                   );
         </sql>
     </changeSet>
+    <changeSet id="20250602191801" author="n0w0rk">
+    <!-- Some profiles still store invalid values. Does get fixed here. !-->
+        <sql dbms="mysql, postgresql, h2">
+            UPDATE course_learner_profile
+            SET aim_for_grade_or_bonus = 3
+            WHERE aim_for_grade_or_bonus = 0
+        </sql>
+        <sql dbms="mysql, postgresql, h2">
+            UPDATE course_learner_profile
+            SET repetition_intensity = 3
+            WHERE repetition_intensity = 0
+        </sql>
+        <sql dbms="mysql, postgresql, h2">
+            UPDATE course_learner_profile
+            SET time_investment = 3
+            WHERE time_investment = 0
+        </sql>
+</changeSet>
 </databaseChangeLog>
