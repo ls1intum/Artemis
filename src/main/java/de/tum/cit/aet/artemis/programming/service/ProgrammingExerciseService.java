@@ -27,6 +27,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
@@ -43,6 +44,7 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerFlagsDTO;
@@ -1086,5 +1088,39 @@ public class ProgrammingExerciseService {
         if (dockerFlagsDTO.memorySwap() < 0) {
             throw new BadRequestAlertException("The memory swap limit is invalid. The minimum memory swap limit is 0", "Exercise", "memorySwapLimitInvalid");
         }
+    }
+
+    /**
+     * Find a programming exercise by its id, with eagerly loaded template and solution participation,
+     * including the latest result with feedback and test cases.
+     * <p>
+     * NOTICE: this method is quite expensive because it loads all feedback and test cases,
+     * IMPORTANT: you should generally avoid using this query except you really need all information!!
+     *
+     * @param programmingExerciseId of the programming exercise.
+     * @return The programming exercise related to the given id
+     * @throws EntityNotFoundException the programming exercise could not be found.
+     */
+    @NotNull
+    public ProgrammingExercise findByIdWithTemplateAndSolutionParticipationAndAuxiliaryReposAndLatestResultFeedbackTestCasesElseThrow(long programmingExerciseId)
+            throws EntityNotFoundException {
+        ProgrammingExercise programmingExerciseWithTemplate = programmingExerciseRepository.findWithTemplateParticipationAndSubmissionsByIdElseThrow(programmingExerciseId);
+        Set<Result> latestResultsForSubmissionsOfTemplate = resultRepository
+                .findLatestResultsWithFeedbacksAndTestcasesForSubmissions(programmingExerciseWithTemplate.getTemplateParticipation().getSubmissions());
+        programmingExerciseWithTemplate.getTemplateParticipation().getSubmissions().forEach(submission -> {
+            submission.setResults(latestResultsForSubmissionsOfTemplate.stream().filter(result -> result.getSubmission().equals(submission)).toList());
+        });
+        ProgrammingExercise programmingExerciseWithSolution = programmingExerciseRepository.findWithSolutionParticipationAndSubmissionsByIdElseThrow(programmingExerciseId);
+        Set<Result> latestResultsForSubmissionsOfSolution = resultRepository
+                .findLatestResultsWithFeedbacksAndTestcasesForSubmissions(programmingExerciseWithSolution.getSolutionParticipation().getSubmissions());
+        programmingExerciseWithSolution.getSolutionParticipation().getSubmissions().forEach(submission -> {
+            submission.setResults(latestResultsForSubmissionsOfSolution.stream().filter(result -> result.getSubmission().equals(submission)).toList());
+        });
+        ProgrammingExercise programmingExerciseWithAuxiliaryRepositories = programmingExerciseRepository.findByIdWithAuxiliaryRepositoriesElseThrow(programmingExerciseId);
+
+        programmingExerciseWithTemplate.setSolutionParticipation(programmingExerciseWithSolution.getSolutionParticipation());
+        programmingExerciseWithTemplate.setAuxiliaryRepositories(programmingExerciseWithAuxiliaryRepositories.getAuxiliaryRepositories());
+
+        return programmingExerciseWithTemplate;
     }
 }
