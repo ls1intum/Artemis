@@ -193,8 +193,6 @@
                     "labelEnd": "Enddatum",
                     "labelStartTime": "Startuhrzeit",
                     "labelEndTime": "Enduhrzeit",
-                    "requiredDateError": "Ein Datum muss angegeben werden!",
-                    "requiredEndDateError": "Ein Enddatum muss angegeben werden!",
                     "invalidEndDateError": "Das Enddatum muss nach dem Startdatum sein!",
                     "parseError": "Das Datum muss im Format 'YYYY-MM-DD' sein"
                 },
@@ -207,7 +205,6 @@
             "sessionForm": {
                 "dateInput": {
                     "label": "Datum",
-                    "requiredDateError": "Ein Datum muss angegeben werden!",
                     "parseError": "Das Datum muss im Format 'YYYY-MM-DD' sein"
                 },
                 "timeInput": {

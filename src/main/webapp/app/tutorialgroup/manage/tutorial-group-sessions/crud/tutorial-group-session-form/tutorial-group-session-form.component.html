@@ -6,35 +6,13 @@
         @if (form) {
             <form class="row" [formGroup]="form" (ngSubmit)="submitForm()">
                 <!-- Date -->
-                <div>
-                    <label class="form-label" for="date" jhiTranslate="artemisApp.forms.sessionForm.dateInput.label"></label>
-                    <div class="input-group">
-                        <input formControlName="date" [owlDateTime]="date" class="d-none" />
-                        <input
-                            name="date"
-                            id="date"
-                            required
-                            [class.is-invalid]="isDateInvalid"
-                            (focus)="markDateAsTouched()"
-                            [value]="dateControl?.value | artemisDate: 'long-date' : false : undefined : true"
-                            [owlDateTimeTrigger]="date"
-                            readonly
-                            class="form-control"
-                        />
-                        <button type="button" class="btn btn-secondary" [owlDateTimeTrigger]="date"><fa-icon [icon]="faCalendarAlt" /></button>
-                        <owl-date-time [firstDayOfWeek]="1" [pickerType]="'calendar'" #date [pickerMode]="'dialog'" />
-                    </div>
-                    @if (dateControl?.invalid && (dateControl?.dirty || dateControl?.touched)) {
-                        <div class="alert alert-danger">
-                            @if (dateControl?.errors?.required) {
-                                <div jhiTranslate="artemisApp.forms.sessionForm.dateInput.requiredDateError"></div>
-                            }
-                            @if (dateControl?.errors?.owlDateTimeParse) {
-                                <div jhiTranslate="artemisApp.forms.sessionForm.dateInput.parseError"></div>
-                            }
-                        </div>
-                    }
-                </div>
+                <jhi-date-time-picker
+                    id="date"
+                    formControlName="date"
+                    [pickerType]="DateTimePickerType.CALENDAR"
+                    [requiredField]="true"
+                    [labelName]="'artemisApp.forms.sessionForm.dateInput.label' | artemisTranslate"
+                />
                 <!-- Time -->
                 <div>
                     <div class="row">
