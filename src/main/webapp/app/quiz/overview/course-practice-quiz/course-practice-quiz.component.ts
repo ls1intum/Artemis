@@ -48,6 +48,7 @@ export class CoursePracticeQuizComponent implements OnInit, OnDestroy {
     result: Result;
     showingResult = false;
     userScore: number;
+    submitted = false;
     quizId = 18;
     questionScores: { [id: number]: number } = {};
     selectedAnswerOptions = new Map<number, AnswerOption[]>();
@@ -71,6 +72,7 @@ export class CoursePracticeQuizComponent implements OnInit, OnDestroy {
      * increments the current question index or navigates to the course practice page if the last question is reached
      */
     nextQuestion(): void {
+        this.submitted = false;
         if (this.isLastQuestion) {
             this.navigateToPractice();
         } else {
@@ -179,6 +181,7 @@ export class CoursePracticeQuizComponent implements OnInit, OnDestroy {
     onSubmit() {
         this.applySelection();
         this.isSubmitting = true;
+        this.submitted = true;
         this.quizParticipationService.submitForPractice(this.submission, this.currentQuestion.exerciseId!).subscribe({
             next: (response: HttpResponse<Result>) => {
                 this.onSubmitSuccess(response.body!);
