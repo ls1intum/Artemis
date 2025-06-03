@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.programming;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyBoolean;
@@ -12,17 +11,12 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
-import java.util.stream.StreamSupport;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.lib.StoredConfig;
-import org.eclipse.jgit.revwalk.RevCommit;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -36,23 +30,15 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractProgrammingIntegrati
 
     private static final String TEST_PREFIX = "progexgitintegration";
 
-    private static final String COMBINE_COMMITS_ENDPOINT = "/api/programming/programming-exercises/{exerciseId}/combine-template-commits";
-
     private File localRepoFile;
 
     private Git localGit;
-
-    private File originRepoFile;
-
-    private Git originGit;
-
-    private ProgrammingExercise programmingExercise;
 
     @BeforeEach
     void initTestCase() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 3, 2, 0, 2);
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
-        programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        ProgrammingExercise programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();
 
         participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
@@ -91,12 +77,6 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractProgrammingIntegrati
         if (localRepoFile != null && localRepoFile.exists()) {
             FileUtils.deleteDirectory(localRepoFile);
         }
-        if (originGit != null) {
-            originGit.close();
-        }
-        if (originRepoFile != null && originRepoFile.exists()) {
-            FileUtils.deleteDirectory(originRepoFile);
-        }
     }
 
     @Test
@@ -119,43 +99,5 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractProgrammingIntegrati
 
         assertThatExceptionOfType(EntityNotFoundException.class)
                 .isThrownBy(() -> programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesElseThrow(Long.MAX_VALUE));
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testCombineTemplateRepositoryCommits() throws Exception {
-        originRepoFile = Files.createTempDirectory("repoOrigin").toFile();
-        originGit = LocalRepository.initialize(originRepoFile, defaultBranch, true);
-        StoredConfig config = localGit.getRepository().getConfig();
-        config.setString("remote", "origin", "url", originRepoFile.getAbsolutePath());
-        config.save();
-        localGit.push().call();
-        assertThat(getAllCommits(localGit)).hasSize(3);
-        assertThat(getAllCommits(originGit)).hasSize(3);
-
-        final var path = COMBINE_COMMITS_ENDPOINT.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
-        request.put(path, Void.class, HttpStatus.OK);
-        assertThat(getAllCommits(localGit)).hasSize(1);
-        assertThat(getAllCommits(originGit)).hasSize(1);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testCombineTemplateRepositoryCommits_invalidId_notFound() throws Exception {
-        programmingExercise.setId(798724305923532L);
-        final var path = COMBINE_COMMITS_ENDPOINT.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
-        request.put(path, Void.class, HttpStatus.NOT_FOUND);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructoralt1", roles = "INSTRUCTOR")
-    void testCombineTemplateRepositoryCommits_instructorNotInCourse_forbidden() throws Exception {
-        userUtilService.addInstructor("other-instructors", TEST_PREFIX + "instructoralt");
-        final var path = COMBINE_COMMITS_ENDPOINT.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
-        request.put(path, Void.class, HttpStatus.FORBIDDEN);
-    }
-
-    private List<RevCommit> getAllCommits(Git gitRepo) throws Exception {
-        return StreamSupport.stream(gitRepo.log().call().spliterator(), false).toList();
     }
 }

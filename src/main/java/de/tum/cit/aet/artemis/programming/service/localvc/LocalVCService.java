@@ -3,7 +3,7 @@ package de.tum.cit.aet.artemis.programming.service.localvc;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 
 import java.io.IOException;
-import java.net.URL;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -45,7 +45,7 @@ public class LocalVCService extends AbstractVersionControlService {
     protected String defaultBranch;
 
     @Value("${artemis.version-control.url}")
-    private URL localVCBaseUrl;
+    private URI localVCBaseUri;
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
     private String localVCBasePath;
@@ -104,7 +104,7 @@ public class LocalVCService extends AbstractVersionControlService {
      */
     @Override
     public VcsRepositoryUri getCloneRepositoryUri(String projectKey, String repositorySlug) {
-        return new LocalVCRepositoryUri(projectKey, repositorySlug, localVCBaseUrl);
+        return new LocalVCRepositoryUri(projectKey, repositorySlug, localVCBaseUri);
     }
 
     /**
@@ -151,7 +151,7 @@ public class LocalVCService extends AbstractVersionControlService {
      */
     @Override
     public void createRepository(String projectKey, String repositorySlug) {
-        LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(projectKey, repositorySlug, localVCBaseUrl);
+        LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(projectKey, repositorySlug, localVCBaseUri);
 
         Path remoteDirPath = localVCRepositoryUri.getLocalRepositoryPath(localVCBasePath);
 

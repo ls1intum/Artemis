@@ -93,19 +93,6 @@
                         @if (programmingExercise.isAtLeastInstructor) {
                             <jhi-programming-exercise-instructor-exercise-download [exerciseId]="programmingExercise.id!" class="me-1" />
                         }
-                        @if (programmingExercise.isAtLeastEditor) {
-                            <span class="me-1">
-                                <button
-                                    [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-                                    type="button"
-                                    (click)="combineTemplateCommits()"
-                                    class="btn btn-secondary btn-sm"
-                                    ngbTooltip="{{ 'artemisApp.programmingExercise.combineTemplateCommitsWarning' | artemisTranslate }}"
-                                >
-                                    <span jhiTranslate="artemisApp.programmingExercise.combineTemplateCommits"></span>
-                                </button>
-                            </span>
-                        }
                         @if (programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA && programmingExercise.isAtLeastEditor) {
                             <span class="me-1">
                                 <button

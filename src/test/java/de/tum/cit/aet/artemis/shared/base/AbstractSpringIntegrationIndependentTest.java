@@ -133,11 +133,6 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
     }
 
     @Override
-    public void mockRetrieveArtifacts(ProgrammingExerciseStudentParticipation participation) {
-        log.debug("Called mockRetrieveArtifacts with args {}", participation);
-    }
-
-    @Override
     public void mockFetchCommitInfo(String projectKey, String repositorySlug, String hash) {
         log.debug("Called mockFetchCommitInfo with args {}, {}, {}", projectKey, repositorySlug, hash);
     }
