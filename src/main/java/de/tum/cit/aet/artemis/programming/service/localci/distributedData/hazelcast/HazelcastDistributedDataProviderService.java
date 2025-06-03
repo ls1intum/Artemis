@@ -17,11 +17,11 @@ import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.ma
 import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.queue.DistributedQueue;
 
 @Service
-public class HazelcastDistributedDataProvider implements DistributedDataProvider {
+public class HazelcastDistributedDataProviderService implements DistributedDataProvider {
 
     private final HazelcastInstance hazelcastInstance;
 
-    public HazelcastDistributedDataProvider(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
+    public HazelcastDistributedDataProviderService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
         this.hazelcastInstance = hazelcastInstance;
     }
 
