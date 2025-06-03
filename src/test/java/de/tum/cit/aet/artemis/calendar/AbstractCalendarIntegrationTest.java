@@ -2,6 +2,9 @@ package de.tum.cit.aet.artemis.calendar;
 
 import java.time.YearMonth;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -50,6 +53,8 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
     static final String TEST_TIMEZONE_STRING = "Europe/Berlin";
 
     static final ZoneId TEST_TIMEZONE = ZoneId.of(TEST_TIMEZONE_STRING);
+
+    static final Comparator<ZonedDateTime> TIMESTAMP_COMPARATOR = Comparator.comparing(zdt -> zdt.toInstant().truncatedTo(ChronoUnit.MILLIS));
 
     static final TypeReference<Map<String, List<CalendarEventDTO>>> GET_CALENDAR_EVENTS_RETURN_TYPE = new TypeReference<Map<String, List<CalendarEventDTO>>>() {
     };

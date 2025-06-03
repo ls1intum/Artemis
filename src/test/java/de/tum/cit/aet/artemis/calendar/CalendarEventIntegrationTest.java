@@ -6,7 +6,6 @@ import java.time.LocalTime;
 import java.time.YearMonth;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -112,8 +111,7 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
             Map<String, List<CalendarEventDTO>> expected = Stream.concat(expectedTutorialEvents.stream(), expectedCourseEvents.stream())
                     .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
-            assertThat(actual).usingRecursiveComparison().withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expected);
+            assertThat(actual).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder().isEqualTo(expected);
         }
 
         @Test
@@ -128,8 +126,7 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
             List<CalendarEventDTO> expectedCourseEvents = courseCalendarEvents.stream().limit(4).map(event -> new CalendarEventDTO(event, TEST_TIMEZONE)).toList();
             Map<String, List<CalendarEventDTO>> expected = expectedCourseEvents.stream().collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
-            assertThat(actual).usingRecursiveComparison().withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expected);
+            assertThat(actual).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder().isEqualTo(expected);
         }
 
         @Test
@@ -144,8 +141,7 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
             List<CalendarEventDTO> expectedCourseEvents = courseCalendarEvents.stream().limit(4).map(event -> new CalendarEventDTO(event, TEST_TIMEZONE)).toList();
             Map<String, List<CalendarEventDTO>> expected = expectedCourseEvents.stream().collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
-            assertThat(actual).usingRecursiveComparison().withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expected);
+            assertThat(actual).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder().isEqualTo(expected);
         }
 
         @Test
@@ -162,8 +158,7 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
             Map<String, List<CalendarEventDTO>> expected = Stream.concat(expectedTutorialEvents.stream(), expectedCourseEvents.stream())
                     .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
-            assertThat(actual).usingRecursiveComparison().withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expected);
+            assertThat(actual).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder().isEqualTo(expected);
         }
 
         @Test
@@ -180,8 +175,7 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
             Map<String, List<CalendarEventDTO>> expected = Stream.concat(expectedTutorialEvents.stream(), expectedCourseEvents.stream())
                     .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
-            assertThat(actual).usingRecursiveComparison().withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expected);
+            assertThat(actual).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder().isEqualTo(expected);
         }
 
         @Test
@@ -196,8 +190,7 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
             List<CalendarEventDTO> expectedCourseEvents = courseCalendarEvents.stream().limit(4).map(event -> new CalendarEventDTO(event, TEST_TIMEZONE)).toList();
             Map<String, List<CalendarEventDTO>> expected = expectedCourseEvents.stream().collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
-            assertThat(actual).usingRecursiveComparison().withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expected);
+            assertThat(actual).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder().isEqualTo(expected);
         }
 
         @Test
@@ -212,8 +205,7 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
             List<CalendarEventDTO> expectedCourseEvents = courseCalendarEvents.stream().limit(4).map(event -> new CalendarEventDTO(event, TEST_TIMEZONE)).toList();
             Map<String, List<CalendarEventDTO>> expected = expectedCourseEvents.stream().collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
-            assertThat(actual).usingRecursiveComparison().withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expected);
+            assertThat(actual).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder().isEqualTo(expected);
         }
 
         @Test
@@ -230,8 +222,7 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
             Map<String, List<CalendarEventDTO>> expected = Stream.concat(expectedTutorialEvents.stream(), expectedCourseEvents.stream())
                     .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
-            assertThat(actual).usingRecursiveComparison().withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expected);
+            assertThat(actual).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder().isEqualTo(expected);
         }
 
         @Test
@@ -248,8 +239,7 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
             Map<String, List<CalendarEventDTO>> expected = Stream.concat(expectedTutorialEvents.stream(), expectedCourseEvents.stream())
                     .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
-            assertThat(actual).usingRecursiveComparison().withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expected);
+            assertThat(actual).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder().isEqualTo(expected);
         }
 
         @Test
@@ -264,8 +254,7 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
             List<CalendarEventDTO> expectedCourseEvents = courseCalendarEvents.stream().limit(8).map(event -> new CalendarEventDTO(event, TEST_TIMEZONE)).toList();
             Map<String, List<CalendarEventDTO>> expected = expectedCourseEvents.stream().collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
-            assertThat(actual).usingRecursiveComparison().withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expected);
+            assertThat(actual).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder().isEqualTo(expected);
         }
 
         @Test
@@ -280,8 +269,7 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
             List<CalendarEventDTO> expectedCourseEvents = courseCalendarEvents.stream().limit(8).map(event -> new CalendarEventDTO(event, TEST_TIMEZONE)).toList();
             Map<String, List<CalendarEventDTO>> expected = expectedCourseEvents.stream().collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
-            assertThat(actual).usingRecursiveComparison().withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expected);
+            assertThat(actual).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder().isEqualTo(expected);
         }
 
         @Test
@@ -299,8 +287,7 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
             Map<String, List<CalendarEventDTO>> expected = Stream.concat(expectedTutorialEvents.stream(), expectedCourseEvents.stream())
                     .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
-            assertThat(actual).usingRecursiveComparison().withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expected);
+            assertThat(actual).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder().isEqualTo(expected);
         }
 
         @Test
@@ -318,8 +305,7 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
             Map<String, List<CalendarEventDTO>> expected = Stream.concat(expectedTutorialEvents.stream(), expectedCourseEvents.stream())
                     .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
-            assertThat(actual).usingRecursiveComparison().withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expected);
+            assertThat(actual).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder().isEqualTo(expected);
         }
 
         @Test
@@ -335,8 +321,7 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
                     .map(event -> new CalendarEventDTO(event, TEST_TIMEZONE)).toList();
             Map<String, List<CalendarEventDTO>> expected = expectedCourseEvents.stream().collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
-            assertThat(actual).usingRecursiveComparison().withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expected);
+            assertThat(actual).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder().isEqualTo(expected);
         }
 
         @Test
@@ -352,8 +337,7 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
                     .map(event -> new CalendarEventDTO(event, TEST_TIMEZONE)).toList();
             Map<String, List<CalendarEventDTO>> expected = expectedCourseEvents.stream().collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
-            assertThat(actual).usingRecursiveComparison().withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expected);
+            assertThat(actual).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder().isEqualTo(expected);
         }
 
         @Test
@@ -384,8 +368,7 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
             List<CalendarEventDTO> expectedCourseEvents = List.of(expectedDTO1, expectedDTO2, expectedDTO3, expectedDTO4, expectedDTO5);
             Map<String, List<CalendarEventDTO>> expected = expectedCourseEvents.stream().collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
-            assertThat(actual).usingRecursiveComparison().withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expected);
+            assertThat(actual).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder().isEqualTo(expected);
         }
 
         @Test
@@ -432,7 +415,7 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
 
             List<CourseCalendarEventDTO> expected = courseCalendarEvents.stream().map(CourseCalendarEventDTO::new).toList();
 
-            assertThat(actual).usingRecursiveComparison().withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class).isEqualTo(expected);
+            assertThat(actual).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).isEqualTo(expected);
         }
 
         @Test
@@ -445,7 +428,7 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
 
             List<CourseCalendarEventDTO> expected = courseCalendarEvents.stream().map(CourseCalendarEventDTO::new).toList();
 
-            assertThat(actual).usingRecursiveComparison().withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class).isEqualTo(expected);
+            assertThat(actual).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).isEqualTo(expected);
         }
 
         @Test
@@ -458,7 +441,7 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
 
             List<CourseCalendarEventDTO> expected = List.of();
 
-            assertThat(actual).usingRecursiveComparison().withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class).isEqualTo(expected);
+            assertThat(actual).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).isEqualTo(expected);
         }
 
         @Test
@@ -539,8 +522,7 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
             assertThat(response).hasSize(1);
             CourseCalendarEventDTO actual = response.iterator().next();
 
-            assertThat(actual).usingRecursiveComparison().withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class)
-                    .ignoringFields("id", "courseName").isEqualTo(expected);
+            assertThat(actual).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringFields("id", "courseName").isEqualTo(expected);
             assertThat(actual.courseName()).isEqualTo(course.getTitle());
         }
 
@@ -560,8 +542,7 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
             assertThat(response).hasSize(1);
             CourseCalendarEventDTO actual = response.iterator().next();
 
-            assertThat(actual).usingRecursiveComparison().withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class)
-                    .ignoringFields("id", "courseName").isEqualTo(expected);
+            assertThat(actual).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringFields("id", "courseName").isEqualTo(expected);
             assertThat(actual.courseName()).isEqualTo(course.getTitle());
         }
 
@@ -586,9 +567,8 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
 
             assertThat(response).hasSize(3);
 
-            assertThat(response)
-                    .usingRecursiveFieldByFieldElementComparator(RecursiveComparisonConfiguration.builder().withIgnoredFields("id", "courseName")
-                            .withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class).build())
+            assertThat(response).usingRecursiveFieldByFieldElementComparator(
+                    RecursiveComparisonConfiguration.builder().withIgnoredFields("id", "courseName").withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).build())
                     .containsExactlyInAnyOrder(expected1, expected2, expected3);
             assertThat(response).extracting(CourseCalendarEventDTO::courseName).containsOnly(course.getTitle());
         }
@@ -614,9 +594,8 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
 
             assertThat(response).hasSize(3);
 
-            assertThat(response)
-                    .usingRecursiveFieldByFieldElementComparator(RecursiveComparisonConfiguration.builder().withIgnoredFields("id", "courseName")
-                            .withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class).build())
+            assertThat(response).usingRecursiveFieldByFieldElementComparator(
+                    RecursiveComparisonConfiguration.builder().withIgnoredFields("id", "courseName").withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).build())
                     .containsExactlyInAnyOrder(expected1, expected2, expected3);
             assertThat(response).extracting(CourseCalendarEventDTO::courseName).containsOnly(course.getTitle());
         }
@@ -700,8 +679,7 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
 
             CourseCalendarEventDTO actual = response.iterator().next();
 
-            assertThat(actual).usingRecursiveComparison().withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class)
-                    .ignoringFields("id", "courseName").isEqualTo(expected);
+            assertThat(actual).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringFields("id", "courseName").isEqualTo(expected);
             assertThat(actual.courseName()).isEqualTo(course.getTitle());
         }
 
@@ -721,8 +699,7 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
             assertThat(response).hasSize(1);
             CourseCalendarEventDTO actual = response.iterator().next();
 
-            assertThat(actual).usingRecursiveComparison().withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class)
-                    .ignoringFields("id", "courseName").isEqualTo(expected);
+            assertThat(actual).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringFields("id", "courseName").isEqualTo(expected);
             assertThat(actual.courseName()).isEqualTo(course.getTitle());
         }
 
@@ -742,8 +719,7 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
             assertThat(response).hasSize(1);
             CourseCalendarEventDTO actual = response.iterator().next();
 
-            assertThat(actual).usingRecursiveComparison().withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class)
-                    .ignoringFields("id", "courseName").isEqualTo(expected);
+            assertThat(actual).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringFields("id", "courseName").isEqualTo(expected);
             assertThat(actual.courseName()).isEqualTo(course.getTitle());
         }
 
@@ -851,8 +827,7 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
 
             CourseCalendarEventDTO actual = request.putWithResponseBody(PUT_REQUEST_URL, expected, CourseCalendarEventDTO.class, HttpStatus.OK);
 
-            assertThat(actual).usingRecursiveComparison().withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class).ignoringFields("courseName")
-                    .isEqualTo(expected);
+            assertThat(actual).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringFields("courseName").isEqualTo(expected);
             assertThat(actual.courseName()).isEqualTo(course.getTitle());
         }
 
@@ -868,8 +843,7 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
 
             CourseCalendarEventDTO actual = request.putWithResponseBody(PUT_REQUEST_URL, expected, CourseCalendarEventDTO.class, HttpStatus.OK);
 
-            assertThat(actual).usingRecursiveComparison().withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class).ignoringFields("courseName")
-                    .isEqualTo(expected);
+            assertThat(actual).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringFields("courseName").isEqualTo(expected);
             assertThat(actual.courseName()).isEqualTo(course.getTitle());
         }
 
@@ -976,8 +950,7 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
 
             CourseCalendarEventDTO actual = request.putWithResponseBody(PUT_REQUEST_URL, expected, CourseCalendarEventDTO.class, HttpStatus.OK);
 
-            assertThat(actual).usingRecursiveComparison().withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class).ignoringFields("courseName")
-                    .isEqualTo(expected);
+            assertThat(actual).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringFields("courseName").isEqualTo(expected);
             assertThat(actual.courseName()).isEqualTo(course.getTitle());
         }
 
@@ -993,8 +966,7 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
 
             CourseCalendarEventDTO actual = request.putWithResponseBody(PUT_REQUEST_URL, expected, CourseCalendarEventDTO.class, HttpStatus.OK);
 
-            assertThat(actual).usingRecursiveComparison().withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class).ignoringFields("courseName")
-                    .isEqualTo(expected);
+            assertThat(actual).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringFields("courseName").isEqualTo(expected);
             assertThat(actual.courseName()).isEqualTo(course.getTitle());
         }
 
@@ -1010,8 +982,7 @@ class CalendarEventIntegrationTest extends AbstractCalendarIntegrationTest {
 
             CourseCalendarEventDTO actual = request.putWithResponseBody(PUT_REQUEST_URL, expected, CourseCalendarEventDTO.class, HttpStatus.OK);
 
-            assertThat(actual).usingRecursiveComparison().withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class).ignoringFields("courseName")
-                    .isEqualTo(expected);
+            assertThat(actual).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringFields("courseName").isEqualTo(expected);
             assertThat(actual.courseName()).isEqualTo(course.getTitle());
         }
 
