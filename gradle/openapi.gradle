@@ -32,10 +32,9 @@
         }
     }
 
-    // TODO missing steps of the overall process
-    // 1. Detect if any resources have changed
-    // 2. If so, modify the packages to scan accordingly in the task above
-    // 3. Replace the existing OpenAPI spec with the new part. Keep the rest as is.
+    // 1.TODO Detect if any resources have changed
+    // 2. TODO If so, modify the packages to scan accordingly in the task above
+    // 3. TODO Replace the existing OpenAPI spec with the new part. Keep the rest as is.
     // 4. Run the OpenAPI generator to generate the complete TypeScript files for the Angular client
     // 5. Post-process the generated files to remove leading underscores and numeric suffixes from method names
     // 6. Remove unused imports from the generated TypeScript files to satisfy our tsconfig.
