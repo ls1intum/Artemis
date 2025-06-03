@@ -252,7 +252,7 @@ comments based on the provided **Grading Instructions**, **Problem Statement**, 
 
       - 2.4. Clicking on the score reveals inline feedback that highlights specific issues and offers suggestions directly under the text.
 
-      .. figure:: text/automatic-feedback-view-detailed.png
+      .. figure:: /user/exercises/text/automatic-feedback-view-detailed.png
          :align: center
          :alt: Screenshot showing detailed AI feedback
          :scale: 50%
