@@ -96,7 +96,7 @@ public class ReactionService {
      * @param reactionId id of the reaction to delete
      * @param courseId   id of the course the according posting belongs to
      */
-    public void deleteReactionById(Long reactionId, Long courseId) {
+    public void deleteReactionByIdIfAllowedElseThrow(Long reactionId, Long courseId) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         final Course course = courseRepository.findByIdElseThrow(courseId);
         Reaction reaction = reactionRepository.findByIdElseThrow(reactionId);
@@ -128,7 +128,7 @@ public class ReactionService {
 
         PlagiarismPostApi api = plagiarismPostApi.orElseThrow(() -> new PlagiarismApiNotPresentException(PlagiarismPostApi.class));
         api.preparePostForBroadcast(updatedPost);
-        api.broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course.getId(), null, null);
+        api.broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course.getId(), null);
         reactionRepository.deleteById(reactionId);
     }
 
@@ -190,7 +190,7 @@ public class ReactionService {
         updatedPost.setConversation(post.getConversation());
 
         api.preparePostForBroadcast(post);
-        api.broadcastForPost(new PostDTO(post, MetisCrudAction.UPDATE), course.getId(), null, null);
+        api.broadcastForPost(new PostDTO(post, MetisCrudAction.UPDATE), course.getId(), null);
         return savedReaction;
     }
 }

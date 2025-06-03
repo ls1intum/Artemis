@@ -22,7 +22,7 @@ public class IrisCourseSettings extends IrisSettings {
 
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @JoinColumn(name = "iris_chat_settings_id")
-    private IrisChatSubSettings irisChatSettings;
+    private IrisProgrammingExerciseChatSubSettings irisProgrammingExerciseChatSettings;
 
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @JoinColumn(name = "iris_text_exercise_chat_settings_id")
@@ -48,6 +48,10 @@ public class IrisCourseSettings extends IrisSettings {
     @JoinColumn(name = "iris_competency_generation_settings_id")
     private IrisCompetencyGenerationSubSettings irisCompetencyGenerationSettings;
 
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @JoinColumn(name = "iris_tutor_suggestion_settings_id")
+    private IrisTutorSuggestionSubSettings irisTutorSuggestionSettings;
+
     public long getCourseId() {
         return courseId;
     }
@@ -67,13 +71,13 @@ public class IrisCourseSettings extends IrisSettings {
     }
 
     @Override
-    public IrisChatSubSettings getIrisChatSettings() {
-        return irisChatSettings;
+    public IrisProgrammingExerciseChatSubSettings getIrisProgrammingExerciseChatSettings() {
+        return irisProgrammingExerciseChatSettings;
     }
 
     @Override
-    public void setIrisChatSettings(IrisChatSubSettings irisChatSettings) {
-        this.irisChatSettings = irisChatSettings;
+    public void setIrisProgrammingExerciseChatSettings(IrisProgrammingExerciseChatSubSettings irisProgrammingExerciseChatSettings) {
+        this.irisProgrammingExerciseChatSettings = irisProgrammingExerciseChatSettings;
     }
 
     @Override
@@ -124,5 +128,15 @@ public class IrisCourseSettings extends IrisSettings {
     @Override
     public void setIrisFaqIngestionSettings(IrisFaqIngestionSubSettings irisFaqIngestionSubSettings) {
         this.irisFaqIngestionSettings = irisFaqIngestionSubSettings;
+    }
+
+    @Override
+    public IrisTutorSuggestionSubSettings getIrisTutorSuggestionSettings() {
+        return irisTutorSuggestionSettings;
+    }
+
+    @Override
+    public void setIrisTutorSuggestionSettings(IrisTutorSuggestionSubSettings irisTutorSuggestionSubSettings) {
+        this.irisTutorSuggestionSettings = irisTutorSuggestionSubSettings;
     }
 }

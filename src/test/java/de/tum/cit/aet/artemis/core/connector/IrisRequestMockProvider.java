@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.course.PyrisCourseChat
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.exercise.PyrisExerciseChatPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.lecture.PyrisLectureChatPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.textexercise.PyrisTextExerciseChatPipelineExecutionDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.tutorsuggestion.PyrisTutorSuggestionPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyExtractionPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisWebhookFaqIngestionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureIngestionExecutionDTO;
@@ -96,7 +97,7 @@ public class IrisRequestMockProvider {
     public void mockProgrammingExerciseChatResponse(Consumer<PyrisExerciseChatPipelineExecutionDTO> responseConsumer) {
         // @formatter:off
         mockServer
-            .expect(ExpectedCount.once(), requestTo(pipelinesApiURL + "/tutor-chat/default/run"))
+            .expect(ExpectedCount.once(), requestTo(pipelinesApiURL + "/programming-exercise-chat/run"))
             .andExpect(method(HttpMethod.POST))
             .andRespond(request -> {
                 var mockRequest = (MockClientHttpRequest) request;
@@ -110,7 +111,7 @@ public class IrisRequestMockProvider {
     public void mockProgrammingExerciseChatResponseExpectingSubmissionId(Consumer<PyrisExerciseChatPipelineExecutionDTO> responseConsumer, long submissionId) {
         // @formatter:off
         mockServer
-            .expect(ExpectedCount.once(), requestTo(pipelinesApiURL + "/tutor-chat/default/run"))
+            .expect(ExpectedCount.once(), requestTo(pipelinesApiURL + "/programming-exercise-chat/run"))
             .andExpect(method(HttpMethod.POST))
             .andExpect(request -> {
                 var mockRequest = (MockClientHttpRequest) request;
@@ -142,7 +143,7 @@ public class IrisRequestMockProvider {
     public void mockTextExerciseChatResponse(Consumer<PyrisTextExerciseChatPipelineExecutionDTO> responseConsumer) {
         // @formatter:off
         mockServer
-            .expect(ExpectedCount.once(), requestTo(pipelinesApiURL + "/text-exercise-chat/default/run"))
+            .expect(ExpectedCount.once(), requestTo(pipelinesApiURL + "/text-exercise-chat/run"))
             .andExpect(method(HttpMethod.POST))
             .andRespond(request -> {
                 var mockRequest = (MockClientHttpRequest) request;
@@ -156,7 +157,7 @@ public class IrisRequestMockProvider {
     public void mockLectureChatResponse(Consumer<PyrisLectureChatPipelineExecutionDTO> responseConsumer) {
         // @formatter:off
         mockServer
-            .expect(ExpectedCount.once(), requestTo(pipelinesApiURL + "/lecture-chat/default/run"))
+            .expect(ExpectedCount.once(), requestTo(pipelinesApiURL + "/lecture-chat/run"))
             .andExpect(method(HttpMethod.POST))
             .andRespond(request -> {
                 var mockRequest = (MockClientHttpRequest) request;
@@ -167,10 +168,25 @@ public class IrisRequestMockProvider {
         // @formatter:on
     }
 
+    public void mockTutorSuggestionResponse(Consumer<PyrisTutorSuggestionPipelineExecutionDTO> responseConsumer) {
+        // @formatter:off
+        mockServer
+            .expect(ExpectedCount.once(), requestTo(pipelinesApiURL + "/tutor-suggestion/run"))
+            .andExpect(method(HttpMethod.POST))
+            .andRespond(request -> {
+                var mockRequest = (MockClientHttpRequest) request;
+                assert mockRequest != null;
+                var dto = mapper.readValue(mockRequest.getBodyAsString(), PyrisTutorSuggestionPipelineExecutionDTO.class);
+                responseConsumer.accept(dto);
+                return MockRestResponseCreators.withRawStatus(HttpStatus.ACCEPTED.value()).createResponse(request);
+            });
+        // @formatter:on
+    }
+
     public void mockRunCompetencyExtractionResponseAnd(Consumer<PyrisCompetencyExtractionPipelineExecutionDTO> executionDTOConsumer) {
         // @formatter:off
         mockServer
-            .expect(ExpectedCount.once(), requestTo(pipelinesApiURL + "/competency-extraction/default/run"))
+            .expect(ExpectedCount.once(), requestTo(pipelinesApiURL + "/competency-extraction/run"))
             .andExpect(method(HttpMethod.POST))
             .andRespond(request -> {
                 var mockRequest = (MockClientHttpRequest) request;
@@ -196,7 +212,7 @@ public class IrisRequestMockProvider {
     }
 
     public void mockIngestionWebhookRunResponse(Consumer<PyrisWebhookLectureIngestionExecutionDTO> responseConsumer) {
-        mockServer.expect(ExpectedCount.once(), requestTo(webhooksApiURL + "/lectures/fullIngestion")).andExpect(method(HttpMethod.POST)).andRespond(request -> {
+        mockServer.expect(ExpectedCount.once(), requestTo(webhooksApiURL + "/lectures/ingest")).andExpect(method(HttpMethod.POST)).andRespond(request -> {
             var mockRequest = (MockClientHttpRequest) request;
             var dto = mapper.readValue(mockRequest.getBodyAsString(), PyrisWebhookLectureIngestionExecutionDTO.class);
             responseConsumer.accept(dto);
@@ -205,7 +221,7 @@ public class IrisRequestMockProvider {
     }
 
     public void mockTranscriptionIngestionWebhookRunResponse(Consumer<PyrisWebhookTranscriptionIngestionExecutionDTO> responseConsumer) {
-        mockServer.expect(ExpectedCount.once(), requestTo(webhooksApiURL + "/transcriptions/fullIngestion")).andExpect(method(HttpMethod.POST)).andRespond(request -> {
+        mockServer.expect(ExpectedCount.once(), requestTo(webhooksApiURL + "/transcriptions/ingest")).andExpect(method(HttpMethod.POST)).andRespond(request -> {
             var mockRequest = (MockClientHttpRequest) request;
             var dto = mapper.readValue(mockRequest.getBodyAsString(), PyrisWebhookTranscriptionIngestionExecutionDTO.class);
             responseConsumer.accept(dto);
@@ -223,7 +239,7 @@ public class IrisRequestMockProvider {
     }
 
     public void mockFaqIngestionWebhookRunResponse(Consumer<PyrisWebhookFaqIngestionExecutionDTO> responseConsumer) {
-        mockServer.expect(ExpectedCount.once(), requestTo(webhooksApiURL + "/faqs")).andExpect(method(HttpMethod.POST)).andRespond(request -> {
+        mockServer.expect(ExpectedCount.once(), requestTo(webhooksApiURL + "/faqs/ingest")).andExpect(method(HttpMethod.POST)).andRespond(request -> {
             var mockRequest = (MockClientHttpRequest) request;
             var dto = mapper.readValue(mockRequest.getBodyAsString(), PyrisWebhookFaqIngestionExecutionDTO.class);
             responseConsumer.accept(dto);
@@ -250,7 +266,7 @@ public class IrisRequestMockProvider {
     }
 
     public void mockBuildFailedRunResponse(Consumer<PyrisExerciseChatPipelineExecutionDTO> responseConsumer) {
-        mockServer.expect(ExpectedCount.max(2), requestTo(pipelinesApiURL + "/tutor-chat/default/run?event=build_failed")).andExpect(method(HttpMethod.POST))
+        mockServer.expect(ExpectedCount.max(2), requestTo(pipelinesApiURL + "/programming-exercise-chat/run?event=build_failed")).andExpect(method(HttpMethod.POST))
                 .andRespond(request -> {
                     var mockRequest = (MockClientHttpRequest) request;
                     var dto = mapper.readValue(mockRequest.getBodyAsString(), PyrisExerciseChatPipelineExecutionDTO.class);
@@ -260,7 +276,7 @@ public class IrisRequestMockProvider {
     }
 
     public void mockProgressStalledEventRunResponse(Consumer<PyrisCourseChatPipelineExecutionDTO> responseConsumer) {
-        mockServer.expect(ExpectedCount.max(2), requestTo(pipelinesApiURL + "/tutor-chat/default/run?event=progress_stalled")).andExpect(method(HttpMethod.POST))
+        mockServer.expect(ExpectedCount.max(2), requestTo(pipelinesApiURL + "/programming-exercise-chat/run?event=progress_stalled")).andExpect(method(HttpMethod.POST))
                 .andRespond(request -> {
                     var mockRequest = (MockClientHttpRequest) request;
                     var dto = mapper.readValue(mockRequest.getBodyAsString(), PyrisCourseChatPipelineExecutionDTO.class);
@@ -270,7 +286,7 @@ public class IrisRequestMockProvider {
     }
 
     public void mockJolEventRunResponse(Consumer<PyrisCourseChatPipelineExecutionDTO> responseConsumer) {
-        mockServer.expect(ExpectedCount.once(), requestTo(pipelinesApiURL + "/course-chat/default/run?event=jol")).andExpect(method(HttpMethod.POST)).andRespond(request -> {
+        mockServer.expect(ExpectedCount.once(), requestTo(pipelinesApiURL + "/course-chat/run?event=jol")).andExpect(method(HttpMethod.POST)).andRespond(request -> {
             var mockRequest = (MockClientHttpRequest) request;
             var dto = mapper.readValue(mockRequest.getBodyAsString(), PyrisCourseChatPipelineExecutionDTO.class);
             responseConsumer.accept(dto);
@@ -281,7 +297,7 @@ public class IrisRequestMockProvider {
     public void mockRunError(int httpStatus) {
         // @formatter:off
         mockServer
-            .expect(ExpectedCount.once(), requestTo(pipelinesApiURL + "/tutor-chat/default/run"))
+            .expect(ExpectedCount.once(), requestTo(pipelinesApiURL + "/programming-exercise-chat/run"))
             .andExpect(method(HttpMethod.POST))
             .andRespond(withStatus(HttpStatus.valueOf(httpStatus)));
         // @formatter:on
@@ -290,7 +306,7 @@ public class IrisRequestMockProvider {
     public void mockIngestionWebhookRunError(int httpStatus) {
         // @formatter:off
         mockServer
-            .expect(ExpectedCount.once(), requestTo(webhooksApiURL + "/lectures/fullIngestion"))
+            .expect(ExpectedCount.once(), requestTo(webhooksApiURL + "/lectures/ingest"))
             .andExpect(method(HttpMethod.POST))
             .andRespond(withStatus(HttpStatus.valueOf(httpStatus)));
         // @formatter:on

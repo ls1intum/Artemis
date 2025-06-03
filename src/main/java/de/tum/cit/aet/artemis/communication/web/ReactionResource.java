@@ -71,8 +71,9 @@ public class ReactionResource {
      */
     @DeleteMapping("courses/{courseId}/postings/reactions/{reactionId}")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> deleteReaction(@PathVariable Long courseId, @PathVariable Long reactionId) throws URISyntaxException {
-        reactionService.deleteReactionById(reactionId, courseId);
+    public ResponseEntity<Void> deleteReaction(@PathVariable long courseId, @PathVariable long reactionId) {
+        // NOTE: the service method handles authorization checks and throws an exception if the user is not allowed to delete the reaction
+        reactionService.deleteReactionByIdIfAllowedElseThrow(reactionId, courseId);
         return ResponseEntity.ok().build();
     }
 }

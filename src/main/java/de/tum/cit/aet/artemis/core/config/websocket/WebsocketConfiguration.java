@@ -61,6 +61,7 @@ import de.tum.cit.aet.artemis.core.config.InetSocketAddressValidator;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTFilter;
+import de.tum.cit.aet.artemis.core.security.jwt.JwtWithSource;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
@@ -213,7 +214,9 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                 if (request instanceof ServletServerHttpRequest servletRequest) {
                     try {
                         attributes.put(IP_ADDRESS, servletRequest.getRemoteAddress());
-                        return JWTFilter.extractValidJwt(servletRequest.getServletRequest(), tokenProvider) != null;
+
+                        JwtWithSource jwtWithSource = JWTFilter.extractValidJwt(servletRequest.getServletRequest(), tokenProvider);
+                        return jwtWithSource != null;
                     }
                     catch (IllegalArgumentException e) {
                         response.setStatusCode(HttpStatusCode.valueOf(400));
