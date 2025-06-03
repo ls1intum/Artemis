@@ -9,7 +9,8 @@ import angular from 'angular-eslint';
 import tseslint from 'typescript-eslint';
 import eslint from '@eslint/js';
 
-export default tseslint.config(    {
+export default tseslint.config(
+    {
         ignores: [
             '.cache/',
             '.git/',
@@ -190,4 +191,4 @@ export default tseslint.config(    {
             '@angular-eslint/template/prefer-self-closing-tags': 'error',
         },
     },
-)
+);
