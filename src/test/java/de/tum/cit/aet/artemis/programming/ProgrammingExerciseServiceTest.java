@@ -80,12 +80,12 @@ class ProgrammingExerciseServiceTest extends AbstractProgrammingIntegrationIndep
         assertThat(fetchedExercise.getTemplateParticipation()).isNotNull();
         assertThat(fetchedExercise.getTemplateParticipation().getSubmissions()).isNotEmpty();
         fetchedExercise.getTemplateParticipation().getSubmissions().forEach(submission -> {
-            assertThat(submission.getResults()).isNotNull().isNotEmpty();
+            assertThat(submission.getResults()).isNotEmpty();
             assertThat(submission.getResults()).doesNotContainNull();
         });
 
         assertThat(fetchedExercise.getSolutionParticipation()).isNotNull();
         assertThat(fetchedExercise.getSolutionParticipation().getSubmissions()).isNotEmpty();
-        fetchedExercise.getSolutionParticipation().getSubmissions().forEach(submission -> assertThat(submission.getResults()).isNotNull().isEmpty());
+        fetchedExercise.getSolutionParticipation().getSubmissions().forEach(submission -> assertThat(submission.getResults()).isEmpty());
     }
 }
