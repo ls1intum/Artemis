@@ -8,3 +8,5 @@ git_push.sh
 README.md
 api.module.ts
 index.ts
+model/models.ts
+api/api.ts

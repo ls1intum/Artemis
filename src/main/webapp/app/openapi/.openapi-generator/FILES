@@ -1,6 +1,5 @@
 .gitignore
 api.base.service.ts
-api/api.ts
 api/tutorialGroupApi.service.ts
 api/tutorialGroupFreePeriodApi.service.ts
 api/tutorialGroupSessionApi.service.ts
@@ -8,7 +7,6 @@ configuration.ts
 encoder.ts
 model/channel.ts
 model/conversationUser.ts
-model/models.ts
 model/student.ts
 model/studentExport.ts
 model/tutorialGroupExport.ts
