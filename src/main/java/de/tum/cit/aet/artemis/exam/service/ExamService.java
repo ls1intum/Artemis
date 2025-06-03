@@ -20,6 +20,7 @@ import java.util.Optional;
 import java.util.OptionalDouble;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
@@ -685,8 +686,9 @@ public class ExamService {
                 continue;
             }
             // Relevant Result is already calculated
-            Set<Result> results = studentParticipation.getResults();
-            if (results != null && !results.isEmpty()) {
+            Set<Result> results = Stream.ofNullable(studentParticipation.getSubmissions()).flatMap(Collection::stream)
+                    .flatMap(submission -> Stream.ofNullable(submission.getResults()).flatMap(Collection::stream)).filter(Objects::nonNull).collect(Collectors.toSet());
+            if (!results.isEmpty()) {
                 Result relevantResult = studentParticipation.findLatestResult();
                 PlagiarismCase plagiarismCase = plagiarismCasesForStudent.get(exercise.getId());
                 double plagiarismPointDeductionPercentage = plagiarismCase != null ? plagiarismCase.getVerdictPointDeduction() : 0.0;
