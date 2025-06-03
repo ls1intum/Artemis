@@ -146,8 +146,13 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
 
     ngAfterViewInit(): void {
         this.markdownEditor.enableTextFieldMode();
-
         const editor = this.markdownEditor.monacoEditor;
+        if (editor && (editor as any)._editor) {
+            (editor as any)._editor.onKeyDown((event: any) => {
+                const domEvent = event.browserEvent as KeyboardEvent;
+                this.onKeyDown(domEvent);
+            });
+        }
         if (editor) {
             editor.onDidChangeModelContent((event: monaco.editor.IModelContentChangedEvent) => {
                 const position = editor.getPosition();
@@ -308,15 +313,22 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
             this.emojiActiveIndex = (this.emojiActiveIndex - 1 + this.emojiSuggestions.length) % this.emojiSuggestions.length;
         } else if (event.key === 'Enter') {
             event.preventDefault();
-            this.onEmojiSuggestionSelect(this.emojiSuggestions[this.emojiActiveIndex]);
+            if (this.emojiSuggestions[this.emojiActiveIndex]) {
+                this.onEmojiSuggestionSelect(this.emojiSuggestions[this.emojiActiveIndex]);
+            }
         } else if (event.key === 'Escape') {
             this.showEmojiDropdown = false;
         }
     }
 
     onKeyDown(event: KeyboardEvent) {
-        if (this.showEmojiDropdown) {
+        if (this.showEmojiDropdown && ['ArrowDown', 'ArrowUp', 'Enter', 'Escape'].includes(event.key)) {
             this.onEmojiSuggestionKeyDown(event);
+            // Prevent further handling of Enter when dropdown is open
+            if (event.key === 'Enter') {
+                event.stopPropagation();
+                return;
+            }
             return;
         }
         // Prevent a newline from being added to the text when pressing enter
