@@ -53,7 +53,7 @@ export class ExerciseUpdatePlagiarismComponent implements OnInit, OnDestroy, Aft
 
     ngOnDestroy() {
         this.fieldCPCEnabledSubscription?.unsubscribe();
-        this.fieldTreshholdSubscription?.unsubscribe();
+        this.fieldTresholdSubscription?.unsubscribe();
         this.fieldMinScoreSubscription?.unsubscribe();
         this.fieldMinSizeSubscription?.unsubscribe();
         this.fieldResponsePeriodSubscription?.unsubscribe();
