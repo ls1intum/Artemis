@@ -223,12 +223,12 @@ comments based on the provided **Grading Instructions**, **Problem Statement**, 
       - 1.2. Enter your response in the text editor and submit it.
       - 1.3. You can request AI feedback either from the exercise overview page or directly within the text editor.
 
-    .. figure:: text/automatic-feedback-request-overview.png
+    .. figure:: text/automatic-feedback-request-overview.PNG
        :align: center
        :alt: Screenshot showing the request feedback button in the exercise overview
        :scale: 80%
 
-    .. figure:: text/automatic-feedback-request-editor.png
+    .. figure:: text/automatic-feedback-request-editor.PNG
        :align: center
        :alt: Screenshot showing the request feedback button in the text editor
        :scale: 80%
@@ -240,19 +240,19 @@ comments based on the provided **Grading Instructions**, **Problem Statement**, 
       - 2.1. After submitting a feedback request, the system processes the text and generates preliminary comments.
       - 2.2. An alert appears at the top of the page indicating that feedback is ready.
 
-      .. figure:: text/automatic-feedback-request-alert.png
+      .. figure:: text/automatic-feedback-request-alert.PNG
          :align: center
          :alt: Screenshot showing the notification alert when AI feedback is ready
 
       - 2.3. A preliminary score is displayed in the top-right corner of the screen.
 
-      .. figure:: text/automatic-feedback-request-score.png
+      .. figure:: text/automatic-feedback-request-score.PNG
          :align: center
          :alt: Screenshot showing the preliminary score in the text editor
 
       - 2.4. Clicking on the score reveals inline feedback that highlights specific issues and offers suggestions directly under the text.
 
-      .. figure:: /user/exercises/text/automatic-feedback-view-detailed.png
+      .. figure:: text/automatic-feedback-view-detailed.PNG
          :align: center
          :alt: Screenshot showing detailed AI feedback
          :scale: 50%
@@ -264,7 +264,7 @@ comments based on the provided **Grading Instructions**, **Problem Statement**, 
       - You may request feedback multiple times before the submission deadline. All feedback requests are recorded in the submission history.
       - To review past feedback, open the submission history section and click an entry to view its detailed comments.
 
-      .. figure:: text/automatic-feedback-history.png
+      .. figure:: text/automatic-feedback-history.PNG
          :align: center
          :alt: Screenshot showing the submission history section in the text editor
          :scale: 50%
@@ -310,16 +310,4 @@ Watch this screencast for a demonstration of automated AI feedback on a text exe
     :scale: 50
 .. |submit| image:: general/submit-button.png
 .. |submit-assessment| image:: general/submit-assessment-button.png
-    :scale: 50
-.. |request-overview| image:: text/automatic-feedback-request-overview.png
-    :scale: 50
-.. |request-editor| image:: text/automatic-feedback-request-editor.png
-    :scale: 50
-.. |request-alert| image:: text/automatic-feedback-request-alert.png
-    :scale: 50
-.. |request-score| image:: text/automatic-feedback-request-score.png
-    :scale: 50
-.. |detailed-feedback| image:: text/automatic-feedback-view-detailed.png
-    :scale: 50
-.. |feedback-history| image:: text/automatic-feedback-history.png
     :scale: 50
