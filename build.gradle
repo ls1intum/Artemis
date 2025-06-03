@@ -441,7 +441,8 @@ dependencies {
     testImplementation "com.tngtech.archunit:archunit:1.4.1"
     testImplementation "org.skyscreamer:jsonassert:1.5.3"
 
-    runtimeOnly "com.h2database:h2:2.2.224"
+    // we only need the database present at runtime
+    runtimeOnly "com.h2database:h2:2.3.232"
 
     // Lightweight JSON library needed for the internals of the MockRestServiceServer
     testImplementation "org.json:json:20250517"
