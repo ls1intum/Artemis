@@ -177,12 +177,16 @@
     tasks.named('openApiGenerate') {
         dependsOn 'pruneOpenApiSpec'
     }
-    tasks.named( 'openApiGenerate') {
+    tasks.named("openApiGenerate") {
         doFirst {
-            delete file("$rootDir/src/main/webapp/app/openapi")
-            println "✔ Deleted old openapi files"
+            def openapiDir = file("$rootDir/src/main/webapp/app/openapi")
+            if (openapiDir.exists()) {
+                delete fileTree(dir: openapiDir, exclude: ".openapi-generator-ignore")
+                println "✔ Deleted everything under openapi/ except .openapi-generator-ignore"
+            }
         }
     }
+
 
     tasks.register('cleanUnusedImports', Exec) {
         description = "Removes unused imports from generated OpenAPI TypeScript files"

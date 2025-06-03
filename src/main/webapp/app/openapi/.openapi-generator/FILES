@@ -1,15 +1,11 @@
 .gitignore
-.openapi-generator-ignore
-README.md
 api.base.service.ts
-api.module.ts
 api/api.ts
 api/tutorialGroupApi.service.ts
 api/tutorialGroupFreePeriodApi.service.ts
 api/tutorialGroupSessionApi.service.ts
 configuration.ts
 encoder.ts
-git_push.sh
 index.ts
 model/channel.ts
 model/conversationUser.ts
