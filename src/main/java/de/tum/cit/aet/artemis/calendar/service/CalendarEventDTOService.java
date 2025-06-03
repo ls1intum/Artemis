@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.calendar.service;
 
+import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.YearMonth;
@@ -37,9 +38,7 @@ public class CalendarEventDTOService {
             if (months.isEmpty()) {
                 throw new BadRequestException("At least one month key must be provided");
             }
-            else {
-                return months;
-            }
+            return months;
         }
         catch (DateTimeParseException exception) {
             throw new BadRequestException("Invalid monthKey format. Expected format: YYYY-MM.");
@@ -57,7 +56,7 @@ public class CalendarEventDTOService {
         try {
             return ZoneId.of(timeZone);
         }
-        catch (Exception exception) {
+        catch (DateTimeException exception) {
             throw new BadRequestException("Invalid time zone format. Expected IANA time zone ID.");
         }
     }

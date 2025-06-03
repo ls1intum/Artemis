@@ -106,10 +106,10 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
 
     @BeforeEach
     void createUsers() {
-        userUtilService.addStudent("tumuser", TEST_PREFIX + "student");
-        userUtilService.addTeachingAssistant("tutor", TEST_PREFIX + "tutor");
-        userUtilService.addEditor("editor", TEST_PREFIX + "editor");
-        userUtilService.addInstructor("instructor", TEST_PREFIX + "instructor");
+        userUtilService.addStudent("tumuser", STUDENT_LOGIN);
+        userUtilService.addTeachingAssistant("tutor", TUTOR_LOGIN);
+        userUtilService.addEditor("editor", EDITOR_LOGIN);
+        userUtilService.addInstructor("instructor", INSTRUCTOR_LOGIN);
         student = userUtilService.getUserByLogin(STUDENT_LOGIN);
         tutor = userUtilService.getUserByLogin(TUTOR_LOGIN);
         editor = userUtilService.getUserByLogin(EDITOR_LOGIN);
@@ -230,8 +230,8 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
      */
     void setupUserNotPartOfAnyCourseScenario() {
         course = courseUtilService.createActiveCourseInTimezone(ZoneId.of(TEST_TIMEZONE_STRING), 1, 3);
-        userUtilService.addEditor("noteditor", TEST_PREFIX + "noteditor");
-        userUtilService.addInstructor("notinstructor", TEST_PREFIX + "notinstructor");
+        userUtilService.addEditor("noteditor", NOT_EDITOR_LOGIN);
+        userUtilService.addInstructor("notinstructor", NOT_INSTRUCTOR_LOGIN);
         tutorialGroup = tutorialGroupUtilService.createTutorialGroup(course.getId(), "Test Tutorial Group", "", 10, false, "Garching", "English", tutor,
                 new HashSet<>(Set.of(student)));
         tutorialGroupSessions = tutorialGroupUtilService.createTutorialGroupSessions(tutorialGroup, course, false);
