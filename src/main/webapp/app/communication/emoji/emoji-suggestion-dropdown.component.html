@@ -1,6 +1,6 @@
 <div class="emoji-suggestion-dropdown" [ngStyle]="dropdownStyle">
     @if (suggestions?.length) {
-        @for (s of suggestions; track i; let i = index) {
+        @for (s of suggestions; track $index; let i = index) {
             <div
                 class="emoji-suggestion-item"
                 [ngClass]="{ active: i === activeIndex }"
