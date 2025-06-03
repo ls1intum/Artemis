@@ -22,7 +22,6 @@ import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
  * REST controller to serve the public JWKSet related to all OAuth2 clients.
  */
 @Profile(PROFILE_LTI)
-// TODO: should we adapt the mapping based on the profile?
 @RestController
 public class PublicOAuth2JWKSResource {
 

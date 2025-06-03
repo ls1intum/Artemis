@@ -24,8 +24,8 @@ public class Lti13ClientRegistrationFactory {
         var clientName = "Artemis - " + serverUrl;
         var tokenEndpointAuthMethod = "private_key_jwt";
         var scope = String.join(" ", List.of(Scopes.AGS_SCORE, Scopes.AGS_RESULT));
-        var redirectUris = List.of(serverUrl + "/" + CustomLti13Configurer.LTI13_LOGIN_REDIRECT_PROXY_PATH);
-        var initiateLoginUri = serverUrl + "/" + CustomLti13Configurer.LTI13_LOGIN_INITIATION_PATH + "/" + clientRegistrationId;
+        var redirectUris = List.of(serverUrl + CustomLti13Configurer.LTI13_LOGIN_REDIRECT_PROXY_PATH);
+        var initiateLoginUri = serverUrl + CustomLti13Configurer.LTI13_LOGIN_INITIATION_PATH + "/" + clientRegistrationId;
         var jwksUri = serverUrl + "/.well-known/jwks.json";
         var logoUri = serverUrl + "/public/images/logo.png";
 
@@ -42,7 +42,7 @@ public class Lti13ClientRegistrationFactory {
             domain = urlParts[1]; // Domain cannot include protocol
         }
         var claims = Arrays.asList("iss", "email", "sub", "name", "given_name", "family_name");
-        var deepLinkingMessage = new Lti13Message(CustomLti13Configurer.LTI13_DEEPLINK_MESSAGE_REQUEST, serverUrl + "/" + CustomLti13Configurer.LTI13_DEEPLINK_REDIRECT_PATH);
+        var deepLinkingMessage = new Lti13Message(CustomLti13Configurer.LTI13_DEEPLINK_MESSAGE_REQUEST, serverUrl + CustomLti13Configurer.LTI13_DEEPLINK_REDIRECT_PATH);
         return new Lti13ToolConfiguration(domain, serverUrl + "/courses", "Artemis: Interactive Learning with Individual Feedback", List.of(deepLinkingMessage), claims);
     }
 }
