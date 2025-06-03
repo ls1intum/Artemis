@@ -6,7 +6,6 @@ api/tutorialGroupFreePeriodApi.service.ts
 api/tutorialGroupSessionApi.service.ts
 configuration.ts
 encoder.ts
-index.ts
 model/channel.ts
 model/conversationUser.ts
 model/models.ts
