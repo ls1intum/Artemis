@@ -410,13 +410,14 @@ public class CourseScoreCalculationService {
         if (participation == null) {
             return null;
         }
-        var resultsSet = participation.getResults();
+        Set<Result> resultsSet = Stream.ofNullable(participation.getSubmissions()).flatMap(Collection::stream)
+                .flatMap(submission -> Stream.ofNullable(submission.getResults()).flatMap(Collection::stream)).filter(Objects::nonNull).collect(Collectors.toSet());
 
         Result emptyResult = new Result();
         // TODO: Check if you can just instantiate Result.score with 0.0.
         emptyResult.setScore(0.0);
 
-        if (resultsSet == null || resultsSet.isEmpty()) {
+        if (resultsSet.isEmpty()) {
             return emptyResult;
         }
 
