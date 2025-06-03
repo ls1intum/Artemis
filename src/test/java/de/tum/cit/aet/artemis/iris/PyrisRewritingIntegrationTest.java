@@ -63,7 +63,7 @@ class PyrisRewritingIntegrationTest extends AbstractIrisIntegrationTest {
 
         RewritingJob job = new RewritingJob(jobId, course.getId(), userId);
         List<PyrisStageDTO> stages = List.of(new PyrisStageDTO("Generating Rewriting", 10, PyrisStageState.DONE, null));
-        List<LLMRequest> tokens = getMockLLMCosts();
+        List<LLMRequest> tokens = getMockLLMCosts("IRIS_CHAT_EXERCISE_MESSAGE");
         String result = "result";
 
         simulateWebsocketMessageWithResult(job, tokens, stages, result);

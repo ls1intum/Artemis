@@ -126,7 +126,7 @@ class IrisChatTokenTrackingIntegrationTest extends AbstractIrisIntegrationTest {
     void testTokenTrackingHandledExerciseChat() throws Exception {
         var irisSession = irisExerciseChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         var messageToSend = createDefaultMockMessage(irisSession);
-        var tokens = getMockLLMCosts();
+        var tokens = getMockLLMCosts("IRIS_CHAT_EXERCISE_MESSAGE");
         List<PyrisStageDTO> doneStage = new ArrayList<>();
         doneStage.add(new PyrisStageDTO("DoneTest", 10, PyrisStageState.DONE, "Done"));
         irisRequestMockProvider.mockProgrammingExerciseChatResponse(dto -> {
@@ -161,7 +161,7 @@ class IrisChatTokenTrackingIntegrationTest extends AbstractIrisIntegrationTest {
         var irisSession = irisExerciseChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         var irisMessage = createDefaultMockMessage(irisSession);
         irisMessageRepository.save(irisMessage);
-        var tokens = getMockLLMCosts();
+        var tokens = getMockLLMCosts("IRIS_CHAT_EXERCISE_MESSAGE");
         LLMTokenUsageTrace tokenUsageTrace = llmTokenUsageService.saveLLMTokenUsage(tokens, LLMServiceType.IRIS,
                 builder -> builder.withIrisMessageID(irisMessage.getId()).withExercise(exercise.getId()).withUser(irisSession.getUserId()).withCourse(course.getId()));
         assertThat(tokenUsageTrace.getServiceType()).isEqualTo(LLMServiceType.IRIS);
@@ -176,7 +176,7 @@ class IrisChatTokenTrackingIntegrationTest extends AbstractIrisIntegrationTest {
     void testTokenTrackingExerciseChatWithPipelineFail() throws Exception {
         var irisSession = irisExerciseChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         var messageToSend = createDefaultMockMessage(irisSession);
-        var tokens = getMockLLMCosts();
+        var tokens = getMockLLMCosts("IRIS_CHAT_EXERCISE_MESSAGE");
         List<PyrisStageDTO> failedStages = new ArrayList<>();
         failedStages.add(new PyrisStageDTO("TestTokenFail", 10, PyrisStageState.ERROR, "Failed running pipeline"));
         irisRequestMockProvider.mockProgrammingExerciseChatResponse(dto -> {

@@ -79,7 +79,7 @@ class PyrisConsistencyCheckIntegrationTest extends AbstractIrisIntegrationTest {
         String userLogin = TEST_PREFIX + "editor1";
         ConsistencyCheckJob job = new ConsistencyCheckJob(jobId, course.getId(), exerciseDto.id(), userUtilService.getUserByLogin(userLogin).getId());
 
-        List<LLMRequest> tokens = getMockLLMCosts();
+        List<LLMRequest> tokens = getMockLLMCosts("IRIS_CHAT_EXERCISE_MESSAGE");
         String rewritingResult = "result";
         // Simulate the websocket message that would be sent by Pyris
         // This is a simulation of the PyrisConsistencyCheckStatusUpdateDTO that would be sent to the user
