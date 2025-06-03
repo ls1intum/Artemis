@@ -6,6 +6,7 @@ import {
     Component,
     EventEmitter,
     Input,
+    OnDestroy,
     OnInit,
     Output,
     ViewChild,
@@ -65,7 +66,7 @@ import { EmojiSuggestionDropdownComponent, getEmojiSuggestions } from '../emoji/
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [MarkdownEditorMonacoComponent, PostingContentComponent, NgStyle, EmojiSuggestionDropdownComponent],
 })
-export class PostingMarkdownEditorComponent implements OnInit, ControlValueAccessor, AfterContentChecked, AfterViewInit {
+export class PostingMarkdownEditorComponent implements OnInit, ControlValueAccessor, AfterContentChecked, AfterViewInit, OnDestroy {
     private cdref = inject(ChangeDetectorRef);
     private metisService = inject(MetisService);
     private fileService = inject(FileService);
@@ -142,6 +143,9 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
         ];
 
         this.lectureAttachmentReferenceAction = new LectureAttachmentReferenceAction(this.metisService, this.lectureService, this.fileService);
+
+        // Listen for window resize and reposition dropdown if open
+        window.addEventListener('resize', this.handleResize);
     }
 
     ngAfterViewInit(): void {
@@ -256,8 +260,8 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
                     const lines = newValue.substring(0, lastIndex).split('\n');
                     const line = lines.length;
                     const column = lines[lines.length - 1].length + 1;
+                    // Recalculate coords on every update to handle resize
                     const coords = editor.getScrolledVisiblePosition({ lineNumber: line, column });
-                    // In updateField, adjust the calculated top position by subtracting a few pixels
                     if (coords) {
                         this.emojiDropdownStyle = {
                             display: 'block',
@@ -276,6 +280,34 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
         this.onChange(this.content);
         this.valueChanged();
     }
+
+    ngOnDestroy(): void {
+        window.removeEventListener('resize', this.handleResize);
+    }
+    handleResize = () => {
+        if (this.showEmojiDropdown && this.lastEmojiMatch && this.content != null) {
+            // Only reposition, do not change content or suggestions
+            const newValue = this.content;
+            const lastIndex = this.lastEmojiMatch.index;
+            const suggestions = this.emojiSuggestions;
+            if (suggestions.length > 0 && this.markdownEditor && this.markdownEditor.monacoEditor && (this.markdownEditor.monacoEditor as any)._editor) {
+                const editor = (this.markdownEditor.monacoEditor as any)._editor;
+                const lines = newValue.substring(0, lastIndex).split('\n');
+                const line = lines.length;
+                const column = lines[lines.length - 1].length + 1;
+                const coords = editor.getScrolledVisiblePosition({ lineNumber: line, column });
+                if (coords) {
+                    this.emojiDropdownStyle = {
+                        display: 'block',
+                        position: 'absolute',
+                        left: `${coords.left}px`,
+                        top: `${coords.top + coords.height + 28}px`,
+                        zIndex: '1000',
+                    };
+                }
+            }
+        }
+    };
 
     onEmojiSuggestionSelect(selected: { name: string; emoji: string }) {
         if (!this.lastEmojiMatch) return;
