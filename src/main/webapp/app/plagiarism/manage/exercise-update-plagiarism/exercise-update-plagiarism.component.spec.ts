@@ -100,7 +100,7 @@ describe('Exercise Update Plagiarism Component', () => {
     });
 
     it('should aggregate aggregate input changes', () => {
-        const inputFieldNames = ['fieldCPCEnabled', 'fieldThreshhold', 'fieldResponsePeriod', 'fieldMinScore', 'fieldMinSize'];
+        const inputFieldNames = ['fieldCPCEnabled', 'fieldThreshold', 'fieldResponsePeriod', 'fieldMinScore', 'fieldMinSize'];
         const calculateValidSpy = jest.spyOn(comp, 'calculateFormValid');
         const formValidChangesSpy = jest.spyOn(comp.formValidChanges, 'next');
         fixture.componentRef.setInput('exercise', {
