@@ -18,16 +18,11 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.calendar.config.CalendarEnabled;
-import de.tum.cit.aet.artemis.calendar.domain.CourseCalendarEvent;
 import de.tum.cit.aet.artemis.calendar.dto.CalendarEventDTO;
-import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
 
-/**
- * A Service providing tools for processing calendar events derived from both {@link CourseCalendarEvent}s and {@link TutorialGroupSession}s.
- */
 @Conditional(CalendarEnabled.class)
 @Service
-public class CalendarEventService {
+public class CalendarEventDTOService {
 
     /**
      * Deserializes a list of month keys into a set of {@link YearMonth} objects.

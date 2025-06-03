@@ -15,12 +15,12 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 
 @Entity
-@Table(name = "course_calendar_event")
-public class CourseCalendarEvent extends DomainObject implements Comparable<CourseCalendarEvent> {
+@Table(name = "coursewide_calendar_event")
+public class CoursewideCalendarEvent extends DomainObject implements Comparable<CoursewideCalendarEvent> {
 
     @ManyToOne
     @JoinColumn(name = "course_id", nullable = false)
-    @JsonIgnoreProperties({ "courseCalendarEvents" })
+    @JsonIgnoreProperties({ "coursewideCalendarEvents" })
     private Course course;
 
     @Column(name = "title")
@@ -133,7 +133,7 @@ public class CourseCalendarEvent extends DomainObject implements Comparable<Cour
     }
 
     @Override
-    public int compareTo(CourseCalendarEvent o) {
+    public int compareTo(CoursewideCalendarEvent o) {
         return startDate.compareTo(o.startDate);
     }
 }

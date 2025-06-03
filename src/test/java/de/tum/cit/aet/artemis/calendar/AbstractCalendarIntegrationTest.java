@@ -17,11 +17,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 
-import de.tum.cit.aet.artemis.calendar.domain.CourseCalendarEvent;
+import de.tum.cit.aet.artemis.calendar.domain.CoursewideCalendarEvent;
 import de.tum.cit.aet.artemis.calendar.dto.CalendarEventDTO;
-import de.tum.cit.aet.artemis.calendar.dto.CourseCalendarEventDTO;
-import de.tum.cit.aet.artemis.calendar.repository.CourseCalendarEventRepository;
-import de.tum.cit.aet.artemis.calendar.util.CourseCalendarEventUtilService;
+import de.tum.cit.aet.artemis.calendar.dto.CoursewideCalendarEventDTO;
+import de.tum.cit.aet.artemis.calendar.repository.CoursewideCalendarEventRepository;
+import de.tum.cit.aet.artemis.calendar.util.CoursewideCalendarEventUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
@@ -59,10 +59,10 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
     static final TypeReference<Map<String, List<CalendarEventDTO>>> GET_CALENDAR_EVENTS_RETURN_TYPE = new TypeReference<Map<String, List<CalendarEventDTO>>>() {
     };
 
-    static final TypeReference<List<CourseCalendarEventDTO>> GET_COURSE_CALENDAR_EVENTS_RETURN_TYPE = new TypeReference<List<CourseCalendarEventDTO>>() {
+    static final TypeReference<List<CoursewideCalendarEventDTO>> GET_COURSE_CALENDAR_EVENTS_RETURN_TYPE = new TypeReference<List<CoursewideCalendarEventDTO>>() {
     };
 
-    static final String PUT_REQUEST_URL = "/api/calendar/course-calendar-event";
+    static final String COURSEWIDE_CALENDAR_EVENT_PUT_REQUEST_URL = "/api/calendar/coursewide-calendar-event";
 
     Course course;
 
@@ -70,7 +70,7 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
 
     List<TutorialGroupSession> tutorialGroupSessions;
 
-    List<CourseCalendarEvent> courseCalendarEvents;
+    List<CoursewideCalendarEvent> coursewideCalendarEvents;
 
     User student;
 
@@ -81,13 +81,13 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
     User instructor;
 
     @Autowired
-    CourseCalendarEventRepository courseCalendarEventRepository;
+    CoursewideCalendarEventRepository coursewideCalendarEventRepository;
 
     @Autowired
     CourseUtilService courseUtilService;
 
     @Autowired
-    private CourseCalendarEventUtilService courseCalendarEventUtilService;
+    private CoursewideCalendarEventUtilService coursewideCalendarEventUtilService;
 
     @Autowired
     private TutorialGroupUtilService tutorialGroupUtilService;
@@ -118,9 +118,9 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
 
     @AfterEach
     void cleanUp() {
-        if (courseCalendarEvents != null) {
-            courseCalendarEventRepository.deleteAll(courseCalendarEvents);
-            courseCalendarEvents = null;
+        if (coursewideCalendarEvents != null) {
+            coursewideCalendarEventRepository.deleteAll(coursewideCalendarEvents);
+            coursewideCalendarEvents = null;
         }
         if (tutorialGroupSessions != null) {
             tutorialGroupSessionRepository.deleteAll(tutorialGroupSessions);
@@ -149,7 +149,7 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
      * <ul>
      * <li>an active {@link Course} of which {@code student}, {@code tutor}, {@code editor}, and {@code instructor} are part representing the user group their name indicates.</li>
      * <li>one {@link TutorialGroup} with weekly {@link TutorialGroupSession}s of which {@code tutor} and {@code student} are part of.</li>
-     * <li>a series of weekly {@link CourseCalendarEvent}s that are visible to all user groups of the course.</li>
+     * <li>a series of weekly {@link CoursewideCalendarEvent}s that are visible to all user groups of the course.</li>
      * </ul>
      */
     void setupActiveCourseScenario() {
@@ -158,7 +158,7 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
                 new HashSet<>(Set.of(student)));
         tutorialGroupSessions = tutorialGroupUtilService.createTutorialGroupSessions(tutorialGroup, course, false);
 
-        courseCalendarEvents = courseCalendarEventUtilService.createCourseCalendarEvents(course);
+        coursewideCalendarEvents = coursewideCalendarEventUtilService.createCoursewideCalendarEvents(course);
     }
 
     /**
@@ -175,12 +175,12 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
      * Creates a scenario that includes:
      * <ul>
      * <li>an active {@link Course} of which {@code student}, {@code tutor}, {@code editor}, and {@code instructor} are part representing the user group their name indicates.</li>
-     * <li>two {@link CourseCalendarEvent}s spanning multiple days (first: 2 days | second: 3 days) that are visible to all user groups of the course.</li>
+     * <li>two {@link CoursewideCalendarEvent}s spanning multiple days (first: 2 days | second: 3 days) that are visible to all user groups of the course.</li>
      * </ul>
      */
-    void setupActiveCourseWithCourseCalendarEventsSpanningMultipleDaysScenario() {
+    void setupActiveCourseWithCoursewideCalendarEventsSpanningMultipleDaysScenario() {
         course = courseUtilService.createActiveCourseInTimezone(ZoneId.of(TEST_TIMEZONE_STRING), 1, 1);
-        CourseCalendarEvent event1 = new CourseCalendarEvent();
+        CoursewideCalendarEvent event1 = new CoursewideCalendarEvent();
         event1.setCourse(course);
         event1.setTitle("Session 1");
         event1.setStartDate(course.getStartDate());
@@ -189,7 +189,7 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
         event1.setVisibleToTutors(true);
         event1.setVisibleToEditors(true);
         event1.setVisibleToInstructors(true);
-        CourseCalendarEvent event2 = new CourseCalendarEvent();
+        CoursewideCalendarEvent event2 = new CoursewideCalendarEvent();
         event2.setCourse(course);
         event2.setTitle("Session 1");
         event2.setStartDate(course.getStartDate().plusDays(5));
@@ -198,8 +198,8 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
         event2.setVisibleToTutors(true);
         event2.setVisibleToEditors(true);
         event2.setVisibleToInstructors(true);
-        courseCalendarEventRepository.saveAll(Set.of(event1, event2));
-        courseCalendarEvents = List.of(event1, event2);
+        coursewideCalendarEventRepository.saveAll(Set.of(event1, event2));
+        coursewideCalendarEvents = List.of(event1, event2);
     }
 
     /**
@@ -207,16 +207,16 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
      * <ul>
      * <li>an active {@link Course} of which {@code student}, {@code tutor}, {@code editor}, and {@code instructor} are part representing the user group their name indicates.</li>
      * <li>one {@link TutorialGroup} with weekly {@link TutorialGroupSession}s of which {@code tutor} and {@code student} are part of.</li>
-     * <li>a series of weekly {@link CourseCalendarEvent}s with visibility alternating between the different user groups of the course.</li>
+     * <li>a series of weekly {@link CoursewideCalendarEvent}s with visibility alternating between the different user groups of the course.</li>
      * </ul>
      */
-    void setupActiveCourseWithMutualExclusiveVisibilityForCourseCalendarEventScenario() {
+    void setupActiveCourseWithMutualExclusiveVisibilityForCoursewideCalendarEventScenario() {
         course = courseUtilService.createActiveCourseInTimezone(ZoneId.of(TEST_TIMEZONE_STRING), 1, 3);
         tutorialGroup = tutorialGroupUtilService.createTutorialGroup(course.getId(), "Test Tutorial Group", "", 10, false, "Garching", "English", tutor,
                 new HashSet<>(Set.of(student)));
         tutorialGroupSessions = tutorialGroupUtilService.createTutorialGroupSessions(tutorialGroup, course, false);
 
-        courseCalendarEvents = courseCalendarEventUtilService.createCourseCalendarEventsWithMutuallyExclusiveVisibility(course);
+        coursewideCalendarEvents = coursewideCalendarEventUtilService.createCoursewideCalendarEventsWithMutuallyExclusiveVisibility(course);
     }
 
     /**
@@ -225,7 +225,7 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
      * <li>an active {@link Course}.</li>
      * <li>an editor and instructor with usernames {@code NOT_EDITOR_LOGIN} and {@code NOT_INSTRUCTOR_LOGIN} that are not part of the course.</li>
      * <li>one {@link TutorialGroup} with weekly {@link TutorialGroupSession}s of which {@code tutor} and {@code student} are part of.</li>
-     * <li>a series of weekly {@link CourseCalendarEvent}s that are visible to all user groups of the course.</li>
+     * <li>a series of weekly {@link CoursewideCalendarEvent}s that are visible to all user groups of the course.</li>
      * </ul>
      */
     void setupUserNotPartOfAnyCourseScenario() {
@@ -235,7 +235,7 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
         tutorialGroup = tutorialGroupUtilService.createTutorialGroup(course.getId(), "Test Tutorial Group", "", 10, false, "Garching", "English", tutor,
                 new HashSet<>(Set.of(student)));
         tutorialGroupSessions = tutorialGroupUtilService.createTutorialGroupSessions(tutorialGroup, course, false);
-        courseCalendarEvents = courseCalendarEventUtilService.createCourseCalendarEvents(course);
+        coursewideCalendarEvents = coursewideCalendarEventUtilService.createCoursewideCalendarEvents(course);
     }
 
     /**
@@ -243,7 +243,7 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
      * <ul>
      * <li>an inactive {@link Course}.</li>
      * <li>one {@link TutorialGroup} with weekly {@link TutorialGroupSession}s of which {@code tutor} and {@code student} are part of.</li>
-     * <li>a series of weekly {@link CourseCalendarEvent}s that are visible to all user groups of the course.</li>
+     * <li>a series of weekly {@link CoursewideCalendarEvent}s that are visible to all user groups of the course.</li>
      * </ul>
      */
     void setupNonActiveCourseScenario() {
@@ -251,7 +251,7 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
         tutorialGroup = tutorialGroupUtilService.createTutorialGroup(course.getId(), "Test Tutorial Group", "", 10, false, "Garching", "English", tutor,
                 new HashSet<>(Set.of(student)));
         tutorialGroupSessions = tutorialGroupUtilService.createTutorialGroupSessions(tutorialGroup, course, false);
-        courseCalendarEvents = courseCalendarEventUtilService.createCourseCalendarEvents(course);
+        coursewideCalendarEvents = coursewideCalendarEventUtilService.createCoursewideCalendarEvents(course);
     }
 
     /**
@@ -259,7 +259,7 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
      * <ul>
      * <li>an active {@link Course}.</li>
      * <li>one {@link TutorialGroup} with weekly {@link TutorialGroupSession}s of which {@code tutor} and {@code student} are <u><b>not</b></u> part of.</li>
-     * <li>a series of weekly {@link CourseCalendarEvent}s that are visible to all user groups of the course.</li>
+     * <li>a series of weekly {@link CoursewideCalendarEvent}s that are visible to all user groups of the course.</li>
      * </ul>
      */
     void setupActiveCourseWithoutParticipatedTutorialGroupScenario() {
@@ -268,7 +268,7 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
         User otherTutor = userRepository.getUserByLoginElseThrow(TEST_PREFIX + "othertutor");
         tutorialGroup = tutorialGroupUtilService.createTutorialGroup(course.getId(), "Test Tutorial Group", "", 10, false, "Garching", "English", otherTutor, new HashSet<>());
         tutorialGroupSessions = tutorialGroupUtilService.createTutorialGroupSessions(tutorialGroup, course, false);
-        courseCalendarEvents = courseCalendarEventUtilService.createCourseCalendarEvents(course);
+        coursewideCalendarEvents = coursewideCalendarEventUtilService.createCoursewideCalendarEvents(course);
     }
 
     /**
@@ -277,7 +277,7 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
      * <li>an active {@link Course}.</li>
      * <li>one {@link TutorialGroup} with weekly {@link TutorialGroupSession}s of which <u><b>the first two are cancelled</b></u>. The {@code tutor} and {@code student} are part of
      * the group.</li>
-     * <li>a series of weekly {@link CourseCalendarEvent}s that are visible to all user groups of the course.</li>
+     * <li>a series of weekly {@link CoursewideCalendarEvent}s that are visible to all user groups of the course.</li>
      * </ul>
      */
     void setupActiveCourseWithCancelledTutorialGroupSessionsScenario() {
@@ -285,7 +285,7 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
         tutorialGroup = tutorialGroupUtilService.createTutorialGroup(course.getId(), "Test Tutorial Group", "", 10, false, "Garching", "English", tutor,
                 new HashSet<>(Set.of(student)));
         tutorialGroupSessions = tutorialGroupUtilService.createTutorialGroupSessions(tutorialGroup, course, true);
-        courseCalendarEvents = courseCalendarEventUtilService.createCourseCalendarEvents(course);
+        coursewideCalendarEvents = coursewideCalendarEventUtilService.createCoursewideCalendarEvents(course);
     }
 
     String getMonthsSpanningCurrentTestCourseAsMonthKeys() {
@@ -300,19 +300,19 @@ public abstract class AbstractCalendarIntegrationTest extends AbstractSpringInte
         return String.join(",", monthStrings);
     }
 
-    String assembleURLForCourseCalendarEventsGetRequest(Long courseId) {
-        return "/api/calendar/courses/" + courseId + "/course-calendar-events";
-    }
-
     String assembleURLForCalendarEventsGetRequest(String monthKeys, String timeZone) {
         return "/api/calendar/calendar-events?monthKeys=" + monthKeys + "&timeZone=" + timeZone;
     }
 
-    String assembleURLForPostRequest(Long courseId) {
-        return "/api/calendar/courses/" + courseId + "/course-calendar-events";
+    String assembleURLForCoursewideCalendarEventsGetRequest(Long courseId) {
+        return "/api/calendar/courses/" + courseId + "/coursewide-calendar-events";
     }
 
-    String assembleURLForDeleteRequest(String eventId) {
-        return "/api/calendar/course-calendar-event/" + eventId;
+    String assembleURLForCoursewideCalendarEventPostRequest(Long courseId) {
+        return "/api/calendar/courses/" + courseId + "/coursewide-calendar-events";
+    }
+
+    String assembleURLForCoursewideCalendarEventDeleteRequest(String eventId) {
+        return "/api/calendar/coursewide-calendar-event/" + eventId;
     }
 }

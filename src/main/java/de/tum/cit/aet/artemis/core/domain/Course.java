@@ -38,7 +38,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.LearningPath;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Prerequisite;
-import de.tum.cit.aet.artemis.calendar.domain.CourseCalendarEvent;
+import de.tum.cit.aet.artemis.calendar.domain.CoursewideCalendarEvent;
 import de.tum.cit.aet.artemis.communication.domain.Faq;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -240,7 +240,7 @@ public class Course extends DomainObject {
 
     @OneToMany(mappedBy = "course", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties(value = "course")
-    private SortedSet<CourseCalendarEvent> courseCalendarEvents = new TreeSet<>();
+    private SortedSet<CoursewideCalendarEvent> coursewideCalendarEvents = new TreeSet<>();
 
     // NOTE: Helpers variable names must be different from Getter name, so that Jackson ignores the @Transient annotation, but Hibernate still respects it
     @Transient
@@ -1038,11 +1038,11 @@ public class Course extends DomainObject {
         faq.setCourse(this);
     }
 
-    public Set<CourseCalendarEvent> getCourseCalendarEvents() {
-        return courseCalendarEvents;
+    public Set<CoursewideCalendarEvent> getCoursewideCalendarEvents() {
+        return coursewideCalendarEvents;
     }
 
-    public void setCourseCalendarEvents(SortedSet<CourseCalendarEvent> courseCalendarEvents) {
-        this.courseCalendarEvents = courseCalendarEvents;
+    public void setCoursewideCalendarEvents(SortedSet<CoursewideCalendarEvent> coursewideCalendarEvents) {
+        this.coursewideCalendarEvents = coursewideCalendarEvents;
     }
 }
