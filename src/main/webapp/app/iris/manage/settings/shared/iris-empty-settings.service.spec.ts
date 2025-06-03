@@ -3,12 +3,12 @@ import { TestBed } from '@angular/core/testing';
 import { IrisEmptySettingsService } from './iris-empty-settings.service';
 import { IrisSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
 import {
-    IrisChatSubSettings,
     IrisCompetencyGenerationSubSettings,
     IrisCourseChatSubSettings,
     IrisFaqIngestionSubSettings,
     IrisLectureChatSubSettings,
     IrisLectureIngestionSubSettings,
+    IrisProgrammingExerciseChatSubSettings,
     IrisTextExerciseChatSubSettings,
     IrisTutorSuggestionSubSettings,
 } from 'app/iris/shared/entities/settings/iris-sub-settings.model';
@@ -27,7 +27,7 @@ describe('IrisEmptySettingsService', () => {
 
         it('should create each sub-setting if not defined', () => {
             const result = service.fillEmptyIrisSubSettings({} as IrisSettings);
-            expect(result!.irisChatSettings).toBeInstanceOf(IrisChatSubSettings);
+            expect(result!.irisProgrammingExerciseChatSettings).toBeInstanceOf(IrisProgrammingExerciseChatSubSettings);
             expect(result!.irisTextExerciseChatSettings).toBeInstanceOf(IrisTextExerciseChatSubSettings);
             expect(result!.irisLectureChatSettings).toBeInstanceOf(IrisLectureChatSubSettings);
             expect(result!.irisCourseChatSettings).toBeInstanceOf(IrisCourseChatSubSettings);
@@ -38,7 +38,7 @@ describe('IrisEmptySettingsService', () => {
         });
 
         it('should preserve existing sub-settings and only create missing ones', () => {
-            const existingChatSettings = new IrisChatSubSettings();
+            const existingChatSettings = new IrisProgrammingExerciseChatSubSettings();
             existingChatSettings.enabled = true;
             existingChatSettings.selectedVariant = 'existingVariant';
 
@@ -46,15 +46,15 @@ describe('IrisEmptySettingsService', () => {
             existingLectureIngestionSettings.autoIngestOnLectureAttachmentUpload = true;
 
             const existingSettings = {
-                irisChatSettings: existingChatSettings,
+                irisProgrammingExerciseChatSettings: existingChatSettings,
                 irisLectureIngestionSettings: existingLectureIngestionSettings,
             } as IrisSettings;
 
             const result = service.fillEmptyIrisSubSettings(existingSettings);
 
-            expect(result!.irisChatSettings).toBe(existingChatSettings);
-            expect(result!.irisChatSettings!.enabled).toBeTrue();
-            expect(result!.irisChatSettings!.selectedVariant).toBe('existingVariant');
+            expect(result!.irisProgrammingExerciseChatSettings).toBe(existingChatSettings);
+            expect(result!.irisProgrammingExerciseChatSettings!.enabled).toBeTrue();
+            expect(result!.irisProgrammingExerciseChatSettings!.selectedVariant).toBe('existingVariant');
 
             expect(result!.irisLectureIngestionSettings).toBe(existingLectureIngestionSettings);
             expect(result!.irisLectureIngestionSettings!.autoIngestOnLectureAttachmentUpload).toBeTrue();
@@ -65,6 +65,12 @@ describe('IrisEmptySettingsService', () => {
             expect(result!.irisCompetencyGenerationSettings).toBeInstanceOf(IrisCompetencyGenerationSubSettings);
             expect(result!.irisFaqIngestionSettings).toBeInstanceOf(IrisFaqIngestionSubSettings);
             expect(result!.irisTutorSuggestionSettings).toBeInstanceOf(IrisTutorSuggestionSubSettings);
+        });
+
+        it('should intialize autoIngestOnLectureAttachmentUpload and autoIngestOnFaqCreation to true', () => {
+            const result = service.fillEmptyIrisSubSettings({} as IrisSettings);
+            expect(result!.irisLectureIngestionSettings?.autoIngestOnLectureAttachmentUpload).toBeTrue();
+            expect(result!.irisFaqIngestionSettings?.autoIngestOnFaqCreation).toBeTrue();
         });
     });
 });

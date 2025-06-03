@@ -61,11 +61,12 @@ export class WeekGroupingUtil {
      * Groups sidebar items into ISO‑weeks (or returns them as‑is for special groups).
      *
      * @param items - The items to group
-     * @param groupKey - Name of the high‑level group ("lecture", "exercise", …)
+     * @param storageId - Storage identifier for the sidebar
+     * @param groupKey - Key of the group being processed
      * @param searchValue - Optional search string to filter items
      * @returns Array of WeekGroup objects containing the grouped items
      */
-    static getGroupedByWeek(items: SidebarCardElement[], groupKey: string, searchValue = ''): WeekGroup[] {
+    static getGroupedByWeek(items: SidebarCardElement[], storageId?: string, groupKey?: string, searchValue = ''): WeekGroup[] {
         // Filter items based on search value if provided
         const filtered = searchValue
             ? items.filter((i) => {
@@ -75,8 +76,8 @@ export class WeekGroupingUtil {
               })
             : items;
 
-        // Return single group without headers for special cases
-        if (groupKey === 'real' || groupKey === 'test' || groupKey === 'attempt' || !!searchValue || filtered.length <= MIN_ITEMS_TO_GROUP_BY_WEEK) {
+        // Only apply weekly grouping to exercises and default type
+        if ((storageId !== 'exercise' && storageId !== 'lecture') || !!searchValue || filtered.length <= MIN_ITEMS_TO_GROUP_BY_WEEK) {
             return [{ isNoDate: true, items: filtered, showDateHeader: false }];
         }
 
@@ -101,7 +102,7 @@ export class WeekGroupingUtil {
                 return {
                     isNoDate: true,
                     items: list,
-                    showDateHeader: true,
+                    showDateHeader: groupKey !== 'noDate',
                 };
             }
 

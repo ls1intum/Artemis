@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
@@ -83,8 +84,8 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
         log.debug("Test setup start");
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         course = courseUtilService.addCourseWithModelingAndTextExercise();
-        modelingExercise = exerciseUtilService.getFirstExerciseWithType(course, ModelingExercise.class);
-        textExercise = exerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
+        modelingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ModelingExercise.class);
+        textExercise = ExerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
         emptyModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/empty-class-diagram.json");
         validModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
         log.debug("Test setup done");

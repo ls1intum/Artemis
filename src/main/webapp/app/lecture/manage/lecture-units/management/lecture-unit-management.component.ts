@@ -10,7 +10,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { Subject, Subscription } from 'rxjs';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lectureUnit.service';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
-import { AttachmentUnit, IngestionState } from 'app/lecture/shared/entities/lecture-unit/attachmentUnit.model';
+import { AttachmentVideoUnit, IngestionState } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
 import { IconDefinition, faCheckCircle, faEye, faFileExport, faPencilAlt, faRepeat, faSpinner, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { CdkDrag, CdkDragDrop, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
@@ -19,9 +19,8 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { UnitCreationCardComponent } from '../unit-creation-card/unit-creation-card.component';
-import { AttachmentUnitComponent } from 'app/lecture/overview/course-lectures/attachment-unit/attachment-unit.component';
+import { AttachmentVideoUnitComponent } from 'app/lecture/overview/course-lectures/attachment-video-unit/attachment-video-unit.component';
 import { ExerciseUnitComponent } from 'app/lecture/overview/course-lectures/exercise-unit/exercise-unit.component';
-import { VideoUnitComponent } from 'app/lecture/overview/course-lectures/video-unit/video-unit.component';
 import { TextUnitComponent } from 'app/lecture/overview/course-lectures/text-unit/text-unit.component';
 import { OnlineUnitComponent } from 'app/lecture/overview/course-lectures/online-unit/online-unit.component';
 import { CompetenciesPopoverComponent } from 'app/atlas/shared/competencies-popover/competencies-popover.component';
@@ -41,9 +40,8 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
         UnitCreationCardComponent,
         CdkDropList,
         CdkDrag,
-        AttachmentUnitComponent,
+        AttachmentVideoUnitComponent,
         ExerciseUnitComponent,
-        VideoUnitComponent,
         TextUnitComponent,
         OnlineUnitComponent,
         CompetenciesPopoverComponent,
@@ -101,8 +99,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     irisEnabled = false;
     lectureIngestionEnabled = false;
     routerEditLinksBase: { [key: string]: string } = {
-        [LectureUnitType.ATTACHMENT]: 'attachment-units',
-        [LectureUnitType.VIDEO]: 'video-units',
+        [LectureUnitType.ATTACHMENT_VIDEO]: 'attachment-video-units',
         [LectureUnitType.TEXT]: 'text-units',
         [LectureUnitType.ONLINE]: 'online-units',
     };
@@ -203,10 +200,8 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         switch (lectureUnit.type) {
             case LectureUnitType.EXERCISE:
                 return 'artemisApp.exerciseUnit.delete.question';
-            case LectureUnitType.ATTACHMENT:
-                return 'artemisApp.attachmentUnit.delete.question';
-            case LectureUnitType.VIDEO:
-                return 'artemisApp.videoUnit.delete.question';
+            case LectureUnitType.ATTACHMENT_VIDEO:
+                return 'artemisApp.attachmentVideoUnit.delete.question';
             case LectureUnitType.TEXT:
                 return 'artemisApp.textUnit.delete.question';
             case LectureUnitType.ONLINE:
@@ -220,10 +215,8 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         switch (lectureUnit.type) {
             case LectureUnitType.EXERCISE:
                 return 'artemisApp.exerciseUnit.delete.typeNameToConfirm';
-            case LectureUnitType.ATTACHMENT:
-                return 'artemisApp.attachmentUnit.delete.typeNameToConfirm';
-            case LectureUnitType.VIDEO:
-                return 'artemisApp.videoUnit.delete.typeNameToConfirm';
+            case LectureUnitType.ATTACHMENT_VIDEO:
+                return 'artemisApp.attachmentVideoUnit.delete.typeNameToConfirm';
             case LectureUnitType.TEXT:
                 return 'artemisApp.textUnit.delete.typeNameToConfirm';
             case LectureUnitType.ONLINE:
@@ -253,9 +246,9 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
 
     isViewButtonAvailable(lectureUnit: LectureUnit): boolean {
         switch (lectureUnit!.type) {
-            case LectureUnitType.ATTACHMENT: {
-                const attachmentUnit = <AttachmentUnit>lectureUnit;
-                return attachmentUnit.attachment?.link?.endsWith('.pdf') ?? false;
+            case LectureUnitType.ATTACHMENT_VIDEO: {
+                const attachmentVideoUnit = <AttachmentVideoUnit>lectureUnit;
+                return attachmentVideoUnit.attachment?.link?.endsWith('.pdf') ?? false;
             }
             default:
                 return false;
@@ -264,9 +257,8 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
 
     editButtonAvailable(lectureUnit: LectureUnit) {
         switch (lectureUnit?.type) {
-            case LectureUnitType.ATTACHMENT:
+            case LectureUnitType.ATTACHMENT_VIDEO:
             case LectureUnitType.TEXT:
-            case LectureUnitType.VIDEO:
             case LectureUnitType.ONLINE:
                 return true;
             default:
@@ -280,8 +272,6 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
 
     getLectureUnitReleaseDate(lectureUnit: LectureUnit) {
         switch (lectureUnit.type) {
-            case LectureUnitType.ATTACHMENT:
-                return (<AttachmentUnit>lectureUnit)?.attachment?.releaseDate || undefined;
             case LectureUnitType.EXERCISE:
                 return (<ExerciseUnit>lectureUnit)?.exercise?.releaseDate || undefined;
             default:
@@ -291,11 +281,15 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
 
     getAttachmentVersion(lectureUnit: LectureUnit) {
         switch (lectureUnit.type) {
-            case LectureUnitType.ATTACHMENT:
-                return (<AttachmentUnit>lectureUnit)?.attachment?.version || undefined;
+            case LectureUnitType.ATTACHMENT_VIDEO:
+                return (<AttachmentVideoUnit>lectureUnit)?.attachment?.version || undefined;
             default:
                 return undefined;
         }
+    }
+
+    hasAttachment(lectureUnit: AttachmentVideoUnit): boolean {
+        return !!lectureUnit.attachment;
     }
 
     /**
@@ -310,7 +304,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                         if (lectureUnit.id) {
                             const ingestionState = ingestionStatesMap[lectureUnit.id];
                             if (ingestionState !== undefined) {
-                                (<AttachmentUnit>lectureUnit).pyrisIngestionState = ingestionState;
+                                (<AttachmentVideoUnit>lectureUnit).pyrisIngestionState = ingestionState;
                             }
                         }
                     });
@@ -323,9 +317,10 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     }
 
     onIngestButtonClicked(lectureUnitId: number) {
+        //TODO: ingest transcription as well
         const unitIndex: number = this.lectureUnits.findIndex((unit) => unit.id === lectureUnitId);
         if (unitIndex > -1) {
-            const unit: AttachmentUnit = this.lectureUnits[unitIndex];
+            const unit: AttachmentVideoUnit = this.lectureUnits[unitIndex];
             unit.pyrisIngestionState = IngestionState.IN_PROGRESS;
             this.lectureUnits[unitIndex] = unit;
         }
@@ -343,8 +338,8 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         });
     }
 
-    getIcon(attachmentUnit: AttachmentUnit): IconDefinition {
-        switch (attachmentUnit.pyrisIngestionState) {
+    getIcon(attachmentVideoUnit: AttachmentVideoUnit): IconDefinition {
+        switch (attachmentVideoUnit.pyrisIngestionState) {
             case IngestionState.NOT_STARTED:
                 return this.faFileExport;
             case IngestionState.IN_PROGRESS:
@@ -357,4 +352,6 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                 return this.faFileExport;
         }
     }
+
+    protected readonly AttachmentVideoUnit = AttachmentVideoUnit;
 }
