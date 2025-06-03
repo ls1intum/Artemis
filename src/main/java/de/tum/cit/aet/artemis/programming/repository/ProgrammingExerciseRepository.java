@@ -541,6 +541,20 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     long countByTitleAndExerciseGroupExamCourse(String shortName, Course course);
 
     /**
+     * Finds the branch for the given exercise id.
+     *
+     * @param exerciseId the exercise id to find the branch for
+     * @return the branch name, potentially null if no branch is set or if the exercise does not exist
+     */
+    @Nullable
+    @Query("""
+            SELECT DISTINCT b.branch
+            FROM ProgrammingExerciseBuildConfig b
+            WHERE b.programmingExercise.id = :exerciseId
+            """)
+    String findBranchByExerciseId(@Param("exerciseId") long exerciseId);
+
+    /**
      * Find a programming exercise by its id, with grading criteria loaded, and throw an EntityNotFoundException if it cannot be found
      *
      * @param exerciseId of the programming exercise.
