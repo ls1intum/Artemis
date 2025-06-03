@@ -16,7 +16,6 @@ import { EMPTY } from 'rxjs';
     selector: 'jhi-course-practice-quiz',
     imports: [MultipleChoiceQuestionComponent, ShortAnswerQuestionComponent, DragAndDropQuestionComponent, ButtonComponent],
     templateUrl: './course-practice-quiz.component.html',
-    styleUrl: './course-practice-quiz.component.scss',
 })
 export class CoursePracticeQuizComponent {
     readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;

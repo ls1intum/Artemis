@@ -70,10 +70,6 @@ describe('CoursePracticeQuizComponent', () => {
         jest.clearAllMocks();
     });
 
-    it('should create', () => {
-        expect(component).toBeTruthy();
-    });
-
     it('should extract courseId from route params', () => {
         expect(component.courseId()).toBe(1);
     });

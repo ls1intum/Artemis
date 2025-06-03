@@ -814,7 +814,7 @@ public class QuizExerciseResource {
      * @param courseId the id of the course whose quiz questions should be retrieved
      * @return a set of quiz questions from the specified course that are released for practice
      */
-    @GetMapping("courses/{courseId}/quiz")
+    @GetMapping("courses/{courseId}/practice/quiz")
     @EnforceAtLeastStudent
     public ResponseEntity<Set<QuizQuestion>> getQuizQuestionsForPractice(@PathVariable Long courseId) {
         log.info("REST request to get quiz questions for course with id : {}", courseId);

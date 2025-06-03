@@ -20,17 +20,13 @@ describe('CoursePracticeQuizService', () => {
         httpMock.verify();
     });
 
-    it('should be created', () => {
-        expect(service).toBeTruthy();
-    });
-
     it('should fetch an Array of quiz questions', () => {
         const courseId = 1;
         const mockQuestions: QuizQuestion[] = [{ id: 1 } as QuizQuestion];
         service.getQuizQuestions(courseId).subscribe((questions) => {
             expect(questions).toEqual(mockQuestions);
         });
-        const req = httpMock.expectOne(`api/quiz/courses/${courseId}/quiz`);
+        const req = httpMock.expectOne(`api/quiz/courses/${courseId}/practice/quiz`);
         expect(req.request.method).toBe('GET');
         req.flush(mockQuestions);
     });
