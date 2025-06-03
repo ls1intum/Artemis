@@ -32,7 +32,6 @@ describe('QuizVisualEditorComponent', () => {
                     useValue: { queryParams: of({}) },
                 },
             ],
-            schemas: [],
         })
             .compileComponents()
             .then(() => {

@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.web;
+package de.tum.cit.aet.artemis.core.web.course;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
@@ -48,7 +48,8 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.core.service.CourseService;
+import de.tum.cit.aet.artemis.core.service.course.CourseAccessService;
+import de.tum.cit.aet.artemis.core.service.course.CourseSearchService;
 import tech.jhipster.web.util.PaginationUtil;
 
 /**
@@ -63,17 +64,21 @@ public class CourseAccessResource {
 
     private final UserRepository userRepository;
 
-    private final CourseService courseService;
+    private final CourseAccessService courseAccessService;
 
     private final AuthorizationCheckService authCheckService;
 
     private final CourseRepository courseRepository;
 
-    public CourseAccessResource(CourseService courseService, CourseRepository courseRepository, AuthorizationCheckService authCheckService, UserRepository userRepository) {
-        this.courseService = courseService;
+    private final CourseSearchService courseSearchService;
+
+    public CourseAccessResource(CourseAccessService courseAccessService, CourseRepository courseRepository, AuthorizationCheckService authCheckService,
+            UserRepository userRepository, CourseSearchService courseSearchService) {
+        this.courseAccessService = courseAccessService;
         this.courseRepository = courseRepository;
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
+        this.courseSearchService = courseSearchService;
     }
 
     /**
@@ -90,7 +95,7 @@ public class CourseAccessResource {
         User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
         Course course = courseRepository.findWithEagerOrganizationsAndCompetenciesAndPrerequisitesAndLearningPathsElseThrow(courseId);
         log.debug("REST request to enroll {} in Course {}", user.getName(), course.getTitle());
-        courseService.enrollUserForCourseOrThrow(user, course);
+        courseAccessService.enrollUserForCourseOrThrow(user, course);
         return ResponseEntity.ok(user.getGroups());
     }
 
@@ -109,7 +114,7 @@ public class CourseAccessResource {
         Course course = courseRepository.findWithEagerOrganizationsElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
         log.debug("REST request to unenroll {} for Course {}", user.getName(), course.getTitle());
-        courseService.unenrollUserForCourseOrThrow(user, course);
+        courseAccessService.unenrollUserForCourseOrThrow(user, course);
         return ResponseEntity.ok(user.getGroups());
     }
 
@@ -142,7 +147,7 @@ public class CourseAccessResource {
     public ResponseEntity<List<Course>> getCoursesForEnrollment() {
         log.debug("REST request to get all currently active courses that are not online courses");
         User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
-        final var courses = courseService.findAllEnrollableForUser(user).stream().filter(course -> authCheckService.isUserAllowedToSelfEnrollInCourse(user, course)).toList();
+        final var courses = courseAccessService.findAllEnrollableForUser(user).stream().filter(course -> authCheckService.isUserAllowedToSelfEnrollInCourse(user, course)).toList();
         return ResponseEntity.ok(courses);
     }
 
@@ -157,7 +162,7 @@ public class CourseAccessResource {
     public ResponseEntity<Set<User>> getStudentsInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all students in course : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        return courseService.getAllUsersInGroup(course, course.getStudentGroupName());
+        return courseAccessService.getAllUsersInGroup(course, course.getStudentGroupName());
     }
 
     /**
@@ -246,7 +251,7 @@ public class CourseAccessResource {
     public ResponseEntity<Set<User>> getTutorsInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all tutors in course : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        return courseService.getAllUsersInGroup(course, course.getTeachingAssistantGroupName());
+        return courseAccessService.getAllUsersInGroup(course, course.getTeachingAssistantGroupName());
     }
 
     /**
@@ -260,7 +265,7 @@ public class CourseAccessResource {
     public ResponseEntity<Set<User>> getEditorsInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all editors in course : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        return courseService.getAllUsersInGroup(course, course.getEditorGroupName());
+        return courseAccessService.getAllUsersInGroup(course, course.getEditorGroupName());
     }
 
     /**
@@ -274,7 +279,7 @@ public class CourseAccessResource {
     public ResponseEntity<Set<User>> getInstructorsInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all instructors in course : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        return courseService.getAllUsersInGroup(course, course.getInstructorGroupName());
+        return courseAccessService.getAllUsersInGroup(course, course.getInstructorGroupName());
     }
 
     /**
@@ -295,7 +300,7 @@ public class CourseAccessResource {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Query param 'name' must be three characters or longer.");
         }
 
-        return ResponseEntity.ok().body(courseService.searchOtherUsersNameInCourse(course, nameOfUser));
+        return ResponseEntity.ok().body(courseSearchService.searchOtherUsersNameInCourse(course, nameOfUser));
     }
 
     /**
@@ -362,7 +367,7 @@ public class CourseAccessResource {
     public ResponseEntity<Void> addEditorToCourse(@PathVariable Long courseId, @PathVariable String editorLogin) {
         log.debug("REST request to add {} as editors to course : {}", editorLogin, courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        courseService.checkIfEditorGroupsNeedsToBeCreated(course);
+        courseAccessService.checkIfEditorGroupsNeedsToBeCreated(course);
         return addUserToCourseGroup(editorLogin, userRepository.getUserWithGroupsAndAuthorities(), course, course.getEditorGroupName());
     }
 
@@ -398,7 +403,7 @@ public class CourseAccessResource {
                 throw new EntityNotFoundException("User with login " + userLogin + " does not exist");
             }
             User user = userToAddToGroup.get();
-            courseService.addUserToGroup(user, group, course);
+            courseAccessService.addUserToGroup(user, group, course);
             return ResponseEntity.ok().body(null);
         }
         else {
@@ -485,7 +490,7 @@ public class CourseAccessResource {
         if (userToRemoveFromGroup.isEmpty()) {
             throw new EntityNotFoundException("User with login " + userLogin + " does not exist");
         }
-        courseService.removeUserFromGroup(userToRemoveFromGroup.get(), group);
+        courseAccessService.removeUserFromGroup(userToRemoveFromGroup.get(), group);
         return ResponseEntity.ok().body(null);
     }
 
@@ -506,7 +511,7 @@ public class CourseAccessResource {
     public ResponseEntity<List<StudentDTO>> addUsersToCourseGroup(@PathVariable Long courseId, @PathVariable String courseGroup, @RequestBody List<StudentDTO> studentDtos) {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, courseRepository.findByIdElseThrow(courseId), null);
         log.debug("REST request to add {} as {} to course {}", studentDtos, courseGroup, courseId);
-        List<StudentDTO> notFoundStudentsDtos = courseService.registerUsersForCourseGroup(courseId, studentDtos, courseGroup);
+        List<StudentDTO> notFoundStudentsDtos = courseAccessService.registerUsersForCourseGroup(courseId, studentDtos, courseGroup);
         return ResponseEntity.ok().body(notFoundStudentsDtos);
     }
 }
