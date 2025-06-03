@@ -28,7 +28,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.core.service.CourseService;
+import de.tum.cit.aet.artemis.core.service.course.CourseAtlasService;
 
 @Conditional(AtlasEnabled.class)
 @RestController
@@ -41,15 +41,15 @@ public class LearnerProfileResource {
 
     private final CourseLearnerProfileRepository courseLearnerProfileRepository;
 
-    private final CourseService courseService;
+    private final CourseAtlasService courseAtlasService;
 
     private final CourseLearnerProfileService courseLearnerProfileService;
 
-    public LearnerProfileResource(UserRepository userRepository, CourseLearnerProfileRepository courseLearnerProfileRepository, CourseService courseService,
+    public LearnerProfileResource(UserRepository userRepository, CourseLearnerProfileRepository courseLearnerProfileRepository, CourseAtlasService courseAtlasService,
             CourseLearnerProfileService courseLearnerProfileService) {
         this.userRepository = userRepository;
         this.courseLearnerProfileRepository = courseLearnerProfileRepository;
-        this.courseService = courseService;
+        this.courseAtlasService = courseAtlasService;
         this.courseLearnerProfileService = courseLearnerProfileService;
     }
 
@@ -65,7 +65,7 @@ public class LearnerProfileResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get all CourseLearnerProfiles of user {}", user.getLogin());
 
-        Set<Course> coursesWithLearningPaths = courseService.findAllActiveForUserAndLearningPathsEnabled(user);
+        Set<Course> coursesWithLearningPaths = courseAtlasService.findAllActiveForUserAndLearningPathsEnabled(user);
 
         Set<CourseLearnerProfile> courseLearnerProfiles = courseLearnerProfileService.getOrCreateByCourses(user, coursesWithLearningPaths)
                 // Only display profiles for courses a user is currently a student in
