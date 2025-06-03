@@ -1,121 +1,53 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { NgClass, NgFor, NgIf, NgStyle } from '@angular/common';
+import { NgClass, NgStyle } from '@angular/common';
+import { EmojiSearch } from '@ctrl/ngx-emoji-mart';
+import { EmojiData, EmojiService } from '@ctrl/ngx-emoji-mart/ngx-emoji';
 
 @Component({
     selector: 'jhi-emoji-suggestion-dropdown',
     templateUrl: './emoji-suggestion-dropdown.component.html',
     styleUrls: ['./emoji-suggestion-dropdown.component.scss'],
     standalone: true,
-    imports: [NgClass, NgStyle, NgIf, NgFor],
+    imports: [NgClass, NgStyle],
+    providers: [EmojiSearch, EmojiService],
 })
 export class EmojiSuggestionDropdownComponent {
     @Input() suggestions: { name: string; emoji: string }[] = [];
     @Input() dropdownStyle: { [key: string]: string } = {};
     @Output() onSelect = new EventEmitter<{ name: string; emoji: string }>();
     @Input() activeIndex: number = 0;
+
+    constructor() {}
 }
 
+/**
+ * Gets emoji suggestions using the emoji mart search functionality.
+ * This provides access to the full emoji database instead of a limited manual list.
+ *
+ * @param query The search query (e.g., "joy", "heart", "rocket")
+ * @param max Maximum number of results to return (default: 3)
+ * @returns Array of emoji suggestions with name and emoji properties
+ */
 export function getEmojiSuggestions(query: string, max: number = 3): { name: string; emoji: string }[] {
-    const EMOJI_LIST = [
-        { name: 'joy', emoji: '😂' },
-        { name: 'sweat_smile', emoji: '😅' },
-        { name: 'smile', emoji: '😄' },
-        { name: 'grinning', emoji: '😀' },
-        { name: 'wink', emoji: '😉' },
-        { name: 'heart', emoji: '❤️' },
-        { name: 'thumbsup', emoji: '👍' },
-        { name: 'clap', emoji: '👏' },
-        { name: 'cry', emoji: '😢' },
-        { name: 'fire', emoji: '🔥' },
-        { name: 'star', emoji: '⭐' },
-        { name: 'thinking', emoji: '🤔' },
-        { name: 'sunglasses', emoji: '😎' },
-        { name: 'party', emoji: '🥳' },
-        { name: 'rocket', emoji: '🚀' },
-        { name: '100', emoji: '💯' },
-        { name: 'tada', emoji: '🎉' },
-        { name: 'wave', emoji: '👋' },
-        { name: 'eyes', emoji: '👀' },
-        { name: 'check', emoji: '✅' },
-        { name: 'x', emoji: '❌' },
-        { name: 'warning', emoji: '⚠️' },
-        { name: 'question', emoji: '❓' },
-        { name: 'zzz', emoji: '💤' },
-        { name: 'coffee', emoji: '☕' },
-        { name: 'cake', emoji: '🎂' },
-        { name: 'gift', emoji: '🎁' },
-        { name: 'muscle', emoji: '💪' },
-        { name: 'pray', emoji: '🙏' },
-        { name: 'ok_hand', emoji: '👌' },
-        { name: 'raised_hands', emoji: '🙌' },
-        { name: 'shrug', emoji: '🤷' },
-        { name: 'facepalm', emoji: '🤦' },
-        { name: 'hug', emoji: '🤗' },
-        { name: 'smirk', emoji: '😏' },
-        { name: 'neutral_face', emoji: '😐' },
-        { name: 'blush', emoji: '😊' },
-        { name: 'scream', emoji: '😱' },
-        { name: 'angry', emoji: '😠' },
-        { name: 'confused', emoji: '😕' },
-        { name: 'sweat', emoji: '😓' },
-        { name: 'yum', emoji: '😋' },
-        { name: 'relieved', emoji: '😌' },
-        { name: 'sleeping', emoji: '😴' },
-        { name: 'mask', emoji: '😷' },
-        { name: 'nerd', emoji: '🤓' },
-        { name: 'money_mouth', emoji: '🤑' },
-        { name: 'poop', emoji: '💩' },
-        { name: 'alien', emoji: '👽' },
-        { name: 'robot', emoji: '🤖' },
-        { name: 'ghost', emoji: '👻' },
-        { name: 'skull', emoji: '💀' },
-        { name: 'crown', emoji: '👑' },
-        { name: 'medal', emoji: '🏅' },
-        { name: 'trophy', emoji: '🏆' },
-        { name: 'soccer', emoji: '⚽' },
-        { name: 'basketball', emoji: '🏀' },
-        { name: 'football', emoji: '🏈' },
-        { name: 'tennis', emoji: '🎾' },
-        { name: 'car', emoji: '🚗' },
-        { name: 'bike', emoji: '🚲' },
-        { name: 'train', emoji: '🚆' },
-        { name: 'airplane', emoji: '✈️' },
-        { name: 'house', emoji: '🏠' },
-        { name: 'computer', emoji: '💻' },
-        { name: 'phone', emoji: '📱' },
-        { name: 'calendar', emoji: '📅' },
-        { name: 'book', emoji: '📚' },
-        { name: 'paperclip', emoji: '📎' },
-        { name: 'pushpin', emoji: '📌' },
-        { name: 'lock', emoji: '🔒' },
-        { name: 'key', emoji: '🔑' },
-        { name: 'hammer', emoji: '🔨' },
-        { name: 'wrench', emoji: '🔧' },
-        { name: 'bulb', emoji: '💡' },
-        { name: 'mag', emoji: '🔍' },
-        { name: 'bell', emoji: '🔔' },
-        { name: 'hourglass', emoji: '⏳' },
-        { name: 'rocket', emoji: '🚀' },
-        { name: 'zap', emoji: '⚡' },
-        { name: 'rainbow', emoji: '🌈' },
-        { name: 'sun', emoji: '☀️' },
-        { name: 'moon', emoji: '🌙' },
-        { name: 'cloud', emoji: '☁️' },
-        { name: 'umbrella', emoji: '☂️' },
-        { name: 'snowflake', emoji: '❄️' },
-        { name: 'fireworks', emoji: '🎆' },
-        { name: 'sparkles', emoji: '✨' },
-        { name: 'balloon', emoji: '🎈' },
-        { name: 'gift', emoji: '🎁' },
-        { name: 'camera', emoji: '📷' },
-        { name: 'video', emoji: '📹' },
-        { name: 'music', emoji: '🎵' },
-        { name: 'microphone', emoji: '🎤' },
-        { name: 'guitar', emoji: '🎸' },
-        { name: 'violin', emoji: '🎻' },
-        { name: 'trumpet', emoji: '🎺' },
-        { name: 'drum', emoji: '🥁' },
-    ];
     if (!query) return [];
-    return EMOJI_LIST.filter((e) => e.name.startsWith(query)).slice(0, max);
+
+    // Create emoji service and search instances
+    const emojiService = new EmojiService();
+    const emojiSearch = new EmojiSearch(emojiService);
+
+    // Search using the emoji mart's search functionality
+    // This gives us access to the full emoji database
+    const results = emojiSearch.search(query, undefined, max);
+
+    if (!results || results.length === 0) {
+        return [];
+    }
+
+    // Convert EmojiData objects to our expected format
+    return results
+        .map((emojiData: EmojiData) => ({
+            name: emojiData.id || emojiData.colons?.replace(/:/g, '') || '',
+            emoji: emojiData.native || emojiData.emoticons?.[0] || '',
+        }))
+        .filter((item) => item.name && item.emoji);
 }
