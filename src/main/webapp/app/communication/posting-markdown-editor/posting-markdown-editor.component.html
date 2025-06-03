@@ -1,4 +1,4 @@
-<div class="col-12">
+<div class="col-12 position-relative" style="height: 100%">
     <jhi-markdown-editor-monaco
         class="markdown-editor background-editor-color w-100"
         [markdown]="content"
@@ -37,6 +37,14 @@
         </ng-container>
         <!-- End of Preview-->
     </jhi-markdown-editor-monaco>
+    @if (showEmojiDropdown) {
+        <jhi-emoji-suggestion-dropdown
+            [suggestions]="emojiSuggestions"
+            [dropdownStyle]="emojiDropdownStyle"
+            [activeIndex]="emojiActiveIndex"
+            (onSelect)="onEmojiSuggestionSelect($event)"
+        />
+    }
 </div>
 @if (isInputLengthDisplayed || (content?.length ?? 0) > maxContentLength) {
     <div class="col mt-1 text-end">

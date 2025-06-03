@@ -1,0 +1,17 @@
+<div class="emoji-suggestion-dropdown" [ngStyle]="dropdownStyle">
+    @if (suggestions?.length) {
+        @for (let s of suggestions; let i = index) {
+            <div
+                class="emoji-suggestion-item"
+                [ngClass]="{ active: i === activeIndex }"
+                (mousedown)="onSelect.emit(s)"
+                (mouseenter)="activeIndex = i"
+                (mouseleave)="activeIndex = -1"
+                style="display: flex; align-items: center; padding: 1px 0; cursor: pointer"
+            >
+                <span style="font-size: 1.1em; width: 1.7em">{{ s.emoji }}</span>
+                <span style="margin-left: 0.4em; font-size: 0.93em">:{{ s.name }}:</span>
+            </div>
+        }
+    }
+</div>
