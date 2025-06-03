@@ -311,3 +311,15 @@ Watch this screencast for a demonstration of automated AI feedback on a text exe
 .. |submit| image:: general/submit-button.png
 .. |submit-assessment| image:: general/submit-assessment-button.png
     :scale: 50
+.. |request-overview| image:: text/automatic-feedback-request-overview.png
+    :scale: 50
+.. |request-editor| image:: text/automatic-feedback-request-editor.png
+    :scale: 50
+.. |request-alert| image:: text/automatic-feedback-request-alert.png
+    :scale: 50
+.. |request-score| image:: text/automatic-feedback-request-score.png
+    :scale: 50
+.. |detailed-feedback| image:: text/automatic-feedback-view-detailed.png
+    :scale: 50
+.. |feedback-history| image:: text/automatic-feedback-history.png
+    :scale: 50
