@@ -4,8 +4,6 @@ import java.util.List;
 
 import jakarta.validation.constraints.NotNull;
 
-import javax.annotation.Nullable;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.LLMRequest;
@@ -21,6 +19,6 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
  * @param tokens List of token usages send by Pyris for tracking the token usage and cost
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PyrisRewritingStatusUpdateDTO(@NotNull List<PyrisStageDTO> stages, @NotNull String result, @Nullable List<LLMRequest> tokens, @Nullable List<String> inconsistencies,
-        @Nullable List<String> suggestions, @Nullable String improvement) {
+public record PyrisRewritingStatusUpdateDTO(@NotNull List<PyrisStageDTO> stages, @NotNull String result, List<LLMRequest> tokens, List<String> inconsistencies,
+        List<String> suggestions, String improvement) {
 }
