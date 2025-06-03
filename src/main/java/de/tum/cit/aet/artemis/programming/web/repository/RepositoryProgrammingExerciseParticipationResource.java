@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.programming.web.repository;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -406,18 +405,17 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     }
 
     /**
-     * GET /repository/:participationId/buildlogs : get the build log for the "participationId" repository.
+     * GET /participations/:participationId/buildlogs : get the build log for the "participationId" repository.
      *
      * @param participationId to identify the repository with.
      * @param resultId        an optional result ID to get the build logs for the submission that the result belongs to. If the result ID is not specified, the latest submission is
      *                            used.
      * @return the ResponseEntity with status 200 (OK) and with body the result, or with status 404 (Not Found)
      */
-    // TODO: rename to participation/{participationId}/buildlogs
-    @GetMapping(value = "repository/{participationId}/buildlogs", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "participations/{participationId}/buildlogs", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastStudent
     public ResponseEntity<List<BuildLogEntry>> getBuildLogs(@PathVariable Long participationId, @RequestParam(name = "resultId") Optional<Long> resultId) {
-        log.debug("REST request to get build log : {}", participationId);
+        log.debug("REST request to get build logs for participation {}", participationId);
 
         ProgrammingExerciseParticipation participation = participationService.findProgrammingExerciseParticipationWithLatestSubmissionAndResult(participationId);
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
@@ -436,16 +434,16 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         }
         else if (programmingSubmission == null) {
             // Can't return build logs if a submission doesn't exist yet
-            return ResponseEntity.ok(new ArrayList<>());
+            return ResponseEntity.ok(List.of());
         }
 
-        // Do not return build logs if the build hasn't failed
+        // Empty build logs are returned if the submission is not build failed
         if (!programmingSubmission.isBuildFailed()) {
-            throw new AccessForbiddenException("Build logs cannot be retrieved when the build hasn't failed!");
+            return ResponseEntity.ok(List.of());
         }
 
         // Load the logs from the database
         List<BuildLogEntry> buildLogs = buildLogService.getLatestBuildLogs(programmingSubmission);
-        return new ResponseEntity<>(buildLogs, HttpStatus.OK);
+        return ResponseEntity.ok(buildLogs);
     }
 }
