@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -145,8 +146,8 @@ public class QuizResultService {
                 participation.setInitializationState(InitializationState.FINISHED);
 
                 Optional<Result> existingRatedResult = Stream.ofNullable(participation.getSubmissions()).flatMap(Collection::stream)
-                        .flatMap(submission -> Stream.ofNullable(submission.getResults()).flatMap(Collection::stream)).filter(result -> Boolean.TRUE.equals(result.isRated()))
-                        .findFirst();
+                        .flatMap(submission -> Stream.ofNullable(submission.getResults()).flatMap(Collection::stream)).filter(Objects::nonNull)
+                        .filter(result -> Boolean.TRUE.equals(result.isRated())).findFirst();
 
                 if (existingRatedResult.isPresent()) {
                     // A rated result already exists; no need to create a new one
