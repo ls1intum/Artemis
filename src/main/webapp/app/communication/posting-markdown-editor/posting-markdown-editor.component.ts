@@ -44,7 +44,7 @@ import { BulletedListAction } from 'app/shared/monaco-editor/model/actions/bulle
 import { OrderedListAction } from 'app/shared/monaco-editor/model/actions/ordered-list.action';
 import { StrikethroughAction } from 'app/shared/monaco-editor/model/actions/strikethrough.action';
 import { PostingContentComponent } from '../posting-content/posting-content.components';
-import { NgIf, NgStyle } from '@angular/common';
+import { NgStyle } from '@angular/common';
 import { PostingEditType } from '../metis.util';
 import { ChannelService } from 'app/communication/conversations/service/channel.service';
 import { FileService } from 'app/shared/service/file.service';
@@ -63,7 +63,7 @@ import { EmojiSuggestionDropdownComponent, getEmojiSuggestions } from '../emoji/
     ],
     encapsulation: ViewEncapsulation.None,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [MarkdownEditorMonacoComponent, PostingContentComponent, NgStyle, EmojiSuggestionDropdownComponent, NgIf],
+    imports: [MarkdownEditorMonacoComponent, PostingContentComponent, NgStyle, EmojiSuggestionDropdownComponent],
 })
 export class PostingMarkdownEditorComponent implements OnInit, ControlValueAccessor, AfterContentChecked, AfterViewInit {
     private cdref = inject(ChangeDetectorRef);
