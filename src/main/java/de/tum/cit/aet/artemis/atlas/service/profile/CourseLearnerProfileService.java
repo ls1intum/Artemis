@@ -69,7 +69,7 @@ public class CourseLearnerProfileService {
             // Course field is lazily initialized.
             // This allows further users of the object to interact with the course without fetching it again.
             courseLearnerProfile.setCourse(course);
-            return courseLearnerProfile;
+            return courseLearnerProfileRepository.save(courseLearnerProfile);
         }).collect(Collectors.toSet());
     }
 
