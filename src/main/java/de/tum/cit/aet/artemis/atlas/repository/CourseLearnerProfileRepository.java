@@ -1,8 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.repository;
 
-import java.time.ZonedDateTime;
 import java.util.Optional;
-import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.data.jpa.repository.Modifying;
@@ -35,16 +33,6 @@ public interface CourseLearnerProfileRepository extends ArtemisJpaRepository<Cou
     void deleteAllByCourse(Course course);
 
     @Query("""
-            SELECT clp
-            FROM CourseLearnerProfile clp
-            LEFT JOIN FETCH clp.course
-            WHERE clp.learnerProfile.user.login = :login
-                        AND (clp.course.startDate <= :now OR clp.course.startDate IS NULL)
-                        AND (clp.course.endDate >= :now OR clp.course.endDate IS NULL)
-            """)
-    Set<CourseLearnerProfile> findAllByLoginAndCourseActive(@Param("login") String login, @Param("now") ZonedDateTime now);
-
-    @Query("""
                 SELECT clp
                 FROM CourseLearnerProfile clp
                 WHERE clp.learnerProfile.user.login = :login AND clp.course = :course
@@ -58,7 +46,7 @@ public interface CourseLearnerProfileRepository extends ArtemisJpaRepository<Cou
             WHERE clp.learnerProfile.user.login = :login
                 AND clp.id = :courseLearnerProfileId
             """)
-    Optional<CourseLearnerProfile> findByLoginAndId(@Param("login") String login, @Param("courseLearnerProfileId") long courseLearnerProfileId);
+    Optional<CourseLearnerProfile> findByLoginAndIdWithCourse(@Param("login") String login, @Param("courseLearnerProfileId") long courseLearnerProfileId);
 
     default CourseLearnerProfile findByLoginAndCourseElseThrow(String login, Course course) throws EntityNotFoundException {
         return getValueElseThrow(findByLoginAndCourse(login, course));

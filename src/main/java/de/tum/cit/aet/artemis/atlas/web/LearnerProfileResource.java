@@ -109,7 +109,7 @@ public class LearnerProfileResource {
                     true);
         }
 
-        Optional<CourseLearnerProfile> optionalCourseLearnerProfile = courseLearnerProfileRepository.findByLoginAndId(user.getLogin(), courseLearnerProfileId);
+        Optional<CourseLearnerProfile> optionalCourseLearnerProfile = courseLearnerProfileRepository.findByLoginAndIdWithCourse(user.getLogin(), courseLearnerProfileId);
 
         if (optionalCourseLearnerProfile.isEmpty()) {
             throw new BadRequestAlertException("CourseLearnerProfile not found.", CourseLearnerProfile.ENTITY_NAME, "courseLearnerProfileNotFound", true);
