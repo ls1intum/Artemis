@@ -3,6 +3,10 @@ import { NgClass, NgStyle } from '@angular/common';
 import { EmojiSearch } from '@ctrl/ngx-emoji-mart';
 import { EmojiData, EmojiService } from '@ctrl/ngx-emoji-mart/ngx-emoji';
 
+// Cache instances at module level for better performance
+const emojiService = new EmojiService();
+const emojiSearch = new EmojiSearch(emojiService);
+
 @Component({
     selector: 'jhi-emoji-suggestion-dropdown',
     templateUrl: './emoji-suggestion-dropdown.component.html',
@@ -31,11 +35,7 @@ export class EmojiSuggestionDropdownComponent {
 export function getEmojiSuggestions(query: string, max: number = 3): { name: string; emoji: string }[] {
     if (!query) return [];
 
-    // Create emoji service and search instances
-    const emojiService = new EmojiService();
-    const emojiSearch = new EmojiSearch(emojiService);
-
-    // Search using the emoji mart's search functionality
+    // Search using the cached emoji search instance
     // This gives us access to the full emoji database
     const results = emojiSearch.search(query, undefined, max);
 

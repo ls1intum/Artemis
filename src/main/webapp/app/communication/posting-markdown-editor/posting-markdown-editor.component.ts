@@ -111,8 +111,9 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
     showEmojiDropdown = false;
     emojiDropdownStyle: { [key: string]: string } = {};
     lastEmojiMatch: { match: string; index: number } | null = null;
-    // Add keyboard navigation for emoji suggestion dropdown
     emojiActiveIndex = 0;
+    // Vertical offset in pixels to position the dropdown below the cursor
+    private EMOJI_DROPDOWN_VERTICAL_OFFSET = 28;
 
     /**
      * on initialization: sets commands that will be available as formatting buttons during creation/editing of postings
@@ -267,7 +268,7 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
                             display: 'block',
                             position: 'absolute',
                             left: `${coords.left}px`,
-                            top: `${coords.top + coords.height + 28}px`,
+                            top: `${coords.top + coords.height + this.EMOJI_DROPDOWN_VERTICAL_OFFSET}px`,
                             zIndex: '1000',
                         };
                         this.emojiSuggestions = suggestions;
@@ -301,7 +302,7 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
                         display: 'block',
                         position: 'absolute',
                         left: `${coords.left}px`,
-                        top: `${coords.top + coords.height + 28}px`,
+                        top: `${coords.top + coords.height + this.EMOJI_DROPDOWN_VERTICAL_OFFSET}px`,
                         zIndex: '1000',
                     };
                 }

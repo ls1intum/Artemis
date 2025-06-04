@@ -1,4 +1,4 @@
-<div class="emoji-suggestion-dropdown" [ngStyle]="dropdownStyle">
+<div class="emoji-suggestion-dropdown" [ngStyle]="dropdownStyle" role="listbox" aria-label="Emoji suggestions">
     @if (suggestions?.length) {
         @for (s of suggestions; track $index; let i = $index) {
             <div
@@ -8,6 +8,8 @@
                 (mouseenter)="activeIndex = i"
                 (mouseleave)="activeIndex = -1"
                 style="display: flex; align-items: center; padding: 1px 0; cursor: pointer"
+                role="option"
+                [aria-selected]="i === activeIndex"
             >
                 <span style="font-size: 1.1em; width: 1.7em">{{ s.emoji }}</span>
                 <span style="margin-left: 0.4em; font-size: 0.93em">:{{ s.name }}:</span>
