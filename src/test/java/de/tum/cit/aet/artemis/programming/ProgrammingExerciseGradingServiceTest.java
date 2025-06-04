@@ -576,7 +576,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         // template 0 %
         {
             var participation = programmingExercise.getTemplateParticipation();
-            var results = participation.getResults();
+            var results = participationUtilService.getResultsForParticipation(participation);
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, 0D, 3, AssessmentType.AUTOMATIC);
@@ -586,7 +586,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         // solution 100 %
         {
             var participation = programmingExercise.getSolutionParticipation();
-            var results = participation.getResults();
+            var results = participationUtilService.getResultsForParticipation(participation);
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, 100D, 3, AssessmentType.AUTOMATIC);
@@ -639,7 +639,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         // template 0 %
         {
             var participation = programmingExercise.getTemplateParticipation();
-            var results = participation.getResults();
+            var results = participationUtilService.getResultsForParticipation(participation);
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, 0D, 4, AssessmentType.AUTOMATIC);
@@ -649,7 +649,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         // solution 100 %
         {
             var participation = programmingExercise.getSolutionParticipation();
-            var results = participation.getResults();
+            var results = participationUtilService.getResultsForParticipation(participation);
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, 100D, 4, AssessmentType.AUTOMATIC);
@@ -824,7 +824,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
 
     private void verifyStudentScoreCalculation(final Participation[] testParticipations, int student) {
         var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(testParticipations[student - 1].getId()).orElseThrow();
-        var results = participation.getResults();
+        var results = participationUtilService.getResultsForParticipation(participation);
 
         if (student == 1) {
             // student1 25 %
@@ -1059,7 +1059,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         // check results without category penalty limits
         {
             var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participation1.getId()).orElseThrow();
-            var results = participation.getResults();
+            var results = participationUtilService.getResultsForParticipation(participation);
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, 60D, 24, AssessmentType.AUTOMATIC);
@@ -1067,7 +1067,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         }
         {
             var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participation2.getId()).orElseThrow();
-            var results = participation.getResults();
+            var results = participationUtilService.getResultsForParticipation(participation);
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, 71.4, 8, AssessmentType.AUTOMATIC);
@@ -1102,7 +1102,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         // check results without any limits
         {
             var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participation3.getId()).orElseThrow();
-            var results = participation.getResults();
+            var results = participationUtilService.getResultsForParticipation(participation);
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, 0D, 24, AssessmentType.AUTOMATIC);
@@ -1110,7 +1110,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         }
         {
             var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participation4.getId()).orElseThrow();
-            var results = participation.getResults();
+            var results = participationUtilService.getResultsForParticipation(participation);
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, 11.9, 12, AssessmentType.AUTOMATIC);
@@ -1142,7 +1142,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         // check results
         {
             var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participation1.getId()).orElseThrow();
-            var results = participation.getResults();
+            var results = participationUtilService.getResultsForParticipation(participation);
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, 79.0, 9, AssessmentType.AUTOMATIC);
@@ -1174,7 +1174,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         // check result without limits
         {
             var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participation2.getId()).orElseThrow();
-            var results = participation.getResults();
+            var results = participationUtilService.getResultsForParticipation(participation);
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, 19.0, 19, AssessmentType.AUTOMATIC);
@@ -1224,7 +1224,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
     private void testResultScores(List<Participation> participations, double[] expectedScores, int[] expectedFeedbackSize, AssessmentType assessmentType) {
         for (int i = 0; i < participations.size(); i++) {
             var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participations.get(i).getId()).orElseThrow();
-            var results = participation.getResults();
+            var results = participationUtilService.getResultsForParticipation(participation);
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, expectedScores[i], expectedFeedbackSize[i], assessmentType);
