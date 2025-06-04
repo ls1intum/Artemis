@@ -81,8 +81,6 @@ export class CourseSidebarItemService {
             hidden: false,
         };
 
-        items.push(this.getPracticeItem());
-
         return [...items, exercisesItem, statisticsItem];
     }
 

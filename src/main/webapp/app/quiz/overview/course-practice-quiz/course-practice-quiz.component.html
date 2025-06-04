@@ -1,35 +1,37 @@
 <div>
-    @if (currentQuestion) {
-        @if (currentQuestion.type === MULTIPLE_CHOICE) {
-            <jhi-multiple-choice-question
-                [question]="currentQuestion"
-                [selectedAnswerOptions]="selectedAnswerOptions.get(currentQuestion.id!)!"
-                (selectedAnswerOptionsChange)="selectedAnswerOptions.set(currentQuestion.id!, $event)"
-                [questionIndex]="currentIndex + 1"
-                [showResult]="showingResult"
-                [submittedResult]="result"
-                [score]="questionScores[currentQuestion.id!]"
-            />
-        }
-        @if (currentQuestion.type === SHORT_ANSWER) {
-            <jhi-short-answer-question
-                [question]="currentQuestion"
-                [submittedTexts]="shortAnswerSubmittedTexts.get(currentQuestion.id!)!"
-                (submittedTextsChange)="shortAnswerSubmittedTexts.set(currentQuestion.id!, $event)"
-                [questionIndex]="currentIndex + 1"
-                [showResult]="showingResult"
-                [score]="questionScores[currentQuestion.id!]"
-            />
-        }
-        @if (currentQuestion.type === DRAG_AND_DROP) {
-            <jhi-drag-and-drop-question
-                [question]="currentQuestion"
-                [mappings]="dragAndDropMappings.get(currentQuestion.id!)!"
-                (mappingsChange)="dragAndDropMappings.set(currentQuestion.id!, $event)"
-                [questionIndex]="currentIndex + 1"
-                [showResult]="showingResult"
-                [score]="questionScores[currentQuestion.id!]"
-            />
+    @if (questions()) {
+        @if (currentQuestion(); as question) {
+            @if (question.type === MULTIPLE_CHOICE) {
+                <jhi-multiple-choice-question
+                    [question]="question"
+                    [selectedAnswerOptions]="selectedAnswerOptions"
+                    (selectedAnswerOptionsChange)="selectedAnswerOptions = $event"
+                    [questionIndex]="currentIndex() + 1"
+                    [showResult]="showingResult"
+                    [submittedResult]="result"
+                    [score]="questionScores[question.id!]"
+                />
+            }
+            @if (question.type === SHORT_ANSWER) {
+                <jhi-short-answer-question
+                    [question]="question"
+                    [submittedTexts]="shortAnswerSubmittedTexts"
+                    (submittedTextsChange)="shortAnswerSubmittedTexts = $event"
+                    [questionIndex]="currentIndex() + 1"
+                    [showResult]="showingResult"
+                    [score]="questionScores[question.id!]"
+                />
+            }
+            @if (question.type === DRAG_AND_DROP) {
+                <jhi-drag-and-drop-question
+                    [question]="question"
+                    [mappings]="dragAndDropMappings"
+                    (mappingsChange)="dragAndDropMappings = $event"
+                    [questionIndex]="currentIndex() + 1"
+                    [showResult]="showingResult"
+                    [score]="questionScores[question.id!]"
+                />
+            }
         }
         @if (!submitted) {
             <jhi-button class="ms-2" (onClick)="onSubmit()" [title]="'artemisApp.exercise.submit'" />

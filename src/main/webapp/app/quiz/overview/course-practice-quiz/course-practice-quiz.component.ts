@@ -53,9 +53,9 @@ export class CoursePracticeQuizComponent {
     submitted = false;
     quizId = 18;
     questionScores: { [id: number]: number } = {};
-    selectedAnswerOptions = new Map<number, AnswerOption[]>();
-    dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
-    shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
+    selectedAnswerOptions: AnswerOption[] = [];
+    dragAndDropMappings: DragAndDropMapping[] = [];
+    shortAnswerSubmittedTexts: ShortAnswerSubmittedText[] = [];
 
     /**
      * checks if the current question is the last question
@@ -81,8 +81,8 @@ export class CoursePracticeQuizComponent {
      * increments the current question index or navigates to the course practice page if the last question is reached
      */
     nextQuestion(): void {
+        this.submitted = false;
         if (this.isLastQuestion()) {
-            this.submitted = false;
             this.navigateToPractice();
         } else {
             this.currentIndex.set(this.currentIndex() + 1);
@@ -95,24 +95,18 @@ export class CoursePracticeQuizComponent {
      * @param question
      */
     initQuestion(question: QuizQuestion): void {
-        this.selectedAnswerOptions = new Map<number, AnswerOption[]>();
-        this.dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
-        this.shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
         this.showingResult = false;
         this.submission = new QuizSubmission();
         if (question) {
             switch (question.type) {
                 case QuizQuestionType.MULTIPLE_CHOICE:
-                    // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                    this.selectedAnswerOptions.set(question.id!, []);
+                    this.selectedAnswerOptions = [];
                     break;
                 case QuizQuestionType.DRAG_AND_DROP:
-                    // add the array of mappings to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                    this.dragAndDropMappings.set(question.id!, []);
+                    this.dragAndDropMappings = [];
                     break;
                 case QuizQuestionType.SHORT_ANSWER:
-                    // add the array of submitted texts to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                    this.shortAnswerSubmittedTexts.set(question.id!, []);
+                    this.shortAnswerSubmittedTexts = [];
                     break;
             }
         }
@@ -129,7 +123,7 @@ export class CoursePracticeQuizComponent {
 
         switch (question.type) {
             case QuizQuestionType.MULTIPLE_CHOICE: {
-                const answerOptions = this.selectedAnswerOptions.get(questionId) || [];
+                const answerOptions = this.selectedAnswerOptions || [];
                 const mcSubmittedAnswer = new MultipleChoiceSubmittedAnswer();
                 mcSubmittedAnswer.quizQuestion = question;
                 mcSubmittedAnswer.selectedOptions = answerOptions;
@@ -137,7 +131,7 @@ export class CoursePracticeQuizComponent {
                 break;
             }
             case QuizQuestionType.DRAG_AND_DROP: {
-                const mappings = this.dragAndDropMappings.get(questionId) || [];
+                const mappings = this.dragAndDropMappings || [];
                 const ddSubmittedAnswer = new DragAndDropSubmittedAnswer();
                 ddSubmittedAnswer.quizQuestion = question;
                 ddSubmittedAnswer.mappings = mappings;
@@ -145,7 +139,7 @@ export class CoursePracticeQuizComponent {
                 break;
             }
             case QuizQuestionType.SHORT_ANSWER: {
-                const submittedTexts = this.shortAnswerSubmittedTexts.get(questionId) || [];
+                const submittedTexts = this.shortAnswerSubmittedTexts || [];
                 const saSubmittedAnswer = new ShortAnswerSubmittedAnswer();
                 saSubmittedAnswer.quizQuestion = question;
                 saSubmittedAnswer.submittedTexts = submittedTexts;
@@ -195,35 +189,29 @@ export class CoursePracticeQuizComponent {
      * this needs to be done when we get new submission data, e.g. through the websocket connection
      */
     applySubmission() {
-        // create dictionaries (key: questionID, value: Array of selected answerOptions / mappings)
-        // for the submittedAnswers to hand the selected options / mappings in individual arrays to the question components
-        this.selectedAnswerOptions = new Map<number, AnswerOption[]>();
-        this.dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
-        this.shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
+        this.selectedAnswerOptions = [];
+        this.dragAndDropMappings = [];
+        this.shortAnswerSubmittedTexts = [];
+        const question = this.currentQuestion();
+        if (question) {
+            const submittedAnswer = this.submission.submittedAnswers?.find((answer) => {
+                return answer.quizQuestion!.id === question.id;
+            });
 
-        if (this.questions) {
-            // iterate through all questions of this quiz
-            this.questions().forEach((question) => {
-                // find the submitted answer that belongs to this question, only when submitted answers already exist
-                const submittedAnswer = this.submission.submittedAnswers?.find((answer) => {
-                    return answer.quizQuestion!.id === question.id;
-                });
-
-                switch (question.type) {
-                    case QuizQuestionType.MULTIPLE_CHOICE:
-                        // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                        this.selectedAnswerOptions.set(question.id!, (submittedAnswer as MultipleChoiceSubmittedAnswer)?.selectedOptions || []);
-                        break;
-                    case QuizQuestionType.DRAG_AND_DROP:
-                        // add the array of mappings to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                        this.dragAndDropMappings.set(question.id!, (submittedAnswer as DragAndDropSubmittedAnswer)?.mappings || []);
-                        break;
-                    case QuizQuestionType.SHORT_ANSWER:
-                        // add the array of submitted texts to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                        this.shortAnswerSubmittedTexts.set(question.id!, (submittedAnswer as ShortAnswerSubmittedAnswer)?.submittedTexts || []);
-                        break;
-                }
-            }, this);
+            switch (question.type) {
+                case QuizQuestionType.MULTIPLE_CHOICE:
+                    // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
+                    this.selectedAnswerOptions = (submittedAnswer as MultipleChoiceSubmittedAnswer)?.selectedOptions || [];
+                    break;
+                case QuizQuestionType.DRAG_AND_DROP:
+                    // add the array of mappings to the dictionary (add an empty array, if there is no submittedAnswer for this question)
+                    this.dragAndDropMappings = (submittedAnswer as DragAndDropSubmittedAnswer)?.mappings || [];
+                    break;
+                case QuizQuestionType.SHORT_ANSWER:
+                    // add the array of submitted texts to the dictionary (add an empty array, if there is no submittedAnswer for this question)
+                    this.shortAnswerSubmittedTexts = (submittedAnswer as ShortAnswerSubmittedAnswer)?.submittedTexts || [];
+                    break;
+            }
         }
     }
 
