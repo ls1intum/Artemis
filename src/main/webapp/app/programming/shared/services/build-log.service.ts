@@ -11,7 +11,7 @@ export interface IBuildLogService {
 export class BuildLogService implements IBuildLogService {
     private http = inject(HttpClient);
 
-    private assignmentResourceUrl = 'api/programming/repository';
+    private participationsResourceUrl = 'api/programming/participations';
 
     /**
      * Retrieves the build logs for a given participation and optionally, a given result.
@@ -23,6 +23,6 @@ export class BuildLogService implements IBuildLogService {
         if (resultId) {
             params = params.set('resultId', resultId);
         }
-        return this.http.get<BuildLogEntry[]>(`${this.assignmentResourceUrl}/${participationId}/buildlogs`, { params });
+        return this.http.get<BuildLogEntry[]>(`${this.participationsResourceUrl}/${participationId}/buildlogs`, { params });
     }
 }

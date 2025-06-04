@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.web;
+package de.tum.cit.aet.artemis.core.web.course;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
@@ -51,12 +51,9 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.CourseExistingExerciseDetailsDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseForImportDTO;
-import de.tum.cit.aet.artemis.core.dto.CourseManagementDetailViewDTO;
-import de.tum.cit.aet.artemis.core.dto.CourseManagementOverviewStatisticsDTO;
 import de.tum.cit.aet.artemis.core.dto.CoursesForDashboardDTO;
 import de.tum.cit.aet.artemis.core.dto.OnlineCourseDTO;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
-import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
@@ -74,8 +71,10 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.core.service.CourseService;
 import de.tum.cit.aet.artemis.core.service.FileService;
+import de.tum.cit.aet.artemis.core.service.course.CourseForUserGroupService;
+import de.tum.cit.aet.artemis.core.service.course.CourseOverviewService;
+import de.tum.cit.aet.artemis.core.service.course.CourseService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
@@ -89,7 +88,6 @@ import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
-import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.lti.api.LtiApi;
 import de.tum.cit.aet.artemis.programming.service.ci.CIUserManagementService;
@@ -120,8 +118,6 @@ public class CourseResource {
     private final Optional<LtiApi> ltiApi;
 
     private final CourseRepository courseRepository;
-
-    private final ExerciseService exerciseService;
 
     private final TutorParticipationRepository tutorParticipationRepository;
 
@@ -155,16 +151,19 @@ public class CourseResource {
 
     private final TeamRepository teamRepository;
 
-    public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService, Optional<LtiApi> ltiApi,
+    private final CourseForUserGroupService courseForUserGroupService;
+
+    private final CourseOverviewService courseOverviewService;
+
+    public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, Optional<LtiApi> ltiApi,
             AuthorizationCheckService authCheckService, TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService,
             AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
             FileService fileService, Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi, CourseScoreCalculationService courseScoreCalculationService,
             GradingScaleRepository gradingScaleRepository, Optional<LearningPathApi> learningPathApi, ConductAgreementService conductAgreementService,
             Optional<AthenaApi> athenaApi, Optional<ExamRepositoryApi> examRepositoryApi, ComplaintService complaintService, TeamRepository teamRepository,
-            Optional<LearnerProfileApi> learnerProfileApi) {
+            Optional<LearnerProfileApi> learnerProfileApi, CourseForUserGroupService courseForUserGroupService, CourseOverviewService courseOverviewService) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
-        this.exerciseService = exerciseService;
         this.ltiApi = ltiApi;
         this.authCheckService = authCheckService;
         this.tutorParticipationRepository = tutorParticipationRepository;
@@ -184,6 +183,8 @@ public class CourseResource {
         this.complaintService = complaintService;
         this.teamRepository = teamRepository;
         this.learnerProfileApi = learnerProfileApi;
+        this.courseForUserGroupService = courseForUserGroupService;
+        this.courseOverviewService = courseOverviewService;
     }
 
     /**
@@ -357,18 +358,8 @@ public class CourseResource {
     public ResponseEntity<List<Course>> getCourses(@RequestParam(defaultValue = "false") boolean onlyActive) {
         log.debug("REST request to get all courses the user has access to");
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        List<Course> courses = getCoursesForTutors(user, onlyActive);
+        List<Course> courses = courseForUserGroupService.getCoursesForTutors(user, onlyActive);
         return ResponseEntity.ok(courses);
-    }
-
-    private List<Course> getCoursesForTutors(User user, boolean onlyActive) {
-        List<Course> userCourses = courseRepository.findCoursesForAtLeastTutorWithGroups(user.getGroups(), authCheckService.isAdmin(user));
-        if (onlyActive) {
-            // only include courses that have NOT been finished
-            final var now = ZonedDateTime.now();
-            userCourses = userCourses.stream().filter(course -> course.getEndDate() == null || course.getEndDate().isAfter(now)).toList();
-        }
-        return userCourses;
     }
 
     /**
@@ -406,28 +397,6 @@ public class CourseResource {
     }
 
     /**
-     * GET /courses/with-user-stats : get all courses for administration purposes with user stats.
-     *
-     * @param onlyActive if true, only active courses will be considered in the result
-     * @return the ResponseEntity with status 200 (OK) and with body the list of courses (the user has access to)
-     */
-    @GetMapping("courses/with-user-stats")
-    @EnforceAtLeastTutor
-    public ResponseEntity<List<Course>> getCoursesWithUserStats(@RequestParam(defaultValue = "false") boolean onlyActive) {
-        log.debug("get courses with user stats, only active: {}", onlyActive);
-
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        List<Course> courses = getCoursesForTutors(user, onlyActive);
-        for (Course course : courses) {
-            course.setNumberOfInstructors(userRepository.countUserInGroup(course.getInstructorGroupName()));
-            course.setNumberOfTeachingAssistants(userRepository.countUserInGroup(course.getTeachingAssistantGroupName()));
-            course.setNumberOfEditors(userRepository.countUserInGroup(course.getEditorGroupName()));
-            course.setNumberOfStudents(userRepository.countUserInGroup(course.getStudentGroupName()));
-        }
-        return ResponseEntity.ok(courses);
-    }
-
-    /**
      * GET /courses/course-overview : get all courses for the management overview
      *
      * @param onlyActive if true, only active courses will be considered in the result
@@ -436,7 +405,7 @@ public class CourseResource {
     @GetMapping("courses/course-management-overview")
     @EnforceAtLeastTutor
     public ResponseEntity<List<Course>> getCoursesForManagementOverview(@RequestParam(defaultValue = "false") boolean onlyActive) {
-        return ResponseEntity.ok(courseService.getAllCoursesForManagementOverview(onlyActive));
+        return ResponseEntity.ok(courseOverviewService.getAllCoursesForManagementOverview(onlyActive));
     }
 
     /**
@@ -599,24 +568,6 @@ public class CourseResource {
     }
 
     /**
-     * GET /courses/:courseId/stats-for-assessment-dashboard A collection of useful statistics for the tutor course dashboard, including: - number of submissions to the course -
-     * number of assessments - number of assessments assessed by the tutor - number of complaints
-     * <p>
-     * all timestamps were measured when calling this method from the PGdP assessment-dashboard
-     *
-     * @param courseId the id of the course to retrieve
-     * @return data about a course including all exercises, plus some data for the tutor as tutor status for assessment
-     */
-    @GetMapping("courses/{courseId}/stats-for-assessment-dashboard")
-    @EnforceAtLeastTutor
-    public ResponseEntity<StatsForDashboardDTO> getStatsForAssessmentDashboard(@PathVariable long courseId) {
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
-        StatsForDashboardDTO stats = courseService.getStatsForDashboardDTO(course);
-        return ResponseEntity.ok(stats);
-    }
-
-    /**
      * GET /courses/:courseId : get the "id" course.
      *
      * @param courseId the id of the course to retrieve
@@ -746,44 +697,11 @@ public class CourseResource {
     @EnforceAtLeastTutor
     public ResponseEntity<List<Course>> getExercisesForCourseOverview(@RequestParam(defaultValue = "false") boolean onlyActive) {
         final List<Course> courses = new ArrayList<>();
-        for (final var course : courseService.getAllCoursesForManagementOverview(onlyActive)) {
+        for (final var course : courseOverviewService.getAllCoursesForManagementOverview(onlyActive)) {
             course.setExercises(exerciseRepository.getExercisesForCourseManagementOverview(course.getId()));
             courses.add(course);
         }
         return ResponseEntity.ok(courses);
-    }
-
-    /**
-     * GET /courses/stats-for-management-overview
-     * <p>
-     * gets the statistics for the courses of the user
-     * statistics for exercises with an assessment due date (or due date if there is no assessment due date)
-     * in the past are limited to the five most recent
-     *
-     * @param onlyActive if true, only active courses will be considered in the result
-     * @return ResponseEntity with status, containing a list of <code>CourseManagementOverviewStatisticsDTO</code>
-     */
-    @GetMapping("courses/stats-for-management-overview")
-    @EnforceAtLeastTutor
-    public ResponseEntity<List<CourseManagementOverviewStatisticsDTO>> getExerciseStatsForCourseOverview(@RequestParam(defaultValue = "false") boolean onlyActive) {
-        log.debug("REST request to get statistics for the courses of the user");
-        final List<CourseManagementOverviewStatisticsDTO> courseDTOs = new ArrayList<>();
-        for (final var course : courseService.getAllCoursesForManagementOverview(onlyActive)) {
-            final var courseId = course.getId();
-            var studentsGroup = course.getStudentGroupName();
-            var amountOfStudentsInCourse = Math.toIntExact(userRepository.countUserInGroup(studentsGroup));
-            var exerciseStatistics = exerciseService.getStatisticsForCourseManagementOverview(courseId, amountOfStudentsInCourse);
-
-            var exerciseIds = exerciseRepository.findAllIdsByCourseId(courseId);
-            var endDate = courseService.determineEndDateForActiveStudents(course);
-            var timeSpanSize = courseService.determineTimeSpanSizeForActiveStudents(course, endDate, 4);
-            var activeStudents = courseService.getActiveStudents(exerciseIds, 0, timeSpanSize, endDate);
-
-            final var courseDTO = new CourseManagementOverviewStatisticsDTO(courseId, activeStudents, exerciseStatistics);
-            courseDTOs.add(courseDTO);
-        }
-
-        return ResponseEntity.ok(courseDTOs);
     }
 
     /**
@@ -813,65 +731,6 @@ public class CourseResource {
     public ResponseEntity<String> getCourseTitle(@PathVariable Long courseId) {
         final var title = courseRepository.getCourseTitle(courseId);
         return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);
-    }
-
-    /**
-     * GET /courses/{courseId}/management-detail : Gets the data needed for the course management detail view
-     *
-     * @param courseId the id of the course
-     * @return the ResponseEntity with status 200 (OK) and the body, or with status 404 (Not Found)
-     */
-    @GetMapping("courses/{courseId}/management-detail")
-    @EnforceAtLeastTutor
-    public ResponseEntity<CourseManagementDetailViewDTO> getCourseDTOForDetailView(@PathVariable Long courseId) {
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
-        GradingScale gradingScale = gradingScaleRepository.findByCourseId(courseId).orElse(null);
-        CourseManagementDetailViewDTO managementDetailViewDTO = courseService.getStatsForDetailView(course, gradingScale);
-        return ResponseEntity.ok(managementDetailViewDTO);
-    }
-
-    /**
-     * GET /courses/:courseId/statistics : Get the active students for this particular course
-     *
-     * @param courseId    the id of the course
-     * @param periodIndex an index indicating which time period, 0 is current week, -1 is one period in the past, -2 is two periods in the past
-     * @param periodSize  optional size of the period, default is 17
-     * @return the ResponseEntity with status 200 (OK) and the data in body, or status 404 (Not Found)
-     */
-    @GetMapping("courses/{courseId}/statistics")
-    @EnforceAtLeastTutor
-    public ResponseEntity<List<Integer>> getActiveStudentsForCourseDetailView(@PathVariable Long courseId, @RequestParam Long periodIndex,
-            @RequestParam Optional<Integer> periodSize) {
-        var course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
-        var exerciseIds = exerciseRepository.findAllIdsByCourseId(courseId);
-        var chartEndDate = courseService.determineEndDateForActiveStudents(course);
-        var spanEndDate = chartEndDate.plusWeeks(periodSize.orElse(17) * periodIndex);
-        var returnedSpanSize = courseService.determineTimeSpanSizeForActiveStudents(course, spanEndDate, periodSize.orElse(17));
-        var activeStudents = courseService.getActiveStudents(exerciseIds, periodIndex, Math.min(returnedSpanSize, periodSize.orElse(17)), chartEndDate);
-        return ResponseEntity.ok(activeStudents);
-    }
-
-    /**
-     * GET /courses/:courseId/statistics-lifetime-overview : Get the active students for this particular course over its whole lifetime
-     *
-     * @param courseId the id of the course
-     * @return the ResponseEntity with status 200 (OK) and the data in body, or status 404 (Not Found)
-     */
-    @GetMapping("courses/{courseId}/statistics-lifetime-overview")
-    @EnforceAtLeastTutor
-    public ResponseEntity<List<Integer>> getActiveStudentsForCourseLiveTime(@PathVariable Long courseId) {
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, courseRepository.findByIdElseThrow(courseId), null);
-        var exerciseIds = exerciseRepository.findAllIdsByCourseId(courseId);
-        var course = courseRepository.findByIdElseThrow(courseId);
-        if (course.getStartDate() == null) {
-            throw new IllegalArgumentException("Course does not contain start date");
-        }
-        var endDate = courseService.determineEndDateForActiveStudents(course);
-        var returnedSpanSize = courseService.calculateWeeksBetweenDates(course.getStartDate(), endDate);
-        var activeStudents = courseService.getActiveStudents(exerciseIds, 0, Math.toIntExact(returnedSpanSize), endDate);
-        return ResponseEntity.ok(activeStudents);
     }
 
     /**
