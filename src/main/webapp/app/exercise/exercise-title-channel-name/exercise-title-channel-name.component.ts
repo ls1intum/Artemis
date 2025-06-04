@@ -53,7 +53,7 @@ export class ExerciseTitleChannelNameComponent implements OnChanges {
 
     updateTitle(newTitle: string) {
         this.exercise.title = newTitle;
-        this.onTitleChange.emit(newTitle);
+        this.onTitleChange.emit(newTitle ?? '');
     }
 
     updateChannelName(newName: string) {
