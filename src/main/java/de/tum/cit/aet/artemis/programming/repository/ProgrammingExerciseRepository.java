@@ -158,14 +158,22 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
      * @return the exercise with the given ID, if found.
      */
     @Query("""
-            SELECT DISTINCT pe
-            FROM ProgrammingExercise pe
-                LEFT JOIN FETCH pe.templateParticipation tp
-                LEFT JOIN FETCH tp.submissions tps
-                LEFT JOIN FETCH tps.results tpr
-            WHERE pe.id = :exerciseId
+
+                SELECT DISTINCT pe
+                FROM ProgrammingExercise pe
+                    LEFT JOIN FETCH pe.templateParticipation tp
+                    LEFT JOIN FETCH tp.submissions s
+                WHERE pe.id = :exerciseId
+                  AND (
+                        s.id = (
+                            SELECT MAX(s2.id)
+                            FROM Submission s2
+                            WHERE s2.participation.id = tp.id
+                        )
+                        OR s.id IS NULL
+                      )
             """)
-    Optional<ProgrammingExercise> findWithTemplateParticipationSubmissionsById(@Param("exerciseId") long exerciseId);
+    Optional<ProgrammingExercise> findWithTemplateParticipationAndLatestSubmissionById(@Param("exerciseId") long exerciseId);
 
     /**
      * Get a programmingExercise with solution participation, each with the latest result and feedbacks.
@@ -177,12 +185,20 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
      */
     @Query("""
             SELECT DISTINCT pe
-            FROM ProgrammingExercise pe
-                LEFT JOIN FETCH pe.solutionParticipation sp
-                LEFT JOIN FETCH sp.submissions s
-            WHERE pe.id = :exerciseId
+                FROM ProgrammingExercise pe
+                    LEFT JOIN FETCH pe.solutionParticipation sp
+                    LEFT JOIN FETCH sp.submissions s
+                WHERE pe.id = :exerciseId
+                  AND (
+                        s.id = (
+                            SELECT MAX(s2.id)
+                            FROM Submission s2
+                            WHERE s2.participation.id = sp.id
+                        )
+                        OR s.id IS NULL
+                      )
             """)
-    Optional<ProgrammingExercise> findWithSolutionParticipationAndSubmissionsById(@Param("exerciseId") long exerciseId);
+    Optional<ProgrammingExercise> findWithSolutionParticipationAndLatestSubmissionById(@Param("exerciseId") long exerciseId);
 
     /**
      * Get all programming exercises that need to be scheduled: Those must satisfy one of the following requirements:
@@ -998,11 +1014,11 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
         return getArbitraryValueElseThrow(findWithTestCasesById(exerciseId), Long.toString(exerciseId));
     }
 
-    default ProgrammingExercise findWithTemplateParticipationAndSubmissionsByIdElseThrow(long exerciseId) {
-        return getValueElseThrow(findWithTemplateParticipationSubmissionsById(exerciseId), exerciseId);
+    default ProgrammingExercise findWithTemplateParticipationAndLatestSubmissionByIdElseThrow(long exerciseId) {
+        return getValueElseThrow(findWithTemplateParticipationAndLatestSubmissionById(exerciseId), exerciseId);
     }
 
-    default ProgrammingExercise findWithSolutionParticipationAndSubmissionsByIdElseThrow(long exerciseId) {
-        return getValueElseThrow(findWithSolutionParticipationAndSubmissionsById(exerciseId), exerciseId);
+    default ProgrammingExercise findWithSolutionParticipationAndLatestSubmissionByIdElseThrow(long exerciseId) {
+        return getValueElseThrow(findWithSolutionParticipationAndLatestSubmissionById(exerciseId), exerciseId);
     }
 }

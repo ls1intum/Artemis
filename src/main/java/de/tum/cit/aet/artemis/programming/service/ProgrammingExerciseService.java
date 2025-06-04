@@ -1104,18 +1104,23 @@ public class ProgrammingExerciseService {
     @NotNull
     public ProgrammingExercise findByIdWithTemplateAndSolutionParticipationAndAuxiliaryReposAndLatestResultFeedbackTestCasesElseThrow(long programmingExerciseId)
             throws EntityNotFoundException {
-        ProgrammingExercise programmingExerciseWithTemplate = programmingExerciseRepository.findWithTemplateParticipationAndSubmissionsByIdElseThrow(programmingExerciseId);
-        Set<Result> latestResultsForSubmissionsOfTemplate = resultRepository
-                .findLatestResultsWithFeedbacksAndTestcasesForSubmissions(programmingExerciseWithTemplate.getTemplateParticipation().getSubmissions());
-        programmingExerciseWithTemplate.getTemplateParticipation().getSubmissions().forEach(submission -> {
-            submission.setResults(latestResultsForSubmissionsOfTemplate.stream().filter(result -> result.getSubmission().equals(submission)).toList());
-        });
-        ProgrammingExercise programmingExerciseWithSolution = programmingExerciseRepository.findWithSolutionParticipationAndSubmissionsByIdElseThrow(programmingExerciseId);
-        Set<Result> latestResultsForSubmissionsOfSolution = resultRepository
-                .findLatestResultsWithFeedbacksAndTestcasesForSubmissions(programmingExerciseWithSolution.getSolutionParticipation().getSubmissions());
-        programmingExerciseWithSolution.getSolutionParticipation().getSubmissions().forEach(submission -> {
-            submission.setResults(latestResultsForSubmissionsOfSolution.stream().filter(result -> result.getSubmission().equals(submission)).toList());
-        });
+        ProgrammingExercise programmingExerciseWithTemplate = programmingExerciseRepository.findWithTemplateParticipationAndLatestSubmissionByIdElseThrow(programmingExerciseId);
+        // if there are no submissions we can neither access a submission nor does it make sense to load a result
+        if (!programmingExerciseWithTemplate.getTemplateParticipation().getSubmissions().isEmpty()) {
+            Optional<Result> latestResultForLatestSubmissionOfTemplate = resultRepository
+                    .findLatestResultWithFeedbacksAndTestcasesForSubmission(programmingExerciseWithTemplate.getTemplateParticipation().getSubmissions().iterator().next().getId());
+            List<Result> resultsForLatestSubmissionTemplate = new ArrayList<>();
+            latestResultForLatestSubmissionOfTemplate.ifPresent(resultsForLatestSubmissionTemplate::add);
+            programmingExerciseWithTemplate.getTemplateParticipation().getSubmissions().iterator().next().setResults(resultsForLatestSubmissionTemplate);
+        }
+        ProgrammingExercise programmingExerciseWithSolution = programmingExerciseRepository.findWithSolutionParticipationAndLatestSubmissionByIdElseThrow(programmingExerciseId);
+        if (!programmingExerciseWithSolution.getSolutionParticipation().getSubmissions().isEmpty()) {
+            Optional<Result> latestResultForLatestSubmissionOfSolution = resultRepository
+                    .findLatestResultWithFeedbacksAndTestcasesForSubmission(programmingExerciseWithSolution.getSolutionParticipation().getSubmissions().iterator().next().getId());
+            List<Result> resultsForLatestSubmissionSolution = new ArrayList<>();
+            latestResultForLatestSubmissionOfSolution.ifPresent(resultsForLatestSubmissionSolution::add);
+            programmingExerciseWithSolution.getSolutionParticipation().getSubmissions().iterator().next().setResults(resultsForLatestSubmissionSolution);
+        }
         ProgrammingExercise programmingExerciseWithAuxiliaryRepositories = programmingExerciseRepository.findByIdWithAuxiliaryRepositoriesElseThrow(programmingExerciseId);
 
         programmingExerciseWithTemplate.setSolutionParticipation(programmingExerciseWithSolution.getSolutionParticipation());

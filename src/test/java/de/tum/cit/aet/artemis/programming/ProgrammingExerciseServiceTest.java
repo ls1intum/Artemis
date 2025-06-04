@@ -61,11 +61,11 @@ class ProgrammingExerciseServiceTest extends AbstractProgrammingIntegrationIndep
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void findByIdWithTemplateAndSolutionParticipationAndAuxiliaryReposAndLatestResultFeedbackTestCasesElseThrow_shouldContainResults() {
-        programmingExercise1 = programmingExerciseRepository.findWithTemplateParticipationAndSubmissionsByIdElseThrow(programmingExercise1.getId());
+        programmingExercise1 = programmingExerciseRepository.findWithTemplateParticipationAndLatestSubmissionByIdElseThrow(programmingExercise1.getId());
         TemplateProgrammingExerciseParticipation templateParticipation = programmingExercise1.getTemplateParticipation();
         Submission templateSubmission = participationUtilService.addSubmission(templateParticipation, new ProgrammingSubmission());
         participationUtilService.addResultToSubmission(null, null, templateSubmission);
-        programmingExercise1 = programmingExerciseRepository.findWithSolutionParticipationAndSubmissionsByIdElseThrow(programmingExercise1.getId());
+        programmingExercise1 = programmingExerciseRepository.findWithSolutionParticipationAndLatestSubmissionByIdElseThrow(programmingExercise1.getId());
 
         var solutionParticipation = programmingExercise1.getSolutionParticipation();
         // this is a submission without results
