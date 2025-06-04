@@ -104,16 +104,16 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
 
     constructor() {
         effect(() => {
-            if (this.titleSection()?.titleChannelNameComponent() && this.lecturePeriodSection()) {
+            if (this.titleSection().titleChannelNameComponent() && this.lecturePeriodSection()) {
                 this.subscriptions.add(
-                    this.titleSection()!
+                    this.titleSection()
                         .titleChannelNameComponent()
                         .titleChange.subscribe(() => {
                             this.updateIsChangesMadeToTitleOrPeriodSection();
                         }),
                 );
                 this.subscriptions.add(
-                    this.titleSection()!
+                    this.titleSection()
                         .titleChannelNameComponent()
                         .channelNameChange.subscribe(() => {
                             this.updateIsChangesMadeToTitleOrPeriodSection();
