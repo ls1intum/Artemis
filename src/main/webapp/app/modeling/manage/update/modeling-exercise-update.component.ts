@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild, effect, inject } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild, effect, inject, viewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
@@ -74,21 +74,22 @@ import { FormFooterComponent } from 'app/shared/form/form-footer/form-footer.com
     ],
 })
 export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy, OnInit {
-    private alertService = inject(AlertService);
-    private modelingExerciseService = inject(ModelingExerciseService);
-    private modalService = inject(NgbModal);
-    private popupService = inject(ExerciseUpdateWarningService);
-    private courseService = inject(CourseManagementService);
-    private exerciseService = inject(ExerciseService);
-    private exerciseGroupService = inject(ExerciseGroupService);
-    private eventManager = inject(EventManager);
-    private activatedRoute = inject(ActivatedRoute);
-    private navigationUtilService = inject(ArtemisNavigationUtilService);
-    private changeDetectorRef = inject(ChangeDetectorRef);
+    private readonly alertService = inject(AlertService);
+    private readonly modelingExerciseService = inject(ModelingExerciseService);
+    private readonly modalService = inject(NgbModal);
+    private readonly popupService = inject(ExerciseUpdateWarningService);
+    private readonly courseService = inject(CourseManagementService);
+    private readonly exerciseService = inject(ExerciseService);
+    private readonly exerciseGroupService = inject(ExerciseGroupService);
+    private readonly eventManager = inject(EventManager);
+    private readonly activatedRoute = inject(ActivatedRoute);
+    private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
+    private readonly changeDetectorRef = inject(ChangeDetectorRef);
 
-    @ViewChild(ExerciseTitleChannelNameComponent) exerciseTitleChannelNameComponent: ExerciseTitleChannelNameComponent;
+    exerciseTitleChannelNameComponent = viewChild.required(ExerciseTitleChannelNameComponent);
     @ViewChild(TeamConfigFormGroupComponent) teamConfigFormGroupComponent?: TeamConfigFormGroupComponent;
     @ViewChild(ModelingEditorComponent, { static: false }) modelingEditor?: ModelingEditorComponent;
+
     @ViewChild('bonusPoints') bonusPoints?: NgModel;
     @ViewChild('points') points?: NgModel;
     @ViewChild('solutionPublicationDate') solutionPublicationDateField?: FormDateTimePickerComponent;
@@ -97,8 +98,8 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     @ViewChild('dueDate') dueDateField?: FormDateTimePickerComponent;
     @ViewChild('assessmentDueDate') assessmentDateField?: FormDateTimePickerComponent;
 
-    readonly IncludedInOverallScore = IncludedInOverallScore;
-    readonly documentationType: DocumentationType = 'Model';
+    protected readonly IncludedInOverallScore = IncludedInOverallScore;
+    protected readonly documentationType: DocumentationType = 'Model';
 
     AssessmentType = AssessmentType;
     UMLDiagramType = UMLDiagramType;
@@ -119,7 +120,6 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
 
     formSectionStatus: FormSectionStatus[];
 
-    // Subscription
     titleChannelNameComponentSubscription?: Subscription;
     pointsSubscription?: Subscription;
     bonusPointsSubscription?: Subscription;
@@ -149,7 +149,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
      * Triggers {@link calculateFormSectionStatus} whenever a relevant signal changes
      */
     private updateFormSectionsOnIsValidChange() {
-        this.exerciseTitleChannelNameComponent.titleChannelNameComponent()?.isValid();
+        this.exerciseTitleChannelNameComponent().titleChannelNameComponent().isValid();
 
         this.calculateFormSectionStatus().then();
     }
@@ -241,7 +241,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
         this.formSectionStatus = [
             {
                 title: 'artemisApp.exercise.sections.general',
-                valid: Boolean(this.exerciseTitleChannelNameComponent?.titleChannelNameComponent()?.isValid()),
+                valid: this.exerciseTitleChannelNameComponent().titleChannelNameComponent().isValid(),
             },
             { title: 'artemisApp.exercise.sections.mode', valid: Boolean(this.teamConfigFormGroupComponent?.formValid) },
             { title: 'artemisApp.exercise.sections.problem', valid: true, empty: !this.modelingExercise.problemStatement },
