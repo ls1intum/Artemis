@@ -849,7 +849,6 @@ public class ExamService {
         return participationsOfStudent.stream().collect(Collectors.toMap(participation -> participation.getExercise().getId(), participation -> {
             PlagiarismCase plagiarismCase = plagiarismMapping.getPlagiarismCase(participation.getStudent().orElseThrow().getId(), participation.getExercise().getId());
             double plagiarismPointDeductionPercentage = plagiarismCase != null ? plagiarismCase.getVerdictPointDeduction() : 0.0;
-            // TODO jfr what will the findFirst return here usually? first submission / latest submission?
             Result result = participation.getSubmissions().stream().findFirst().map(Submission::getFirstResult).orElse(null);
             return calculateAchievedPoints(participation.getExercise(), result, course, plagiarismPointDeductionPercentage);
         }));
