@@ -439,7 +439,6 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         SolutionProgrammingExerciseParticipation solutionParticipation = solutionProgrammingExerciseParticipationRepository
                 .findByProgrammingExerciseId(importResult.importedExercise().getId()).orElseThrow();
 
-        // Verify that triggerBuild was called for both template and solution participations
         verify(localCITriggerService, timeout(5000).times(1)).triggerBuild(eq(templateParticipation));
         verify(localCITriggerService, timeout(5000).times(1)).triggerBuild(eq(solutionParticipation));
     }
