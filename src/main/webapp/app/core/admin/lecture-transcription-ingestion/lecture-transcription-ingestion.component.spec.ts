@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { LectureTranscriptionIngestionComponent } from 'app/admin/lecture-transcription-ingestion/lecture-transcription-ingestion.component';
-import { LectureTranscriptionService } from 'app/admin/lecture-transcription-ingestion/service/lecture-transcription.service';
+import { LectureTranscriptionIngestionComponent } from 'app/core/admin/lecture-transcription-ingestion/lecture-transcription-ingestion.component';
+import { LectureTranscriptionService } from 'app/core/admin/lecture-transcription-ingestion/service/lecture-transcription.service';
 import { By } from '@angular/platform-browser';
 import { of } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
