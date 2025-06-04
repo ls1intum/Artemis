@@ -256,13 +256,12 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
             query = lastMatch.slice(1); // Remove the leading colon
             if (query.length > 0) {
                 const suggestions = getEmojiSuggestions(query, 3);
-                if (suggestions.length > 0 && this.markdownEditor && this.markdownEditor.monacoEditor && (this.markdownEditor.monacoEditor as any)._editor) {
-                    const editor = (this.markdownEditor.monacoEditor as any)._editor;
+                if (suggestions.length > 0 && this.markdownEditor?.monacoEditor) {
                     const lines = newValue.substring(0, lastIndex).split('\n');
                     const line = lines.length;
                     const column = lines[lines.length - 1].length + 1;
-                    // Recalculate coords on every update to handle resize
-                    const coords = editor.getScrolledVisiblePosition({ lineNumber: line, column });
+                    // Use the new public getScrolledVisiblePosition API
+                    const coords = this.markdownEditor.monacoEditor.getScrolledVisiblePosition({ lineNumber: line, column });
                     if (coords) {
                         this.emojiDropdownStyle = {
                             display: 'block',
