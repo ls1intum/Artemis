@@ -5,6 +5,8 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
 import java.util.List;
 import java.util.Objects;
 
+import jakarta.annotation.Nullable;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -91,7 +93,7 @@ public class AthenaFeedbackSuggestionsService {
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    private record RequestDTO(ExerciseBaseDTO exercise, SubmissionBaseDTO submission, LearnerProfileDTO learnerProfile, boolean isGraded) {
+    private record RequestDTO(ExerciseBaseDTO exercise, SubmissionBaseDTO submission, @Nullable LearnerProfileDTO learnerProfile, boolean isGraded) {
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
