@@ -124,7 +124,7 @@ public class ProgrammingExerciseGradingService {
             AuditEventRepository auditEventRepository, GroupNotificationService groupNotificationService, ResultService resultService, ExerciseDateService exerciseDateService,
             SubmissionPolicyService submissionPolicyService, ProgrammingExerciseRepository programmingExerciseRepository, BuildLogEntryService buildLogService,
             StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository, ProgrammingExerciseFeedbackCreationService feedbackCreationService,
-            FeedbackService feedbackService, Optional<LearnerProfileApi> learnerProfileApi, ProgrammingSubmissionService programmingSubmissionService,
+            Optional<LearnerProfileApi> learnerProfileApi, ProgrammingSubmissionService programmingSubmissionService,
             ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.continuousIntegrationResultService = continuousIntegrationResultService;

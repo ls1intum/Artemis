@@ -45,17 +45,17 @@ public class CourseLearnerProfile extends DomainObject {
     private Course course;
 
     @Column(name = "aim_for_grade_or_bonus")
-    @Min(MIN_PROFILE_VALUE) // TODO should actually be MIN_PROFILE_VALUE = 1, however, then almost all tests in LearningPathIntegrationTest fail
+    @Min(MIN_PROFILE_VALUE)
     @Max(MAX_PROFILE_VALUE)
     private int aimForGradeOrBonus = 3;
 
     @Column(name = "time_investment")
-    @Min(MIN_PROFILE_VALUE) // TODO should actually be MIN_PROFILE_VALUE = 1, however, then almost all tests in LearningPathIntegrationTest fail
+    @Min(MIN_PROFILE_VALUE)
     @Max(MAX_PROFILE_VALUE)
     private int timeInvestment = 3;
 
     @Column(name = "repetition_intensity")
-    @Min(MIN_PROFILE_VALUE) // TODO should actually be MIN_PROFILE_VALUE = 1, however, then almost all tests in LearningPathIntegrationTest fail
+    @Min(MIN_PROFILE_VALUE)
     @Max(MAX_PROFILE_VALUE)
     private int repetitionIntensity = 3;
 
