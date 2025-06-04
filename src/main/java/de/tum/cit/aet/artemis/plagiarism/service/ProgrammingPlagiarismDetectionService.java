@@ -433,7 +433,7 @@ public class ProgrammingPlagiarismDetectionService {
 
     /**
      * Checks if a repository meets the minimum size requirement by counting tokens in relevant files.
-     * Returns true as soon as the minimum size is reached.
+     * Returns true as soon as the minimum token count is reached across all files.
      * Returns true in case of any errors to be INCLUSIVE. I/O errors should not prevent plagiarism check.
      *
      * @param repository          The repository to check
@@ -453,43 +453,61 @@ public class ProgrammingPlagiarismDetectionService {
             Set<String> fileExtensions = programmingExercise.getProgrammingLanguage().getFileExtensions().stream().map(ext -> "." + ext).collect(Collectors.toSet());
 
             try (Stream<Path> paths = Files.walk(repoPath)) {
-                return paths.filter(Files::isRegularFile).filter(path -> {
+                List<Path> relevantFiles = paths.filter(Files::isRegularFile).filter(path -> {
                     // Only consider files with the correct file extension
                     String fileName = path.getFileName().toString().toLowerCase();
                     return fileExtensions.stream().anyMatch(fileName::endsWith);
-                }).anyMatch(path -> {
-                    try {
-                        // Count tokens in the file
-                        String content = Files.readString(path);
-                        // Split the content into tokens using a regex that matches whitespace and common programming symbols
-                        String[] tokens = content.split("[\\s\\n\\r\\t{}();,=+\\-*/<>!&|\\[\\]]+");
+                }).toList();
 
-                        int count = 0;
-                        for (String token : tokens) {
-                            // Count non-empty tokens
-                            if (!token.trim().isEmpty()) {
-                                count++;
-                                if (count >= minimumTokenSize) {
-                                    // Return true as soon as the minimum token size is reached
-                                    return true;
-                                }
-                            }
-                        }
-                        // Return false if the minimum token size is not reached
-                        return false;
-                    }
-                    catch (IOException e) {
-                        // Check for plagiarism if there is an error reading the file
-                        log.warn("Failed to read file {}: {}", path, e.getMessage());
+                int totalTokenCount = 0;
+                for (Path path : relevantFiles) {
+                    totalTokenCount = countTokensInFile(path, minimumTokenSize, totalTokenCount);
+                    if (totalTokenCount >= minimumTokenSize) {
+                        // Return true as soon as the minimum token size is reached
                         return true;
                     }
-                });
+                }
+
+                // Return false if minimum token size was not reached after checking all files
+                return false;
             }
         }
         catch (IOException e) {
             // Check for plagiarism if there is an error reading the repository
             log.warn("Failed to check repository token count {}: {}", repository.getLocalPath(), e.getMessage());
             return true;
+        }
+    }
+
+    /**
+     * Counts the number of tokens in a single file.
+     * Returns minimumTokenSize if there's an error reading the file. This includes the file for plagiarism check
+     *
+     * @param path The path to the file to count tokens in
+     * @return The number of tokens in the file, or minimumTokenSize if there's an error
+     */
+    private int countTokensInFile(Path path, int minimumTokenSize, int totalTokenCount) {
+        try {
+            String content = Files.readString(path);
+            // Split the content into tokens using a regex that matches whitespace and common programming symbols.
+            // This set of delimiters is chosen because it covers the most common token boundaries in programming languages.
+            String[] tokens = content.split("[\\s\\n\\r\\t{}();,=+\\-*/<>!&|\\[\\]]+");
+
+            for (String token : tokens) {
+                // Count non-empty tokens
+                if (!token.trim().isEmpty()) {
+                    totalTokenCount++;
+                    if (totalTokenCount >= minimumTokenSize) {
+                        // Return totalTokenCount as soon as the minimum token size is reached
+                        break;
+                    }
+                }
+            }
+            return totalTokenCount;
+        }
+        catch (IOException e) {
+            log.warn("Failed to read file {}: {}", path, e.getMessage());
+            return minimumTokenSize;
         }
     }
 }
