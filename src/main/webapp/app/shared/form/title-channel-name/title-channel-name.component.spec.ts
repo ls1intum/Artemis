@@ -25,10 +25,6 @@ describe('TitleChannelNameComponent', () => {
         fixture.detectChanges();
     });
 
-    it('should create', () => {
-        expect(component).toBeTruthy();
-    });
-
     it('should display title and channel name input fields with correct content', fakeAsync(() => {
         fixture.componentRef.setInput('title', 'Test');
         fixture.componentRef.setInput('channelName', 'test');
@@ -99,15 +95,14 @@ describe('TitleChannelNameComponent', () => {
         expect(component.channelName()).toBe('prefix-');
     }));
 
-    it('remove special characters and trailing hyphens from channel name on init with non-empty title', fakeAsync(() => {
+    it('remove special characters and trailing hyphens from channel name on init with non-empty title', () => {
         fixture.componentRef.setInput('title', '-- -  t--=*+ -- ');
         fixture.componentRef.setInput('channelNamePrefix', CHANNEL_NAME_PREFIX);
 
         component.ngOnInit();
-        tick();
 
         expect(component.channelName()).toBe('-p-t');
-    }));
+    });
 
     it("don't remove trailing hyphens from channel name on init with empty title", fakeAsync(() => {
         fixture.componentRef.setInput('title', '');
@@ -138,32 +133,29 @@ describe('TitleChannelNameComponent', () => {
         expect(component.channelName()).toBe('-p-t');
     }));
 
-    it("don't remove trailing hyphens from channel name on title edit if title empty", fakeAsync(() => {
+    it("don't remove trailing hyphens from channel name on title edit if title empty", () => {
         fixture.componentRef.setInput('channelNamePrefix', CHANNEL_NAME_PREFIX);
 
         component.updateTitle('');
-        tick();
 
         expect(component.channelName()).toBe('-p-');
-    }));
+    });
 
-    it("don't remove trailing hyphens from channel name on channel name edit", fakeAsync(() => {
+    it("don't remove trailing hyphens from channel name on channel name edit", () => {
         fixture.componentRef.setInput('channelNamePrefix', CHANNEL_NAME_PREFIX + '-');
 
         component.formatChannelName('-p--t--');
-        tick();
 
         expect(component.channelName()).toBe('-p--t--');
-    }));
+    });
 
-    it("don't init channel name if not allowed", fakeAsync(() => {
+    it("don't init channel name if not allowed", () => {
         fixture.componentRef.setInput('title', 't');
         fixture.componentRef.setInput('channelNamePrefix', 'p-');
         fixture.componentRef.setInput('initChannelName', false);
 
         component.ngOnInit();
-        tick();
 
         expect(component.channelName()).toBeUndefined();
-    }));
+    });
 });

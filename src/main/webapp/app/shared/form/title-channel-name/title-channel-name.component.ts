@@ -15,7 +15,7 @@ import { HelpIconComponent } from '../../components/help-icon/help-icon.componen
 export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnInit {
     title = model<string | undefined>(undefined);
     channelName = model<string | undefined>(undefined);
-    channelNamePrefix = input<string | undefined>(undefined);
+    channelNamePrefix = input<string | undefined>('');
     titlePattern = input<string>();
     hideTitleLabel = input<boolean>(false);
     emphasizeLabels = input<boolean>(false);
