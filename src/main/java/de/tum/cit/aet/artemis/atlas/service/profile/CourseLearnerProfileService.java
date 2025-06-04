@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.service.profile;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -63,7 +64,7 @@ public class CourseLearnerProfileService {
      */
     public Set<CourseLearnerProfile> getOrCreateByCourses(User user, Set<Course> courses) {
 
-        return courses.stream().map(course -> {
+        Set<CourseLearnerProfile> profiles = courses.stream().map(course -> {
             Optional<CourseLearnerProfile> courseLearnerProfileOptional = courseLearnerProfileRepository.findByLoginAndCourse(user.getLogin(), course);
             CourseLearnerProfile courseLearnerProfile = courseLearnerProfileOptional.orElseGet(() -> createCourseLearnerProfile(user, course));
             // Course field is lazily initialized.
@@ -71,6 +72,8 @@ public class CourseLearnerProfileService {
             courseLearnerProfile.setCourse(course);
             return courseLearnerProfileRepository.save(courseLearnerProfile);
         }).collect(Collectors.toSet());
+
+        return new HashSet<>(courseLearnerProfileRepository.saveAll(profiles));
     }
 
     private CourseLearnerProfile createCourseLearnerProfile(User user, Course course) {
