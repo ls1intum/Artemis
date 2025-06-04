@@ -22,11 +22,7 @@ export class ExerciseTitleChannelNameComponent implements OnChanges {
     @Input() isImport: boolean;
     @Input() hideTitleLabel: boolean;
 
-    // readonly content = viewChild<ElementRef>('itemsContainer');
-
-    // @ViewChild(TitleChannelNameComponent)
-
-    readonly titleChannelNameComponent = viewChild<TitleChannelNameComponent>('titleChannelNameComponent');
+    readonly titleChannelNameComponent = viewChild.required(TitleChannelNameComponent);
 
     onTitleChange = output<string>();
     onChannelNameChange = output<string>();

@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectionStrategy, Component, OnDestroy, OnInit, ViewChild, effect, inject } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, OnDestroy, OnInit, ViewChild, effect, inject, viewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
@@ -77,20 +77,20 @@ import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/f
     ],
 })
 export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
-    private activatedRoute = inject(ActivatedRoute);
-    private alertService = inject(AlertService);
-    private textExerciseService = inject(TextExerciseService);
-    private modalService = inject(NgbModal);
-    private popupService = inject(ExerciseUpdateWarningService);
-    private exerciseService = inject(ExerciseService);
-    private exerciseGroupService = inject(ExerciseGroupService);
-    private courseService = inject(CourseManagementService);
-    private eventManager = inject(EventManager);
-    private navigationUtilService = inject(ArtemisNavigationUtilService);
-    private profileService = inject(ProfileService);
+    private readonly activatedRoute = inject(ActivatedRoute);
+    private readonly alertService = inject(AlertService);
+    private readonly textExerciseService = inject(TextExerciseService);
+    private readonly modalService = inject(NgbModal);
+    private readonly popupService = inject(ExerciseUpdateWarningService);
+    private readonly exerciseService = inject(ExerciseService);
+    private readonly exerciseGroupService = inject(ExerciseGroupService);
+    private readonly courseService = inject(CourseManagementService);
+    private readonly eventManager = inject(EventManager);
+    private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
+    private readonly profileService = inject(ProfileService);
 
-    readonly IncludedInOverallScore = IncludedInOverallScore;
-    readonly documentationType: DocumentationType = 'Text';
+    protected readonly IncludedInOverallScore = IncludedInOverallScore;
+    protected readonly documentationType: DocumentationType = 'Text';
 
     @ViewChild('editForm') editForm: NgForm;
     @ViewChild('bonusPoints') bonusPoints: NgModel;
@@ -100,7 +100,8 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     @ViewChild('startDate') startDateField?: FormDateTimePickerComponent;
     @ViewChild('dueDate') dueDateField?: FormDateTimePickerComponent;
     @ViewChild('assessmentDueDate') assessmentDateField?: FormDateTimePickerComponent;
-    @ViewChild(ExerciseTitleChannelNameComponent) exerciseTitleChannelNameComponent: ExerciseTitleChannelNameComponent;
+
+    exerciseTitleChannelNameComponent = viewChild.required(ExerciseTitleChannelNameComponent);
     @ViewChild(ExerciseUpdatePlagiarismComponent) exerciseUpdatePlagiarismComponent?: ExerciseUpdatePlagiarismComponent;
     @ViewChild(TeamConfigFormGroupComponent) teamConfigFormGroupComponent: TeamConfigFormGroupComponent;
 
@@ -122,7 +123,6 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
 
     formSectionStatus: FormSectionStatus[];
 
-    // subcriptions
     pointsSubscription?: Subscription;
     bonusPointsSubscription?: Subscription;
     plagiarismSubscription?: Subscription;
@@ -138,7 +138,7 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
 
     constructor() {
         effect(() => {
-            if (this.exerciseTitleChannelNameComponent?.titleChannelNameComponent()) {
+            if (this.exerciseTitleChannelNameComponent()?.titleChannelNameComponent()) {
                 this.updateFormSectionsOnIsValidChange();
             }
         });
@@ -148,7 +148,7 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
      * Triggers {@link calculateFormSectionStatus} whenever a relevant signal changes
      */
     private updateFormSectionsOnIsValidChange() {
-        this.exerciseTitleChannelNameComponent.titleChannelNameComponent()?.isValid(); // trigger the effect
+        this.exerciseTitleChannelNameComponent()?.titleChannelNameComponent()?.isValid(); // trigger the effect
 
         this.calculateFormSectionStatus();
     }
@@ -240,7 +240,7 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
             this.formSectionStatus = [
                 {
                     title: 'artemisApp.exercise.sections.general',
-                    valid: this.exerciseTitleChannelNameComponent.titleChannelNameComponent()?.isValid() ?? false,
+                    valid: this.exerciseTitleChannelNameComponent()?.titleChannelNameComponent()?.isValid() ?? false,
                 },
                 { title: 'artemisApp.exercise.sections.mode', valid: this.teamConfigFormGroupComponent.formValid },
                 { title: 'artemisApp.exercise.sections.problem', valid: true, empty: !this.textExercise.problemStatement },
