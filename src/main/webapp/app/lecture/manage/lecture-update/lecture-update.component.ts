@@ -93,7 +93,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
 
     areSectionsValid = computed(() => {
         return (
-            this.titleSection().titleChannelNameComponent().isFormValidSignal() &&
+            this.titleSection().titleChannelNameComponent().isValid() &&
             this.lecturePeriodSection().isPeriodSectionValid() &&
             (this.unitSection()?.isUnitConfigurationValid() ?? true) &&
             (this.attachmentsSection()?.isFormValid() ?? true)
@@ -174,7 +174,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
         updatedFormStatusSections.push(
             {
                 title: 'artemisApp.lecture.sections.title',
-                valid: Boolean(this.titleSection().titleChannelNameComponent().isFormValidSignal()),
+                valid: Boolean(this.titleSection().titleChannelNameComponent().isValid()),
             },
             {
                 title: 'artemisApp.lecture.sections.period',

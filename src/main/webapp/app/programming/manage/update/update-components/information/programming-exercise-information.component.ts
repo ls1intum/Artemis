@@ -141,6 +141,16 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
         effect(() => {
             this.fetchAndInitializeTakenTitlesAndShortNames();
         });
+
+        effect(() => {
+            this.updateFormStatus();
+        });
+    }
+
+    private updateFormStatus(): void {
+        this.exerciseTitleChannelComponent()?.titleChannelNameComponent?.isValid(); // triggers effect
+
+        this.calculateFormValid();
     }
 
     ngOnInit() {
@@ -166,7 +176,6 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     registerInputFields() {
         this.inputFieldSubscriptions.forEach((subscription) => subscription?.unsubscribe());
 
-        this.inputFieldSubscriptions.push(this.exerciseTitleChannelComponent()?.titleChannelNameComponent?.formValidChanges.subscribe(() => this.calculateFormValid()));
         this.inputFieldSubscriptions.push(this.shortNameField()?.valueChanges?.subscribe(() => this.calculateFormValid()));
         this.inputFieldSubscriptions.push(this.checkoutSolutionRepositoryField?.valueChanges?.subscribe(() => this.calculateFormValid()));
         this.inputFieldSubscriptions.push(this.recreateBuildPlansField?.valueChanges?.subscribe(() => this.calculateFormValid()));
@@ -198,7 +207,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
         const areAuxiliaryRepositoriesValid = this.areAuxiliaryRepositoriesValid();
         const areCheckoutPathsValid = this.areCheckoutPathsValid();
         this.formValid = Boolean(
-            this.exerciseTitleChannelComponent()?.titleChannelNameComponent?.isFormValidSignal() &&
+            this.exerciseTitleChannelComponent()?.titleChannelNameComponent?.isValid() &&
                 this.getIsShortNameFieldValid() &&
                 isCheckoutSolutionRepositoryValid &&
                 isRecreateBuildPlansValid &&

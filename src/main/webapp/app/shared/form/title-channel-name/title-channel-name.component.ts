@@ -13,9 +13,9 @@ import { HelpIconComponent } from '../../components/help-icon/help-icon.componen
     imports: [TranslateDirective, FormsModule, CustomNotIncludedInValidatorDirective, HelpIconComponent],
 })
 export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnInit {
-    title = model<string>('');
-    channelName = model<string>('');
-    channelNamePrefix = input<string>('');
+    title = model<string | undefined>(undefined);
+    channelName = model<string | undefined>(undefined);
+    channelNamePrefix = input<string | undefined>(undefined);
     titlePattern = input<string>();
     hideTitleLabel = input<boolean>(false);
     emphasizeLabels = input<boolean>(false);
@@ -90,12 +90,12 @@ export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnIn
 
     updateTitle(newTitle: string) {
         this.title.set(newTitle);
-        this.titleChange.emit(this.title());
+        this.titleChange.emit(this.title() ?? '');
         this.updateChannelName();
     }
 
     updateChannelName() {
-        this.formatChannelName(this.channelNamePrefix() + this.title(), false, !!this.title());
+        this.formatChannelName(this.channelNamePrefix() ?? '-' + (this.title() ?? '-'), false, !!this.title());
     }
 
     /**
@@ -106,10 +106,10 @@ export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnIn
      * @param {boolean} [removeTrailingHyphens=false] - Flag indicating whether trailing hyphens should be removed from the formatted name.
      * @return {void} This method does not return a value but emits the formatted channel name.
      */
-    private formatChannelName(newName: string, allowDuplicateHyphens: boolean = true, removeTrailingHyphens: boolean = false): void {
+    protected formatChannelName(newName: string, allowDuplicateHyphens: boolean = true, removeTrailingHyphens: boolean = false): void {
         const specialCharacters: RegExp = allowDuplicateHyphens ? /[^a-z0-9-]+/g : /[^a-z0-9]+/g;
         const trailingHyphens = removeTrailingHyphens ? /-$/ : new RegExp('[]');
         this.channelName.set(newName.toLowerCase().replaceAll(specialCharacters, '-').replace(trailingHyphens, '').slice(0, 30));
-        this.channelNameChange.emit(this.channelName());
+        this.channelNameChange.emit(this.channelName() ?? '');
     }
 }
