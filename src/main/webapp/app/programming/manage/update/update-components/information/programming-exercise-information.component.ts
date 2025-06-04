@@ -93,14 +93,13 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     courseId = input<number>();
     isAuxiliaryRepositoryInputValid = model.required<boolean>();
 
-    exerciseTitleChannelComponent = viewChild<ExerciseTitleChannelNameComponent>('titleChannelNameComponent');
+    exerciseTitleChannelComponent = viewChild.required(ExerciseTitleChannelNameComponent);
     @ViewChildren(TableEditableFieldComponent) tableEditableFields?: QueryList<TableEditableFieldComponent>;
 
     shortNameField = viewChild<NgModel>('shortName');
     @ViewChild('checkoutSolutionRepository') checkoutSolutionRepositoryField?: NgModel;
     @ViewChild('recreateBuildPlans') recreateBuildPlansField?: NgModel;
     @ViewChild('updateTemplateFiles') updateTemplateFilesField?: NgModel;
-    @ViewChild('titleChannelNameComponent') titleComponent?: ExerciseTitleChannelNameComponent;
     @ViewChild(ProgrammingExerciseEditCheckoutDirectoriesComponent) programmingExerciseEditCheckoutDirectories?: ProgrammingExerciseEditCheckoutDirectoriesComponent;
 
     private readonly exerciseService = inject(ExerciseService);
@@ -185,11 +184,13 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
             fields.toArray().forEach((field) => this.inputFieldSubscriptions.push(field.editingInput.valueChanges?.subscribe(() => this.calculateFormValid())));
         });
 
-        this.titleComponent?.titleChannelNameComponent()?.field_title?.valueChanges?.subscribe((newTitle: string) => {
-            if (this.isSimpleMode()) {
-                this.updateShortName(newTitle);
-            }
-        });
+        this.exerciseTitleChannelComponent()
+            .titleChannelNameComponent()
+            .field_title?.valueChanges?.subscribe((newTitle: string) => {
+                if (this.isSimpleMode()) {
+                    this.updateShortName(newTitle);
+                }
+            });
 
         this.shortNameField()?.valueChanges?.subscribe(() => {
             this.updateIsShortNameValid();

@@ -988,7 +988,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                 translateKey: 'artemisApp.exercise.form.title.pattern',
                 translateValues: {},
             });
-        } else if (this.exerciseInfoComponent?.titleComponent?.titleChannelNameComponent()?.field_title?.control?.errors?.disallowedValue) {
+        } else if (this.exerciseInfoComponent?.exerciseTitleChannelComponent().titleChannelNameComponent().field_title?.control?.errors?.disallowedValue) {
             validationErrorReasons.push({
                 translateKey: 'artemisApp.exercise.form.title.disallowedValue',
                 translateValues: {},
