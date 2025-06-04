@@ -370,7 +370,7 @@ public class ProgrammingPlagiarismDetectionService {
     }
 
     private List<Repository> downloadRepositories(ProgrammingExercise programmingExercise, List<ProgrammingExerciseParticipation> participations, String targetPath,
-            int minimumSize) {
+            int minimumTokenSize) {
         // Used for sending progress notifications
         var topic = plagiarismWebsocketService.getProgrammingExercisePlagiarismCheckTopic(programmingExercise.getId());
 
@@ -387,16 +387,16 @@ public class ProgrammingPlagiarismDetectionService {
                 gitService.resetToOriginHead(repo); // start with clean state
 
                 // Check if repository meets minimum size requirement
-                if (minimumSize > 0) {
-                    boolean meetsMinimumSize = meetsMinimumSize(repo, programmingExercise, minimumSize);
+                if (minimumTokenSize > 0) {
+                    boolean meetsMinimumSize = meetsMinimumSize(repo, programmingExercise, minimumTokenSize);
 
                     if (meetsMinimumSize) {
-                        log.debug("Repository {} meets minimum size requirement ({} tokens), including in plagiarism check", participation.getVcsRepositoryUri(), minimumSize);
+                        log.debug("Repository {} meets minimum size requirement ({} tokens), including in plagiarism check", participation.getVcsRepositoryUri(), minimumTokenSize);
                         return repo;
                     }
                     else {
                         log.info("Repository {} does not meet minimum size requirement ({} tokens), excluding from plagiarism check", participation.getVcsRepositoryUri(),
-                                minimumSize);
+                                minimumTokenSize);
                         // Clean up the repository since we won't use it
                         try {
                             deleteTempLocalRepository(repo);
@@ -426,7 +426,7 @@ public class ProgrammingPlagiarismDetectionService {
         plagiarismWebsocketService.notifyInstructorAboutPlagiarismState(topic, PlagiarismCheckState.RUNNING, List.of(progressMessage));
 
         log.info("Downloaded and filtered {} repositories out of {} participations for exercise {} (minimum token size: {} tokens)", downloadedRepositories.size(),
-                participations.size(), programmingExercise.getId(), minimumSize);
+                participations.size(), programmingExercise.getId(), minimumTokenSize);
 
         return downloadedRepositories;
     }
@@ -434,14 +434,14 @@ public class ProgrammingPlagiarismDetectionService {
     /**
      * Checks if a repository meets the minimum size requirement by counting tokens in relevant files.
      * Returns true as soon as the minimum size is reached.
-     * Returns true in case of any errors to be inclusive.
+     * Returns true in case of any errors to be INCLUSIVE. I/O errors should not prevent plagiarism check.
      *
      * @param repository          The repository to check
      * @param programmingExercise The programming exercise
-     * @param minimumSize         The minimum number of tokens required
+     * @param minimumTokenSize    The minimum number of tokens required
      * @return true if the repository meets the minimum size requirement or if there are any errors
      */
-    private boolean meetsMinimumSize(Repository repository, ProgrammingExercise programmingExercise, int minimumSize) {
+    private boolean meetsMinimumSize(Repository repository, ProgrammingExercise programmingExercise, int minimumTokenSize) {
         try {
             Path repoPath = repository.getLocalPath();
             if (!Files.exists(repoPath) || !Files.isDirectory(repoPath)) {
@@ -449,29 +449,37 @@ public class ProgrammingPlagiarismDetectionService {
                 return true;
             }
 
+            // Get file extensions for the programming language for filtering
             Set<String> fileExtensions = programmingExercise.getProgrammingLanguage().getFileExtensions().stream().map(ext -> "." + ext).collect(Collectors.toSet());
 
             try (Stream<Path> paths = Files.walk(repoPath)) {
                 return paths.filter(Files::isRegularFile).filter(path -> {
+                    // Only consider files with the correct file extension
                     String fileName = path.getFileName().toString().toLowerCase();
                     return fileExtensions.stream().anyMatch(fileName::endsWith);
                 }).anyMatch(path -> {
                     try {
+                        // Count tokens in the file
                         String content = Files.readString(path);
+                        // Split the content into tokens using a regex that matches whitespace and common programming symbols
                         String[] tokens = content.split("[\\s\\n\\r\\t{}();,=+\\-*/<>!&|\\[\\]]+");
 
                         int count = 0;
                         for (String token : tokens) {
+                            // Count non-empty tokens
                             if (!token.trim().isEmpty()) {
                                 count++;
-                                if (count >= minimumSize) {
+                                if (count >= minimumTokenSize) {
+                                    // Return true as soon as the minimum token size is reached
                                     return true;
                                 }
                             }
                         }
+                        // Return false if the minimum token size is not reached
                         return false;
                     }
                     catch (IOException e) {
+                        // Check for plagiarism if there is an error reading the file
                         log.warn("Failed to read file {}: {}", path, e.getMessage());
                         return true;
                     }
@@ -479,7 +487,8 @@ public class ProgrammingPlagiarismDetectionService {
             }
         }
         catch (IOException e) {
-            log.warn("Failed to check repository size {}: {}", repository.getLocalPath(), e.getMessage());
+            // Check for plagiarism if there is an error reading the repository
+            log.warn("Failed to check repository token count {}: {}", repository.getLocalPath(), e.getMessage());
             return true;
         }
     }
