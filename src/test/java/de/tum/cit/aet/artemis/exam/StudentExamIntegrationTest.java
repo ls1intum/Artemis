@@ -550,7 +550,6 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
                 var submission = participation.getSubmissions().iterator().next();
                 assertThat(participation.getParticipant()).isEqualTo(user);
                 assertThat(submission.isSubmitted()).isFalse();
-                assertThat(participation.getResults()).as(exercise.getClass().getName() + " should have no results").isNullOrEmpty();
                 assertThat(submission.getResults()).as(exercise.getClass().getName() + " should have no results").isNullOrEmpty();
             }
             assertThat(exercise.getGradingCriteria()).isNullOrEmpty();
@@ -1656,7 +1655,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
         // check that all relevant information is visible to the student
         for (final var exercise : studentExamSummary.getExercises()) {
-            assertThat(exercise.getStudentParticipations().iterator().next().getResults()).isEmpty();
+            assertThat(participationUtilService.getResultsForParticipation(exercise.getStudentParticipations().iterator().next())).isEmpty();
             assertThat(exercise.getGradingInstructions()).isNull();
             assertThat(exercise.getGradingCriteria()).isEmpty();
 
@@ -1696,7 +1695,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
             }
             else {
                 var participation = exercise.getStudentParticipations().iterator().next();
-                assertThat(participation.getResults()).isEmpty();
+                assertThat(participationUtilService.getResultsForParticipation(participation)).isEmpty();
                 assertThat(participation.getSubmissions().iterator().next().getResults()).isEmpty();
             }
         }
@@ -1715,7 +1714,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
         // check that all relevant information is visible to the student
         for (final var exercise : studentExamSummary.getExercises()) {
-            assertThat(exercise.getStudentParticipations().iterator().next().getResults()).isNotEmpty();
+            assertThat(participationUtilService.getResultsForParticipation(exercise.getStudentParticipations().iterator().next())).isNotEmpty();
             assertThat(exercise.getGradingInstructions()).isNull();
             assertThat(exercise.getGradingCriteria()).isEmpty();
 
@@ -1755,8 +1754,9 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
             }
             else {
                 var participation = exercise.getStudentParticipations().iterator().next();
-                assertThat(participation.getResults()).hasSize(1);
-                var result = participation.getResults().iterator().next();
+                Set<Result> results = participationUtilService.getResultsForParticipation(participation);
+                assertThat(results).hasSize(1);
+                var result = results.iterator().next();
                 assertThat(result.getAssessor()).as("no sensitive inforation get leaked").isNull();
             }
         }
@@ -2140,7 +2140,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         StudentParticipation participationWithLatestResult = studentParticipationRepository
                 .findByExerciseIdAndStudentIdAndTestRunWithLatestResult(finalStudentExam.getExercises().getFirst().getId(), finalStudentExam.getUser().getId(), false)
                 .orElseThrow();
-        Result result = participationWithLatestResult.getResults().iterator().next();
+        Result result = participationUtilService.getResultsForParticipation(participationWithLatestResult).iterator().next();
         result.setScore(0.0); // To reduce grade to a grade lower than the max grade.
         resultRepository.save(result);
         return finalExam;

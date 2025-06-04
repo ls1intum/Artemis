@@ -983,7 +983,12 @@ public class ParticipationUtilService {
         doNothing().when(continuousIntegrationService).configureBuildPlan(any());
     }
 
-    public Set<Result> getResultForParticipation(Participation participation) {
+    /**
+     * Gets all Results of all submissions for the given Participation.
+     *
+     * @return A Set of Results that belong to the Participation's submissions
+     */
+    public Set<Result> getResultsForParticipation(Participation participation) {
         return Stream.ofNullable(participation.getSubmissions()).flatMap(Collection::stream)
                 .flatMap(submission -> Stream.ofNullable(submission.getResults()).flatMap(Collection::stream)).filter(Objects::nonNull).collect(Collectors.toSet());
     }

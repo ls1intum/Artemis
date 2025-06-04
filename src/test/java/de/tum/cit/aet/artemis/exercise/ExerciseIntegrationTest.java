@@ -436,7 +436,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             }
             ExerciseDetailsDTO exerciseWithDetails = request.get("/api/exercise/exercises/" + exercise.getId() + "/details", HttpStatus.OK, ExerciseDetailsDTO.class);
             for (StudentParticipation participation : exerciseWithDetails.exercise().getStudentParticipations()) {
-                Set<Result> results = participationUtilService.getResultForParticipation(participation);
+                Set<Result> results = participationUtilService.getResultsForParticipation(participation);
                 // Programming exercises should only have one automatic result
                 if (exercise instanceof ProgrammingExercise) {
                     assertThat(results).hasSize(1);
@@ -464,7 +464,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
             ExerciseDetailsDTO exerciseWithDetails = request.get("/api/exercise/exercises/" + exercise.getId() + "/details", HttpStatus.OK, ExerciseDetailsDTO.class);
             for (var studentParticipation : exerciseWithDetails.exercise().getStudentParticipations()) {
-                Set<Result> results = participationUtilService.getResultForParticipation(studentParticipation);
+                Set<Result> results = participationUtilService.getResultsForParticipation(studentParticipation);
                 // Programming exercises should now how two results and the latest one is the manual result.
                 if (exercise instanceof ProgrammingExercise) {
                     assertThat(results).hasSize(resultSize);
@@ -511,7 +511,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             exerciseService.filterExerciseForCourseDashboard(exercise, Set.copyOf(exercise.getStudentParticipations()), true);
 
             StudentParticipation participation = exercise.getStudentParticipations().iterator().next();
-            Set<Result> results = participationUtilService.getResultForParticipation(participation);
+            Set<Result> results = participationUtilService.getResultsForParticipation(participation);
             if (exercise instanceof ProgrammingExercise) {
                 var submission = participation.getSubmissions().iterator().next();
                 // Programming exercises should only have one automatic result
@@ -537,7 +537,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 addResultToSubmissionAndParticipation(exercise);
             }
             exerciseService.filterExerciseForCourseDashboard(exercise, Set.copyOf(exercise.getStudentParticipations()), true);
-            Set<Result> results = participationUtilService.getResultForParticipation(exercise.getStudentParticipations().iterator().next());
+            Set<Result> results = participationUtilService.getResultsForParticipation(exercise.getStudentParticipations().iterator().next());
             // All exercises have one result
             assertThat(results).hasSize(1);
             // Programming exercises should now have one manual result
