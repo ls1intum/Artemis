@@ -45,9 +45,12 @@ export class ProblemStatementComponent implements OnInit {
             }
         });
         // Check whether problem statement is displayed standalone (mobile apps)
-        this.route.url.subscribe((segments) => {
-            this.isStandalone = segments.some((segment) => segment.path == 'problem-statement');
-        });
+        let url = this.route.url;
+        if (url) {
+            url.subscribe((segments) => {
+                this.isStandalone = segments.some((segment) => segment.path == 'problem-statement');
+            });
+        }
     }
 
     get isProgrammingExercise(): boolean {
