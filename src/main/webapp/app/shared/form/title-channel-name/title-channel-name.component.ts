@@ -106,7 +106,7 @@ export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnIn
      * @param {boolean} [removeTrailingHyphens=false] - Flag indicating whether trailing hyphens should be removed from the formatted name.
      * @return {void} This method does not return a value but emits the formatted channel name.
      */
-    protected formatChannelName(newName: string, allowDuplicateHyphens: boolean = true, removeTrailingHyphens: boolean = false): void {
+    formatChannelName(newName: string, allowDuplicateHyphens: boolean = true, removeTrailingHyphens: boolean = false): void {
         const specialCharacters: RegExp = allowDuplicateHyphens ? /[^a-z0-9-]+/g : /[^a-z0-9]+/g;
         const trailingHyphens = removeTrailingHyphens ? /-$/ : new RegExp('[]');
         this.channelName.set(newName.toLowerCase().replaceAll(specialCharacters, '-').replace(trailingHyphens, '').slice(0, 30));
