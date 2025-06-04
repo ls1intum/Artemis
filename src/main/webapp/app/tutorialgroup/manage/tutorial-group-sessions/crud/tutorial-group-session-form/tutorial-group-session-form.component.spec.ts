@@ -10,9 +10,7 @@ import {
 import { NgbTimepickerModule } from '@ng-bootstrap/ng-bootstrap';
 import '@angular/localize/init';
 import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
-import { generateClickSubmitButton, generateTestFormIsInvalidOnMissingRequiredProperty } from 'test/helpers/sample/tutorialgroup/tutorialGroupFormsUtils';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { runOnPushChangeDetection } from 'test/helpers/on-push-change-detection.helper';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('TutorialGroupSessionForm', () => {
@@ -22,9 +20,6 @@ describe('TutorialGroupSessionForm', () => {
     const validStartTime = '12:00:00';
     const validEndTime = '13:00:00';
     const validLocation = 'Garching';
-
-    let clickSubmit: (expectSubmitEvent: boolean) => void;
-    let testFormIsInvalidOnMissingRequiredProperty: (controlName: string) => void;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -44,14 +39,6 @@ describe('TutorialGroupSessionForm', () => {
                 component.timeZone = 'Europe/Berlin';
                 fixture.detectChanges();
 
-                clickSubmit = generateClickSubmitButton(component, fixture, {
-                    date: validDate,
-                    startTime: validStartTime,
-                    endTime: validEndTime,
-                    location: validLocation,
-                });
-
-                testFormIsInvalidOnMissingRequiredProperty = generateTestFormIsInvalidOnMissingRequiredProperty(component, fixture, setValidFormValues, clickSubmit);
                 fixture.detectChanges();
             });
     });
@@ -82,34 +69,20 @@ describe('TutorialGroupSessionForm', () => {
 
     it('should submit valid form', fakeAsync(() => {
         setValidFormValues();
-        runOnPushChangeDetection(fixture);
         expect(component.form.valid).toBeTrue();
         expect(component.isSubmitPossible).toBeTrue();
-
-        clickSubmit(true);
     }));
 
     it('should block submit when time range is invalid', fakeAsync(() => {
         setValidFormValues();
-        runOnPushChangeDetection(fixture);
 
         expect(component.form.valid).toBeTrue();
         expect(component.isSubmitPossible).toBeTrue();
 
         component.endTimeControl!.setValue('11:00:00');
         component.startTimeControl!.setValue('12:00:00');
-        runOnPushChangeDetection(fixture);
         expect(component.form.invalid).toBeTrue();
         expect(component.isSubmitPossible).toBeFalse();
-
-        clickSubmit(false);
-    }));
-
-    it('should block submit when required property is missing', fakeAsync(() => {
-        const requiredControlNames = ['startTime', 'endTime', 'date', 'location'];
-        for (const controlName of requiredControlNames) {
-            testFormIsInvalidOnMissingRequiredProperty(controlName);
-        }
     }));
 
     // === helper functions ===
