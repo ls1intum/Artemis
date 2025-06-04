@@ -193,8 +193,7 @@
                     "labelEnd": "End Date",
                     "labelStartTime": "Start Time",
                     "labelEndTime": "End Time",
-                    "invalidEndDateError": "The end date of the tutorial free period needs to be after the start date!",
-                    "parseError": "Date must be in the format 'YYYY-MM-DD'"
+                    "invalidEndDateError": "The end date of the tutorial free period needs to be after the start date!"
                 },
                 "reasonInput": {
                     "label": "Reason for no sessions on this day",
@@ -204,8 +203,7 @@
             },
             "sessionForm": {
                 "dateInput": {
-                    "label": "Date",
-                    "parseError": "Date must be in the format 'YYYY-MM-DD'"
+                    "label": "Date"
                 },
                 "timeInput": {
                     "from": "Session starts at",

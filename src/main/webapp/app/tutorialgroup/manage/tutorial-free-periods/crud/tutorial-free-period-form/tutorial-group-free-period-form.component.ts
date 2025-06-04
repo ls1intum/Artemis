@@ -3,8 +3,6 @@ import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angul
 import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
 import { OWL_DATE_TIME_FORMATS, OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { NgClass } from '@angular/common';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
@@ -41,17 +39,7 @@ export enum TimeFrame {
     templateUrl: './tutorial-group-free-period-form.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
     providers: [{ provide: OWL_DATE_TIME_FORMATS, useValue: MY_NATIVE_FORMATS }],
-    imports: [
-        TranslateDirective,
-        FormsModule,
-        ReactiveFormsModule,
-        OwlDateTimeModule,
-        NgClass,
-        FaIconComponent,
-        ArtemisDatePipe,
-        ArtemisTranslatePipe,
-        FormDateTimePickerComponent,
-    ],
+    imports: [TranslateDirective, FormsModule, ReactiveFormsModule, OwlDateTimeModule, ArtemisDatePipe, ArtemisTranslatePipe, FormDateTimePickerComponent],
 })
 export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
     private fb = inject(FormBuilder);
@@ -114,22 +102,25 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
      * @returns {boolean} - Returns true if the start time/date is before the end time/date, otherwise returns true.
      */
     get isStartBeforeEnd(): boolean {
-        // “PeriodWithinDay” → compare hours/minutes
         if (this.timeFrame === TimeFrame.PeriodWithinDay && this.endTimeControl?.value && this.startTimeControl?.value) {
-            const end = dayjs(this.endTimeControl.value).startOf('minute');
-            const start = dayjs(this.startTimeControl.value).startOf('minute');
-            return end.isAfter(start);
+            return this.normalizeAndCompare(this.startTimeControl.value, this.endTimeControl.value, 'minute');
         }
 
-        // “Period” → compare full dates (ignore time‐of‐day)
         if (this.timeFrame === TimeFrame.Period && this.endDateControl?.value && this.startDateControl?.value) {
-            const endDate = dayjs(this.endDateControl.value).startOf('day');
-            const startDate = dayjs(this.startDateControl.value).startOf('day');
-            return endDate.isAfter(startDate);
+            return this.normalizeAndCompare(this.startDateControl.value, this.endDateControl.value, 'day');
         }
 
-        // otherwise (Day or missing values) → treat as valid
         return true;
+    }
+
+    /**
+     * Normalize two input values (either Date or dayjs) to dayjs, round down to the chosen unit,
+     * then check whether endValue > startValue.
+     */
+    private normalizeAndCompare(rawStart: Date | dayjs.Dayjs, rawEnd: Date | dayjs.Dayjs, unit: 'minute' | 'day'): boolean {
+        const start = dayjs(rawStart).startOf(unit);
+        const end = dayjs(rawEnd).startOf(unit);
+        return end.isAfter(start);
     }
 
     get timeFrameControl(): TimeFrame {
@@ -195,7 +186,15 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
     }
 
     submitForm() {
-        const tutorialGroupFreePeriodFormData: TutorialGroupFreePeriodFormData = { ...this.form.value };
+        const formValue = this.form.value;
+        // Currently neccessary till component gets rewritten to modern angular
+        const tutorialGroupFreePeriodFormData: TutorialGroupFreePeriodFormData = {
+            startDate: formValue.startDate ? new Date(formValue.startDate) : undefined,
+            endDate: formValue.endDate ? new Date(formValue.endDate) : undefined,
+            startTime: formValue.startTime ? new Date(formValue.startTime) : undefined,
+            endTime: formValue.endTime ? new Date(formValue.endTime) : undefined,
+            reason: formValue.reason,
+        };
         this.formSubmitted.emit(tutorialGroupFreePeriodFormData);
     }
 

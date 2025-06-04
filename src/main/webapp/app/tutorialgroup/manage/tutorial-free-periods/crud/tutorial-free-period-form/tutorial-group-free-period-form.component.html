@@ -61,11 +61,7 @@
                     [labelName]="'artemisApp.forms.tutorialFreePeriodForm.dateInput.labelEnd' | artemisTranslate"
                 />
 
-                @if (
-                    form.controls.endDate?.value &&
-                    form.controls.startDate?.value &&
-                    (form.controls.endDate?.value | artemisDate: 'short-date' : false : timeZone) <= (form.controls.startDate?.value | artemisDate: 'short-date' : false : timeZone)
-                ) {
+                @if (!isStartBeforeEnd) {
                     <div class="alert alert-danger" jhiTranslate="artemisApp.forms.tutorialFreePeriodForm.dateInput.invalidEndDateError"></div>
                 }
             } @else if (timeFrame === TimeFrame.PeriodWithinDay) {
