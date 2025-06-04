@@ -69,7 +69,6 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentP
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTriggerService;
-import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCGitBranchService;
 
 // TODO: this class has too many dependencies to other services. We should reduce this
 @Profile(PROFILE_CORE)
@@ -77,8 +76,6 @@ import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCGitBranchServic
 public class ProgrammingSubmissionService extends SubmissionService {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingSubmissionService.class);
-
-    private final Optional<LocalVCGitBranchService> localVCGitBranchService;
 
     @Value("${artemis.git.name}")
     private String artemisGitName;
@@ -114,8 +111,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
             ExerciseDateService exerciseDateService, CourseRepository courseRepository, ParticipationRepository participationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ComplaintRepository complaintRepository,
             ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService, ParticipationAuthorizationCheckService participationAuthCheckService,
-            FeedbackService feedbackService, SubmissionPolicyRepository submissionPolicyRepository, Optional<AthenaApi> athenaApi,
-            Optional<LocalVCGitBranchService> localVCGitBranchService) {
+            FeedbackService feedbackService, SubmissionPolicyRepository submissionPolicyRepository, Optional<AthenaApi> athenaApi) {
         super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository, examDateApi,
                 exerciseDateService, courseRepository, participationRepository, complaintRepository, feedbackService, athenaApi);
         this.programmingSubmissionRepository = programmingSubmissionRepository;
@@ -128,7 +124,6 @@ public class ProgrammingSubmissionService extends SubmissionService {
         this.programmingExerciseGitDiffReportService = programmingExerciseGitDiffReportService;
         this.participationAuthCheckService = participationAuthCheckService;
         this.submissionPolicyRepository = submissionPolicyRepository;
-        this.localVCGitBranchService = localVCGitBranchService;
     }
 
     /**
@@ -151,7 +146,9 @@ public class ProgrammingSubmissionService extends SubmissionService {
         log.info("processNewProgrammingSubmission invoked due to the commit {} by {} with {} in branch {}", commit.commitHash(), commit.authorName(), commit.authorEmail(),
                 commit.branch());
 
-        String branch = localVCGitBranchService.orElseThrow().getOrRetrieveBranchOfParticipation(participation);
+        String branch = participation instanceof ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation
+                ? programmingExerciseStudentParticipation.getBranch()
+                : programmingExerciseRepository.findBranchByExerciseId(participation.getExercise().getId());
         if (commit.branch() != null && !commit.branch().equalsIgnoreCase(branch)) {
             // if the commit was made in a branch different from the default, ignore this
             throw new VersionControlException(

@@ -54,7 +54,6 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobPermissionsService;
-import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCGitBranchService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCService;
 
 // TODO: rewrite this test to use LocalVC
@@ -76,9 +75,6 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTest extends Abstra
 
     @MockitoSpyBean
     protected LocalVCService versionControlService;
-
-    @MockitoSpyBean
-    protected LocalVCGitBranchService localVCGitBranchService;
 
     @MockitoSpyBean
     protected JenkinsJobPermissionsService jenkinsJobPermissionsService;
