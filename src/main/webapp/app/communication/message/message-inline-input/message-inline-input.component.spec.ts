@@ -39,7 +39,6 @@ describe('MessageInlineInputComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: AccountService, useClass: MockAccountService },
-                DraftService,
             ],
         })
             .compileComponents()
