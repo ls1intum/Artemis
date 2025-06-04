@@ -72,7 +72,7 @@ export async function processRepositoryDiff(originalFileContentByPath: Map<strin
 
 /**
  * Gets the diff information for a given template and solution file content.
- * It also handles renamed files and ignores .gitignore patterns.
+ * It also handles renamed files.
  * @param originalFileContentByPath The template file content by path
  * @param modifiedFileContentByPath The solution file content by path
  * @returns The diff information
