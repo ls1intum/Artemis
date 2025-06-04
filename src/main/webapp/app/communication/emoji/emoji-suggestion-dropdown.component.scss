@@ -23,5 +23,19 @@
 }
 
 .emoji-suggestion-item {
+    display: flex;
+    align-items: center;
+    padding: 1px 0;
+    cursor: pointer;
     border-radius: 4px;
+}
+
+.emoji-icon {
+    font-size: 1.1em;
+    width: 1.7em;
+}
+
+.emoji-name {
+    margin-left: 0.4em;
+    font-size: 0.93em;
 }
