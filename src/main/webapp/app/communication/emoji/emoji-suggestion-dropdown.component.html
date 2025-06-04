@@ -7,9 +7,9 @@
                 (mousedown)="onSelect.emit(s)"
                 (mouseenter)="activeIndex = i"
                 (mouseleave)="activeIndex = -1"
+                [attr.aria-selected]="i === activeIndex"
                 style="display: flex; align-items: center; padding: 1px 0; cursor: pointer"
                 role="option"
-                [aria-selected]="i === activeIndex"
             >
                 <span style="font-size: 1.1em; width: 1.7em">{{ s.emoji }}</span>
                 <span style="margin-left: 0.4em; font-size: 0.93em">:{{ s.name }}:</span>
