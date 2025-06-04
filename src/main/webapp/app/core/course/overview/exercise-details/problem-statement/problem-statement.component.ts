@@ -46,7 +46,7 @@ export class ProblemStatementComponent implements OnInit {
         });
         // Check whether problem statement is displayed standalone (mobile apps)
         this.route.url.subscribe((segments) => {
-            this.isStandalone = segments.some(segment => segment.path == "problem-statement");
+            this.isStandalone = segments.some((segment) => segment.path == 'problem-statement');
         });
     }
 
