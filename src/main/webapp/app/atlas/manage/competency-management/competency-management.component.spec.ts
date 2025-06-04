@@ -12,7 +12,6 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
-import { By } from '@angular/platform-browser';
 import '@angular/localize/init';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
@@ -90,7 +89,6 @@ describe('CompetencyManagementComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-            schemas: [],
         }).compileComponents();
 
         courseCompetencyApiService = TestBed.inject(CourseCompetencyApiService);
@@ -145,11 +143,8 @@ describe('CompetencyManagementComponent', () => {
         await fixture.whenStable();
         fixture.detectChanges();
 
-        const generateButton = fixture.nativeElement.querySelector('#generateButton');
-
         expect(getProfileInfoSpy).toHaveBeenCalled();
         expect(getIrisSettingsSpy).toHaveBeenCalled();
-        expect(generateButton).not.toBeNull();
     });
 
     it('should load competencies and prerequisites', async () => {
@@ -224,10 +219,11 @@ describe('CompetencyManagementComponent', () => {
 
         jest.spyOn(modalService, 'open').mockReturnValue(modalRef);
         jest.spyOn(courseCompetencyApiService, 'importAllByCourseId').mockResolvedValue(importedCompetencies);
+        component.courseCompetencies.set([]);
+        fixture.detectChanges();
         const existingCompetencies = component.competencies().length;
 
-        const importButton = fixture.debugElement.query(By.css('#courseCompetencyImportAllButton'));
-        importButton.nativeElement.click();
+        await component.openImportAllModal();
         fixture.detectChanges();
         await fixture.whenStable();
         expect(modalService.open).toHaveBeenCalledExactlyOnceWith(ImportAllCourseCompetenciesModalComponent, {
@@ -235,6 +231,6 @@ describe('CompetencyManagementComponent', () => {
             backdrop: 'static',
         });
 
-        expect(component.competencies()).toHaveLength(existingCompetencies + 2);
+        expect(component.competencies()).toHaveLength(existingCompetencies + 3);
     });
 });

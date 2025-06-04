@@ -77,9 +77,9 @@ describe('IrisChatService', () => {
     it('should change to tutor chat and start new session', fakeAsync(() => {
         const httpStub = jest.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithEmptyConversation));
         const wsStub = jest.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
-        service.switchTo(ChatServiceMode.EXERCISE, id);
+        service.switchTo(ChatServiceMode.PROGRAMMING_EXERCISE, id);
 
-        expect(httpStub).toHaveBeenCalledWith(ChatServiceMode.EXERCISE + '/' + id);
+        expect(httpStub).toHaveBeenCalledWith(ChatServiceMode.PROGRAMMING_EXERCISE + '/' + id);
         expect(wsStub).toHaveBeenCalledWith(id);
     }));
 
@@ -205,7 +205,7 @@ describe('IrisChatService', () => {
     it('should handle websocket status message', fakeAsync(() => {
         jest.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
         jest.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of(mockWebsocketStatusMessage));
-        service.switchTo(ChatServiceMode.EXERCISE, id);
+        service.switchTo(ChatServiceMode.PROGRAMMING_EXERCISE, id);
 
         service.currentStages().subscribe((stages) => {
             expect(stages).toEqual(mockWebsocketStatusMessage.stages);
@@ -217,12 +217,44 @@ describe('IrisChatService', () => {
         jest.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
         jest.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of(mockWebsocketServerMessage));
         const message = mockServerMessage2;
-        service.switchTo(ChatServiceMode.EXERCISE, id);
+        service.switchTo(ChatServiceMode.PROGRAMMING_EXERCISE, id);
 
         service.currentMessages().subscribe((messages) => {
             expect(messages).toHaveLength(mockConversation.messages!.length + 1);
             expect(messages.last()).toEqual(message);
         });
+        tick();
+    }));
+
+    it('should emit sessionId when set', () => {
+        const expectedId = 456;
+        service.sessionId$.subscribe((id) => {
+            expect(id).toBe(expectedId);
+        });
+        service.sessionId = expectedId;
+    });
+
+    it('should request tutor suggestion if sessionId is set', fakeAsync(() => {
+        service.sessionId = id;
+        const httpStub = jest.spyOn(httpService, 'createTutorSuggestion').mockReturnValueOnce(of());
+
+        service.requestTutorSuggestion().subscribe((res) => {
+            expect(res).toBeUndefined();
+        });
+
+        expect(httpStub).toHaveBeenCalledWith(id);
+        tick();
+    }));
+
+    it('should throw error if sessionId is undefined on tutor suggestion', fakeAsync(() => {
+        service.sessionId = undefined;
+
+        service.requestTutorSuggestion().subscribe({
+            error: (err) => {
+                expect(err.message).toBe('Not initialized');
+            },
+        });
+
         tick();
     }));
 });

@@ -18,9 +18,9 @@ import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscriptionSegment;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
-import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
+import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 
 class PyrisLectureTranscriptionIngestionTest extends AbstractIrisIntegrationTest {
@@ -31,7 +31,7 @@ class PyrisLectureTranscriptionIngestionTest extends AbstractIrisIntegrationTest
     private LectureTranscriptionRepository lectureTranscriptionRepository;
 
     @Autowired
-    private LectureRepository lectureRepository;
+    private LectureTestRepository lectureRepository;
 
     @Autowired
     private UserUtilService userUtilService;
@@ -53,7 +53,7 @@ class PyrisLectureTranscriptionIngestionTest extends AbstractIrisIntegrationTest
 
     private LectureUnit emptyLectureUnit;
 
-    private LectureUnit attachmentUnit;
+    private LectureUnit textUnit;
 
     @BeforeEach
     void initTestCase() throws Exception {
@@ -63,17 +63,16 @@ class PyrisLectureTranscriptionIngestionTest extends AbstractIrisIntegrationTest
         this.lecture1 = course1.getLectures().stream().findFirst().orElseThrow();
         this.lecture1.setTitle("Lecture " + lecture1.getId()); // needed for search by title
         this.lecture1 = lectureRepository.save(this.lecture1);
-        this.lectureUnit = lectureUtilService.createVideoUnit();
-        this.emptyLectureUnit = lectureUtilService.createVideoUnit();
-        this.attachmentUnit = lectureUtilService.createAttachmentUnit(false);
-        this.lectureUtilService.addLectureUnitsToLecture(lecture1, List.of(this.lectureUnit, this.emptyLectureUnit, this.attachmentUnit));
+        this.lectureUnit = lectureUtilService.createAttachmentVideoUnit(true);
+        this.emptyLectureUnit = lectureUtilService.createAttachmentVideoUnit(false);
+        this.textUnit = lectureUtilService.createTextUnit();
+        this.lectureUtilService.addLectureUnitsToLecture(lecture1, List.of(this.lectureUnit, this.emptyLectureUnit, this.textUnit));
 
         Course course2 = this.courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(courses.getLast().getId());
         this.lecture2 = new Lecture();
         this.lecture2.setTitle("Lecture 2" + lecture2.getId());
         this.lecture2.setCourse(course2);
         this.lecture2 = lectureRepository.save(this.lecture2);
-
         // Add users that are not in the course
         userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
         userUtilService.createAndSaveUser(TEST_PREFIX + "tutor42");
@@ -83,7 +82,7 @@ class PyrisLectureTranscriptionIngestionTest extends AbstractIrisIntegrationTest
         LectureTranscriptionSegment segment2 = new LectureTranscriptionSegment(0.0, 12.0, "Today we will talk about Artemis", 1);
         LectureTranscription transcription = new LectureTranscription("en", List.of(new LectureTranscriptionSegment[] { segment1, segment2 }), this.lectureUnit);
 
-        LectureTranscription transcriptionAttachmentUnit = new LectureTranscription("en", List.of(), this.attachmentUnit);
+        LectureTranscription transcriptionAttachmentUnit = new LectureTranscription("en", List.of(), this.lectureUnit);
         lectureTranscriptionRepository.save(transcription);
     }
 
@@ -121,9 +120,9 @@ class PyrisLectureTranscriptionIngestionTest extends AbstractIrisIntegrationTest
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testIngestTranscriptionWithAttachmentUnit() throws Exception {
+    void testIngestTranscriptionWithTextUnit() throws Exception {
         activateIrisFor(lecture1.getCourse());
-        request.put("/api/lecture/" + lecture1.getId() + "/lecture-unit/" + attachmentUnit.getId() + "/ingest-transcription", Optional.empty(), HttpStatus.BAD_REQUEST);
+        request.put("/api/lecture/" + lecture1.getId() + "/lecture-unit/" + textUnit.getId() + "/ingest-transcription", Optional.empty(), HttpStatus.BAD_REQUEST);
     }
 
     @Test

@@ -35,7 +35,7 @@ export class AboutUsComponent implements OnInit {
         ['exercises.programming', { programmingUrl: 'https://docs.artemis.cit.tum.de/user/exercises/programming/' }],
         ['exercises.quiz', { quizUrl: 'https://docs.artemis.cit.tum.de/user/exercises/quiz/' }],
         ['exercises.modeling', { modelingUrl: 'https://docs.artemis.cit.tum.de/user/exercises/modeling/', apollonUrl: 'https://apollon.ase.in.tum.de/' }],
-        ['exercises.text', { textUrl: 'https://docs.artemis.cit.tum.de/user/exercises/textual/', athenaUrl: 'https://github.com/ls1intum/Athena' }],
+        ['exercises.text', { textUrl: 'https://docs.artemis.cit.tum.de/user/exercises/textual/', athenaUrl: 'https://github.com/ls1intum/edutelligence/tree/main/athena' }],
         ['exercises.fileUpload', { fileUploadUrl: 'https://docs.artemis.cit.tum.de/user/exercises/file-upload/' }],
         ['exam', { examModeUrl: 'https://docs.artemis.cit.tum.de/user/exam_mode/', studentFeatureUrl: '/features/students', instructorFeatureUrl: '/features/instructors' }],
         ['grading', { gradingUrl: 'https://docs.artemis.cit.tum.de/user/grading/' }],

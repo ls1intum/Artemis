@@ -28,6 +28,7 @@ import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
@@ -37,6 +38,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider;
 import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
 import de.tum.cit.aet.artemis.programming.domain.AeolusTarget;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -81,6 +83,9 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
 
     private Competency competency;
 
+    @Value("${artemis.repo-clone-path}")
+    private String repoClonePath;
+
     @Autowired
     private ProgrammingExerciseTestService programmingExerciseTestService;
 
@@ -102,7 +107,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
 
         course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         String projectKey = programmingExercise.getProjectKey();
         programmingExercise.setProjectType(ProjectType.PLAIN_GRADLE);
         programmingExercise.setTestRepositoryUri(localVCBaseUrl + "/git/" + projectKey + "/" + projectKey.toLowerCase() + "-tests.git");
@@ -140,7 +145,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         competency = competencyUtilService.createCompetency(course);
 
         programmingExerciseTestService.setupTestUsers(TEST_PREFIX, 0, 0, 0, 0);
-        programmingExerciseTestService.setup(this, versionControlService, localVCGitBranchService);
+        programmingExerciseTestService.setup(this, versionControlService);
     }
 
     @Override
@@ -391,7 +396,6 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         assertThat(importedExercise.getProgrammingLanguage()).isEqualTo(importResult.parsedExercise().getProgrammingLanguage());
         assertThat(importedExercise.getCourseViaExerciseGroupOrCourseMember()).isEqualTo(course);
 
-        String repoClonePath = System.getProperty("artemis.repo-clone-path", "repos");
         String projectKey = importResult.parsedExercise().getProjectKey();
         Path exercisePath = Path.of(repoClonePath, projectKey);
         int newTitleCount = programmingExerciseImportTestService.countOccurrencesInDirectory(exercisePath, newTitle);

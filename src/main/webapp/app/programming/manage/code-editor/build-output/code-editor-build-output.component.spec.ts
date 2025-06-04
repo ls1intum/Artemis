@@ -112,7 +112,8 @@ describe('CodeEditorBuildOutputComponent', () => {
 
     it('should setup result websocket, fetch result details and build logs on participation change', () => {
         const result = { id: 1 };
-        const participation = { id: 1, results: [result] } as Participation;
+        const submission = { id: 1, results: [result] };
+        const participation = { id: 1, submissions: [submission] } as Participation;
 
         subscribeForLatestResultOfParticipationStub.mockReturnValue(of(null));
         getFeedbackDetailsForResultStub.mockReturnValue(of({ body: [] }));
@@ -156,10 +157,10 @@ describe('CodeEditorBuildOutputComponent', () => {
     });
 
     it('should not retrieve build logs after participation change, if submission could be built', () => {
-        const submission = { id: 1, buildFailed: false } as ProgrammingSubmission;
         const result = { id: 1, successful: true } as Result;
+        const submission = { id: 1, buildFailed: false, results: [result] } as ProgrammingSubmission;
         result.submission = submission;
-        const participation = { id: 1, results: [result] } as Participation;
+        const participation = { id: 1, submissions: [submission] } as Participation;
         comp.participation = participation;
         subscribeForLatestResultOfParticipationStub.mockReturnValue(of(null));
         getFeedbackDetailsForResultStub.mockReturnValue(of({ ...result, feedbacks: [] }));
@@ -234,7 +235,9 @@ describe('CodeEditorBuildOutputComponent', () => {
         const submission = { id: 1, buildFailed: false } as ProgrammingSubmission;
         const result = { id: 1, successful: true } as Result;
         result.submission = submission;
-        const participation = { id: 1, results: [result] } as Participation;
+        const participation = { id: 1, submissions: [submission] } as Participation;
+        submission.participation = participation;
+        submission.results = [result];
         comp.participation = participation;
         const feedback = {
             id: 1,

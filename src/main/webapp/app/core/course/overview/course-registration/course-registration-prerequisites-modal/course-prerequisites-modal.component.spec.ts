@@ -34,7 +34,6 @@ describe('CoursePrerequisitesModal', () => {
                 },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
-            schemas: [],
         })
             .compileComponents()
             .then(() => {
