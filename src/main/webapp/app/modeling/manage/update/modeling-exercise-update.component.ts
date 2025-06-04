@@ -149,7 +149,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
      * Triggers {@link calculateFormSectionStatus} whenever a relevant signal changes
      */
     private updateFormSectionsOnIsValidChange() {
-        this.exerciseTitleChannelNameComponent.titleChannelNameComponent.isValid();
+        this.exerciseTitleChannelNameComponent.titleChannelNameComponent()?.isValid();
 
         this.calculateFormSectionStatus().then();
     }
@@ -241,7 +241,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
         this.formSectionStatus = [
             {
                 title: 'artemisApp.exercise.sections.general',
-                valid: Boolean(this.exerciseTitleChannelNameComponent?.titleChannelNameComponent.isValid()),
+                valid: Boolean(this.exerciseTitleChannelNameComponent?.titleChannelNameComponent()?.isValid()),
             },
             { title: 'artemisApp.exercise.sections.mode', valid: Boolean(this.teamConfigFormGroupComponent?.formValid) },
             { title: 'artemisApp.exercise.sections.problem', valid: true, empty: !this.modelingExercise.problemStatement },

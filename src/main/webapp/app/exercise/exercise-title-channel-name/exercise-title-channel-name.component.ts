@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, SimpleChanges, ViewChild, effect, inject, input, output, signal } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { Course, isCommunicationEnabled } from 'app/core/course/shared/entities/course.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
@@ -22,7 +22,11 @@ export class ExerciseTitleChannelNameComponent implements OnChanges {
     @Input() isImport: boolean;
     @Input() hideTitleLabel: boolean;
 
-    @ViewChild(TitleChannelNameComponent) titleChannelNameComponent: TitleChannelNameComponent;
+    // readonly content = viewChild<ElementRef>('itemsContainer');
+
+    // @ViewChild(TitleChannelNameComponent)
+
+    readonly titleChannelNameComponent = viewChild<TitleChannelNameComponent>('titleChannelNameComponent');
 
     onTitleChange = output<string>();
     onChannelNameChange = output<string>();

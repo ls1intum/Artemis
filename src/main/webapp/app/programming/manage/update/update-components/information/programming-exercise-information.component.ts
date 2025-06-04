@@ -148,7 +148,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     }
 
     private updateFormStatus(): void {
-        this.exerciseTitleChannelComponent()?.titleChannelNameComponent?.isValid(); // triggers effect
+        this.exerciseTitleChannelComponent()?.titleChannelNameComponent()?.isValid(); // triggers effect
 
         this.calculateFormValid();
     }
@@ -185,7 +185,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
             fields.toArray().forEach((field) => this.inputFieldSubscriptions.push(field.editingInput.valueChanges?.subscribe(() => this.calculateFormValid())));
         });
 
-        this.titleComponent?.titleChannelNameComponent?.field_title?.valueChanges?.subscribe((newTitle: string) => {
+        this.titleComponent?.titleChannelNameComponent()?.field_title?.valueChanges?.subscribe((newTitle: string) => {
             if (this.isSimpleMode()) {
                 this.updateShortName(newTitle);
             }
@@ -207,7 +207,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
         const areAuxiliaryRepositoriesValid = this.areAuxiliaryRepositoriesValid();
         const areCheckoutPathsValid = this.areCheckoutPathsValid();
         this.formValid = Boolean(
-            this.exerciseTitleChannelComponent()?.titleChannelNameComponent?.isValid() &&
+            this.exerciseTitleChannelComponent()?.titleChannelNameComponent()?.isValid() &&
                 this.getIsShortNameFieldValid() &&
                 isCheckoutSolutionRepositoryValid &&
                 isRecreateBuildPlansValid &&
