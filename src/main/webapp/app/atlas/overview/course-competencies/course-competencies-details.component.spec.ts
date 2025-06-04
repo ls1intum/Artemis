@@ -87,7 +87,6 @@ describe('CourseCompetenciesDetails', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 MockProvider(ScienceService),
             ],
-            schemas: [],
         })
             .compileComponents()
             .then(() => {

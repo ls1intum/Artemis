@@ -89,8 +89,6 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
                 any());
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(eq(testRepoUri), eq(false),
                 any());
-
-        doReturn(defaultBranch).when(localVCGitBranchService).getOrRetrieveBranchOfExercise(programmingExercise);
     }
 
     @AfterEach
