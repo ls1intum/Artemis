@@ -5,6 +5,8 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.util.List;
 import java.util.Optional;
 
+import jakarta.annotation.PostConstruct;
+
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -37,6 +39,7 @@ import de.tum.cit.aet.artemis.core.security.DomainUserDetailsService;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.filter.SpaWebFilter;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTConfigurer;
+import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 import de.tum.cit.aet.artemis.core.security.passkey.ArtemisPasskeyWebAuthnConfigurer;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
@@ -55,23 +58,46 @@ public class SecurityConfiguration {
 
     private final ArtemisPasskeyWebAuthnConfigurer passkeyWebAuthnConfigurer;
 
+    private final JWTCookieService jwtCookieService;
+
     private final PasswordService passwordService;
 
     private final ProfileService profileService;
 
     private final TokenProvider tokenProvider;
 
+    @Value("${artemis.user-management.passkey.token-validity-in-seconds-for-passkey:15552000}")
+    private long tokenValidityInSecondsForPasskey;
+
+    @Value("${" + Constants.PASSKEY_ENABLED_PROPERTY_NAME + ":false}")
+    private boolean passkeyEnabled;
+
     @Value("#{'${spring.prometheus.monitoringIp:127.0.0.1}'.split(',')}")
     private List<String> monitoringIpAddresses;
 
+    /**
+     * Validates the configuration of the validity duration of passkey generated jwts
+     *
+     * @throws IllegalStateException if the server URL configuration is invalid
+     */
+    @PostConstruct
+    public void validatePasskeyJwtValidityConfiguration() {
+        if (passkeyEnabled) {
+            if (tokenValidityInSecondsForPasskey <= 0) {
+                throw new IllegalStateException("Token validity in seconds for passkey must be greater than 0 when passkey authentication is enabled.");
+            }
+        }
+    }
+
     public SecurityConfiguration(CorsFilter corsFilter, Optional<CustomLti13Configurer> customLti13Configurer, ArtemisPasskeyWebAuthnConfigurer passkeyWebAuthnConfigurer,
-            PasswordService passwordService, ProfileService profileService, TokenProvider tokenProvider) {
+            PasswordService passwordService, ProfileService profileService, TokenProvider tokenProvider, JWTCookieService jwtCookieService) {
         this.corsFilter = corsFilter;
         this.customLti13Configurer = customLti13Configurer;
         this.passkeyWebAuthnConfigurer = passkeyWebAuthnConfigurer;
         this.passwordService = passwordService;
         this.profileService = profileService;
         this.tokenProvider = tokenProvider;
+        this.jwtCookieService = jwtCookieService;
     }
 
     /**
@@ -250,6 +276,6 @@ public class SecurityConfiguration {
      * @return JWTConfigurer configured with a token provider that generates and validates JWT tokens.
      */
     private JWTConfigurer securityConfigurerAdapter() {
-        return new JWTConfigurer(tokenProvider);
+        return new JWTConfigurer(tokenProvider, jwtCookieService, tokenValidityInSecondsForPasskey);
     }
 }

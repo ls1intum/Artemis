@@ -22,7 +22,7 @@ export enum CourseOverviewRoutePath {
     COMMUNICATION = 'communication',
     SETTINGS = 'settings',
     PRACTICE = 'practice',
-    PRACTICE_QUIZ = 'quiz',
+    PRACTICE_QUIZ = 'practice/quiz',
 }
 
 export const routes: Routes = [

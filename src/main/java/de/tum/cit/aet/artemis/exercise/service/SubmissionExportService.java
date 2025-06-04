@@ -30,6 +30,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.ArchivalReportEntry;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ZipFileService;
+import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -168,7 +169,7 @@ public abstract class SubmissionExportService {
 
         // Create unique name for directory
         String zipGroupName = course.getShortName() + "-" + exercise.getTitle() + "-" + exercise.getId();
-        String cleanZipGroupName = FileService.sanitizeFilename(zipGroupName);
+        String cleanZipGroupName = FileUtil.sanitizeFilename(zipGroupName);
         String zipFileName = cleanZipGroupName + "-" + ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss")) + ".zip";
 
         // Create directory
@@ -205,7 +206,7 @@ public abstract class SubmissionExportService {
 
         // Add report entry
         reportData.add(
-                new ArchivalReportEntry(exercise, FileService.sanitizeFilename(exercise.getTitle()), participations.size(), submissionFilePaths.size(), skippedEntries.intValue()));
+                new ArchivalReportEntry(exercise, FileUtil.sanitizeFilename(exercise.getTitle()), participations.size(), submissionFilePaths.size(), skippedEntries.intValue()));
 
         if (submissionFilePaths.isEmpty()) {
             return List.of();
@@ -223,7 +224,7 @@ public abstract class SubmissionExportService {
             }
             finally {
                 log.debug("Delete all temporary files");
-                fileService.deleteFiles(submissionFilePaths);
+                FileUtil.deleteFiles(submissionFilePaths);
             }
         }
         else {

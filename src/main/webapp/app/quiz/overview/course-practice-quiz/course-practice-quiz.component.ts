@@ -1,7 +1,6 @@
-import { Component, Input, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Subscription, combineLatest, of } from 'rxjs';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import { CoursePracticeQuizService } from 'app/quiz/overview/service/course-practice-quiz.service';
@@ -12,6 +11,8 @@ import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
 import { ShortAnswerSubmittedText } from 'app/quiz/shared/entities/short-answer-submitted-text.model';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { EMPTY } from 'rxjs';
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { MultipleChoiceSubmittedAnswer } from 'app/quiz/shared/entities/multiple-choice-submitted-answer.model';
 import { QuizParticipationService } from 'app/quiz/overview/service/quiz-participation.service';
@@ -24,11 +25,8 @@ import { round } from 'app/shared/util/utils';
     selector: 'jhi-course-practice-quiz',
     imports: [MultipleChoiceQuestionComponent, ShortAnswerQuestionComponent, DragAndDropQuestionComponent, ButtonComponent],
     templateUrl: './course-practice-quiz.component.html',
-    styleUrl: './course-practice-quiz.component.scss',
 })
-export class CoursePracticeQuizComponent implements OnInit, OnDestroy {
-    @Input() questions: QuizQuestion[] = [];
-
+export class CoursePracticeQuizComponent {
     readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
     readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
     readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
@@ -36,13 +34,17 @@ export class CoursePracticeQuizComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);
     private router = inject(Router);
     private quizService = inject(CoursePracticeQuizService);
-    private subscription: Subscription;
+
+    currentIndex = signal(0);
     private quizParticipationService = inject(QuizParticipationService);
     private alertService = inject(AlertService);
 
-    courseId: number;
-    currentIndex = 0;
-    currentQuestion: QuizQuestion;
+    // Reactive chain for loading quiz questions based on the current route
+    paramsSignal = toSignal(this.route.parent?.params ?? EMPTY);
+    courseId = computed(() => this.paramsSignal()?.['courseId']);
+    questionsSignal = toSignal(this.quizService.getQuizQuestions(this.courseId()) ?? EMPTY, { initialValue: [] });
+    questions = computed(() => this.questionsSignal());
+
     submission = new QuizSubmission();
     isSubmitting = false;
     result: Result;
@@ -55,62 +57,37 @@ export class CoursePracticeQuizComponent implements OnInit, OnDestroy {
     dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
     shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
 
-    ngOnInit(): void {
-        this.subscription = combineLatest([this.route.parent?.params ?? of({ courseId: undefined, course: undefined })]).subscribe(([params]) => {
-            this.courseId = params['courseId'];
-            this.loadQuestions(this.courseId);
-        });
-    }
-
-    ngOnDestroy(): void {
-        if (this.subscription) {
-            this.subscription.unsubscribe();
+    /**
+     * checks if the current question is the last question
+     */
+    isLastQuestion = computed(() => {
+        if (this.questions().length === 0) {
+            return true;
         }
-    }
+        return this.currentIndex() === this.questions().length - 1;
+    });
+
+    /**
+     * gets the current question
+     */
+    currentQuestion = computed(() => {
+        if (this.questions().length === 0) {
+            return undefined;
+        }
+        return this.questions()[this.currentIndex()];
+    });
 
     /**
      * increments the current question index or navigates to the course practice page if the last question is reached
      */
     nextQuestion(): void {
-        this.submitted = false;
-        if (this.isLastQuestion) {
+        if (this.isLastQuestion()) {
+            this.submitted = false;
             this.navigateToPractice();
         } else {
-            this.currentIndex++;
-            this.currentQuestion = this.questions[this.currentIndex];
-            this.initQuestion(this.currentQuestion);
+            this.currentIndex.set(this.currentIndex() + 1);
+            this.initQuestion(this.currentQuestion()!);
         }
-    }
-
-    /**
-     * checks if the current question is the last question
-     */
-    get isLastQuestion(): boolean {
-        if (this.questions.length === 0) {
-            return true;
-        }
-        return this.currentIndex === this.questions.length - 1;
-    }
-
-    /**
-     * loads the quiz questions for the given course
-     * @param courseId
-     */
-    loadQuestions(courseId: number): void {
-        this.quizService.getQuizQuestions(courseId).subscribe((questions) => {
-            this.startQuiz(questions);
-        });
-    }
-
-    /**
-     * Initializes the quiz with the given questions
-     * @param questions
-     */
-    startQuiz(questions: QuizQuestion[]): void {
-        this.questions = questions;
-        this.currentIndex = 0;
-        this.currentQuestion = this.questions[this.currentIndex];
-        this.initQuestion(this.currentQuestion);
     }
 
     /**
@@ -143,8 +120,8 @@ export class CoursePracticeQuizComponent implements OnInit, OnDestroy {
 
     applySelection() {
         this.submission.submittedAnswers = [];
-        const questionId = this.currentQuestion.id!;
-        const question = this.questions.find((q) => q.id === questionId);
+        const questionId = this.currentQuestion()!.id!;
+        const question = this.questions().find((q) => q.id === questionId);
 
         if (!question) {
             return;
@@ -182,7 +159,7 @@ export class CoursePracticeQuizComponent implements OnInit, OnDestroy {
         this.applySelection();
         this.isSubmitting = true;
         this.submitted = true;
-        this.quizParticipationService.submitForPractice(this.submission, this.currentQuestion.exerciseId!).subscribe({
+        this.quizParticipationService.submitForPractice(this.submission, this.currentQuestion()!.exerciseId!).subscribe({
             next: (response: HttpResponse<Result>) => {
                 this.onSubmitSuccess(response.body!);
             },
@@ -226,7 +203,7 @@ export class CoursePracticeQuizComponent implements OnInit, OnDestroy {
 
         if (this.questions) {
             // iterate through all questions of this quiz
-            this.questions.forEach((question) => {
+            this.questions().forEach((question) => {
                 // find the submitted answer that belongs to this question, only when submitted answers already exist
                 const submittedAnswer = this.submission.submittedAnswers?.find((answer) => {
                     return answer.quizQuestion!.id === question.id;
@@ -275,6 +252,6 @@ export class CoursePracticeQuizComponent implements OnInit, OnDestroy {
      * navigates to the course practice page
      */
     navigateToPractice(): void {
-        this.router.navigate(['courses', this.courseId, 'practice']);
+        this.router.navigate(['courses', this.courseId(), 'practice']);
     }
 }

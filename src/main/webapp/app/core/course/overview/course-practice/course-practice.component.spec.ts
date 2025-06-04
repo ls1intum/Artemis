@@ -15,7 +15,9 @@ describe('CoursePracticeComponent', () => {
             .provide({
                 provide: ActivatedRoute,
                 useValue: {
-                    parent: { params: of({ courseId: 1 }) },
+                    parent: {
+                        params: of({ courseId: 1 }),
+                    },
                 },
             });
 
@@ -24,18 +26,18 @@ describe('CoursePracticeComponent', () => {
         fixture.detectChanges();
     });
 
-    it('should create', () => {
-        expect(component).toBeTruthy();
+    afterEach(() => {
+        jest.clearAllMocks();
     });
 
-    it('should initiate', () => {
-        expect(component.courseId).toBe(1);
+    it('should extract courseId from route params', () => {
+        expect(component.courseId()).toBe(1);
     });
 
     it('should navigate to quiz', () => {
         const router = TestBed.inject(Router);
         const navigateSpy = jest.spyOn(router, 'navigate');
         component.navigateToPractice();
-        expect(navigateSpy).toHaveBeenCalledWith(['courses', 1, 'quiz']);
+        expect(navigateSpy).toHaveBeenCalledWith(['courses', 1, 'practice', 'quiz']);
     });
 });

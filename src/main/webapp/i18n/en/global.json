@@ -201,6 +201,7 @@
     "entity": {
         "actions": "Actions",
         "quickActions": "Quick Actions",
+        "controlCenter": "Control Center",
         "action": {
             "add": "Add",
             "addblob": "Add blob",

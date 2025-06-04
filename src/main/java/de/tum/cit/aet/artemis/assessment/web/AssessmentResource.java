@@ -116,7 +116,7 @@ public abstract class AssessmentResource {
 
         Result result = assessmentService.saveAndSubmitManualAssessment(exercise, submission, feedbackList, resultId, assessmentNote, submit);
 
-        var participation = result.getParticipation();
+        var participation = result.getSubmission().getParticipation();
         // remove information about the student for tutors to ensure double-blind assessment
         if (!isAtLeastInstructor) {
             participation.filterSensitiveInformation();

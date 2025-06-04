@@ -19,11 +19,13 @@ import { CourseExercisePerformanceComponent } from 'app/core/course/overview/cou
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
+import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
 
 describe('CourseDashboardComponent', () => {
     let component: CourseDashboardComponent;
     let fixture: ComponentFixture<CourseDashboardComponent>;
     let debugElement: DebugElement;
+    let courseStorageService: CourseStorageService;
 
     beforeEach(waitForAsync(() => {
         TestBed.configureTestingModule({
@@ -45,6 +47,13 @@ describe('CourseDashboardComponent', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: ProfileService, useClass: MockProfileService },
+                {
+                    provide: CourseStorageService,
+                    useValue: {
+                        getCourse: () => ({ id: 123, studentCourseAnalyticsDashboardEnabled: true, irisCourseChatEnabled: true, learningPathsEnabled: true }),
+                        subscribeToCourseUpdates: () => ({ subscribe: jest.fn() }),
+                    },
+                },
             ],
         }).compileComponents();
     }));
@@ -53,11 +62,12 @@ describe('CourseDashboardComponent', () => {
         fixture = TestBed.createComponent(CourseDashboardComponent);
         component = fixture.componentInstance;
         debugElement = fixture.debugElement;
+        courseStorageService = TestBed.inject(CourseStorageService);
         fixture.detectChanges();
+        component.isLoading = false;
     });
 
     it('should display chatbot when iris is enabled', () => {
-        component.irisEnabled = true;
         fixture.detectChanges();
 
         const chatContainer = debugElement.query(By.css('.chat-container'));
@@ -73,7 +83,6 @@ describe('CourseDashboardComponent', () => {
     });
 
     it('should show learning paths button if course has learningPathsEnabled', () => {
-        component.course = { learningPathsEnabled: true };
         component.atlasEnabled = true;
         fixture.detectChanges();
 
@@ -83,7 +92,6 @@ describe('CourseDashboardComponent', () => {
     });
 
     it('should navigate to learning paths when button is clicked', () => {
-        component.course = { learningPathsEnabled: true };
         component.atlasEnabled = true;
         fixture.detectChanges();
 
@@ -109,5 +117,28 @@ describe('CourseDashboardComponent', () => {
 
         const noDataMessage = debugElement.query(By.css('[jhiTranslate="artemisApp.studentAnalyticsDashboard.competencyAccordion.noData"]'));
         expect(noDataMessage).toBeTruthy();
+    });
+
+    it('should not load course metrics when studentCourseAnalyticsDashboardEnabled is false', () => {
+        const metricsSpy = jest.spyOn(component, 'loadMetrics');
+        jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({
+            id: 456,
+            studentCourseAnalyticsDashboardEnabled: false,
+            irisCourseChatEnabled: true,
+            learningPathsEnabled: true,
+        });
+        component.ngOnInit();
+        expect(metricsSpy).not.toHaveBeenCalled();
+    });
+    it('should load course metrics when studentCourseAnalyticsDashboardEnabled is true', () => {
+        const metricsSpy = jest.spyOn(component, 'loadMetrics');
+        jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({
+            id: 456,
+            studentCourseAnalyticsDashboardEnabled: true,
+            irisCourseChatEnabled: true,
+            learningPathsEnabled: true,
+        });
+        component.ngOnInit();
+        expect(metricsSpy).toHaveBeenCalledOnce();
     });
 });
