@@ -1092,7 +1092,7 @@ public class ProgrammingExerciseService {
 
     /**
      * Find a programming exercise by its id, with eagerly loaded template and solution participation,
-     * including the latest result with feedback and test cases.
+     * including their latest submission with the latest result with feedback and test cases.
      * <p>
      * NOTICE: this method is quite expensive because it loads all feedback and test cases,
      * IMPORTANT: you should generally avoid using this query except you really need all information!!

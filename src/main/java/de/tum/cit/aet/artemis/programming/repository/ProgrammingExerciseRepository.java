@@ -152,33 +152,30 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     }
 
     /**
-     * Get a programmingExercise with template participation and submissions
+     * Get a programmingExercise with template participation and the latest submission
      *
      * @param exerciseId the id of the exercise that should be fetched.
      * @return the exercise with the given ID, if found.
      */
     @Query("""
-
-                SELECT DISTINCT pe
-                FROM ProgrammingExercise pe
-                    LEFT JOIN FETCH pe.templateParticipation tp
-                    LEFT JOIN FETCH tp.submissions s
-                WHERE pe.id = :exerciseId
-                  AND (
-                        s.id = (
-                            SELECT MAX(s2.id)
-                            FROM Submission s2
-                            WHERE s2.participation.id = tp.id
-                        )
-                        OR s.id IS NULL
-                      )
+            SELECT DISTINCT pe
+            FROM ProgrammingExercise pe
+                 LEFT JOIN FETCH pe.templateParticipation tp
+                 LEFT JOIN FETCH tp.submissions s
+            WHERE pe.id = :exerciseId
+            AND (
+            s.id = (
+                 SELECT MAX(s2.id)
+                 FROM Submission s2
+                 WHERE s2.participation.id = tp.id
+                    )
+                 OR s.id IS NULL
+                )
             """)
     Optional<ProgrammingExercise> findWithTemplateParticipationAndLatestSubmissionById(@Param("exerciseId") long exerciseId);
 
     /**
-     * Get a programmingExercise with solution participation, each with the latest result and feedbacks.
-     * NOTICE: this query is quite expensive because it loads all feedback and test cases, and it includes sub queries to retrieve the latest result
-     * IMPORTANT: you should generally avoid using this query except you really need all information!!
+     * Get a programmingExercise with solution participation and the latest submission.
      *
      * @param exerciseId the id of the exercise that should be fetched.
      * @return the exercise with the given ID, if found.
@@ -190,10 +187,10 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
                     LEFT JOIN FETCH sp.submissions s
                 WHERE pe.id = :exerciseId
                   AND (
-                        s.id = (
-                            SELECT MAX(s2.id)
-                            FROM Submission s2
-                            WHERE s2.participation.id = sp.id
+                  s.id = (
+                        SELECT MAX(s2.id)
+                        FROM Submission s2
+                        WHERE s2.participation.id = sp.id
                         )
                         OR s.id IS NULL
                       )
