@@ -146,7 +146,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
         });
     }
 
-    private updateFormStatus(): void {
+    private updateFormStatus() {
         this.exerciseTitleChannelComponent()?.titleChannelNameComponent()?.isValid(); // triggers effect
 
         this.calculateFormValid();
@@ -208,7 +208,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
         const areAuxiliaryRepositoriesValid = this.areAuxiliaryRepositoriesValid();
         const areCheckoutPathsValid = this.areCheckoutPathsValid();
         this.formValid = Boolean(
-            this.exerciseTitleChannelComponent()?.titleChannelNameComponent()?.isValid() &&
+            this.exerciseTitleChannelComponent().titleChannelNameComponent().isValid() &&
                 this.getIsShortNameFieldValid() &&
                 isCheckoutSolutionRepositoryValid &&
                 isRecreateBuildPlansValid &&
@@ -231,7 +231,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
 
         const isAuxRepoEditingPossibleInCurrentEditMode = !this.isSimpleMode() || this.isEditFieldDisplayedRecord().addAuxiliaryRepository;
         if (isAuxRepoEditingPossibleInCurrentEditMode) {
-            // if editing is not possible the field will not be displayed and validity checks will evaluate to true,
+            // if editing is not possible, the field will not be displayed and validity checks will evaluate to true,
             // even if the actual current setting is invalid
             this.isAuxiliaryRepositoryInputValid.set(areAuxiliaryRepositoriesValid);
         }

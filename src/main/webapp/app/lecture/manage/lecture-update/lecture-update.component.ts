@@ -174,7 +174,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
         updatedFormStatusSections.push(
             {
                 title: 'artemisApp.lecture.sections.title',
-                valid: Boolean(this.titleSection().titleChannelNameComponent().isValid()),
+                valid: this.titleSection().titleChannelNameComponent().isValid(),
             },
             {
                 title: 'artemisApp.lecture.sections.period',

@@ -95,7 +95,7 @@ export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnIn
     }
 
     updateChannelName() {
-        this.formatChannelName(this.channelNamePrefix() ?? '-' + (this.title() ?? '-'), false, !!this.title());
+        this.formatChannelName(this.channelNamePrefix() ?? '' + (this.title() ?? ''), false, !!this.title());
     }
 
     /**
