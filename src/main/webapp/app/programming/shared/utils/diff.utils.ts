@@ -221,15 +221,25 @@ function calculateStringSimilarity(str1: string, str2: string): number {
     return 1 - matrix[len1][len2] / maxLength;
 }
 
+/**
+ * Checks similarity between CREATED and DELETED files and merges them into a RENAMED file if they are similar enough.
+ *
+ * @param diffInformation Array of file diff information.
+ * @param created Optional list of CREATED file paths.
+ * @param deleted Optional list of DELETED file paths.
+ * @returns Updated array with RENAMED files merged.
+ */
 function mergeRenamedFiles(diffInformation: DiffInformation[], created?: string[], deleted?: string[]): DiffInformation[] {
+    // If created or deleted is not provided, compute it from the diffInformation
     if (!created || !deleted) {
         created = diffInformation.filter((info) => info.fileStatus === FileStatus.CREATED).map((info) => info.modifiedPath);
         deleted = diffInformation.filter((info) => info.fileStatus === FileStatus.DELETED).map((info) => info.originalPath);
     }
 
-    // TODO: Reduce time complexity of this function, currently it is O(n^2)
-    // TODO: Use highest similarity ratio to merge files
-    const SIMILARITY_THRESHOLD = 0.8; // 80% similarity threshold
+    // Possible improvements for algorithm:
+    // - Reduce time complexity of this function, currently it is O(n^2).
+    // - Use highest similarity ratio to merge files. Currently, the first pair of files with similarity above the threshold is merged.
+    const SIMILARITY_THRESHOLD = 0.8; // Similarity threshold for merging files
 
     for (const createdPath of created) {
         const createdFileContent = diffInformation.find((info) => info.modifiedPath === createdPath)?.modifiedFileContent;
