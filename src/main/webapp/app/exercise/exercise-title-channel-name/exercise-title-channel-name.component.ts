@@ -51,14 +51,14 @@ export class ExerciseTitleChannelNameComponent implements OnChanges {
         }
     }
 
-    updateTitle(newTitle: string) {
+    updateTitle(newTitle: string | undefined) {
         this.exercise.title = newTitle;
         this.onTitleChange.emit(newTitle ?? '');
     }
 
-    updateChannelName(newName: string) {
+    updateChannelName(newName: string | undefined) {
         this.exercise.channelName = newName;
-        this.onChannelNameChange.emit(newName);
+        this.onChannelNameChange.emit(newName ?? '');
     }
 
     /**
