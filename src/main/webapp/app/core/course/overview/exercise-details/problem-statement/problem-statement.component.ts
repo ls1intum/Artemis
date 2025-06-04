@@ -23,7 +23,7 @@ export class ProblemStatementComponent implements OnInit {
 
     @Input() public exercise?: Exercise;
     @Input() participation?: StudentParticipation;
-    isStandalone: boolean;
+    isStandalone: boolean = false;
 
     ngOnInit() {
         this.route.params.subscribe((params) => {
@@ -45,7 +45,7 @@ export class ProblemStatementComponent implements OnInit {
             }
         });
         // Check whether problem statement is displayed standalone (mobile apps)
-        let url = this.route.url;
+        const url = this.route.url;
         if (url) {
             url.subscribe((segments) => {
                 this.isStandalone = segments.some((segment) => segment.path == 'problem-statement');
