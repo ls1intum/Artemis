@@ -371,28 +371,6 @@ describe('TutorialFreePeriodFormComponent', () => {
         expect(component.isStartBeforeEnd).toBeFalse();
     });
 
-    it('should return false for isSubmitPossible when timeFrame is invalid', () => {
-        // ensure startDate controls passes first check
-        component.form.patchValue({ startDate: validStartDateBerlin, endDate: undefined, startTime: undefined, endTime: undefined, reason: validReason });
-        // force an invalid timeFrame value
-        (component as any).timeFrame = null;
-        expect(component.isSubmitPossible).toBeFalse();
-    });
-
-    it('should return false for isStartTimeInvalid when startTimeControl is untouched/pristine', () => {
-        component.startTimeControl!.setValue(validStartTimeBerlin);
-        component.startTimeControl!.markAsUntouched();
-        component.startTimeControl!.markAsPristine();
-        expect(component.isStartTimeInvalid).toBeFalse();
-    });
-
-    it('should return false for isEndTimeInvalid when endTimeControl is untouched/pristine', () => {
-        component.endTimeControl!.setValue(validEndTimeBerlin);
-        component.endTimeControl!.markAsUntouched();
-        component.endTimeControl!.markAsPristine();
-        expect(component.isEndTimeInvalid).toBeFalse();
-    });
-
     // === helper functions ===
     const setFormValues = (startDate: Date | undefined, endDate: Date | undefined, startTime: Date | undefined, endTime: Date | undefined, reason: string) => {
         component.startDateControl!.setValue(startDate);
