@@ -38,7 +38,7 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
     ngOnInit(): void {
         super.ngOnInit();
         this.warningDismissed = !!this.localStorageService.retrieve('chatWarningDismissed');
-        void this.loadCurrentUser();
+        this.loadCurrentUser();
     }
 
     ngOnChanges() {
