@@ -175,29 +175,6 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     Optional<ProgrammingExercise> findWithTemplateParticipationAndLatestSubmissionById(@Param("exerciseId") long exerciseId);
 
     /**
-     * Get a programmingExercise with solution participation and the latest submission.
-     *
-     * @param exerciseId the id of the exercise that should be fetched.
-     * @return the exercise with the given ID, if found.
-     */
-    @Query("""
-            SELECT DISTINCT pe
-                FROM ProgrammingExercise pe
-                    LEFT JOIN FETCH pe.solutionParticipation sp
-                    LEFT JOIN FETCH sp.submissions s
-                WHERE pe.id = :exerciseId
-                  AND (
-                  s.id = (
-                        SELECT MAX(s2.id)
-                        FROM Submission s2
-                        WHERE s2.participation.id = sp.id
-                        )
-                        OR s.id IS NULL
-                      )
-            """)
-    Optional<ProgrammingExercise> findWithSolutionParticipationAndLatestSubmissionById(@Param("exerciseId") long exerciseId);
-
-    /**
      * Get all programming exercises that need to be scheduled: Those must satisfy one of the following requirements:
      * <ul>
      * <li>The release date is in the future → Schedule combine template commits</li>
@@ -1013,9 +990,5 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
 
     default ProgrammingExercise findWithTemplateParticipationAndLatestSubmissionByIdElseThrow(long exerciseId) {
         return getValueElseThrow(findWithTemplateParticipationAndLatestSubmissionById(exerciseId), exerciseId);
-    }
-
-    default ProgrammingExercise findWithSolutionParticipationAndLatestSubmissionByIdElseThrow(long exerciseId) {
-        return getValueElseThrow(findWithSolutionParticipationAndLatestSubmissionById(exerciseId), exerciseId);
     }
 }

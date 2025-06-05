@@ -1113,18 +1113,20 @@ public class ProgrammingExerciseService {
             latestResultForLatestSubmissionOfTemplate.ifPresent(resultsForLatestSubmissionTemplate::add);
             programmingExerciseWithTemplate.getTemplateParticipation().getSubmissions().iterator().next().setResults(resultsForLatestSubmissionTemplate);
         }
-        ProgrammingExercise programmingExerciseWithSolution = programmingExerciseRepository.findWithSolutionParticipationAndLatestSubmissionByIdElseThrow(programmingExerciseId);
-        if (!programmingExerciseWithSolution.getSolutionParticipation().getSubmissions().isEmpty()) {
+        SolutionProgrammingExerciseParticipation solutionParticipationWithLatestSubmission = solutionProgrammingExerciseParticipationRepository
+                .findWithLatestSubmissionByExerciseIdElseThrow(programmingExerciseId);
+
+        if (!solutionParticipationWithLatestSubmission.getSubmissions().isEmpty()) {
             Optional<Result> latestResultForLatestSubmissionOfSolution = resultRepository
-                    .findLatestResultWithFeedbacksAndTestcasesForSubmission(programmingExerciseWithSolution.getSolutionParticipation().getSubmissions().iterator().next().getId());
+                    .findLatestResultWithFeedbacksAndTestcasesForSubmission(solutionParticipationWithLatestSubmission.getSubmissions().iterator().next().getId());
             List<Result> resultsForLatestSubmissionSolution = new ArrayList<>();
             latestResultForLatestSubmissionOfSolution.ifPresent(resultsForLatestSubmissionSolution::add);
-            programmingExerciseWithSolution.getSolutionParticipation().getSubmissions().iterator().next().setResults(resultsForLatestSubmissionSolution);
+            solutionParticipationWithLatestSubmission.getSubmissions().iterator().next().setResults(resultsForLatestSubmissionSolution);
         }
-        ProgrammingExercise programmingExerciseWithAuxiliaryRepositories = programmingExerciseRepository.findByIdWithAuxiliaryRepositoriesElseThrow(programmingExerciseId);
+        List<AuxiliaryRepository> auxiliaryRepositories = auxiliaryRepositoryRepository.findByProgrammingExerciseId(programmingExerciseId);
 
-        programmingExerciseWithTemplate.setSolutionParticipation(programmingExerciseWithSolution.getSolutionParticipation());
-        programmingExerciseWithTemplate.setAuxiliaryRepositories(programmingExerciseWithAuxiliaryRepositories.getAuxiliaryRepositories());
+        programmingExerciseWithTemplate.setSolutionParticipation(solutionParticipationWithLatestSubmission);
+        programmingExerciseWithTemplate.setAuxiliaryRepositories(auxiliaryRepositories);
 
         return programmingExerciseWithTemplate;
     }

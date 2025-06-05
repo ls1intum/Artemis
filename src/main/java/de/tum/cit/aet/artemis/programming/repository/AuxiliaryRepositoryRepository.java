@@ -36,4 +36,11 @@ public interface AuxiliaryRepositoryRepository extends ArtemisJpaRepository<Auxi
             WHERE a.id = :auxiliaryRepositoryId
             """)
     String findBranchByRepoId(@Param("auxiliaryRepositoryId") long auxiliaryRepositoryId);
+
+    @Query("""
+            SELECT a
+            FROM AuxiliaryRepository a
+            WHERE a.exercise.id = :programmingExerciseId
+            """)
+    List<AuxiliaryRepository> findByProgrammingExerciseId(long programmingExerciseId);
 }
