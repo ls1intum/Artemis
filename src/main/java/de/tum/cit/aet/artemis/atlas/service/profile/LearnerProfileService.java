@@ -5,7 +5,6 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile;
-import de.tum.cit.aet.artemis.atlas.repository.LearnerProfileRepository;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 
@@ -13,12 +12,9 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 @Service
 public class LearnerProfileService {
 
-    private final LearnerProfileRepository learnerProfileRepository;
-
     private final UserRepository userRepository;
 
-    public LearnerProfileService(LearnerProfileRepository learnerProfileRepository, UserRepository userRepository) {
-        this.learnerProfileRepository = learnerProfileRepository;
+    public LearnerProfileService(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
@@ -32,24 +28,5 @@ public class LearnerProfileService {
         profile.setUser(user);
         user.setLearnerProfile(profile);
         userRepository.save(user);
-    }
-
-    /**
-     * Delete the learner profile of a user
-     *
-     * @param user the user for which the profile is deleted
-     */
-    public void deleteProfile(User user) {
-        learnerProfileRepository.deleteByUser(user);
-    }
-
-    /**
-     * Find a learner profile by its ID
-     *
-     * @param id the ID of the learner profile
-     * @return the learner profile or null if not found
-     */
-    public LearnerProfile findById(Long id) {
-        return learnerProfileRepository.findById(id).orElse(null);
     }
 }

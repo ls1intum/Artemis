@@ -7,6 +7,7 @@ import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile;
+import de.tum.cit.aet.artemis.atlas.repository.LearnerProfileRepository;
 import de.tum.cit.aet.artemis.atlas.service.profile.CourseLearnerProfileService;
 import de.tum.cit.aet.artemis.atlas.service.profile.LearnerProfileService;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -20,9 +21,13 @@ public class LearnerProfileApi extends AbstractAtlasApi {
 
     private final CourseLearnerProfileService courseLearnerProfileService;
 
-    public LearnerProfileApi(LearnerProfileService learnerProfileService, CourseLearnerProfileService courseLearnerProfileService) {
+    private final LearnerProfileRepository learnerProfileRepository;
+
+    public LearnerProfileApi(LearnerProfileService learnerProfileService, CourseLearnerProfileService courseLearnerProfileService,
+            LearnerProfileRepository learnerProfileRepository) {
         this.learnerProfileService = learnerProfileService;
         this.courseLearnerProfileService = courseLearnerProfileService;
+        this.learnerProfileRepository = learnerProfileRepository;
     }
 
     public void deleteAllForCourse(Course course) {
@@ -45,8 +50,13 @@ public class LearnerProfileApi extends AbstractAtlasApi {
         learnerProfileService.createProfile(user);
     }
 
+    /**
+     * Delete a learner profile by its user
+     *
+     * @param user the user for which the profile is deleted
+     */
     public void deleteProfile(User user) {
-        learnerProfileService.deleteProfile(user);
+        learnerProfileRepository.deleteByUser(user);
     }
 
     /**
@@ -56,7 +66,7 @@ public class LearnerProfileApi extends AbstractAtlasApi {
      * @return the learner profile or null if not found
      */
     public LearnerProfile findById(Long id) {
-        return learnerProfileService.findById(id);
+        return learnerProfileRepository.findById(id).orElse(null);
     }
 
 }
