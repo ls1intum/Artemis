@@ -15,6 +15,7 @@ import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseService;
 
 class ProgrammingExerciseServiceTest extends AbstractProgrammingIntegrationIndependentTest {
@@ -25,7 +26,7 @@ class ProgrammingExerciseServiceTest extends AbstractProgrammingIntegrationIndep
     private ProgrammingExerciseService programmingExerciseService;
 
     @Autowired
-    private ExerciseUtilService exerciseUtilService;
+    private SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
     private ProgrammingExercise programmingExercise1;
 
@@ -65,9 +66,8 @@ class ProgrammingExerciseServiceTest extends AbstractProgrammingIntegrationIndep
         TemplateProgrammingExerciseParticipation templateParticipation = programmingExercise1.getTemplateParticipation();
         Submission templateSubmission = participationUtilService.addSubmission(templateParticipation, new ProgrammingSubmission());
         participationUtilService.addResultToSubmission(null, null, templateSubmission);
-        programmingExercise1 = programmingExerciseRepository.findWithSolutionParticipationAndLatestSubmissionByIdElseThrow(programmingExercise1.getId());
 
-        var solutionParticipation = programmingExercise1.getSolutionParticipation();
+        var solutionParticipation = solutionProgrammingExerciseParticipationRepository.findWithLatestSubmissionByExerciseIdElseThrow(programmingExercise1.getId());
         // this is a submission without results
         participationUtilService.addSubmission(solutionParticipation, new ProgrammingSubmission());
         programmingExerciseRepository.save(programmingExercise1);
