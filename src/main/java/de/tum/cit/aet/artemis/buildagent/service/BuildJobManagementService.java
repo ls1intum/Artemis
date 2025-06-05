@@ -33,7 +33,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
 import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
-import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.DistributedTopic;
+import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.topic.DistributedTopic;
 
 /**
  * This service is responsible for adding build jobs to the Integrated Code Lifecycle executor service.

@@ -4,6 +4,7 @@ import java.util.Set;
 
 import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.queue.DistributedQueue;
+import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.topic.DistributedTopic;
 
 public interface DistributedDataProvider {
 

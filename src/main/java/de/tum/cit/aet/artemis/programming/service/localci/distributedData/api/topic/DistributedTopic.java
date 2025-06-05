@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.programming.service.localci.distributedData.api;
+package de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.topic;
 
 import java.util.UUID;
 import java.util.function.Consumer;

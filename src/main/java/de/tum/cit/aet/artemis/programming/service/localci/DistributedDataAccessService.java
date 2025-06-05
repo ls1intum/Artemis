@@ -18,9 +18,9 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
 import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.DistributedDataProvider;
-import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.DistributedTopic;
 import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.queue.DistributedQueue;
+import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.topic.DistributedTopic;
 
 /**
  * This service is used to access the distributed data structures.
