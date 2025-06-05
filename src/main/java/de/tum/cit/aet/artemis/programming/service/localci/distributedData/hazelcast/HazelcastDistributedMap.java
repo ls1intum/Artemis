@@ -109,7 +109,7 @@ public class HazelcastDistributedMap<K, V> implements DistributedMap<K, V> {
     }
 
     @Override
-    public UUID addEntryListener(MapListener listener) {
+    public UUID addListener(MapListener listener) {
         class HazelcastMapEntryListener implements EntryAddedListener<K, V>, EntryRemovedListener<K, V>, EntryUpdatedListener<K, V> {
 
             @Override

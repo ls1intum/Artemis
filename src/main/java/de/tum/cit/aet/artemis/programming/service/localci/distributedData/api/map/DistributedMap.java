@@ -111,5 +111,5 @@ public interface DistributedMap<K, V> {
      * @param listener the listener to add
      * @return a unique identifier for the listener, which can be used to remove it later
      */
-    UUID addEntryListener(MapListener listener);
+    UUID addListener(MapListener listener);
 }
