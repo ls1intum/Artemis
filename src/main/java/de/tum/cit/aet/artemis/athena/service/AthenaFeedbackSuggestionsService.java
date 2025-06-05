@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import jakarta.annotation.Nullable;
 
@@ -67,7 +68,7 @@ public class AthenaFeedbackSuggestionsService {
 
     private final LLMTokenUsageService llmTokenUsageService;
 
-    private final LearnerProfileApi learnerProfileApi;
+    private final Optional<LearnerProfileApi> learnerProfileApi;
 
     @Value("${artemis.athena.allowed-feedback-requests:10}")
     private int allowedFeedbackRequests;
@@ -82,7 +83,7 @@ public class AthenaFeedbackSuggestionsService {
      * @param learnerProfileApi         API for learner profile operations
      */
     public AthenaFeedbackSuggestionsService(@Qualifier("athenaRestTemplate") RestTemplate athenaRestTemplate, AthenaModuleService athenaModuleService,
-            AthenaDTOConverterService athenaDTOConverterService, LLMTokenUsageService llmTokenUsageService, LearnerProfileApi learnerProfileApi) {
+            AthenaDTOConverterService athenaDTOConverterService, LLMTokenUsageService llmTokenUsageService, Optional<LearnerProfileApi> learnerProfileApi) {
         textAthenaConnector = new AthenaConnector<>(athenaRestTemplate, ResponseDTOText.class);
         programmingAthenaConnector = new AthenaConnector<>(athenaRestTemplate, ResponseDTOProgramming.class);
         modelingAthenaConnector = new AthenaConnector<>(athenaRestTemplate, ResponseDTOModeling.class);
@@ -142,11 +143,7 @@ public class AthenaFeedbackSuggestionsService {
         }
 
         try {
-            var initializedProfile = learnerProfileApi.findById(learnerProfile.getId());
-            if (initializedProfile == null) {
-                log.warn("Learner profile with ID {} not found in database", learnerProfile.getId());
-            }
-            return initializedProfile;
+            return learnerProfileApi.map(api -> api.findById(learnerProfile.getId())).orElse(null);
         }
         catch (Exception e) {
             log.error("Error retrieving learner profile for student {}: {}", student.getId(), e.getMessage());
