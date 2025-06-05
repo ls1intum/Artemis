@@ -61,8 +61,6 @@ public class ParticipationService {
 
     private final Optional<VersionControlService> versionControlService;
 
-    private final BuildLogEntryService buildLogEntryService;
-
     private final ParticipationRepository participationRepository;
 
     private final StudentParticipationRepository studentParticipationRepository;
@@ -86,7 +84,6 @@ public class ParticipationService {
             ParticipationVcsAccessTokenService participationVCSAccessTokenService) {
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
-        this.buildLogEntryService = buildLogEntryService;
         this.participationRepository = participationRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
