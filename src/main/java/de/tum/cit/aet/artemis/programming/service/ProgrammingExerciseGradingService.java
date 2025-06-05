@@ -43,6 +43,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
@@ -315,6 +316,9 @@ public class ProgrammingExerciseGradingService {
             }
 
             if (learnerProfileApi.isPresent()) {
+
+                long startTime = System.nanoTime();
+
                 // Update course learner profile with received score and lines changed
                 int linesChangedInSubmission = programmingSubmissionService.calculateLinesChangedToPreviousSubmission(programmingSubmission);
                 ProgrammingExerciseGitDiffReport exerciseGitDiffReport = programmingExerciseGitDiffReportService.getOrCreateReportOfExercise(programmingExercise);
@@ -330,6 +334,8 @@ public class ProgrammingExerciseGradingService {
                     learnerProfileApi.get().updateProficiency(((StudentParticipation) participation).getStudents(),
                             participation.getProgrammingExercise().getCourseViaExerciseGroupOrCourseMember(), linesChangedInSubmission, linesChangedInSolution, score);
                 }
+
+                log.info("Updated learner profile in {}", TimeLogUtil.formatDurationFrom(startTime));
             }
             if (programmingSubmission.getLatestResult() != null && programmingSubmission.getLatestResult().isManual() && !((Participation) participation).isPracticeMode()) {
                 // Note: in this case, we do not want to save the processedResult, but we only want to update the latest semi-automatic one
