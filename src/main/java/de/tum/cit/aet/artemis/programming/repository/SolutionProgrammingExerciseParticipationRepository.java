@@ -6,6 +6,7 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 
 import java.util.Collection;
 import java.util.Optional;
+import java.util.Set;
 
 import jakarta.validation.constraints.NotNull;
 
@@ -79,6 +80,22 @@ public interface SolutionProgrammingExerciseParticipationRepository
                 )
             """)
     Optional<SolutionProgrammingExerciseParticipation> findWithLatestSubmissionByExerciseId(@Param("exerciseId") long exerciseId);
+
+    @Query("""
+            SELECT DISTINCT sp
+              FROM SolutionProgrammingExerciseParticipation sp
+              LEFT JOIN FETCH sp.submissions s
+             WHERE sp.programmingExercise.id IN :exerciseIds
+               AND (
+                 s.id = (
+                   SELECT MAX(s2.id)
+                     FROM Submission s2
+                    WHERE s2.participation.id = sp.id
+                 )
+                 OR s.id IS NULL
+               )
+            """)
+    Set<SolutionProgrammingExerciseParticipation> findAllWithLatestSubmissionByExerciseIds(@Param("exerciseIds") Set<Long> exerciseIds);
 
     @NotNull
     default SolutionProgrammingExerciseParticipation findByExerciseIdElseThrow(final Specification<SolutionProgrammingExerciseParticipation> specification, long exerciseId) {
