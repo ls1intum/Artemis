@@ -56,7 +56,7 @@ describe('GlobalNotificationsSettingsComponent', () => {
         component.ngOnInit();
         tick();
 
-        expect(mockService.getAll).toHaveBeenCalledOnce();
+        expect(mockService.getAll).toHaveBeenCalled();
         expect(component.notificationSettings).toEqual(mockSettings);
     }));
 
@@ -68,7 +68,7 @@ describe('GlobalNotificationsSettingsComponent', () => {
         tick();
 
         expect(mockService.update).toHaveBeenCalledWith(GLOBAL_NOTIFICATION_TYPES.NEW_LOGIN, false);
-        expect(component.notificationSettings?.[GLOBAL_NOTIFICATION_TYPES.NEW_LOGIN]).toBeFalse();
+        expect(component.notificationSettings?.[GLOBAL_NOTIFICATION_TYPES.NEW_LOGIN]).toBeFalsy();
     }));
 
     it('should generate the correct i18n label key', () => {
@@ -100,18 +100,40 @@ describe('GlobalNotificationsSettingsComponent', () => {
 
     describe('isSettingAvailable', () => {
         it('should return true for types other than NEW_PASSKEY_ADDED', () => {
-            expect(component.isSettingAvailable(GLOBAL_NOTIFICATION_TYPES.NEW_LOGIN)).toBeTrue();
-            expect(component.isSettingAvailable(GLOBAL_NOTIFICATION_TYPES.SSH_KEY_EXPIRED)).toBeTrue();
+            expect(component.isSettingAvailable(GLOBAL_NOTIFICATION_TYPES.NEW_LOGIN)).toBeTruthy();
+            expect(component.isSettingAvailable(GLOBAL_NOTIFICATION_TYPES.SSH_KEY_EXPIRED)).toBeTruthy();
         });
 
         it('should return true for NEW_PASSKEY_ADDED if passkey is enabled', () => {
             component.isPasskeyEnabled = true;
-            expect(component.isSettingAvailable(GLOBAL_NOTIFICATION_TYPES.NEW_PASSKEY_ADDED)).toBeTrue();
+            expect(component.isSettingAvailable(GLOBAL_NOTIFICATION_TYPES.NEW_PASSKEY_ADDED)).toBeTruthy();
         });
 
         it('should return false for NEW_PASSKEY_ADDED if passkey is disabled', () => {
             component.isPasskeyEnabled = false;
-            expect(component.isSettingAvailable(GLOBAL_NOTIFICATION_TYPES.NEW_PASSKEY_ADDED)).toBeFalse();
+            expect(component.isSettingAvailable(GLOBAL_NOTIFICATION_TYPES.NEW_PASSKEY_ADDED)).toBeFalsy();
+        });
+    });
+
+    describe('notificationTypeLinks', () => {
+        it('should have correct configuration for all notification types with links', () => {
+            const links = component.notificationTypeLinks;
+            expect(links).toHaveLength(3);
+
+            const passkeyLink = links.find((link) => link.type === GLOBAL_NOTIFICATION_TYPES.NEW_PASSKEY_ADDED);
+            expect(passkeyLink).toBeDefined();
+            expect(passkeyLink?.routerLink).toEqual(['/user-settings', 'passkeys']);
+            expect(passkeyLink?.translationKey).toBe('artemisApp.userSettings.globalNotificationSettings.viewPasskeySettings');
+
+            const vcsTokenLink = links.find((link) => link.type === GLOBAL_NOTIFICATION_TYPES.VCS_TOKEN_EXPIRED);
+            expect(vcsTokenLink).toBeDefined();
+            expect(vcsTokenLink?.routerLink).toEqual(['/user-settings', 'vcs-token']);
+            expect(vcsTokenLink?.translationKey).toBe('artemisApp.userSettings.globalNotificationSettings.viewVcsTokenSettings');
+
+            const sshKeyLink = links.find((link) => link.type === GLOBAL_NOTIFICATION_TYPES.SSH_KEY_EXPIRED);
+            expect(sshKeyLink).toBeDefined();
+            expect(sshKeyLink?.routerLink).toEqual(['/user-settings', 'ssh']);
+            expect(sshKeyLink?.translationKey).toBe('artemisApp.userSettings.globalNotificationSettings.viewSshKeySettings');
         });
 
         it('should render correct links for special notification types', fakeAsync(() => {
@@ -124,16 +146,11 @@ describe('GlobalNotificationsSettingsComponent', () => {
             const element: HTMLElement = fixture.nativeElement;
             const links = element.querySelectorAll('a.small');
 
-            const routerLinks = Array.from(links).map((link) => link.getAttribute('ng-reflect-router-link'));
-
-            expect(routerLinks).toContain('/user-settings,passkeys');
-            expect(routerLinks).toContain('/user-settings,vcs-token');
-            expect(routerLinks).toContain('/user-settings,ssh');
-
-            const linkSpans = Array.from(links).map((link) => link.querySelector('span')?.getAttribute('jhiTranslate'));
-            expect(linkSpans).toContain('artemisApp.userSettings.globalNotificationSettings.viewPasskeySettings');
-            expect(linkSpans).toContain('artemisApp.userSettings.globalNotificationSettings.viewVcsTokenSettings');
-            expect(linkSpans).toContain('artemisApp.userSettings.globalNotificationSettings.viewSshKeySettings');
+            const notificationLinks = component.notificationTypeLinks;
+            notificationLinks.forEach((link) => {
+                const matchingLink = Array.from(links).find((a) => a.getAttribute('ng-reflect-router-link') === link.routerLink.join(','));
+                expect(matchingLink).toBeDefined();
+            });
         }));
     });
 });

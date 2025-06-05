@@ -18,18 +18,12 @@
                                 />
                                 <label class="form-check-label" [for]="'notification-' + type" jhiTranslate="{{ getNotificationTypeLabel(type) }}"></label>
                             </div>
-                            @if (type === GLOBAL_NOTIFICATION_TYPES.NEW_PASSKEY_ADDED) {
-                                <a [routerLink]="['/user-settings', 'passkeys']" class="small text-end">
-                                    <span jhiTranslate="artemisApp.userSettings.globalNotificationSettings.viewPasskeySettings"></span>
-                                </a>
-                            } @else if (type === GLOBAL_NOTIFICATION_TYPES.VCS_TOKEN_EXPIRED) {
-                                <a [routerLink]="['/user-settings', 'vcs-token']" class="small text-end">
-                                    <span jhiTranslate="artemisApp.userSettings.globalNotificationSettings.viewVcsTokenSettings"></span>
-                                </a>
-                            } @else if (type === GLOBAL_NOTIFICATION_TYPES.SSH_KEY_EXPIRED) {
-                                <a [routerLink]="['/user-settings', 'ssh']" class="small text-end">
-                                    <span jhiTranslate="artemisApp.userSettings.globalNotificationSettings.viewSshKeySettings"></span>
-                                </a>
+                            @for (link of notificationTypeLinks; track link.type) {
+                                @if (type === link.type) {
+                                    <a [routerLink]="link.routerLink" class="small text-end">
+                                        <span jhiTranslate="{{ link.translationKey }}"></span>
+                                    </a>
+                                }
                             }
                         </div>
                     </dt>

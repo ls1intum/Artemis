@@ -20,6 +20,12 @@ export const GLOBAL_NOTIFICATION_TYPES = {
 
 export type GlobalNotificationType = keyof typeof GLOBAL_NOTIFICATION_TYPES;
 
+interface NotificationTypeLink {
+    type: GlobalNotificationType;
+    routerLink: string[];
+    translationKey: string;
+}
+
 @Component({
     selector: 'jhi-email-notifications-settings',
     imports: [TranslateDirective, FaIconComponent, FormsModule, RouterLink],
@@ -29,6 +35,23 @@ export type GlobalNotificationType = keyof typeof GLOBAL_NOTIFICATION_TYPES;
 export class GlobalNotificationsSettingsComponent implements OnInit, OnDestroy {
     protected readonly faSpinner = faSpinner;
     protected readonly notificationTypes = Object.values(GLOBAL_NOTIFICATION_TYPES);
+    public readonly notificationTypeLinks: NotificationTypeLink[] = [
+        {
+            type: GLOBAL_NOTIFICATION_TYPES.NEW_PASSKEY_ADDED,
+            routerLink: ['/user-settings', 'passkeys'],
+            translationKey: 'artemisApp.userSettings.globalNotificationSettings.viewPasskeySettings',
+        },
+        {
+            type: GLOBAL_NOTIFICATION_TYPES.VCS_TOKEN_EXPIRED,
+            routerLink: ['/user-settings', 'vcs-token'],
+            translationKey: 'artemisApp.userSettings.globalNotificationSettings.viewVcsTokenSettings',
+        },
+        {
+            type: GLOBAL_NOTIFICATION_TYPES.SSH_KEY_EXPIRED,
+            routerLink: ['/user-settings', 'ssh'],
+            translationKey: 'artemisApp.userSettings.globalNotificationSettings.viewSshKeySettings',
+        },
+    ];
     notificationSettings: { [key: string]: boolean } | null = null;
 
     private globalNotificationSettingsService = inject(GlobalNotificationSettingsService);
@@ -100,6 +123,4 @@ export class GlobalNotificationsSettingsComponent implements OnInit, OnDestroy {
     isSettingAvailable(type: string): boolean {
         return type !== GLOBAL_NOTIFICATION_TYPES.NEW_PASSKEY_ADDED || this.isPasskeyEnabled;
     }
-
-    protected readonly GLOBAL_NOTIFICATION_TYPES = GLOBAL_NOTIFICATION_TYPES;
 }
