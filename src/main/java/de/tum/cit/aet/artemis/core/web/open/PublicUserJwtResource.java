@@ -37,9 +37,11 @@ import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.UserNotActivatedException;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
+import de.tum.cit.aet.artemis.core.security.jwt.AuthenticationMethod;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.service.ArtemisSuccessfulLoginService;
 import de.tum.cit.aet.artemis.core.service.connectors.SAML2Service;
+import de.tum.cit.aet.artemis.core.util.HttpRequestUtils;
 
 /**
  * REST controller to authenticate users.
@@ -78,8 +80,8 @@ public class PublicUserJwtResource {
      */
     @PostMapping("authenticate")
     @EnforceNothing
-    public ResponseEntity<Map<String, String>> authorize(@Valid @RequestBody LoginVM loginVM, @RequestHeader("User-Agent") String userAgent,
-            @RequestParam(name = "tool", required = false) ToolTokenType tool, HttpServletResponse response) {
+    public ResponseEntity<Map<String, String>> authorize(@Valid @RequestBody LoginVM loginVM, @RequestHeader(HttpHeaders.USER_AGENT) String userAgent,
+            @RequestParam(name = "tool", required = false) ToolTokenType tool, HttpServletResponse response, HttpServletRequest request) {
 
         var username = loginVM.getUsername();
         var password = loginVM.getPassword();
@@ -95,9 +97,7 @@ public class PublicUserJwtResource {
 
             ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(rememberMe, tool);
             response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
-
-            // TODO: move this to the actual login implementations
-            artemisSuccessfulLoginService.sendLoginEmail(username);
+            artemisSuccessfulLoginService.sendLoginEmail(username, AuthenticationMethod.PASSWORD, HttpRequestUtils.getClientEnvironment(request));
 
             return ResponseEntity.ok(Map.of("access_token", responseCookie.getValue()));
         }
@@ -116,7 +116,7 @@ public class PublicUserJwtResource {
      */
     @PostMapping("saml2")
     @EnforceNothing
-    public ResponseEntity<Void> authorizeSAML2(@RequestBody final String body, HttpServletResponse response) {
+    public ResponseEntity<Void> authorizeSAML2(@RequestBody final String body, HttpServletResponse response, HttpServletRequest request) {
         if (saml2Service.isEmpty()) {
             throw new AccessForbiddenException("SAML2 is disabled");
         }
@@ -129,11 +129,11 @@ public class PublicUserJwtResource {
         log.debug("SAML2 authentication: {}", authentication);
 
         try {
-            authentication = saml2Service.get().handleAuthentication(authentication, principal);
+            authentication = saml2Service.get().handleAuthentication(authentication, principal, request);
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
         catch (UserNotActivatedException e) {
-            // If the exception is not caught a 401 is returned.
+            // If the exception is not caught, a 401 is returned.
             // That does not match the actual reason and would trigger authentication in the client
             return ResponseEntity.status(HttpStatus.FORBIDDEN).header("X-artemisApp-error", e.getMessage()).build();
         }
@@ -157,7 +157,7 @@ public class PublicUserJwtResource {
     @EnforceNothing
     public ResponseEntity<Void> logout(HttpServletRequest request, HttpServletResponse response) throws ServletException {
         request.logout();
-        // Logout needs to build the same cookie (secure, httpOnly and sameSite='Lax') or browsers will ignore the header and not unset the cookie
+        // Logout needs to build the same cookie (secure, httpOnly and sameSite='Lax'), or browsers will ignore the header and not unset the cookie
         ResponseCookie responseCookie = jwtCookieService.buildLogoutCookie();
         response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
         return ResponseEntity.ok().build();
