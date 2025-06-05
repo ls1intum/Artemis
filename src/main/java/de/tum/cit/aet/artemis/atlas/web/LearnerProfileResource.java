@@ -8,7 +8,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -52,7 +51,7 @@ public class LearnerProfileResource {
         }
     }
 
-    @GetMapping("learner-profiles")
+    @GetMapping("learner-profile")
     @EnforceAtLeastStudent
     public ResponseEntity<LearnerProfileDTO> getLearnerProfile() {
         User user = userRepository.getUser();
@@ -64,19 +63,14 @@ public class LearnerProfileResource {
     /**
      * PUT learner-profiles/{learnerProfileId} : update fields in a {@link LearnerProfile}.
      *
-     * @param learnerProfileId  ID of the LearnerProfile
      * @param learnerProfileDTO {@link LearnerProfileDTO} object from the request body.
      * @return A ResponseEntity with a status matching the validity of the request containing the updated profile.
      */
-    @PutMapping(value = "learner-profiles/{learnerProfileId}")
+    @PutMapping(value = "learner-profile")
     @EnforceAtLeastStudent
-    public ResponseEntity<LearnerProfileDTO> updateLearnerProfile(@PathVariable long learnerProfileId, @RequestBody LearnerProfileDTO learnerProfileDTO) {
+    public ResponseEntity<LearnerProfileDTO> updateLearnerProfile(@RequestBody LearnerProfileDTO learnerProfileDTO) {
         User user = userRepository.getUser();
         log.debug("REST request to update LearnerProfile of user {}", user.getLogin());
-
-        if (learnerProfileDTO.id() != learnerProfileId) {
-            throw new BadRequestAlertException("Provided learnerProfileId does not match learnerProfile.", LearnerProfile.ENTITY_NAME, "objectDoesNotMatchId", true);
-        }
 
         LearnerProfile updateProfile = learnerProfileRepository.findByUserElseThrow(user);
 

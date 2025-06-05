@@ -51,22 +51,22 @@ public class LearnerProfileApi extends AbstractAtlasApi {
     }
 
     /**
+     * Get or create a learner profile for a user
+     *
+     * @param user the user for which the profile is retrieved or created
+     * @return Saved LearnerProfile
+     */
+    public LearnerProfile getOrCreateLearnerProfile(User user) {
+        return learnerProfileService.getOrCreateLearnerProfile(user);
+    }
+
+    /**
      * Delete a learner profile by its user
      *
      * @param user the user for which the profile is deleted
      */
     public void deleteProfile(User user) {
         learnerProfileRepository.deleteByUser(user);
-    }
-
-    /**
-     * Get a learner profile by its ID
-     *
-     * @param id the ID of the learner profile
-     * @return the learner profile or null if not found
-     */
-    public LearnerProfile findById(Long id) {
-        return learnerProfileRepository.findById(id).orElse(null);
     }
 
 }

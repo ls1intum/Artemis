@@ -14,10 +14,10 @@ export class LearnerProfileApiService extends BaseApiHttpService {
     }
 
     async getLearnerProfileForCurrentUser(): Promise<LearnerProfileDTO> {
-        return await this.get<LearnerProfileDTO>('atlas/learner-profiles');
+        return await this.get<LearnerProfileDTO>('atlas/learner-profile');
     }
 
     putUpdatedLearnerProfile(learnerProfile: LearnerProfileDTO): Promise<LearnerProfileDTO> {
-        return this.put<LearnerProfileDTO>(`atlas/learner-profiles/${learnerProfile.id}`, learnerProfile);
+        return this.put<LearnerProfileDTO>(`atlas/learner-profile`, learnerProfile);
     }
 }

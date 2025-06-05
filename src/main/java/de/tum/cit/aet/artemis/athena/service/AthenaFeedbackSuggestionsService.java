@@ -136,14 +136,9 @@ public class AthenaFeedbackSuggestionsService {
         }
 
         var student = studentOpt.get();
-        var learnerProfile = student.getLearnerProfile();
-        if (learnerProfile == null) {
-            log.debug("Cannot extract learner profile: student has no learner profile");
-            return null;
-        }
 
         try {
-            return learnerProfileApi.map(api -> api.findById(learnerProfile.getId())).orElse(null);
+            return learnerProfileApi.map(api -> api.getOrCreateLearnerProfile(student)).orElse(null);
         }
         catch (Exception e) {
             log.error("Error retrieving learner profile for student {}: {}", student.getId(), e.getMessage());
