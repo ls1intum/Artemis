@@ -61,18 +61,18 @@ public interface TemplateProgrammingExerciseParticipationRepository
 
     @Query("""
             SELECT DISTINCT tp
-              FROM TemplateProgrammingExerciseParticipation tp
-              LEFT JOIN FETCH tp.submissions s
-             WHERE tp.programmingExercise.id IN :exerciseIds
-               AND (
-                 s.id = (
-                   SELECT MAX(s2.id)
-                     FROM Submission s2
+            FROM TemplateProgrammingExerciseParticipation tp
+             LEFT JOIN FETCH tp.submissions s
+            WHERE tp.programmingExercise.id IN :exerciseIds
+            AND (
+                  s.id = (
+                    SELECT MAX(s2.id)
+                    FROM Submission s2
                     WHERE s2.participation.id = tp.id
-                 )
-                 OR s.id IS NULL
-               )
-            """)
+                  )
+                  OR s.id IS NULL
+                )
+             """)
     Set<TemplateProgrammingExerciseParticipation> findAllWithLatestSubmissionByExerciseIds(@Param("exerciseIds") Set<Long> exerciseIds);
 
     @NotNull

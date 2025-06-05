@@ -67,10 +67,10 @@ public interface SolutionProgrammingExerciseParticipationRepository
 
     @Query("""
              SELECT DISTINCT sp
-               FROM SolutionProgrammingExerciseParticipation sp
+             FROM SolutionProgrammingExerciseParticipation sp
                LEFT JOIN FETCH sp.submissions s
-              WHERE sp.programmingExercise.id = :exerciseId
-                AND (
+             WHERE sp.programmingExercise.id = :exerciseId
+             AND (
                   s.id = (
                     SELECT MAX(s2.id)
                       FROM Submission s2
@@ -83,14 +83,14 @@ public interface SolutionProgrammingExerciseParticipationRepository
 
     @Query("""
             SELECT DISTINCT sp
-              FROM SolutionProgrammingExerciseParticipation sp
+            FROM SolutionProgrammingExerciseParticipation sp
               LEFT JOIN FETCH sp.submissions s
-             WHERE sp.programmingExercise.id IN :exerciseIds
-               AND (
+            WHERE sp.programmingExercise.id IN :exerciseIds
+            AND (
                  s.id = (
                    SELECT MAX(s2.id)
-                     FROM Submission s2
-                    WHERE s2.participation.id = sp.id
+                   FROM Submission s2
+                   WHERE s2.participation.id = sp.id
                  )
                  OR s.id IS NULL
                )
