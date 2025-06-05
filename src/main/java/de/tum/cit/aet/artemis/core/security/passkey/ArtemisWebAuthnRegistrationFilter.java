@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.core.security.passkey;
 
-import static org.springframework.security.web.util.matcher.AntPathRequestMatcher.antMatcher;
-
 import java.io.IOException;
 import java.util.HashMap;
 
@@ -13,7 +11,7 @@ import jakarta.validation.constraints.NotNull;
 
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.web.util.matcher.RequestMatcher;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.webauthn.management.UserCredentialRepository;
 import org.springframework.security.web.webauthn.management.WebAuthnRelyingPartyOperations;
 import org.springframework.security.web.webauthn.registration.WebAuthnRegistrationFilter;
@@ -30,7 +28,7 @@ public class ArtemisWebAuthnRegistrationFilter extends WebAuthnRegistrationFilte
 
     static final String DEFAULT_REGISTER_CREDENTIAL_URL = "/webauthn/register";
 
-    private final RequestMatcher registerCredentialMatcher = antMatcher(HttpMethod.POST, DEFAULT_REGISTER_CREDENTIAL_URL);
+    private final PathPatternRequestMatcher registerCredentialMatcher = PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.POST, DEFAULT_REGISTER_CREDENTIAL_URL);
 
     private final MailSendingService mailSendingService;
 
@@ -73,6 +71,6 @@ public class ArtemisWebAuthnRegistrationFilter extends WebAuthnRegistrationFilte
      * @return true if the request is a WebAuthn registration request, false otherwise
      */
     private boolean isWebAuthnRegistrationRequest(HttpServletRequest request) {
-        return registerCredentialMatcher.matches(request) && request.getMethod().equals("POST");
+        return registerCredentialMatcher.matches(request) && request.getMethod().equals(HttpMethod.POST.name());
     }
 }
