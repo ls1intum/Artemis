@@ -319,6 +319,26 @@ describe('TutorialFreePeriodFormComponent', () => {
         );
     });
 
+    it('should return false if endDate ≤ startDate when timeFrame is Period', () => {
+        const start = dayjs('2021-01-10T00:00:00').tz('Europe/Berlin').toDate();
+        const endBefore = dayjs('2021-01-05T00:00:00').tz('Europe/Berlin').toDate();
+
+        component.form.patchValue({ startDate: start, endDate: endBefore, startTime: undefined, endTime: undefined, reason: validReason });
+        component.setTimeFrame(TimeFrame.Period);
+
+        expect(component.isStartBeforeEnd).toBeFalse();
+    });
+
+    it('should return true if endDate > startDate when timeFrame is Period', () => {
+        const start = dayjs('2021-01-05T00:00:00').tz('Europe/Berlin').toDate();
+        const endAfter = dayjs('2021-01-10T00:00:00').tz('Europe/Berlin').toDate();
+
+        component.form.patchValue({ startDate: start, endDate: endAfter, startTime: undefined, endTime: undefined, reason: validReason });
+        component.setTimeFrame(TimeFrame.Period);
+
+        expect(component.isStartBeforeEnd).toBeTrue();
+    });
+
     // === helper functions ===
     const setFormValues = (startDate: Date | undefined, endDate: Date | undefined, startTime: Date | undefined, endTime: Date | undefined, reason: string) => {
         component.startDateControl!.setValue(startDate);
