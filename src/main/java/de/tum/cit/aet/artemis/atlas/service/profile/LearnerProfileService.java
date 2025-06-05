@@ -33,7 +33,7 @@ public class LearnerProfileService {
         profile.setUser(user);
         user.setLearnerProfile(profile);
         userRepository.save(user);
-        return profile;
+        return learnerProfileRepository.save(profile);
     }
 
     /**
@@ -43,12 +43,6 @@ public class LearnerProfileService {
      * @return Saved LearnerProfile
      */
     public LearnerProfile getOrCreateLearnerProfile(User user) {
-        var profile = learnerProfileRepository.findByUser(user).orElse(null);
-
-        if (profile == null) {
-            profile = createProfile(user);
-        }
-
-        return profile;
+        return learnerProfileRepository.findByUser(user).orElseGet(() -> createProfile(user));
     }
 }

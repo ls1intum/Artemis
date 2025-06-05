@@ -7,17 +7,17 @@ export interface LearnerProfileData {
 
 export class LearnerProfileDTO {
     /**
-     * Minimum value allowed for profile fields representing values on a Likert scale.
+     * Minimum value allowed for profile fields.
      * Must be the same as in the server in LearnerProfile.java
      */
     public static readonly MIN_VALUE = 1;
     /**
-     * Minimum value allowed for profile fields representing values on a Likert scale.
+     * Default value for profile fields.
      * Must be the same as in the server in LearnerProfile.java
      */
     public static readonly DEFAULT_VALUE = 2;
     /**
-     * Maximum value allowed for profile fields representing values on a Likert scale.
+     * Maximum value allowed for profile fields.
      * Must be the same as in the server in LearnerProfile.java
      */
     public static readonly MAX_VALUE = 3;
