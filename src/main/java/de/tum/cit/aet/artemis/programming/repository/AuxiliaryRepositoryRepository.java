@@ -42,5 +42,5 @@ public interface AuxiliaryRepositoryRepository extends ArtemisJpaRepository<Auxi
             FROM AuxiliaryRepository a
             WHERE a.exercise.id = :programmingExerciseId
             """)
-    List<AuxiliaryRepository> findByProgrammingExerciseId(long programmingExerciseId);
+    List<AuxiliaryRepository> findByProgrammingExerciseId(@Param("programmingExerciseId") long programmingExerciseId);
 }
