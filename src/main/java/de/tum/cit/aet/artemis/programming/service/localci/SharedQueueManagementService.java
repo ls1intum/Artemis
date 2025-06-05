@@ -26,10 +26,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import com.hazelcast.map.listener.EntryAddedListener;
-import com.hazelcast.map.listener.EntryRemovedListener;
-import com.hazelcast.map.listener.EntryUpdatedListener;
-
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerImageBuild;
@@ -39,6 +35,10 @@ import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
+import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.map.listener.MapEntryAddedEvent;
+import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.map.listener.MapEntryListener;
+import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.map.listener.MapEntryRemovedEvent;
+import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.map.listener.MapEntryUpdatedEvent;
 
 /**
  * Includes methods for managing and retrieving the shared build job queue and build agent information. Also contains methods for cancelling build jobs.
@@ -70,7 +70,7 @@ public class SharedQueueManagementService {
      */
     @EventListener(ApplicationReadyEvent.class)
     public void init() {
-        this.distributedDataAccessService.getDistributedBuildAgentInformation().addEntryListener(new BuildAgentListener(), false);
+        this.distributedDataAccessService.getDistributedBuildAgentInformation().addEntryListener(new BuildAgentListener());
         this.updateBuildAgentCapacity();
     }
 
@@ -122,7 +122,7 @@ public class SharedQueueManagementService {
                     toRemove.add(job);
                 }
             }
-            distributedDataAccessService.getDistributedQueuedJobs().removeAll(toRemove);
+            distributedDataAccessService.getDistributedBuildJobQueue().removeAll(toRemove);
             updateCancelledQueuedBuildJobsStatus(toRemove);
         }
         else {
@@ -157,7 +157,7 @@ public class SharedQueueManagementService {
     public void cancelAllQueuedBuildJobs() {
         log.debug("Cancelling all queued build jobs");
         List<BuildJobQueueItem> queuedJobs = distributedDataAccessService.getQueuedJobs();
-        distributedDataAccessService.getDistributedQueuedJobs().clear();
+        distributedDataAccessService.getDistributedBuildJobQueue().clear();
         updateCancelledQueuedBuildJobsStatus(queuedJobs);
     }
 
@@ -193,7 +193,7 @@ public class SharedQueueManagementService {
                 toRemove.add(job);
             }
         }
-        distributedDataAccessService.getDistributedQueuedJobs().removeAll(toRemove);
+        distributedDataAccessService.getDistributedBuildJobQueue().removeAll(toRemove);
         updateCancelledQueuedBuildJobsStatus(toRemove);
     }
 
@@ -224,7 +224,7 @@ public class SharedQueueManagementService {
                 toRemove.add(queuedJob);
             }
         }
-        distributedDataAccessService.getDistributedQueuedJobs().removeAll(toRemove);
+        distributedDataAccessService.getDistributedBuildJobQueue().removeAll(toRemove);
         updateCancelledQueuedBuildJobsStatus(toRemove);
 
         List<BuildJobQueueItem> runningJobs = distributedDataAccessService.getProcessingJobs();
@@ -240,10 +240,10 @@ public class SharedQueueManagementService {
      * This method should only be called by an admin user.
      */
     public void clearDistributedData() {
-        distributedDataAccessService.getDistributedQueuedJobs().clear();
+        distributedDataAccessService.getDistributedBuildJobQueue().clear();
         distributedDataAccessService.getDistributedProcessingJobs().clear();
         distributedDataAccessService.getDistributedDockerImageCleanupInfo().clear();
-        distributedDataAccessService.getDistributedResultQueue().clear();
+        distributedDataAccessService.getDistributedBuildResultQueue().clear();
         distributedDataAccessService.getDistributedBuildAgentInformation().clear();
     }
 
@@ -288,7 +288,7 @@ public class SharedQueueManagementService {
      * @return the estimated queue release date as a {@link ZonedDateTime}
      */
     public ZonedDateTime getBuildJobEstimatedStartDate(long participationId) {
-        if (distributedDataAccessService.getDistributedQueuedJobs().isEmpty()
+        if (distributedDataAccessService.getDistributedBuildJobQueue().isEmpty()
                 || this.buildAgentsCapacity > this.runningBuildJobCount + distributedDataAccessService.getQueuedJobsSize()) {
             return ZonedDateTime.now();
         }
@@ -359,24 +359,23 @@ public class SharedQueueManagementService {
         return Duration.between(now, estimatedCompletionDate).toSeconds();
     }
 
-    class BuildAgentListener
-            implements EntryAddedListener<String, BuildAgentInformation>, EntryRemovedListener<String, BuildAgentInformation>, EntryUpdatedListener<String, BuildAgentInformation> {
+    class BuildAgentListener implements MapEntryListener<String, BuildAgentInformation> {
 
         @Override
-        public void entryAdded(com.hazelcast.core.EntryEvent<String, BuildAgentInformation> event) {
-            log.debug("Build agent added: {}", event.getValue());
+        public void entryAdded(MapEntryAddedEvent<String, BuildAgentInformation> event) {
+            log.debug("Build agent added: {}", event.value());
             updateBuildAgentCapacity();
         }
 
         @Override
-        public void entryRemoved(com.hazelcast.core.EntryEvent<String, BuildAgentInformation> event) {
-            log.debug("Build agent removed: {}", event.getOldValue());
+        public void entryRemoved(MapEntryRemovedEvent<String, BuildAgentInformation> event) {
+            log.debug("Build agent removed: {}", event.oldValue());
             updateBuildAgentCapacity();
         }
 
         @Override
-        public void entryUpdated(com.hazelcast.core.EntryEvent<String, BuildAgentInformation> event) {
-            log.debug("Build agent updated: {}", event.getValue());
+        public void entryUpdated(MapEntryUpdatedEvent<String, BuildAgentInformation> event) {
+            log.debug("Build agent updated: {}", event.value());
             updateBuildAgentCapacity();
         }
     }

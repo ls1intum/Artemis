@@ -8,99 +8,94 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
-import jakarta.annotation.PostConstruct;
-
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-
-import com.hazelcast.collection.IQueue;
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
-import com.hazelcast.topic.ITopic;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
+import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.map.DistributedMap;
+import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.queue.DistributedQueue;
+import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.topic.DistributedTopic;
 
+/**
+ * This service is used to access the distributed data structures.
+ * All data structures are created lazily, meaning they are only created when they are first accessed.
+ */
 @Service
 @Profile({ PROFILE_LOCALCI, PROFILE_BUILDAGENT })
 public class DistributedDataAccessService {
 
-    private final HazelcastInstance hazelcastInstance;
+    private final DistributedDataProvider distributedDataProvider;
 
-    private IQueue<BuildJobQueueItem> queue;
+    private DistributedQueue<BuildJobQueueItem> buildJobQueue;
 
-    private IMap<String, BuildJobQueueItem> processingJobs;
+    private DistributedMap<String, BuildJobQueueItem> processingJobs;
 
-    private IQueue<ResultQueueItem> resultQueue;
+    private DistributedQueue<ResultQueueItem> buildResultQueue;
 
-    private IMap<String, BuildAgentInformation> buildAgentInformation;
+    private DistributedMap<String, BuildAgentInformation> buildAgentInformation;
 
-    private IMap<String, ZonedDateTime> dockerImageCleanupInfo;
+    private DistributedMap<String, ZonedDateTime> dockerImageCleanupInfo;
 
-    private ITopic<String> canceledBuildJobsTopic;
+    private DistributedTopic<String> canceledBuildJobsTopic;
 
-    private ITopic<String> pauseBuildAgentTopic;
+    private DistributedTopic<String> pauseBuildAgentTopic;
 
-    private ITopic<String> resumeBuildAgentTopic;
+    private DistributedTopic<String> resumeBuildAgentTopic;
 
-    public DistributedDataAccessService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
-        this.hazelcastInstance = hazelcastInstance;
-    }
-
-    /**
-     * Initialize relevant data from hazelcast. We use @PostConstruct instead of @EventListener(ApplicationReadyEvent.class) to ensure that the initialization is done before other
-     * services can use this service.
-     */
-    @PostConstruct
-    public void init() {
-        this.buildAgentInformation = this.hazelcastInstance.getMap("buildAgentInformation");
-        this.processingJobs = this.hazelcastInstance.getMap("processingJobs");
-        this.queue = this.hazelcastInstance.getQueue("buildJobQueue");
-        this.canceledBuildJobsTopic = hazelcastInstance.getTopic("canceledBuildJobsTopic");
-        this.dockerImageCleanupInfo = this.hazelcastInstance.getMap("dockerImageCleanupInfo");
-        this.pauseBuildAgentTopic = hazelcastInstance.getTopic("pauseBuildAgentTopic");
-        this.resumeBuildAgentTopic = hazelcastInstance.getTopic("resumeBuildAgentTopic");
-        this.resultQueue = this.hazelcastInstance.getQueue("buildResultQueue");
+    public DistributedDataAccessService(Optional<DistributedDataProvider> distributedDataProvider) {
+        this.distributedDataProvider = distributedDataProvider.orElseThrow(() -> new IllegalStateException(
+                "DistributedDataProvider is not available. " + "Please ensure that the application is running with the correct profile (e.g., hazelcast or redisson)."));
     }
 
     /**
      * This method is used to get the distributed queue of build jobs. This should only be used in special cases like writing to the queue or adding a listener.
      * In general, the queue should be accessed via the {@link DistributedDataAccessService#getQueuedJobs()} method.
+     * The queue is initialized lazily the first time this method is called if it is still null.
      *
      * @return the distributed queue of build jobs.
      */
-    public IQueue<BuildJobQueueItem> getDistributedQueuedJobs() {
-        return this.queue;
+    public DistributedQueue<BuildJobQueueItem> getDistributedBuildJobQueue() {
+        if (this.buildJobQueue == null) {
+            this.buildJobQueue = this.distributedDataProvider.getQueue("buildJobQueue");
+        }
+        return this.buildJobQueue;
     }
 
     /**
      * This method is used to get a List containing all queued build jobs. This should be used for reading the queue.
-     * If you want to write to the queue or add a listener, use {@link DistributedDataAccessService#getDistributedQueuedJobs()} instead.
+     * If you want to write to the queue or add a listener, use {@link DistributedDataAccessService#getDistributedBuildJobQueue()} instead.
      *
      * @return a list of queued build jobs
      */
     public List<BuildJobQueueItem> getQueuedJobs() {
         // NOTE: we should not use streams with IQueue directly, because it can be unstable, when many items are added at the same time and there is a slow network condition
-        return new ArrayList<>(this.queue);
+        return getDistributedBuildJobQueue().getAll();
     }
 
     /**
      * @return the size of the queued jobs
      */
     public int getQueuedJobsSize() {
-        return queue.size();
+        return getDistributedBuildJobQueue().size();
     }
 
     /**
      * This method is used to get the distributed map of processing jobs. This should only be used in special cases like writing to the map or adding a listener.
      * In general, the map should be accessed via the {@link DistributedDataAccessService#getProcessingJobs()} method.
+     * The map is initialized lazily the first time this method is called if it is still null.
      *
      * @return the distributed map of processing jobs
      */
-    public IMap<String, BuildJobQueueItem> getDistributedProcessingJobs() {
+    public DistributedMap<String, BuildJobQueueItem> getDistributedProcessingJobs() {
+        if (this.processingJobs == null) {
+            this.processingJobs = this.distributedDataProvider.getMap("processingJobs");
+        }
         return this.processingJobs;
     }
 
@@ -112,14 +107,14 @@ public class DistributedDataAccessService {
      */
     public List<BuildJobQueueItem> getProcessingJobs() {
         // NOTE: we should not use streams with IMap directly, because it can be unstable, when many items are added at the same time and there is a slow network condition
-        return new ArrayList<>(this.processingJobs.values());
+        return new ArrayList<>(getDistributedProcessingJobs().values());
     }
 
     /**
      * @return the size of the processing jobs
      */
     public int getProcessingJobsSize() {
-        return processingJobs.size();
+        return getDistributedProcessingJobs().size();
     }
 
     /**
@@ -127,51 +122,61 @@ public class DistributedDataAccessService {
      */
     public List<String> getProcessingJobIds() {
         // NOTE: we should not use streams with IMap, because it can be unstable, when many items are added at the same time and there is a slow network condition
-        return new ArrayList<>(this.processingJobs.keySet());
+        return new ArrayList<>(getDistributedProcessingJobs().keySet());
     }
 
     /**
      * This method is used to get the distributed queue of build results. This should only be used in special cases like writing to the queue or adding a listener.
-     * In general, the queue should be accessed via the {@link DistributedDataAccessService#getResultQueue()} method.
+     * In general, the queue should be accessed via the {@link DistributedDataAccessService#getBuildResultQueue()} method.
+     * The queue is initialized lazily the first time this method is called if it is still null.
      *
      * @return the distributed queue of build results
      */
-    public IQueue<ResultQueueItem> getDistributedResultQueue() {
-        return this.resultQueue;
+    public DistributedQueue<ResultQueueItem> getDistributedBuildResultQueue() {
+        if (this.buildResultQueue == null) {
+            this.buildResultQueue = this.distributedDataProvider.getQueue("buildResultQueue");
+        }
+        return this.buildResultQueue;
     }
 
     /**
      * This method is used to get a List containing all build results. This should be used for reading the queue.
-     * If you want to write to the queue or add a listener, use {@link DistributedDataAccessService#getDistributedResultQueue()} instead.
+     * If you want to write to the queue or add a listener, use {@link DistributedDataAccessService#getDistributedBuildResultQueue()} instead.
      *
      * @return a list of build results
      */
-    public List<ResultQueueItem> getResultQueue() {
-        // NOTE: we should not use streams with IQueue directly, because it can be unstable, when many items are added at the same time and there is a slow network condition
-        return new ArrayList<>(this.resultQueue);
+    public List<ResultQueueItem> getBuildResultQueue() {
+        // NOTE: we should not use streams with DistributedQueue directly, because it can be unstable, when many items are added at the same time and there is a slow network
+        // condition
+        return getDistributedBuildResultQueue().getAll();
     }
 
     /**
      * @return the size of the result queue
      */
     public int getResultQueueSize() {
-        return resultQueue.size();
+        return getDistributedBuildResultQueue().size();
     }
 
     /**
      * @return a list of result queue ids
      */
     public List<String> getResultQueueIds() {
-        return getResultQueue().stream().map(i -> i.buildJobQueueItem().id()).toList();
+        // stream is ok, because we use the converted version as list
+        return getBuildResultQueue().stream().map(item -> item.buildJobQueueItem().id()).toList();
     }
 
     /**
      * This method is used to get the distributed map of build agent information. This should only be used in special cases like writing to the map or adding a listener.
      * In general, the map should be accessed via the {@link DistributedDataAccessService#getBuildAgentInformation()} method.
+     * The map is initialized lazily the first time this method is called if it is still null.
      *
      * @return the distributed map of build agent information
      */
-    public IMap<String, BuildAgentInformation> getDistributedBuildAgentInformation() {
+    public DistributedMap<String, BuildAgentInformation> getDistributedBuildAgentInformation() {
+        if (this.buildAgentInformation == null) {
+            this.buildAgentInformation = this.distributedDataProvider.getMap("buildAgentInformation");
+        }
         return this.buildAgentInformation;
     }
 
@@ -183,7 +188,7 @@ public class DistributedDataAccessService {
      */
     public Map<String, BuildAgentInformation> getBuildAgentInformationMap() {
         // NOTE: we should not use streams with IMap directly, because it can be unstable, when many items are added at the same time and there is a slow network condition
-        return new HashMap<>(this.buildAgentInformation);
+        return getDistributedBuildAgentInformation().getMapCopy();
     }
 
     /**
@@ -194,23 +199,27 @@ public class DistributedDataAccessService {
      */
     public List<BuildAgentInformation> getBuildAgentInformation() {
         // NOTE: we should not use streams with IMap directly, because it can be unstable, when many items are added at the same time and there is a slow network condition
-        return new ArrayList<>(this.buildAgentInformation.values());
+        return new ArrayList<>(getDistributedBuildAgentInformation().values());
     }
 
     /**
      * @return the size of the build agent information
      */
     public int getBuildAgentInformationSize() {
-        return buildAgentInformation.size();
+        return getDistributedBuildAgentInformation().size();
     }
 
     /**
      * This method is used to get the distributed map of docker image cleanup info. This should only be used in special cases like writing to the map or adding a listener.
      * In general, the map should be accessed via the {@link DistributedDataAccessService#getDockerImageCleanupInfoMap()} method.
+     * The map is initialized lazily the first time this method is called if it is still null.
      *
      * @return the distributed map of docker image cleanup info
      */
-    public IMap<String, ZonedDateTime> getDistributedDockerImageCleanupInfo() {
+    public DistributedMap<String, ZonedDateTime> getDistributedDockerImageCleanupInfo() {
+        if (this.dockerImageCleanupInfo == null) {
+            this.dockerImageCleanupInfo = this.distributedDataProvider.getMap("dockerImageCleanupInfo");
+        }
         return this.dockerImageCleanupInfo;
     }
 
@@ -222,27 +231,39 @@ public class DistributedDataAccessService {
      */
     public Map<String, ZonedDateTime> getDockerImageCleanupInfoMap() {
         // NOTE: we should not use streams with IMap directly, because it can be unstable, when many items are added at the same time and there is a slow network condition
-        return new HashMap<>(this.dockerImageCleanupInfo);
+        return new HashMap<>(getDistributedDockerImageCleanupInfo().getMapCopy());
     }
 
     /**
      * @return ITopic for canceled build jobs
+     *         The topic is initialized lazily the first time this method is called if it is still null.
      */
-    public ITopic<String> getCanceledBuildJobsTopic() {
+    public DistributedTopic<String> getCanceledBuildJobsTopic() {
+        if (this.canceledBuildJobsTopic == null) {
+            this.canceledBuildJobsTopic = this.distributedDataProvider.getTopic("canceledBuildJobsTopic");
+        }
         return this.canceledBuildJobsTopic;
     }
 
     /**
      * @return ITopic for pausing build agents
+     *         The topic is initialized lazily the first time this method is called if it is still null.
      */
-    public ITopic<String> getPauseBuildAgentTopic() {
+    public DistributedTopic<String> getPauseBuildAgentTopic() {
+        if (this.pauseBuildAgentTopic == null) {
+            this.pauseBuildAgentTopic = this.distributedDataProvider.getTopic("pauseBuildAgentTopic");
+        }
         return this.pauseBuildAgentTopic;
     }
 
     /**
      * @return ITopic for resuming build agents
+     *         The topic is initialized lazily the first time this method is called if it is still null.
      */
-    public ITopic<String> getResumeBuildAgentTopic() {
+    public DistributedTopic<String> getResumeBuildAgentTopic() {
+        if (this.resumeBuildAgentTopic == null) {
+            this.resumeBuildAgentTopic = this.distributedDataProvider.getTopic("resumeBuildAgentTopic");
+        }
         return this.resumeBuildAgentTopic;
     }
 
@@ -276,5 +297,40 @@ public class DistributedDataAccessService {
      */
     public List<BuildJobQueueItem> getProcessingJobsForParticipation(long participationId) {
         return getProcessingJobs().stream().filter(job -> job.participationId() == participationId).toList();
+    }
+
+    /**
+     * Checks if the instance is active and operational.
+     *
+     * @return {@code true} if the instance has been initialized and is actively running,
+     *         {@code false} if the instance has not been initialized or is no longer running
+     */
+    public boolean isInstanceRunning() {
+        return distributedDataProvider.isInstanceRunning();
+    }
+
+    /**
+     * @return the address of the local member
+     */
+    public String getLocalMemberAddress() {
+        return distributedDataProvider.getLocalMemberAddress();
+    }
+
+    /**
+     * Retrieves the addresses of all members in the cluster.
+     *
+     * @return a set of addresses of all cluster members
+     */
+    public Set<String> getClusterMemberAddresses() {
+        return distributedDataProvider.getClusterMemberAddresses();
+    }
+
+    /**
+     * Checks if there are no data members available in the cluster.
+     *
+     * @return {@code true} if all members in the cluster are lite members (i.e., no data members are available),
+     */
+    public boolean noDataMemberInClusterAvailable() {
+        return distributedDataProvider.noDataMemberInClusterAvailable();
     }
 }

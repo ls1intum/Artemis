@@ -13,8 +13,6 @@ import org.springframework.boot.info.GitProperties;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import com.hazelcast.core.HazelcastInstance;
-
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDetailsDTO;
@@ -28,8 +26,6 @@ import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessS
 public class BuildAgentInformationService {
 
     private static final Logger log = org.slf4j.LoggerFactory.getLogger(BuildAgentInformationService.class);
-
-    private final HazelcastInstance hazelcastInstance;
 
     private final BuildAgentConfiguration buildAgentConfiguration;
 
@@ -45,9 +41,8 @@ public class BuildAgentInformationService {
     @Value("${artemis.continuous-integration.build-agent.display-name:}")
     private String buildAgentDisplayName;
 
-    public BuildAgentInformationService(HazelcastInstance hazelcastInstance, BuildAgentConfiguration buildAgentConfiguration, BuildAgentSshKeyService buildAgentSSHKeyService,
+    public BuildAgentInformationService(BuildAgentConfiguration buildAgentConfiguration, BuildAgentSshKeyService buildAgentSSHKeyService,
             DistributedDataAccessService distributedDataAccessService, GitProperties gitProperties) {
-        this.hazelcastInstance = hazelcastInstance;
         this.buildAgentConfiguration = buildAgentConfiguration;
         this.buildAgentSSHKeyService = buildAgentSSHKeyService;
         this.gitProperties = gitProperties;
@@ -65,7 +60,7 @@ public class BuildAgentInformationService {
      * @param isPaused       whether the build agent is paused
      */
     public void updateLocalBuildAgentInformationWithRecentJob(BuildJobQueueItem recentBuildJob, boolean isPaused) {
-        String memberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
+        String memberAddress = distributedDataAccessService.getLocalMemberAddress();
         try {
             distributedDataAccessService.getDistributedBuildAgentInformation().lock(memberAddress);
             // Add/update
@@ -86,7 +81,7 @@ public class BuildAgentInformationService {
     }
 
     private BuildAgentInformation getUpdatedLocalBuildAgentInformation(BuildJobQueueItem recentBuildJob, boolean isPaused) {
-        String memberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
+        String memberAddress = distributedDataAccessService.getLocalMemberAddress();
         List<BuildJobQueueItem> processingJobsOfMember = getProcessingJobsOfNode(memberAddress);
         int numberOfCurrentBuildJobs = processingJobsOfMember.size();
         int maxNumberOfConcurrentBuilds = buildAgentConfiguration.getBuildExecutor() != null ? buildAgentConfiguration.getBuildExecutor().getMaximumPoolSize()
