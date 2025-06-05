@@ -119,8 +119,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateParticipationForExternalSubmission() throws Exception {
         Optional<User> student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "student1");
-        participationUtilService.mockCreationOfExerciseParticipation(false, null, programmingExercise, uriService, versionControlService, continuousIntegrationService,
-                localVCGitBranchService);
+        participationUtilService.mockCreationOfExerciseParticipation(false, null, programmingExercise, uriService, versionControlService, continuousIntegrationService);
 
         StudentParticipation participation = participationService.createParticipationWithEmptySubmissionIfNotExisting(programmingExercise, student.orElseThrow(),
                 SubmissionType.EXTERNAL);
@@ -136,8 +135,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetBuildJobsForResultsOfParticipation() throws Exception {
         Optional<User> student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "student1");
-        participationUtilService.mockCreationOfExerciseParticipation(false, null, programmingExercise, uriService, versionControlService, continuousIntegrationService,
-                localVCGitBranchService);
+        participationUtilService.mockCreationOfExerciseParticipation(false, null, programmingExercise, uriService, versionControlService, continuousIntegrationService);
 
         StudentParticipation participation = participationService.createParticipationWithEmptySubmissionIfNotExisting(programmingExercise, student.orElseThrow(),
                 SubmissionType.EXTERNAL);
@@ -158,8 +156,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void canStartExerciseWithPracticeParticipationAfterDueDateChange() throws URISyntaxException {
         Participant participant = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        participationUtilService.mockCreationOfExerciseParticipation(false, null, programmingExercise, uriService, versionControlService, continuousIntegrationService,
-                localVCGitBranchService);
+        participationUtilService.mockCreationOfExerciseParticipation(false, null, programmingExercise, uriService, versionControlService, continuousIntegrationService);
 
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
         exerciseUtilService.updateExerciseDueDate(programmingExercise.getId(), ZonedDateTime.now().minusHours(1));
@@ -202,7 +199,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
         Result gradedResult = participationUtilService.addProgrammingParticipationWithResultForExercise(programmingExercise, TEST_PREFIX + "student1");
 
         participationUtilService.mockCreationOfExerciseParticipation(useGradedParticipation, gradedResult, programmingExercise, uriService, versionControlService,
-                continuousIntegrationService, localVCGitBranchService);
+                continuousIntegrationService);
 
         StudentParticipation studentParticipationReceived = participationService.startPracticeMode(programmingExercise, participant,
                 Optional.of((StudentParticipation) gradedResult.getSubmission().getParticipation()), useGradedParticipation);

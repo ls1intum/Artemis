@@ -27,6 +27,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
@@ -44,6 +45,7 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerFlagsDTO;
@@ -1088,5 +1090,46 @@ public class ProgrammingExerciseService {
         if (dockerFlagsDTO.memorySwap() < 0) {
             throw new BadRequestAlertException("The memory swap limit is invalid. The minimum memory swap limit is 0", "Exercise", "memorySwapLimitInvalid");
         }
+    }
+
+    /**
+     * Find a programming exercise by its id, with eagerly loaded template and solution participation,
+     * including their latest submission with the latest result with feedback and test cases.
+     * <p>
+     * NOTICE: this method is quite expensive because it loads all feedback and test cases,
+     * IMPORTANT: you should generally avoid using this query except you really need all information!!
+     *
+     * @param programmingExerciseId of the programming exercise.
+     * @return The programming exercise related to the given id
+     * @throws EntityNotFoundException the programming exercise could not be found.
+     */
+    @NotNull
+    public ProgrammingExercise findByIdWithTemplateAndSolutionParticipationAndAuxiliaryReposAndLatestResultFeedbackTestCasesElseThrow(long programmingExerciseId)
+            throws EntityNotFoundException {
+        ProgrammingExercise programmingExerciseWithTemplate = programmingExerciseRepository.findWithTemplateParticipationAndLatestSubmissionByIdElseThrow(programmingExerciseId);
+        // if there are no submissions we can neither access a submission nor does it make sense to load a result
+        if (!programmingExerciseWithTemplate.getTemplateParticipation().getSubmissions().isEmpty()) {
+            Optional<Result> latestResultForLatestSubmissionOfTemplate = resultRepository
+                    .findLatestResultWithFeedbacksAndTestcasesForSubmission(programmingExerciseWithTemplate.getTemplateParticipation().getSubmissions().iterator().next().getId());
+            List<Result> resultsForLatestSubmissionTemplate = new ArrayList<>();
+            latestResultForLatestSubmissionOfTemplate.ifPresent(resultsForLatestSubmissionTemplate::add);
+            programmingExerciseWithTemplate.getTemplateParticipation().getSubmissions().iterator().next().setResults(resultsForLatestSubmissionTemplate);
+        }
+        SolutionProgrammingExerciseParticipation solutionParticipationWithLatestSubmission = solutionProgrammingExerciseParticipationRepository
+                .findWithLatestSubmissionByExerciseIdElseThrow(programmingExerciseId);
+
+        if (!solutionParticipationWithLatestSubmission.getSubmissions().isEmpty()) {
+            Optional<Result> latestResultForLatestSubmissionOfSolution = resultRepository
+                    .findLatestResultWithFeedbacksAndTestcasesForSubmission(solutionParticipationWithLatestSubmission.getSubmissions().iterator().next().getId());
+            List<Result> resultsForLatestSubmissionSolution = new ArrayList<>();
+            latestResultForLatestSubmissionOfSolution.ifPresent(resultsForLatestSubmissionSolution::add);
+            solutionParticipationWithLatestSubmission.getSubmissions().iterator().next().setResults(resultsForLatestSubmissionSolution);
+        }
+        List<AuxiliaryRepository> auxiliaryRepositories = auxiliaryRepositoryRepository.findByProgrammingExerciseId(programmingExerciseId);
+
+        programmingExerciseWithTemplate.setSolutionParticipation(solutionParticipationWithLatestSubmission);
+        programmingExerciseWithTemplate.setAuxiliaryRepositories(auxiliaryRepositories);
+
+        return programmingExerciseWithTemplate;
     }
 }
