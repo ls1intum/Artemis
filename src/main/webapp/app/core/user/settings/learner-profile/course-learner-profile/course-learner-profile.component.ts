@@ -17,7 +17,7 @@ import { COURSE_LEARNER_PROFILE_OPTIONS } from 'app/core/user/settings/learner-p
 @Component({
     selector: 'jhi-course-learner-profile',
     templateUrl: './course-learner-profile.component.html',
-    styleUrls: ['./course-learner-profile.component.scss'],
+    styleUrls: ['../learner-profile.component.scss'],
     imports: [TranslateDirective, NgClass, SegmentedToggleComponent],
 })
 export class CourseLearnerProfileComponent implements OnInit {

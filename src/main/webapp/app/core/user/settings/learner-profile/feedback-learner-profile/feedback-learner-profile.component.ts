@@ -16,7 +16,7 @@ import { ALTERNATIVE_STANDARD_OPTIONS, BRIEF_DETAILED_OPTIONS, FOLLOWUP_SUMMARY_
 @Component({
     selector: 'jhi-feedback-learner-profile',
     templateUrl: './feedback-learner-profile.component.html',
-    styleUrls: ['./feedback-learner-profile.component.scss'],
+    styleUrls: ['../learner-profile.component.scss'],
     imports: [TranslateDirective, NgClass, ArtemisTranslatePipe, FaIconComponent, HelpIconComponent, SegmentedToggleComponent],
 })
 export class FeedbackLearnerProfileComponent implements OnInit {
@@ -46,13 +46,10 @@ export class FeedbackLearnerProfileComponent implements OnInit {
         value: option.level,
     }));
 
-    /** Default value for profile settings */
-    private readonly defaultProfileValue = LearnerProfileDTO.MIN_VALUE;
-
     /** Signals for learner profile settings */
-    feedbackAlternativeStandard = signal<number>(this.defaultProfileValue);
-    feedbackFollowupSummary = signal<number>(this.defaultProfileValue);
-    feedbackBriefDetailed = signal<number>(this.defaultProfileValue);
+    feedbackAlternativeStandard = signal<number>(LearnerProfileDTO.DEFAULT_VALUE);
+    feedbackFollowupSummary = signal<number>(LearnerProfileDTO.DEFAULT_VALUE);
+    feedbackBriefDetailed = signal<number>(LearnerProfileDTO.DEFAULT_VALUE);
 
     /** Icon for save button */
     protected readonly faSave = faSave;

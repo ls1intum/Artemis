@@ -12,6 +12,11 @@ export class LearnerProfileDTO {
      */
     public static readonly MIN_VALUE = 1;
     /**
+     * Minimum value allowed for profile fields representing values on a Likert scale.
+     * Must be the same as in the server in LearnerProfile.java
+     */
+    public static readonly DEFAULT_VALUE = 2;
+    /**
      * Maximum value allowed for profile fields representing values on a Likert scale.
      * Must be the same as in the server in LearnerProfile.java
      */
@@ -36,11 +41,11 @@ export class LearnerProfileDTO {
 
     private validateAndGetValue(value: number | undefined, fieldName: string): number {
         if (value === undefined || value === null) {
-            return LearnerProfileDTO.MIN_VALUE;
+            return LearnerProfileDTO.DEFAULT_VALUE;
         }
 
         if (!this.isValueInRange(value)) {
-            return LearnerProfileDTO.MIN_VALUE;
+            return LearnerProfileDTO.DEFAULT_VALUE;
         }
 
         return value;
