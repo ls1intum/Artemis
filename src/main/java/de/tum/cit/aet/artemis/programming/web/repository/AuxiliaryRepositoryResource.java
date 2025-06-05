@@ -48,7 +48,6 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryAccessService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
-import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCGitBranchService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCServletService;
 
 /**
@@ -62,15 +61,11 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
 
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
-    private final Optional<LocalVCGitBranchService> localVCGitBranchService;
-
     public AuxiliaryRepositoryResource(ProfileService profileService, UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService,
             RepositoryService repositoryService, ProgrammingExerciseRepository programmingExerciseRepository, RepositoryAccessService repositoryAccessService,
-            Optional<LocalVCServletService> localVCServletService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
-            Optional<LocalVCGitBranchService> localVCGitBranchService) {
+            Optional<LocalVCServletService> localVCServletService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository) {
         super(profileService, userRepository, authCheckService, gitService, repositoryService, programmingExerciseRepository, repositoryAccessService, localVCServletService);
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
-        this.localVCGitBranchService = localVCGitBranchService;
     }
 
     @Override
@@ -102,9 +97,7 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
 
     @Override
     String getOrRetrieveBranchOfDomainObject(Long auxiliaryRepositoryId) {
-        AuxiliaryRepository auxiliaryRepo = auxiliaryRepositoryRepository.findByIdElseThrow(auxiliaryRepositoryId);
-        ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(auxiliaryRepo.getExercise().getId());
-        return localVCGitBranchService.orElseThrow().getOrRetrieveBranchOfExercise(exercise);
+        return auxiliaryRepositoryRepository.findBranchByRepoId(auxiliaryRepositoryId);
     }
 
     @Override

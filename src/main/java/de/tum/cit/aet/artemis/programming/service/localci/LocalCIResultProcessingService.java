@@ -13,7 +13,6 @@ import jakarta.annotation.PreDestroy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -22,7 +21,6 @@ import org.springframework.stereotype.Service;
 
 import com.hazelcast.collection.ItemEvent;
 import com.hazelcast.collection.ItemListener;
-import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
@@ -59,8 +57,6 @@ public class LocalCIResultProcessingService {
 
     private static final int BUILD_STATISTICS_UPDATE_THRESHOLD = 10;
 
-    private final HazelcastInstance hazelcastInstance;
-
     private final ProgrammingExerciseGradingService programmingExerciseGradingService;
 
     private final ProgrammingMessagingService programmingMessagingService;
@@ -81,11 +77,10 @@ public class LocalCIResultProcessingService {
 
     private UUID listenerId;
 
-    public LocalCIResultProcessingService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, ProgrammingExerciseGradingService programmingExerciseGradingService,
-            ProgrammingMessagingService programmingMessagingService, BuildJobRepository buildJobRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            ParticipationRepository participationRepository, ProgrammingTriggerService programmingTriggerService, BuildLogEntryService buildLogEntryService,
+    public LocalCIResultProcessingService(ProgrammingExerciseGradingService programmingExerciseGradingService, ProgrammingMessagingService programmingMessagingService,
+            BuildJobRepository buildJobRepository, ProgrammingExerciseRepository programmingExerciseRepository, ParticipationRepository participationRepository,
+            ProgrammingTriggerService programmingTriggerService, BuildLogEntryService buildLogEntryService,
             ProgrammingExerciseBuildStatisticsRepository programmingExerciseBuildStatisticsRepository, DistributedDataAccessService distributedDataAccessService) {
-        this.hazelcastInstance = hazelcastInstance;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.participationRepository = participationRepository;
         this.programmingExerciseGradingService = programmingExerciseGradingService;
@@ -102,7 +97,7 @@ public class LocalCIResultProcessingService {
      */
     @EventListener(ApplicationReadyEvent.class)
     public void init() {
-        this.listenerId = distributedDataAccessService.getDistributedResultQueue().addItemListener(new ResultQueueListener(), true);
+        this.listenerId = distributedDataAccessService.getDistributedBuildResultQueue().addItemListener(new ResultQueueListener(), true);
     }
 
     /**
@@ -113,8 +108,8 @@ public class LocalCIResultProcessingService {
     public void removeListener() {
         // check if Hazelcast is still active, before invoking this
         try {
-            if (hazelcastInstance != null && hazelcastInstance.getLifecycleService().isRunning()) {
-                distributedDataAccessService.getDistributedResultQueue().removeItemListener(this.listenerId);
+            if (distributedDataAccessService.isInstanceRunning()) {
+                distributedDataAccessService.getDistributedBuildResultQueue().removeItemListener(this.listenerId);
             }
         }
         catch (HazelcastInstanceNotActiveException e) {
@@ -128,7 +123,7 @@ public class LocalCIResultProcessingService {
     public void processResult() {
 
         // set lock to prevent multiple nodes from processing the same build job
-        ResultQueueItem resultQueueItem = distributedDataAccessService.getDistributedResultQueue().poll();
+        ResultQueueItem resultQueueItem = distributedDataAccessService.getDistributedBuildResultQueue().poll();
 
         if (resultQueueItem == null) {
             return;

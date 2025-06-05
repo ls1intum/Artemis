@@ -72,7 +72,7 @@ public interface ConversationMessageRepository extends ArtemisJpaRepository<Post
      * @return returns a Page of Messages
      */
     default Page<Post> findMessages(PostContextFilterDTO postContextFilter, Pageable pageable, long userId) {
-        var specification = Specification.where(getConversationsSpecification(postContextFilter.conversationIds()));
+        var specification = getConversationsSpecification(postContextFilter.conversationIds());
         specification = configureSearchSpecification(specification, postContextFilter, userId);
         // Fetch all necessary attributes to avoid lazy loading (even though relations are defined as EAGER in the domain class, specification queries do not respect this)
         return findPostsWithSpecification(pageable, specification);
