@@ -75,7 +75,7 @@ export class TutorialGroupSessionFormComponent implements OnInit, OnChanges {
 
     submitForm() {
         const formValue = this.form.value;
-        // Currently neccessary till component gets rewritten to modern angular
+        // Creating a TutorialGroupSessionFormData is currently neccessary till component gets rewritten to modern angular
         const tutorialGroupSessionFormData: TutorialGroupSessionFormData = {
             date: formValue.date ? new Date(formValue.date) : undefined,
             startTime: formValue.startTime,
@@ -97,7 +97,7 @@ export class TutorialGroupSessionFormComponent implements OnInit, OnChanges {
             {
                 startTime: ['13:00:00', [Validators.required]],
                 endTime: ['14:00:00', [Validators.required]],
-                date: [undefined],
+                date: [undefined, [Validators.required]],
                 location: [undefined, [Validators.required]],
             },
             { validators: validTimeRange },

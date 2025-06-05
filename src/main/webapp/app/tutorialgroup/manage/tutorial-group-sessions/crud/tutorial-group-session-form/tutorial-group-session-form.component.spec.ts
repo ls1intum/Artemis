@@ -27,8 +27,8 @@ describe('TutorialGroupSessionForm', () => {
     let clickSubmit: (expectSubmitEvent: boolean) => void;
     let testFormIsInvalidOnMissingRequiredProperty: (controlName: string) => void;
 
-    beforeEach(async () => {
-        await TestBed.configureTestingModule({
+    beforeEach(() => {
+        TestBed.configureTestingModule({
             imports: [ReactiveFormsModule, FormsModule, NgbTimepickerModule, OwlDateTimeModule, OwlNativeDateTimeModule, TranslateModule.forRoot()],
             declarations: [
                 TutorialGroupSessionFormComponent,

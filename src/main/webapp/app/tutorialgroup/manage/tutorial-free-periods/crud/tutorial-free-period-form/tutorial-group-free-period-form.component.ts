@@ -43,6 +43,7 @@ export enum TimeFrame {
 })
 export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
     private fb = inject(FormBuilder);
+    protected readonly DateTimePickerType = DateTimePickerType;
 
     @Input()
     formData: TutorialGroupFreePeriodFormData = {
@@ -62,9 +63,6 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
     faCalendarAlt = faCalendarAlt;
 
     form: FormGroup;
-
-    protected readonly DateTimePickerType = DateTimePickerType;
-
     // TimeFrame to store the current time frame of the form.
     protected timeFrame = TimeFrame.Day;
 
@@ -187,7 +185,7 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
 
     submitForm() {
         const formValue = this.form.value;
-        // Currently neccessary till component gets rewritten to modern angular
+        // Creating a TutorialGroupFreePeriodFormData is currently neccessary till component gets rewritten to modern angular
         const tutorialGroupFreePeriodFormData: TutorialGroupFreePeriodFormData = {
             startDate: formValue.startDate ? new Date(formValue.startDate) : undefined,
             endDate: formValue.endDate ? new Date(formValue.endDate) : undefined,
