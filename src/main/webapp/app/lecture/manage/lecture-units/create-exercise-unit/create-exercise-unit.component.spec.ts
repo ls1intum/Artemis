@@ -80,7 +80,6 @@ describe('CreateExerciseUnitComponent', () => {
                 },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
-            schemas: [],
         })
             .compileComponents()
             .then(() => {

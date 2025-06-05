@@ -173,7 +173,7 @@ public class QuizSubmissionResource {
 
         quizExercise.setQuizPointStatistic(null);
 
-        resultWebsocketService.broadcastNewResult(result.getParticipation(), result);
+        resultWebsocketService.broadcastNewResult(result.getSubmission().getParticipation(), result);
 
         quizExercise.setCourse(null);
         // return result with quizSubmission, participation and quiz exercise (including the solution)
@@ -208,7 +208,7 @@ public class QuizSubmissionResource {
         StudentParticipation participation = new StudentParticipation().exercise(quizExercise);
 
         // create result
-        Result result = new Result().participation(participation).submission(quizSubmission);
+        Result result = new Result().submission(quizSubmission);
         result.setRated(false);
         result.setAssessmentType(AssessmentType.AUTOMATIC);
         result.setCompletionDate(ZonedDateTime.now());

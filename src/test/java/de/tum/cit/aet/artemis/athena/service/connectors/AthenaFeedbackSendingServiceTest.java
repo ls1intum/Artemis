@@ -119,7 +119,7 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
         textBlock.computeId();
         textBlock = textBlockRepository.save(textBlock);
 
-        var textResult = participationUtilService.addResultToParticipation(textParticipation, textSubmission);
+        var textResult = participationUtilService.addResultToSubmission(textParticipation, textSubmission);
 
         textFeedback = new Feedback().type(FeedbackType.MANUAL).credits(5.0).reference(textBlock.getId());
         textFeedback.setText("Title");
@@ -137,7 +137,7 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
         programmingSubmission.setParticipation(programmingParticipation);
         programmingSubmission = programmingSubmissionRepository.save(programmingSubmission);
 
-        var programmingResult = participationUtilService.addResultToParticipation(programmingParticipation, programmingSubmission);
+        var programmingResult = participationUtilService.addResultToSubmission(programmingParticipation, programmingSubmission);
 
         programmingFeedback = new Feedback().type(FeedbackType.MANUAL).credits(5.0).reference("test");
         programmingFeedback.setText("Title");
