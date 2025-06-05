@@ -97,7 +97,7 @@ export class TutorialGroupSessionFormComponent implements OnInit, OnChanges {
             {
                 startTime: ['13:00:00', [Validators.required]],
                 endTime: ['14:00:00', [Validators.required]],
-                date: [undefined, [Validators.required]],
+                date: [undefined],
                 location: [undefined, [Validators.required]],
             },
             { validators: validTimeRange },
