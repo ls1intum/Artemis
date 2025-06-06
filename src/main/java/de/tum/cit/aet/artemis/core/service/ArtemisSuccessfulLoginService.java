@@ -48,6 +48,10 @@ public class ArtemisSuccessfulLoginService {
 
     private final MailSendingService mailSendingService;
 
+    /**
+     * Ensures that the password reset links for both English and German are initialized properly.
+     * If the configured links are empty or set to a placeholder, it uses the default link the Artemis server URL/account/reset/request.
+     */
     @PostConstruct
     public void ensurePasswordResetLinksAreInitializedProperly() {
         String defaultPasswordResetLink = artemisServerUrl + "/account/reset/request";
@@ -71,7 +75,9 @@ public class ArtemisSuccessfulLoginService {
      * Handles successful authentication events.
      * Sends a login notification email to users when they successfully authenticate.
      *
-     * @param username the username of the user who has successfully logged in
+     * @param username             the username of the user who has successfully logged in
+     * @param authenticationMethod the method used for authentication (e.g., password, passkey, SAML2)
+     * @param clientEnvironment    the environment information of the client (optional)
      */
     public void sendLoginEmail(String username, AuthenticationMethod authenticationMethod, @Nullable ClientEnvironment clientEnvironment) {
         try {
