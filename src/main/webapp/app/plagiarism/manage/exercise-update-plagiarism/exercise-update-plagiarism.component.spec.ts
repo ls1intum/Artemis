@@ -131,7 +131,13 @@ describe('Exercise Update Plagiarism Component', () => {
 
         // @ts-ignore
         comp.fieldCPCEnabled()!.valid = true;
-        comp.exercise()?.plagiarismDetectionConfig!.continuousPlagiarismControlEnabled = true;
+        fixture.componentRef.setInput('exercise', {
+            ...comp.exercise(),
+            plagiarismDetectionConfig: {
+                ...comp.exercise()?.plagiarismDetectionConfig!,
+                continuousPlagiarismControlEnabled: true,
+            },
+        });
         (comp.fieldCPCEnabled()!.valueChanges! as Subject<boolean>).next(true);
 
         expect(calculateValidSpy).toHaveBeenCalledTimes(2);
