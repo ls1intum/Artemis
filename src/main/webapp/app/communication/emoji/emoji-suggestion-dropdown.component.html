@@ -1,0 +1,18 @@
+<div class="emoji-suggestion-dropdown" [ngStyle]="dropdownStyle" role="listbox" aria-label="Emoji suggestions">
+    @if (suggestions?.length) {
+        @for (s of suggestions; track $index; let i = $index) {
+            <div
+                class="emoji-suggestion-item"
+                [ngClass]="{ active: i === activeIndex }"
+                (mousedown)="onSelect.emit(s)"
+                (mouseenter)="activeIndex = i"
+                (mouseleave)="activeIndex = -1"
+                [attr.aria-selected]="i === activeIndex"
+                role="option"
+            >
+                <span class="emoji-icon">{{ s.emoji }}</span>
+                <span class="emoji-name">:{{ s.name }}:</span>
+            </div>
+        }
+    }
+</div>
