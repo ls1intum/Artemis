@@ -206,21 +206,8 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
             // we do not need the course and lectures
             quizExercise.setCourse(null);
         }
-        // submissions are part of results, so we do not need them twice
         participation.setSubmissions(null);
         participation.setParticipant(null);
-        if (participation.getResults() != null && !participation.getResults().isEmpty()) {
-            QuizSubmission quizSubmission = (QuizSubmission) participation.getResults().iterator().next().getSubmission();
-            if (quizSubmission != null && quizSubmission.getSubmittedAnswers() != null) {
-                for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {
-                    if (submittedAnswer.getQuizQuestion() != null) {
-                        // we do not need all information of the questions again, they are already stored in the exercise
-                        var question = submittedAnswer.getQuizQuestion();
-                        submittedAnswer.setQuizQuestion(question.copyQuestionId());
-                    }
-                }
-            }
-        }
     }
 
     /**

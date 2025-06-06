@@ -4,10 +4,14 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
@@ -143,8 +147,10 @@ public class ProgrammingExerciseParticipationResource {
         hasAccessToParticipationElseThrow(participation);
         filterParticipationSubmissionResults(participation);
 
+        Set<Result> results = Stream.ofNullable(participation.getSubmissions()).flatMap(Collection::stream)
+                .flatMap(submission -> Stream.ofNullable(submission.getResults()).flatMap(Collection::stream)).filter(Objects::nonNull).collect(Collectors.toSet());
         // hide details that should not be shown to the students
-        resultService.filterSensitiveInformationIfNecessary(participation, participation.getResults(), Optional.empty());
+        resultService.filterSensitiveInformationIfNecessary(participation, results, Optional.empty());
         return ResponseEntity.ok(participation);
     }
 
@@ -172,8 +178,10 @@ public class ProgrammingExerciseParticipationResource {
         hasAccessToParticipationElseThrow(participation);
         filterParticipationSubmissionResults(participation);
 
+        Set<Result> results = Stream.ofNullable(participation.getSubmissions()).flatMap(Collection::stream)
+                .flatMap(submission -> Stream.ofNullable(submission.getResults()).flatMap(Collection::stream)).filter(Objects::nonNull).collect(Collectors.toSet());
         // hide details that should not be shown to the students
-        resultService.filterSensitiveInformationIfNecessary(participation, participation.getResults(), Optional.empty());
+        resultService.filterSensitiveInformationIfNecessary(participation, results, Optional.empty());
         return ResponseEntity.ok(participation);
     }
 

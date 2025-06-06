@@ -313,7 +313,6 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
         returnedSubmission = request.putWithResponseBody("/api/modeling/exercises/" + classExercise.getId() + "/modeling-submissions", returnedSubmission, ModelingSubmission.class,
                 HttpStatus.OK);
         StudentParticipation studentParticipation = (StudentParticipation) returnedSubmission.getParticipation();
-        assertThat(studentParticipation.getResults()).as("do not send old results to the client").isEmpty();
         assertThat(studentParticipation.getSubmissions()).as("do not send old submissions to the client").isEmpty();
         assertThat(studentParticipation.getExercise().getGradingInstructions()).as("sensitive information (grading instructions) is hidden").isNull();
         assertThat(returnedSubmission.getLatestResult()).as("sensitive information (exercise result) is hidden").isNull();
@@ -970,7 +969,6 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
 
     private void checkDetailsHidden(ModelingSubmission submission, boolean isStudent) {
         assertThat(submission.getParticipation().getSubmissions()).isNullOrEmpty();
-        assertThat(submission.getParticipation().getResults()).isNullOrEmpty();
         if (isStudent) {
             var modelingExercise = ((ModelingExercise) submission.getParticipation().getExercise());
             assertThat(modelingExercise.getExampleSolutionModel()).isNullOrEmpty();

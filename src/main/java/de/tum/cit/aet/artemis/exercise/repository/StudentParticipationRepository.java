@@ -970,7 +970,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                         resultsOfParticipation = participation.getSubmissions().stream().map(Submission::getLatestResult).collect(Collectors.toSet());
                     }
                     else {
-                        resultsOfParticipation = participation.getResults();
+                        resultsOfParticipation = participation.getSubmissions().stream()
+                                .flatMap(submission -> Stream.ofNullable(submission.getResults()).flatMap(Collection::stream)).collect(Collectors.toSet());
                     }
                     // search for the relevant result by filtering out irrelevant results using the continue keyword
                     // this for loop is optimized for performance and thus not very easy to understand ;)
