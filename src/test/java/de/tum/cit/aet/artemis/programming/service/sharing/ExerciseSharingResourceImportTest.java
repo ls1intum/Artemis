@@ -330,7 +330,6 @@ class ExerciseSharingResourceImportTest extends AbstractSpringIntegrationIndepen
         // when(continuousIntegrationService.givePlanPermissions(any(), anyString()))
         // when(continuousIntegrationService.enablePlan(any(), any()));
 
-        when(versionControlService.getDefaultBranchOfArtemis()).thenReturn("main");
         when(versionControlService.getCloneRepositoryUri(eq(exercise.getProjectKey()), any())).thenReturn(new VcsRepositoryUri("http://some.cloneurl"));
 
         doAnswer(invocation -> {
@@ -376,7 +375,6 @@ class ExerciseSharingResourceImportTest extends AbstractSpringIntegrationIndepen
             e.setTutorParticipations(Set.of());
             e.setExampleSubmissions(Set.of());
             e.setAttachments(Set.of());
-            e.setPosts(Set.of());
             e.setPlagiarismCases(Set.of());
             if (e instanceof ProgrammingExercise) {
                 ProgrammingExercise pe = (ProgrammingExercise) e;
