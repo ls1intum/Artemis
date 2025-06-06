@@ -6,7 +6,7 @@ import { cloneDeep } from 'lodash-es';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { faBan, faExclamationTriangle, faPencilAlt, faQuestionCircle, faSave, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faExclamationTriangle, faPencilAlt, faQuestionCircle, faSave, faTimes, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import { Subject } from 'rxjs';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -18,6 +18,7 @@ import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/manage/u
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FeedbackContentPipe } from 'app/shared/pipes/feedback-content.pipe';
 import { QuotePipe } from 'app/shared/pipes/quote.pipe';
+import { AlertService } from 'app/shared/service/alert.service';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment-inline-feedback',
@@ -43,6 +44,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     protected readonly faPencilAlt = faPencilAlt;
     protected readonly faTrashAlt = faTrashAlt;
     protected readonly faExclamationTriangle = faExclamationTriangle;
+    protected readonly faTimes = faTimes;
     protected readonly Feedback = Feedback;
     protected readonly ButtonSize = ButtonSize;
     protected readonly MANUAL = FeedbackType.MANUAL;
@@ -54,7 +56,10 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     // Needed for the outer editor to access the DOM node of this component
     public elementRef = inject(ElementRef);
 
-    @Input() get feedback(): Feedback {
+    private alertService = inject(AlertService);
+
+    @Input()
+    get feedback(): Feedback {
         return this._feedback;
     }
 
@@ -112,9 +117,18 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     }
 
     /**
-     * Deletes feedback after confirmation and emits to parent component
+     * Deletes feedback with a notification and emits to parent component
      */
-    deleteFeedback() {
+    deleteFeedback(preliminary: boolean) {
+        if (preliminary) {
+            const storageKey = 'jhi-code-editor-tutor-assessment-inline-feedback.showReopenHint';
+
+            if (!localStorage.getItem(storageKey)) {
+                this.alertService.success('artemisApp.editor.showReopenFeedbackHint');
+                localStorage.setItem(storageKey, 'true');
+            }
+        }
+
         this.onDeleteFeedback.emit(this.feedback);
         this.dialogErrorSource.next('');
     }
