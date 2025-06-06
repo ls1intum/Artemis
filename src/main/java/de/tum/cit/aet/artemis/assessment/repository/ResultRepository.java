@@ -844,4 +844,19 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
             ORDER BY r.id DESC
             """)
     List<Result> findLatestResultsForParticipation(@Param("participationId") Long participationId, Pageable pageable);
+
+    @Query("""
+            SELECT r
+            FROM Result r
+                 LEFT JOIN FETCH r.feedbacks f
+                 LEFT JOIN FETCH f.testCase
+            WHERE r.submission.id = :submissionId
+            AND r.id = (
+                 SELECT MAX(r2.id)
+                 FROM Result r2
+                 WHERE r2.submission.id = :submissionId
+               )
+            """)
+    Optional<Result> findLatestResultWithFeedbacksAndTestcasesForSubmission(@Param("submissionId") long submissionId);
+
 }
