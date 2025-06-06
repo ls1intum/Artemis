@@ -118,6 +118,7 @@ public class SAML2Service {
      *
      * @param originalAuth the original authentication with details
      * @param principal    the principal, containing the user information
+     * @param request      HTTP request
      * @return a new {@link UsernamePasswordAuthenticationToken} matching the SAML2 user
      */
     public Authentication handleAuthentication(final Authentication originalAuth, final Saml2AuthenticatedPrincipal principal, final HttpServletRequest request) {
