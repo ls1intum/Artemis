@@ -108,7 +108,6 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnDestr
 
     formStatusSections: FormSectionStatus[];
 
-    titleChannelNameComponentSubscription?: Subscription;
     pointsSubscription?: Subscription;
     bonusPointsSubscription?: Subscription;
     teamSubscription?: Subscription;
@@ -170,7 +169,6 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnDestr
     }
 
     ngOnDestroy() {
-        this.titleChannelNameComponentSubscription?.unsubscribe();
         this.pointsSubscription?.unsubscribe();
         this.bonusPointsSubscription?.unsubscribe();
         this.teamSubscription?.unsubscribe();
