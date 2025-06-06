@@ -17,6 +17,9 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
+import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
+import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
@@ -57,6 +60,8 @@ public class ProgrammingExerciseImportBasicService {
 
     private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
+    private final GradingCriterionRepository gradingCriterionRepository;
+
     private final ProgrammingExerciseService programmingExerciseService;
 
     private final StaticCodeAnalysisService staticCodeAnalysisService;
@@ -76,15 +81,16 @@ public class ProgrammingExerciseImportBasicService {
     public ProgrammingExerciseImportBasicService(Optional<VersionControlService> versionControlService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
             StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            ProgrammingExerciseService programmingExerciseService, StaticCodeAnalysisService staticCodeAnalysisService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
-            SubmissionPolicyRepository submissionPolicyRepository, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository,
-            ProgrammingExerciseTaskService programmingExerciseTaskService, ChannelService channelService,
+            GradingCriterionRepository gradingCriterionRepository, ProgrammingExerciseService programmingExerciseService, StaticCodeAnalysisService staticCodeAnalysisService,
+            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, SubmissionPolicyRepository submissionPolicyRepository,
+            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ProgrammingExerciseTaskService programmingExerciseTaskService, ChannelService channelService,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, ExerciseService exerciseService) {
         this.versionControlService = versionControlService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
         this.staticCodeAnalysisCategoryRepository = staticCodeAnalysisCategoryRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.gradingCriterionRepository = gradingCriterionRepository;
         this.programmingExerciseService = programmingExerciseService;
         this.staticCodeAnalysisService = staticCodeAnalysisService;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
@@ -133,6 +139,35 @@ public class ProgrammingExerciseImportBasicService {
 
         // Hints, tasks, test cases and static code analysis categories
         newProgrammingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(newProgrammingExercise.getBuildConfig()));
+
+        Set<GradingCriterion> oldCriteria = originalProgrammingExercise.getGradingCriteria();
+        if (oldCriteria != null) {
+            for (GradingCriterion oldCriterion : oldCriteria) {
+                // 1) Create and copy a new GradingCriterion
+                GradingCriterion copyCriterion = new GradingCriterion();
+                copyCriterion.setId(null);  // ensure Hibernate treats it as new
+                copyCriterion.setTitle(oldCriterion.getTitle());
+                copyCriterion.setExercise(newProgrammingExercise);
+
+                // 2) Copy each GradingInstruction (but skip feedbacks)
+                for (GradingInstruction oldInstr : oldCriterion.getStructuredGradingInstructions()) {
+                    GradingInstruction copyInstr = new GradingInstruction();
+                    copyInstr.setId(null);
+                    copyInstr.setCredits(oldInstr.getCredits());
+                    copyInstr.setGradingScale(oldInstr.getGradingScale());
+                    copyInstr.setInstructionDescription(oldInstr.getInstructionDescription());
+                    copyInstr.setFeedback(oldInstr.getFeedback());
+                    copyInstr.setUsageCount(oldInstr.getUsageCount());
+                    // do NOT copy oldInstr.getFeedbacks()
+
+                    // Link the new instruction to its parent:
+                    copyCriterion.addStructuredGradingInstruction(copyInstr);
+                }
+
+                // 3) Add the newly built criterion into the new exercise
+                newProgrammingExercise.getGradingCriteria().add(copyCriterion);
+            }
+        }
 
         final ProgrammingExercise importedExercise = exerciseService.saveWithCompetencyLinks(newProgrammingExercise, programmingExerciseRepository::save);
 
