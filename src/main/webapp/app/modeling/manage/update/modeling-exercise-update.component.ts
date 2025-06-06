@@ -193,7 +193,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
                         this.modelingExercise.mode = ExerciseMode.INDIVIDUAL;
                         this.modelingExercise.teamAssignmentConfig = undefined;
                         this.modelingExercise.teamMode = false;
-                        // Exam exercises cannot be not included into the total score
+                        // Exam exercises cannot be not included in the total score
                         if (this.modelingExercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED) {
                             this.modelingExercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
                         }
@@ -275,7 +275,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
             },
         ];
 
-        // otherwise the change detection does not work on the initial load
+        // otherwise, the change detection does not work on the initial load
         this.changeDetectorRef.detectChanges();
     }
 
