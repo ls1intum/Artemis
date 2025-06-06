@@ -217,7 +217,8 @@ public class ProgrammingExerciseExportImportResource {
         programmingExerciseRepository.validateCourseSettings(newExercise, course);
 
         final var originalProgrammingExercise = programmingExerciseRepository
-                .findByIdWithEagerBuildConfigTestCasesStaticCodeAnalysisCategoriesAndTemplateAndSolutionParticipationsAndAuxReposAndAndBuildConfig(sourceExerciseId)
+                .findByIdWithEagerBuildConfigTestCasesStaticCodeAnalysisCategoriesAndTemplateAndSolutionParticipationsAndAuxReposAndAndBuildConfigAndGradingCriteria(
+                        sourceExerciseId)
                 .orElseThrow(() -> new EntityNotFoundException("ProgrammingExercise", sourceExerciseId));
 
         var consistencyErrors = consistencyCheckService.checkConsistencyOfProgrammingExercise(originalProgrammingExercise);

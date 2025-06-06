@@ -332,9 +332,10 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
                 LEFT JOIN FETCH p.solutionParticipation
                 LEFT JOIN FETCH p.auxiliaryRepositories
                 LEFT JOIN FETCH p.buildConfig
+                LEFT JOIN FETCH p.gradingCriteria
             WHERE p.id = :exerciseId
             """)
-    Optional<ProgrammingExercise> findByIdWithEagerBuildConfigTestCasesStaticCodeAnalysisCategoriesAndTemplateAndSolutionParticipationsAndAuxReposAndAndBuildConfig(
+    Optional<ProgrammingExercise> findByIdWithEagerBuildConfigTestCasesStaticCodeAnalysisCategoriesAndTemplateAndSolutionParticipationsAndAuxReposAndAndBuildConfigAndGradingCriteria(
             @Param("exerciseId") long exerciseId);
 
     @Query("""
