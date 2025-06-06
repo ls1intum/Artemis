@@ -78,7 +78,7 @@ describe('TitleChannelNameComponent', () => {
 
     it('init channel name based on prefix and title', fakeAsync(() => {
         fixture.componentRef.setInput('title', 'Test');
-        fixture.componentRef.setInput('channelName', 'test');
+        fixture.componentRef.setInput('channelNamePrefix', 'prefix-');
 
         component.ngOnInit();
         tick();
@@ -87,7 +87,7 @@ describe('TitleChannelNameComponent', () => {
     }));
 
     it('init channel name based on prefix if title is undefined', fakeAsync(() => {
-        fixture.componentRef.setInput('channelName', 'test');
+        fixture.componentRef.setInput('channelNamePrefix', 'prefix-');
 
         component.ngOnInit();
         tick();
@@ -95,14 +95,14 @@ describe('TitleChannelNameComponent', () => {
         expect(component.channelName()).toBe('prefix-');
     }));
 
-    it('remove special characters and trailing hyphens from channel name on init with non-empty title', () => {
+    it('remove special characters and trailing hyphens from channel name on init with non-empty title', fakeAsync(() => {
         fixture.componentRef.setInput('title', '-- -  t--=*+ -- ');
         fixture.componentRef.setInput('channelNamePrefix', CHANNEL_NAME_PREFIX);
 
         component.ngOnInit();
 
         expect(component.channelName()).toBe('-p-t');
-    });
+    }));
 
     it("don't remove trailing hyphens from channel name on init with empty title", fakeAsync(() => {
         fixture.componentRef.setInput('title', '');
