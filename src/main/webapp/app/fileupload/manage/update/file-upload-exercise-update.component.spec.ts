@@ -175,6 +175,8 @@ describe('FileUploadExerciseUpdateComponent', () => {
 
             comp.validateDate();
             expect(calculateValidSpy).toHaveBeenCalledTimes(2);
+
+            comp.ngOnDestroy();
         });
     });
     describe('imported exercise', () => {

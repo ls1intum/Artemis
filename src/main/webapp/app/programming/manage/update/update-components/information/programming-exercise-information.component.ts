@@ -147,7 +147,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     }
 
     private updateFormStatus() {
-        this.exerciseTitleChannelComponent()?.titleChannelNameComponent()?.isValid(); // triggers effect
+        this.exerciseTitleChannelComponent()?.titleChannelNameComponent()?.isValid(); // triggers effect on change
 
         this.calculateFormValid();
     }
@@ -299,7 +299,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     }
 
     private registerInputFieldsWhenChildComponentsAreReady() {
-        this.shortNameField(); // triggers effect
+        this.shortNameField(); // triggers effect on change
         this.registerInputFields();
     }
 

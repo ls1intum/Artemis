@@ -148,7 +148,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
      * Triggers {@link calculateFormSectionStatus} whenever a relevant signal changes
      */
     private updateFormSectionsOnIsValidChange() {
-        this.exerciseTitleChannelNameComponent().titleChannelNameComponent().isValid();
+        this.exerciseTitleChannelNameComponent().titleChannelNameComponent().isValid(); // triggers effect on change
 
         this.calculateFormSectionStatus().then();
     }
