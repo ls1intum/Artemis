@@ -13,7 +13,7 @@ import { ShortAnswerQuestionComponent } from 'app/quiz/shared/questions/short-an
 import { TranslateService } from '@ngx-translate/core';
 import * as smoothscroll from 'smoothscroll-polyfill';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
+import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { ShortAnswerSubmittedAnswer } from 'app/quiz/shared/entities/short-answer-submitted-answer.model';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
@@ -39,7 +39,6 @@ import { faCircleNotch, faSync } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { JhiConnectionStatusComponent } from 'app/shared/connection-status/connection-status.component';
 import { FormsModule } from '@angular/forms';
