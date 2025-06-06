@@ -130,6 +130,9 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     protected LocalCIService continuousIntegrationService;
 
     @MockitoSpyBean
+    protected LocalCITriggerService localCITriggerService;
+
+    @MockitoSpyBean
     protected BuildAgentConfiguration buildAgentConfiguration;
 
     @MockitoSpyBean
@@ -206,7 +209,8 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     @AfterEach
     @Override
     protected void resetSpyBeans() {
-        Mockito.reset(versionControlService, continuousIntegrationService, resourceLoaderService, programmingMessagingService, competencyProgressService, competencyProgressApi);
+        Mockito.reset(versionControlService, continuousIntegrationService, localCITriggerService, resourceLoaderService, programmingMessagingService, competencyProgressService,
+                competencyProgressApi);
         super.resetSpyBeans();
     }
 
