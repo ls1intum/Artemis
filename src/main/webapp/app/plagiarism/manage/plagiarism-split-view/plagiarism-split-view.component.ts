@@ -29,10 +29,10 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
     private plagiarismCasesService = inject(PlagiarismCasesService);
 
     readonly comparison = input<PlagiarismComparison<TextSubmissionElement> | undefined>(undefined!);
-    readonly exercise = input<Exercise>(undefined!);
-    readonly splitControlSubject = input<Subject<string>>(undefined!);
-    readonly sortByStudentLogin = input<string>(undefined!);
-    readonly forStudent = input<boolean>(undefined!);
+    readonly exercise = input<Exercise>();
+    readonly splitControlSubject = input<Subject<string>>();
+    readonly sortByStudentLogin = input<string>();
+    readonly forStudent = input<boolean>();
 
     readonly panes = viewChildren(SplitPaneDirective);
 
@@ -67,7 +67,7 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
     }
 
     ngOnInit(): void {
-        this.splitControlSubject().subscribe((pane: string) => this.handleSplitControl(pane));
+        this.splitControlSubject()?.subscribe((pane: string) => this.handleSplitControl(pane));
     }
 
     ngOnChanges(changes: SimpleChanges) {

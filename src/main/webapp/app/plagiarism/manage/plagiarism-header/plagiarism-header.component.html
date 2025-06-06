@@ -7,14 +7,14 @@
     </div>
 
     <div class="plagiarism-header-right">
-        @if (!exercise().teamMode) {
+        @if (!exercise()?.teamMode) {
             @if (comparison()?.status === plagiarismStatus.CONFIRMED) {
                 <button
                     class="btn btn-primary btn-sm"
                     data-qa="view-plagiarism-cases-button"
                     jhiTranslate="artemisApp.plagiarism.viewCases"
-                    [routerLink]="['/course-management', exercise().course?.id, 'plagiarism-cases']"
-                    [queryParams]="{ exerciseId: exercise().id }"
+                    [routerLink]="['/course-management', exercise()?.course?.id, 'plagiarism-cases']"
+                    [queryParams]="{ exerciseId: exercise()?.id }"
                     [disabled]="isLoading"
                 ></button>
             } @else {

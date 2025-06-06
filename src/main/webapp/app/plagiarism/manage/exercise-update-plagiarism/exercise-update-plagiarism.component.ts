@@ -14,7 +14,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     imports: [TranslateDirective, FaIconComponent, NgbTooltip, FormsModule, ArtemisTranslatePipe],
 })
 export class ExerciseUpdatePlagiarismComponent implements OnInit, OnDestroy, AfterViewInit {
-    readonly exercise = input<Exercise>(undefined!);
+    readonly exercise = input<Exercise>();
     readonly fieldCPCEnabled = viewChild<NgModel>('continuous_plagiarism_control_enabled');
     readonly fieldThreshold = viewChild<NgModel>('exercise.plagiarismDetectionConfig!.similarityThreshol');
     readonly fieldMinScore = viewChild<NgModel>('exercise.plagiarismDetectionConfig.minimumScore');
@@ -37,7 +37,7 @@ export class ExerciseUpdatePlagiarismComponent implements OnInit, OnDestroy, Aft
     ngOnInit(): void {
         this.minimumSizeTooltip = this.getMinimumSizeTooltip();
         const exercise = this.exercise();
-        if (!exercise.plagiarismDetectionConfig) {
+        if (exercise != undefined && !exercise.plagiarismDetectionConfig) {
             // Create the default plagiarism configuration if there is none (e.g. importing an old exercise from a file)
             exercise.plagiarismDetectionConfig = DEFAULT_PLAGIARISM_DETECTION_CONFIG;
         }
@@ -61,14 +61,14 @@ export class ExerciseUpdatePlagiarismComponent implements OnInit, OnDestroy, Aft
 
     calculateFormValid(): void {
         this.formValid = Boolean(
-            !this.exercise().plagiarismDetectionConfig?.continuousPlagiarismControlEnabled ||
+            !this.exercise()?.plagiarismDetectionConfig?.continuousPlagiarismControlEnabled ||
                 (this.fieldThreshold()?.valid && this.fieldMinScore()?.valid && this.fieldMinSize()?.valid && this.fieldResponsePeriod()?.valid),
         );
         this.formValidChanges.next(this.formValid);
     }
 
     toggleCPCEnabled() {
-        const config = this.exercise().plagiarismDetectionConfig!;
+        const config = this.exercise()?.plagiarismDetectionConfig!;
         const newValue = !config.continuousPlagiarismControlEnabled;
         config.continuousPlagiarismControlEnabled = newValue;
         config.continuousPlagiarismControlPostDueDateChecksEnabled = newValue;
@@ -78,7 +78,7 @@ export class ExerciseUpdatePlagiarismComponent implements OnInit, OnDestroy, Aft
      * Return the translation identifier of the minimum size tooltip for the current exercise type.
      */
     getMinimumSizeTooltip(): string | undefined {
-        switch (this.exercise().type) {
+        switch (this.exercise()?.type) {
             case ExerciseType.PROGRAMMING: {
                 return 'artemisApp.plagiarism.minimumSizeTooltipProgrammingExercise';
             }

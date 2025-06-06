@@ -17,7 +17,7 @@
                     id="continuous_plagiarism_control_enabled"
                     class="plagiarism-option-checkbox form-check-input"
                     name="exercise.plagiarismDetectionConfig.continuousPlagiarismControlEnabled"
-                    [ngModel]="exercise().plagiarismDetectionConfig!.continuousPlagiarismControlEnabled"
+                    [ngModel]="(exercise()?.plagiarismDetectionConfig)!.continuousPlagiarismControlEnabled"
                     (ngModelChange)="toggleCPCEnabled()"
                 />
                 <div class="plagiarism-option-label" jhiTranslate="artemisApp.plagiarism.continuousPlagiarismControlEnabled"></div>
@@ -30,9 +30,9 @@
                     id="continuous_plagiarism_control_post_due_date_checks_enabled"
                     class="plagiarism-option-checkbox form-check-input"
                     name="exercise.plagiarismDetectionConfig.continuousPlagiarismControlPostDueDateChecksEnabled"
-                    [disabled]="!exercise().plagiarismDetectionConfig?.continuousPlagiarismControlEnabled"
+                    [disabled]="!exercise()?.plagiarismDetectionConfig?.continuousPlagiarismControlEnabled"
                     #exercise.plagiarismDetectionConfig.continuousPlagiarismControlPostDueDateChecksEnabled="ngModel"
-                    [(ngModel)]="exercise().plagiarismDetectionConfig!.continuousPlagiarismControlPostDueDateChecksEnabled"
+                    [(ngModel)]="(exercise()?.plagiarismDetectionConfig)!.continuousPlagiarismControlPostDueDateChecksEnabled"
                 />
                 <div class="plagiarism-option-label" jhiTranslate="artemisApp.plagiarism.continuousPlagiarismControlPostDueDateChecksEnabled"></div>
             </div>
@@ -54,8 +54,8 @@
                         id="plagiarism-similarity-threshold"
                         name="plagiarismChecksSimilarityThresholdPercentage"
                         #exercise.plagiarismDetectionConfig!.similarityThreshol="ngModel"
-                        [(ngModel)]="exercise().plagiarismDetectionConfig!.similarityThreshold"
-                        [disabled]="!exercise().plagiarismDetectionConfig!.continuousPlagiarismControlEnabled"
+                        [(ngModel)]="(exercise()?.plagiarismDetectionConfig)!.similarityThreshold"
+                        [disabled]="!(exercise()?.plagiarismDetectionConfig)!.continuousPlagiarismControlEnabled"
                     />
                 </div>
             </div>
@@ -74,8 +74,8 @@
                         id="plagiarism-minimum-score"
                         name="exercise.plagiarismDetectionConfig.minimumScore"
                         #exercise.plagiarismDetectionConfig.minimumScore="ngModel"
-                        [(ngModel)]="exercise().plagiarismDetectionConfig!.minimumScore"
-                        [disabled]="!exercise().plagiarismDetectionConfig!.continuousPlagiarismControlEnabled"
+                        [(ngModel)]="(exercise()?.plagiarismDetectionConfig)!.minimumScore"
+                        [disabled]="!(exercise()?.plagiarismDetectionConfig)!.continuousPlagiarismControlEnabled"
                     />
                 </div>
             </div>
@@ -94,8 +94,8 @@
                         id="plagiarism-minimum-size"
                         name="exercise.plagiarismDetectionConfig.minimumSize"
                         #exercise.plagiarismDetectionConfig.minimumSize="ngModel"
-                        [(ngModel)]="exercise().plagiarismDetectionConfig!.minimumSize"
-                        [disabled]="!exercise().plagiarismDetectionConfig!.continuousPlagiarismControlEnabled"
+                        [(ngModel)]="(exercise()?.plagiarismDetectionConfig)!.minimumSize"
+                        [disabled]="!(exercise()?.plagiarismDetectionConfig)!.continuousPlagiarismControlEnabled"
                     />
                 </div>
             </div>
@@ -115,8 +115,8 @@
                         id="plagiarism-case-response-period"
                         name="continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod"
                         #exercise.plagiarismDetectionConfig!.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod="ngModel"
-                        [(ngModel)]="exercise().plagiarismDetectionConfig!.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod"
-                        [disabled]="!exercise().plagiarismDetectionConfig!.continuousPlagiarismControlEnabled"
+                        [(ngModel)]="(exercise()?.plagiarismDetectionConfig)!.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod"
+                        [disabled]="!(exercise()?.plagiarismDetectionConfig)!.continuousPlagiarismControlEnabled"
                     />
                 </div>
             </div>

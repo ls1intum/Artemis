@@ -112,7 +112,7 @@ export class PlagiarismCasesService {
      * @param { number } plagiarismComparisonId
      * @param { PlagiarismStatus } status
      */
-    public updatePlagiarismComparisonStatus(courseId: number, plagiarismComparisonId: number, status: PlagiarismStatus): Observable<HttpResponse<void>> {
+    public updatePlagiarismComparisonStatus(courseId: number | undefined, plagiarismComparisonId: number, status: PlagiarismStatus): Observable<HttpResponse<void>> {
         return this.http.put<void>(`${this.resourceUrl}/${courseId}/plagiarism-comparisons/${plagiarismComparisonId}/status`, { status }, { observe: 'response' });
     }
 

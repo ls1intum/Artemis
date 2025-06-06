@@ -29,7 +29,7 @@
                     [matches]="matchesB"
                     [plagiarismSubmission]="getTextSubmissionB()"
                     [isLockFilesEnabled]="isLockFilesEnabled"
-                    [hideContent]="forStudent() && dayjs(exercise().dueDate).isAfter(dayjs())"
+                    [hideContent]="forStudent() && dayjs(exercise()?.dueDate).isAfter(dayjs())"
                     [dropdownHoverSubject]="this.dropdownHoverSubject"
                     [showFilesSubject]="this.showFilesSubject"
                 />

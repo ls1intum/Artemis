@@ -23,9 +23,9 @@ export class PlagiarismHeaderComponent {
     private plagiarismCasesService = inject(PlagiarismCasesService);
     private modalService = inject(NgbModal);
 
-    readonly comparison = input<PlagiarismComparison<TextSubmissionElement> | undefined>(undefined!);
-    readonly exercise = input<Exercise>(undefined!);
-    readonly splitControlSubject = input<Subject<string>>(undefined!);
+    readonly comparison = input<PlagiarismComparison<TextSubmissionElement> | undefined>(undefined);
+    readonly exercise = input<Exercise>();
+    readonly splitControlSubject = input<Subject<string>>();
 
     readonly plagiarismStatus = PlagiarismStatus;
     isLoading = false;
@@ -67,7 +67,7 @@ export class PlagiarismHeaderComponent {
         // store comparison in variable in case comparison changes while request is made
         const comparison = this.comparison();
         if (comparison && comparison.id) {
-            this.plagiarismCasesService.updatePlagiarismComparisonStatus(getCourseId(this.exercise())!, comparison!.id, status).subscribe(() => {
+            this.plagiarismCasesService.updatePlagiarismComparisonStatus(getCourseId(this.exercise()), comparison.id, status).subscribe(() => {
                 comparison.status = status;
                 this.isLoading = false;
             });
@@ -75,11 +75,11 @@ export class PlagiarismHeaderComponent {
     }
 
     expandSplitPane(pane: 'left' | 'right') {
-        this.splitControlSubject().next(pane);
+        this.splitControlSubject()?.next(pane);
     }
 
     resetSplitPanes() {
-        this.splitControlSubject().next('even');
+        this.splitControlSubject()?.next('even');
     }
 
     protected readonly faCircleInfo = faCircleInfo;

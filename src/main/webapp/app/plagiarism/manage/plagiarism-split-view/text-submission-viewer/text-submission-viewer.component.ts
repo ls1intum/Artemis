@@ -32,12 +32,12 @@ export class TextSubmissionViewerComponent implements OnChanges {
     private repositoryService = inject(CodeEditorRepositoryFileService);
     private textSubmissionService = inject(TextSubmissionService);
 
-    readonly exercise = input<ProgrammingExercise | TextExercise>(undefined!);
-    readonly matches = input<Map<string, FromToElement[]>>(undefined!);
-    readonly plagiarismSubmission = input<PlagiarismSubmission<TextSubmissionElement>>(undefined!);
-    readonly hideContent = input<boolean>(undefined!);
+    readonly exercise = input<ProgrammingExercise | TextExercise>();
+    readonly matches = input<Map<string, FromToElement[]>>();
+    readonly plagiarismSubmission = input<PlagiarismSubmission<TextSubmissionElement>>();
+    readonly hideContent = input<boolean>();
     readonly fileSelectedSubject = input.required<Subject<TextPlagiarismFileElement>>();
-    readonly isLockFilesEnabled = input<boolean>(undefined!);
+    readonly isLockFilesEnabled = input<boolean>();
     readonly showFilesSubject = input.required<Subject<boolean>>();
     readonly dropdownHoverSubject = input.required<Subject<TextPlagiarismFileElement>>();
 
@@ -95,7 +95,7 @@ export class TextSubmissionViewerComponent implements OnChanges {
             if (!this.hideContent()) {
                 this.loading = true;
 
-                if (this.exercise().type === ExerciseType.PROGRAMMING) {
+                if (this.exercise()?.type === ExerciseType.PROGRAMMING) {
                     this.loadProgrammingExercise(currentPlagiarismSubmission);
                 } else {
                     this.loadTextExercise(currentPlagiarismSubmission);
@@ -188,7 +188,7 @@ export class TextSubmissionViewerComponent implements OnChanges {
         if (TEXT_FILE_EXTENSIONS.includes(fileExtension)) {
             this.binaryFile = false;
 
-            const domain: DomainChange = [DomainType.PARTICIPATION, { id: this.plagiarismSubmission().submissionId }];
+            const domain: DomainChange = [DomainType.PARTICIPATION, { id: this.plagiarismSubmission()?.submissionId }];
             this.repositoryService.getFileForPlagiarismView(file, domain).subscribe({
                 next: ({ fileContent }) => {
                     this.loading = false;
@@ -208,15 +208,15 @@ export class TextSubmissionViewerComponent implements OnChanges {
      * Downloads the currently selected file with a friendly name consisting of the exercises short name, the student login and the filename.
      */
     downloadCurrentFile() {
-        this.repositoryService.downloadFile(this.currentFile, this.exercise().shortName + '_' + this.plagiarismSubmission().studentLogin + '_' + this.currentFile);
+        this.repositoryService.downloadFile(this.currentFile, this.exercise()?.shortName + '_' + this.plagiarismSubmission()?.studentLogin + '_' + this.currentFile);
     }
 
     getMatchesForCurrentFile() {
-        return this.matches().get(this.currentFile || 'none') || [];
+        return this.matches()?.get(this.currentFile || 'none') || [];
     }
 
     private hasMatch(file: string): boolean {
-        return this.matches().has(file);
+        return this.matches()?.has(file) || false;
     }
 
     insertMatchTokens(fileContent: string): string {
