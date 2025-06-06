@@ -38,7 +38,7 @@ describe('Exercise Update Plagiarism Component', () => {
 
         comp.ngOnInit();
 
-        expect(comp.exercise().plagiarismDetectionConfig).toEqual(plagiarismDetectionConfig);
+        expect(comp.exercise()?.plagiarismDetectionConfig).toEqual(plagiarismDetectionConfig);
     });
 
     it('should use default if exercise does not have plagiarism checks config', () => {
@@ -46,7 +46,7 @@ describe('Exercise Update Plagiarism Component', () => {
 
         comp.ngOnInit();
 
-        expect(comp.exercise().plagiarismDetectionConfig).toEqual(DEFAULT_PLAGIARISM_DETECTION_CONFIG);
+        expect(comp.exercise()?.plagiarismDetectionConfig).toEqual(DEFAULT_PLAGIARISM_DETECTION_CONFIG);
     });
 
     it('should set minimumSizeTooltip on init', () => {
@@ -58,7 +58,7 @@ describe('Exercise Update Plagiarism Component', () => {
     it('should set default plagiarism detection config on init if not set', () => {
         fixture.componentRef.setInput('exercise', { type: ExerciseType.PROGRAMMING } as Exercise);
         fixture.detectChanges();
-        expect(comp.exercise().plagiarismDetectionConfig).toEqual(DEFAULT_PLAGIARISM_DETECTION_CONFIG);
+        expect(comp.exercise()?.plagiarismDetectionConfig).toEqual(DEFAULT_PLAGIARISM_DETECTION_CONFIG);
     });
 
     it('should enable cpc', () => {
@@ -70,8 +70,8 @@ describe('Exercise Update Plagiarism Component', () => {
         } as Exercise);
         fixture.detectChanges();
         comp.toggleCPCEnabled();
-        expect(comp.exercise().plagiarismDetectionConfig!.continuousPlagiarismControlEnabled).toBeTrue();
-        expect(comp.exercise().plagiarismDetectionConfig!.continuousPlagiarismControlPostDueDateChecksEnabled).toBeTrue();
+        expect(comp.exercise()?.plagiarismDetectionConfig!.continuousPlagiarismControlEnabled).toBeTrue();
+        expect(comp.exercise()?.plagiarismDetectionConfig!.continuousPlagiarismControlPostDueDateChecksEnabled).toBeTrue();
     });
 
     it('should disable cpc', () => {
@@ -83,8 +83,8 @@ describe('Exercise Update Plagiarism Component', () => {
         } as Exercise);
         fixture.detectChanges();
         comp.toggleCPCEnabled();
-        expect(comp.exercise().plagiarismDetectionConfig!.continuousPlagiarismControlEnabled).toBeFalse();
-        expect(comp.exercise().plagiarismDetectionConfig!.continuousPlagiarismControlPostDueDateChecksEnabled).toBeFalse();
+        expect(comp.exercise()?.plagiarismDetectionConfig!.continuousPlagiarismControlEnabled).toBeFalse();
+        expect(comp.exercise()?.plagiarismDetectionConfig!.continuousPlagiarismControlPostDueDateChecksEnabled).toBeFalse();
     });
 
     it('should get correct minimumSizeTooltip for programming exercises', () => {
@@ -131,7 +131,7 @@ describe('Exercise Update Plagiarism Component', () => {
 
         // @ts-ignore
         comp.fieldCPCEnabled()!.valid = true;
-        comp.exercise().plagiarismDetectionConfig!.continuousPlagiarismControlEnabled = true;
+        comp.exercise()?.plagiarismDetectionConfig!.continuousPlagiarismControlEnabled = true;
         (comp.fieldCPCEnabled()!.valueChanges! as Subject<boolean>).next(true);
 
         expect(calculateValidSpy).toHaveBeenCalledTimes(2);

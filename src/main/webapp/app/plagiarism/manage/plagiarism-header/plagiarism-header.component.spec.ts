@@ -105,7 +105,8 @@ describe('Plagiarism Header Component', () => {
     }));
 
     it('should emit when expanding left split view pane', () => {
-        jest.spyOn(comp.splitControlSubject(), 'next');
+        // we set the splitControlSubject in beforeEach, so we can spy on it here
+        jest.spyOn(comp.splitControlSubject()!, 'next');
 
         const nativeElement = fixture.nativeElement;
         const splitLeftButton = nativeElement.querySelector("[data-qa='split-view-left']");
@@ -113,7 +114,7 @@ describe('Plagiarism Header Component', () => {
 
         fixture.detectChanges();
 
-        expect(comp.splitControlSubject().next).toHaveBeenCalledWith('left');
+        expect(comp.splitControlSubject()?.next).toHaveBeenCalledWith('left');
     });
 
     it('should emit when expanding right split view pane', () => {
@@ -125,7 +126,7 @@ describe('Plagiarism Header Component', () => {
 
         fixture.detectChanges();
 
-        expect(comp.splitControlSubject().next).toHaveBeenCalledWith('right');
+        expect(comp.splitControlSubject()?.next).toHaveBeenCalledWith('right');
     });
 
     it('should emit when resetting the split panes', () => {
@@ -137,7 +138,7 @@ describe('Plagiarism Header Component', () => {
 
         fixture.detectChanges();
 
-        expect(comp.splitControlSubject().next).toHaveBeenCalledWith('even');
+        expect(comp.splitControlSubject()?.next).toHaveBeenCalledWith('even');
     });
 
     it('should display team mode disabled help icon when teamMode is enabled', () => {

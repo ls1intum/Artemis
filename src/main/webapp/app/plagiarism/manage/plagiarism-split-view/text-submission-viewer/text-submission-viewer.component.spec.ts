@@ -128,8 +128,8 @@ describe('Text Submission Viewer Component', () => {
             e: FileType.FILE,
         };
 
-        comp.matches().set('e', [{ from: new TextSubmissionElement(), to: new TextSubmissionElement() }]);
-        comp.matches().set('kContinuedName', [{ from: new TextSubmissionElement(), to: new TextSubmissionElement() }]);
+        comp.matches()?.set('e', [{ from: new TextSubmissionElement(), to: new TextSubmissionElement() }]);
+        comp.matches()?.set('kContinuedName', [{ from: new TextSubmissionElement(), to: new TextSubmissionElement() }]);
 
         jest.spyOn(repositoryService, 'getRepositoryContentForPlagiarismView').mockReturnValue(of(filesUnordered));
 
