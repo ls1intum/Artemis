@@ -3,9 +3,9 @@ package de.tum.cit.aet.artemis.programming.service.localci.distributedData.hazel
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
+import java.util.ArrayList;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
@@ -74,7 +74,8 @@ public class HazelcastDistributedDataProviderService implements DistributedDataP
      */
     @Override
     public Set<String> getClusterMemberAddresses() {
-        return getClusterMembers().map(Member::getAddress).map(Object::toString).collect(Collectors.toSet());
+        // stream is on the copy so fine here
+        return getClusterMembers().stream().map(Member::getAddress).map(Object::toString).collect(Collectors.toSet());
     }
 
     /**
@@ -84,7 +85,8 @@ public class HazelcastDistributedDataProviderService implements DistributedDataP
      */
     @Override
     public boolean noDataMemberInClusterAvailable() {
-        return getClusterMembers().allMatch(Member::isLiteMember);
+        // stream is on the copy so fine here
+        return getClusterMembers().stream().allMatch(Member::isLiteMember);
     }
 
     /**
@@ -92,10 +94,10 @@ public class HazelcastDistributedDataProviderService implements DistributedDataP
      *
      * @return a stream of Hazelcast cluster members
      */
-    private Stream<Member> getClusterMembers() {
+    private ArrayList<Member> getClusterMembers() {
         if (!isInstanceRunning()) {
-            return Stream.empty();
+            return new ArrayList<>();
         }
-        return hazelcastInstance.getCluster().getMembers().stream();
+        return new ArrayList<>(hazelcastInstance.getCluster().getMembers());
     }
 }
