@@ -18,14 +18,12 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.stream.Collectors;
 
 import jakarta.annotation.PreDestroy;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
@@ -34,10 +32,8 @@ import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import com.hazelcast.cluster.Member;
 import com.hazelcast.collection.ItemEvent;
 import com.hazelcast.collection.ItemListener;
-import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
@@ -59,8 +55,6 @@ import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessS
 public class SharedQueueProcessingService {
 
     private static final Logger log = LoggerFactory.getLogger(SharedQueueProcessingService.class);
-
-    private final HazelcastInstance hazelcastInstance;
 
     private final BuildAgentConfiguration buildAgentConfiguration;
 
@@ -120,10 +114,9 @@ public class SharedQueueProcessingService {
     @Value("${artemis.continuous-integration.pause-after-consecutive-failed-jobs:100}")
     private int pauseAfterConsecutiveFailedJobs;
 
-    public SharedQueueProcessingService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, BuildAgentConfiguration buildAgentConfiguration,
-            BuildJobManagementService buildJobManagementService, BuildLogsMap buildLogsMap, TaskScheduler taskScheduler, BuildAgentDockerService buildAgentDockerService,
-            BuildAgentInformationService buildAgentInformationService, DistributedDataAccessService distributedDataAccessService) {
-        this.hazelcastInstance = hazelcastInstance;
+    public SharedQueueProcessingService(BuildAgentConfiguration buildAgentConfiguration, BuildJobManagementService buildJobManagementService, BuildLogsMap buildLogsMap,
+            TaskScheduler taskScheduler, BuildAgentDockerService buildAgentDockerService, BuildAgentInformationService buildAgentInformationService,
+            DistributedDataAccessService distributedDataAccessService) {
         this.buildAgentConfiguration = buildAgentConfiguration;
         this.buildJobManagementService = buildJobManagementService;
         this.buildLogsMap = buildLogsMap;
@@ -151,9 +144,9 @@ public class SharedQueueProcessingService {
 
         // Remove listener if already present
         if (this.listenerId != null) {
-            distributedDataAccessService.getDistributedQueuedJobs().removeItemListener(this.listenerId);
+            distributedDataAccessService.getDistributedBuildJobQueue().removeItemListener(this.listenerId);
         }
-        this.listenerId = this.distributedDataAccessService.getDistributedQueuedJobs().addItemListener(new QueuedBuildJobItemListener(), true);
+        this.listenerId = this.distributedDataAccessService.getDistributedBuildJobQueue().addItemListener(new QueuedBuildJobItemListener(), true);
 
         /*
          * Check every 10 seconds whether the node has at least one thread available for a new build job.
@@ -185,8 +178,8 @@ public class SharedQueueProcessingService {
     private void removeListener() {
         // check if Hazelcast is still active, before invoking this
         try {
-            if (hazelcastInstance != null && hazelcastInstance.getLifecycleService().isRunning()) {
-                distributedDataAccessService.getDistributedQueuedJobs().removeItemListener(this.listenerId);
+            if (distributedDataAccessService.isInstanceRunning()) {
+                distributedDataAccessService.getDistributedBuildJobQueue().removeItemListener(this.listenerId);
             }
         }
         catch (HazelcastInstanceNotActiveException e) {
@@ -206,7 +199,7 @@ public class SharedQueueProcessingService {
      */
     @Scheduled(initialDelay = 60000, fixedRate = 60000) // 1 minute initial delay, 1 minute fixed rate
     public void updateBuildAgentInformation() {
-        if (noDataMemberInClusterAvailable(hazelcastInstance)) {
+        if (distributedDataAccessService.noDataMemberInClusterAvailable()) {
             log.debug("There are only lite member in the cluster. Not updating build agent information.");
             return;
         }
@@ -215,7 +208,7 @@ public class SharedQueueProcessingService {
         removeOfflineNodes();
 
         // Add build agent information of local hazelcast member to map if not already present
-        if (!distributedDataAccessService.getBuildAgentInformationMap().containsKey(hazelcastInstance.getCluster().getLocalMember().getAddress().toString())) {
+        if (!distributedDataAccessService.getBuildAgentInformationMap().containsKey(distributedDataAccessService.getLocalMemberAddress())) {
             buildAgentInformationService.updateLocalBuildAgentInformation(isPaused.get());
         }
     }
@@ -225,14 +218,14 @@ public class SharedQueueProcessingService {
      * If so, process the next build job.
      */
     private void checkAvailabilityAndProcessNextBuild() {
-        if (noDataMemberInClusterAvailable(hazelcastInstance) || distributedDataAccessService.getDistributedQueuedJobs() == null) {
+        if (distributedDataAccessService.noDataMemberInClusterAvailable() || distributedDataAccessService.getDistributedBuildJobQueue() == null) {
             log.debug("There are only lite member in the cluster. Not processing build jobs.");
             return;
         }
         // Check conditions before acquiring the lock to avoid unnecessary locking
         if (!nodeIsAvailable()) {
             // Add build agent information of local hazelcast member to map if not already present
-            if (!distributedDataAccessService.getBuildAgentInformationMap().containsKey(hazelcastInstance.getCluster().getLocalMember().getAddress().toString())) {
+            if (!distributedDataAccessService.getBuildAgentInformationMap().containsKey(distributedDataAccessService.getLocalMemberAddress())) {
                 buildAgentInformationService.updateLocalBuildAgentInformation(isPaused.get());
             }
 
@@ -240,14 +233,14 @@ public class SharedQueueProcessingService {
             return;
         }
 
-        if (distributedDataAccessService.getDistributedQueuedJobs().isEmpty() || isPaused.get()) {
+        if (distributedDataAccessService.getDistributedBuildJobQueue().isEmpty() || isPaused.get()) {
             return;
         }
         BuildJobQueueItem buildJob = null;
         instanceLock.lock();
         try {
             // Recheck conditions after acquiring the lock to ensure they are still valid
-            if (!nodeIsAvailable() || distributedDataAccessService.getDistributedQueuedJobs().isEmpty() || isPaused.get()) {
+            if (!nodeIsAvailable() || distributedDataAccessService.getDistributedBuildJobQueue().isEmpty() || isPaused.get()) {
                 return;
             }
 
@@ -275,7 +268,7 @@ public class SharedQueueProcessingService {
                     // TODO: we should try to run this job on a different build agent to avoid getting the same error again
                     buildJob = new BuildJobQueueItem(buildJob, new BuildAgentDTO("", "", ""), buildJob.retryCount() + 1);
                     log.info("Adding build job {} back to the queue with retry count {}", buildJob, buildJob.retryCount());
-                    distributedDataAccessService.getDistributedQueuedJobs().add(buildJob);
+                    distributedDataAccessService.getDistributedBuildJobQueue().add(buildJob);
                 }
                 localProcessingJobs.decrementAndGet();
             }
@@ -287,14 +280,10 @@ public class SharedQueueProcessingService {
         }
     }
 
-    private static boolean noDataMemberInClusterAvailable(HazelcastInstance hazelcastInstance) {
-        return hazelcastInstance.getCluster().getMembers().stream().allMatch(Member::isLiteMember);
-    }
-
     private BuildJobQueueItem addToProcessingJobs() {
-        BuildJobQueueItem buildJob = distributedDataAccessService.getDistributedQueuedJobs().poll();
+        BuildJobQueueItem buildJob = distributedDataAccessService.getDistributedBuildJobQueue().poll();
         if (buildJob != null) {
-            String hazelcastMemberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
+            String hazelcastMemberAddress = distributedDataAccessService.getLocalMemberAddress();
 
             long estimatedDuration = Math.max(0, buildJob.jobTimingInfo().estimatedDuration());
             ZonedDateTime estimatedCompletionDate = ZonedDateTime.now().plusSeconds(estimatedDuration);
@@ -311,7 +300,7 @@ public class SharedQueueProcessingService {
     }
 
     private void removeOfflineNodes() {
-        Set<String> memberAddresses = hazelcastInstance.getCluster().getMembers().stream().map(member -> member.getAddress().toString()).collect(Collectors.toSet());
+        Set<String> memberAddresses = distributedDataAccessService.getClusterMemberAddresses();
         for (String key : distributedDataAccessService.getDistributedBuildAgentInformation().keySet()) {
             if (!memberAddresses.contains(key)) {
                 distributedDataAccessService.getDistributedBuildAgentInformation().remove(key);
@@ -350,7 +339,7 @@ public class SharedQueueProcessingService {
 
             ResultQueueItem resultQueueItem = new ResultQueueItem(buildResult, finishedJob, buildLogs, null);
             if (processResults.get()) {
-                distributedDataAccessService.getDistributedResultQueue().add(resultQueueItem);
+                distributedDataAccessService.getDistributedBuildResultQueue().add(resultQueueItem);
             }
             else {
                 log.info("Build agent is paused. Not adding build result to result queue for build job: {}", buildJob);
@@ -405,7 +394,7 @@ public class SharedQueueProcessingService {
 
             ResultQueueItem resultQueueItem = new ResultQueueItem(failedResult, job, buildLogs, ex);
             if (processResults.get()) {
-                distributedDataAccessService.getDistributedResultQueue().add(resultQueueItem);
+                distributedDataAccessService.getDistributedBuildResultQueue().add(resultQueueItem);
             }
             else {
                 log.info("Build agent is paused. Not adding build result to result queue for build job: {}", buildJob);
@@ -434,7 +423,7 @@ public class SharedQueueProcessingService {
 
         pauseResumeLock.lock();
         try {
-            log.info("Pausing build agent with address {}", hazelcastInstance.getCluster().getLocalMember().getAddress().toString());
+            log.info("Pausing build agent with address {}", distributedDataAccessService.getLocalMemberAddress());
 
             isPaused.set(true);
             removeListenerAndCancelScheduledFuture();
@@ -484,7 +473,7 @@ public class SharedQueueProcessingService {
         List<BuildJobQueueItem> runningBuildJobsAfterGracePeriod = distributedDataAccessService.getDistributedProcessingJobs().getAll(runningBuildJobIdsAfterGracePeriod).values()
                 .stream().toList();
         runningBuildJobIdsAfterGracePeriod.forEach(buildJobManagementService::cancelBuildJob);
-        distributedDataAccessService.getDistributedQueuedJobs().addAll(runningBuildJobsAfterGracePeriod);
+        distributedDataAccessService.getDistributedBuildJobQueue().addAll(runningBuildJobsAfterGracePeriod);
         log.info("Cancelled running build jobs and added them back to the queue with Ids {}", runningBuildJobIdsAfterGracePeriod);
         log.debug("Cancelled running build jobs: {}", runningBuildJobsAfterGracePeriod);
     }
@@ -497,7 +486,7 @@ public class SharedQueueProcessingService {
 
         pauseResumeLock.lock();
         try {
-            log.info("Resuming build agent with address {}", hazelcastInstance.getCluster().getLocalMember().getAddress().toString());
+            log.info("Resuming build agent with address {}", distributedDataAccessService.getLocalMemberAddress());
             isPaused.set(false);
             processResults.set(true);
             buildAgentConfiguration.openBuildAgentServices();
@@ -508,7 +497,7 @@ public class SharedQueueProcessingService {
 
             // We remove the listener and scheduledTask first to avoid having multiple listeners and scheduled tasks running
             removeListenerAndCancelScheduledFuture();
-            listenerId = distributedDataAccessService.getDistributedQueuedJobs().addItemListener(new QueuedBuildJobItemListener(), true);
+            listenerId = distributedDataAccessService.getDistributedBuildJobQueue().addItemListener(new QueuedBuildJobItemListener(), true);
             scheduledFuture = taskScheduler.scheduleAtFixedRate(this::checkAvailabilityAndProcessNextBuild, Duration.ofSeconds(10));
 
             buildAgentInformationService.updateLocalBuildAgentInformation(isPaused.get());
