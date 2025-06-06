@@ -62,16 +62,16 @@ public class BeanInstantiationTracer implements InstantiationAwareBeanPostProces
      */
     @EventListener(PrintStartupBeansEvent.class)
     public void printDependencyGraph() {
-        try (PrintWriter out = new PrintWriter("beans.dot")) {
+        try (PrintWriter out = new PrintWriter("startupBeans.dot")) {
             out.println("digraph beans {");
             for (Pair<String, String> edge : edges) {
                 out.printf("  \"%s\" -> \"%s\";%n", edge.first(), edge.second());
             }
             out.println("}");
-            log.info("Bean instantiation graph exported to beans.dot ({} edges)", edges.size());
+            log.info("Bean instantiation graph exported to startupBeans.dot ({} edges)", edges.size());
         }
         catch (IOException e) {
-            log.error("Failed to write beans.dot", e);
+            log.error("Failed to write startupBeans.dot", e);
         }
     }
 }
