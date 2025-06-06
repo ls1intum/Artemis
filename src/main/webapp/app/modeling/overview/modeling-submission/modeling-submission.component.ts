@@ -524,23 +524,23 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.cleanup(() => clearInterval(teamSyncInterval));
     }
 
-    // /**
-    //  * Emits submission patches when receiving patches from the modeling editor.
-    //  * These patches need to be synced with other team members in team exercises.
-    //  * The observable through which the patches are emitted is passed to the team sync
-    //  * component, who then sends the patches to the server and other team members.
-    //  * @param patch The patch to update the submission with.
-    //  */
-    // onModelPatch(patch: Patch) {
-    //     if (this.modelingExercise.teamMode) {
-    //         const submissionPatch = new SubmissionPatch(patch);
-    //         submissionPatch.participation = this.participation;
-    //         if (submissionPatch.participation?.exercise) {
-    //             submissionPatch.participation.exercise.studentParticipations = [];
-    //         }
-    //         this.submissionPatchObservable.next(Object.assign({}, submissionPatch));
-    //     }
-    // }
+    /**
+     * Emits submission patches when receiving patches from the modeling editor.
+     * These patches need to be synced with other team members in team exercises.
+     * The observable through which the patches are emitted is passed to the team sync
+     * component, who then sends the patches to the server and other team members.
+     * @param patch The patch to update the submission with.
+     */
+    onModelPatch(patch: string) {
+        if (this.modelingExercise.teamMode) {
+            const submissionPatch = new SubmissionPatch(patch);
+            submissionPatch.participation = this.participation;
+            if (submissionPatch.participation?.exercise) {
+                submissionPatch.participation.exercise.studentParticipations = [];
+            }
+            this.submissionPatchObservable.next(Object.assign({}, submissionPatch));
+        }
+    }
 
     /**
      * Runs given cleanup logic when the component is destroyed.
@@ -670,14 +670,14 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.updateModelingSubmission(submission);
     }
 
-    // /**
-    //  * This is called when the team sync component receives
-    //  * patches from the server. Updates the modeling editor with the received patch.
-    //  * @param submissionPatch
-    //  */
-    // onReceiveSubmissionPatchFromTeam(submissionPatch: SubmissionPatch) {
-    //     this.modelingEditor.importPatch(submissionPatch.patch);
-    // }
+    /**
+     * This is called when the team sync component receives
+     * patches from the server. Updates the modeling editor with the received patch.
+     * @param submissionPatch
+     */
+    onReceiveSubmissionPatchFromTeam(submissionPatch: SubmissionPatch) {
+        this.modelingEditor.importPatch(submissionPatch.patch);
+    }
 
     private isModelEmpty(model?: string): boolean {
         const umlModel: UMLModel = model ? JSON.parse(model) : undefined;

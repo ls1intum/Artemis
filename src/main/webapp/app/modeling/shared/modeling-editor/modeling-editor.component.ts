@@ -29,12 +29,11 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
     @Input() savedStatus?: { isChanged?: boolean; isSaving?: boolean };
 
     @Output() private onModelChanged: EventEmitter<UMLModel> = new EventEmitter<UMLModel>();
-    // @Output() onModelPatch = new EventEmitter<Patch>();
+    @Output() onModelPatch = new EventEmitter<string>();
 
     @Output() explanationChange = new EventEmitter();
 
     private modelSubscription: number;
-    // private modelPatchSubscription: number;
 
     // Icons
     faCheck = faCheck;
@@ -98,9 +97,9 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
                 this.onModelChanged.emit(model);
             });
 
-            // this.modelPatchSubscription = this.apollonEditor.subscribeToModelChangePatches((patch: Patch) => {
-            //     this.onModelPatch.emit(patch);
-            // });
+            this.apollonEditor.sendBroadcastMessage((patch) => {
+                this.onModelPatch.emit(patch);
+            });
         }
     }
 
@@ -235,11 +234,11 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
         this.explanation = newValue;
     }
 
-    // /**
-    //  * Import a patch into the Apollon editor
-    //  * @param patch the patch to import
-    //  */
-    // importPatch(patch: Patch) {
-    //     this.apollonEditor?.importPatch(patch);
-    // }
+    /**
+     * Import a patch into the Apollon editor
+     * @param patch the patch to import
+     */
+    importPatch(patch: string) {
+        this.apollonEditor?.receiveBroadcastedMessage(patch);
+    }
 }
