@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @ComponentScan
-class HibernatePropertiesConfig {
+public class HibernatePropertiesConfig {
 
     @Bean
     public HibernatePropertiesCustomizer hibernateCustomizer(StatementInspector statementInspector) {
