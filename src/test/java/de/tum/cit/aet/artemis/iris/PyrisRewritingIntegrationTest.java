@@ -91,7 +91,15 @@ class PyrisRewritingIntegrationTest extends AbstractIrisIntegrationTest {
         });
         request.postWithoutResponseBody("/api/iris/courses/" + course.getId() + "/rewrite-text", requestDTO, HttpStatus.FORBIDDEN);
     }
-
+    /**
+     Simulate the websocket message that would be sent by Pyris
+     This is a simulation of the PyrisRewritingRequest that would be sent to the user
+     It contains the stages and the result of the consistency check
+     * @param job the job that is being processed
+     * @param tokens the LLM requests that were made during the rewriting process
+     * @param stages the stages of the rewriting process
+     * @param result the result of the rewriting process
+     */
     private void simulateWebsocketMessageWithResult(RewritingJob job, List<LLMRequest> tokens, List<PyrisStageDTO> stages, String result) {
         irisRewritingService.handleStatusUpdate(job, new PyrisRewritingStatusUpdateDTO(stages, result, tokens));
     }

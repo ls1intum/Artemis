@@ -81,9 +81,7 @@ class PyrisConsistencyCheckIntegrationTest extends AbstractIrisIntegrationTest {
 
         List<LLMRequest> tokens = getMockLLMCosts("IRIS_CHAT_EXERCISE_MESSAGE");
         String rewritingResult = "result";
-        // Simulate the websocket message that would be sent by Pyris
-        // This is a simulation of the PyrisConsistencyCheckStatusUpdateDTO that would be sent to the user
-        // It contains the stages and the result of the consistency check
+
         simulateWebsocketMessageWithResult(job, tokens, stages, rewritingResult);
         // Make sure that the websocket message returned to the user contains the proper values (we need to intercept the returned message with the argumentCaptor)
         ArgumentCaptor<PyrisConsistencyCheckStatusUpdateDTO> argumentCaptor = ArgumentCaptor.forClass(PyrisConsistencyCheckStatusUpdateDTO.class);
@@ -129,6 +127,15 @@ class PyrisConsistencyCheckIntegrationTest extends AbstractIrisIntegrationTest {
                 Instant.now().plusSeconds(604800));
     }
 
+    /**
+     Simulate the websocket message that would be sent by Pyris
+     This is a simulation of the PyrisConsistencyCheckStatusUpdateDTO that would be sent to the user
+     It contains the stages and the result of the consistency check
+     * @param job the job that is being processed
+     * @param tokens the LLM requests that were made during the rewriting process
+     * @param stages the stages of the consistency process
+     * @param result the result of the consistency check process
+     */
     private void simulateWebsocketMessageWithResult(ConsistencyCheckJob job, List<LLMRequest> tokens, List<PyrisStageDTO> stages, String result) {
         irisConsistencyCheckService.handleStatusUpdate(job, new PyrisConsistencyCheckStatusUpdateDTO(stages, result, tokens));
     }
