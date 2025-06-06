@@ -261,6 +261,17 @@ public class UserCreationService {
     }
 
     /**
+     * Deactivate user
+     *
+     * @param user the user that should be deactivated
+     */
+    public void deactivateUser(User user) {
+        user.setActivated(false);
+        saveUser(user);
+        log.info("Deactivated user: {}", user);
+    }
+
+    /**
      * saves the user and clears the cache
      *
      * @param user the user object that will be saved into the database

@@ -2,8 +2,8 @@ import { Component, ElementRef, OnDestroy, OnInit, computed, effect, inject, sig
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { AttachmentService } from 'app/lecture/manage/services/attachment.service';
 import { Attachment } from 'app/lecture/shared/entities/attachment.model';
-import { AttachmentUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentUnit.model';
-import { AttachmentUnitService } from 'app/lecture/manage/lecture-units/services/attachmentUnit.service';
+import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/shared/service/alert.service';
 import { Subject, Subscription } from 'rxjs';
@@ -86,7 +86,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     showPopover = viewChild.required<NgbPopover>('showPopover');
 
     attachmentSub: Subscription;
-    attachmentUnitSub: Subscription;
+    attachmentVideoUnitSub: Subscription;
 
     FOREVER = dayjs('9999-12-31');
 
@@ -97,7 +97,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     // Signals
     course = signal<Course | undefined>(undefined);
     attachment = signal<Attachment | undefined>(undefined);
-    attachmentUnit = signal<AttachmentUnit | undefined>(undefined);
+    attachmentVideoUnit = signal<AttachmentVideoUnit | undefined>(undefined);
     isPdfLoading = signal<boolean>(false);
     attachmentToBeEdited = signal<Attachment | undefined>(undefined);
     currentPdfUrl = signal<string | undefined>(undefined);
@@ -135,7 +135,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     // Injected services
     private readonly route = inject(ActivatedRoute);
     private readonly attachmentService = inject(AttachmentService);
-    private readonly attachmentUnitService = inject(AttachmentUnitService);
+    private readonly attachmentVideoUnitService = inject(AttachmentVideoUnitService);
     private readonly lectureUnitService = inject(LectureUnitService);
     private readonly alertService = inject(AlertService);
     private readonly router = inject(Router);
@@ -161,9 +161,9 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             if ('attachment' in data) {
                 this.attachment.set(data.attachment);
                 this.fetchPdfFile('attachment');
-            } else if ('attachmentUnit' in data) {
-                this.attachmentUnit.set(data.attachmentUnit);
-                const { slides } = data.attachmentUnit;
+            } else if ('attachmentVideoUnit' in data) {
+                this.attachmentVideoUnit.set(data.attachmentVideoUnit);
+                const { slides } = data.attachmentVideoUnit;
 
                 // Store hidden pages information
                 const hiddenPagesMap: HiddenPageMap = Object.fromEntries(
@@ -180,7 +180,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                 this.initialHiddenPages.set(hiddenPagesMap);
                 this.hiddenPages.set({ ...hiddenPagesMap });
 
-                this.fetchPdfFile('attachmentUnit', slides);
+                this.fetchPdfFile('attachmentVideoUnit', slides);
             } else {
                 this.isPdfLoading.set(false);
             }
@@ -188,11 +188,11 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Fetches a PDF file based on the specified file type (attachment or attachmentUnit).
-     * @param fileType The type of file to fetch ('attachment' or 'attachmentUnit')
-     * @param slides Optional array of slides (only used for attachmentUnit)
+     * Fetches a PDF file based on the specified file type (attachment or attachmentVideoUnit).
+     * @param fileType The type of file to fetch ('attachment' or 'attachmentVideoUnit')
+     * @param slides Optional array of slides (only used for attachmentVideoUnit)
      */
-    private fetchPdfFile(fileType: 'attachment' | 'attachmentUnit', slides?: Slide[]): void {
+    private fetchPdfFile(fileType: 'attachment' | 'attachmentVideoUnit', slides?: Slide[]): void {
         const courseId = this.course()!.id!;
         let subscription: Subscription;
 
@@ -207,15 +207,15 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
             this.attachmentSub = subscription;
         } else {
-            subscription = this.attachmentUnitService
-                .getAttachmentFile(courseId, this.attachmentUnit()!.id!)
+            subscription = this.attachmentVideoUnitService
+                .getAttachmentFile(courseId, this.attachmentVideoUnit()!.id!)
                 .pipe(finalize(() => this.isPdfLoading.set(false)))
                 .subscribe({
                     next: (blob: Blob) => this.processPdfBlob(blob, slides),
                     error: (error: HttpErrorResponse) => onError(this.alertService, error),
                 });
 
-            this.attachmentUnitSub = subscription;
+            this.attachmentVideoUnitSub = subscription;
         }
     }
 
@@ -243,7 +243,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      * @param fileUrl The URL of the file to load
      * @param arrayBuffer The PDF file as an ArrayBuffer
      * @param sourceId Identifier for the source PDF, or 'original' for the initial PDF
-     * @param existingSlides Optional array of existing slides (for attachmentUnit)
+     * @param existingSlides Optional array of existing slides (for attachmentVideoUnit)
      * @param append Whether to append the new pages to existing ones
      */
     async loadPdf(fileUrl: string, arrayBuffer: ArrayBuffer, sourceId: string = 'original', existingSlides?: Slide[], append: boolean = false): Promise<void> {
@@ -346,7 +346,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
     ngOnDestroy() {
         this.attachmentSub?.unsubscribe();
-        this.attachmentUnitSub?.unsubscribe();
+        this.attachmentVideoUnitSub?.unsubscribe();
 
         this.sourcePDFs().forEach((source) => {
             URL.revokeObjectURL(source.url);
@@ -594,7 +594,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
     /**
      * Updates the attachment with both instructor and student versions
-     * Refactored version combining updateAttachmentWithFile and updateAttachmentUnitStudentVersion
+     * Refactored version combining updateAttachmentWithFile and updateAttachmentVideoUnitStudentVersion
      */
     async updateAttachmentWithFile(): Promise<void> {
         // Validate hidden slides dates before proceeding
@@ -605,7 +605,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         this.isSaving.set(true);
 
         try {
-            const pdfName = this.attachment()?.name ?? this.attachmentUnit()?.name ?? '';
+            const pdfName = this.attachment()?.name ?? this.attachmentVideoUnit()?.name ?? '';
             const { instructorPdf, studentPdf } = await this.applyOperations(true);
 
             const instructorPdfFile = await this.createPdfFile(instructorPdf, pdfName);
@@ -618,9 +618,9 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
             if (this.attachment()) {
                 await this.updateAttachment(instructorPdfFile);
-            } else if (this.attachmentUnit()) {
+            } else if (this.attachmentVideoUnit()) {
                 const hiddenPages = this.getHiddenPages();
-                await this.updateAttachmentUnit(instructorPdfFile, hiddenPages);
+                await this.updateAttachmentVideoUnit(instructorPdfFile, hiddenPages);
 
                 if (studentPdf && hiddenPages.length > 0) {
                     const studentPdfFile = await this.createPdfFile(studentPdf, pdfName, true);
@@ -659,34 +659,39 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Updates an attachment unit
+     * Updates an attachment video unit
      */
-    private async updateAttachmentUnit(instructorPdfFile: File, hiddenPages: HiddenPage[]): Promise<void> {
+    private async updateAttachmentVideoUnit(instructorPdfFile: File, hiddenPages: HiddenPage[]): Promise<void> {
         return new Promise<void>((resolve, reject) => {
-            this.attachmentToBeEdited.set(this.attachmentUnit()!.attachment!);
+            this.attachmentToBeEdited.set(this.attachmentVideoUnit()!.attachment!);
             this.attachmentToBeEdited()!.uploadDate = dayjs();
 
             const formData = new FormData();
             formData.append('file', instructorPdfFile);
             formData.append('attachment', objectToJsonBlob(this.attachmentToBeEdited()!));
-            formData.append('attachmentUnit', objectToJsonBlob(this.attachmentUnit()!));
+            formData.append('attachmentVideoUnit', objectToJsonBlob(this.attachmentVideoUnit()!));
 
             this.getFinalPageOrder().then((finalPageOrder) => {
                 formData.append(
                     'pageOrder',
-                    JSON.stringify(
-                        finalPageOrder.map((page) => ({
-                            slideId: page.slideId,
-                            order: page.order,
-                        })),
+                    new Blob(
+                        [
+                            JSON.stringify(
+                                finalPageOrder.map((page) => ({
+                                    slideId: page.slideId,
+                                    order: page.order,
+                                })),
+                            ),
+                        ],
+                        { type: 'application/json' },
                     ),
                 );
 
                 if (hiddenPages.length > 0) {
-                    formData.append('hiddenPages', JSON.stringify(hiddenPages));
+                    formData.append('hiddenPages', new Blob([JSON.stringify(hiddenPages)], { type: 'application/json' }));
                 }
 
-                this.attachmentUnitService.update(this.attachmentUnit()!.lecture!.id!, this.attachmentUnit()!.id!, formData).subscribe({
+                this.attachmentVideoUnitService.update(this.attachmentVideoUnit()!.lecture!.id!, this.attachmentVideoUnit()!.id!, formData).subscribe({
                     next: () => resolve(),
                     error: (error) => {
                         this.isSaving.set(false);
@@ -699,14 +704,14 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Updates only the student version of the attachment unit
+     * Updates only the student version of the attachment video unit
      */
     private updateStudentVersion(studentPdfFile: File): Promise<void> {
         return new Promise<void>((resolve, reject) => {
             const formData = new FormData();
             formData.append('studentVersion', studentPdfFile);
 
-            this.attachmentUnitService.updateStudentVersion(this.attachmentUnit()!.lecture!.id!, this.attachmentUnit()!.id!, formData).subscribe({
+            this.attachmentVideoUnitService.updateStudentVersion(this.attachmentVideoUnit()!.lecture!.id!, this.attachmentVideoUnit()!.id!, formData).subscribe({
                 next: () => {
                     this.finishSaving();
                     resolve();
@@ -769,7 +774,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Deletes the attachment file if it exists, or deletes the attachment unit if it exists.
+     * Deletes the attachment file if it exists, or deletes the attachment video unit if it exists.
      * @returns A Promise that resolves when the deletion process is completed.
      */
     async deleteAttachmentFile() {
@@ -783,8 +788,8 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                     this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: error.message });
                 },
             });
-        } else if (this.attachmentUnit()) {
-            this.lectureUnitService.delete(this.attachmentUnit()!.id!, this.attachmentUnit()!.lecture!.id!).subscribe({
+        } else if (this.attachmentVideoUnit()) {
+            this.lectureUnitService.delete(this.attachmentVideoUnit()!.id!, this.attachmentVideoUnit()!.lecture!.id!).subscribe({
                 next: () => {
                     this.navigateToCourseManagement();
                     this.dialogErrorSource.next('');
@@ -1010,7 +1015,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         if (this.attachment()) {
             this.router.navigate(['course-management', this.course()!.id, 'lectures', this.attachment()!.lecture!.id, 'attachments']);
         } else {
-            this.router.navigate(['course-management', this.course()!.id, 'lectures', this.attachmentUnit()!.lecture!.id, 'unit-management']);
+            this.router.navigate(['course-management', this.course()!.id, 'lectures', this.attachmentVideoUnit()!.lecture!.id, 'unit-management']);
         }
     }
 }

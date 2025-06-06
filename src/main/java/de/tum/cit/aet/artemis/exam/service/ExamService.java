@@ -120,12 +120,13 @@ public class ExamService {
 
     private static final int EXAM_ACTIVE_DAYS = 7;
 
-    private final QuizResultService quizResultService;
-
-    @Value("${artemis.course-archives-path}")
-    private Path examArchivesDirPath;
-
     private static final Logger log = LoggerFactory.getLogger(ExamService.class);
+
+    private static final boolean IS_TEST_RUN = false;
+
+    private static final String NOT_ALLOWED_TO_ACCESS_THE_GRADE_SUMMARY = "You are not allowed to access the grade summary of a student exam ";
+
+    private final QuizResultService quizResultService;
 
     private final UserRepository userRepository;
 
@@ -177,9 +178,8 @@ public class ExamService {
 
     private final ObjectMapper defaultObjectMapper;
 
-    private static final boolean IS_TEST_RUN = false;
-
-    private static final String NOT_ALLOWED_TO_ACCESS_THE_GRADE_SUMMARY = "You are not allowed to access the grade summary of a student exam ";
+    @Value("${artemis.course-archives-path}")
+    private Path examArchivesDirPath;
 
     public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, TutorLeaderboardService tutorLeaderboardService,
             StudentParticipationRepository studentParticipationRepository, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
@@ -216,6 +216,65 @@ public class ExamService {
         this.courseRepository = courseRepository;
         this.defaultObjectMapper = new ObjectMapper();
         this.quizResultService = quizResultService;
+    }
+
+    private static boolean isSecondCorrectionEnabled(Exam exam) {
+        return exam.getExerciseGroups().stream().flatMap(exerciseGroup -> exerciseGroup.getExercises().stream()).anyMatch(Exercise::getSecondCorrectionEnabled);
+    }
+
+    /**
+     * Determines whether the student should see the result of the exam.
+     * This is the case if the exam is started and not ended yet or if the results are already published.
+     *
+     * @param studentExam   The student exam
+     * @param participation The participation of the student
+     * @return true if the student should see the result, false otherwise
+     */
+    public static boolean shouldStudentSeeResult(StudentExam studentExam, StudentParticipation participation) {
+        return (studentExam.getExam().isStarted() && !studentExam.isEnded() && participation instanceof ProgrammingExerciseStudentParticipation)
+                || studentExam.areResultsPublishedYet();
+    }
+
+    /**
+     * Helper method which attaches the result to its participation's latest submission..
+     * For direct automatic feedback during the exam conduction for {@link ProgrammingExercise}, we need to attach the results.
+     * We also attach the result if the results are already published for the exam.
+     * If no suitable Result is found for StudentParticipation, an empty Result set is assigned to prevent LazyInitializationException on future reads.
+     * See {@link StudentExam#areResultsPublishedYet}
+     *
+     * @param studentExam         the given studentExam
+     * @param participation       the given participation of the student
+     * @param isAtLeastInstructor flag for instructor access privileges
+     */
+    private static void setResultIfNecessary(StudentExam studentExam, StudentParticipation participation, boolean isAtLeastInstructor) {
+        // Only set the result during the exam for programming exercises (for direct automatic feedback) or after publishing the results
+        boolean isStudentAllowedToSeeResult = shouldStudentSeeResult(studentExam, participation);
+        Optional<Submission> latestSubmission = participation.findLatestSubmission();
+
+        if (latestSubmission.isPresent()) {
+            var lastSubmission = latestSubmission.get();
+            if (isStudentAllowedToSeeResult || isAtLeastInstructor) {
+                Result latestResult = lastSubmission.getLatestResult();
+                if (latestResult != null) {
+                    latestResult.setSubmission(lastSubmission);
+                    latestResult.filterSensitiveInformation();
+                    lastSubmission.setResults(List.of(latestResult));
+                }
+            }
+            else {
+                lastSubmission.setResults(List.of());
+            }
+        }
+    }
+
+    private static Set<Exercise> getAllExercisesForExam(Exam exam) {
+        return getAllExercisesForExamByType(exam, Exercise.class);
+    }
+
+    private static <T extends Exercise> Set<T> getAllExercisesForExamByType(Exam exam, Class<T> exerciseType) {
+        return exam.getExerciseGroups().stream().flatMap(exerciseGroup -> exerciseGroup.getExercises().stream())
+                // this also filters potential null values
+                .filter(exerciseType::isInstance).map(exerciseType::cast).collect(Collectors.toSet());
     }
 
     /**
@@ -315,10 +374,6 @@ public class ExamService {
         // the second correction has started if it is enabled in the exam and at least one exercise was started
         var hasSecondCorrectionAndStarted = exam.getNumberOfCorrectionRoundsInExam() > 1 && isSecondCorrectionEnabled(exam);
         return new ExamScoresDTO(exam.getId(), exam.getTitle(), exam.getExamMaxPoints(), averagePointsAchieved, hasSecondCorrectionAndStarted, exerciseGroups, studentResults);
-    }
-
-    private static boolean isSecondCorrectionEnabled(Exam exam) {
-        return exam.getExerciseGroups().stream().flatMap(exerciseGroup -> exerciseGroup.getExercises().stream()).anyMatch(Exercise::getSecondCorrectionEnabled);
     }
 
     /**
@@ -586,66 +641,12 @@ public class ExamService {
                     quizSubmission.filterForExam(studentExam.areResultsPublishedYet(), isAtLeastInstructor);
                 }
             }
-            else {
-                // To prevent LazyInitializationException.
-                participation.setResults(Set.of());
-            }
             // add participation into an array
             exercise.setStudentParticipations(Set.of(participation));
         }
         else {
             // To prevent LazyInitializationException.
             exercise.setStudentParticipations(Set.of());
-        }
-    }
-
-    /**
-     * Determines whether the student should see the result of the exam.
-     * This is the case if the exam is started and not ended yet or if the results are already published.
-     *
-     * @param studentExam   The student exam
-     * @param participation The participation of the student
-     * @return true if the student should see the result, false otherwise
-     */
-    public static boolean shouldStudentSeeResult(StudentExam studentExam, StudentParticipation participation) {
-        return (studentExam.getExam().isStarted() && !studentExam.isEnded() && participation instanceof ProgrammingExerciseStudentParticipation)
-                || studentExam.areResultsPublishedYet();
-    }
-
-    /**
-     * Helper method which attaches the result to its participation.
-     * For direct automatic feedback during the exam conduction for {@link ProgrammingExercise}, we need to attach the results.
-     * We also attach the result if the results are already published for the exam.
-     * If no suitable Result is found for StudentParticipation, an empty Result set is assigned to prevent LazyInitializationException on future reads.
-     * See {@link StudentExam#areResultsPublishedYet}
-     *
-     * @param studentExam         the given studentExam
-     * @param participation       the given participation of the student
-     * @param isAtLeastInstructor flag for instructor access privileges
-     */
-    private static void setResultIfNecessary(StudentExam studentExam, StudentParticipation participation, boolean isAtLeastInstructor) {
-        // Only set the result during the exam for programming exercises (for direct automatic feedback) or after publishing the results
-        boolean isStudentAllowedToSeeResult = shouldStudentSeeResult(studentExam, participation);
-        Optional<Submission> latestSubmission = participation.findLatestSubmission();
-
-        // To prevent LazyInitializationException.
-        participation.setResults(Set.of());
-        if (latestSubmission.isPresent()) {
-            var lastSubmission = latestSubmission.get();
-            if (isStudentAllowedToSeeResult || isAtLeastInstructor) {
-                // Also set the latest result into the participation as the client expects it there for programming exercises
-                Result latestResult = lastSubmission.getLatestResult();
-                if (latestResult != null) {
-                    latestResult.setParticipation(null);
-                    latestResult.setSubmission(lastSubmission);
-                    latestResult.filterSensitiveInformation();
-                    // to avoid cycles and support certain use cases on the client, only the last result + submission inside the participation are relevant, i.e. participation ->
-                    // lastResult -> lastSubmission
-                    participation.setResults(Set.of(latestResult));
-                }
-                participation.setSubmissions(Set.of(lastSubmission));
-            }
-            lastSubmission.setResults(null);
         }
     }
 
@@ -690,7 +691,7 @@ public class ExamService {
             }
             // Relevant Result is already calculated
             if (studentParticipation.getResults() != null && !studentParticipation.getResults().isEmpty()) {
-                Result relevantResult = studentParticipation.getResults().iterator().next();
+                Result relevantResult = studentParticipation.findLatestResult();
                 PlagiarismCase plagiarismCase = plagiarismCasesForStudent.get(exercise.getId());
                 double plagiarismPointDeductionPercentage = plagiarismCase != null ? plagiarismCase.getVerdictPointDeduction() : 0.0;
                 double achievedPoints = calculateAchievedPoints(exercise, relevantResult, exam.getCourse(), plagiarismPointDeductionPercentage);
@@ -1068,6 +1069,8 @@ public class ExamService {
             totalNumberOfComplaintResponse += numberOfComplaintResponse;
         }
 
+        boolean existsUnassessedQuizzes = submissionRepository.existsUnassessedQuizzesByExamId(exam.getId());
+
         if (isInstructor) {
             // set number of student exams that have been generated
             long numberOfGeneratedStudentExams = examRepository.countGeneratedStudentExamsByExamWithoutTestRuns(exam.getId());
@@ -1097,11 +1100,11 @@ public class ExamService {
             }
 
             return new ExamChecklistDTO(numberOfGeneratedStudentExams, numberOfTestRuns, totalNumberOfAssessmentsFinished, totalNumberOfParticipationsForAssessment,
-                    numberOfStudentExamsSubmitted, numberOfStudentExamsStarted, totalNumberOfComplaints, totalNumberOfComplaintResponse, exercisesPrepared, null, null);
+                    numberOfStudentExamsSubmitted, numberOfStudentExamsStarted, totalNumberOfComplaints, totalNumberOfComplaintResponse, exercisesPrepared, existsUnassessedQuizzes,
+                    null);
 
         }
 
-        boolean existsUnassessedQuizzes = submissionRepository.existsUnassessedQuizzesByExamId(exam.getId());
         boolean existsUnsubmittedExercises = submissionRepository.existsUnsubmittedExercisesByExamId(exam.getId());
 
         // For non-instructors, consider what limited information they should receive and adjust accordingly
@@ -1132,16 +1135,6 @@ public class ExamService {
     private <T extends Exercise> Set<T> getAllExercisesForExamByType(Long examId, Class<T> exerciseType) {
         var exam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
         return getAllExercisesForExamByType(exam, exerciseType);
-    }
-
-    private static Set<Exercise> getAllExercisesForExam(Exam exam) {
-        return getAllExercisesForExamByType(exam, Exercise.class);
-    }
-
-    private static <T extends Exercise> Set<T> getAllExercisesForExamByType(Exam exam, Class<T> exerciseType) {
-        return exam.getExerciseGroups().stream().flatMap(exerciseGroup -> exerciseGroup.getExercises().stream())
-                // this also filters potential null values
-                .filter(exerciseType::isInstance).map(exerciseType::cast).collect(Collectors.toSet());
     }
 
     /**
@@ -1184,11 +1177,12 @@ public class ExamService {
                 exam.getNumberOfCorrectionRoundsInExam());
         stats.setNumberOfAssessmentsOfCorrectionRounds(numberOfAssessmentsOfCorrectionRounds);
 
-        final long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_ExerciseGroup_Exam_IdAndComplaintType(examId, ComplaintType.COMPLAINT);
+        final long numberOfComplaints = complaintRepository.countByResult_Submission_Participation_Exercise_ExerciseGroup_Exam_IdAndComplaintType(examId, ComplaintType.COMPLAINT);
         stats.setNumberOfComplaints(numberOfComplaints);
 
         final long numberOfComplaintResponses = complaintResponseRepository
-                .countByComplaint_Result_Participation_Exercise_ExerciseGroup_Exam_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(examId, ComplaintType.COMPLAINT);
+                .countByComplaint_Result_Submission_Participation_Exercise_ExerciseGroup_Exam_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(examId,
+                        ComplaintType.COMPLAINT);
         stats.setNumberOfOpenComplaints(numberOfComplaints - numberOfComplaintResponses);
 
         final long numberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByUserIdAndExamId(userRepository.getUserWithGroupsAndAuthorities().getId(), examId);
