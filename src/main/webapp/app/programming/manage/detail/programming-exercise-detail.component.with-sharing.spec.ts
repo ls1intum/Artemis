@@ -29,6 +29,7 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { ProgrammingExerciseGitDiffReport } from 'app/programming/shared/entities/programming-exercise-git-diff-report.model';
 import { SubmissionPolicyService } from 'app/programming/manage/services/submission-policy.service';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
 
 /*
  * just use a separate file for sharing aspects, could be merged into programming-exercise-detail.component.spec.ts if stabilized.
@@ -54,6 +55,9 @@ describe('ProgrammingExerciseDetailComponent', () => {
         buildConfig: {
             buildTool: 'GRADLE',
         },
+        numberOfAssessmentsOfCorrectionRounds: [0, 0, 0],
+        studentAssignedTeamIdComputed: false,
+        secondCorrectionEnabled: false,
     } as ProgrammingExercise;
 
     const exerciseStatistics = {
@@ -87,6 +91,7 @@ describe('ProgrammingExerciseDetailComponent', () => {
 
     const profileInfo = {
         activeProfiles: [],
+        activeModuleFeatures: [MODULE_FEATURE_PLAGIARISM],
     } as unknown as ProfileInfo;
 
     beforeEach(() => {
