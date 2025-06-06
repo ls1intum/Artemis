@@ -62,6 +62,8 @@ public class SharedQueueProcessingService {
 
     private final BuildLogsMap buildLogsMap;
 
+    private final AtomicInteger consecutiveBuildJobFailures = new AtomicInteger(0);
+
     private final AtomicInteger localProcessingJobs = new AtomicInteger(0);
 
     private final BuildAgentInformationService buildAgentInformationService;
@@ -109,6 +111,9 @@ public class SharedQueueProcessingService {
     @Value("${artemis.continuous-integration.build-agent.display-name:}")
     private String buildAgentDisplayName;
 
+    @Value("${artemis.continuous-integration.pause-after-consecutive-failed-jobs:100}")
+    private int pauseAfterConsecutiveFailedJobs;
+
     public SharedQueueProcessingService(BuildAgentConfiguration buildAgentConfiguration, BuildJobManagementService buildJobManagementService, BuildLogsMap buildLogsMap,
             TaskScheduler taskScheduler, BuildAgentDockerService buildAgentDockerService, BuildAgentInformationService buildAgentInformationService,
             DistributedDataAccessService distributedDataAccessService) {
@@ -153,7 +158,7 @@ public class SharedQueueProcessingService {
 
         distributedDataAccessService.getPauseBuildAgentTopic().addMessageListener(message -> {
             if (buildAgentShortName.equals(message.getMessageObject())) {
-                pauseBuildAgent();
+                pauseBuildAgent(false);
             }
         });
 
@@ -343,7 +348,9 @@ public class SharedQueueProcessingService {
             // after processing a build job, remove it from the processing jobs
             distributedDataAccessService.getDistributedProcessingJobs().remove(buildJob.id());
             localProcessingJobs.decrementAndGet();
-            buildAgentInformationService.updateLocalBuildAgentInformationWithRecentJob(finishedJob, isPaused.get());
+            buildAgentInformationService.updateLocalBuildAgentInformationWithRecentJob(finishedJob, isPaused.get(), false);
+
+            consecutiveBuildJobFailures.set(0);
 
             // process next build job if node is available
             checkAvailabilityAndProcessNextBuild();
@@ -365,6 +372,7 @@ public class SharedQueueProcessingService {
             if ((cause instanceof TimeoutException) || errorMessage.equals(timeoutMsg)) {
                 status = BuildStatus.TIMEOUT;
                 log.info("Build job with id {} was timed out", buildJob.id());
+                consecutiveBuildJobFailures.incrementAndGet();
             }
             else if ((cause instanceof CancellationException) && errorMessage.equals(cancelledMsg)) {
                 status = BuildStatus.CANCELLED;
@@ -373,6 +381,7 @@ public class SharedQueueProcessingService {
             else {
                 status = BuildStatus.FAILED;
                 log.error("Error while processing build job: {}", buildJob, ex);
+                consecutiveBuildJobFailures.incrementAndGet();
             }
 
             job = new BuildJobQueueItem(buildJob, completionDate, status);
@@ -393,14 +402,20 @@ public class SharedQueueProcessingService {
 
             distributedDataAccessService.getDistributedProcessingJobs().remove(buildJob.id());
             localProcessingJobs.decrementAndGet();
-            buildAgentInformationService.updateLocalBuildAgentInformationWithRecentJob(job, isPaused.get());
+            buildAgentInformationService.updateLocalBuildAgentInformationWithRecentJob(job, isPaused.get(), false);
+
+            if (consecutiveBuildJobFailures.get() >= pauseAfterConsecutiveFailedJobs) {
+                log.error("Build agent has failed to process build jobs {} times in a row. Pausing build agent.", consecutiveBuildJobFailures.get());
+                pauseBuildAgent(true);
+                return null;
+            }
 
             checkAvailabilityAndProcessNextBuild();
             return null;
         });
     }
 
-    private void pauseBuildAgent() {
+    private void pauseBuildAgent(boolean dueToFailures) {
         if (isPaused.get()) {
             log.info("Build agent is already paused");
             return;
@@ -412,7 +427,7 @@ public class SharedQueueProcessingService {
 
             isPaused.set(true);
             removeListenerAndCancelScheduledFuture();
-            buildAgentInformationService.updateLocalBuildAgentInformation(isPaused.get());
+            buildAgentInformationService.updateLocalBuildAgentInformation(isPaused.get(), dueToFailures);
 
             log.info("Gracefully cancelling running build jobs");
             Set<String> runningBuildJobIds = buildJobManagementService.getRunningBuildJobIds();
@@ -475,6 +490,7 @@ public class SharedQueueProcessingService {
             isPaused.set(false);
             processResults.set(true);
             buildAgentConfiguration.openBuildAgentServices();
+            consecutiveBuildJobFailures.set(0);
 
             // Cleanup docker containers
             buildAgentDockerService.cleanUpContainers();
