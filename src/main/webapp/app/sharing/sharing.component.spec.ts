@@ -1,25 +1,25 @@
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { StaticContentService } from 'app/shared/service/static-content.service';
 import { MockDirective, MockModule, MockProvider } from 'ng-mocks';
 import { SharingComponent } from 'app/sharing/sharing.component';
-import { MockRouter } from '../../helpers/mocks/mock-router';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { ReactiveFormsModule } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { SessionStorageService } from 'ngx-webstorage';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { of } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { AlertService } from 'app/shared/service/alert.service';
-import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
+import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { SharingInfo, ShoppingBasket } from 'app/sharing/sharing.model';
-import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('SharingComponent', () => {
     let fixture: ComponentFixture<SharingComponent>;
@@ -65,7 +65,7 @@ describe('SharingComponent', () => {
         jest.restoreAllMocks();
     });
 
-    const testBasket: ShoppingBasket = { exerciseInfo: [], userInfo: {}, tokenValidUntil: new Date(Date.now() + 60 * 60 * 1000) };
+    const testBasket: ShoppingBasket = { exerciseInfo: [], userInfo: { email: 'test@banana.com' }, tokenValidUntil: new Date(Date.now() + 60 * 60 * 1000) };
 
     const courses: Course[] = [
         { id: 1, title: 'testCouse 1' },

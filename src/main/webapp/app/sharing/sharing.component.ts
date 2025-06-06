@@ -173,7 +173,6 @@ export class SharingComponent implements OnInit {
             this.sharingInfo.basketToken = params['basketToken'];
             if (!this.sharingInfo.basketToken) {
                 this.alertService.error('artemisApp.sharing.error.missingToken');
-                return;
             }
         });
 
