@@ -30,23 +30,23 @@
                         </div>
                     </div>
                     @if (startTimeControl?.invalid && (startTimeControl?.dirty || startTimeControl?.touched)) {
-                        <div class="alert alert-danger">
+                        <div class="text-danger">
                             @if (startTimeControl?.errors?.required) {
                                 <div jhiTranslate="artemisApp.forms.sessionForm.timeInput.invalidTimeRange"></div>
                             }
                         </div>
                     }
                     @if (endTimeControl?.invalid && (endTimeControl?.dirty || endTimeControl?.touched)) {
-                        <div class="alert alert-danger">
+                        <div class="text-danger">
                             @if (endTimeControl?.errors?.required) {
-                                <div jhiTranslate="artemisApp.forms.sessionForm.timeInput.invalidTimeRange"></div>
+                                <span jhiTranslate="artemisApp.forms.sessionForm.timeInput.invalidTimeRange"></span>
                             }
                         </div>
                     }
                     @if (form?.invalid && (form?.dirty || form?.touched)) {
                         <div>
                             @if (form?.errors?.invalidTimeRange) {
-                                <div class="alert alert-danger" jhiTranslate="artemisApp.forms.sessionForm.timeInput.invalidTimeRange"></div>
+                                <span class="text-danger" jhiTranslate="artemisApp.forms.sessionForm.timeInput.invalidTimeRange"></span>
                             }
                         </div>
                     }

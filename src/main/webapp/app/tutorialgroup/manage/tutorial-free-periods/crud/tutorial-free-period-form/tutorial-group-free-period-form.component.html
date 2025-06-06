@@ -62,7 +62,7 @@
                 />
 
                 @if (!isStartBeforeEnd) {
-                    <div class="alert alert-danger" jhiTranslate="artemisApp.forms.tutorialFreePeriodForm.dateInput.invalidEndDateError"></div>
+                    <span class="text-danger" jhiTranslate="artemisApp.forms.tutorialFreePeriodForm.dateInput.invalidEndDateError"></span>
                 }
             } @else if (timeFrame === TimeFrame.PeriodWithinDay) {
                 <jhi-date-time-picker
@@ -86,7 +86,7 @@
                     form.controls.startTime &&
                     (form.controls.endTime?.value | artemisDate: 'time' : false : timeZone) <= (form.controls.startTime?.value | artemisDate: 'time' : false : timeZone)
                 ) {
-                    <div class="alert alert-danger" jhiTranslate="artemisApp.forms.tutorialFreePeriodForm.dateInput.invalidEndDateError"></div>
+                    <span class="text-danger" jhiTranslate="artemisApp.forms.tutorialFreePeriodForm.dateInput.invalidEndDateError"></span>
                 }
             }
             <!-- Reason -->
