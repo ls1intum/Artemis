@@ -64,6 +64,22 @@ public interface SolutionProgrammingExerciseParticipationRepository
     @EntityGraph(type = LOAD, attributePaths = { "submissions" })
     Optional<SolutionProgrammingExerciseParticipation> findWithEagerSubmissionsByProgrammingExerciseId(long exerciseId);
 
+    @Query("""
+             SELECT DISTINCT sp
+               FROM SolutionProgrammingExerciseParticipation sp
+               LEFT JOIN FETCH sp.submissions s
+              WHERE sp.programmingExercise.id = :exerciseId
+                AND (
+                  s.id = (
+                    SELECT MAX(s2.id)
+                      FROM Submission s2
+                     WHERE s2.participation.id = sp.id
+                  )
+                  OR s.id IS NULL
+                )
+            """)
+    Optional<SolutionProgrammingExerciseParticipation> findWithLatestSubmissionByExerciseId(@Param("exerciseId") long exerciseId);
+
     @NotNull
     default SolutionProgrammingExerciseParticipation findByExerciseIdElseThrow(final Specification<SolutionProgrammingExerciseParticipation> specification, long exerciseId) {
         final Specification<SolutionProgrammingExerciseParticipation> hasExerciseIdSpec = (root, query, criteriaBuilder) -> criteriaBuilder
@@ -91,6 +107,10 @@ public interface SolutionProgrammingExerciseParticipationRepository
 
     default SolutionProgrammingExerciseParticipation findByProgrammingExerciseIdElseThrow(long programmingExerciseId) {
         return getValueElseThrow(findByProgrammingExerciseId(programmingExerciseId));
+    }
+
+    default SolutionProgrammingExerciseParticipation findWithLatestSubmissionByExerciseIdElseThrow(long programmingExerciseId) {
+        return getValueElseThrow(findWithLatestSubmissionByExerciseId(programmingExerciseId));
     }
 
     /**
