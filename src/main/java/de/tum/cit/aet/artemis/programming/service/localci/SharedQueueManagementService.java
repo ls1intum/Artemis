@@ -9,7 +9,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.function.Function;
@@ -18,7 +17,6 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
@@ -35,12 +33,9 @@ import com.hazelcast.map.listener.EntryUpdatedListener;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerImageBuild;
-import de.tum.cit.aet.artemis.communication.service.notifications.MailService;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.FinishedBuildJobPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
-import de.tum.cit.aet.artemis.core.service.user.UserService;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
@@ -60,21 +55,14 @@ public class SharedQueueManagementService {
 
     private final ProfileService profileService;
 
-    private final MailService mailService;
-
-    private final UserService userService;
-
     private int buildAgentsCapacity;
 
     private int runningBuildJobCount;
 
-    public SharedQueueManagementService(BuildJobRepository buildJobRepository, ProfileService profileService, DistributedDataAccessService distributedDataAccessService,
-            MailService mailService, @Lazy UserService userService) {
+    public SharedQueueManagementService(BuildJobRepository buildJobRepository, ProfileService profileService, DistributedDataAccessService distributedDataAccessService) {
         this.buildJobRepository = buildJobRepository;
         this.profileService = profileService;
         this.distributedDataAccessService = distributedDataAccessService;
-        this.mailService = mailService;
-        this.userService = userService;
     }
 
     /**
@@ -390,20 +378,6 @@ public class SharedQueueManagementService {
         public void entryUpdated(com.hazelcast.core.EntryEvent<String, BuildAgentInformation> event) {
             log.debug("Build agent updated: {}", event.getValue());
             updateBuildAgentCapacity();
-
-            BuildAgentInformation oldValue = event.getOldValue();
-            BuildAgentInformation newValue = event.getValue();
-
-            if (oldValue != null && newValue != null && oldValue.status() != BuildAgentInformation.BuildAgentStatus.SELF_PAUSED
-                    && newValue.status() == BuildAgentInformation.BuildAgentStatus.SELF_PAUSED) {
-
-                Optional<User> admin = userService.findInternalAdminUser();
-                if (admin.isEmpty()) {
-                    log.warn("No internal admin user found. Cannot notify admin about self pausing build agent.");
-                    return;
-                }
-                mailService.sendBuildAgentSelfPausedEmailToAdmin(admin.get(), newValue.buildAgent().name());
-            }
         }
     }
 
