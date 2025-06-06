@@ -56,10 +56,14 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      * @return map of participation id to submission count
      */
     private static Map<Long, Integer> convertListOfCountsIntoMap(List<long[]> participationIdAndSubmissionCountPairs) {
-        return participationIdAndSubmissionCountPairs.stream().collect(Collectors.toMap(participationIdAndSubmissionCountPair -> participationIdAndSubmissionCountPair[0],
-                // participationId
-                participationIdAndSubmissionCountPair -> Math.toIntExact(participationIdAndSubmissionCountPair[1]) // submissionCount
-        ));
+        // @formatter:off
+        return participationIdAndSubmissionCountPairs.stream().collect(Collectors
+            .toMap(
+        participationIdAndSubmissionCountPair -> participationIdAndSubmissionCountPair[0], // participationId
+        participationIdAndSubmissionCountPair -> Math.toIntExact(participationIdAndSubmissionCountPair[1]) // submissionCount
+            )
+        );
+        // @formatter:on
     }
 
     @EntityGraph(type = LOAD, attributePaths = { "team.students" })
