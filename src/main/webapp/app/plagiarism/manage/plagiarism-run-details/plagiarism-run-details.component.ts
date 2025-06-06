@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, inject } from '@angular/core';
+import { Component, OnChanges, SimpleChanges, inject, input, output } from '@angular/core';
 import { TextPlagiarismResult } from 'app/plagiarism/shared/entities/text/TextPlagiarismResult';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { Range, round } from 'app/shared/util/utils';
@@ -31,12 +31,12 @@ export class PlagiarismRunDetailsComponent extends PlagiarismAndTutorEffortDirec
     /**
      * Result of the automated plagiarism detection
      */
-    @Input() plagiarismResult?: TextPlagiarismResult;
+    readonly plagiarismResult = input<TextPlagiarismResult>();
     /**
      * Statistics for the automated plagiarism detection result
      */
-    @Input() plagiarismResultStats?: PlagiarismResultStats;
-    @Output() similaritySelected: EventEmitter<Range> = new EventEmitter<Range>();
+    readonly plagiarismResultStats = input<PlagiarismResultStats>();
+    readonly similaritySelected = output<Range>();
 
     yScaleMax = 5;
     totalDetectedPlagiarisms: number;
