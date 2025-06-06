@@ -201,7 +201,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
      */
     ngOnChanges(changes: SimpleChanges): void {
         if (changes.diagramType) {
-            // if diagram type changed -> recreate the editor
+            // if the diagram type changed -> recreate the editor
             this.initializeApollonEditor();
         }
 
