@@ -67,12 +67,6 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
 
     Set<StudentParticipation> findByExerciseId(long exerciseId);
 
-    /**
-     * This method is used to find all student participations for a quiz exercise with eagerly loaded submissions, results of submissions and submitted answers.
-     *
-     * @param exerciseId The exercise for which participations should be fetched.
-     * @return A set of all student participations for the given exercise, with eagerly loaded submissions and results of submissions.
-     */
     @Query("""
             SELECT DISTINCT p
             FROM StudentParticipation p
@@ -83,7 +77,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
                 AND TYPE(p.exercise) IN (QuizExercise)
             """)
-    Set<StudentParticipation> findByQuizExerciseIdWithSubmissionsAndAnswers(@Param("exerciseId") long exerciseId);
+    Set<StudentParticipation> findByQuizExerciseIdWithLegalSubmissionsAndAnswers(@Param("exerciseId") long exerciseId);
 
     @Query("""
             SELECT DISTINCT p

@@ -144,7 +144,7 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
     public void calculateAllResults(long quizExerciseId) {
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
         log.info("Calculating results for quiz {}", quizExercise.getId());
-        studentParticipationRepository.findByQuizExerciseIdWithSubmissionsAndAnswers(quizExercise.getId()).forEach(participation -> {
+        studentParticipationRepository.findByQuizExerciseIdWithLegalSubmissionsAndAnswers(quizExercise.getId()).forEach(participation -> {
             participation.setExercise(quizExercise);
             Optional<QuizSubmission> quizSubmissionOptional = quizSubmissionRepository.findWithEagerSubmittedAnswersByParticipationId(participation.getId()).stream().findFirst();
 
