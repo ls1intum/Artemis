@@ -120,7 +120,6 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
 
     formSectionStatus: FormSectionStatus[];
 
-    titleChannelNameComponentSubscription?: Subscription;
     pointsSubscription?: Subscription;
     bonusPointsSubscription?: Subscription;
     teamSubscription?: Subscription;
@@ -231,7 +230,6 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     }
 
     ngOnDestroy() {
-        this.titleChannelNameComponentSubscription?.unsubscribe();
         this.pointsSubscription?.unsubscribe();
         this.bonusPointsSubscription?.unsubscribe();
     }
