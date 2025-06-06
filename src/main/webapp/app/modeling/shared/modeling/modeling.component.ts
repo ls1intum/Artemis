@@ -8,6 +8,9 @@ import interact from 'interactjs';
     template: '',
 })
 export abstract class ModelingComponent {
+    protected readonly faGripLines = faGripLines;
+    protected readonly faGripLinesVertical = faGripLinesVertical;
+
     @ViewChild('editorContainer', { static: false }) editorContainer: ElementRef;
     @ViewChild('resizeContainer', { static: false }) resizeContainer: ElementRef;
     @Input() resizeOptions: { horizontalResize?: boolean; verticalResize?: boolean };
@@ -17,10 +20,6 @@ export abstract class ModelingComponent {
     @Input() readOnly = false;
 
     apollonEditor?: ApollonEditor;
-
-    // Icons
-    faGripLines = faGripLines;
-    faGripLinesVertical = faGripLinesVertical;
 
     protected setupInteract(): void {
         if (this.resizeOptions) {

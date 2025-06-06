@@ -93,14 +93,13 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     courseId = input<number>();
     isAuxiliaryRepositoryInputValid = model.required<boolean>();
 
-    exerciseTitleChannelComponent = viewChild<ExerciseTitleChannelNameComponent>('titleChannelNameComponent');
+    exerciseTitleChannelComponent = viewChild.required(ExerciseTitleChannelNameComponent);
     @ViewChildren(TableEditableFieldComponent) tableEditableFields?: QueryList<TableEditableFieldComponent>;
 
     shortNameField = viewChild<NgModel>('shortName');
     @ViewChild('checkoutSolutionRepository') checkoutSolutionRepositoryField?: NgModel;
     @ViewChild('recreateBuildPlans') recreateBuildPlansField?: NgModel;
     @ViewChild('updateTemplateFiles') updateTemplateFilesField?: NgModel;
-    @ViewChild('titleChannelNameComponent') titleComponent?: ExerciseTitleChannelNameComponent;
     @ViewChild(ProgrammingExerciseEditCheckoutDirectoriesComponent) programmingExerciseEditCheckoutDirectories?: ProgrammingExerciseEditCheckoutDirectoriesComponent;
 
     private readonly exerciseService = inject(ExerciseService);
@@ -141,6 +140,16 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
         effect(() => {
             this.fetchAndInitializeTakenTitlesAndShortNames();
         });
+
+        effect(() => {
+            this.updateFormStatus();
+        });
+    }
+
+    private updateFormStatus() {
+        this.exerciseTitleChannelComponent()?.titleChannelNameComponent()?.isValid(); // triggers effect on change
+
+        this.calculateFormValid();
     }
 
     ngOnInit() {
@@ -166,7 +175,6 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     registerInputFields() {
         this.inputFieldSubscriptions.forEach((subscription) => subscription?.unsubscribe());
 
-        this.inputFieldSubscriptions.push(this.exerciseTitleChannelComponent()?.titleChannelNameComponent?.formValidChanges.subscribe(() => this.calculateFormValid()));
         this.inputFieldSubscriptions.push(this.shortNameField()?.valueChanges?.subscribe(() => this.calculateFormValid()));
         this.inputFieldSubscriptions.push(this.checkoutSolutionRepositoryField?.valueChanges?.subscribe(() => this.calculateFormValid()));
         this.inputFieldSubscriptions.push(this.recreateBuildPlansField?.valueChanges?.subscribe(() => this.calculateFormValid()));
@@ -176,11 +184,13 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
             fields.toArray().forEach((field) => this.inputFieldSubscriptions.push(field.editingInput.valueChanges?.subscribe(() => this.calculateFormValid())));
         });
 
-        this.titleComponent?.titleChannelNameComponent?.field_title?.valueChanges?.subscribe((newTitle: string) => {
-            if (this.isSimpleMode()) {
-                this.updateShortName(newTitle);
-            }
-        });
+        this.exerciseTitleChannelComponent()
+            .titleChannelNameComponent()
+            .field_title?.valueChanges?.subscribe((newTitle: string) => {
+                if (this.isSimpleMode()) {
+                    this.updateShortName(newTitle);
+                }
+            });
 
         this.shortNameField()?.valueChanges?.subscribe(() => {
             this.updateIsShortNameValid();
@@ -198,7 +208,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
         const areAuxiliaryRepositoriesValid = this.areAuxiliaryRepositoriesValid();
         const areCheckoutPathsValid = this.areCheckoutPathsValid();
         this.formValid = Boolean(
-            this.exerciseTitleChannelComponent()?.titleChannelNameComponent?.isFormValidSignal() &&
+            this.exerciseTitleChannelComponent().titleChannelNameComponent().isValid() &&
                 this.getIsShortNameFieldValid() &&
                 isCheckoutSolutionRepositoryValid &&
                 isRecreateBuildPlansValid &&
@@ -221,7 +231,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
 
         const isAuxRepoEditingPossibleInCurrentEditMode = !this.isSimpleMode() || this.isEditFieldDisplayedRecord().addAuxiliaryRepository;
         if (isAuxRepoEditingPossibleInCurrentEditMode) {
-            // if editing is not possible the field will not be displayed and validity checks will evaluate to true,
+            // if editing is not possible, the field will not be displayed and validity checks will evaluate to true,
             // even if the actual current setting is invalid
             this.isAuxiliaryRepositoryInputValid.set(areAuxiliaryRepositoriesValid);
         }
@@ -289,7 +299,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     }
 
     private registerInputFieldsWhenChildComponentsAreReady() {
-        this.shortNameField(); // triggers effect
+        this.shortNameField(); // triggers effect on change
         this.registerInputFields();
     }
 
