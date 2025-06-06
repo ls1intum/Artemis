@@ -124,14 +124,13 @@ describe('TitleChannelNameComponent', () => {
         expect(component.channelName()).toBe('-p-');
     }));
 
-    it('remove trailing hyphens from channel name on title edit', fakeAsync(() => {
+    it('remove trailing hyphens from channel name on title edit', () => {
         fixture.componentRef.setInput('channelNamePrefix', CHANNEL_NAME_PREFIX);
 
         component.updateTitle('--t--(%&');
-        tick();
 
         expect(component.channelName()).toBe('-p-t');
-    }));
+    });
 
     it("don't remove trailing hyphens from channel name on title edit if title empty", () => {
         fixture.componentRef.setInput('channelNamePrefix', CHANNEL_NAME_PREFIX);
