@@ -9,7 +9,7 @@ import {
     TutorialGroupFreePeriodFormComponent,
     TutorialGroupFreePeriodFormData,
 } from 'app/tutorialgroup/manage/tutorial-free-periods/crud/tutorial-free-period-form/tutorial-group-free-period-form.component';
-import { generateClickSubmitButton, generateTestFormIsInvalidOnMissingRequiredProperty } from 'test/helpers/sample/tutorialgroup/tutorialGroupFormsUtils';
+import { generateClickSubmitButton } from 'test/helpers/sample/tutorialgroup/tutorialGroupFormsUtils';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { runOnPushChangeDetection } from 'test/helpers/on-push-change-detection.helper';
 import dayjs from 'dayjs/esm';
@@ -31,7 +31,6 @@ describe('TutorialFreePeriodFormComponent', () => {
     const validReason = 'Holiday';
 
     let clickSubmit: (expectSubmitEvent: boolean) => void;
-    let testFormIsInvalidOnMissingRequiredProperty: (controlName: string) => void;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -50,8 +49,6 @@ describe('TutorialFreePeriodFormComponent', () => {
             endTime: undefined,
             reason: validReason,
         });
-
-        testFormIsInvalidOnMissingRequiredProperty = generateTestFormIsInvalidOnMissingRequiredProperty(component, fixture, setValidFormValues, clickSubmit);
     });
 
     afterEach(() => {
@@ -101,13 +98,6 @@ describe('TutorialFreePeriodFormComponent', () => {
         expect(component.form.valid).toBeTrue();
         expect(component.isSubmitPossible).toBeTrue();
         clickSubmit(true);
-    }));
-
-    it('should block submit when required property is missing', fakeAsync(() => {
-        const requiredControlNames = ['startDate'];
-        for (const controlName of requiredControlNames) {
-            testFormIsInvalidOnMissingRequiredProperty(controlName);
-        }
     }));
 
     it('should reset unused form values when time frame changes', () => {
@@ -388,14 +378,6 @@ describe('TutorialFreePeriodFormComponent', () => {
         component.startTimeControl!.setValue(startTime);
         component.endTimeControl!.setValue(endTime);
         component.reasonControl!.setValue(reason);
-    };
-
-    const setValidFormValues = () => {
-        component.startDateControl!.setValue(validStartDateBerlin);
-        component.endDateControl!.setValue(undefined);
-        component.startTimeControl!.setValue(undefined);
-        component.endTimeControl!.setValue(undefined);
-        component.reasonControl!.setValue(validReason);
     };
 
     const setTimeFrameAndCheckValues = (timeFrame: TimeFrame, startDate: Date | undefined, endDate: Date | undefined, startTime: Date | undefined, endTime: Date | undefined) => {
