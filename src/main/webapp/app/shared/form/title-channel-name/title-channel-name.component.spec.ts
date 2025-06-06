@@ -100,6 +100,7 @@ describe('TitleChannelNameComponent', () => {
         fixture.componentRef.setInput('channelNamePrefix', CHANNEL_NAME_PREFIX);
 
         component.ngOnInit();
+        tick();
 
         expect(component.channelName()).toBe('-p-t');
     }));
