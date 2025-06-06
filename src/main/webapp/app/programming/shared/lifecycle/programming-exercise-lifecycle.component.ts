@@ -89,7 +89,6 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
             .pipe(
                 tap((segments) => {
                     isImportFromExistingExercise = segments.some((segment) => segment.path === 'import');
-                    // TODO (seems this is merged): currently not supported for imports from files, issue https://github.com/ls1intum/Artemis/issues/8562 should be fixed first
                     isImportFromFile = segments.some((segment) => segment.path === 'import-from-file');
                 }),
             )
