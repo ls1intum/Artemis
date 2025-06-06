@@ -105,7 +105,7 @@ describe('Plagiarism Header Component', () => {
     }));
 
     it('should emit when expanding left split view pane', () => {
-        // we set the splitControlSubject in beforeEach, so we can spy on it here
+        // we set the splitControlSubject in beforeEach, hence we can assume it is defined
         jest.spyOn(comp.splitControlSubject()!, 'next');
 
         const nativeElement = fixture.nativeElement;
@@ -118,7 +118,8 @@ describe('Plagiarism Header Component', () => {
     });
 
     it('should emit when expanding right split view pane', () => {
-        jest.spyOn(comp.splitControlSubject(), 'next');
+        // we set the splitControlSubject in beforeEach, hence we can assume it is defined
+        jest.spyOn(comp.splitControlSubject()!, 'next');
 
         const nativeElement = fixture.nativeElement;
         const splitRightButton = nativeElement.querySelector("[data-qa='split-view-right']");
@@ -130,7 +131,8 @@ describe('Plagiarism Header Component', () => {
     });
 
     it('should emit when resetting the split panes', () => {
-        jest.spyOn(comp.splitControlSubject(), 'next');
+        // we set the splitControlSubject in beforeEach, hence we can assume it is defined
+        jest.spyOn(comp.splitControlSubject()!, 'next');
 
         const nativeElement = fixture.nativeElement;
         const splitHalfButton = nativeElement.querySelector("[data-qa='split-view-even']");
