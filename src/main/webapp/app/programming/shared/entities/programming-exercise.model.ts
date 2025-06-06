@@ -120,5 +120,6 @@ export function copyBuildConfigFromExerciseJson(exerciseJson: ProgrammingExercis
     buildConfig.windfile = exerciseJson.windfile ?? undefined;
     buildConfig.buildScript = exerciseJson.buildScript ?? '';
     buildConfig.dockerFlags = exerciseJson.dockerFlags ?? '';
+    // TODO: Adapt this properly.
     return buildConfig;
 }
