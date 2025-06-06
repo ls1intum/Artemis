@@ -107,4 +107,16 @@ public class DistributedInstanceMessageSendService implements InstanceMessageSen
     private void sendMessageDelayed(MessageTopic topic, Long... payload) {
         exec.schedule(() -> hazelcastInstance.getTopic(topic.toString()).publish(payload), 1, TimeUnit.SECONDS);
     }
+
+    @Override
+    public void sendSlideUnhideSchedule(Long slideId) {
+        log.info("Sending schedule for slide unhiding {} to broker.", slideId);
+        sendMessageDelayed(MessageTopic.SLIDE_UNHIDE_SCHEDULE, slideId);
+    }
+
+    @Override
+    public void sendSlideUnhideScheduleCancel(Long slideId) {
+        log.info("Sending schedule cancel for slide unhiding {} to broker.", slideId);
+        sendMessageDelayed(MessageTopic.SLIDE_UNHIDE_SCHEDULE_CANCEL, slideId);
+    }
 }

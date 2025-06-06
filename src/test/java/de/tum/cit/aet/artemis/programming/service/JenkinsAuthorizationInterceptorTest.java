@@ -26,9 +26,9 @@ import org.springframework.web.util.UriComponentsBuilder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationJenkinsLocalVcTest;
+import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationJenkinsLocalVCTest;
 
-class JenkinsAuthorizationInterceptorTest extends AbstractProgrammingIntegrationJenkinsLocalVcTest {
+class JenkinsAuthorizationInterceptorTest extends AbstractProgrammingIntegrationJenkinsLocalVCTest {
 
     private static final String TEST_PREFIX = "jenkinsauthintercept";
 

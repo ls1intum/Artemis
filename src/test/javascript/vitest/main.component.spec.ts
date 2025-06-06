@@ -13,7 +13,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { PageRibbonComponent } from 'app/core/layouts/profiles/page-ribbon.component';
-import { NotificationPopupComponent } from 'app/core/notification/notification-popup/notification-popup.component';
 
 // Mock the initialize method
 class MockThemeService {
@@ -46,7 +45,7 @@ describe('JhiMainComponent', () => {
 
     beforeEach(async () => {
         const { fixture, container: renderedContainer } = await render(AppComponent, {
-            declarations: [AlertOverlayComponent, PageRibbonComponent, NotificationPopupComponent],
+            declarations: [AlertOverlayComponent, PageRibbonComponent],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },

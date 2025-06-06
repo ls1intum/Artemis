@@ -29,7 +29,7 @@ import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedbac
 import { AlertService } from 'app/shared/service/alert.service';
 import { DebugElement } from '@angular/core';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
-import { ConfirmAutofocusButtonComponent } from 'app/shared/components/confirm-autofocus-button/confirm-autofocus-button.component';
+import { ConfirmAutofocusButtonComponent } from 'app/shared/components/buttons/confirm-autofocus-button/confirm-autofocus-button.component';
 import { TranslateDirective } from '../../../shared/language/translate.directive';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';

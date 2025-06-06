@@ -6,7 +6,7 @@ import { Subscription } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
 import { NgbCollapse, NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { User } from 'app/core/user/user.model';
-import { MODULE_FEATURE_ATLAS, PROFILE_IRIS, PROFILE_LOCALCI, PROFILE_LTI, VERSION } from 'app/app.constants';
+import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, PROFILE_IRIS, PROFILE_LOCALCI, PROFILE_LTI, VERSION } from 'app/app.constants';
 import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { LoginService } from 'app/core/login/login.service';
@@ -60,7 +60,6 @@ import { ActiveMenuDirective } from './active-menu.directive';
 import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-key.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
-import { NotificationSidebarComponent } from 'app/core/notification/notification-sidebar/notification-sidebar.component';
 import { JhiConnectionWarningComponent } from 'app/shared/connection-warning/connection-warning.component';
 import { LoadingNotificationComponent } from 'app/core/loading-notification/loading-notification.component';
 import { SystemNotificationComponent } from 'app/core/notification/system-notification/system-notification.component';
@@ -72,7 +71,6 @@ import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.ser
     styleUrls: ['navbar.scss'],
     imports: [
         NgClass,
-        NotificationSidebarComponent,
         ThemeSwitchComponent,
         NgbDropdown,
         RouterLinkActive,
@@ -96,6 +94,33 @@ import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.ser
     ],
 })
 export class NavbarComponent implements OnInit, OnDestroy {
+    protected readonly faBars = faBars;
+    protected readonly faThLarge = faThLarge;
+    protected readonly faThList = faThList;
+    protected readonly faUser = faUser;
+    protected readonly faBell = faBell;
+    protected readonly faUniversity = faUniversity;
+    protected readonly faEye = faEye;
+    protected readonly faCog = faCog;
+    protected readonly faWrench = faWrench;
+    protected readonly faLock = faLock;
+    protected readonly faStamp = faStamp;
+    protected readonly faFlag = faFlag;
+    protected readonly faBook = faBook;
+    protected readonly faTasks = faTasks;
+    protected readonly faList = faList;
+    protected readonly faRobot = faRobot;
+    protected readonly faHeart = faHeart;
+    protected readonly faTachometerAlt = faTachometerAlt;
+    protected readonly faToggleOn = faToggleOn;
+    protected readonly faBookOpen = faBookOpen;
+    protected readonly faUserPlus = faUserPlus;
+    protected readonly faSignOutAlt = faSignOutAlt;
+    protected readonly faGears = faGears;
+    protected readonly faPuzzlePiece = faPuzzlePiece;
+    protected readonly faChevronRight = faChevronRight;
+    protected readonly faBroom = faBroom;
+
     private accountService = inject(AccountService);
     private loginService = inject(LoginService);
     private translateService = inject(TranslateService);
@@ -133,6 +158,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     isExamActive = false;
     examActiveCheckFuture?: ReturnType<typeof setTimeout>;
     atlasEnabled = false;
+    examEnabled = false;
     irisEnabled: boolean;
     localCIActive = false;
     ltiEnabled: boolean;
@@ -144,34 +170,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
     exerciseTitle?: string;
     lectureTitle?: string;
     examTitle?: string;
-
-    // Icons
-    faBars = faBars;
-    faThLarge = faThLarge;
-    faThList = faThList;
-    faUser = faUser;
-    faBell = faBell;
-    faUniversity = faUniversity;
-    faEye = faEye;
-    faCog = faCog;
-    faWrench = faWrench;
-    faLock = faLock;
-    faStamp = faStamp;
-    faFlag = faFlag;
-    faBook = faBook;
-    faTasks = faTasks;
-    faList = faList;
-    faRobot = faRobot;
-    faHeart = faHeart;
-    faTachometerAlt = faTachometerAlt;
-    faToggleOn = faToggleOn;
-    faBookOpen = faBookOpen;
-    faUserPlus = faUserPlus;
-    faSignOutAlt = faSignOutAlt;
-    faGears = faGears;
-    faPuzzlePiece = faPuzzlePiece;
-    faChevronRight = faChevronRight;
-    faBroom = faBroom;
 
     private standardizedCompetencySubscription: Subscription;
     private authStateSubscription: Subscription;
@@ -231,6 +229,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this.gitTimestamp = new Date(profileInfo.git.commit.time).toUTCString();
         this.gitUsername = profileInfo.git.commit.user.name;
         this.atlasEnabled = profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_ATLAS);
+        this.examEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_EXAM);
         this.irisEnabled = profileInfo.activeProfiles.includes(PROFILE_IRIS);
         this.localCIActive = profileInfo?.activeProfiles.includes(PROFILE_LOCALCI);
         this.ltiEnabled = profileInfo?.activeProfiles.includes(PROFILE_LTI);
@@ -320,7 +319,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
         test_run_exercise_assessment_dashboard: 'artemisApp.exerciseAssessmentDashboard.home.title',
         lti_configuration: 'artemisApp.lti.home.title',
         teams: 'artemisApp.team.home.title',
-        exercise_hints: 'artemisApp.exerciseHint.home.title',
         ratings: 'artemisApp.ratingList.pageTitle',
         competency_management: 'artemisApp.competency.manage.title',
         prerequisite_management: 'artemisApp.prerequisite.manage.title',

@@ -2,13 +2,12 @@ import { Component, OnInit, inject } from '@angular/core';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ActivatedRoute } from '@angular/router';
 import { ExerciseFilter } from 'app/exercise/shared/entities/exercise/exercise-filter.model';
-import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { CourseManagementExercisesSearchComponent } from '../exercises-search/course-management-exercises-search.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseExerciseCardComponent } from '../course-exercise-card/course-exercise-card.component';
-import { ProgrammingExerciseCreateButtonsComponent } from 'app/programming/manage/create-buttons/programming-exercise-create-buttons.component';
 import { ProgrammingExerciseComponent } from 'app/programming/manage/exercise/programming-exercise.component';
 import { QuizExerciseCreateButtonsComponent } from 'app/quiz/manage/create-buttons/quiz-exercise-create-buttons.component';
 import { QuizExerciseComponent } from 'app/quiz/manage/exercise/quiz-exercise.component';
@@ -19,6 +18,7 @@ import { FileUploadExerciseComponent } from 'app/fileupload/manage/file-upload-e
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_TEXT } from 'app/app.constants';
+import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 
 @Component({
     selector: 'jhi-course-management-exercises',
@@ -28,7 +28,6 @@ import { MODULE_FEATURE_TEXT } from 'app/app.constants';
         CourseManagementExercisesSearchComponent,
         TranslateDirective,
         CourseExerciseCardComponent,
-        ProgrammingExerciseCreateButtonsComponent,
         ProgrammingExerciseComponent,
         QuizExerciseCreateButtonsComponent,
         QuizExerciseComponent,
@@ -40,8 +39,9 @@ import { MODULE_FEATURE_TEXT } from 'app/app.constants';
     ],
 })
 export class CourseManagementExercisesComponent implements OnInit {
-    readonly ExerciseType = ExerciseType;
-    readonly documentationType: DocumentationType = 'Exercise';
+    protected readonly ExerciseType = ExerciseType;
+    protected readonly documentationType: DocumentationType = 'Exercise';
+    protected readonly FeatureToggle = FeatureToggle;
 
     course: Course;
     showSearch = false;

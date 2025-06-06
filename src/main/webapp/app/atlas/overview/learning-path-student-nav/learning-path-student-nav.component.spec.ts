@@ -5,7 +5,8 @@ import { LearningObjectType, LearningPathNavigationDTO } from 'app/atlas/shared/
 import { LearningPathNavOverviewComponent } from 'app/atlas/overview/learning-path-nav-overview/learning-path-nav-overview.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { LearningPathNavigationService } from 'app/atlas/overview/learning-path-navigation.service';
-import { MockComponent } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
+import { ScienceService } from 'app/shared/science/science.service';
 
 describe('LearningPathStudentNavComponent', () => {
     let component: LearningPathNavComponent;
@@ -65,6 +66,7 @@ describe('LearningPathStudentNavComponent', () => {
                         completeLearningPath: jest.fn(),
                     },
                 },
+                MockProvider(ScienceService),
             ],
         })
 

@@ -9,7 +9,7 @@
     <div>
         <div class="px-3 scrollable-content" [ngClass]="{ 'content-height-dev': !isProduction || isTestServer }">
             <!-- HEADER INFORMATION START -->
-            <div class="course-info-bar">
+            <div class="mt-2 me-1 course-info-bar">
                 <div class="row">
                     <div class="col general-info">
                         <h3>
@@ -74,16 +74,16 @@
                                         <jhi-exercise-unit [exerciseUnit]="lectureUnit" [course]="lecture!.course!" />
                                     }
                                     @case (LectureUnitType.ATTACHMENT) {
-                                        <jhi-attachment-unit [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
+                                        <jhi-attachment-unit [courseId]="courseId!" [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
                                     }
                                     @case (LectureUnitType.VIDEO) {
-                                        <jhi-video-unit [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
+                                        <jhi-video-unit [courseId]="courseId!" [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
                                     }
                                     @case (LectureUnitType.TEXT) {
-                                        <jhi-text-unit [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
+                                        <jhi-text-unit [courseId]="courseId!" [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
                                     }
                                     @case (LectureUnitType.ONLINE) {
-                                        <jhi-online-unit [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
+                                        <jhi-online-unit [courseId]="courseId!" [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
                                     }
                                 }
                             </div>

@@ -7,7 +7,7 @@ import { ActivatedRoute } from '@angular/router';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
-import { ButtonSize, ButtonType } from 'app/shared/components/button/button.component';
+import { ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { AlertService } from 'app/shared/service/alert.service';
 import { faCheck, faInfoCircle, faPlus, faSort, faTimes, faUpload, faXmark } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';

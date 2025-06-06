@@ -1,8 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockTranslateService } from '../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { By } from '@angular/platform-browser';
 import { AppComponent } from './app.component';
-import { MockSyncStorage } from '../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
@@ -13,25 +13,23 @@ import { RouterModule } from '@angular/router';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MockProfileService } from '../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
 import { PageRibbonComponent } from 'app/core/layouts/profiles/page-ribbon.component';
-import { NotificationPopupComponent } from 'app/core/notification/notification-popup/notification-popup.component';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
-// Mock the initialize method
 class MockThemeService {
     initialize() {
         return of();
     }
 }
 
-describe('JhiMainComponent', () => {
+describe('AppComponent', () => {
     let fixture: ComponentFixture<AppComponent>;
     let comp: AppComponent;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [RouterModule.forRoot([])],
-            declarations: [AppComponent, MockComponent(AlertOverlayComponent), MockComponent(PageRibbonComponent), MockComponent(NotificationPopupComponent)],
+            declarations: [AppComponent, MockComponent(AlertOverlayComponent), MockComponent(PageRibbonComponent)],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },

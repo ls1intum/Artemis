@@ -146,7 +146,6 @@ export class ProfileInfo {
     public externalPasswordResetLinkMap: { [key: string]: string };
     public features: ActiveFeatureToggles;
     public git: Git;
-    public imprint: string;
     public java: Java;
     public needsToAcceptTerms?: boolean;
     public operatorAdminName: string;
@@ -154,7 +153,7 @@ export class ProfileInfo {
     public programmingLanguageFeatures: ProgrammingLanguageFeature[] = [];
     public registrationEnabled?: boolean;
     public repositoryAuthenticationMechanisms: string[];
-    public saml2Config?: Saml2Config;
+    public saml2?: Saml2Config;
     public sentry: SentryConfig;
     public sshCloneURLTemplate: string;
     public studentExamStoreSessionData: boolean;

@@ -38,7 +38,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 
-class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrationLocalVcSamlTest {
+class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrationLocalVCSamlTest {
 
     private static final String TEST_PREFIX = "programmingexercisescheduleservice";
 

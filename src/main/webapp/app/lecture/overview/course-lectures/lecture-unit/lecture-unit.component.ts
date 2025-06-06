@@ -1,3 +1,4 @@
+import { inject } from '@angular/core';
 import { Component, computed, input, output, signal } from '@angular/core';
 import { IconDefinition, faDownload, faExternalLinkAlt, faSquare, faSquareCheck } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -9,19 +10,22 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { CompetencyContributionComponent } from 'app/atlas/shared/competency-contribution/competency-contribution.component';
 
 @Component({
     selector: 'jhi-lecture-unit-card',
-    imports: [FontAwesomeModule, NgbCollapseModule, TranslateDirective, ArtemisTranslatePipe, ArtemisDatePipe, CommonModule, NgbTooltipModule],
+    imports: [FontAwesomeModule, NgbCollapseModule, TranslateDirective, ArtemisTranslatePipe, ArtemisDatePipe, CommonModule, NgbTooltipModule, CompetencyContributionComponent],
     templateUrl: './lecture-unit.component.html',
     styleUrl: './lecture-unit.component.scss',
 })
 export class LectureUnitComponent {
-    constructor(private router: Router) {}
+    private router = inject(Router);
 
     protected faDownload = faDownload;
     protected faSquareCheck = faSquareCheck;
     protected faSquare = faSquare;
+
+    courseId = input.required<number>();
 
     lectureUnit = input.required<LectureUnit>();
     icon = input.required<IconDefinition>();

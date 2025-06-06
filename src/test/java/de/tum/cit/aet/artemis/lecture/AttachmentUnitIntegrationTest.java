@@ -11,6 +11,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -381,7 +382,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationIndependent
         assertThat(persistedAttachmentUnit.getId()).isNotNull();
         assertThat(slideRepository.findAllByAttachmentUnitId(persistedAttachmentUnit.getId())).hasSize(0);
         request.delete("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + persistedAttachmentUnit.getId(), HttpStatus.OK);
-        request.get("/api/lecture/lectures/" + lecture1.getId() + "/attachment-units/" + persistedAttachmentUnit.getId(), HttpStatus.NOT_FOUND, AttachmentUnit.class);
+        request.get("/api/lecture/lectures/" + lecture1.getId() + "/attachment-units/" + persistedAttachmentUnit.getId(), HttpStatus.FORBIDDEN, AttachmentUnit.class);
         verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(persistedAttachmentUnit), eq(Optional.empty()));
     }
 
@@ -439,5 +440,106 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationIndependent
         // Verify the file can be accessed
         String requestUrl = String.format("%s%s", ARTEMIS_FILE_PATH_PREFIX, finalAttachmentUnit.getAttachment().getStudentVersion());
         request.getFile(requestUrl, HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateAttachmentUnit_withInvalidHiddenSlideDates_shouldReturnBadRequest() throws Exception {
+        // First create an attachment unit
+        attachmentUnit.setCompetencyLinks(Set.of(new CompetencyLectureUnitLink(competency, attachmentUnit, 1)));
+        var createResult = request.performMvcRequest(buildCreateAttachmentUnit(attachmentUnit, attachment)).andExpect(status().isCreated()).andReturn();
+        var persistedAttachmentUnit = mapper.readValue(createResult.getResponse().getContentAsString(), AttachmentUnit.class);
+        var persistedAttachment = persistedAttachmentUnit.getAttachment();
+
+        // Wait for async operation to complete
+        await().untilAsserted(() -> assertThat(slideRepository.findAllByAttachmentUnitId(persistedAttachmentUnit.getId())).hasSize(SLIDE_COUNT));
+
+        // Create a hiddenPages JSON with past dates
+        // Format: ZonedDateTime string representation
+        String pastDate = ZonedDateTime.now().minusDays(1).toString();
+        String hiddenPagesJson = "[{\"page\": 1, \"date\": \"" + pastDate + "\"}]";
+
+        // Create multipart request parts
+        var attachmentUnitPart = new MockMultipartFile("attachmentUnit", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(persistedAttachmentUnit).getBytes());
+        var attachmentPart = new MockMultipartFile("attachment", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(persistedAttachment).getBytes());
+        var hiddenPagesPart = new MockMultipartFile("hiddenPages", "", MediaType.APPLICATION_JSON_VALUE, hiddenPagesJson.getBytes());
+
+        // Build request with multipart
+        var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-units/" + persistedAttachmentUnit.getId())
+                .file(attachmentUnitPart).file(attachmentPart).file(hiddenPagesPart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+
+        // Should get a bad request due to invalid dates
+        request.performMvcRequest(builder).andExpect(status().isBadRequest());
+
+        // Now create a valid future date
+        String futureDate = ZonedDateTime.now().plusDays(1).toString();
+        String validHiddenPagesJson = "[{\"page\": 1, \"date\": \"" + futureDate + "\"}]";
+
+        // Create new multipart request parts with valid dates
+        var validHiddenPagesPart = new MockMultipartFile("hiddenPages", "", MediaType.APPLICATION_JSON_VALUE, validHiddenPagesJson.getBytes());
+
+        // Build valid request
+        var validBuilder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-units/" + persistedAttachmentUnit.getId())
+                .file(attachmentUnitPart).file(attachmentPart).file(validHiddenPagesPart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+
+        // Should succeed with valid dates
+        request.performMvcRequest(validBuilder).andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateAttachmentUnit_withForeverHiddenSlideDates_shouldSucceed() throws Exception {
+        // First create an attachment unit
+        attachmentUnit.setCompetencyLinks(Set.of(new CompetencyLectureUnitLink(competency, attachmentUnit, 1)));
+        var createResult = request.performMvcRequest(buildCreateAttachmentUnit(attachmentUnit, attachment)).andExpect(status().isCreated()).andReturn();
+        var persistedAttachmentUnit = mapper.readValue(createResult.getResponse().getContentAsString(), AttachmentUnit.class);
+        var persistedAttachment = persistedAttachmentUnit.getAttachment();
+
+        // Wait for async operation to complete
+        await().untilAsserted(() -> assertThat(slideRepository.findAllByAttachmentUnitId(persistedAttachmentUnit.getId())).hasSize(SLIDE_COUNT));
+
+        // Create a hiddenPages JSON with "forever" date (year >= 9000)
+        String foreverDate = ZonedDateTime.of(9999, 12, 31, 23, 59, 59, 0, ZonedDateTime.now().getZone()).toString();
+        String hiddenPagesJson = "[{\"page\": 1, \"date\": \"" + foreverDate + "\"}]";
+
+        // Create multipart request parts
+        var attachmentUnitPart = new MockMultipartFile("attachmentUnit", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(persistedAttachmentUnit).getBytes());
+        var attachmentPart = new MockMultipartFile("attachment", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(persistedAttachment).getBytes());
+        var hiddenPagesPart = new MockMultipartFile("hiddenPages", "", MediaType.APPLICATION_JSON_VALUE, hiddenPagesJson.getBytes());
+
+        // Build request with multipart
+        var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-units/" + persistedAttachmentUnit.getId())
+                .file(attachmentUnitPart).file(attachmentPart).file(hiddenPagesPart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+
+        // Should succeed with "forever" dates
+        request.performMvcRequest(builder).andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateAttachmentUnit_withInvalidHiddenSlidesDatesFormat_shouldReturnBadRequest() throws Exception {
+        // First create an attachment unit
+        attachmentUnit.setCompetencyLinks(Set.of(new CompetencyLectureUnitLink(competency, attachmentUnit, 1)));
+        var createResult = request.performMvcRequest(buildCreateAttachmentUnit(attachmentUnit, attachment)).andExpect(status().isCreated()).andReturn();
+        var persistedAttachmentUnit = mapper.readValue(createResult.getResponse().getContentAsString(), AttachmentUnit.class);
+        var persistedAttachment = persistedAttachmentUnit.getAttachment();
+
+        // Wait for async operation to complete
+        await().untilAsserted(() -> assertThat(slideRepository.findAllByAttachmentUnitId(persistedAttachmentUnit.getId())).hasSize(SLIDE_COUNT));
+
+        // Create an invalid format for hiddenPages JSON
+        String invalidJson = "[{\"page\": 1, \"date\": \"invalid-date-format\"}]";
+
+        // Create multipart request parts
+        var attachmentUnitPart = new MockMultipartFile("attachmentUnit", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(persistedAttachmentUnit).getBytes());
+        var attachmentPart = new MockMultipartFile("attachment", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(persistedAttachment).getBytes());
+        var hiddenPagesPart = new MockMultipartFile("hiddenPages", "", MediaType.APPLICATION_JSON_VALUE, invalidJson.getBytes());
+
+        // Build request with multipart
+        var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-units/" + persistedAttachmentUnit.getId())
+                .file(attachmentUnitPart).file(attachmentPart).file(hiddenPagesPart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+
+        // Should get a bad request due to invalid format
+        request.performMvcRequest(builder).andExpect(status().isBadRequest());
     }
 }

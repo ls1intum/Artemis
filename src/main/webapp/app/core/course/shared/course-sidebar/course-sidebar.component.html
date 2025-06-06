@@ -14,7 +14,7 @@
                 }
 
                 <div ngbDropdownMenu class="dropdown-menu py-1 ms-n2">
-                    @for (courseItem of courses() ?? []; track courseItem) {
+                    @for (courseItem of courses() ?? []; track courseItem.id) {
                         <button ngbDropdownItem (click)="switchCourse.emit(courseItem)" class="d-flex align-items-center py-1 px-2">
                             <ng-template *ngTemplateOutlet="courseImage; context: { $implicit: courseItem.courseIconPath, courseTitle: courseItem.title }" />
                             <div class="h6 fw-normal mb-0 course-title text-wrap">{{ courseItem?.title }}</div>
@@ -116,11 +116,13 @@
                                 }
                             </div>
                         </a>
-                        @if (isLast && !isNavbarCollapsed()) {
+                        @if (isLast && !isNavbarCollapsed() && canExpand()) {
                             <div
                                 class="double-arrow px-2"
                                 [ngClass]="{ 'menu-closed': isNavbarCollapsed() }"
                                 [ngbTooltip]="'Collapse Menu (Ctrl + M)'"
+                                tooltipClass="double-arrow-tooltip"
+                                [container]="'body'"
                                 (click)="toggleCollapseState.emit()"
                             >
                                 <div class="double-arrow-icon" [attr.aria-expanded]="!isNavbarCollapsed()" aria-controls="collapseBasic">
@@ -133,10 +135,11 @@
                 </li>
             }
 
-            @if (isNavbarCollapsed() || !sidebarItemsBottom().length) {
+            @if ((isNavbarCollapsed() || !sidebarItemsBottom().length) && canExpand()) {
                 <div
                     class="double-arrow mb-2"
                     [ngClass]="{ 'menu-closed': isNavbarCollapsed() }"
+                    [tooltipClass]="isNavbarCollapsed() ? 'double-arrow-tooltip-collapsed' : 'double-arrow-tooltip-no-bottom-items'"
                     [ngbTooltip]="(isNavbarCollapsed() ? 'Expand' : 'Collapse') + ' Menu (Ctrl + M)'"
                     (click)="toggleCollapseState.emit()"
                 >

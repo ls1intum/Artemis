@@ -190,8 +190,9 @@ public class ParticipationService {
             }
         }
 
-        if (exercise instanceof ProgrammingExercise programmingExercise) {
-            // fetch again to get additional objects
+        if (exercise instanceof ProgrammingExercise) {
+            // we need to fetch the programming exercise again to get the template participation because we need the repository uri for the copy operation
+            var programmingExercise = programmingExerciseRepository.findByIdWithTemplateParticipationElseThrow(exercise.getId());
             participation = startProgrammingExercise(programmingExercise, (ProgrammingExerciseStudentParticipation) participation);
         }
         // for all other exercises: QuizExercise, ModelingExercise, TextExercise, FileUploadExercise
@@ -691,24 +692,6 @@ public class ParticipationService {
             throw new EntityNotFoundException("No exercise participation found with id " + participationId);
         }
         return studentParticipation;
-    }
-
-    /**
-     * Get all programming exercise participations belonging to exercise and student with eager results and submissions.
-     *
-     * @param exercise  the exercise
-     * @param studentId the id of student
-     * @return the list of programming exercise participations belonging to exercise and student
-     */
-    public List<StudentParticipation> findByExerciseAndStudentIdWithEagerResultsAndSubmissions(Exercise exercise, Long studentId) {
-        // TODO: do we really need to fetch all this information here?
-        if (exercise.isTeamMode()) {
-            Optional<Team> optionalTeam = teamRepository.findOneByExerciseIdAndUserId(exercise.getId(), studentId);
-            return optionalTeam
-                    .map(team -> studentParticipationRepository.findByExerciseIdAndTeamIdWithEagerResultsAndLegalSubmissionsAndTeamStudents(exercise.getId(), team.getId()))
-                    .orElse(List.of());
-        }
-        return studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerResultsAndSubmissions(exercise.getId(), studentId);
     }
 
     /**

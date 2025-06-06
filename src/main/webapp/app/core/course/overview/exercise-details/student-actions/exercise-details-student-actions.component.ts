@@ -16,12 +16,12 @@ import dayjs from 'dayjs/esm';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { MODULE_FEATURE_TEXT, PROFILE_ATHENA } from 'app/app.constants';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { ButtonType } from 'app/shared/components/button/button.component';
+import { ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { NgTemplateOutlet } from '@angular/common';
-import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button/exercise-action-button.component';
+import { ExerciseActionButtonComponent } from 'app/shared/components/buttons/exercise-action-button/exercise-action-button.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
-import { CodeButtonComponent } from 'app/shared/components/code-button/code-button.component';
+import { CodeButtonComponent } from 'app/shared/components/buttons/code-button/code-button.component';
 import { RequestFeedbackButtonComponent } from '../request-feedback-button/request-feedback-button.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
@@ -29,6 +29,7 @@ import { StartPracticeModeButtonComponent } from 'app/core/course/overview/exerc
 import { OpenCodeEditorButtonComponent } from 'app/core/course/overview/exercise-details/open-code-editor-button/open-code-editor-button.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
+import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
     imports: [
@@ -49,15 +50,21 @@ import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
     styleUrls: ['../../course-overview/course-overview.scss'],
 })
 export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges {
+    protected readonly faFolderOpen = faFolderOpen;
+    protected readonly faUsers = faUsers;
+    protected readonly faEye = faEye;
+    protected readonly faPlayCircle = faPlayCircle;
+    protected readonly faRedo = faRedo;
+
+    protected readonly FeatureToggle = FeatureToggle;
+    protected readonly ExerciseType = ExerciseType;
+    protected readonly InitializationState = InitializationState;
+    protected readonly ButtonType = ButtonType;
+
     private alertService = inject(AlertService);
     private courseExerciseService = inject(CourseExerciseService);
     private participationService = inject(ParticipationService);
     private profileService = inject(ProfileService);
-
-    readonly FeatureToggle = FeatureToggle;
-    readonly ExerciseType = ExerciseType;
-    readonly InitializationState = InitializationState;
-    protected readonly ButtonType = ButtonType;
 
     @Input() @HostBinding('class.col') equalColumns = true;
     @Input() @HostBinding('class.col-auto') smallColumns = false;
@@ -82,13 +89,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     textExerciseEnabled = false;
     athenaEnabled = false;
     routerLink: string;
-
-    // Icons
-    readonly faFolderOpen = faFolderOpen;
-    readonly faUsers = faUsers;
-    readonly faEye = faEye;
-    readonly faPlayCircle = faPlayCircle;
-    readonly faRedo = faRedo;
 
     ngOnInit(): void {
         this.athenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
@@ -183,8 +183,11 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
                         }
                     }
                 },
-                error: () => {
-                    this.alertService.error('artemisApp.exercise.startError');
+                error: (err: HttpErrorResponse) => {
+                    const responseCodesWithErrorKeySentByServer = [403];
+                    if (!responseCodesWithErrorKeySentByServer.includes(err.status)) {
+                        this.alertService.error('artemisApp.exercise.startError');
+                    }
                 },
             });
     }

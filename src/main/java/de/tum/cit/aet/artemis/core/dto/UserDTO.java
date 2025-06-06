@@ -61,8 +61,6 @@ public class UserDTO extends AuditingEntityDTO {
 
     private boolean internal;
 
-    private ZonedDateTime lastNotificationRead;
-
     private Set<String> authorities = new HashSet<>();
 
     private Set<String> groups = new HashSet<>();
@@ -73,6 +71,16 @@ public class UserDTO extends AuditingEntityDTO {
 
     private ZonedDateTime vcsAccessTokenExpiryDate;
 
+    /**
+     * True if
+     * <ul>
+     * <li>No passkey has been registered for this user yet</li>
+     * <li>and the passkey feature is enabled</li>
+     * <li>and <code>artemis.user-management.passkey.ask-users-to-setup</code> is set to true</li>
+     * </ul>
+     */
+    private boolean askToSetupPasskey = false;
+
     private ZonedDateTime externalLLMUsageAccepted;
 
     public UserDTO() {
@@ -82,12 +90,12 @@ public class UserDTO extends AuditingEntityDTO {
     public UserDTO(User user) {
         this(user.getId(), user.getLogin(), user.getName(), user.getFirstName(), user.getLastName(), user.getEmail(), user.getVisibleRegistrationNumber(), user.getActivated(),
                 user.getImageUrl(), user.getLangKey(), user.isInternal(), user.getCreatedBy(), user.getCreatedDate(), user.getLastModifiedBy(), user.getLastModifiedDate(),
-                user.getLastNotificationRead(), user.getAuthorities(), user.getGroups(), user.getOrganizations(), user.getExternalLLMUsageAcceptedTimestamp());
+                user.getAuthorities(), user.getGroups(), user.getOrganizations(), user.getExternalLLMUsageAcceptedTimestamp());
     }
 
     public UserDTO(Long id, String login, String name, String firstName, String lastName, String email, String visibleRegistrationNumber, boolean activated, String imageUrl,
-            String langKey, boolean internal, String createdBy, Instant createdDate, String lastModifiedBy, Instant lastModifiedDate, ZonedDateTime lastNotificationRead,
-            Set<Authority> authorities, Set<String> groups, Set<Organization> organizations, ZonedDateTime externalLLMUsageAccepted) {
+            String langKey, boolean internal, String createdBy, Instant createdDate, String lastModifiedBy, Instant lastModifiedDate, Set<Authority> authorities,
+            Set<String> groups, Set<Organization> organizations, ZonedDateTime externalLLMUsageAccepted) {
 
         this.id = id;
         this.login = login;
@@ -104,7 +112,6 @@ public class UserDTO extends AuditingEntityDTO {
         this.setCreatedDate(createdDate);
         this.setLastModifiedBy(lastModifiedBy);
         this.setLastModifiedDate(lastModifiedDate);
-        this.lastNotificationRead = lastNotificationRead;
         if (authorities != null && Hibernate.isInitialized(authorities)) {
             this.authorities = authorities.stream().map(Authority::getName).collect(Collectors.toSet());
         }
@@ -193,14 +200,6 @@ public class UserDTO extends AuditingEntityDTO {
         this.langKey = langKey;
     }
 
-    public ZonedDateTime getLastNotificationRead() {
-        return lastNotificationRead;
-    }
-
-    public void setLastNotificationRead(ZonedDateTime lastNotificationRead) {
-        this.lastNotificationRead = lastNotificationRead;
-    }
-
     public Set<String> getAuthorities() {
         return authorities;
     }
@@ -246,12 +245,19 @@ public class UserDTO extends AuditingEntityDTO {
         return vcsAccessTokenExpiryDate;
     }
 
+    public void setAskToSetupPasskey(boolean askToSetupPasskey) {
+        this.askToSetupPasskey = askToSetupPasskey;
+    }
+
+    public boolean getAskToSetupPasskey() {
+        return askToSetupPasskey;
+    }
+
     @Override
     public String toString() {
         return "UserDTO{" + "login='" + login + '\'' + ", firstName='" + firstName + '\'' + ", lastName='" + lastName + '\'' + ", email='" + email + '\'' + ", imageUrl='"
                 + imageUrl + '\'' + ", activated=" + activated + ", langKey='" + langKey + '\'' + ", createdBy=" + getCreatedBy() + ", createdDate=" + getCreatedDate()
-                + ", lastModifiedBy='" + getLastModifiedBy() + '\'' + ", lastModifiedDate=" + getLastModifiedDate() + ", lastNotificationRead=" + lastNotificationRead
-                + ", authorities=" + authorities + "}";
+                + ", lastModifiedBy='" + getLastModifiedBy() + '\'' + ", lastModifiedDate=" + getLastModifiedDate() + ", authorities=" + authorities + "}";
     }
 
     public boolean isInternal() {

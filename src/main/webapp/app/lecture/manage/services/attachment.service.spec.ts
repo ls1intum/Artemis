@@ -48,22 +48,6 @@ describe('Attachment Service', () => {
     });
 
     describe('Service methods', () => {
-        it('should create an attachment in the database', async () => {
-            const file = new File([], 'testName.txt');
-            const returnedFromService = { ...elemDefault };
-            const expected = { ...returnedFromService };
-            service
-                .create(elemDefault, file)
-                .pipe(take(1))
-                .subscribe((resp) => (expectedResult = resp));
-            const req = httpMock.expectOne({
-                url: resourceUrl,
-                method: 'POST',
-            });
-            req.flush(returnedFromService);
-            expect(expectedResult.body).toEqual(expected);
-        });
-
         it.each([new File([], 'testName.txt'), undefined])('should create an attachment in the database with file %s', async (file: File | undefined) => {
             const returnedFromService = { ...elemDefault };
             const expected = { ...returnedFromService };
