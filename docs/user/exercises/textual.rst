@@ -219,14 +219,11 @@ comments based on the provided **Grading Instructions**, **Problem Statement**, 
 
    .. container::
 
-      - 1.1. Navigate to a **Text Exercise** with the **Automatic Student Feedback** feature enabled.
-      - 1.2. Enter your response in the text editor and submit it.
-      - 1.3. You can request AI feedback either from the exercise overview page or directly within the text editor.
+      - Navigate to a **Text Exercise** with the **Automatic Student Feedback** feature enabled.
+      - Enter your response in the text editor and submit it.
+      - You can request AI feedback either from the exercise overview page or directly within the text editor.
 
-    .. figure:: text/automatic-feedback-request-overview.PNG
-       :align: center
-       :alt: Screenshot showing the request feedback button in the exercise overview
-       :scale: 80%
+
 
     .. figure:: text/automatic-feedback-request-editor.PNG
        :align: center
@@ -237,20 +234,20 @@ comments based on the provided **Grading Instructions**, **Problem Statement**, 
 
    .. container::
 
-      - 2.1. After submitting a feedback request, the system processes the text and generates preliminary comments.
-      - 2.2. An alert appears at the top of the page indicating that feedback is ready.
+      - After submitting a feedback request, the system processes the text and generates preliminary comments.
+      - An alert appears at the top of the page indicating that feedback is ready.
 
       .. figure:: text/automatic-feedback-request-alert.PNG
          :align: center
          :alt: Screenshot showing the notification alert when AI feedback is ready
 
-      - 2.3. A preliminary score is displayed in the top-right corner of the screen.
+      - A preliminary score is displayed in the top-right corner of the screen.
 
       .. figure:: text/automatic-feedback-request-score.PNG
          :align: center
          :alt: Screenshot showing the preliminary score in the text editor
 
-      - 2.4. Clicking on the score reveals inline feedback that highlights specific issues and offers suggestions directly under the text.
+      - Clicking on the score reveals inline feedback that highlights specific issues and offers suggestions directly under the text.
 
       .. figure:: text/automatic-feedback-view-detailed.PNG
          :align: center
