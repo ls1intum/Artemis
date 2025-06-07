@@ -554,7 +554,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         programmingExercise = (ProgrammingExercise) exerciseUtilService.addMaxScoreAndBonusPointsToExercise(programmingExercise);
         programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
-        programmingExercise = programmingExerciseRepository
+        programmingExercise = programmingExerciseService
                 .findByIdWithTemplateAndSolutionParticipationAndAuxiliaryReposAndLatestResultFeedbackTestCasesElseThrow(programmingExercise.getId());
 
         var testCases = createTestCases(false);
@@ -570,7 +570,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
 
         // Tests
-        programmingExercise = programmingExerciseRepository
+        programmingExercise = programmingExerciseService
                 .findByIdWithTemplateAndSolutionParticipationAndAuxiliaryReposAndLatestResultFeedbackTestCasesElseThrow(programmingExercise.getId());
 
         // template 0 %
@@ -615,7 +615,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         programmingExercise = (ProgrammingExercise) exerciseUtilService.addMaxScoreAndBonusPointsToExercise(programmingExercise);
         programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
-        programmingExercise = programmingExerciseRepository
+        programmingExercise = programmingExerciseService
                 .findByIdWithTemplateAndSolutionParticipationAndAuxiliaryReposAndLatestResultFeedbackTestCasesElseThrow(programmingExercise.getId());
 
         final var testCases = createTestCases(true);
@@ -631,7 +631,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
 
         // Tests
-        programmingExercise = programmingExerciseRepository
+        programmingExercise = programmingExerciseService
                 .findByIdWithTemplateAndSolutionParticipationAndAuxiliaryReposAndLatestResultFeedbackTestCasesElseThrow(programmingExercise.getId());
 
         // the invisible test case should however be visible for the template and solution repos
@@ -665,7 +665,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         programmingExercise = (ProgrammingExercise) exerciseUtilService.addMaxScoreAndBonusPointsToExercise(programmingExercise);
         programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
-        programmingExercise = programmingExerciseRepository
+        programmingExercise = programmingExerciseService
                 .findByIdWithTemplateAndSolutionParticipationAndAuxiliaryReposAndLatestResultFeedbackTestCasesElseThrow(programmingExercise.getId());
 
         final var testCases = createTestCases(false);
@@ -687,7 +687,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         programmingExercise = (ProgrammingExercise) exerciseUtilService.addMaxScoreAndBonusPointsToExercise(programmingExercise);
         programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
-        programmingExercise = programmingExerciseRepository
+        programmingExercise = programmingExerciseService
                 .findByIdWithTemplateAndSolutionParticipationAndAuxiliaryReposAndLatestResultFeedbackTestCasesElseThrow(programmingExercise.getId());
 
         final var testCases = createTestCases(false);
@@ -699,7 +699,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         participationWithIndividualDueDate = studentParticipationRepository.save((StudentParticipation) participationWithIndividualDueDate);
         final Long participationWithIndividualDueDateId = participationWithIndividualDueDate.getId();
 
-        programmingExercise = programmingExerciseRepository
+        programmingExercise = programmingExerciseService
                 .findByIdWithTemplateAndSolutionParticipationAndAuxiliaryReposAndLatestResultFeedbackTestCasesElseThrow(programmingExercise.getId());
 
         final var updated = programmingExerciseGradingService.updateResultsOnlyRegularDueDateParticipations(programmingExercise);
@@ -716,7 +716,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         programmingExercise = (ProgrammingExercise) exerciseUtilService.addMaxScoreAndBonusPointsToExercise(programmingExercise);
         programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
-        programmingExercise = programmingExerciseRepository
+        programmingExercise = programmingExerciseService
                 .findByIdWithTemplateAndSolutionParticipationAndAuxiliaryReposAndLatestResultFeedbackTestCasesElseThrow(programmingExercise.getId());
 
         final var testCases = createTestCases(false);
