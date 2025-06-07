@@ -1,20 +1,20 @@
 package de.tum.cit.aet.artemis.atlas.service.profile;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.profile.CourseLearnerProfile;
 import de.tum.cit.aet.artemis.atlas.repository.CourseLearnerProfileRepository;
 import de.tum.cit.aet.artemis.atlas.repository.LearnerProfileRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 
-@Profile(PROFILE_CORE)
+@Conditional(AtlasEnabled.class)
 @Service
 public class CourseLearnerProfileService {
 
@@ -22,9 +22,13 @@ public class CourseLearnerProfileService {
 
     private final LearnerProfileRepository learnerProfileRepository;
 
-    public CourseLearnerProfileService(CourseLearnerProfileRepository courseLearnerProfileRepository, LearnerProfileRepository learnerProfileRepository) {
+    private final LearnerProfileService learnerProfileService;
+
+    public CourseLearnerProfileService(CourseLearnerProfileRepository courseLearnerProfileRepository, LearnerProfileRepository learnerProfileRepository,
+            LearnerProfileService learnerProfileService) {
         this.courseLearnerProfileRepository = courseLearnerProfileRepository;
         this.learnerProfileRepository = learnerProfileRepository;
+        this.learnerProfileService = learnerProfileService;
     }
 
     /**
@@ -32,15 +36,26 @@ public class CourseLearnerProfileService {
      *
      * @param course the course for which the profile is created
      * @param user   the user for which the profile is created
+     * @return Saved CourseLearnerProfile
      */
-    public void createCourseLearnerProfile(Course course, User user) {
+    public CourseLearnerProfile createCourseLearnerProfile(Course course, User user) {
+
+        if (user.getLearnerProfile() == null) {
+            learnerProfileService.createProfile(user);
+        }
+
         var courseProfile = new CourseLearnerProfile();
         courseProfile.setCourse(course);
+
+        // Initialize values in the middle of Likert scale
+        courseProfile.setAimForGradeOrBonus(3);
+        courseProfile.setRepetitionIntensity(3);
+        courseProfile.setTimeInvestment(3);
 
         var learnerProfile = learnerProfileRepository.findByUserElseThrow(user);
         courseProfile.setLearnerProfile(learnerProfile);
 
-        courseLearnerProfileRepository.save(courseProfile);
+        return courseLearnerProfileRepository.save(courseProfile);
     }
 
     /**
@@ -48,17 +63,27 @@ public class CourseLearnerProfileService {
      *
      * @param course the course for which the profiles are created
      * @param users  the users for which the profiles are created with eagerly loaded learner profiles
+     * @return A List of saved CourseLearnerProfiles
      */
-    public void createCourseLearnerProfiles(Course course, Set<User> users) {
-        Set<CourseLearnerProfile> courseProfiles = users.stream().map(user -> {
+    public List<CourseLearnerProfile> createCourseLearnerProfiles(Course course, Set<User> users) {
+
+        users.stream().filter(user -> user.getLearnerProfile() == null).forEach(learnerProfileService::createProfile);
+
+        Set<CourseLearnerProfile> courseProfiles = users.stream().map(user -> courseLearnerProfileRepository.findByLoginAndCourse(user.getLogin(), course).orElseGet(() -> {
+
             var courseProfile = new CourseLearnerProfile();
             courseProfile.setCourse(course);
-            courseProfile.setLearnerProfile(user.getLearnerProfile());
+            courseProfile.setLearnerProfile(learnerProfileRepository.findByUserElseThrow(user));
+
+            // Initialize values in the middle of Likert scale
+            courseProfile.setAimForGradeOrBonus(3);
+            courseProfile.setRepetitionIntensity(3);
+            courseProfile.setTimeInvestment(3);
 
             return courseProfile;
-        }).collect(Collectors.toSet());
+        })).collect(Collectors.toSet());
 
-        courseLearnerProfileRepository.saveAll(courseProfiles);
+        return courseLearnerProfileRepository.saveAll(courseProfiles);
     }
 
     /**

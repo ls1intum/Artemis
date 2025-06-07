@@ -23,7 +23,7 @@ import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/communication/s
 import { Conversation, ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { getAsGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { getAsOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
-import { ForwardedMessage, ForwardedMessageDTO } from 'app/communication/shared/entities/forwarded-message.model';
+import { ForwardedMessage, ForwardedMessagesGroupDTO } from 'app/communication/shared/entities/forwarded-message.model';
 import { MetisPostDTO } from 'app/communication/shared/entities/metis-post-dto.model';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { Posting, PostingType, SavedPostStatus } from 'app/communication/shared/entities/posting.model';
@@ -36,6 +36,7 @@ import { WebsocketService } from 'app/shared/service/websocket.service';
 import dayjs from 'dayjs/esm';
 import { cloneDeep } from 'lodash-es';
 import { BehaviorSubject, Observable, ReplaySubject, Subscription, catchError, forkJoin, map, of, switchMap, tap, throwError } from 'rxjs';
+import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 
 @Injectable()
 export class MetisService implements OnDestroy {
@@ -47,6 +48,7 @@ export class MetisService implements OnDestroy {
     private conversationService = inject(ConversationService);
     private forwardedMessageService = inject(ForwardedMessageService);
     private savedPostService = inject(SavedPostService);
+    private metisConversationService = inject(MetisConversationService);
 
     private posts$: ReplaySubject<Post[]> = new ReplaySubject<Post[]>(1);
     private tags$: BehaviorSubject<string[]> = new BehaviorSubject<string[]>([]);
@@ -276,6 +278,17 @@ export class MetisService implements OnDestroy {
      * @return updated post
      */
     updatePost(post: Post): Observable<Post> {
+        if (post.id) {
+            const updateIndex = this.cachedPosts.findIndex((cachedPost) => cachedPost.id === post.id);
+            const foundCachedPost = updateIndex !== -1;
+            if (foundCachedPost) {
+                // We update the date immediately so that the client is aware about the post being edited without having to wait for the update call to finish
+                this.cachedPosts[updateIndex].updatedDate = dayjs();
+                this.cachedPosts[updateIndex].content = post.content;
+                this.posts$.next(this.cachedPosts);
+            }
+        }
+
         return this.postService.update(this.courseId, post).pipe(
             map((res: HttpResponse<Post>) => res.body!),
             tap((updatedPost: Post) => {
@@ -681,6 +694,10 @@ export class MetisService implements OnDestroy {
         const postIsNotFromCurrentPlagiarismCase =
             this.currentPostContextFilter.plagiarismCaseId && postDTO.post.plagiarismCase?.id !== this.currentPostContextFilter.plagiarismCaseId;
 
+        if (postDTO.action === MetisPostAction.CREATE && postDTO.post.conversation?.id !== this.currentConversation?.id && postDTO.post.author?.id !== this.user.id) {
+            this.metisConversationService.handleNewMessage(postConvId, postDTO.post.creationDate);
+        }
+
         if (!isValidPostContext || !postIsFromCurrentConversation || postIsNotFromCurrentPlagiarismCase || postIsPrivate) {
             return;
         }
@@ -692,13 +709,14 @@ export class MetisService implements OnDestroy {
 
         switch (postDTO.action) {
             case MetisPostAction.CREATE:
-                const doesNotMatchOwnFilter = this.currentPostContextFilter.filterToOwn && postDTO.post.author?.id !== this.user.id;
+                const isAuthorFilterActive = this.currentPostContextFilter.authorIds && this.currentPostContextFilter.authorIds?.length > 0;
+                const doesNotMatchAuthorFilter = isAuthorFilterActive && postDTO.post.author?.id && !this.currentPostContextFilter.authorIds?.includes(postDTO.post.author?.id);
                 const doesNotMatchReactedFilter = this.currentPostContextFilter.filterToAnsweredOrReacted;
                 const doesNotMatchSearchString =
                     this.currentPostContextFilter.searchText?.length &&
                     !postDTO.post.content?.toLowerCase().includes(this.currentPostContextFilter.searchText.toLowerCase().trim());
 
-                if (doesNotMatchOwnFilter || doesNotMatchReactedFilter || doesNotMatchSearchString) {
+                if (doesNotMatchAuthorFilter || doesNotMatchReactedFilter || doesNotMatchSearchString) {
                     break;
                 }
                 // we can add the received conversation message to the cached messages without violating the current context filter setting
@@ -713,7 +731,10 @@ export class MetisService implements OnDestroy {
                 }
 
                 if (this.currentPostContextFilter.conversationIds && this.currentPostContextFilter.conversationIds.length == 1 && postDTO.post.author?.id !== this.user.id) {
-                    this.conversationService.markAsRead(this.courseId, this.currentPostContextFilter.conversationIds[0]).subscribe();
+                    setTimeout(() => {
+                        // We add a small timeout to avoid concurrency issues
+                        this.conversationService.markAsRead(this.courseId, this.currentPostContextFilter!.conversationIds![0]).subscribe();
+                    }, 1000);
                 }
 
                 this.addTags(postDTO.post.tags);
@@ -728,6 +749,14 @@ export class MetisService implements OnDestroy {
                         if (cachedAnswer) {
                             answer.authorRole = cachedAnswer.authorRole;
                         }
+
+                        // The updates only set the post.id property of answers, so we set the author and conversation properties manually
+                        // to ensure the same answer.post structure as from the get-messages call.
+                        answer.post = {
+                            id: postDTO.post.id,
+                            author: postDTO.post.author,
+                            conversation: postDTO.post.conversation,
+                        };
                     });
                     this.cachedPosts[indexToUpdate] = postDTO.post;
                 }
@@ -802,7 +831,7 @@ export class MetisService implements OnDestroy {
      * @param type - The type of messages to retrieve ('post' or 'answer').
      * @returns An observable containing a list of objects where each object includes an ID and its corresponding messages (as DTOs), wrapped in an HttpResponse, or undefined if the IDs are invalid.
      */
-    getForwardedMessagesByIds(postingIds: number[], type: PostingType): Observable<HttpResponse<{ id: number; messages: ForwardedMessageDTO[] }[]>> | undefined {
+    getForwardedMessagesByIds(postingIds: number[], type: PostingType): Observable<HttpResponse<ForwardedMessagesGroupDTO[]>> | undefined {
         if (postingIds && postingIds.length > 0) {
             return this.forwardedMessageService.getForwardedMessages(postingIds, type);
         } else {

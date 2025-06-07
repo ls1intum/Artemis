@@ -2,14 +2,18 @@ package de.tum.cit.aet.artemis.atlas.service.competency;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.hibernate.Hibernate;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
@@ -27,10 +31,9 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
+import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
-import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository;
-import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
 
 /**
  * Service for managing competencies.
@@ -44,13 +47,13 @@ public class CompetencyService extends CourseCompetencyService {
     private final CompetencyExerciseLinkRepository competencyExerciseLinkRepository;
 
     public CompetencyService(CompetencyRepository competencyRepository, AuthorizationCheckService authCheckService, CompetencyRelationRepository competencyRelationRepository,
-            LearningPathService learningPathService, CompetencyProgressService competencyProgressService, LectureUnitService lectureUnitService,
-            CompetencyProgressRepository competencyProgressRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository,
-            StandardizedCompetencyRepository standardizedCompetencyRepository, CourseCompetencyRepository courseCompetencyRepository, ExerciseService exerciseService,
-            LearningObjectImportService learningObjectImportService, CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository, CourseRepository courseRepository,
+            LearningPathService learningPathService, CompetencyProgressService competencyProgressService, CompetencyProgressRepository competencyProgressRepository,
+            Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi, StandardizedCompetencyRepository standardizedCompetencyRepository,
+            CourseCompetencyRepository courseCompetencyRepository, ExerciseService exerciseService, LearningObjectImportService learningObjectImportService,
+            CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository, CourseRepository courseRepository,
             CompetencyExerciseLinkRepository competencyExerciseLinkRepository) {
-        super(competencyProgressRepository, courseCompetencyRepository, competencyRelationRepository, competencyProgressService, exerciseService, lectureUnitService,
-                learningPathService, authCheckService, standardizedCompetencyRepository, lectureUnitCompletionRepository, learningObjectImportService, courseRepository);
+        super(competencyProgressRepository, courseCompetencyRepository, competencyRelationRepository, competencyProgressService, exerciseService, learningPathService,
+                authCheckService, standardizedCompetencyRepository, lectureUnitRepositoryApi, learningObjectImportService, courseRepository, competencyLectureUnitLinkRepository);
         this.competencyRepository = competencyRepository;
         this.competencyExerciseLinkRepository = competencyExerciseLinkRepository;
     }
@@ -126,16 +129,29 @@ public class CompetencyService extends CourseCompetencyService {
      * @param lecture the lecture to augment the exercise unit links for
      */
     public void addCompetencyLinksToExerciseUnits(Lecture lecture) {
-        var exerciseUnits = lecture.getLectureUnits().stream().filter(unit -> unit instanceof ExerciseUnit);
-        exerciseUnits.forEach(unit -> {
-            var exerciseUnit = (ExerciseUnit) unit;
+        List<ExerciseUnit> exerciseUnits = lecture.getLectureUnits().stream().filter(ExerciseUnit.class::isInstance).map(ExerciseUnit.class::cast)
+                .filter(unit -> unit.getExercise() != null).toList();
+
+        if (exerciseUnits.isEmpty()) {
+            return;
+        }
+
+        Set<Long> exerciseIds = exerciseUnits.stream().map(unit -> unit.getExercise().getId()).collect(Collectors.toSet());
+        Set<CompetencyExerciseLink> allCompetencyExerciseLinks = competencyExerciseLinkRepository.findByExerciseIdInWithCompetency(exerciseIds);
+
+        Map<Long, List<CompetencyExerciseLink>> linksByExerciseId = allCompetencyExerciseLinks.stream().collect(Collectors.groupingBy(link -> link.getExercise().getId()));
+
+        exerciseUnits.forEach(exerciseUnit -> {
             var exercise = exerciseUnit.getExercise();
-            if (exercise != null) {
-                var competencyExerciseLinks = competencyExerciseLinkRepository.findByExerciseIdWithCompetency(exercise.getId());
-                var competencyLectureUnitLinks = competencyExerciseLinks.stream().map(link -> new CompetencyLectureUnitLink(link.getCompetency(), exerciseUnit, link.getWeight()))
-                        .collect(Collectors.toSet());
-                exerciseUnit.setCompetencyLinks(competencyLectureUnitLinks);
-            }
+            List<CompetencyExerciseLink> competencyExerciseLinksForUnit = linksByExerciseId.getOrDefault(exercise.getId(), List.of());
+            Set<CompetencyLectureUnitLink> competencyLectureUnitLinks = competencyExerciseLinksForUnit.stream()
+                    .map(link -> new CompetencyLectureUnitLink(link.getCompetency(), exerciseUnit, link.getWeight())).collect(Collectors.toSet());
+            competencyExerciseLinksForUnit.forEach(competencyLink -> {
+                if (competencyLink.getCompetency() != null && Hibernate.isInitialized(competencyLink.getCompetency())) {
+                    competencyLink.getCompetency().setCourse(null); // Avoid sending the course to the client multiple times in the response to save data
+                }
+            });
+            exerciseUnit.setCompetencyLinks(competencyLectureUnitLinks);
         });
     }
 }

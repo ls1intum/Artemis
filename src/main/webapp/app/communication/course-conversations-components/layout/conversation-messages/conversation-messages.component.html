@@ -1,54 +1,5 @@
 @if (course) {
     <div class="justify-content-center conversation-messages">
-        <div class="justify-content-center px-3">
-            <!-- search bar -->
-            @if (!searchbarCollapsed) {
-                <div class="input-group channel-search" [class.search-active]="!!searchText">
-                    <span class="input-group-text">
-                        <fa-icon [icon]="faSearch" size="sm" />
-                        <span [hidden]="true" id="inputLabel" jhiTranslate="artemisApp.conversationsLayout.conversationMessages.searchLabel"></span>
-                    </span>
-                    <input
-                        id="searchInput"
-                        aria-labelledby="inputLabel"
-                        aria-describedby="searchResult"
-                        #searchInput
-                        (input)="onSearchQueryInput($event)"
-                        class="form-control"
-                        type="text"
-                        placeholder="{{ 'artemisApp.conversationsLayout.conversationMessages.searchBarPlaceholder' | artemisTranslate }}"
-                    />
-                    @if (!!searchText) {
-                        <button
-                            class="btn btn-outline-secondary border-end-0 border-start-0"
-                            type="button"
-                            (click)="clearSearchInput()"
-                            aria-labelledby="clearSearchLabel"
-                            id="clearSearchButton"
-                        >
-                            <span id="clearSearchLabel" [hidden]="true" jhiTranslate="artemisApp.conversationsLayout.conversationMessages.clearSearch"></span>
-                            <fa-icon [icon]="faTimes" size="xs" />
-                        </button>
-                    }
-                    <span class="input-group-text" [hidden]="!searchText" id="searchResult">
-                        @switch (totalNumberOfPosts) {
-                            @case (0) {
-                                <span jhiTranslate="artemisApp.conversationsLayout.conversationMessages.searchResultsNone"></span>
-                            }
-                            @case (1) {
-                                <span jhiTranslate="artemisApp.conversationsLayout.conversationMessages.searchResultsSingle"></span>
-                            }
-                            @default {
-                                <span
-                                    jhiTranslate="artemisApp.conversationsLayout.conversationMessages.searchResultsMultiple"
-                                    [translateValues]="{ count: totalNumberOfPosts }"
-                                ></span>
-                            }
-                        }
-                    </span>
-                </div>
-            }
-        </div>
         <div class="channel-content">
             <!-- loading messages -->
             @if (isFetchingPosts) {

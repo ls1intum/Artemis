@@ -78,6 +78,7 @@ import de.tum.cit.aet.artemis.exercise.dto.ExerciseForPlagiarismCasesOverviewDTO
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseGroupWithIdAndExamDTO;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.fileupload.util.ZipFileTestUtilService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
@@ -86,14 +87,14 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.test_repository.QuizExerciseTestRepository;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVcTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVcTest {
+class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
 
     private static final String TEST_PREFIX = "examint";
 
@@ -330,7 +331,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVcTest {
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testSaveExamWithExerciseGroupWithExerciseToDatabase() {
-        textExerciseUtilService.addCourseExamExerciseGroupWithOneTextExercise();
+        examUtilService.addCourseExamExerciseGroupWithOneTextExercise();
     }
 
     private void testAllPreAuthorize(Course course, Exam exam) throws Exception {
@@ -574,7 +575,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVcTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateExam_exampleSolutionPublicationDateChanged() throws Exception {
-        var modelingExercise = modelingExerciseUtilService.addCourseExamExerciseGroupWithOneModelingExercise();
+        var modelingExercise = examUtilService.addCourseExamExerciseGroupWithOneModelingExercise();
         var examWithModelingEx = modelingExercise.getExerciseGroup().getExam();
         assertThat(modelingExercise.isExampleSolutionPublished()).isFalse();
 
@@ -832,7 +833,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVcTest {
 
         var exam = examUtilService.addExam(course1);
         exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, true, true);
-        mockDeleteProgrammingExercise(exerciseUtilService.getFirstExerciseWithType(exam, ProgrammingExercise.class), Set.of(instructor));
+        mockDeleteProgrammingExercise(ExerciseUtilService.getFirstExerciseWithType(exam, ProgrammingExercise.class), Set.of(instructor));
 
         examUtilService.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
         examUtilService.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
@@ -885,7 +886,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVcTest {
     @ValueSource(ints = { 0, 1, 2 })
     void testGetExamForExamAssessmentDashboard(int numberOfCorrectionRounds) throws Exception {
         // we need an exam from the past, otherwise the tutor won't have access
-        Course course = examUtilService.createCourseWithExamAndExerciseGroupAndExercises(student1, now().minusHours(3), now().minusHours(2), now().minusHours(1));
+        Course course = courseUtilService.createCourse();
+        course = examUtilService.createCourseWithExamAndExerciseGroupAndExercises(course, student1, now().minusHours(3), now().minusHours(2), now().minusHours(1));
         Exam exam = course.getExams().iterator().next();
 
         // Ensure the API endpoint works for all number of correctionRounds

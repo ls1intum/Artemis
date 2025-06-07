@@ -40,8 +40,8 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
+import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
-import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lti.config.Lti13TokenRetriever;
 import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -56,7 +56,7 @@ class LtiDeepLinkingServiceTest {
     private ExerciseTestRepository exerciseRepository;
 
     @Mock
-    LectureRepository lectureRepository;
+    LectureRepositoryApi lectureRepositoryApi;
 
     @Mock
     private Lti13TokenRetriever tokenRetriever;
@@ -72,7 +72,7 @@ class LtiDeepLinkingServiceTest {
         closeable = MockitoAnnotations.openMocks(this);
         oidcIdToken = mock(OidcIdToken.class);
         SecurityContextHolder.clearContext();
-        ltiDeepLinkingService = new LtiDeepLinkingService(courseRepository, exerciseRepository, lectureRepository, tokenRetriever);
+        ltiDeepLinkingService = new LtiDeepLinkingService(courseRepository, exerciseRepository, Optional.of(lectureRepositoryApi), tokenRetriever);
         ReflectionTestUtils.setField(ltiDeepLinkingService, "artemisServerUrl", "http://artemis.com");
     }
 
@@ -173,7 +173,7 @@ class LtiDeepLinkingServiceTest {
         createMockOidcIdToken();
         Course course = createMockCourse();
         course.setLearningPathsEnabled(false);
-        when(courseRepository.findWithEagerLearningPathsAndLearningPathCompetenciesByIdElseThrow(anyLong())).thenReturn(course);
+        when(courseRepository.findByIdElseThrow(anyLong())).thenReturn(course);
 
         assertThatExceptionOfType(BadRequestAlertException.class)
                 .isThrownBy(() -> ltiDeepLinkingService.performDeepLinking(oidcIdToken, "test_registration_id", 1L, null, DeepLinkingType.LEARNING_PATH))
@@ -203,7 +203,7 @@ class LtiDeepLinkingServiceTest {
         Lecture lecture = new Lecture();
         lecture.setId(lectureId);
         lecture.setTitle("Test Lecture");
-        when(lectureRepository.findById(lectureId)).thenReturn(Optional.of(lecture));
+        when(lectureRepositoryApi.findById(lectureId)).thenReturn(Optional.of(lecture));
 
         Set<Long> lectureIds = new HashSet<>();
         lectureIds.add(lectureId);
@@ -237,7 +237,7 @@ class LtiDeepLinkingServiceTest {
 
         Course course = createMockCourse();
         course.setLearningPathsEnabled(true);
-        when(courseRepository.findWithEagerLearningPathsAndLearningPathCompetenciesByIdElseThrow(course.getId())).thenReturn(course);
+        when(courseRepository.findByIdElseThrow(course.getId())).thenReturn(course);
 
         String deepLinkResponse = ltiDeepLinkingService.performDeepLinking(oidcIdToken, "test_registration_id", course.getId(), null, DeepLinkingType.LEARNING_PATH);
 
@@ -304,7 +304,7 @@ class LtiDeepLinkingServiceTest {
         lectureIds.add(lectureId1);
         lectureIds.add(lectureId2);
 
-        when(lectureRepository.findAllById(lectureIds)).thenReturn(new ArrayList<>());
+        when(lectureRepositoryApi.findAllById(lectureIds)).thenReturn(new ArrayList<>());
 
         Lecture lecture1 = new Lecture();
         lecture1.setId(lectureId1);
@@ -316,7 +316,7 @@ class LtiDeepLinkingServiceTest {
         lectures.add(lecture1);
         lectures.add(lecture2);
 
-        when(lectureRepository.findAllById(lectureIds)).thenReturn(lectures);
+        when(lectureRepositoryApi.findAllById(lectureIds)).thenReturn(lectures);
 
         String deepLinkResponse = ltiDeepLinkingService.performDeepLinking(oidcIdToken, "test_registration_id", courseId, lectureIds, DeepLinkingType.GROUPED_LECTURE);
 

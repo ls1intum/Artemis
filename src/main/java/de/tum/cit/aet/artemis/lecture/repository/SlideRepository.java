@@ -24,9 +24,9 @@ import de.tum.cit.aet.artemis.lecture.dto.SlideUnhideDTO;
 @Repository
 public interface SlideRepository extends ArtemisJpaRepository<Slide, Long> {
 
-    Slide findSlideByAttachmentUnitIdAndSlideNumber(Long attachmentUnitId, Integer slideNumber);
+    Slide findSlideByAttachmentVideoUnitIdAndSlideNumber(long attachmentVideoUnitId, int slideNumber);
 
-    List<Slide> findAllByAttachmentUnitId(Long attachmentUnitId);
+    List<Slide> findAllByAttachmentVideoUnitId(Long attachmentUnitId);
 
     /**
      * Find all slides with non-null hidden field but only returns the id and hidden fields
@@ -41,13 +41,13 @@ public interface SlideRepository extends ArtemisJpaRepository<Slide, Long> {
     List<SlideUnhideDTO> findHiddenSlidesProjection();
 
     /**
-     * Find slides for a specific attachment unit where the hidden field is not null
+     * Find slides for a specific attachment video unit where the hidden field is not null
      * (these are the hidden slides)
      *
-     * @param attachmentUnitId The ID of the attachment unit
-     * @return List of hidden slides for the attachment unit
+     * @param attachmentUnitId The ID of the attachment video unit
+     * @return List of hidden slides for the attachment video unit
      */
-    List<Slide> findByAttachmentUnitIdAndHiddenNotNull(Long attachmentUnitId);
+    List<Slide> findByAttachmentVideoUnitIdAndHiddenNotNull(Long attachmentUnitId);
 
     /**
      * Find all slides associated with a specific exercise
@@ -77,10 +77,10 @@ public interface SlideRepository extends ArtemisJpaRepository<Slide, Long> {
     void unhideSlide(@Param("slideId") Long slideId);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.lecture.dto.SlideDTO(s.id, s.slideNumber, s.hidden, s.attachmentUnit.id)
+            SELECT new de.tum.cit.aet.artemis.lecture.dto.SlideDTO(s.id, s.slideNumber, s.hidden, s.attachmentVideoUnit.id)
             FROM Slide s
-            WHERE s.attachmentUnit.id IN :attachmentUnitIds
+            WHERE s.attachmentVideoUnit.id IN :attachmentVideoUnitIds
                 AND (s.hidden IS NULL OR s.hidden < CURRENT_TIMESTAMP())
             """)
-    Set<SlideDTO> findVisibleSlidesByAttachmentUnits(@Param("attachmentUnitIds") Set<Long> attachmentUnitIds);
+    Set<SlideDTO> findVisibleSlidesByAttachmentVideoUnits(@Param("attachmentVideoUnitIds") Set<Long> attachmentVideoUnitIds);
 }

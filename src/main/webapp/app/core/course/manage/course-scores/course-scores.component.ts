@@ -21,7 +21,7 @@ import { faClipboard, faDownload, faSort, faSpinner } from '@fortawesome/free-so
 import { CsvExportRowBuilder } from 'app/shared/export/row-builder/csv-export-row-builder';
 import { mean, median, standardDeviation } from 'simple-statistics';
 import { CsvExportOptions } from 'app/shared/export/modal/export-modal.component';
-import { ButtonSize } from 'app/shared/components/button/button.component';
+import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
 import * as XLSX from 'xlsx';
 import { MODULE_FEATURE_PLAGIARISM, VERSION } from 'app/app.constants';
 import { ExcelExportRowBuilder } from 'app/shared/export/row-builder/excel-export-row-builder';
@@ -57,6 +57,7 @@ import { CourseScoresStudentStatistics } from 'app/core/course/manage/course-sco
 import { ExerciseTypeStatisticsMap } from 'app/core/course/manage/course-scores/exercise-type-statistics-map';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { CourseTitleBarActionsDirective } from 'app/core/course/shared/directives/course-title-bar-actions.directive';
 
 export enum HighlightType {
     AVERAGE = 'average',
@@ -80,6 +81,7 @@ export enum HighlightType {
         SortDirective,
         SortByDirective,
         ArtemisTranslatePipe,
+        CourseTitleBarActionsDirective,
     ],
 })
 export class CourseScoresComponent implements OnInit, OnDestroy {

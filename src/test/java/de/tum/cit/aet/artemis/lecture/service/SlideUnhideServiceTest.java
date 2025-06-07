@@ -12,7 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
-import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.test_repository.SlideTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
@@ -38,9 +38,9 @@ class SlideUnhideServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @BeforeEach
     void initTestCase() {
-        // AttachmentUnit with hidden slides
-        AttachmentUnit testAttachmentUnit = lectureUtilService.createAttachmentUnitWithSlidesAndFile(5, true);
-        testSlides = slideRepository.findAllByAttachmentUnitId(testAttachmentUnit.getId());
+        // AttachmentVideoUnit with hidden slides
+        AttachmentVideoUnit testAttachmentVideoUnit = lectureUtilService.createAttachmentVideoUnitWithSlidesAndFile(5, true);
+        testSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
 
         // Make slides 2 and 4 hidden
         ZonedDateTime pastDate = ZonedDateTime.now().minusDays(2);

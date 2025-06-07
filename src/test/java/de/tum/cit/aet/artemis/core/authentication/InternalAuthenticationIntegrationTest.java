@@ -40,9 +40,9 @@ import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 import de.tum.cit.aet.artemis.core.service.user.PasswordService;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVcTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTest;
 
-class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVcTest {
+class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
 
     private static final String TEST_PREFIX = "internalauth";
 

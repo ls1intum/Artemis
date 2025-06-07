@@ -17,6 +17,8 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyJol;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
+import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
@@ -52,10 +54,12 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
 
     private final PyrisPipelineService pyrisPipelineService;
 
+    private final CourseRepository courseRepository;
+
     public IrisCourseChatSessionService(IrisMessageService irisMessageService, LLMTokenUsageService llmTokenUsageService, IrisSettingsService irisSettingsService,
             IrisChatWebsocketService irisChatWebsocketService, AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository,
             IrisRateLimitService rateLimitService, IrisCourseChatSessionRepository irisCourseChatSessionRepository, PyrisPipelineService pyrisPipelineService,
-            ObjectMapper objectMapper) {
+            ObjectMapper objectMapper, CourseRepository courseRepository) {
         super(irisSessionRepository, objectMapper, irisMessageService, irisChatWebsocketService, llmTokenUsageService);
         this.irisSettingsService = irisSettingsService;
         this.irisChatWebsocketService = irisChatWebsocketService;
@@ -64,12 +68,12 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
         this.rateLimitService = rateLimitService;
         this.irisCourseChatSessionRepository = irisCourseChatSessionRepository;
         this.pyrisPipelineService = pyrisPipelineService;
+        this.courseRepository = courseRepository;
     }
 
     /**
      * Checks if the user has access to the Iris session.
-     * A user has access if they have access to the exercise and the session belongs to them.
-     * If the user is null, the user is fetched from the database.
+     * A user has access if they have access to the course and the session belongs to them.
      *
      * @param user    The user to check
      * @param session The session to check
@@ -77,8 +81,9 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
     @Override
     public void checkHasAccessTo(User user, IrisCourseChatSession session) {
         user.hasAcceptedExternalLLMUsageElseThrow();
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, session.getCourse(), user);
-        if (!Objects.equals(session.getUser(), user)) {
+        var course = courseRepository.findByIdElseThrow(session.getCourseId());
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+        if (!Objects.equals(session.getUserId(), user.getId())) {
             throw new AccessForbiddenException("Iris Session", session.getId());
         }
     }
@@ -90,7 +95,8 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
      */
     @Override
     public void checkIsFeatureActivatedFor(IrisCourseChatSession session) {
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.COURSE_CHAT, session.getCourse());
+        var course = courseRepository.findByIdElseThrow(session.getCourseId());
+        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.COURSE_CHAT, course);
     }
 
     @Override
@@ -111,18 +117,22 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
      */
     @Override
     public void requestAndHandleResponse(IrisCourseChatSession session) {
-        var variant = irisSettingsService.getCombinedIrisSettingsFor(session.getCourse(), false).irisChatSettings().selectedVariant();
-        requestAndHandleResponse(session, variant, null);
+        var course = courseRepository.findByIdElseThrow(session.getCourseId());
+        var settings = irisSettingsService.getCombinedIrisSettingsFor(course, false).irisCourseChatSettings();
+        if (!settings.enabled()) {
+            throw new ConflictException("Iris is not enabled for this course", "Iris", "irisDisabled");
+        }
+        requestAndHandleResponse(session, settings.selectedVariant(), settings.customInstructions(), null);
     }
 
-    private void requestAndHandleResponse(IrisCourseChatSession session, String variant, Object object) {
+    private void requestAndHandleResponse(IrisCourseChatSession session, String variant, String customInstructions, Object object) {
         var chatSession = (IrisCourseChatSession) irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
-        pyrisPipelineService.executeCourseChatPipeline(variant, chatSession, object);
+        pyrisPipelineService.executeCourseChatPipeline(variant, customInstructions, chatSession, object);
     }
 
     @Override
     protected void setLLMTokenUsageParameters(LLMTokenUsageService.LLMTokenUsageBuilder builder, IrisCourseChatSession session) {
-        builder.withCourse(session.getCourse().getId());
+        builder.withCourse(session.getCourseId());
     }
 
     /**
@@ -139,7 +149,12 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
         var user = competencyJol.getUser();
         user.hasAcceptedExternalLLMUsageElseThrow();
         var session = getCurrentSessionOrCreateIfNotExistsInternal(course, user, false);
-        CompletableFuture.runAsync(() -> requestAndHandleResponse(session, "default", competencyJol));
+
+        var settings = irisSettingsService.getCombinedIrisSettingsFor(course, false).irisCourseChatSettings();
+        var variant = settings.selectedVariant();
+        var customInstructions = settings.customInstructions();
+
+        CompletableFuture.runAsync(() -> requestAndHandleResponse(session, variant, customInstructions, competencyJol));
     }
 
     /**

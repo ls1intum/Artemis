@@ -11,7 +11,7 @@ import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { iconsAsHTML } from 'app/shared/util/icons.utils';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
-import { ButtonSize, ButtonType } from 'app/shared/components/button/button.component';
+import { ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { faCheck, faInfoCircle, faPlus, faTimes, faUpload, faUserSlash, faUserTimes } from '@fortawesome/free-solid-svg-icons';
@@ -24,6 +24,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { addPublicFilePrefix } from 'app/app.constants';
 
 const cssClasses = {
     alreadyRegistered: 'already-registered',
@@ -48,6 +49,12 @@ const cssClasses = {
     ],
 })
 export class ExamStudentsComponent implements OnInit, OnDestroy {
+    protected readonly ButtonType = ButtonType;
+    protected readonly ButtonSize = ButtonSize;
+    protected readonly ActionType = ActionType;
+    protected readonly missingImage = '/content/images/missing_image.png';
+    protected readonly addPublicFilePrefix = addPublicFilePrefix;
+
     private route = inject(ActivatedRoute);
     private alertService = inject(AlertService);
     private examManagementService = inject(ExamManagementService);
@@ -56,11 +63,6 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
     private studentExamService = inject(StudentExamService);
 
     dataTable = viewChild.required(DataTableComponent);
-
-    readonly ButtonType = ButtonType;
-    readonly ButtonSize = ButtonSize;
-    readonly ActionType = ActionType;
-    readonly missingImage = '/content/images/missing_image.png';
 
     courseId: number;
     exam: Exam;

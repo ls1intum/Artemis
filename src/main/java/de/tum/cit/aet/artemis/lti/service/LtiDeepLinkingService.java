@@ -23,8 +23,9 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
+import de.tum.cit.aet.artemis.lecture.config.LectureApiNotPresentException;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
-import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lti.config.Lti13TokenRetriever;
 import de.tum.cit.aet.artemis.lti.dto.LineItem;
 import de.tum.cit.aet.artemis.lti.dto.Lti13DeepLinkingResponse;
@@ -48,15 +49,15 @@ public class LtiDeepLinkingService {
 
     private final ExerciseRepository exerciseRepository;
 
-    private final LectureRepository lectureRepository;
+    private final Optional<LectureRepositoryApi> lectureRepositoryApi;
 
     private final Lti13TokenRetriever tokenRetriever;
 
-    public LtiDeepLinkingService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository,
+    public LtiDeepLinkingService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, Optional<LectureRepositoryApi> lectureRepositoryApi,
             Lti13TokenRetriever tokenRetriever) {
         this.courseRepository = courseRepository;
         this.exerciseRepository = exerciseRepository;
-        this.lectureRepository = lectureRepository;
+        this.lectureRepositoryApi = lectureRepositoryApi;
         this.tokenRetriever = tokenRetriever;
     }
 
@@ -71,17 +72,17 @@ public class LtiDeepLinkingService {
      * @return Constructed deep linking response URL.
      * @throws BadRequestAlertException if there are issues with the OIDC ID token claims.
      */
-    public String performDeepLinking(OidcIdToken ltiIdToken, String clientRegistrationId, Long courseId, Set<Long> unitIds, DeepLinkingType type) {
+    public String performDeepLinking(OidcIdToken ltiIdToken, String clientRegistrationId, long courseId, Set<Long> unitIds, DeepLinkingType type) {
         Lti13DeepLinkingResponse lti13DeepLinkingResponse = Lti13DeepLinkingResponse.from(ltiIdToken, clientRegistrationId);
 
         List<LtiContentItem> contentItems = switch (type) {
-            case EXERCISE -> populateExerciseContentItems(String.valueOf(courseId), unitIds);
-            case GROUPED_EXERCISE -> List.of(populateGroupedExerciseContentItem(String.valueOf(courseId), unitIds));
-            case LECTURE -> populateLectureContentItems(String.valueOf(courseId), unitIds);
-            case GROUPED_LECTURE -> List.of(populateGroupedLectureContentItems(String.valueOf(courseId), unitIds));
-            case COMPETENCY -> populateCompetencyContentItems(String.valueOf(courseId));
-            case IRIS -> populateIrisContentItems(String.valueOf(courseId));
-            case LEARNING_PATH -> populateLearningPathsContentItems(String.valueOf(courseId));
+            case EXERCISE -> populateExerciseContentItems(courseId, unitIds);
+            case GROUPED_EXERCISE -> List.of(populateGroupedExerciseContentItem(courseId, unitIds));
+            case LECTURE -> populateLectureContentItems(courseId, unitIds);
+            case GROUPED_LECTURE -> List.of(populateGroupedLectureContentItems(courseId, unitIds));
+            case COMPETENCY -> populateCompetencyContentItems(courseId);
+            case IRIS -> populateIrisContentItems(courseId);
+            case LEARNING_PATH -> populateLearningPathsContentItems(courseId);
         };
 
         List<Map<String, Object>> contentItemsMap = contentItems.stream().map(LtiContentItem::toMap).toList();
@@ -115,7 +116,7 @@ public class LtiDeepLinkingService {
     /**
      * Maps each exercise ID to an individual LTI content item.
      */
-    private List<LtiContentItem> populateExerciseContentItems(String courseId, Set<Long> exerciseIds) {
+    private List<LtiContentItem> populateExerciseContentItems(long courseId, Set<Long> exerciseIds) {
         validateUnitIds(exerciseIds, DeepLinkingType.EXERCISE);
         return exerciseIds.stream().map(exerciseId -> setExerciseContentItem(courseId, String.valueOf(exerciseId))).toList();
     }
@@ -123,7 +124,7 @@ public class LtiDeepLinkingService {
     /**
      * Groups a set of exercises into one content item.
      */
-    private LtiContentItem populateGroupedExerciseContentItem(String courseId, Set<Long> exerciseIds) {
+    private LtiContentItem populateGroupedExerciseContentItem(long courseId, Set<Long> exerciseIds) {
         validateUnitIds(exerciseIds, DeepLinkingType.GROUPED_EXERCISE);
         return setGroupedExerciseContentItem(courseId, exerciseIds);
     }
@@ -131,7 +132,7 @@ public class LtiDeepLinkingService {
     /**
      * Maps each lecture ID to an individual LTI content item.
      */
-    private List<LtiContentItem> populateLectureContentItems(String courseId, Set<Long> lectureIds) {
+    private List<LtiContentItem> populateLectureContentItems(long courseId, Set<Long> lectureIds) {
         validateUnitIds(lectureIds, DeepLinkingType.LECTURE);
         return lectureIds.stream().map(lectureId -> setLectureContentItem(courseId, String.valueOf(lectureId))).toList();
     }
@@ -139,7 +140,7 @@ public class LtiDeepLinkingService {
     /**
      * Groups a set of lectures into one content item.
      */
-    private LtiContentItem populateGroupedLectureContentItems(String courseId, Set<Long> lectureIds) {
+    private LtiContentItem populateGroupedLectureContentItems(long courseId, Set<Long> lectureIds) {
         validateUnitIds(lectureIds, DeepLinkingType.GROUPED_LECTURE);
         return setGroupedLectureContentItem(courseId, lectureIds);
     }
@@ -147,8 +148,8 @@ public class LtiDeepLinkingService {
     /**
      * Prepares a content item pointing to the first available competency in the course.
      */
-    private List<LtiContentItem> populateCompetencyContentItems(String courseId) {
-        Optional<Competency> competencyOpt = courseRepository.findWithEagerCompetenciesAndPrerequisitesById(Long.parseLong(courseId))
+    private List<LtiContentItem> populateCompetencyContentItems(long courseId) {
+        Optional<Competency> competencyOpt = courseRepository.findWithEagerCompetenciesAndPrerequisitesById(courseId)
                 .flatMap(course -> course.getCompetencies().stream().findFirst());
         String launchUrl = buildContentUrl(courseId, "competencies");
         return List.of(competencyOpt.map(competency -> createSingleUnitContentItem(launchUrl))
@@ -158,8 +159,8 @@ public class LtiDeepLinkingService {
     /**
      * Prepares a content item for launching the Iris analytics dashboard.
      */
-    private List<LtiContentItem> populateIrisContentItems(String courseId) {
-        Optional<Course> courseOpt = courseRepository.findById(Long.parseLong(courseId));
+    private List<LtiContentItem> populateIrisContentItems(long courseId) {
+        Optional<Course> courseOpt = courseRepository.findById(courseId);
         if (courseOpt.isPresent() && courseOpt.get().getStudentCourseAnalyticsDashboardEnabled()) {
             String launchUrl = buildContentUrl(courseId, "dashboard");
             return List.of(createSingleUnitContentItem(launchUrl));
@@ -172,8 +173,8 @@ public class LtiDeepLinkingService {
     /**
      * Prepares a content item pointing to the learning path of the course.
      */
-    private List<LtiContentItem> populateLearningPathsContentItems(String courseId) {
-        boolean hasLearningPaths = courseRepository.findWithEagerLearningPathsAndLearningPathCompetenciesByIdElseThrow(Long.parseLong(courseId)).getLearningPathsEnabled();
+    private List<LtiContentItem> populateLearningPathsContentItems(long courseId) {
+        boolean hasLearningPaths = courseRepository.findByIdElseThrow(courseId).getLearningPathsEnabled();
         if (hasLearningPaths) {
             String launchUrl = buildContentUrl(courseId, "learning-path");
             return List.of(createSingleUnitContentItem(launchUrl));
@@ -186,7 +187,7 @@ public class LtiDeepLinkingService {
     /**
      * Create a content item for a specific exercise.
      */
-    private LtiContentItem setExerciseContentItem(String courseId, String exerciseId) {
+    private LtiContentItem setExerciseContentItem(long courseId, String exerciseId) {
         Optional<Exercise> exerciseOpt = exerciseRepository.findById(Long.valueOf(exerciseId));
         String launchUrl = buildContentUrl(courseId, "exercises", exerciseId);
         return exerciseOpt.map(exercise -> createExerciseContentItem(exercise, launchUrl))
@@ -196,7 +197,7 @@ public class LtiDeepLinkingService {
     /**
      * Create a content item for a group of exercises.
      */
-    private LtiContentItem setGroupedExerciseContentItem(String courseId, Set<Long> exerciseIds) {
+    private LtiContentItem setGroupedExerciseContentItem(long courseId, Set<Long> exerciseIds) {
 
         List<Exercise> exercises = exerciseRepository.findAllById(exerciseIds);
 
@@ -210,18 +211,19 @@ public class LtiDeepLinkingService {
     /**
      * Create a content item for a specific lecture.
      */
-    private LtiContentItem setLectureContentItem(String courseId, String lectureId) {
+    private LtiContentItem setLectureContentItem(long courseId, String lectureId) {
+        LectureRepositoryApi api = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class));
         String launchUrl = buildContentUrl(courseId, "lectures", lectureId);
-        return lectureRepository.findById(Long.valueOf(lectureId)).map(lecture -> createLectureContentItem(lecture, launchUrl))
+        return api.findById(Long.valueOf(lectureId)).map(lecture -> createLectureContentItem(lecture, launchUrl))
                 .orElseThrow(() -> new BadRequestAlertException("Lecture not found.", "LTI", "lectureNotFound"));
     }
 
     /**
      * Create a content item for a group of lectures.
      */
-    private LtiContentItem setGroupedLectureContentItem(String courseId, Set<Long> lectureIds) {
+    private LtiContentItem setGroupedLectureContentItem(long courseId, Set<Long> lectureIds) {
 
-        List<Lecture> lectures = lectureRepository.findAllById(lectureIds);
+        List<Lecture> lectures = lectureRepositoryApi.map(api -> api.findAllById(lectureIds)).orElse(List.of());
 
         if (lectures.isEmpty()) {
             throw new BadRequestAlertException("No lectures found.", "LTI", "lecturesNotFound");
@@ -269,16 +271,16 @@ public class LtiDeepLinkingService {
     /**
      * Build a content URL for deep linking.
      */
-    private String buildContentUrl(String courseId, String resourceType, String resourceId) {
+    private String buildContentUrl(long courseId, String resourceType, String resourceId) {
         return String.format("%s/courses/%s/%s/%s", artemisServerUrl, courseId, resourceType, resourceId);
     }
 
-    private String buildContentUrl(String courseId, String resourceType) {
+    private String buildContentUrl(long courseId, String resourceType) {
         return String.format("%s/courses/%s/%s", artemisServerUrl, courseId, resourceType);
     }
 
-    private String buildGroupedResourceUrl(String courseId, Set<Long> ids, String pathSegment, String queryParamKey, String alertKey) {
-        Long smallestId = ids.stream().min(Long::compareTo).orElseThrow(() -> new BadRequestAlertException("No IDs provided", "LTI", alertKey));
+    private String buildGroupedResourceUrl(long courseId, Set<Long> ids, String pathSegment, String queryParamKey, String alertKey) {
+        long smallestId = ids.stream().min(Long::compareTo).orElseThrow(() -> new BadRequestAlertException("No IDs provided", "LTI", alertKey));
 
         String baseUrl = String.format("%s/courses/%s/%s/%d", artemisServerUrl, courseId, pathSegment, smallestId);
         String joinedIds = ids.stream().map(String::valueOf).collect(Collectors.joining(","));

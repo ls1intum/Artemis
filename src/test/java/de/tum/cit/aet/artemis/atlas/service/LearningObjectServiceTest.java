@@ -22,7 +22,6 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
-import de.tum.cit.aet.artemis.lecture.service.LearningObjectService;
 import de.tum.cit.aet.artemis.lecture.util.LectureFactory;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
@@ -86,7 +85,7 @@ class LearningObjectServiceTest extends AbstractSpringIntegrationIndependentTest
     @ParameterizedTest(name = "{displayName} [{index}] {arguments}")
     @ValueSource(booleans = { true, false })
     void testIsCompletedByUserLectureUnit(boolean completed) {
-        var lectureUnit = LectureFactory.generateAttachmentUnit();
+        var lectureUnit = LectureFactory.generateAttachmentVideoUnit();
 
         if (completed) {
             lectureUtilService.completeLectureUnitForUser(lectureUnit, student);
