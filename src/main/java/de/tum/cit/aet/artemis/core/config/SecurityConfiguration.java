@@ -240,8 +240,10 @@ public class SecurityConfiguration {
                     .requestMatchers("/.well-known/assetlinks.json").permitAll()
                     .requestMatchers("/.well-known/apple-app-site-association").permitAll()
                     // Prometheus endpoint protected by IP address.
-                    .requestMatchers("/management/prometheus/**").access((authentication, context) -> new AuthorizationDecision(monitoringIpAddresses.contains(context.getRequest().getRemoteAddr())));
-
+                    .requestMatchers("/management/prometheus/**").access((authentication, context) -> new AuthorizationDecision(monitoringIpAddresses.contains(context.getRequest().getRemoteAddr())))
+                    .requestMatchers(("/api-docs")).permitAll()
+                    .requestMatchers(("/api-docs.yaml")).permitAll()
+                    .requestMatchers("/swagger-ui/**").permitAll();
                     // LocalVC related URLs: LocalVCPushFilter and LocalVCFetchFilter handle authentication on their own
                     if (profileService.isLocalVCActive()) {
                         requests.requestMatchers("/git/**").permitAll();
@@ -278,4 +280,5 @@ public class SecurityConfiguration {
     private JWTConfigurer securityConfigurerAdapter() {
         return new JWTConfigurer(tokenProvider, jwtCookieService, tokenValidityInSecondsForPasskey);
     }
+
 }
