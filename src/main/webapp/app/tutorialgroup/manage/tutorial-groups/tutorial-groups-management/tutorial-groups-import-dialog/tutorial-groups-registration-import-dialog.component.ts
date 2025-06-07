@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnDestroy, OnInit, ViewChild, inject, input } from '@angular/core';
+import { Component, ElementRef, Input, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { faBan, faCheck, faCircleNotch, faFileImport, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroupRegistrationImportDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-import-dto.model';
 import { cleanString } from 'app/shared/util/utils';
@@ -61,7 +61,7 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
     @ViewChild('fileInput') fileInput: ElementRef<HTMLInputElement>;
     selectedFile?: File;
 
-    courseId = input.required<number>();
+    @Input() courseId: number;
 
     registrationsDisplayedInTable: TutorialGroupRegistrationImportDTO[] = [];
     allRegistrations: TutorialGroupRegistrationImportDTO[] = [];
