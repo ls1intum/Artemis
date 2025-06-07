@@ -23,8 +23,8 @@ export class CourseCompetencyRelationFormComponent {
     private readonly courseCompetencyApiService = inject(CourseCompetencyApiService);
     private readonly alertService = inject(AlertService);
 
-    readonly courseId = input.required<number>();
-    readonly courseCompetencies = input.required<CourseCompetency[]>();
+    courseId = input.required<number>();
+    courseCompetencies = input.required<CourseCompetency[]>();
     readonly relations = model.required<CompetencyRelationDTO[]>();
     readonly selectedRelationId = model.required<number | undefined>();
 

@@ -38,8 +38,8 @@ describe('CompetencyAccordionComponent', () => {
         const exerciseMetrics: ExerciseMetrics = { exerciseInformation: { 0: exerciseInformation0, 1: exerciseInformation1 }, score: { 0: 80, 1: 40 }, completed: [0] };
         const competencyMetrics: CompetencyMetrics = { exercises: { 42: [0, 1] } };
         const metrics: StudentMetrics = { exerciseMetrics, competencyMetrics };
-        component.competency = { description: '', masteryThreshold: 80, optional: false, title: '', id: 42 };
-        component.metrics = metrics;
+        fixture.componentRef.setInput('competency', { description: '', masteryThreshold: 80, optional: false, title: '', id: 42 });
+        fixture.componentRef.setInput('metrics', metrics);
         const progress = component.calculateExercisesProgress();
         // achieved points decided by total points
         expect(progress).toBeCloseTo((80 * 10 + 40 * 20) / (10 + 20), 1);
@@ -56,8 +56,8 @@ describe('CompetencyAccordionComponent', () => {
         };
         const competencyMetrics: CompetencyMetrics = { lectureUnits: { 42: [0, 1, 2] } };
         const metrics: StudentMetrics = { lectureUnitStudentMetricsDTO, competencyMetrics };
-        component.competency = { description: '', masteryThreshold: 80, optional: false, title: '', id: 42 };
-        component.metrics = metrics;
+        fixture.componentRef.setInput('competency', { description: '', masteryThreshold: 80, optional: false, title: '', id: 42 });
+        fixture.componentRef.setInput('metrics', metrics);
         const progress = component.calculateLectureUnitsProgress();
         // completed 2 out of 3 lecture units
         expect(progress).toBeCloseTo((2 / 3) * 100, 0);
