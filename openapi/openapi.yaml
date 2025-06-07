@@ -20,7 +20,11 @@ paths:
         required: true
         schema: {type: integer, format: int64}
       responses:
-        '200': {description: OK}
+        '204':
+          description: No Content
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/EmptyResponse'}
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}:
     get:
       tags: [tutorial-group-session]
@@ -88,7 +92,11 @@ paths:
         required: true
         schema: {type: integer, format: int64}
       responses:
-        '200': {description: OK}
+        '204':
+          description: No Content
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/EmptyResponse'}
   ? /api/tutorialgroup/courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}/tutorial-free-periods/{tutorialGroupFreePeriodId}
   : delete:
       tags: [tutorial-group-free-period]
@@ -107,7 +115,11 @@ paths:
         required: true
         schema: {type: integer, format: int64}
       responses:
-        '200': {description: OK}
+        '204':
+          description: No Content
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/EmptyResponse'}
   /api/tutorialgroup/courses/{courseId}/tutorial-groups:
     get:
       tags: [tutorial-group]
@@ -412,7 +424,11 @@ paths:
         required: true
         schema: {type: string}
       responses:
-        '200': {description: OK}
+        '204':
+          description: No Content
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/EmptyResponse'}
 components:
   schemas:
     TutorialGroupSession:
@@ -524,6 +540,10 @@ components:
         notificationText: {type: string, maxLength: 1000, minLength: 1}
         updateTutorialGroupChannelName: {type: boolean}
       required: [tutorialGroup]
+    EmptyResponse:
+      type: object
+      description: An empty response (no content)
+      properties: {}
     StudentExport:
       type: object
       properties:
