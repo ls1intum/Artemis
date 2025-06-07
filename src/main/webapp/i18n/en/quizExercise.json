@@ -119,6 +119,7 @@
             "resultsAvailable": "Results available",
             "waitingForStart": "Waiting for Start",
             "numberOfQuestions": "Number of Questions",
+            "noQuestions": "No questions available",
             "quizInstructions": {
                 "live": "Answer all questions in the remaining time and only click the \"Submit\" button once you are done.",
                 "autoSave": "Your answers will be saved every 30s.",
