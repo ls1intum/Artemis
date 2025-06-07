@@ -112,7 +112,7 @@ class ProgrammingSubmissionAndResultLocalVCJenkinsIntegrationTest extends Abstra
         var notification = createJenkinsNewResultNotification("scrambled build plan key", userLogin, programmingLanguage, List.of(), new ArrayList<>(), new ArrayList<>());
         postResult(notification, HttpStatus.BAD_REQUEST);
 
-        var results = resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(participation.getId());
+        var results = resultRepository.findAllBySubmissionParticipationIdOrderByCompletionDateDesc(participation.getId());
         assertThat(results).isEmpty();
     }
 
@@ -178,7 +178,7 @@ class ProgrammingSubmissionAndResultLocalVCJenkinsIntegrationTest extends Abstra
     private Result assertBuildError(Long participationId, String userLogin) throws Exception {
         SecurityUtils.setAuthorizationObject();
         // Assert that result is linked to the participation
-        var results = resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(participationId);
+        var results = resultRepository.findAllBySubmissionParticipationIdOrderByCompletionDateDesc(participationId);
         assertThat(results).hasSize(1);
         var result = results.getFirst();
         assertThat(result.isSuccessful()).isFalse();
@@ -195,7 +195,7 @@ class ProgrammingSubmissionAndResultLocalVCJenkinsIntegrationTest extends Abstra
 
         userUtilService.changeUser(userLogin);
         // Assert that the build logs can be retrieved from the REST API from the database
-        var receivedLogs = request.get("/api/programming/repository/" + participationId + "/buildlogs", HttpStatus.OK, List.class);
+        var receivedLogs = request.get("/api/programming/participations/" + participationId + "/buildlogs", HttpStatus.OK, List.class);
         assertThat(receivedLogs).isNotNull().isNotEmpty();
 
         return result;

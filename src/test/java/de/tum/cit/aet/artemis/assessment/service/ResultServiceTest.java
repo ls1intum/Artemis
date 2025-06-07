@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilServi
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
@@ -72,9 +73,11 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentTest {
         this.programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         // This is done to avoid proxy issues in the processNewResult method of the ResultService.
         this.programmingExerciseStudentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(this.programmingExercise, TEST_PREFIX + "student1");
+        participationUtilService.addSubmission(this.programmingExerciseStudentParticipation, new ProgrammingSubmission());
 
         ProgrammingExercise examProgrammingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();
         this.examStudentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(examProgrammingExercise, TEST_PREFIX + "student1");
+        participationUtilService.addSubmission(examStudentParticipation, new ProgrammingSubmission());
     }
 
     @Test
@@ -96,7 +99,7 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     private void testFilterFeedbacksForClientAsCurrentUser() {
-        Result result = participationUtilService.addResultToParticipation(null, null, programmingExerciseStudentParticipation);
+        Result result = participationUtilService.addResultToSubmission(null, null, programmingExerciseStudentParticipation.findLatestSubmission().orElseThrow());
         result = participationUtilService.addVariousVisibilityFeedbackToResult(result);
 
         assertThat(resultService.filterFeedbackForClient(result)).containsExactlyInAnyOrderElementsOf(result.getFeedbacks());
@@ -105,7 +108,7 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
     void testFilterFeedbacksForClientAreSortedWithManualFirst() {
-        Result result = participationUtilService.addResultToParticipation(null, null, programmingExerciseStudentParticipation);
+        Result result = participationUtilService.addResultToSubmission(null, null, programmingExerciseStudentParticipation.findLatestSubmission().orElseThrow());
         result = participationUtilService.addVariousFeedbackTypeFeedbacksToResult(result);
 
         // The ordering should be the same as is declared in addVariousFeedbackTypeFeedbacksToResult()
@@ -118,7 +121,7 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentTest {
         Exam exam = examStudentParticipation.getExercise().getExam();
         exam.setPublishResultsDate(ZonedDateTime.now().plusDays(2));
         examRepository.save(exam);
-        Result result = participationUtilService.addResultToParticipation(null, null, examStudentParticipation);
+        Result result = participationUtilService.addResultToSubmission(null, null, examStudentParticipation.findLatestSubmission().orElseThrow());
         result = participationUtilService.addVariousVisibilityFeedbackToResult(result);
 
         List<Feedback> expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible() && !feedback.isAfterDueDate()).toList();
@@ -132,7 +135,7 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentTest {
         Exam exam = examStudentParticipation.getExercise().getExam();
         exam.setPublishResultsDate(ZonedDateTime.now().minusDays(2));
         examRepository.save(exam);
-        Result result = participationUtilService.addResultToParticipation(null, null, examStudentParticipation);
+        Result result = participationUtilService.addResultToSubmission(null, null, examStudentParticipation.findLatestSubmission().orElseThrow());
         result = participationUtilService.addVariousVisibilityFeedbackToResult(result);
 
         List<Feedback> expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible()).toList();
@@ -145,7 +148,7 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentTest {
     void testFilterFeedbacksForClientAsStudent_shouldFilterInCourseBeforeDueDate() {
         programmingExercise.setDueDate(ZonedDateTime.now().plusDays(2));
         programmingExerciseRepository.save(programmingExercise);
-        Result result = participationUtilService.addResultToParticipation(null, null, programmingExerciseStudentParticipation);
+        Result result = participationUtilService.addResultToSubmission(null, null, programmingExerciseStudentParticipation.findLatestSubmission().orElseThrow());
         result = participationUtilService.addVariousVisibilityFeedbackToResult(result);
 
         List<Feedback> expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible() && !feedback.isAfterDueDate()).toList();
@@ -158,9 +161,9 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentTest {
     void testFilterFeedbacksForClientAsStudent_shouldFilterInCourseAfterDueDate() {
         programmingExercise.setDueDate(ZonedDateTime.now().minusDays(2));
         programmingExerciseRepository.save(programmingExercise);
-        Result result = participationUtilService.addResultToParticipation(null, null, programmingExerciseStudentParticipation);
+        Result result = participationUtilService.addResultToSubmission(null, null, programmingExerciseStudentParticipation.findLatestSubmission().orElseThrow());
         result = participationUtilService.addVariousVisibilityFeedbackToResult(result);
-
+        result = resultRepository.save(result);
         List<Feedback> expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible()).toList();
 
         assertThat(resultService.filterFeedbackForClient(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
@@ -172,7 +175,8 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentTest {
         programmingExercise.setDueDate(ZonedDateTime.now().minusDays(4));
         programmingExercise.setAssessmentDueDate(ZonedDateTime.now().plusDays(2));
         programmingExerciseRepository.save(programmingExercise);
-        Result result = participationUtilService.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC, null, programmingExerciseStudentParticipation);
+        Result result = participationUtilService.addResultToSubmission(AssessmentType.SEMI_AUTOMATIC, null,
+                programmingExerciseStudentParticipation.findLatestSubmission().orElseThrow());
         result = participationUtilService.addVariousVisibilityFeedbackToResult(result);
         result = participationUtilService.addFeedbackToResult(ParticipationFactory.createPositiveFeedback(FeedbackType.MANUAL), result);
 
@@ -188,7 +192,8 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentTest {
         programmingExercise.setDueDate(ZonedDateTime.now().minusDays(4));
         programmingExercise.setAssessmentDueDate(ZonedDateTime.now().minusDays(2));
         programmingExerciseRepository.save(programmingExercise);
-        Result result = participationUtilService.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC, null, programmingExerciseStudentParticipation);
+        Result result = participationUtilService.addResultToSubmission(AssessmentType.SEMI_AUTOMATIC, null,
+                programmingExerciseStudentParticipation.findLatestSubmission().orElseThrow());
         result = participationUtilService.addVariousVisibilityFeedbackToResult(result);
         result = participationUtilService.addFeedbackToResult(ParticipationFactory.createPositiveFeedback(FeedbackType.MANUAL), result);
 
@@ -203,7 +208,8 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentTest {
         programmingExercise.setDueDate(ZonedDateTime.now().minusDays(4));
         programmingExercise.setAssessmentDueDate(ZonedDateTime.now().minusDays(2));
         programmingExerciseRepository.save(programmingExercise);
-        Result result = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, null, programmingExerciseStudentParticipation);
+        Result result = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null,
+                programmingExerciseStudentParticipation.findLatestSubmission().orElseThrow());
         result = participationUtilService.addVariousVisibilityFeedbackToResult(result);
         result = participationUtilService.addFeedbackToResult(ParticipationFactory.createPositiveFeedback(FeedbackType.MANUAL), result);
 
@@ -224,7 +230,7 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentTest {
         participation2.setIndividualDueDate(ZonedDateTime.now().plusDays(2));
         participationRepository.save(participation2);
 
-        Result result = participationUtilService.addResultToParticipation(assessmentType, null, programmingExerciseStudentParticipation);
+        Result result = participationUtilService.addResultToSubmission(assessmentType, null, programmingExerciseStudentParticipation.findLatestSubmission().orElseThrow());
         result = participationUtilService.addVariousVisibilityFeedbackToResult(result);
         result = participationUtilService.addFeedbackToResult(ParticipationFactory.createPositiveFeedback(FeedbackType.MANUAL), result);
 
@@ -252,7 +258,7 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentTest {
         participation2.setIndividualDueDate(ZonedDateTime.now().minusHours(1));
         participationRepository.save(participation2);
 
-        Result result = participationUtilService.addResultToParticipation(assessmentType, null, programmingExerciseStudentParticipation);
+        Result result = participationUtilService.addResultToSubmission(assessmentType, null, programmingExerciseStudentParticipation.findLatestSubmission().orElseThrow());
         result = participationUtilService.addVariousVisibilityFeedbackToResult(result);
         result = participationUtilService.addFeedbackToResult(ParticipationFactory.createPositiveFeedback(FeedbackType.MANUAL), result);
 
