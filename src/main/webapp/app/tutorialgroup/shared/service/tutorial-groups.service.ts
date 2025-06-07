@@ -24,11 +24,11 @@ export class TutorialGroupsService {
 
     private resourceURL = 'api/tutorialgroup';
 
-    getUniqueCampusValues(courseId: number): Observable<HttpResponse<Set<string>>> {
+    getUniqueCampusValues(courseId: number): Observable<HttpResponse<Array<string>>> {
         return this.tutorialGroupApiService.getUniqueCampusValues(courseId, 'response');
     }
 
-    getUniqueLanguageValues(courseId: number): Observable<HttpResponse<Set<string>>> {
+    getUniqueLanguageValues(courseId: number): Observable<HttpResponse<Array<string>>> {
         return this.tutorialGroupApiService.getUniqueLanguageValues(courseId, 'response');
     }
 
@@ -80,11 +80,11 @@ export class TutorialGroupsService {
         return this.tutorialGroupApiService.registerStudent(courseId, tutorialGroupId, login, 'response');
     }
 
-    registerMultipleStudents(courseId: number, tutorialGroupId: number, studentDtos: StudentDTO[]): Observable<HttpResponse<Set<Student>>> {
-        return this.tutorialGroupApiService.registerMultipleStudentsToTutorialGroup(courseId, tutorialGroupId, new Set(studentDtos), 'response');
+    registerMultipleStudents(courseId: number, tutorialGroupId: number, studentDtos: StudentDTO[]): Observable<HttpResponse<Array<Student>>> {
+        return this.tutorialGroupApiService.registerMultipleStudentsToTutorialGroup(courseId, tutorialGroupId, studentDtos, 'response');
     }
 
-    import(courseId: number, tutorialGroups: TutorialGroupRegistrationImport): Observable<HttpResponse<Array<TutorialGroupRegistrationImport>>> {
+    import(courseId: number, tutorialGroups: TutorialGroupRegistrationImport[]): Observable<HttpResponse<Array<TutorialGroupRegistrationImport>>> {
         return this.tutorialGroupApiService.importRegistrations(courseId, tutorialGroups, 'response');
     }
 

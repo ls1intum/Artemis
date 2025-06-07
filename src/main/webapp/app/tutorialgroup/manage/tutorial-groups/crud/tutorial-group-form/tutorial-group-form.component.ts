@@ -335,19 +335,13 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy 
 
     private getUniqueCampusValuesOfCourse() {
         return concat(
-            of([] as string[]),
+            of([]), // default items
             this.tutorialGroupService.getUniqueCampusValues(this.course.id!).pipe(
                 catchError((res: HttpErrorResponse) => {
                     onError(this.alertService, res);
-                    return of([] as string[]);
+                    return of([]);
                 }),
-                map((response: HttpResponse<Set<string>> | string[]) => {
-                    if (response instanceof HttpResponse) {
-                        return response.body ? Array.from(response.body) : [];
-                    } else {
-                        return response;
-                    }
-                }),
+                map((res: HttpResponse<string[]>) => res.body!),
                 finalize(() => {
                     this.campusAreLoading = false;
                 }),
@@ -360,19 +354,13 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy 
 
     private getUniqueLanguageValuesOfCourse() {
         return concat(
-            of([] as string[]),
+            of([]), // default items
             this.tutorialGroupService.getUniqueLanguageValues(this.course.id!).pipe(
                 catchError((res: HttpErrorResponse) => {
                     onError(this.alertService, res);
-                    return of([] as string[]);
+                    return of([]);
                 }),
-                map((response: HttpResponse<Set<string>> | string[]) => {
-                    if (response instanceof HttpResponse) {
-                        return response.body ? Array.from(response.body) : [];
-                    } else {
-                        return response;
-                    }
-                }),
+                map((res: HttpResponse<string[]>) => res.body!),
                 finalize(() => {
                     this.languagesAreLoading = false;
                 }),
@@ -380,6 +368,7 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy 
             ),
         ).subscribe((languages: string[]) => {
             this.languages = languages;
+            // default values for English & German
             if (!languages.includes('English')) {
                 this.languages.push('English');
             }

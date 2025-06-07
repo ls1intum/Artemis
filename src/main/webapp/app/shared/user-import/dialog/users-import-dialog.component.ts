@@ -232,7 +232,7 @@ export class UsersImportDialogComponent implements OnDestroy {
         this.isImporting = true;
         if (this.tutorialGroup) {
             this.tutorialGroupService.registerMultipleStudents(this.courseId, this.tutorialGroup.id!, this.usersToImport).subscribe({
-                next: (res: HttpResponse<Set<Student>>) => {
+                next: (res: HttpResponse<Array<Student>>) => {
                     // Assuming res.body contains students that could NOT be registered.
                     // Convert Set<Student> to Partial<StudentDTO>[] for onSaveSuccess.
                     const notFoundDtos: Partial<StudentDTO>[] = [];
