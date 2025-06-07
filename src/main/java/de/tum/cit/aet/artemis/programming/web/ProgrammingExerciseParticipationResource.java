@@ -4,6 +4,8 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -187,7 +190,7 @@ public class ProgrammingExerciseParticipationResource {
      * The repository name is the last part of the repository URL.
      * The repository URL is built as follows: {server.url}/git/{project_key}/{repo-name}.git
      *
-     * @param repoName the URL repository identifier
+     * @param repoNameParam the URL repository identifier
      * @return the ResponseEntity with status 200 (OK) and the participation DTO {@link de.tum.cit.aet.artemis.programming.dto.RepoNameProgrammingStudentParticipationDTO} in body,
      *         or with status 400 (Bad Request) if the repo name is not provided as request parameter,
      *         or with status 404 (Not Found) if the participation is not found,
@@ -196,13 +199,22 @@ public class ProgrammingExerciseParticipationResource {
     @GetMapping("programming-exercise-participations")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
-    public ResponseEntity<RepoNameProgrammingStudentParticipationDTO> getStudentParticipationByRepoName(@RequestParam(required = true, name = "repoName") String repoName) {
+    public ResponseEntity<RepoNameProgrammingStudentParticipationDTO> getStudentParticipationByRepoName(@RequestParam(required = false, name = "repoName") String repoNameParam,
+            @RequestParam(required = false, name = "repoUri") String repoUriParam) {
         String repoUri;
-        try {
-            repoUri = new VcsRepositoryUri(vcUrl, repoName).toString();
+        if (StringUtils.hasText(repoUriParam)) {
+            repoUri = URLDecoder.decode(repoUriParam, StandardCharsets.UTF_8);
         }
-        catch (URISyntaxException e) {
-            throw new BadRequestAlertException("Invalid repository URL", ENTITY_NAME, "invalidRepositoryUrl");
+        else if (StringUtils.hasText(repoNameParam)) {
+            try {
+                repoUri = new VcsRepositoryUri(vcUrl, repoNameParam).toString();
+            }
+            catch (URISyntaxException e) {
+                throw new BadRequestAlertException("Invalid repository URL", ENTITY_NAME, "invalidRepositoryUrl");
+            }
+        }
+        else {
+            throw new BadRequestAlertException("Repository name or URI must be provided", ENTITY_NAME, "repoNameOrUriRequired");
         }
 
         // find participation by url
