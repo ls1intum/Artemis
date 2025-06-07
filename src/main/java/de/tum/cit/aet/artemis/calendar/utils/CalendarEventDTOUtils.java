@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.calendar.service;
+package de.tum.cit.aet.artemis.calendar.utils;
 
 import java.time.DateTimeException;
 import java.time.LocalDate;
@@ -15,16 +15,10 @@ import java.util.stream.Collectors;
 
 import jakarta.ws.rs.BadRequestException;
 
-import org.springframework.context.annotation.Conditional;
-import org.springframework.stereotype.Service;
-
-import de.tum.cit.aet.artemis.calendar.config.CalendarEnabled;
 import de.tum.cit.aet.artemis.calendar.dto.CalendarEventDTO;
 import de.tum.cit.aet.artemis.core.util.DateUtil;
 
-@Conditional(CalendarEnabled.class)
-@Service
-public class CalendarEventDTOService {
+public class CalendarEventDTOUtils {
 
     /**
      * Deserializes a list of month keys into a set of {@link YearMonth} objects.
@@ -33,7 +27,7 @@ public class CalendarEventDTOService {
      * @return the set of parsed objects
      * @throws BadRequestException if the list is empty or contains invalid format
      */
-    public Set<YearMonth> deserializeMonthKeysOrElseThrow(List<String> monthKeys) {
+    public static Set<YearMonth> deserializeMonthKeysOrElseThrow(List<String> monthKeys) {
         try {
             Set<YearMonth> months = monthKeys.stream().map(YearMonth::parse).collect(Collectors.toSet());
             if (months.isEmpty()) {
@@ -53,7 +47,7 @@ public class CalendarEventDTOService {
      * @return the parsed object
      * @throws BadRequestException if the input has a wrong format
      */
-    public ZoneId deserializeZoneIdOrElseThrow(String timeZone) {
+    public static ZoneId deserializeZoneIdOrElseThrow(String timeZone) {
         try {
             return ZoneId.of(timeZone);
         }
@@ -70,11 +64,11 @@ public class CalendarEventDTOService {
      * @param clientTimeZone used to accurately compute month boundaries in the client's timezone when checking for overlaps
      * @return the filtered calendar events
      */
-    public Set<CalendarEventDTO> filterForEventsOverlappingMonths(Set<CalendarEventDTO> eventDTOs, Set<YearMonth> months, ZoneId clientTimeZone) {
+    public static Set<CalendarEventDTO> filterForEventsOverlappingMonths(Set<CalendarEventDTO> eventDTOs, Set<YearMonth> months, ZoneId clientTimeZone) {
         return eventDTOs.stream().filter(eventDTO -> months.stream().anyMatch(month -> areMonthAndEventOverlapping(month, eventDTO, clientTimeZone))).collect(Collectors.toSet());
     }
 
-    private boolean areMonthAndEventOverlapping(YearMonth month, CalendarEventDTO calendarEventDTO, ZoneId clientZone) {
+    private static boolean areMonthAndEventOverlapping(YearMonth month, CalendarEventDTO calendarEventDTO, ZoneId clientZone) {
         ZonedDateTime eventStart = calendarEventDTO.startDate();
         ZonedDateTime eventEnd = calendarEventDTO.endDate();
         ZonedDateTime monthStart = ZonedDateTime.of(month.atDay(1), LocalTime.MIDNIGHT, clientZone).withZoneSameInstant(ZoneOffset.UTC);
@@ -86,7 +80,7 @@ public class CalendarEventDTOService {
         return eventStartFallsIntoMonth || eventEndFallsIntoMonth || eventWrapsMonth;
     }
 
-    private boolean firstIsBeforeOrEqualSecond(ZonedDateTime first, ZonedDateTime second) {
+    private static boolean firstIsBeforeOrEqualSecond(ZonedDateTime first, ZonedDateTime second) {
         return first.isBefore(second) || first.isEqual(second);
     }
 
@@ -96,11 +90,11 @@ public class CalendarEventDTOService {
      * @param eventDTOs the set of calendar events to process
      * @return a set including all unsplit events and the splitting results
      */
-    public Set<CalendarEventDTO> splitEventsSpanningMultipleDaysIfNecessary(Set<CalendarEventDTO> eventDTOs) {
+    public static Set<CalendarEventDTO> splitEventsSpanningMultipleDaysIfNecessary(Set<CalendarEventDTO> eventDTOs) {
         return eventDTOs.stream().flatMap(event -> splitEventAcrossDaysIfNecessary(event).stream()).collect(Collectors.toSet());
     }
 
-    private Set<CalendarEventDTO> splitEventAcrossDaysIfNecessary(CalendarEventDTO event) {
+    private static Set<CalendarEventDTO> splitEventAcrossDaysIfNecessary(CalendarEventDTO event) {
         ZonedDateTime start = event.startDate();
         ZonedDateTime end = event.endDate();
 

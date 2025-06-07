@@ -30,8 +30,8 @@ import de.tum.cit.aet.artemis.calendar.domain.CoursewideCalendarEvent;
 import de.tum.cit.aet.artemis.calendar.dto.CalendarEventDTO;
 import de.tum.cit.aet.artemis.calendar.dto.CoursewideCalendarEventDTO;
 import de.tum.cit.aet.artemis.calendar.repository.CoursewideCalendarEventRepository;
-import de.tum.cit.aet.artemis.calendar.service.CalendarEventDTOService;
 import de.tum.cit.aet.artemis.calendar.service.CoursewideCalendarEventService;
+import de.tum.cit.aet.artemis.calendar.utils.CalendarEventDTOUtils;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
@@ -61,19 +61,16 @@ public class CalendarResource {
 
     private final CoursewideCalendarEventService coursewideCalendarEventService;
 
-    private final CalendarEventDTOService calendarEventDTOService;
-
     private final CoursewideCalendarEventRepository coursewideCalendarEventRepository;
 
     public CalendarResource(UserRepository userRepository, TutorialGroupApi tutorialGroupApi, CourseRepository courseRepository,
-            AuthorizationCheckService authorizationCheckService, CoursewideCalendarEventService coursewideCalendarEventService, CalendarEventDTOService calendarEventDTOService,
+            AuthorizationCheckService authorizationCheckService, CoursewideCalendarEventService coursewideCalendarEventService,
             CoursewideCalendarEventRepository coursewideCalendarEventRepository) {
         this.userRepository = userRepository;
         this.tutorialGroupApi = tutorialGroupApi;
         this.courseRepository = courseRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.coursewideCalendarEventService = coursewideCalendarEventService;
-        this.calendarEventDTOService = calendarEventDTOService;
         this.coursewideCalendarEventRepository = coursewideCalendarEventRepository;
     }
 
@@ -92,16 +89,16 @@ public class CalendarResource {
     public ResponseEntity<Map<String, List<CalendarEventDTO>>> getCalendarEventsOverlappingMonths(@RequestParam List<String> monthKeys, @RequestParam String timeZone) {
         log.debug("REST request to get calendar events falling into: {}", monthKeys);
 
-        Set<YearMonth> months = calendarEventDTOService.deserializeMonthKeysOrElseThrow(monthKeys);
-        ZoneId clientTimeZone = calendarEventDTOService.deserializeZoneIdOrElseThrow(timeZone);
+        Set<YearMonth> months = CalendarEventDTOUtils.deserializeMonthKeysOrElseThrow(monthKeys);
+        ZoneId clientTimeZone = CalendarEventDTOUtils.deserializeZoneIdOrElseThrow(timeZone);
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
         Set<CalendarEventDTO> tutorialEventReadDTOs = tutorialGroupApi.getTutorialEventsForUser(user, clientTimeZone);
         Set<CalendarEventDTO> courseEventReadDTOs = coursewideCalendarEventService.getCourseEventsForUser(user, clientTimeZone);
 
         Set<CalendarEventDTO> calendarEventDTOS = Stream.concat(tutorialEventReadDTOs.stream(), courseEventReadDTOs.stream()).collect(Collectors.toSet());
-        Set<CalendarEventDTO> filteredDTOs = calendarEventDTOService.filterForEventsOverlappingMonths(calendarEventDTOS, months, clientTimeZone);
-        Set<CalendarEventDTO> splitDTOs = calendarEventDTOService.splitEventsSpanningMultipleDaysIfNecessary(filteredDTOs);
+        Set<CalendarEventDTO> filteredDTOs = CalendarEventDTOUtils.filterForEventsOverlappingMonths(calendarEventDTOS, months, clientTimeZone);
+        Set<CalendarEventDTO> splitDTOs = CalendarEventDTOUtils.splitEventsSpanningMultipleDaysIfNecessary(filteredDTOs);
         Map<String, List<CalendarEventDTO>> calendarEventDTOsByDay = splitDTOs.stream().collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
         return ResponseEntity.ok(calendarEventDTOsByDay);
