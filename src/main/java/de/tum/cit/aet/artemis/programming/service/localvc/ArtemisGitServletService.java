@@ -5,12 +5,12 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 import org.eclipse.jgit.http.server.GitServlet;
 import org.eclipse.jgit.transport.ReceivePack;
 import org.eclipse.jgit.transport.UploadPack;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 import de.tum.cit.aet.artemis.core.domain.User;
 
 /**
@@ -42,7 +42,7 @@ public class ArtemisGitServletService extends GitServlet {
      * <p>
      * <a href="https://git-scm.com/docs/git-upload-pack">https://git-scm.com/docs/git-upload-pack</a>
      */
-    @EventListener(ApplicationReadyEvent.class)
+    @EventListener(FullStartupEvent.class)
     @Override
     public void init() {
         this.setRepositoryResolver((request, name) -> {

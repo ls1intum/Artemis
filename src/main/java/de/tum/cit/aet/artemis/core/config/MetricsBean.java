@@ -20,7 +20,6 @@ import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthContributor;
 import org.springframework.boot.actuate.health.HealthIndicator;
 import org.springframework.boot.actuate.health.NamedContributor;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.cloud.client.discovery.health.DiscoveryCompositeHealthContributor;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -225,7 +224,7 @@ public class MetricsBean {
      * </li>
      * </ul>
      */
-    @EventListener(ApplicationReadyEvent.class)
+    @EventListener(FullStartupEvent.class)
     public void applicationReady() {
         registerHealthContributors(healthContributors);
         registerWebsocketMetrics();
