@@ -11,6 +11,7 @@ import java.util.regex.Pattern;
 import jakarta.validation.constraints.NotNull;
 
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -24,6 +25,7 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
  * Spring JPA repository for Organization entities
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Repository
 public interface OrganizationRepository extends ArtemisJpaRepository<Organization, Long> {
 

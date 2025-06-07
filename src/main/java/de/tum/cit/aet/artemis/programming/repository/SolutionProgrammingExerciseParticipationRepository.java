@@ -9,6 +9,7 @@ import java.util.Optional;
 
 import jakarta.validation.constraints.NotNull;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -29,6 +30,7 @@ import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExercisePart
  * Spring Data JPA repository for the Participation entity.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Repository
 public interface SolutionProgrammingExerciseParticipationRepository
         extends DynamicSpecificationRepository<SolutionProgrammingExerciseParticipation, Long, SolutionParticipationFetchOptions> {

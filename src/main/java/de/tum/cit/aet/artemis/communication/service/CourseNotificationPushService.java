@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.util.HashSet;
 import java.util.List;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -24,6 +25,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
  * </p>
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class CourseNotificationPushService extends CourseNotificationBroadcastService {
 

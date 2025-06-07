@@ -53,6 +53,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.scheduling.annotation.Async;
@@ -85,9 +86,13 @@ import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.authorization.AuthorizationTestService;
 import de.tum.cit.aet.artemis.core.config.ApplicationConfiguration;
 import de.tum.cit.aet.artemis.core.config.ConditionalMetricsExclusionConfiguration;
+import de.tum.cit.aet.artemis.core.config.SecurityConfiguration;
+import de.tum.cit.aet.artemis.core.config.TomcatConfiguration;
+import de.tum.cit.aet.artemis.core.util.HibernateQueryInterceptor;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryResource;
 import de.tum.cit.aet.artemis.shared.base.AbstractArtemisIntegrationTest;
+import de.tum.cit.aet.artemis.shared.config.HibernatePropertiesConfig;
 
 /**
  * This class contains architecture tests that apply for the whole project.
@@ -382,6 +387,16 @@ class ArchitectureTest extends AbstractArchitectureTest {
             }
         }
         return false;
+    }
+
+    @Test
+    void ensureSpringComponentsAreLazyAnnotated() {
+        ArchRule rule = classes().that().areAnnotatedWith(Controller.class).or().areAnnotatedWith(RestController.class).or().areAnnotatedWith(Repository.class).or()
+                .areAnnotatedWith(Service.class).or().areAnnotatedWith(Component.class).or().areAnnotatedWith(Configuration.class).should().beAnnotatedWith(Lazy.class)
+                .because("All Spring components should be lazy-loaded to improve startup time");
+
+        rule.check(classesExcept(allClasses, ApplicationConfiguration.class, ConditionalMetricsExclusionConfiguration.class, SecurityConfiguration.class, TomcatConfiguration.class,
+                HibernateQueryInterceptor.class, HibernatePropertiesConfig.class));
     }
 
     @Test

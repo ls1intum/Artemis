@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.iris.api;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
@@ -12,6 +13,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyR
 
 @Profile(PROFILE_IRIS)
 @Controller
+@Lazy
 public class IrisCompetencyApi extends AbstractIrisApi {
 
     private final IrisCompetencyGenerationService irisCompetencyGenerationService;

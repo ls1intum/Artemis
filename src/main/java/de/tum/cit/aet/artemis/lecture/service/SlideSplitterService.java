@@ -25,6 +25,7 @@ import org.apache.pdfbox.rendering.ImageType;
 import org.apache.pdfbox.rendering.PDFRenderer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -46,6 +47,7 @@ import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
  * Service Implementation for managing the split of AttachmentVideoUnit into single slides and save them as PNG.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class SlideSplitterService {
 

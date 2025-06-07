@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -35,6 +36,7 @@ import de.tum.cit.aet.artemis.programming.service.jenkins.build_plan.JenkinsBuil
 import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobService;
 
 @Profile(PROFILE_JENKINS)
+@Lazy
 @Service
 public class JenkinsService implements ContinuousIntegrationService {
 

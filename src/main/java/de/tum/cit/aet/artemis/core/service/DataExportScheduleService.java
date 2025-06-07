@@ -12,6 +12,7 @@ import java.util.concurrent.Executors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -28,6 +29,7 @@ import de.tum.cit.aet.artemis.core.service.user.UserService;
 /**
  * Service responsible for scheduling data exports.
  */
+@Lazy
 @Service
 @Profile(PROFILE_CORE_AND_SCHEDULING)
 public class DataExportScheduleService {

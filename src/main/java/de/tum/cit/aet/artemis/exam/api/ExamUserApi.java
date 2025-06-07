@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.exam.api;
 import java.util.Optional;
 
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
@@ -11,6 +12,7 @@ import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 
 @Conditional(ExamEnabled.class)
 @Controller
+@Lazy
 public class ExamUserApi extends AbstractExamApi {
 
     private final ExamUserRepository examUserRepository;

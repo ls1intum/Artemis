@@ -10,6 +10,7 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +20,7 @@ import com.hazelcast.core.HazelcastInstance;
  * This service is only active on a node that does not run with the 'scheduling' profile.
  * All requests are forwarded to a Hazelcast topic and a node with the 'scheduling' profile will then process it.
  */
+@Lazy
 @Service
 @Profile("!" + PROFILE_SCHEDULING + " & " + PROFILE_CORE)
 public class DistributedInstanceMessageSendService implements InstanceMessageSendService {

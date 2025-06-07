@@ -7,6 +7,7 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.health.Status;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,6 +31,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.PyrisHealthIndicator;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisWebhookService;
 
 @Profile(PROFILE_IRIS)
+@Lazy
 @RestController
 @RequestMapping("api/iris/")
 public class IrisResource {

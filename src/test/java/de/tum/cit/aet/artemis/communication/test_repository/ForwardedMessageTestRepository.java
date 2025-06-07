@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.communication.test_repository;
 
 import java.util.Set;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -13,6 +14,7 @@ import de.tum.cit.aet.artemis.communication.repository.ForwardedMessageRepositor
 /**
  * Test repository for ForwardedMessageRepository.
  */
+@Lazy
 @Repository
 @Primary
 public interface ForwardedMessageTestRepository extends ForwardedMessageRepository {

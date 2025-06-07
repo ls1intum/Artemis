@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
 import java.util.List;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
@@ -15,6 +16,7 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 
 @Profile(PROFILE_IRIS)
 @Controller
+@Lazy
 public class IrisLectureApi extends AbstractIrisApi {
 
     private final PyrisWebhookService pyrisWebhookService;

@@ -7,6 +7,7 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.web.webauthn.api.Bytes;
 import org.springframework.security.web.webauthn.api.CredentialRecord;
@@ -38,6 +39,7 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
  * @see UserRepository
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Repository
 public class ArtemisUserCredentialRepository implements UserCredentialRepository {
 
