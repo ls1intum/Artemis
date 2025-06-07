@@ -42,6 +42,16 @@ public interface TutorialGroupSessionRepository extends ArtemisJpaRepository<Tut
     Set<TutorialGroupSession> findAllByTutorialGroupId(@Param("tutorialGroupId") Long tutorialGroupId);
 
     @Query("""
+                SELECT session
+                FROM TutorialGroupSession session
+                    JOIN FETCH session.tutorialGroup tg
+                    JOIN FETCH tg.course
+                    JOIN FETCH tg.teachingAssistant
+                WHERE tg.id IN :tutorialGroupIds AND session.status = 'ACTIVE'
+            """)
+    Set<TutorialGroupSession> findAllActiveByTutorialGroupIdsWithGroupAndCourseAndAssistant(@Param("tutorialGroupIds") Set<Long> tutorialGroupIds);
+
+    @Query("""
             SELECT session
             FROM TutorialGroupSession session
             WHERE session.tutorialGroupSchedule.id = :scheduleId
