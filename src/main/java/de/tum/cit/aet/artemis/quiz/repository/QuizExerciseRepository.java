@@ -20,7 +20,6 @@ import org.springframework.stereotype.Repository;
 import de.tum.cit.aet.artemis.core.exception.NoUniqueQueryException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
-import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 
 /**
  * Spring Data JPA repository for the QuizExercise entity.
@@ -85,19 +84,6 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
                 AND q.course.id = :courseId
             """)
     Set<QuizExercise> findAllWithCompetenciesByTitleAndCourseId(@Param("title") String title, @Param("courseId") long courseId);
-
-    /**
-     * Finds all quiz question from a course that are open for practice.
-     *
-     * @param courseId of the course
-     * @return a set of quiz questions
-     */
-    @Query("""
-            SELECT q
-            FROM QuizQuestion q
-            WHERE q.exercise.course.id = :courseId AND q.exercise.isOpenForPractice = TRUE
-            """)
-    Set<QuizQuestion> findAllQuizQuestionsByCourseId(@Param("courseId") Long courseId);
 
     /**
      * Finds a quiz exercise by its title and course id and throws a NoUniqueQueryException if multiple exercises are found.
