@@ -21,6 +21,10 @@
                     "label": "Repetition Intensity",
                     "description": "Choose how much you are willing to repeat the course content."
                 },
+                "proficiency": {
+                    "label": "Proficiency",
+                    "description": "Artemis' estimation of your proficiency in this course."
+                },
                 "profileSaved": "Learner profile saved",
                 "invalidRange": "Values must be between 1 and 5",
                 "level": {

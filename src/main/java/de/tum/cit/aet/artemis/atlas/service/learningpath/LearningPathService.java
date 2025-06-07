@@ -122,7 +122,7 @@ public class LearningPathService {
     public void enableLearningPathsForCourse(@NotNull Course course) {
         course.setLearningPathsEnabled(true);
         Set<User> students = userRepository.getStudentsWithLearnerProfile(course);
-        courseLearnerProfileService.createCourseLearnerProfiles(course, students);
+        courseLearnerProfileService.getOrCreateCourseLearnerProfiles(course, students);
         generateLearningPaths(course, students);
         courseRepository.save(course);
         log.debug("Enabled learning paths for course (id={})", course.getId());
@@ -135,7 +135,7 @@ public class LearningPathService {
      */
     public void generateLearningPaths(@NotNull Course course) {
         Set<User> students = userRepository.getStudentsWithLearnerProfile(course);
-        courseLearnerProfileService.createCourseLearnerProfiles(course, students);
+        courseLearnerProfileService.getOrCreateCourseLearnerProfiles(course, students);
         generateLearningPaths(course, students);
     }
 
@@ -381,7 +381,7 @@ public class LearningPathService {
         LearningPath learningPath;
         if (optionalLearningPath.isEmpty()) {
             LearningPath learningPathWithCourse = learningPathRepository.findWithEagerCourseByIdElseThrow(learningPathId);
-            courseLearnerProfileService.createCourseLearnerProfile(learningPathWithCourse.getCourse(), learningPathWithCourse.getUser());
+            courseLearnerProfileService.getOrCreateCourseLearnerProfile(learningPathWithCourse.getCourse(), learningPathWithCourse.getUser());
             learningPath = learningPathRepositoryService.findWithCompetenciesAndLectureUnitsAndExercisesAndLearnerProfileByIdElseThrow(learningPathId);
         }
         else {
