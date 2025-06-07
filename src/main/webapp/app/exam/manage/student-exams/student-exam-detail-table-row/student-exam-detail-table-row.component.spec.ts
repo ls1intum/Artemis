@@ -25,6 +25,7 @@ import { faCheckDouble, faFileUpload, faKeyboard, faProjectDiagram } from '@fort
 import { UMLDiagramType } from '@ls1intum/apollon';
 import { provideRouter } from '@angular/router';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
+import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 
 describe('StudentExamDetailTableRowComponent', () => {
     let studentExamDetailTableRowComponentFixture: ComponentFixture<StudentExamDetailTableRowComponent>;
@@ -40,7 +41,10 @@ describe('StudentExamDetailTableRowComponent', () => {
         exam1 = { course, id: 1 };
         result = { score: 40, id: 10 };
         studentParticipation = new StudentParticipation(ParticipationType.STUDENT);
-        studentParticipation.results = [result];
+        const submission = new TextSubmission();
+        submission.results = [result];
+        submission.participation = studentParticipation;
+        studentParticipation.submissions = [submission];
         exercise = new ModelingExercise(UMLDiagramType.ActivityDiagram, course, new ExerciseGroup());
         exercise.maxPoints = 100;
         exercise.studentParticipations = [studentParticipation];

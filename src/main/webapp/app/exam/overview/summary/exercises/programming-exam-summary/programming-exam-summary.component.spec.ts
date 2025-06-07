@@ -63,11 +63,13 @@ const feedback = {
 
 const result = {
     id: 89,
-    participation: {
-        id: 55,
-        type: ParticipationType.PROGRAMMING,
-        participantIdentifier: 'student42',
-        repositoryUri: 'https://artemis.tum.de/projects/somekey/repos/somekey-student42',
+    submission: {
+        participation: {
+            id: 55,
+            type: ParticipationType.PROGRAMMING,
+            participantIdentifier: 'student42',
+            repositoryUri: 'https://artemis.tum.de/projects/somekey/repos/somekey-student42',
+        },
     },
     feedbacks: [feedback],
     assessmentType: AssessmentType.MANUAL,
@@ -111,6 +113,15 @@ describe('ProgrammingExamSummaryComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(ProgrammingExamSummaryComponent);
                 component = fixture.componentInstance;
+
+                // TODO Michal Kawka
+                component.exercise = programmingExercise;
+                programmingSubmission.results = [result];
+                programmingSubmission.participation = programmingParticipation;
+                programmingParticipation.submissions = [programmingSubmission];
+                component.participation = programmingParticipation;
+                component.submission = programmingSubmission;
+                component.exam = exam;
 
                 fixture.componentRef.setInput('exercise', programmingExercise);
                 fixture.componentRef.setInput('participation', programmingParticipation);

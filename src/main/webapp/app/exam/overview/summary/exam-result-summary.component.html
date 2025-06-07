@@ -164,7 +164,7 @@
                                         class="mb-2 mt-2 ms-3"
                                         [exercise]="exercise"
                                         [participation]="exerciseInfos[exercise.id!]!.participation!"
-                                        [result]="exerciseInfos[exercise.id!]!.participation!.results?.[0]"
+                                        [result]="exerciseInfos[exercise.id!]!.participation!.submissions![0].results?.[0]"
                                         [exam]="examWithOnlyIdAndStudentReviewPeriod"
                                         [testRun]="isTestRun"
                                     />
