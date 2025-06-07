@@ -84,7 +84,7 @@ export class TutorialGroupsService {
         return this.tutorialGroupApiService.registerMultipleStudentsToTutorialGroup(courseId, tutorialGroupId, new Set(studentDtos), 'response');
     }
 
-    import(courseId: number, tutorialGroups: Set<TutorialGroupRegistrationImport>): Observable<HttpResponse<Array<TutorialGroupRegistrationImport>>> {
+    import(courseId: number, tutorialGroups: TutorialGroupRegistrationImport): Observable<HttpResponse<Array<TutorialGroupRegistrationImport>>> {
         return this.tutorialGroupApiService.importRegistrations(courseId, tutorialGroups, 'response');
     }
 

@@ -45,6 +45,10 @@
         outputDir = "${rootDir}/src/main/webapp/app/openapi"
         apiPackage = "api"
         modelPackage = "model"
+        // sets are not properly converted to JSON objects, so we need to use Array instead https://github.com/OpenAPITools/openapi-generator/issues/14055
+        typeMappings = [
+                set: 'Array'
+        ]
         configOptions = [
             serviceSuffix: "ApiService",
             supportsES6: "true",
