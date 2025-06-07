@@ -19,7 +19,7 @@ public interface CoursewideCalendarEventRepository extends ArtemisJpaRepository<
     @Query("""
             SELECT event
             FROM CoursewideCalendarEvent event
-                JOIN FETCH event.course course
+                JOIN event.course course
             WHERE course.id IN :courseIds
             """)
     Set<CoursewideCalendarEvent> findAllByCourseIdsWithCourse(@Param("courseIds") Set<Long> courseIds);
@@ -27,7 +27,7 @@ public interface CoursewideCalendarEventRepository extends ArtemisJpaRepository<
     @Query("""
             SELECT event
             FROM CoursewideCalendarEvent event
-                JOIN FETCH event.course
+                JOIN event.course
             WHERE event.id = :id
             """)
     Optional<CoursewideCalendarEvent> findByIdWithCourse(@Param("id") Long id);
