@@ -6,10 +6,10 @@ import static de.tum.cit.aet.artemis.core.config.Constants.COMPLAINT_TEXT_LIMIT;
 import static de.tum.cit.aet.artemis.core.config.Constants.SHORT_NAME_PATTERN;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
 import java.util.regex.Matcher;
 
 import jakarta.persistence.CascadeType;
@@ -240,7 +240,8 @@ public class Course extends DomainObject {
 
     @OneToMany(mappedBy = "course", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties(value = "course")
-    private SortedSet<CoursewideCalendarEvent> coursewideCalendarEvents = new TreeSet<>();
+    @OrderBy("startDate ASC")
+    private List<CoursewideCalendarEvent> coursewideCalendarEvents = new ArrayList<>();
 
     // NOTE: Helpers variable names must be different from Getter name, so that Jackson ignores the @Transient annotation, but Hibernate still respects it
     @Transient
@@ -1038,11 +1039,11 @@ public class Course extends DomainObject {
         faq.setCourse(this);
     }
 
-    public Set<CoursewideCalendarEvent> getCoursewideCalendarEvents() {
+    public List<CoursewideCalendarEvent> getCoursewideCalendarEvents() {
         return coursewideCalendarEvents;
     }
 
-    public void setCoursewideCalendarEvents(SortedSet<CoursewideCalendarEvent> coursewideCalendarEvents) {
+    public void setCoursewideCalendarEvents(List<CoursewideCalendarEvent> coursewideCalendarEvents) {
         this.coursewideCalendarEvents = coursewideCalendarEvents;
     }
 }
