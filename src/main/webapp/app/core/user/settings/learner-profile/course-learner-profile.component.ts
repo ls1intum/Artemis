@@ -2,12 +2,12 @@ import { NgClass } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { LearnerProfileApiService } from 'app/learner-profile/service/learner-profile-api.service';
-import { CourseLearnerProfileDTO } from 'app/learner-profile/shared/entities/learner-profile.model';
+import { LearnerProfileApiService } from 'app/core/learner-profile/service/learner-profile-api.service';
+import { CourseLearnerProfileDTO } from 'app/core/learner-profile/shared/entities/learner-profile.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { SegmentedToggleComponent } from 'app/shared/segmented-toggle/segmented-toggle.component';
-import { COURSE_LEARNER_PROFILE_OPTIONS } from 'app/learner-profile/shared/entities/learner-profile-options.model';
+import { COURSE_LEARNER_PROFILE_OPTIONS } from 'app/core/learner-profile/shared/entities/learner-profile-options.model';
 
 /**
  * Component for managing course-specific learner profiles.

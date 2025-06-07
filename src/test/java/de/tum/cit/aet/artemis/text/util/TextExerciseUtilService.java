@@ -280,11 +280,10 @@ public class TextExerciseUtilService {
         else { // exam exercises do not have a release date
             result.setCompletionDate(ZonedDateTime.now());
         }
-        result = resultRepo.save(result);
         result.setSubmission(submission);
+        result = resultRepo.save(result);
         submission.setParticipation(participation);
         submission.addResult(result);
-        submission.getParticipation().addResult(result);
         submission = textSubmissionRepo.save(submission);
         resultRepo.save(result);
         studentParticipationRepo.save(participation);
@@ -319,11 +318,11 @@ public class TextExerciseUtilService {
         else { // exam exercises do not have a release date
             result.setCompletionDate(ZonedDateTime.now());
         }
-        result = resultRepo.save(result);
+
         result.setSubmission(submission);
+        result = resultRepo.save(result);
         submission.setParticipation(participation);
         submission.addResult(result);
-        submission.getParticipation().addResult(result);
         submission = textSubmissionRepo.save(submission);
         resultRepo.save(result);
         studentParticipationRepo.save(participation);

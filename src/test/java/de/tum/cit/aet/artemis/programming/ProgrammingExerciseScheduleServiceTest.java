@@ -506,7 +506,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         StudentExam studentExam = examUtilService.addStudentExamWithUser(exam, user);
         ProgrammingExerciseStudentParticipation participation = (ProgrammingExerciseStudentParticipation) participationUtilService
-                .addProgrammingParticipationWithResultForExercise(examExercise, TEST_PREFIX + "student1").getParticipation();
+                .addProgrammingParticipationWithResultForExercise(examExercise, TEST_PREFIX + "student1").getSubmission().getParticipation();
         studentExam.setExercises(List.of(examExercise));
         studentExam.setWorkingTime(1);
         studentExamRepository.saveAndFlush(studentExam);
@@ -522,7 +522,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         StudentExam studentExam = examUtilService.addStudentExamWithUser(exam, user);
         ProgrammingExerciseStudentParticipation participation = (ProgrammingExerciseStudentParticipation) participationUtilService
-                .addProgrammingParticipationWithResultForExercise(examExercise, TEST_PREFIX + "student1").getParticipation();
+                .addProgrammingParticipationWithResultForExercise(examExercise, TEST_PREFIX + "student1").getSubmission().getParticipation();
         studentExam.setExercises(List.of(examExercise));
         studentExam.setWorkingTime(1);
         studentExamRepository.saveAndFlush(studentExam);
