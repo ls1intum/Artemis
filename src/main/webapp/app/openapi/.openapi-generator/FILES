@@ -10,7 +10,7 @@ model/conversationUser.ts
 model/student.ts
 model/studentExport.ts
 model/tutorialGroupExport.ts
-model/tutorialGroupFreePeriod.ts
+model/tutorialGroupFreePeriodRequest.ts
 model/tutorialGroupRegistrationImport.ts
 model/tutorialGroupSession.ts
 model/tutorialGroupStatus.ts

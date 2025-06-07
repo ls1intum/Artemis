@@ -90,56 +90,7 @@ paths:
       responses:
         '200': {description: OK}
   ? /api/tutorialgroup/courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}/tutorial-free-periods/{tutorialGroupFreePeriodId}
-  : get:
-      tags: [tutorial-group-free-period]
-      operationId: getOneOfConfiguration
-      parameters:
-      - name: courseId
-        in: path
-        required: true
-        schema: {type: integer, format: int64}
-      - name: tutorialGroupsConfigurationId
-        in: path
-        required: true
-        schema: {type: integer, format: int64}
-      - name: tutorialGroupFreePeriodId
-        in: path
-        required: true
-        schema: {type: integer, format: int64}
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/TutorialGroupFreePeriod'}
-    put:
-      tags: [tutorial-group-free-period]
-      operationId: update_3
-      parameters:
-      - name: courseId
-        in: path
-        required: true
-        schema: {type: integer, format: int64}
-      - name: tutorialGroupsConfigurationId
-        in: path
-        required: true
-        schema: {type: integer, format: int64}
-      - name: tutorialGroupFreePeriodId
-        in: path
-        required: true
-        schema: {type: integer, format: int64}
-      requestBody:
-        content:
-          application/json:
-            schema: {$ref: '#/components/schemas/TutorialGroupFreePeriod'}
-        required: true
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/TutorialGroupFreePeriod'}
-    delete:
+  : delete:
       tags: [tutorial-group-free-period]
       operationId: delete_1
       parameters:
@@ -321,30 +272,6 @@ paths:
               schema:
                 type: array
                 items: {$ref: '#/components/schemas/TutorialGroupRegistrationImport'}
-  /api/tutorialgroup/courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}/tutorial-free-periods:
-    post:
-      tags: [tutorial-group-free-period]
-      operationId: create_3
-      parameters:
-      - name: courseId
-        in: path
-        required: true
-        schema: {type: integer, format: int64}
-      - name: tutorialGroupsConfigurationId
-        in: path
-        required: true
-        schema: {type: integer, format: int64}
-      requestBody:
-        content:
-          application/json:
-            schema: {$ref: '#/components/schemas/TutorialGroupFreePeriod'}
-        required: true
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/TutorialGroupFreePeriod'}
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/attendance-count:
     patch:
       tags: [tutorial-group-session]
@@ -494,13 +421,6 @@ components:
         date: {type: string, format: date}
         location: {type: string, maxLength: 2000, minLength: 1}
       required: [date, endTime, startTime]
-    TutorialGroupFreePeriod:
-      type: object
-      properties:
-        startDate: {type: string, format: date-time}
-        endDate: {type: string, format: date-time}
-        reason: {type: string}
-      required: [endDate, startDate]
     Channel:
       type: object
       properties:
@@ -533,6 +453,13 @@ components:
           enum: [general, exercise, lecture, exam, feedbackDiscussion]
         subTypeReferenceId: {type: integer, format: int64}
         subTypeWithReferenceFromChannel: {$ref: '#/components/schemas/Channel', writeOnly: true}
+    TutorialGroupFreePeriodRequest:
+      type: object
+      properties:
+        startDate: {type: string, format: date-time}
+        endDate: {type: string, format: date-time}
+        reason: {type: string}
+      required: [endDate, startDate]
     TutorialGroupStatus:
       type: object
       properties:
