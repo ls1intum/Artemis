@@ -39,6 +39,7 @@ All these exercises are supposed to be run either live in the lecture with insta
    user/markdown-support
    user/integrated-code-lifecycle
    user/exports
+   user/sharing
    user/mobile-applications
    user/lti
 
