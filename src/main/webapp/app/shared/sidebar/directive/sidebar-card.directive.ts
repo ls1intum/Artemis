@@ -57,6 +57,15 @@ export class SidebarCardDirective implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * Removes known channel prefixes (e.g. 'exercise-', 'lecture-', 'exam-') from the given title,
+     * but only if the current item belongs to one of the corresponding channel groups.
+     *
+     * This is used to clean up channel names displayed in the sidebar by stripping technical prefixes.
+     *
+     * @param name The original channel name (e.g. 'exercise-Homework 1')
+     * @returns The cleaned-up name (e.g. 'Homework 1')
+     */
     removeChannelPrefix(name: string): string {
         const prefixes = ['exercise-', 'lecture-', 'exam-'];
         const channelTypes = ['exerciseChannels', 'lectureChannels', 'examChannels'];
