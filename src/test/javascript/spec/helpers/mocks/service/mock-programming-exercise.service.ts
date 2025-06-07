@@ -15,7 +15,6 @@ export class MockProgrammingExerciseService {
     exportInstructorRepository = (exerciseId: number, repositoryType: RepositoryType) => of({ body: undefined });
     exportStudentRepository = (exerciseId: number, participationId: number) => of({ body: undefined });
     exportStudentRequestedRepository = (exerciseId: number, includeTests: boolean) => of({ body: undefined });
-    getDiffReport = (exerciseId: number) => of({});
     getTheiaConfig = (exerciseId: number) => of({});
     createStructuralSolutionEntries = (exerciseId: number) => of({});
     createBehavioralSolutionEntries = (exerciseId: number) => of({});
@@ -23,6 +22,7 @@ export class MockProgrammingExerciseService {
     combineTemplateRepositoryCommits = (exerciseId: number) => of({});
     delete = (programmingExerciseId: number, deleteStudentReposBuildPlans: boolean, deleteBaseReposBuildPlans: boolean) => of({});
     generateStructureOracle = (exerciseId: number) => of({});
-    getDiffReportForCommits = (exerciseId: number, participationId: number, olderCommitHash: string, newerCommitHash: string, repositoryType: string) => of({});
     getCheckoutDirectoriesForProgrammingLanguage = (programmingLanguage: ProgrammingLanguage, checkoutSolution: boolean) => of();
+    getTemplateRepositoryTestFilesWithContent = (exerciseId: number) => of(new Map<string, string>());
+    getSolutionRepositoryTestFilesWithContent = (exerciseId: number) => of(new Map<string, string>());
 }
