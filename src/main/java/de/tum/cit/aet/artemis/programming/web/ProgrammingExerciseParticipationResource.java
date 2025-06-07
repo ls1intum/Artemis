@@ -197,16 +197,16 @@ public class ProgrammingExerciseParticipationResource {
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<RepoNameProgrammingStudentParticipationDTO> getStudentParticipationByRepoName(@RequestParam(required = true, name = "repoName") String repoName) {
-        String repoUri
+        String repoUri;
         try {
-            repoUrl = new VcsRepositoryUri(vcUrl, repoName).toString();
+            repoUri = new VcsRepositoryUri(vcUrl, repoName).toString();
         }
         catch (URISyntaxException e) {
             throw new BadRequestAlertException("Invalid repository URL", ENTITY_NAME, "invalidRepositoryUrl");
         }
 
         // find participation by url
-        var participation = programmingExerciseStudentParticipationRepository.findByRepositoryUriElseThrow(repoUrl);
+        var participation = programmingExerciseStudentParticipationRepository.findByRepositoryUriElseThrow(repoUri);
 
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
         // check if the exercise is released. This also checks if the user can see an exam exercise
