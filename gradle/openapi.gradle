@@ -148,31 +148,6 @@
         }
     }
 
-    tasks.register('postProcessTsFiles') {
-        description = 'Remove leading underscores and numeric suffixes from OpenAPI TS methods, and add // @ts-nocheck'
-
-        doLast {
-            def genDir = file("$project.rootDir/src/main/webapp/app/openapi")
-            fileTree(dir: genDir, include: '**/*.ts').each { File tsFile ->
-                def content = tsFile.text
-
-                // 2) Strip leading underscores on public methods
-                content = content.replaceAll(
-                    /(public\s+)_+([A-Za-z_][A-Za-z0-9_]*)/,
-                    '$1$2'
-                )
-                // 3) Strip numeric suffixes on public methods
-                content = content.replaceAll(
-                    /(public\s+[A-Za-z_][A-Za-z0-9_]*)_[0-9]+(\s*\()/,
-                    '$1$2'
-                )
-
-                tsFile.text = content
-            }
-            println "✔ Post-processed TS files in $genDir"
-        }
-    }
-
 
     tasks.named('openApiGenerate') {
         finalizedBy 'postProcessTsFiles'
@@ -191,11 +166,8 @@
     }
 
 
-    tasks.register('cleanUnusedImports', Exec) {
-        description = "Removes unused imports from generated OpenAPI TypeScript files"
+    tasks.register('postProcessTsFiles', Exec) {
+        description = "Removes unused imports from generated OpenAPI TypeScript files and cleans numeric suffixes from method names"
 
-        commandLine "npx", "tsx", "gradle/scripts/remove-unused-imports.ts"
-    }
-    tasks.named('postProcessTsFiles') {
-        finalizedBy 'cleanUnusedImports'
+        commandLine "npx", "tsx", "gradle/scripts/openapi-post-processing.ts"
     }

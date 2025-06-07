@@ -177,10 +177,10 @@ export class TutorialGroupSessionApiService extends BaseService {
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      */
-    public create1(courseId: number, tutorialGroupId: number, tutorialGroupSession: TutorialGroupSession, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<TutorialGroupSession>;
-    public create1(courseId: number, tutorialGroupId: number, tutorialGroupSession: TutorialGroupSession, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<TutorialGroupSession>>;
-    public create1(courseId: number, tutorialGroupId: number, tutorialGroupSession: TutorialGroupSession, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<TutorialGroupSession>>;
-    public create1(courseId: number, tutorialGroupId: number, tutorialGroupSession: TutorialGroupSession, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public create(courseId: number, tutorialGroupId: number, tutorialGroupSession: TutorialGroupSession, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<TutorialGroupSession>;
+    public create(courseId: number, tutorialGroupId: number, tutorialGroupSession: TutorialGroupSession, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<TutorialGroupSession>>;
+    public create(courseId: number, tutorialGroupId: number, tutorialGroupSession: TutorialGroupSession, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<TutorialGroupSession>>;
+    public create(courseId: number, tutorialGroupId: number, tutorialGroupSession: TutorialGroupSession, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (courseId === null || courseId === undefined) {
             throw new Error('Required parameter courseId was null or undefined when calling create1.');
         }
@@ -367,10 +367,10 @@ export class TutorialGroupSessionApiService extends BaseService {
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      */
-    public update1(courseId: number, tutorialGroupId: number, sessionId: number, tutorialGroupSession: TutorialGroupSession, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<TutorialGroupSession>;
-    public update1(courseId: number, tutorialGroupId: number, sessionId: number, tutorialGroupSession: TutorialGroupSession, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<TutorialGroupSession>>;
-    public update1(courseId: number, tutorialGroupId: number, sessionId: number, tutorialGroupSession: TutorialGroupSession, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<TutorialGroupSession>>;
-    public update1(courseId: number, tutorialGroupId: number, sessionId: number, tutorialGroupSession: TutorialGroupSession, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public update(courseId: number, tutorialGroupId: number, sessionId: number, tutorialGroupSession: TutorialGroupSession, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<TutorialGroupSession>;
+    public update(courseId: number, tutorialGroupId: number, sessionId: number, tutorialGroupSession: TutorialGroupSession, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<TutorialGroupSession>>;
+    public update(courseId: number, tutorialGroupId: number, sessionId: number, tutorialGroupSession: TutorialGroupSession, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<TutorialGroupSession>>;
+    public update(courseId: number, tutorialGroupId: number, sessionId: number, tutorialGroupSession: TutorialGroupSession, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (courseId === null || courseId === undefined) {
             throw new Error('Required parameter courseId was null or undefined when calling update1.');
         }
