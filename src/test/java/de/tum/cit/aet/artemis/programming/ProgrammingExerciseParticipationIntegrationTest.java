@@ -45,7 +45,6 @@ import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
@@ -673,45 +672,6 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         assertThat(participationDTO.id()).isEqualTo(participation.getId());
         assertThat(participationDTO.exercise().id()).isEqualTo(participation.getExercise().getId());
         assertThat(participationDTO.exercise().course().id()).isEqualTo(participation.getExercise().getCourseViaExerciseGroupOrCourseMember().getId());
-        assertThat(participationDTO.exercise().testCases()).isNull();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetProgrammingExerciseStudentParticipationByRepoNameWithSubmissionAndResult() throws Exception {
-        programmingExercise.setReleaseDate(ZonedDateTime.now());
-        programmingExercise = programmingExerciseRepository.save(programmingExercise);
-
-        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
-        var testCases = testCaseRepository.findByExerciseId(participation.getExercise().getId()).toArray(ProgrammingExerciseTestCase[]::new);
-
-        var earlyResult = participationUtilService.createSubmissionAndResult(participation, 1, true);
-        earlyResult = participationUtilService.addFeedbackToResult(new Feedback().testCase(testCases[0]), earlyResult);
-        var laterResult = participationUtilService.createSubmissionAndResult(participation, 1, true);
-        participationUtilService.addFeedbackToResult(new Feedback().testCase(testCases[0]), laterResult);
-        var latestResult = participationUtilService.addResultToParticipation(participation, laterResult.getSubmission());
-        latestResult = participationUtilService.addFeedbackToResult(new Feedback().testCase(testCases[0]), latestResult);
-
-        var repoName = extractRepoName(participation.getRepositoryUri());
-        RepoNameProgrammingStudentParticipationDTO participationDTO = request.get("/api/programming/programming-exercise-participations/repo-name/" + repoName, HttpStatus.OK,
-                RepoNameProgrammingStudentParticipationDTO.class);
-
-        assertThat(participationDTO.id()).isEqualTo(participation.getId());
-        assertThat(participationDTO.exercise().id()).isEqualTo(participation.getExercise().getId());
-        assertThat(participationDTO.exercise().course().id()).isEqualTo(participation.getExercise().getCourseViaExerciseGroupOrCourseMember().getId());
-
-        assertThat(participationDTO.submissions()).hasSize(1);
-        var submissionDTO = participationDTO.submissions().toArray(RepoNameProgrammingStudentParticipationDTO.RepoNameSubmissionDTO[]::new)[0];
-        assertThat(submissionDTO.id()).isEqualTo(latestResult.getSubmission().getId());
-        assertThat(submissionDTO.results()).hasSize(1);
-        var resultDTO = submissionDTO.results().toArray(RepoNameProgrammingStudentParticipationDTO.RepoNameResultDTO[]::new)[0];
-        assertThat(resultDTO.id()).isEqualTo(latestResult.getId());
-        assertThat(resultDTO.feedbacks()).isNotEmpty();
-        for (var feedbackDTO : resultDTO.feedbacks()) {
-            assertThat(feedbackDTO.testCaseId()).isNotNull();
-        }
-
-        assertThat(participationDTO.exercise().testCases()).isNotEmpty();
     }
 
     @Test

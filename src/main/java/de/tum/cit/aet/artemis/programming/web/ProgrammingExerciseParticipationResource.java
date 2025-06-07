@@ -7,7 +7,6 @@ import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -61,8 +60,6 @@ import de.tum.cit.aet.artemis.programming.dto.VcsAccessLogDTO;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 import de.tum.cit.aet.artemis.programming.repository.VcsAccessLogRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
@@ -78,8 +75,6 @@ public class ProgrammingExerciseParticipationResource {
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseParticipationResource.class);
 
     private static final String ENTITY_NAME = "programmingExerciseParticipation";
-
-    private final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
     @Value("${artemis.version-control.url}")
     private String vcUrl;
@@ -116,17 +111,13 @@ public class ProgrammingExerciseParticipationResource {
 
     private final Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService;
 
-    private final ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
-
-    public ProgrammingExerciseParticipationResource(ProgrammingSubmissionRepository programmingSubmissionRepository,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, ResultRepository resultRepository, ParticipationRepository participationRepository,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingSubmissionService submissionService,
-            ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService, ResultService resultService,
-            ParticipationAuthorizationCheckService participationAuthCheckService, RepositoryService repositoryService, Optional<StudentExamApi> studentExamApi,
-            Optional<VcsAccessLogRepository> vcsAccessLogRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
+    public ProgrammingExerciseParticipationResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ResultRepository resultRepository,
+            ParticipationRepository participationRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
+            ProgrammingSubmissionService submissionService, ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
+            ResultService resultService, ParticipationAuthorizationCheckService participationAuthCheckService, RepositoryService repositoryService,
+            Optional<StudentExamApi> studentExamApi, Optional<VcsAccessLogRepository> vcsAccessLogRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
             Optional<SharedQueueManagementService> sharedQueueManagementService, Optional<ExamApi> examApi,
-            Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository) {
-        this.programmingSubmissionRepository = programmingSubmissionRepository;
+            Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService) {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -143,7 +134,6 @@ public class ProgrammingExerciseParticipationResource {
         this.sharedQueueManagementService = sharedQueueManagementService;
         this.examApi = examApi;
         this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
-        this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
     }
 
     /**
@@ -193,21 +183,20 @@ public class ProgrammingExerciseParticipationResource {
     }
 
     /**
-     * Get the given student participation with its latest submission, latest result and feedbacks by its repository identifier.
+     * Get the student participation by its repository identifier.
      * The repository name is the last part of the repository URL.
      * The repository URL is built as follows: {server.url}/git/{project_key}/{repo-name}.git
      *
      * @param repoName the URL repository identifier
-     * @return the ResponseEntity with status 200 (OK) and the participation DTO {@link de.tum.cit.aet.artemis.programming.dto.RepoUrlProgrammingStudentParticipationDTO} in body,
+     * @return the ResponseEntity with status 200 (OK) and the participation DTO {@link de.tum.cit.aet.artemis.programming.dto.RepoNameProgrammingStudentParticipationDTO} in body,
+     *         or with status 400 (Bad Request) if the repo name is not provided as request parameter,
      *         or with status 404 (Not Found) if the participation is not found,
      *         or with status 403 (Forbidden) if the user doesn't have access to the participation
      */
-    @GetMapping("programming-exercise-participations/repo-name/{repoName}")
+    @GetMapping("programming-exercise-participations")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
-    public ResponseEntity<RepoNameProgrammingStudentParticipationDTO> getStudentParticipationWithLatestSubmissionLatestResultFeedbacksByRepoName(
-            @PathVariable("repoName") String repoName) {
-
+    public ResponseEntity<RepoNameProgrammingStudentParticipationDTO> getStudentParticipationByRepoName(@RequestParam(required = true, name = "repoName") String repoName) {
         String repoUrl;
         try {
             repoUrl = new VcsRepositoryUri(vcUrl, repoName).toString();
@@ -223,27 +212,6 @@ public class ProgrammingExerciseParticipationResource {
         // check if the exercise is released. This also checks if the user can see an exam exercise
         if (!participation.getProgrammingExercise().isReleased()) {
             throw new AccessForbiddenException("exercise", participation.getProgrammingExercise().getId());
-        }
-
-        programmingSubmissionRepository.findLatestWithLatestResultAndFeedbacksByParticipationId(participation.getId())
-                .ifPresentOrElse(submission -> participation.setSubmissions(Set.of(submission)), () -> participation.setSubmissions(Set.of()));
-
-        // if the participation has no submissions, we don't want to query test cases because we won't display feedback in the problem statement
-        // so we set the test cases to empty to avoid lazy loading
-        if (participation.getSubmissions().isEmpty()) {
-            participation.getProgrammingExercise().setTestCases(Set.of());
-        }
-        else {
-            // otherwise they will be eagerly fetched into the exercise to then be joint in the client to the feedback by either id or name
-            participation.getProgrammingExercise().setTestCases(programmingExerciseTestCaseRepository.findByExerciseId(participation.getExercise().getId()));
-
-            var results = participation.getSubmissions().stream().flatMap(submission -> submission.getResults().stream()).filter(Objects::nonNull).collect(Collectors.toSet());
-
-            // set testcases per feedback to null to avoid lazy loading
-            results.forEach(result -> result.getFeedbacks().forEach(feedback -> feedback.setTestCase(null)));
-
-            // filter results in submission user is allowed to see
-            resultService.filterSensitiveInformationIfNecessary(participation, results, Optional.empty());
         }
 
         return ResponseEntity.ok(RepoNameProgrammingStudentParticipationDTO.of(participation));
