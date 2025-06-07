@@ -114,14 +114,9 @@ describe('ProgrammingExamSummaryComponent', () => {
                 fixture = TestBed.createComponent(ProgrammingExamSummaryComponent);
                 component = fixture.componentInstance;
 
-                // TODO Michal Kawka
-                component.exercise = programmingExercise;
                 programmingSubmission.results = [result];
                 programmingSubmission.participation = programmingParticipation;
                 programmingParticipation.submissions = [programmingSubmission];
-                component.participation = programmingParticipation;
-                component.submission = programmingSubmission;
-                component.exam = exam;
 
                 fixture.componentRef.setInput('exercise', programmingExercise);
                 fixture.componentRef.setInput('participation', programmingParticipation);
