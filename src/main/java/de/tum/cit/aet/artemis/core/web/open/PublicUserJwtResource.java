@@ -78,6 +78,7 @@ public class PublicUserJwtResource {
      * @param userAgent User Agent
      * @param tool      optional Tool Token Type to define the scope of the token
      * @param response  HTTP response
+     * @param request   HTTP request
      * @return the ResponseEntity with status 200 (ok), 401 (unauthorized) or 403 (Captcha required)
      */
     @PostMapping("authenticate")
@@ -114,6 +115,7 @@ public class PublicUserJwtResource {
      *
      * @param body     the body of the request. "true" to remember the user.
      * @param response HTTP response
+     * @param request  HTTP request
      * @return the ResponseEntity with status 200 (ok), 401 (unauthorized) or 403 (user not activated)
      */
     @PostMapping("saml2")
