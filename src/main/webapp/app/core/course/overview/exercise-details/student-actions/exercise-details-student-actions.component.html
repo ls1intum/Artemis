@@ -130,11 +130,12 @@
                             [repositoryUri]="''"
                         />
                     }
-                    @if (exercise.allowFeedbackRequests && gradedParticipation && exercise.type === ExerciseType.PROGRAMMING) {
+                    @if (gradedParticipation && exercise.type === ExerciseType.PROGRAMMING) {
                         <jhi-request-feedback-button [exercise]="exercise" [smallButtons]="smallButtons" />
                     }
                     <!--                    </ng-container>-->
                 }
+
                 <!-- NOTE: we use the same logic 'isStartExerciseAvailable' in ngIf as above because start and resume are not always possible -->
                 @if (
                     (gradedParticipation?.initializationState === InitializationState.INACTIVE || gradedParticipation?.initializationState === InitializationState.FINISHED) &&
@@ -221,7 +222,7 @@
                         [hideLabelMobile]="false"
                         [routerLink]="['/courses', courseId, 'exercises', exercise.type + '-exercises', exercise.id, 'participate', gradedParticipation!.id]"
                     ></button>
-                    @if (exercise.allowFeedbackRequests && athenaEnabled && (exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.MODELING) && beforeDueDate) {
+                    @if (athenaEnabled && (exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.MODELING) && beforeDueDate) {
                         <jhi-request-feedback-button
                             [exercise]="exercise"
                             [smallButtons]="smallButtons"

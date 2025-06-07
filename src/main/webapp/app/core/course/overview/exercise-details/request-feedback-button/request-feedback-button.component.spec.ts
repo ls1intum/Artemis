@@ -64,13 +64,16 @@ describe('RequestFeedbackButtonComponent', () => {
         fixture.detectChanges();
     }
 
-    function createBaseExercise(type: ExerciseType, isExam = false, participation?: StudentParticipation): Exercise {
+    function createBaseExercise(type: ExerciseType, isExam = false, participation?: StudentParticipation, preliminaryModule?: string): Exercise {
+        if (!preliminaryModule) {
+            preliminaryModule = 'module';
+        }
         return {
             id: 1,
             type,
             course: isExam ? undefined : {},
             studentParticipations: participation ? [participation] : undefined,
-            allowFeedbackRequests: true,
+            preliminaryFeedbackModule: preliminaryModule,
         } as Exercise;
     }
 
@@ -268,5 +271,19 @@ describe('RequestFeedbackButtonComponent', () => {
 
         expect(modalSpy).not.toHaveBeenCalled();
         expect(processFeedbackSpy).toHaveBeenCalledWith(exercise.id);
+    }));
+
+    it('should display the button when Athena is disabled and it is not an exam exercise and manual feedback requests are enabled', fakeAsync(() => {
+        setAthenaEnabled(false);
+        const exercise = { id: 1, type: ExerciseType.TEXT, course: {}, allowManualFeedbackRequests: true } as Exercise; // course undefined means exam exercise
+        fixture.componentRef.setInput('exercise', exercise);
+        mockExerciseDetails(exercise);
+
+        component.ngOnInit();
+        tick();
+        fixture.detectChanges();
+
+        const button = debugElement.query(By.css('a'));
+        expect(button).not.toBeNull();
     }));
 });
