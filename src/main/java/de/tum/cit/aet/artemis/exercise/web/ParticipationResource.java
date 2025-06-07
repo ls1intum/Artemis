@@ -218,7 +218,7 @@ public class ParticipationResource {
     /**
      * POST /exercises/:exerciseId/participations : start the "participationId" exercise for the current user.
      *
-     * @param exerciseId the participationId of the exercise for which to init a participation
+     * @param exerciseId the exerciseId of the exercise for which to init a participation
      * @return the ResponseEntity with status 201 (Created) and the participation within the body, or with status 404 (Not Found)
      * @throws URISyntaxException If the URI for the created participation could not be created
      */
