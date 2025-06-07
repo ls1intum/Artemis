@@ -85,11 +85,9 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
         Result result = ParticipationFactory.generateResult(true, 50D);
         result.setAssessor(tutor1);
         result.setHasComplaint(true);
-        result.setParticipation(studentParticipation);
-        result = resultRepository.saveAndFlush(result);
-
         submission.addResult(result);
         result.setSubmission(submission);
+        result = resultRepository.saveAndFlush(result);
         submissionRepository.save(submission);
 
         log.debug("3 Test setup submissions done");
