@@ -197,7 +197,7 @@ public class ProgrammingExerciseParticipationResource {
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<RepoNameProgrammingStudentParticipationDTO> getStudentParticipationByRepoName(@RequestParam(required = true, name = "repoName") String repoName) {
-        String repoUrl;
+        String repoUri
         try {
             repoUrl = new VcsRepositoryUri(vcUrl, repoName).toString();
         }
