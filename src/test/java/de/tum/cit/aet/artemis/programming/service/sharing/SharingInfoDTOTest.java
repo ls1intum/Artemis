@@ -14,7 +14,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 import de.tum.cit.aet.artemis.core.dto.SharingInfoDTO;
 
-public class SharingInfoDTOTest {
+class SharingInfoDTOTest {
 
     @ParameterizedTest
     @MethodSource("provideEqualsTestCases")

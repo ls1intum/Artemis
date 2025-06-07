@@ -73,7 +73,7 @@ public class ExerciseSharingService {
     /**
      * the logger
      */
-    private final Logger log = LoggerFactory.getLogger(ExerciseSharingService.class);
+    private static final Logger log = LoggerFactory.getLogger(ExerciseSharingService.class);
 
     /**
      * the repo download path

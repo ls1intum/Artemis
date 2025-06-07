@@ -1,8 +1,5 @@
 package de.tum.cit.aet.artemis.core.web;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.SHARINGCONFIG_RESOURCE_IS_ENABLED;
-import static de.tum.cit.aet.artemis.core.config.Constants.SHARINGCONFIG_RESOURCE_PATH;
-
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
@@ -28,14 +25,24 @@ import de.tum.cit.aet.artemis.programming.service.sharing.SharingConnectorServic
  */
 @Validated
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/sharing/")
 @Profile("sharing")
 public class SharingSupportResource {
 
     /**
      * the logger
      */
-    private final Logger log = LoggerFactory.getLogger(SharingSupportResource.class);
+    private static final Logger log = LoggerFactory.getLogger(SharingSupportResource.class);
+
+    /**
+     * sharing configution resource path for sharing config request
+     */
+    public static final String SHARINGCONFIG_RESOURCE_PATH = "config";
+
+    /**
+     * sharing configuration resource path for rest request, iff sharing profile is enabled
+     */
+    public static final String SHARINGCONFIG_RESOURCE_IS_ENABLED = SHARINGCONFIG_RESOURCE_PATH + "/isEnabled";
 
     /**
      * the sharing plugin service

@@ -13,7 +13,6 @@ import java.util.regex.Pattern;
 import org.codeability.sharing.plugins.api.SharingPluginConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
@@ -92,7 +91,7 @@ public class SharingConnectorService {
 
     private final HealthStatusWithHistory lastHealthStati = new HealthStatusWithHistory();
 
-    private final Logger log = LoggerFactory.getLogger(SharingConnectorService.class);
+    private static final Logger log = LoggerFactory.getLogger(SharingConnectorService.class);
 
     /**
      * Base url for callbacks
@@ -123,6 +122,8 @@ public class SharingConnectorService {
     @Value("${artemis.sharing.serverurl:#{null}}")
     private String sharingUrl;
 
+    private final TaskExecutor taskExecutor;
+
     /**
      * installation name for Sharing Platform
      */
@@ -140,9 +141,10 @@ public class SharingConnectorService {
      */
     private final RestTemplate restTemplate;
 
-    public SharingConnectorService(ProfileService profileService, RestTemplate restTemplate) {
+    public SharingConnectorService(ProfileService profileService, RestTemplate restTemplate, TaskExecutor taskExecutor) {
         this.profileService = profileService;
         this.restTemplate = restTemplate;
+        this.taskExecutor = taskExecutor;
     }
 
     /**
@@ -240,9 +242,6 @@ public class SharingConnectorService {
         }
         return success;
     }
-
-    @Autowired
-    private TaskExecutor taskExecutor;
 
     /**
      * At (spring) application startup, we request a reinitialization of the sharing platform .

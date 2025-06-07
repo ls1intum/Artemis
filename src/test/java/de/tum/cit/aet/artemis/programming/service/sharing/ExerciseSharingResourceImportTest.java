@@ -294,7 +294,7 @@ class ExerciseSharingResourceImportTest extends AbstractSpringIntegrationIndepen
         // get Exercise Details
 
         MvcResult resultED = restMockMvc
-                .perform(post("/api/sharing/import/basket/exerciseDetails").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(sharingInfo))
+                .perform(post("/api/sharing/import/basket/exercise-details").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(sharingInfo))
                         .accept(MediaType.APPLICATION_JSON)) /* .andDo(print()) */
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andReturn();
         String contentED = resultED.getResponse().getContentAsString();
@@ -307,7 +307,7 @@ class ExerciseSharingResourceImportTest extends AbstractSpringIntegrationIndepen
 
         // get Problem Statement
         MvcResult resultPS = restMockMvc
-                .perform(post("/api/sharing/import/basket/problemStatement").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(sharingInfo))
+                .perform(post("/api/sharing/import/basket/problem-statement").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(sharingInfo))
                         .accept(MediaType.APPLICATION_JSON))/* .andDo(print()) */
                 .andExpect(content().contentType(MediaType.TEXT_PLAIN)).andExpect(status().isOk()).andReturn();
         // Zip file is cached, no extra request to sharing platform required!
@@ -411,7 +411,7 @@ class ExerciseSharingResourceImportTest extends AbstractSpringIntegrationIndepen
         sharingInfo.setBasketToken("Some Basket Token");
         sharingInfo.setChecksum("Invalid Checksum");
 
-        restMockMvc.perform(post("/api/sharing/import/basket/exerciseDetails").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(sharingInfo))
+        restMockMvc.perform(post("/api/sharing/import/basket/exercise-details").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(sharingInfo))
                 .accept(MediaType.APPLICATION_JSON)).andExpect(status().isBadRequest());
     }
 
@@ -425,7 +425,7 @@ class ExerciseSharingResourceImportTest extends AbstractSpringIntegrationIndepen
         sharingInfo.setBasketToken("Some Basket Token");
         sharingInfo.setChecksum("Invalid Checksum");
 
-        restMockMvc.perform(post("/api/sharing/import/basket/problemStatement").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(sharingInfo))
+        restMockMvc.perform(post("/api/sharing/import/basket/problem-statement").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(sharingInfo))
                 .accept(MediaType.APPLICATION_JSON)).andExpect(status().isBadRequest());
     }
 

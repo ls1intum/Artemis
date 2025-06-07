@@ -377,11 +377,6 @@ public final class Constants {
     public static final String PROFILE_SHARING = "sharing";
 
     /**
-     * sharing configution resource path for sharing config request
-     */
-    public static final String SHARINGCONFIG_RESOURCE_PATH = "/sharing/config";
-
-    /**
      * The name of the profile for integration independent tests
      */
     public static final String PROFILE_TEST_INDEPENDENT = "test-independent-integration";
@@ -485,21 +480,6 @@ public final class Constants {
      * The directory in the docker container in which the results can be found
      */
     public static final String LOCAL_CI_RESULTS_DIRECTORY = "/results";
-
-    /**
-     * sharing configuration resource path for sharing config import request
-     */
-    public static final String SHARINGIMPORT_RESOURCE_PATH = "/sharing/import";
-
-    /**
-     * sharing configuration resource path for sharing config export request
-     */
-    public static final String SHARINGEXPORT_RESOURCE_PATH = "/sharing/export";
-
-    /**
-     * sharing configuration resource path for rest request, iff sharing profile is enabled
-     */
-    public static final String SHARINGCONFIG_RESOURCE_IS_ENABLED = SHARINGCONFIG_RESOURCE_PATH + "/isEnabled";
 
     /**
      * The directory in the docker container in which the build script is executed

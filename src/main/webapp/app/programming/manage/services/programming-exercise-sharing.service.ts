@@ -43,11 +43,11 @@ export class ProgrammingExerciseSharingService {
      */
     loadProblemStatementForExercises(sharingInfo: SharingInfo): Observable<string> {
         const headers = new HttpHeaders();
-        return this.http.post<string>(this.resourceUrlBasket + 'problemStatement', sharingInfo, { headers, responseType: 'text' as 'json' });
+        return this.http.post<string>(this.resourceUrlBasket + 'problem-statement', sharingInfo, { headers, responseType: 'text' as 'json' });
     }
 
     loadDetailsForExercises(sharingInfo: SharingInfo): Observable<ProgrammingExercise> {
-        return this.http.post<ProgrammingExercise>(this.resourceUrlBasket + 'exerciseDetails', sharingInfo);
+        return this.http.post<ProgrammingExercise>(this.resourceUrlBasket + 'exercise-details', sharingInfo);
     }
 
     /**

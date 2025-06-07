@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.programming.web;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.SHARINGEXPORT_RESOURCE_PATH;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -24,7 +22,6 @@ import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -46,11 +43,16 @@ import tech.jhipster.web.util.ResponseUtil;
  * REST controller for managing the sharing of programming exercises.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/sharing/")
 @Profile("sharing")
 public class ExerciseSharingResource {
 
-    private final Logger log = LoggerFactory.getLogger(ExerciseSharingResource.class);
+    /**
+     * sharing configuration resource path for sharing config export request
+     */
+    public static final String SHARINGEXPORT_RESOURCE_PATH = "export";
+
+    private static final Logger log = LoggerFactory.getLogger(ExerciseSharingResource.class);
 
     private final ExerciseSharingService exerciseSharingService;
 
@@ -77,8 +79,7 @@ public class ExerciseSharingResource {
      *
      * @return the ResponseEntity with status 200 (OK) and with body the Shopping Basket, or with status 404 (Not Found)
      */
-    @GetMapping("/sharing/import/basket")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR','EDITOR','ADMIN')")
+    @GetMapping("import/basket")
     public ResponseEntity<ShoppingBasket> loadShoppingBasket(@RequestParam String basketToken, @RequestParam String returnURL, @RequestParam String apiBaseURL,
             @RequestParam String checksum) {
         if (SecretChecksumCalculator.checkChecksum(Map.of("returnURL", returnURL, "apiBaseURL", apiBaseURL), sharingConnectorService.getSharingApiKeyOrNull(), checksum)) {
@@ -97,8 +98,7 @@ public class ExerciseSharingResource {
      *
      * @return the ResponseEntity with status 200 (OK) and with body the programming exercise, or with status 404 (Not Found)
      */
-    @PostMapping("/sharing/setup-import")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR','EDITOR','ADMIN')")
+    @PostMapping("setup-import")
     public ResponseEntity<ProgrammingExercise> setUpFromSharingImport(@RequestBody SharingSetupInfo sharingSetupInfo)
             throws GitAPIException, SharingException, IOException, URISyntaxException {
         ProgrammingExercise exercise = programmingExerciseImportFromSharingService.importProgrammingExerciseFromSharing(sharingSetupInfo);
@@ -106,13 +106,12 @@ public class ExerciseSharingResource {
     }
 
     /**
-     * GET .../sharing/import/basket/problemStatement : get problem statement of the exercise defined in sharingInfo.
+     * GET .../sharing/import/basket/problem-statement : get problem statement of the exercise defined in sharingInfo.
      *
      * @param sharingInfo the sharing info (with exercise position in basket)
      * @return the ResponseEntity with status 200 (OK) and with body the problem statement, or with status 404 (Not Found)
      */
-    @PostMapping("/sharing/import/basket/problemStatement")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR','EDITOR','ADMIN')")
+    @PostMapping("import/basket/problem-statement")
     public ResponseEntity<String> getProblemStatement(@RequestBody SharingInfoDTO sharingInfo) throws IOException {
         if (!sharingInfo.checkChecksum(sharingConnectorService.getSharingApiKeyOrNull())) {
             return ResponseEntity.badRequest().body(null);
@@ -122,12 +121,12 @@ public class ExerciseSharingResource {
     }
 
     /**
-     * GET .../sharing/import/basket/exerciseDetails : get exercise details of the exercise defined in sharingInfo.
+     * GET .../sharing/import/basket/exercise-details : get exercise details of the exercise defined in sharingInfo.
      *
      * @param sharingInfo the sharing info (with exercise position in basket)
      * @return the ResponseEntity with status 200 (OK) and with body the problem statement, or with status 404 (Not Found)
      */
-    @PostMapping("/sharing/import/basket/exerciseDetails")
+    @PostMapping("import/basket/exercise-details")
     public ResponseEntity<ProgrammingExercise> getExerciseDetails(@RequestBody SharingInfoDTO sharingInfo) throws IOException {
         if (!sharingInfo.checkChecksum(sharingConnectorService.getSharingApiKeyOrNull())) {
             return ResponseEntity.badRequest().body(null);
@@ -144,7 +143,6 @@ public class ExerciseSharingResource {
      * @return the URL to Sharing
      */
     @PostMapping(SHARINGEXPORT_RESOURCE_PATH + "/{exerciseId}")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<String> exportExerciseToSharing(@RequestBody String callBackUrl, @PathVariable("exerciseId") Long exerciseId) {
         try {
             URI uriRedirect = exerciseSharingService.exportExerciseToSharing(exerciseId).toURI();

@@ -52,12 +52,6 @@ describe('ProgrammingExerciseDetailComponent', () => {
         solutionParticipation: {
             id: 2,
         } as SolutionProgrammingExerciseParticipation,
-        buildConfig: {
-            buildTool: 'GRADLE',
-        },
-        numberOfAssessmentsOfCorrectionRounds: [0, 0, 0],
-        studentAssignedTeamIdComputed: false,
-        secondCorrectionEnabled: false,
     } as ProgrammingExercise;
 
     const exerciseStatistics = {
@@ -127,10 +121,9 @@ describe('ProgrammingExerciseDetailComponent', () => {
             of(new HttpResponse<ProgrammingExercise>({ body: mockProgrammingExercise })),
         );
         jest.spyOn(exerciseService, 'getDiffReport').mockReturnValue(of(gitDiffReport));
-        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(profileInfo));
+        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
         jest.spyOn(submissionPolicyService, 'getSubmissionPolicyOfProgrammingExercise').mockReturnValue(of(undefined));
 
-        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(profileInfo));
         jest.spyOn(programmingLanguageFeatureService, 'getProgrammingLanguageFeature').mockReturnValue({
             plagiarismCheckSupported: true,
         } as ProgrammingLanguageFeature);

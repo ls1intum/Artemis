@@ -6,8 +6,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
-import javax.annotation.Nonnull;
-
 import org.apache.commons.io.FileUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.web.multipart.MultipartFile;
@@ -31,7 +29,6 @@ public class SharingMultipartZipFile implements MultipartFile, Closeable {
     }
 
     @Override
-    @Nonnull
     public String getName() {
         return this.name;
     }
@@ -67,19 +64,17 @@ public class SharingMultipartZipFile implements MultipartFile, Closeable {
     }
 
     @Override
-    @Nonnull
     public byte[] getBytes() throws IOException {
         return this.inputStream.readAllBytes();
     }
 
     @Override
-    @Nonnull
     public InputStream getInputStream() throws IOException {
         return this.inputStream;
     }
 
     @Override
-    public void transferTo(@Nonnull File dest) throws IOException, IllegalStateException {
+    public void transferTo(File dest) throws IOException, IllegalStateException {
         FileUtils.copyInputStreamToFile(this.inputStream, dest);
     }
 

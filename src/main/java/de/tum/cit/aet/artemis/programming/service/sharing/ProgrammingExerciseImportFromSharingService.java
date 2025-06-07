@@ -25,7 +25,7 @@ public class ProgrammingExerciseImportFromSharingService {
     /**
      * the logger
      */
-    private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseImportFromSharingService.class);
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseImportFromSharingService.class);
 
     /**
      * the import from file service (because this service strongly relies in the file import format.
