@@ -21,6 +21,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
+import org.junit.jupiter.params.support.ParameterDeclarations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -192,7 +193,7 @@ class ExamStartTest extends AbstractSpringIntegrationLocalCILocalVCTest {
     void testStartExerciseWithProgrammingExercise() throws Exception {
         ProgrammingExercise programmingExercise = createProgrammingExercise();
 
-        participationUtilService.mockCreationOfExerciseParticipation(programmingExercise, versionControlService, continuousIntegrationService, localVCGitBranchService);
+        participationUtilService.mockCreationOfExerciseParticipation(versionControlService, continuousIntegrationService);
 
         createStudentExams(programmingExercise);
 
@@ -210,7 +211,7 @@ class ExamStartTest extends AbstractSpringIntegrationLocalCILocalVCTest {
     private static class ExamStartDateSource implements ArgumentsProvider {
 
         @Override
-        public Stream<? extends Arguments> provideArguments(ExtensionContext context) {
+        public Stream<? extends Arguments> provideArguments(ParameterDeclarations parameters, ExtensionContext context) {
             return Stream.of(Arguments.of(ZonedDateTime.now().minusHours(1)), // after exam start
                     Arguments.arguments(ZonedDateTime.now().plusMinutes(3)) // before exam start but after pe unlock date
             );
@@ -227,7 +228,7 @@ class ExamStartTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
         ProgrammingExercise programmingExercise = createProgrammingExercise();
 
-        participationUtilService.mockCreationOfExerciseParticipation(programmingExercise, versionControlService, continuousIntegrationService, localVCGitBranchService);
+        participationUtilService.mockCreationOfExerciseParticipation(versionControlService, continuousIntegrationService);
 
         createStudentExams(programmingExercise);
 

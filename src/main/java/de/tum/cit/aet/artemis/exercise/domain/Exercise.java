@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import jakarta.annotation.Nullable;
@@ -479,49 +478,53 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     }
 
     /**
-     * Find the latest (rated or unrated result) of the given participation. Returns null, if there are no results. Please beware: In many cases you might only want to show rated
-     * results.
+     * Filters results in all submissions of a student participation based on assessment status and exercise type.
      *
-     * @param participation to find the latest result for.
-     * @return latest result or null
+     * <p>
+     * This method implements the following filtering logic:
+     * </p>
+     * <ul>
+     * <li>If the assessment is still ongoing:
+     * <ul>
+     * <li>For {@code TextExercise} or {@code ModelingExercise}: keeps only results with {@code AUTOMATIC_ATHENA} assessment type.</li>
+     * <li>For other exercise types: removes all results.</li>
+     * </ul>
+     * </li>
+     * <li>If the assessment is over: keeps only results that have a completion date.</li>
+     * </ul>
+     *
+     * <p>
+     * This filtering happens in-place by modifying the results list of each submission.
+     * </p>
+     * <p>
+     * Override this method in subclasses if different filtering behavior is required for specific exercise types.
+     * </p>
+     *
+     * @param participation the participation containing submissions to filter
      */
-    public Result findLatestResultWithCompletionDate(Participation participation) {
-        if (participation.getResults() == null) {
-            return null;
-        }
-        Optional<Result> latestResult = participation.getResults().stream().filter(result -> result.getCompletionDate() != null).max((result1, result2) -> {
-            ZonedDateTime resultDate1 = result1.getCompletionDate();
-            ZonedDateTime resultDate2 = result2.getCompletionDate();
-            if (resultDate1.equals(resultDate2)) {
-                return 0;
-            }
-            else if (resultDate1.isAfter(resultDate2)) {
-                return 1;
-            }
-            else {
-                return -1;
+    public void filterResultsForStudents(Participation participation) {
+        boolean isAssessmentOver = getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
+
+        participation.getSubmissions().forEach(submission -> {
+            List<Result> results = submission.getResults();
+            if (results != null && !results.isEmpty()) {
+                if (!isAssessmentOver) {
+                    // For assessment that's not over yet
+                    if (this instanceof TextExercise || this instanceof ModelingExercise) {
+                        // Keep only AUTOMATIC_ATHENA results, set others to null
+                        results.removeIf(result -> result.getAssessmentType() != AssessmentType.AUTOMATIC_ATHENA);
+                    }
+                    else {
+                        // Clear all results if not TextExercise or ModelingExercise
+                        results.clear();
+                    }
+                }
+                else {
+                    // For completed assessments, remove results without completion date
+                    results.removeIf(result -> result.getCompletionDate() == null);
+                }
             }
         });
-        return latestResult.orElse(null);
-    }
-
-    /**
-     * Returns all results of an exercise for give participation that have a completion date. If the exercise is restricted like {@link QuizExercise} please override this function
-     * with the respective filter. (relevancy depends on Exercise type => this should be overridden by subclasses if necessary)
-     *
-     * @param results results which should be taken into account
-     * @return results of given participation, or null, if none exist
-     */
-    public Set<Result> filterResultsForStudents(Collection<Result> results) {
-        boolean isAssessmentOver = getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
-        if (!isAssessmentOver) {
-            // This allows the showing of preliminary feedback in case the assessment due date is set before its over.
-            if (this instanceof TextExercise || this instanceof ModelingExercise) {
-                return results.stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA).collect(Collectors.toSet());
-            }
-            return Set.of();
-        }
-        return results.stream().filter(result -> result.getCompletionDate() != null).collect(Collectors.toSet());
     }
 
     public Set<TutorParticipation> getTutorParticipations() {
