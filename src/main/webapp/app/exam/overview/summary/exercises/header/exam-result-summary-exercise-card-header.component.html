@@ -1,32 +1,32 @@
 <div class="d-flex align-items-center">
     <div class="d-flex align-items-center">
-        <h5 class="mb-0" [id]="'exercise-group-title-' + exercise.id">
-            #{{ index + 1 }} &nbsp;
-            @if (exercise?.type && exerciseInfo?.icon) {
-                <fa-icon [icon]="exerciseInfo!.icon" />
+        <h5 class="mb-0" [id]="'exercise-group-title-' + exercise().id">
+            #{{ index() + 1 }} &nbsp;
+            @if (exercise()?.type && exerciseInfo()?.icon) {
+                <fa-icon [icon]="exerciseInfo()!.icon" />
             }
             &nbsp;
-            {{ exercise.exerciseGroup?.title }}
+            {{ exercise().exerciseGroup?.title }}
         </h5>
         <div class="ms-3" id="exercise-result-score">
-            @if (resultsPublished && exerciseInfo?.achievedPoints !== undefined) {
+            @if (resultsPublished() && exerciseInfo()?.achievedPoints !== undefined) {
                 <div class="d-flex">
-                    [{{ exerciseInfo?.achievedPoints }} / {{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.exercisePoints' | artemisTranslate }}]
+                    [{{ exerciseInfo()?.achievedPoints }} / {{ exercise().maxPoints }} {{ 'artemisApp.examParticipation.exercisePoints' | artemisTranslate }}]
                     <div style="margin-left: 1em">
-                        @if (exerciseInfo?.resultIconClass) {
-                            <fa-icon [ngClass]="exerciseInfo?.colorClass" [icon]="exerciseInfo?.resultIconClass!" size="lg" />
+                        @if (exerciseInfo()?.resultIconClass) {
+                            <fa-icon [ngClass]="exerciseInfo()?.colorClass" [icon]="exerciseInfo()?.resultIconClass!" size="lg" />
                         }
-                        @if (exerciseInfo?.achievedPercentage !== undefined) {
-                            <span data-testid="achieved-percentage" [class]="exerciseInfo!.colorClass"> {{ exerciseInfo!.achievedPercentage }}% </span>
+                        @if (exerciseInfo()?.achievedPercentage !== undefined) {
+                            <span data-testid="achieved-percentage" [class]="exerciseInfo()!.colorClass"> {{ exerciseInfo()!.achievedPercentage }}% </span>
                         }
                     </div>
                 </div>
             } @else {
-                [{{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.exercisePoints' | artemisTranslate }}]
+                [{{ exercise().maxPoints }} {{ 'artemisApp.examParticipation.exercisePoints' | artemisTranslate }}]
             }
         </div>
     </div>
-    @if (exercise.studentParticipations?.[0]?.submissions?.[0]?.type === SUBMISSION_TYPE_ILLEGAL) {
+    @if (exercise().studentParticipations?.[0]?.submissions?.[0]?.type === SUBMISSION_TYPE_ILLEGAL) {
         <div>
             <span class="badge bg-danger" jhiTranslate="artemisApp.assessment.assessmentIllegalSubmission"></span>
         </div>
