@@ -193,11 +193,6 @@ spring:
         jpa:
             repositories:
                 bootstrap-mode: deferred
-    web:
-      resources:
-        static-locations: classpath:/META-INF/resources/, file:build/resources/main/static/
-    mvc:
-      static-path-pattern: /static/**
     jpa:
         open-in-view: false
         show-sql: false
