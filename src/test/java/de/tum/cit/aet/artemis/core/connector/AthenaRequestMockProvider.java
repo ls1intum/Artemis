@@ -28,6 +28,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import de.tum.cit.aet.artemis.athena.dto.ResponseMetaDTO;
+
 @Component
 @Profile(PROFILE_ATHENA)
 public class AthenaRequestMockProvider {
@@ -210,7 +212,7 @@ public class AthenaRequestMockProvider {
      * @param isPreliminary    Is part of graded assessment or not
      * @param expectedContents The expected contents of the request
      */
-    public void mockGetFeedbackSuggestionsAndExpect(String moduleType, boolean isPreliminary, RequestMatcher... expectedContents) {
+    public void mockGetFeedbackSuggestionsAndExpect(String moduleType, boolean isPreliminary, ResponseMetaDTO meta, RequestMatcher... expectedContents) {
         ResponseActions responseActions = mockServer
                 .expect(ExpectedCount.once(), requestTo(athenaUrl + "/modules/" + moduleType + "/" + getTestModuleName(moduleType, isPreliminary) + "/feedback_suggestions"))
                 .andExpect(method(HttpMethod.POST)).andExpect(content().contentType(MediaType.APPLICATION_JSON));
@@ -236,6 +238,10 @@ public class AthenaRequestMockProvider {
 
         final ObjectNode node = mapper.createObjectNode().put("module_name", getTestModuleName(moduleType)).put("status", 200).set("data",
                 mapper.createArrayNode().add(suggestion));
+
+        if (meta != null) {
+            node.set("meta", mapper.valueToTree(meta));
+        }
 
         responseActions.andRespond(withSuccess(node.toString(), MediaType.APPLICATION_JSON));
     }
