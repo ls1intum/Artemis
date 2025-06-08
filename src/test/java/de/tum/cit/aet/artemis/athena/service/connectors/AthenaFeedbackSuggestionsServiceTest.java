@@ -22,14 +22,17 @@ import de.tum.cit.aet.artemis.athena.dto.ProgrammingFeedbackDTO;
 import de.tum.cit.aet.artemis.athena.dto.ResponseMetaDTO;
 import de.tum.cit.aet.artemis.athena.dto.TextFeedbackDTO;
 import de.tum.cit.aet.artemis.athena.service.AthenaFeedbackSuggestionsService;
+import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.LLMRequest;
 import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.core.domain.LLMTokenUsageRequest;
 import de.tum.cit.aet.artemis.core.domain.LLMTokenUsageTrace;
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.core.repository.LLMTokenUsageRequestRepository;
 import de.tum.cit.aet.artemis.core.repository.LLMTokenUsageTraceRepository;
+import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
@@ -63,6 +66,9 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
     @Autowired
     private LLMTokenUsageRequestRepository llmTokenUsageRequestRepository;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
     private TextExercise textExercise;
 
     private TextSubmission textSubmission;
@@ -79,11 +85,17 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
     void setUp() {
         athenaRequestMockProvider.enableMockingOfRequests();
 
-        textExercise = textExerciseUtilService.createSampleTextExercise(null);
+        userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 0);
+
+        Course course = courseUtilService.addEmptyCourse();
+        textExercise = textExerciseUtilService.createSampleTextExercise(course);
         textExercise.setFeedbackSuggestionModule(ATHENA_MODULE_TEXT_SUGGESTIONS_TEST);
         textExercise.setPreliminaryFeedbackModule(ATHENA_MODULE_TEXT_PRELIMINARY_TEST);
         textSubmission = new TextSubmission(2L).text("This is a text submission");
-        textSubmission.setParticipation(new StudentParticipation().exercise(textExercise));
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        StudentParticipation textParticipation = new StudentParticipation().exercise(textExercise);
+        textParticipation.setParticipant(student);
+        textSubmission.setParticipation(textParticipation);
 
         programmingExercise = programmingExerciseUtilService.createSampleProgrammingExercise();
         programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_SUGGESTIONS_TEST);
