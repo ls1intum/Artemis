@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.calendar.utils;
+package de.tum.cit.aet.artemis.calendar.util;
 
 import java.time.DateTimeException;
 import java.time.LocalDate;
@@ -18,7 +18,7 @@ import jakarta.ws.rs.BadRequestException;
 import de.tum.cit.aet.artemis.calendar.dto.CalendarEventDTO;
 import de.tum.cit.aet.artemis.core.util.DateUtil;
 
-public class CalendarEventDTOUtils {
+public class CalendarEventDTOUtil {
 
     /**
      * Deserializes a list of month keys into a set of {@link YearMonth} objects.
