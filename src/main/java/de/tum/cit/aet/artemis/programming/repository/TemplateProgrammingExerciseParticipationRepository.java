@@ -6,6 +6,7 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 
 import java.util.Collection;
 import java.util.Optional;
+import java.util.Set;
 
 import jakarta.validation.constraints.NotNull;
 
@@ -57,6 +58,22 @@ public interface TemplateProgrammingExerciseParticipationRepository
 
     @EntityGraph(type = LOAD, attributePaths = { "submissions", "submissions.results", "submissions.results.feedbacks", "submissions.results.feedbacks.testCase" })
     Optional<TemplateProgrammingExerciseParticipation> findWithEagerResultsAndFeedbacksAndTestCasesAndSubmissionsByProgrammingExerciseId(long exerciseId);
+
+    @Query("""
+            SELECT DISTINCT tp
+            FROM TemplateProgrammingExerciseParticipation tp
+             LEFT JOIN FETCH tp.submissions s
+            WHERE tp.programmingExercise.id IN :exerciseIds
+            AND (
+                  s.id = (
+                    SELECT MAX(s2.id)
+                    FROM Submission s2
+                    WHERE s2.participation.id = tp.id
+                  )
+                  OR s.id IS NULL
+                )
+             """)
+    Set<TemplateProgrammingExerciseParticipation> findAllWithLatestSubmissionByExerciseIds(@Param("exerciseIds") Set<Long> exerciseIds);
 
     @NotNull
     default TemplateProgrammingExerciseParticipation findByExerciseIdElseThrow(final Specification<TemplateProgrammingExerciseParticipation> specification, long exerciseId) {
