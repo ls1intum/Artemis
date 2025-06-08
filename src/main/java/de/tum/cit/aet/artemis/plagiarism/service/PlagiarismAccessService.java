@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -20,6 +21,7 @@ import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismComparisonReposito
 
 @Service
 @Conditional(PlagiarismEnabled.class)
+@Lazy
 public class PlagiarismAccessService {
 
     private final PlagiarismComparisonRepository plagiarismComparisonRepository;
