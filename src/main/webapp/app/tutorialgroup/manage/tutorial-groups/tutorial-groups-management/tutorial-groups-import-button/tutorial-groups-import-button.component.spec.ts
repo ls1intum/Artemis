@@ -58,7 +58,7 @@ describe('TutorialGroupsImportButtonComponent', () => {
             expect(openDialogSpy).toHaveBeenCalledOnce();
             expect(modalOpenSpy).toHaveBeenCalledTimes(2);
             expect(modalOpenSpy).toHaveBeenCalledWith(TutorialGroupsRegistrationImportDialogComponent, { backdrop: 'static', scrollable: false, size: 'xl', animation: false });
-            expect(mockModalRef.componentInstance.courseId()).toEqual(exampleCourseId);
+            expect(mockModalRef.componentInstance.courseId()!).toEqual(exampleCourseId);
             expect(importFinishSpy).toHaveBeenCalledOnce();
         });
     }));
