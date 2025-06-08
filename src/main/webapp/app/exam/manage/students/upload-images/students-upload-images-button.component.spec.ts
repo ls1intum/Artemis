@@ -36,7 +36,7 @@ describe('StudentsUploadImagesButtonComponent', () => {
 
     it('should initialize and set modal inputs correctly', () => {
         const mockModalRef = {
-            componentInstance: { courseId: undefined, exam: undefined },
+            componentInstance: { courseId: undefined as any, exam: undefined as any },
             result: new Promise((resolve) => resolve(true)),
         };
         const modalServiceOpenStub = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as NgbModalRef);
