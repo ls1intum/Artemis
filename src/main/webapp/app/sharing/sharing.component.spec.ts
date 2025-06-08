@@ -76,7 +76,7 @@ describe('SharingComponent', () => {
         jest.spyOn(accountService, 'hasAnyAuthority').mockReturnValue(Promise.resolve(true));
         fixture.detectChanges();
         tick();
-        const basketUrl = `api/sharing/import/basket?basketToken=${fixture.componentInstance.sharingInfo.basketToken}&returnURL=${fixture.componentInstance.sharingInfo.returnURL}&apiBaseURL=${fixture.componentInstance.sharingInfo.apiBaseURL}&checksum=${fixture.componentInstance.sharingInfo.checksum}`;
+        const basketUrl = `api/programming/sharing/import/basket?basketToken=${fixture.componentInstance.sharingInfo.basketToken}&returnURL=${fixture.componentInstance.sharingInfo.returnURL}&apiBaseURL=${fixture.componentInstance.sharingInfo.apiBaseURL}&checksum=${fixture.componentInstance.sharingInfo.checksum}`;
         const req = httpMock.expectOne({
             method: 'GET',
             url: basketUrl,
@@ -119,7 +119,7 @@ describe('SharingComponent', () => {
 
         fixture.detectChanges();
         tick();
-        const basketUrl = `api/sharing/import/basket?basketToken=${fixture.componentInstance.sharingInfo.basketToken}&returnURL=${fixture.componentInstance.sharingInfo.returnURL}&apiBaseURL=${fixture.componentInstance.sharingInfo.apiBaseURL}&checksum=${fixture.componentInstance.sharingInfo.checksum}`;
+        const basketUrl = `api/programming/sharing/import/basket?basketToken=${fixture.componentInstance.sharingInfo.basketToken}&returnURL=${fixture.componentInstance.sharingInfo.returnURL}&apiBaseURL=${fixture.componentInstance.sharingInfo.apiBaseURL}&checksum=${fixture.componentInstance.sharingInfo.checksum}`;
         const req = httpMock.expectOne({
             method: 'GET',
             url: basketUrl,
@@ -130,7 +130,7 @@ describe('SharingComponent', () => {
         courseReq.flush(courses);
 
         req.flush(
-            { message: 'Bakset not found' }, // error body
+            { message: 'Basket not found' }, // error body
             {
                 status: 404,
                 statusText: 'Not Found',
@@ -147,7 +147,7 @@ describe('SharingComponent', () => {
 
         fixture.detectChanges();
         tick();
-        const basketUrl = `api/sharing/import/basket?basketToken=${fixture.componentInstance.sharingInfo.basketToken}&returnURL=${fixture.componentInstance.sharingInfo.returnURL}&apiBaseURL=${fixture.componentInstance.sharingInfo.apiBaseURL}&checksum=${fixture.componentInstance.sharingInfo.checksum}`;
+        const basketUrl = `api/programming/sharing/import/basket?basketToken=${fixture.componentInstance.sharingInfo.basketToken}&returnURL=${fixture.componentInstance.sharingInfo.returnURL}&apiBaseURL=${fixture.componentInstance.sharingInfo.apiBaseURL}&checksum=${fixture.componentInstance.sharingInfo.checksum}`;
         const req = httpMock.expectOne({
             method: 'GET',
             url: basketUrl,
@@ -164,40 +164,20 @@ describe('SharingComponent', () => {
         expect(errorSpy).toHaveBeenCalledOnce();
     }));
 
-    it('basketInfo validation', fakeAsync(() => {
+    it('missing Baskettoken', fakeAsync(() => {
         const sharingInfo: SharingInfo = new SharingInfo();
 
-        sharingInfo.basketToken = 'someBasketToken';
+        // sharingInfo.basketToken will be '' by default;
         sharingInfo.returnURL = 'someReturnURL';
         sharingInfo.checksum = 'someCheckSum1234abcd';
         sharingInfo.apiBaseURL = 'someBaseURL';
 
-        expect(sharingInfo.isAvailable()).toBeTrue();
-
-        sharingInfo.validate();
+        expect(() => sharingInfo.validate()).toThrow('Basket token is required');
 
         sharingInfo.clear();
-        try {
-            sharingInfo.validate();
-        } catch (err) {
-            expect(err).toBeInstanceOf(Error);
-            expect(err.message).toBe('Basket token is required');
-        }
-        try {
-            sharingInfo.validate();
-            throw new Error('Error expected, got none');
-        } catch (err) {
-            expect(err).toBeInstanceOf(Error);
-            expect(err.message).toBe('Basket token is required');
-        }
-        try {
-            sharingInfo.basketToken = 'someToken';
-            // Api Base URL still undefined
-            sharingInfo.validate();
-            throw new Error('Error expected, got none');
-        } catch (err) {
-            expect(err).toBeInstanceOf(Error);
-            expect(err.message).toBe('API base URL is required');
-        }
+        expect(() => sharingInfo.validate()).toThrow('Basket token is required');
+
+        sharingInfo.basketToken = 'someToken';
+        expect(() => sharingInfo.validate()).toThrow('API base URL is required');
     }));
 });

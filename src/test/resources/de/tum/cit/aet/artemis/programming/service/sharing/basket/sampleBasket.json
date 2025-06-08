@@ -1,6 +1,6 @@
 {
   "userInfo" : {
-    "email" : "michael.breu@uibk.ac.at"
+    "email" : "test.user@example.com"
   },
   "exerciseInfo" : [ {
     "project" : {
@@ -12,8 +12,7 @@
       "url" : "https://sharing.codeability-austria.uibk.ac.at/sharing/university-innsbruck/java/general/simple-io-tests",
       "last_activity_at" : "2025-01-23T12:10:20Z",
       "visibility" : "public",
-      "users" : [ "simon.priller@uibk.ac.at", "daniel.m.rainer@student.uibk.ac.at", "adrian.bracher@live.at", "johannes.karrer@student.uibk.ac.at", "sharing-codeability@uibk.ac.at", "artemis-support-informatik@uibk.ac.at", "philipp.gritsch@uibk.ac.at", "tobias.antensteiner@uibk.ac.at", "adrian.bracher@tuwien.ac.at", "eduard.frankford@uibk.ac.at", "michael.breu@uibk.ac.at", "lukas.kaltenbrunner@uibk.ac.at", "daniel.crazzolara@uibk.ac.at", "e.frankford@student.uibk.ac.at" ],
-      "groups" : [ "teacher", "teacher/unauthenticatedteachers" ],
+      "users" : [ "user1@example.com", "user2@example.com", "user3@example.com", "instructor@example.com", "admin@example.com" ],      "groups" : [ "teacher", "teacher/unauthenticatedteachers" ],
       "star_count" : 0,
       "open_issues_count" : 0,
       "forks_count" : 1,
@@ -37,7 +36,7 @@
       "creator" : [ {
         "name" : "Michael Breu",
         "affiliation" : "Universität Innsbruck",
-        "email" : "michael.breu@uibk.ac.at"
+        "email" : "creator@example.com"
       } ],
       "description" : "This package provides an infrastructure for simple IO Tests in Artemis. The goal is to provide a simple configuration of the IO-behavior with JUnit tests.",
       "difficulty" : "medium",
@@ -59,7 +58,7 @@
       "publisher" : [ {
         "name" : "Michael Breu",
         "affiliation" : "Universität Innsbruck",
-        "email" : "michael.breu@uibk.ac.at"
+        "email" : "publish.user@example.com"
       } ],
       "requires" : [ "Java8", "JUnit5" ],
       "status" : "final",

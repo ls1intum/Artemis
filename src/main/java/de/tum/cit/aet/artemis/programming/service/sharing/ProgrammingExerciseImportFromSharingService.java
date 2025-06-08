@@ -61,6 +61,8 @@ public class ProgrammingExerciseImportFromSharingService {
      * It reuses the implementation of ProgrammingExerciseImportFromFileService for importing the exercise from a Zip file.
      *
      * @param sharingSetupInfo Containing sharing and exercise data needed for the import
+     * @return The imported ProgrammingExercise
+     * @throws SharingException if the sharing setup info is invalid or the import fails
      */
     public ProgrammingExercise importProgrammingExerciseFromSharing(SharingSetupInfo sharingSetupInfo) throws SharingException, IOException, GitAPIException, URISyntaxException {
         if (sharingSetupInfo.exercise() == null) {

@@ -126,6 +126,8 @@ public class SharingConnectorService {
 
     /**
      * installation name for Sharing Platform
+     *
+     * @return the name of this artemis installation (as shown in Sharing Platform)
      */
     public String getInstallationName() {
         return installationName;
@@ -185,6 +187,8 @@ public class SharingConnectorService {
 
     /**
      * Method used to check if a Sharing ApiBaseUrl is present
+     *
+     * @return true if sharing api base url is present
      */
     public boolean isSharingApiBaseUrlPresent() {
         return this.profileService.isSharing() && sharingApiBaseUrl != null;
@@ -195,6 +199,7 @@ public class SharingConnectorService {
      *
      * @param apiBaseUrl       the base url of the sharing application api (for callbacks)
      * @param installationName an optional descriptive name of the sharing application
+     * @return the sharing plugin config
      */
     public SharingPluginConfig getPluginConfig(URL apiBaseUrl, Optional<String> installationName) {
         this.sharingApiBaseUrl = apiBaseUrl;

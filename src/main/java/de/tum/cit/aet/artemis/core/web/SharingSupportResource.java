@@ -25,7 +25,7 @@ import de.tum.cit.aet.artemis.programming.service.sharing.SharingConnectorServic
  */
 @Validated
 @RestController
-@RequestMapping("/api/sharing/")
+@RequestMapping("api/core/sharing/")
 @Profile("sharing")
 public class SharingSupportResource {
 
@@ -42,7 +42,7 @@ public class SharingSupportResource {
     /**
      * sharing configuration resource path for rest request, iff sharing profile is enabled
      */
-    public static final String SHARINGCONFIG_RESOURCE_IS_ENABLED = SHARINGCONFIG_RESOURCE_PATH + "/isEnabled";
+    public static final String SHARINGCONFIG_RESOURCE_IS_ENABLED = SHARINGCONFIG_RESOURCE_PATH + "/is-enabled";
 
     /**
      * the sharing plugin service
@@ -83,12 +83,12 @@ public class SharingSupportResource {
             }
             catch (IllegalArgumentException | MalformedURLException e) {
                 log.error("Bad URL", e);
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+                return ResponseEntity.badRequest().build();
             }
             return ResponseEntity.ok(sharingConnectorService.getPluginConfig(apiBaseUrl1, installationName));
         }
         log.warn("Received wrong or missing api key");
-        return ResponseEntity.status(401).body(null);
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
     }
 
     /**
@@ -99,8 +99,8 @@ public class SharingSupportResource {
     @GetMapping(SHARINGCONFIG_RESOURCE_IS_ENABLED)
     public ResponseEntity<Boolean> isSharingEnabled() {
         if (sharingConnectorService.isSharingApiBaseUrlPresent()) {
-            return ResponseEntity.status(200).body(true);
+            return ResponseEntity.ok(true);
         }
-        return ResponseEntity.status(503).body(false);
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(false);
     }
 }

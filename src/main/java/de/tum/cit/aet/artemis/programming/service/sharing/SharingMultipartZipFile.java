@@ -80,7 +80,8 @@ public class SharingMultipartZipFile implements MultipartFile, Closeable {
 
     @Override
     public void close() throws IOException {
-        if (this.inputStream != null)
+        if (this.inputStream != null) {
             inputStream.close();
+        }
     }
 }

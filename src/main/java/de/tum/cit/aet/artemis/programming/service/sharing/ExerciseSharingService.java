@@ -40,7 +40,6 @@ import org.apache.http.client.utils.URIBuilder;
 import org.codeability.sharing.plugins.api.ShoppingBasket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
@@ -90,11 +89,9 @@ public class ExerciseSharingService {
     /**
      * the profile service
      */
-    protected ProfileService profileService;
+    protected final ProfileService profileService;
 
-    @Autowired
-    @Qualifier("sharingRestTemplate")
-    protected RestTemplate restTemplate;
+    protected final RestTemplate restTemplate;
 
     /**
      * the programming Exercise Export Service
@@ -120,11 +117,12 @@ public class ExerciseSharingService {
      * @param profileService                   profile service
      */
     public ExerciseSharingService(ProgrammingExerciseExportService programmingExerciseExportService, SharingConnectorService sharingConnectorService,
-            ProgrammingExerciseRepository programmingExerciseRepository, ProfileService profileService) {
+            ProgrammingExerciseRepository programmingExerciseRepository, ProfileService profileService, @Qualifier("sharingRestTemplate") RestTemplate restTemplate) {
         this.programmingExerciseExportService = programmingExerciseExportService;
         this.sharingConnectorService = sharingConnectorService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.profileService = profileService;
+        this.restTemplate = restTemplate;
     }
 
     /**
@@ -161,7 +159,7 @@ public class ExerciseSharingService {
     public Optional<SharingMultipartZipFile> getBasketItem(SharingInfoDTO sharingInfo, int itemPosition) throws SharingException {
         try {
             File f = repositoryCache.get(Pair.of(sharingInfo, itemPosition));
-            SharingMultipartZipFile zipFileItem = new SharingMultipartZipFile(getBasketFileName(sharingInfo.getBasketToken(), itemPosition), new FileInputStream(f));
+            SharingMultipartZipFile zipFileItem = new SharingMultipartZipFile(getBasketFileName(sharingInfo.basketToken(), itemPosition), new FileInputStream(f));
             return Optional.of(zipFileItem);
         }
         catch (WebApplicationException | IOException | ExecutionException wae) {
@@ -189,9 +187,9 @@ public class ExerciseSharingService {
                     SharingInfoDTO sharingInfo = sharingInfoAndPos.getLeft();
                     int itemPosition = sharingInfoAndPos.getRight();
                     try {
-                        String exercisesZipUrl = correctLocalHostInDocker(sharingInfo.getApiBaseURL()) + "/basket/{basketToken}/repository/" + itemPosition + "?format={format}";
+                        String exercisesZipUrl = correctLocalHostInDocker(sharingInfo.apiBaseURL()) + "/basket/{basketToken}/repository/" + itemPosition + "?format={format}";
                         Resource zipInputResource = restTemplate.getForObject(exercisesZipUrl, Resource.class,
-                                Map.of("basketToken", sharingInfo.getBasketToken(), "format", "artemis"));
+                                Map.of("basketToken", sharingInfo.basketToken(), "format", "artemis"));
                         if (zipInputResource == null) {
                             throw new SharingException("Could not retrieve basket item resource");
                         }
@@ -219,7 +217,7 @@ public class ExerciseSharingService {
     }
 
     public Optional<SharingMultipartZipFile> getCachedBasketItem(SharingInfoDTO sharingInfo) throws IOException, SharingException {
-        int itemPosition = sharingInfo.getExercisePosition();
+        int itemPosition = sharingInfo.exercisePosition();
         return getBasketItem(sharingInfo, itemPosition);
     }
 
@@ -312,7 +310,7 @@ public class ExerciseSharingService {
             repositoryStream = cachedBasketItem.get().getInputStream();
         }
         catch (IOException | SharingException e) {
-            log.error("Cannot read input Template for {}", sharingInfo.getBasketToken(), e);
+            log.error("Cannot read input Template for {}", sharingInfo.basketToken(), e);
             return Optional.empty();
         }
 

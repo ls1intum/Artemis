@@ -12,7 +12,7 @@
                         <br />
                         <div>
                             @if (!shoppingBasket) {
-                                <div jhiTranslate="artemisApp.sharing.courseToImport">Keine importierten Aufgaben gefunden</div>
+                                <div jhiTranslate="artemisApp.sharing.error.noImportedExercises">No importable exercises found</div>
                             } @else {
                                 <table class="table table-striped">
                                     <thead>
@@ -27,10 +27,12 @@
                                                 <td>
                                                     <input
                                                         id="{{ exercise.project.project_id }}"
+                                                        [attr.aria-label="'Select exercise: ' + exercise.metadata.title"
                                                         [(ngModel)]="sharingInfo.selectedExercise"
                                                         (change)="onExerciseSelected(exercisePos)"
                                                         [value]="exercisePos"
                                                         name="selectedExercise"
+                                                        title="{{ exercise.metadata.title }}"
                                                         type="radio"
                                                         required
                                                     />
@@ -71,10 +73,12 @@
                                             <td>
                                                 <input
                                                     id="{{ course.id }}"
+                                                    [attr.aria-label]="'Select course: ' + course.title"
                                                     type="radio"
                                                     value="{{ course.id }}"
                                                     (change)="onCourseSelected(course)"
                                                     name="course"
+                                                    title="{{ course.title }}"
                                                     ngModel
                                                     required
                                                 />

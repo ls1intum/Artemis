@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise_;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository.ProgrammingExerciseFetchOptions;
 
 /**
  * Spring Data JPA repository for the ProgrammingExercise entity.
@@ -98,6 +99,7 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
 
     List<ProgrammingExercise> findAllByProjectKey(String projectKey);
 
+    // used by de/tum/cit/aet/artemis/athena/service/connectors/AthenaRepositoryExportServiceTest.java
     List<ProgrammingExercise> findAllByCourseId(Long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "categories" })

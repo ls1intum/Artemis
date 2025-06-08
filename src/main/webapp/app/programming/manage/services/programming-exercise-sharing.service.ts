@@ -19,10 +19,10 @@ export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
 /** the programming exercise sharing service */
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseSharingService {
-    baseSharingConfigUrl = 'api/sharing/config';
-    resourceUrl = 'api/sharing/import';
-    resourceUrlBasket = 'api/sharing/import/basket/';
-    resourceUrlExport = 'api/sharing/export';
+    baseSharingConfigUrl = 'api/core/sharing/config';
+    resourceUrl = 'api/programming/sharing/import';
+    resourceUrlBasket = 'api/programming/sharing/import/basket/';
+    resourceUrlExport = 'api/programming/sharing/export';
 
     constructor(private readonly http: HttpClient) {}
 
@@ -126,7 +126,7 @@ export class ProgrammingExerciseSharingService {
      * If enabled the request will return a 200, and a 503 if not.
      */
     isSharingEnabled() {
-        return this.http.get<boolean>(this.baseSharingConfigUrl + '/isEnabled', {
+        return this.http.get<boolean>(this.baseSharingConfigUrl + '/is-enabled', {
             observe: 'response',
         });
     }

@@ -65,7 +65,8 @@ export class ProgrammingExerciseInstructorExerciseSharingComponent {
                 }
             },
             error: (errorResponse) => {
-                this.alertService.error('artemisApp.programmingExercise.sharing.error.export', { message: errorResponse.error });
+                const errorMessage = errorResponse?.error?.message || errorResponse?.error || 'Unknown error';
+                this.alertService.error('artemisApp.programmingExercise.sharing.error.export', { message: errorMessage });
             },
         });
     }

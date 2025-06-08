@@ -44,7 +44,7 @@ import tech.jhipster.web.util.ResponseUtil;
  * REST controller for managing the sharing of programming exercises.
  */
 @RestController
-@RequestMapping("/api/sharing/")
+@RequestMapping("api/programming/sharing/")
 @Profile("sharing")
 public class ExerciseSharingResource {
 
@@ -97,6 +97,10 @@ public class ExerciseSharingResource {
     /**
      * GET .../sharing-import/basket
      *
+     * @param basketToken the token of the shopping basket
+     * @param returnURL   the URL to return to after the basket is loaded
+     * @param apiBaseURL  the base URL of the API
+     * @param checksum    the checksum to validate the request
      * @return the ResponseEntity with status 200 (OK) and with body the Shopping Basket, or with status 404 (Not Found)
      */
     @GetMapping("import/basket")
@@ -116,6 +120,8 @@ public class ExerciseSharingResource {
      * GET .../sharing/setup-import
      * sets up the imported exercise as a ProgrammingExercise.
      *
+     * @param sharingSetupInfo the sharing setup information containing the details of the exercise to be imported
+     * @throws GitAPIException if there is an error with the git operations
      * @return the ResponseEntity with status 200 (OK) and with body the programming exercise, or with status 404 (Not Found)
      */
     @PostMapping("setup-import")
@@ -132,9 +138,9 @@ public class ExerciseSharingResource {
      * @return the ResponseEntity with status 200 (OK) and with body the problem statement, or with status 404 (Not Found)
      */
     @PostMapping("import/basket/problem-statement")
-    public ResponseEntity<String> getProblemStatement(@RequestBody SharingInfoDTO sharingInfo) throws IOException {
+    public ResponseEntity<String> getProblemStatement(@RequestBody SharingInfoDTO sharingInfo) {
         if (!sharingInfo.checkChecksum(sharingConnectorService.getSharingApiKeyOrNull())) {
-            return ResponseEntity.badRequest().body(null);
+            return ResponseEntity.badRequest().build();
         }
         String problemStatement = this.exerciseSharingService.getProblemStatementFromBasket(sharingInfo);
         return ResponseEntity.ok().contentType(MediaType.TEXT_PLAIN).body(problemStatement);
@@ -159,7 +165,8 @@ public class ExerciseSharingResource {
      * POST /sharing/export/{exerciseId}: export programming exercise to sharing
      * by generating a unique URL token exposing the exercise
      *
-     * @param exerciseId the id of the exercise to export
+     * @param exerciseId  the id of the exercise to export
+     * @param callBackUrl the call back url returned to client after export has finished
      * @return the URL to Sharing
      */
     @PostMapping(SHARINGEXPORT_RESOURCE_PATH + "/{exerciseId}")
@@ -180,6 +187,7 @@ public class ExerciseSharingResource {
      * GET /sharing/export/{exerciseToken}: Endpoint exposing an exported exercise zip to Sharing
      *
      * @param token in base64 format and used to retrieve the exercise
+     * @param sec   digeset of shared key
      * @return a stream of the zip file
      * @throws FileNotFoundException if zip file does not exist anymore
      */

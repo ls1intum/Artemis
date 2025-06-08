@@ -77,7 +77,7 @@ export class SharingComponent implements OnInit {
      * @returns the expiration data of the shopping basket
      */
     getTokenExpiryDate(): Date {
-        if (this.shoppingBasket) {
+        if (this.shoppingBasket?.tokenValidUntil) {
             return new Date(this.shoppingBasket.tokenValidUntil);
         }
         return new Date();
@@ -90,7 +90,7 @@ export class SharingComponent implements OnInit {
             next: (res: HttpResponse<Course[]>) => {
                 this.courses = res.body!;
             },
-            error: (res: HttpErrorResponse) => this.alertService.error('Cannot load courses: ' + res.message),
+            error: (res: HttpErrorResponse) => this.alertService.error('artemisApp.sharing.error.loadingCourses'),
         });
     }
 

@@ -174,6 +174,13 @@ public class ProgrammingExerciseImportFromFileService {
 
     /**
      * Overloaded method setting the isImportFromSharing flag to false as default
+     *
+     * @param programmingExerciseForImport the programming exercise that should be imported
+     * @param zipFile                      the zip file that contains the exercise
+     * @param course                       the course to which the exercise should be added
+     * @param user                         the user initiating the import
+     * @return the imported programming exercise
+     * @throws IOException if there is an error reading the file
      */
     public ProgrammingExercise importProgrammingExerciseFromFile(ProgrammingExercise programmingExerciseForImport, MultipartFile zipFile, Course course, User user)
             throws IOException, GitAPIException, URISyntaxException {

@@ -52,7 +52,13 @@ describe('ProgrammingExerciseDetailComponent', () => {
         solutionParticipation: {
             id: 2,
         } as SolutionProgrammingExerciseParticipation,
-    } as ProgrammingExercise;
+        buildConfig: {
+            buildTool: 'GRADLE',
+            buildImage: 'ghcr.io/ls1intum/gradle-jdk17:latest',
+            buildImagePullSecret: 'gradle-jdk17-pull-secret',
+            buildImagePullSecretName: 'gradle-jdk17-pull-secret',
+        },
+    } as unknown as ProgrammingExercise;
 
     const exerciseStatistics = {
         averageScoreOfExercise: 50,
@@ -153,7 +159,7 @@ describe('ProgrammingExerciseDetailComponent', () => {
             comp.programmingExercise = mockProgrammingExercise;
             comp.programmingExerciseBuildConfig = mockProgrammingExercise.buildConfig;
 
-            const req = httpMock.expectOne({ method: 'GET', url: 'api/sharing/config/isEnabled' });
+            const req = httpMock.expectOne({ method: 'GET', url: 'api/core/sharing/config/is-enabled' });
             req.flush(true);
 
             // THEN
@@ -166,12 +172,31 @@ describe('ProgrammingExerciseDetailComponent', () => {
             comp.programmingExercise = mockProgrammingExercise;
             comp.programmingExerciseBuildConfig = mockProgrammingExercise.buildConfig;
 
-            const req = httpMock.expectOne({ method: 'GET', url: 'api/sharing/config/isEnabled' });
+            const req = httpMock.expectOne({ method: 'GET', url: 'api/core/sharing/config/is-enabled' });
             req.flush(
                 { message: 'Resource not found' }, // error body
                 {
                     status: 404,
                     statusText: 'Not Found',
+                },
+            );
+
+            // THEN
+            expect(comp.isExportToSharingEnabled).toBeFalsy();
+        });
+
+        it('should not be in sharing mode because profile enabled but body empty', async () => {
+            // WHEN
+            comp.ngOnInit();
+            comp.programmingExercise = mockProgrammingExercise;
+            comp.programmingExerciseBuildConfig = mockProgrammingExercise.buildConfig;
+
+            const req = httpMock.expectOne({ method: 'GET', url: 'api/core/sharing/config/is-enabled' });
+            req.flush(
+                null, // empty body
+                {
+                    status: 200,
+                    statusText: 'OK',
                 },
             );
 

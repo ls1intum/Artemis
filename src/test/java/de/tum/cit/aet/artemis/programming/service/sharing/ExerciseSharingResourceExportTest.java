@@ -15,7 +15,6 @@ import java.util.Optional;
 
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -83,7 +82,7 @@ class ExerciseSharingResourceExportTest extends AbstractProgrammingIntegrationLo
         assertThat(progrO).isPresent();
         ProgrammingExercise progr = progrO.get();
 
-        MvcResult result = restMockMvc.perform(post("/api/sharing/export/" + progr.getId()).content(TEST_CALLBACK_URL).contentType(MediaType.APPLICATION_JSON))
+        MvcResult result = restMockMvc.perform(post("/api/programming/sharing/export/" + progr.getId()).content(TEST_CALLBACK_URL).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(content().contentType(MediaType.TEXT_PLAIN + ";charset=UTF-8")).andExpect(status().isInternalServerError()).andReturn();
         String content = result.getResponse().getContentAsString();
         assertThat(content).startsWith("An error occurred while exporting the exercise");
@@ -95,7 +94,8 @@ class ExerciseSharingResourceExportTest extends AbstractProgrammingIntegrationLo
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testExportWithRepositories() throws Exception {
 
-        MvcResult result = restMockMvc.perform(post("/api/sharing/export/" + programmingExercise1.getId()).content(TEST_CALLBACK_URL).contentType(MediaType.APPLICATION_JSON))
+        MvcResult result = restMockMvc
+                .perform(post("/api/programming/sharing/export/" + programmingExercise1.getId()).content(TEST_CALLBACK_URL).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(content().contentType(MediaType.TEXT_PLAIN + ";charset=UTF-8")).andExpect(status().isOk()).andReturn();
         String jsonResult = result.getResponse().getContentAsString();
 
@@ -124,7 +124,7 @@ class ExerciseSharingResourceExportTest extends AbstractProgrammingIntegrationLo
         assertThat(binaryData).hasSizeGreaterThan(100); // a very trivial test that a valid zip is transferred
     }
 
-    private static @NotNull MockHttpServletRequestBuilder convertToGetRequestBuilder(String exerciseUrl) throws URISyntaxException {
+    private static MockHttpServletRequestBuilder convertToGetRequestBuilder(String exerciseUrl) throws URISyntaxException {
         URI exerciseUri = new URI(exerciseUrl);
         List<NameValuePair> paramsExerciseUri = URLEncodedUtils.parse(exerciseUri, StandardCharsets.UTF_8);
 
@@ -140,7 +140,7 @@ class ExerciseSharingResourceExportTest extends AbstractProgrammingIntegrationLo
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testExerciseZipdownloadInvalidToken() throws Exception {
 
-        restMockMvc.perform(get("/api/sharing/export/INVALID_EXERCISE_TOKEN").queryParam("sec", "someSec")).andDo(print()).andExpect(status().isUnauthorized());
+        restMockMvc.perform(get("/api/programming/sharing/export/INVALID_EXERCISE_TOKEN").queryParam("sec", "someSec")).andDo(print()).andExpect(status().isUnauthorized());
     }
 
 }

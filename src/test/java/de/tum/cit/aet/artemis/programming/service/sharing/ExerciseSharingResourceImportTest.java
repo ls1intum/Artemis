@@ -283,11 +283,8 @@ class ExerciseSharingResourceImportTest extends AbstractSpringIntegrationIndepen
         final ResponseActions responseActions = mockServer.expect(ExpectedCount.once(), requestTo(basketURI)).andExpect(method(HttpMethod.GET));
         responseActions.andRespond(MockRestResponseCreators.withSuccess(zippedBytes, MediaType.APPLICATION_OCTET_STREAM));
 
-        SharingInfoDTO sharingInfo = new SharingInfoDTO();
-        sharingInfo.setApiBaseURL(SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN);
-        sharingInfo.setReturnURL(TEST_RETURN_URL);
-        sharingInfo.setBasketToken(basketToken);
-        sharingInfo.setChecksum(calculateCorrectChecksum("returnURL", TEST_RETURN_URL, "apiBaseURL", sharingConnectorService.getSharingApiBaseUrlOrNull().toString()));
+        SharingInfoDTO sharingInfo = new SharingInfoDTO(basketToken, TEST_RETURN_URL, SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN,
+                calculateCorrectChecksum("returnURL", TEST_RETURN_URL, "apiBaseURL", sharingConnectorService.getSharingApiBaseUrlOrNull().toString()), 0);
 
         Course course1 = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
 
@@ -404,7 +401,7 @@ class ExerciseSharingResourceImportTest extends AbstractSpringIntegrationIndepen
         SharingSetupInfo emptySetupInfo = new SharingSetupInfo(null, null, null);
 
         // last step: do Exercise Import
-        restMockMvc.perform(post("/api/sharing/setup-import").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(emptySetupInfo))
+        restMockMvc.perform(post("/api/programming/sharing/setup-import").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(emptySetupInfo))
                 .accept(MediaType.APPLICATION_JSON)).andDo(print()).andExpect(status().is5xxServerError());
 
     }
@@ -413,28 +410,20 @@ class ExerciseSharingResourceImportTest extends AbstractSpringIntegrationIndepen
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importExerciseInfosWrongChecksum() throws Exception {
 
-        SharingInfoDTO sharingInfo = new SharingInfoDTO();
-        sharingInfo.setApiBaseURL(SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN);
-        sharingInfo.setReturnURL(TEST_RETURN_URL);
-        sharingInfo.setBasketToken("Some Basket Token");
-        sharingInfo.setChecksum("Invalid Checksum");
+        SharingInfoDTO sharingInfo = new SharingInfoDTO("Some Basket Token", TEST_RETURN_URL, SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN, "Invalid Checksum", 0);
 
-        restMockMvc.perform(post("/api/sharing/import/basket/exercise-details").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(sharingInfo))
-                .accept(MediaType.APPLICATION_JSON)).andExpect(status().isBadRequest());
+        restMockMvc.perform(post("/api/programming/sharing/import/basket/exercise-details").contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(sharingInfo)).accept(MediaType.APPLICATION_JSON)).andExpect(status().isBadRequest());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importProblemStatementWrongChecksum() throws Exception {
 
-        SharingInfoDTO sharingInfo = new SharingInfoDTO();
-        sharingInfo.setApiBaseURL(SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN);
-        sharingInfo.setReturnURL(TEST_RETURN_URL);
-        sharingInfo.setBasketToken("Some Basket Token");
-        sharingInfo.setChecksum("Invalid Checksum");
+        SharingInfoDTO sharingInfo = new SharingInfoDTO("Some Basket Token", TEST_RETURN_URL, SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN, "Invalid Checksum", 0);
 
-        restMockMvc.perform(post("/api/sharing/import/basket/problem-statement").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(sharingInfo))
-                .accept(MediaType.APPLICATION_JSON)).andExpect(status().isBadRequest());
+        restMockMvc.perform(post("/api/programming/sharing/import/basket/problem-statement").contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(sharingInfo)).accept(MediaType.APPLICATION_JSON)).andExpect(status().isBadRequest());
     }
 
 }
