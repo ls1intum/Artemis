@@ -451,7 +451,7 @@ public class ProgrammingExerciseResource {
         log.debug("REST request to get all ProgrammingExercises for the course with id : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
-        List<ProgrammingExercise> exercises = programmingExerciseRepository.findByCourseIdWithLatestResultForTemplateSolutionParticipations(courseId);
+        List<ProgrammingExercise> exercises = programmingExerciseService.findByCourseIdWithCategoriesLatestSubmissionResultForTemplateAndSolutionParticipation(courseId);
         for (ProgrammingExercise exercise : exercises) {
             // not required in the returned json body
             exercise.setStudentParticipations(null);
