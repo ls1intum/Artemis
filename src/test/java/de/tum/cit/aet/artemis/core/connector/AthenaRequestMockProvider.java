@@ -197,18 +197,13 @@ public class AthenaRequestMockProvider {
 
         ObjectNode suggestion = mapper.createObjectNode().put("id", 1L).put("exerciseId", 1L).put("submissionId", 1L).put("title", "Not so good")
                 .put("description", "This needs to be improved").put("credits", -1.0);
-        if (moduleType.equals("text")) {
-            suggestion = suggestion.put("indexStart", 3).put("indexEnd", 9);
-        }
-        else if (moduleType.equals("programming")) {
-            suggestion = suggestion.put("lineStart", 3).put("lineEnd", 4).put("description", "invoke infinite compression here").put("filePath", "client.cpp");
-        }
-        else if (moduleType.equals("modeling")) {
-            suggestion = suggestion.put("credits", 0);
-        }
-        else {
-            throw new IllegalArgumentException("Unknown module type: " + moduleType);
-        }
+
+        suggestion = switch (moduleType) {
+            case "text" -> suggestion.put("indexStart", 3).put("indexEnd", 9);
+            case "programming" -> suggestion.put("lineStart", 3).put("lineEnd", 4).put("description", "invoke infinite compression here").put("filePath", "client.cpp");
+            case "modeling" -> suggestion.put("credits", 0);
+            default -> throw new IllegalArgumentException("Unknown module type: " + moduleType);
+        };
 
         final ObjectNode node = mapper.createObjectNode().put("module_name", getTestModuleName(moduleType)).put("status", 200).set("data",
                 mapper.createArrayNode().add(suggestion));
