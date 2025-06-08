@@ -31,7 +31,7 @@ import de.tum.cit.aet.artemis.calendar.dto.CalendarEventDTO;
 import de.tum.cit.aet.artemis.calendar.dto.CoursewideCalendarEventDTO;
 import de.tum.cit.aet.artemis.calendar.repository.CoursewideCalendarEventRepository;
 import de.tum.cit.aet.artemis.calendar.service.CoursewideCalendarEventService;
-import de.tum.cit.aet.artemis.calendar.util.CalendarEventDTOUtil;
+import de.tum.cit.aet.artemis.calendar.util.CalendarUtil;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
@@ -89,16 +89,16 @@ public class CalendarResource {
     public ResponseEntity<Map<String, List<CalendarEventDTO>>> getCalendarEventsOverlappingMonths(@RequestParam List<String> monthKeys, @RequestParam String timeZone) {
         log.debug("REST request to get calendar events falling into: {}", monthKeys);
 
-        Set<YearMonth> months = CalendarEventDTOUtil.deserializeMonthKeysOrElseThrow(monthKeys);
-        ZoneId clientTimeZone = CalendarEventDTOUtil.deserializeZoneIdOrElseThrow(timeZone);
+        Set<YearMonth> months = CalendarUtil.deserializeMonthKeysOrElseThrow(monthKeys);
+        ZoneId clientTimeZone = CalendarUtil.deserializeZoneIdOrElseThrow(timeZone);
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
         Set<CalendarEventDTO> tutorialEventReadDTOs = tutorialGroupApi.getTutorialEventsForUser(user, clientTimeZone);
         Set<CalendarEventDTO> courseEventReadDTOs = coursewideCalendarEventService.getCourseEventsForUser(user, clientTimeZone);
 
         Set<CalendarEventDTO> calendarEventDTOS = Stream.concat(tutorialEventReadDTOs.stream(), courseEventReadDTOs.stream()).collect(Collectors.toSet());
-        Set<CalendarEventDTO> filteredDTOs = CalendarEventDTOUtil.filterForEventsOverlappingMonths(calendarEventDTOS, months, clientTimeZone);
-        Set<CalendarEventDTO> splitDTOs = CalendarEventDTOUtil.splitEventsSpanningMultipleDaysIfNecessary(filteredDTOs);
+        Set<CalendarEventDTO> filteredDTOs = CalendarUtil.filterForEventsOverlappingMonths(calendarEventDTOS, months, clientTimeZone);
+        Set<CalendarEventDTO> splitDTOs = CalendarUtil.splitEventsSpanningMultipleDaysIfNecessary(filteredDTOs);
         Map<String, List<CalendarEventDTO>> calendarEventDTOsByDay = splitDTOs.stream().collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
         return ResponseEntity.ok(calendarEventDTOsByDay);
@@ -147,9 +147,9 @@ public class CalendarResource {
         Course course = courseRepository.findByIdElseThrow(courseId);
         User responsibleUser = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, responsibleUser);
-        coursewideCalendarEventService.checkThatNoEventHasIdElseThrow(coursewideCalendarEventDTOS);
-        coursewideCalendarEventService.checkThatNoEventHasACourseNameElseThrow(coursewideCalendarEventDTOS);
-        coursewideCalendarEventService.checkThatAllEventsAreAtLeastVisibleToOneUserGroupElseThrow(coursewideCalendarEventDTOS);
+        CalendarUtil.checkThatNoEventHasIdElseThrow(coursewideCalendarEventDTOS);
+        CalendarUtil.checkThatNoEventHasACourseNameElseThrow(coursewideCalendarEventDTOS);
+        CalendarUtil.checkThatAllEventsAreAtLeastVisibleToOneUserGroupElseThrow(coursewideCalendarEventDTOS);
 
         Set<CoursewideCalendarEventDTO> createdCoursewideCalendarEventDTOS = coursewideCalendarEventService.createCoursewideCalendarEventsElseThrow(coursewideCalendarEventDTOS,
                 course);
@@ -174,13 +174,13 @@ public class CalendarResource {
     public ResponseEntity<CoursewideCalendarEventDTO> updateCoursewideCalendarEvent(@Valid @RequestBody CoursewideCalendarEventDTO coursewideCalendarEventDTO) {
         log.debug("REST request to update CoursewideCalendarEvent: {}", coursewideCalendarEventDTO);
 
-        Long coursewideCalendarEventId = coursewideCalendarEventService.checkIfValidIdAndExtractCoursewideCalendarEventIdOrThrow(coursewideCalendarEventDTO.id());
+        Long coursewideCalendarEventId = CalendarUtil.checkIfValidIdAndExtractCoursewideCalendarEventIdElseThrow(coursewideCalendarEventDTO.id());
         CoursewideCalendarEvent event = coursewideCalendarEventRepository.findByIdWithCourseElseThrow(coursewideCalendarEventId);
         Course course = event.getCourse();
         User responsibleUser = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, responsibleUser);
-        coursewideCalendarEventService.checkThatEventHasNoCourseNameElseThrow(coursewideCalendarEventDTO);
-        coursewideCalendarEventService.checkThatEventIsAtLeastVisibleToOneUserGroupElseThrow(coursewideCalendarEventDTO);
+        CalendarUtil.checkThatEventHasNoCourseNameElseThrow(coursewideCalendarEventDTO);
+        CalendarUtil.checkThatEventIsAtLeastVisibleToOneUserGroupElseThrow(coursewideCalendarEventDTO);
 
         CoursewideCalendarEventDTO updatedCoursewideCalendarEventDTO = coursewideCalendarEventService.updateCoursewideCalendarEventElseThrow(event, coursewideCalendarEventDTO);
 
@@ -202,7 +202,7 @@ public class CalendarResource {
     public ResponseEntity<Void> deleteCoursewideCalendarEvent(@PathVariable String calendarEventId) {
         log.debug("REST request to delete CoursewideCalendarEvent {}", calendarEventId);
 
-        Long coursewideCalendarEventId = coursewideCalendarEventService.checkIfValidIdAndExtractCoursewideCalendarEventIdOrThrow(calendarEventId);
+        Long coursewideCalendarEventId = CalendarUtil.checkIfValidIdAndExtractCoursewideCalendarEventIdElseThrow(calendarEventId);
         CoursewideCalendarEvent event = coursewideCalendarEventRepository.findByIdWithCourseElseThrow(coursewideCalendarEventId);
         Course course = event.getCourse();
         User responsibleUser = userRepository.getUserWithGroupsAndAuthorities();
