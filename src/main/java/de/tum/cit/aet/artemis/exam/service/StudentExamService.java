@@ -420,8 +420,8 @@ public class StudentExamService {
                 isContentEqualTo(dndSubmittedAnswer1, dndSubmittedAnswer2);
             case MultipleChoiceSubmittedAnswer mcSubmittedAnswer1 when answer2 instanceof MultipleChoiceSubmittedAnswer mcSubmittedAnswer2 ->
                 isContentEqualTo(mcSubmittedAnswer1, mcSubmittedAnswer2);
-            case ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer1 when answer2 instanceof ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer ->
-                isContentEqualTo(shortAnswerSubmittedAnswer1, shortAnswerSubmittedAnswer);
+            case ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer1 when answer2 instanceof ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer2 ->
+                isContentEqualTo(shortAnswerSubmittedAnswer1, shortAnswerSubmittedAnswer2);
             default -> {
                 log.error("Cannot compare {} and {} for equality, classes unknown", answer1, answer2);
                 yield false;
