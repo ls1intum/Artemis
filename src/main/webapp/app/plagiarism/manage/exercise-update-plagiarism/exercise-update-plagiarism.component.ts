@@ -14,7 +14,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     imports: [TranslateDirective, FaIconComponent, NgbTooltip, FormsModule, ArtemisTranslatePipe],
 })
 export class ExerciseUpdatePlagiarismComponent implements OnInit, OnDestroy, AfterViewInit {
-    readonly exercise = input<Exercise>();
+    readonly exercise = input.required<Exercise>();
     readonly fieldCPCEnabled = viewChild<NgModel>('continuous_plagiarism_control_enabled');
     readonly fieldThreshold = viewChild<NgModel>('exercise.plagiarismDetectionConfig!.similarityThreshol');
     readonly fieldMinScore = viewChild<NgModel>('exercise.plagiarismDetectionConfig.minimumScore');

@@ -24,8 +24,8 @@ export class PlagiarismHeaderComponent {
     private modalService = inject(NgbModal);
 
     readonly comparison = input<PlagiarismComparison<TextSubmissionElement> | undefined>(undefined);
-    readonly exercise = input<Exercise>();
-    readonly splitControlSubject = input<Subject<string>>();
+    readonly exercise = input.required<Exercise>();
+    readonly splitControlSubject = input.required<Subject<string>>();
 
     readonly plagiarismStatus = PlagiarismStatus;
     isLoading = false;

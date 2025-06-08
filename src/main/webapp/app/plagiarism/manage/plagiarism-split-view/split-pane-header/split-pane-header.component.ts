@@ -23,8 +23,8 @@ export type FileWithHasMatch = {
     imports: [NgbDropdown, NgClass, FaIconComponent, NgbDropdownItem, TranslateDirective, ArtemisTranslatePipe],
 })
 export class SplitPaneHeaderComponent implements OnChanges, OnInit, OnDestroy {
-    readonly files = input<FileWithHasMatch[]>(undefined!);
-    readonly studentLogin = input<string>(undefined!);
+    readonly files = input<FileWithHasMatch[]>([]);
+    readonly studentLogin = input.required<string>();
     fileSelectedSubject = input<Subject<TextPlagiarismFileElement>>();
     isLockFilesEnabled = input<boolean>();
     showFilesSubject = input<Subject<boolean>>();

@@ -15,12 +15,12 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     imports: [FaIconComponent, TranslateDirective, NgClass, DecimalPipe, ArtemisTranslatePipe],
 })
 export class PlagiarismSidebarComponent implements OnChanges {
-    readonly activeID = input<number>(undefined!);
+    readonly activeID = input<number>();
     readonly comparisons = input<PlagiarismComparison<TextSubmissionElement>[]>();
     readonly casesFiltered = input(false);
     readonly offset = input(0);
 
-    readonly showRunDetails = input<boolean>(undefined!);
+    readonly showRunDetails = input<boolean>();
     readonly showRunDetailsChange = output<boolean>();
 
     readonly selectIndex = output<number>();

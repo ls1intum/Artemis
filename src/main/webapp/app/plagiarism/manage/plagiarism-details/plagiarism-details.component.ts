@@ -14,7 +14,7 @@ import { PlagiarismSplitViewComponent } from '../plagiarism-split-view/plagiaris
 })
 export class PlagiarismDetailsComponent {
     readonly comparison = input<PlagiarismComparison<TextSubmissionElement> | undefined>();
-    readonly exercise = input<Exercise>();
+    readonly exercise = input.required<Exercise>();
 
     /**
      * Subject to be passed into PlagiarismSplitViewComponent to control the split view.
