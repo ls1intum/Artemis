@@ -84,12 +84,12 @@ export class StudentsUploadImagesDialogComponent implements OnDestroy {
      */
     parsePDFFile() {
         this.isParsing = true;
-        const exam = this.exam;
-        if (exam()?.id) {
+        const exam = this.exam();
+        if (exam?.id) {
             const formData: FormData = new FormData();
             formData.append('file', this.file);
 
-            this.examManagementService.saveImages(this.courseId(), exam().id!, formData).subscribe({
+            this.examManagementService.saveImages(this.courseId(), exam.id, formData).subscribe({
                 next: (res: any) => {
                     if (res) {
                         this.notFoundUsers = res.body;
