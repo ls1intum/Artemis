@@ -41,7 +41,7 @@ describe('TutorialGroupsImportButtonComponent', () => {
         // given
         const modalService = TestBed.inject(NgbModal);
         const mockModalRef = {
-            componentInstance: { courseId: undefined },
+            componentInstance: { courseId: undefined as any },
             result: Promise.resolve(),
         };
         const modalOpenSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as unknown as NgbModalRef);
