@@ -78,7 +78,7 @@ public class CalendarUtil {
     public static void checkThatEventHasNoCourseNameElseThrow(CoursewideCalendarEventDTO coursewideCalendarEventDTO) {
         boolean hasCourseName = coursewideCalendarEventDTO.courseName() != null;
         if (hasCourseName) {
-            throw new BadRequestException("Each calendar events must not have a courseName, since it is assigned automatically.");
+            throw new BadRequestException("Each calendar event must not have a courseName, since it is assigned automatically.");
         }
     }
 
