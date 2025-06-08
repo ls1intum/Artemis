@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -384,6 +385,29 @@ public class ProgrammingExerciseTestService {
         setupRepositoryMocks(projectKey, exerciseRepository, exerciseRepoName, solutionRepository, solutionRepoName, testRepository, testRepoName, auxRepository, auxRepoName);
     }
 
+    private String convertToLocalVcUriString(File repoFile) {
+        try {
+            // we basically add a "git" in the middle of the URI to make it a valid LocalVC URI
+            Path originalPath = repoFile.toPath();
+            Path prefixPath = Paths.get(localVCRepoPath).toAbsolutePath().normalize();
+
+            if (!originalPath.startsWith(prefixPath)) {
+                throw new IllegalArgumentException("Path does not start with configured localVCRepoPath: " + repoFile.getPath());
+            }
+
+            // Relative path after the configured prefix
+            Path relativePath = prefixPath.relativize(originalPath);
+
+            // Construct modified path with inserted 'git' segment
+            Path modifiedPath = prefixPath.resolve("git").resolve(relativePath);
+
+            return modifiedPath.toUri().toURL().toString();
+        }
+        catch (Exception e) {
+            throw new IllegalArgumentException("Failed to convert file to URI string: " + repoFile.getPath(), e);
+        }
+    }
+
     /**
      * Mocks the access and interaction with repository mocks on the local file system.
      *
@@ -400,10 +424,10 @@ public class ProgrammingExerciseTestService {
      */
     public void setupRepositoryMocks(String projectKey, LocalRepository exerciseRepository, String exerciseRepoName, LocalRepository solutionRepository, String solutionRepoName,
             LocalRepository testRepository, String testRepoName, LocalRepository auxRepository, String auxRepoName) throws Exception {
-        var exerciseRepoTestUrl = new LocalVCRepositoryUri(exerciseRepository.bareGitRepoFile.getPath());
-        var testRepoTestUrl = new LocalVCRepositoryUri(testRepository.bareGitRepoFile.getPath());
-        var solutionRepoTestUrl = new LocalVCRepositoryUri(solutionRepository.bareGitRepoFile.getPath());
-        var auxRepoTestUrl = new LocalVCRepositoryUri(auxRepository.bareGitRepoFile.getPath());
+        var exerciseRepoTestUrl = new LocalVCRepositoryUri(convertToLocalVcUriString(exerciseRepository.bareGitRepoFile));
+        var testRepoTestUrl = new LocalVCRepositoryUri(convertToLocalVcUriString(testRepository.bareGitRepoFile));
+        var solutionRepoTestUrl = new LocalVCRepositoryUri(convertToLocalVcUriString(solutionRepository.bareGitRepoFile));
+        var auxRepoTestUrl = new LocalVCRepositoryUri(convertToLocalVcUriString(auxRepository.bareGitRepoFile));
 
         doReturn(exerciseRepoTestUrl).when(versionControlService).getCloneRepositoryUri(projectKey, exerciseRepoName);
         doReturn(testRepoTestUrl).when(versionControlService).getCloneRepositoryUri(projectKey, testRepoName);

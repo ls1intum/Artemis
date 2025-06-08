@@ -7,7 +7,6 @@ import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -30,7 +29,7 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractProgrammingIntegrati
 
     private static final String TEST_PREFIX = "progexgitintegration";
 
-    private File localRepoFile;
+    private Path localRepoPath;
 
     private Git localGit;
 
@@ -44,22 +43,22 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractProgrammingIntegrati
         participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
         participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student2");
 
-        localRepoFile = Files.createTempDirectory("repo").toFile();
-        localGit = LocalRepository.initialize(localRepoFile, defaultBranch, false);
+        localRepoPath = Files.createTempDirectory("repo");
+        localGit = LocalRepository.initialize(localRepoPath, defaultBranch, false);
 
         // create commits
         // the following 2 lines prepare the generation of the structural test oracle
-        var testJsonFilePath = Path.of(localRepoFile.getPath(), "test", programmingExercise.getPackageFolderName(), "test.json");
+        var testJsonFilePath = localRepoPath.resolve("test").resolve(programmingExercise.getPackageFolderName()).resolve("test.json");
         gitUtilService.writeEmptyJsonFileToPath(testJsonFilePath);
         GitService.commit(localGit).setMessage("add test.json").setAuthor("test", "test@test.com").call();
-        var testJsonFilePath2 = Path.of(localRepoFile.getPath(), "test", programmingExercise.getPackageFolderName(), "test2.json");
+        var testJsonFilePath2 = localRepoPath.resolve("test").resolve(programmingExercise.getPackageFolderName()).resolve("test2.json");
         gitUtilService.writeEmptyJsonFileToPath(testJsonFilePath2);
         GitService.commit(localGit).setMessage("add test2.json").setAuthor("test", "test@test.com").call();
-        var testJsonFilePath3 = Path.of(localRepoFile.getPath(), "test", programmingExercise.getPackageFolderName(), "test3.json");
+        var testJsonFilePath3 = localRepoPath.resolve("test").resolve(programmingExercise.getPackageFolderName()).resolve("test3.json");
         gitUtilService.writeEmptyJsonFileToPath(testJsonFilePath3);
         GitService.commit(localGit).setMessage("add test3.json").setAuthor("test", "test@test.com").call();
 
-        var repository = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile.toPath(), null);
+        var repository = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoPath, null);
         doReturn(repository).when(gitService).getOrCheckoutRepository(any(VcsRepositoryUri.class), anyString(), anyBoolean());
         doNothing().when(gitService).fetchAll(any());
         var objectId = localGit.reflog().call().iterator().next().getNewId();
@@ -74,8 +73,8 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractProgrammingIntegrati
         if (localGit != null) {
             localGit.close();
         }
-        if (localRepoFile != null && localRepoFile.exists()) {
-            FileUtils.deleteDirectory(localRepoFile);
+        if (localRepoPath != null && localRepoPath.toFile().exists()) {
+            FileUtils.deleteDirectory(localRepoPath.toFile());
         }
     }
 

@@ -1029,7 +1029,7 @@ public class GitService extends AbstractGitService {
             try (RevWalk walk = new RevWalk(sourceRepo)) {
                 ObjectId debugCommitId = sourceRepo.resolve("refs/heads/" + sourceBranch + "^{commit}");
                 if (debugCommitId == null) {
-                    log.error("Source repo [{}] has no branch [{}]", sourceRepoUri, sourceBranch);
+                    log.error("Source repo [{}] has no head commit in branch [{}]", sourceRepoUri, sourceBranch);
                 }
                 RevCommit headCommit = walk.parseCommit(debugCommitId);
                 walk.markStart(headCommit);
@@ -1057,12 +1057,12 @@ public class GitService extends AbstractGitService {
             if (commitId == null) {
                 throw new IOException("Branch " + sourceBranch + " not found in " + sourceRepoUri);
             }
-            RevTree headTree;
+
             RevWalk walk = new RevWalk(sourceRepo);
             RevCommit headCommit = walk.parseCommit(commitId);
             walk.markStart(headCommit);
 
-            headTree = headCommit.getTree();
+            RevTree headTree = headCommit.getTree();
 
             // Get PersonIdent from the very first commit
             ObjectId branchHead = sourceRepo.resolve("refs/heads/" + sourceBranch);

@@ -52,12 +52,12 @@ public class LocalRepository {
         this.defaultBranch = defaultBranch;
     }
 
-    public static Git initialize(File filePath, String defaultBranch, boolean bare) throws GitAPIException, IOException {
+    public static Git initialize(Path gitFilePath, String defaultBranch, boolean bare) throws GitAPIException, IOException {
 
-        Files.createDirectories(filePath.toPath());
+        Files.createDirectories(gitFilePath);
 
         // Create a bare local repository with JGit.
-        Git git = Git.init().setDirectory(filePath).setInitialBranch(defaultBranch).setBare(bare).call();
+        Git git = Git.init().setDirectory(gitFilePath.toFile()).setInitialBranch(defaultBranch).setBare(bare).call();
 
         // Change the default branch to the Artemis default branch.
         Repository repository = git.getRepository();
@@ -97,11 +97,13 @@ public class LocalRepository {
      * @param originIsBare       Whether the origin repository should be bare or not. Set this to false only if you need to create files in the origin repository.
      */
     public void configureRepos(Path repoBasePath, String localRepoFileName, String originRepoFileName, boolean originIsBare) throws Exception {
-        workingCopyGitRepoFile = getRepoPath(repoBasePath, localRepoFileName).toFile();
-        workingCopyGitRepo = initialize(workingCopyGitRepoFile, defaultBranch, false);
+        var workingCopyGitRepoPath = getRepoPath(repoBasePath, localRepoFileName);
+        workingCopyGitRepoFile = workingCopyGitRepoPath.toFile();
+        workingCopyGitRepo = initialize(workingCopyGitRepoPath, defaultBranch, false);
 
-        bareGitRepoFile = getRepoPath(repoBasePath, originRepoFileName).toFile();
-        bareGitRepo = initialize(bareGitRepoFile, defaultBranch, originIsBare);
+        var bareGitRepoPath = getRepoPath(repoBasePath, originRepoFileName);
+        bareGitRepoFile = bareGitRepoPath.toFile();
+        bareGitRepo = initialize(bareGitRepoPath, defaultBranch, originIsBare);
 
         workingCopyGitRepo.remoteAdd().setName("origin").setUri(new URIish(bareGitRepoFile.toURI().toString())).call();
 
@@ -147,13 +149,13 @@ public class LocalRepository {
      */
     public void configureRepos(Path repoBasePath, String localRepoFileName, Path originRepositoryFolder) throws IOException, GitAPIException, URISyntaxException {
 
-        Path localRepoPath = getRepoPath(repoBasePath, localRepoFileName);
+        var localRepoPath = getRepoPath(repoBasePath, localRepoFileName);
         workingCopyGitRepoFile = localRepoPath.toFile();
-        workingCopyGitRepo = initialize(workingCopyGitRepoFile, defaultBranch, false);
+        workingCopyGitRepo = initialize(localRepoPath, defaultBranch, false);
 
         bareGitRepoFile = originRepositoryFolder.toFile();
         // Create a bare remote repository.
-        bareGitRepo = initialize(bareGitRepoFile, defaultBranch, true);
+        bareGitRepo = initialize(bareGitRepoFile.toPath(), defaultBranch, true);
 
         workingCopyGitRepo.remoteAdd().setName("origin").setUri(new URIish(String.valueOf(bareGitRepoFile))).call();
 
@@ -175,7 +177,7 @@ public class LocalRepository {
     // This method tries to build a valid, but unique (random) LocalVCRepositoryUri from the given base path and local repository file name.
     private static Path getRepoPath(@NotNull Path repoBasePath, @NotNull String localRepoFileName) {
         var tempPrefix = getTempPrefix(6);
-        return repoBasePath.resolve("git").resolve(tempPrefix).resolve(tempPrefix + "-" + localRepoFileName + ".git");
+        return repoBasePath.resolve(tempPrefix).resolve(tempPrefix + "-" + localRepoFileName + ".git");
     }
 
     private static final String CHARACTERS = "abcdefghijklmnopqrstuvwxyz0123456789";
