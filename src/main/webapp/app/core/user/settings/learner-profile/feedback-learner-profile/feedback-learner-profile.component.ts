@@ -25,7 +25,7 @@ export class FeedbackLearnerProfileComponent implements OnInit {
     protected translateService = inject(TranslateService);
 
     /** Signal containing the learner profile for the current user */
-    public readonly learnerProfile = signal<LearnerProfileDTO | null>(null);
+    protected readonly learnerProfile = signal<LearnerProfileDTO | undefined>(undefined);
 
     /** Flag indicating whether the profile editing is disabled */
     disabled = true;
