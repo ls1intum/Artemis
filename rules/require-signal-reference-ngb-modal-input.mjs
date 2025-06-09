@@ -6,13 +6,12 @@ const createRule = ESLintUtils.RuleCreator(() => "");
 /**
  * @fileoverview
  * Enforce that when opening an Angular dialog whose inputs are backed by Signals
- * (via `input()` / `input.required()`), you never assign `.value` or invoke the Signal—
+ * (via `input()` / `input.required()`), you never invoke the Signal—
  * instead always pass the Signal itself.
  *
  * Examples **flagged** by this rule:
  * ```js
  * const dialogReference = this.modalService.open(MyDialogComponent);
- * dialogReference.componentInstance.title = this.titleSignal.value;
  * dialogReference.componentInstance.count = this.countSignal();
  * ```
  *
@@ -32,8 +31,6 @@ export default createRule({
             recommended: "error",
         },
         messages: {
-            unexpectedValueAccess:
-                "Input '{{propertyName}}' is signal-backed; don’t pass '{{expressionText}}.value'. Pass the Signal itself.",
             unexpectedSignalInvocation:
                 "Input '{{propertyName}}' is signal-backed; don’t invoke it ('{{expressionText}}()'). Pass the Signal itself.",
         },
@@ -123,7 +120,8 @@ export default createRule({
             return (
                 (ts.isIdentifier(expr) && expr.text === "input") ||
                 (ts.isPropertyAccessExpression(expr) &&
-                    expr.expression.getText() === "input")
+                    ts.isIdentifier(expr.expression) &&
+                    expr.expression.text === "input")
             );
         };
 
@@ -140,26 +138,6 @@ export default createRule({
                 if (member) return member;
             }
             return null;
-        };
-
-        /**
-         * Validate `.value` access on a signal expression.
-         */
-        const checkValueAccessExpression = (node, propertyName) => {
-            if (
-                node.type === "MemberExpression" &&
-                node.property.type === "Identifier" &&
-                node.property.name === "value"
-            ) {
-                const exprText = sourceCode.getText(node.object);
-                context.report({
-                    node: node.property,
-                    messageId: "unexpectedValueAccess",
-                    data: { propertyName, expressionText: exprText },
-                });
-                return true;
-            }
-            return false;
         };
 
         /**
@@ -213,7 +191,6 @@ export default createRule({
             if (!backedMember) return;
 
             const right = node.right;
-            if (checkValueAccessExpression(right, propertyName)) return;
             checkSignalInvocation(right, propertyName);
         }
 
