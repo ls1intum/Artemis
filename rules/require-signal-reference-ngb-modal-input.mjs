@@ -1,12 +1,9 @@
-// rules/require-signal-ref.js
-"use strict";
-
-const { ESLintUtils } = require("@typescript-eslint/utils");
-const ts = require("typescript");
+import { ESLintUtils } from "@typescript-eslint/utils";
+import ts from "typescript";
 
 const createRule = ESLintUtils.RuleCreator(() => "");
 
-module.exports = createRule({
+export default createRule({
     name: "require-signal-ref",
     meta: {
         type: "problem",
@@ -29,10 +26,10 @@ module.exports = createRule({
         const checker       = parserServices.program.getTypeChecker();
         const src           = context.getSourceCode();
 
-        // Map of modalRef var name → component class Symbol
+        // modalRef var name → dialog component Symbol
         const modalMap = new Map();
 
-        // Helper: does this property declaration use input() or input.required()?
+        // is this prop initialized with input() or input.required()?
         function isSignalBacked(decl) {
             const init = decl.initializer;
             if (!init || !ts.isCallExpression(init)) return false;
@@ -46,7 +43,7 @@ module.exports = createRule({
         }
 
         return {
-            // 1) Track `const mr = this.modalService.open(TheDialog, …)`
+            // 1) capture `const mr = this.modalService.open(TheDialog, …)`
             CallExpression(node) {
                 if (
                     node.callee.type !== "MemberExpression" ||
@@ -61,22 +58,21 @@ module.exports = createRule({
                         .getTypeAtLocation(tsObj)
                         .getSymbol()
                         ?.getName() !== "NgbModal"
-                )
-                    return;
+                ) return;
 
                 const compArg = node.arguments[0];
                 if (!compArg || compArg.type !== "Identifier") return;
 
-                // resolve imported alias to real class symbol
                 let compSym = checker.getSymbolAtLocation(
                     parserServices.esTreeNodeToTSNodeMap.get(compArg)
                 );
+                // resolve import-alias to real class
                 if (compSym && (compSym.flags & ts.SymbolFlags.Alias)) {
                     compSym = checker.getAliasedSymbol(compSym);
                 }
                 if (!compSym) return;
 
-                // figure out the modalRef var name
+                // figure out the modalRef var
                 let modalVar;
                 const p = node.parent;
                 if (
@@ -90,12 +86,10 @@ module.exports = createRule({
                 ) {
                     modalVar = p.left.name;
                 }
-                if (modalVar) {
-                    modalMap.set(modalVar, compSym);
-                }
+                if (modalVar) modalMap.set(modalVar, compSym);
             },
 
-            // 2) On `mr.componentInstance.foo = RHS`, enforce only if foo is signal-backed
+            // 2) on `mr.componentInstance.foo = RHS`, only enforce if foo is signal-backed
             AssignmentExpression(node) {
                 const L = node.left;
                 if (
@@ -103,8 +97,7 @@ module.exports = createRule({
                     L.object.type !== "MemberExpression" ||
                     L.object.property.name !== "componentInstance" ||
                     L.property.type !== "Identifier"
-                )
-                    return;
+                ) return;
 
                 const mr = L.object.object;
                 if (mr.type !== "Identifier") return;
@@ -113,7 +106,7 @@ module.exports = createRule({
 
                 const inputName = L.property.name;
 
-                // find that property declaration in the component class
+                // find the class-prop decl
                 let found = null;
                 for (const d of compSym.getDeclarations()) {
                     if (!ts.isClassDeclaration(d)) continue;
@@ -128,7 +121,7 @@ module.exports = createRule({
                         break;
                     }
                 }
-                if (!found) return; // not a signal-backed property
+                if (!found) return;  // not signal-backed
 
                 const rhs = node.right;
 

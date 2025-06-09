@@ -8,7 +8,7 @@ import angularTemplateParser from '@angular-eslint/template-parser';
 import angular from 'angular-eslint';
 import tseslint from 'typescript-eslint';
 import eslint from '@eslint/js';
-import localRulesPlugin from './rules/index.js';
+import localRulesPlugin from './rules/index.mjs';
 
 export default tseslint.config(
     {
