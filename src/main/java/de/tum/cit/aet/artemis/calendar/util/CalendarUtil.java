@@ -158,6 +158,9 @@ public class CalendarUtil {
         ZonedDateTime monthEnd = ZonedDateTime.of(month.atEndOfMonth(), LocalTime.of(23, 59, 59, 999_000_000), clientZone).withZoneSameInstant(ZoneOffset.UTC);
 
         boolean eventStartFallsIntoMonth = firstIsBeforeOrEqualSecond(monthStart, eventStart) && firstIsBeforeOrEqualSecond(eventStart, monthEnd);
+        if (eventEnd == null) {
+            return eventStartFallsIntoMonth;
+        }
         boolean eventEndFallsIntoMonth = firstIsBeforeOrEqualSecond(monthStart, eventEnd) && firstIsBeforeOrEqualSecond(eventEnd, monthEnd);
         boolean eventWrapsMonth = eventStart.isBefore(monthStart) && monthEnd.isBefore(eventEnd);
         return eventStartFallsIntoMonth || eventEndFallsIntoMonth || eventWrapsMonth;
