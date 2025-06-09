@@ -42,6 +42,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.athena.api.AthenaApi;
+import de.tum.cit.aet.artemis.athena.api.AthenaFeedbackApi;
 import de.tum.cit.aet.artemis.athena.domain.ModuleType;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -135,13 +136,15 @@ public class ProgrammingExerciseExportImportResource {
 
     private final ProgrammingExerciseService programmingExerciseService;
 
+    private final Optional<AthenaFeedbackApi> athenaFeedbackApi;
+
     public ProgrammingExerciseExportImportResource(ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository,
             AuthorizationCheckService authCheckService, CourseService courseService, ProgrammingExerciseImportService programmingExerciseImportService,
             ProgrammingExerciseExportService programmingExerciseExportService, Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService,
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, SubmissionPolicyService submissionPolicyService,
             ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, Optional<ExamAccessApi> examAccessApi, CourseRepository courseRepository,
             ProgrammingExerciseImportFromFileService programmingExerciseImportFromFileService, ConsistencyCheckService consistencyCheckService, Optional<AthenaApi> athenaApi,
-            Optional<CompetencyProgressApi> competencyProgressApi, ProgrammingExerciseService programmingExerciseService) {
+            Optional<CompetencyProgressApi> competencyProgressApi, ProgrammingExerciseService programmingExerciseService, Optional<AthenaFeedbackApi> athenaFeedbackApi) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -159,6 +162,7 @@ public class ProgrammingExerciseExportImportResource {
         this.athenaApi = athenaApi;
         this.competencyProgressApi = competencyProgressApi;
         this.programmingExerciseService = programmingExerciseService;
+        this.athenaFeedbackApi = athenaFeedbackApi;
     }
 
     /**
@@ -204,7 +208,9 @@ public class ProgrammingExerciseExportImportResource {
         log.debug("REST request to import programming exercise {} into course {}", sourceExerciseId, newExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         newExercise.validateGeneralSettings();
         newExercise.validateProgrammingSettings();
-        newExercise.validateSettingsForFeedbackRequest();
+        if (!this.athenaFeedbackApi.isPresent()) {
+            newExercise.validateSettingsForManualFeedbackRequest();
+        }
         programmingExerciseService.validateDockerFlags(newExercise);
         validateStaticCodeAnalysisSettings(newExercise);
 
