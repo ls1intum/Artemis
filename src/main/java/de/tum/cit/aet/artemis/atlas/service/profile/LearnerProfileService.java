@@ -33,7 +33,7 @@ public class LearnerProfileService {
         profile.setUser(user);
         user.setLearnerProfile(profile);
         userRepository.save(user);
-        return learnerProfileRepository.save(profile);
+        return profile;
     }
 
     /**
