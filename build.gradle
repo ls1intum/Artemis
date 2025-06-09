@@ -394,7 +394,7 @@ dependencies {
 
     implementation "com.google.errorprone:error_prone_annotations:2.38.0"
     // needed for OpenAPI generation
-    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.5'
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.8'
 
 
     // NOTE: we want to keep the same unique version for all configurations, implementation and annotationProcessor

@@ -11,7 +11,7 @@
 
 import { Inject, Injectable, Optional }                      from '@angular/core';
 import { HttpClient, HttpParams,
-         HttpResponse, HttpEvent, HttpContext
+         HttpResponse, HttpEvent, HttpContext 
         }       from '@angular/common/http';
 import { Observable }                                        from 'rxjs';
 
@@ -37,9 +37,9 @@ export class TutorialGroupSessionApiService extends BaseService {
     }
 
     /**
-     * @param courseId
-     * @param tutorialGroupId
-     * @param sessionId
+     * @param courseId 
+     * @param tutorialGroupId 
+     * @param sessionId 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      */
@@ -97,10 +97,10 @@ export class TutorialGroupSessionApiService extends BaseService {
     }
 
     /**
-     * @param courseId
-     * @param tutorialGroupId
-     * @param sessionId
-     * @param tutorialGroupStatus
+     * @param courseId 
+     * @param tutorialGroupId 
+     * @param sessionId 
+     * @param tutorialGroupStatus 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      */
@@ -171,9 +171,9 @@ export class TutorialGroupSessionApiService extends BaseService {
     }
 
     /**
-     * @param courseId
-     * @param tutorialGroupId
-     * @param tutorialGroupSession
+     * @param courseId 
+     * @param tutorialGroupId 
+     * @param tutorialGroupSession 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      */
@@ -241,16 +241,16 @@ export class TutorialGroupSessionApiService extends BaseService {
     }
 
     /**
-     * @param courseId
-     * @param tutorialGroupId
-     * @param sessionId
+     * @param courseId 
+     * @param tutorialGroupId 
+     * @param sessionId 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      */
-    public deleteSession(courseId: number, tutorialGroupId: number, sessionId: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Void>;
-    public deleteSession(courseId: number, tutorialGroupId: number, sessionId: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Void>>;
-    public deleteSession(courseId: number, tutorialGroupId: number, sessionId: number, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Void>>;
-    public deleteSession(courseId: number, tutorialGroupId: number, sessionId: number, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public deleteSession(courseId: number, tutorialGroupId: number, sessionId: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public deleteSession(courseId: number, tutorialGroupId: number, sessionId: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public deleteSession(courseId: number, tutorialGroupId: number, sessionId: number, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public deleteSession(courseId: number, tutorialGroupId: number, sessionId: number, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (courseId === null || courseId === undefined) {
             throw new Error('Required parameter courseId was null or undefined when calling deleteSession.');
         }
@@ -264,7 +264,6 @@ export class TutorialGroupSessionApiService extends BaseService {
         let localVarHeaders = this.defaultHeaders;
 
         const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
-            'application/json'
         ]);
         if (localVarHttpHeaderAcceptSelected !== undefined) {
             localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
@@ -287,7 +286,7 @@ export class TutorialGroupSessionApiService extends BaseService {
         }
 
         let localVarPath = `/api/tutorialgroup/courses/${this.configuration.encodeParam({name: "courseId", value: courseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/tutorial-groups/${this.configuration.encodeParam({name: "tutorialGroupId", value: tutorialGroupId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/sessions/${this.configuration.encodeParam({name: "sessionId", value: sessionId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}`;
-        return this.httpClient.request<void>('delete', `${this.configuration.basePath}${localVarPath}`,
+        return this.httpClient.request<any>('delete', `${this.configuration.basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
                 responseType: <any>responseType_,
@@ -301,9 +300,9 @@ export class TutorialGroupSessionApiService extends BaseService {
     }
 
     /**
-     * @param courseId
-     * @param tutorialGroupId
-     * @param sessionId
+     * @param courseId 
+     * @param tutorialGroupId 
+     * @param sessionId 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      */
@@ -361,10 +360,10 @@ export class TutorialGroupSessionApiService extends BaseService {
     }
 
     /**
-     * @param courseId
-     * @param tutorialGroupId
-     * @param sessionId
-     * @param tutorialGroupSession
+     * @param courseId 
+     * @param tutorialGroupId 
+     * @param sessionId 
+     * @param tutorialGroupSession 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      */
@@ -435,10 +434,10 @@ export class TutorialGroupSessionApiService extends BaseService {
     }
 
     /**
-     * @param courseId
-     * @param tutorialGroupId
-     * @param sessionId
-     * @param attendanceCount
+     * @param courseId 
+     * @param tutorialGroupId 
+     * @param sessionId 
+     * @param attendanceCount 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      */

@@ -20,11 +20,7 @@ paths:
         required: true
         schema: {type: integer, format: int64}
       responses:
-        '204':
-          description: No Content
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/EmptyResponse'}
+        '200': {description: OK}
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}:
     get:
       tags: [tutorial-group-session]
@@ -92,11 +88,7 @@ paths:
         required: true
         schema: {type: integer, format: int64}
       responses:
-        '204':
-          description: No Content
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/EmptyResponse'}
+        '200': {description: OK}
   ? /api/tutorialgroup/courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}/tutorial-free-periods/{tutorialGroupFreePeriodId}
   : delete:
       tags: [tutorial-group-free-period]
@@ -115,11 +107,7 @@ paths:
         required: true
         schema: {type: integer, format: int64}
       responses:
-        '204':
-          description: No Content
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/EmptyResponse'}
+        '200': {description: OK}
   /api/tutorialgroup/courses/{courseId}/tutorial-groups:
     get:
       tags: [tutorial-group]
@@ -424,17 +412,15 @@ paths:
         required: true
         schema: {type: string}
       responses:
-        '204':
-          description: No Content
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/EmptyResponse'}
+        '200': {description: OK}
 components:
   schemas:
     TutorialGroupSession:
       type: object
       properties:
         date: {type: string, format: date}
+        startTime: {type: string}
+        endTime: {type: string}
         location: {type: string, maxLength: 2000, minLength: 1}
       required: [date, endTime, startTime]
     Channel:
@@ -541,7 +527,6 @@ components:
         updateTutorialGroupChannelName: {type: boolean}
       required: [tutorialGroup]
     EmptyResponse:
-      type: object
       description: An empty response (no content)
       properties: {}
     StudentExport:

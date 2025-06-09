@@ -11,6 +11,8 @@
 
 export interface TutorialGroupSession { 
     date: string;
+    startTime: string;
+    endTime: string;
     location?: string;
 }
 

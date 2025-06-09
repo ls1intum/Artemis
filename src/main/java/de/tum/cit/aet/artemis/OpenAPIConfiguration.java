@@ -7,19 +7,13 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springdoc.core.customizers.OpenApiCustomizer;
-import org.springdoc.core.customizers.OperationCustomizer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.bind.annotation.DeleteMapping;
 
 import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
-import io.swagger.v3.oas.models.media.Content;
-import io.swagger.v3.oas.models.media.MediaType;
 import io.swagger.v3.oas.models.media.Schema;
-import io.swagger.v3.oas.models.responses.ApiResponse;
-import io.swagger.v3.oas.models.responses.ApiResponses;
 
 @Configuration
 public class OpenAPIConfiguration {
@@ -134,29 +128,5 @@ public class OpenAPIConfiguration {
         if (schema.getItems() != null) {
             removeDTOSuffixesFromSchemaRecursively(schema.getItems());
         }
-    }
-
-    /**
-     * 2) This bean only fires for @DeleteMapping methods,
-     * replacing any 200 with a 204 that references EmptyResponse.
-     */
-    @Bean
-    public OperationCustomizer deleteMappingResponseCustomizer() {
-        return (operation, handlerMethod) -> {
-            if (handlerMethod.getMethod().isAnnotationPresent(DeleteMapping.class)) {
-                ApiResponses responses = operation.getResponses();
-                // drop automatic 200
-                responses.remove("200");
-
-                // build a content -> $ref "#/components/schemas/EmptyResponse"
-                MediaType mt = new MediaType().schema(new Schema<>().$ref("#/components/schemas/EmptyResponse"));
-                Content content = new Content().addMediaType("application/json", mt);
-
-                ApiResponse noContent = new ApiResponse().description("No Content").content(content);
-
-                responses.addApiResponse("204", noContent);
-            }
-            return operation;
-        };
     }
 }

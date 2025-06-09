@@ -48,8 +48,8 @@
         // empty responses should be void, not object
         typeMappings = [
                 set: 'Array',
-                object: 'void'
         ]
+        languageSpecificPrimitives =['void']
         configOptions = [
             serviceSuffix: "ApiService",
             supportsES6: "true",
