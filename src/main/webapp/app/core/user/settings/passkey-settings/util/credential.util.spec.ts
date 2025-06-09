@@ -121,6 +121,14 @@ describe('credential util helper method', () => {
         let mockUser: User;
 
         beforeEach(() => {
+            // Mock navigator.credentials.create
+            Object.defineProperty(navigator, 'credentials', {
+                value: {
+                    create: jest.fn(),
+                },
+                writable: true,
+            });
+
             mockWebauthnApiService = {
                 getRegistrationOptions: jest.fn(),
                 registerPasskey: jest.fn(),
@@ -141,6 +149,14 @@ describe('credential util helper method', () => {
             mockWebauthnApiService.getRegistrationOptions.mockRejectedValue(new Error('WebAuthn API error'));
 
             await expect(addNewPasskey(mockUser, mockWebauthnApiService, mockAlertService)).rejects.toThrow('WebAuthn API error');
+        });
+
+        it('should handle InvalidCredentialError if credential is null', async () => {
+            mockWebauthnApiService.getRegistrationOptions.mockResolvedValue({} as PublicKeyCredentialCreationOptions);
+            jest.spyOn(navigator.credentials, 'create').mockResolvedValue(null);
+
+            await expect(addNewPasskey(mockUser, mockWebauthnApiService, mockAlertService)).rejects.toThrow(Error('Invalid credential'));
+            expect(mockAlertService.addErrorAlert).toHaveBeenCalledWith('artemisApp.userSettings.passkeySettingsPage.error.registration');
         });
     });
 });
