@@ -515,11 +515,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
 
     it('should display the request feedback button for text exercises when Athena is enabled and before due date', () => {
         getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
-        getProfileInfoSub.mockReturnValue(
-            of({
-                activeProfiles: [PROFILE_ATHENA],
-            } as ProfileInfo),
-        );
+        getProfileInfoSub.mockReturnValue({ activeProfiles: [PROFILE_ATHENA] } as ProfileInfo);
 
         const exercise = { type: ExerciseType.TEXT } as ProgrammingExercise;
         exercise.studentParticipations = [{ initializationState: InitializationState.INITIALIZED } as StudentParticipation];
@@ -536,11 +532,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
 
     it('should display the request feedback button for modeling exercises when Athena is enabled and before due date', () => {
         getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
-        getProfileInfoSub.mockReturnValue(
-            of({
-                activeProfiles: [PROFILE_ATHENA],
-            } as ProfileInfo),
-        );
+        getProfileInfoSub.mockReturnValue({ activeProfiles: [PROFILE_ATHENA] } as ProfileInfo);
 
         const exercise = { type: ExerciseType.MODELING } as ProgrammingExercise;
         exercise.studentParticipations = [{ initializationState: InitializationState.INITIALIZED } as StudentParticipation];
