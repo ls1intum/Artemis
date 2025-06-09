@@ -29,6 +29,7 @@ describe('ExamBarComponent', () => {
                 provideHttpClient(),
             ],
         }).compileComponents();
+
         // Required because exam bar uses the ResizeObserver for height calculations
         global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
             return new MockResizeObserver(callback);
@@ -36,11 +37,6 @@ describe('ExamBarComponent', () => {
 
         fixture = TestBed.createComponent(ExamBarComponent);
         comp = fixture.componentInstance;
-
-        comp.exam = new Exam();
-        comp.exam.title = 'Test Exam';
-        comp.studentExam = new StudentExam();
-        comp.endDate = dayjs();
         const exercises = [
             {
                 id: 0,
@@ -54,7 +50,18 @@ describe('ExamBarComponent', () => {
             { id: 1, type: ExerciseType.TEXT } as Exercise,
             { id: 2, type: ExerciseType.MODELING } as Exercise,
         ];
-        comp.studentExam.exercises = exercises;
+
+        const exam = new Exam();
+        exam.title = 'Test Exam';
+
+        const studentExam = new StudentExam();
+        studentExam.exercises = exercises;
+
+        fixture.componentRef.setInput('exam', exam);
+        fixture.componentRef.setInput('studentExam', studentExam);
+        fixture.componentRef.setInput('endDate', dayjs());
+        fixture.componentRef.setInput('examStartDate', dayjs());
+        fixture.componentRef.setInput('isEndView', false);
     });
 
     beforeEach(() => {

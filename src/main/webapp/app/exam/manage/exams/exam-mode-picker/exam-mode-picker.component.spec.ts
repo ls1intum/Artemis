@@ -4,7 +4,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { input } from '@angular/core';
 
 const exam = {
     id: 2,
@@ -22,18 +21,14 @@ describe('ExamModePickerComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(ExamModePickerComponent);
                 component = fixture.componentInstance;
-                TestBed.runInInjectionContext(() => {
-                    component.exam = input(exam);
-                    component.disableInput = input(false);
-                });
+                fixture.componentRef.setInput('exam', exam);
+                fixture.componentRef.setInput('disableInput', false);
             });
     });
 
     it('should be in readonly mode', () => {
         const examCopy = { ...exam };
-        TestBed.runInInjectionContext(() => {
-            component.disableInput = input(true);
-        });
+        fixture.componentRef.setInput('disableInput', true);
         fixture.detectChanges();
         component.setExamMode(true);
         expect(component.exam()).toEqual(examCopy);

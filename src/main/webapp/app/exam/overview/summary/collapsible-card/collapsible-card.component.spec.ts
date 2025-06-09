@@ -13,13 +13,13 @@ describe('CollapsibleCardComponent', () => {
                 fixture = TestBed.createComponent(CollapsibleCardComponent);
                 component = fixture.componentInstance;
 
-                component.toggleCollapse = () => {};
-                component.isCardContentCollapsed = false;
+                fixture.componentRef.setInput('toggleCollapse', () => {});
+                fixture.componentRef.setInput('isCardContentCollapsed', false);
             });
     });
 
     it('should collapse and expand exercise when collapse button is clicked', fakeAsync(() => {
-        const toggleCollapseSpy = jest.spyOn(component, 'toggleCollapse').mockImplementation(() => {});
+        const toggleCollapseSpy = jest.spyOn(component, 'toggleCollapse');
 
         fixture.detectChanges();
         const toggleCollapseHeader = fixture.debugElement.query(By.css('.card-header'));

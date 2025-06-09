@@ -18,10 +18,11 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 
 describe('ModelingExamSummaryComponent', () => {
     let fixture: ComponentFixture<ModelingExamSummaryComponent>;
-    let component: ModelingExamSummaryComponent;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -38,7 +39,8 @@ describe('ModelingExamSummaryComponent', () => {
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ModelingExamSummaryComponent);
-                component = fixture.componentInstance;
+                fixture.componentRef.setInput('exercise', {} as Exercise);
+                fixture.componentRef.setInput('submission', {} as Submission);
             });
     });
 
@@ -60,8 +62,8 @@ describe('ModelingExamSummaryComponent', () => {
         const course = new Course();
         const exercise = { course: course, exerciseGroup: undefined, diagramType: UMLDiagramType.ClassDiagram, studentParticipations: [{ id: 1 }] } as ModelingExercise;
         course.isAtLeastInstructor = true;
-        component.exercise = exercise;
-        component.submission = mockSubmission;
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('submission', mockSubmission);
 
         fixture.detectChanges();
 

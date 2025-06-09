@@ -50,9 +50,11 @@ describe('ExamResultSummaryExerciseCardHeaderComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(ExamResultSummaryExerciseCardHeaderComponent);
                 component = fixture.componentInstance;
-                component.index = 3;
-                component.exercise = programmingExercise;
-                component.exerciseInfo = { isCollapsed: false } as ResultSummaryExerciseInfo;
+
+                fixture.componentRef.setInput('index', 3);
+                fixture.componentRef.setInput('exercise', programmingExercise);
+                fixture.componentRef.setInput('exerciseInfo', { isCollapsed: false } as ResultSummaryExerciseInfo);
+                fixture.componentRef.setInput('resultsPublished', false);
             });
     });
 
@@ -71,7 +73,7 @@ describe('ExamResultSummaryExerciseCardHeaderComponent', () => {
         [{ studentParticipations: [{ submissions: [{ type: SubmissionType.MANUAL }] }] }, false],
         [{ studentParticipations: [{ submissions: [{ type: SubmissionType.ILLEGAL }] }] }, true],
     ])('should handle missing/empty fields correctly for %o when displaying illegal submission badge', (exercise, shouldBeNonNull) => {
-        component.exercise = exercise as Exercise;
+        fixture.componentRef.setInput('exercise', exercise as Exercise);
 
         fixture.detectChanges();
         const span = fixture.debugElement.query(By.css('.badge.bg-danger'));
@@ -86,7 +88,7 @@ describe('ExamResultSummaryExerciseCardHeaderComponent', () => {
         fixture.detectChanges();
 
         const exerciseTitleElement: HTMLElement = fixture.nativeElement.querySelector('#exercise-group-title-' + programmingExercise.id);
-        expect(exerciseTitleElement.textContent).toContain('#' + (component.index + 1));
+        expect(exerciseTitleElement.textContent).toContain('#' + (component.index() + 1));
         expect(exerciseTitleElement.textContent).toContain(programmingExercise.exerciseGroup?.title);
     });
 });
