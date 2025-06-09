@@ -3,164 +3,222 @@ import ts from "typescript";
 
 const createRule = ESLintUtils.RuleCreator(() => "");
 
+/**
+ * @fileoverview
+ * Enforce that when opening an Angular dialog whose inputs are backed by Signals
+ * (via `input()` / `input.required()`), you never assign `.value` or invoke the Signal—
+ * instead always pass the Signal itself.
+ *
+ * Examples **flagged** by this rule:
+ * ```js
+ * const dialogReference = this.modalService.open(MyDialogComponent);
+ * dialogReference.componentInstance.title = this.titleSignal.value;
+ * dialogReference.componentInstance.count = this.countSignal();
+ * ```
+ *
+ * Examples **not flagged**:
+ * ```js
+ * dialogReference.componentInstance.title = this.titleSignal;
+ * dialogReference.componentInstance.count = this.countSignal;
+ * ```
+ */
 export default createRule({
-    name: "require-signal-ref",
+    name: "require-signal-reference-ngb-modal-input",
     meta: {
         type: "problem",
         docs: {
             description:
-                "When a dialog’s property is backed by an Angular Signal (via `input()` / `input.required()`), ensure assignments into `modalRef.componentInstance.x` pass the Signal itself — never `.value` or by calling it.",
+                "When a dialog’s property is backed by an Angular Signal, ensure assignments into `modalRef.componentInstance.x` pass the Signal itself — never `.value` or by calling it.",
             recommended: "error",
         },
         messages: {
-            noValue:
-                "Input '{{name}}' is signal-backed; don’t pass '{{expr}}.value'. Pass the Signal itself (e.g. `this.{{name}}`).",
-            noCall:
-                "Input '{{name}}' is signal-backed; don’t invoke it ('{{expr}}()'). Pass the Signal itself (no `()`).",
+            unexpectedValueAccess:
+                "Input '{{propertyName}}' is signal-backed; don’t pass '{{expressionText}}.value'. Pass the Signal itself.",
+            unexpectedSignalInvocation:
+                "Input '{{propertyName}}' is signal-backed; don’t invoke it ('{{expressionText}}()'). Pass the Signal itself.",
         },
         schema: [],
     },
     defaultOptions: [],
     create(context) {
         const parserServices = ESLintUtils.getParserServices(context);
-        const checker       = parserServices.program.getTypeChecker();
-        const src           = context.getSourceCode();
+        const typeChecker = parserServices.program.getTypeChecker();
+        const sourceCode = context.getSourceCode();
 
-        // modalRef var name → dialog component Symbol
-        const modalMap = new Map();
+        const modalReferenceVariableNameToComponentClassNameMap = new Map();
 
-        // is this prop initialized with input() or input.required()?
-        function isSignalBacked(decl) {
-            const init = decl.initializer;
-            if (!init || !ts.isCallExpression(init)) return false;
-            const e = init.expression;
+        const isModalServiceOpenCall = node => {
+            const callee = node.callee;
             return (
-                (ts.isIdentifier(e) && e.text === "input") ||
-                (ts.isPropertyAccessExpression(e) &&
-                    ts.isIdentifier(e.expression) &&
-                    e.expression.text === "input")
+                callee.type === "MemberExpression" &&
+                callee.property.type === "Identifier" &&
+                callee.property.name === "open"
             );
+        };
+
+
+        const isNgbModalInstance = objectNode => {
+            const tsNode = parserServices.esTreeNodeToTSNodeMap.get(objectNode);
+            const objectType = typeChecker.getTypeAtLocation(tsNode);
+            return objectType.getSymbol()?.getName() === "NgbModal";
+        };
+
+        /**
+         * Resolve the component class symbol from the first argument.
+         */
+        const resolveComponentSymbol = argumentNode => {
+            if (!argumentNode || argumentNode.type !== "Identifier") return null;
+            let symbol = typeChecker.getSymbolAtLocation(
+                parserServices.esTreeNodeToTSNodeMap.get(argumentNode)
+            );
+            // The component symbol might be marked as an alias when it was imported using a different name.
+            if (symbol?.flags && ts.SymbolFlags.Alias) {
+                symbol = typeChecker.getAliasedSymbol(symbol);
+            }
+            return symbol;
+        };
+
+
+        const extractModalReferenceAssignedVariableName = parentNode => {
+            if (
+                parentNode?.type === "VariableDeclarator" &&
+                parentNode.id.type === "Identifier"
+            ) {
+                return parentNode.id.name;
+            }
+            if (
+                parentNode?.type === "AssignmentExpression" &&
+                parentNode.left.type === "Identifier"
+            ) {
+                return parentNode.left.name;
+            }
+            return null;
+        };
+
+        /**
+         * STEP 1: Capture modal open calls
+         */
+        const handleOpenCallExpression = node => {
+            if (!isModalServiceOpenCall(node)) return;
+            const callee = node.callee;
+            if (!isNgbModalInstance(callee.object)) return;
+
+            const componentSymbol = resolveComponentSymbol(node.arguments[0]);
+            if (!componentSymbol) return;
+
+            const modalVariableName = extractModalReferenceAssignedVariableName(node.parent);
+            if (modalVariableName) {
+                modalReferenceVariableNameToComponentClassNameMap.set(modalVariableName, componentSymbol);
+            }
+        };
+
+        /**
+         * Returns true if a class property is initialized via `input()` or `input.required()`.
+         */
+        const isSignalBackedProperty = member => {
+            const initializer = member.initializer;
+            if (!initializer || !ts.isCallExpression(initializer)) return false;
+            const expr = initializer.expression;
+            return (
+                (ts.isIdentifier(expr) && expr.text === "input") ||
+                (ts.isPropertyAccessExpression(expr) &&
+                    expr.expression.getText() === "input")
+            );
+        };
+
+
+        const findSignalBackedPropertyDeclaration = (componentSymbol, propertyName) => {
+            for (const decl of componentSymbol.getDeclarations() || []) {
+                if (!ts.isClassDeclaration(decl)) continue;
+                const member = decl.members.find(member =>
+                    ts.isPropertyDeclaration(member) &&
+                    ts.isIdentifier(member.name) &&
+                    member.name.text === propertyName &&
+                    isSignalBackedProperty(member)
+                );
+                if (member) return member;
+            }
+            return null;
+        };
+
+        /**
+         * Validate `.value` access on a signal expression.
+         */
+        const checkValueAccessExpression = (node, propertyName) => {
+            if (
+                node.type === "MemberExpression" &&
+                node.property.type === "Identifier" &&
+                node.property.name === "value"
+            ) {
+                const exprText = sourceCode.getText(node.object);
+                context.report({
+                    node: node.property,
+                    messageId: "unexpectedValueAccess",
+                    data: { propertyName, expressionText: exprText },
+                });
+                return true;
+            }
+            return false;
+        };
+
+        /**
+         * Validate signal invocation (e.g. `this.courseId()`).
+         */
+        const checkSignalInvocation = (node, propertyName) => {
+            if (node.type !== "CallExpression") return false;
+            const callee = node.callee;
+            const isDirect =
+                callee.type === "Identifier" && callee.name === propertyName;
+            const isMember =
+                callee.type === "MemberExpression" &&
+                callee.property.type === "Identifier" &&
+                callee.property.name === propertyName;
+            if (isDirect || isMember) {
+                const exprText = sourceCode.getText(callee);
+                context.report({
+                    node,
+                    messageId: "unexpectedSignalInvocation",
+                    data: { propertyName, expressionText: exprText },
+                });
+                return true;
+            }
+            return false;
+        };
+
+        /**
+         * STEP 2: On assignments to `dialogRef.componentInstance.prop`,
+         * forbid `.value` and signal invocation for signal-backed props.
+         */
+        function handleAssignmentExpression(node) {
+            const left = node.left;
+            // Check shape: X.componentInstance.y
+            if (
+                left.type !== "MemberExpression" ||
+                left.object.type !== "MemberExpression" ||
+                left.object.property.name !== "componentInstance" ||
+                left.property.type !== "Identifier"
+            ) return;
+
+            const modalVar = left.object.object;
+            if (modalVar.type !== "Identifier") return;
+            const componentSymbol = modalReferenceVariableNameToComponentClassNameMap.get(modalVar.name);
+            if (!componentSymbol) return;
+
+            const propertyName = left.property.name;
+            const backedMember = findSignalBackedPropertyDeclaration(
+                componentSymbol,
+                propertyName
+            );
+            if (!backedMember) return;
+
+            const right = node.right;
+            if (checkValueAccessExpression(right, propertyName)) return;
+            checkSignalInvocation(right, propertyName);
         }
 
         return {
-            // 1) capture `const mr = this.modalService.open(TheDialog, …)`
-            CallExpression(node) {
-                if (
-                    node.callee.type !== "MemberExpression" ||
-                    node.callee.property.name !== "open"
-                ) return;
-
-                const tsObj = parserServices.esTreeNodeToTSNodeMap.get(
-                    node.callee.object
-                );
-                if (
-                    checker
-                        .getTypeAtLocation(tsObj)
-                        .getSymbol()
-                        ?.getName() !== "NgbModal"
-                ) return;
-
-                const compArg = node.arguments[0];
-                if (!compArg || compArg.type !== "Identifier") return;
-
-                let compSym = checker.getSymbolAtLocation(
-                    parserServices.esTreeNodeToTSNodeMap.get(compArg)
-                );
-                // resolve import-alias to real class
-                if (compSym && (compSym.flags & ts.SymbolFlags.Alias)) {
-                    compSym = checker.getAliasedSymbol(compSym);
-                }
-                if (!compSym) return;
-
-                // figure out the modalRef var
-                let modalVar;
-                const p = node.parent;
-                if (
-                    p.type === "VariableDeclarator" &&
-                    p.id.type === "Identifier"
-                ) {
-                    modalVar = p.id.name;
-                } else if (
-                    p.type === "AssignmentExpression" &&
-                    p.left.type === "Identifier"
-                ) {
-                    modalVar = p.left.name;
-                }
-                if (modalVar) modalMap.set(modalVar, compSym);
-            },
-
-            // 2) on `mr.componentInstance.foo = RHS`, only enforce if foo is signal-backed
-            AssignmentExpression(node) {
-                const L = node.left;
-                if (
-                    L.type !== "MemberExpression" ||
-                    L.object.type !== "MemberExpression" ||
-                    L.object.property.name !== "componentInstance" ||
-                    L.property.type !== "Identifier"
-                ) return;
-
-                const mr = L.object.object;
-                if (mr.type !== "Identifier") return;
-                const compSym = modalMap.get(mr.name);
-                if (!compSym) return;
-
-                const inputName = L.property.name;
-
-                // find the class-prop decl
-                let found = null;
-                for (const d of compSym.getDeclarations()) {
-                    if (!ts.isClassDeclaration(d)) continue;
-                    const member = d.members.find(
-                        (m) =>
-                            ts.isPropertyDeclaration(m) &&
-                            ts.isIdentifier(m.name) &&
-                            m.name.text === inputName
-                    );
-                    if (member && isSignalBacked(member)) {
-                        found = member;
-                        break;
-                    }
-                }
-                if (!found) return;  // not signal-backed
-
-                const rhs = node.right;
-
-                // A) .value
-                if (
-                    rhs.type === "MemberExpression" &&
-                    rhs.property.type === "Identifier" &&
-                    rhs.property.name === "value"
-                ) {
-                    return context.report({
-                        node: rhs.property,
-                        messageId: "noValue",
-                        data: {
-                            name: inputName,
-                            expr: src.getText(rhs.object),
-                        },
-                    });
-                }
-
-                // B) invocation foo()
-                if (rhs.type === "CallExpression") {
-                    const calleeText = src.getText(rhs.callee);
-                    if (
-                        (rhs.callee.type === "Identifier" &&
-                            rhs.callee.name === inputName) ||
-                        (rhs.callee.type === "MemberExpression" &&
-                            rhs.callee.property.name === inputName)
-                    ) {
-                        return context.report({
-                            node: rhs,
-                            messageId: "noCall",
-                            data: {
-                                name: inputName,
-                                expr: calleeText,
-                            },
-                        });
-                    }
-                }
-            },
+            CallExpression: handleOpenCallExpression,
+            AssignmentExpression: handleAssignmentExpression,
         };
     },
 });
