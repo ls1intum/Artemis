@@ -114,7 +114,7 @@ describe('FeedbackLearnerProfileComponent', () => {
     });
 
     it('should not update profile if no profile exists', async () => {
-        component.learnerProfile.set(null);
+        component.learnerProfile.set(undefined);
         await component.onToggleChange();
         await fixture.whenStable();
 
