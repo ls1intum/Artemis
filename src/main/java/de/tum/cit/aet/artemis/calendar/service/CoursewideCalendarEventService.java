@@ -57,18 +57,21 @@ public class CoursewideCalendarEventService {
 
         Set<CoursewideCalendarEvent> visibleEvents = new HashSet<>();
         for (CoursewideCalendarEvent event : coursewideCalendarEvents) {
-            boolean userIsStudentInCourse = user.getGroups().contains(event.getCourse().getStudentGroupName());
-            boolean userIsTutorInCourse = user.getGroups().contains(event.getCourse().getTeachingAssistantGroupName());
-            boolean userIsEditorInCourse = user.getGroups().contains(event.getCourse().getEditorGroupName());
-            boolean userIsInstructorInCourse = user.getGroups().contains(event.getCourse().getInstructorGroupName());
-            boolean userAllowedToViewEvent = userIsStudentInCourse && event.isVisibleToStudents() || userIsTutorInCourse && event.isVisibleToTutors()
-                    || userIsEditorInCourse && event.isVisibleToEditors() || userIsInstructorInCourse && event.isVisibleToInstructors();
-            if (userAllowedToViewEvent) {
+            if (isUserAllowedToViewEvent(user, event)) {
                 visibleEvents.add(event);
             }
         }
 
         return visibleEvents.stream().map(event -> new CalendarEventDTO(event, clientTimeZone)).collect(Collectors.toSet());
+    }
+
+    private boolean isUserAllowedToViewEvent(User user, CoursewideCalendarEvent event) {
+        boolean userIsStudentInCourse = user.getGroups().contains(event.getCourse().getStudentGroupName());
+        boolean userIsTutorInCourse = user.getGroups().contains(event.getCourse().getTeachingAssistantGroupName());
+        boolean userIsEditorInCourse = user.getGroups().contains(event.getCourse().getEditorGroupName());
+        boolean userIsInstructorInCourse = user.getGroups().contains(event.getCourse().getInstructorGroupName());
+        return userIsStudentInCourse && event.isVisibleToStudents() || userIsTutorInCourse && event.isVisibleToTutors() || userIsEditorInCourse && event.isVisibleToEditors()
+                || userIsInstructorInCourse && event.isVisibleToInstructors();
     }
 
     /**
@@ -81,21 +84,26 @@ public class CoursewideCalendarEventService {
     public Set<CoursewideCalendarEventDTO> createCoursewideCalendarEventsElseThrow(List<CoursewideCalendarEventDTO> coursewideCalendarEventDTOS, Course course) {
         List<CoursewideCalendarEvent> coursewideCalendarEvents = new ArrayList<>();
         for (CoursewideCalendarEventDTO dto : coursewideCalendarEventDTOS) {
-            CoursewideCalendarEvent event = new CoursewideCalendarEvent();
-            event.setCourse(course);
-            event.setTitle(dto.title());
-            event.setStartDate(dto.startDate());
-            event.setEndDate(dto.endDate());
-            event.setLocation(dto.location());
-            event.setFacilitator(dto.facilitator());
-            event.setVisibleToStudents(dto.visibleToStudents());
-            event.setVisibleToTutors(dto.visibleToTutors());
-            event.setVisibleToEditors(dto.visibleToEditors());
-            event.setVisibleToInstructors(dto.visibleToInstructors());
+            CoursewideCalendarEvent event = instanciateCoursewideCalendarEvent(dto, course);
             coursewideCalendarEvents.add(event);
         }
         List<CoursewideCalendarEvent> savedEvents = coursewideCalendarEventRepository.saveAll(coursewideCalendarEvents);
         return savedEvents.stream().map(CoursewideCalendarEventDTO::new).collect(Collectors.toSet());
+    }
+
+    private CoursewideCalendarEvent instanciateCoursewideCalendarEvent(CoursewideCalendarEventDTO dto, Course course) {
+        CoursewideCalendarEvent event = new CoursewideCalendarEvent();
+        event.setCourse(course);
+        event.setTitle(dto.title());
+        event.setStartDate(dto.startDate());
+        event.setEndDate(dto.endDate());
+        event.setLocation(dto.location());
+        event.setFacilitator(dto.facilitator());
+        event.setVisibleToStudents(dto.visibleToStudents());
+        event.setVisibleToTutors(dto.visibleToTutors());
+        event.setVisibleToEditors(dto.visibleToEditors());
+        event.setVisibleToInstructors(dto.visibleToInstructors());
+        return event;
     }
 
     /**
