@@ -74,7 +74,7 @@ export class TutorialGroupSessionService {
     }
 
     delete(courseId: number, tutorialGroupId: number, sessionId: number): Observable<HttpResponse<void>> {
-        return this.httpClient.delete<void>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/sessions/${sessionId}`, { observe: 'response' });
+        return this.tutorialGroupSessionApiService.deleteSession(courseId, tutorialGroupId, sessionId, 'response');
     }
 
     convertTutorialGroupSessionDatesFromServer(tutorialGroupSession: TutorialGroupSession): TutorialGroupSession {

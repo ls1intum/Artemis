@@ -22,55 +22,6 @@ paths:
       responses:
         '200': {description: OK}
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}:
-    get:
-      tags: [tutorial-group-session]
-      operationId: getOneOfTutorialGroup
-      parameters:
-      - name: courseId
-        in: path
-        required: true
-        schema: {type: integer, format: int64}
-      - name: tutorialGroupId
-        in: path
-        required: true
-        schema: {type: integer, format: int64}
-      - name: sessionId
-        in: path
-        required: true
-        schema: {type: integer, format: int64}
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/TutorialGroupSession'}
-    put:
-      tags: [tutorial-group-session]
-      operationId: update_1
-      parameters:
-      - name: courseId
-        in: path
-        required: true
-        schema: {type: integer, format: int64}
-      - name: tutorialGroupId
-        in: path
-        required: true
-        schema: {type: integer, format: int64}
-      - name: sessionId
-        in: path
-        required: true
-        schema: {type: integer, format: int64}
-      requestBody:
-        content:
-          application/json:
-            schema: {$ref: '#/components/schemas/TutorialGroupSession'}
-        required: true
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/TutorialGroupSession'}
     delete:
       tags: [tutorial-group-session]
       operationId: deleteSession
@@ -123,81 +74,6 @@ paths:
           content:
             application/json:
               schema: {type: array}
-  /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions:
-    post:
-      tags: [tutorial-group-session]
-      operationId: create_1
-      parameters:
-      - name: courseId
-        in: path
-        required: true
-        schema: {type: integer, format: int64}
-      - name: tutorialGroupId
-        in: path
-        required: true
-        schema: {type: integer, format: int64}
-      requestBody:
-        content:
-          application/json:
-            schema: {$ref: '#/components/schemas/TutorialGroupSession'}
-        required: true
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/TutorialGroupSession'}
-  /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/cancel:
-    post:
-      tags: [tutorial-group-session]
-      operationId: cancel
-      parameters:
-      - name: courseId
-        in: path
-        required: true
-        schema: {type: integer, format: int64}
-      - name: tutorialGroupId
-        in: path
-        required: true
-        schema: {type: integer, format: int64}
-      - name: sessionId
-        in: path
-        required: true
-        schema: {type: integer, format: int64}
-      requestBody:
-        content:
-          application/json:
-            schema: {$ref: '#/components/schemas/TutorialGroupStatus'}
-        required: true
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/TutorialGroupSession'}
-  /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/activate:
-    post:
-      tags: [tutorial-group-session]
-      operationId: activate
-      parameters:
-      - name: courseId
-        in: path
-        required: true
-        schema: {type: integer, format: int64}
-      - name: tutorialGroupId
-        in: path
-        required: true
-        schema: {type: integer, format: int64}
-      - name: sessionId
-        in: path
-        required: true
-        schema: {type: integer, format: int64}
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/TutorialGroupSession'}
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}/register/{studentLogin}:
     post:
       tags: [tutorial-group]
@@ -272,33 +148,6 @@ paths:
               schema:
                 type: array
                 items: {$ref: '#/components/schemas/TutorialGroupRegistrationImport'}
-  /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/attendance-count:
-    patch:
-      tags: [tutorial-group-session]
-      operationId: updateAttendanceCount
-      parameters:
-      - name: courseId
-        in: path
-        required: true
-        schema: {type: integer, format: int64}
-      - name: tutorialGroupId
-        in: path
-        required: true
-        schema: {type: integer, format: int64}
-      - name: sessionId
-        in: path
-        required: true
-        schema: {type: integer, format: int64}
-      - name: attendanceCount
-        in: query
-        required: false
-        schema: {type: integer, format: int32, maximum: 3000, minimum: 0}
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/TutorialGroupSession'}
   /api/tutorialgroup/tutorial-groups/{tutorialGroupId}/title:
     get:
       tags: [tutorial-group]
@@ -415,14 +264,6 @@ paths:
         '200': {description: OK}
 components:
   schemas:
-    TutorialGroupSession:
-      type: object
-      properties:
-        date: {type: string, format: date}
-        startTime: {type: string}
-        endTime: {type: string}
-        location: {type: string, maxLength: 2000, minLength: 1}
-      required: [date, endTime, startTime]
     Channel:
       type: object
       properties:
@@ -526,6 +367,14 @@ components:
         notificationText: {type: string, maxLength: 1000, minLength: 1}
         updateTutorialGroupChannelName: {type: boolean}
       required: [tutorialGroup]
+    TutorialGroupSessionRequest:
+      type: object
+      properties:
+        date: {type: string, format: date}
+        startTime: {type: string}
+        endTime: {type: string}
+        location: {type: string, maxLength: 2000, minLength: 1}
+      required: [date, endTime, startTime]
     EmptyResponse:
       description: An empty response (no content)
       properties: {}
