@@ -86,13 +86,9 @@ import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.authorization.AuthorizationTestService;
 import de.tum.cit.aet.artemis.core.config.ApplicationConfiguration;
 import de.tum.cit.aet.artemis.core.config.ConditionalMetricsExclusionConfiguration;
-import de.tum.cit.aet.artemis.core.config.SecurityConfiguration;
-import de.tum.cit.aet.artemis.core.config.TomcatConfiguration;
-import de.tum.cit.aet.artemis.core.util.HibernateQueryInterceptor;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryResource;
 import de.tum.cit.aet.artemis.shared.base.AbstractArtemisIntegrationTest;
-import de.tum.cit.aet.artemis.shared.config.HibernatePropertiesConfig;
 
 /**
  * This class contains architecture tests that apply for the whole project.
@@ -395,8 +391,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 .areAnnotatedWith(Service.class).or().areAnnotatedWith(Component.class).or().areAnnotatedWith(Configuration.class).should().beAnnotatedWith(Lazy.class)
                 .because("All Spring components should be lazy-loaded to improve startup time");
 
-        rule.check(classesExcept(allClasses, ApplicationConfiguration.class, ConditionalMetricsExclusionConfiguration.class, SecurityConfiguration.class, TomcatConfiguration.class,
-                HibernateQueryInterceptor.class, HibernatePropertiesConfig.class));
+        rule.check(allClasses);
     }
 
     @Test
