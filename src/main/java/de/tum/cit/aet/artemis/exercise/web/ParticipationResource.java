@@ -221,15 +221,11 @@ public class ParticipationResource {
     }
 
     /**
-     * POST /exercises/:exerciseId/participations : start the "participationId"
-     * exercise for the current user.
+     * POST /exercises/:exerciseId/participations : start the "participationId" exercise for the current user.
      *
-     * @param exerciseId the participationId of the exercise for which to init a
-     *                       participation
-     * @return the ResponseEntity with status 201 (Created) and the participation
-     *         within the body, or with status 404 (Not Found)
-     * @throws URISyntaxException If the URI for the created participation could not
-     *                                be created
+     * @param exerciseId the participationId of the exercise for which to init a participation
+     * @return the ResponseEntity with status 201 (Created) and the participation within the body, or with status 404 (Not Found)
+     * @throws URISyntaxException If the URI for the created participation could not be created
      */
     @PostMapping("exercises/{exerciseId}/participations")
     @EnforceAtLeastStudentInExercise
@@ -241,8 +237,7 @@ public class ParticipationResource {
 
         checkIfParticipationCanBeStartedElseThrow(exercise, user);
 
-        // if this is a team-based exercise, set the participant to the team that the
-        // user belongs to
+        // if this is a team-based exercise, set the participant to the team that the user belongs to
         Participant participant = user;
         if (exercise.isTeamMode()) {
             participant = teamRepository.findOneByExerciseIdAndUserId(exercise.getId(), user.getId())
@@ -257,18 +252,12 @@ public class ParticipationResource {
     }
 
     /**
-     * POST /exercises/:exerciseId/participations : start the "participationId"
-     * exercise for the current user.
+     * POST /exercises/:exerciseId/participations : start the "participationId" exercise for the current user.
      *
-     * @param exerciseId             the participationId of the exercise for which
-     *                                   to init a participation
-     * @param useGradedParticipation a flag that indicates that the student wants to
-     *                                   use their graded participation as baseline for
-     *                                   the new repo
-     * @return the ResponseEntity with status 201 (Created) and the participation
-     *         within the body, or with status 404 (Not Found)
-     * @throws URISyntaxException If the URI for the created participation could not
-     *                                be created
+     * @param exerciseId             the participationId of the exercise for which to init a participation
+     * @param useGradedParticipation a flag that indicates that the student wants to use their graded participation as baseline for the new repo
+     * @return the ResponseEntity with status 201 (Created) and the participation within the body, or with status 404 (Not Found)
+     * @throws URISyntaxException If the URI for the created participation could not be created
      */
     @PostMapping("exercises/{exerciseId}/participations/practice")
     @EnforceAtLeastStudent
@@ -308,13 +297,11 @@ public class ParticipationResource {
     }
 
     /**
-     * PUT exercises/:exerciseId/resume-programming-participation: resume the
-     * participation of the current user in the given programming exercise
+     * PUT exercises/:exerciseId/resume-programming-participation: resume the participation of the current user in the given programming exercise
      *
      * @param exerciseId      of the exercise for which to resume participation
      * @param participationId of the participation that should be resumed
-     * @return ResponseEntity with status 200 (OK) and with updated participation as
-     *         a body, or with status 500 (Internal Server Error)
+     * @return ResponseEntity with status 200 (OK) and with updated participation as a body, or with status 500 (Internal Server Error)
      */
     @PutMapping("exercises/{exerciseId}/resume-programming-participation/{participationId}")
     @EnforceAtLeastStudent
@@ -323,8 +310,7 @@ public class ParticipationResource {
         log.debug("REST request to resume Exercise : {}", exerciseId);
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         var participation = programmingExerciseStudentParticipationRepository.findWithTeamStudentsByIdElseThrow(participationId);
-        // explicitly set the exercise here to make sure that the templateParticipation
-        // and solutionParticipation are initialized in case they should be used again
+        // explicitly set the exercise here to make sure that the templateParticipation and solutionParticipation are initialized in case they should be used again
         participation.setProgrammingExercise(programmingExercise);
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -333,8 +319,7 @@ public class ParticipationResource {
             throw new AccessForbiddenException("You are not allowed to resume that participation.");
         }
 
-        // There is a second participation of that student in the exercise that is
-        // inactive/finished now
+        // There is a second participation of that student in the exercise that is inactive/finished now
         Optional<StudentParticipation> optionalOtherStudentParticipation = participationService.findOneByExerciseAndParticipantAnyStateAndTestRun(programmingExercise, user,
                 !participation.isPracticeMode());
         if (optionalOtherStudentParticipation.isPresent()) {
@@ -354,8 +339,7 @@ public class ParticipationResource {
     }
 
     /**
-     * PUT exercises/:exerciseId/request-feedback: Requests feedback for the latest
-     * participation
+     * PUT exercises/:exerciseId/request-feedback: Requests feedback for the latest participation
      *
      * @param exerciseId of the exercise for which to resume participation
      * @param principal  current user principal
@@ -440,21 +424,15 @@ public class ParticipationResource {
      * <p>
      * Checks if a participation can be started for the given exercise and user.
      * </p>
-     * This method verifies if the participation can be started based on the due
-     * date.
+     * This method verifies if the participation can be started based on the due date.
      * <ul>
-     * <li>Checks if the due date has passed (allows starting participations for
-     * non-programming exercises if the user might have an individual working
-     * time)</li>
-     * <li>Additionally, for programming exercises, checks if the programming
-     * exercise feature is enabled</li>
+     * <li>Checks if the due date has passed (allows starting participations for non-programming exercises if the user might have an individual working time)</li>
+     * <li>Additionally, for programming exercises, checks if the programming exercise feature is enabled</li>
      * </ul>
      *
      * @param exercise for which the participation is to be started
      * @param user     attempting to start the participation
-     * @throws AccessForbiddenAlertException if the participation cannot be started
-     *                                           due to feature restrictions or due date
-     *                                           constraints
+     * @throws AccessForbiddenAlertException if the participation cannot be started due to feature restrictions or due date constraints
      */
     private void checkIfParticipationCanBeStartedElseThrow(Exercise exercise, User user) {
         // 1) Don't allow student to start before the start and release date
@@ -470,11 +448,9 @@ public class ParticipationResource {
         }
         // 3) Don't allow to start after the (individual) end date
         ZonedDateTime exerciseDueDate = exercise.getDueDate();
-        // NOTE: course exercises can only have an individual due date when they already
-        // have started
+        // NOTE: course exercises can only have an individual due date when they already have started
         if (exercise.isExamExercise()) {
-            // NOTE: this is an absolute edge case because exam participations are generated
-            // before the exam starts and should not be started by the user
+            // NOTE: this is an absolute edge case because exam participations are generated before the exam starts and should not be started by the user
             exerciseDueDate = exercise.getExam().getEndDate();
             var studentExam = studentExamApi.orElseThrow().findByExamIdAndUserId(exercise.getExam().getId(), user.getId());
             if (studentExam.isPresent() && studentExam.get().getIndividualEndDate() != null) {
@@ -497,12 +473,10 @@ public class ParticipationResource {
     }
 
     /**
-     * Checks if the student is currently allowed to participate in the course
-     * exercise using this participation
+     * Checks if the student is currently allowed to participate in the course exercise using this participation
      *
      * @param programmingExercise the exercise where the user wants to participate
-     * @param participation       the participation, may be null in case there is
-     *                                none
+     * @param participation       the participation, may be null in case there is none
      * @return a boolean indicating if the user may participate
      */
     private boolean isAllowedToParticipateInProgrammingExercise(ProgrammingExercise programmingExercise, @Nullable StudentParticipation participation) {
@@ -516,52 +490,11 @@ public class ParticipationResource {
     }
 
     /**
-     * This makes sure the client can display the latest result immediately after
-     * loading this participation
-     *
-     * @param participation The participation to which the latest result should get
-     *                          added
-     */
-    private void addLatestResultToParticipation(StudentParticipation participation) {
-        // Load results of participation as they are not contained in the current object
-        participation = studentParticipationRepository.findByIdWithResultsElseThrow(participation.getId());
-
-        Result result = participation.findLatestLegalResult();
-        if (result != null) {
-            participation.setResults(Set.of(result));
-        }
-    }
-
-    /**
-     * GET /exercises/{participationId}/athena-feedback-request-count :
-     * Returns how many *successful* AUTOMATIC_ATHENA results the **current user**
-     * already has for this exercise.
-     *
-     * @param participationId the id of the participation
-     * @return the ResponseEntity with status 200 (OK) and with body the number of
-     *         successful feedback requests
-     */
-    @GetMapping("participations/{participationId}/athena-feedback-request-count")
-    @EnforceAtLeastStudent
-    public ResponseEntity<Integer> getAutomaticFeedbackRequestCount(@PathVariable long participationId) {
-
-        StudentParticipation participation = studentParticipationRepository.findByIdWithEagerTeamStudentsElseThrow(participationId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        this.checkAccessPermissionOwner(participation, user);
-
-        int count = resultRepository.countByParticipationIdAndAssessmentTypeAndSuccessfulTrue(participationId, AssessmentType.AUTOMATIC_ATHENA);
-
-        return ResponseEntity.ok(count);
-    }
-
-    /**
      * PUT /participations : Updates an existing participation.
      *
      * @param exerciseId    the id of the exercise, the participation belongs to
      * @param participation the participation to update
-     * @return the ResponseEntity with status 200 (OK) and with body the updated
-     *         participation, or with status 400 (Bad Request) if the participation
-     *         is not valid, or with status
+     * @return the ResponseEntity with status 200 (OK) and with body the updated participation, or with status 400 (Bad Request) if the participation is not valid, or with status
      *         500 (Internal Server Error) if the participation couldn't be updated
      */
     @PutMapping("exercises/{exerciseId}/participations")
@@ -635,8 +568,7 @@ public class ParticipationResource {
     }
 
     /**
-     * PUT /participations/update-individual-due-date : Updates the individual due
-     * dates for the given already existing participations.
+     * PUT /participations/update-individual-due-date : Updates the individual due dates for the given already existing participations.
      * <p>
      * If the exercise is a programming exercise, also triggers a scheduling
      * update for the participations where the individual due date has changed.
@@ -683,9 +615,7 @@ public class ParticipationResource {
     }
 
     private Set<StudentParticipation> findParticipationWithLatestResults(Exercise exercise) {
-        // TODO: we should reduce the amount of data fetched here and sent to the
-        // client: double check which data is actually required in the exercise scores
-        // page
+        // TODO: we should reduce the amount of data fetched here and sent to the client: double check which data is actually required in the exercise scores page
         if (exercise.isTeamMode()) {
             // For team exercises the students need to be eagerly fetched
             return studentParticipationRepository.findByExerciseIdWithLatestAndManualResultsWithTeamInformation(exercise.getId());
@@ -694,12 +624,10 @@ public class ParticipationResource {
     }
 
     /**
-     * GET /exercises/:exerciseId/participations : get all the participations for an
-     * exercise
+     * GET /exercises/:exerciseId/participations : get all the participations for an exercise
      *
      * @param exerciseId        The participationId of the exercise
-     * @param withLatestResults Whether the manual and latest {@link Result results}
-     *                              for the participations should also be fetched
+     * @param withLatestResults Whether the manual and latest {@link Result results} for the participations should also be fetched
      * @return A list of all participations for the exercise
      */
     @GetMapping("exercises/{exerciseId}/participations")
@@ -741,8 +669,7 @@ public class ParticipationResource {
     }
 
     /**
-     * GET /courses/:courseId/participations : get all the participations for a
-     * course
+     * GET /courses/:courseId/participations : get all the participations for a course
      *
      * @param courseId The participationId of the course
      * @return A list of all participations for the given course
@@ -807,12 +734,10 @@ public class ParticipationResource {
     }
 
     /**
-     * GET /participations/:participationId : get the participation for the given
-     * "participationId" including its latest result.
+     * GET /participations/:participationId : get the participation for the given "participationId" including its latest result.
      *
      * @param participationId the participationId of the participation to retrieve
-     * @return the ResponseEntity with status 200 (OK) and with body the
-     *         participation, or with status 404 (Not Found)
+     * @return the ResponseEntity with status 200 (OK) and with body the participation, or with status 404 (Not Found)
      */
     @GetMapping("participations/{participationId}/with-latest-result")
     @EnforceAtLeastStudent
@@ -825,12 +750,10 @@ public class ParticipationResource {
     }
 
     /**
-     * GET /participations/:participationId : get the participation for the given
-     * "participationId".
+     * GET /participations/:participationId : get the participation for the given "participationId".
      *
      * @param participationId the participationId of the participation to retrieve
-     * @return the ResponseEntity with status 200 (OK) and with body the
-     *         participation, or with status 404 (Not Found)
+     * @return the ResponseEntity with status 200 (OK) and with body the participation, or with status 404 (Not Found)
      */
     @GetMapping("participations/{participationId}")
     @EnforceAtLeastStudent
@@ -843,32 +766,25 @@ public class ParticipationResource {
     }
 
     /**
-     * GET /exercises/:exerciseId/participation: get the user's participation for a
-     * specific exercise. Please note: 'courseId' is only included in the call for
+     * GET /exercises/:exerciseId/participation: get the user's participation for a specific exercise. Please note: 'courseId' is only included in the call for
      * API consistency, it is not actually used
      *
-     * @param exerciseId the participationId of the exercise for which to retrieve
-     *                       the participation
+     * @param exerciseId the participationId of the exercise for which to retrieve the participation
      * @param principal  The principal in form of the user's identity
-     * @return the ResponseEntity with status 200 (OK) and with body the
-     *         participation, or with status 404 (Not Found)
+     * @return the ResponseEntity with status 200 (OK) and with body the participation, or with status 404 (Not Found)
      */
     @GetMapping("exercises/{exerciseId}/participation")
     @EnforceAtLeastStudent
-    // TODO: use a proper DTO (or interface here for the return type and avoid
-    // MappingJacksonValue)
+    // TODO: use a proper DTO (or interface here for the return type and avoid MappingJacksonValue)
     public ResponseEntity<MappingJacksonValue> getParticipationForCurrentUser(@PathVariable Long exerciseId, Principal principal) {
         log.debug("REST request to get Participation for Exercise : {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        // if exercise is not yet released to the students they should not have any
-        // access to it
+        // if exercise is not yet released to the students they should not have any access to it
         // Exam exercise
         if (exercise.isExamExercise()) {
-            // NOTE: we disable access to exam exercises over this endpoint for now, in the
-            // future we should check if there is a way to enable this
-            // e.g. by checking if there is a visible exam attached and a student exam
-            // exists
+            // NOTE: we disable access to exam exercises over this endpoint for now, in the future we should check if there is a way to enable this
+            // e.g. by checking if there is a visible exam attached and a student exam exists
             throw new AccessForbiddenException("You are not allowed to access this exam exercise");
         }
         // Course exercise
@@ -898,8 +814,7 @@ public class ParticipationResource {
     }
 
     @Nullable
-    // TODO: use a proper DTO (or interface here for the return type and avoid
-    // MappingJacksonValue)
+    // TODO: use a proper DTO (or interface here for the return type and avoid MappingJacksonValue)
     private MappingJacksonValue participationForQuizExercise(QuizExercise quizExercise, User user) {
         // 1st case the quiz has already ended
         if (quizExercise.isQuizEnded()) {
@@ -956,9 +871,7 @@ public class ParticipationResource {
     }
 
     /**
-     * DELETE /participations/:participationId : delete the "participationId"
-     * participation. This only works for student participations - other
-     * participations should not be deleted
+     * DELETE /participations/:participationId : delete the "participationId" participation. This only works for student participations - other participations should not be deleted
      * here!
      *
      * @param participationId the participationId of the participation to delete
@@ -977,12 +890,10 @@ public class ParticipationResource {
     }
 
     /**
-     * delete the participation, potentially including build plan and repository and
-     * log the event in the database audit
+     * delete the participation, potentially including build plan and repository and log the event in the database audit
      *
      * @param participation the participation to be deleted
-     * @param user          the currently logged-in user who initiated the delete
-     *                          operation
+     * @param user          the currently logged-in user who initiated the delete operation
      * @return the response to the client
      */
     @NotNull
@@ -997,13 +908,10 @@ public class ParticipationResource {
     }
 
     /**
-     * DELETE /participations/:participationId/cleanup-build-plan : remove the build
-     * plan of the ProgrammingExerciseStudentParticipation of the "participationId".
+     * DELETE /participations/:participationId/cleanup-build-plan : remove the build plan of the ProgrammingExerciseStudentParticipation of the "participationId".
      * This only works for programming exercises.
      *
-     * @param participationId the participationId of the
-     *                            ProgrammingExerciseStudentParticipation for which the
-     *                            build plan should be removed
+     * @param participationId the participationId of the ProgrammingExerciseStudentParticipation for which the build plan should be removed
      * @param principal       The identity of the user accessing this resource
      * @return the ResponseEntity with status 200 (OK)
      */
@@ -1057,21 +965,15 @@ public class ParticipationResource {
 
     /**
      * Get a participation for the given quiz and username.
-     * If the quiz hasn't ended, participation is constructed from cached
-     * submission.
-     * If the quiz has ended, we first look in the database for the participation
-     * and construct one if none was found
+     * If the quiz hasn't ended, participation is constructed from cached submission.
+     * If the quiz has ended, we first look in the database for the participation and construct one if none was found
      *
      * @param quizExercise the quiz exercise to attach to the participation
-     * @param username     the username of the user that the participation belongs
-     *                         to
-     * @param quizBatch    the quiz batch of quiz exercise which user participated
-     *                         in
+     * @param username     the username of the user that the participation belongs to
+     * @param quizBatch    the quiz batch of quiz exercise which user participated in
      * @return the found or created participation with a result
      */
-    // TODO: we should move this method (and others related to quizzes) into a
-    // QuizParticipationService (or similar) to make this resource independent of
-    // specific quiz exercise
+    // TODO: we should move this method (and others related to quizzes) into a QuizParticipationService (or similar) to make this resource independent of specific quiz exercise
     // functionality
     private StudentParticipation participationForQuizWithSubmissionAndResult(QuizExercise quizExercise, String username, QuizBatch quizBatch) {
         // try getting participation from database
