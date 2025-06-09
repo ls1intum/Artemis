@@ -13,7 +13,6 @@ import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
@@ -31,6 +30,7 @@ import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.service.AndroidFingerprintService;
+import de.tum.cit.aet.artemis.core.service.ArtemisSuccessfulLoginService;
 import de.tum.cit.aet.artemis.core.util.AndroidApkKeyHashUtil;
 
 /**
@@ -60,7 +60,7 @@ public class ArtemisPasskeyWebAuthnConfigurer {
 
     private final MailSendingService mailSendingService;
 
-    private final ApplicationEventPublisher eventPublisher;
+    private final ArtemisSuccessfulLoginService artemisSuccessfulLoginService;
 
     private final GlobalNotificationSettingRepository globalNotificationSettingRepository;
 
@@ -86,7 +86,7 @@ public class ArtemisPasskeyWebAuthnConfigurer {
             PublicKeyCredentialUserEntityRepository publicKeyCredentialUserEntityRepository, UserCredentialRepository userCredentialRepository,
             PublicKeyCredentialCreationOptionsRepository publicKeyCredentialCreationOptionsRepository,
             PublicKeyCredentialRequestOptionsRepository publicKeyCredentialRequestOptionsRepository, AndroidFingerprintService androidFingerprintService,
-            MailSendingService mailSendingService, ApplicationEventPublisher eventPublisher, GlobalNotificationSettingRepository globalNotificationSettingRepository) {
+            MailSendingService mailSendingService,ArtemisSuccessfulLoginService artemisSuccessfulLoginService, GlobalNotificationSettingRepository globalNotificationSettingRepository) {
         this.converter = converter;
         this.jwtCookieService = jwtCookieService;
         this.userRepository = userRepository;
@@ -96,7 +96,7 @@ public class ArtemisPasskeyWebAuthnConfigurer {
         this.publicKeyCredentialRequestOptionsRepository = publicKeyCredentialRequestOptionsRepository;
         this.androidFingerprintService = androidFingerprintService;
         this.mailSendingService = mailSendingService;
-        this.eventPublisher = eventPublisher;
+        this.artemisSuccessfulLoginService = artemisSuccessfulLoginService;
         this.globalNotificationSettingRepository = globalNotificationSettingRepository;
     }
 
@@ -161,8 +161,8 @@ public class ArtemisPasskeyWebAuthnConfigurer {
         }
 
         WebAuthnConfigurer<HttpSecurity> webAuthnConfigurer = new ArtemisWebAuthnConfigurer<>(converter, jwtCookieService, userRepository, publicKeyCredentialUserEntityRepository,
-                userCredentialRepository, publicKeyCredentialCreationOptionsRepository, publicKeyCredentialRequestOptionsRepository, mailSendingService, eventPublisher,
-                globalNotificationSettingRepository);
+                userCredentialRepository, publicKeyCredentialCreationOptionsRepository, publicKeyCredentialRequestOptionsRepository, mailSendingService,
+                artemisSuccessfulLoginService, globalNotificationSettingRepository);
 
         http.with(webAuthnConfigurer, configurer -> {
             configurer.allowedOrigins(allowedOrigins).rpId(relyingPartyId).rpName(relyingPartyName);
