@@ -72,7 +72,8 @@ export default createRule({
                 parserServices.esTreeNodeToTSNodeMap.get(argumentNode)
             );
             // The component symbol might be marked as an alias when it was imported using a different name.
-            if (symbol?.flags && ts.SymbolFlags.Alias) {
+            // flags is a bit flag enum, so the check is done using bitwise AND.
+            if (symbol?.flags & ts.SymbolFlags.Alias) {
                 symbol = typeChecker.getAliasedSymbol(symbol);
             }
             return symbol;
