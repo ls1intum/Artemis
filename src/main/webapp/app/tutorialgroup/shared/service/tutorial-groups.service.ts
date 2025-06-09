@@ -11,6 +11,7 @@ import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/shared/ser
 import { Student } from 'app/openapi/model/student';
 import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
 import { TutorialGroupRegistrationImport } from 'app/openapi/model/tutorialGroupRegistrationImport';
+import { TutorialGroupExport } from 'app/openapi/model/tutorialGroupExport';
 
 type EntityResponseType = HttpResponse<TutorialGroup>;
 type EntityArrayResponseType = HttpResponse<TutorialGroup[]>;
@@ -176,18 +177,15 @@ export class TutorialGroupsService {
      * @return an Observable containing the CSV file as a Blob
      */
     exportTutorialGroupsToCSV(courseId: number, fields: string[]): Observable<Blob> {
-        const params = { fields };
-        return this.httpClient.get(`${this.resourceURL}/courses/${courseId}/tutorial-groups/export/csv`, {
-            params,
-            responseType: 'blob',
-        });
+        return this.tutorialGroupApiService.exportTutorialGroupsToCSV(courseId, fields);
     }
 
-    exportToJson(courseId: number, fields: string[]): Observable<string> {
-        const params = { fields };
-        return this.httpClient.get(`${this.resourceURL}/courses/${courseId}/tutorial-groups/export/json`, {
-            params,
-            responseType: 'text',
-        });
+    exportToJson(courseId: number, fields: string[]): Observable<Blob> {
+        return this.tutorialGroupApiService.exportTutorialGroupsToJSON(courseId, fields).pipe(
+            map((tutorialGroupExports: Array<TutorialGroupExport>) => {
+                const jsonString = JSON.stringify(tutorialGroupExports, null, 2); // Convert array to JSON string
+                return new Blob([jsonString], { type: 'application/json' }); // Create a Blob from the string
+            }),
+        );
     }
 }

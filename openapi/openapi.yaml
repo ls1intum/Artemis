@@ -375,7 +375,7 @@ paths:
           description: OK
           content:
             text/csv:
-              schema: {type: string, format: byte}
+              schema: {type: string, format: binary}
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/campus-values:
     get:
       tags: [tutorial-group]

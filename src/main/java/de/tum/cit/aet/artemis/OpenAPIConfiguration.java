@@ -13,7 +13,11 @@ import org.springframework.context.annotation.Configuration;
 
 import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.media.MediaType;
 import io.swagger.v3.oas.models.media.Schema;
+import io.swagger.v3.oas.models.media.StringSchema;
+import io.swagger.v3.oas.models.responses.ApiResponse;
+import io.swagger.v3.oas.models.responses.ApiResponses;
 
 @Configuration
 public class OpenAPIConfiguration {
@@ -128,5 +132,20 @@ public class OpenAPIConfiguration {
         if (schema.getItems() != null) {
             removeDTOSuffixesFromSchemaRecursively(schema.getItems());
         }
+    }
+
+    @Bean
+    public OpenApiCustomizer binaryFormatCustomizer() {
+        return openApi -> openApi.getPaths().values().forEach(pathItem -> pathItem.readOperations().forEach(op -> {
+            ApiResponses responses = op.getResponses();
+            ApiResponse resp200 = responses.get("200");
+            if (resp200 != null && resp200.getContent() != null) {
+                MediaType media = resp200.getContent().get("text/csv");
+                if (media != null) {
+                    // replace schema with binary string
+                    media.setSchema(new StringSchema().type("string").format("binary"));
+                }
+            }
+        }));
     }
 }
