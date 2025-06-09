@@ -1,4 +1,3 @@
-    import org.openapitools.generator.gradle.plugin.tasks.GenerateTask
     import org.yaml.snakeyaml.Yaml
 
 
