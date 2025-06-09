@@ -29,7 +29,7 @@ import { ResultService } from 'app/exercise/result/result.service';
 import { problemStatementHasChanged } from 'app/exercise/util/exercise.utils';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
-import { findLatestResult } from 'app/shared/util/utils';
+import { findLatestResultWithTests } from 'app/shared/util/utils';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { hasParticipationChanged } from 'app/exercise/participation/participation.utils';
 import { ExamExerciseUpdateHighlighterComponent } from 'app/exam/overview/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
@@ -225,8 +225,10 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             .subscribeForLatestResultOfParticipation(this.participation.id!, this.personalParticipation, this.exercise.id!)
             .pipe(filter((result) => !!result))
             .subscribe((result: Result) => {
-                this.latestResult = result;
-                this.programmingExercisePlantUmlWrapper.setLatestResult(this.latestResult);
+                if (result.testCaseCount !== undefined && result.testCaseCount !== null) {
+                    this.latestResult = result;
+                    this.programmingExercisePlantUmlWrapper.setLatestResult(this.latestResult);
+                }
                 this.updateMarkdown();
             });
     }
@@ -253,8 +255,8 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     loadInitialResult(): Observable<Result | undefined> {
         const results = getAllResultsOfAllSubmissions(this.participation.submissions);
         if (this.participation?.id && results.length) {
-            // Get the result with the highest id (most recent result)
-            const latestResult = findLatestResult(results);
+            // Get the newest result that still contains test information
+            const latestResult = findLatestResultWithTests(results);
             if (!latestResult) {
                 return of(undefined);
             }

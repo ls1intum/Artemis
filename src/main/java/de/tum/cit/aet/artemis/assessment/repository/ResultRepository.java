@@ -655,7 +655,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
      * @param assessmentType  the type of assessment (e.g. AUTOMATIC_ATHENA)
      * @return number of successful results for the participation (0 if none)
      */
-    int countByParticipationIdAndAssessmentTypeAndSuccessfulTrue(long participationId, AssessmentType assessmentType);
+    int countBySubmissionParticipationIdAndAssessmentTypeAndSuccessfulTrue(long participationId, AssessmentType assessmentType);
 
     /**
      * This function is used for submitting a manual assessment/result.

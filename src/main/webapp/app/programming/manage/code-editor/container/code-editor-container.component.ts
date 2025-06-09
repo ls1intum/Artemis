@@ -57,6 +57,9 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
     readonly CommitState = CommitState;
     readonly EditorState = EditorState;
     readonly CollapsableCodeEditorElement = CollapsableCodeEditorElement;
+
+    public ParticipationUtil = Participation;
+
     @ViewChild(CodeEditorGridComponent, { static: false }) grid: CodeEditorGridComponent;
 
     @ViewChild(CodeEditorFileBrowserComponent, { static: false }) fileBrowser: CodeEditorFileBrowserComponent;
@@ -369,4 +372,6 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
     onReopenFeedback(fileName: string) {
         this.monacoEditor.refreshFeedback(fileName);
     }
+
+    protected readonly Participation = Participation;
 }
