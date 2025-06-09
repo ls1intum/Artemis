@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
@@ -48,6 +49,7 @@ import de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer;
 
 @Configuration
 @EnableWebSecurity
+@Lazy
 @EnableMethodSecurity(securedEnabled = true)
 @Profile(PROFILE_CORE)
 public class SecurityConfiguration {
