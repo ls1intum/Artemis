@@ -445,7 +445,7 @@ public class ProgrammingExerciseResource {
         log.debug("REST request to get all ProgrammingExercises for the course with id : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
-        List<ProgrammingExercise> exercises = programmingExerciseRepository.findByCourseIdWithLatestResultForTemplateSolutionParticipations(courseId);
+        List<ProgrammingExercise> exercises = programmingExerciseService.findByCourseIdWithCategoriesLatestSubmissionResultForTemplateAndSolutionParticipation(courseId);
         for (ProgrammingExercise exercise : exercises) {
             // not required in the returned json body
             exercise.setStudentParticipations(null);
@@ -526,7 +526,7 @@ public class ProgrammingExerciseResource {
     public ResponseEntity<ProgrammingExercise> getProgrammingExerciseWithSetupParticipations(@PathVariable long exerciseId) {
         log.debug("REST request to get ProgrammingExercise with setup participations : {}", exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryReposAndLatestResultFeedbackTestCasesElseThrow(exerciseId);
+        var programmingExercise = programmingExerciseService.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryReposAndLatestResultFeedbackTestCasesElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, user);
         var assignmentParticipation = studentParticipationRepository.findByExerciseIdAndStudentIdAndTestRunWithLatestResult(programmingExercise.getId(), user.getId(), false);
         Set<StudentParticipation> participations = new HashSet<>();
