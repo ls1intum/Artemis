@@ -12,7 +12,7 @@ model/studentExport.ts
 model/tutorialGroupExport.ts
 model/tutorialGroupFreePeriodRequest.ts
 model/tutorialGroupRegistrationImport.ts
-model/tutorialGroupSession.ts
+model/tutorialGroupSessionRequest.ts
 model/tutorialGroupStatus.ts
 model/tutorialGroupUpdate.ts
 param.ts
