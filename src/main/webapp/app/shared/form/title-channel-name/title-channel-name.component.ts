@@ -6,6 +6,11 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CustomNotIncludedInValidatorDirective } from '../../validators/custom-not-included-in-validator.directive';
 import { HelpIconComponent } from '../../components/help-icon/help-icon.component';
 
+/**
+ * Negative lookahead regex that fails for any character, we do not match anything.
+ */
+const NEVER_MATCHING_REGEX = /^(?!.*)/;
+
 @Component({
     selector: 'jhi-title-channel-name',
     templateUrl: './title-channel-name.component.html',
@@ -108,7 +113,7 @@ export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnIn
      */
     formatChannelName(newName: string, allowDuplicateHyphens: boolean = true, removeTrailingHyphens: boolean = false): void {
         const specialCharacters: RegExp = allowDuplicateHyphens ? /[^a-z0-9-]+/g : /[^a-z0-9]+/g;
-        const trailingHyphens = removeTrailingHyphens ? /-$/ : new RegExp('[]');
+        const trailingHyphens = removeTrailingHyphens ? /-$/ : NEVER_MATCHING_REGEX;
         this.channelName.set(newName.toLowerCase().replaceAll(specialCharacters, '-').replace(trailingHyphens, '').slice(0, 30));
         this.channelNameChange.emit(this.channelName() ?? '');
     }
