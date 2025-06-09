@@ -2,7 +2,6 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { Observable } from 'rxjs';
-import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
 import { convertDateFromServer } from 'app/shared/util/date.utils';
 import { map } from 'rxjs/operators';
 import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
@@ -81,7 +80,7 @@ export class TutorialGroupsService {
         return this.tutorialGroupApiService.registerStudent(courseId, tutorialGroupId, login, 'response');
     }
 
-    registerMultipleStudents(courseId: number, tutorialGroupId: number, studentDtos: StudentDTO[]): Observable<HttpResponse<Array<Student>>> {
+    registerMultipleStudents(courseId: number, tutorialGroupId: number, studentDtos: Student[]): Observable<HttpResponse<Array<Student>>> {
         return this.tutorialGroupApiService.registerMultipleStudentsToTutorialGroup(courseId, tutorialGroupId, studentDtos, 'response');
     }
 
@@ -180,11 +179,10 @@ export class TutorialGroupsService {
         return this.tutorialGroupApiService.exportTutorialGroupsToCSV(courseId, fields);
     }
 
-    exportToJson(courseId: number, fields: string[]): Observable<Blob> {
+    exportToJson(courseId: number, fields: string[]): Observable<string> {
         return this.tutorialGroupApiService.exportTutorialGroupsToJSON(courseId, fields).pipe(
-            map((tutorialGroupExports: Array<TutorialGroupExport>) => {
-                const jsonString = JSON.stringify(tutorialGroupExports, null, 2); // Convert array to JSON string
-                return new Blob([jsonString], { type: 'application/json' }); // Create a Blob from the string
+            map((data: Array<TutorialGroupExport>) => {
+                return JSON.stringify(data);
             }),
         );
     }

@@ -3,15 +3,15 @@ import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { map, take } from 'rxjs/operators';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
-import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
 import { TutorialGroupSessionService } from 'app/tutorialgroup/shared/service/tutorial-group-session.service';
 import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/shared/service/tutorial-groups-configuration.service';
 import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
-import { TutorialGroupRegistrationImportDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-import-dto.model';
 import { provideHttpClient } from '@angular/common/http';
 import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
-import { of } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
+import { Student } from 'app/openapi/model/student';
+import { TutorialGroupRegistrationImport } from 'app/openapi/model/tutorialGroupRegistrationImport';
 describe('TutorialGroupService', () => {
     let service: TutorialGroupsService;
     let httpMock: HttpTestingController;
@@ -21,7 +21,6 @@ describe('TutorialGroupService', () => {
     let tutorialGroupsConfigurationService: jest.Mocked<TutorialGroupsConfigurationService>;
     let tutorialGroupApiService: jest.Mocked<TutorialGroupApiService>;
     let elemDefault: TutorialGroup;
-    const resourceURL = 'api/tutorialgroup';
 
     beforeEach(() => {
         const spySessionService = {
@@ -153,7 +152,7 @@ describe('TutorialGroupService', () => {
     }));
 
     it('registerMultipleStudents', fakeAsync(() => {
-        const returnedFromService = new StudentDTO();
+        const returnedFromService = {} as Student;
         returnedFromService.login = 'login';
         const expected = { ...returnedFromService };
 
@@ -174,7 +173,7 @@ describe('TutorialGroupService', () => {
         const courseId = 1;
         const fields = ['ID', 'Title', 'Campus', 'Language'];
         const mockBlob = new Blob(['test'], { type: 'text/csv' });
-        const apiServiceSpy = jest.spyOn(tutorialGroupApiService, 'exportTutorialGroupsToCSV').mockReturnValue(of(mockBlob));
+        const apiServiceSpy = jest.spyOn(tutorialGroupApiService, 'exportTutorialGroupsToCSV').mockReturnValue(of(mockBlob) as Observable<any>);
 
         service
             .exportTutorialGroupsToCSV(courseId, fields)
@@ -189,8 +188,11 @@ describe('TutorialGroupService', () => {
     it('should export tutorial groups to JSON', () => {
         const courseId = 1;
         const fields = ['ID', 'Title', 'Campus', 'Language'];
-        const mockResponse = JSON.stringify({ data: 'test' });
-        const apiServiceSpy = jest.spyOn(tutorialGroupApiService, 'exportTutorialGroupsToJSON').mockReturnValue(of(mockResponse));
+        const mockResponse: Array<TutorialGroup> = [
+            { id: 1, title: 'Group A', campus: 'Campus 1', language: 'English' },
+            { id: 2, title: 'Group B', campus: 'Campus 2', language: 'German' },
+        ];
+        const apiServiceSpy = jest.spyOn(tutorialGroupApiService, 'exportTutorialGroupsToJSON').mockReturnValue(of(mockResponse) as Observable<any>);
 
         service
             .exportToJson(courseId, fields)
@@ -215,7 +217,7 @@ describe('TutorialGroupService', () => {
 
     it('should import tutorial groups', fakeAsync(() => {
         const courseId = 1;
-        const tutorialGroups: TutorialGroupRegistrationImportDTO[] = [{ title: 'Group A', student: { login: 'student1' } as StudentDTO }];
+        const tutorialGroups: TutorialGroupRegistrationImport[] = [{ title: 'Group A', student: { login: 'student1' } as Student }];
         const apiServiceSpy = jest.spyOn(tutorialGroupApiService, 'importRegistrations').mockReturnValue(of(new HttpResponse({ body: tutorialGroups })));
         service.import(courseId, tutorialGroups).subscribe((res) => {
             expect(res.body).toEqual(tutorialGroups);
