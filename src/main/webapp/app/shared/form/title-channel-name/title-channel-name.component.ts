@@ -6,11 +6,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CustomNotIncludedInValidatorDirective } from '../../validators/custom-not-included-in-validator.directive';
 import { HelpIconComponent } from '../../components/help-icon/help-icon.component';
 
-/**
- * Negative lookahead regex that fails for any character, we do not match anything.
- */
-const NEVER_MATCHING_REGEX = /^(?!.*)/;
-
 @Component({
     selector: 'jhi-title-channel-name',
     templateUrl: './title-channel-name.component.html',
@@ -112,9 +107,15 @@ export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnIn
      * @return {void} This method does not return a value but emits the formatted channel name.
      */
     formatChannelName(newName: string, allowDuplicateHyphens: boolean = true, removeTrailingHyphens: boolean = false): void {
-        const specialCharacters: RegExp = allowDuplicateHyphens ? /[^a-z0-9-]+/g : /[^a-z0-9]+/g;
-        const trailingHyphens = removeTrailingHyphens ? /-$/ : NEVER_MATCHING_REGEX;
-        this.channelName.set(newName.toLowerCase().replaceAll(specialCharacters, '-').replace(trailingHyphens, '').slice(0, 30));
+        const REMOVE_SPECIAL_CHARACTERS_ALLOW_HYPHENS = /[^a-z0-9-]+/g;
+        const REMOVE_SPECIAL_CHARACTERS_NO_HYPHENS = /[^a-z0-9]+/g;
+        const TRAILING_HYPHENS = /-$/;
+        const removeSpecialCharactersRegEx: RegExp = allowDuplicateHyphens ? REMOVE_SPECIAL_CHARACTERS_ALLOW_HYPHENS : REMOVE_SPECIAL_CHARACTERS_NO_HYPHENS;
+
+        const nameWithoutSpecialCharacters = newName.toLowerCase().replaceAll(removeSpecialCharactersRegEx, '-');
+        const formattedName = removeTrailingHyphens ? nameWithoutSpecialCharacters.replace(TRAILING_HYPHENS, '') : nameWithoutSpecialCharacters;
+
+        this.channelName.set(formattedName.slice(0, 30));
         this.channelNameChange.emit(this.channelName() ?? '');
     }
 }
