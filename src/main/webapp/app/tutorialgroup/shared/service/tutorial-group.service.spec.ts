@@ -9,14 +9,17 @@ import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/shared/ser
 import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { TutorialGroupRegistrationImportDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-import-dto.model';
 import { provideHttpClient } from '@angular/common/http';
-
+import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
+import { of } from 'rxjs';
+import { HttpResponse } from '@angular/common/http';
 describe('TutorialGroupService', () => {
     let service: TutorialGroupsService;
     let httpMock: HttpTestingController;
     let tutorialGroupSessionService: jest.Mocked<TutorialGroupSessionService>;
     // following service is being used therefore the suppression is being used
-    // @ts-ignore
+    // @ts-expect-error
     let tutorialGroupsConfigurationService: jest.Mocked<TutorialGroupsConfigurationService>;
+    let tutorialGroupApiService: jest.Mocked<TutorialGroupApiService>;
     let elemDefault: TutorialGroup;
     const resourceURL = 'api/tutorialgroup';
 
@@ -40,6 +43,7 @@ describe('TutorialGroupService', () => {
         httpMock = TestBed.inject(HttpTestingController);
         tutorialGroupSessionService = TestBed.inject(TutorialGroupSessionService) as jest.Mocked<TutorialGroupSessionService>;
         tutorialGroupsConfigurationService = TestBed.inject(TutorialGroupsConfigurationService) as jest.Mocked<TutorialGroupsConfigurationService>;
+        tutorialGroupApiService = TestBed.inject(TutorialGroupApiService) as jest.Mocked<TutorialGroupApiService>;
 
         elemDefault = new TutorialGroup();
         elemDefault.id = 0;
@@ -106,16 +110,14 @@ describe('TutorialGroupService', () => {
         tick();
     }));
 
-    it('deregisterStudent', fakeAsync(() => {
+    it('deregisterStudent', () => {
+        const apiServiceSpy = jest.spyOn(tutorialGroupApiService, 'deregisterStudent').mockReturnValue(of(new HttpResponse({ body: {} })));
         service
             .deregisterStudent(1, 1, 'login')
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual({}));
-
-        const req = httpMock.expectOne({ method: 'DELETE' });
-        req.flush({});
-        tick();
-    }));
+        expect(apiServiceSpy).toHaveBeenCalledWith(1, 1, 'login', 'response');
+    });
 
     it('registerStudent', fakeAsync(() => {
         service
@@ -172,6 +174,7 @@ describe('TutorialGroupService', () => {
         const courseId = 1;
         const fields = ['ID', 'Title', 'Campus', 'Language'];
         const mockBlob = new Blob(['test'], { type: 'text/csv' });
+        const apiServiceSpy = jest.spyOn(tutorialGroupApiService, 'exportTutorialGroupsToCSV').mockReturnValue(of(mockBlob));
 
         service
             .exportTutorialGroupsToCSV(courseId, fields)
@@ -180,15 +183,14 @@ describe('TutorialGroupService', () => {
                 expect(blob).toEqual(mockBlob);
             });
 
-        const req = httpMock.expectOne(`${resourceURL}/courses/${courseId}/tutorial-groups/export/csv?fields=ID&fields=Title&fields=Campus&fields=Language`);
-        expect(req.request.method).toBe('GET');
-        req.flush(mockBlob);
+        expect(apiServiceSpy).toHaveBeenCalledWith(courseId, fields);
     });
 
     it('should export tutorial groups to JSON', () => {
         const courseId = 1;
         const fields = ['ID', 'Title', 'Campus', 'Language'];
         const mockResponse = JSON.stringify({ data: 'test' });
+        const apiServiceSpy = jest.spyOn(tutorialGroupApiService, 'exportTutorialGroupsToJSON').mockReturnValue(of(mockResponse));
 
         service
             .exportToJson(courseId, fields)
@@ -197,36 +199,28 @@ describe('TutorialGroupService', () => {
                 expect(response).toEqual(mockResponse);
             });
 
-        const req = httpMock.expectOne(`${resourceURL}/courses/${courseId}/tutorial-groups/export/json?fields=ID&fields=Title&fields=Campus&fields=Language`);
-        expect(req.request.method).toBe('GET');
-        req.flush(mockResponse, { headers: { 'Content-Type': 'application/json' } });
+        expect(apiServiceSpy).toHaveBeenCalledWith(courseId, fields);
     });
-    it('should get unique language values', fakeAsync(() => {
+    it('should get unique language values', () => {
         const courseId = 1;
         const mockResponse = ['English', 'German'];
+        const apiServiceSpy = jest.spyOn(tutorialGroupApiService, 'getUniqueLanguageValues').mockReturnValue(of(new HttpResponse({ body: mockResponse })));
 
         service.getUniqueLanguageValues(courseId).subscribe((res) => {
             expect(res.body).toEqual(mockResponse);
         });
 
-        const req = httpMock.expectOne(`${resourceURL}/courses/${courseId}/tutorial-groups/language-values`);
-        expect(req.request.method).toBe('GET');
-        req.flush(mockResponse);
-        tick();
-    }));
+        expect(apiServiceSpy).toHaveBeenCalledWith(courseId, 'response');
+    });
 
     it('should import tutorial groups', fakeAsync(() => {
         const courseId = 1;
         const tutorialGroups: TutorialGroupRegistrationImportDTO[] = [{ title: 'Group A', student: { login: 'student1' } as StudentDTO }];
-
+        const apiServiceSpy = jest.spyOn(tutorialGroupApiService, 'importRegistrations').mockReturnValue(of(new HttpResponse({ body: tutorialGroups })));
         service.import(courseId, tutorialGroups).subscribe((res) => {
             expect(res.body).toEqual(tutorialGroups);
         });
-
-        const req = httpMock.expectOne(`${resourceURL}/courses/${courseId}/tutorial-groups/import`);
-        expect(req.request.method).toBe('POST');
-        req.flush(tutorialGroups);
-        tick();
+        expect(apiServiceSpy).toHaveBeenCalledWith(courseId, tutorialGroups, 'response');
     }));
 
     it('should convert tutorial group array dates from server', () => {
