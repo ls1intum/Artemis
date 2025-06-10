@@ -5,6 +5,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.saml2.provider.service.authentication.Saml2Authentication;
 import org.springframework.security.web.webauthn.authentication.WebAuthnAuthentication;
 
+import de.tum.cit.aet.artemis.core.domain.Language;
+
 public enum AuthenticationMethod {
 
     PASSKEY("passkey"), PASSWORD("password"), SAML2("saml2");
@@ -48,5 +50,19 @@ public enum AuthenticationMethod {
             }
         }
         throw new IllegalArgumentException("Unknown authentication method: " + method);
+    }
+
+    /**
+     * Returns the email displayName of the authentication method based on the provided language.
+     *
+     * @param language the {@link Language} code
+     * @return the localized display name
+     */
+    public String getEmailDisplayName(Language language) {
+        return switch (this) {
+            case PASSKEY -> language == Language.GERMAN ? "Passkey" : "passkey";
+            case PASSWORD -> language == Language.GERMAN ? "Passwort" : "password";
+            case SAML2 -> "SAML2";
+        };
     }
 }

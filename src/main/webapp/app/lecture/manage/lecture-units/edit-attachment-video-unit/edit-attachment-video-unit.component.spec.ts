@@ -76,7 +76,6 @@ describe('EditAttachmentVideoUnitComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-            schemas: [],
         }).compileComponents();
         fixture = TestBed.createComponent(EditAttachmentVideoUnitComponent);
         router = TestBed.inject(Router);

@@ -272,7 +272,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         doReturn(new Repository("ab", new VcsRepositoryUri("uri"))).when(gitService).getExistingCheckedOutRepositoryByLocalPath(any(), any(), any());
 
         // TODO: all parts using programmingExerciseTestService should also be provided for LocalVC+Jenkins
-        programmingExerciseTestService.setup(this, versionControlService, localVCGitBranchService);
+        programmingExerciseTestService.setup(this, versionControlService);
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
     }
 
@@ -1643,7 +1643,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
             participation.setExercise(exercise);
             Optional<Submission> latestSubmission = participation.findLatestSubmission();
 
-            participationUtilService.addResultToParticipation(participation, latestSubmission.orElseThrow());
+            participationUtilService.addResultToSubmission(participation, latestSubmission.orElseThrow());
         }
         // evaluate quizzes
         request.postWithoutLocation("/api/exam/courses/" + exam2.getCourse().getId() + "/exams/" + exam2.getId() + "/student-exams/evaluate-quiz-exercises", null, HttpStatus.OK,
@@ -1833,7 +1833,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
             participation.setExercise(exercise);
             Optional<Submission> latestSubmission = participation.findLatestSubmission();
 
-            participationUtilService.addResultToParticipation(participation, latestSubmission.orElseThrow());
+            participationUtilService.addResultToSubmission(participation, latestSubmission.orElseThrow());
         }
         exam.setPublishResultsDate(ZonedDateTime.now());
         exam = examRepository.save(exam);
@@ -2271,7 +2271,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
             participation.setExercise(exercise);
             Optional<Submission> latestSubmission = participation.findLatestSubmission();
 
-            participationUtilService.addResultToParticipation(participation, latestSubmission.orElseThrow());
+            participationUtilService.addResultToSubmission(participation, latestSubmission.orElseThrow());
         }
         exam2.setPublishResultsDate(ZonedDateTime.now());
         exam2 = examRepository.save(exam2);
@@ -2473,7 +2473,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
         assertThat(quizSubmissionTestRepository.findByParticipation_Exercise_Id(quizExerciseId)).hasSize(1);
 
-        List<Result> results = resultRepository.findByParticipationExerciseIdOrderByCompletionDateAsc(quizExerciseId);
+        List<Result> results = resultRepository.findBySubmissionParticipationExerciseIdOrderByCompletionDateAsc(quizExerciseId);
         assertThat(results).hasSize(1);
         var result = results.getFirst();
         assertThat(result.getSubmission().getId()).isEqualTo(quizSubmissionId);
