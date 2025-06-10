@@ -28,6 +28,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.transaction.TestTransaction;
 
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
@@ -336,6 +337,10 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         programmingExercise.getBuildConfig().setBranchRegex(regex);
         programmingExerciseRepository.saveAndFlush(programmingExercise);
         programmingExerciseBuildConfigRepository.saveAndFlush(programmingExercise.getBuildConfig());
+
+        TestTransaction.flagForCommit();
+        TestTransaction.end();
+        TestTransaction.start();
 
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
