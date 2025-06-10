@@ -71,7 +71,7 @@ export class ExerciseUpdatePlagiarismComponent implements OnInit, OnDestroy, Aft
         config.continuousPlagiarismControlPostDueDateChecksEnabled = newValue;
     }
 
-    getMinimumSizeLabel(): string | undefined {
+    getMinimumSizeLabel(): string {
         switch (this.exercise.type) {
             case ExerciseType.PROGRAMMING: {
                 return 'artemisApp.plagiarism.minimumTokenCount';
@@ -79,19 +79,25 @@ export class ExerciseUpdatePlagiarismComponent implements OnInit, OnDestroy, Aft
             case ExerciseType.TEXT: {
                 return 'artemisApp.plagiarism.minimumSize';
             }
+            default: {
+                return '';
+            }
         }
     }
 
     /**
      * Return the translation identifier of the minimum size tooltip for the current exercise type.
      */
-    getMinimumSizeTooltip(): string | undefined {
+    getMinimumSizeTooltip(): string {
         switch (this.exercise.type) {
             case ExerciseType.PROGRAMMING: {
                 return 'artemisApp.plagiarism.minimumTokenCountTooltipProgrammingExercise';
             }
             case ExerciseType.TEXT: {
                 return 'artemisApp.plagiarism.minimumSizeTooltipTextExercise';
+            }
+            default: {
+                return '';
             }
         }
     }

@@ -82,7 +82,7 @@
             <div class="col">
                 <div class="form-group">
                     <div>
-                        <label class="form-control-label" jhiTranslate="{{ getMinimumSizeLabel() }}"></label>
+                        <label class="form-control-label" [jhiTranslate]="getMinimumSizeLabel()"></label>
                         <fa-icon [icon]="faQuestionCircle" placement="bottom auto" [ngbTooltip]="getMinimumSizeTooltip() | artemisTranslate" />
                     </div>
                     <input
