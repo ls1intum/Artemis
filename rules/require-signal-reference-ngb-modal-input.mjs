@@ -15,11 +15,9 @@ const createRule = ESLintUtils.RuleCreator(() => "");
  * dialogReference.componentInstance.count = this.countSignal();
  * ```
  *
- * Examples **not flagged**:
+ * Example **not flagged**:
  * ```js
- * dialogReference.componentInstance.title = this.titleSignal;
  * dialogReference.componentInstance.count = this.countSignal;
- * ```
  */
 export default createRule({
     name: "require-signal-reference-ngb-modal-input",
@@ -27,12 +25,12 @@ export default createRule({
         type: "problem",
         docs: {
             description:
-                "When a dialog’s property is backed by an Angular Signal, ensure assignments into `modalRef.componentInstance.x` pass the Signal itself — never `.value` or by calling it.",
+                "When a passing an Angular Signal to a ngb-modal, ensure assignments into `modalRef.componentInstance.x` pass the Signal itself — never by calling it. (use '= mySignal;' instead of '= mySignal();'",
             recommended: "error",
         },
         messages: {
             unexpectedSignalInvocation:
-                "Input '{{propertyName}}' is signal-backed; don’t invoke it ('{{expressionText}}()'). Pass the Signal itself.",
+                "Input '{{propertyName}}' is an angular signal; don’t invoke it ('{{expressionText}}()'). Pass the Signal itself.",
         },
         schema: [],
     },
@@ -126,7 +124,7 @@ export default createRule({
         };
 
 
-        const findSignalBackedPropertyDeclaration = (componentSymbol, propertyName) => {
+        const findSignalInputDeclaration = (componentSymbol, propertyName) => {
             for (const decl of componentSymbol.getDeclarations() || []) {
                 if (!ts.isClassDeclaration(decl)) continue;
                 const member = decl.members.find(member =>
@@ -142,6 +140,7 @@ export default createRule({
 
         /**
          * Validate signal invocation (e.g. `this.courseId()`).
+         * @return {boolean} true if the node is a signal invocation
          */
         const checkSignalInvocation = (node, propertyName) => {
             if (node.type !== "CallExpression") return false;
@@ -166,11 +165,11 @@ export default createRule({
 
         /**
          * STEP 2: On assignments to `dialogRef.componentInstance.prop`,
-         * forbid `.value` and signal invocation for signal-backed props.
+         * forbid  signal invocation `mySignal()` for signal-input props.
          */
         function handleAssignmentExpression(node) {
             const left = node.left;
-            // Check shape: X.componentInstance.y
+            // Check shape: modalRef.componentInstance.attributeName
             if (
                 left.type !== "MemberExpression" ||
                 left.object.type !== "MemberExpression" ||
@@ -184,11 +183,13 @@ export default createRule({
             if (!componentSymbol) return;
 
             const propertyName = left.property.name;
-            const backedMember = findSignalBackedPropertyDeclaration(
+            const signalInput = findSignalInputDeclaration(
                 componentSymbol,
                 propertyName
             );
-            if (!backedMember) return;
+            if (!signalInput){
+                return;
+            }
 
             const right = node.right;
             checkSignalInvocation(right, propertyName);
