@@ -308,6 +308,7 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
                 LEFT JOIN FETCH p.auxiliaryRepositories
                 LEFT JOIN FETCH p.buildConfig
                 LEFT JOIN FETCH p.plagiarismDetectionConfig
+                LEFT JOIN FETCH p.gradingCriteria
             WHERE p.id = :exerciseId
             """)
     Optional<ProgrammingExercise> findByIdForImport(@Param("exerciseId") long exerciseId);
