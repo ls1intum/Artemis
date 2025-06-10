@@ -1,5 +1,5 @@
 import { ErrorHandler, Injectable } from '@angular/core';
-import { captureException, dedupeIntegration, init, browserTracingIntegration } from '@sentry/angular';
+import { browserTracingIntegration, captureException, dedupeIntegration, init } from '@sentry/angular';
 import { PROFILE_PROD, PROFILE_TEST, VERSION } from 'app/app.constants';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
@@ -30,7 +30,7 @@ export class SentryErrorHandler extends ErrorHandler {
             dsn: profileInfo.sentry.dsn,
             release: VERSION,
             environment: this.environment,
-            integrations: [dedupeIntegration(), browserTracingIntegration()],
+            integrations: [browserTracingIntegration(), dedupeIntegration()],
             tracesSampleRate: this.environment !== PROFILE_PROD ? 1.0 : 0.2,
         });
 
