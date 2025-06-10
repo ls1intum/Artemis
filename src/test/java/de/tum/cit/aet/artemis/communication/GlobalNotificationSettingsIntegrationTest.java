@@ -37,7 +37,7 @@ class GlobalNotificationSettingsIntegrationTest extends AbstractSpringIntegratio
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testEnableNotification() throws Exception {
+    void shouldEnableAllNotifications() throws Exception {
         enableAllNotifications();
 
         assertThat(globalNotificationSettingRepository.isNotificationEnabled(testUser.getId(), GlobalNotificationType.NEW_LOGIN)).isTrue();
@@ -48,7 +48,7 @@ class GlobalNotificationSettingsIntegrationTest extends AbstractSpringIntegratio
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testDisableNotification() throws Exception {
+    void shouldDisableEachNotification() throws Exception {
         enableAllNotifications();
 
         Map<String, Boolean> requestBody = new HashMap<>();
@@ -69,7 +69,7 @@ class GlobalNotificationSettingsIntegrationTest extends AbstractSpringIntegratio
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetAllNotificationSettings() throws Exception {
+    void shouldReturnAllNotificationSettings() throws Exception {
         enableAllNotifications();
 
         Map<String, Boolean> settings = request.get("/api/communication/global-notification-settings", HttpStatus.OK, Map.class);
@@ -83,7 +83,7 @@ class GlobalNotificationSettingsIntegrationTest extends AbstractSpringIntegratio
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testUpdateAllNotificationSettings() throws Exception {
+    void shouldUpdateAllNotificationSettings() throws Exception {
         Map<String, Boolean> requestBody = new HashMap<>();
         requestBody.put("enabled", true);
 
@@ -102,7 +102,7 @@ class GlobalNotificationSettingsIntegrationTest extends AbstractSpringIntegratio
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testInvalidNotificationType() throws Exception {
+    void shouldReturnBadRequestWhenNotificationTypeIsInvalid() throws Exception {
         Map<String, Boolean> requestBody = new HashMap<>();
         requestBody.put("enabled", true);
         request.put("/api/communication/global-notification-settings/INVALID_TYPE", requestBody, HttpStatus.BAD_REQUEST);
@@ -110,7 +110,7 @@ class GlobalNotificationSettingsIntegrationTest extends AbstractSpringIntegratio
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testCascadeDeleteOnUserDeletion() throws Exception {
+    void shouldDeleteNotificationSettingsWhenUserIsSoftDeleted() throws Exception {
         enableAllNotifications();
 
         assertThat(globalNotificationSettingRepository.isNotificationEnabled(testUser.getId(), GlobalNotificationType.NEW_LOGIN)).isTrue();

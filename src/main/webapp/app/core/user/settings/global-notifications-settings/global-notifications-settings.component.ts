@@ -35,6 +35,9 @@ interface NotificationTypeLink {
 export class GlobalNotificationsSettingsComponent implements OnInit, OnDestroy {
     protected readonly faSpinner = faSpinner;
     protected readonly notificationTypes = Object.values(GLOBAL_NOTIFICATION_TYPES);
+    protected filteredNotificationTypes: GlobalNotificationType[] = [];
+    protected notificationLabels: Partial<Record<GlobalNotificationType, string>> = {};
+
     public readonly notificationTypeLinks: NotificationTypeLink[] = [
         {
             type: GLOBAL_NOTIFICATION_TYPES.NEW_PASSKEY_ADDED,
@@ -52,7 +55,7 @@ export class GlobalNotificationsSettingsComponent implements OnInit, OnDestroy {
             translationKey: 'artemisApp.userSettings.globalNotificationSettings.viewSshKeySettings',
         },
     ];
-    notificationSettings: { [key: string]: boolean } | null = null;
+    notificationSettings: { [key: string]: boolean } | undefined;
 
     private globalNotificationSettingsService = inject(GlobalNotificationSettingsService);
     private profileService = inject(ProfileService);
@@ -64,6 +67,8 @@ export class GlobalNotificationsSettingsComponent implements OnInit, OnDestroy {
     isPasskeyEnabled = false;
 
     ngOnInit(): void {
+        this.filteredNotificationTypes = this.notificationTypes.filter((type) => this.isSettingAvailable(type));
+        this.notificationLabels = Object.fromEntries(this.filteredNotificationTypes.map((type) => [type, this.getNotificationTypeLabel(type)]));
         this.isPasskeyEnabled = this.profileService.isModuleFeatureActive(FEATURE_PASSKEY);
         this.loadSettings();
     }
@@ -79,7 +84,7 @@ export class GlobalNotificationsSettingsComponent implements OnInit, OnDestroy {
     loadSettings(): void {
         this.getAllSub?.unsubscribe();
         this.getAllSub = this.globalNotificationSettingsService.getAll().subscribe({
-            next: (settings: { [key: string]: boolean } | null) => {
+            next: (settings: { [key: string]: boolean } | undefined) => {
                 this.notificationSettings = settings;
             },
             error: (error) => {
@@ -111,7 +116,7 @@ export class GlobalNotificationsSettingsComponent implements OnInit, OnDestroy {
      * @param type - The notification type
      * @returns The translation key string
      */
-    getNotificationTypeLabel(type: string): string {
+    getNotificationTypeLabel(type: GlobalNotificationType): string {
         return `artemisApp.userSettings.globalNotificationSettings.options.${type}`;
     }
 
@@ -120,7 +125,7 @@ export class GlobalNotificationsSettingsComponent implements OnInit, OnDestroy {
      * @param type - The notification type to check
      * @returns true if the notification type should be displayed
      */
-    isSettingAvailable(type: string): boolean {
+    isSettingAvailable(type: GlobalNotificationType): boolean {
         return type !== GLOBAL_NOTIFICATION_TYPES.NEW_PASSKEY_ADDED || this.isPasskeyEnabled;
     }
 }
