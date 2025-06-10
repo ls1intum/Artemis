@@ -114,4 +114,8 @@ export class IrisChatHttpService {
     createSession<T extends IrisSession>(identifier: string): Response<T> {
         return this.httpClient.post<T>(`${this.apiPrefix}/${identifier}/sessions`, null, { observe: 'response' });
     }
+
+    loadChatSessions(courseId: number): Response<IrisSession[]> {
+        return this.httpClient.post<IrisSession[]>(`api/iris/chat-history/${courseId}/sessions`, null, { observe: 'response' });
+    }
 }
