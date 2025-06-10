@@ -16,6 +16,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { DraftService } from 'app/communication/message/service/draft-message.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { MockProvider } from 'ng-mocks';
 
 describe('MessageReplyInlineInputComponent', () => {
     let component: MessageReplyInlineInputComponent;
@@ -38,7 +39,7 @@ describe('MessageReplyInlineInputComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: AccountService, useClass: MockAccountService },
-                DraftService,
+                MockProvider(DraftService),
             ],
         })
             .compileComponents()
@@ -157,7 +158,7 @@ describe('MessageReplyInlineInputComponent', () => {
             });
             tick();
 
-            expect(getDraftKeySpy).toHaveBeenCalled();
+            expect(getDraftKeySpy).toHaveBeenCalledOnce();
             expect(saveDraftSpy).toHaveBeenCalledWith('thread_draft_1_1_1', saveDraft);
         }));
 
@@ -170,7 +171,7 @@ describe('MessageReplyInlineInputComponent', () => {
             });
             tick();
 
-            expect(getDraftKeySpy).toHaveBeenCalled();
+            expect(getDraftKeySpy).toHaveBeenCalledOnce();
             expect(clearDraftSpy).toHaveBeenCalledWith('thread_draft_1_1_1');
         }));
 
@@ -185,7 +186,7 @@ describe('MessageReplyInlineInputComponent', () => {
             component['loadDraft']();
             tick();
 
-            expect(getDraftKeySpy).toHaveBeenCalled();
+            expect(getDraftKeySpy).toHaveBeenCalledOnce();
             expect(component.posting.content).toBe(draftContent);
         }));
 

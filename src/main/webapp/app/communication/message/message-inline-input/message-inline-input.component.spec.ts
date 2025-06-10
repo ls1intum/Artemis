@@ -167,7 +167,7 @@ describe('MessageInlineInputComponent', () => {
             });
             tick();
 
-            expect(getDraftKeySpy).toHaveBeenCalled();
+            expect(getDraftKeySpy).toHaveBeenCalledOnce();
             expect(saveDraftSpy).toHaveBeenCalledWith('message_draft_1_1', 'test draft content');
         }));
 
@@ -180,8 +180,8 @@ describe('MessageInlineInputComponent', () => {
             });
             tick();
 
-            expect(getDraftKeySpy).toHaveBeenCalled();
-            expect(clearDraftSpy).toHaveBeenCalledWith('message_draft_1_1');
+            expect(getDraftKeySpy).toHaveBeenCalledOnce();
+            expect(clearDraftSpy).toHaveBeenCalledOnce('message_draft_1_1');
         }));
 
         it('should load draft on init if available', fakeAsync(() => {
@@ -195,7 +195,7 @@ describe('MessageInlineInputComponent', () => {
             component['loadDraft']();
             tick();
 
-            expect(getDraftKeySpy).toHaveBeenCalled();
+            expect(getDraftKeySpy).toHaveBeenCalledOnce();
             expect(component.posting.content).toBe(draftContent);
         }));
 
@@ -211,7 +211,7 @@ describe('MessageInlineInputComponent', () => {
             component.confirm();
             tick();
 
-            expect(getDraftKeySpy).toHaveBeenCalled();
+            expect(getDraftKeySpy).toHaveBeenCalledOnce();
             expect(clearDraftSpy).toHaveBeenCalledWith('message_draft_1_1');
         }));
     });
