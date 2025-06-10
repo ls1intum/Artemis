@@ -16,11 +16,15 @@ export class SentryErrorHandler extends ErrorHandler {
             return;
         }
 
+	// list of all integrations that should be active regardless of profile
+	let integrations = [dedupeIntegration()];
         if (profileInfo.testServer != undefined) {
             if (profileInfo.testServer) {
                 this.environment = PROFILE_TEST;
             } else {
                 this.environment = PROFILE_PROD;
+		// all Sentry integrations that should only be active in prod are added here
+		integrations = integrations.concat([browserTracingIntegration()]);
             }
         } else {
             this.environment = 'local';
@@ -30,7 +34,7 @@ export class SentryErrorHandler extends ErrorHandler {
             dsn: profileInfo.sentry.dsn,
             release: VERSION,
             environment: this.environment,
-            integrations: [browserTracingIntegration(), dedupeIntegration()],
+            integrations: integrations,
             tracesSampleRate: this.environment !== PROFILE_PROD ? 1.0 : 0.2,
         });
 
