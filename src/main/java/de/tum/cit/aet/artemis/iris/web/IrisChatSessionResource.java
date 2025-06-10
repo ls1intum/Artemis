@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -94,7 +95,50 @@ public class IrisChatSessionResource {
     }
 
     /**
-     * GET course-chat/{courseId}/sessions: Retrieve all Iris Sessions for the course
+     * GET chat-history/{courseId}/session/{sessionId}: Retrieve an Iris Session for a sessionId
+     *
+     * @param courseId  of the course
+     * @param sessionId of the session
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body a list of the iris sessions for the course or {@code 404 (Not Found)} if no session exists
+     */
+    @GetMapping("{courseId}/{chatMode}/session/{sessionId}")
+    @EnforceAtLeastStudentInCourse
+    public ResponseEntity<Optional<IrisSessionDTO>> getSessionsForSessionId(@PathVariable Long courseId, @PathVariable Long sessionId, @PathVariable String chatMode) {
+        var chatModeEnum = IrisChatMode.valueOf(chatMode);
+        var course = courseRepository.findById(courseId);
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+
+        user.hasAcceptedExternalLLMUsageElseThrow();
+
+        if (chatModeEnum.equals(IrisChatMode.COURSE)) {
+            if (irisSettingsService.isEnabledFor(IrisSubSettingsType.COURSE_CHAT, course.get())) {
+                return ResponseEntity.ok(irisCourseChatSessionRepository.findById(sessionId)
+                        .map(s -> new IrisSessionDTO(s.getId(), s.getUserId(), s.getMessages(), s.getCreationDate(), IrisChatMode.COURSE.getValue(), s.getCourseId())));
+            }
+        }
+        else if (chatModeEnum.equals(IrisChatMode.LECTURE)) {
+            if (irisSettingsService.isEnabledFor(IrisSubSettingsType.LECTURE_CHAT, course.get())) {
+                return ResponseEntity.ok(irisLectureChatSessionRepository.findById(sessionId)
+                        .map(s -> new IrisSessionDTO(s.getId(), s.getUserId(), s.getMessages(), s.getCreationDate(), IrisChatMode.LECTURE.getValue(), s.getLectureId())));
+            }
+        }
+        else if (chatModeEnum.equals(IrisChatMode.TEXT_EXERCISE)) {
+            if (irisSettingsService.isEnabledFor(IrisSubSettingsType.TEXT_EXERCISE_CHAT, course.get())) {
+                return ResponseEntity.ok(irisTextExerciseChatSessionRepository.findById(sessionId)
+                        .map(s -> new IrisSessionDTO(s.getId(), s.getUserId(), s.getMessages(), s.getCreationDate(), IrisChatMode.TEXT_EXERCISE.getValue(), s.getExerciseId())));
+            }
+        }
+        else if (chatModeEnum.equals(IrisChatMode.PROGRAMMING_EXERCISE)) {
+            if (irisSettingsService.isEnabledFor(IrisSubSettingsType.PROGRAMMING_EXERCISE_CHAT, course.get())) {
+                return ResponseEntity.ok(irisExerciseChatSessionRepository.findById(sessionId).map(
+                        s -> new IrisSessionDTO(s.getId(), s.getUserId(), s.getMessages(), s.getCreationDate(), IrisChatMode.PROGRAMMING_EXERCISE.getValue(), s.getExerciseId())));
+            }
+        }
+        return ResponseEntity.badRequest().build();
+    }
+
+    /**
+     * GET chat-history/{courseId}/sessions: Retrieve all Iris Sessions for the course
      *
      * @param courseId of the course
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body a list of the iris sessions for the course or {@code 404 (Not Found)} if no session exists

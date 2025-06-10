@@ -337,7 +337,7 @@ export class IrisChatService implements OnDestroy {
         const newIdentifier = mode && id ? mode + '/' + id : undefined;
         this.sessionCreationIdentifier = newIdentifier;
         this.getCurrentSessionOrCreate().subscribe((session) => {
-            if (session.id != this.sessionId) {
+            if (this.chatSessions.getValue()) {
                 this.closeAndStart();
             }
         });
