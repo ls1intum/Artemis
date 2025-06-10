@@ -19,7 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
-import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
@@ -60,8 +59,6 @@ public class ProgrammingExerciseImportBasicService {
 
     private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
-    private final GradingCriterionRepository gradingCriterionRepository;
-
     private final ProgrammingExerciseService programmingExerciseService;
 
     private final StaticCodeAnalysisService staticCodeAnalysisService;
@@ -81,16 +78,15 @@ public class ProgrammingExerciseImportBasicService {
     public ProgrammingExerciseImportBasicService(Optional<VersionControlService> versionControlService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
             StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            GradingCriterionRepository gradingCriterionRepository, ProgrammingExerciseService programmingExerciseService, StaticCodeAnalysisService staticCodeAnalysisService,
-            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, SubmissionPolicyRepository submissionPolicyRepository,
-            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ProgrammingExerciseTaskService programmingExerciseTaskService, ChannelService channelService,
+            ProgrammingExerciseService programmingExerciseService, StaticCodeAnalysisService staticCodeAnalysisService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
+            SubmissionPolicyRepository submissionPolicyRepository, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository,
+            ProgrammingExerciseTaskService programmingExerciseTaskService, ChannelService channelService,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, ExerciseService exerciseService) {
         this.versionControlService = versionControlService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
         this.staticCodeAnalysisCategoryRepository = staticCodeAnalysisCategoryRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
-        this.gradingCriterionRepository = gradingCriterionRepository;
         this.programmingExerciseService = programmingExerciseService;
         this.staticCodeAnalysisService = staticCodeAnalysisService;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
