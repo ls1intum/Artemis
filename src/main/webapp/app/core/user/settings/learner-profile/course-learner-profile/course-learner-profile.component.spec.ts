@@ -178,5 +178,150 @@ describe('CourseLearnerProfileComponent', () => {
             const profile = await setupUpdateTest(courseIndex, profiles[courseIndex].courseId, false);
             await validateError(profiles[courseIndex].courseId, courseIndex, profile);
         });
+
+        it('should not update profile when activeCourseId is null', async () => {
+            // Arrange
+            component.activeCourseId = null;
+            component.disabled = false;
+
+            // Act
+            await component.onToggleChange();
+            await fixture.whenStable();
+
+            // Assert
+            expect(putUpdatedCourseLearnerProfileSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not update profile when course profile is not found', async () => {
+            // Arrange
+            component.activeCourseId = 999; // Non-existent course ID
+            component.disabled = false;
+
+            // Act
+            await component.onToggleChange();
+            await fixture.whenStable();
+
+            // Assert
+            expect(putUpdatedCourseLearnerProfileSpy).not.toHaveBeenCalled();
+        });
+
+        it('should show error when profile values are invalid', async () => {
+            // Arrange
+            const courseIndex = 1;
+            const courseId = profiles[courseIndex].courseId;
+            component.courseLearnerProfiles.set([...profiles]);
+            component.activeCourseId = courseId;
+            component.disabled = false;
+
+            // Set invalid values (outside valid range)
+            component.aimForGradeOrBonus.set(-1);
+            component.timeInvestment.set(6);
+            component.repetitionIntensity.set(7);
+
+            // Act
+            await component.onToggleChange();
+            await fixture.whenStable();
+
+            // Assert
+            expect(putUpdatedCourseLearnerProfileSpy).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('Error handling', () => {
+        it('should handle HTTP error when loading profiles', async () => {
+            // Arrange
+            const httpError = new HttpResponse({ status: 500 });
+            jest.spyOn(learnerProfileApiService, 'getCourseLearnerProfilesForCurrentUser').mockRejectedValue(httpError);
+
+            // Act
+            await component.ngOnInit();
+            await fixture.whenStable();
+
+            // Assert
+            expect(component.courseLearnerProfiles()).toEqual(profiles);
+        });
+
+        it('should handle non-HTTP error when loading profiles', async () => {
+            // Arrange
+            const genericError = new Error('Network error');
+            jest.spyOn(learnerProfileApiService, 'getCourseLearnerProfilesForCurrentUser').mockRejectedValue(genericError);
+
+            // Act
+            await component.ngOnInit();
+            await fixture.whenStable();
+
+            // Assert
+            expect(component.courseLearnerProfiles()).toEqual(profiles);
+        });
+
+        it('should handle HTTP error during profile update', async () => {
+            // Arrange
+            const courseIndex = 1;
+            const courseId = profiles[courseIndex].courseId;
+            component.courseLearnerProfiles.set([...profiles]);
+            component.activeCourseId = courseId;
+            component.disabled = false;
+
+            const httpError = new HttpResponse({ status: 500 });
+            putUpdatedCourseLearnerProfileSpy.mockRejectedValue(httpError);
+
+            // Act
+            await component.onToggleChange();
+            await fixture.whenStable();
+
+            // Assert
+            expect(putUpdatedCourseLearnerProfileSpy).toHaveBeenCalled();
+        });
+
+        it('should handle non-HTTP error during profile update', async () => {
+            // Arrange
+            const courseIndex = 1;
+            const courseId = profiles[courseIndex].courseId;
+            component.courseLearnerProfiles.set([...profiles]);
+            component.activeCourseId = courseId;
+            component.disabled = false;
+
+            const genericError = new Error('Network error');
+            putUpdatedCourseLearnerProfileSpy.mockRejectedValue(genericError);
+
+            // Act
+            await component.onToggleChange();
+            await fixture.whenStable();
+
+            // Assert
+            expect(putUpdatedCourseLearnerProfileSpy).toHaveBeenCalled();
+        });
+    });
+
+    describe('Course selection', () => {
+        it('should handle selection of no course', () => {
+            // Arrange
+            selectCourse(-1);
+            const changeEvent = new Event('change', { bubbles: true, cancelable: false });
+
+            // Act
+            selector.dispatchEvent(changeEvent);
+
+            // Assert
+            expect(component.activeCourseId).toBeNull();
+            expect(component.disabled).toBeTrue();
+        });
+
+        it('should load profile when course is selected', () => {
+            // Arrange
+            const courseId = 1;
+            selectCourse(courseId);
+            const changeEvent = new Event('change', { bubbles: true, cancelable: false });
+
+            // Act
+            selector.dispatchEvent(changeEvent);
+
+            // Assert
+            expect(component.activeCourseId).toBe(courseId);
+            expect(component.disabled).toBeFalse();
+            expect(component.aimForGradeOrBonus()).toBe(clp1.aimForGradeOrBonus);
+            expect(component.timeInvestment()).toBe(clp1.timeInvestment);
+            expect(component.repetitionIntensity()).toBe(clp1.repetitionIntensity);
+        });
     });
 });
