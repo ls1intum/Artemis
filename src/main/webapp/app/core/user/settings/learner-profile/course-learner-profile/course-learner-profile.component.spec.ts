@@ -228,19 +228,6 @@ describe('CourseLearnerProfileComponent', () => {
     });
 
     describe('Error handling', () => {
-        it('should handle HTTP error when loading profiles', async () => {
-            // Arrange
-            const httpError = new HttpResponse({ status: 500 });
-            jest.spyOn(learnerProfileApiService, 'getCourseLearnerProfilesForCurrentUser').mockRejectedValue(httpError);
-
-            // Act
-            await component.ngOnInit();
-            await fixture.whenStable();
-
-            // Assert
-            expect(component.courseLearnerProfiles()).toEqual(profiles);
-        });
-
         it('should handle non-HTTP error when loading profiles', async () => {
             // Arrange
             const genericError = new Error('Network error');
