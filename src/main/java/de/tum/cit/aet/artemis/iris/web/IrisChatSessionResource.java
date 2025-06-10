@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.iris.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -146,7 +148,7 @@ public class IrisChatSessionResource {
      */
     @GetMapping("{courseId}/sessions")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<List<IrisSessionDTO>> getAllSessionsForCourse(@PathVariable Long courseId) {
+    public ResponseEntity<List<IrisChatSession>> getAllSessionsForCourse(@PathVariable Long courseId) {
         var user = userRepository.getUserWithGroupsAndAuthorities();
         if (user.hasAcceptedExternalLLMUsage()) {
             var allChatSessions = Stream.of(getAllSessionsForCourseChat(courseId), getAllSessionsForLectureChat(courseId), getAllSessionsForProgrammingExerciseChat(courseId),
@@ -159,22 +161,24 @@ public class IrisChatSessionResource {
 
     }
 
-    private List<IrisSessionDTO> getAllSessionsForCourseChat(Long courseId) {
+    private List<IrisChatSession> getAllSessionsForCourseChat(Long courseId) {
         var course = courseRepository.findById(courseId);
         if (course.isPresent()) {
             if (irisSettingsService.isEnabledFor(IrisSubSettingsType.COURSE_CHAT, course.get())) {
                 var user = userRepository.getUserWithGroupsAndAuthorities();
 
                 var sessions = irisCourseChatSessionRepository.findLatestByCourseIdAndUserIdWithMessages(course.get().getId(), user.getId(), Pageable.unpaged());
-                sessions.forEach(s -> irisSessionService.checkHasAccessToIrisSession(s, user));
-                return sessions.stream()
-                        .map(s -> new IrisSessionDTO(s.getId(), s.getUserId(), s.getMessages(), s.getCreationDate(), IrisChatMode.COURSE.getValue(), s.getCourseId())).toList();
+                sessions.forEach(s -> {
+                    irisSessionService.checkHasAccessToIrisSession(s, user);
+                    s.setIrisChatMode(IrisChatMode.COURSE.getValue());
+                });
+                return new ArrayList<>(sessions);
             }
         }
-        return null;
+        return Collections.emptyList();
     }
 
-    private List<IrisSessionDTO> getAllSessionsForLectureChat(Long courseId) {
+    private List<IrisChatSession> getAllSessionsForLectureChat(Long courseId) {
         var course = courseRepository.findById(courseId);
 
         if (course.isPresent()) {
@@ -185,15 +189,17 @@ public class IrisChatSessionResource {
                 List<IrisLectureChatSession> sessions = lecturesForCourse.stream()
                         .flatMap(l -> irisLectureChatSessionRepository.findLatestSessionsByLectureIdAndUserIdWithMessages(l.getId(), user.getId(), Pageable.unpaged()).stream())
                         .toList();
-                sessions.forEach(s -> irisSessionService.checkHasAccessToIrisSession(s, user));
-                return sessions.stream()
-                        .map(s -> new IrisSessionDTO(s.getId(), s.getUserId(), s.getMessages(), s.getCreationDate(), IrisChatMode.LECTURE.getValue(), s.getLectureId())).toList();
+                sessions.forEach(s -> {
+                    irisSessionService.checkHasAccessToIrisSession(s, user);
+                    s.setIrisChatMode(IrisChatMode.COURSE.getValue());
+                });
+                return new ArrayList<>(sessions);
             }
         }
         return null;
     }
 
-    private List<IrisSessionDTO> getAllSessionsForProgrammingExerciseChat(Long courseId) {
+    private List<IrisChatSession> getAllSessionsForProgrammingExerciseChat(Long courseId) {
         var course = courseRepository.findById(courseId);
         if (course.isPresent()) {
             var exercisesForCourse = exerciseRepository.findAllExercisesByCourseId(courseId);
@@ -202,16 +208,17 @@ public class IrisChatSessionResource {
 
                 var sessions = exercisesForCourse.stream()
                         .flatMap(e -> irisExerciseChatSessionRepository.findLatestByExerciseIdAndUserIdWithMessages(e.getId(), user.getId(), Pageable.unpaged()).stream()).toList();
-                sessions.forEach(s -> irisSessionService.checkHasAccessToIrisSession(s, user));
-                return sessions.stream().map(
-                        s -> new IrisSessionDTO(s.getId(), s.getUserId(), s.getMessages(), s.getCreationDate(), IrisChatMode.PROGRAMMING_EXERCISE.getValue(), s.getExerciseId()))
-                        .toList();
+                sessions.forEach(s -> {
+                    irisSessionService.checkHasAccessToIrisSession(s, user);
+                    s.setIrisChatMode(IrisChatMode.COURSE.getValue());
+                });
+                return new ArrayList<>(sessions);
             }
         }
         return null;
     }
 
-    private List<IrisSessionDTO> getAllSessionsForTextExerciseChat(Long courseId) {
+    private List<IrisChatSession> getAllSessionsForTextExerciseChat(Long courseId) {
         var course = courseRepository.findById(courseId);
         if (course.isPresent()) {
             var exercisesForCourse = exerciseRepository.findAllExercisesByCourseId(courseId);
@@ -221,10 +228,11 @@ public class IrisChatSessionResource {
                 var sessions = exercisesForCourse.stream()
                         .flatMap(e -> irisTextExerciseChatSessionRepository.findLatestByExerciseIdAndUserIdWithMessages(e.getId(), user.getId(), Pageable.unpaged()).stream())
                         .toList();
-                sessions.forEach(s -> irisSessionService.checkHasAccessToIrisSession(s, user));
-                return sessions.stream()
-                        .map(s -> new IrisSessionDTO(s.getId(), s.getUserId(), s.getMessages(), s.getCreationDate(), IrisChatMode.TEXT_EXERCISE.getValue(), s.getExerciseId()))
-                        .toList();
+                sessions.forEach(s -> {
+                    irisSessionService.checkHasAccessToIrisSession(s, user);
+                    s.setIrisChatMode(IrisChatMode.COURSE.getValue());
+                });
+                return new ArrayList<>(sessions);
             }
         }
         return null;

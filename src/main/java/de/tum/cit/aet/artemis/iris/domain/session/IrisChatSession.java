@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.iris.domain.session;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.Transient;
 
 import de.tum.cit.aet.artemis.core.domain.User;
 
@@ -8,6 +9,9 @@ import de.tum.cit.aet.artemis.core.domain.User;
 public abstract class IrisChatSession extends IrisSession {
 
     private long userId;
+
+    @Transient
+    private String irisChatMode;
 
     public IrisChatSession(User user) {
         this.userId = user.getId();
@@ -22,5 +26,13 @@ public abstract class IrisChatSession extends IrisSession {
 
     public void setUserId(long userId) {
         this.userId = userId;
+    }
+
+    public String getIrisChatMode() {
+        return this.irisChatMode;
+    }
+
+    public void setIrisChatMode(String irisChatMode) {
+        this.irisChatMode = irisChatMode;
     }
 }
