@@ -181,7 +181,7 @@ describe('MessageInlineInputComponent', () => {
             tick();
 
             expect(getDraftKeySpy).toHaveBeenCalledOnce();
-            expect(clearDraftSpy).toHaveBeenCalledOnce('message_draft_1_1');
+            expect(clearDraftSpy).toHaveBeenCalledWith('message_draft_1_1');
         }));
 
         it('should load draft on init if available', fakeAsync(() => {
