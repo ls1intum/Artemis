@@ -271,6 +271,20 @@ pre {
     padding-top: 5px;
 }
 
+.chat-container {
+    height: 100%;
+    display: grid;
+    grid-template-columns: 25rem 1fr;
+    grid-template-rows: 1fr;
+}
+
+.chat-history {
+    margin: 1rem;
+    padding: 1rem;
+    background-color: var(--gray-200);
+    border-radius: var(--bs-border-radius-lg);
+}
+
 .chat-input textarea {
     flex: 1;
     padding: 5px 13px;

@@ -26,6 +26,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AsPipe } from 'app/shared/pipes/as.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ActivatedRoute } from '@angular/router';
+import { IrisSession } from 'app/iris/shared/entities/iris-session.model';
 
 @Component({
     selector: 'jhi-iris-base-chatbot',
@@ -125,7 +126,9 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     activeStatusSubscription: Subscription;
     suggestionsSubscription: Subscription;
     routeSubscription: Subscription;
+    chatSessionsSubscription: Subscription;
 
+    chatSessions: IrisSession[] = [];
     messages: IrisMessage[] = [];
     stages?: IrisStageDTO[] = [];
     suggestions?: string[] = [];
@@ -189,6 +192,9 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
                 }
             });
         });
+        this.chatSessionsSubscription = this.chatService.availableChatSessions().subscribe((sessions) => {
+            this.chatSessions = sessions;
+        });
         this.stagesSubscription = this.chatService.currentStages().subscribe((stages) => {
             this.stages = stages;
             this.hasActiveStage = stages?.some((stage) => [IrisStageStateDTO.IN_PROGRESS, IrisStageStateDTO.NOT_STARTED].includes(stage.state));
@@ -242,6 +248,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
         this.activeStatusSubscription.unsubscribe();
         this.suggestionsSubscription.unsubscribe();
         this.routeSubscription?.unsubscribe();
+        this.chatSessionsSubscription.unsubscribe();
     }
 
     checkIfUserAcceptedExternalLLMUsage(): void {
