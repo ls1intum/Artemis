@@ -2,7 +2,7 @@ import { Project } from "ts-morph";
 import { join } from "path";
 import { readdirSync, statSync } from "fs";
 
-function getAllTSFiles(dir: string): string[] {
+const getAllTSFiles = (dir: string): string[] => {
     let results: string[] = [];
     for (const file of readdirSync(dir)) {
         const fullPath = join(dir, file);
@@ -14,14 +14,15 @@ function getAllTSFiles(dir: string): string[] {
         }
     }
     return results;
-}
+};
 
-async function main() {
+const main = async () => {
     const directory = "src/main/webapp/app/openapi";
     const files = getAllTSFiles(directory);
 
     const project = new Project({
         tsConfigFilePath: "tsconfig.json",
+        // we don't want to add files from tsconfig.json, as we only need the openapi files and not all ts files
         skipAddingFilesFromTsConfig: true,
     });
     project.addSourceFilesAtPaths(files);
@@ -34,12 +35,13 @@ async function main() {
         let removedImportsInFile = 0;
         let renamedMethodsInFile = 0;
 
-        // 1) Your original unused‐import cleanup:
-        for (const importDecl of sourceFile.getImportDeclarations()) {
-            for (const namedImport of importDecl.getNamedImports()) {
+        for (const importDeclaration of sourceFile.getImportDeclarations()) {
+            for (const namedImport of importDeclaration.getNamedImports()) {
                 const id = namedImport.getNameNode();
-                const sym = typeChecker.getSymbolAtLocation(id);
-                if (!sym) continue;
+                const symbol = typeChecker.getSymbolAtLocation(id);
+                if (!symbol) {
+                    continue;
+                }
 
                 const refs = id.findReferences();
                 const isUsed = refs.some(r =>
@@ -56,24 +58,23 @@ async function main() {
             }
 
             if (
-                importDecl.getNamedImports().length === 0 &&
-                !importDecl.getDefaultImport() &&
-                !importDecl.getNamespaceImport()
+                importDeclaration.getNamedImports().length === 0 &&
+                !importDeclaration.getDefaultImport() &&
+                !importDeclaration.getNamespaceImport()
             ) {
-                importDecl.remove();
+                importDeclaration.remove();
             }
         }
 
         // 2) Strip leading underscores and trailing digits from every class‐method name:
-        for (const cls of sourceFile.getClasses()) {
-            for (const method of cls.getMethods()) {
+        for (const clazz of sourceFile.getClasses()) {
+            for (const method of clazz.getMethods()) {
                 const oldName = method.getName();
                 // remove all leading '_' then remove any digits at the end
                 const newName = oldName
                     .replace(/^_+/, "")
                     .replace(/\d+$/, "");
                 if (newName !== oldName) {
-                    // full rename (updates all call sites)
                     method.getNameNode().rename(newName);
                     renamedMethodsInFile++;
                     console.log(`🔄 [${sourceFile.getBaseName()}] ${oldName} → ${newName}`);
@@ -96,7 +97,7 @@ async function main() {
         `✅ Done. Total imports removed: ${totalRemovedImports}, ` +
         `methods renamed: ${totalRenamedMethods}`
     );
-}
+};
 
 main().catch(err => {
     console.error("❌ Error:", err);
