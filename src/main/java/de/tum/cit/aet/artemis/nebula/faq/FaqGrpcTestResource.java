@@ -17,18 +17,18 @@ public class FaqGrpcTestResource {
 
     private static final String ENTITY_NAME = "faq_GRPC";
 
-    private final FaqGrpcIngestService faqGrpcIngestService;
+    private final FaqGrpcService faqGrpcService;
 
-    public FaqGrpcTestResource(FaqGrpcIngestService faqGrpcIngestService) {
-        this.faqGrpcIngestService = faqGrpcIngestService;
+    public FaqGrpcTestResource(FaqGrpcService faqGrpcService) {
+        this.faqGrpcService = faqGrpcService;
     }
 
     @PostMapping("/rewrite-faq/{courseId}")
     public ResponseEntity<String> rewriteFaqInNebula(@PathVariable Long courseId, @RequestBody String inputText) {
 
         log.debug("REST request to rewrite the following FAQ input text : {}", inputText);
-        String result = faqGrpcIngestService.ingestAcceptedFaqsToNebula(courseId, inputText);
-        log.debug("Result from the rewriting : {} See the result {}", inputText, result);
+        String result = faqGrpcService.ingestAcceptedFaqsToNebula(courseId, inputText);
+        log.debug("Result from the rewriting : {} See the result: {}", inputText, result);
         return ResponseEntity.ok(result);
     }
 }

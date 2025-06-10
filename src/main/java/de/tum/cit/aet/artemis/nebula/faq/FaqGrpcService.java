@@ -15,7 +15,7 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 
 @Service
-public class FaqGrpcIngestService {
+public class FaqGrpcService {
 
     @Value("${nebula.faq.host:host.docker.internal}")
     private String nebulaUrl;
@@ -27,11 +27,14 @@ public class FaqGrpcIngestService {
 
     private FAQServiceGrpc.FAQServiceBlockingStub faqStub;
 
-    public FaqGrpcIngestService(FaqRepository faqRepository) {
+    public FaqGrpcService(FaqRepository faqRepository) {
         this.faqRepository = faqRepository;
     }
 
     @PostConstruct
+    // This method is called after the service is constructed to initialize the gRPC channel.
+    // It sets up the FAQServiceBlockingStub to communicate with the Nebula FAQ service.
+    // This has to be done afterward, else the application will not start properly due to the missing configs
     public void initGrpcChannel() {
         ManagedChannel channel = ManagedChannelBuilder.forAddress(nebulaUrl, faqPort).usePlaintext().intercept().build();
         this.faqStub = FAQServiceGrpc.newBlockingStub(channel);
