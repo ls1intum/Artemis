@@ -57,6 +57,7 @@ export class IrisChatService implements OnDestroy {
     stages: BehaviorSubject<IrisStageDTO[]> = new BehaviorSubject([]);
     suggestions: BehaviorSubject<string[]> = new BehaviorSubject([]);
     error: BehaviorSubject<IrisErrorMessageKey | undefined> = new BehaviorSubject(undefined);
+    chatSessions: BehaviorSubject<IrisSession[]> = new BehaviorSubject([]);
 
     rateLimitInfo?: IrisRateLimitInformation;
     rateLimitSubscription: Subscription;
@@ -82,6 +83,7 @@ export class IrisChatService implements OnDestroy {
 
         if (requiresAcceptance === false || this.accountService.userIdentity?.externalLLMUsageAccepted || this.hasJustAcceptedExternalLLMUsage) {
             this.getCurrentSessionOrCreate().subscribe(this.handleNewSession());
+            this.loadChatSessions();
         }
     }
 
@@ -303,6 +305,22 @@ export class IrisChatService implements OnDestroy {
         );
     }
 
+    private loadChatSessions() {
+        const sessions: IrisSession[] = [
+            {
+                id: 1,
+            },
+            {
+                id: 2,
+            },
+            {
+                id: 3,
+            },
+        ];
+
+        return this.chatSessions.next(sessions);
+    }
+
     /**
      * Creates a new session
      */
@@ -356,5 +374,9 @@ export class IrisChatService implements OnDestroy {
 
     public currentSuggestions(): Observable<string[]> {
         return this.suggestions.asObservable();
+    }
+
+    public availableChatSessions(): Observable<IrisSession[]> {
+        return this.chatSessions.asObservable();
     }
 }
