@@ -33,9 +33,10 @@ $discussion-section-card-min-width: 370px;
             display: inline-flex;
             justify-content: space-between;
             align-items: center;
-            background-color: var(--artemis-dark);
             cursor: pointer;
             border-radius: 0.25em 0.25em 0 0;
+            background-color: transparent;
+            border-bottom: 1px solid $border-color;
 
             .card-title {
                 display: flex;
@@ -61,7 +62,8 @@ $discussion-section-card-min-width: 370px;
     width: 38px;
     justify-content: space-between;
     flex-flow: column nowrap;
-    background-color: var(--artemis-dark);
+    border: 1px solid $border-color;
+    border-radius: 0.25em 0 0 0.25em;
     margin-left: auto;
     cursor: pointer;
 
