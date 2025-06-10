@@ -233,28 +233,8 @@ export class UsersImportDialogComponent implements OnDestroy {
         if (this.tutorialGroup) {
             this.tutorialGroupService.registerMultipleStudents(this.courseId, this.tutorialGroup.id!, this.usersToImport).subscribe({
                 next: (res: HttpResponse<Array<Student>>) => {
-                    // Assuming res.body contains students that could NOT be registered.
-                    // Convert Set<Student> to Partial<StudentDTO>[] for onSaveSuccess.
-                    const notFoundDtos: Partial<StudentDTO>[] = [];
-                    if (res.body) {
-                        for (const student of res.body) {
-                            notFoundDtos.push({
-                                login: student.login,
-                                firstName: student.firstName,
-                                lastName: student.lastName,
-                                registrationNumber: student.registrationNumber,
-                                email: student.email,
-                            });
-                        }
-                    }
-                    const newHttpResponse = new HttpResponse<Partial<StudentDTO>[]>({
-                        body: notFoundDtos,
-                        headers: res.headers,
-                        status: res.status,
-                        statusText: res.statusText,
-                        url: res.url ?? undefined,
-                    });
-                    this.onSaveSuccess(newHttpResponse);
+                    const convertedHttpResponse = this.convertGeneratedDtoToNonGenerated(res);
+                    this.onSaveSuccess(convertedHttpResponse);
                 },
                 error: () => this.onSaveError(),
             });
@@ -286,6 +266,33 @@ export class UsersImportDialogComponent implements OnDestroy {
         } else {
             this.alertService.error('artemisApp.importUsers.genericErrorMessage');
         }
+    }
+
+    /**
+     * Helper method to convert the generated Student DTOs to non-generated StudentDTOs
+     * This is needed as long as not all methods in this component are converted to use the generated Student DTO.
+     * @param response The HttpResponse containing the DTOs converted to @link{StudentDTO}
+     */
+    private convertGeneratedDtoToNonGenerated(response: HttpResponse<Array<Student>>): HttpResponse<Partial<StudentDTO>[]> {
+        const dtosToReturn: Partial<StudentDTO>[] = [];
+        if (response.body) {
+            for (const student of response.body) {
+                dtosToReturn.push({
+                    login: student.login,
+                    firstName: student.firstName,
+                    lastName: student.lastName,
+                    registrationNumber: student.registrationNumber,
+                    email: student.email,
+                });
+            }
+        }
+        return new HttpResponse<Partial<StudentDTO>[]>({
+            body: dtosToReturn,
+            headers: response.headers,
+            status: response.status,
+            statusText: response.statusText,
+            url: response.url ?? undefined,
+        });
     }
 
     /**
