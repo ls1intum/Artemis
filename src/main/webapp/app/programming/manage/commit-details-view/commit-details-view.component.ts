@@ -25,8 +25,8 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
     isTemplate = false;
 
     errorWhileFetching = false;
-    leftCommitFileContentByPath: Map<string, string> = new Map<string, string>();
-    rightCommitFileContentByPath: Map<string, string> = new Map<string, string>();
+    leftCommitFileContentByPath: Map<string, string> = new Map();
+    rightCommitFileContentByPath: Map<string, string> = new Map();
     repositoryDiffInformation: RepositoryDiffInformation;
     commits: CommitInfo[] = [];
     currentCommit: CommitInfo;
@@ -115,7 +115,7 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
         this.diffReady = false;
 
         const leftCommitObservable = this.isTemplate
-            ? of(new Map<string, string>())
+            ? of(new Map())
             : this.programmingExerciseParticipationService.getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView(
                   this.exerciseId,
                   this.repositoryId!,
@@ -135,8 +135,8 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
             rightFiles: rightCommitObservable,
         }).subscribe({
             next: async (result) => {
-                this.leftCommitFileContentByPath = result.leftFiles || new Map<string, string>();
-                this.rightCommitFileContentByPath = result.rightFiles || new Map<string, string>();
+                this.leftCommitFileContentByPath = result.leftFiles || new Map();
+                this.rightCommitFileContentByPath = result.rightFiles || new Map();
                 this.repositoryDiffInformation = await processRepositoryDiff(this.leftCommitFileContentByPath, this.rightCommitFileContentByPath);
 
                 // Set ready state to true when diff processing is complete
@@ -144,8 +144,8 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
             },
             error: () => {
                 this.errorWhileFetching = true;
-                this.leftCommitFileContentByPath = new Map<string, string>();
-                this.rightCommitFileContentByPath = new Map<string, string>();
+                this.leftCommitFileContentByPath = new Map();
+                this.rightCommitFileContentByPath = new Map();
                 this.diffReady = false;
             },
         });
