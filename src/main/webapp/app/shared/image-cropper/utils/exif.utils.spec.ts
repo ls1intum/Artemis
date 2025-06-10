@@ -13,7 +13,7 @@ describe('Exif Utils', () => {
             jest.spyOn(window, 'Image').mockImplementation(() => mockImage);
 
             const promise = supportsAutomaticRotation();
-            mockImage.onload?.();
+            mockImage.onload?.(new Event('load'));
             const result = await promise;
 
             expect(result).toBeTrue();
@@ -30,7 +30,7 @@ describe('Exif Utils', () => {
             jest.spyOn(window, 'Image').mockImplementation(() => mockImage);
 
             const promise = supportsAutomaticRotation();
-            mockImage.onload?.();
+            mockImage.onload?.(new Event('load'));
             const result = await promise;
 
             expect(result).toBeFalse();
