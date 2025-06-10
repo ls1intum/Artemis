@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
 import java.util.Collections;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -10,6 +12,7 @@ import org.springdoc.core.customizers.OpenApiCustomizer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 
 import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
@@ -20,9 +23,10 @@ import io.swagger.v3.oas.models.responses.ApiResponse;
 import io.swagger.v3.oas.models.responses.ApiResponses;
 
 @Configuration
+@Profile(PROFILE_CORE)
 public class OpenAPIConfiguration {
 
-    private final Logger logger = LoggerFactory.getLogger(OpenAPIConfiguration.class);
+    private static final Logger log = LoggerFactory.getLogger(OpenAPIConfiguration.class);
 
     @Value("${artemis.version}")
     private String version;
@@ -60,13 +64,13 @@ public class OpenAPIConfiguration {
                 }
             }
             else {
-                logger.warn("Components or Schemas are null in OpenAPI configuration.");
+                log.warn("Components or Schemas are null in OpenAPI configuration.");
             }
 
             var paths = openApi.getPaths();
             if (paths != null) {
                 paths.forEach((path, pathItem) -> {
-                    logger.info("Processing path: {}", path);
+                    log.info("Processing path: {}", path);
                     pathItem.readOperations().forEach(operation -> {
                         String id = operation.getOperationId();
                         // strip any trailing "_<digit>" suffix
@@ -81,12 +85,12 @@ public class OpenAPIConfiguration {
                                             removeDTOSuffixesFromSchemaRecursively(mediaType.getSchema());
                                         }
                                         else {
-                                            logger.warn("MediaType or Schema is null for content type: {}", contentType);
+                                            log.warn("MediaType or Schema is null for content type: {}", contentType);
                                         }
                                     });
                                 }
                                 else {
-                                    logger.warn("Response with code {} has no content.", responseCode);
+                                    log.warn("Response with code {} has no content.", responseCode);
                                 }
                             });
                         }
@@ -104,16 +108,16 @@ public class OpenAPIConfiguration {
                                     return true;
                                 }
                                 else {
-                                    logger.warn("Tag '{}' is shorter than expected and cannot be trimmed.", tag);
+                                    log.warn("Tag '{}' is shorter than expected and cannot be trimmed.", tag);
                                     return false;
                                 }
-                            }).map(tag -> tag.substring(0, tag.length() - 9)).collect(Collectors.toList()));
+                            }).map(tag -> tag.substring(0, tag.length() - 9)).toList());
                         }
                     });
                 });
             }
             else {
-                logger.warn("Paths are null in OpenAPI configuration.");
+                log.warn("Paths are null in OpenAPI configuration.");
             }
         };
     }
@@ -126,7 +130,7 @@ public class OpenAPIConfiguration {
         if (schema.get$ref() != null && schema.get$ref().endsWith("DTO")) {
             String newRef = schema.get$ref().substring(0, schema.get$ref().length() - 3);
             schema.set$ref(newRef);
-            logger.debug("Updated $ref from {} to {}", schema.get$ref(), newRef);
+            log.debug("Updated $ref from {} to {}", schema.get$ref(), newRef);
         }
 
         if (schema.getItems() != null) {
