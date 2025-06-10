@@ -7,6 +7,7 @@ import { LearnerProfileDTO } from '../dto/learner-profile-dto.model';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockProvider } from 'ng-mocks';
+import { HttpErrorResponse } from '@angular/common/http';
 
 describe('FeedbackLearnerProfileComponent', () => {
     let component: FeedbackLearnerProfileComponent;
@@ -119,5 +120,138 @@ describe('FeedbackLearnerProfileComponent', () => {
         await fixture.whenStable();
 
         expect(learnerProfileApiService.putUpdatedLearnerProfile).not.toHaveBeenCalled();
+    });
+
+    describe('Error handling', () => {
+        beforeEach(() => {
+            // Reset the component state
+            component.learnerProfile.set(undefined);
+            component.disabled = true;
+            // Clear any existing mocks
+            jest.clearAllMocks();
+        });
+
+        it('should handle HTTP errors with specific message', async () => {
+            // Arrange
+            const httpError = new HttpErrorResponse({ error: 'Server Error', status: 500 });
+            jest.spyOn(learnerProfileApiService, 'getLearnerProfileForCurrentUser').mockRejectedValue(httpError);
+
+            // Act
+            await component.ngOnInit();
+            await fixture.whenStable();
+
+            // Assert
+            expect(component.learnerProfile()).toBeUndefined();
+            expect(component.disabled).toBeTrue();
+        });
+
+        it('should handle non-HTTP errors with generic message', async () => {
+            // Arrange
+            const genericError = new Error('Network error');
+            jest.spyOn(learnerProfileApiService, 'getLearnerProfileForCurrentUser').mockRejectedValue(genericError);
+
+            // Act
+            await component.ngOnInit();
+            await fixture.whenStable();
+
+            // Assert
+            expect(component.learnerProfile()).toBeUndefined();
+            expect(component.disabled).toBeTrue();
+        });
+
+        it('should handle HTTP errors during profile update', async () => {
+            // Arrange
+            component.learnerProfile.set(mockProfile);
+            component.disabled = false;
+            const httpError = new HttpErrorResponse({ error: 'Update Failed', status: 500 });
+            jest.spyOn(learnerProfileApiService, 'putUpdatedLearnerProfile').mockRejectedValue(httpError);
+
+            // Act
+            await component.onToggleChange();
+            await fixture.whenStable();
+
+            // Assert
+            expect(component.learnerProfile()).toEqual(mockProfile); // Profile should remain unchanged
+            expect(component.disabled).toBeFalse(); // Component should remain enabled
+        });
+    });
+
+    it('should update all profile values when profile is loaded', async () => {
+        // Arrange
+        const newProfile = new LearnerProfileDTO({
+            id: 1,
+            feedbackAlternativeStandard: 3,
+            feedbackFollowupSummary: 1,
+            feedbackBriefDetailed: 2,
+        });
+
+        // Mock the API to return our new profile
+        jest.spyOn(learnerProfileApiService, 'getLearnerProfileForCurrentUser').mockResolvedValue(newProfile);
+
+        // Act
+        await component.ngOnInit();
+        await fixture.whenStable();
+
+        // Assert
+        expect(component.feedbackAlternativeStandard()).toBe(newProfile.feedbackAlternativeStandard);
+        expect(component.feedbackFollowupSummary()).toBe(newProfile.feedbackFollowupSummary);
+        expect(component.feedbackBriefDetailed()).toBe(newProfile.feedbackBriefDetailed);
+    });
+
+    it('should handle profile with undefined values', async () => {
+        // Arrange
+        const profileWithUndefinedValues = new LearnerProfileDTO({
+            id: 1,
+            feedbackAlternativeStandard: undefined,
+            feedbackFollowupSummary: undefined,
+            feedbackBriefDetailed: undefined,
+        });
+
+        jest.spyOn(learnerProfileApiService, 'getLearnerProfileForCurrentUser').mockResolvedValue(profileWithUndefinedValues);
+
+        // Act
+        await component.ngOnInit();
+        await fixture.whenStable();
+
+        // Assert
+        expect(component.feedbackAlternativeStandard()).toBe(LearnerProfileDTO.DEFAULT_VALUE);
+        expect(component.feedbackFollowupSummary()).toBe(LearnerProfileDTO.DEFAULT_VALUE);
+        expect(component.feedbackBriefDetailed()).toBe(LearnerProfileDTO.DEFAULT_VALUE);
+    });
+
+    it('should handle non-HTTP error during profile update', async () => {
+        // Arrange
+        component.learnerProfile.set(mockProfile);
+        component.disabled = false;
+        const genericError = new Error('Network error');
+        jest.spyOn(learnerProfileApiService, 'putUpdatedLearnerProfile').mockRejectedValue(genericError);
+
+        // Act
+        await component.onToggleChange();
+        await fixture.whenStable();
+
+        // Assert
+        expect(component.learnerProfile()).toEqual(mockProfile); // Profile should remain unchanged
+        expect(component.disabled).toBeFalse(); // Component should remain enabled
+    });
+
+    it('should handle HTTP error with specific message during profile update', async () => {
+        // Arrange
+        component.learnerProfile.set(mockProfile);
+        component.disabled = false;
+        const httpError = new HttpErrorResponse({
+            error: 'Validation failed',
+            status: 400,
+            statusText: 'Bad Request',
+        });
+        jest.spyOn(learnerProfileApiService, 'putUpdatedLearnerProfile').mockRejectedValue(httpError);
+
+        // Act
+        await component.onToggleChange();
+        await fixture.whenStable();
+
+        // Assert
+        expect(component.learnerProfile()).toEqual(mockProfile); // Profile should remain unchanged
+        expect(component.disabled).toBeFalse(); // Component should remain enabled
     });
 });
