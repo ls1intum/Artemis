@@ -308,8 +308,8 @@ export class IrisChatService implements OnDestroy {
     }
 
     private loadChatSessions() {
-        this.http.loadChatSessions(this.courseId).subscribe((response: HttpResponse<IrisSession[]>) => {
-            this.chatSessions.next(response.body ?? []);
+        this.http.loadChatSessions(this.courseId).subscribe((sessions: IrisSession[]) => {
+            this.chatSessions.next(sessions ?? []);
         });
     }
 
