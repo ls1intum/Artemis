@@ -28,16 +28,12 @@ export class ExerciseUpdatePlagiarismComponent implements OnInit, OnDestroy, Aft
 
     isCPCCollapsed = true;
 
-    minimumSizeLabel?: string;
-    minimumSizeTooltip?: string;
     formValid: boolean;
     formValidChanges = new Subject<boolean>();
 
     readonly faQuestionCircle = faQuestionCircle;
 
     ngOnInit(): void {
-        this.minimumSizeLabel = this.getMinimumSizeLabel();
-        this.minimumSizeTooltip = this.getMinimumSizeTooltip();
         if (!this.exercise.plagiarismDetectionConfig) {
             // Create the default plagiarism configuration if there is none (e.g. importing an old exercise from a file)
             this.exercise.plagiarismDetectionConfig = DEFAULT_PLAGIARISM_DETECTION_CONFIG;
