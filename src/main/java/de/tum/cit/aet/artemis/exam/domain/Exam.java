@@ -448,9 +448,6 @@ public class Exam extends DomainObject {
      */
     @JsonIgnore
     public boolean isVisibleToStudents() {
-        if (visibleDate == null) {  // no visible date means the exam is configured wrongly and should not be visible!
-            return false;
-        }
         return visibleDate.isBefore(ZonedDateTime.now());
     }
 
@@ -461,9 +458,6 @@ public class Exam extends DomainObject {
      */
     @JsonIgnore
     public boolean isStarted() {
-        if (startDate == null) {   // no start date means the exam is configured wrongly and we cannot answer the question!
-            return false;
-        }
         return startDate.isBefore(ZonedDateTime.now());
     }
 

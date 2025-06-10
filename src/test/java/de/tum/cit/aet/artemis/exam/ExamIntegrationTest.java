@@ -27,6 +27,7 @@ import java.util.stream.Stream;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -1251,25 +1252,28 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
     }
 
     private void testGetExamTitle() throws Exception {
-        // Test for regular titles
+        testGetExamTitleRegularTitle();
+        testGetExamTitleStrippedTitle();
+    }
+
+    private void testGetExamTitleRegularTitle() throws Exception {
         Exam exam = ExamFactory.generateExam(course1);
         exam.setTitle("Test Exam");
         exam = examRepository.save(exam);
 
         final var title = request.get("/api/exam/exams/" + exam.getId() + "/title", HttpStatus.OK, String.class);
 
-        assertThat(title).isEqualTo(exam.getTitle());
+        assertThat(title).isEqualTo("Test Exam");
+    }
 
-        // Test for exams with titles with leading and trailing whitespaces
-        examRepository.delete(exam);
-        exam = ExamFactory.generateExam(course1);
-
-        exam.setTitle(" \n\t Test Exam title    ");
+    private void testGetExamTitleStrippedTitle() throws Exception {
+        Exam exam = ExamFactory.generateExam(course1);
+        exam.setTitle(" \r\r\n\n\t Test Exam title  \f \r \r\n \r\f\f\f   \r\f\t");
         exam = examRepository.save(exam);
 
-        final var title2 = request.get("/api/exam/exams/" + exam.getId() + "/title", HttpStatus.OK, String.class);
+        final var title = request.get("/api/exam/exams/" + exam.getId() + "/title", HttpStatus.OK, String.class);
 
-        assertThat(title2).isEqualTo("Test Exam title");
+        assertThat(title).isEqualTo("Test Exam title");
     }
 
     @Test
@@ -1284,7 +1288,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
         final var examinerName = "Prof. Dr. Stephan Krusche";
         Exam exam = ExamFactory.generateExam(course1);
         exam.setExaminer(examinerName);
-        assertThat(exam.getExaminer()).isEqualTo(examinerName);
+        assertThat(exam.getExaminer()).isEqualTo(examinerName);  // TODO: Wait for removal-confirmation
         final URI createdExamURI = request.post("/api/exam/courses/" + course1.getId() + "/exams", exam, HttpStatus.CREATED);
         final Exam requestedExam = request.get(String.valueOf(createdExamURI), HttpStatus.OK, Exam.class);
         assertThat(requestedExam.getExaminer()).isEqualTo(examinerName);
@@ -1299,6 +1303,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateExamWithValidCorrectionRounds() throws Exception {
+        // Real exams must have either 1 or 2 correction rounds; test exams must have exactly 0 correction rounds
         // Real exam - correction rounds = 1
         testCreateExamWithCorrectionRoundsAndExpectedCreationStatus(false, 1, 1, HttpStatus.CREATED);
 
@@ -1307,6 +1312,22 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
 
         // Test exam - correction rounds = 0
         testCreateExamWithCorrectionRoundsAndExpectedCreationStatus(true, 0, 0, HttpStatus.CREATED);
+    }
+
+    @ParameterizedTest
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @ValueSource(ints = { Integer.MIN_VALUE, -3, -2, -1, 0, 3, 4, 5, 1 << 20, Integer.MAX_VALUE })
+    void testCreateRealExamWithInvalidCorrectionRounds(Integer plannedCorrectionRounds) throws Exception {
+        // Real exams must have either 1 or 2 correction rounds
+        testCreateExamWithCorrectionRoundsAndExpectedCreationStatus(false, plannedCorrectionRounds, plannedCorrectionRounds, HttpStatus.BAD_REQUEST);
+    }
+
+    @ParameterizedTest
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @ValueSource(ints = { Integer.MIN_VALUE, -3, -2, -1, 1, 2, 3, 4, 5, 1 << 20, Integer.MAX_VALUE })
+    void testCreateTestExamWithInvalidCorrectionRounds(Integer plannedCorrectionRounds) throws Exception {
+        // Test exams must have exactly 0 correction rounds
+        testCreateExamWithCorrectionRoundsAndExpectedCreationStatus(true, plannedCorrectionRounds, plannedCorrectionRounds, HttpStatus.BAD_REQUEST);
     }
 
     void testCreateExamWithCorrectionRoundsAndExpectedCreationStatus(boolean isTestExam, Integer plannedCorrectionRounds, int actualCorrectionRounds, HttpStatus expectedStatus)
@@ -1322,35 +1343,36 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
         }
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = { "Course Name for Testing", "abc", "a  space ", "\r\n Title \f\n\r more \ttitle" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetCourseNameRegularName(final String courseName) throws Exception {
+        final Exam examA = ExamFactory.generateExam(course1);
+        examA.setCourseName(courseName);
+        assertThat(examA.getCourseName()).isEqualTo(courseName);  // TODO: Wait for removal-confirmation
+        final URI createdExamURI = request.post("/api/exam/courses/" + course1.getId() + "/exams", examA, HttpStatus.CREATED);
+        Exam receivedExam = request.get(String.valueOf(createdExamURI), HttpStatus.OK, Exam.class);
+        assertThat(receivedExam.getCourseName()).isEqualTo(courseName);
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetCourseName() throws Exception {
-        // First we test for an actual name
-        {
-            final String testCourseName = "Course Name for Testing";
-            final Exam examA = ExamFactory.generateExam(course1);
-            examA.setCourseName(testCourseName);
-            assertThat(examA.getCourseName()).isEqualTo(testCourseName);
-            final URI createdExamURI = request.post("/api/exam/courses/" + course1.getId() + "/exams", examA, HttpStatus.CREATED);
-            Exam receivedExam = request.get(String.valueOf(createdExamURI), HttpStatus.OK, Exam.class);
-            assertThat(receivedExam.getCourseName()).isEqualTo(testCourseName);
-        }
-
-        // Here we test for null
-        {
-            final Exam examB = ExamFactory.generateExam(course1);
-            examB.setCourseName(null);
-            assertThat(examB.getCourseName()).isNull();
-            final URI createdExamURI = request.post("/api/exam/courses/" + course1.getId() + "/exams", examB, HttpStatus.CREATED);
-            Exam receivedExam = request.get(String.valueOf(createdExamURI), HttpStatus.OK, Exam.class);
-            assertThat(receivedExam.getCourseName()).isNull();
-        }
+    void testGetCourseNameNullName() throws Exception {
+        final Exam examB = ExamFactory.generateExam(course1);
+        examB.setCourseName(null);
+        assertThat(examB.getCourseName()).isNull();  // TODO: Wait for removal-confirmation
+        final URI createdExamURI = request.post("/api/exam/courses/" + course1.getId() + "/exams", examB, HttpStatus.CREATED);
+        Exam receivedExam = request.get(String.valueOf(createdExamURI), HttpStatus.OK, Exam.class);
+        assertThat(receivedExam.getCourseName()).isNull();
     }
 
     @ParameterizedTest
     @ValueSource(ints = { 0, 1, 2, 5, 10, 20, 100, 1000 })
     void testQuizExamMaxPoints(int quizExamMaxPoints) throws Exception {
-        /* quizExamMaxPoints is a @Transient field, thus not stored in the DB, and it's getter */
+        /*
+         * quizExamMaxPoints is a @Transient field, thus not stored in the DB,
+         * and it's getter and setter are marked with JsonProperty.Access.READ_ONLY / JsonProperty.Access.WRITE_ONLY
+         */
         // First a simple unit test
         {
             Exam exam = new Exam();
@@ -1386,12 +1408,11 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
     void testIsVisibleToStudents(int beforeSeconds) throws Exception {
         final Exam exam = ExamFactory.generateExam(course1);
         exam.setVisibleDate(ZonedDateTime.now().minusSeconds(beforeSeconds));
-        assertThat(exam.isVisibleToStudents()).isTrue();
+        assertThat(exam.isVisibleToStudents()).isTrue();  // TODO: Wait for removal-confirmation
 
         final URI createdExamURI = request.post("/api/exam/courses/" + course1.getId() + "/exams", exam, HttpStatus.CREATED);
         final Exam receivedExam = request.get(String.valueOf(createdExamURI), HttpStatus.OK, Exam.class);
         assertThat(receivedExam.isVisibleToStudents()).isTrue();
-
     }
 
     @ParameterizedTest
@@ -1402,7 +1423,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
         final Exam exam = ExamFactory.generateExam(course1);
         final var visibleDate = ZonedDateTime.now().plusSeconds(afterSeconds);
         exam.setVisibleDate(visibleDate);
-        assertThat(exam.isVisibleToStudents()).isFalse();
+        assertThat(exam.isVisibleToStudents()).isFalse();  // TODO: Wait for removal-confirmation
 
         final int workingTimeSeconds = 1000;
         exam.setStartDate(visibleDate.plusMinutes(5));
@@ -1414,39 +1435,25 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
         assertThat(receivedExam.isVisibleToStudents()).isFalse();
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testVisibleToStudentsDateIncorrectlyConfigured() throws Exception {
-        // First we test if the domain object works as expected, i.e., a unit test
-        Exam exam = ExamFactory.generateExam(course1);
-        exam.setVisibleDate(null);
-        assertThat(exam.isVisibleToStudents()).isFalse();
+    @Nested
+    class IsAfterLastStudentExamEndedTest {
 
-        // Now we check if creation fails
-        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams", exam, HttpStatus.BAD_REQUEST, null);
-    }
+        private ZonedDateTime timeExamStart;
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testIncorrectlyConfiguredExamIsStarted() throws Exception {
-        Exam exam = ExamFactory.generateExam(course1);
-        exam.setStartDate(null);
-        assertThat(exam.isStarted()).isFalse();
+        private int examWorkingTime;
 
-        // Check that creation fails
-        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams", exam, HttpStatus.BAD_REQUEST, null);
-    }
+        private ZonedDateTime timeExamEnd;
 
-    @Test
-    void testIsAfterLastStudentExamEnded() {
-        // initialize start, end and work times
-        final var timeNow = ZonedDateTime.now();
-        final var timeExamStart = timeNow.minusMinutes(60);
-        final int examWorkingTime = 3000;  // 50 minutes
-        final var timeExamEnd = timeExamStart.plusSeconds(examWorkingTime);
+        @BeforeEach
+        void initializeTimes() {
+            timeExamStart = ZonedDateTime.now().minusMinutes(60);
+            examWorkingTime = 3000;  // 50 minutes
+            timeExamEnd = timeExamStart.plusSeconds(examWorkingTime);
+        }
 
-        // Check if it works for an exam without any student exams - should default to regular end time
-        {
+        @Test
+        void noParticipations() {
+            // should default to regular end time
             Exam noParticipationsExam = examUtilService.addExam(course1);
             noParticipationsExam.setStartDate(timeExamStart);
             noParticipationsExam.setEndDate(timeExamEnd);
@@ -1455,8 +1462,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
             assertThat(noParticipationsExam.isAfterLatestStudentExamEnd()).isTrue();
         }
 
-        // Regular exam where no student has a time advantage
-        {
+        @Test
+        void noStudentHasTimeAdvantage() {
             Exam regularExam = examUtilService.addExam(course1);
             regularExam.setStartDate(timeExamStart);
             regularExam.setEndDate(timeExamEnd);
@@ -1474,8 +1481,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
             assertThat(regularExam.isAfterLatestStudentExamEnd()).isTrue();
         }
 
-        // Exam where some students have a time advantage, but not enough to trigger the threshold
-        {
+        @Test
+        void someStudentsHaveTimeAdvantageNotEnoughToTriggerThreshold() {
             Exam exam = examUtilService.addExam(course1);
             exam.setStartDate(timeExamStart);
             exam.setEndDate(timeExamEnd);
@@ -1493,8 +1500,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
             assertThat(exam.isAfterLatestStudentExamEnd()).isTrue();
         }
 
-        // Exam where some students have a time advantage, and at least one student still has time to work
-        {
+        @Test
+        void someStudentsHaveTimeAdvantageEnoughToTriggerThreshold() {
             Exam exam = examUtilService.addExam(course1);
             exam.setStartDate(timeExamStart);
             exam.setEndDate(timeExamEnd);
@@ -1516,20 +1523,44 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testHasExamArchivePathBranchesAsInstructor() throws Exception {
-        testHasExamArchivePath(null, false);
-        testHasExamArchivePath("", false);
-        testHasExamArchivePath("Path", true);
-        testHasExamArchivePath("Very long exam archive path", true);
+        testHasExamArchivePathExpectStatus(HttpStatus.OK);
     }
 
-    void testHasExamArchivePath(String examArchivePath, boolean expectExamArchivePath) throws Exception {
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testHasExamArchivePathBranchesAsEditor() throws Exception {
+        testHasExamArchivePathExpectStatus(HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testHasExamArchivePathBranchesAsTeachingAssistant() throws Exception {
+        testHasExamArchivePathExpectStatus(HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    void testHasExamArchivePathBranchesAsStudent() throws Exception {
+        testHasExamArchivePathExpectStatus(HttpStatus.FORBIDDEN);
+    }
+
+    void testHasExamArchivePathExpectStatus(HttpStatus expectedStatus) throws Exception {
+        testHasExamArchivePath(null, false, expectedStatus);
+        testHasExamArchivePath("", false, expectedStatus);
+        testHasExamArchivePath("Path", true, expectedStatus);
+        testHasExamArchivePath("Very long exam archive path", true, expectedStatus);
+    }
+
+    void testHasExamArchivePath(String examArchivePath, boolean expectExamArchivePath, HttpStatus expectedStatus) throws Exception {
         Exam exam = ExamFactory.generateExam(course1);
         exam.setExamArchivePath(examArchivePath);
 
         examRepository.save(exam);
 
-        final Exam receivedExam = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK, Exam.class);
-        assertThat(receivedExam.hasExamArchive()).isEqualTo(expectExamArchivePath);
+        final Exam receivedExam = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId(), expectedStatus, Exam.class);
+        if (expectedStatus == HttpStatus.OK) {
+            assertThat(receivedExam.hasExamArchive()).isEqualTo(expectExamArchivePath);
+        }
     }
 
     @Test
