@@ -9,4 +9,17 @@ export class IrisSessionDto implements BaseEntity {
     creationDate: Date;
     chatMode: ChatServiceMode;
     entityId: number;
+
+    static parseChatMode(mode: string): ChatServiceMode | undefined {
+        return Object.values(ChatServiceMode).includes(mode as ChatServiceMode) ? (mode as ChatServiceMode) : undefined;
+    }
+
+    constructor(init?: Partial<IrisSessionDto>) {
+        if (init) {
+            Object.assign(this, init);
+            if (typeof init.chatMode === 'string') {
+                this.chatMode = IrisSessionDto.parseChatMode(init.chatMode) as ChatServiceMode;
+            }
+        }
+    }
 }
