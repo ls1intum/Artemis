@@ -124,4 +124,6 @@ public interface ProgrammingExerciseTestRepository extends ProgrammingExerciseRe
 
     @EntityGraph(type = LOAD, attributePaths = { "buildConfig" })
     Optional<ProgrammingExercise> findWithBuildConfigById(long exerciseId);
+
+    List<ProgrammingExercise> findAllByCourseId(Long courseId);
 }
