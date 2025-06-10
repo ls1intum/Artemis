@@ -138,6 +138,29 @@ public class OpenAPIConfiguration {
         }
     }
 
+    /**
+     * Registers an OpenApiCustomizer that adjusts the schema for all CSV endpoints
+     * in the generated OpenAPI specification.
+     *
+     * <p>
+     * <strong>Default behavior:</strong> SpringDoc will document a response
+     * producing "text/csv" as a plain string schema (i.e. {@code type="string"}
+     * with no specific {@code format}). Client generators typically interpret
+     * this as regular text, which may not trigger file-download behavior.
+     * </p>
+     *
+     * <p>
+     * <strong>Why this customizer is needed:</strong> By setting
+     * {@code format="binary"} on the schema, we signal to OpenAPI tools and
+     * generated clients that the CSV payload should be handled as a downloadable
+     * binary stream (e.g. saving to file), rather than as inline text.
+     * </p>
+     *
+     * @return an {@link OpenApiCustomizer} bean that finds every operation’s
+     *         200 response with media type "text/csv" and replaces its schema
+     *         with a binary string schema ({@code type="string"},
+     *         {@code format="binary"}).
+     */
     @Bean
     public OpenApiCustomizer binaryFormatCustomizer() {
         return openApi -> openApi.getPaths().values().forEach(pathItem -> pathItem.readOperations().forEach(op -> {
@@ -146,10 +169,11 @@ public class OpenAPIConfiguration {
             if (resp200 != null && resp200.getContent() != null) {
                 MediaType media = resp200.getContent().get("text/csv");
                 if (media != null) {
-                    // replace schema with binary string
+                    // replace schema with a binary string so clients treat CSV as a file download
                     media.setSchema(new StringSchema().type("string").format("binary"));
                 }
             }
         }));
     }
+
 }
