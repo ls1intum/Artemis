@@ -280,9 +280,15 @@ pre {
 
 .chat-history {
     margin: 1rem;
-    padding: 1rem;
-    background-color: var(--gray-200);
+    background-color: var(--gray-100);
     border-radius: var(--bs-border-radius-lg);
+
+    .chat-history-label p {
+        color: var(--gray-600);
+        font-size: 0.8rem;
+        margin: 0.5rem 0 0.2rem 0;
+        padding-left: 1rem;
+    }
 }
 
 .chat-input textarea {

@@ -67,7 +67,7 @@ export class IrisChatService implements OnDestroy {
 
     hasJustAcceptedExternalLLMUsage = false;
 
-    private courseId = 0;
+    // private courseId = 0;
 
     protected constructor() {
         this.rateLimitSubscription = this.status.currentRatelimitInfo().subscribe((info) => (this.rateLimitInfo = info));
@@ -308,9 +308,19 @@ export class IrisChatService implements OnDestroy {
     }
 
     private loadChatSessions() {
-        this.http.loadChatSessions(this.courseId).subscribe((sessions: IrisSession[]) => {
-            this.chatSessions.next(sessions ?? []);
-        });
+        // this.http.loadChatSessions(this.courseId).subscribe((sessions: IrisSession[]) => {
+        //     this.chatSessions.next(sessions ?? []);
+        // });
+
+        const now = new Date();
+        this.chatSessions.next([
+            { id: 1, creationDate: new Date(now) },
+            { id: 2, creationDate: new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1) },
+            { id: 3, creationDate: new Date(now.getFullYear(), now.getMonth(), now.getDate() - 4) },
+            { id: 4, creationDate: new Date(now.getFullYear(), now.getMonth(), now.getDate() - 10) },
+            { id: 5, creationDate: new Date(now.getFullYear(), now.getMonth(), now.getDate() - 20) },
+            { id: 6, creationDate: new Date(now.getFullYear(), now.getMonth(), now.getDate() - 45) },
+        ]);
     }
 
     /**
@@ -361,7 +371,7 @@ export class IrisChatService implements OnDestroy {
     }
 
     public setCourseId(courseId: number): void {
-        this.courseId = courseId;
+        // this.courseId = courseId;
     }
 
     public currentNumNewMessages(): Observable<number> {

@@ -27,6 +27,7 @@ import { AsPipe } from 'app/shared/pipes/as.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ActivatedRoute } from '@angular/router';
 import { IrisSession } from 'app/iris/shared/entities/iris-session.model';
+import { ChatHistoryItemComponent } from './chat-history-item/chat-history-item.component';
 
 @Component({
     selector: 'jhi-iris-base-chatbot',
@@ -94,6 +95,7 @@ import { IrisSession } from 'app/iris/shared/entities/iris-session.model';
         ArtemisTranslatePipe,
         AsPipe,
         HtmlForMarkdownPipe,
+        ChatHistoryItemComponent,
     ],
 })
 export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewInit {
@@ -454,5 +456,48 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     onSuggestionClick(suggestion: string) {
         this.newMessageTextContent = suggestion;
         this.onSend();
+    }
+
+    onSessionClick(session: IrisSession) {
+        // this.chatService.switchTo()
+    }
+
+    /**
+     * Retrieves chat sessions that occurred between a specified range of days ago.
+     * @param daysAgoNewer The newer boundary of the range, in days ago (e.g., 0 for today, 1 for yesterday).
+     * @param daysAgoOlder The older boundary of the range, in days ago (e.g., 0 for today, 7 for 7 days ago).
+     *                     Must be greater than or equal to daysAgoNewer if ignoreOlderBoundary is false.
+     * @param ignoreOlderBoundary If true, only the daysAgoNewer boundary is considered (sessions newer than or on this day).
+     * @returns An array of IrisSession objects matching the criteria.
+     */
+    getSessionsBetween(daysAgoNewer: number, daysAgoOlder?: number, ignoreOlderBoundary = false): IrisSession[] {
+        if (daysAgoNewer < 0 || (!ignoreOlderBoundary && (daysAgoOlder === undefined || daysAgoOlder < 0 || daysAgoNewer > daysAgoOlder))) {
+            return [];
+        }
+
+        const today = new Date();
+        const rangeEndDate = new Date(today);
+        rangeEndDate.setDate(today.getDate() - daysAgoNewer);
+        rangeEndDate.setHours(23, 59, 59, 999); // Set to the end of the 'daysAgoNewer' day
+
+        let rangeStartDate: Date | null = null;
+        if (!ignoreOlderBoundary && daysAgoOlder !== undefined) {
+            rangeStartDate = new Date(today);
+            rangeStartDate.setDate(today.getDate() - daysAgoOlder);
+            rangeStartDate.setHours(0, 0, 0, 0); // Set to the start of the 'daysAgoOlder' day
+        }
+
+        return this.chatSessions.filter((session) => {
+            const sessionCreationDate = session.creationDate;
+
+            const isAfterOrOnStartDate = ignoreOlderBoundary || (rangeStartDate && sessionCreationDate.getTime() >= rangeStartDate.getTime());
+            const isBeforeOrOnEndDate = sessionCreationDate.getTime() <= rangeEndDate.getTime();
+
+            if (ignoreOlderBoundary) {
+                return isBeforeOrOnEndDate;
+            } else {
+                return isAfterOrOnStartDate && isBeforeOrOnEndDate;
+            }
+        });
     }
 }
