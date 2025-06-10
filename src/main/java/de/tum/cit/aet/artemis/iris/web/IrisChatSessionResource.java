@@ -18,6 +18,7 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisLectureChatSession;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
@@ -121,8 +122,8 @@ public class IrisChatSessionResource {
 
                 var sessions = irisCourseChatSessionRepository.findByCourseIdAndUserId(course.get().getId(), user.getId());
                 sessions.forEach(s -> irisSessionService.checkHasAccessToIrisSession(s, user));
-                return sessions.stream()
-                        .map(s -> new IrisSessionDTO(s.getId(), s.getUserId(), s.getMessages(), s.getCreationDate(), IrisSubSettingsType.COURSE_CHAT, s.getCourseId())).toList();
+                return sessions.stream().map(s -> new IrisSessionDTO(s.getId(), s.getUserId(), s.getMessages(), s.getCreationDate(), IrisChatMode.COURSE, s.getCourseId()))
+                        .toList();
             }
         }
         return null;
@@ -139,8 +140,8 @@ public class IrisChatSessionResource {
                 List<IrisLectureChatSession> sessions = lecturesForCourse.stream()
                         .flatMap(l -> irisLectureChatSessionRepository.findByLectureIdAndUserIdOrderByCreationDateDesc(l.getId(), user.getId()).stream()).toList();
                 sessions.forEach(s -> irisSessionService.checkHasAccessToIrisSession(s, user));
-                return sessions.stream()
-                        .map(s -> new IrisSessionDTO(s.getId(), s.getUserId(), s.getMessages(), s.getCreationDate(), IrisSubSettingsType.LECTURE_CHAT, s.getLectureId())).toList();
+                return sessions.stream().map(s -> new IrisSessionDTO(s.getId(), s.getUserId(), s.getMessages(), s.getCreationDate(), IrisChatMode.LECTURE, s.getLectureId()))
+                        .toList();
             }
         }
         return null;
@@ -155,8 +156,8 @@ public class IrisChatSessionResource {
 
                 var sessions = exercisesForCourse.stream().flatMap(e -> irisExerciseChatSessionRepository.findByExerciseIdAndUserId(e.getId(), user.getId()).stream()).toList();
                 sessions.forEach(s -> irisSessionService.checkHasAccessToIrisSession(s, user));
-                return sessions.stream().map(
-                        s -> new IrisSessionDTO(s.getId(), s.getUserId(), s.getMessages(), s.getCreationDate(), IrisSubSettingsType.PROGRAMMING_EXERCISE_CHAT, s.getExerciseId()))
+                return sessions.stream()
+                        .map(s -> new IrisSessionDTO(s.getId(), s.getUserId(), s.getMessages(), s.getCreationDate(), IrisChatMode.PROGRAMMING_EXERCISE, s.getExerciseId()))
                         .toList();
             }
         }
@@ -172,8 +173,7 @@ public class IrisChatSessionResource {
 
                 var sessions = exercisesForCourse.stream().flatMap(e -> irisTextExerciseChatSessionRepository.findByExerciseIdAndUserId(e.getId(), user.getId()).stream()).toList();
                 sessions.forEach(s -> irisSessionService.checkHasAccessToIrisSession(s, user));
-                return sessions.stream()
-                        .map(s -> new IrisSessionDTO(s.getId(), s.getUserId(), s.getMessages(), s.getCreationDate(), IrisSubSettingsType.TEXT_EXERCISE_CHAT, s.getExerciseId()))
+                return sessions.stream().map(s -> new IrisSessionDTO(s.getId(), s.getUserId(), s.getMessages(), s.getCreationDate(), IrisChatMode.TEXT_EXERCISE, s.getExerciseId()))
                         .toList();
             }
         }
