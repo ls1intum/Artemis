@@ -25,6 +25,7 @@ plugins {
     id "org.liquibase.gradle" version "${liquibase_plugin_version}"
     id "org.owasp.dependencycheck" version "12.1.1"
     id "org.springframework.boot" version "${spring_boot_version}"
+    id "com.google.protobuf" version "0.9.4"
 }
 
 group = "de.tum.cit.aet.artemis"
@@ -125,7 +126,6 @@ configurations.configureEach {
     exclude group: "org.apache.lucene", module: "lucene-queryparser"
     exclude group: "org.apache.lucene", module: "lucene-core"
     exclude group: "org.apache.lucene", module: "lucene-analyzers-common"
-    exclude group: "com.google.protobuf", module: "protobuf-java"
 
     exclude group: "org.jasypt", module: "jasypt"
 
@@ -390,6 +390,15 @@ dependencies {
 
     implementation "com.google.errorprone:error_prone_annotations:2.38.0"
 
+    //use protobuf-java
+    implementation "com.google.protobuf:protobuf-java:3.25.3"
+    implementation "io.grpc:grpc-netty-shaded:1.64.0"
+    implementation "io.grpc:grpc-protobuf:1.64.0"
+    implementation "io.grpc:grpc-stub:1.64.0"
+    implementation "io.grpc:grpc-api:1.64.0"
+    implementation "io.grpc:grpc-core:1.64.0"
+    implementation "javax.annotation:javax.annotation-api:1.3.2"
+
     // NOTE: we want to keep the same unique version for all configurations, implementation and annotationProcessor
     implementation("net.bytebuddy:byte-buddy") { version {              strictly byte_buddy_version } }
     annotationProcessor("net.bytebuddy:byte-buddy") { version {         strictly byte_buddy_version } }
@@ -450,8 +459,45 @@ dependencies {
     testRuntimeOnly "org.junit.platform:junit-platform-launcher:${junit_platform_version}"
 }
 
+protobuf {
+    protoc {
+        artifact = "com.google.protobuf:protoc:3.25.3"
+    }
+    plugins {
+        grpc {
+            artifact = "io.grpc:protoc-gen-grpc-java:1.64.0"
+        }
+    }
+    generateProtoTasks {
+        all().each { task ->
+            task.plugins {
+                grpc {}
+            }
+            task.builtins {
+                java {}
+            }
+        }
+    }
+}
+
+sourceSets {
+    main {
+        proto {
+            srcDir 'src/main/java'
+        }
+        java {
+            srcDirs += 'build/generated/source/proto/main/java'
+            srcDirs += 'build/generated/source/proto/main/grpc'
+        }
+    }
+}
+
 // we have to apply the test.gradle file after the dependencies block, otherwise we get the error  Cannot change dependencies of dependency configuration ":mockitoAgent" after it has been resolved
 apply from: "gradle/test.gradle"
+
+// protobuf configuration
+
+
 
 
 dependencyManagement {
@@ -505,6 +551,10 @@ tasks.named("dependencyUpdates").configure {
     rejectVersionIf {
         isNonStable(it.candidate.version) && !isNonStable(it.currentVersion)
     }
+}
+
+tasks.named("compileJava") {
+    dependsOn("generateProto")
 }
 
 // Available commands:

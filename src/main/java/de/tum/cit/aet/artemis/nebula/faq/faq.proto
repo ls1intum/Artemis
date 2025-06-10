@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package faqservice;
+
+service FAQService {
+  rpc ProcessInput(FaqRewritingRequest) returns (FaqRewritingResponse);
+}
+
+message FAQ {
+  string question_title = 1;
+  string question_answer = 2;
+}
+
+message FaqRewritingRequest {
+  repeated FAQ faqs = 1;
+  string input_text = 2;
+}
+
+message FaqRewritingResponse {
+  string result = 1;
+}
