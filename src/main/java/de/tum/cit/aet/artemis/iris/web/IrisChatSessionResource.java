@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -164,7 +165,7 @@ public class IrisChatSessionResource {
             if (irisSettingsService.isEnabledFor(IrisSubSettingsType.COURSE_CHAT, course.get())) {
                 var user = userRepository.getUserWithGroupsAndAuthorities();
 
-                var sessions = irisCourseChatSessionRepository.findByCourseIdAndUserId(course.get().getId(), user.getId());
+                var sessions = irisCourseChatSessionRepository.findLatestByCourseIdAndUserIdWithMessages(course.get().getId(), user.getId(), Pageable.unpaged());
                 sessions.forEach(s -> irisSessionService.checkHasAccessToIrisSession(s, user));
                 return sessions.stream()
                         .map(s -> new IrisSessionDTO(s.getId(), s.getUserId(), s.getMessages(), s.getCreationDate(), IrisChatMode.COURSE.getValue(), s.getCourseId())).toList();
@@ -182,7 +183,8 @@ public class IrisChatSessionResource {
             if (irisSettingsService.isEnabledFor(IrisSubSettingsType.LECTURE_CHAT, course.get())) {
                 var user = userRepository.getUserWithGroupsAndAuthorities();
                 List<IrisLectureChatSession> sessions = lecturesForCourse.stream()
-                        .flatMap(l -> irisLectureChatSessionRepository.findByLectureIdAndUserIdOrderByCreationDateDesc(l.getId(), user.getId()).stream()).toList();
+                        .flatMap(l -> irisLectureChatSessionRepository.findLatestSessionsByLectureIdAndUserIdWithMessages(l.getId(), user.getId(), Pageable.unpaged()).stream())
+                        .toList();
                 sessions.forEach(s -> irisSessionService.checkHasAccessToIrisSession(s, user));
                 return sessions.stream()
                         .map(s -> new IrisSessionDTO(s.getId(), s.getUserId(), s.getMessages(), s.getCreationDate(), IrisChatMode.LECTURE.getValue(), s.getLectureId())).toList();
@@ -198,7 +200,8 @@ public class IrisChatSessionResource {
             if (irisSettingsService.isEnabledFor(IrisSubSettingsType.PROGRAMMING_EXERCISE_CHAT, course.get())) {
                 var user = userRepository.getUserWithGroupsAndAuthorities();
 
-                var sessions = exercisesForCourse.stream().flatMap(e -> irisExerciseChatSessionRepository.findByExerciseIdAndUserId(e.getId(), user.getId()).stream()).toList();
+                var sessions = exercisesForCourse.stream()
+                        .flatMap(e -> irisExerciseChatSessionRepository.findLatestByExerciseIdAndUserIdWithMessages(e.getId(), user.getId(), Pageable.unpaged()).stream()).toList();
                 sessions.forEach(s -> irisSessionService.checkHasAccessToIrisSession(s, user));
                 return sessions.stream().map(
                         s -> new IrisSessionDTO(s.getId(), s.getUserId(), s.getMessages(), s.getCreationDate(), IrisChatMode.PROGRAMMING_EXERCISE.getValue(), s.getExerciseId()))
@@ -215,7 +218,9 @@ public class IrisChatSessionResource {
             if (irisSettingsService.isEnabledFor(IrisSubSettingsType.TEXT_EXERCISE_CHAT, course.get())) {
                 var user = userRepository.getUserWithGroupsAndAuthorities();
 
-                var sessions = exercisesForCourse.stream().flatMap(e -> irisTextExerciseChatSessionRepository.findByExerciseIdAndUserId(e.getId(), user.getId()).stream()).toList();
+                var sessions = exercisesForCourse.stream()
+                        .flatMap(e -> irisTextExerciseChatSessionRepository.findLatestByExerciseIdAndUserIdWithMessages(e.getId(), user.getId(), Pageable.unpaged()).stream())
+                        .toList();
                 sessions.forEach(s -> irisSessionService.checkHasAccessToIrisSession(s, user));
                 return sessions.stream()
                         .map(s -> new IrisSessionDTO(s.getId(), s.getUserId(), s.getMessages(), s.getCreationDate(), IrisChatMode.TEXT_EXERCISE.getValue(), s.getExerciseId()))
