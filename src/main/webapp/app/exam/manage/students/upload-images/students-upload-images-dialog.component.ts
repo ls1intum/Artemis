@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, ViewEncapsulation, inject, viewChild } from '@angular/core';
+import { Component, OnDestroy, ViewEncapsulation, inject, input, viewChild } from '@angular/core';
 import { FormsModule, NgForm } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -37,9 +37,8 @@ export class StudentsUploadImagesDialogComponent implements OnDestroy {
     notFoundUsers?: NotFoundExamUserType;
     file: File;
 
-    // we cannot use input<> here because then the data is undefined
-    @Input() courseId: number;
-    @Input() exam: Exam;
+    courseId = input.required<number>();
+    exam = input.required<Exam>();
 
     isParsing = false;
     hasParsed = false;
@@ -85,12 +84,12 @@ export class StudentsUploadImagesDialogComponent implements OnDestroy {
      */
     parsePDFFile() {
         this.isParsing = true;
-        const exam = this.exam;
+        const exam = this.exam();
         if (exam?.id) {
             const formData: FormData = new FormData();
             formData.append('file', this.file);
 
-            this.examManagementService.saveImages(this.courseId, exam.id, formData).subscribe({
+            this.examManagementService.saveImages(this.courseId(), exam.id, formData).subscribe({
                 next: (res: any) => {
                     if (res) {
                         this.notFoundUsers = res.body;
