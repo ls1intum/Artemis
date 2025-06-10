@@ -11,6 +11,7 @@ import java.util.stream.Stream;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -99,7 +100,7 @@ public class IrisChatSessionResource {
      */
     @GetMapping("{courseId}/sessions")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<List<IrisChatSession>> getAllSessionsForCourse(Long courseId) {
+    public ResponseEntity<List<IrisChatSession>> getAllSessionsForCourse(@PathVariable Long courseId) {
         var user = userRepository.getUserWithGroupsAndAuthorities();
         if (user.hasAcceptedExternalLLMUsage()) {
             var allChatSessions = Stream.of(getAllSessionsForCourseChat(courseId), getAllSessionsForLectureChat(courseId), getAllSessionsForProgrammingExerciseChat(courseId),
@@ -107,7 +108,7 @@ public class IrisChatSessionResource {
             return ResponseEntity.ok(allChatSessions);
         }
         else {
-            return ResponseEntity.internalServerError().body(null);
+            return ResponseEntity.ok(List.of());
         }
 
     }
