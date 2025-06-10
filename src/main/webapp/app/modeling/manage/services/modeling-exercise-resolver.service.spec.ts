@@ -9,6 +9,9 @@ import { ActivatedRouteSnapshot } from '@angular/router';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { UMLDiagramType } from '@ls1intum/apollon';
 import { of } from 'rxjs';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
+import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
+import { Course } from 'app/core/course/shared/entities/course.model';
 
 describe('ModelingExerciseResolver', () => {
     let component: ModelingExerciseResolver;
@@ -40,5 +43,43 @@ describe('ModelingExerciseResolver', () => {
         });
 
         expect(modelingExerciseService.find).toHaveBeenCalledWith('123');
+    });
+
+    it('should resolve a ModelingExercise for a course and exercise group', () => {
+        const dummyExerciseGroup = { id: 3 } as ExerciseGroup;
+        const exerciseGroupService = TestBed.inject(ExerciseGroupService);
+        jest.spyOn(exerciseGroupService, 'find').mockReturnValue(of(new HttpResponse({ body: dummyExerciseGroup })));
+
+        currentRoute.params = { courseId: '1', examId: '2', exerciseGroupId: '3' };
+
+        component.resolve(currentRoute).subscribe((result) => {
+            expect(result).toEqual(
+                expect.objectContaining({
+                    diagramType: UMLDiagramType.ClassDiagram,
+                    exerciseGroup: dummyExerciseGroup,
+                }),
+            );
+        });
+
+        expect(exerciseGroupService.find).toHaveBeenCalledWith('1', '2', '3');
+    });
+
+    it('should resolve a ModelingExercise for a course without an exercise group', () => {
+        const dummyCourse = { id: 1 } as Course;
+        const courseService = TestBed.inject(CourseManagementService);
+        jest.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: dummyCourse })));
+
+        currentRoute.params = { courseId: '1' };
+
+        component.resolve(currentRoute).subscribe((result) => {
+            expect(result).toEqual(
+                expect.objectContaining({
+                    diagramType: UMLDiagramType.ClassDiagram,
+                    course: dummyCourse,
+                }),
+            );
+        });
+
+        expect(courseService.find).toHaveBeenCalledWith('1');
     });
 });
