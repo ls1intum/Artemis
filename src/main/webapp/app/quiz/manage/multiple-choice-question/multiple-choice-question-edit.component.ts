@@ -43,7 +43,7 @@ export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestion
     private modalService = inject(NgbModal);
     private changeDetector = inject(ChangeDetectorRef);
 
-    private readonly markdownEditor = viewChild.required<MarkdownEditorMonacoComponent>('markdownEditor');
+    readonly markdownEditor = viewChild.required<MarkdownEditorMonacoComponent>('markdownEditor');
 
     readonly visualChild = viewChild.required<MultipleChoiceVisualQuestionComponent>('visual');
 

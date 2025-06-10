@@ -32,6 +32,9 @@ import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
+import { MultipleChoiceQuestionComponent } from '../../shared/questions/multiple-choice-question/multiple-choice-question.component';
+import { DragAndDropQuestionComponent } from '../../shared/questions/drag-and-drop-question/drag-and-drop-question.component';
+import { ShortAnswerQuestionComponent } from '../../shared/questions/short-answer-question/short-answer-question.component';
 
 const now = dayjs();
 const question1: QuizQuestion = {
@@ -51,13 +54,15 @@ const question2: MultipleChoiceQuestion = {
     exportQuiz: false,
     randomizeOrder: true,
 };
-const question3: QuizQuestion = {
+const question3: QuizQuestion & { spots: any[] } = {
     id: 3,
     type: QuizQuestionType.SHORT_ANSWER,
     points: 3,
     invalid: false,
     exportQuiz: false,
     randomizeOrder: true,
+    text: 'Short answer question text',
+    spots: [],
 };
 
 let quizExercise: QuizExercise;
@@ -137,6 +142,9 @@ describe('QuizParticipationComponent', () => {
     describe('live mode', () => {
         beforeEach(waitForAsync(() => {
             MockBuilder(QuizParticipationComponent)
+                .keep(MultipleChoiceQuestionComponent)
+                .keep(DragAndDropQuestionComponent)
+                .keep(ShortAnswerQuestionComponent)
                 .keep(QuizExerciseService)
                 .keep(ButtonComponent)
                 .keep(QuizParticipationService)
@@ -507,6 +515,9 @@ describe('QuizParticipationComponent', () => {
     describe('preview mode', () => {
         beforeEach(() => {
             MockBuilder(QuizParticipationComponent)
+                .keep(MultipleChoiceQuestionComponent)
+                .keep(DragAndDropQuestionComponent)
+                .keep(ShortAnswerQuestionComponent)
                 .keep(ButtonComponent)
                 .keep(QuizParticipationService)
                 .keep(ArtemisQuizService)
@@ -585,6 +596,9 @@ describe('QuizParticipationComponent', () => {
     describe('practice mode', () => {
         beforeEach(() => {
             MockBuilder(QuizParticipationComponent)
+                .keep(MultipleChoiceQuestionComponent)
+                .keep(DragAndDropQuestionComponent)
+                .keep(ShortAnswerQuestionComponent)
                 .keep(ButtonComponent)
                 .keep(QuizParticipationService)
                 .keep(ArtemisQuizService)
@@ -669,6 +683,9 @@ describe('QuizParticipationComponent', () => {
     describe('solution mode', () => {
         beforeEach(() => {
             MockBuilder(QuizParticipationComponent)
+                .keep(MultipleChoiceQuestionComponent)
+                .keep(DragAndDropQuestionComponent)
+                .keep(ShortAnswerQuestionComponent)
                 .keep(ButtonComponent)
                 .keep(QuizParticipationService)
                 .keep(ArtemisQuizService)
