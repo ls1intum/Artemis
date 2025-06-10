@@ -391,6 +391,9 @@ export class PlagiarismInspectorComponent implements OnInit {
             case ExerciseType.TEXT: {
                 return 'artemisApp.plagiarism.minimumSize';
             }
+            default: {
+                return '';
+            }
         }
     }
 
@@ -404,6 +407,9 @@ export class PlagiarismInspectorComponent implements OnInit {
             }
             case ExerciseType.TEXT: {
                 return 'artemisApp.plagiarism.minimumSizeTooltipTextExercise';
+            }
+            default: {
+                return '';
             }
         }
     }
