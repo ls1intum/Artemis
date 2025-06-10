@@ -67,6 +67,8 @@ export class IrisChatService implements OnDestroy {
 
     hasJustAcceptedExternalLLMUsage = false;
 
+    private courseId = 0;
+
     protected constructor() {
         this.rateLimitSubscription = this.status.currentRatelimitInfo().subscribe((info) => (this.rateLimitInfo = info));
     }
@@ -306,19 +308,9 @@ export class IrisChatService implements OnDestroy {
     }
 
     private loadChatSessions() {
-        const sessions: IrisSession[] = [
-            {
-                id: 1,
-            },
-            {
-                id: 2,
-            },
-            {
-                id: 3,
-            },
-        ];
-
-        return this.chatSessions.next(sessions);
+        this.http.loadChatSessions(this.courseId).subscribe((response: HttpResponse<IrisSession[]>) => {
+            this.chatSessions.next(response.body ?? []);
+        });
     }
 
     /**
@@ -366,6 +358,10 @@ export class IrisChatService implements OnDestroy {
 
     public currentError(): Observable<IrisErrorMessageKey | undefined> {
         return this.error.asObservable();
+    }
+
+    public setCourseId(courseId: number): void {
+        this.courseId = courseId;
     }
 
     public currentNumNewMessages(): Observable<number> {
