@@ -90,9 +90,9 @@
                     } @else {
                         <span jhiTranslate="artemisApp.dialogs.conversationDetail.infoTab.notificationsEnabledDescription"></span>
                     }
-                    {{ 'artemisApp.dialogs.conversationDetail.infoTab.seeSettingsPrefix' | artemisTranslate }}
+                    <span jhiTranslate="artemisApp.dialogs.conversationDetail.infoTab.seeSettingsPrefix"></span>
                     <a [routerLink]="['/courses', course()?.id, 'settings']" class="ms-1" target="_blank">
-                        {{ 'artemisApp.dialogs.conversationDetail.infoTab.seeSettingsLink' | artemisTranslate }}
+                        <span jhiTranslate="artemisApp.dialogs.conversationDetail.infoTab.seeSettingsLink"></span>
                     </a>
                 </p>
 
