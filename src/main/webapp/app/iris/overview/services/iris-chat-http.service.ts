@@ -116,7 +116,7 @@ export class IrisChatHttpService {
         return this.httpClient.post<T>(`${this.apiPrefix}/${identifier}/sessions`, null, { observe: 'response' });
     }
 
-    loadChatSessions(courseId: number): Observable<IrisSession[]> {
+    loadChatSessions(courseId: number): Observable<IrisSessionDto[]> {
         return this.httpClient.get<IrisSessionDto[]>(`api/iris/chat-history/${courseId}/sessions`);
     }
 }
