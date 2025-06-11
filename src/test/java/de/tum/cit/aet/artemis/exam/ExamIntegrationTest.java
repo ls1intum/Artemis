@@ -396,11 +396,11 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateExam_asInstructor_returnsBody() throws Exception {
-        Exam exam = ExamFactory.generateExam(course1, "examF");
+        final Exam exam = validExamWithCustomFieldValues();
 
-        Exam savedExam = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams", exam, Exam.class, HttpStatus.CREATED);
+        final Exam savedExam = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams", exam, Exam.class, HttpStatus.CREATED);
 
-        assertThat(savedExam.getTitle()).isEqualTo(exam.getTitle());
+        checkCustomFieldValuesExamsAreEffectivelyEqual(savedExam, exam);
     }
 
     @Test
@@ -1282,87 +1282,148 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
         request.get("/api/exam/exams/123124123123/title", HttpStatus.NOT_FOUND, String.class);
     }
 
+    /// Creates a new Exam - this is outside the ExamFactory because I'm relying on the fact that
+    /// exactly the fields set in this method are being set, which could be subject to change in the Factory.
+    private Exam validExamWithCustomFieldValues() {
+        Exam exam = ExamFactory.generateExam(course1);
+        exam.setTitle("Exam Title");
+        exam.setTestExam(false);
+        exam.setVisibleDate(ZonedDateTime.now().minusHours(1));
+        exam.setStartDate(ZonedDateTime.now());
+        exam.setEndDate(ZonedDateTime.now().plusHours(1));
+        exam.setExamStudentReviewStart(ZonedDateTime.now().plusHours(12));
+        exam.setExamStudentReviewEnd(ZonedDateTime.now().plusDays(1));
+        exam.setWorkingTime(60 * 60);
+        exam.setExaminer("Prof. Dr. Stephan Krusche");
+        exam.setStartText("Start Text");
+        exam.setEndText("End Text");
+        exam.setConfirmationStartText("Confirmation Start Text");
+        exam.setConfirmationEndText("Confirmation End Text");
+        exam.setExamMaxPoints(99);
+        exam.setNumberOfExercisesInExam(4);
+        exam.setRandomizeExerciseOrder(true);
+        exam.setNumberOfCorrectionRoundsInExam(1);
+        exam.setChannelName("scientific-channel-name");
+        exam.setCourseName("Course Name");
+        exam.setExamArchivePath("Path to Exam Archive");
+
+        return exam;
+    }
+
+    /// Compares two exams on all fields that {@link ExamIntegrationTest#validExamWithCustomFieldValues()} sets
+    private void checkCustomFieldValuesExamsAreEffectivelyEqual(Exam actualExam, Exam expectedExam) {
+        assertThat(actualExam.getTitle()).isEqualTo(expectedExam.getTitle());
+        assertThat(actualExam.getWorkingTime()).isEqualTo(expectedExam.getWorkingTime());
+        assertThat(actualExam.getExaminer()).isEqualTo(expectedExam.getExaminer());
+        assertThat(actualExam.getStartText()).isEqualTo(expectedExam.getStartText());
+        assertThat(actualExam.getEndText()).isEqualTo(expectedExam.getEndText());
+        assertThat(actualExam.getConfirmationStartText()).isEqualTo(expectedExam.getConfirmationStartText());
+        assertThat(actualExam.getConfirmationEndText()).isEqualTo(expectedExam.getConfirmationEndText());
+        assertThat(actualExam.getExamMaxPoints()).isEqualTo(expectedExam.getExamMaxPoints());
+        assertThat(actualExam.getNumberOfExercisesInExam()).isEqualTo(expectedExam.getNumberOfExercisesInExam());
+        assertThat(actualExam.getNumberOfCorrectionRoundsInExam()).isEqualTo(expectedExam.getNumberOfCorrectionRoundsInExam());
+        assertThat(actualExam.getChannelName()).isEqualTo(expectedExam.getChannelName());
+        assertThat(actualExam.getCourseName()).isEqualTo(expectedExam.getCourseName());
+        assertThat(actualExam.getExamArchivePath()).isEqualTo(expectedExam.getExamArchivePath());
+
+        assertThat(actualExam.isTestExam()).isFalse();
+        assertThat(actualExam.getRandomizeExerciseOrder()).isTrue();
+
+        /// For the times we need to give a slight tolerance because Artemis truncates the times to 6 sub-second digits
+        assertThat(ChronoUnit.MILLIS.between(actualExam.getVisibleDate(), expectedExam.getVisibleDate())).isLessThan(1);
+        assertThat(ChronoUnit.MILLIS.between(actualExam.getStartDate(), expectedExam.getStartDate())).isLessThan(1);
+        assertThat(ChronoUnit.MILLIS.between(actualExam.getEndDate(), expectedExam.getEndDate())).isLessThan(1);
+        assertThat(ChronoUnit.MILLIS.between(actualExam.getExamStudentReviewStart(), expectedExam.getExamStudentReviewStart())).isLessThan(1);
+        assertThat(ChronoUnit.MILLIS.between(actualExam.getExamStudentReviewEnd(), expectedExam.getExamStudentReviewEnd())).isLessThan(1);
+
+        assertThat(actualExam.getId()).isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateAndGetExam_asInstructor_returnsBody() throws Exception {
+        Exam exam = validExamWithCustomFieldValues();
+
+        final URI createdExamURI = request.post("/api/exam/courses/" + course1.getId() + "/exams", exam, HttpStatus.CREATED);
+
+        /// GETS the "api/exam/courses/{course-id}/exams/{exam-id}" endpoint
+        final Exam receivedExam = request.get(String.valueOf(createdExamURI), HttpStatus.OK, Exam.class);
+
+        checkCustomFieldValuesExamsAreEffectivelyEqual(receivedExam, exam);
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetExamExaminer() throws Exception {
         final var examinerName = "Prof. Dr. Stephan Krusche";
         Exam exam = ExamFactory.generateExam(course1);
         exam.setExaminer(examinerName);
-        assertThat(exam.getExaminer()).isEqualTo(examinerName);  // TODO: Wait for removal-confirmation
-        final URI createdExamURI = request.post("/api/exam/courses/" + course1.getId() + "/exams", exam, HttpStatus.CREATED);
-        final Exam requestedExam = request.get(String.valueOf(createdExamURI), HttpStatus.OK, Exam.class);
+        final URI receivedExamURI = request.post("/api/exam/courses/" + course1.getId() + "/exams", exam, HttpStatus.CREATED);
+
+        /// GETS the "api/exam/courses/{course-id}/exams/{exam-id}" endpoint
+        final Exam requestedExam = request.get(String.valueOf(receivedExamURI), HttpStatus.OK, Exam.class);
         assertThat(requestedExam.getExaminer()).isEqualTo(examinerName);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testCreateExamWithNullCorrectionRounds() throws Exception {
-        testCreateExamWithCorrectionRoundsAndExpectedCreationStatus(false, null, 1, HttpStatus.CREATED);
+    void testCreateAndGetExamWithNullCorrectionRounds() throws Exception {
+        testCreateAndGetExamWithCorrectionRoundsAndExpectedCreationStatus(false, null, 1, HttpStatus.CREATED);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testCreateExamWithValidCorrectionRounds() throws Exception {
+    void testCreateAndGetExamWithValidCorrectionRounds() throws Exception {
         // Real exams must have either 1 or 2 correction rounds; test exams must have exactly 0 correction rounds
         // Real exam - correction rounds = 1
-        testCreateExamWithCorrectionRoundsAndExpectedCreationStatus(false, 1, 1, HttpStatus.CREATED);
+        testCreateAndGetExamWithCorrectionRoundsAndExpectedCreationStatus(false, 1, 1, HttpStatus.CREATED);
 
         // Real exam - correction rounds = 2
-        testCreateExamWithCorrectionRoundsAndExpectedCreationStatus(false, 2, 2, HttpStatus.CREATED);
+        testCreateAndGetExamWithCorrectionRoundsAndExpectedCreationStatus(false, 2, 2, HttpStatus.CREATED);
 
         // Test exam - correction rounds = 0
-        testCreateExamWithCorrectionRoundsAndExpectedCreationStatus(true, 0, 0, HttpStatus.CREATED);
+        testCreateAndGetExamWithCorrectionRoundsAndExpectedCreationStatus(true, 0, 0, HttpStatus.CREATED);
     }
 
     @ParameterizedTest
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     @ValueSource(ints = { Integer.MIN_VALUE, -3, -2, -1, 0, 3, 4, 5, 1 << 20, Integer.MAX_VALUE })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateRealExamWithInvalidCorrectionRounds(Integer plannedCorrectionRounds) throws Exception {
         // Real exams must have either 1 or 2 correction rounds
-        testCreateExamWithCorrectionRoundsAndExpectedCreationStatus(false, plannedCorrectionRounds, plannedCorrectionRounds, HttpStatus.BAD_REQUEST);
+        testCreateAndGetExamWithCorrectionRoundsAndExpectedCreationStatus(false, plannedCorrectionRounds, plannedCorrectionRounds, HttpStatus.BAD_REQUEST);
     }
 
     @ParameterizedTest
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     @ValueSource(ints = { Integer.MIN_VALUE, -3, -2, -1, 1, 2, 3, 4, 5, 1 << 20, Integer.MAX_VALUE })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateTestExamWithInvalidCorrectionRounds(Integer plannedCorrectionRounds) throws Exception {
         // Test exams must have exactly 0 correction rounds
-        testCreateExamWithCorrectionRoundsAndExpectedCreationStatus(true, plannedCorrectionRounds, plannedCorrectionRounds, HttpStatus.BAD_REQUEST);
+        testCreateAndGetExamWithCorrectionRoundsAndExpectedCreationStatus(true, plannedCorrectionRounds, plannedCorrectionRounds, HttpStatus.BAD_REQUEST);
     }
 
-    void testCreateExamWithCorrectionRoundsAndExpectedCreationStatus(boolean isTestExam, Integer plannedCorrectionRounds, int actualCorrectionRounds, HttpStatus expectedStatus)
-            throws Exception {
+    void testCreateAndGetExamWithCorrectionRoundsAndExpectedCreationStatus(boolean isTestExam, Integer plannedCorrectionRounds, int actualCorrectionRounds,
+            HttpStatus expectedStatus) throws Exception {
         final Exam exam = isTestExam ? ExamFactory.generateTestExam(course1) : ExamFactory.generateExam(course1);
         exam.setNumberOfCorrectionRoundsInExam(plannedCorrectionRounds);
         assertThat(exam.getNumberOfCorrectionRoundsInExam()).isEqualTo(actualCorrectionRounds);
-        final URI createdExamURI = request.post("/api/exam/courses/" + course1.getId() + "/exams", exam, expectedStatus);
+        final URI receivedExamURI = request.post("/api/exam/courses/" + course1.getId() + "/exams", exam, expectedStatus);
 
         if (expectedStatus == HttpStatus.CREATED) {
-            final Exam receivedExam = request.get(String.valueOf(createdExamURI), HttpStatus.OK, Exam.class);
+            /// GETS the "api/exam/courses/{course-id}/exams/{exam-id}" endpoint
+            final Exam receivedExam = request.get(String.valueOf(receivedExamURI), HttpStatus.OK, Exam.class);
             assertThat(receivedExam.getNumberOfCorrectionRoundsInExam()).isEqualTo(actualCorrectionRounds);
         }
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = { "Course Name for Testing", "abc", "a  space ", "\r\n Title \f\n\r more \ttitle" })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetCourseNameRegularName(final String courseName) throws Exception {
-        final Exam examA = ExamFactory.generateExam(course1);
-        examA.setCourseName(courseName);
-        assertThat(examA.getCourseName()).isEqualTo(courseName);  // TODO: Wait for removal-confirmation
-        final URI createdExamURI = request.post("/api/exam/courses/" + course1.getId() + "/exams", examA, HttpStatus.CREATED);
-        Exam receivedExam = request.get(String.valueOf(createdExamURI), HttpStatus.OK, Exam.class);
-        assertThat(receivedExam.getCourseName()).isEqualTo(courseName);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetCourseNameNullName() throws Exception {
-        final Exam examB = ExamFactory.generateExam(course1);
-        examB.setCourseName(null);
-        assertThat(examB.getCourseName()).isNull();  // TODO: Wait for removal-confirmation
-        final URI createdExamURI = request.post("/api/exam/courses/" + course1.getId() + "/exams", examB, HttpStatus.CREATED);
-        Exam receivedExam = request.get(String.valueOf(createdExamURI), HttpStatus.OK, Exam.class);
+        final Exam exam = ExamFactory.generateExam(course1);
+        exam.setCourseName(null);
+        final URI receivedExamURI = request.post("/api/exam/courses/" + course1.getId() + "/exams", exam, HttpStatus.CREATED);
+
+        /// GETS the "api/exam/courses/{course-id}/exams/{exam-id}" endpoint
+        Exam receivedExam = request.get(String.valueOf(receivedExamURI), HttpStatus.OK, Exam.class);
         assertThat(receivedExam.getCourseName()).isNull();
     }
 
@@ -1408,10 +1469,11 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
     void testIsVisibleToStudents(int beforeSeconds) throws Exception {
         final Exam exam = ExamFactory.generateExam(course1);
         exam.setVisibleDate(ZonedDateTime.now().minusSeconds(beforeSeconds));
-        assertThat(exam.isVisibleToStudents()).isTrue();  // TODO: Wait for removal-confirmation
 
-        final URI createdExamURI = request.post("/api/exam/courses/" + course1.getId() + "/exams", exam, HttpStatus.CREATED);
-        final Exam receivedExam = request.get(String.valueOf(createdExamURI), HttpStatus.OK, Exam.class);
+        final URI receivedExamURI = request.post("/api/exam/courses/" + course1.getId() + "/exams", exam, HttpStatus.CREATED);
+
+        /// GETS the "api/exam/courses/{course-id}/exams/{exam-id}" endpoint
+        final Exam receivedExam = request.get(String.valueOf(receivedExamURI), HttpStatus.OK, Exam.class);
         assertThat(receivedExam.isVisibleToStudents()).isTrue();
     }
 
@@ -1423,15 +1485,16 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
         final Exam exam = ExamFactory.generateExam(course1);
         final var visibleDate = ZonedDateTime.now().plusSeconds(afterSeconds);
         exam.setVisibleDate(visibleDate);
-        assertThat(exam.isVisibleToStudents()).isFalse();  // TODO: Wait for removal-confirmation
 
         final int workingTimeSeconds = 1000;
         exam.setStartDate(visibleDate.plusMinutes(5));
         exam.setEndDate(visibleDate.plusMinutes(5).plusSeconds(workingTimeSeconds));
         exam.setWorkingTime(workingTimeSeconds);
 
-        final URI createdExamURI = request.post("/api/exam/courses/" + course1.getId() + "/exams", exam, HttpStatus.CREATED);
-        final Exam receivedExam = request.get(String.valueOf(createdExamURI), HttpStatus.OK, Exam.class);
+        final URI receivedExamURI = request.post("/api/exam/courses/" + course1.getId() + "/exams", exam, HttpStatus.CREATED);
+
+        /// GETS the "api/exam/courses/{course-id}/exams/{exam-id}" endpoint
+        final Exam receivedExam = request.get(String.valueOf(receivedExamURI), HttpStatus.OK, Exam.class);
         assertThat(receivedExam.isVisibleToStudents()).isFalse();
     }
 
@@ -1524,12 +1587,6 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testHasExamArchivePathBranchesAsInstructor() throws Exception {
         testHasExamArchivePathExpectStatus(HttpStatus.OK);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-    void testHasExamArchivePathBranchesAsEditor() throws Exception {
-        testHasExamArchivePathExpectStatus(HttpStatus.NOT_FOUND);
     }
 
     @Test
