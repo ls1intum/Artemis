@@ -191,7 +191,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     private loadSubmission(submissionId: number): void {
         this.modelingSubmissionService.getSubmission(submissionId, this.correctionRound, this.resultId).subscribe({
             next: (submission: ModelingSubmission) => {
-                // console.log('DEBUG received submission,', submission);
                 this.handleReceivedSubmission(submission);
                 this.validateFeedback();
             },
@@ -429,7 +428,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
     onSubmitAssessment() {
         const totalNumberOfElements = (this.model?.nodes.length ?? 0) + (this.model?.edges.length ?? 0);
-        // console.log('DEBUG onSubmit assessment is triggered totalNumberOfElements:', totalNumberOfElements);
         if ((this.model && this.referencedFeedback.length < totalNumberOfElements) || !this.assessmentsAreValid) {
             const confirmationMessage = this.translateService.instant('artemisApp.modelingAssessmentEditor.messages.confirmSubmission');
 
@@ -457,7 +455,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             return;
         }
 
-        // console.log('DEBUG before modelingAssessmentService.saveAssessment is called', this.feedback);
         this.modelingAssessmentService.saveAssessment(this.result!.id!, this.feedback, this.submission!.id!, this.result!.assessmentNote?.note, true).subscribe({
             next: (result: Result) => {
                 this.result = result;
@@ -531,7 +528,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
      * @param feedback The feedback present in the editor.
      */
     onFeedbackChanged(feedback: Feedback[]) {
-        // console.log('DEBUG on feedbackChanged,', feedback);
         this.updateApollonEditorWithFeedback(feedback);
     }
 

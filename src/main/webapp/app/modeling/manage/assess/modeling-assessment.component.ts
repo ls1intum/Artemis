@@ -78,14 +78,12 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     }
 
     ngOnDestroy() {
-        // console.log('DEUBUG Modelin-assessment component ngOnDestroy');
         if (this.apollonEditor) {
             this.apollonEditor.destroy();
         }
     }
 
     async ngOnChanges(changes: SimpleChanges): Promise<void> {
-        // console.log('DEBUG ngOnChanges, ', changes);
         if (changes.umlModel && changes.umlModel.currentValue && this.apollonEditor) {
             this.apollonEditor!.model = changes.umlModel.currentValue;
             this.handleFeedback();
@@ -111,11 +109,6 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
      * events of Apollon and passes them on to parent components.
      */
     private initializeApollonEditor() {
-        if (this.apollonEditor) {
-            // console.log('DEBUG modelling assessment component initializeApollonEditor disposing Apollon Editor');
-            // this.apollonEditor.destroy();
-        }
-
         this.handleFeedback();
 
         this.apollonEditor = new ApollonEditor(this.editorContainer.nativeElement, {
