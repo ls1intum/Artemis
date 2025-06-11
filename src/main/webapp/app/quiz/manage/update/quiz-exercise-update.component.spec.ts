@@ -1015,9 +1015,7 @@ describe('QuizExerciseUpdateComponent', () => {
                 comp.pendingChangesCache = true;
                 if (comp.courseId) {
                     const childFixture = TestBed.createComponent(QuizQuestionListEditComponent);
-                    Object.defineProperty(comp, 'quizQuestionListEditComponent', {
-                        value: () => childFixture.componentInstance,
-                    });
+                    (comp as any).quizQuestionListEditComponent = () => childFixture.componentInstance;
                     jest.spyOn(comp.quizQuestionListEditComponent(), 'parseAllQuestions').mockImplementation();
                 }
                 comp.save();

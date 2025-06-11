@@ -210,7 +210,7 @@ describe('MultipleChoiceQuestionEditComponent', () => {
 
     it('should parse markdown when preparing for save in edit mode', () => {
         fixture.detectChanges();
-        component['markdownEditor'].inVisualMode = false;
+        component['markdownEditor']().inVisualMode = false;
         const parseMarkdownSpy = jest.spyOn(component['markdownEditor'](), 'parseMarkdown');
         component.prepareForSave();
         expect(parseMarkdownSpy).toHaveBeenCalledOnce();

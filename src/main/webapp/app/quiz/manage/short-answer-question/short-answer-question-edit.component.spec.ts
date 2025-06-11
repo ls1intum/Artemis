@@ -366,10 +366,8 @@ describe('ShortAnswerQuestionEditComponent', () => {
                 return true;
             },
         } as unknown as HTMLElement;
-        Object.defineProperty(component, 'questionElement', {
-            value: () => ({
-                nativeElement: questionElement,
-            }),
+        (component as any).questionElement = () => ({
+            nativeElement: questionElement,
         });
 
         const range = {

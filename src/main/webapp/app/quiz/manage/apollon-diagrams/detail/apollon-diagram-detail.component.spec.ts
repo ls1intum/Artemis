@@ -17,7 +17,6 @@ import { MockLanguageHelper, MockTranslateService } from 'src/test/javascript/sp
 import { MockRouter } from 'src/test/javascript/spec/helpers/mocks/mock-router';
 import * as testClassDiagram from 'src/test/javascript/spec/helpers/sample/modeling/test-models/class-diagram.json';
 import { UMLDiagramType, UMLModel } from '@ls1intum/apollon';
-import { ElementRef } from '@angular/core';
 import { Text } from '@ls1intum/apollon/lib/es5/utils/svg/text';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { MockCourseManagementService } from 'src/test/javascript/spec/helpers/mocks/service/mock-course-management.service';
@@ -63,17 +62,14 @@ describe('ApollonDiagramDetail Component', () => {
                 { provide: ProfileService, useClass: MockProfileService },
             ],
         })
-            .overrideTemplate(ApollonDiagramDetailComponent, '')
+            .overrideTemplate(ApollonDiagramDetailComponent, '<div #editorContainer></div>')
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ApollonDiagramDetailComponent);
                 apollonDiagramService = fixture.debugElement.injector.get(ApollonDiagramService);
                 alertService = fixture.debugElement.injector.get(AlertService);
                 modalService = fixture.debugElement.injector.get(NgbModal);
-                div = document.createElement('div');
-                Object.defineProperty(fixture.componentInstance, 'editorContainer', {
-                    value: () => new ElementRef(div),
-                });
+                div = fixture.componentInstance.editorContainer().nativeElement;
             });
     });
 
