@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.iris;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -297,5 +298,51 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
         assertThat(response.getContentAsString()).contains("Run ID in URL does not match run ID in request body");
         response = request.postWithoutResponseBody("/api/iris/public/pyris/webhooks/ingestion/runs/" + chatJobToken + "/status", statusUpdate, HttpStatus.CONFLICT, headers);
         assertThat(response.getContentAsString()).contains("Run ID is not an ingestion job");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetLectureUnitLinkConstruction() throws Exception {
+        activateIrisFor(lecture1.getCourse());
+
+        if (lecture1.getLectureUnits().getFirst() instanceof AttachmentVideoUnit existingUnit) {
+            String originalLink = existingUnit.getAttachment().getLink();
+            existingUnit.getAttachment().setLink("files/attachments/lecture/1/example.pdf");
+
+            // Get the artemisBaseUrl field via reflection
+            Field artemisBaseUrlField = PyrisWebhookService.class.getDeclaredField("artemisBaseUrl");
+            artemisBaseUrlField.setAccessible(true);
+            String originalBaseUrl = (String) artemisBaseUrlField.get(pyrisWebhookService);
+
+            try {
+                // Test case 1: artemisBaseUrl WITH trailing slash
+                artemisBaseUrlField.set(pyrisWebhookService, "http://localhost:8080/");
+
+                irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> {
+                    String lectureUnitLink = dto.pyrisLectureUnit().lectureUnitLink();
+                    // Should be: http://localhost:8080/ + files/attachments/lecture/1/example.pdf
+                    assertThat(lectureUnitLink).isEqualTo("http://localhost:8080/files/attachments/lecture/1/example.pdf");
+                });
+
+                pyrisWebhookService.addLectureUnitToPyrisDB(existingUnit);
+
+                // Test case 2: artemisBaseUrl WITHOUT trailing slash
+                artemisBaseUrlField.set(pyrisWebhookService, "http://localhost:8080");
+
+                irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> {
+                    String lectureUnitLink = dto.pyrisLectureUnit().lectureUnitLink();
+                    // Should be: http://localhost:8080 + / + files/attachments/lecture/1/example.pdf
+                    assertThat(lectureUnitLink).isEqualTo("http://localhost:8080/files/attachments/lecture/1/example.pdf");
+                });
+
+                pyrisWebhookService.addLectureUnitToPyrisDB(existingUnit);
+
+            }
+            finally {
+                // Restore original values
+                artemisBaseUrlField.set(pyrisWebhookService, originalBaseUrl);
+                existingUnit.getAttachment().setLink(originalLink);
+            }
+        }
     }
 }
