@@ -1,8 +1,8 @@
 package de.tum.cit.aet.artemis.iris;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.ARTEMIS_FILE_PATH_PREFIX;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -14,6 +14,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -302,47 +303,25 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetLectureUnitLinkConstruction() throws Exception {
+    void testLectureUnitLinkConstruction() {
         activateIrisFor(lecture1.getCourse());
 
-        if (lecture1.getLectureUnits().getFirst() instanceof AttachmentVideoUnit existingUnit) {
-            String originalLink = existingUnit.getAttachment().getLink();
-            existingUnit.getAttachment().setLink("files/attachments/lecture/1/example.pdf");
+        AttachmentVideoUnit testUnit = lectureUtilService.createAttachmentVideoUnit(true);
+        testUnit.setLecture(lecture1);
+        testUnit.getAttachment().setLink("lecture/123/test-document.pdf");
+        lecture1.getLectureUnits().add(testUnit);
 
-            // Get the artemisBaseUrl field via reflection
-            Field artemisBaseUrlField = PyrisWebhookService.class.getDeclaredField("artemisBaseUrl");
-            artemisBaseUrlField.setAccessible(true);
-            String originalBaseUrl = (String) artemisBaseUrlField.get(pyrisWebhookService);
+        String expectedBaseUrl = "http://localhost:8080"; // Default test server URL
+        ReflectionTestUtils.setField(pyrisWebhookService, "artemisBaseUrl", expectedBaseUrl);
+        String attachmentLink = testUnit.getAttachment().getLink();
+        String expectedUrl = expectedBaseUrl + ARTEMIS_FILE_PATH_PREFIX + attachmentLink;
 
-            try {
-                // Test case 1: artemisBaseUrl WITH trailing slash
-                artemisBaseUrlField.set(pyrisWebhookService, "http://localhost:8080/");
+        irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> {
+            String lectureUnitLink = dto.pyrisLectureUnit().lectureUnitLink();
+            // Verify URL construction: baseURL + pathprefix + link
+            assertThat(lectureUnitLink).isEqualTo(expectedUrl);
+        });
 
-                irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> {
-                    String lectureUnitLink = dto.pyrisLectureUnit().lectureUnitLink();
-                    // Should be: http://localhost:8080/ + files/attachments/lecture/1/example.pdf
-                    assertThat(lectureUnitLink).isEqualTo("http://localhost:8080/files/attachments/lecture/1/example.pdf");
-                });
-
-                pyrisWebhookService.addLectureUnitToPyrisDB(existingUnit);
-
-                // Test case 2: artemisBaseUrl WITHOUT trailing slash
-                artemisBaseUrlField.set(pyrisWebhookService, "http://localhost:8080");
-
-                irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> {
-                    String lectureUnitLink = dto.pyrisLectureUnit().lectureUnitLink();
-                    // Should be: http://localhost:8080 + / + files/attachments/lecture/1/example.pdf
-                    assertThat(lectureUnitLink).isEqualTo("http://localhost:8080/files/attachments/lecture/1/example.pdf");
-                });
-
-                pyrisWebhookService.addLectureUnitToPyrisDB(existingUnit);
-
-            }
-            finally {
-                // Restore original values
-                artemisBaseUrlField.set(pyrisWebhookService, originalBaseUrl);
-                existingUnit.getAttachment().setLink(originalLink);
-            }
-        }
+        pyrisWebhookService.addLectureUnitToPyrisDB(testUnit);
     }
 }

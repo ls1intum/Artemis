@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.iris.service.pyris;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.ARTEMIS_FILE_PATH_PREFIX;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
 import java.io.IOException;
@@ -181,28 +182,10 @@ public class PyrisWebhookService {
         String courseTitle = attachmentVideoUnit.getLecture().getCourse().getTitle();
         String courseDescription = attachmentVideoUnit.getLecture().getCourse().getDescription() == null ? "" : attachmentVideoUnit.getLecture().getCourse().getDescription();
         String base64EncodedPdf = attachmentToBase64(attachmentVideoUnit);
-        String lectureUnitLink = getLectureUnitLink(attachmentVideoUnit);
+        String lectureUnitLink = artemisBaseUrl + ARTEMIS_FILE_PATH_PREFIX + attachmentVideoUnit.getAttachment().getLink();
         LectureUnitRepositoryApi api = lectureUnitRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureUnitRepositoryApi.class));
         api.save(attachmentVideoUnit);
         return new PyrisLectureUnitWebhookDTO(base64EncodedPdf, lectureUnitId, lectureUnitName, lectureId, lectureTitle, courseId, courseTitle, courseDescription, lectureUnitLink);
-    }
-
-    /**
-     * Constructs the full link to the lecture unit based on the base URL and the attachment link.
-     *
-     * @param attachmentVideoUnit The attachment video unit containing the link.
-     * @return The full URL to the lecture unit.
-     */
-    private String getLectureUnitLink(AttachmentVideoUnit attachmentVideoUnit) {
-        if (attachmentVideoUnit == null || attachmentVideoUnit.getAttachment() == null || attachmentVideoUnit.getAttachment().getLink() == null) {
-            return "";
-        }
-
-        if (artemisBaseUrl.endsWith("/")) {
-            return artemisBaseUrl + attachmentVideoUnit.getAttachment().getLink();
-        }
-
-        return artemisBaseUrl + "/" + attachmentVideoUnit.getAttachment().getLink();
     }
 
     private PyrisLectureUnitWebhookDTO processAttachmentForDeletion(AttachmentVideoUnit attachmentVideoUnit) {
