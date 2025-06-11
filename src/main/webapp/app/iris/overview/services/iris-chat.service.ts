@@ -14,7 +14,6 @@ import { IrisRateLimitInformation } from 'app/iris/shared/entities/iris-ratelimi
 import { IrisSession } from 'app/iris/shared/entities/iris-session.model';
 import { UserService } from 'app/core/user/shared/user.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { IrisSessionDto } from 'app/iris/shared/entities/iris-session-dto.model';
 
 export enum ChatServiceMode {
     TEXT_EXERCISE = 'text-exercise-chat',
@@ -58,7 +57,7 @@ export class IrisChatService implements OnDestroy {
     stages: BehaviorSubject<IrisStageDTO[]> = new BehaviorSubject([]);
     suggestions: BehaviorSubject<string[]> = new BehaviorSubject([]);
     error: BehaviorSubject<IrisErrorMessageKey | undefined> = new BehaviorSubject(undefined);
-    chatSessions: BehaviorSubject<IrisSessionDto[]> = new BehaviorSubject([]);
+    chatSessions: BehaviorSubject<IrisSession[]> = new BehaviorSubject([]);
 
     rateLimitInfo?: IrisRateLimitInformation;
     rateLimitSubscription: Subscription;
@@ -309,7 +308,7 @@ export class IrisChatService implements OnDestroy {
     }
 
     private loadChatSessions() {
-        this.http.loadChatSessions(this.courseId).subscribe((sessions: IrisSessionDto[]) => {
+        this.http.getChatSessions(this.courseId).subscribe((sessions: IrisSession[]) => {
             this.chatSessions.next(sessions ?? []);
         });
     }
@@ -343,11 +342,32 @@ export class IrisChatService implements OnDestroy {
         });
     }
 
+    switchToSession(session: IrisSession): void {
+        if (this.sessionId === session.id) {
+            return;
+        }
+
+        this.close();
+        const newIdentifier = session.chatMode.toString() && session.entityId ? session.chatMode.toString() + '/' + session.entityId : undefined;
+        this.sessionCreationIdentifier = newIdentifier;
+
+        const requiresAcceptance = this.sessionCreationIdentifier ? this.modeRequiresLLMAcceptance.get(session.chatMode) : true;
+
+        if (requiresAcceptance === false || this.accountService.userIdentity?.externalLLMUsageAccepted || this.hasJustAcceptedExternalLLMUsage) {
+            this.handleNewSession().next(session);
+            this.loadChatSessions();
+        }
+    }
+
     private closeAndStart() {
         this.close();
         if (this.sessionCreationIdentifier) {
             this.start();
         }
+    }
+
+    public currentSessionId(): Observable<number | undefined> {
+        return this.sessionId$;
     }
 
     public currentMessages(): Observable<IrisMessage[]> {
@@ -374,7 +394,7 @@ export class IrisChatService implements OnDestroy {
         return this.suggestions.asObservable();
     }
 
-    public availableChatSessions(): Observable<IrisSessionDto[]> {
+    public availableChatSessions(): Observable<IrisSession[]> {
         return this.chatSessions.asObservable();
     }
 }

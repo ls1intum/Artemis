@@ -5,7 +5,6 @@ import { IrisAssistantMessage, IrisMessage, IrisUserMessage } from 'app/iris/sha
 import { convertDateFromClient, convertDateFromServer } from 'app/shared/util/date.utils';
 import { map, tap } from 'rxjs/operators';
 import { IrisSession } from 'app/iris/shared/entities/iris-session.model';
-import { IrisSessionDto } from 'app/iris/shared/entities/iris-session-dto.model';
 
 export type Response<T> = Observable<HttpResponse<T>>;
 
@@ -112,11 +111,17 @@ export class IrisChatHttpService {
         return this.httpClient.post<T>(`${this.apiPrefix}/${identifier}/sessions/current`, null, { observe: 'response' });
     }
 
+    getSessionById<T extends IrisSession>(sessionId: number): Response<T> {
+        return this.httpClient.get<T>(`${this.apiPrefix}/sessions/${sessionId}`, { observe: 'response' });
+    }
+
     createSession<T extends IrisSession>(identifier: string): Response<T> {
         return this.httpClient.post<T>(`${this.apiPrefix}/${identifier}/sessions`, null, { observe: 'response' });
     }
 
-    loadChatSessions(courseId: number): Observable<IrisSessionDto[]> {
-        return this.httpClient.get<IrisSessionDto[]>(`api/iris/chat-history/${courseId}/sessions`);
+    getChatSessions(courseId: number): Observable<IrisSession[]> {
+        return this.httpClient
+            .get<any[]>(`api/iris/chat-history/${courseId}/sessions`)
+            .pipe(map((sessionsArray) => sessionsArray.map((sessionData) => new IrisSession(sessionData))));
     }
 }

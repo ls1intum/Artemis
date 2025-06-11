@@ -1,3 +1,3 @@
-<div class="chat-history-item" (click)="onItemClick()">
+<div class="chat-history-item" [ngClass]="{ 'chat-history-item-selected': active }" (click)="onItemClick()">
     <p>{{ session.creationDate | date: 'dd.MM.yy HH:mm' }}</p>
 </div>

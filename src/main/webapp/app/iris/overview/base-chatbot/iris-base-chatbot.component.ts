@@ -27,7 +27,7 @@ import { AsPipe } from 'app/shared/pipes/as.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ActivatedRoute } from '@angular/router';
 import { ChatHistoryItemComponent } from './chat-history-item/chat-history-item.component';
-import { IrisSessionDto } from 'app/iris/shared/entities/iris-session-dto.model';
+import { IrisSession } from 'app/iris/shared/entities/iris-session.model';
 
 @Component({
     selector: 'jhi-iris-base-chatbot',
@@ -120,6 +120,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     faRedo = faRedo;
 
     // State variables
+    sessionIdSubscription: Subscription;
     messagesSubscription: Subscription;
     stagesSubscription: Subscription;
     errorSubscription: Subscription;
@@ -130,7 +131,8 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     routeSubscription: Subscription;
     chatSessionsSubscription: Subscription;
 
-    chatSessions: IrisSessionDto[] = [];
+    currentSessionId: number | undefined;
+    chatSessions: IrisSession[] = [];
     messages: IrisMessage[] = [];
     stages?: IrisStageDTO[] = [];
     suggestions?: string[] = [];
@@ -177,6 +179,9 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
             if (params?.irisQuestion) {
                 this.newMessageTextContent = params.irisQuestion;
             }
+        });
+        this.sessionIdSubscription = this.chatService.currentSessionId().subscribe((sessionId) => {
+            this.currentSessionId = sessionId;
         });
         this.messagesSubscription = this.chatService.currentMessages().subscribe((messages) => {
             if (messages.length !== this.messages?.length) {
@@ -458,8 +463,8 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
         this.onSend();
     }
 
-    onSessionClick(session: IrisSessionDto) {
-        this.chatService.switchTo(session.chatMode, session.entityId);
+    onSessionClick(session: IrisSession) {
+        this.chatService.switchToSession(session);
     }
 
     /**
@@ -470,7 +475,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
      * @param ignoreOlderBoundary If true, only the daysAgoNewer boundary is considered (sessions newer than or on this day).
      * @returns An array of IrisSession objects matching the criteria.
      */
-    getSessionsBetween(daysAgoNewer: number, daysAgoOlder?: number, ignoreOlderBoundary = false): IrisSessionDto[] {
+    getSessionsBetween(daysAgoNewer: number, daysAgoOlder?: number, ignoreOlderBoundary = false): IrisSession[] {
         if (daysAgoNewer < 0 || (!ignoreOlderBoundary && (daysAgoOlder === undefined || daysAgoOlder < 0 || daysAgoNewer > daysAgoOlder))) {
             return [];
         }

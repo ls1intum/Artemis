@@ -66,35 +66,35 @@
             <p>Today</p>
         </div>
         @for (session of getSessionsBetween(0, 0); track session.id; let i = $index) {
-            <jhi-chat-history-item [session]="session" (sessionClicked)="onSessionClick(session)" />
+            <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId" (sessionClicked)="onSessionClick(session)" />
         }
 
         <div class="chat-history-label">
             <p>Yesterday</p>
         </div>
         @for (session of getSessionsBetween(1, 1); track session.id; let i = $index) {
-            <jhi-chat-history-item [session]="session" (sessionClicked)="onSessionClick(session)" />
+            <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId" (sessionClicked)="onSessionClick(session)" />
         }
 
         <div class="chat-history-label">
             <p>Last 7 days</p>
         </div>
         @for (session of getSessionsBetween(2, 6); track session.id; let i = $index) {
-            <jhi-chat-history-item [session]="session" (sessionClicked)="onSessionClick(session)" />
+            <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId" (sessionClicked)="onSessionClick(session)" />
         }
 
         <div class="chat-history-label">
             <p>Last 30 days</p>
         </div>
         @for (session of getSessionsBetween(7, 29); track session.id; let i = $index) {
-            <jhi-chat-history-item [session]="session" (sessionClicked)="onSessionClick(session)" />
+            <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId" (sessionClicked)="onSessionClick(session)" />
         }
 
         <div class="chat-history-label">
             <p>Older</p>
         </div>
         @for (session of getSessionsBetween(30, undefined, true); track session.id; let i = $index) {
-            <jhi-chat-history-item [session]="session" (sessionClicked)="onSessionClick(session)" />
+            <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId" (sessionClicked)="onSessionClick(session)" />
         }
     </div>
     <div class="chat-body" [class.not-accepted]="!userAccepted" #chatBody>
