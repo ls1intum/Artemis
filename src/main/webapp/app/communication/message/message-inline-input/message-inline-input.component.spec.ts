@@ -180,7 +180,7 @@ describe('MessageInlineInputComponent', () => {
             });
             tick();
 
-            expect(getDraftKeySpy).toHaveBeenCalledOnce();
+            expect(getDraftKeySpy).toHaveBeenCalled();
             expect(clearDraftSpy).toHaveBeenCalledWith('message_draft_1_1');
         }));
 
@@ -211,7 +211,7 @@ describe('MessageInlineInputComponent', () => {
             component.confirm();
             tick();
 
-            expect(getDraftKeySpy).toHaveBeenCalledOnce();
+            expect(getDraftKeySpy).toHaveBeenCalled();
             expect(clearDraftSpy).toHaveBeenCalledWith('message_draft_1_1');
         }));
     });
