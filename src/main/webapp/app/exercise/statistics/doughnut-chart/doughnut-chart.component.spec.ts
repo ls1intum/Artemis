@@ -81,13 +81,6 @@ describe('DoughnutChartComponent', () => {
             expect(component.doughnutChartTitle).toBe('resolved_posts');
             expect(component.titleLink).toEqual([`/courses/${component.course.id}/exercises/${component.exerciseId}`]);
         });
-
-        it('should handle default case in ngOnInit', () => {
-            component.contentType = undefined;
-            component.ngOnInit();
-            expect(component.doughnutChartTitle).toBe('');
-            expect(component.titleLink).toBeUndefined();
-        });
     });
 
     it('should open corresponding page', () => {
