@@ -1,0 +1,22 @@
+@import '../../../../../../node_modules/bootstrap/scss/functions';
+@import '../../../../../../node_modules/bootstrap/scss/variables';
+@import '../../../../../../node_modules/bootstrap/scss/mixins';
+
+.panel-wrapper {
+    border: 1px solid $border-color;
+    border-radius: 3px;
+
+    .panel-header {
+        padding: 10px 10px 10px 15px;
+        font-size: 16px;
+    }
+
+    .panel-body {
+        padding: 8px 15px;
+    }
+
+    .vertLine {
+        height: 1px;
+        background-color: $border-color;
+    }
+}

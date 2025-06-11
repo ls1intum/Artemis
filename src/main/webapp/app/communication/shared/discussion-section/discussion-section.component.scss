@@ -28,6 +28,7 @@ $discussion-section-card-min-width: 370px;
     .card {
         width: inherit;
         min-width: $discussion-section-card-min-width;
+        border: 1px solid $border-color;
 
         .card-header {
             display: inline-flex;
