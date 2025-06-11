@@ -62,39 +62,54 @@
 <!-- main chat section -->
 <div class="chat-container">
     <div class="chat-history">
-        <div class="chat-history-label">
-            <p>Today</p>
-        </div>
-        @for (session of getSessionsBetween(0, 0); track session.id; let i = $index) {
-            <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId" (sessionClicked)="onSessionClick(session)" />
+        @let todaySessions = getSessionsBetween(0, 0);
+        @if (todaySessions.length > 0) {
+            <div class="chat-history-label">
+                <p>Today</p>
+            </div>
+            @for (session of todaySessions; track session.id; let i = $index) {
+                <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId" (sessionClicked)="onSessionClick(session)" />
+            }
         }
 
-        <div class="chat-history-label">
-            <p>Yesterday</p>
-        </div>
-        @for (session of getSessionsBetween(1, 1); track session.id; let i = $index) {
-            <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId" (sessionClicked)="onSessionClick(session)" />
+        @let yesterdaySessions = getSessionsBetween(1, 1);
+        @if (yesterdaySessions.length > 0) {
+            <div class="chat-history-label">
+                <p>Yesterday</p>
+            </div>
+            @for (session of yesterdaySessions; track session.id; let i = $index) {
+                <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId" (sessionClicked)="onSessionClick(session)" />
+            }
         }
 
-        <div class="chat-history-label">
-            <p>Last 7 days</p>
-        </div>
-        @for (session of getSessionsBetween(2, 6); track session.id; let i = $index) {
-            <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId" (sessionClicked)="onSessionClick(session)" />
+        @let last7DaysSessions = getSessionsBetween(2, 6);
+        @if (last7DaysSessions.length > 0) {
+            <div class="chat-history-label">
+                <p>Last 7 days</p>
+            </div>
+            @for (session of last7DaysSessions; track session.id; let i = $index) {
+                <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId" (sessionClicked)="onSessionClick(session)" />
+            }
         }
 
-        <div class="chat-history-label">
-            <p>Last 30 days</p>
-        </div>
-        @for (session of getSessionsBetween(7, 29); track session.id; let i = $index) {
-            <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId" (sessionClicked)="onSessionClick(session)" />
+        @let last30DaysSessions = getSessionsBetween(7, 29);
+        @if (last30DaysSessions.length > 0) {
+            <div class="chat-history-label">
+                <p>Last 30 days</p>
+            </div>
+            @for (session of last30DaysSessions; track session.id; let i = $index) {
+                <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId" (sessionClicked)="onSessionClick(session)" />
+            }
         }
 
-        <div class="chat-history-label">
-            <p>Older</p>
-        </div>
-        @for (session of getSessionsBetween(30, undefined, true); track session.id; let i = $index) {
-            <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId" (sessionClicked)="onSessionClick(session)" />
+        @let olderSessions = getSessionsBetween(30, undefined, true);
+        @if (olderSessions.length > 0) {
+            <div class="chat-history-label">
+                <p>Older</p>
+            </div>
+            @for (session of olderSessions; track session.id; let i = $index) {
+                <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId" (sessionClicked)="onSessionClick(session)" />
+            }
         }
     </div>
     <div class="chat-body" [class.not-accepted]="!userAccepted" #chatBody>
