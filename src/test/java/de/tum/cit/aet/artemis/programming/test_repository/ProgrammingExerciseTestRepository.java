@@ -79,11 +79,7 @@ public interface ProgrammingExerciseTestRepository extends ProgrammingExerciseRe
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation" })
     List<ProgrammingExercise> findAllWithTemplateAndSolutionParticipationByIdIn(Set<Long> exerciseIds);
 
-    List<ProgrammingExercise> findAllByCourse_InstructorGroupNameIn(Set<String> groupNames);
-
-    List<ProgrammingExercise> findAllByCourse_EditorGroupNameIn(Set<String> groupNames);
-
-    List<ProgrammingExercise> findAllByCourse_TeachingAssistantGroupNameIn(Set<String> groupNames);
+    List<ProgrammingExercise> findAllByCourseId(Long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "studentParticipations.team.students", "buildConfig" })
     Optional<ProgrammingExercise> findWithAllParticipationsAndBuildConfigById(long exerciseId);
