@@ -67,9 +67,9 @@ export class GlobalNotificationsSettingsComponent implements OnInit, OnDestroy {
     isPasskeyEnabled = false;
 
     ngOnInit(): void {
+        this.isPasskeyEnabled = this.profileService.isModuleFeatureActive(FEATURE_PASSKEY);
         this.filteredNotificationTypes = this.notificationTypes.filter((type) => this.isSettingAvailable(type));
         this.notificationLabels = Object.fromEntries(this.filteredNotificationTypes.map((type) => [type, this.getNotificationTypeLabel(type)]));
-        this.isPasskeyEnabled = this.profileService.isModuleFeatureActive(FEATURE_PASSKEY);
         this.loadSettings();
     }
 
