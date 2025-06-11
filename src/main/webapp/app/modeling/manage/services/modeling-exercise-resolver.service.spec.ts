@@ -27,10 +27,6 @@ describe('ModelingExerciseResolver', () => {
         currentRoute = {} as ActivatedRouteSnapshot;
     });
 
-    it('should be created', () => {
-        expect(component).toBeTruthy();
-    });
-
     it('should resolve a ModelingExercise when exerciseId is provided', () => {
         const dummyExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
         const modelingExerciseService = TestBed.inject(ModelingExerciseService);
