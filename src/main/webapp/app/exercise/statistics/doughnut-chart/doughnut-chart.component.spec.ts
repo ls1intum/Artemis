@@ -49,6 +49,17 @@ describe('DoughnutChartComponent', () => {
         expect(component.ngxDoughnutData[1].value).toBe(0);
         expect(component.ngxDoughnutData[2].value).toBe(1);
     });
+
+    it('should use fallback value when currentAbsolute is undefined and stats are not received', () => {
+        component.currentAbsolute = undefined;
+        component.receivedStats = false;
+        component.ngOnChanges();
+
+        expect(component.ngxDoughnutData[0].value).toBe(0);
+        expect(component.ngxDoughnutData[1].value).toBe(0);
+        expect(component.ngxDoughnutData[2].value).toBe(1);
+    });
+
     describe('setting titles for different chart types', () => {
         it('should set title for average exercise score', () => {
             component.contentType = DoughnutChartType.AVERAGE_EXERCISE_SCORE;
@@ -69,6 +80,13 @@ describe('DoughnutChartComponent', () => {
             component.ngOnInit();
             expect(component.doughnutChartTitle).toBe('resolved_posts');
             expect(component.titleLink).toEqual([`/courses/${component.course.id}/exercises/${component.exerciseId}`]);
+        });
+
+        it('should handle default case in ngOnInit', () => {
+            component.contentType = undefined;
+            component.ngOnInit();
+            expect(component.doughnutChartTitle).toBe('');
+            expect(component.titleLink).toBeUndefined();
         });
     });
 
