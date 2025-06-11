@@ -49,9 +49,7 @@ export class CoursePracticeQuizComponent {
     isSubmitting = false;
     result: Result;
     showingResult = false;
-    userScore: number;
     submitted = false;
-    quizId = 18;
     questionScores: { [id: number]: number } = {};
     selectedAnswerOptions: AnswerOption[] = [];
     dragAndDropMappings: DragAndDropMapping[] = [];
@@ -112,47 +110,47 @@ export class CoursePracticeQuizComponent {
         }
     }
 
+    /**
+     * applies the current selection to the submission object
+     */
     applySelection() {
         this.submission.submittedAnswers = [];
-        const questionId = this.currentQuestion()!.id!;
-        const question = this.questions().find((q) => q.id === questionId);
+        const question = this.currentQuestion();
 
-        if (!question) {
-            return;
-        }
-
-        switch (question.type) {
+        switch (question!.type) {
             case QuizQuestionType.MULTIPLE_CHOICE: {
-                const answerOptions = this.selectedAnswerOptions || [];
+                const answerOptions = this.selectedAnswerOptions;
                 const mcSubmittedAnswer = new MultipleChoiceSubmittedAnswer();
                 mcSubmittedAnswer.quizQuestion = question;
                 mcSubmittedAnswer.selectedOptions = answerOptions;
-                this.submission.submittedAnswers!.push(mcSubmittedAnswer);
+                this.submission.submittedAnswers.push(mcSubmittedAnswer);
                 break;
             }
             case QuizQuestionType.DRAG_AND_DROP: {
-                const mappings = this.dragAndDropMappings || [];
+                const mappings = this.dragAndDropMappings;
                 const ddSubmittedAnswer = new DragAndDropSubmittedAnswer();
                 ddSubmittedAnswer.quizQuestion = question;
                 ddSubmittedAnswer.mappings = mappings;
-                this.submission.submittedAnswers!.push(ddSubmittedAnswer);
+                this.submission.submittedAnswers.push(ddSubmittedAnswer);
                 break;
             }
             case QuizQuestionType.SHORT_ANSWER: {
-                const submittedTexts = this.shortAnswerSubmittedTexts || [];
+                const submittedTexts = this.shortAnswerSubmittedTexts;
                 const saSubmittedAnswer = new ShortAnswerSubmittedAnswer();
                 saSubmittedAnswer.quizQuestion = question;
                 saSubmittedAnswer.submittedTexts = submittedTexts;
-                this.submission.submittedAnswers!.push(saSubmittedAnswer);
+                this.submission.submittedAnswers.push(saSubmittedAnswer);
                 break;
             }
         }
     }
 
+    /**
+     * Submits the quiz for practice
+     */
     onSubmit() {
         this.applySelection();
         this.isSubmitting = true;
-        this.submitted = true;
         this.quizParticipationService.submitForPractice(this.submission, this.currentQuestion()!.exerciseId!).subscribe({
             next: (response: HttpResponse<Result>) => {
                 this.onSubmitSuccess(response.body!);
@@ -163,6 +161,7 @@ export class CoursePracticeQuizComponent {
 
     onSubmitSuccess(result: Result) {
         this.isSubmitting = false;
+        this.submitted = true;
         this.submission = result.submission as QuizSubmission;
         this.applySubmission();
         this.showResult(result);
@@ -186,7 +185,6 @@ export class CoursePracticeQuizComponent {
      * applies the data from the model to the UI (reverse of applySelection):
      *
      * Sets the checkmarks (selected answers) for all questions according to the submission data
-     * this needs to be done when we get new submission data, e.g. through the websocket connection
      */
     applySubmission() {
         this.selectedAnswerOptions = [];
@@ -194,21 +192,16 @@ export class CoursePracticeQuizComponent {
         this.shortAnswerSubmittedTexts = [];
         const question = this.currentQuestion();
         if (question) {
-            const submittedAnswer = this.submission.submittedAnswers?.find((answer) => {
-                return answer.quizQuestion!.id === question.id;
-            });
+            const submittedAnswer = this.submission.submittedAnswers?.[0];
 
             switch (question.type) {
                 case QuizQuestionType.MULTIPLE_CHOICE:
-                    // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
                     this.selectedAnswerOptions = (submittedAnswer as MultipleChoiceSubmittedAnswer)?.selectedOptions || [];
                     break;
                 case QuizQuestionType.DRAG_AND_DROP:
-                    // add the array of mappings to the dictionary (add an empty array, if there is no submittedAnswer for this question)
                     this.dragAndDropMappings = (submittedAnswer as DragAndDropSubmittedAnswer)?.mappings || [];
                     break;
                 case QuizQuestionType.SHORT_ANSWER:
-                    // add the array of submitted texts to the dictionary (add an empty array, if there is no submittedAnswer for this question)
                     this.shortAnswerSubmittedTexts = (submittedAnswer as ShortAnswerSubmittedAnswer)?.submittedTexts || [];
                     break;
             }
@@ -224,15 +217,11 @@ export class CoursePracticeQuizComponent {
         if (this.result) {
             this.showingResult = true;
 
-            // assign user score (limit decimal places to 2)
-            this.userScore = this.submission.scoreInPoints ? round(this.submission.scoreInPoints) : 0;
-
-            // create dictionary with scores for each question
             this.questionScores = {};
-            this.submission.submittedAnswers?.forEach((submittedAnswer) => {
-                // limit decimal places
-                this.questionScores[submittedAnswer.quizQuestion!.id!] = round(submittedAnswer.scoreInPoints!);
-            }, this);
+            const submittedAnswers = this.submission.submittedAnswers?.[0];
+            if (submittedAnswers) {
+                this.questionScores[submittedAnswers.quizQuestion!.id!] = round(submittedAnswers.scoreInPoints);
+            }
         }
     }
 
