@@ -31,7 +31,7 @@ export class TutorialGroupsImportButtonComponent implements OnDestroy {
             backdrop: 'static',
             animation: false,
         });
-        modalRef.componentInstance.courseId = this.courseId();
+        modalRef.componentInstance.courseId = this.courseId;
 
         from(modalRef.result)
             .pipe(
