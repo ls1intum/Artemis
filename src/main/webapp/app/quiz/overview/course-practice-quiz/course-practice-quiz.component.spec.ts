@@ -79,11 +79,18 @@ describe('CoursePracticeQuizComponent', () => {
         expect(component.questions()).toEqual(mockQuestions);
     });
 
+    it('should check if questions is empty', () => {
+        jest.spyOn(component, 'questions').mockReturnValue([]);
+        component.currentIndex.set(1);
+        expect(component.isLastQuestion()).toBeTruthy();
+        expect(component.currentQuestion()).toBeUndefined();
+    });
+
     it('should check for last question', () => {
         component.currentIndex.set(0);
-        expect(component.isLastQuestion()).toBeFalse();
+        expect(component.isLastQuestion()).toBeFalsy();
         component.currentIndex.set(2);
-        expect(component.isLastQuestion()).toBeTrue();
+        expect(component.isLastQuestion()).toBeTruthy();
     });
 
     it('should check for nextQuestion', () => {
