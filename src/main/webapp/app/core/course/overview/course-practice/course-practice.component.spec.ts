@@ -34,6 +34,19 @@ describe('CoursePracticeComponent', () => {
         expect(component.courseId()).toBe(1);
     });
 
+    it('should check for missing parent route', async () => {
+        await MockBuilder(CoursePracticeComponent).keep(Router).provide({
+            provide: ActivatedRoute,
+            useValue: {},
+        });
+
+        const fixtureNoParent = TestBed.createComponent(CoursePracticeComponent);
+        const componentNoParent = fixtureNoParent.componentInstance;
+        fixtureNoParent.detectChanges();
+
+        expect(componentNoParent.courseId()).toBeUndefined();
+    });
+
     it('should navigate to quiz', () => {
         const router = TestBed.inject(Router);
         const navigateSpy = jest.spyOn(router, 'navigate');
