@@ -27,7 +27,10 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
@@ -40,6 +43,9 @@ import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
 
     private static final String TEST_PREFIX = "localvcint";
+
+    @Autowired
+    private PlatformTransactionManager platformTransactionManager;
 
     private LocalRepository assignmentRepository;
 
@@ -332,10 +338,14 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     }
 
     void customBranchTestHelper(boolean allowBranching, String regex, boolean shouldSucceed) throws Exception {
-        programmingExercise.getBuildConfig().setAllowBranching(allowBranching);
-        programmingExercise.getBuildConfig().setBranchRegex(regex);
-        programmingExerciseRepository.saveAndFlush(programmingExercise);
-        programmingExerciseBuildConfigRepository.saveAndFlush(programmingExercise.getBuildConfig());
+        TransactionTemplate template = new TransactionTemplate(platformTransactionManager);
+        template.execute(status -> {
+            programmingExercise.getBuildConfig().setAllowBranching(allowBranching);
+            programmingExercise.getBuildConfig().setBranchRegex(regex);
+            programmingExerciseRepository.saveAndFlush(programmingExercise);
+            programmingExerciseBuildConfigRepository.saveAndFlush(programmingExercise.getBuildConfig());
+            return null;
+        });
 
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
