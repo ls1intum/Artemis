@@ -57,7 +57,7 @@ public class SharingPlatformMockProvider {
      */
     public SharingPluginConfig connectRequestFromSharingPlatform() throws Exception {
         MvcResult result = restMockMvc
-                .perform(get("/api/sharing/config").queryParam("apiBaseUrl", SHARING_BASEURL_PLUGIN).queryParam("installationName", TEST_INSTALLATION_NAME)
+                .perform(get("/api/core/sharing/config").queryParam("apiBaseUrl", SHARING_BASEURL_PLUGIN).queryParam("installationName", TEST_INSTALLATION_NAME)
                         .header("Authorization", sharingApiKey).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andReturn();
         String content = result.getResponse().getContentAsString();

@@ -370,7 +370,7 @@ public class ExerciseSharingService {
 
             URL apiBaseUrl = sharingConnectorService.getSharingApiBaseUrlOrNull();
             String sharingImportEndPoint = "/exercise/import";
-            URIBuilder callBackBuilder = new URIBuilder(artemisServerUrl + "/api/sharing/export/" + tokenInB64);
+            URIBuilder callBackBuilder = new URIBuilder(artemisServerUrl + "/api/programming/sharing/export/" + tokenInB64);
             callBackBuilder.addParameter("sec", tokenIntegrity);
             URIBuilder builder = new URIBuilder();
             builder.setScheme(apiBaseUrl.getProtocol()).setHost(apiBaseUrl.getHost()).setPath(apiBaseUrl.getPath().concat(sharingImportEndPoint)).setPort(apiBaseUrl.getPort())

@@ -27,7 +27,7 @@
                                                 <td>
                                                     <input
                                                         id="{{ exercise.project.project_id }}"
-                                                        [attr.aria-label="'Select exercise: ' + exercise.metadata.title"
+                                                        [attr.aria-label]="'Select exercise: ' + exercise.metadata.title"
                                                         [(ngModel)]="sharingInfo.selectedExercise"
                                                         (change)="onExerciseSelected(exercisePos)"
                                                         [value]="exercisePos"

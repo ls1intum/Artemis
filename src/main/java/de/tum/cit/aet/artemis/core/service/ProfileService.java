@@ -145,7 +145,7 @@ public class ProfileService {
      *
      * @return true if the sharing profile is active, false otherwise
      */
-    public boolean isSharing() {
+    public boolean isSharingActive() {
         return isProfileActive(Constants.PROFILE_SHARING);
     }
 }

@@ -191,7 +191,7 @@ public class SharingConnectorService {
      * @return true if sharing api base url is present
      */
     public boolean isSharingApiBaseUrlPresent() {
-        return this.profileService.isSharing() && sharingApiBaseUrl != null;
+        return this.profileService.isSharingActive() && sharingApiBaseUrl != null;
     }
 
     /**

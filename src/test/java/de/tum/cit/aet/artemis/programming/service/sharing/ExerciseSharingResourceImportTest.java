@@ -145,7 +145,7 @@ class ExerciseSharingResourceImportTest extends AbstractSpringIntegrationIndepen
 
     @Test
     void isSharingPlatformUp() throws Exception {
-        MvcResult result = restMockMvc.perform(get("/api" + SharingSupportResource.SHARINGCONFIG_RESOURCE_IS_ENABLED).contentType(MediaType.APPLICATION_JSON))
+        MvcResult result = restMockMvc.perform(get("/api/core/sharing/" + SharingSupportResource.SHARINGCONFIG_RESOURCE_IS_ENABLED).contentType(MediaType.APPLICATION_JSON))
                 // .andDo(print())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andReturn();
         String content = result.getResponse().getContentAsString();
@@ -180,8 +180,8 @@ class ExerciseSharingResourceImportTest extends AbstractSpringIntegrationIndepen
         responseActions.andRespond(MockRestResponseCreators.withBadRequest());
 
         restMockMvc
-                .perform(addCorrectChecksum(get("/api/sharing/import/basket").queryParam("basketToken", SAMPLE_BASKET_TOKEN), "returnURL", TEST_RETURN_URL, "apiBaseURL",
-                        SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN).contentType(MediaType.APPLICATION_JSON))
+                .perform(addCorrectChecksum(get("/api/programming/sharing/import/basket").queryParam("basketToken", SAMPLE_BASKET_TOKEN), "returnURL", TEST_RETURN_URL,
+                        "apiBaseURL", SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN).contentType(MediaType.APPLICATION_JSON))
                 /* .andDo(print()) */
                 .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON)).andExpect(status().isNotFound());
     }
@@ -198,14 +198,14 @@ class ExerciseSharingResourceImportTest extends AbstractSpringIntegrationIndepen
         responseActions.andRespond(MockRestResponseCreators.withSuccess(sampleBasket, MediaType.APPLICATION_JSON));
 
         MvcResult result = restMockMvc
-                .perform(addCorrectChecksum(get("/api/sharing/import/basket").queryParam("basketToken", SAMPLE_BASKET_TOKEN), "returnURL", TEST_RETURN_URL, "apiBaseURL",
-                        SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN).contentType(MediaType.APPLICATION_JSON))
+                .perform(addCorrectChecksum(get("/api/programming/sharing/import/basket").queryParam("basketToken", SAMPLE_BASKET_TOKEN), "returnURL", TEST_RETURN_URL,
+                        "apiBaseURL", SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN).contentType(MediaType.APPLICATION_JSON))
                 /* .andDo(print()) */
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andReturn();
         String content = result.getResponse().getContentAsString();
 
         ShoppingBasket sb = objectMapper.readerFor(ShoppingBasket.class).readValue(content);
-        assertThat(sb.userInfo.email).isEqualTo("michael.breu@uibk.ac.at");
+        assertThat(sb.userInfo.email).isEqualTo("test.user@example.com");
         return SAMPLE_BASKET_TOKEN;
     }
 
@@ -225,7 +225,7 @@ class ExerciseSharingResourceImportTest extends AbstractSpringIntegrationIndepen
         final ResponseActions responseActions = mockServer.expect(ExpectedCount.once(), requestTo(basketURI)).andExpect(method(HttpMethod.GET));
         responseActions.andRespond(MockRestResponseCreators.withResourceNotFound());
 
-        restMockMvc.perform(addCorrectChecksum(get("/api/sharing/import/basket").queryParam("basketToken", "undefinedBasket.json"), "returnURL", "http://testing/xyz1",
+        restMockMvc.perform(addCorrectChecksum(get("/api/programming/sharing/import/basket").queryParam("basketToken", "undefinedBasket.json"), "returnURL", "http://testing/xyz1",
                 "apiBaseURL", sharingConnectorService.getSharingApiBaseUrlOrNull().toString()).contentType(MediaType.APPLICATION_JSON)).andExpect(status().isNotFound());
     }
 
@@ -262,7 +262,7 @@ class ExerciseSharingResourceImportTest extends AbstractSpringIntegrationIndepen
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importBasketWrongChecksum() throws Exception {
-        restMockMvc.perform(get("/api/sharing/import/basket").queryParam("basketToken", "sampleBasket.json").queryParam("returnURL", "http://testing/xyz1")
+        restMockMvc.perform(get("/api/programming/sharing/import/basket").queryParam("basketToken", "sampleBasket.json").queryParam("returnURL", "http://testing/xyz1")
                 .queryParam("apiBaseURL", sharingConnectorService.getSharingApiBaseUrlOrNull().toString()).queryParam("checksum", "wrongChecksum")
                 .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isBadRequest());
     }
@@ -270,7 +270,7 @@ class ExerciseSharingResourceImportTest extends AbstractSpringIntegrationIndepen
     @Test
     @WithMockUser(username = INSTRUCTORNAME + "1", roles = "INSTRUCTOR")
     void importExerciseCompleteProcess() throws Exception {
-        userUtilService.addInstructor("Sharing", INSTRUCTORNAME); // unfortunatelly this utility extends the username by "1"
+        userUtilService.addInstructor("Sharing", INSTRUCTORNAME); // unfortunately this utility extends the username by "1"
 
         String basketToken = importBasket();
 
@@ -323,8 +323,8 @@ class ExerciseSharingResourceImportTest extends AbstractSpringIntegrationIndepen
 
         String setupInfoJsonString = objectMapper.writeValueAsString(setupInfo);
         MvcResult resultPE = restMockMvc
-                .perform(post("/api/sharing/setup-import").contentType(MediaType.APPLICATION_JSON).content(setupInfoJsonString).accept(MediaType.APPLICATION_JSON)).andDo(print())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andReturn();
+                .perform(post("/api/programming/sharing/setup-import").contentType(MediaType.APPLICATION_JSON).content(setupInfoJsonString).accept(MediaType.APPLICATION_JSON))
+                .andDo(print()).andExpect(content().contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andReturn();
 
         // finally cleanup the cache
         exerciseSharingService.getRepositoryCache().asMap().forEach((key, value) -> {
@@ -336,8 +336,8 @@ class ExerciseSharingResourceImportTest extends AbstractSpringIntegrationIndepen
     private void validateProblemStatement(SharingInfoDTO sharingInfo) throws Exception, JsonProcessingException, UnsupportedEncodingException {
         // get Problem Statement
         MvcResult resultPS = restMockMvc
-                .perform(post("/api/sharing/import/basket/problem-statement").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(sharingInfo))
-                        .accept(MediaType.APPLICATION_JSON))/* .andDo(print()) */
+                .perform(post("/api/programming/sharing/import/basket/problem-statement").contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(sharingInfo)).accept(MediaType.APPLICATION_JSON))/* .andDo(print()) */
                 .andExpect(content().contentType(MediaType.TEXT_PLAIN)).andExpect(status().isOk()).andReturn();
         // Zip file is cached, no extra request to sharing platform required!
         String contentPS = resultPS.getResponse().getContentAsString();
@@ -348,8 +348,8 @@ class ExerciseSharingResourceImportTest extends AbstractSpringIntegrationIndepen
         // get Exercise Details
 
         MvcResult resultED = restMockMvc
-                .perform(post("/api/sharing/import/basket/exercise-details").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(sharingInfo))
-                        .accept(MediaType.APPLICATION_JSON)) /* .andDo(print()) */
+                .perform(post("/api/programming/sharing/import/basket/exercise-details").contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(sharingInfo)).accept(MediaType.APPLICATION_JSON)) /* .andDo(print()) */
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andReturn();
         String contentED = resultED.getResponse().getContentAsString();
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);

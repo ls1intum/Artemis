@@ -60,7 +60,7 @@ export class ProgrammingExerciseSharingService {
         let copy = this.convertDataFromClient(programmingExercise);
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         return this.http
-            .post<ProgrammingExercise>('api/sharing/setup-import', { exercise: copy, course, sharingInfo }, { observe: 'response' })
+            .post<ProgrammingExercise>('api/programming/sharing/setup-import', { exercise: copy, course, sharingInfo }, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 

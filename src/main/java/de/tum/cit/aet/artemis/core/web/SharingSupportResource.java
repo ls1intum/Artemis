@@ -98,9 +98,6 @@ public class SharingSupportResource {
      */
     @GetMapping(SHARINGCONFIG_RESOURCE_IS_ENABLED)
     public ResponseEntity<Boolean> isSharingEnabled() {
-        if (sharingConnectorService.isSharingApiBaseUrlPresent()) {
-            return ResponseEntity.ok(true);
-        }
-        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(false);
+        return ResponseEntity.ok(sharingConnectorService.isSharingApiBaseUrlPresent());
     }
 }

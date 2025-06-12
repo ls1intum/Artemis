@@ -45,6 +45,7 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.annotations.VisibleForTesting;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
@@ -476,6 +477,27 @@ public class ProgrammingExerciseService {
         }
         Matcher matcher = ALLOWED_CHECKOUT_DIRECTORY.matcher(checkoutPath);
         return matcher.matches();
+    }
+
+    /**
+     * TEMPORARY workaround for open pull request
+     * https://github.com/ls1intum/Artemis/pull/10997. Remove once resolved.
+     * Not for public use!
+     *
+     * <pre>
+     * method de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository.findAllByCourseId(java.lang.Long) is not used in production code
+     * </pre>
+     *
+     * It can be deleted after resolving the related issue
+     *
+     * @param id the course id
+     * @return the list of exercises for this course
+     * @deprecated will be removed ASAP.
+     */
+    @VisibleForTesting
+    @Deprecated
+    public List<ProgrammingExercise> findAllByCourseId(Long id) {
+        return programmingExerciseRepository.findAllByCourseId(id);
     }
 
     /**
