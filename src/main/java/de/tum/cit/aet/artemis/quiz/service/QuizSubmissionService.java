@@ -3,9 +3,12 @@ package de.tum.cit.aet.artemis.quiz.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +24,7 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.QuizSubmissionException;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
+import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -144,14 +148,17 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
     public void calculateAllResults(long quizExerciseId) {
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
         log.info("Calculating results for quiz {}", quizExercise.getId());
-        studentParticipationRepository.findByQuizExerciseIdWithLegalSubmissionsAndAnswers(quizExercise.getId()).forEach(participation -> {
+        Set<StudentParticipation> participations = studentParticipationRepository.findByExerciseId(quizExercise.getId());
+        associateQuizSubmissionsWithStudentParticipations(participations);
+
+        participations.forEach(participation -> {
             participation.setExercise(quizExercise);
-            Optional<QuizSubmission> quizSubmissionOptional = quizSubmissionRepository.findWithEagerSubmittedAnswersByParticipationId(participation.getId()).stream().findFirst();
+            Optional<Submission> quizSubmissionOptional = participation.getSubmissions().stream().findFirst();
 
             if (quizSubmissionOptional.isEmpty()) {
                 return;
             }
-            QuizSubmission quizSubmission = quizSubmissionOptional.get();
+            QuizSubmission quizSubmission = (QuizSubmission) quizSubmissionOptional.get();
 
             if (quizSubmission.isSubmitted()) {
                 if (quizSubmission.getType() == null) {
@@ -178,11 +185,7 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
             quizSubmissionRepository.save(quizSubmission);
             resultRepository.save(result);
             studentParticipationRepository.save(participation);
-
-            // Set the result for the submission and then set the submission for the participation
-            // Since the results are not yet represented in the participation object, we need to set it manually
             quizSubmission.setResults(List.of(result));
-            participation.setSubmissions(Set.of(quizSubmission));
 
             sendQuizResultToUser(quizExerciseId, participation);
         });
@@ -190,6 +193,25 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         // notify users via websocket about new results for the statistics, filter out solution information
         quizExercise.filterForStatisticWebsocket();
         websocketMessagingService.sendMessage("/topic/statistic/" + quizExercise.getId(), quizExercise);
+    }
+
+    /**
+     * Fetches quiz submissions for the given student participations and associates them with the participations.
+     *
+     * @param participations The set of student participations to associate with quiz submissions.
+     */
+    private void associateQuizSubmissionsWithStudentParticipations(Set<StudentParticipation> participations) {
+        Set<Long> participationIds = participations.stream().map(StudentParticipation::getId).collect(Collectors.toSet());
+
+        List<QuizSubmission> submissions = quizSubmissionRepository.findWithEagerSubmittedAnswersByParticipationIds(participationIds);
+
+        Map<Long, Set<QuizSubmission>> submissionsByParticipationId = submissions.stream().collect(Collectors.groupingBy(s -> s.getParticipation().getId(), Collectors.toSet()));
+
+        for (StudentParticipation participation : participations) {
+            Set<QuizSubmission> quizSubmissions = submissionsByParticipationId.getOrDefault(participation.getId(), Set.of());
+            Set<Submission> submissionSet = new HashSet<>(quizSubmissions);
+            participation.setSubmissions(submissionSet);
+        }
     }
 
     private void sendQuizResultToUser(long quizExerciseId, StudentParticipation participation) {
