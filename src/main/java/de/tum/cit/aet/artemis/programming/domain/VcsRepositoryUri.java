@@ -35,7 +35,7 @@ public class VcsRepositoryUri {
 
     /**
      * Initializes a new instance of the {@link VcsRepositoryUri} class from a repository name
-     * builds an url to format <server.url>/git/<project_key>/<repo-name>.git
+     * and builds an url to format <server.url>/git/<project_key>/<repo-name>.git
      *
      * @param vcBaseUrl      The base URL of the version control system
      * @param repositoryName containing the project key at the beginning
