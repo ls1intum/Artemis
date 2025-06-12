@@ -15,7 +15,8 @@ import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record BuildJobQueueItem(String id, String name, BuildAgentDTO buildAgent, long participationId, long courseId, long exerciseId, int retryCount, int priority,
-        BuildStatus status, RepositoryInfo repositoryInfo, JobTimingInfo jobTimingInfo, BuildConfig buildConfig, ResultDTO submissionResult) implements Serializable {
+        BuildStatus status, RepositoryInfo repositoryInfo, JobTimingInfo jobTimingInfo, BuildConfig buildConfig, ResultDTO submissionResult)
+        implements Serializable, Comparable<BuildJobQueueItem> {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -57,5 +58,14 @@ public record BuildJobQueueItem(String id, String name, BuildAgentDTO buildAgent
                 queueItem.repositoryInfo(),
                 new JobTimingInfo(queueItem.jobTimingInfo.submissionDate(), ZonedDateTime.now(), null, null, queueItem.jobTimingInfo().estimatedDuration()),
                 queueItem.buildConfig(), null);
+    }
+
+    @Override
+    public int compareTo(BuildJobQueueItem item2) {
+        int priorityComparison = Integer.compare(this.priority(), item2.priority());
+        if (priorityComparison == 0) {
+            return this.jobTimingInfo().submissionDate().compareTo(item2.jobTimingInfo().submissionDate());
+        }
+        return priorityComparison;
     }
 }
