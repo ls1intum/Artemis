@@ -20,8 +20,8 @@ export class LtiConfigurationService {
     }
 
     /**
-     * Updates an LTI platform configuration.
-     * @param ltiPlatformConfiguration The configuration to update.
+     * Adds a LTI platform configuration.
+     * @param ltiPlatformConfiguration The configuration to add.
      * @return Observable of the HTTP response.
      */
     addLtiPlatformConfiguration(ltiPlatformConfiguration: LtiPlatformConfiguration): Observable<HttpResponse<any>> {
@@ -29,7 +29,7 @@ export class LtiConfigurationService {
     }
 
     /**
-     * Updates an LTI platform configuration.
+     * Updates a LTI platform configuration.
      * @param ltiPlatformConfiguration The configuration to update.
      * @return Observable of the HTTP response.
      */
