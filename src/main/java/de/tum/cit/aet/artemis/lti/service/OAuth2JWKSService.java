@@ -7,11 +7,8 @@ import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPublicKey;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+
+import jakarta.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +18,8 @@ import org.springframework.security.crypto.keygen.StringKeyGenerator;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.stereotype.Service;
 
+import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.map.IMap;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
@@ -37,17 +36,31 @@ public class OAuth2JWKSService {
 
     private final OnlineCourseConfigurationService onlineCourseConfigurationService;
 
+    private final HazelcastInstance hazelcastInstance;
+
     private final StringKeyGenerator kidGenerator = new Base64StringKeyGenerator(32);
 
     private static final Logger log = LoggerFactory.getLogger(OAuth2JWKSService.class);
 
-    private final Map<String, String> clientRegistrationIdToKeyId = new HashMap<>();
+    private IMap<String, String> clientRegistrationIdToKeyId;
 
-    private JWKSet jwkSet;
+    private IMap<String, JWK> kidToJwk;
 
-    public OAuth2JWKSService(OnlineCourseConfigurationService onlineCourseConfigurationService) {
+    public OAuth2JWKSService(OnlineCourseConfigurationService onlineCourseConfigurationService, HazelcastInstance hazelcastInstance) {
         this.onlineCourseConfigurationService = onlineCourseConfigurationService;
-        this.jwkSet = new JWKSet(generateOAuth2ClientKeys());
+        this.hazelcastInstance = hazelcastInstance;
+    }
+
+    @PostConstruct
+    public void init() {
+        clientRegistrationIdToKeyId = hazelcastInstance.getMap("lti-clientRegistrationIdToKeyId");
+        kidToJwk = hazelcastInstance.getMap("lti-jwkSet");
+
+        // Only one node should initialize the JWKSet
+        if (clientRegistrationIdToKeyId.isEmpty() && kidToJwk.isEmpty()) {
+            log.debug("Initializing JWKSet for OAuth2 ClientRegistrations");
+            generateOAuth2ClientKeys();
+        }
     }
 
     /**
@@ -57,7 +70,8 @@ public class OAuth2JWKSService {
      * @return the JWK found for the client registrationId
      */
     public JWK getJWK(String clientRegistrationId) {
-        return this.jwkSet.getKeyByKeyId(this.clientRegistrationIdToKeyId.get(clientRegistrationId));
+        String kid = clientRegistrationIdToKeyId.get(clientRegistrationId);
+        return (kid != null) ? kidToJwk.get(kid) : null;
     }
 
     /**
@@ -67,53 +81,39 @@ public class OAuth2JWKSService {
      */
     public void updateKey(String clientRegistrationId) {
         ClientRegistration clientRegistration = onlineCourseConfigurationService.findByRegistrationId(clientRegistrationId);
-        JWK jwkToRemove = getJWK(clientRegistrationId);
-
-        if (jwkToRemove == null && clientRegistration == null) {
+        if (clientRegistration == null)
             return;
+
+        String oldKid = clientRegistrationIdToKeyId.get(clientRegistrationId);
+        if (oldKid != null) {
+            kidToJwk.remove(oldKid);
         }
 
-        List<JWK> keys = new ArrayList<>(jwkSet.getKeys());
-
-        if (jwkToRemove != null) {
-            keys = keys.stream().filter(jwk -> jwk != jwkToRemove).collect(Collectors.toCollection(ArrayList::new));
-        }
-
-        generateAndAddKey(clientRegistration, keys);
-        this.jwkSet = new JWKSet(keys);
+        generateAndAddKey(clientRegistration);
     }
 
     public JWKSet getJwkSet() {
-        return this.jwkSet;
+        return new JWKSet(new ArrayList<>(kidToJwk.values()));
     }
 
-    private List<JWK> generateOAuth2ClientKeys() {
-        List<JWK> keys = new LinkedList<>();
-        onlineCourseConfigurationService.getAllClientRegistrations().forEach(clientRegistration -> generateAndAddKey(clientRegistration, keys));
-        return keys;
+    private void generateOAuth2ClientKeys() {
+        onlineCourseConfigurationService.getAllClientRegistrations().forEach(this::generateAndAddKey);
     }
 
-    private void generateAndAddKey(ClientRegistration clientRegistration, List<JWK> keys) {
-        if (clientRegistration == null) {
-            return;
-        }
-
-        KeyPair clientKeyPair;
+    private void generateAndAddKey(ClientRegistration clientRegistration) {
         try {
-            clientKeyPair = KeyPairGenerator.getInstance("RSA").generateKeyPair();
+            KeyPair keyPair = KeyPairGenerator.getInstance("RSA").generateKeyPair();
+            String kid = kidGenerator.generateKey();
+
+            RSAKey rsaKey = new RSAKey.Builder((RSAPublicKey) keyPair.getPublic()).keyUse(KeyUse.SIGNATURE).algorithm(JWSAlgorithm.RS256).privateKey(keyPair.getPrivate())
+                    .keyID(kid).build();
+
+            clientRegistrationIdToKeyId.put(clientRegistration.getRegistrationId(), kid);
+            kidToJwk.put(kid, rsaKey);
+
         }
         catch (NoSuchAlgorithmException e) {
-            log.error("Could not generate key for clientRegistrationId {}", clientRegistration.getRegistrationId());
-            return;
+            log.error("Failed to generate key for clientRegistrationId {}", clientRegistration.getRegistrationId(), e);
         }
-
-        String kid = kidGenerator.generateKey();
-        RSAKey.Builder builder = new RSAKey.Builder((RSAPublicKey) clientKeyPair.getPublic()).keyUse(KeyUse.SIGNATURE).algorithm(JWSAlgorithm.RS256)
-                .privateKey(clientKeyPair.getPrivate()).keyID(kid);
-
-        this.clientRegistrationIdToKeyId.put(clientRegistration.getRegistrationId(), kid);
-
-        JWK jwk = builder.build();
-        keys.add(jwk);
     }
 }
