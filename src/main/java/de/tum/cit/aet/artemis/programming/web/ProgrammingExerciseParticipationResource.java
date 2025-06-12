@@ -77,7 +77,7 @@ public class ProgrammingExerciseParticipationResource {
     private static final String ENTITY_NAME = "programmingExerciseParticipation";
 
     @Value("${artemis.version-control.url}")
-    private String vcUrl;
+    private String localVCBaseUrl;
 
     private final ParticipationRepository participationRepository;
 
@@ -204,7 +204,7 @@ public class ProgrammingExerciseParticipationResource {
         String repoUri;
         if (StringUtils.hasText(repoNameParam)) {
             try {
-                repoUri = new VcsRepositoryUri(vcUrl, repoNameParam).toString();
+                repoUri = new VcsRepositoryUri(localVCBaseUrl, repoNameParam).toString();
             }
             catch (URISyntaxException e) {
                 throw new BadRequestAlertException("Invalid repository URL", ENTITY_NAME, "invalidRepositoryUrl");
