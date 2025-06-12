@@ -254,4 +254,82 @@ describe('FeedbackLearnerProfileComponent', () => {
         expect(component.learnerProfile()).toEqual(mockProfile); // Profile should remain unchanged
         expect(component.disabled).toBeFalse(); // Component should remain enabled
     });
+
+    describe('Profile validation', () => {
+        it('should handle successful profile update with success alert', async () => {
+            // Arrange
+            const newProfile = new LearnerProfileDTO({
+                id: mockProfile.id,
+                feedbackAlternativeStandard: 3,
+                feedbackFollowupSummary: 3,
+                feedbackBriefDetailed: 3,
+            });
+
+            component.learnerProfile.set(mockProfile);
+            component.disabled = false;
+            component.feedbackAlternativeStandard.set(newProfile.feedbackAlternativeStandard);
+            component.feedbackFollowupSummary.set(newProfile.feedbackFollowupSummary);
+            component.feedbackBriefDetailed.set(newProfile.feedbackBriefDetailed);
+
+            const putSpy = jest.spyOn(learnerProfileApiService, 'putUpdatedLearnerProfile').mockResolvedValue(newProfile);
+
+            // Act
+            await component.onToggleChange();
+            await fixture.whenStable();
+
+            // Assert
+            expect(putSpy).toHaveBeenCalledWith(newProfile);
+            expect(component.learnerProfile()).toEqual(newProfile);
+        });
+
+        it('should update profile values in component state after successful update', async () => {
+            // Arrange
+            const newProfile = new LearnerProfileDTO({
+                id: mockProfile.id,
+                feedbackAlternativeStandard: 3,
+                feedbackFollowupSummary: 3,
+                feedbackBriefDetailed: 3,
+            });
+
+            component.learnerProfile.set(mockProfile);
+            component.disabled = false;
+            component.feedbackAlternativeStandard.set(newProfile.feedbackAlternativeStandard);
+            component.feedbackFollowupSummary.set(newProfile.feedbackFollowupSummary);
+            component.feedbackBriefDetailed.set(newProfile.feedbackBriefDetailed);
+
+            jest.spyOn(learnerProfileApiService, 'putUpdatedLearnerProfile').mockResolvedValue(newProfile);
+
+            // Act
+            await component.onToggleChange();
+            await fixture.whenStable();
+
+            // Assert
+            expect(component.feedbackAlternativeStandard()).toBe(newProfile.feedbackAlternativeStandard);
+            expect(component.feedbackFollowupSummary()).toBe(newProfile.feedbackFollowupSummary);
+            expect(component.feedbackBriefDetailed()).toBe(newProfile.feedbackBriefDetailed);
+        });
+    });
+
+    describe('Profile initialization', () => {
+        it('should initialize with profile values when profile exists', async () => {
+            // Arrange
+            const profile = new LearnerProfileDTO({
+                id: 1,
+                feedbackAlternativeStandard: 3,
+                feedbackFollowupSummary: 2,
+                feedbackBriefDetailed: 1,
+            });
+            jest.spyOn(learnerProfileApiService, 'getLearnerProfileForCurrentUser').mockResolvedValue(profile);
+
+            // Act
+            await component.ngOnInit();
+            await fixture.whenStable();
+
+            // Assert
+            expect(component.feedbackAlternativeStandard()).toBe(profile.feedbackAlternativeStandard);
+            expect(component.feedbackFollowupSummary()).toBe(profile.feedbackFollowupSummary);
+            expect(component.feedbackBriefDetailed()).toBe(profile.feedbackBriefDetailed);
+            expect(component.disabled).toBeFalse();
+        });
+    });
 });
