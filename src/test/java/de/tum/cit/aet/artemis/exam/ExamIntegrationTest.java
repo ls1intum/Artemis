@@ -40,9 +40,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-
 import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
@@ -397,10 +394,13 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateExam_asInstructor_returnsBody() throws Exception {
         final Exam exam = validExamWithCustomFieldValues();
+        exam.setQuizExamMaxPoints(40);  // this is only returned by the POST endpoint (createExam),
+        // not the GET endpoint (getExam)
 
         final Exam savedExam = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams", exam, Exam.class, HttpStatus.CREATED);
 
         checkCustomFieldValuesExamsAreEffectivelyEqual(savedExam, exam);
+        assertThat(savedExam.getQuizExamMaxPoints()).isEqualTo(exam.getQuizExamMaxPoints());
     }
 
     @Test
@@ -1425,42 +1425,6 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
         /// GETS the "api/exam/courses/{course-id}/exams/{exam-id}" endpoint
         Exam receivedExam = request.get(String.valueOf(receivedExamURI), HttpStatus.OK, Exam.class);
         assertThat(receivedExam.getCourseName()).isNull();
-    }
-
-    @ParameterizedTest
-    @ValueSource(ints = { 0, 1, 2, 5, 10, 20, 100, 1000 })
-    void testQuizExamMaxPoints(int quizExamMaxPoints) throws Exception {
-        /*
-         * quizExamMaxPoints is a @Transient field, thus not stored in the DB,
-         * and it's getter and setter are marked with JsonProperty.Access.READ_ONLY / JsonProperty.Access.WRITE_ONLY
-         */
-        // First a simple unit test
-        {
-            Exam exam = new Exam();
-            exam.setQuizExamMaxPoints(quizExamMaxPoints);
-            assertThat(exam.getQuizExamMaxPoints()).isEqualTo(quizExamMaxPoints);
-        }
-
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new JavaTimeModule());
-
-        // Next a test if the serialization includes the quizExamMaxPoints
-        {
-            final Exam exam = new Exam();
-            exam.setQuizExamMaxPoints(quizExamMaxPoints);
-
-            String json = objectMapper.writeValueAsString(exam);
-
-            assertThat(json).contains("\"quizExamMaxPoints\":" + quizExamMaxPoints);
-        }
-
-        // Now a test if the deserialization sets the quizExamMaxPoints
-        {
-            String json = "{ \"quizExamMaxPoints\": %d }".formatted(quizExamMaxPoints);
-
-            Exam exam = objectMapper.readValue(json, Exam.class);
-            assertThat(exam.getQuizExamMaxPoints()).isEqualTo(quizExamMaxPoints);
-        }
     }
 
     @ParameterizedTest
