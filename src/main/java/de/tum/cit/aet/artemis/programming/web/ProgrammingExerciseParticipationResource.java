@@ -4,8 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
@@ -202,13 +200,9 @@ public class ProgrammingExerciseParticipationResource {
     @GetMapping("programming-exercise-participations")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
-    public ResponseEntity<RepoNameProgrammingStudentParticipationDTO> getStudentParticipationByRepoName(@RequestParam(required = false, name = "repoName") String repoNameParam,
-            @RequestParam(required = false, name = "repoUri") String repoUriParam) {
+    public ResponseEntity<RepoNameProgrammingStudentParticipationDTO> getStudentParticipationByRepoName(@RequestParam(required = false, name = "repoName") String repoNameParam) {
         String repoUri;
-        if (StringUtils.hasText(repoUriParam)) {
-            repoUri = URLDecoder.decode(repoUriParam, StandardCharsets.UTF_8);
-        }
-        else if (StringUtils.hasText(repoNameParam)) {
+        if (StringUtils.hasText(repoNameParam)) {
             try {
                 repoUri = new VcsRepositoryUri(vcUrl, repoNameParam).toString();
             }
@@ -217,7 +211,7 @@ public class ProgrammingExerciseParticipationResource {
             }
         }
         else {
-            throw new BadRequestAlertException("Repository name or URI must be provided", ENTITY_NAME, "repoNameOrUriRequired");
+            throw new BadRequestAlertException("Repository name must be provided", ENTITY_NAME, "repoNameRequired");
         }
 
         // find participation by url
