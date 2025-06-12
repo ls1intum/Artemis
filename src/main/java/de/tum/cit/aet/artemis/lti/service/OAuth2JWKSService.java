@@ -42,9 +42,7 @@ public class OAuth2JWKSService {
 
     private static final Logger log = LoggerFactory.getLogger(OAuth2JWKSService.class);
 
-    private IMap<String, String> clientRegistrationIdToKeyId;
-
-    private IMap<String, JWK> kidToJwk;
+    private IMap<String, JWK> clientRegistrationIdToJwk;
 
     public OAuth2JWKSService(OnlineCourseConfigurationService onlineCourseConfigurationService, HazelcastInstance hazelcastInstance) {
         this.onlineCourseConfigurationService = onlineCourseConfigurationService;
@@ -53,11 +51,10 @@ public class OAuth2JWKSService {
 
     @PostConstruct
     public void init() {
-        clientRegistrationIdToKeyId = hazelcastInstance.getMap("ltiClientRegistrationIdToKeyId");
-        kidToJwk = hazelcastInstance.getMap("ltiJwkSet");
+        clientRegistrationIdToJwk = hazelcastInstance.getMap("ltiJwkMap");
 
         // Only one node should initialize the JWKSet
-        if (clientRegistrationIdToKeyId.isEmpty() && kidToJwk.isEmpty()) {
+        if (clientRegistrationIdToJwk.isEmpty()) {
             log.debug("Initializing JWKSet for OAuth2 ClientRegistrations");
             generateOAuth2ClientKeys();
         }
@@ -70,8 +67,7 @@ public class OAuth2JWKSService {
      * @return the JWK found for the client registrationId
      */
     public JWK getJWK(String clientRegistrationId) {
-        String kid = clientRegistrationIdToKeyId.get(clientRegistrationId);
-        return (kid != null) ? kidToJwk.get(kid) : null;
+        return clientRegistrationIdToJwk.get(clientRegistrationId);
     }
 
     /**
@@ -81,24 +77,17 @@ public class OAuth2JWKSService {
      */
     public void updateKey(String clientRegistrationId) {
         ClientRegistration clientRegistration = onlineCourseConfigurationService.findByRegistrationId(clientRegistrationId);
-        String oldKid = clientRegistrationIdToKeyId.get(clientRegistrationId);
 
         if (clientRegistration == null) {
-            // If the clientRegistration is null, we assume it's a delete operation
-            clientRegistrationIdToKeyId.delete(clientRegistrationId);
+            clientRegistrationIdToJwk.delete(clientRegistrationId);  // Delete only
         }
-
-        if (oldKid != null) {
-            // For replace or delete operations, we remove the old key
-            kidToJwk.remove(oldKid);
+        else {
+            generateAndAddKey(clientRegistration);  // Replace or Add
         }
-
-        // Only generates a new key if the clientRegistration is not null (for add and replace operations)
-        generateAndAddKey(clientRegistration);
     }
 
     public JWKSet getJwkSet() {
-        return new JWKSet(new ArrayList<>(kidToJwk.values()));
+        return new JWKSet(new ArrayList<>(clientRegistrationIdToJwk.values()));
     }
 
     private void generateOAuth2ClientKeys() {
@@ -116,9 +105,7 @@ public class OAuth2JWKSService {
             RSAKey rsaKey = new RSAKey.Builder((RSAPublicKey) keyPair.getPublic()).keyUse(KeyUse.SIGNATURE).algorithm(JWSAlgorithm.RS256).privateKey(keyPair.getPrivate())
                     .keyID(kid).build();
 
-            clientRegistrationIdToKeyId.put(clientRegistration.getRegistrationId(), kid);
-            kidToJwk.put(kid, rsaKey);
-
+            clientRegistrationIdToJwk.put(clientRegistration.getRegistrationId(), rsaKey);
         }
         catch (NoSuchAlgorithmException e) {
             log.error("Failed to generate key for clientRegistrationId {}", clientRegistration.getRegistrationId(), e);
