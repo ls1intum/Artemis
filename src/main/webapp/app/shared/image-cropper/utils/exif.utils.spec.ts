@@ -1,6 +1,10 @@
 import { getTransformationsFromExifData, supportsAutomaticRotation } from './exif.utils';
 
 describe('Exif Utils', () => {
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
     describe('supportsAutomaticRotation', () => {
         it('should resolve true if the browser supports automatic image orientation', async () => {
             const mockImage = {

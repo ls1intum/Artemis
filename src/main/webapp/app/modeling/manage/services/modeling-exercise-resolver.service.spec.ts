@@ -19,7 +19,13 @@ describe('ModelingExerciseResolver', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [MockProvider(CourseManagementService), MockProvider(ModelingExerciseService), provideHttpClient(), provideHttpClientTesting()],
+            providers: [
+                MockProvider(CourseManagementService),
+                MockProvider(ModelingExerciseService),
+                MockProvider(ExerciseGroupService),
+                provideHttpClient(),
+                provideHttpClientTesting(),
+            ],
         });
 
         component = TestBed.inject(ModelingExerciseResolver);
