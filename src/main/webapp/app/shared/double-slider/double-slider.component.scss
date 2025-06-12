@@ -17,6 +17,18 @@ input[type='range']#currentSlider::-ms-thumb {
     cursor: pointer;
 }
 
+#currentSlider::-webkit-slider-runnable-track {
+    background: transparent;
+}
+
+#currentSlider::-moz-range-track {
+    background-color: transparent;
+}
+
+#currentSlider::-ms-track {
+    background-color: transparent;
+}
+
 input[type='range'] {
     position: absolute;
 }
@@ -27,10 +39,6 @@ input[type='range'] {
 
 #initialSlider {
     pointer-events: none;
-}
-
-#currentSlider::-moz-range-track {
-    background-color: transparent;
 }
 
 datalist {
