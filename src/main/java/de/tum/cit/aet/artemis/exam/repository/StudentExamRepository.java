@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import de.tum.cit.aet.artemis.exam.dto.StudentExamCheckDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 
@@ -201,7 +202,21 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             """)
     Optional<StudentExam> findByExamIdAndUserId(@Param("examId") long examId, @Param("userId") long userId);
 
-    Optional<StudentExam> findFirstByExamIdAndUserIdOrderByCreatedDateDesc(long examId, long userId);
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.exam.dto.StudentExamCheckDTO(se.id, se.submitted, se.started, se.startedDate, se.workingTime, se.testRun, e.startDate, e.testExam)
+            FROM StudentExam se
+                JOIN se.exam e
+            WHERE e.id = :examId
+                AND se.user.id = :userId
+            ORDER BY se.createdDate DESC
+            LIMIT 1
+            """)
+    Optional<StudentExamCheckDTO> findStudentExamSubmissionStatusByExamIdAndUserId(@Param("examId") Long examId, @Param("userId") Long userId);
+
+    default StudentExamCheckDTO findStudentExamSubmissionStatusByExamIdAndUserIdElseThrow(long examId, long userId) {
+        return this.findStudentExamSubmissionStatusByExamIdAndUserId(examId, userId)
+                .orElseThrow(() -> new EntityNotFoundException("StudentExam", "examId: " + examId + ", userId: " + userId));
+    }
 
     @Query("""
             SELECT se
@@ -211,18 +226,6 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
                 AND p.id = :participationId
             """)
     Optional<StudentExam> findByExamIdAndParticipationId(@Param("examId") long examId, @Param("participationId") long participationId);
-
-    /**
-     * Return the StudentExam for the given examId and userId, if possible. For test exams, the latest Student Exam is returned.
-     *
-     * @param examId id of the exam
-     * @param userId id of the user
-     * @return the student exam
-     * @throws EntityNotFoundException if no student exams could be found
-     */
-    default StudentExam findOneByExamIdAndUserIdElseThrow(long examId, long userId) {
-        return getValueElseThrow(this.findFirstByExamIdAndUserIdOrderByCreatedDateDesc(examId, userId));
-    }
 
     /**
      * Retrieves the submission status of a student exam.
