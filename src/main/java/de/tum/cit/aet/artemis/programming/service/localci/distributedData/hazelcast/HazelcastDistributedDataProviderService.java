@@ -36,6 +36,11 @@ public class HazelcastDistributedDataProviderService implements DistributedDataP
     }
 
     @Override
+    public <T extends Comparable<T>> DistributedQueue<T> getPriorityQueue(String name) {
+        return getQueue(name);
+    }
+
+    @Override
     public <K, V> DistributedMap<K, V> getMap(String name) {
         return new HazelcastDistributedMap<>(hazelcastInstance.getMap(name));
     }

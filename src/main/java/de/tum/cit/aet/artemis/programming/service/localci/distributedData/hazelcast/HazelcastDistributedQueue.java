@@ -63,6 +63,11 @@ public class HazelcastDistributedQueue<T> implements DistributedQueue<T> {
     }
 
     @Override
+    public String getName() {
+        return queue.getName();
+    }
+
+    @Override
     public boolean isEmpty() {
         return queue.isEmpty();
     }

@@ -59,6 +59,13 @@ public interface DistributedQueue<T> {
     List<T> getAll();
 
     /**
+     * Returns the name of the queue.
+     *
+     * @return queue name
+     */
+    String getName();
+
+    /**
      * Checks if the queue is empty.
      *
      * @return {@code true} if the queue contains no items, {@code false} otherwise

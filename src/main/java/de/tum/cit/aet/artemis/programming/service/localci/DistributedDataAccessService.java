@@ -62,7 +62,7 @@ public class DistributedDataAccessService {
      */
     public DistributedQueue<BuildJobQueueItem> getDistributedBuildJobQueue() {
         if (this.buildJobQueue == null) {
-            this.buildJobQueue = this.distributedDataProvider.getQueue("buildJobQueue");
+            this.buildJobQueue = this.distributedDataProvider.getPriorityQueue("buildJobQueue");
         }
         return this.buildJobQueue;
     }
