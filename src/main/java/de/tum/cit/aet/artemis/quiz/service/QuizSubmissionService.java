@@ -159,6 +159,7 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
                 return;
             }
             QuizSubmission quizSubmission = (QuizSubmission) quizSubmissionOptional.get();
+            quizSubmission.setParticipation(participation);
 
             if (quizSubmission.isSubmitted()) {
                 if (quizSubmission.getType() == null) {
