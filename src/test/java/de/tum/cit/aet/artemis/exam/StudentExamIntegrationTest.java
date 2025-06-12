@@ -94,6 +94,7 @@ import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.exception.UnknownExerciseTypeException;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionVersionRepository;
@@ -1498,8 +1499,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
                 submitQuizInExam(quizExercise, (QuizSubmission) submission);
             }
             case FileUploadExercise fileUploadExercise -> assertSensitiveInformationWasFilteredFileUploadExercise(fileUploadExercise);
-            default -> {
-            }
+            default -> throw new UnknownExerciseTypeException(exercise);
         }
     }
 

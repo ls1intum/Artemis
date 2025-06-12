@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionExportOptionsDTO;
+import de.tum.cit.aet.artemis.exercise.exception.UnknownExerciseTypeException;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
@@ -133,8 +134,7 @@ class SubmissionExportIntegrationTest extends AbstractSpringIntegrationIndepende
                         fail("Could not create submission files", e);
                     }
                 }
-                default -> {
-                }
+                default -> throw new UnknownExerciseTypeException(exercise);
             }
         });
 
