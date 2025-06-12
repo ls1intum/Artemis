@@ -6,6 +6,7 @@ import java.net.URL;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
+import java.util.Optional;
 
 import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
@@ -35,11 +36,11 @@ public class ArtemisSuccessfulLoginService {
 
     private static final Logger log = LoggerFactory.getLogger(ArtemisSuccessfulLoginService.class);
 
-    @Value("${artemis.user-management.password-reset.links.en}")
-    private String passwordResetLinkEnUrl;
+    @Value("${artemis.user-management.password-reset.links.en:#{null}}")
+    private Optional<String> passwordResetLinkEnUrl;
 
-    @Value("${artemis.user-management.password-reset.links.de}")
-    private String passwordResetLinkDeUrl;
+    @Value("${artemis.user-management.password-reset.links.de:#{null}}")
+    private Optional<String> passwordResetLinkDeUrl;
 
     @Value("${server.url}")
     private URL artemisServerUrl;
@@ -55,14 +56,24 @@ public class ArtemisSuccessfulLoginService {
     @PostConstruct
     public void ensurePasswordResetLinksAreInitializedProperly() {
         String defaultPasswordResetLink = artemisServerUrl + "/account/reset/request";
-        String configurationPlaceholder = "<link>";
-        if (passwordResetLinkEnUrl == null || passwordResetLinkEnUrl.isEmpty() || passwordResetLinkEnUrl.equals(configurationPlaceholder)) {
+        if (isEmptyOrDefaultLink(passwordResetLinkEnUrl)) {
             log.info("No password reset link configured for English, using default link {}", defaultPasswordResetLink);
-            passwordResetLinkEnUrl = defaultPasswordResetLink;
+            passwordResetLinkEnUrl = Optional.of(defaultPasswordResetLink);
         }
-        if (passwordResetLinkDeUrl == null || passwordResetLinkDeUrl.isEmpty() || passwordResetLinkDeUrl.equals(configurationPlaceholder)) {
+        if (isEmptyOrDefaultLink(passwordResetLinkDeUrl)) {
             log.info("No password reset link configured for German, using default link {}", defaultPasswordResetLink);
-            passwordResetLinkDeUrl = defaultPasswordResetLink;
+            passwordResetLinkDeUrl = Optional.of(defaultPasswordResetLink);
+        }
+    }
+
+    private boolean isEmptyOrDefaultLink(final Optional<String> link) {
+        if (link.isEmpty()) {
+            return true;
+        }
+        else {
+            final String configurationPlaceholder = "<link>";
+            final String configuredLink = link.get();
+            return configuredLink.isBlank() || configurationPlaceholder.equals(configuredLink);
         }
     }
 
