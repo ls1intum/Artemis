@@ -53,8 +53,8 @@ public class OAuth2JWKSService {
 
     @PostConstruct
     public void init() {
-        clientRegistrationIdToKeyId = hazelcastInstance.getMap("lti-clientRegistrationIdToKeyId");
-        kidToJwk = hazelcastInstance.getMap("lti-jwkSet");
+        clientRegistrationIdToKeyId = hazelcastInstance.getMap("ltiClientRegistrationIdToKeyId");
+        kidToJwk = hazelcastInstance.getMap("ltiJwkSet");
 
         // Only one node should initialize the JWKSet
         if (clientRegistrationIdToKeyId.isEmpty() && kidToJwk.isEmpty()) {
@@ -81,14 +81,19 @@ public class OAuth2JWKSService {
      */
     public void updateKey(String clientRegistrationId) {
         ClientRegistration clientRegistration = onlineCourseConfigurationService.findByRegistrationId(clientRegistrationId);
-        if (clientRegistration == null)
-            return;
-
         String oldKid = clientRegistrationIdToKeyId.get(clientRegistrationId);
+
+        if (clientRegistration == null) {
+            // If the clientRegistration is null, we assume it's a delete operation
+            clientRegistrationIdToKeyId.delete(clientRegistrationId);
+        }
+
         if (oldKid != null) {
+            // For replace or delete operations, we remove the old key
             kidToJwk.remove(oldKid);
         }
 
+        // Only generates a new key if the clientRegistration is not null (for add and replace operations)
         generateAndAddKey(clientRegistration);
     }
 
@@ -101,6 +106,9 @@ public class OAuth2JWKSService {
     }
 
     private void generateAndAddKey(ClientRegistration clientRegistration) {
+        if (clientRegistration == null) {
+            return;
+        }
         try {
             KeyPair keyPair = KeyPairGenerator.getInstance("RSA").generateKeyPair();
             String kid = kidGenerator.generateKey();
