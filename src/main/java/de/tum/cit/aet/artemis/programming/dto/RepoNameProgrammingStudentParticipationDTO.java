@@ -21,7 +21,7 @@ public record RepoNameProgrammingStudentParticipationDTO(long id, ZonedDateTime 
 
     /**
      * Converts a ProgrammingExerciseStudentParticipation into a dto for the endpoint
-     * {@link de.tum.cit.aet.artemis.programming.web.ProgrammingExerciseParticipationResource#getStudentParticipationWithLatestSubmissionLatestResultFeedbacksByRepoName(String)}.
+     * {@link de.tum.cit.aet.artemis.programming.web.ProgrammingExerciseParticipationResource#getStudentParticipationByRepoName(String)}.
      *
      * @param participation to convert
      * @return the converted DTO
@@ -42,7 +42,7 @@ public record RepoNameProgrammingStudentParticipationDTO(long id, ZonedDateTime 
 
         /**
          * Converts a ProgrammingExercise into a dto for the endpoint
-         * {@link de.tum.cit.aet.artemis.programming.web.ProgrammingExerciseParticipationResource#getStudentParticipationWithLatestSubmissionLatestResultFeedbacksByRepoName(String)}.
+         * {@link de.tum.cit.aet.artemis.programming.web.ProgrammingExerciseParticipationResource#getStudentParticipationByRepoName(String)}.
          *
          * @param exercise to convert
          * @return the converted DTO
@@ -62,7 +62,7 @@ public record RepoNameProgrammingStudentParticipationDTO(long id, ZonedDateTime 
 
         /**
          * Converts a Course into a dto for the endpoint
-         * {@link de.tum.cit.aet.artemis.programming.web.ProgrammingExerciseParticipationResource#getStudentParticipationWithLatestSubmissionLatestResultFeedbacksByRepoName(String)}.
+         * {@link de.tum.cit.aet.artemis.programming.web.ProgrammingExerciseParticipationResource#getStudentParticipationByRepoName(String)}.
          *
          * @param course to convert
          * @return the converted DTO
