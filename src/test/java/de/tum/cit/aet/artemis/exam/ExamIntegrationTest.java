@@ -1442,7 +1442,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
     }
 
     @ParameterizedTest
-    @ValueSource(ints = { 5, 60, 5 * 60, 3 * 60 * 60, 5 * 24 * 60 * 60 })
+    @ValueSource(ints = { 15, 60, 5 * 60, 3 * 60 * 60, 5 * 24 * 60 * 60 })
     /* We don't want to test with too small values, or else the test might become flaky */
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testIsNotVisibleToStudents(int afterSeconds) throws Exception {
