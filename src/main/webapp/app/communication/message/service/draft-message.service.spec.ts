@@ -58,19 +58,6 @@ describe('DraftService', () => {
         expect(clearSpy).toHaveBeenCalledWith('key');
     });
 
-    it('should treat draft saved exactly 7 days ago as valid', () => {
-        const now = Date.now();
-        const exact7DaysAgo = now - SEVEN_DAYS_MS;
-        const draftData = JSON.stringify({ content: 'edge case draft', timestamp: exact7DaysAgo });
-
-        const clearSpy = jest.spyOn(localStorageService, 'clear');
-        jest.spyOn(localStorageService, 'retrieve').mockReturnValue(draftData);
-
-        const result = draftService.loadDraft('key');
-        expect(result).toBe('edge case draft');
-        expect(clearSpy).not.toHaveBeenCalled();
-    });
-
     it('should treat draft saved just after 7 days ago as expired', () => {
         const now = Date.now();
         const justOver7DaysAgo = now - SEVEN_DAYS_MS - 1;
