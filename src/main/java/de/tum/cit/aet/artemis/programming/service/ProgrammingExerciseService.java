@@ -48,6 +48,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.athena.api.AthenaFeedbackApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerFlagsDTO;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
@@ -211,6 +212,8 @@ public class ProgrammingExerciseService {
 
     private final ProgrammingExerciseBuildConfigService programmingExerciseBuildConfigService;
 
+    private final Optional<AthenaFeedbackApi> athenaFeedbackApi;
+
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, GitService gitService, Optional<VersionControlService> versionControlService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
@@ -225,7 +228,7 @@ public class ProgrammingExerciseService {
             Optional<IrisSettingsApi> irisSettingsApi, Optional<AeolusTemplateService> aeolusTemplateService, Optional<BuildScriptGenerationService> buildScriptGenerationService,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProfileService profileService, ExerciseService exerciseService,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, Optional<CompetencyProgressApi> competencyProgressApi,
-            ProgrammingExerciseBuildConfigService programmingExerciseBuildConfigService) {
+            ProgrammingExerciseBuildConfigService programmingExerciseBuildConfigService, Optional<AthenaFeedbackApi> athenaFeedbackApi) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.gitService = gitService;
         this.versionControlService = versionControlService;
@@ -259,6 +262,7 @@ public class ProgrammingExerciseService {
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.competencyProgressApi = competencyProgressApi;
         this.programmingExerciseBuildConfigService = programmingExerciseBuildConfigService;
+        this.athenaFeedbackApi = athenaFeedbackApi;
     }
 
     /**
@@ -393,7 +397,9 @@ public class ProgrammingExerciseService {
 
         programmingExercise.validateGeneralSettings();
         programmingExercise.validateProgrammingSettings();
-        programmingExercise.validateSettingsForFeedbackRequest();
+        if (!this.athenaFeedbackApi.isPresent()) {
+            programmingExercise.validateSettingsForManualFeedbackRequest();
+        }
         validateCustomCheckoutPaths(programmingExercise);
         validateDockerFlags(programmingExercise);
         auxiliaryRepositoryService.validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(programmingExercise, programmingExercise.getAuxiliaryRepositories());

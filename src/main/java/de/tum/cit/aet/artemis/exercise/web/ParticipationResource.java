@@ -46,6 +46,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.GradingScaleService;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
+import de.tum.cit.aet.artemis.athena.api.AthenaFeedbackApi;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -173,6 +174,8 @@ public class ParticipationResource {
 
     private final ResultService resultService;
 
+    private final Optional<AthenaFeedbackApi> athenaFeedbackApi;
+
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
@@ -185,7 +188,8 @@ public class ParticipationResource {
             ResultRepository resultRepository, ExerciseDateService exerciseDateService, InstanceMessageSendService instanceMessageSendService, QuizBatchService quizBatchService,
             SubmittedAnswerRepository submittedAnswerRepository, QuizSubmissionService quizSubmissionService, GradingScaleService gradingScaleService,
             ProgrammingExerciseCodeReviewFeedbackService programmingExerciseCodeReviewFeedbackService, Optional<TextFeedbackApi> textFeedbackApi,
-            ModelingExerciseFeedbackService modelingExerciseFeedbackService, ResultService resultService, Optional<StudentExamApi> studentExamApi) {
+            ModelingExerciseFeedbackService modelingExerciseFeedbackService, ResultService resultService, Optional<StudentExamApi> studentExamApi,
+            Optional<AthenaFeedbackApi> athenaFeedbackApi) {
         this.participationService = participationService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.quizExerciseRepository = quizExerciseRepository;
@@ -213,6 +217,7 @@ public class ParticipationResource {
         this.modelingExerciseFeedbackService = modelingExerciseFeedbackService;
         this.resultService = resultService;
         this.studentExamApi = studentExamApi;
+        this.athenaFeedbackApi = athenaFeedbackApi;
     }
 
     /**
@@ -364,7 +369,9 @@ public class ParticipationResource {
             throw new BadRequestAlertException("The due date is over", "participation", "feedbackRequestAfterDueDate", true);
         }
         if (exercise instanceof ProgrammingExercise) {
-            ((ProgrammingExercise) exercise).validateSettingsForFeedbackRequest();
+            if (!this.athenaFeedbackApi.isPresent()) {
+                ((ProgrammingExercise) exercise).validateSettingsForManualFeedbackRequest();
+            }
         }
 
         // Get and validate participation
@@ -659,6 +666,26 @@ public class ParticipationResource {
         }).collect(Collectors.toSet());
 
         return ResponseEntity.ok(participations);
+    }
+
+    /**
+     * GET /exercises/{participationId}/athena-feedback-request-count :
+     * Returns how many *successful* AUTOMATIC_ATHENA results the **current user** already has for this exercise.
+     *
+     * @param participationId the id of the participation
+     * @return the ResponseEntity with status 200 (OK) and with body the number of successful feedback requests
+     */
+    @GetMapping("participations/{participationId}/athena-feedback-request-count")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Integer> getAutomaticFeedbackRequestCount(@PathVariable long participationId) {
+
+        StudentParticipation participation = studentParticipationRepository.findByIdWithEagerTeamStudentsElseThrow(participationId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        this.checkAccessPermissionOwner(participation, user);
+
+        int count = resultRepository.countBySubmissionParticipationIdAndAssessmentTypeAndSuccessfulTrue(participationId, AssessmentType.AUTOMATIC_ATHENA);
+
+        return ResponseEntity.ok(count);
     }
 
     /**

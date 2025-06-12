@@ -23,6 +23,8 @@ export class CodeEditorFileBrowserBadgeComponent {
         switch (this.badge.type) {
             case FileBadgeType.FEEDBACK_SUGGESTION:
                 return this.translateService.instant('artemisApp.editor.fileBrowser.fileBadgeTooltips.feedbackSuggestions');
+            case FileBadgeType.PRELIMINARY_FEEDBACK:
+                return this.translateService.instant('artemisApp.editor.fileBrowser.fileBadgeTooltips.preliminaryFeedback');
             default:
                 return undefined;
         }
@@ -31,6 +33,8 @@ export class CodeEditorFileBrowserBadgeComponent {
     get icon(): IconDefinition | undefined {
         switch (this.badge.type) {
             case FileBadgeType.FEEDBACK_SUGGESTION:
+                return faLightbulb;
+            case FileBadgeType.PRELIMINARY_FEEDBACK:
                 return faLightbulb;
             default:
                 return undefined;

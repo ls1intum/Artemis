@@ -42,7 +42,8 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
 /**
  * Service for receiving feedback suggestions from the Athena service.
- * Assumes that submissions and already given feedback have already been sent to Athena or that the feedback is non-graded.
+ * Assumes that submissions and already given feedback have already been sent to
+ * Athena or that the feedback is non-graded.
  */
 @Service
 @Profile(PROFILE_ATHENA)
@@ -66,11 +67,15 @@ public class AthenaFeedbackSuggestionsService {
     private int allowedFeedbackRequests;
 
     /**
-     * Create a new AthenaFeedbackSuggestionsService to receive feedback suggestions from the Athena service.
+     * Create a new AthenaFeedbackSuggestionsService to receive feedback suggestions
+     * from the Athena service.
      *
-     * @param athenaRestTemplate        REST template used for the communication with Athena
-     * @param athenaModuleService       Athena module serviced used to determine the urls for different modules
-     * @param athenaDTOConverterService Service to convert exrcises and submissions to DTOs
+     * @param athenaRestTemplate        REST template used for the communication
+     *                                      with Athena
+     * @param athenaModuleService       Athena module serviced used to determine the
+     *                                      urls for different modules
+     * @param athenaDTOConverterService Service to convert exrcises and submissions
+     *                                      to DTOs
      * @param llmTokenUsageService      Service to store the usage of LLM tokens
      */
     public AthenaFeedbackSuggestionsService(@Qualifier("athenaRestTemplate") RestTemplate athenaRestTemplate, AthenaModuleService athenaModuleService,
@@ -100,11 +105,14 @@ public class AthenaFeedbackSuggestionsService {
     }
 
     /**
-     * Calls the remote Athena service to get feedback suggestions for a given submission.
+     * Calls the remote Athena service to get feedback suggestions for a given
+     * submission.
      *
      * @param exercise      the {@link TextExercise} the suggestions are fetched for
-     * @param submission    the {@link TextSubmission} the suggestions are fetched for
-     * @param isPreliminary the {@link Boolean} should Athena generate grade suggestions or not
+     * @param submission    the {@link TextSubmission} the suggestions are fetched
+     *                          for
+     * @param isPreliminary the {@link Boolean} should Athena generate grade
+     *                          suggestions or not
      * @return a list of feedback suggestions
      */
     public List<TextFeedbackDTO> getTextFeedbackSuggestions(TextExercise exercise, TextSubmission submission, boolean isPreliminary) throws NetworkingException {
@@ -128,11 +136,15 @@ public class AthenaFeedbackSuggestionsService {
     }
 
     /**
-     * Calls the remote Athena service to get feedback suggestions for a given programming submission.
+     * Calls the remote Athena service to get feedback suggestions for a given
+     * programming submission.
      *
-     * @param exercise      the {@link ProgrammingExercise} the suggestions are fetched for
-     * @param submission    the {@link ProgrammingSubmission} the suggestions are fetched for
-     * @param isPreliminary the {@link Boolean} should Athena generate grade suggestions or not
+     * @param exercise      the {@link ProgrammingExercise} the suggestions are
+     *                          fetched for
+     * @param submission    the {@link ProgrammingSubmission} the suggestions are
+     *                          fetched for
+     * @param isPreliminary the {@link Boolean} should Athena generate grade
+     *                          suggestions or not
      * @return a list of feedback suggestions
      */
     public List<ProgrammingFeedbackDTO> getProgrammingFeedbackSuggestions(ProgrammingExercise exercise, ProgrammingSubmission submission, boolean isPreliminary)
@@ -150,11 +162,15 @@ public class AthenaFeedbackSuggestionsService {
     }
 
     /**
-     * Retrieve feedback suggestions for a given modeling exercise submission from Athena
+     * Retrieve feedback suggestions for a given modeling exercise submission from
+     * Athena
      *
-     * @param exercise      the {@link ModelingExercise} the suggestions are fetched for
-     * @param submission    the {@link ModelingSubmission} the suggestions are fetched for
-     * @param isPreliminary the {@link Boolean} should Athena generate grade suggestions or not
+     * @param exercise      the {@link ModelingExercise} the suggestions are fetched
+     *                          for
+     * @param submission    the {@link ModelingSubmission} the suggestions are
+     *                          fetched for
+     * @param isPreliminary the {@link Boolean} should Athena generate grade
+     *                          suggestions or not
      * @return a list of feedback suggestions generated by Athena
      */
     public List<ModelingFeedbackDTO> getModelingFeedbackSuggestions(ModelingExercise exercise, ModelingSubmission submission, boolean isPreliminary) throws NetworkingException {
@@ -210,7 +226,8 @@ public class AthenaFeedbackSuggestionsService {
      * the allowed threshold and throws an exception if the limit is reached.
      *
      * @param participation the student participation to check
-     * @throws BadRequestAlertException if the maximum number of Athena feedback requests is exceeded
+     * @throws BadRequestAlertException if the maximum number of Athena feedback
+     *                                      requests is exceeded
      */
     public void checkRateLimitOrThrow(StudentParticipation participation) {
         List<Result> athenaResults = participation.getResults().stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA).toList();
@@ -227,7 +244,8 @@ public class AthenaFeedbackSuggestionsService {
      * Throws an exception if Athena result already exists.
      *
      * @param submission the student's submission to validate
-     * @throws BadRequestAlertException if an Athena result is already present for the submission
+     * @throws BadRequestAlertException if an Athena result is already present for
+     *                                      the submission
      */
     public void checkLatestSubmissionHasNoAthenaResultOrThrow(Submission submission) {
         Result latestResult = submission.getLatestResult();

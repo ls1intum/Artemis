@@ -175,7 +175,11 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
         return [];
     }
 
-    receivedNewResult() {
+    receivedParticipationChange() {
         this.getNumberOfSubmissionsForSubmissionPolicy();
+    }
+
+    receivedNewResult(result: Result) {
+        this.latestResult = result;
     }
 }

@@ -6,7 +6,7 @@ import {
     FEEDBACK_SUGGESTION_IDENTIFIER,
     Feedback,
     FeedbackType,
-    NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER,
+    PRELIMINARY_FEEDBACK_IDENTIFIER,
     STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER,
     SUBMISSION_POLICY_FEEDBACK_IDENTIFIER,
 } from 'app/assessment/shared/entities/feedback.model';
@@ -50,9 +50,9 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
             return this.createScaFeedbackItem(feedback, showTestDetails);
         } else if (Feedback.isFeedbackSuggestion(feedback)) {
             return this.createFeedbackSuggestionItem(feedback, showTestDetails);
-        } else if (feedback.type === FeedbackType.AUTOMATIC && !Feedback.isNonGradedFeedbackSuggestion(feedback)) {
+        } else if (feedback.type === FeedbackType.AUTOMATIC && !Feedback.isPreliminaryFeedback(feedback)) {
             return this.createAutomaticFeedbackItem(feedback, showTestDetails);
-        } else if (feedback.type === FeedbackType.AUTOMATIC && Feedback.isNonGradedFeedbackSuggestion(feedback)) {
+        } else if (feedback.type === FeedbackType.AUTOMATIC && Feedback.isPreliminaryFeedback(feedback)) {
             return this.createNonGradedFeedbackItem(feedback);
         } else if ((feedback.type === FeedbackType.MANUAL || feedback.type === FeedbackType.MANUAL_UNREFERENCED) && feedback.gradingInstruction) {
             return this.createGradingInstructionFeedbackItem(feedback, showTestDetails);
@@ -161,7 +161,7 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
         return {
             type: 'Reviewer',
             name: this.translateService.instant('artemisApp.result.detail.feedback'),
-            title: feedback.text?.slice(NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER.length),
+            title: feedback.text?.slice(PRELIMINARY_FEEDBACK_IDENTIFIER.length),
             text: feedback.detailText,
             positive: feedback.positive,
             credits: feedback.credits,
