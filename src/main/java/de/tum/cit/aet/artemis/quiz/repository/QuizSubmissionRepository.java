@@ -38,9 +38,9 @@ public interface QuizSubmissionRepository extends ArtemisJpaRepository<QuizSubmi
                 SELECT DISTINCT s
                 FROM QuizSubmission s
                     LEFT JOIN FETCH s.submittedAnswers
-                WHERE s.participation.id in :participationIds
+                WHERE s.participation.id IN :participationIds
             """)
-    List<QuizSubmission> findWithEagerSubmittedAnswersByParticipationIds(Set<Long> participationIds);
+    List<QuizSubmission> findWithEagerSubmittedAnswersByParticipationIds(@Param("participationIds") Set<Long> participationIds);
 
     @EntityGraph(type = LOAD, attributePaths = { "submittedAnswers" })
     QuizSubmission findWithEagerSubmittedAnswersById(long submissionId);
