@@ -33,3 +33,4 @@ Other Extension Services
    setup/apollon
    setup/hermes
    setup/aeolus
+   setup/sharing
