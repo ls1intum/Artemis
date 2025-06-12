@@ -66,7 +66,7 @@ public class CourseLearnerProfileService {
         return courses.stream().map(course -> {
             Optional<CourseLearnerProfile> courseLearnerProfileOptional = courseLearnerProfileRepository.findByLoginAndCourse(user.getLogin(), course);
             CourseLearnerProfile courseLearnerProfile = courseLearnerProfileOptional.orElseGet(() -> createCourseLearnerProfile(user, course));
-            // Course field is lazily initialized.
+            // Course field is manually fetched as it is only lazily initialized by default.
             // This allows further users of the object to interact with the course without fetching it again.
             courseLearnerProfileRepository.save(courseLearnerProfile);
             courseLearnerProfile.setCourse(course);

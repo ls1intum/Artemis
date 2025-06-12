@@ -28,33 +28,41 @@
         <div class="col">
             <div class="title" jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.aimForGradeOrBonus.label"></div>
             <div class="description" jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.aimForGradeOrBonus.description"></div>
-            <jhi-segmented-toggle [options]="aimForGradeOrBonusOptions" [(selected)]="aimForGradeOrBonus" (selectedChange)="onToggleChange()" />
+            <div class="controls">
+                <jhi-segmented-toggle [options]="aimForGradeOrBonusOptions" [(selected)]="aimForGradeOrBonus" (selectedChange)="onToggleChange()" />
+            </div>
         </div>
 
         <!-- Time Investment setting -->
         <div class="col">
             <div class="title" jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.timeInvestment.label"></div>
             <div class="description" jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.timeInvestment.description"></div>
-            <jhi-segmented-toggle [options]="timeInvestmentOptions" [(selected)]="timeInvestment" (selectedChange)="onToggleChange()" />
+            <div class="controls">
+                <jhi-segmented-toggle [options]="timeInvestmentOptions" [(selected)]="timeInvestment" (selectedChange)="onToggleChange()" />
+            </div>
         </div>
 
         <!-- Repetition Intensity setting -->
         <div class="col">
             <div class="title" jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.repetitionIntensity.label"></div>
             <div class="description" jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.repetitionIntensity.description"></div>
-            <jhi-segmented-toggle [options]="repetitionIntensityOptions" [(selected)]="repetitionIntensity" (selectedChange)="onToggleChange()" />
+            <div class="controls">
+                <jhi-segmented-toggle [options]="repetitionIntensityOptions" [(selected)]="repetitionIntensity" (selectedChange)="onToggleChange()" />
+            </div>
         </div>
         <div class="col">
             <div class="title" jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.proficiency.label"></div>
             <div class="description" jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.proficiency.description"></div>
-            <jhi-double-slider
-                [step]="0.1"
-                [min]="CourseLearnerProfileDTO.MIN_VALUE"
-                [max]="CourseLearnerProfileDTO.MAX_VALUE"
-                [initialValue]="initialProficiency"
-                [(currentValue)]="proficiency"
-                (currentValueChange)="this.editing = true"
-            />
+            <div class="controls">
+                <jhi-double-slider
+                    [step]="0.1"
+                    [min]="CourseLearnerProfileDTO.MIN_VALUE"
+                    [max]="CourseLearnerProfileDTO.MAX_VALUE"
+                    [initialValue]="initialProficiency"
+                    [(currentValue)]="proficiency"
+                    (currentValueChange)="this.editing = true"
+                />
+            </div>
         </div>
     </div>
 </div>

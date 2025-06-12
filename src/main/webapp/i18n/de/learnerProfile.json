@@ -23,7 +23,7 @@
                 },
                 "proficiency": {
                     "label": "Kenntnis",
-                    "description": "Artemis einschätzung deiner Kenntnis des aktuellen Kurses."
+                    "description": "Artemis Einschätzung deiner Kenntnis des aktuellen Kurses."
                 },
                 "profileSaved": "Lernprofil gespeichert",
                 "invalidRange": "Werte müssen zwischen 1 und 5 liegen",
