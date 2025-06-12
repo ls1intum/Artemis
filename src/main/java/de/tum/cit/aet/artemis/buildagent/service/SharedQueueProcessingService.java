@@ -43,6 +43,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
 import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
+import de.tum.cit.aet.artemis.core.exception.LocalCIException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
@@ -364,24 +365,21 @@ public class SharedQueueProcessingService {
             BuildJobQueueItem job;
             BuildStatus status;
 
-            String cancelledMsg = "Build job with id " + buildJob.id() + " was cancelled.";
-            String timeoutMsg = "Build job with id " + buildJob.id() + " was timed out";
-            Throwable cause = ex.getCause();
-            String errorMessage = ex.getMessage();
-
-            if ((cause instanceof TimeoutException) || errorMessage.equals(timeoutMsg)) {
+            if (isCausedByTimeoutException(ex, buildJob.id())) {
                 status = BuildStatus.TIMEOUT;
                 log.info("Build job with id {} was timed out", buildJob.id());
                 consecutiveBuildJobFailures.incrementAndGet();
             }
-            else if ((cause instanceof CancellationException) && errorMessage.equals(cancelledMsg)) {
+            else if (isCausedByCancelledException(ex, buildJob.id())) {
                 status = BuildStatus.CANCELLED;
                 log.info("Build job with id {} was cancelled", buildJob.id());
             }
             else {
                 status = BuildStatus.FAILED;
                 log.error("Error while processing build job: {}", buildJob, ex);
-                consecutiveBuildJobFailures.incrementAndGet();
+                if (!isCausedByImagePullFailedException(ex)) {
+                    consecutiveBuildJobFailures.incrementAndGet();
+                }
             }
 
             job = new BuildJobQueueItem(buildJob, completionDate, status);
@@ -522,6 +520,45 @@ public class SharedQueueProcessingService {
                 buildExecutorService.getActiveCount(), buildExecutorService.getMaximumPoolSize());
         return localProcessingJobs.get() < buildExecutorService.getMaximumPoolSize() && buildExecutorService.getActiveCount() < buildExecutorService.getMaximumPoolSize()
                 && buildExecutorService.getQueue().isEmpty();
+    }
+
+    /**
+     * Check if a throwable is caused by local CI failing to pull the docker image
+     *
+     * @param throwable throwable to check
+     * @return {@code true} if the throwable is caused by local CI failing to pull the docker image, {@code false} otherwise
+     */
+    private boolean isCausedByImagePullFailedException(Throwable throwable) {
+        Throwable cause = throwable.getCause();
+        if (!(cause instanceof ExecutionException)) {
+            return false;
+        }
+        Throwable rootCause = cause.getCause();
+        return rootCause instanceof LocalCIException && rootCause.getMessage() != null && rootCause.getMessage().contains("Could not pull Docker image");
+    }
+
+    /**
+     * Check if a throwable is caused by a cancelled build job
+     *
+     * @param throwable  the throwable to check
+     * @param buildJobId the id of the build job
+     * @return {@code true} if the throwable is caused by a cancelled build job, {@code false} otherwise
+     */
+    private boolean isCausedByCancelledException(Throwable throwable, String buildJobId) {
+        String cancelledMsg = "Build job with id " + buildJobId + " was cancelled.";
+        return throwable.getCause() instanceof CancellationException && throwable.getMessage().equals(cancelledMsg);
+    }
+
+    /**
+     * Check if a throwable is caused by a timeout
+     *
+     * @param throwable  the throwable to check
+     * @param buildJobId the id of the build job
+     * @return {@code true} if the throwable is caused by a timeout, {@code false} otherwise
+     */
+    private boolean isCausedByTimeoutException(Throwable throwable, String buildJobId) {
+        String timeoutMsg = "Build job with id " + buildJobId + " was timed out";
+        return throwable.getCause() instanceof TimeoutException || throwable.getMessage().equals(timeoutMsg);
     }
 
     public class QueuedBuildJobItemListener implements ItemListener<BuildJobQueueItem> {
