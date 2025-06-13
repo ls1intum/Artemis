@@ -165,7 +165,7 @@ public class BuildJobManagementService {
             }
             catch (Exception ex) {
                 Throwable cause = ex.getCause();
-                if (cause != null && DockerUtil.isDockerNotAvailable((Exception) cause)) {
+                if (cause != null && DockerUtil.isDockerNotAvailable(cause)) {
                     log.error("Cannot connect to Docker Host. Make sure Docker is running and configured properly! {}", cause.getMessage());
                     throw new CompletionException(ex);
                 }
