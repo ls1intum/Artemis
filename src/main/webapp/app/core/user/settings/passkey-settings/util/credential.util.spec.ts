@@ -120,6 +120,8 @@ describe('credential util helper method', () => {
         let mockAlertService: jest.Mocked<AlertService>;
         let mockUser: User;
 
+        const originalCredentials = navigator.credentials;
+
         beforeEach(() => {
             // Mock navigator.credentials.create
             Object.defineProperty(navigator, 'credentials', {
@@ -139,6 +141,13 @@ describe('credential util helper method', () => {
             } as unknown as jest.Mocked<AlertService>;
 
             mockUser = { email: 'test@example.com' } as User;
+        });
+
+        afterEach(() => {
+            Object.defineProperty(navigator, 'credentials', {
+                value: originalCredentials,
+                writable: true,
+            });
         });
 
         it('should throw an error if user is undefined', async () => {
