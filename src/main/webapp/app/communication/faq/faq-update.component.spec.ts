@@ -297,4 +297,22 @@ describe('FaqUpdateComponent', () => {
         expect(actions).toHaveLength(1);
         expect(actions[0]).toBeInstanceOf(RewriteAction);
     });
+
+    it('should reset renderedConsistencyCheckResultMarkdown when dismissConsistencyCheck is called', () => {
+        faqUpdateComponent.renderedConsistencyCheckResultMarkdown.set({
+            result: 'Some result',
+            inconsistencies: ['Inconsistency 1'],
+            suggestions: ['Suggestion 1'],
+            improvement: 'Some improvement',
+        });
+
+        faqUpdateComponent.dismissConsistencyCheck();
+
+        expect(faqUpdateComponent.renderedConsistencyCheckResultMarkdown()).toEqual({
+            result: '',
+            inconsistencies: [],
+            suggestions: [],
+            improvement: '',
+        });
+    });
 });
