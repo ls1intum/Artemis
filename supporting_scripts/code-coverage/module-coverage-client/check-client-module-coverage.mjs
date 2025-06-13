@@ -137,6 +137,8 @@ const moduleThresholds = {
 
 const metrics = ['statements', 'branches', 'functions', 'lines'];
 
+const AIMED_FOR_COVERAGE = 90;
+
 const evaluateAndPrintMetrics = (module, aggregatedMetrics, thresholds) => {
     let failed = false;
     console.log(`\nModule: ${module}`);
@@ -145,7 +147,7 @@ const evaluateAndPrintMetrics = (module, aggregatedMetrics, thresholds) => {
         const percentage = total > 0 ? (covered / total) * 100 : 0;
         const threshold = thresholds[metric];
         const pass = Math.round(percentage * 100) / 100 >= threshold;
-        const higherThanExpected = percentage > threshold && threshold < 90;
+        const higherThanExpected = percentage > threshold && threshold < AIMED_FOR_COVERAGE;
         console.log(`  ${pass ? '✅' : '❌'}${higherThanExpected ? '⬆️' : ''} ${metric.padEnd(10)} : ${percentage.toFixed(2)}%  (need ≥ ${threshold}%)`);
         if (!pass) failed = true;
     }
