@@ -7,7 +7,7 @@
         }
         dependencies {
             // reuse the same version from your root project
-            classpath "org.yaml:snakeyaml:${rootProject.property('snakevaml_version')}"
+            classpath "org.yaml:snakeyaml:${rootProject.property('snakeyaml_version')}"
             classpath "org.openapitools:openapi-generator-gradle-plugin:7.13.0"
         }
     }

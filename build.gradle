@@ -213,7 +213,7 @@ dependencies {
     implementation "me.xdrop:fuzzywuzzy:1.4.0"
     implementation("org.yaml:snakeyaml") {
         version {
-            strictly "${snakevaml_version}"
+            strictly "${snakeyaml_version}"
             // needed to reduce the number of vulnerabilities, also see https://mvnrepository.com/artifact/org.yaml/snakeyaml
         }
     }
