@@ -5,7 +5,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -275,8 +274,7 @@ public class ResultResource {
 
         // Check if a result exists already for this exercise and student. If so, do nothing and just inform the instructor.
         Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseAndStudentLoginAnyStateWithEagerResults(exercise, studentLogin);
-        if (optionalParticipation.isPresent() && optionalParticipation.get().getSubmissions().stream()
-                .flatMap(submission -> Stream.ofNullable(submission.getResults()).flatMap(Collection::stream)).anyMatch(Objects::nonNull)) {
+        if (optionalParticipation.isPresent() && optionalParticipation.get().getSubmissions().stream().anyMatch(submission -> submission.getResults() != null)) {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, "result", "resultAlreadyExists", "A result already exists for this student in this exercise."))
                     .build();
