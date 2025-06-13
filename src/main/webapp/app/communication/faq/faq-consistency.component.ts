@@ -16,14 +16,11 @@ export class FaqConsistencyComponent {
     inconsistencies = input<string[] | undefined>([]);
     improvement = input<string | undefined>('');
     closeConsistencyWidget = output<void>();
-
     formattedConsistency = signal<{ inconsistentFaq: string; suggestion: string }[]>([]);
 
     constructor() {
         effect(() => {
-            effect(() => {
-                this.formattedConsistency.set(this.getInconsistencies());
-            });
+            this.formattedConsistency.set(this.getInconsistencies());
         });
     }
 
