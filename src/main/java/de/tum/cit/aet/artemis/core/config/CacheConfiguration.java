@@ -96,8 +96,11 @@ public class CacheConfiguration {
     @Value("${spring.hazelcast.interface:}")
     private String hazelcastInterface;
 
-    @Value("${spring.hazelcast.publicInterface:#{null}}")
-    private String hazelcastPublicInterface;
+    /**
+     * Should have the format {@code ip:port}.
+     */
+    @Value("${spring.hazelcast.publicAddress:#{null}}")
+    private String hazelcastPublicAddress;
 
     @Value("${spring.hazelcast.port:5701}")
     private int hazelcastPort;
@@ -327,7 +330,7 @@ public class CacheConfiguration {
 
     private void hazelcastBindOnlyOnInterface(String hazelcastInterface, Config config) {
         // Hazelcast should bind to the interface and use it as local and public address
-        String publicAddress = hazelcastPublicInterface == null ? hazelcastInterface : hazelcastPublicInterface;
+        String publicAddress = hazelcastPublicAddress == null ? hazelcastInterface : hazelcastPublicAddress;
         log.info("Binding Hazelcast to interface {} and public address {}", hazelcastInterface, publicAddress);
         System.setProperty("hazelcast.local.localAddress", hazelcastInterface);
         System.setProperty("hazelcast.local.publicAddress", publicAddress);
