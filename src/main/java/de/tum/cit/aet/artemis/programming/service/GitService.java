@@ -69,6 +69,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -1260,6 +1261,26 @@ public class GitService extends AbstractGitService {
     }
 
     /**
+     * Zips the contents of a directory directly to memory without creating temporary files.
+     * Content filtering is added with the intention of optionally excluding ".git" directory from the result.
+     *
+     * @param contentRootPath the root path of the content to zip
+     * @param zipFilename     the name of the zipped file (for metadata)
+     * @param contentFilter   path filter to exclude some files, can be null to include everything
+     * @return ByteArrayResource containing the zipped content
+     * @throws IOException if the zipping process failed.
+     */
+    public ByteArrayResource zipDirectoryToMemory(Path contentRootPath, String zipFilename, @Nullable Predicate<Path> contentFilter) throws IOException, UncheckedIOException {
+        var zipFilenameWithoutSlash = zipFilename.replaceAll("\\s", "");
+
+        if (!zipFilenameWithoutSlash.endsWith(".zip")) {
+            zipFilenameWithoutSlash += ".zip";
+        }
+
+        return zipFileService.createZipFileWithFolderContentInMemory(contentRootPath, zipFilenameWithoutSlash, contentFilter);
+    }
+
+    /**
      * Checks if repo was already checked out and is present on disk
      *
      * @param repoUri URL of the remote repository.
@@ -1339,5 +1360,95 @@ public class GitService extends AbstractGitService {
     public void clearCachedRepositories() {
         cachedRepositories.clear();
         cachedBareRepositories.clear();
+    }
+
+    /**
+     * Exports a repository snapshot directly to memory without creating temporary files.
+     * This method uses JGit's ArchiveCommand to create a zip archive of the repository's HEAD state.
+     *
+     * @param repositoryUri the URI of the repository to export
+     * @param filename      the desired filename for the export (without extension)
+     * @return ByteArrayResource containing the zipped repository content
+     * @throws GitAPIException if the git operation fails
+     * @throws IOException     if IO operations fail
+     * @throws GitException    if repository access fails
+     */
+    public ByteArrayResource exportRepositorySnapshot(VcsRepositoryUri repositoryUri, String filename) throws GitAPIException, IOException, GitException {
+
+        if (profileService.isLocalVCorCIActive()) {
+            return exportRepositorySnapshotFromBareRepo(repositoryUri, filename);
+        }
+
+        return exportRepositorySnapshotFromRemote(repositoryUri, filename);
+    }
+
+    /**
+     * Export snapshot from a bare repository (Local VCS)
+     */
+    private ByteArrayResource exportRepositorySnapshotFromBareRepo(VcsRepositoryUri repositoryUri, String filename) throws GitAPIException, IOException {
+
+        // For bare repositories, we need to checkout to a temporary directory first
+        Path tempDir = Path.of(repoClonePath, "temp-bare-export-" + System.currentTimeMillis());
+
+        try {
+            // Clone the bare repository to a temporary working directory
+            org.eclipse.jgit.api.CloneCommand cloneCommand = cloneCommand().setURI(getGitUriAsString(repositoryUri)).setDirectory(tempDir.toFile()).setDepth(1)
+                    .setCloneAllBranches(false).setBare(false);
+
+            try (Git git = cloneCommand.call()) {
+                // Use the existing zipDirectoryToMemory method
+                return zipDirectoryToMemory(tempDir, filename,
+                        path -> StreamSupport.stream(path.spliterator(), false).noneMatch(pathPart -> ".git".equalsIgnoreCase(pathPart.toString())));
+            }
+        }
+        catch (URISyntaxException e) {
+            throw new GitException("Invalid repository URI: " + repositoryUri, e);
+        }
+        finally {
+            try {
+                if (Files.exists(tempDir)) {
+                    FileUtils.deleteDirectory(tempDir.toFile());
+                    log.debug("Cleaned up temporary directory: {}", tempDir);
+                }
+            }
+            catch (IOException e) {
+                log.warn("Failed to clean up temporary directory {}: {}", tempDir, e.getMessage());
+            }
+        }
+    }
+
+    /**
+     * Export snapshot from a remote repository with minimal cloning
+     */
+    private ByteArrayResource exportRepositorySnapshotFromRemote(VcsRepositoryUri repositoryUri, String filename) throws GitAPIException, IOException, GitException {
+
+        Path tempDir = Path.of(repoClonePath, "temp-export-" + System.currentTimeMillis());
+
+        try {
+            log.debug("Performing shallow clone of {} for in-memory export", repositoryUri);
+
+            org.eclipse.jgit.api.CloneCommand cloneCommand = cloneCommand().setURI(getGitUriAsString(repositoryUri)).setDirectory(tempDir.toFile()).setDepth(1)
+                    .setCloneAllBranches(false).setBare(false);
+
+            try (Git git = cloneCommand.call()) {
+                // Use the existing zipDirectoryToMemory method
+                return zipDirectoryToMemory(tempDir, filename,
+                        path -> StreamSupport.stream(path.spliterator(), false).noneMatch(pathPart -> ".git".equalsIgnoreCase(pathPart.toString())));
+            }
+        }
+        catch (URISyntaxException e) {
+            throw new GitException("Invalid repository URI: " + repositoryUri, e);
+        }
+        finally {
+            try {
+                if (Files.exists(tempDir)) {
+                    FileUtils.deleteDirectory(tempDir.toFile());
+                    log.debug("Cleaned up temporary directory: {}", tempDir);
+                }
+            }
+            catch (IOException e) {
+                log.warn("Failed to clean up temporary directory {}: {}", tempDir, e.getMessage());
+            }
+        }
     }
 }

@@ -15,7 +15,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import jakarta.validation.constraints.NotNull;
 
@@ -24,8 +26,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -50,6 +54,7 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.exception.GitException;
 import de.tum.cit.aet.artemis.core.exception.HttpStatusException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
@@ -61,9 +66,11 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.course.CourseService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
+import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exam.api.ExamAccessApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
@@ -71,11 +78,14 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTaskRepository;
 import de.tum.cit.aet.artemis.programming.service.ConsistencyCheckService;
+import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseExportService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseImportFromFileService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseImportService;
@@ -99,6 +109,9 @@ public class ProgrammingExerciseExportImportResource {
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
+
+    @Value("${artemis.repo-download-clone-path}")
+    private Path repoDownloadClonePath;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
@@ -134,13 +147,17 @@ public class ProgrammingExerciseExportImportResource {
 
     private final ProgrammingExerciseService programmingExerciseService;
 
+    private final FileService fileService;
+
+    private final GitService gitService;
+
     public ProgrammingExerciseExportImportResource(ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository,
             AuthorizationCheckService authCheckService, CourseService courseService, ProgrammingExerciseImportService programmingExerciseImportService,
             ProgrammingExerciseExportService programmingExerciseExportService, Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService,
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, SubmissionPolicyService submissionPolicyService,
             ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, Optional<ExamAccessApi> examAccessApi, CourseRepository courseRepository,
             ProgrammingExerciseImportFromFileService programmingExerciseImportFromFileService, ConsistencyCheckService consistencyCheckService, Optional<AthenaApi> athenaApi,
-            Optional<CompetencyProgressApi> competencyProgressApi, ProgrammingExerciseService programmingExerciseService) {
+            Optional<CompetencyProgressApi> competencyProgressApi, ProgrammingExerciseService programmingExerciseService, FileService fileService, GitService gitService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -158,6 +175,8 @@ public class ProgrammingExerciseExportImportResource {
         this.athenaApi = athenaApi;
         this.competencyProgressApi = competencyProgressApi;
         this.programmingExerciseService = programmingExerciseService;
+        this.fileService = fileService;
+        this.gitService = gitService;
     }
 
     /**
@@ -543,9 +562,39 @@ public class ProgrammingExerciseExportImportResource {
             throw new AccessForbiddenException(RepositoryType.SOLUTION.getName(), programmingExercise.getId());
         }
         long start = System.nanoTime();
-        Optional<File> zipFile = programmingExerciseExportService.exportStudentRequestedRepository(programmingExercise.getId(), includeTests, new ArrayList<>());
 
-        return returnZipFileForRepositoryExport(zipFile, RepositoryType.SOLUTION.getName(), programmingExercise, start);
+        RepositoryType repositoryType = includeTests ? RepositoryType.TESTS : RepositoryType.SOLUTION;
+        VcsRepositoryUri repositoryUri = programmingExercise.getRepositoryURL(repositoryType);
+        if (repositoryUri == null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
+                    "Failed to export repository because the repository URI is not defined.")).body(null);
+        }
+
+        Path clonePath = fileService.getTemporaryUniquePathWithoutPathCreation(repoDownloadClonePath, 5);
+
+        try {
+            Repository repository = gitService.getOrCheckoutRepository(repositoryUri, clonePath, true);
+            gitService.resetToOriginHead(repository);
+
+            Predicate<Path> gitDirFilter = path -> StreamSupport.stream(path.spliterator(), false).noneMatch(pathPart -> ".git".equalsIgnoreCase(pathPart.toString()));
+
+            String zippedRepoName = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-" + programmingExercise.getTitle() + "-"
+                    + repositoryType.getName();
+            zippedRepoName = FileUtil.sanitizeFilename(zippedRepoName);
+
+            ByteArrayResource zipResource = gitService.zipDirectoryToMemory(repository.getLocalPath(), zippedRepoName, gitDirFilter);
+
+            log.info("Successfully exported repository for programming exercise {} with title {} in {} ms", programmingExercise.getId(), programmingExercise.getTitle(),
+                    (System.nanoTime() - start) / 1000000);
+
+            return ResponseEntity.ok().contentType(MediaType.APPLICATION_OCTET_STREAM).contentLength(zipResource.contentLength())
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + zippedRepoName + ".zip\"").body(zipResource);
+        }
+        catch (GitAPIException e) {
+            log.error("Failed to export repository: {}", e.getMessage());
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError", "Failed to export repository: " + e.getMessage())).body(null);
+        }
     }
 
     /**
@@ -574,5 +623,49 @@ public class ProgrammingExerciseExportImportResource {
             throw new InternalServerErrorException("Could not export the student repository of participation " + participationId + ". Logged errors: " + exportErrors);
         }
         return returnZipFileForRepositoryExport(zipFile, RepositoryType.USER.getName(), programmingExercise, start);
+    }
+
+    /**
+     * GET /programming-exercises/:exerciseId/export-repository-memory-test/:repositoryType : Test endpoint for in-memory repository export
+     * This endpoint demonstrates the new in-memory zip functionality without creating temporary files.
+     *
+     * @param exerciseId     The id of the programming exercise
+     * @param repositoryType The type of repository to export (TEMPLATE, SOLUTION, TESTS)
+     * @return ResponseEntity with the zipped repository content
+     * @throws IOException if something during the zip process went wrong
+     */
+    @GetMapping("programming-exercises/{exerciseId}/export-repository-memory-test/{repositoryType}")
+    @EnforceAtLeastInstructor
+    @FeatureToggle(Feature.Exports)
+    public ResponseEntity<Resource> exportRepositoryMemoryTest(@PathVariable long exerciseId, @PathVariable RepositoryType repositoryType) throws IOException {
+        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
+
+        long start = System.nanoTime();
+
+        VcsRepositoryUri repositoryUri = programmingExercise.getRepositoryURL(repositoryType);
+        if (repositoryUri == null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
+                    "Failed to export repository because the repository URI is not defined.")).body(null);
+        }
+
+        try {
+            String filename = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-" + programmingExercise.getTitle() + "-" + repositoryType.getName()
+                    + "-memory-test";
+            filename = FileUtil.sanitizeFilename(filename);
+
+            ByteArrayResource zipResource = gitService.exportRepositorySnapshot(repositoryUri, filename);
+
+            log.info("Successfully exported repository using in-memory method for programming exercise {} with title {} in {} ms", programmingExercise.getId(),
+                    programmingExercise.getTitle(), (System.nanoTime() - start) / 1000000);
+
+            return ResponseEntity.ok().contentType(MediaType.APPLICATION_OCTET_STREAM).contentLength(zipResource.contentLength())
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + zipResource.getFilename() + "\"").body(zipResource);
+        }
+        catch (GitAPIException | GitException e) {
+            log.error("Failed to export repository using in-memory method: {}", e.getMessage());
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
+                    "Failed to export repository using in-memory method: " + e.getMessage())).body(null);
+        }
     }
 }
