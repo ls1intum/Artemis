@@ -16,9 +16,17 @@ export class CourseLearnerProfileDTO {
     public aimForGradeOrBonus: number;
     public timeInvestment: number;
     public repetitionIntensity: number;
+    public initialProficiency: number;
+    public proficiency: number;
 
     public isValid(): boolean {
-        return this.isValueInRange(this.aimForGradeOrBonus) && this.isValueInRange(this.timeInvestment) && this.isValueInRange(this.repetitionIntensity);
+        return (
+            this.isValueInRange(this.aimForGradeOrBonus) &&
+            this.isValueInRange(this.timeInvestment) &&
+            this.isValueInRange(this.repetitionIntensity) &&
+            this.isValueInRange(this.initialProficiency) &&
+            this.isValueInRange(this.proficiency)
+        );
     }
 
     private isValueInRange(value: number): boolean {
