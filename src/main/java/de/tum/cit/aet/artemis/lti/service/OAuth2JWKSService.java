@@ -49,6 +49,10 @@ public class OAuth2JWKSService {
         this.hazelcastInstance = hazelcastInstance;
     }
 
+    /**
+     * Initializes the clientRegistration to JWK Map for OAuth2 ClientRegistrations.
+     * This method is called once when the application starts, and it generates keys for all existing ClientRegistrations.
+     */
     @PostConstruct
     public void init() {
         clientRegistrationIdToJwk = hazelcastInstance.getMap("ltiJwkMap");
@@ -86,14 +90,29 @@ public class OAuth2JWKSService {
         }
     }
 
+    /**
+     * Returns the JWKSet containing all JWKs for the OAuth2 ClientRegistrations.
+     *
+     * @return a JWKSet containing all JWKs
+     */
     public JWKSet getJwkSet() {
         return new JWKSet(new ArrayList<>(clientRegistrationIdToJwk.values()));
     }
 
+    /**
+     * Generates a new JWK for each OAuth2 ClientRegistration and stores it in the Hazelcast map.
+     * This method is called once during initialization to ensure all existing ClientRegistrations have a key.
+     */
     private void generateOAuth2ClientKeys() {
         onlineCourseConfigurationService.getAllClientRegistrations().forEach(this::generateAndAddKey);
     }
 
+    /**
+     * Generates a new RSAKey for the given ClientRegistration and adds it to the Hazelcast map.
+     * If the ClientRegistration is null, no action is taken.
+     *
+     * @param clientRegistration the ClientRegistration for which to generate a key
+     */
     private void generateAndAddKey(ClientRegistration clientRegistration) {
         if (clientRegistration == null) {
             return;
