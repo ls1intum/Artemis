@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { PROFILE_IRIS, addPublicFilePrefix } from 'app/app.constants';
 import { downloadStream } from 'app/shared/util/download.util';
-import dayjs from 'dayjs/esm';
+import dayjs, { Dayjs } from 'dayjs/esm';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { Attachment } from 'app/lecture/shared/entities/attachment.model';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
@@ -88,18 +88,16 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     courseParamsSubscription: Subscription;
     isProduction = true;
     isTestServer = false;
-    endsSameDay = false;
     irisEnabled = false;
 
     readonly LectureUnitType = LectureUnitType;
     readonly isCommunicationEnabled = isCommunicationEnabled;
     readonly isMessagingEnabled = isMessagingEnabled;
     readonly ChatServiceMode = ChatServiceMode;
-    informationBoxData: InformationBox[] = [];
+    readonly informationBoxData: InformationBox[] = [];
 
-    // Icons
-    faSpinner = faSpinner;
-    faChalkboardTeacher = faChalkboardTeacher;
+    readonly faSpinner = faSpinner;
+    readonly faChalkboardTeacher = faChalkboardTeacher;
 
     ngOnInit(): void {
         this.isProduction = this.profileService.isProduction();
@@ -151,35 +149,20 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
                                     (unit) => unit.attachment?.link?.split('.').pop()!.toLocaleLowerCase() === 'pdf',
                                 ).length > 0;
                         }
-                        this.endsSameDay = !!this.lecture?.startDate && !!this.lecture.endDate && dayjs(this.lecture.startDate).isSame(this.lecture.endDate, 'day');
                         if (this.irisEnabled && this.lecture?.course?.id) {
                             this.irisSettingsService.getCombinedCourseSettings(this.lecture.course.id).subscribe((irisSettings) => {
                                 this.irisSettings = irisSettings;
                             });
                         }
                         if (this.lecture?.startDate) {
-                            const boxContentStartDate: InformationBoxContent = {
-                                type: 'dateTime',
-                                value: this.lecture!.startDate,
-                            };
-                            const informationBoxStartDate: InformationBox = {
-                                title: 'artemisApp.courseOverview.lectureDetails.startDate',
-                                content: boxContentStartDate,
-                                isContentComponent: true,
-                            };
-                            this.informationBoxData.push(informationBoxStartDate);
+                            const startDateInfoBoxTitle = 'artemisApp.courseOverview.lectureDetails.startDate';
+                            const infoBoxStartDate = this.createDateInfoBox(this.lecture!.startDate, startDateInfoBoxTitle);
+                            this.informationBoxData.push(infoBoxStartDate);
                         }
                         if (this.lecture?.endDate) {
-                            const boxContentStartDate: InformationBoxContent = {
-                                type: 'dateTime',
-                                value: this.lecture!.endDate,
-                            };
-                            const informationBoxStartDate: InformationBox = {
-                                title: 'artemisApp.courseOverview.lectureDetails.endDate',
-                                content: boxContentStartDate,
-                                isContentComponent: true,
-                            };
-                            this.informationBoxData.push(informationBoxStartDate);
+                            const endDateInfoBoxTitle = 'artemisApp.courseOverview.lectureDetails.endDate';
+                            const infoBoxEndDate = this.createDateInfoBox(this.lecture!.endDate, endDateInfoBoxTitle);
+                            this.informationBoxData.push(infoBoxEndDate);
                         }
                     },
                     error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
@@ -227,6 +210,18 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
 
     completeLectureUnit(event: LectureUnitCompletionEvent): void {
         this.lectureUnitService.completeLectureUnit(this.lecture!, event);
+    }
+
+    createDateInfoBox(date: Dayjs, contentStringName: string): InformationBox {
+        const boxContentStartDate: InformationBoxContent = {
+            type: 'dateTime',
+            value: date,
+        };
+        return {
+            title: contentStringName,
+            content: boxContentStartDate,
+            isContentComponent: true,
+        };
     }
 
     ngOnDestroy() {
