@@ -114,8 +114,12 @@ public class AdminLtiConfigurationResource {
             return ResponseEntity.badRequest().build();
         }
 
+        LtiPlatformConfiguration existingPlatform = ltiPlatformConfigurationRepository.findByIdElseThrow(platform.getId());
+        if (!existingPlatform.getRegistrationId().equals(platform.getRegistrationId())) {
+            return ResponseEntity.badRequest().build();
+        }
+
         ltiPlatformConfigurationRepository.save(platform);
-        oAuth2JWKSService.updateKey(platform.getRegistrationId());
 
         return ResponseEntity.ok().build();
     }
