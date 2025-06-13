@@ -2,9 +2,8 @@ package de.tum.cit.aet.artemis.iris.service.pyris.dto.rewriting;
 
 import java.util.List;
 
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
-
-import javax.annotation.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
