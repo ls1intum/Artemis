@@ -36,7 +36,7 @@ public class FaqGrpcService {
     // It sets up the FAQServiceBlockingStub to communicate with the Nebula FAQ service.
     // This has to be done afterward, else the application will not start properly due to the missing configs
     public void initGrpcChannel() {
-        ManagedChannel channel = ManagedChannelBuilder.forAddress(nebulaUrl, faqPort).usePlaintext().intercept().build();
+        ManagedChannel channel = ManagedChannelBuilder.forAddress(nebulaUrl, faqPort).usePlaintext().build();
         this.faqStub = FAQServiceGrpc.newBlockingStub(channel);
     }
 
