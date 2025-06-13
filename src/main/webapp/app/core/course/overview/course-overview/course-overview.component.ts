@@ -37,6 +37,7 @@ import { CourseNotificationSettingInfo } from 'app/communication/shared/entities
 import { CourseNotificationSettingService } from 'app/communication/course-notification/course-notification-setting.service';
 import { CourseNotificationService } from 'app/communication/course-notification/course-notification.service';
 import { CourseNotificationPresetPickerComponent } from 'app/communication/course-notification/course-notification-preset-picker/course-notification-preset-picker.component';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 @Component({
     selector: 'jhi-course-overview',
@@ -76,6 +77,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     private quizExercisesChannel: string;
     private examStartedSubscription: Subscription;
     manageViewLink = signal<string[]>(['']);
+    profileService = inject(ProfileService);
 
     protected selectableSettingPresets: CourseNotificationSettingPreset[];
     protected selectedSettingPreset?: CourseNotificationSettingPreset;
@@ -88,6 +90,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     activatedComponentReference = signal<
         CourseExercisesComponent | CourseLecturesComponent | CourseExamsComponent | CourseTutorialGroupsComponent | CourseConversationsComponent | undefined
     >(undefined);
+    isTestServer = this.profileService.isTestServer();
 
     // Icons
     faTimes = faTimes;
@@ -327,7 +330,11 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
             const faqItem = this.sidebarItemService.getFaqItem();
             sidebarItems.push(faqItem);
         }
-        sidebarItems.push(this.sidebarItemService.getPracticeItem());
+
+        if (this.isTestServer) {
+            sidebarItems.push(this.sidebarItemService.getPracticeItem());
+        }
+
         sidebarItems.push(this.sidebarItemService.getNotificationSettingsItem());
 
         return sidebarItems;
