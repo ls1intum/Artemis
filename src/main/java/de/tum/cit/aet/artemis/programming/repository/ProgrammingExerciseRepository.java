@@ -100,8 +100,6 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
 
     List<ProgrammingExercise> findAllByProjectKey(String projectKey);
 
-    List<ProgrammingExercise> findAllByCourseId(Long courseId);
-
     @EntityGraph(type = LOAD, attributePaths = { "categories" })
     List<ProgrammingExercise> findAllWithCategoriesByCourseId(Long courseId);
 
