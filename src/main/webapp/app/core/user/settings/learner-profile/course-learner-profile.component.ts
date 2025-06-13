@@ -11,6 +11,9 @@ import { DoubleSliderComponent } from 'app/shared/double-slider/double-slider.co
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faSave } from '@fortawesome/free-solid-svg-icons';
 import { COURSE_LEARNER_PROFILE_OPTIONS } from 'app/core/learner-profile/shared/entities/learner-profile-options.model';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 /**
  * Component for managing course-specific learner profiles.
@@ -21,7 +24,7 @@ import { COURSE_LEARNER_PROFILE_OPTIONS } from 'app/core/learner-profile/shared/
     selector: 'jhi-course-learner-profile',
     templateUrl: './course-learner-profile.component.html',
     styleUrls: ['./course-learner-profile.component.scss'],
-    imports: [TranslateDirective, NgClass, SegmentedToggleComponent, DoubleSliderComponent, FaIconComponent],
+    imports: [TranslateDirective, NgClass, SegmentedToggleComponent, DoubleSliderComponent, FaIconComponent, HelpIconComponent, NgbTooltip, ArtemisTranslatePipe],
 })
 export class CourseLearnerProfileComponent implements OnInit {
     private readonly alertService = inject(AlertService);

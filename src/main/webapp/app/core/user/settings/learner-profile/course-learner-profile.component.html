@@ -51,7 +51,12 @@
             </div>
         </div>
         <div class="col">
-            <div class="title" jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.proficiency.label"></div>
+            <div
+                class="title"
+                jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.proficiency.label"
+                ngbTooltip="{{ 'artemisApp.learnerProfile.courseLearnerProfile.proficiency.tooltip' | artemisTranslate }}"
+            ></div>
+            <jhi-help-icon text="artemisApp.learnerProfile.courseLearnerProfile.proficiency.tooltip" />
             <div class="description" jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.proficiency.description"></div>
             <div class="controls">
                 <jhi-double-slider
