@@ -1,4 +1,4 @@
-import { AfterViewChecked, Component, OnInit, Renderer2, inject } from '@angular/core';
+import { AfterViewChecked, Component, OnDestroy, OnInit, Renderer2, inject } from '@angular/core';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { User } from 'app/core/user/user.model';
@@ -24,6 +24,13 @@ import { getCredentialWithGracefullyHandlingAuthenticatorIssues } from 'app/core
 import { InvalidCredentialError } from 'app/core/user/settings/passkey-settings/entities/invalid-credential-error';
 import { EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, SetupPasskeyModalComponent } from 'app/core/course/overview/setup-passkey-modal/setup-passkey-modal.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { PasskeyAbortError } from 'app/core/user/settings/passkey-settings/entities/passkey-abort-error';
+import { Subscription } from 'rxjs';
+
+/**
+ * This occurs if a user clicks the "login with passkey" button but then cancel the login process.
+ */
+export const USER_CANCELLED_LOGIN_WITH_PASSKEY_ERROR = 'NotAllowedError';
 
 @Component({
     selector: 'jhi-home',
@@ -31,7 +38,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
     styleUrls: ['home.scss'],
     imports: [TranslateDirective, FormsModule, RouterLink, FaIconComponent, Saml2LoginComponent, ButtonComponent],
 })
-export class HomeComponent implements OnInit, AfterViewChecked {
+export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
     protected readonly faCircleNotch = faCircleNotch;
     protected readonly faKey = faKey;
     protected readonly ButtonSize = ButtonSize;
@@ -86,6 +93,16 @@ export class HomeComponent implements OnInit, AfterViewChecked {
 
     profileInfo: ProfileInfo;
 
+    private langChangeSubscription: Subscription;
+    private queryParamsSubscription: Subscription;
+
+    /**
+     * Flag indicating whether the passkey autocomplete request is being retried
+     * after encountering an error. This prevents an infinite loop of failure
+     * when attempting to re-enable passkey autocomplete functionality.
+     */
+    isRetryingPasskeyAutocompleteRequest = false;
+
     /**
      * <p>
      * We want users to use passkey authentication over password authentication.
@@ -128,11 +145,45 @@ export class HomeComponent implements OnInit, AfterViewChecked {
         if (prefilledUsername) {
             this.username = prefilledUsername;
         }
+
+        this.prefillPasskeysIfPossible();
     }
 
-    async loginWithPasskey() {
+    ngOnDestroy() {
+        this.langChangeSubscription?.unsubscribe();
+        this.queryParamsSubscription?.unsubscribe();
+    }
+
+    /**
+     * Makes sure that passkeys can be autofilled on <a href="https://caniuse.com/mdn-api_publickeycredential_isconditionalmediationavailable_static">supporting browsers</a>.
+     */
+    async prefillPasskeysIfPossible() {
+        if (this.isPasskeyEnabled && window.PublicKeyCredential && PublicKeyCredential.isConditionalMediationAvailable) {
+            const isConditionalMediationAvailable = await PublicKeyCredential.isConditionalMediationAvailable();
+            if (isConditionalMediationAvailable) {
+                await this.makePasskeyAutocompleteAvailable();
+            }
+        }
+    }
+
+    /**
+     * Ensures that passkey autocomplete functionality is available by initiating a credential request
+     * with <a href="https://www.corbado.com/blog/webauthn-conditional-ui-passkeys-autofill">conditional mediation</a>.
+     * This is required to enable the browser's passkey autocomplete feature.
+     */
+    async makePasskeyAutocompleteAvailable() {
+        await this.loginWithPasskey(true);
+    }
+
+    /**
+     * Performs a passkey login. This includes requesting the passkey credential from the authenticator.
+     *
+     * @param isConditional set to true if the passkey credential shall be requested with <a href="https://www.corbado.com/blog/webauthn-conditional-ui-passkeys-autofill">conditional mediation</a> (required for the passkey autocomplete)
+     */
+    async loginWithPasskey(isConditional: boolean = false) {
         try {
-            const authenticatorCredential = await this.webauthnService.getCredential();
+            const publicKeyCredentialOptions = await this.webauthnApiService.getAuthenticationOptions();
+            const authenticatorCredential = await this.webauthnService.getCredential(publicKeyCredentialOptions, isConditional);
 
             if (!authenticatorCredential || authenticatorCredential.type != 'public-key') {
                 // noinspection ExceptionCaughtLocallyJS - intended to be caught locally
@@ -147,16 +198,60 @@ export class HomeComponent implements OnInit, AfterViewChecked {
 
             await this.webauthnApiService.loginWithPasskey(credential);
             this.handleLoginSuccess();
+            this.isRetryingPasskeyAutocompleteRequest = false;
         } catch (error) {
+            const shouldFailErrorSilently = this.isPasskeyAutocompleteError(error);
+            if (shouldFailErrorSilently) {
+                return;
+            }
+
             if (error instanceof InvalidCredentialError) {
                 this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.invalidCredential');
             } else {
                 this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.login');
             }
-            // eslint-disable-next-line no-undef
+
             console.error(error);
             throw error;
         }
+    }
+
+    /**
+     * Checks if the error is related to passkey autocomplete and makes sure to reEnable it if necessary.
+     *
+     * @param error that occurred during the passkey login process.
+     * @return true if the error is an expected error related to making passkey autocomplete available
+     */
+    private isPasskeyAutocompleteError(error: Error | DOMException): boolean {
+        if (error.name === USER_CANCELLED_LOGIN_WITH_PASSKEY_ERROR) {
+            // The user manually aborted the passkey login process after clicking the "Sign in with passkey" button.
+            // This required aborting the `getCredential` request with <a href="https://www.corbado.com/blog/webauthn-conditional-ui-passkeys-autofill">conditional mediation</a>,
+            // which is necessary for enabling passkey autocomplete.
+            // To restore passkey autocomplete functionality, re-invoke `makePasskeyAutocompleteAvailable`.
+            console.warn('Operation not allowed or timed out: login with passkey was aborted manually');
+            const isInRecursiveFailingLoop = this.isRetryingPasskeyAutocompleteRequest;
+            if (!isInRecursiveFailingLoop) {
+                this.isRetryingPasskeyAutocompleteRequest = true;
+                this.makePasskeyAutocompleteAvailable();
+            }
+            return true;
+        } else if (error instanceof PasskeyAbortError || (error instanceof DOMException && this.isSafariAbortError(error))) {
+            console.warn(error.message);
+            return true;
+        } else if (error.name === 'OperationError' && error.message === 'A request is already pending.') {
+            // This error occurs after logging out in connection with makePasskeyAutocompleteAvailable, we want to fail silently in that case
+            console.warn(error.message);
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Safari appears to handle the abort error as {@link DOMException} instead of an {@link PasskeyAbortError}
+     */
+    private isSafariAbortError(error: DOMException) {
+        return error.name === 'AbortError' && error.message === 'Aborted by AbortSignal.';
     }
 
     /**
@@ -178,13 +273,15 @@ export class HomeComponent implements OnInit, AfterViewChecked {
             this.usernameRegexPattern = new RegExp(/^(?!.*@.*@)[a-zA-Z0-9.@_-]{7,50}$/);
         }
         this.usernamePlaceholderTranslated = this.translateService.instant(this.usernamePlaceholder);
-        this.translateService.onLangChange.subscribe(() => {
+        this.langChangeSubscription = this.translateService.onLangChange.subscribe(() => {
             this.usernamePlaceholderTranslated = this.translateService.instant(this.usernamePlaceholder);
         });
 
         this.isRegistrationEnabled = !!this.profileInfo.registrationEnabled;
         this.needsToAcceptTerms = !!this.profileInfo.needsToAcceptTerms;
-        this.activatedRoute.queryParams.subscribe((params) => {
+
+        this.queryParamsSubscription?.unsubscribe();
+        this.queryParamsSubscription = this.activatedRoute.queryParams.subscribe((params) => {
             const loginFormOverride = params.hasOwnProperty('showLoginForm');
             this.isPasswordLoginDisabled = !!this.profileInfo?.saml2 && this.profileInfo.saml2.passwordLoginDisabled && !loginFormOverride;
         });

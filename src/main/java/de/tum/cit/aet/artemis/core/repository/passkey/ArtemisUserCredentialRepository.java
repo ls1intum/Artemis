@@ -97,6 +97,11 @@ public class ArtemisUserCredentialRepository implements UserCredentialRepository
      */
     @Override
     public CredentialRecord findByCredentialId(Bytes credentialId) {
+        if (credentialId == null) {
+            // e.g. the case for conditional mediation https://www.corbado.com/blog/webauthn-conditional-ui-passkeys-autofill
+            return null;
+        }
+
         return passkeyCredentialsRepository.findByCredentialId(credentialId.toBase64UrlString()).map(PasskeyCredential::toCredentialRecord).orElseGet(() -> {
             log.debug("No credential found for id={}", credentialId.toBase64UrlString());
             return null;
