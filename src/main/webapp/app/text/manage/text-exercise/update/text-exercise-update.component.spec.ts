@@ -28,6 +28,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
+import { ActivatedRouteSnapshot } from '@angular/router';
 
 describe('TextExercise Management Update Component', () => {
     let comp: TextExerciseUpdateComponent;
@@ -198,7 +199,7 @@ describe('TextExercise Management Update Component', () => {
                 paramMap: {
                     get: (key: string) => 'mockValue',
                 },
-            } as any;
+            } as ActivatedRouteSnapshot;
 
             global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
                 return new MockResizeObserver(callback);
