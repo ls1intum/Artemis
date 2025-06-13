@@ -10,6 +10,8 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     standalone: true,
 })
 export class FaqConsistencyComponent {
+    protected readonly faCheck = faCheck;
+
     suggestions = input<string[]>([]);
     inconsistencies = input<string[]>([]);
     improvement = input<string>('');
@@ -17,23 +19,25 @@ export class FaqConsistencyComponent {
 
     formattedConsistency = signal<{ inconsistentFaq: string; suggestion: string }[]>([]);
 
-    protected readonly faCheck = faCheck;
-
     constructor() {
         effect(() => {
-            this.formattedConsistency.set(
-                this.inconsistencies().map((inconsistency, index) => {
-                    const suggestion = this.suggestions()[index];
-                    return {
-                        inconsistentFaq: inconsistency,
-                        suggestion: suggestion,
-                    };
-                }),
-            );
+            effect(() => {
+                this.formattedConsistency.set(this.getInconsistencies());
+            });
         });
     }
 
     dismissConsistencyCheck(): void {
         this.closeConsistencyWidget.emit();
+    }
+
+    private getInconsistencies(): { inconsistentFaq: string; suggestion: string }[] {
+        return this.inconsistencies().map((inconsistency, index) => {
+            const suggestion = this.suggestions()[index];
+            return {
+                inconsistentFaq: inconsistency,
+                suggestion: suggestion,
+            };
+        });
     }
 }

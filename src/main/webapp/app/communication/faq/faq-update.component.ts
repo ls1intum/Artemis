@@ -22,8 +22,8 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
 import { CategorySelectorComponent } from 'app/shared/category-selector/category-selector.component';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
-import RewriteResult from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
 import { FaqConsistencyComponent } from 'app/communication/faq/faq-consistency.component';
+import { RewriteResult } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
 
 @Component({
     selector: 'jhi-faq-update',
@@ -51,10 +51,10 @@ export class FaqUpdateComponent implements OnInit {
     domainActionsDescription = [new FormulaAction()];
 
     renderedConsistencyCheckResultMarkdown = signal<RewriteResult>({
-        result: '',
-        inconsistencies: [],
-        suggestions: [],
-        improvement: '',
+        result: undefined,
+        inconsistencies: undefined,
+        suggestions: undefined,
+        improvement: undefined,
     });
 
     showConsistencyCheck = computed(() => !!this.renderedConsistencyCheckResultMarkdown().result);

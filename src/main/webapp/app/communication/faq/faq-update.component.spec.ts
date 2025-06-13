@@ -275,28 +275,26 @@ describe('FaqUpdateComponent', () => {
         expect(faqUpdateComponent.faq.questionAnswer).toBe('test');
     });
 
-    it('should have no intelligence action when IRIS is not active', fakeAsync(() => {
+    it('should have no intelligence action when IRIS is not active', () => {
         faqUpdateComponentFixture = TestBed.createComponent(FaqUpdateComponent);
         faqUpdateComponent = faqUpdateComponentFixture.componentInstance;
         faqUpdateComponentFixture.detectChanges();
-        tick();
 
         expect(faqUpdateComponent.artemisIntelligenceActions()).toEqual([]);
-    }));
+    });
 
-    it('should have intelligence action when IRIS is active', fakeAsync(() => {
+    it('should have intelligence action when IRIS is active', () => {
         const isProfileActiveSpy = jest.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
 
         faqUpdateComponentFixture = TestBed.createComponent(FaqUpdateComponent);
         faqUpdateComponent = faqUpdateComponentFixture.componentInstance;
         faqUpdateComponent.courseId = 1;
         faqUpdateComponentFixture.detectChanges();
-        tick();
 
         expect(isProfileActiveSpy).toHaveBeenCalledWith('iris');
 
         const actions = faqUpdateComponent.artemisIntelligenceActions();
         expect(actions).toHaveLength(1);
         expect(actions[0]).toBeInstanceOf(RewriteAction);
-    }));
+    });
 });

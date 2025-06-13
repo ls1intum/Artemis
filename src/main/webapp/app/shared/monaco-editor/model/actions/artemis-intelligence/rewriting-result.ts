@@ -1,8 +1,6 @@
-interface RewriteResult {
+export interface RewriteResult {
     result: string | undefined;
-    inconsistencies: string[];
-    suggestions: string[];
-    improvement: string;
+    inconsistencies: string[] | undefined;
+    suggestions: string[] | undefined;
+    improvement: string | undefined;
 }
-
-export default RewriteResult;
