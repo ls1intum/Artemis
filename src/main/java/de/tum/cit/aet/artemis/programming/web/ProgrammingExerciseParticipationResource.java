@@ -147,8 +147,9 @@ public class ProgrammingExerciseParticipationResource {
         hasAccessToParticipationElseThrow(participation);
         filterParticipationSubmissionResults(participation);
 
-        Set<Result> results = Stream.ofNullable(participation.getSubmissions()).flatMap(Collection::stream)
-                .flatMap(submission -> Stream.ofNullable(submission.getResults()).flatMap(Collection::stream)).filter(Objects::nonNull).collect(Collectors.toSet());
+        Optional<Submission> latestSubmission = participation.getSubmissions().stream().findFirst();
+        Optional<Result> latestResult = latestSubmission.flatMap(submission -> submission.getResults().stream().findFirst());
+        Set<Result> results = latestResult.map(Set::of).orElseGet(Set::of);
         // hide details that should not be shown to the students
         resultService.filterSensitiveInformationIfNecessary(participation, results, Optional.empty());
         return ResponseEntity.ok(participation);
