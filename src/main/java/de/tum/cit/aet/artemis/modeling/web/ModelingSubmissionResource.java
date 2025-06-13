@@ -3,13 +3,10 @@ package de.tum.cit.aet.artemis.modeling.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Stream;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -407,9 +404,9 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
         if (!ExerciseDateService.isAfterAssessmentDueDate(exercise)) {
             // We want to have the preliminary feedback before the assessment due date too
-            List<Result> athenaResults = Stream.ofNullable(studentParticipation.getSubmissions()).flatMap(Collection::stream)
-                    .flatMap(submission -> Stream.ofNullable(submission.getResults()).flatMap(Collection::stream)).filter(Objects::nonNull)
-                    .filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA).toList();
+            List<Result> athenaResults = studentParticipation.getSubmissions().stream()
+                    .flatMap(submission -> submission.getResults().stream().filter(result -> result != null && result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA))
+                    .toList();
 
             if (!athenaResults.isEmpty()) {
                 modelingSubmission.setResults(athenaResults);
