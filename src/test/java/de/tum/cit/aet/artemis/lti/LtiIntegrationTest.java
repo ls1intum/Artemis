@@ -103,7 +103,12 @@ class LtiIntegrationTest extends AbstractLtiIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void deleteLtiPlatformConfigurationByIdAsAdmin() throws Exception {
         Long platformId = 1L;
-        doReturn(new LtiPlatformConfiguration()).when(ltiPlatformConfigurationRepository).findByIdElseThrow(platformId);
+
+        LtiPlatformConfiguration platformToDelete = new LtiPlatformConfiguration();
+        platformToDelete.setId(platformId);
+        fillLtiPlatformConfig(platformToDelete);
+
+        doReturn(platformToDelete).when(ltiPlatformConfigurationRepository).findByIdElseThrow(platformId);
         doNothing().when(ltiPlatformConfigurationRepository).delete(any(LtiPlatformConfiguration.class));
 
         request.performMvcRequest(delete("/api/lti/admin/lti-platform/{platformId}", platformId)).andExpect(status().isOk());
@@ -115,9 +120,13 @@ class LtiIntegrationTest extends AbstractLtiIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void updateLtiPlatformConfigurationAsAdmin() throws Exception {
+        Long platformId = 1L;
+
         LtiPlatformConfiguration platformToUpdate = new LtiPlatformConfiguration();
-        platformToUpdate.setId(1L);
+        platformToUpdate.setId(platformId);
         fillLtiPlatformConfig(platformToUpdate);
+
+        doReturn(platformToUpdate).when(ltiPlatformConfigurationRepository).findByIdElseThrow(platformId);
 
         request.performMvcRequest(put("/api/lti/admin/lti-platform").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(platformToUpdate)))
                 .andExpect(status().isOk());
