@@ -158,8 +158,8 @@ public class CacheConfiguration {
             }
         }).toList();
 
-        log.debug("Current Registry members: {}", discoveryClient.getInstances(serviceId).stream().map(ServiceInstance::getHost).toList());
-        log.debug("Current Hazelcast members: {}", hazelcastMemberAddresses);
+        log.info("Current Registry members: {}", discoveryClient.getInstances(serviceId).stream().map(ServiceInstance::getHost).toList());
+        log.info("Current Hazelcast members: {}", hazelcastMemberAddresses);
 
         for (ServiceInstance instance : discoveryClient.getInstances(serviceId)) {
             var instanceHost = instance.getHost();
