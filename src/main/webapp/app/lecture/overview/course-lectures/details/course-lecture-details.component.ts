@@ -12,7 +12,7 @@ import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/at
 import { onError } from 'app/shared/util/global.utils';
 import { finalize, tap } from 'rxjs/operators';
 import { AlertService } from 'app/shared/service/alert.service';
-import { faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faChalkboardTeacher, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lectureUnit.service';
 import { isCommunicationEnabled, isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
 import { ScienceEventType } from 'app/shared/science/science.model';
@@ -36,6 +36,7 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { IrisExerciseChatbotButtonComponent } from 'app/iris/overview/exercise-chatbot/exercise-chatbot-button.component';
 import { FileService } from 'app/shared/service/file.service';
 import { ScienceService } from 'app/shared/science/science.service';
+import { InformationBox, InformationBoxComponent, InformationBoxContent } from 'app/shared/information-box/information-box.component';
 
 export interface LectureUnitCompletionEvent {
     lectureUnit: LectureUnit;
@@ -61,6 +62,7 @@ export interface LectureUnitCompletionEvent {
         ArtemisTranslatePipe,
         HtmlForMarkdownPipe,
         IrisExerciseChatbotButtonComponent,
+        InformationBoxComponent,
     ],
 })
 export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
@@ -93,9 +95,11 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     readonly isCommunicationEnabled = isCommunicationEnabled;
     readonly isMessagingEnabled = isMessagingEnabled;
     readonly ChatServiceMode = ChatServiceMode;
+    informationBoxData: InformationBox[] = [];
 
     // Icons
     faSpinner = faSpinner;
+    faChalkboardTeacher = faChalkboardTeacher;
 
     ngOnInit(): void {
         this.isProduction = this.profileService.isProduction();
@@ -152,6 +156,30 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
                             this.irisSettingsService.getCombinedCourseSettings(this.lecture.course.id).subscribe((irisSettings) => {
                                 this.irisSettings = irisSettings;
                             });
+                        }
+                        if (this.lecture?.startDate) {
+                            const boxContentStartDate: InformationBoxContent = {
+                                type: 'dateTime',
+                                value: this.lecture!.startDate,
+                            };
+                            const informationBoxStartDate: InformationBox = {
+                                title: 'artemisApp.courseOverview.lectureDetails.startDate',
+                                content: boxContentStartDate,
+                                isContentComponent: true,
+                            };
+                            this.informationBoxData.push(informationBoxStartDate);
+                        }
+                        if (this.lecture?.endDate) {
+                            const boxContentStartDate: InformationBoxContent = {
+                                type: 'dateTime',
+                                value: this.lecture!.endDate,
+                            };
+                            const informationBoxStartDate: InformationBox = {
+                                title: 'artemisApp.courseOverview.lectureDetails.endDate',
+                                content: boxContentStartDate,
+                                isContentComponent: true,
+                            };
+                            this.informationBoxData.push(informationBoxStartDate);
                         }
                     },
                     error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
