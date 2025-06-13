@@ -15,7 +15,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckService;
-import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismApi;
+import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismAccessApi;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -29,7 +29,7 @@ import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 @Service
 public class RepositoryAccessService {
 
-    private final Optional<PlagiarismApi> plagiarismApi;
+    private final Optional<PlagiarismAccessApi> plagiarismAccessApi;
 
     private final AuthorizationCheckService authorizationCheckService;
 
@@ -37,9 +37,9 @@ public class RepositoryAccessService {
 
     private final ParticipationAuthorizationCheckService participationAuthorizationCheckService;
 
-    public RepositoryAccessService(Optional<PlagiarismApi> plagiarismApi, AuthorizationCheckService authorizationCheckService, ExerciseDateService exerciseDateService,
+    public RepositoryAccessService(Optional<PlagiarismAccessApi> plagiarismAccessApi, AuthorizationCheckService authorizationCheckService, ExerciseDateService exerciseDateService,
             ParticipationAuthorizationCheckService participationAuthorizationCheckService) {
-        this.plagiarismApi = plagiarismApi;
+        this.plagiarismAccessApi = plagiarismAccessApi;
         this.authorizationCheckService = authorizationCheckService;
         this.exerciseDateService = exerciseDateService;
         this.participationAuthorizationCheckService = participationAuthorizationCheckService;
@@ -170,7 +170,8 @@ public class RepositoryAccessService {
             if (isAtLeastTeachingAssistant) {
                 return;
             }
-            if (plagiarismApi.isEmpty() || plagiarismApi.get().hasAccessToSubmission(programmingParticipation.getId(), user.getLogin(), (Participation) programmingParticipation)) {
+            if (plagiarismAccessApi.isEmpty()
+                    || plagiarismAccessApi.get().hasAccessToSubmission(programmingParticipation.getId(), user.getLogin(), (Participation) programmingParticipation)) {
                 return;
             }
         }

@@ -30,11 +30,12 @@ public class StaticCodeAnalysisService {
 
     private final StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository;
 
-    private final ProgrammingTriggerService programmingTriggerService;
+    private final ProgrammingExerciseTestCaseChangedService programmingExerciseTestCaseChangedService;
 
-    public StaticCodeAnalysisService(StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository, ProgrammingTriggerService programmingTriggerService) {
+    public StaticCodeAnalysisService(StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository,
+            ProgrammingExerciseTestCaseChangedService programmingExerciseTestCaseChangedService) {
         this.staticCodeAnalysisCategoryRepository = staticCodeAnalysisCategoryRepository;
-        this.programmingTriggerService = programmingTriggerService;
+        this.programmingExerciseTestCaseChangedService = programmingExerciseTestCaseChangedService;
     }
 
     /**
@@ -86,7 +87,7 @@ public class StaticCodeAnalysisService {
         staticCodeAnalysisCategoryRepository.saveAll(originalCategories);
 
         // At least one category was updated. We use this flag to inform the instructor about outdated student results.
-        programmingTriggerService.setTestCasesChangedAndTriggerTestCaseUpdate(exerciseId);
+        programmingExerciseTestCaseChangedService.setTestCasesChangedAndTriggerTestCaseUpdate(exerciseId);
 
         return originalCategories;
     }
@@ -119,7 +120,7 @@ public class StaticCodeAnalysisService {
         staticCodeAnalysisCategoryRepository.saveAll(categories);
 
         // We use this flag to inform the instructor about outdated student results.
-        programmingTriggerService.setTestCasesChangedAndTriggerTestCaseUpdate(exercise.getId());
+        programmingExerciseTestCaseChangedService.setTestCasesChangedAndTriggerTestCaseUpdate(exercise.getId());
 
         return categories;
     }
@@ -146,7 +147,7 @@ public class StaticCodeAnalysisService {
         staticCodeAnalysisCategoryRepository.saveAll(newCategories);
 
         // We use this flag to inform the instructor about outdated student results.
-        programmingTriggerService.setTestCasesChangedAndTriggerTestCaseUpdate(targetExercise.getId());
+        programmingExerciseTestCaseChangedService.setTestCasesChangedAndTriggerTestCaseUpdate(targetExercise.getId());
 
         return newCategories;
     }
