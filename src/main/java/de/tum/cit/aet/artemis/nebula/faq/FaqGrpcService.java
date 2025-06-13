@@ -1,13 +1,10 @@
 package de.tum.cit.aet.artemis.nebula.faq;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_NEBULA;
-
 import java.util.List;
 
 import jakarta.annotation.PostConstruct;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.domain.Faq;
@@ -18,7 +15,6 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 
 @Service
-@Profile(PROFILE_NEBULA)
 public class FaqGrpcService {
 
     @Value("${nebula.faq.host:host.docker.internal}")
