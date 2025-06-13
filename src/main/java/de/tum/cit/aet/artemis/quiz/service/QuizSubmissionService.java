@@ -3,8 +3,12 @@ package de.tum.cit.aet.artemis.quiz.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +24,7 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.QuizSubmissionException;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
+import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -32,6 +37,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
+import de.tum.cit.aet.artemis.quiz.dto.participation.StudentQuizParticipationWithSolutionsDTO;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
 
@@ -142,14 +148,18 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
     public void calculateAllResults(long quizExerciseId) {
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
         log.info("Calculating results for quiz {}", quizExercise.getId());
-        studentParticipationRepository.findByExerciseId(quizExercise.getId()).forEach(participation -> {
+        Set<StudentParticipation> participations = studentParticipationRepository.findByExerciseId(quizExercise.getId());
+        associateQuizSubmissionsWithStudentParticipations(participations);
+
+        participations.forEach(participation -> {
             participation.setExercise(quizExercise);
-            Optional<QuizSubmission> quizSubmissionOptional = quizSubmissionRepository.findWithEagerSubmittedAnswersByParticipationId(participation.getId()).stream().findFirst();
+            Optional<Submission> quizSubmissionOptional = participation.getSubmissions().stream().findFirst();
 
             if (quizSubmissionOptional.isEmpty()) {
                 return;
             }
-            QuizSubmission quizSubmission = quizSubmissionOptional.get();
+            QuizSubmission quizSubmission = (QuizSubmission) quizSubmissionOptional.get();
+            quizSubmission.setParticipation(participation);
 
             if (quizSubmission.isSubmitted()) {
                 if (quizSubmission.getType() == null) {
@@ -176,14 +186,9 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
             quizSubmissionRepository.save(quizSubmission);
             resultRepository.save(result);
             studentParticipationRepository.save(participation);
+            quizSubmission.setResults(List.of(result));
 
-            var course = quizExercise.getCourseViaExerciseGroupOrCourseMember();
             sendQuizResultToUser(quizExerciseId, participation);
-            if (course != null) {
-                // This is required, as sendQuizResultToUser removes the course from the quizExercise
-                // TODO: This should be fixed by using DTOs in the future
-                quizExercise.setCourse(course);
-            }
         });
         quizStatisticService.recalculateStatistics(quizExercise);
         // notify users via websocket about new results for the statistics, filter out solution information
@@ -191,23 +196,29 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         websocketMessagingService.sendMessage("/topic/statistic/" + quizExercise.getId(), quizExercise);
     }
 
-    private void sendQuizResultToUser(long quizExerciseId, StudentParticipation participation) {
-        // TODO: we should convert this into a DTO instead of removing data from the entity
-        var user = participation.getParticipantIdentifier();
-        removeUnnecessaryObjectsBeforeSendingToClient(participation);
-        websocketMessagingService.sendMessageToUser(user, "/topic/exercise/" + quizExerciseId + "/participation", participation);
+    /**
+     * Fetches quiz submissions for the given student participations and associates them with the participations.
+     *
+     * @param participations The set of student participations to associate with quiz submissions.
+     */
+    private void associateQuizSubmissionsWithStudentParticipations(Set<StudentParticipation> participations) {
+        Set<Long> participationIds = participations.stream().map(StudentParticipation::getId).collect(Collectors.toSet());
+
+        List<QuizSubmission> submissions = quizSubmissionRepository.findWithEagerSubmittedAnswersByParticipationIds(participationIds);
+
+        Map<Long, Set<QuizSubmission>> submissionsByParticipationId = submissions.stream().collect(Collectors.groupingBy(s -> s.getParticipation().getId(), Collectors.toSet()));
+
+        for (StudentParticipation participation : participations) {
+            Set<QuizSubmission> quizSubmissions = submissionsByParticipationId.getOrDefault(participation.getId(), Set.of());
+            Set<Submission> submissionSet = new HashSet<>(quizSubmissions);
+            participation.setSubmissions(submissionSet);
+        }
     }
 
-    // TODO: Use a DTO instead of removing data from the entity
-    @Deprecated
-    private void removeUnnecessaryObjectsBeforeSendingToClient(StudentParticipation participation) {
-        if (participation.getExercise() != null) {
-            var quizExercise = (QuizExercise) participation.getExercise();
-            // we do not need the course and lectures
-            quizExercise.setCourse(null);
-        }
-        participation.setSubmissions(null);
-        participation.setParticipant(null);
+    private void sendQuizResultToUser(long quizExerciseId, StudentParticipation participation) {
+        var user = participation.getParticipantIdentifier();
+        StudentQuizParticipationWithSolutionsDTO participationDTO = StudentQuizParticipationWithSolutionsDTO.of(participation);
+        websocketMessagingService.sendMessageToUser(user, "/topic/exercise/" + quizExerciseId + "/participation", participationDTO);
     }
 
     /**
@@ -377,4 +388,5 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         savedQuizSubmission.filterForStudentsDuringQuiz();
         return savedQuizSubmission;
     }
+
 }
