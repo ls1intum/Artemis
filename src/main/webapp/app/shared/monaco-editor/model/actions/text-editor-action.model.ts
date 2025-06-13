@@ -11,7 +11,7 @@ import RewritingVariant from 'app/shared/monaco-editor/model/actions/artemis-int
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { WritableSignal } from '@angular/core';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
-import RewriteResult from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
+import { RewriteResult } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
 
 export abstract class TextEditorAction implements Disposable {
     id: string;

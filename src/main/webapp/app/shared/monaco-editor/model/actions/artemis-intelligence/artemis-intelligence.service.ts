@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import RewritingVariant from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-variant';
 import { AlertService } from 'app/shared/service/alert.service';
-import RewriteResult from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
+import { RewriteResult } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
 
 /**
  * Service providing shared functionality for Artemis Intelligence of the markdown editor.

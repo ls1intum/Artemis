@@ -2,8 +2,8 @@ import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-ed
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
 import RewritingVariant from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-variant';
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
-import RewriteResult from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
 import { WritableSignal } from '@angular/core';
+import { RewriteResult } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
 
 /**
  * Artemis Intelligence action for rewriting in the editor.
