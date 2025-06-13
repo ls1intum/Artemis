@@ -12,9 +12,9 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 export class FaqConsistencyComponent {
     protected readonly faCheck = faCheck;
 
-    suggestions = input<string[]>([]);
-    inconsistencies = input<string[]>([]);
-    improvement = input<string>('');
+    suggestions = input<string[] | undefined>([]);
+    inconsistencies = input<string[] | undefined>([]);
+    improvement = input<string | undefined>('');
     closeConsistencyWidget = output<void>();
 
     formattedConsistency = signal<{ inconsistentFaq: string; suggestion: string }[]>([]);
@@ -32,12 +32,12 @@ export class FaqConsistencyComponent {
     }
 
     private getInconsistencies(): { inconsistentFaq: string; suggestion: string }[] {
-        return this.inconsistencies().map((inconsistency, index) => {
-            const suggestion = this.suggestions()[index];
-            return {
-                inconsistentFaq: inconsistency,
-                suggestion: suggestion,
-            };
-        });
+        const inconsistencies = this.inconsistencies() ?? [];
+        const suggestions = this.suggestions() ?? [];
+
+        return inconsistencies.map((inconsistency, index) => ({
+            inconsistentFaq: inconsistency,
+            suggestion: suggestions[index] ?? '',
+        }));
     }
 }
