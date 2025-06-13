@@ -24,7 +24,7 @@ plugins {
     id "io.spring.dependency-management" version "1.1.7"
     id "nebula.lint" version "20.6.1"
     id "org.liquibase.gradle" version "${liquibase_plugin_version}"
-    id "org.owasp.dependencycheck" version "12.1.1"
+    id "org.owasp.dependencycheck" version "12.1.3"
     id "org.springframework.boot" version "${spring_boot_version}"
     id "org.springdoc.openapi-gradle-plugin" version "1.9.0"
     id "org.openapi.generator" version "7.12.0"
@@ -234,7 +234,21 @@ dependencies {
     implementation "commons-codec:commons-codec:1.18.0"
 
     // use the latest version to avoid security vulnerabilities
+    implementation "org.springframework:spring-aop:${spring_framework_version}"
+    implementation "org.springframework:spring-aspects:${spring_framework_version}"
+    implementation "org.springframework:spring-beans:${spring_framework_version}"
+    implementation "org.springframework:spring-context:${spring_framework_version}"
+    implementation "org.springframework:spring-context-support:${spring_framework_version}"
+    implementation "org.springframework:spring-core:${spring_framework_version}"
+    implementation "org.springframework:spring-expression:${spring_framework_version}"
+    implementation "org.springframework:spring-jcl:${spring_framework_version}"
+    implementation "org.springframework:spring-jdbc:${spring_framework_version}"
+    implementation "org.springframework:spring-messaging:${spring_framework_version}"
+    implementation "org.springframework:spring-orm:${spring_framework_version}"
+    implementation "org.springframework:spring-tx:${spring_framework_version}"
     implementation "org.springframework:spring-webmvc:${spring_framework_version}"
+    implementation "org.springframework:spring-web:${spring_framework_version}"
+    implementation "org.springframework:spring-websocket:${spring_framework_version}"
 
     implementation "com.vdurmont:semver4j:3.1.0"
 
@@ -314,15 +328,15 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-oauth2-client:${spring_boot_version}"
 
     implementation "org.springframework.data:spring-data-ldap:${spring_boot_version}"
-    implementation "org.springframework.ldap:spring-ldap-core:3.3.0"
+    implementation "org.springframework.ldap:spring-ldap-core:3.3.1"
 
     implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:${spring_cloud_version}"
     implementation "org.springframework.cloud:spring-cloud-starter-config:${spring_cloud_version}"
     implementation "org.springframework.cloud:spring-cloud-commons:${spring_cloud_version}"
 
     // required by the Websocket Broker Connection in WebsocketConfiguration (due to multi node setup support)
-    implementation "io.projectreactor.netty:reactor-netty-core:1.2.6"
-    implementation "org.springframework:spring-messaging:${spring_framework_version}"
+    implementation "io.projectreactor.netty:reactor-netty-core:1.2.7"
+
     // required for the connection to Hermes (push notifications)
     implementation "org.springframework.retry:spring-retry:2.0.12"
 
@@ -344,11 +358,9 @@ dependencies {
     implementation "org.springframework.security:spring-security-messaging:${spring_security_version}"
     implementation "org.springframework.security:spring-security-ldap:${spring_security_version}"
 
-    constraints {
-        implementation "org.opensaml:opensaml-core:${opensaml_version}"
-        implementation "org.opensaml:opensaml-saml-api:${opensaml_version}"
-        implementation "org.opensaml:opensaml-saml-impl:${opensaml_version}"
-    }
+    implementation "org.opensaml:opensaml-saml-api:${opensaml_version}"
+    implementation "org.opensaml:opensaml-saml-impl:${opensaml_version}"
+
     implementation "org.springframework.security:spring-security-saml2-service-provider:${spring_security_version}"
 
     implementation "io.jsonwebtoken:jjwt-api:${jwt_version}"
@@ -360,7 +372,7 @@ dependencies {
     implementation "org.bouncycastle:bcprov-jdk18on:1.81"
 
     implementation "com.mysql:mysql-connector-j:${mysql_version}"
-    implementation "org.postgresql:postgresql:42.7.6"
+    implementation "org.postgresql:postgresql:42.7.7"
 
     implementation "org.zalando:problem-spring-web:0.29.1"
     implementation "org.zalando:jackson-datatype-problem:0.27.1"
@@ -374,7 +386,7 @@ dependencies {
     implementation "org.apache.pdfbox:pdfbox:3.0.5"
     implementation "org.apache.commons:commons-csv:1.14.0"
     implementation "org.commonmark:commonmark:0.24.0"
-    implementation "commons-fileupload:commons-fileupload:1.5"
+    implementation "commons-fileupload:commons-fileupload:1.6.0"
     implementation "net.lingala.zip4j:zip4j:2.11.5"
 
     // use newest version of guava to avoid security issues through outdated dependencies
@@ -423,6 +435,7 @@ dependencies {
     testImplementation "org.springframework.boot:spring-boot-starter-test:${spring_boot_version}"
     testImplementation "org.springframework.security:spring-security-test:${spring_security_version}"
     testImplementation "org.springframework.boot:spring-boot-test:${spring_boot_version}"
+    testImplementation "org.springframework:spring-test:${spring_framework_version}"
     testImplementation "org.assertj:assertj-core:3.27.3"
     testImplementation "org.mockito:mockito-core:${mockito_version}"
     // needed to add mockito as agent and avoid its warning

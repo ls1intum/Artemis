@@ -534,6 +534,12 @@ public class BuildJobContainerService {
                     public void onComplete() {
                         latch.countDown();
                     }
+
+                    @Override
+                    public void onError(Throwable throwable) {
+                        log.error("Error while executing Docker command: {} on container {}", String.join(" ", command), containerId, throwable);
+                        latch.countDown();
+                    }
                 });
             }
             catch (ConflictException e) {
