@@ -66,7 +66,7 @@ class AthenaRepositoryExportServiceTest extends AbstractSpringIntegrationIndepen
     @WithMockUser(username = TEST_PREFIX + "instructor1")
     void shouldExportRepository() throws Exception {
         Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        var programmingExercise = programmingExerciseRepository.findByCourseIdWithLatestResultForTemplateSolutionParticipations(course.getId()).stream().iterator().next();
+        var programmingExercise = programmingExerciseRepository.findAllByCourseId(course.getId()).getFirst();
         programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
         programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
         programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);

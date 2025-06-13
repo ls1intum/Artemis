@@ -50,8 +50,11 @@ public class PublicResourcesConfiguration implements WebMvcConfigurer {
 
         var defaultCacheControl = CacheControl.maxAge(jHipsterProperties.getHttp().getCache().getTimeToLiveInDays(), TimeUnit.DAYS).cachePublic();
 
-        addResourceHandlerForPath(registry, "images", "about").setCacheControl(defaultCacheControl);
+        addResourceHandlerForPath(registry, "content").setCacheControl(defaultCacheControl);
+        addResourceHandlerForPath(registry, "documents").setCacheControl(defaultCacheControl);
         addResourceHandlerForPath(registry, "emoji").setCacheControl(defaultCacheControl);
+        addResourceHandlerForPath(registry, "images").setCacheControl(defaultCacheControl);
+        addResourceHandlerForPath(registry, "videos").setCacheControl(defaultCacheControl);
 
         // Add caching for course icons, user profile pictures, and drag and drop quiz pictures
         // Add resource handlers for dynamic image paths based on fileUploadPath
@@ -62,9 +65,6 @@ public class PublicResourcesConfiguration implements WebMvcConfigurer {
                 .setCacheControl(defaultCacheControl);
 
         registry.addResourceHandler("/drag-and-drop/**").addResourceLocations("file:" + fileUploadPath + "/images/drag-and-drop/").setCacheControl(defaultCacheControl);
-
-        // e.g. public/videos/course-competencies/create-competencies.gif
-        addResourceHandlerForPath(registry, "videos", "course-competencies").setCacheControl(defaultCacheControl);
     }
 
     /**

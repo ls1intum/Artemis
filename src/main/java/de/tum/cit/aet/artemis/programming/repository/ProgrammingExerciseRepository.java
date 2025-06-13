@@ -46,29 +46,6 @@ import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExercisePart
 @Repository
 public interface ProgrammingExerciseRepository extends DynamicSpecificationRepository<ProgrammingExercise, Long, ProgrammingExerciseFetchOptions> {
 
-    /**
-     * Does a max join on the result table for each participation by result id (the newer the result id, the newer the result).
-     * This makes sure that we only receive the latest result for the template and the solution participation if they exist.
-     *
-     * @param courseId the course the returned programming exercises belong to.
-     * @return all exercises for the given course with only the latest results for solution and template each (if present).
-     */
-    @Query("""
-            SELECT DISTINCT pe
-            FROM ProgrammingExercise pe
-                LEFT JOIN FETCH pe.templateParticipation tp
-                LEFT JOIN FETCH pe.solutionParticipation sp
-                LEFT JOIN FETCH tp.submissions tps
-                LEFT JOIN FETCH sp.submissions s
-                LEFT JOIN FETCH tps.results tpr
-                LEFT JOIN FETCH s.results spr
-                LEFT JOIN FETCH pe.categories
-            WHERE pe.course.id = :courseId
-                AND (tpr.id = (SELECT MAX(r1.id) FROM Submission stp JOIN stp.results r1 WHERE stp.participation = tp) OR tpr.id IS NULL)
-                AND (spr.id = (SELECT MAX(r2.id) FROM Submission s2 JOIN s2.results r2 WHERE s2.participation = sp) OR spr.id IS NULL)
-            """)
-    List<ProgrammingExercise> findByCourseIdWithLatestResultForTemplateSolutionParticipations(@Param("courseId") long courseId);
-
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation" })
     Optional<ProgrammingExercise> findWithTemplateParticipationById(long exerciseId);
 
@@ -122,8 +99,6 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     Optional<ProgrammingExercise> findWithSubmissionPolicyById(long exerciseId);
 
     List<ProgrammingExercise> findAllByProjectKey(String projectKey);
-
-    List<ProgrammingExercise> findAllByCourseId(Long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "categories" })
     List<ProgrammingExercise> findAllWithCategoriesByCourseId(Long courseId);

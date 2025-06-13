@@ -20,11 +20,13 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
@@ -52,6 +54,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.DockerFlagsDTO;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
@@ -62,6 +65,7 @@ import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
+import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseSpecificationService;
@@ -1131,5 +1135,67 @@ public class ProgrammingExerciseService {
         programmingExerciseWithTemplate.setAuxiliaryRepositories(auxiliaryRepositories);
 
         return programmingExerciseWithTemplate;
+    }
+
+    /**
+     * Retrieves all programming exercises for a given course, including their categories, template and solution participations with their latest submissions and results.
+     * This method avoids one big and expensive query by splitting the retrieval into multiple smaller queries.
+     *
+     * @param courseId the course the returned programming exercises belong to.
+     * @return all exercises for the given course with only the latest result and latest submission for solution and template each (if present).
+     */
+    public List<ProgrammingExercise> findByCourseIdWithCategoriesLatestSubmissionResultForTemplateAndSolutionParticipation(long courseId) {
+        List<ProgrammingExercise> programmingExercisesWithCategories = programmingExerciseRepository.findAllWithCategoriesByCourseId(courseId);
+        if (programmingExercisesWithCategories.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        Set<Long> exerciseIds = programmingExercisesWithCategories.stream().map(ProgrammingExercise::getId).collect(Collectors.toSet());
+
+        Set<SolutionProgrammingExerciseParticipation> solutionParticipationsWithLatestSubmission = solutionProgrammingExerciseParticipationRepository
+                .findAllWithLatestSubmissionByExerciseIds(exerciseIds);
+        Set<TemplateProgrammingExerciseParticipation> templateParticipationsWithLatestSubmission = templateProgrammingExerciseParticipationRepository
+                .findAllWithLatestSubmissionByExerciseIds(exerciseIds);
+
+        Set<Long> solutionSubmissionIds = solutionParticipationsWithLatestSubmission.stream().flatMap(p -> p.getSubmissions().stream().map(DomainObject::getId))
+                .collect(Collectors.toSet());
+        Set<Long> templateSubmissionIds = templateParticipationsWithLatestSubmission.stream().flatMap(p -> p.getSubmissions().stream().map(DomainObject::getId))
+                .collect(Collectors.toSet());
+
+        Map<Long, Result> latestResultsForSolutionSubmissions = resultRepository.findLatestResultsBySubmissionIds(solutionSubmissionIds).stream()
+                .collect(Collectors.toMap(result -> result.getSubmission().getId(), result -> result, (r1, r2) -> r1)); // In case of multiple, take first
+
+        Map<Long, Result> latestResultsForTemplateSubmissions = resultRepository.findLatestResultsBySubmissionIds(templateSubmissionIds).stream()
+                .collect(Collectors.toMap(result -> result.getSubmission().getId(), result -> result, (r1, r2) -> r1));
+
+        Map<Long, SolutionProgrammingExerciseParticipation> solutionParticipationMap = solutionParticipationsWithLatestSubmission.stream()
+                .collect(Collectors.toMap(p -> p.getProgrammingExercise().getId(), p -> p));
+
+        Map<Long, TemplateProgrammingExerciseParticipation> templateParticipationMap = templateParticipationsWithLatestSubmission.stream()
+                .collect(Collectors.toMap(p -> p.getProgrammingExercise().getId(), p -> p));
+
+        for (ProgrammingExercise programmingExercise : programmingExercisesWithCategories) {
+            TemplateProgrammingExerciseParticipation templateParticipation = templateParticipationMap.get(programmingExercise.getId());
+            if (templateParticipation != null) {
+                programmingExercise.setTemplateParticipation(templateParticipation);
+                connectSubmissionAndResult(latestResultsForTemplateSubmissions, templateParticipation.getSubmissions());
+            }
+            SolutionProgrammingExerciseParticipation solutionParticipation = solutionParticipationMap.get(programmingExercise.getId());
+            if (solutionParticipation != null) {
+                programmingExercise.setSolutionParticipation(solutionParticipation);
+                connectSubmissionAndResult(latestResultsForSolutionSubmissions, solutionParticipation.getSubmissions());
+            }
+        }
+        return programmingExercisesWithCategories;
+    }
+
+    private void connectSubmissionAndResult(Map<Long, Result> latestResultsForSolutionSubmissions, Set<Submission> submissions) {
+        if (submissions != null && !submissions.isEmpty()) {
+            Submission submission = submissions.iterator().next();
+            Result res = latestResultsForSolutionSubmissions.get(submission.getId());
+            if (res != null) {
+                submission.setResults(Collections.singletonList(res));
+            }
+        }
     }
 }
