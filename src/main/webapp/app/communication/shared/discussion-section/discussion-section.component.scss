@@ -61,7 +61,7 @@ $discussion-section-card-min-width: 370px;
 
 .collapsed-discussion {
     width: 38px;
-    justify-content: space-between;
+    justify-content: start;
     flex-flow: column nowrap;
     border: 2px solid $border-color;
     border-radius: 0.25em 0 0 0.25em;
@@ -77,6 +77,11 @@ $discussion-section-card-min-width: 370px;
         padding-top: 0.5rem;
         padding-bottom: 0.5rem;
         place-self: center;
+    }
+
+    .spacer {
+        flex: 1;
+        width: 100%;
     }
 }
 
