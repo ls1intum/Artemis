@@ -13,7 +13,6 @@ import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
@@ -30,6 +29,7 @@ import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.service.AndroidFingerprintService;
+import de.tum.cit.aet.artemis.core.service.ArtemisSuccessfulLoginService;
 import de.tum.cit.aet.artemis.core.util.AndroidApkKeyHashUtil;
 
 /**
@@ -59,7 +59,7 @@ public class ArtemisPasskeyWebAuthnConfigurer {
 
     private final MailSendingService mailSendingService;
 
-    private final ApplicationEventPublisher eventPublisher;
+    private final ArtemisSuccessfulLoginService artemisSuccessfulLoginService;
 
     @Value("${" + Constants.PASSKEY_ENABLED_PROPERTY_NAME + ":false}")
     private boolean passkeyEnabled;
@@ -83,7 +83,7 @@ public class ArtemisPasskeyWebAuthnConfigurer {
             PublicKeyCredentialUserEntityRepository publicKeyCredentialUserEntityRepository, UserCredentialRepository userCredentialRepository,
             PublicKeyCredentialCreationOptionsRepository publicKeyCredentialCreationOptionsRepository,
             PublicKeyCredentialRequestOptionsRepository publicKeyCredentialRequestOptionsRepository, AndroidFingerprintService androidFingerprintService,
-            MailSendingService mailSendingService, ApplicationEventPublisher eventPublisher) {
+            MailSendingService mailSendingService, ArtemisSuccessfulLoginService artemisSuccessfulLoginService) {
         this.converter = converter;
         this.jwtCookieService = jwtCookieService;
         this.userRepository = userRepository;
@@ -93,7 +93,7 @@ public class ArtemisPasskeyWebAuthnConfigurer {
         this.publicKeyCredentialRequestOptionsRepository = publicKeyCredentialRequestOptionsRepository;
         this.androidFingerprintService = androidFingerprintService;
         this.mailSendingService = mailSendingService;
-        this.eventPublisher = eventPublisher;
+        this.artemisSuccessfulLoginService = artemisSuccessfulLoginService;
     }
 
     /**
@@ -122,8 +122,8 @@ public class ArtemisPasskeyWebAuthnConfigurer {
 
             addAndroidApkKeyHashesToAllowedOrigins();
 
-            log.info("WebAuthn passkey authentication enabled with RP ID: {}", relyingPartyId);
-            log.info("Allowed origins: {}", allowedOrigins);
+            log.debug("WebAuthn passkey authentication enabled with RP ID: {}", relyingPartyId);
+            log.debug("Allowed origins: {}", allowedOrigins);
         }
         catch (URISyntaxException | MalformedURLException e) {
             throw new IllegalStateException("Invalid server URL configuration for WebAuthn: " + e.getMessage(), e);
@@ -157,7 +157,8 @@ public class ArtemisPasskeyWebAuthnConfigurer {
         }
 
         WebAuthnConfigurer<HttpSecurity> webAuthnConfigurer = new ArtemisWebAuthnConfigurer<>(converter, jwtCookieService, userRepository, publicKeyCredentialUserEntityRepository,
-                userCredentialRepository, publicKeyCredentialCreationOptionsRepository, publicKeyCredentialRequestOptionsRepository, mailSendingService, eventPublisher);
+                userCredentialRepository, publicKeyCredentialCreationOptionsRepository, publicKeyCredentialRequestOptionsRepository, mailSendingService,
+                artemisSuccessfulLoginService);
 
         http.with(webAuthnConfigurer, configurer -> {
             configurer.allowedOrigins(allowedOrigins).rpId(relyingPartyId).rpName(relyingPartyName);

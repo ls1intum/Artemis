@@ -282,7 +282,7 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 return latestSubmissionDate.map(date -> new ResourceTimestampDTO(exercise.getId(), date)).stream();
             }).collect(Collectors.toSet());
 
-            Set<ResourceTimestampDTO> result = exerciseMetricsRepository.findLatestSubmissionDatesForUser(exerciseIds, userID);
+            Set<ResourceTimestampDTO> result = exerciseMetricsRepository.findLatestIndividualSubmissionDatesForUser(exerciseIds, userID);
             assertThat(result).isEqualTo(expectedSet);
         }
 

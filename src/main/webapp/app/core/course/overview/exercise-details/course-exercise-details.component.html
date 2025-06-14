@@ -55,7 +55,7 @@
         <div class="row">
             <div class="col flex-grow-1">
                 <!-- RESULTS START -->
-                @if ((this.sortedHistoryResults?.length && this.sortedHistoryResults.length > 1) || this.practiceStudentParticipation?.results?.length) {
+                @if ((this.sortedHistoryResults?.length && this.sortedHistoryResults.length > 1) || this.numberOfPracticeResults) {
                     <div class="row">
                         <div class="row mb-2 mt-2 align-items-baseline d-none d-md-flex">
                             <div class="col-auto">
@@ -184,8 +184,8 @@
                         <jhi-rating class="mt-2 alert alert-info" [result]="latestRatedResult" />
                     </div>
                 }
-                @if (exercise.type === PROGRAMMING && !exercise.exerciseGroup && irisSettings?.irisChatSettings?.enabled) {
-                    <jhi-exercise-chatbot-button [mode]="ChatServiceMode.EXERCISE" />
+                @if (exercise.type === PROGRAMMING && !exercise.exerciseGroup && irisSettings?.irisProgrammingExerciseChatSettings?.enabled) {
+                    <jhi-exercise-chatbot-button [mode]="ChatServiceMode.PROGRAMMING_EXERCISE" />
                 }
                 @if (plagiarismCaseInfo?.verdict === PlagiarismVerdict.NO_PLAGIARISM) {
                     <a class="btn btn-info btn-sm me-2" [routerLink]="['/courses', courseId, 'plagiarism-cases', plagiarismCaseInfo?.id]">

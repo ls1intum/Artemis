@@ -101,8 +101,8 @@ export class IrisSettingsUpdateComponent implements OnInit, OnDestroy, DoCheck, 
             this.irisSettings = settings;
             this.irisSettings = this.irisEmptySettingService.fillEmptyIrisSubSettings(this.irisSettings);
             this.originalIrisSettings = cloneDeep(settings);
-            this.autoLectureIngestion = this.irisSettings?.irisLectureIngestionSettings?.autoIngestOnLectureAttachmentUpload ?? false;
-            this.autoFaqIngestion = this.irisSettings?.irisFaqIngestionSettings?.autoIngestOnFaqCreation ?? false;
+            this.autoLectureIngestion = this.irisSettings?.irisLectureIngestionSettings?.autoIngestOnLectureAttachmentUpload ?? true;
+            this.autoFaqIngestion = this.irisSettings?.irisFaqIngestionSettings?.autoIngestOnFaqCreation ?? true;
             this.isDirty = false;
         });
         this.loadParentIrisSettingsObservable().subscribe((settings) => {

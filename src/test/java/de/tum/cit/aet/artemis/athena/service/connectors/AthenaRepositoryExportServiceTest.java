@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -36,6 +37,9 @@ class AthenaRepositoryExportServiceTest extends AbstractSpringIntegrationIndepen
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ProgrammingExerciseParticipationUtilService programmingExerciseParticipationUtilService;
 
     @Autowired
     private ProgrammingExerciseTestRepository programmingExerciseRepository;
@@ -62,10 +66,10 @@ class AthenaRepositoryExportServiceTest extends AbstractSpringIntegrationIndepen
     @WithMockUser(username = TEST_PREFIX + "instructor1")
     void shouldExportRepository() throws Exception {
         Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        var programmingExercise = programmingExerciseRepository.findByCourseIdWithLatestResultForTemplateSolutionParticipations(course.getId()).stream().iterator().next();
+        var programmingExercise = programmingExerciseRepository.findAllByCourseId(course.getId()).getFirst();
         programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
-        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
-        programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
         var programmingExerciseWithId = programmingExerciseRepository.save(programmingExercise);
 
         ProgrammingExerciseStudentParticipation participation = new ProgrammingExerciseStudentParticipation();

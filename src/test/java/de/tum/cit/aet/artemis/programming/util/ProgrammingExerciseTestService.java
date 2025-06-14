@@ -140,7 +140,6 @@ import de.tum.cit.aet.artemis.programming.service.JavaTemplateUpgradeService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeature;
 import de.tum.cit.aet.artemis.programming.service.UriService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.build_plan.JenkinsBuildPlanUtils;
-import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCGitBranchService;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTaskTestRepository;
@@ -254,6 +253,9 @@ public class ProgrammingExerciseTestService {
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
     @Autowired
+    private ProgrammingExerciseParticipationUtilService programmingExerciseParticipationUtilService;
+
+    @Autowired
     private ParticipationUtilService participationUtilService;
 
     @Autowired
@@ -297,10 +299,7 @@ public class ProgrammingExerciseTestService {
     // Injected in the constructor
     private VersionControlService versionControlService;
 
-    private LocalVCGitBranchService localVCGitBranchService;
-
     // Injected in the constructor
-
     private MockDelegate mockDelegate;
 
     private String userPrefix;
@@ -316,7 +315,7 @@ public class ProgrammingExerciseTestService {
         userUtilService.addUsers(userPrefix, NUMBER_OF_STUDENTS + additionalStudents, additionalTutors + 1, additionalEditors + 1, additionalInstructors + 1);
     }
 
-    public void setup(MockDelegate mockDelegate, VersionControlService versionControlService, LocalVCGitBranchService localVCGitBranchService) throws Exception {
+    public void setup(MockDelegate mockDelegate, VersionControlService versionControlService) throws Exception {
         mockDelegate.resetMockProvider();
         exerciseRepo = new LocalRepository(defaultBranch);
         testRepo = new LocalRepository(defaultBranch);
@@ -330,7 +329,6 @@ public class ProgrammingExerciseTestService {
         studentTeamRepo = new LocalRepository(defaultBranch);
         this.mockDelegate = mockDelegate;
         this.versionControlService = versionControlService;
-        this.localVCGitBranchService = localVCGitBranchService;
 
         course = courseUtilService.addEmptyCourse();
         ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true);
@@ -1294,8 +1292,8 @@ public class ProgrammingExerciseTestService {
         exercise.setMode(exerciseMode);
         exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
         programmingExerciseRepository.save(exercise);
-        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(exercise);
-        programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(exercise);
+        programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(exercise);
+        programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(exercise);
         return course;
     }
 
@@ -1735,8 +1733,8 @@ public class ProgrammingExerciseTestService {
         exercise.setProblemStatement(null);
         exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
         exercise = programmingExerciseRepository.save(exercise);
-        exercise = programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(exercise);
-        exercise = programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(exercise);
+        exercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(exercise);
+        exercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(exercise);
         exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exercise.getId()).orElseThrow();
     }
 
@@ -1763,8 +1761,8 @@ public class ProgrammingExerciseTestService {
         if (shouldIncludeBuildPlan) {
             buildPlanRepository.setBuildPlanForExercise("my build plan", exercise);
         }
-        exercise = programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(exercise);
-        exercise = programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(exercise);
+        exercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(exercise);
+        exercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(exercise);
         exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exercise.getId()).orElseThrow();
 
     }
@@ -1788,8 +1786,8 @@ public class ProgrammingExerciseTestService {
         // Create a programming exercise with solution, template, tests participation and build config
         exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
         exercise = programmingExerciseRepository.save(exercise);
-        exercise = programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(exercise);
-        exercise = programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(exercise);
+        exercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(exercise);
+        exercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(exercise);
         exercise.setProblemStatement("Lorem Ipsum");
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(exercise);
 
@@ -1885,8 +1883,8 @@ public class ProgrammingExerciseTestService {
 
         // Create a programming exercise with solution, template, and tests participations
         exercise = programmingExerciseRepository.save(exercise);
-        exercise = programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(exercise);
-        exercise = programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(exercise);
+        exercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(exercise);
+        exercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(exercise);
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(exercise);
 
         // Add student participation
@@ -2144,7 +2142,6 @@ public class ProgrammingExerciseTestService {
         var participantRepoTestUrl = ParticipationFactory.getMockFileRepositoryUri(studentTeamRepo);
         final var teamLocalPath = studentTeamRepo.localRepoFile.toPath();
         doReturn(teamLocalPath).when(gitService).getDefaultLocalPathOfRepo(participantRepoTestUrl);
-        doReturn(defaultBranch).when(localVCGitBranchService).getOrRetrieveBranchOfExercise(exercise);
         doThrow(new CanceledException("Checkout got interrupted!")).when(gitService).getOrCheckoutRepositoryIntoTargetDirectory(any(), any(), anyBoolean());
 
         // the local repo should exist before startExercise()
@@ -2179,8 +2176,8 @@ public class ProgrammingExerciseTestService {
         exercise.setMode(TEAM);
         exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
         programmingExerciseRepository.save(exercise);
-        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(exercise);
-        programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(exercise);
+        programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(exercise);
+        programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(exercise);
     }
 
     // TEST
@@ -2285,7 +2282,7 @@ public class ProgrammingExerciseTestService {
         var programmingSubmission = ParticipationFactory.generateProgrammingSubmission(true, "abcde", SubmissionType.MANUAL);
         programmingSubmission = programmingExerciseUtilService.addProgrammingSubmission(exercise, programmingSubmission, userPrefix + studentLogin);
         if (withResult) {
-            participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, submissionDate, programmingSubmission.getParticipation(), score >= 100D, true, 100D);
+            participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, submissionDate, programmingSubmission, score >= 100D, true, 100D);
         }
         return (ProgrammingExerciseStudentParticipation) programmingSubmission.getParticipation();
     }

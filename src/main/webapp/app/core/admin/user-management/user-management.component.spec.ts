@@ -148,13 +148,47 @@ describe('User Management Component', () => {
 
                 comp.ngOnInit();
 
-                const profileSpy = jest.spyOn(userService, 'update').mockReturnValue(of(new HttpResponse<User>({ status: 200 })));
+                const profileSpy = jest.spyOn(userService, 'activate').mockReturnValue(of(new HttpResponse<User>({ status: 200 })));
                 // WHEN
                 comp.setActive(user, true);
                 tick(1000); // simulate async
 
                 // THEN
-                expect(userService.update).toHaveBeenCalledWith({ ...user, activated: true });
+                expect(userService.activate).toHaveBeenCalledWith(user.id);
+                expect(userService.query).toHaveBeenCalledTimes(2);
+                expect(comp.users && comp.users[0]).toEqual(expect.objectContaining({ id: 123 }));
+                expect(profileSpy).toHaveBeenCalledOnce();
+            }),
+        ));
+    });
+
+    describe('setInactive', () => {
+        it('should update user and call load all', inject(
+            [],
+            fakeAsync(() => {
+                // GIVEN
+                const headers = new HttpHeaders().append('link', 'link;link');
+                const user = new User(123);
+                jest.spyOn(userService, 'query').mockReturnValue(
+                    of(
+                        new HttpResponse({
+                            body: [user],
+                            headers,
+                        }),
+                    ),
+                );
+
+                jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(new ProfileInfo());
+
+                comp.ngOnInit();
+
+                const profileSpy = jest.spyOn(userService, 'deactivate').mockReturnValue(of(new HttpResponse<User>({ status: 200 })));
+                // WHEN
+                comp.setActive(user, false);
+                tick(1000); // simulate async
+
+                // THEN
+                expect(userService.deactivate).toHaveBeenCalledWith(user.id);
                 expect(userService.query).toHaveBeenCalledTimes(2);
                 expect(comp.users && comp.users[0]).toEqual(expect.objectContaining({ id: 123 }));
                 expect(profileSpy).toHaveBeenCalledOnce();
