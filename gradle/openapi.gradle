@@ -1,0 +1,174 @@
+    import org.yaml.snakeyaml.Yaml
+
+
+    buildscript {
+        repositories {
+            mavenCentral()
+        }
+        dependencies {
+            // reuse the same version from your root project
+            classpath "org.yaml:snakeyaml:${rootProject.property('snakeyaml_version')}"
+            classpath "org.openapitools:openapi-generator-gradle-plugin:7.13.0"
+        }
+    }
+
+    openApi {
+        apiDocsUrl.set("http://localhost:8080/api-docs.yaml")
+        outputDir.set(file("$rootDir/openapi"))
+        outputFileName.set("openapi.yaml")
+        waitTimeInSeconds.set(180)
+        customBootRun {
+
+            jvmArgs = ["-Dspring.profiles.active=test,artemis,core,atlas,scheduling,athena,apollon,iris,aeolus,theia,lti," +
+
+                           "dev","-Dspringdoc.packages-to-scan=de.tum.cit.aet.artemis.tutorialgroup.web"
+            ]
+
+// TODO add package later add ${System.getProperty("springdoc.packages-to-scan")} package via cli property
+            args.set(["--artemis.user-management.use-external=false","--artemis.iris.url=http://iris.fake=",
+                      "--artemis.iris.secret-token=token", "--spring.jpa.database=h2", "--spring.datasource.url=jdbc:h2:mem:mydb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE", "--spring.datasource.username=sa", --"spring.datasource.password=", "--aeolus.url=http://aeolus.fake"])
+
+        }
+    }
+
+    // 1.TODO Detect if any resources have changed
+    // 2. TODO If so, modify the packages to scan accordingly in the task above
+    // 3. TODO Replace the existing OpenAPI spec with the new part. Keep the rest as is.
+    // 4. Run the OpenAPI generator to generate the complete TypeScript files for the Angular client
+    // 5. Post-process the generated files to remove leading underscores and numeric suffixes from method names
+    // 6. Remove unused imports from the generated TypeScript files to satisfy our tsconfig.
+
+    openApiGenerate {
+        generatorName = "typescript-angular"
+        inputSpec.set(file("${rootDir}/openapi/openapi.yaml").toURI().toString())
+        outputDir = "${rootDir}/src/main/webapp/app/openapi"
+        apiPackage = "api"
+        modelPackage = "model"
+        // sets are not properly converted to JSON objects, so we need to use Array instead https://github.com/OpenAPITools/openapi-generator/issues/14055
+        // empty responses should be void, not object
+        typeMappings = [
+                set: 'Array',
+        ]
+        languageSpecificPrimitives =['void']
+        configOptions = [
+            serviceSuffix: "ApiService",
+            supportsES6: "true",
+            serviceFileSuffix: "Api.service"
+        ]
+    }
+    tasks.register('pruneOpenApiSpec') {
+        description = 'Prune invalid $ref nodes and drop operations (and empty paths) with missing schemas'
+
+        doLast {
+            def root = project.rootDir
+            def inputFile = file("$root/openapi/openapi.yaml")
+            def outputFile = file("$root/openapi/openapi.yaml")
+            def yaml = new Yaml()
+            def spec = yaml.load(inputFile.text) as Map<String, Object>
+            def components = (spec.components ?: [:]) as Map<String, Map<String, Object>>
+
+            // 1) Define a recursive function to prune invalid $ref nodes in the spec
+            Closure pruneRec
+            pruneRec = { obj ->
+                // If the object is a Map with only a $ref key
+                if (obj instanceof Map && obj.size() == 1 && obj.containsKey('$ref')) {
+                    def ref = obj['$ref'] as String
+
+                    // Match references of the form "#/components/{type}/{name}"
+                    def matcher = (ref =~ /^#\/components\/([^\/]+)\/(.+)$/)
+
+                    // If it's a valid match but the referenced component is missing, prune it (return null)
+                    if (matcher.matches() && !components[matcher[0][1]]?.containsKey(matcher[0][2])) {
+                        return null
+                    }
+
+                    // Otherwise, keep the reference as is
+                    return obj
+                }
+
+                // Recursively process maps: build a new map with only non-null values
+                if (obj instanceof Map) {
+                    obj.collectEntries { key, val ->
+                        def prunedVal = pruneRec(val)
+                        prunedVal != null ? [(key): prunedVal] : [:]
+                    }
+                }
+                // Recursively process lists: remove any null entries after pruning
+                else if (obj instanceof List) {
+                    obj.collect { pruneRec(it) }.findAll { it != null }
+                }
+                // If it's not a map or list, return the object unchanged
+                else {
+                    obj
+                }
+            }
+
+// Apply the recursive pruning function to the OpenAPI spec
+            def prunedSpec = pruneRec(spec) as Map<String, Object>
+
+// 2) Remove operations from paths that have invalid request/response schemas
+            prunedSpec.paths?.with { pathsMap ->
+                pathsMap.each { pathName, ops ->
+                    // Collect operation keys (e.g., get, post) that need to be removed
+                    def toRemoveOps = ops.keySet().findAll { opName ->
+                        def op = ops[opName] as Map
+
+                        // Determine if the request body has a content type with a null schema
+                        def badReq = op.requestBody?.content?.values()?.any { mt -> mt.schema == null }
+
+                        // Determine if any response media type has a null schema
+                        def badResp = op.responses?.values()?.any { resp ->
+                            resp.content?.values()?.any { mt -> mt.schema == null }
+                        }
+
+                        // Mark the operation for removal if either request or response is bad
+                        badReq || badResp
+                    }
+
+                    // Actually remove the invalid operations from the map
+                    toRemoveOps.each { badOpName ->
+                        ops.remove(badOpName)
+                    }
+                }
+
+                // 3) After removing bad operations, remove any path that has no remaining operations
+                def emptyPaths = pathsMap.keySet().findAll { pn ->
+                    (pathsMap[pn] as Map).isEmpty()
+                }
+
+                // Remove the empty paths from the paths map
+                emptyPaths.each { ep ->
+                    pathsMap.remove(ep)
+                }
+            }
+
+// 4) Write the cleaned and pruned spec to an output YAML file
+            outputFile.text = yaml.dump(prunedSpec)
+            println "✔ Pruned spec written to $outputFile"
+
+        }
+    }
+
+
+    tasks.named('openApiGenerate') {
+        finalizedBy 'postProcessTsFiles'
+    }
+    tasks.named('openApiGenerate') {
+        dependsOn 'pruneOpenApiSpec'
+    }
+    tasks.named("openApiGenerate") {
+        doFirst {
+            def openapiDir = file("$rootDir/src/main/webapp/app/openapi")
+            if (openapiDir.exists()) {
+                delete fileTree(dir: openapiDir, exclude: ".openapi-generator-ignore")
+                println "✔ Deleted everything under openapi/ except .openapi-generator-ignore"
+            }
+        }
+    }
+
+
+    tasks.register('postProcessTsFiles', Exec) {
+        description = "Removes unused imports from generated OpenAPI TypeScript files and cleans numeric suffixes from method names"
+
+        commandLine "npx", "tsx", "gradle/scripts/openapi-post-processing.ts"
+    }

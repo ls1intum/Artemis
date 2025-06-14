@@ -40,6 +40,7 @@ export default tseslint.config(
             'prebuild.mjs',
             'rules/**/*.js',
             'src/main/webapp/content/scripts/pdf.worker.min.mjs',
+            'src/main/webapp/app/openapi/**',
         ],
     },
     eslint.configs.recommended,

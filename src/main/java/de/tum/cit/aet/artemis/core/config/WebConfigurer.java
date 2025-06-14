@@ -96,6 +96,10 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
     private void setLocationForStaticAssets(WebServerFactory server) {
         if (server instanceof ConfigurableServletWebServerFactory servletWebServer) {
             String prefixPath = resolvePathPrefix();
+            // when running using gradlew the prefix path starts with / which is illegal on Windows
+            if (System.getProperty("os.name").toLowerCase().contains("win") && prefixPath.startsWith("/")) {
+                prefixPath = prefixPath.substring(1);
+            }
             Path root = Path.of(prefixPath + "build/resources/main/static/");
             if (Files.exists(root) && Files.isDirectory(root)) {
                 servletWebServer.setDocumentRoot(root.toFile());
