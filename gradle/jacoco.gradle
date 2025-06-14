@@ -21,6 +21,7 @@ ext {
         "quiz"          :          ["INSTRUCTION": 0.889, "CLASS":  7],
         "text"          :          ["INSTRUCTION": 0.949, "CLASS":  1],
         "tutorialgroup" :          ["INSTRUCTION": 0.915, "CLASS":  1],
+        "calendar"      :          ["INSTRUCTION": 0.990, "CLASS":  0],
     ]
     // If no explicit modules defined -> generate reports and validate for each module
     reportedModules = includedModules.size() == 0
