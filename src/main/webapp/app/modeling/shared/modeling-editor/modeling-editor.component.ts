@@ -21,8 +21,13 @@ import { captureException } from '@sentry/angular';
     imports: [TranslateDirective, FaIconComponent, NgStyle, NgClass, ModelingExplanationEditorComponent],
 })
 export class ModelingEditorComponent extends ModelingComponent implements AfterViewInit, OnDestroy, OnChanges {
-    private modalService = inject(NgbModal);
-    private sanitizer = inject(DomSanitizer);
+    protected readonly faCheck = faCheck;
+    protected readonly faTimes = faTimes;
+    protected readonly faCircleNotch = faCircleNotch;
+    protected readonly farQuestionCircle = faQuestionCircle;
+
+    private readonly modalService = inject(NgbModal);
+    private readonly sanitizer = inject(DomSanitizer);
 
     @Input() showHelpButton = true;
     @Input() withExplanation = false;
@@ -35,12 +40,6 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
 
     private modelSubscription: number;
     private modelPatchSubscription: number;
-
-    // Icons
-    faCheck = faCheck;
-    faTimes = faTimes;
-    faCircleNotch = faCircleNotch;
-    farQuestionCircle = faQuestionCircle;
 
     htmlScroll = 0;
     mouseDownListener: ((this: Document, ev: MouseEvent) => any) | undefined;
@@ -201,7 +200,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
      */
     ngOnChanges(changes: SimpleChanges): void {
         if (changes.diagramType) {
-            // if diagram type changed -> recreate the editor
+            // if the diagram type changed -> recreate the editor
             this.initializeApollonEditor();
         }
 

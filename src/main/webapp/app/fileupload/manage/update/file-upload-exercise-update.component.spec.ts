@@ -12,19 +12,24 @@ import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-acti
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { TranslateService } from '@ngx-translate/core';
-import { MockProvider } from 'ng-mocks';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import dayjs from 'dayjs/esm';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { fileUploadExercise } from 'test/helpers/mocks/service/mock-file-upload-exercise.service';
-import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
 import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-group/team-config-form-group.component';
 import { NgModel } from '@angular/forms';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import { MockComponent } from 'ng-mocks';
+import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 
 describe('FileUploadExerciseUpdateComponent', () => {
     let comp: FileUploadExerciseUpdateComponent;
@@ -33,13 +38,16 @@ describe('FileUploadExerciseUpdateComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
+            imports: [OwlDateTimeModule, OwlNativeDateTimeModule],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute({}) },
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: Router, useClass: MockRouter },
-                MockProvider(TranslateService),
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ProfileService, useClass: MockProfileService },
+                MockComponent(FormDateTimePickerComponent),
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -134,6 +142,10 @@ describe('FileUploadExerciseUpdateComponent', () => {
             const route = TestBed.inject(ActivatedRoute);
             route.data = of({ fileUploadExercise });
             route.url = of([{ path: 'new' } as UrlSegment]);
+
+            global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+                return new MockResizeObserver(callback);
+            });
         });
 
         it('should not be in exam mode', fakeAsync(() => {
@@ -147,17 +159,16 @@ describe('FileUploadExerciseUpdateComponent', () => {
 
         it('should calculate valid sections', () => {
             const calculateValidSpy = jest.spyOn(comp, 'calculateFormSectionStatus');
-            comp.exerciseTitleChannelNameComponent = { titleChannelNameComponent: { formValidChanges: new Subject() } } as ExerciseTitleChannelNameComponent;
+            comp.exerciseTitleChannelNameComponent().titleChannelNameComponent().isValid.set(false);
             comp.teamConfigFormGroupComponent = { formValidChanges: new Subject() } as TeamConfigFormGroupComponent;
             comp.bonusPoints = { valueChanges: new Subject(), valid: true } as unknown as NgModel;
             comp.points = { valueChanges: new Subject(), valid: true } as unknown as NgModel;
 
             comp.ngOnInit();
             comp.ngAfterViewInit();
-            expect(comp.titleChannelNameComponentSubscription).toBeDefined();
 
-            comp.exerciseTitleChannelNameComponent.titleChannelNameComponent.formValid = true;
-            comp.exerciseTitleChannelNameComponent.titleChannelNameComponent.formValidChanges.next(true);
+            comp.exerciseTitleChannelNameComponent().titleChannelNameComponent().isValid.set(true);
+            fixture.detectChanges();
             expect(calculateValidSpy).toHaveBeenCalledOnce();
             expect(comp.formStatusSections).toBeDefined();
             expect(comp.formStatusSections[0].valid).toBeTrue();
@@ -166,7 +177,6 @@ describe('FileUploadExerciseUpdateComponent', () => {
             expect(calculateValidSpy).toHaveBeenCalledTimes(2);
 
             comp.ngOnDestroy();
-            expect(comp.titleChannelNameComponentSubscription?.closed).toBeTrue();
         });
     });
     describe('imported exercise', () => {
