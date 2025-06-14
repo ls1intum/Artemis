@@ -98,9 +98,10 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
      * Downloads the file as the student version if available, otherwise the instructor version
      * If it is not the student view, it always downloads the original version
      */
-    handleDownload(): void {
+    handleDownload() {
         this.scienceService.logEvent(ScienceEventType.LECTURE__OPEN_UNIT, this.lectureUnit().id);
 
+        // Determine the link based on the availability of a student version
         const link = addPublicFilePrefix(this.lectureUnit().attachment!.studentVersion || this.fileService.createStudentLink(this.lectureUnit().attachment!.link!));
 
         if (link) {
