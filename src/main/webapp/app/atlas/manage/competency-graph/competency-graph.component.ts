@@ -13,7 +13,7 @@ import { CompetencyNodeComponent, SizeUpdate } from 'app/atlas/manage/competency
     styleUrl: './competency-graph.component.scss',
 })
 export class CompetencyGraphComponent {
-    readonly competencyGraph = input.required<CompetencyGraphDTO>();
+    competencyGraph = input.required<CompetencyGraphDTO>();
 
     private readonly internalCompetencyGraph = signal<CompetencyGraphDTO>({
         nodes: [],
