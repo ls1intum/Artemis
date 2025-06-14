@@ -6,6 +6,7 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.web.webauthn.api.Bytes;
 import org.springframework.security.web.webauthn.api.ImmutablePublicKeyCredentialUserEntity;
@@ -35,6 +36,7 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
  * @see de.tum.cit.aet.artemis.core.security.passkey.ArtemisWebAuthnConfigurer
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Repository
 public class ArtemisPublicKeyCredentialUserEntityRepository implements PublicKeyCredentialUserEntityRepository {
 

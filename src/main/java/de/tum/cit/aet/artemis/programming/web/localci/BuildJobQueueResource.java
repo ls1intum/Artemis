@@ -7,6 +7,7 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpHeaders;
@@ -40,6 +41,7 @@ import de.tum.cit.aet.artemis.programming.service.localci.SharedQueueManagementS
 import tech.jhipster.web.util.PaginationUtil;
 
 @Profile(PROFILE_LOCALCI)
+@Lazy
 @RestController
 @RequestMapping("api/programming/")
 public class BuildJobQueueResource {

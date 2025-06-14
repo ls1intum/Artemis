@@ -6,6 +6,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -22,6 +23,7 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus;
  * Spring Data JPA repository for the PlagiarismComparison entity.
  */
 @Conditional(PlagiarismEnabled.class)
+@Lazy
 @Repository
 public interface PlagiarismComparisonRepository extends ArtemisJpaRepository<PlagiarismComparison<?>, Long> {
 

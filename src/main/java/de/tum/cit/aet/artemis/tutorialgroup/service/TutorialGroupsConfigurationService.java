@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,6 +19,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupScheduleRepo
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupSessionRepository;
 
 @Conditional(TutorialGroupEnabled.class)
+@Lazy
 @Service
 public class TutorialGroupsConfigurationService {
 

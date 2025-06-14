@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -36,6 +37,7 @@ import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
  * Spring Data repository for the Message (Post) entity.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Repository
 public interface ConversationMessageRepository extends ArtemisJpaRepository<Post, Long>, CustomPostRepository {
 

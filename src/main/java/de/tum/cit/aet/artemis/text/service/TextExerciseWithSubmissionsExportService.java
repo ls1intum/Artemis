@@ -4,6 +4,7 @@ import java.nio.file.Path;
 import java.util.List;
 
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +20,7 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
  */
 
 @Conditional(TextEnabled.class)
+@Lazy
 @Service
 public class TextExerciseWithSubmissionsExportService extends ExerciseWithSubmissionsExportService {
 

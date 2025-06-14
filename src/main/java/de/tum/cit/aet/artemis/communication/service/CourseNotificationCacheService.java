@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
  * This service provides methods to invalidate caches related to course notifications.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class CourseNotificationCacheService {
 

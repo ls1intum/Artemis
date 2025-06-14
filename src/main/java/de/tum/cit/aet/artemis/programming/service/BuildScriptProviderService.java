@@ -14,6 +14,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.io.Resource;
@@ -32,6 +33,7 @@ import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusTemplateService;
  * Service for providing build scripts for programming exercises
  * The scripts are loaded from the resources/templates/aeolus directory
  */
+@Lazy
 @Service
 @Profile("aeolus | localci")
 public class BuildScriptProviderService {

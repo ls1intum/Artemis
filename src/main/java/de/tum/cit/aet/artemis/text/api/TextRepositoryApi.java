@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.assessment.repository.TextBlockRepository;
@@ -14,6 +15,7 @@ import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 
 @Conditional(TextEnabled.class)
 @Controller
+@Lazy
 public class TextRepositoryApi extends AbstractTextApi {
 
     private final TextExerciseRepository textExerciseRepository;

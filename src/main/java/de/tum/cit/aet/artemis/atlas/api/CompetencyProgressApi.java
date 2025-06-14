@@ -4,6 +4,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
@@ -18,6 +19,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
 
 @Controller
 @Conditional(AtlasEnabled.class)
+@Lazy
 public class CompetencyProgressApi extends AbstractAtlasApi {
 
     private final CompetencyProgressService competencyProgressService;

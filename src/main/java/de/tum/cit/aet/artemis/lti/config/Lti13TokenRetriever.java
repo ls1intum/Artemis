@@ -13,6 +13,7 @@ import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -43,6 +44,7 @@ import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
  * This class is responsible to retrieve access tokens from an LTI 1.3 platform of a specific ClientRegistration.
  */
 @Component
+@Lazy
 @Profile(PROFILE_LTI)
 public class Lti13TokenRetriever {
 

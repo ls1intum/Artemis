@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.web.servlet.ServletRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 
 /**
@@ -15,6 +16,7 @@ import org.springframework.context.annotation.Profile;
  */
 @Configuration
 @Profile(PROFILE_LOCALVC)
+@Lazy
 public class JGitServletConfiguration {
 
     private static final Logger log = LoggerFactory.getLogger(JGitServletConfiguration.class);

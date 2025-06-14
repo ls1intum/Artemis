@@ -14,6 +14,7 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
@@ -30,6 +31,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 @Component
 @Profile(PROFILE_ATHENA)
+@Lazy
 public class AthenaRequestMockProvider {
 
     private final RestTemplate restTemplate;

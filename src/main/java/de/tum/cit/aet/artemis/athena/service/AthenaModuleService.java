@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.stereotype.Service;
@@ -32,6 +33,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 /**
  * Service to get the URL for an Athena module, depending on the type of exercise.
  */
+@Lazy
 @Service
 @Profile(PROFILE_ATHENA)
 public class AthenaModuleService {

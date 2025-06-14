@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -31,6 +32,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
  * All communication data is exported per course and stored in a CSV file.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class DataExportCommunicationDataService {
 

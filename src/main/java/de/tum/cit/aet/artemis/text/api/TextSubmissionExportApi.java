@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.core.service.ArchivalReportEntry;
@@ -20,6 +21,7 @@ import de.tum.cit.aet.artemis.text.service.TextSubmissionExportService;
 
 @Conditional(TextEnabled.class)
 @Controller
+@Lazy
 public class TextSubmissionExportApi extends AbstractTextApi {
 
     private final TextSubmissionExportService textSubmissionExportService;

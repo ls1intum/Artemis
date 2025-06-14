@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.util.List;
 import java.util.Set;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -21,6 +22,7 @@ import de.tum.cit.aet.artemis.lecture.dto.SlideUnhideDTO;
  * Spring Data JPA repository for the Attachment Unit entity.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Repository
 public interface SlideRepository extends ArtemisJpaRepository<Slide, Long> {
 

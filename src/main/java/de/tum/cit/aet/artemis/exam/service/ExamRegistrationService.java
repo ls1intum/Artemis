@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -42,6 +43,7 @@ import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
  * Service Implementation for registering students in the exam.
  */
 @Conditional(ExamEnabled.class)
+@Lazy
 @Service
 public class ExamRegistrationService {
 

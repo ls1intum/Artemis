@@ -9,6 +9,7 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -17,6 +18,7 @@ import de.tum.cit.aet.artemis.core.domain.FileUploadEntityType;
 import de.tum.cit.aet.artemis.core.repository.FileUploadRepository;
 import de.tum.cit.aet.artemis.core.service.FileService;
 
+@Lazy
 @Service
 @Profile(PROFILE_CORE)
 public class FileUploadService {

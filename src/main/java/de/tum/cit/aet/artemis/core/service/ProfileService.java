@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
 
 import java.util.Set;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,7 @@ import tech.jhipster.config.JHipsterConstants;
  * Helper service for checking which profiles are active
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class ProfileService {
 

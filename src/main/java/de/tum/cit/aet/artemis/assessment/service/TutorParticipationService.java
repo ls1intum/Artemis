@@ -18,6 +18,7 @@ import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -38,6 +39,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
  * Service Implementation for managing TutorParticipation.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class TutorParticipationService {
 

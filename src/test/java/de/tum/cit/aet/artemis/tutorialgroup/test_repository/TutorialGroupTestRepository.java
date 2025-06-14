@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.tutorialgroup.test_repository;
 
 import java.util.Optional;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Repository;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRepository;
 
+@Lazy
 @Repository
 @Primary
 public interface TutorialGroupTestRepository extends TutorialGroupRepository {

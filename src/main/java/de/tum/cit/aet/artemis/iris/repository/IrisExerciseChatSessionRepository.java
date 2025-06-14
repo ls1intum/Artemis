@@ -8,6 +8,7 @@ import java.util.List;
 
 import jakarta.validation.constraints.NotNull;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -24,6 +25,7 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisProgrammingExerciseChatSes
  * Repository interface for managing {@link IrisProgrammingExerciseChatSession} entities.
  * Provides custom queries for finding chat sessions based on different criteria.
  */
+@Lazy
 @Repository
 @Profile(PROFILE_IRIS)
 public interface IrisExerciseChatSessionRepository extends ArtemisJpaRepository<IrisProgrammingExerciseChatSession, Long> {

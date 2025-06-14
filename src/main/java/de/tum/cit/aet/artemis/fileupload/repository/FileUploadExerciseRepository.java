@@ -10,6 +10,7 @@ import java.util.Set;
 import jakarta.validation.constraints.NotNull;
 
 import org.hibernate.NonUniqueResultException;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -25,6 +26,7 @@ import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
  * Spring Data JPA repository for the FileUploadExercise entity.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Repository
 public interface FileUploadExerciseRepository extends ArtemisJpaRepository<FileUploadExercise, Long>, JpaSpecificationExecutor<FileUploadExercise> {
 

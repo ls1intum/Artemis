@@ -7,6 +7,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.hibernate.NonUniqueResultException;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
@@ -23,6 +24,7 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
  */
 @Profile(PROFILE_CORE)
 @Controller
+@Lazy
 public class LectureUnitRepositoryApi extends AbstractLectureApi {
 
     private final LectureUnitRepository lectureUnitRepository;

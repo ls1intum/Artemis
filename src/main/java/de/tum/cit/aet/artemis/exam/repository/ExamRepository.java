@@ -15,6 +15,7 @@ import jakarta.validation.constraints.NotNull;
 
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -34,6 +35,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
  * Spring Data JPA repository for the ExamRepository entity.
  */
 @Conditional(ExamEnabled.class)
+@Lazy
 @Repository
 public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
 
