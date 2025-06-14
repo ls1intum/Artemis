@@ -5,6 +5,7 @@ import { LectureUnitComponent } from 'app/lecture/overview/course-lectures/lectu
 import urlParser from 'js-video-url-parser';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { VideoPlayerComponent } from 'app/lecture/shared/video-player/video-player.component';
+import { HttpClient } from '@angular/common/http';
 import {
     faDownload,
     faFile,
@@ -28,9 +29,8 @@ import { FileService } from 'app/shared/service/file.service';
 import { ScienceService } from 'app/shared/science/science.service';
 import { ScienceEventType } from 'app/shared/science/science.model';
 import { TranscriptSegment } from 'app/lecture/shared/video-player/video-player.component';
-import { fromFetch } from 'rxjs/fetch';
 import { firstValueFrom, of } from 'rxjs';
-import { catchError, switchMap } from 'rxjs/operators';
+import { catchError } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-attachment-video-unit',
@@ -43,6 +43,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     private readonly fileService = inject(FileService);
     private readonly scienceService = inject(ScienceService);
+    private readonly http = inject(HttpClient);
 
     readonly transcriptSegments = signal<TranscriptSegment[]>([]);
 
@@ -74,14 +75,18 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         const url = `/api/lecture/lecture-unit/${id}/transcript`;
 
         void firstValueFrom(
-            fromFetch(url).pipe(
-                switchMap((res) => (res.ok ? res.json() : of({ segments: [] }))),
-                catchError(() => of({ segments: [] })),
+            this.http.get<{ segments: TranscriptSegment[] }>(url).pipe(
+                catchError((err) => {
+                    // eslint-disable-next-line no-undef
+                    console.error('Transcript fetch failed', err);
+                    return of({ segments: [] });
+                }),
             ),
-        ).then((res: { segments: TranscriptSegment[] }) => {
-            this.transcriptSegments.set(res.segments || []);
+        ).then((res) => {
+            this.transcriptSegments.set(res.segments ?? []);
         });
     }
+
     /**
      * Returns the name of the attachment file (including its file extension)
      */
