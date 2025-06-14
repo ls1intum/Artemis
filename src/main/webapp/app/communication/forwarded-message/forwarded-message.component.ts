@@ -27,12 +27,15 @@ export class ForwardedMessageComponent implements AfterViewInit {
 
     sourceName: string | undefined = '';
     todayFlag?: string;
+
+    /** the forwarded post (can be a Post or AnswerPost) */
     originalPostDetails = input<Posting | undefined>();
     messageContent = viewChild<ElementRef>('messageContent');
     isContentLong = false;
     showFullForwardedMessage = false;
     postingIsOfToday = false;
 
+    /** Controls whether the "View" button should be shown */
     protected viewButtonVisible = false;
     hasOriginalPostBeenDeleted = input<boolean | undefined>();
 
@@ -72,10 +75,15 @@ export class ForwardedMessageComponent implements AfterViewInit {
         }, 0);
     }
 
+    /** Toggles whether full message content should be shown */
     toggleShowFullForwardedMessage(): void {
         this.showFullForwardedMessage = !this.showFullForwardedMessage;
     }
 
+    /**
+     * Checks if the message content exceeds its container height
+     * and sets a flag for showing the "expand" button.
+     */
     checkIfContentOverflows(): void {
         if (this.messageContent()) {
             const nativeElement = this.messageContent()?.nativeElement;
@@ -108,6 +116,10 @@ export class ForwardedMessageComponent implements AfterViewInit {
         this.onNavigateToPost.emit(this.originalPostDetails()!);
     }
 
+    /**
+     * Updates the name of the source of the forwarded message
+     * based on the conversation type and post type (e.g., thread, channel, DM).
+     */
     updateSourceName() {
         if (!this.conversation) {
             this.sourceName = '';

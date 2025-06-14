@@ -259,12 +259,14 @@ export class CourseOverviewService {
             const conversationGroups = this.getConversationGroup(conversation);
             const conversationCardItem = this.mapConversationToSidebarCardElement(course, conversation);
 
+            // Add the conversation card to all applicable sidebar groups
             for (const group of conversationGroups) {
                 groupedConversationGroups[group].entityData.push(conversationCardItem);
             }
         }
 
         for (const group in groupedConversationGroups) {
+            // Sort conversations within each group so that favorites are shown on top
             groupedConversationGroups[group].entityData.sort((a, b) => {
                 const aIsFavorite = a.conversation?.isFavorite ? 1 : 0;
                 const bIsFavorite = b.conversation?.isFavorite ? 1 : 0;
@@ -288,6 +290,14 @@ export class CourseOverviewService {
         return exams.map((exam, index) => this.mapExamToSidebarCardElement(exam, studentExams?.[index]));
     }
 
+    /**
+     * Maps an array of conversations to their respective sidebar card representations.
+     * This is used to display conversation cards (channels, group chats, etc.) in the sidebar.
+     *
+     * @param course - The course to which the conversations belong
+     * @param conversations - The conversations to be mapped
+     * @returns An array of SidebarCardElement objects
+     */
     mapConversationsToSidebarCardElements(course: Course, conversations: ConversationDTO[]) {
         return conversations.map((conversation) => this.mapConversationToSidebarCardElement(course, conversation));
     }
@@ -372,6 +382,15 @@ export class CourseOverviewService {
         };
     }
 
+    /**
+     * Returns the appropriate FontAwesome icon for a given conversation.
+     * - Announcement channels get a bullhorn icon.
+     * - Public channels get a hashtag icon.
+     * - Private channels get a lock icon.
+     *
+     * @param conversation - The conversation to determine the icon for
+     * @returns A FontAwesome IconDefinition
+     */
     getChannelIcon(conversation: ConversationDTO): IconDefinition {
         const channelDTO = getAsChannelDTO(conversation);
         if (channelDTO?.isAnnouncementChannel) {
@@ -383,6 +402,16 @@ export class CourseOverviewService {
         }
     }
 
+    /**
+     * Maps a conversation (e.g., channel, group chat, direct message) to a SidebarCardElement.
+     * This includes metadata like title, icon, type, and whether it's currently active ("isCurrent").
+     * The "isCurrent" flag is determined based on relevant dates (like due date or start date)
+     * of the associated exercise/lecture/exam being within ±1.5 weeks from today.
+     *
+     * @param course - The course to which the conversation belongs
+     * @param conversation - The conversation to map
+     * @returns A SidebarCardElement representing the conversation
+     */
     mapConversationToSidebarCardElement(course: Course, conversation: ConversationDTO): SidebarCardElement {
         let isCurrent = false;
         const channelDTO = getAsChannelDTO(conversation);
@@ -391,9 +420,12 @@ export class CourseOverviewService {
         const oneAndHalfWeekBefore = now.subtract(1.5, 'week');
         const oneAndHalfWeekLater = now.add(1.5, 'week');
         let relevantDate = null;
+
+        // Determine relevance of conversation based on associated exercise, lecture, or exam
         if (subTypeRefId && course.exercises && channelDTO?.subType === 'exercise') {
             const exercise = course.exercises.find((exercise) => exercise.id === subTypeRefId);
             const relevantDates = [exercise?.releaseDate, exercise?.dueDate].filter(Boolean);
+            // If any date is within ±1.5 weeks, mark as current
             isCurrent = relevantDates.some((date) => dayjs(date).isBetween(oneAndHalfWeekBefore, oneAndHalfWeekLater, 'day', '[]'));
         } else if (subTypeRefId && course.lectures && channelDTO?.subType === 'lecture') {
             const lecture = course.lectures.find((lecture) => lecture.id === subTypeRefId);
