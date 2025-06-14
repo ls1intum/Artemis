@@ -3,14 +3,12 @@ import type { ProgrammingDiffReportDetail } from 'app/shared/detail-overview-lis
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ButtonComponent, ButtonSize, ButtonType, TooltipPlacement } from 'app/shared/components/buttons/button/button.component';
 import { faCodeCompare } from '@fortawesome/free-solid-svg-icons';
-import { ProgrammingExerciseGitDiffReport } from 'app/programming/shared/entities/programming-exercise-git-diff-report.model';
 import { GitDiffReportModalComponent } from 'app/programming/shared/git-diff-report/git-diff-report-modal/git-diff-report-modal.component';
 
 import { NgbModal, NgbModalRef, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat/git-diff-line-stat.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-
 @Component({
     selector: 'jhi-programming-diff-report-detail',
     templateUrl: 'programming-diff-report-detail.component.html',
@@ -29,16 +27,26 @@ export class ProgrammingDiffReportDetailComponent implements OnDestroy {
 
     @Input({ required: true }) detail: ProgrammingDiffReportDetail;
 
+    get addedLineCount(): number {
+        return this.detail.data.repositoryDiffInformation?.totalLineChange?.addedLineCount ?? 0;
+    }
+
+    get removedLineCount(): number {
+        return this.detail.data.repositoryDiffInformation?.totalLineChange?.removedLineCount ?? 0;
+    }
+
     ngOnDestroy() {
         this.modalRef?.close();
     }
 
-    showGitDiff(gitDiff?: ProgrammingExerciseGitDiffReport) {
-        if (!gitDiff) {
+    showGitDiff() {
+        if (!this.detail.data.repositoryDiffInformation) {
             return;
         }
 
         this.modalRef = this.modalService.open(GitDiffReportModalComponent, { windowClass: GitDiffReportModalComponent.WINDOW_CLASS });
-        this.modalRef.componentInstance.report = signal(gitDiff);
+        this.modalRef.componentInstance.repositoryDiffInformation = signal(this.detail.data.repositoryDiffInformation);
+        this.modalRef.componentInstance.templateFileContentByPath = signal(this.detail.data.templateFileContentByPath);
+        this.modalRef.componentInstance.solutionFileContentByPath = signal(this.detail.data.solutionFileContentByPath);
     }
 }

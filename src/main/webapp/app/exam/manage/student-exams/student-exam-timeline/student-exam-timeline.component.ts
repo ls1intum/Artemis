@@ -19,11 +19,11 @@ import { FileUploadExamSubmissionComponent } from 'app/exam/overview/exercises/f
 import { SubmissionVersionService } from 'app/exercise/submission-version/submission-version.service';
 import { ProgrammingExerciseExamDiffComponent } from 'app/exam/manage/student-exams/student-exam-timeline/programming-exam-diff/programming-exercise-exam-diff.component';
 import { ExamPageComponent } from 'app/exam/overview/exercises/exam-page.component';
-import { ProgrammingExerciseGitDiffReport } from 'app/programming/shared/entities/programming-exercise-git-diff-report.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MatSlider, MatSliderThumb } from '@angular/material/slider';
 import { FormsModule } from '@angular/forms';
 import { toObservable } from '@angular/core/rxjs-interop';
+import { RepositoryDiffInformation } from 'app/programming/shared/utils/diff.utils';
 
 @Component({
     selector: 'jhi-student-exam-timeline',
@@ -68,7 +68,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
     currentExercise: Exercise | undefined;
     currentSubmission: SubmissionVersion | ProgrammingSubmission | FileUploadSubmission | undefined;
     changesSubscription: Subscription;
-    cachedDiffReports: Map<string, ProgrammingExerciseGitDiffReport> = new Map<string, ProgrammingExerciseGitDiffReport>();
+    cachedDiffInformation: Map<string, RepositoryDiffInformation> = new Map<string, RepositoryDiffInformation>();
 
     currentPageComponents = viewChildren(ExamSubmissionComponent);
     examNavigationBarComponent = viewChild.required<ExamNavigationBarComponent>('examNavigationBar');

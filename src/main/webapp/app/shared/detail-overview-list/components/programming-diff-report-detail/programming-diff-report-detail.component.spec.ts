@@ -8,7 +8,7 @@ import { ProgrammingExerciseService } from 'app/programming/manage/services/prog
 import { MockProgrammingExerciseService } from 'test/helpers/mocks/service/mock-programming-exercise.service';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { MockProgrammingExerciseParticipationService } from 'test/helpers/mocks/service/mock-programming-exercise-participation.service';
-import { ProgrammingExerciseGitDiffReport } from 'app/programming/shared/entities/programming-exercise-git-diff-report.model';
+import { ProgrammingDiffReportDetail } from 'app/shared/detail-overview-list/detail.model';
 
 describe('ProgrammingDiffReportDetailComponent', () => {
     let component: ProgrammingDiffReportDetailComponent;
@@ -31,15 +31,32 @@ describe('ProgrammingDiffReportDetailComponent', () => {
         component = fixture.componentInstance;
     });
 
-    it('should open git diff modal', () => {
+    it('should open git diff modal when repository diff information exists', () => {
         const modalSpy = jest.spyOn(modalService, 'open');
-        component.showGitDiff({} as unknown as ProgrammingExerciseGitDiffReport);
-        expect(modalSpy).toHaveBeenCalledOnce();
+        component.detail = {
+            data: {
+                repositoryDiffInformation: {
+                    totalLineChange: {
+                        addedLineCount: 10,
+                        removedLineCount: 5,
+                    },
+                },
+            },
+        } as ProgrammingDiffReportDetail;
+
+        component.showGitDiff();
+        expect(modalSpy).toHaveBeenCalled();
     });
 
-    it('should not open git diff modal', () => {
+    it('should not open git diff modal when repository diff information is missing', () => {
         const modalSpy = jest.spyOn(modalService, 'open');
-        component.showGitDiff(undefined);
+        component.detail = {
+            data: {
+                repositoryDiffInformation: undefined,
+            },
+        } as ProgrammingDiffReportDetail;
+
+        component.showGitDiff();
         expect(modalSpy).not.toHaveBeenCalled();
     });
 });

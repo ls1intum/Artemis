@@ -28,14 +28,12 @@ export class ExerciseUpdatePlagiarismComponent implements OnInit, OnDestroy, Aft
 
     isCPCCollapsed = true;
 
-    minimumSizeTooltip?: string;
     formValid: boolean;
     formValidChanges = new Subject<boolean>();
 
     readonly faQuestionCircle = faQuestionCircle;
 
     ngOnInit(): void {
-        this.minimumSizeTooltip = this.getMinimumSizeTooltip();
         if (!this.exercise.plagiarismDetectionConfig) {
             // Create the default plagiarism configuration if there is none (e.g. importing an old exercise from a file)
             this.exercise.plagiarismDetectionConfig = DEFAULT_PLAGIARISM_DETECTION_CONFIG;
@@ -73,16 +71,33 @@ export class ExerciseUpdatePlagiarismComponent implements OnInit, OnDestroy, Aft
         config.continuousPlagiarismControlPostDueDateChecksEnabled = newValue;
     }
 
+    getMinimumSizeLabel(): string {
+        switch (this.exercise.type) {
+            case ExerciseType.PROGRAMMING: {
+                return 'artemisApp.plagiarism.minimumTokenCount';
+            }
+            case ExerciseType.TEXT: {
+                return 'artemisApp.plagiarism.minimumSize';
+            }
+            default: {
+                return '';
+            }
+        }
+    }
+
     /**
      * Return the translation identifier of the minimum size tooltip for the current exercise type.
      */
-    getMinimumSizeTooltip(): string | undefined {
+    getMinimumSizeTooltip(): string {
         switch (this.exercise.type) {
             case ExerciseType.PROGRAMMING: {
-                return 'artemisApp.plagiarism.minimumSizeTooltipProgrammingExercise';
+                return 'artemisApp.plagiarism.minimumTokenCountTooltipProgrammingExercise';
             }
             case ExerciseType.TEXT: {
                 return 'artemisApp.plagiarism.minimumSizeTooltipTextExercise';
+            }
+            default: {
+                return '';
             }
         }
     }

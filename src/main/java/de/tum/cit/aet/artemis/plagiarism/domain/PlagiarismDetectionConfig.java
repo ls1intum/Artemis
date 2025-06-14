@@ -46,9 +46,17 @@ public class PlagiarismDetectionConfig extends DomainObject {
     @Column(name = "similarity_threshold")
     private int similarityThreshold;
 
+    /**
+     * Minimum score of the submission.
+     * This is used to filter out submissions that are not successful enough to be considered for plagiarism detection.
+     */
     @Column(name = "minimum_score")
     private int minimumScore;
 
+    /**
+     * Minimum size of the submission in tokens.
+     * This is used to filter out submissions that are too small to be considered for plagiarism detection.
+     */
     @Column(name = "minimum_size")
     private int minimumSize;
 

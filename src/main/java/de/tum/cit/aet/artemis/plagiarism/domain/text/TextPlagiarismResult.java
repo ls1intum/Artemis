@@ -24,6 +24,7 @@ public class TextPlagiarismResult extends PlagiarismResult<TextSubmissionElement
      * @param exercise the exercise to which the result should belong, either Text or Programming
      */
     public void convertJPlagResult(JPlagResult result, Exercise exercise) {
+        // TODO: Extract the hardcoded value of 500 into a configuration file
         // sort and limit the number of comparisons to 500
         var comparisons = result.getComparisons(500);
         // only convert those 500 comparisons to save memory and cpu power
