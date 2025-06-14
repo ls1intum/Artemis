@@ -1,9 +1,10 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { LectureUnitDirective } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.directive';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { LectureUnitComponent } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.component';
 import urlParser from 'js-video-url-parser';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
+import { VideoPlayerComponent } from 'app/lecture/shared/video-player/video-player.component';
 import {
     faDownload,
     faFile,
@@ -26,10 +27,14 @@ import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
 import { FileService } from 'app/shared/service/file.service';
 import { ScienceService } from 'app/shared/science/science.service';
 import { ScienceEventType } from 'app/shared/science/science.model';
+import { TranscriptSegment } from 'app/lecture/shared/video-player/video-player.component';
+import { fromFetch } from 'rxjs/fetch';
+import { firstValueFrom, of } from 'rxjs';
+import { catchError, switchMap } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-attachment-video-unit',
-    imports: [LectureUnitComponent, ArtemisDatePipe, TranslateDirective, SafeResourceUrlPipe],
+    imports: [LectureUnitComponent, ArtemisDatePipe, TranslateDirective, SafeResourceUrlPipe, VideoPlayerComponent],
     templateUrl: './attachment-video-unit.component.html',
     styleUrl: './attachment-video-unit.component.scss',
 })
@@ -39,11 +44,44 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     private readonly fileService = inject(FileService);
     private readonly scienceService = inject(ScienceService);
 
-    private readonly videoUrlAllowList = [
-        // TUM-Live. Example: 'https://live.rbg.tum.de/w/test/26?video_only=1'
-        RegExp('^https://live\\.rbg\\.tum\\.de/w/\\w+/\\d+(/(CAM|COMB|PRES))?\\?video_only=1$'),
-    ];
+    readonly transcriptSegments = signal<TranscriptSegment[]>([]);
 
+    private readonly videoUrlAllowList = [RegExp('^https://live\\.rbg\\.tum\\.de/w/\\w+/\\d+(/(CAM|COMB|PRES))?\\?video_only=1$'), RegExp('^https://.+\\.m3u8($|\\?.*)')];
+
+    /**
+     * Return the URL of the video source
+     */
+    readonly videoUrl = computed(() => {
+        const source = this.lectureUnit().videoSource;
+        if (!source) return undefined;
+        if (this.videoUrlAllowList.some((r) => r.test(source)) || !urlParser || urlParser.parse(source)) {
+            return source;
+        }
+        return undefined;
+    });
+
+    override toggleCollapse(isCollapsed: boolean): void {
+        super.toggleCollapse(isCollapsed);
+
+        if (!isCollapsed) {
+            this.scienceService.logEvent(ScienceEventType.LECTURE__OPEN_UNIT, this.lectureUnit().id);
+            this.fetchTranscript();
+        }
+    }
+
+    private fetchTranscript(): void {
+        const id = this.lectureUnit().id;
+        const url = `/api/lecture/lecture-unit/${id}/transcript`;
+
+        void firstValueFrom(
+            fromFetch(url).pipe(
+                switchMap((res) => (res.ok ? res.json() : of({ segments: [] }))),
+                catchError(() => of({ segments: [] })),
+            ),
+        ).then((res: { segments: TranscriptSegment[] }) => {
+            this.transcriptSegments.set(res.segments || []);
+        });
+    }
     /**
      * Returns the name of the attachment file (including its file extension)
      */
@@ -57,26 +95,12 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     }
 
     /**
-     * Return the URL of the video source
-     */
-    readonly videoUrl = computed(() => {
-        if (this.lectureUnit().videoSource) {
-            const source = this.lectureUnit().videoSource!;
-            if (this.videoUrlAllowList.some((r) => r.test(source)) || !urlParser || urlParser.parse(source)) {
-                return source;
-            }
-        }
-        return undefined;
-    });
-
-    /**
      * Downloads the file as the student version if available, otherwise the instructor version
      * If it is not the student view, it always downloads the original version
      */
-    handleDownload() {
+    handleDownload(): void {
         this.scienceService.logEvent(ScienceEventType.LECTURE__OPEN_UNIT, this.lectureUnit().id);
 
-        // Determine the link based on the availability of a student version
         const link = addPublicFilePrefix(this.lectureUnit().attachment!.studentVersion || this.fileService.createStudentLink(this.lectureUnit().attachment!.link!));
 
         if (link) {
@@ -85,11 +109,10 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         }
     }
 
-    handleOriginalVersion() {
+    handleOriginalVersion(): void {
         this.scienceService.logEvent(ScienceEventType.LECTURE__OPEN_UNIT, this.lectureUnit().id);
 
         const link = addPublicFilePrefix(this.lectureUnit().attachment!.link!);
-
         if (link) {
             this.fileService.downloadFileByAttachmentName(link, this.lectureUnit().attachment!.name!);
             this.onCompletion.emit({ lectureUnit: this.lectureUnit(), completed: true });
@@ -103,7 +126,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     hasVideo(): boolean {
         return !!this.lectureUnit().videoSource;
     }
-
     /**
      * Returns the matching icon for the file extension of the attachment
      */
