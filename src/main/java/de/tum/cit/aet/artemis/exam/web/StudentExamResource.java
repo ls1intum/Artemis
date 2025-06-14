@@ -549,16 +549,16 @@ public class StudentExamResource {
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get the exam live events for exam {} by user {}", examId, currentUser.getLogin());
 
-        StudentExam studentExam = studentExamRepository.findOneByExamIdAndUserIdElseThrow(examId, currentUser.getId());
+        var studentExamCheckDto = studentExamRepository.findStudentExamSubmissionStatusByExamIdAndUserIdElseThrow(examId, currentUser.getId());
 
-        if (studentExam.isTestRun()) {
+        if (studentExamCheckDto.isTestRun()) {
             throw new BadRequestAlertException("Test runs do not have live events", ENTITY_NAME, "testRunNoLiveEvents");
         }
 
-        studentExamAccessService.checkCourseAndExamAccessElseThrow(courseId, examId, currentUser, studentExam.isTestRun(), false);
+        studentExamAccessService.checkCourseAndExamAccessElseThrow(courseId, examId, currentUser, false, false);
 
-        List<ExamLiveEventBaseDTO> examLiveEvents = examLiveEventRepository.findAllByStudentExamIdOrGlobalByExamId(examId, studentExam.getId()).stream().map(ExamLiveEvent::asDTO)
-                .toList();
+        List<ExamLiveEventBaseDTO> examLiveEvents = examLiveEventRepository.findAllByStudentExamIdOrGlobalByExamId(examId, studentExamCheckDto.studentExamId()).stream()
+                .map(ExamLiveEvent::asDTO).toList();
 
         log.debug("getExamLiveEvents done in {}ms for user {}", System.currentTimeMillis() - start, currentUser.getLogin());
         return ResponseEntity.ok(examLiveEvents);

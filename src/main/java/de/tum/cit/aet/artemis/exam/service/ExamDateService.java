@@ -17,7 +17,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
-import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import de.tum.cit.aet.artemis.exam.dto.StudentExamCheckDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -103,12 +103,12 @@ public class ExamDateService {
         // Students can participate in a test exam multiple times, meaning there can be multiple student exams for a single exam.
         // For test exams, we aim to find the latest student exam.
         // For real exams, we aim to find the only existing student exam.
-        Optional<StudentExam> optionalStudentExam = studentExamRepository.findFirstByExamIdAndUserIdOrderByCreatedDateDesc(exam.getId(),
+        Optional<StudentExamCheckDTO> optionalStudentExamCheck = studentExamRepository.findStudentExamSubmissionStatusByExamIdAndUserId(exam.getId(),
                 studentParticipation.getParticipant().getId());
 
-        if (optionalStudentExam.isPresent()) {
-            StudentExam studentExam = optionalStudentExam.get();
-            return Boolean.TRUE.equals(studentExam.isSubmitted()) || studentExam.isEnded();
+        if (optionalStudentExamCheck.isPresent()) {
+            var studentExamCheck = optionalStudentExamCheck.get();
+            return studentExamCheck.submitted() || studentExamCheck.isEnded();
         }
 
         throw new IllegalStateException("No student exam found for student participation " + studentParticipation.getId());
