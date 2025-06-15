@@ -1288,11 +1288,12 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
         Exam exam = ExamFactory.generateExam(course1);
         exam.setTitle("Exam Title");
         exam.setTestExam(false);
-        exam.setVisibleDate(ZonedDateTime.now().minusHours(1));
-        exam.setStartDate(ZonedDateTime.now());
-        exam.setEndDate(ZonedDateTime.now().plusHours(1));
-        exam.setExamStudentReviewStart(ZonedDateTime.now().plusHours(12));
-        exam.setExamStudentReviewEnd(ZonedDateTime.now().plusDays(1));
+        final var baseTime = ZonedDateTime.now();
+        exam.setVisibleDate(baseTime.minusHours(1));
+        exam.setStartDate(baseTime);
+        exam.setEndDate(baseTime.plusHours(1));
+        exam.setExamStudentReviewStart(baseTime.plusHours(12));
+        exam.setExamStudentReviewEnd(baseTime.plusDays(1));
         exam.setWorkingTime(60 * 60);
         exam.setExaminer("Prof. Dr. Stephan Krusche");
         exam.setStartText("Start Text");
