@@ -1307,7 +1307,6 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
         exam.setNumberOfCorrectionRoundsInExam(1);
         exam.setChannelName("scientific-channel-name");
         exam.setCourseName("Course Name");
-        exam.setExamArchivePath("Path to Exam Archive");
 
         return exam;
     }
@@ -1326,7 +1325,6 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
         assertThat(actualExam.getNumberOfCorrectionRoundsInExam()).isEqualTo(expectedExam.getNumberOfCorrectionRoundsInExam());
         assertThat(actualExam.getChannelName()).isEqualTo(expectedExam.getChannelName());
         assertThat(actualExam.getCourseName()).isEqualTo(expectedExam.getCourseName());
-        assertThat(actualExam.getExamArchivePath()).isEqualTo(expectedExam.getExamArchivePath());
 
         assertThat(actualExam.isTestExam()).isFalse();
         assertThat(actualExam.getRandomizeExerciseOrder()).isTrue();
