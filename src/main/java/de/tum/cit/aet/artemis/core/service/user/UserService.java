@@ -42,6 +42,7 @@ import de.tum.cit.aet.artemis.atlas.api.ScienceEventApi;
 import de.tum.cit.aet.artemis.communication.domain.SavedPost;
 import de.tum.cit.aet.artemis.communication.repository.SavedPostRepository;
 import de.tum.cit.aet.artemis.communication.service.CourseNotificationSettingService;
+import de.tum.cit.aet.artemis.communication.service.GlobalNotificationSettingService;
 import de.tum.cit.aet.artemis.communication.service.UserCourseNotificationStatusService;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
@@ -123,12 +124,14 @@ public class UserService {
 
     private final UserCourseNotificationStatusService userCourseNotificationStatusService;
 
+    private final GlobalNotificationSettingService globalNotificationSettingService;
+
     public UserService(UserCreationService userCreationService, UserRepository userRepository, AuthorityService authorityService, AuthorityRepository authorityRepository,
             CacheManager cacheManager, Optional<LdapUserService> ldapUserService, PasswordService passwordService,
             Optional<CIUserManagementService> optionalCIUserManagementService, InstanceMessageSendService instanceMessageSendService, FileService fileService,
             Optional<ScienceEventApi> scienceEventApi, ParticipationVcsAccessTokenService participationVCSAccessTokenService, Optional<LearnerProfileApi> learnerProfileApi,
             SavedPostRepository savedPostRepository, UserSshPublicKeyService userSshPublicKeyService, CourseNotificationSettingService courseNotificationSettingService,
-            UserCourseNotificationStatusService userCourseNotificationStatusService) {
+            UserCourseNotificationStatusService userCourseNotificationStatusService, GlobalNotificationSettingService globalNotificationSettingService) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
         this.authorityService = authorityService;
@@ -146,6 +149,7 @@ public class UserService {
         this.userSshPublicKeyService = userSshPublicKeyService;
         this.courseNotificationSettingService = courseNotificationSettingService;
         this.userCourseNotificationStatusService = userCourseNotificationStatusService;
+        this.globalNotificationSettingService = globalNotificationSettingService;
     }
 
     /**
@@ -465,6 +469,7 @@ public class UserService {
             participationVCSAccessTokenService.deleteAllByUserId(user.getId());
             learnerProfileApi.ifPresent(api -> api.deleteProfile(user));
             userSshPublicKeyService.deleteAllByUserId(user.getId());
+            globalNotificationSettingService.deleteAllByUserId(user.getId());
             user.setDeleted(true);
             user.setLearnerProfile(null);
             anonymizeUser(user);
