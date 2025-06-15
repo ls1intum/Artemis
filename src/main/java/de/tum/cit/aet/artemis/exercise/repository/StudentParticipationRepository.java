@@ -49,6 +49,23 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizSubmittedAnswerCount;
 @Repository
 public interface StudentParticipationRepository extends ArtemisJpaRepository<StudentParticipation, Long> {
 
+    /**
+     * Converts List<[participationId, submissionCount]> into Map<participationId -> submissionCount>
+     *
+     * @param participationIdAndSubmissionCountPairs list of pairs (participationId, submissionCount)
+     * @return map of participation id to submission count
+     */
+    private static Map<Long, Integer> convertListOfCountsIntoMap(List<long[]> participationIdAndSubmissionCountPairs) {
+        // @formatter:off
+        return participationIdAndSubmissionCountPairs.stream().collect(Collectors
+            .toMap(
+        participationIdAndSubmissionCountPair -> participationIdAndSubmissionCountPair[0], // participationId
+        participationIdAndSubmissionCountPair -> Math.toIntExact(participationIdAndSubmissionCountPair[1]) // submissionCount
+            )
+        );
+        // @formatter:on
+    }
+
     @EntityGraph(type = LOAD, attributePaths = { "team.students" })
     Set<StudentParticipation> findWithTeamInformationByExerciseId(long exerciseId);
 
@@ -1077,18 +1094,6 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
         return convertListOfCountsIntoMap(countLegalSubmissionsPerParticipationByCourseIdAndTeamShortName(courseId, teamShortName));
     }
 
-    /**
-     * Converts List<[participationId, submissionCount]> into Map<participationId -> submissionCount>
-     *
-     * @param participationIdAndSubmissionCountPairs list of pairs (participationId, submissionCount)
-     * @return map of participation id to submission count
-     */
-    private static Map<Long, Integer> convertListOfCountsIntoMap(List<long[]> participationIdAndSubmissionCountPairs) {
-        return participationIdAndSubmissionCountPairs.stream().collect(Collectors.toMap(participationIdAndSubmissionCountPair -> participationIdAndSubmissionCountPair[0], // participationId
-                participationIdAndSubmissionCountPair -> Math.toIntExact(participationIdAndSubmissionCountPair[1]) // submissionCount
-        ));
-    }
-
     @Query("""
             SELECT COUNT(p)
             FROM StudentParticipation p
@@ -1436,4 +1441,5 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             """)
     List<String> findAffectedLoginsByFeedbackDetailText(@Param("exerciseId") long exerciseId, @Param("detailTexts") List<String> detailTexts,
             @Param("testCaseName") String testCaseName);
+
 }
