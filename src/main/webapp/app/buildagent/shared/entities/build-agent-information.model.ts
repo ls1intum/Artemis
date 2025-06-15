@@ -6,6 +6,7 @@ import dayjs from 'dayjs/esm';
 export enum BuildAgentStatus {
     ACTIVE = 'ACTIVE',
     PAUSED = 'PAUSED',
+    SELF_PAUSED = 'SELF_PAUSED',
     IDLE = 'IDLE',
 }
 

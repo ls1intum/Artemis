@@ -52,21 +52,26 @@ public class BuildAgentInformationService {
     }
 
     public void updateLocalBuildAgentInformation(boolean isPaused) {
-        updateLocalBuildAgentInformationWithRecentJob(null, isPaused);
+        updateLocalBuildAgentInformationWithRecentJob(null, isPaused, false);
+    }
+
+    public void updateLocalBuildAgentInformation(boolean isPaused, boolean isPausedDueToFailures) {
+        updateLocalBuildAgentInformationWithRecentJob(null, isPaused, isPausedDueToFailures);
     }
 
     /**
      * Updates the local build agent information with the most recent build job.
      *
-     * @param recentBuildJob the most recent build job
-     * @param isPaused       whether the build agent is paused
+     * @param recentBuildJob        the most recent build job
+     * @param isPaused              whether the build agent is paused
+     * @param isPausedDueToFailures whether the build agent is paused due to consecutive failures
      */
-    public void updateLocalBuildAgentInformationWithRecentJob(BuildJobQueueItem recentBuildJob, boolean isPaused) {
+    public void updateLocalBuildAgentInformationWithRecentJob(BuildJobQueueItem recentBuildJob, boolean isPaused, boolean isPausedDueToFailures) {
         String memberAddress = distributedDataAccessService.getLocalMemberAddress();
         try {
             distributedDataAccessService.getDistributedBuildAgentInformation().lock(memberAddress);
             // Add/update
-            BuildAgentInformation info = getUpdatedLocalBuildAgentInformation(recentBuildJob, isPaused);
+            BuildAgentInformation info = getUpdatedLocalBuildAgentInformation(recentBuildJob, isPaused, isPausedDueToFailures);
             try {
                 distributedDataAccessService.getDistributedBuildAgentInformation().put(info.buildAgent().memberAddress(), info);
             }
@@ -82,17 +87,22 @@ public class BuildAgentInformationService {
         }
     }
 
-    private BuildAgentInformation getUpdatedLocalBuildAgentInformation(BuildJobQueueItem recentBuildJob, boolean isPaused) {
+    private BuildAgentInformation getUpdatedLocalBuildAgentInformation(BuildJobQueueItem recentBuildJob, boolean isPaused, boolean isPausedDueToFailures) {
         String memberAddress = distributedDataAccessService.getLocalMemberAddress();
         List<BuildJobQueueItem> processingJobsOfMember = getProcessingJobsOfNode(memberAddress);
         int numberOfCurrentBuildJobs = processingJobsOfMember.size();
         int maxNumberOfConcurrentBuilds = buildAgentConfiguration.getBuildExecutor() != null ? buildAgentConfiguration.getBuildExecutor().getMaximumPoolSize()
                 : buildAgentConfiguration.getThreadPoolSize();
         boolean hasJobs = numberOfCurrentBuildJobs > 0;
-        BuildAgentInformation.BuildAgentStatus status = isPaused ? BuildAgentInformation.BuildAgentStatus.PAUSED
-                : hasJobs ? BuildAgentInformation.BuildAgentStatus.ACTIVE : BuildAgentInformation.BuildAgentStatus.IDLE;
+        BuildAgentInformation.BuildAgentStatus status;
         BuildAgentInformation agent = distributedDataAccessService.getDistributedBuildAgentInformation().get(memberAddress);
-
+        if (isPaused) {
+            boolean isAlreadySelfPaused = agent != null && agent.status() == BuildAgentInformation.BuildAgentStatus.SELF_PAUSED;
+            status = (isPausedDueToFailures || isAlreadySelfPaused) ? BuildAgentInformation.BuildAgentStatus.SELF_PAUSED : BuildAgentInformation.BuildAgentStatus.PAUSED;
+        }
+        else {
+            status = hasJobs ? BuildAgentInformation.BuildAgentStatus.ACTIVE : BuildAgentInformation.BuildAgentStatus.IDLE;
+        }
         String publicSshKey = buildAgentSSHKeyService.getPublicKeyAsString();
 
         BuildAgentDTO agentInfo = new BuildAgentDTO(buildAgentShortName, memberAddress, buildAgentDisplayName);
