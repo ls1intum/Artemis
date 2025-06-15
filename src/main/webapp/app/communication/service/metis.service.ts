@@ -983,6 +983,9 @@ export class MetisService implements OnDestroy {
     }
 
     enableCommunication(courseId: number, withMessaging: boolean): void {
+        if (!courseId) {
+            return;
+        }
         const httpParams = new HttpParams().set('withMessaging', withMessaging);
         this.http.put('api/communication/courses/' + courseId + '/enable', undefined, { params: httpParams }).subscribe({
             next: () => {

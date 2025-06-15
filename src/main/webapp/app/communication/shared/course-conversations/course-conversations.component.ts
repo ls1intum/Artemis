@@ -139,9 +139,8 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
 })
 export class CourseConversationsComponent implements OnInit, OnDestroy {
     protected readonly isCommunicationEnabled = computed(() => {
-        // console.log('isCommunicationEnabled', this.course());
-        // console.log('isCommunicationEnabled', isCommunicationEnabled(this.course()));
-        return isCommunicationEnabled(this.course());
+        const currentCourse = this.course();
+        return currentCourse ? isCommunicationEnabled(currentCourse) : false;
     });
     protected readonly faComments = faComments;
     private router = inject(Router);
@@ -232,8 +231,12 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         this.metisService.setPageType(PageType.OVERVIEW);
         this.metisService.setCourse(this.course());
     }
+    private getParentCourse(): Course | undefined {
+        return this.activatedRoute.parent?.snapshot.data?.course;
+    }
 
     ngOnInit(): void {
+        this.course.set(this.getParentCourse());
         this.isManagementView = this.router.url.includes('course-management');
         this.isMobile = this.layoutService.isBreakpointActive(CustomBreakpointNames.extraSmall);
 
@@ -650,7 +653,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     }
     enableCommunication(withMessaging = true) {
         if (this.course()?.id) {
-            this.metisService.enableCommunication(this.course()!.id, withMessaging);
+            this.metisService.enableCommunication(this.course()!.id!, withMessaging);
         }
     }
 }
