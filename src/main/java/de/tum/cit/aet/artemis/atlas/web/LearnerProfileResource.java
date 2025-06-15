@@ -6,6 +6,7 @@ import static de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile.MIN_PRO
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -23,6 +24,7 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 
 @Conditional(AtlasEnabled.class)
+@Lazy
 @RestController
 @RequestMapping("api/atlas/")
 public class LearnerProfileResource {

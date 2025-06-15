@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.util.List;
 import java.util.Set;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -22,6 +23,7 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
  * The Repository used for PushNotificationDeviceConfiguration
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Repository
 public interface PushNotificationDeviceConfigurationRepository extends ArtemisJpaRepository<PushNotificationDeviceConfiguration, PushNotificationDeviceConfigurationId> {
 

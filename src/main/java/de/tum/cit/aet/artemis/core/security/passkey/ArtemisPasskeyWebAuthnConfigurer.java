@@ -13,6 +13,7 @@ import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
@@ -38,6 +39,7 @@ import de.tum.cit.aet.artemis.core.util.AndroidApkKeyHashUtil;
  */
 @Component
 @Profile(Constants.PROFILE_CORE)
+@Lazy
 public class ArtemisPasskeyWebAuthnConfigurer {
 
     private static final Logger log = LoggerFactory.getLogger(ArtemisPasskeyWebAuthnConfigurer.class);
@@ -86,7 +88,8 @@ public class ArtemisPasskeyWebAuthnConfigurer {
             PublicKeyCredentialUserEntityRepository publicKeyCredentialUserEntityRepository, UserCredentialRepository userCredentialRepository,
             PublicKeyCredentialCreationOptionsRepository publicKeyCredentialCreationOptionsRepository,
             PublicKeyCredentialRequestOptionsRepository publicKeyCredentialRequestOptionsRepository, AndroidFingerprintService androidFingerprintService,
-            MailSendingService mailSendingService,ArtemisSuccessfulLoginService artemisSuccessfulLoginService, GlobalNotificationSettingRepository globalNotificationSettingRepository) {
+            MailSendingService mailSendingService, ArtemisSuccessfulLoginService artemisSuccessfulLoginService,
+            GlobalNotificationSettingRepository globalNotificationSettingRepository) {
         this.converter = converter;
         this.jwtCookieService = jwtCookieService;
         this.userRepository = userRepository;
