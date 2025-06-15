@@ -1698,6 +1698,22 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         return quizExerciseDatabase;
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetQuizQuestionsForPractice() throws Exception {
+
+        Course course = quizExerciseUtilService.addCourseWithOneQuizExercise();
+        QuizExercise quizExercise = (QuizExercise) course.getExercises().stream().findFirst().get();
+        quizExercise.setIsOpenForPractice(true);
+        quizExerciseService.save(quizExercise);
+
+        Set<QuizQuestion> quizQuestions = request.getSet("/api/quiz/courses/" + course.getId() + "/practice/quiz", OK, QuizQuestion.class);
+
+        assertThat(quizQuestions).isNotNull();
+        assertThat(quizQuestions).hasSameSizeAs(quizExercise.getQuizQuestions());
+        assertThat(quizQuestions).containsAll(quizExercise.getQuizQuestions());
+    }
+
     private QuizExercise createQuizOnServerForExam() throws Exception {
         ExerciseGroup exerciseGroup = examUtilService.createAndSaveActiveExerciseGroup(createEmptyCourse(), true);
         QuizExercise quizExercise = QuizExerciseFactory.createQuizForExam(exerciseGroup);
