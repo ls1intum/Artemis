@@ -11,7 +11,6 @@ import jakarta.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
@@ -20,6 +19,7 @@ import org.springframework.stereotype.Service;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
+import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.CourseChatJob;
@@ -65,7 +65,7 @@ public class PyrisJobService {
      * Initializes the PyrisJobService by configuring the Hazelcast map for Pyris jobs.
      * Sets the time-to-live for the map entries to the specified jobTimeout value.
      */
-    @EventListener(ApplicationReadyEvent.class)
+    @EventListener(FullStartupEvent.class)
     public void init() {
         var mapConfig = hazelcastInstance.getConfig().getMapConfig("pyris-job-map");
         mapConfig.setTimeToLiveSeconds(jobTimeout);

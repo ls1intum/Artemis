@@ -11,7 +11,6 @@ import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
@@ -20,6 +19,7 @@ import org.springframework.stereotype.Component;
 import org.w3c.dom.Document;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationBuildPlanException;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -83,7 +83,7 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
         this.resourceLoaderService = resourceLoaderService;
     }
 
-    @EventListener(ApplicationReadyEvent.class)
+    @EventListener(FullStartupEvent.class)
     public void init() {
         this.artemisNotificationUrl = artemisServerUrl + Constants.NEW_RESULT_RESOURCE_API_PATH;
     }

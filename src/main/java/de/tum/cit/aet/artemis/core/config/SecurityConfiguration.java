@@ -58,7 +58,7 @@ public class SecurityConfiguration {
 
     private final Optional<CustomLti13Configurer> customLti13Configurer;
 
-    private final ArtemisPasskeyWebAuthnConfigurer passkeyWebAuthnConfigurer;
+    private final Optional<ArtemisPasskeyWebAuthnConfigurer> passkeyWebAuthnConfigurer;
 
     private final JWTCookieService jwtCookieService;
 
@@ -91,7 +91,7 @@ public class SecurityConfiguration {
         }
     }
 
-    public SecurityConfiguration(CorsFilter corsFilter, Optional<CustomLti13Configurer> customLti13Configurer, ArtemisPasskeyWebAuthnConfigurer passkeyWebAuthnConfigurer,
+    public SecurityConfiguration(CorsFilter corsFilter, Optional<CustomLti13Configurer> customLti13Configurer, Optional<ArtemisPasskeyWebAuthnConfigurer> passkeyWebAuthnConfigurer,
             PasswordService passwordService, ProfileService profileService, TokenProvider tokenProvider, JWTCookieService jwtCookieService) {
         this.corsFilter = corsFilter;
         this.customLti13Configurer = customLti13Configurer;
@@ -257,7 +257,9 @@ public class SecurityConfiguration {
             .with(securityConfigurerAdapter(), configurer -> configurer.configure(http));
 
         // Configure WebAuthn passkey if enabled
-        passkeyWebAuthnConfigurer.configure(http);
+        if(passkeyEnabled){
+        passkeyWebAuthnConfigurer.orElseThrow(()->new IllegalStateException("Passkey enabled but SecurityConfigurer could not be injected")).configure(http);
+        }
 
         // @formatter:on
 
