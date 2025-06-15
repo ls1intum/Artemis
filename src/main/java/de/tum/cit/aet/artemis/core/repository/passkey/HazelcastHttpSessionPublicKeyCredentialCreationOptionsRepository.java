@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.core.repository.passkey;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -10,7 +9,9 @@ import jakarta.servlet.http.HttpSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
 import org.springframework.security.web.webauthn.api.PublicKeyCredentialCreationOptions;
 import org.springframework.security.web.webauthn.registration.PublicKeyCredentialCreationOptionsRepository;
 import org.springframework.stereotype.Repository;
@@ -19,6 +20,7 @@ import com.hazelcast.config.MapConfig;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
+import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 import de.tum.cit.aet.artemis.core.dto.passkey.PublicKeyCredentialCreationOptionsDTO;
 
 /**
@@ -40,6 +42,7 @@ import de.tum.cit.aet.artemis.core.dto.passkey.PublicKeyCredentialCreationOption
  * </p>
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Repository
 public class HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository implements PublicKeyCredentialCreationOptionsRepository {
 
@@ -69,7 +72,7 @@ public class HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository im
     /**
      * Initializes the Hazelcast map with a TTL of 5 minutes for credential creation options.
      */
-    @PostConstruct
+    @EventListener(FullStartupEvent.class)
     public void init() {
         int registrationOptionsTimeToLive = 300; // 5 minutes
 

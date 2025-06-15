@@ -9,6 +9,7 @@ import java.util.Set;
 
 import jakarta.validation.constraints.NotNull;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -22,6 +23,7 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 
 @Profile(PROFILE_CORE)
 @Repository
+@Lazy
 public interface GlobalNotificationSettingRepository extends ArtemisJpaRepository<GlobalNotificationSetting, Long> {
 
     @Query("""
