@@ -53,6 +53,12 @@ public class LearnerProfileResource {
         }
     }
 
+    /**
+     * GET learner-profile : get the {@link LearnerProfile} of the current user.
+     * If no profile exists for the current user, a BadRequestAlertException is thrown.
+     *
+     * @return A ResponseEntity with a status matching the validity of the request containing the profile.
+     */
     @GetMapping("learner-profile")
     @EnforceAtLeastStudent
     public ResponseEntity<LearnerProfileDTO> getLearnerProfile() {
