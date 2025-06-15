@@ -15,7 +15,6 @@ import javax.crypto.SecretKey;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
@@ -27,6 +26,7 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 import de.tum.cit.aet.artemis.core.management.SecurityMetersService;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import io.jsonwebtoken.Claims;
@@ -71,7 +71,7 @@ public class TokenProvider {
     /**
      * initializes the token provider based on the yml config file
      */
-    @EventListener(ApplicationReadyEvent.class)
+    @EventListener(FullStartupEvent.class)
     public void init() {
         byte[] keyBytes;
         String secret = jHipsterProperties.getSecurity().getAuthentication().getJwt().getSecret();
