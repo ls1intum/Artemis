@@ -1288,7 +1288,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
         Exam exam = ExamFactory.generateExam(course1);
         exam.setTitle("Exam Title");
         exam.setTestExam(false);
-        final var baseTime = ZonedDateTime.now();
+        /// Artemis truncates to 6 sub-second digits
+        final var baseTime = ZonedDateTime.now().truncatedTo(ChronoUnit.MILLIS);
         exam.setVisibleDate(baseTime.minusHours(1));
         exam.setStartDate(baseTime);
         exam.setEndDate(baseTime.plusHours(1));
