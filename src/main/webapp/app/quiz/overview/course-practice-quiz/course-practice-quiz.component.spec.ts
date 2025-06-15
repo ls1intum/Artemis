@@ -92,10 +92,10 @@ describe('CoursePracticeQuizComponent', () => {
         expect(component.isLastQuestion()).toBeTruthy();
     });
 
-    it('should check for empty questions', () => {
+    it('should check if questions is empty', () => {
         jest.spyOn(component, 'questions').mockReturnValue([]);
         component.currentIndex.set(1);
-        expect(component.isLastQuestion()).toBeTrue();
+        expect(component.isLastQuestion()).toBeTruthy();
         expect(component.currentQuestion()).toBeUndefined();
     });
 
@@ -246,7 +246,7 @@ describe('CoursePracticeQuizComponent', () => {
 
         component.onSubmitError(error);
 
-        expect(component.isSubmitting).toBeFalse();
+        expect(component.isSubmitting).toBeFalsy();
         expect(addAlertSpy).toHaveBeenCalledWith(
             expect.objectContaining({
                 type: expect.anything(),

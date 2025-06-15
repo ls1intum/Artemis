@@ -1,5 +1,5 @@
 <div>
-    @if (questions()) {
+    @if (questions().length > 0) {
         @if (currentQuestion(); as question) {
             @if (question.type === MULTIPLE_CHOICE) {
                 <jhi-multiple-choice-question
