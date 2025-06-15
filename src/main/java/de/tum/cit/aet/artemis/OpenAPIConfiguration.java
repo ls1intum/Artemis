@@ -22,11 +22,25 @@ import io.swagger.v3.oas.models.media.StringSchema;
 import io.swagger.v3.oas.models.responses.ApiResponse;
 import io.swagger.v3.oas.models.responses.ApiResponses;
 
+/**
+ * Configuration class for OpenAPI Spec customization.
+ * <p>
+ * This class customizes the OpenAPI schema to:
+ * - Remove "DTO" suffixes from schema names and properties.
+ * - Adjust response schemas to use a binary format for CSV responses.
+ * - Set application metadata such as title, version, and contact information.
+ */
 @Configuration
 @Profile(PROFILE_CORE)
 public class OpenAPIConfiguration {
 
     private static final Logger log = LoggerFactory.getLogger(OpenAPIConfiguration.class);
+
+    private static final String OK_STATUS_CODE = "200";
+
+    private static final int RESOURCE_NUMBER_OF_CHARACTERS = 9;
+
+    private static final int DTO_NUMBER_OF_CHARACTERS = 3;
 
     @Value("${artemis.version}")
     private String version;
@@ -40,9 +54,9 @@ public class OpenAPIConfiguration {
             if (components != null && components.getSchemas() != null) {
                 // Only include schemas with DTO suffix and remove the suffix
                 var schemas = components.getSchemas().entrySet().stream().filter(entry -> entry.getKey().endsWith("DTO"))
-                        .collect(Collectors.toMap(entry -> entry.getKey().substring(0, entry.getKey().length() - 3), entry -> {
+                        .collect(Collectors.toMap(entry -> entry.getKey().substring(0, entry.getKey().length() - DTO_NUMBER_OF_CHARACTERS), entry -> {
                             var schema = entry.getValue();
-                            schema.setName(entry.getKey().substring(0, entry.getKey().length() - 3));
+                            schema.setName(entry.getKey().substring(0, entry.getKey().length() - DTO_NUMBER_OF_CHARACTERS));
                             return schema;
                         }));
 
@@ -101,17 +115,17 @@ public class OpenAPIConfiguration {
                             });
                         }
 
-                        // Remove -controller suffix from tags
+                        // Remove -resource suffix from tags
                         if (operation.getTags() != null) {
                             operation.setTags(operation.getTags().stream().filter(tag -> {
-                                if (tag.length() > 11) {
+                                if (tag.length() > RESOURCE_NUMBER_OF_CHARACTERS) {
                                     return true;
                                 }
                                 else {
                                     log.warn("Tag '{}' is shorter than expected and cannot be trimmed.", tag);
                                     return false;
                                 }
-                            }).map(tag -> tag.substring(0, tag.length() - 9)).toList());
+                            }).map(tag -> tag.substring(0, tag.length() - RESOURCE_NUMBER_OF_CHARACTERS)).toList());
                         }
                     });
                 });
@@ -128,7 +142,7 @@ public class OpenAPIConfiguration {
         }
 
         if (schema.get$ref() != null && schema.get$ref().endsWith("DTO")) {
-            String newRef = schema.get$ref().substring(0, schema.get$ref().length() - 3);
+            String newRef = schema.get$ref().substring(0, schema.get$ref().length() - DTO_NUMBER_OF_CHARACTERS);
             schema.set$ref(newRef);
             log.debug("Updated $ref from {} to {}", schema.get$ref(), newRef);
         }
@@ -165,7 +179,7 @@ public class OpenAPIConfiguration {
     public OpenApiCustomizer binaryFormatCustomizer() {
         return openApi -> openApi.getPaths().values().forEach(pathItem -> pathItem.readOperations().forEach(op -> {
             ApiResponses responses = op.getResponses();
-            ApiResponse resp200 = responses.get("200");
+            ApiResponse resp200 = responses.get(OK_STATUS_CODE);
             if (resp200 != null && resp200.getContent() != null) {
                 MediaType media = resp200.getContent().get("text/csv");
                 if (media != null) {
