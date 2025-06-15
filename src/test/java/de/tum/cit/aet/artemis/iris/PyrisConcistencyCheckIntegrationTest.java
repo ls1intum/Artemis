@@ -128,10 +128,11 @@ class PyrisConsistencyCheckIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     /**
-     Simulate the websocket message that would be sent by Pyris
-     This is a simulation of the PyrisConsistencyCheckStatusUpdateDTO that would be sent to the user
-     It contains the stages and the result of the consistency check
-     * @param job the job that is being processed
+     * Simulate the websocket message that would be sent by Pyris
+     * This is a simulation of the PyrisConsistencyCheckStatusUpdateDTO that would be sent to the user
+     * It contains the stages and the result of the consistency check
+     *
+     * @param job    the job that is being processed
      * @param tokens the LLM requests that were made during the rewriting process
      * @param stages the stages of the consistency process
      * @param result the result of the consistency check process

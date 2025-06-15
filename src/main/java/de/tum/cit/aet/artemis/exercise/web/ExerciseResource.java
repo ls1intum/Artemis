@@ -3,12 +3,15 @@ package de.tum.cit.aet.artemis.exercise.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +31,6 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.TutorParticipation;
 import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
-import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.TutorParticipationService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
@@ -106,14 +108,12 @@ public class ExerciseResource {
 
     private final Optional<PlagiarismCaseApi> plagiarismCaseApi;
 
-    private final ResultRepository resultRepository;
-
     public ExerciseResource(ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService, ParticipationService participationService,
             UserRepository userRepository, Optional<ExamDateApi> examDateApi, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
             ExampleSubmissionRepository exampleSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             GradingCriterionRepository gradingCriterionRepository, ExerciseRepository exerciseRepository, QuizBatchService quizBatchService,
             ParticipationRepository participationRepository, Optional<ExamAccessApi> examAccessApi, Optional<IrisSettingsApi> irisSettingsApi,
-            Optional<PlagiarismCaseApi> plagiarismCaseApi, ResultRepository resultRepository) {
+            Optional<PlagiarismCaseApi> plagiarismCaseApi) {
         this.exerciseService = exerciseService;
         this.exerciseDeletionService = exerciseDeletionService;
         this.participationService = participationService;
@@ -130,7 +130,6 @@ public class ExerciseResource {
         this.examAccessApi = examAccessApi;
         this.irisSettingsApi = irisSettingsApi;
         this.plagiarismCaseApi = plagiarismCaseApi;
-        this.resultRepository = resultRepository;
     }
 
     /**
@@ -336,9 +335,9 @@ public class ExerciseResource {
         for (StudentParticipation participation : participations) {
             // By filtering the results available yet, they can become null for the exercise.
             exercise.filterResultsForStudents(participation);
-            if (participation.getResults() != null) {
-                participation.getResults().forEach(Result::filterSensitiveInformation);
-            }
+            Stream.ofNullable(participation.getSubmissions()).flatMap(Collection::stream)
+                    .flatMap(submission -> Stream.ofNullable(submission.getResults()).flatMap(Collection::stream)).filter(Objects::nonNull)
+                    .forEach(Result::filterSensitiveInformation);
             exercise.addParticipation(participation);
         }
 
