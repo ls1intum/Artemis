@@ -1,4 +1,4 @@
 package de.tum.cit.aet.artemis.core;
 
-public class PrintStartupBeansEvent {
+public record PrintStartupBeansEvent() {
 }

@@ -87,9 +87,9 @@ public class ArtemisApp {
         var gitProperties = context.getBean(GitProperties.class);
         logApplicationStartup(env, buildProperties, gitProperties);
         // only publish the PrintStartupBeansEvent if the development profile is active.
-        // This event is only consumed by the BeanInstantiationTracer. This class prints a dependency graph of the initialized beans in the application context to beans.dot
+        // This event is only consumed by the BeanInstantiationTracer. This class prints a dependency graph of the initialized beans in the application context to startupBeans.dot
         // This is useful for debugging and performance improvements, but should not be enabled in production environments.
-        // beans.dot can be visualized with graphviz, e.g. with http://www.webgraphviz.com/
+        // startupBeans.dot can be visualized with graphviz, e.g. with http://www.webgraphviz.com/
         if (env.acceptsProfiles(Profiles.of(SPRING_PROFILE_DEVELOPMENT))) {
             context.publishEvent(new PrintStartupBeansEvent());
         }
