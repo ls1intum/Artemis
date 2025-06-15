@@ -7,17 +7,17 @@ import org.springframework.stereotype.Controller;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
-import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismService;
+import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismAccessService;
 
-@Conditional(PlagiarismEnabled.class)
 @Controller
+@Conditional(PlagiarismEnabled.class)
 @Lazy
-public class PlagiarismApi extends AbstractPlagiarismApi {
+public class PlagiarismAccessApi extends AbstractPlagiarismApi {
 
-    private final PlagiarismService plagiarismService;
+    private final PlagiarismAccessService plagiarismAccessService;
 
-    public PlagiarismApi(PlagiarismService plagiarismService) {
-        this.plagiarismService = plagiarismService;
+    public PlagiarismAccessApi(PlagiarismAccessService plagiarismAccessService) {
+        this.plagiarismAccessService = plagiarismAccessService;
     }
 
     /**
@@ -30,7 +30,7 @@ public class PlagiarismApi extends AbstractPlagiarismApi {
      * @return true if the user has access to the submission, false otherwise
      */
     public boolean hasAccessToSubmission(Long submissionId, String userLogin, Participation participation) {
-        return plagiarismService.hasAccessToSubmission(submissionId, userLogin, participation);
+        return plagiarismAccessService.hasAccessToSubmission(submissionId, userLogin, participation);
     }
 
     /**
@@ -41,6 +41,6 @@ public class PlagiarismApi extends AbstractPlagiarismApi {
      * @return true if the user is involved in a plagiarism case and was notified by the instructor, false otherwise
      */
     public boolean wasUserNotifiedByInstructor(Submission submission, String userLogin) {
-        return plagiarismService.wasUserNotifiedByInstructor(submission, userLogin);
+        return plagiarismAccessService.wasUserNotifiedByInstructor(submission, userLogin);
     }
 }

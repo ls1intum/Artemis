@@ -13,7 +13,6 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
@@ -23,6 +22,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
 import com.hazelcast.core.HazelcastInstance;
+
+import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 
 /**
  * A specialized {@link AuthorizationRequestRepository} that uses Hazelcast to store OAuth2 authorization requests.
@@ -56,7 +57,7 @@ public class DistributedStateAuthorizationRequestRepository implements Authoriza
         this.hazelcastInstance = hazelcastInstance;
     }
 
-    @EventListener(ApplicationReadyEvent.class)
+    @EventListener(FullStartupEvent.class)
     void init() {
         this.store = hazelcastInstance.getMap("ltiStateAuthorizationRequestStore");
     }

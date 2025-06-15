@@ -23,7 +23,6 @@ import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
@@ -34,6 +33,7 @@ import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 import de.tum.cit.aet.artemis.core.util.Pair;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseLifecycle;
@@ -145,7 +145,7 @@ public class ScheduleService {
      * The scheduling mechanism ensures that outdated or completed tasks do not persist in
      * memory unnecessarily while maintaining visibility into scheduled tasks.
      */
-    @EventListener(ApplicationReadyEvent.class)
+    @EventListener(FullStartupEvent.class)
     public void startup() {
         taskScheduler.scheduleAtFixedRate(() -> {
             log.debug("Number of scheduled Exercise Tasks: {}", scheduledExerciseTasks.values().stream().mapToLong(Set::size).sum());

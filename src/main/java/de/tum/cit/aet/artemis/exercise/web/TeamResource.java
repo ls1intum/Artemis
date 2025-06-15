@@ -58,7 +58,7 @@ import de.tum.cit.aet.artemis.exercise.dto.TeamSearchUserDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
-import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
+import de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.exercise.service.team.TeamService;
 
@@ -92,7 +92,7 @@ public class TeamResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final ParticipationService participationService;
+    private final ParticipationDeletionService participationDeletionService;
 
     private final SubmissionService submissionService;
 
@@ -103,9 +103,9 @@ public class TeamResource {
     private final TeamScoreRepository teamScoreRepository;
 
     public TeamResource(TeamRepository teamRepository, TeamService teamService, TeamWebsocketService teamWebsocketService, CourseRepository courseRepository,
-            ExerciseRepository exerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService, ParticipationService participationService,
-            SubmissionService submissionService, AuditEventRepository auditEventRepository, StudentParticipationRepository studentParticipationRepository,
-            TeamScoreRepository teamScoreRepository) {
+            ExerciseRepository exerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
+            ParticipationDeletionService participationDeletionService, SubmissionService submissionService, AuditEventRepository auditEventRepository,
+            StudentParticipationRepository studentParticipationRepository, TeamScoreRepository teamScoreRepository) {
         this.teamRepository = teamRepository;
         this.teamService = teamService;
         this.teamWebsocketService = teamWebsocketService;
@@ -113,7 +113,7 @@ public class TeamResource {
         this.exerciseRepository = exerciseRepository;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
-        this.participationService = participationService;
+        this.participationDeletionService = participationDeletionService;
         this.submissionService = submissionService;
         this.auditEventRepository = auditEventRepository;
         this.studentParticipationRepository = studentParticipationRepository;
@@ -298,7 +298,7 @@ public class TeamResource {
         var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_TEAM, logMessage);
         auditEventRepository.add(auditEvent);
         // Delete all participations of the team first and then the team itself
-        participationService.deleteAllByTeamId(teamId);
+        participationDeletionService.deleteAllByTeamId(teamId);
         // delete all team scores associated with the team
         teamScoreRepository.deleteAllByTeamId(team.getId());
 
