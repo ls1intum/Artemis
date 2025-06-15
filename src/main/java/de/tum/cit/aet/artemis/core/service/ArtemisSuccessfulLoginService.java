@@ -16,6 +16,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.communication.domain.GlobalNotificationType;
+import de.tum.cit.aet.artemis.communication.repository.GlobalNotificationSettingRepository;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -48,6 +50,8 @@ public class ArtemisSuccessfulLoginService {
 
     private final MailSendingService mailSendingService;
 
+    private final GlobalNotificationSettingRepository globalNotificationSettingRepository;
+
     /**
      * Ensures that the password reset links for both English and German are initialized properly.
      * If the configured links are empty or set to a placeholder, it uses the default link, the ArtemisServerURL/account/reset/request.
@@ -66,9 +70,11 @@ public class ArtemisSuccessfulLoginService {
         }
     }
 
-    public ArtemisSuccessfulLoginService(UserRepository userRepository, MailSendingService mailSendingService) {
+    public ArtemisSuccessfulLoginService(UserRepository userRepository, MailSendingService mailSendingService,
+            GlobalNotificationSettingRepository globalNotificationSettingRepository) {
         this.userRepository = userRepository;
         this.mailSendingService = mailSendingService;
+        this.globalNotificationSettingRepository = globalNotificationSettingRepository;
     }
 
     /**
@@ -83,6 +89,10 @@ public class ArtemisSuccessfulLoginService {
     public void sendLoginEmail(String username, AuthenticationMethod authenticationMethod, @Nullable ClientEnvironment clientEnvironment) {
         try {
             User recipient = userRepository.getUserByLoginElseThrow(username);
+
+            if (!globalNotificationSettingRepository.isNotificationEnabled(recipient.getId(), GlobalNotificationType.NEW_LOGIN)) {
+                return;
+            }
 
             String localeKey = recipient.getLangKey();
             if (localeKey == null) {
