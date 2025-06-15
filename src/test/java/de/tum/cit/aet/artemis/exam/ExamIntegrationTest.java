@@ -395,7 +395,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
     void testCreateExam_asInstructor_returnsBody() throws Exception {
         final Exam exam = validExamWithCustomFieldValues();
         exam.setQuizExamMaxPoints(40);  // this is only returned by the POST endpoint (createExam),
-        // not the GET endpoint (getExam)
+        // not the GET endpoint (getExam), because it's an unfinished feature
 
         final Exam savedExam = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams", exam, Exam.class, HttpStatus.CREATED);
 
@@ -1346,7 +1346,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
 
         final URI createdExamURI = request.post("/api/exam/courses/" + course1.getId() + "/exams", exam, HttpStatus.CREATED);
 
-        /// GETS the "api/exam/courses/{course-id}/exams/{exam-id}" endpoint
+        /// GETS the "/api/exam/courses/{course-id}/exams/{exam-id}" endpoint
         final Exam receivedExam = request.get(String.valueOf(createdExamURI), HttpStatus.OK, Exam.class);
 
         checkCustomFieldValuesExamsAreEffectivelyEqual(receivedExam, exam);
@@ -1360,7 +1360,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
         exam.setExaminer(examinerName);
         final URI receivedExamURI = request.post("/api/exam/courses/" + course1.getId() + "/exams", exam, HttpStatus.CREATED);
 
-        /// GETS the "api/exam/courses/{course-id}/exams/{exam-id}" endpoint
+        /// GETS the "/api/exam/courses/{course-id}/exams/{exam-id}" endpoint
         final Exam requestedExam = request.get(String.valueOf(receivedExamURI), HttpStatus.OK, Exam.class);
         assertThat(requestedExam.getExaminer()).isEqualTo(examinerName);
     }
@@ -1409,7 +1409,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
         final URI receivedExamURI = request.post("/api/exam/courses/" + course1.getId() + "/exams", exam, expectedStatus);
 
         if (expectedStatus == HttpStatus.CREATED) {
-            /// GETS the "api/exam/courses/{course-id}/exams/{exam-id}" endpoint
+            /// GETS the "/api/exam/courses/{course-id}/exams/{exam-id}" endpoint
             final Exam receivedExam = request.get(String.valueOf(receivedExamURI), HttpStatus.OK, Exam.class);
             assertThat(receivedExam.getNumberOfCorrectionRoundsInExam()).isEqualTo(actualCorrectionRounds);
         }
@@ -1422,7 +1422,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
         exam.setCourseName(null);
         final URI receivedExamURI = request.post("/api/exam/courses/" + course1.getId() + "/exams", exam, HttpStatus.CREATED);
 
-        /// GETS the "api/exam/courses/{course-id}/exams/{exam-id}" endpoint
+        /// GETS the "/api/exam/courses/{course-id}/exams/{exam-id}" endpoint
         Exam receivedExam = request.get(String.valueOf(receivedExamURI), HttpStatus.OK, Exam.class);
         assertThat(receivedExam.getCourseName()).isNull();
     }
@@ -1436,7 +1436,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
 
         final URI receivedExamURI = request.post("/api/exam/courses/" + course1.getId() + "/exams", exam, HttpStatus.CREATED);
 
-        /// GETS the "api/exam/courses/{course-id}/exams/{exam-id}" endpoint
+        /// GETS the "/api/exam/courses/{course-id}/exams/{exam-id}" endpoint
         final Exam receivedExam = request.get(String.valueOf(receivedExamURI), HttpStatus.OK, Exam.class);
         assertThat(receivedExam.isVisibleToStudents()).isTrue();
     }
@@ -1457,7 +1457,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
 
         final URI receivedExamURI = request.post("/api/exam/courses/" + course1.getId() + "/exams", exam, HttpStatus.CREATED);
 
-        /// GETS the "api/exam/courses/{course-id}/exams/{exam-id}" endpoint
+        /// GETS the "/api/exam/courses/{course-id}/exams/{exam-id}" endpoint
         final Exam receivedExam = request.get(String.valueOf(receivedExamURI), HttpStatus.OK, Exam.class);
         assertThat(receivedExam.isVisibleToStudents()).isFalse();
     }
