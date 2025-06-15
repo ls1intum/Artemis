@@ -16,6 +16,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -30,6 +31,7 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastStudentInLectureUnit;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
@@ -172,4 +174,31 @@ public class LectureTranscriptionResource {
         lectureService.deleteLectureTranscriptionInPyris(lectureTranscription.get());
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, lectureTranscription.get().getId().toString())).build();
     }
+
+    /**
+     * Retrieves the transcript for a given lecture unit.
+     *
+     * <p>
+     * This endpoint returns the transcript associated with the specified {@code lectureUnitId}, including
+     * the language and individual transcript segments.
+     * </p>
+     *
+     * @param lectureUnitId the ID of the lecture unit for which to retrieve the transcript
+     * @return {@link ResponseEntity} containing the {@link LectureTranscriptionDTO} if found, or 404 Not Found if no transcript exists
+     */
+    @GetMapping("lecture-unit/{lectureUnitId}/transcript")
+    @EnforceAtLeastStudentInLectureUnit
+    public ResponseEntity<LectureTranscriptionDTO> getTranscript(@PathVariable Long lectureUnitId) {
+        Optional<LectureTranscription> transcriptionOpt = lectureTranscriptionRepository.findByLectureUnit_Id(lectureUnitId);
+
+        if (transcriptionOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        LectureTranscription transcription = transcriptionOpt.get();
+        LectureTranscriptionDTO dto = new LectureTranscriptionDTO(lectureUnitId, transcription.getLanguage(), transcription.getSegments());
+
+        return ResponseEntity.ok(dto);
+    }
+
 }
