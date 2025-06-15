@@ -10,12 +10,12 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -61,7 +61,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.core.service.CourseService;
+import de.tum.cit.aet.artemis.core.service.course.CourseService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
@@ -99,6 +99,7 @@ import de.tum.cit.aet.artemis.text.service.TextSubmissionExportService;
  * REST controller for managing TextExercise.
  */
 @Conditional(TextEnabled.class)
+@Lazy
 @RestController
 @RequestMapping("api/text/")
 public class TextExerciseResource {
@@ -427,19 +428,6 @@ public class TextExerciseResource {
         if (textExercise.isExamExercise()) {
             ExamAccessApi api = examAccessApi.orElseThrow(() -> new ExamApiNotPresentException(ExamAccessApi.class));
             api.checkIfAllowedToGetExamResult(textExercise, participation, user);
-        }
-
-        // if no results, check if there are really no results or the relation to results was not updated yet
-        if (participation.getResults().isEmpty()) {
-            List<Result> results = resultRepository.findByParticipationIdOrderByCompletionDateDesc(participation.getId());
-            participation.setResults(new HashSet<>(results));
-        }
-
-        if (!ExerciseDateService.isAfterAssessmentDueDate(textExercise) && !authCheckService.isAtLeastTeachingAssistantForExercise(textExercise, user)) {
-            // We want to have the preliminary feedback before the assessment due date too
-            Set<Result> athenaResults = participation.getResults().stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA)
-                    .collect(Collectors.toSet());
-            participation.setResults(athenaResults);
         }
 
         Set<Submission> submissions = participation.getSubmissions();

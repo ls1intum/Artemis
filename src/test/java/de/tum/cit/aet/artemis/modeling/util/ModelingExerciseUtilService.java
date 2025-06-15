@@ -12,6 +12,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -48,6 +49,7 @@ import de.tum.cit.aet.artemis.modeling.test_repository.ModelingSubmissionTestRep
 /**
  * Service responsible for initializing the database with specific testdata related to modeling exercises for use in integration tests.
  */
+@Lazy
 @Service
 @Profile(SPRING_PROFILE_TEST)
 public class ModelingExerciseUtilService {
@@ -221,10 +223,9 @@ public class ModelingExerciseUtilService {
         var user = userUtilService.getUserByLogin(login);
         submission = modelSubmissionService.handleModelingSubmission(submission, exercise, user);
         Result result = new Result();
-        result = resultRepo.save(result);
         result.setSubmission(submission);
+        result = resultRepo.save(result);
         submission.addResult(result);
-        participation.addResult(result);
         studentParticipationRepo.save(participation);
         modelingSubmissionRepo.save(submission);
         resultRepo.save(result);
@@ -285,15 +286,14 @@ public class ModelingExerciseUtilService {
 
         result.setAssessor(userUtilService.getUserByLogin(assessorLogin));
         result.setAssessmentType(AssessmentType.MANUAL);
-        result = resultRepo.save(result);
         submission = modelingSubmissionRepo.save(submission);
+        result.setSubmission(submission);
+        result = resultRepo.save(result);
         studentParticipationRepo.save(participation);
         result = resultRepo.save(result);
 
-        result.setSubmission(submission);
         submission.setParticipation(participation);
         submission.addResult(result);
-        submission.getParticipation().addResult(result);
         submission = modelingSubmissionRepo.save(submission);
         studentParticipationRepo.save(participation);
         return submission;
@@ -370,8 +370,9 @@ public class ModelingExerciseUtilService {
     public Result addModelingAssessmentForSubmission(ModelingExercise exercise, ModelingSubmission submission, String path, String login, boolean submit) throws Exception {
         List<Feedback> feedbackList = participationUtilService.loadAssessmentFomResources(path);
         Result result = assessmentService.saveAndSubmitManualAssessment(exercise, submission, feedbackList, null, null, submit);
-        result.setParticipation(submission.getParticipation().results(null));
         result.setAssessor(userUtilService.getUserByLogin(login));
+        result.setSubmission(submission);
+        submission.addResult(result);
         resultRepo.save(result);
         return resultRepo.findWithBidirectionalSubmissionAndFeedbackAndAssessorAndAssessmentNoteAndTeamStudentsByIdElseThrow(result.getId());
     }
@@ -393,7 +394,6 @@ public class ModelingExerciseUtilService {
         feedbacks.add(feedback2);
 
         Result result = assessmentService.saveAndSubmitManualAssessment(exercise, submission, feedbacks, null, null, submit);
-        result.setParticipation(submission.getParticipation().results(null));
         result.setAssessor(userUtilService.getUserByLogin(login));
         resultRepo.save(result);
         return resultRepo.findWithBidirectionalSubmissionAndFeedbackAndAssessorAndAssessmentNoteAndTeamStudentsByIdElseThrow(result.getId());

@@ -22,9 +22,8 @@ import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
-import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
+import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureFactory;
-import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class LectureServiceTest extends AbstractSpringIntegrationIndependentTest {
@@ -35,13 +34,10 @@ class LectureServiceTest extends AbstractSpringIntegrationIndependentTest {
     private LectureService lectureService;
 
     @Autowired
-    private LectureRepository lectureRepository;
+    private LectureTestRepository lectureRepository;
 
     @Autowired
     private UserUtilService userUtilService;
-
-    @Autowired
-    private LectureUtilService lectureUtilService;
 
     @Autowired
     private PageableSearchUtilService pageableSearchUtilService;

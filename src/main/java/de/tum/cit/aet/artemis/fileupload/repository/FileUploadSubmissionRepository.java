@@ -7,6 +7,7 @@ import java.util.Optional;
 
 import jakarta.validation.constraints.NotNull;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
@@ -20,6 +21,7 @@ import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
  * Spring Data JPA repository for the FileUploadSubmission entity.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Repository
 public interface FileUploadSubmissionRepository extends ArtemisJpaRepository<FileUploadSubmission, Long> {
 
@@ -44,7 +46,8 @@ public interface FileUploadSubmissionRepository extends ArtemisJpaRepository<Fil
      * @param submissionId the id of the file upload submission that should be loaded from the database
      * @return the file upload submission with its result, the feedback list of the result, the assessor of the result, its participation and all results of the participation
      */
-    @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks", "results.assessor", "results.assessmentNote", "participation", "participation.results" })
+    @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks", "results.assessor", "results.assessmentNote", "participation",
+            "participation.submissions.results" })
     Optional<FileUploadSubmission> findWithResultsFeedbacksAssessorAssessmentNoteAndParticipationResultsById(long submissionId);
 
     @Query("""

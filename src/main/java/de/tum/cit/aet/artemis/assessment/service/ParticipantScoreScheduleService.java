@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.TaskScheduler;
@@ -61,6 +62,7 @@ import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
  *
  * @see ResultListener
  */
+@Lazy
 @Service
 @Profile(PROFILE_CORE_AND_SCHEDULING)
 public class ParticipantScoreScheduleService {
@@ -187,7 +189,7 @@ public class ParticipantScoreScheduleService {
 
         var resultsToProcess = resultRepository.findAllByLastModifiedDateAfter(latestRun);
         resultsToProcess.forEach(result -> {
-            if (result.getParticipation() instanceof StudentParticipation studentParticipation) {
+            if (result.getSubmission().getParticipation() instanceof StudentParticipation studentParticipation) {
                 var lastModified = result.getLastModifiedDate() == null ? Instant.now() : result.getLastModifiedDate();
                 scheduleTask(studentParticipation.getExercise().getId(), studentParticipation.getParticipant().getId(), lastModified, null);
             }

@@ -11,6 +11,7 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -38,6 +39,7 @@ import de.tum.cit.aet.artemis.programming.dto.SubmissionProcessingDTO;
 import de.tum.cit.aet.artemis.programming.exception.BuildTriggerWebsocketError;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class ProgrammingMessagingService {
 
@@ -171,7 +173,7 @@ public class ProgrammingMessagingService {
      * @param participation the participation for which the result was created.
      */
     public void notifyUserAboutNewResult(Result result, ProgrammingExerciseParticipation participation) {
-        log.debug("Send result to client over websocket. Result: {}, Submission: {}, Participation: {}", result, result.getSubmission(), result.getParticipation());
+        log.debug("Send result to client over websocket. Result: {}, Submission: {}, Participation: {}", result, result.getSubmission(), result.getSubmission().getParticipation());
         // notify user via websocket
         resultWebsocketService.broadcastNewResult((Participation) participation, result);
 

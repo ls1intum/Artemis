@@ -53,7 +53,6 @@ describe('LectureUpdateUnitsComponent', () => {
                 },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
-            schemas: [],
         }).compileComponents();
 
         wizardUnitComponentFixture = TestBed.createComponent(LectureUpdateUnitsComponent);

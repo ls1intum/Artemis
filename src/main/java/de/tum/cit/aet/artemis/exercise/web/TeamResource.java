@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -65,6 +66,7 @@ import de.tum.cit.aet.artemis.exercise.service.team.TeamService;
  * REST controller for managing Teams.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @RestController
 @RequestMapping("api/exercise/")
 public class TeamResource {
@@ -224,7 +226,8 @@ public class TeamResource {
 
         savedTeam.filterSensitiveInformation();
         savedTeam.getStudents().forEach(student -> student.setVisibleRegistrationNumber(student.getRegistrationNumber()));
-        var participationsOfSavedTeam = studentParticipationRepository.findAllWithTeamStudentsByExerciseIdAndTeamStudentId(exercise.getId(), savedTeam.getId());
+        var participationsOfSavedTeam = studentParticipationRepository.findAllWithTeamStudentsByExerciseIdAndTeamStudentIdWithSubmissionsAndResults(exercise.getId(),
+                savedTeam.getId());
         teamWebsocketService.sendTeamAssignmentUpdate(exercise, existingTeam.get(), savedTeam, participationsOfSavedTeam);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, team.getId().toString())).body(savedTeam);
     }
@@ -472,7 +475,6 @@ public class TeamResource {
         else {
             // for other tutors and for students: submissions not needed, hide results
             participations = studentParticipationRepository.findAllByCourseIdAndTeamShortName(course.getId(), teamShortName);
-            participations.forEach(participation -> participation.setResults(null));
         }
 
         // Set the submission count for all participations

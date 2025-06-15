@@ -12,6 +12,7 @@ import java.util.stream.Stream;
 import jakarta.validation.constraints.NotNull;
 
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -29,6 +30,7 @@ import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismComparisonReposito
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 
 @Conditional(PlagiarismEnabled.class)
+@Lazy
 @Service
 public class PlagiarismService {
 

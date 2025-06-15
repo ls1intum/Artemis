@@ -53,6 +53,7 @@ import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -127,6 +128,7 @@ import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
  * Note: this class should be independent of the actual VCS and CIS and contains common test logic for scenarios:
  * 1) LocalVC + LocalCI
  */
+@Lazy
 @Service
 @Profile(SPRING_PROFILE_TEST)
 public class ProgrammingExerciseIntegrationTestService {
@@ -338,7 +340,8 @@ public class ProgrammingExerciseIntegrationTestService {
         programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(5L));
         programmingExerciseRepository.save(programmingExercise);
         StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(programmingExercise, userPrefix + "student1");
-        participationUtilService.addResultToParticipation(null, null, participation);
+        var submission = participationUtilService.addSubmission(participation, new ProgrammingSubmission());
+        participationUtilService.addResultToSubmission(null, null, submission);
 
         ProgrammingExerciseTestCaseStateDTO releaseStateDTO = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-case-state",
                 HttpStatus.OK, ProgrammingExerciseTestCaseStateDTO.class);
@@ -351,7 +354,8 @@ public class ProgrammingExerciseIntegrationTestService {
         programmingExercise.setReleaseDate(ZonedDateTime.now().plusHours(5L));
         programmingExerciseRepository.save(programmingExercise);
         StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(programmingExercise, userPrefix + "student1");
-        participationUtilService.addResultToParticipation(null, null, participation);
+        var submission = participationUtilService.addSubmission(participation, new ProgrammingSubmission());
+        participationUtilService.addResultToSubmission(null, null, submission);
 
         ProgrammingExerciseTestCaseStateDTO releaseStateDTO = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-case-state",
                 HttpStatus.OK, ProgrammingExerciseTestCaseStateDTO.class);

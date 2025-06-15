@@ -16,6 +16,7 @@ import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -53,7 +54,6 @@ import de.tum.cit.aet.artemis.programming.service.ParticipationVcsAccessTokenSer
 import de.tum.cit.aet.artemis.programming.service.UriService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.programming.service.localci.SharedQueueManagementService;
-import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCGitBranchService;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 
@@ -61,6 +61,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
  * Service Implementation for managing Participation.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class ParticipationService {
 
@@ -74,8 +75,6 @@ public class ParticipationService {
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
     private final Optional<VersionControlService> versionControlService;
-
-    private final Optional<LocalVCGitBranchService> localVCGitBranchService;
 
     private final BuildLogEntryService buildLogEntryService;
 
@@ -108,16 +107,15 @@ public class ParticipationService {
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
     public ParticipationService(GitService gitService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
-            Optional<LocalVCGitBranchService> localVCGitBranchService, BuildLogEntryService buildLogEntryService, ParticipationRepository participationRepository,
-            StudentParticipationRepository studentParticipationRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository, SubmissionRepository submissionRepository, TeamRepository teamRepository, UriService uriService,
-            ResultService resultService, ParticipantScoreRepository participantScoreRepository, StudentScoreRepository studentScoreRepository,
-            TeamScoreRepository teamScoreRepository, Optional<SharedQueueManagementService> localCISharedBuildJobQueueService,
-            ParticipationVcsAccessTokenService participationVCSAccessTokenService, Optional<CompetencyProgressApi> competencyProgressApi) {
+            BuildLogEntryService buildLogEntryService, ParticipationRepository participationRepository, StudentParticipationRepository studentParticipationRepository,
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            SubmissionRepository submissionRepository, TeamRepository teamRepository, UriService uriService, ResultService resultService,
+            ParticipantScoreRepository participantScoreRepository, StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository,
+            Optional<SharedQueueManagementService> localCISharedBuildJobQueueService, ParticipationVcsAccessTokenService participationVCSAccessTokenService,
+            Optional<CompetencyProgressApi> competencyProgressApi) {
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
-        this.localVCGitBranchService = localVCGitBranchService;
         this.buildLogEntryService = buildLogEntryService;
         this.participationRepository = participationRepository;
         this.studentParticipationRepository = studentParticipationRepository;
@@ -453,7 +451,7 @@ public class ParticipationService {
             // NOTE: we have to get the repository slug of the template participation here, because not all exercises (in particular old ones) follow the naming conventions
             final var templateRepoName = uriService.getRepositorySlugFromRepositoryUri(sourceURL);
             VersionControlService vcs = versionControlService.orElseThrow();
-            String templateBranch = localVCGitBranchService.orElseThrow().getOrRetrieveBranchOfExercise(programmingExercise);
+            String templateBranch = programmingExerciseRepository.findBranchByExerciseId(programmingExercise.getId());
             // the next action includes recovery, which means if the repository has already been copied, we simply retrieve the repository uri and do not copy it again
             var newRepoUri = vcs.copyRepository(projectKey, templateRepoName, templateBranch, projectKey, repoName, participation.getAttempt());
             // add the userInfo part to the repoUri only if the participation belongs to a single student (and not a team of students)
@@ -657,11 +655,11 @@ public class ParticipationService {
      * @param studentId the id of student
      * @return the list of exercise participations belonging to exercise and student
      */
-    public List<StudentParticipation> findByExerciseAndStudentId(Exercise exercise, Long studentId) {
+    public List<StudentParticipation> findByExerciseAndStudentIdWithSubmissionsAndResults(Exercise exercise, Long studentId) {
         if (exercise.isTeamMode()) {
-            return studentParticipationRepository.findAllWithTeamStudentsByExerciseIdAndTeamStudentId(exercise.getId(), studentId);
+            return studentParticipationRepository.findAllWithTeamStudentsByExerciseIdAndTeamStudentIdWithSubmissionsAndResults(exercise.getId(), studentId);
         }
-        return studentParticipationRepository.findByExerciseIdAndStudentId(exercise.getId(), studentId);
+        return studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerResultsAndSubmissions(exercise.getId(), studentId);
     }
 
     /**
@@ -822,7 +820,7 @@ public class ParticipationService {
      */
     public void deleteResultsAndSubmissionsOfParticipation(Long participationId, boolean deleteParticipantScores) {
         log.debug("Request to delete all results and submissions of participation with id : {}", participationId);
-        var participation = participationRepository.findByIdWithResultsAndSubmissionsResults(participationId)
+        var participation = participationRepository.findByIdWithSubmissionsResults(participationId)
                 .orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
 
         // delete the participant score with the combination (exerciseId, studentId) or (exerciseId, teamId)
@@ -834,10 +832,8 @@ public class ParticipationService {
         Set<Submission> submissions = participation.getSubmissions();
         // Delete all results for this participation
         Set<Result> resultsToBeDeleted = submissions.stream().flatMap(submission -> submission.getResults().stream()).collect(Collectors.toSet());
-        resultsToBeDeleted.addAll(participation.getResults());
         // By removing the participation, the ResultListener will ignore this result instead of scheduling a participant score update
         // This is okay here, because we delete the whole participation (no older results will exist for the score)
-        resultsToBeDeleted.forEach(participation::removeResult);
         resultsToBeDeleted.forEach(result -> resultService.deleteResult(result, false));
         // Delete all submissions for this participation
         submissions.forEach(submission -> {

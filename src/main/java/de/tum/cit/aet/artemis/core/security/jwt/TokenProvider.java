@@ -9,14 +9,16 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import jakarta.annotation.Nullable;
-import jakarta.annotation.PostConstruct;
 import jakarta.validation.constraints.NotNull;
 
 import javax.crypto.SecretKey;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -40,6 +42,7 @@ import tech.jhipster.config.JHipsterProperties;
 
 @Profile(PROFILE_CORE)
 @Component
+@Lazy
 public class TokenProvider {
 
     private static final Logger log = LoggerFactory.getLogger(TokenProvider.class);
@@ -68,7 +71,7 @@ public class TokenProvider {
     /**
      * initializes the token provider based on the yml config file
      */
-    @PostConstruct
+    @EventListener(ApplicationReadyEvent.class)
     public void init() {
         byte[] keyBytes;
         String secret = jHipsterProperties.getSecurity().getAuthentication().getJwt().getSecret();

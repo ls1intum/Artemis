@@ -2,12 +2,14 @@ package de.tum.cit.aet.artemis.core.management;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 
+@Lazy
 @Service
 @Profile(PROFILE_CORE)
 public class SecurityMetersService {

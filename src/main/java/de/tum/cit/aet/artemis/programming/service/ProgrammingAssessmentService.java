@@ -6,6 +6,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -35,6 +36,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class ProgrammingAssessmentService extends AssessmentService {
 
@@ -58,16 +60,13 @@ public class ProgrammingAssessmentService extends AssessmentService {
      * @return result that was saved in the database
      */
     private Result saveManualAssessment(Result result, User assessor) {
-        var participation = result.getParticipation();
+        var participation = result.getSubmission().getParticipation();
 
         result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         result.setAssessor(assessor);
         result.setCompletionDate(null);
 
-        Result finalResult = resultService.storeFeedbackInResult(result, result.getFeedbacks(), true);
-
-        finalResult.setParticipation(participation);
-        return finalResult;
+        return resultService.storeFeedbackInResult(result, result.getFeedbacks(), true);
     }
 
     /**
@@ -95,9 +94,6 @@ public class ProgrammingAssessmentService extends AssessmentService {
         newManualResult.setHasComplaint(existingManualResult.getHasComplaint().orElse(false));
         newManualResult = saveManualAssessment(newManualResult, assessor);
 
-        if (submission.getParticipation() == null) {
-            newManualResult.setParticipation(submission.getParticipation());
-        }
         Result savedResult = resultRepository.save(newManualResult);
         savedResult.setSubmission(submission);
 
@@ -126,7 +122,6 @@ public class ProgrammingAssessmentService extends AssessmentService {
 
         sendFeedbackToAthena(exercise, submission, newManualResult.getFeedbacks());
         handleResolvedFeedbackRequest(participation);
-        newManualResult.setParticipation(participation);
 
         return newManualResult;
     }
