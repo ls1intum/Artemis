@@ -36,7 +36,6 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedText;
 import de.tum.cit.aet.artemis.quiz.domain.compare.DnDMapping;
 import de.tum.cit.aet.artemis.quiz.domain.compare.SAMapping;
-import de.tum.cit.aet.artemis.quiz.exception.UnknownQuizQuestionTypeException;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
 
 class QuizComparisonTest {
@@ -611,7 +610,8 @@ class QuizComparisonTest {
                     id++;
                 }
             }
-            default -> throw new UnknownQuizQuestionTypeException(question);
+            default -> {
+            }
         }
         return id;
     }

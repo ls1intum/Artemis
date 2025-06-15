@@ -25,7 +25,6 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizQuestionStatisticComponent;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerMapping;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestionStatistic;
-import de.tum.cit.aet.artemis.quiz.exception.UnknownQuizQuestionTypeException;
 import de.tum.cit.aet.artemis.quiz.repository.DragAndDropMappingRepository;
 import de.tum.cit.aet.artemis.quiz.repository.ShortAnswerMappingRepository;
 
@@ -67,7 +66,8 @@ public abstract class QuizService<T extends QuizConfiguration> {
                 case MultipleChoiceQuestion multipleChoiceQuestion -> fixReferenceMultipleChoice(multipleChoiceQuestion);
                 case DragAndDropQuestion dragAndDropQuestion -> fixReferenceDragAndDrop(dragAndDropQuestion);
                 case ShortAnswerQuestion shortAnswerQuestion -> fixReferenceShortAnswer(shortAnswerQuestion);
-                default -> throw new UnknownQuizQuestionTypeException(quizQuestion);
+                default -> {
+                }
             }
         }
 

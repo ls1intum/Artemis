@@ -302,7 +302,6 @@ public class StudentExamService {
                     dragAndDropSubmittedAnswer.getMappings().forEach(dragAndDropMapping -> dragAndDropMapping.setSubmittedAnswer(dragAndDropSubmittedAnswer));
                 case ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer ->
                     shortAnswerSubmittedAnswer.getSubmittedTexts().forEach(submittedText -> submittedText.setSubmittedAnswer(shortAnswerSubmittedAnswer));
-                /// do nothing in case of MultipleChoiceSubmittedAnswer
                 default -> {
                 }
             }
