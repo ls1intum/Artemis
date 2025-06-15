@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -31,6 +32,7 @@ import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusTemplateService;
  * image for the programming language and project type for the artemis instance.
  */
 @Profile("aeolus | localci")
+@Lazy
 @RestController
 @RequestMapping("api/programming/aeolus/")
 public class AeolusTemplateResource {

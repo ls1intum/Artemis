@@ -32,6 +32,7 @@ import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -65,9 +66,9 @@ import de.tum.cit.aet.artemis.programming.repository.ParticipationVCSAccessToken
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.AuxiliaryRepositoryService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTestCaseChangedService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionMessagingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryAccessService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.programming.service.localvc.ssh.SshConstants;
@@ -77,6 +78,7 @@ import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
  * This service is responsible for authenticating and authorizing git requests as well as for retrieving the requested Git repositories from disk.
  * It is used by the ArtemisGitServletService, the LocalVCFetchFilter, and the LocalVCPushFilter.
  */
+@Lazy
 @Service
 @Profile(PROFILE_LOCALVC)
 // TODO: we should rename this because its used in the context of https and ssh git operations
@@ -102,9 +104,9 @@ public class LocalVCServletService {
 
     private final ProgrammingSubmissionService programmingSubmissionService;
 
-    private final ProgrammingMessagingService programmingMessagingService;
+    private final ProgrammingSubmissionMessagingService programmingSubmissionMessagingService;
 
-    private final ProgrammingTriggerService programmingTriggerService;
+    private final ProgrammingExerciseTestCaseChangedService programmingExerciseTestCaseChangedService;
 
     // TODO As soon as only LocalVC is supported, this Optional can be removed
     private final Optional<VcsAccessLogService> vcsAccessLogService;
@@ -143,7 +145,7 @@ public class LocalVCServletService {
             RepositoryAccessService repositoryAccessService, AuthorizationCheckService authorizationCheckService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, AuxiliaryRepositoryService auxiliaryRepositoryService,
             ContinuousIntegrationTriggerService ciTriggerService, ProgrammingSubmissionService programmingSubmissionService,
-            ProgrammingMessagingService programmingMessagingService, ProgrammingTriggerService programmingTriggerService,
+            ProgrammingSubmissionMessagingService programmingSubmissionMessagingService, ProgrammingExerciseTestCaseChangedService programmingExerciseTestCaseChangedService,
             ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository, Optional<VcsAccessLogService> vcsAccessLogService) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
@@ -154,8 +156,8 @@ public class LocalVCServletService {
         this.auxiliaryRepositoryService = auxiliaryRepositoryService;
         this.ciTriggerService = ciTriggerService;
         this.programmingSubmissionService = programmingSubmissionService;
-        this.programmingMessagingService = programmingMessagingService;
-        this.programmingTriggerService = programmingTriggerService;
+        this.programmingSubmissionMessagingService = programmingSubmissionMessagingService;
+        this.programmingExerciseTestCaseChangedService = programmingExerciseTestCaseChangedService;
         this.participationVCSAccessTokenRepository = participationVCSAccessTokenRepository;
         this.vcsAccessLogService = vcsAccessLogService;
     }
@@ -826,12 +828,12 @@ public class LocalVCServletService {
         // Create a new submission for the solution repository.
         ProgrammingSubmission submission = getProgrammingSubmission(exercise, commitHash);
 
-        programmingMessagingService.notifyUserAboutSubmission(submission, exercise.getId());
+        programmingSubmissionMessagingService.notifyUserAboutSubmission(submission, exercise.getId());
 
         if (repositoryType.equals(RepositoryType.TESTS)) {
             try {
                 // Set a flag to inform the instructor that the student results are now outdated.
-                programmingTriggerService.setTestCasesChanged(exercise.getId(), true);
+                programmingExerciseTestCaseChangedService.setTestCasesChanged(exercise.getId(), true);
             }
             catch (EntityNotFoundException e) {
                 throw new VersionControlException("Could not set test cases changed flag", e);
@@ -903,7 +905,7 @@ public class LocalVCServletService {
 
         // Remove unnecessary information from the new submission.
         submission.getParticipation().setSubmissions(null);
-        programmingMessagingService.notifyUserAboutSubmission(submission, participation.getExercise().getId());
+        programmingSubmissionMessagingService.notifyUserAboutSubmission(submission, participation.getExercise().getId());
     }
 
     private Commit extractCommitInfo(String commitHash, Repository repository) throws IOException, GitAPIException, VersionControlException {
