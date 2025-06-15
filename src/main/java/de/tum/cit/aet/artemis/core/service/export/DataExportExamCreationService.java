@@ -16,6 +16,7 @@ import java.util.stream.Stream;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -35,6 +36,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
  * Results are only included if the results are already published.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class DataExportExamCreationService {
 
