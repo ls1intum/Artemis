@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.util.RoundingUtil.roundScoreSpecifiedB
 
 import java.util.Map;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +17,7 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
  * Service for calculating the presentation points for a course or student.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class PresentationPointsCalculationService {
 

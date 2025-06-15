@@ -80,7 +80,6 @@ export class CourseSidebarItemService {
             translation: 'artemisApp.courseOverview.menu.statistics',
             hidden: false,
         };
-
         return [...items, exercisesItem, statisticsItem];
     }
 

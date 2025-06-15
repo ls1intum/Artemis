@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.programming.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.core.config.Constants.TEST_CASES_DUPLICATE_NOTIFICATION;
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission.createFallbackSubmission;
 
 import java.time.ZonedDateTime;
@@ -26,6 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
@@ -69,9 +69,9 @@ import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExercise
 import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationResultService;
-import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCGitBranchService;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class ProgrammingExerciseGradingService {
 
@@ -111,16 +111,13 @@ public class ProgrammingExerciseGradingService {
 
     private final FeedbackService feedbackService;
 
-    private final Optional<LocalVCGitBranchService> localVCGitBranchService;
-
     public ProgrammingExerciseGradingService(StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
             Optional<ContinuousIntegrationResultService> continuousIntegrationResultService, ProgrammingExerciseTestCaseRepository testCaseRepository,
-            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository, FeedbackService feedbackService,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             AuditEventRepository auditEventRepository, GroupNotificationService groupNotificationService, ResultService resultService, ExerciseDateService exerciseDateService,
             SubmissionPolicyService submissionPolicyService, ProgrammingExerciseRepository programmingExerciseRepository, BuildLogEntryService buildLogService,
-            StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository, ProgrammingExerciseFeedbackCreationService feedbackCreationService,
-            FeedbackService feedbackService, Optional<LocalVCGitBranchService> localVCGitBranchService) {
+            StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository, ProgrammingExerciseFeedbackCreationService feedbackCreationService) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.continuousIntegrationResultService = continuousIntegrationResultService;
         this.resultRepository = resultRepository;
@@ -138,7 +135,6 @@ public class ProgrammingExerciseGradingService {
         this.staticCodeAnalysisCategoryRepository = staticCodeAnalysisCategoryRepository;
         this.feedbackCreationService = feedbackCreationService;
         this.feedbackService = feedbackService;
-        this.localVCGitBranchService = localVCGitBranchService;
     }
 
     /**
@@ -218,10 +214,10 @@ public class ProgrammingExerciseGradingService {
         if (!ObjectUtils.isEmpty(branchName)) {
             String participationDefaultBranch = null;
             if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
-                participationDefaultBranch = localVCGitBranchService.orElseThrow().getOrRetrieveBranchOfParticipation(studentParticipation);
+                participationDefaultBranch = studentParticipation.getBranch();
             }
             if (StringUtils.isEmpty(participationDefaultBranch)) {
-                participationDefaultBranch = localVCGitBranchService.orElseThrow().getOrRetrieveBranchOfExercise(participation.getProgrammingExercise());
+                participationDefaultBranch = programmingExerciseRepository.findBranchByExerciseId(participation.getExercise().getId());
             }
 
             if (!Objects.equals(branchName, participationDefaultBranch)) {
@@ -742,8 +738,6 @@ public class ProgrammingExerciseGradingService {
                     .text(testCase.getTestName() + " - Duplicate Test Case!").detailText(duplicateDetailText).positive(false)).toList();
             result.addFeedbacks(feedbacksForDuplicateTestCases);
 
-            String notificationText = TEST_CASES_DUPLICATE_NOTIFICATION
-                    + duplicateTestCases.stream().map(ProgrammingExerciseTestCase::getTestName).sorted().collect(Collectors.joining(", "));
             groupNotificationService.notifyEditorAndInstructorGroupAboutDuplicateTestCasesForExercise(programmingExercise);
 
             return true;

@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.web;
+package de.tum.cit.aet.artemis.core.web.course;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static java.time.ZonedDateTime.now;
@@ -13,6 +13,7 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
@@ -38,7 +39,7 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.core.service.CourseService;
+import de.tum.cit.aet.artemis.core.service.course.CourseArchiveService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
@@ -49,11 +50,10 @@ import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 @Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/core/")
+@Lazy
 public class CourseArchiveResource {
 
     private static final Logger log = LoggerFactory.getLogger(CourseArchiveResource.class);
-
-    private final CourseService courseService;
 
     private final CourseRepository courseRepository;
 
@@ -61,14 +61,17 @@ public class CourseArchiveResource {
 
     private final UserRepository userRepository;
 
+    private final CourseArchiveService courseArchiveService;
+
     @Value("${artemis.course-archives-path}")
     private String courseArchivesDirPath;
 
-    public CourseArchiveResource(CourseService courseService, CourseRepository courseRepository, AuthorizationCheckService authCheckService, UserRepository userRepository) {
-        this.courseService = courseService;
+    public CourseArchiveResource(CourseRepository courseRepository, AuthorizationCheckService authCheckService, UserRepository userRepository,
+            CourseArchiveService courseArchiveService) {
         this.courseRepository = courseRepository;
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
+        this.courseArchiveService = courseArchiveService;
     }
 
     /**
@@ -89,7 +92,7 @@ public class CourseArchiveResource {
         if (now().isBefore(course.getEndDate())) {
             throw new BadRequestAlertException("You cannot archive a course that is not over.", Course.ENTITY_NAME, "courseNotOver", true);
         }
-        courseService.archiveCourse(course);
+        courseArchiveService.archiveCourse(course);
 
         // Note: in the first version, we do not store the results with feedback and other metadata, as those will stay available in Artemis, the main focus is to allow
         // instructors to download student repos in order to delete those in the VCS
@@ -147,7 +150,7 @@ public class CourseArchiveResource {
         if (!course.hasCourseArchive()) {
             throw new BadRequestAlertException("Failed to clean up course " + courseId + " because it needs to be archived first.", Course.ENTITY_NAME, "archivenonexistent");
         }
-        courseService.cleanupCourse(courseId, principal);
+        courseArchiveService.cleanupCourse(courseId, principal);
         return ResponseEntity.ok().build();
     }
 
@@ -163,7 +166,7 @@ public class CourseArchiveResource {
         long start = System.nanoTime();
         User user = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get all inactive courses from previous semesters user {} has access to", user.getLogin());
-        Set<CourseForArchiveDTO> courses = courseService.getAllCoursesForCourseArchive();
+        Set<CourseForArchiveDTO> courses = courseArchiveService.getAllCoursesForCourseArchive();
         log.debug("courseService.getAllCoursesForCourseArchive done");
 
         log.info("GET /courses/for-archive took {} for {} courses for user {}", TimeLogUtil.formatDurationFrom(start), courses.size(), user.getLogin());

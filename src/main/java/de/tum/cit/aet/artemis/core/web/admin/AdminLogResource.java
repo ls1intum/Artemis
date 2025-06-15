@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.util.List;
 
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,6 +25,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
  */
 @Profile(PROFILE_CORE)
 @EnforceAdmin
+@Lazy
 @RestController
 @RequestMapping("api/core/admin/")
 public class AdminLogResource {

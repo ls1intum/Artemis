@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
@@ -43,6 +44,7 @@ import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
 /**
  * Includes methods for managing and retrieving the shared build job queue and build agent information. Also contains methods for cancelling build jobs.
  */
+@Lazy
 @Service
 @Profile(PROFILE_LOCALCI)
 public class SharedQueueManagementService {
@@ -122,7 +124,7 @@ public class SharedQueueManagementService {
                     toRemove.add(job);
                 }
             }
-            distributedDataAccessService.getDistributedQueuedJobs().removeAll(toRemove);
+            distributedDataAccessService.getDistributedBuildJobQueue().removeAll(toRemove);
             updateCancelledQueuedBuildJobsStatus(toRemove);
         }
         else {
@@ -157,7 +159,7 @@ public class SharedQueueManagementService {
     public void cancelAllQueuedBuildJobs() {
         log.debug("Cancelling all queued build jobs");
         List<BuildJobQueueItem> queuedJobs = distributedDataAccessService.getQueuedJobs();
-        distributedDataAccessService.getDistributedQueuedJobs().clear();
+        distributedDataAccessService.getDistributedBuildJobQueue().clear();
         updateCancelledQueuedBuildJobsStatus(queuedJobs);
     }
 
@@ -193,7 +195,7 @@ public class SharedQueueManagementService {
                 toRemove.add(job);
             }
         }
-        distributedDataAccessService.getDistributedQueuedJobs().removeAll(toRemove);
+        distributedDataAccessService.getDistributedBuildJobQueue().removeAll(toRemove);
         updateCancelledQueuedBuildJobsStatus(toRemove);
     }
 
@@ -224,7 +226,7 @@ public class SharedQueueManagementService {
                 toRemove.add(queuedJob);
             }
         }
-        distributedDataAccessService.getDistributedQueuedJobs().removeAll(toRemove);
+        distributedDataAccessService.getDistributedBuildJobQueue().removeAll(toRemove);
         updateCancelledQueuedBuildJobsStatus(toRemove);
 
         List<BuildJobQueueItem> runningJobs = distributedDataAccessService.getProcessingJobs();
@@ -240,10 +242,10 @@ public class SharedQueueManagementService {
      * This method should only be called by an admin user.
      */
     public void clearDistributedData() {
-        distributedDataAccessService.getDistributedQueuedJobs().clear();
+        distributedDataAccessService.getDistributedBuildJobQueue().clear();
         distributedDataAccessService.getDistributedProcessingJobs().clear();
         distributedDataAccessService.getDistributedDockerImageCleanupInfo().clear();
-        distributedDataAccessService.getDistributedResultQueue().clear();
+        distributedDataAccessService.getDistributedBuildResultQueue().clear();
         distributedDataAccessService.getDistributedBuildAgentInformation().clear();
     }
 
@@ -288,7 +290,7 @@ public class SharedQueueManagementService {
      * @return the estimated queue release date as a {@link ZonedDateTime}
      */
     public ZonedDateTime getBuildJobEstimatedStartDate(long participationId) {
-        if (distributedDataAccessService.getDistributedQueuedJobs().isEmpty()
+        if (distributedDataAccessService.getDistributedBuildJobQueue().isEmpty()
                 || this.buildAgentsCapacity > this.runningBuildJobCount + distributedDataAccessService.getQueuedJobsSize()) {
             return ZonedDateTime.now();
         }

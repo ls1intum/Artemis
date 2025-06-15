@@ -20,13 +20,16 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
@@ -34,6 +37,7 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -43,12 +47,14 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerFlagsDTO;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
@@ -59,6 +65,7 @@ import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
+import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseSpecificationService;
@@ -91,6 +98,7 @@ import de.tum.cit.aet.artemis.programming.service.structureoraclegenerator.Oracl
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class ProgrammingExerciseService {
 
@@ -1085,6 +1093,109 @@ public class ProgrammingExerciseService {
 
         if (dockerFlagsDTO.memorySwap() < 0) {
             throw new BadRequestAlertException("The memory swap limit is invalid. The minimum memory swap limit is 0", "Exercise", "memorySwapLimitInvalid");
+        }
+    }
+
+    /**
+     * Find a programming exercise by its id, with eagerly loaded template and solution participation,
+     * including their latest submission with the latest result with feedback and test cases.
+     * <p>
+     * NOTICE: this method is quite expensive because it loads all feedback and test cases,
+     * IMPORTANT: you should generally avoid using this query except you really need all information!!
+     *
+     * @param programmingExerciseId of the programming exercise.
+     * @return The programming exercise related to the given id
+     * @throws EntityNotFoundException the programming exercise could not be found.
+     */
+    @NotNull
+    public ProgrammingExercise findByIdWithTemplateAndSolutionParticipationAndAuxiliaryReposAndLatestResultFeedbackTestCasesElseThrow(long programmingExerciseId)
+            throws EntityNotFoundException {
+        ProgrammingExercise programmingExerciseWithTemplate = programmingExerciseRepository.findWithTemplateParticipationAndLatestSubmissionByIdElseThrow(programmingExerciseId);
+        // if there are no submissions we can neither access a submission nor does it make sense to load a result
+        if (!programmingExerciseWithTemplate.getTemplateParticipation().getSubmissions().isEmpty()) {
+            Optional<Result> latestResultForLatestSubmissionOfTemplate = resultRepository
+                    .findLatestResultWithFeedbacksAndTestcasesForSubmission(programmingExerciseWithTemplate.getTemplateParticipation().getSubmissions().iterator().next().getId());
+            List<Result> resultsForLatestSubmissionTemplate = new ArrayList<>();
+            latestResultForLatestSubmissionOfTemplate.ifPresent(resultsForLatestSubmissionTemplate::add);
+            programmingExerciseWithTemplate.getTemplateParticipation().getSubmissions().iterator().next().setResults(resultsForLatestSubmissionTemplate);
+        }
+        SolutionProgrammingExerciseParticipation solutionParticipationWithLatestSubmission = solutionProgrammingExerciseParticipationRepository
+                .findWithLatestSubmissionByExerciseIdElseThrow(programmingExerciseId);
+
+        if (!solutionParticipationWithLatestSubmission.getSubmissions().isEmpty()) {
+            Optional<Result> latestResultForLatestSubmissionOfSolution = resultRepository
+                    .findLatestResultWithFeedbacksAndTestcasesForSubmission(solutionParticipationWithLatestSubmission.getSubmissions().iterator().next().getId());
+            List<Result> resultsForLatestSubmissionSolution = new ArrayList<>();
+            latestResultForLatestSubmissionOfSolution.ifPresent(resultsForLatestSubmissionSolution::add);
+            solutionParticipationWithLatestSubmission.getSubmissions().iterator().next().setResults(resultsForLatestSubmissionSolution);
+        }
+        List<AuxiliaryRepository> auxiliaryRepositories = auxiliaryRepositoryRepository.findByProgrammingExerciseId(programmingExerciseId);
+
+        programmingExerciseWithTemplate.setSolutionParticipation(solutionParticipationWithLatestSubmission);
+        programmingExerciseWithTemplate.setAuxiliaryRepositories(auxiliaryRepositories);
+
+        return programmingExerciseWithTemplate;
+    }
+
+    /**
+     * Retrieves all programming exercises for a given course, including their categories, template and solution participations with their latest submissions and results.
+     * This method avoids one big and expensive query by splitting the retrieval into multiple smaller queries.
+     *
+     * @param courseId the course the returned programming exercises belong to.
+     * @return all exercises for the given course with only the latest result and latest submission for solution and template each (if present).
+     */
+    public List<ProgrammingExercise> findByCourseIdWithCategoriesLatestSubmissionResultForTemplateAndSolutionParticipation(long courseId) {
+        List<ProgrammingExercise> programmingExercisesWithCategories = programmingExerciseRepository.findAllWithCategoriesByCourseId(courseId);
+        if (programmingExercisesWithCategories.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        Set<Long> exerciseIds = programmingExercisesWithCategories.stream().map(ProgrammingExercise::getId).collect(Collectors.toSet());
+
+        Set<SolutionProgrammingExerciseParticipation> solutionParticipationsWithLatestSubmission = solutionProgrammingExerciseParticipationRepository
+                .findAllWithLatestSubmissionByExerciseIds(exerciseIds);
+        Set<TemplateProgrammingExerciseParticipation> templateParticipationsWithLatestSubmission = templateProgrammingExerciseParticipationRepository
+                .findAllWithLatestSubmissionByExerciseIds(exerciseIds);
+
+        Set<Long> solutionSubmissionIds = solutionParticipationsWithLatestSubmission.stream().flatMap(p -> p.getSubmissions().stream().map(DomainObject::getId))
+                .collect(Collectors.toSet());
+        Set<Long> templateSubmissionIds = templateParticipationsWithLatestSubmission.stream().flatMap(p -> p.getSubmissions().stream().map(DomainObject::getId))
+                .collect(Collectors.toSet());
+
+        Map<Long, Result> latestResultsForSolutionSubmissions = resultRepository.findLatestResultsBySubmissionIds(solutionSubmissionIds).stream()
+                .collect(Collectors.toMap(result -> result.getSubmission().getId(), result -> result, (r1, r2) -> r1)); // In case of multiple, take first
+
+        Map<Long, Result> latestResultsForTemplateSubmissions = resultRepository.findLatestResultsBySubmissionIds(templateSubmissionIds).stream()
+                .collect(Collectors.toMap(result -> result.getSubmission().getId(), result -> result, (r1, r2) -> r1));
+
+        Map<Long, SolutionProgrammingExerciseParticipation> solutionParticipationMap = solutionParticipationsWithLatestSubmission.stream()
+                .collect(Collectors.toMap(p -> p.getProgrammingExercise().getId(), p -> p));
+
+        Map<Long, TemplateProgrammingExerciseParticipation> templateParticipationMap = templateParticipationsWithLatestSubmission.stream()
+                .collect(Collectors.toMap(p -> p.getProgrammingExercise().getId(), p -> p));
+
+        for (ProgrammingExercise programmingExercise : programmingExercisesWithCategories) {
+            TemplateProgrammingExerciseParticipation templateParticipation = templateParticipationMap.get(programmingExercise.getId());
+            if (templateParticipation != null) {
+                programmingExercise.setTemplateParticipation(templateParticipation);
+                connectSubmissionAndResult(latestResultsForTemplateSubmissions, templateParticipation.getSubmissions());
+            }
+            SolutionProgrammingExerciseParticipation solutionParticipation = solutionParticipationMap.get(programmingExercise.getId());
+            if (solutionParticipation != null) {
+                programmingExercise.setSolutionParticipation(solutionParticipation);
+                connectSubmissionAndResult(latestResultsForSolutionSubmissions, solutionParticipation.getSubmissions());
+            }
+        }
+        return programmingExercisesWithCategories;
+    }
+
+    private void connectSubmissionAndResult(Map<Long, Result> latestResultsForSolutionSubmissions, Set<Submission> submissions) {
+        if (submissions != null && !submissions.isEmpty()) {
+            Submission submission = submissions.iterator().next();
+            Result res = latestResultsForSolutionSubmissions.get(submission.getId());
+            if (res != null) {
+                submission.setResults(Collections.singletonList(res));
+            }
         }
     }
 }
