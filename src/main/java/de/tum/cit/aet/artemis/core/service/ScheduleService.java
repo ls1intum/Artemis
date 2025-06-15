@@ -24,6 +24,7 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
@@ -44,6 +45,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 
 @Profile(PROFILE_CORE_AND_SCHEDULING)
+@Lazy
 @Service
 public class ScheduleService {
 
