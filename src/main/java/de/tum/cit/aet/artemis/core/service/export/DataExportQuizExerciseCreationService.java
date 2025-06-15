@@ -100,8 +100,8 @@ public class DataExportQuizExerciseCreationService {
             for (var question : quizQuestions) {
                 var submittedAnswer = quizSubmission.getSubmittedAnswerForQuestion(question);
                 // if this question wasn't answered, the submitted answer is null
-                if (submittedAnswer != null) {
-                    if (submittedAnswer instanceof DragAndDropSubmittedAnswer dragAndDropSubmittedAnswer) {
+                switch (submittedAnswer) {
+                    case DragAndDropSubmittedAnswer dragAndDropSubmittedAnswer -> {
                         try {
                             dragAndDropQuizAnswerConversionService.convertDragAndDropQuizAnswerAndStoreAsPdf(dragAndDropSubmittedAnswer, outputDir, includeResults);
                         }
@@ -111,14 +111,16 @@ public class DataExportQuizExerciseCreationService {
                                     + quizExercise.getTitle() + " with id " + quizExercise.getId()));
                         }
                     }
-                    else if (submittedAnswer instanceof ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer) {
+                    case ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer ->
                         shortAnswerQuestionsSubmissions.add(createExportForShortAnswerQuestion(shortAnswerSubmittedAnswer, includeResults));
-                    }
-                    else if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer multipleChoiceSubmittedAnswer) {
+                    case MultipleChoiceSubmittedAnswer multipleChoiceSubmittedAnswer ->
                         multipleChoiceQuestionsSubmissions.add(createExportForMultipleChoiceAnswerQuestion(multipleChoiceSubmittedAnswer, includeResults));
+                    case null, default -> {
+                        // continue;
                     }
                 }
             }
+
             if (!multipleChoiceQuestionsSubmissions.isEmpty()) {
                 try {
                     FileUtils.writeLines(outputDir.resolve("quiz_submission_" + submission.getId() + "_multiple_choice_questions_answers" + TXT_FILE_EXTENSION).toFile(),
@@ -130,6 +132,7 @@ public class DataExportQuizExerciseCreationService {
                             + quizExercise.getTitle() + " with id " + quizExercise.getId()));
                 }
             }
+
             if (!shortAnswerQuestionsSubmissions.isEmpty()) {
                 try {
                     FileUtils.writeLines(outputDir.resolve("quiz_submission_" + submission.getId() + "_short_answer_questions_answers" + TXT_FILE_EXTENSION).toFile(),
@@ -142,6 +145,7 @@ public class DataExportQuizExerciseCreationService {
                 }
             }
         }
+
         return !errorOccurred;
     }
 

@@ -586,29 +586,31 @@ class QuizComparisonTest {
     private Long setQuizQuestionIds(QuizQuestion question, Long id) {
         question.setId(id);
         id++;
-        if (question instanceof DragAndDropQuestion dragAndDropQuestion) {
-            for (var item : dragAndDropQuestion.getDragItems()) {
-                item.setId(id);
-                id++;
-            }
+        switch (question) {
+            case DragAndDropQuestion dragAndDropQuestion -> {
+                for (var item : dragAndDropQuestion.getDragItems()) {
+                    item.setId(id);
+                    id++;
+                }
 
-            for (var location : dragAndDropQuestion.getDropLocations()) {
-                location.setId(id);
-                id++;
+                for (var location : dragAndDropQuestion.getDropLocations()) {
+                    location.setId(id);
+                    id++;
+                }
             }
-
-        }
-        else if (question instanceof ShortAnswerQuestion shortAnswerQuestion) {
-            for (var spot : shortAnswerQuestion.getSpots()) {
-                spot.setId(id);
-                id++;
+            case ShortAnswerQuestion shortAnswerQuestion -> {
+                for (var spot : shortAnswerQuestion.getSpots()) {
+                    spot.setId(id);
+                    id++;
+                }
             }
-
-        }
-        else if (question instanceof MultipleChoiceQuestion multipleChoiceQuestion) {
-            for (var answerOption : multipleChoiceQuestion.getAnswerOptions()) {
-                answerOption.setId(id);
-                id++;
+            case MultipleChoiceQuestion multipleChoiceQuestion -> {
+                for (var answerOption : multipleChoiceQuestion.getAnswerOptions()) {
+                    answerOption.setId(id);
+                    id++;
+                }
+            }
+            default -> {
             }
         }
         return id;
