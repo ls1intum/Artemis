@@ -40,8 +40,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
-import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
-import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
@@ -327,16 +325,6 @@ public class ProgrammingExerciseExportImportResource {
     public ResponseEntity<Resource> exportInstructorExercise(@PathVariable long exerciseId) throws IOException {
         var programmingExercise = programmingExerciseRepository.findByIdWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
-
-        // Reset grading criterion ids to null, such that Hibernate can persist them.
-        if (programmingExercise.getGradingCriteria() != null) {
-            for (GradingCriterion gradingCriterion : programmingExercise.getGradingCriteria()) {
-                gradingCriterion.setId(null);
-                for (GradingInstruction gradingInstruction : gradingCriterion.getStructuredGradingInstructions()) {
-                    gradingInstruction.setId(null);
-                }
-            }
-        }
 
         long start = System.nanoTime();
         Path path;
