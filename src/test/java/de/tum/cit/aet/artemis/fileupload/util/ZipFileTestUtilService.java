@@ -12,6 +12,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import org.apache.commons.io.FileUtils;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Service;
  * Zip file service containing utility methods
  * used only for testing purposes.
  */
+@Lazy
 @Service
 @Profile(SPRING_PROFILE_TEST)
 public class ZipFileTestUtilService {
