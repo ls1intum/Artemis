@@ -1,5 +1,6 @@
 import {
     faArrowDown,
+    faChevronRight,
     faCircle,
     faCircleInfo,
     faCompress,
@@ -41,6 +42,7 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ActivatedRoute } from '@angular/router';
 import { ChatHistoryItemComponent } from './chat-history-item/chat-history-item.component';
 import { IrisSession } from 'app/iris/shared/entities/iris-session.model';
+import { NgClass } from '@angular/common';
 
 @Component({
     selector: 'jhi-iris-base-chatbot',
@@ -109,6 +111,7 @@ import { IrisSession } from 'app/iris/shared/entities/iris-session.model';
         AsPipe,
         HtmlForMarkdownPipe,
         ChatHistoryItemComponent,
+        NgClass,
     ],
 })
 export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewInit {
@@ -132,6 +135,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     faThumbsDown = faThumbsDown;
     faRedo = faRedo;
     faPenToSquare = faPenToSquare;
+    faChevronRight = faChevronRight;
 
     // State variables
     sessionIdSubscription: Subscription;
@@ -159,6 +163,8 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     isLoading: boolean;
     shouldAnimate = false;
     hasActiveStage = false;
+
+    isChatHistoryOpen = true;
 
     // User preferences
     userAccepted: boolean;
@@ -481,6 +487,10 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
         this.chatService.switchToSession(session);
     }
 
+    setChatHistoryVisibility(isOpen: boolean) {
+        this.isChatHistoryOpen = isOpen;
+    }
+
     /**
      * Retrieves chat sessions that occurred between a specified range of days ago.
      * @param daysAgoNewer The newer boundary of the range, in days ago (e.g., 0 for today, 1 for yesterday).
@@ -506,18 +516,22 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
             rangeStartDate.setHours(0, 0, 0, 0); // Set to the start of the 'daysAgoOlder' day
         }
 
-        return this.chatSessions.filter((session) => {
-            const sessionCreationDate = new Date(session.creationDate);
+        return this.chatSessions
+            .filter((session) => {
+                const sessionCreationDate = new Date(session.creationDate);
 
-            const isAfterOrOnStartDate = ignoreOlderBoundary || (rangeStartDate && sessionCreationDate.getTime() >= rangeStartDate.getTime());
-            const isBeforeOrOnEndDate = sessionCreationDate.getTime() <= rangeEndDate.getTime();
+                const isAfterOrOnStartDate = ignoreOlderBoundary || (rangeStartDate && sessionCreationDate.getTime() >= rangeStartDate.getTime());
+                const isBeforeOrOnEndDate = sessionCreationDate.getTime() <= rangeEndDate.getTime();
 
-            if (ignoreOlderBoundary) {
-                return isBeforeOrOnEndDate;
-            } else {
-                return isAfterOrOnStartDate && isBeforeOrOnEndDate;
-            }
-        });
+                if (ignoreOlderBoundary) {
+                    return isBeforeOrOnEndDate;
+                } else {
+                    return isAfterOrOnStartDate && isBeforeOrOnEndDate;
+                }
+            })
+            .toSorted((a, b) => {
+                return new Date(b.creationDate).getTime() - new Date(a.creationDate).getTime();
+            });
     }
 
     openNewSession() {

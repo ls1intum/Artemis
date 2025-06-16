@@ -61,55 +61,76 @@
 </ng-template>
 <!-- main chat section -->
 <div class="chat-container">
-    <div class="chat-history">
-        @let todaySessions = getSessionsBetween(0, 0);
-        @if (todaySessions.length > 0) {
-            <div class="chat-history-label">
-                <p>Today</p>
-            </div>
-            @for (session of todaySessions; track session.id; let i = $index) {
-                <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId" (sessionClicked)="onSessionClick(session)" />
-            }
-        }
+    <div class="chat-history" [ngClass]="{ 'chat-history-open': isChatHistoryOpen }">
+        @if (isChatHistoryOpen) {
+            <div class="chat-history-container">
+                <div class="chat-history-close-btn-row">
+                    <h6>Chats</h6>
+                    <div class="chat-history-close-btn" (click)="setChatHistoryVisibility(false)">
+                        <div class="double-arrow-icon">
+                            <fa-icon class="icon-negative fa-xs" [icon]="faChevronRight" />
+                            <fa-icon class="fa-xs" [icon]="faChevronRight" />
+                        </div>
+                    </div>
+                </div>
 
-        @let yesterdaySessions = getSessionsBetween(1, 1);
-        @if (yesterdaySessions.length > 0) {
-            <div class="chat-history-label">
-                <p>Yesterday</p>
-            </div>
-            @for (session of yesterdaySessions; track session.id; let i = $index) {
-                <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId" (sessionClicked)="onSessionClick(session)" />
-            }
-        }
+                @let todaySessions = getSessionsBetween(0, 0);
+                @if (todaySessions.length > 0) {
+                    <div class="chat-history-label">
+                        <p>Today</p>
+                    </div>
+                    @for (session of todaySessions; track session.id; let i = $index) {
+                        <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId" (sessionClicked)="onSessionClick(session)" />
+                    }
+                }
 
-        @let last7DaysSessions = getSessionsBetween(2, 6);
-        @if (last7DaysSessions.length > 0) {
-            <div class="chat-history-label">
-                <p>Last 7 days</p>
-            </div>
-            @for (session of last7DaysSessions; track session.id; let i = $index) {
-                <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId" (sessionClicked)="onSessionClick(session)" />
-            }
-        }
+                @let yesterdaySessions = getSessionsBetween(1, 1);
+                @if (yesterdaySessions.length > 0) {
+                    <div class="chat-history-label">
+                        <p>Yesterday</p>
+                    </div>
+                    @for (session of yesterdaySessions; track session.id; let i = $index) {
+                        <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId" (sessionClicked)="onSessionClick(session)" />
+                    }
+                }
 
-        @let last30DaysSessions = getSessionsBetween(7, 29);
-        @if (last30DaysSessions.length > 0) {
-            <div class="chat-history-label">
-                <p>Last 30 days</p>
-            </div>
-            @for (session of last30DaysSessions; track session.id; let i = $index) {
-                <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId" (sessionClicked)="onSessionClick(session)" />
-            }
-        }
+                @let last7DaysSessions = getSessionsBetween(2, 6);
+                @if (last7DaysSessions.length > 0) {
+                    <div class="chat-history-label">
+                        <p>Last 7 days</p>
+                    </div>
+                    @for (session of last7DaysSessions; track session.id; let i = $index) {
+                        <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId" (sessionClicked)="onSessionClick(session)" />
+                    }
+                }
 
-        @let olderSessions = getSessionsBetween(30, undefined, true);
-        @if (olderSessions.length > 0) {
-            <div class="chat-history-label">
-                <p>Older</p>
+                @let last30DaysSessions = getSessionsBetween(7, 29);
+                @if (last30DaysSessions.length > 0) {
+                    <div class="chat-history-label">
+                        <p>Last 30 days</p>
+                    </div>
+                    @for (session of last30DaysSessions; track session.id; let i = $index) {
+                        <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId" (sessionClicked)="onSessionClick(session)" />
+                    }
+                }
+
+                @let olderSessions = getSessionsBetween(30, undefined, true);
+                @if (olderSessions.length > 0) {
+                    <div class="chat-history-label">
+                        <p>Older</p>
+                    </div>
+                    @for (session of olderSessions; track session.id; let i = $index) {
+                        <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId" (sessionClicked)="onSessionClick(session)" />
+                    }
+                }
             </div>
-            @for (session of olderSessions; track session.id; let i = $index) {
-                <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId" (sessionClicked)="onSessionClick(session)" />
-            }
+        } @else {
+            <div class="chat-history-open-btn" (click)="setChatHistoryVisibility(true)">
+                <div class="double-arrow-icon history-closed">
+                    <fa-icon class="icon-negative fa-xs" [icon]="faChevronRight" />
+                    <fa-icon class="fa-xs" [icon]="faChevronRight" />
+                </div>
+            </div>
         }
     </div>
     <div class="chat-body" [class.not-accepted]="!userAccepted" #chatBody>
