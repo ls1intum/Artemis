@@ -14,6 +14,7 @@ import jakarta.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
@@ -41,6 +42,7 @@ import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 import de.tum.cit.aet.artemis.text.repository.TextSubmissionRepository;
 
 @Conditional(TextEnabled.class)
+@Lazy
 @Service
 public class TextExerciseImportService extends ExerciseImportService {
 

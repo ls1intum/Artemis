@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import jakarta.ws.rs.BadRequestException;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,6 +24,7 @@ import de.tum.cit.aet.artemis.core.service.LegalDocumentService;
  */
 @Profile(PROFILE_CORE)
 @EnforceAdmin
+@Lazy
 @RestController
 @RequestMapping("api/core/admin/")
 public class AdminPrivacyStatementResource {

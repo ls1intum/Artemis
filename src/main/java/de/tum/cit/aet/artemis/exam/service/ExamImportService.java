@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
@@ -41,6 +42,7 @@ import de.tum.cit.aet.artemis.text.api.TextExerciseImportApi;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 @Conditional(ExamEnabled.class)
+@Lazy
 @Service
 public class ExamImportService {
 
