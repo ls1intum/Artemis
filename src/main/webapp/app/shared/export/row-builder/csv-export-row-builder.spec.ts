@@ -105,7 +105,7 @@ describe('The CsvExportRowBuilder', () => {
         user.visibleRegistrationNumber = ' 123456789  ';
         const student = new CourseScoresStudentStatistics(user);
 
-        csvRow.setUserInformation(student.user.name, student.user.login, student.user.email, student.user.visibleRegistrationNumber);
+        csvRow.setUserInformation(student.student.name, student.student.login, student.student.email, student.student.visibleRegistrationNumber);
 
         const row = csvRow.build();
         expect(row[NAME_KEY]).toBe('Testuser');
@@ -118,7 +118,7 @@ describe('The CsvExportRowBuilder', () => {
         const user = new User();
         const student = new CourseScoresStudentStatistics(user);
 
-        csvRow.setUserInformation(student.user.name, student.user.login, student.user.email, student.user.visibleRegistrationNumber);
+        csvRow.setUserInformation(student.student.name, student.student.login, student.student.email, student.student.visibleRegistrationNumber);
 
         const row = csvRow.build();
         expect(row[NAME_KEY]).toBe('');

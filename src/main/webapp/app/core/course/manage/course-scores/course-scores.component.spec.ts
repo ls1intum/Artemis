@@ -427,7 +427,7 @@ describe('CourseScoresComponent', () => {
         fixture.detectChanges();
 
         expect(component.course).toEqual(course);
-        expect(component.exercisesOfCourseThatAreIncludedInScoreCalculation).toEqual([
+        expect(component.includedExercises).toEqual([
             modelingIncludedWith10Points0BonusPoints,
             quizIncludedWith10Points0BonusPoints,
             fileBonusWith10Points0BonusPoints,
@@ -448,7 +448,7 @@ describe('CourseScoresComponent', () => {
         jest.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForInstructor').mockReturnValue(of(new HttpResponse<PlagiarismCase[]>({ body: [] })));
         fixture.detectChanges();
 
-        expect(component.allParticipationsOfCourse).toEqual(participations);
+        expect(component.gradeScores).toEqual(participations);
         expect(component.maxNumberOfOverallPoints).toEqual(overallPoints);
         expect(component.exerciseMaxPointsPerType).toEqual(exerciseMaxPointsPerType);
     });
@@ -460,17 +460,17 @@ describe('CourseScoresComponent', () => {
         jest.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForInstructor').mockReturnValue(of(new HttpResponse<PlagiarismCase[]>({ body: [] })));
         fixture.detectChanges();
 
-        expect(component.students[0].pointsPerExerciseType).toEqual(pointsOfStudent1);
-        expect(component.students[0].numberOfParticipatedExercises).toBe(3);
-        expect(component.students[0].numberOfSuccessfulExercises).toBe(3);
-        expect(component.students[0].presentationPoints).toBe(10);
-        expect(component.students[0].overallPoints).toBe(50);
+        expect(component.studentStatistics[0].pointsPerExerciseType).toEqual(pointsOfStudent1);
+        expect(component.studentStatistics[0].numberOfParticipatedExercises).toBe(3);
+        expect(component.studentStatistics[0].numberOfSuccessfulExercises).toBe(3);
+        expect(component.studentStatistics[0].presentationPoints).toBe(10);
+        expect(component.studentStatistics[0].overallPoints).toBe(50);
 
-        expect(component.students[1].pointsPerExerciseType).toEqual(pointsOfStudent2);
-        expect(component.students[1].numberOfParticipatedExercises).toBe(2);
-        expect(component.students[1].numberOfSuccessfulExercises).toBe(1);
-        expect(component.students[1].presentationPoints).toBe(0);
-        expect(component.students[1].overallPoints).toBe(15);
+        expect(component.studentStatistics[1].pointsPerExerciseType).toEqual(pointsOfStudent2);
+        expect(component.studentStatistics[1].numberOfParticipatedExercises).toBe(2);
+        expect(component.studentStatistics[1].numberOfSuccessfulExercises).toBe(1);
+        expect(component.studentStatistics[1].presentationPoints).toBe(0);
+        expect(component.studentStatistics[1].overallPoints).toBe(15);
 
         expect(component.maxNumberOfPresentationPoints).toBe(10);
         expect(component.averageNumberOfPresentationPoints).toBe(5);
@@ -485,7 +485,7 @@ describe('CourseScoresComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.students).toBeEmpty();
+        expect(component.studentStatistics).toBeEmpty();
     });
 
     it('should assign plagiarism grade if there is a PLAGIARISM verdict', () => {
@@ -512,8 +512,8 @@ describe('CourseScoresComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.students[0].gradeStep?.gradeName).toEqual(GradingScale.DEFAULT_PLAGIARISM_GRADE);
-        expect(component.students[1].gradeStep?.gradeName).toEqual(matchingGradeStep.gradeName);
+        expect(component.studentStatistics[0].gradeStep?.gradeName).toEqual(GradingScale.DEFAULT_PLAGIARISM_GRADE);
+        expect(component.studentStatistics[1].gradeStep?.gradeName).toEqual(matchingGradeStep.gradeName);
         expect(component.averageGrade).toEqual(matchingGradeStep.gradeName);
     });
 

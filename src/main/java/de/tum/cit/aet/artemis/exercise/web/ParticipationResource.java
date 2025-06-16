@@ -7,6 +7,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
 import java.time.ZonedDateTime;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -16,6 +17,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
@@ -46,7 +48,6 @@ import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.GradingScaleService;
-import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -69,6 +70,7 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
+import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
@@ -77,6 +79,9 @@ import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.CourseGradeInformationDTO;
+import de.tum.cit.aet.artemis.exercise.dto.GradeScoreDTO;
+import de.tum.cit.aet.artemis.exercise.dto.StudentDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
@@ -176,8 +181,6 @@ public class ParticipationResource {
 
     private final Optional<StudentExamApi> studentExamApi;
 
-    private final ResultService resultService;
-
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
@@ -190,7 +193,7 @@ public class ParticipationResource {
             ResultRepository resultRepository, ExerciseDateService exerciseDateService, InstanceMessageSendService instanceMessageSendService, QuizBatchService quizBatchService,
             SubmittedAnswerRepository submittedAnswerRepository, QuizSubmissionService quizSubmissionService, GradingScaleService gradingScaleService,
             ProgrammingExerciseCodeReviewFeedbackService programmingExerciseCodeReviewFeedbackService, Optional<TextFeedbackApi> textFeedbackApi,
-            ModelingExerciseFeedbackService modelingExerciseFeedbackService, ResultService resultService, Optional<StudentExamApi> studentExamApi) {
+            ModelingExerciseFeedbackService modelingExerciseFeedbackService, Optional<StudentExamApi> studentExamApi) {
         this.participationService = participationService;
         this.participationDeletionService = participationDeletionService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
@@ -217,7 +220,6 @@ public class ParticipationResource {
         this.programmingExerciseCodeReviewFeedbackService = programmingExerciseCodeReviewFeedbackService;
         this.textFeedbackApi = textFeedbackApi;
         this.modelingExerciseFeedbackService = modelingExerciseFeedbackService;
-        this.resultService = resultService;
         this.studentExamApi = studentExamApi;
     }
 
@@ -675,61 +677,25 @@ public class ParticipationResource {
      */
     @GetMapping("courses/{courseId}/participations")
     @EnforceAtLeastInstructor
-    public ResponseEntity<List<StudentParticipation>> getAllParticipationsForCourse(@PathVariable Long courseId) {
-        long start = System.currentTimeMillis();
-        log.debug("REST request to get all Participations for Course {}", courseId);
+    public ResponseEntity<CourseGradeInformationDTO> getAllParticipationsForCourse(@PathVariable Long courseId) {
+        log.info("REST request to get all participations for Course {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        List<StudentParticipation> participations = studentParticipationRepository.findByCourseIdWithRelevantResult(courseId);
-        int resultCount = 0;
-        for (StudentParticipation participation : participations) {
-            // make sure the registration number is explicitly shown in the client
-            participation.getStudents().forEach(student -> student.setVisibleRegistrationNumber(student.getRegistrationNumber()));
-            // we only need participationId, title, dates and max points
-            // remove unnecessary elements
-            final var exercise = getExercise(participation);
-            switch (exercise) {
-                case ProgrammingExercise programmingExercise -> {
-                    programmingExercise.setSolutionParticipation(null);
-                    programmingExercise.setTemplateParticipation(null);
-                    programmingExercise.setTestRepositoryUri(null);
-                    programmingExercise.setShortName(null);
-                    programmingExercise.setProgrammingLanguage(null);
-                    programmingExercise.setPackageName(null);
-                    programmingExercise.setAllowOnlineEditor(null);
-                }
-                case QuizExercise quizExercise -> {
-                    quizExercise.setQuizQuestions(null);
-                    quizExercise.setQuizPointStatistic(null);
-                }
-                case TextExercise textExercise -> textExercise.setExampleSolution(null);
-                case ModelingExercise modelingExercise -> {
-                    modelingExercise.setExampleSolutionModel(null);
-                    modelingExercise.setExampleSolutionExplanation(null);
-                }
-                default -> {
-                }
-            }
-            resultCount += participation.getResults().size();
-        }
-        long end = System.currentTimeMillis();
-        log.info("Found {} participations with {} results in {}ms", participations.size(), resultCount, end - start);
-        return ResponseEntity.ok().body(participations);
-    }
 
-    private static Exercise getExercise(StudentParticipation participation) {
-        Exercise exercise = participation.getExercise();
-        exercise.setCourse(null);
-        exercise.setStudentParticipations(null);
-        exercise.setTutorParticipations(null);
-        exercise.setExampleSubmissions(null);
-        exercise.setAttachments(null);
-        exercise.setCategories(null);
-        exercise.setProblemStatement(null);
-        exercise.setGradingInstructions(null);
-        exercise.setDifficulty(null);
-        exercise.setMode(null);
-        return exercise;
+        long startNew = System.nanoTime();
+        // Distinguish between individual and team participations for performance reasons
+        List<GradeScoreDTO> individualGradeScores = studentParticipationRepository.findIndividualGradesByCourseId(courseId);
+        log.info("New: Found {} individual grades", individualGradeScores.size());
+        List<GradeScoreDTO> individualQuizGradeScores = studentParticipationRepository.findIndividualQuizGradesByCourseId(courseId);
+        log.info("New: Found {} individual quiz grades", individualQuizGradeScores.size());
+        List<GradeScoreDTO> teamGradeScores = studentParticipationRepository.findTeamGradesByCourseId(courseId);
+        log.info("New: Found {} team grades", teamGradeScores.size());
+        List<GradeScoreDTO> gradeScores = Stream.of(individualGradeScores, individualQuizGradeScores, teamGradeScores).flatMap(Collection::stream).toList();
+        Set<Long> userIds = gradeScores.stream().map(GradeScoreDTO::userId).collect(Collectors.toSet());
+        List<StudentDTO> students = userRepository.findAllStudentsByIdIn(userIds);
+        log.info("New: Found {} grade scores, {} students, in {}", gradeScores.size(), students.size(), TimeLogUtil.formatDurationFrom(startNew));
+
+        return ResponseEntity.ok().body(new CourseGradeInformationDTO(gradeScores, students));
     }
 
     /**
