@@ -394,7 +394,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         }
 
         // make sure only the latest submission and latest result is sent to the client
-        studentParticipation.setSubmissions(null);
+        studentParticipation.setSubmissions(Set.of());
 
         // do not send the result to the client if the assessment is not finished
         if (modelingSubmission.getLatestResult() != null
