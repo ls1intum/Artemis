@@ -8,6 +8,7 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -29,7 +30,6 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.user.UserCreationService;
-import de.tum.cit.aet.artemis.core.service.user.UserService;
 import de.tum.cit.aet.artemis.lti.api.LtiApi;
 import tech.jhipster.web.util.PaginationUtil;
 
@@ -54,13 +54,12 @@ import tech.jhipster.web.util.PaginationUtil;
  * Another option would be to have a specific JPA entity graph to handle this case.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @RestController
 @RequestMapping("api/core/")
 public class UserResource {
 
     private static final Logger log = LoggerFactory.getLogger(UserResource.class);
-
-    private final UserService userService;
 
     private final UserCreationService userCreationService;
 
@@ -68,9 +67,8 @@ public class UserResource {
 
     private final UserRepository userRepository;
 
-    public UserResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService, Optional<LtiApi> ltiApi) {
+    public UserResource(UserRepository userRepository, UserCreationService userCreationService, Optional<LtiApi> ltiApi) {
         this.userRepository = userRepository;
-        this.userService = userService;
         this.ltiApi = ltiApi;
         this.userCreationService = userCreationService;
     }

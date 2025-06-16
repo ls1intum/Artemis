@@ -31,12 +31,30 @@ export class AdminUserService {
     }
 
     /**
-     * Update a user on the server.
+     * Update a user on the server: this should only be used when groups and authorities are included, otherwise they might be lost on the server
      * @param user The user to update.
      * @return Observable<HttpResponse<User>> with the updated user as body.
      */
     update(user: User): Observable<HttpResponse<User>> {
         return this.http.put<User>(this.resourceUrl, user, { observe: 'response' });
+    }
+
+    /**
+     * Activate a user on the server (by an admin)
+     * @param userId The id of the user to activate.
+     * @return Observable<HttpResponse<User>> with the updated user as body.
+     */
+    activate(userId: number): Observable<HttpResponse<User>> {
+        return this.http.patch<User>(`${this.resourceUrl}/${userId}/activate`, null, { observe: 'response' });
+    }
+
+    /**
+     * Deactivate a user on the server (by an admin)
+     * @param userId The id of the user to deactivate.
+     * @return Observable<HttpResponse<User>> with the updated user as body.
+     */
+    deactivate(userId: number): Observable<HttpResponse<User>> {
+        return this.http.patch<User>(`${this.resourceUrl}/${userId}/deactivate`, null, { observe: 'response' });
     }
 
     /**

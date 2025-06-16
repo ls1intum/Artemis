@@ -3,11 +3,13 @@ package de.tum.cit.aet.artemis.quiz.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,6 +28,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.En
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
+import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.quiz.dto.participation.StudentQuizParticipationDTO;
 import de.tum.cit.aet.artemis.quiz.dto.participation.StudentQuizParticipationWithQuestionsDTO;
 import de.tum.cit.aet.artemis.quiz.dto.participation.StudentQuizParticipationWithSolutionsDTO;
@@ -38,6 +41,7 @@ import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
  * REST controller for managing quiz participations.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @RestController
 @RequestMapping("api/quiz/")
 public class QuizParticipationResource {
@@ -92,17 +96,19 @@ public class QuizParticipationResource {
         StudentParticipation participation = participationService.startExercise(exercise, user, true);
 
         // NOTE: starting exercise prevents that two participation will exist, but ensures that a submission is created
-        var result = resultRepository.findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(participation.getId(), true).orElse(new Result());
+        var result = resultRepository.findFirstBySubmissionParticipationIdAndRatedOrderByCompletionDateDesc(participation.getId(), true).orElse(new Result());
+        QuizSubmission submission;
         if (result.getId() == null) {
             // Load the live submission of the participation
-            result.setSubmission(quizSubmissionRepository.findWithEagerSubmittedAnswersByParticipationId(participation.getId()).stream().findFirst().orElseThrow());
+            submission = quizSubmissionRepository.findWithEagerSubmittedAnswersByParticipationId(participation.getId()).stream().findFirst().orElseThrow();
         }
         else {
             // Load the actual submission of the result
-            result.setSubmission(quizSubmissionRepository.findWithEagerSubmittedAnswersByResultId(result.getId()).orElseThrow());
+            submission = quizSubmissionRepository.findWithEagerSubmittedAnswersByResultId(result.getId()).orElseThrow();
         }
+        submission.setResults(List.of(result));
+        participation.setSubmissions(Set.of(submission));
 
-        participation.setResults(Set.of(result));
         participation.setExercise(exercise);
 
         StudentQuizParticipationDTO responseDTO;

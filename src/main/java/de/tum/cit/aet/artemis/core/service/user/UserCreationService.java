@@ -15,6 +15,7 @@ import jakarta.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.CacheManager;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.stereotype.Service;
@@ -33,6 +34,7 @@ import de.tum.cit.aet.artemis.programming.service.ci.CIUserManagementService;
 import tech.jhipster.security.RandomUtil;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class UserCreationService {
 
@@ -258,6 +260,17 @@ public class UserCreationService {
         user.setActivationKey(null);
         saveUser(user);
         log.info("Activated user: {}", user);
+    }
+
+    /**
+     * Deactivate user
+     *
+     * @param user the user that should be deactivated
+     */
+    public void deactivateUser(User user) {
+        user.setActivated(false);
+        saveUser(user);
+        log.info("Deactivated user: {}", user);
     }
 
     /**

@@ -124,10 +124,10 @@ artemis:
     compatible-versions:
       android:
         min: "2.0.0"
-        recommended: "2.0.0"
+        recommended: "2.1.0"
       ios:
         min: "2.0.0"
-        recommended: "2.0.0"
+        recommended: "2.1.0"
 
 
 
@@ -220,6 +220,7 @@ spring:
             hibernate.jdbc.lob.non_contextual_creation: true
             # limit fetch depth to prevent queries from getting too large because of eager fetching
             hibernate.max_fetch_depth: 2
+            jakarta.persistence.validation.mode: none # disable validation for faster startup
     liquibase:
         contexts: prod
     messages:

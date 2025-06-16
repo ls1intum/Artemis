@@ -12,6 +12,7 @@ import java.util.Set;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -33,6 +34,7 @@ import de.tum.cit.aet.artemis.lecture.repository.AttachmentVideoUnitRepository;
 
 @Profile(PROFILE_CORE)
 @Service
+@Lazy
 public class AttachmentVideoUnitService {
 
     private final AttachmentVideoUnitRepository attachmentVideoUnitRepository;

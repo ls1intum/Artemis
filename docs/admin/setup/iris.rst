@@ -7,6 +7,8 @@ The core technology of Iris is based on Generative AI and Large Language Models,
 
 Iris also powers other smart features in Artemis, like the automatic generation of descriptions for hints.
 
+Iris is powered by Pyris, which is part of the EduTelligence suite.
+
 This section outlines how to set up IRIS in your own Artemis instance.
 
 Prerequisites
@@ -39,5 +41,9 @@ HTTP(s). We need to extend the configuration in the file
 
 The secret can be any string. For more detailed instructions on how to set it up in Pyris, refer to the :doc:`pyris`.
 
-.. _Pyris: https://github.com/ls1intum/Pyris
+.. important::
+   Pyris (which powers Iris) is now part of the EduTelligence suite. Please check the `compatibility matrix <https://github.com/ls1intum/edutelligence#-artemis-compatibility>`_ 
+   to ensure you're using compatible versions of Artemis and EduTelligence.
+
+.. _Pyris: https://github.com/ls1intum/edutelligence/tree/main/iris
 .. _pyris-documentation: :doc:`pyris`

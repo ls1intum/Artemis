@@ -4,7 +4,7 @@
             <jhi-git-diff-file-panel-title [modifiedFilePath]="modifiedFilePath()" [originalFilePath]="originalFilePath()" />
             <div>
                 <jhi-git-diff-line-stat
-                    [addedLineCount]="addedLineCount()"
+                    [addedLineCount]="addedLineCount"
                     [removedLineCount]="removedLineCount()"
                     ngbTooltip="{{
                         (diffForTemplateAndSolution()

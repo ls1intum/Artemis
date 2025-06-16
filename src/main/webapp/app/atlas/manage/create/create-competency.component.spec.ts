@@ -51,7 +51,6 @@ describe('CreateCompetency', () => {
                     },
                 },
             ],
-            schemas: [],
         })
             .compileComponents()
             .then(() => {
