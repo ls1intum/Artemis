@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -17,6 +18,7 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Repository
 public interface LectureUnitCompletionRepository extends ArtemisJpaRepository<LectureUnitCompletion, Long> {
 
@@ -33,6 +35,7 @@ public interface LectureUnitCompletionRepository extends ArtemisJpaRepository<Le
     @Query("""
             SELECT lectureUnitCompletion
             FROM LectureUnitCompletion lectureUnitCompletion
+                LEFT JOIN FETCH lectureUnitCompletion.lectureUnit
             WHERE lectureUnitCompletion.lectureUnit IN :lectureUnits
                 AND lectureUnitCompletion.user.id = :userId
             """)

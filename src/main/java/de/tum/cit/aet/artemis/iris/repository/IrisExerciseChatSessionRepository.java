@@ -8,6 +8,7 @@ import java.util.List;
 
 import jakarta.validation.constraints.NotNull;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -18,18 +19,19 @@ import org.springframework.stereotype.Repository;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisExerciseChatSession;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisProgrammingExerciseChatSession;
 
 /**
- * Repository interface for managing {@link IrisExerciseChatSession} entities.
+ * Repository interface for managing {@link IrisProgrammingExerciseChatSession} entities.
  * Provides custom queries for finding chat sessions based on different criteria.
  */
+@Lazy
 @Repository
 @Profile(PROFILE_IRIS)
-public interface IrisExerciseChatSessionRepository extends ArtemisJpaRepository<IrisExerciseChatSession, Long> {
+public interface IrisExerciseChatSessionRepository extends ArtemisJpaRepository<IrisProgrammingExerciseChatSession, Long> {
 
     /**
-     * Finds a list of {@link IrisExerciseChatSession} based on the exercise and user IDs.
+     * Finds a list of {@link IrisProgrammingExerciseChatSession} based on the exercise and user IDs.
      *
      * @param exerciseId The ID of the exercise.
      * @param userId     The ID of the user.
@@ -37,24 +39,24 @@ public interface IrisExerciseChatSessionRepository extends ArtemisJpaRepository<
      */
     @Query("""
             SELECT s
-                FROM IrisExerciseChatSession s
+                FROM IrisProgrammingExerciseChatSession s
                 WHERE s.exerciseId = :exerciseId
                     AND s.userId = :userId
                 ORDER BY s.creationDate DESC
             """)
-    List<IrisExerciseChatSession> findByExerciseIdAndUserId(@Param("exerciseId") Long exerciseId, @Param("userId") Long userId);
+    List<IrisProgrammingExerciseChatSession> findByExerciseIdAndUserId(@Param("exerciseId") Long exerciseId, @Param("userId") Long userId);
 
     @Query("""
             SELECT s
-            FROM IrisExerciseChatSession s
+            FROM IrisProgrammingExerciseChatSession s
             WHERE s.exerciseId = :exerciseId
                 AND s.userId = :userId
             ORDER BY s.creationDate DESC
             """)
-    List<IrisExerciseChatSession> findSessionsByExerciseIdAndUserId(@Param("exerciseId") Long exerciseId, @Param("userId") Long userId, Pageable pageable);
+    List<IrisProgrammingExerciseChatSession> findSessionsByExerciseIdAndUserId(@Param("exerciseId") Long exerciseId, @Param("userId") Long userId, Pageable pageable);
 
     @EntityGraph(type = LOAD, attributePaths = "messages")
-    List<IrisExerciseChatSession> findSessionsWithMessagesByIdIn(List<Long> ids);
+    List<IrisProgrammingExerciseChatSession> findSessionsWithMessagesByIdIn(List<Long> ids);
 
     /**
      * Finds the latest chat sessions by exercise ID and user ID, including their messages, with pagination support.
@@ -63,9 +65,9 @@ public interface IrisExerciseChatSessionRepository extends ArtemisJpaRepository<
      * @param exerciseId the ID of the exercise to find the chat sessions for
      * @param userId     the ID of the user to find the chat sessions for
      * @param pageable   the pagination information
-     * @return a list of {@code IrisExerciseChatSession} with messages, or an empty list if no sessions are found
+     * @return a list of {@code IrisProgrammingExerciseChatSession} with messages, or an empty list if no sessions are found
      */
-    default List<IrisExerciseChatSession> findLatestByExerciseIdAndUserIdWithMessages(Long exerciseId, Long userId, Pageable pageable) {
+    default List<IrisProgrammingExerciseChatSession> findLatestByExerciseIdAndUserIdWithMessages(Long exerciseId, Long userId, Pageable pageable) {
         List<Long> ids = findSessionsByExerciseIdAndUserId(exerciseId, userId, pageable).stream().map(DomainObject::getId).toList();
         if (ids.isEmpty()) {
             return Collections.emptyList();
@@ -82,7 +84,7 @@ public interface IrisExerciseChatSessionRepository extends ArtemisJpaRepository<
      * @throws EntityNotFoundException if no sessions are found.
      */
     @NotNull
-    default List<IrisExerciseChatSession> findByExerciseIdAndUserIdElseThrow(long exerciseId, long userId) throws EntityNotFoundException {
+    default List<IrisProgrammingExerciseChatSession> findByExerciseIdAndUserIdElseThrow(long exerciseId, long userId) throws EntityNotFoundException {
         var result = findByExerciseIdAndUserId(exerciseId, userId);
         if (result.isEmpty()) {
             throw new EntityNotFoundException("Iris Exercise Chat Session");

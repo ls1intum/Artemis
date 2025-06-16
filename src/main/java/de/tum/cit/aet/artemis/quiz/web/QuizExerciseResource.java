@@ -21,6 +21,7 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -66,10 +67,10 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.En
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.core.service.CourseService;
-import de.tum.cit.aet.artemis.core.service.FilePathService;
-import de.tum.cit.aet.artemis.core.service.FileService;
+import de.tum.cit.aet.artemis.core.service.course.CourseService;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
@@ -83,10 +84,12 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizAction;
 import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
+import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.dto.QuizBatchJoinDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseForEditorDTO;
 import de.tum.cit.aet.artemis.quiz.repository.QuizBatchRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
+import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseImportService;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
@@ -99,6 +102,7 @@ import de.tum.cit.aet.artemis.quiz.service.QuizSubmissionService;
  * REST controller for managing QuizExercise.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @RestController
 @RequestMapping("api/quiz/")
 public class QuizExerciseResource {
@@ -106,6 +110,11 @@ public class QuizExerciseResource {
     private static final Logger log = LoggerFactory.getLogger(QuizExerciseResource.class);
 
     private static final String ENTITY_NAME = "quizExercise";
+
+    private final QuizQuestionRepository quizQuestionRepository;
+
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
 
     private final QuizSubmissionService quizSubmissionService;
 
@@ -145,8 +154,6 @@ public class QuizExerciseResource {
 
     private final QuizBatchRepository quizBatchRepository;
 
-    private final FileService fileService;
-
     private final ChannelService channelService;
 
     private final ChannelRepository channelRepository;
@@ -155,16 +162,14 @@ public class QuizExerciseResource {
 
     private final Optional<SlideApi> slideApi;
 
-    @Value("${jhipster.clientApp.name}")
-    private String applicationName;
-
     public QuizExerciseResource(QuizExerciseService quizExerciseService, QuizMessagingService quizMessagingService, QuizExerciseRepository quizExerciseRepository,
             UserRepository userRepository, CourseService courseService, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService,
             Optional<ExamDateApi> examDateApi, InstanceMessageSendService instanceMessageSendService, QuizStatisticService quizStatisticService,
             QuizExerciseImportService quizExerciseImportService, AuthorizationCheckService authCheckService, GroupNotificationService groupNotificationService,
             GroupNotificationScheduleService groupNotificationScheduleService, StudentParticipationRepository studentParticipationRepository, QuizBatchService quizBatchService,
-            QuizBatchRepository quizBatchRepository, FileService fileService, ChannelService channelService, ChannelRepository channelRepository,
-            QuizSubmissionService quizSubmissionService, QuizResultService quizResultService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi) {
+            QuizBatchRepository quizBatchRepository, ChannelService channelService, ChannelRepository channelRepository, QuizSubmissionService quizSubmissionService,
+            QuizResultService quizResultService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi,
+            QuizQuestionRepository quizQuestionRepository) {
         this.quizExerciseService = quizExerciseService;
         this.quizMessagingService = quizMessagingService;
         this.quizExerciseRepository = quizExerciseRepository;
@@ -182,13 +187,13 @@ public class QuizExerciseResource {
         this.studentParticipationRepository = studentParticipationRepository;
         this.quizBatchService = quizBatchService;
         this.quizBatchRepository = quizBatchRepository;
-        this.fileService = fileService;
         this.channelService = channelService;
         this.channelRepository = channelRepository;
         this.quizSubmissionService = quizSubmissionService;
         this.quizResultService = quizResultService;
         this.competencyProgressApi = competencyProgressApi;
         this.slideApi = slideApi;
+        this.quizQuestionRepository = quizQuestionRepository;
     }
 
     /**
@@ -737,14 +742,14 @@ public class QuizExerciseResource {
         exerciseDeletionService.delete(quizExerciseId, false);
         quizExerciseService.cancelScheduledQuiz(quizExerciseId);
 
-        fileService.deleteFiles(imagesToDelete);
+        FileUtil.deleteFiles(imagesToDelete);
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, quizExercise.getTitle())).build();
     }
 
     private Path convertToActualPath(String pathString, FilePathType filePathType) {
         try {
-            return FilePathService.fileSystemPathForExternalUri(URI.create(pathString), filePathType);
+            return FilePathConverter.fileSystemPathForExternalUri(URI.create(pathString), filePathType);
         }
         catch (FilePathParsingException e) {
             log.warn("Could not find file {} for deletion", pathString);
@@ -861,6 +866,20 @@ public class QuizExerciseResource {
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newQuizExercise.getId().toString())).body(newQuizExercise);
     }
 
+    /**
+     * Retrieves all the quiz questions belonging to a course that are released for practice
+     *
+     * @param courseId the id of the course whose quiz questions should be retrieved
+     * @return a set of quiz questions from the specified course that are released for practice
+     */
+    @GetMapping("courses/{courseId}/practice/quiz")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Set<QuizQuestion>> getQuizQuestionsForPractice(@PathVariable Long courseId) {
+        log.info("REST request to get quiz questions for course with id : {}", courseId);
+        Set<QuizQuestion> quizQuestions = quizQuestionRepository.findAllQuizQuestionsByCourseId(courseId);
+        return ResponseEntity.ok(quizQuestions);
+    }
+
     private void setQuizBatches(User user, QuizExercise quizExercise) {
         if (quizExercise.getQuizMode() != null) {
             Set<QuizBatch> batches = switch (quizExercise.getQuizMode()) {
@@ -871,5 +890,4 @@ public class QuizExerciseResource {
             quizExercise.setQuizBatches(batches);
         }
     }
-
 }

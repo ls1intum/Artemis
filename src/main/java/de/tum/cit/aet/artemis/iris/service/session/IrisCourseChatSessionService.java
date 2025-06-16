@@ -7,6 +7,7 @@ import java.time.ZoneId;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -17,6 +18,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyJol;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -35,6 +37,7 @@ import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 /**
  * Service to handle the course chat subsystem of Iris.
  */
+@Lazy
 @Service
 @Profile(PROFILE_IRIS)
 public class IrisCourseChatSessionService extends AbstractIrisChatSessionService<IrisCourseChatSession> {
@@ -117,13 +120,16 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
     @Override
     public void requestAndHandleResponse(IrisCourseChatSession session) {
         var course = courseRepository.findByIdElseThrow(session.getCourseId());
-        var variant = irisSettingsService.getCombinedIrisSettingsFor(course, false).irisChatSettings().selectedVariant();
-        requestAndHandleResponse(session, variant, null);
+        var settings = irisSettingsService.getCombinedIrisSettingsFor(course, false).irisCourseChatSettings();
+        if (!settings.enabled()) {
+            throw new ConflictException("Iris is not enabled for this course", "Iris", "irisDisabled");
+        }
+        requestAndHandleResponse(session, settings.selectedVariant(), settings.customInstructions(), null);
     }
 
-    private void requestAndHandleResponse(IrisCourseChatSession session, String variant, Object object) {
+    private void requestAndHandleResponse(IrisCourseChatSession session, String variant, String customInstructions, Object object) {
         var chatSession = (IrisCourseChatSession) irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
-        pyrisPipelineService.executeCourseChatPipeline(variant, chatSession, object);
+        pyrisPipelineService.executeCourseChatPipeline(variant, customInstructions, chatSession, object);
     }
 
     @Override
@@ -145,7 +151,12 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
         var user = competencyJol.getUser();
         user.hasAcceptedExternalLLMUsageElseThrow();
         var session = getCurrentSessionOrCreateIfNotExistsInternal(course, user, false);
-        CompletableFuture.runAsync(() -> requestAndHandleResponse(session, "default", competencyJol));
+
+        var settings = irisSettingsService.getCombinedIrisSettingsFor(course, false).irisCourseChatSettings();
+        var variant = settings.selectedVariant();
+        var customInstructions = settings.customInstructions();
+
+        CompletableFuture.runAsync(() -> requestAndHandleResponse(session, variant, customInstructions, competencyJol));
     }
 
     /**

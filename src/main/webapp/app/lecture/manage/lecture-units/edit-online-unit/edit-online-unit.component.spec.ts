@@ -65,7 +65,6 @@ describe('EditOnlineUnitComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-            schemas: [],
         })
             .compileComponents()
             .then(() => {

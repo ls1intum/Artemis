@@ -20,6 +20,7 @@ import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
@@ -48,7 +49,7 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationIndependent
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
-        TextExercise exercise = exerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
+        TextExercise exercise = ExerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
         User student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         participationUtilService.createAndSaveParticipationForExercise(exercise, student1.getLogin());
 

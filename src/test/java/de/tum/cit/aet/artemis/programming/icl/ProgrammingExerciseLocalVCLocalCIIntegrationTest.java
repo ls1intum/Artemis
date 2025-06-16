@@ -38,6 +38,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider;
 import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
 import de.tum.cit.aet.artemis.programming.domain.AeolusTarget;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -106,7 +107,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
 
         course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         String projectKey = programmingExercise.getProjectKey();
         programmingExercise.setProjectType(ProjectType.PLAIN_GRADLE);
         programmingExercise.setTestRepositoryUri(localVCBaseUrl + "/git/" + projectKey + "/" + projectKey.toLowerCase() + "-tests.git");
@@ -144,7 +145,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         competency = competencyUtilService.createCompetency(course);
 
         programmingExerciseTestService.setupTestUsers(TEST_PREFIX, 0, 0, 0, 0);
-        programmingExerciseTestService.setup(this, versionControlService, localVCGitBranchService);
+        programmingExerciseTestService.setup(this, versionControlService);
     }
 
     @Override
@@ -422,52 +423,24 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
     /**
      * Ensures <a href="https://github.com/ls1intum/Artemis/issues/8562">issue #8562</a> does not occur again
      *
+     * This test verifies that build plans are triggered during exercise import from file.
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void importFromFile_verifyBuildPlansCreated() throws Exception {
+    void importFromFile_verifyBuildPlansTriggered() throws Exception {
         aeolusRequestMockProvider.enableMockingOfRequests();
         aeolusRequestMockProvider.mockFailedGenerateBuildPlan(AeolusTarget.CLI);
 
-        // Mock commit hash retrieval
-        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir/assignment/.git/refs/heads/[^/]+",
-                Map.of("assignmentCommitHash", DUMMY_COMMIT_HASH), Map.of("assignmentCommitHash", DUMMY_COMMIT_HASH));
-        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir/.git/refs/heads/[^/]+",
-                Map.of("testsCommitHash", DUMMY_COMMIT_HASH), Map.of("testsCommitHash", DUMMY_COMMIT_HASH));
-
-        // Mock image inspection
-        dockerClientTestService.mockInspectImage(dockerClient);
-
         ImportFileResult importResult = programmingExerciseImportTestService.prepareExerciseImport("test-data/import-from-file/valid-import.zip", exercise -> null, course);
-        ProgrammingExercise importedExercise = importResult.importedExercise();
 
-        assertThat(importedExercise).isNotNull();
+        // Get participations from the imported exercise
+        TemplateProgrammingExerciseParticipation templateParticipation = templateProgrammingExerciseParticipationRepository
+                .findByProgrammingExerciseId(importResult.importedExercise().getId()).orElseThrow();
+        SolutionProgrammingExerciseParticipation solutionParticipation = solutionProgrammingExerciseParticipationRepository
+                .findByProgrammingExerciseId(importResult.importedExercise().getId()).orElseThrow();
 
-        // Mock test results for builds
-        Map<String, String> templateBuildTestResults = dockerClientTestService.createMapFromTestResultsFolder(ALL_FAIL_TEST_RESULTS_PATH);
-        Map<String, String> solutionBuildTestResults = dockerClientTestService.createMapFromTestResultsFolder(ALL_SUCCEED_TEST_RESULTS_PATH);
-        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + LOCAL_CI_RESULTS_DIRECTORY,
-                templateBuildTestResults, solutionBuildTestResults);
-
-        try {
-            // Refresh the exercise to get latest participation data
-            ProgrammingExercise refreshedExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(importedExercise.getId()).orElseThrow();
-
-            // Verify template build plan
-            TemplateProgrammingExerciseParticipation templateParticipation = templateProgrammingExerciseParticipationRepository
-                    .findByProgrammingExerciseId(refreshedExercise.getId()).orElseThrow();
-
-            localVCLocalCITestService.testLatestSubmission(templateParticipation.getId(), null, 0, false, 30);
-
-            // Verify solution build plan
-            SolutionProgrammingExerciseParticipation solutionParticipation = solutionProgrammingExerciseParticipationRepository
-                    .findByProgrammingExerciseId(refreshedExercise.getId()).orElseThrow();
-
-            localVCLocalCITestService.testLatestSubmission(solutionParticipation.getId(), null, 13, false, 30);
-        }
-        catch (Exception e) {
-            throw new AssertionError("Failed to verify build plans", e);
-        }
+        verify(localCITriggerService, timeout(5000).times(1)).triggerBuild(eq(templateParticipation));
+        verify(localCITriggerService, timeout(5000).times(1)).triggerBuild(eq(solutionParticipation));
     }
 
     @Test

@@ -7,6 +7,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +17,7 @@ import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
@@ -41,6 +43,7 @@ import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
  */
 @Service
 @Profile(PROFILE_IRIS)
+@Lazy
 public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionService<IrisTutorSuggestionSession> implements IrisRateLimitedFeatureInterface {
 
     private static final Logger log = LoggerFactory.getLogger(IrisTutorSuggestionSessionService.class);
@@ -103,11 +106,15 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
     public void requestAndHandleResponse(IrisTutorSuggestionSession session, Optional<String> event) {
         var post = postRepository.findPostOrMessagePostByIdElseThrow(session.getPostId());
         var course = post.getCoursePostingBelongsTo();
-        var variant = irisSettingsService.getCombinedIrisSettingsFor(course, false).irisChatSettings().selectedVariant();
+
+        var settings = irisSettingsService.getCombinedIrisSettingsFor(course, false).irisTutorSuggestionSettings();
+        if (!settings.enabled()) {
+            throw new ConflictException("Tutor Suggestions are not enabled for this course", "Iris", "irisDisabled");
+        }
 
         var chatSession = (IrisTutorSuggestionSession) irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
 
-        pyrisPipelineService.executeTutorSuggestionPipeline(variant, chatSession, event, post);
+        pyrisPipelineService.executeTutorSuggestionPipeline(settings.selectedVariant(), chatSession, event, post);
     }
 
     @Override

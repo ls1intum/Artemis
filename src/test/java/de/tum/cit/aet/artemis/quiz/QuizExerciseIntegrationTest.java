@@ -45,6 +45,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
+import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
@@ -138,6 +139,9 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @Autowired
     private ParticipationUtilService participationUtilService;
 
+    @Autowired
+    private ConversationUtilService conversationUtilService;
+
     // helper attributes for shorter code in assert statements
     private final PointCounter pc01 = pc(0, 1);
 
@@ -188,11 +192,17 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createQuizExercise_setCourseAndExerciseGroup_badRequest() throws Exception {
-        ExerciseGroup exerciseGroup = examUtilService.createAndSaveActiveExerciseGroup(true);
+        ExerciseGroup exerciseGroup = examUtilService.createAndSaveActiveExerciseGroup(createEmptyCourse(), true);
         QuizExercise quizExercise = QuizExerciseFactory.generateQuizExerciseForExam(exerciseGroup);
         quizExercise.setCourse(exerciseGroup.getExam().getCourse());
 
         createQuizExerciseWithFiles(quizExercise, HttpStatus.BAD_REQUEST, true);
+    }
+
+    private Course createEmptyCourse() {
+        final ZonedDateTime PAST_TIMESTAMP = ZonedDateTime.now().minusDays(1);
+        final ZonedDateTime FUTURE_FUTURE_TIMESTAMP = ZonedDateTime.now().plusDays(2);
+        return quizExerciseUtilService.createAndSaveCourse(1L, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, Set.of());
     }
 
     @Test
@@ -407,7 +417,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateQuizExercise_setCourseAndExerciseGroup_badRequest() throws Exception {
-        ExerciseGroup exerciseGroup = examUtilService.createAndSaveActiveExerciseGroup(true);
+        ExerciseGroup exerciseGroup = examUtilService.createAndSaveActiveExerciseGroup(createEmptyCourse(), true);
         QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
         quizExercise.setExerciseGroup(exerciseGroup);
 
@@ -435,7 +445,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateQuizExercise_convertFromCourseToExamExercise_badRequest() throws Exception {
         QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
-        ExerciseGroup exerciseGroup = examUtilService.createAndSaveActiveExerciseGroup(true);
+        ExerciseGroup exerciseGroup = examUtilService.createAndSaveActiveExerciseGroup(createEmptyCourse(), true);
 
         quizExercise.setCourse(null);
         quizExercise.setExerciseGroup(exerciseGroup);
@@ -494,7 +504,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void testDeleteQuizExerciseWithChannel() throws Exception {
         Course course = quizExerciseUtilService.addCourseWithOneQuizExercise();
         QuizExercise quizExercise = (QuizExercise) course.getExercises().stream().findFirst().orElseThrow();
-        Channel exerciseChannel = exerciseUtilService.addChannelToExercise(quizExercise);
+        Channel exerciseChannel = conversationUtilService.addChannelToExercise(quizExercise);
 
         request.delete("/api/quiz/quiz-exercises/" + quizExercise.getId(), OK);
 
@@ -759,7 +769,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         participationUtilService.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), true);
 
         assertThat(studentParticipationRepository.findByExerciseId(quizExercise.getId())).hasSize(numberOfParticipants);
-        assertThat(resultRepository.findAllByParticipationExerciseId(quizExercise.getId())).hasSize(numberOfParticipants);
+        assertThat(resultRepository.findAllBySubmissionParticipationExerciseId(quizExercise.getId())).hasSize(numberOfParticipants);
         assertThat(quizSubmissionTestRepository.findByParticipation_Exercise_Id(quizExercise.getId())).hasSize(numberOfParticipants);
         assertThat(submittedAnswerRepository.findBySubmission(quizSubmission)).hasSize(3);
 
@@ -869,7 +879,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         participationUtilService.addResultToSubmission(quizSubmissionPractice, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmissionPractice), false);
 
         assertThat(studentParticipationRepository.countParticipationsByExerciseIdAndTestRun(quizExercise.getId(), false)).isEqualTo(10);
-        assertThat(resultRepository.findAllByParticipationExerciseId(quizExercise.getId())).hasSize(10);
+        assertThat(resultRepository.findAllBySubmissionParticipationExerciseId(quizExercise.getId())).hasSize(10);
 
         // calculate statistics
         quizExercise = request.get("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/recalculate-statistics", OK, QuizExercise.class);
@@ -1294,8 +1304,8 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importQuizExerciseFromCourseToExam() throws Exception {
-        ExerciseGroup exerciseGroup = examUtilService.createAndSaveActiveExerciseGroup(true);
         QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().plusHours(2), null, QuizMode.SYNCHRONIZED);
+        ExerciseGroup exerciseGroup = examUtilService.createAndSaveActiveExerciseGroup(createEmptyCourse(), true);
         quizExerciseService.handleDndQuizFileCreation(quizExercise,
                 List.of(new MockMultipartFile("files", "drag-and-drop/drag-items/dragItemImage2.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes()),
                         new MockMultipartFile("files", "drag-and-drop/drag-items/dragItemImage4.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes())));
@@ -1313,8 +1323,8 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void importQuizExerciseFromCourseToExam_forbidden() throws Exception {
-        ExerciseGroup exerciseGroup = examUtilService.createAndSaveActiveExerciseGroup(true);
         QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuiz(ZonedDateTime.now().plusHours(2), null, QuizMode.SYNCHRONIZED);
+        ExerciseGroup exerciseGroup = examUtilService.createAndSaveActiveExerciseGroup(createEmptyCourse(), true);
 
         quizExerciseUtilService.emptyOutQuizExercise(quizExercise);
         quizExercise.setExerciseGroup(exerciseGroup);
@@ -1363,7 +1373,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importQuizExerciseFromExamToExam() throws Exception {
-        ExerciseGroup exerciseGroup = examUtilService.createAndSaveActiveExerciseGroup(true);
+        ExerciseGroup exerciseGroup = examUtilService.createAndSaveActiveExerciseGroup(createEmptyCourse(), true);
         QuizExercise quizExercise = QuizExerciseFactory.createQuizForExam(exerciseGroup);
         quizExerciseService.handleDndQuizFileCreation(quizExercise,
                 List.of(new MockMultipartFile("files", "drag-and-drop/drag-items/dragItemImage2.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes()),
@@ -1688,8 +1698,24 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         return quizExerciseDatabase;
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetQuizQuestionsForPractice() throws Exception {
+
+        Course course = quizExerciseUtilService.addCourseWithOneQuizExercise();
+        QuizExercise quizExercise = (QuizExercise) course.getExercises().stream().findFirst().get();
+        quizExercise.setIsOpenForPractice(true);
+        quizExerciseService.save(quizExercise);
+
+        Set<QuizQuestion> quizQuestions = request.getSet("/api/quiz/courses/" + course.getId() + "/practice/quiz", OK, QuizQuestion.class);
+
+        assertThat(quizQuestions).isNotNull();
+        assertThat(quizQuestions).hasSameSizeAs(quizExercise.getQuizQuestions());
+        assertThat(quizQuestions).containsAll(quizExercise.getQuizQuestions());
+    }
+
     private QuizExercise createQuizOnServerForExam() throws Exception {
-        ExerciseGroup exerciseGroup = examUtilService.createAndSaveActiveExerciseGroup(true);
+        ExerciseGroup exerciseGroup = examUtilService.createAndSaveActiveExerciseGroup(createEmptyCourse(), true);
         QuizExercise quizExercise = QuizExerciseFactory.createQuizForExam(exerciseGroup);
         quizExercise.setDuration(3600);
 
@@ -1906,7 +1932,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     }
 
     private QuizExercise createMultipleChoiceQuizExercise() {
-        Course course = courseUtilService.createAndSaveCourse(null, ZonedDateTime.now().minusDays(1), null, Set.of());
+        Course course = quizExerciseUtilService.createAndSaveCourse(null, ZonedDateTime.now().minusDays(1), null, Set.of());
         QuizExercise quizExercise = QuizExerciseFactory.generateQuizExercise(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED, course);
         MultipleChoiceQuestion question = (MultipleChoiceQuestion) new MultipleChoiceQuestion().title("MC").score(4d).text("Q1");
 

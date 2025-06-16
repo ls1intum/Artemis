@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.core;
 
-import de.tum.cit.aet.artemis.core.service.FilePathService;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 
 /**
  * <p>
@@ -15,7 +15,7 @@ import de.tum.cit.aet.artemis.core.service.FilePathService;
  * <li>Ensure related items in the file system are grouped together.</li>
  * </ul>
  *
- * @see FilePathService FilePathService for the actual path generation.
+ * @see FilePathConverter FilePathService for the actual path generation.
  */
 public enum FilePathType {
     // @formatter:off

@@ -21,6 +21,7 @@ import org.apache.commons.lang3.mutable.MutableInt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -30,6 +31,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.ArchivalReportEntry;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ZipFileService;
+import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -37,6 +39,7 @@ import de.tum.cit.aet.artemis.exercise.dto.SubmissionExportOptionsDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public abstract class SubmissionExportService {
 
@@ -168,7 +171,7 @@ public abstract class SubmissionExportService {
 
         // Create unique name for directory
         String zipGroupName = course.getShortName() + "-" + exercise.getTitle() + "-" + exercise.getId();
-        String cleanZipGroupName = FileService.sanitizeFilename(zipGroupName);
+        String cleanZipGroupName = FileUtil.sanitizeFilename(zipGroupName);
         String zipFileName = cleanZipGroupName + "-" + ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss")) + ".zip";
 
         // Create directory
@@ -205,7 +208,7 @@ public abstract class SubmissionExportService {
 
         // Add report entry
         reportData.add(
-                new ArchivalReportEntry(exercise, FileService.sanitizeFilename(exercise.getTitle()), participations.size(), submissionFilePaths.size(), skippedEntries.intValue()));
+                new ArchivalReportEntry(exercise, FileUtil.sanitizeFilename(exercise.getTitle()), participations.size(), submissionFilePaths.size(), skippedEntries.intValue()));
 
         if (submissionFilePaths.isEmpty()) {
             return List.of();
@@ -223,7 +226,7 @@ public abstract class SubmissionExportService {
             }
             finally {
                 log.debug("Delete all temporary files");
-                fileService.deleteFiles(submissionFilePaths);
+                FileUtil.deleteFiles(submissionFilePaths);
             }
         }
         else {

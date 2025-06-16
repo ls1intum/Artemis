@@ -13,7 +13,7 @@ import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -33,6 +33,7 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
+import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
@@ -55,6 +56,7 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
 @Controller
 @Profile(PROFILE_CORE)
+@Lazy
 public class ParticipationTeamWebsocketService {
 
     private static final Logger log = LoggerFactory.getLogger(ParticipationTeamWebsocketService.class);
@@ -97,7 +99,7 @@ public class ParticipationTeamWebsocketService {
     /**
      * Initialize relevant data from hazelcast
      */
-    @EventListener(ApplicationReadyEvent.class)
+    @EventListener(FullStartupEvent.class)
     public void init() {
         // participationId-username -> timestamp
         this.lastTypingTracker = hazelcastInstance.getMap("lastTypingTracker");
@@ -157,7 +159,7 @@ public class ParticipationTeamWebsocketService {
     public void updateModelingSubmission(@DestinationVariable Long participationId, @Payload ModelingSubmission modelingSubmission, Principal principal) {
         long start = System.currentTimeMillis();
         updateSubmission(participationId, modelingSubmission, principal, "/modeling-submissions", false);
-        log.info("Websocket endpoint updateModelingSubmission took {}ms for submission with id {}", System.currentTimeMillis() - start, modelingSubmission.getId());
+        log.debug("Websocket endpoint updateModelingSubmission took {}ms for submission with id {}", System.currentTimeMillis() - start, modelingSubmission.getId());
     }
 
     /**
@@ -171,7 +173,7 @@ public class ParticipationTeamWebsocketService {
     public void patchModelingSubmission(@DestinationVariable Long participationId, @Payload SubmissionPatch submissionPatch, Principal principal) {
         long start = System.currentTimeMillis();
         patchSubmission(participationId, submissionPatch, principal, "/modeling-submissions");
-        log.info("Websocket endpoint patchModelingSubmission took {}ms", System.currentTimeMillis() - start);
+        log.debug("Websocket endpoint patchModelingSubmission took {}ms", System.currentTimeMillis() - start);
     }
 
     /**

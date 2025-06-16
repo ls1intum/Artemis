@@ -1,9 +1,11 @@
 package de.tum.cit.aet.artemis.atlas.repository;
 
+import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -17,6 +19,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 
 @Conditional(AtlasEnabled.class)
+@Lazy
 @Repository
 public interface CourseLearnerProfileRepository extends ArtemisJpaRepository<CourseLearnerProfile, Long> {
 
@@ -35,10 +38,19 @@ public interface CourseLearnerProfileRepository extends ArtemisJpaRepository<Cou
     @Query("""
             SELECT clp
             FROM CourseLearnerProfile clp
-                LEFT JOIN FETCH clp.course
+            LEFT JOIN FETCH clp.course
             WHERE clp.learnerProfile.user.login = :login
+                        AND (clp.course.startDate <= :now OR clp.course.startDate IS NULL)
+                        AND (clp.course.endDate >= :now OR clp.course.endDate IS NULL)
             """)
-    Set<CourseLearnerProfile> findAllByLogin(@Param("login") String login);
+    Set<CourseLearnerProfile> findAllByLoginAndCourseActive(@Param("login") String login, @Param("now") ZonedDateTime now);
+
+    @Query("""
+                SELECT clp
+                FROM CourseLearnerProfile clp
+                WHERE clp.learnerProfile.user.login = :login AND clp.course = :course
+            """)
+    Optional<CourseLearnerProfile> findByLoginAndCourse(@Param("login") String login, @Param("course") Course course);
 
     @Query("""
             SELECT clp

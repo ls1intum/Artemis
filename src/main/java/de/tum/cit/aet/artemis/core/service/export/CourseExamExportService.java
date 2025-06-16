@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -36,6 +37,7 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.service.ArchivalReportEntry;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ZipFileService;
+import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -56,6 +58,7 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
  * Service Implementation for exporting courses and exams.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class CourseExamExportService {
 
@@ -114,7 +117,7 @@ public class CourseExamExportService {
 
         var timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
         var courseDirName = course.getShortName() + "-" + course.getTitle() + "-" + timestamp;
-        String cleanCourseDirName = FileService.sanitizeFilename(courseDirName);
+        String cleanCourseDirName = FileUtil.sanitizeFilename(courseDirName);
         List<ArchivalReportEntry> reportData = new ArrayList<>();
 
         // Create a temporary directory that will contain the files that will be zipped
@@ -187,7 +190,7 @@ public class CourseExamExportService {
 
         var timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
         var examDirName = exam.getId() + "-" + exam.getTitle() + "-" + timestamp;
-        var cleanExamDirName = FileService.sanitizeFilename(examDirName);
+        var cleanExamDirName = FileUtil.sanitizeFilename(examDirName);
         List<ArchivalReportEntry> reportData = new ArrayList<>();
 
         // Create a temporary directory that will contain the files that will be zipped
@@ -363,7 +366,7 @@ public class CourseExamExportService {
         Path examDir = null;
         try {
             // Create exam directory.
-            String cleanExamTitle = FileService.sanitizeFilename(exam.getId() + "-" + exam.getTitle());
+            String cleanExamTitle = FileUtil.sanitizeFilename(exam.getId() + "-" + exam.getTitle());
             examDir = Path.of(outputDir, cleanExamTitle);
             Files.createDirectory(examDir);
 

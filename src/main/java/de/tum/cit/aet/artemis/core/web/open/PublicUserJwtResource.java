@@ -12,6 +12,7 @@ import jakarta.validation.Valid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.util.Pair;
 import org.springframework.http.HttpHeaders;
@@ -37,13 +38,17 @@ import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.UserNotActivatedException;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
+import de.tum.cit.aet.artemis.core.security.jwt.AuthenticationMethod;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
+import de.tum.cit.aet.artemis.core.service.ArtemisSuccessfulLoginService;
 import de.tum.cit.aet.artemis.core.service.connectors.SAML2Service;
+import de.tum.cit.aet.artemis.core.util.HttpRequestUtils;
 
 /**
  * REST controller to authenticate users.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @RestController
 @RequestMapping("api/core/public/")
 public class PublicUserJwtResource {
@@ -54,11 +59,15 @@ public class PublicUserJwtResource {
 
     private final AuthenticationManager authenticationManager;
 
+    private final ArtemisSuccessfulLoginService artemisSuccessfulLoginService;
+
     private final Optional<SAML2Service> saml2Service;
 
-    public PublicUserJwtResource(JWTCookieService jwtCookieService, AuthenticationManager authenticationManager, Optional<SAML2Service> saml2Service) {
+    public PublicUserJwtResource(JWTCookieService jwtCookieService, AuthenticationManager authenticationManager, ArtemisSuccessfulLoginService artemisSuccessfulLoginService,
+            Optional<SAML2Service> saml2Service) {
         this.jwtCookieService = jwtCookieService;
         this.authenticationManager = authenticationManager;
+        this.artemisSuccessfulLoginService = artemisSuccessfulLoginService;
         this.saml2Service = saml2Service;
     }
 
@@ -69,12 +78,13 @@ public class PublicUserJwtResource {
      * @param userAgent User Agent
      * @param tool      optional Tool Token Type to define the scope of the token
      * @param response  HTTP response
+     * @param request   HTTP request
      * @return the ResponseEntity with status 200 (ok), 401 (unauthorized) or 403 (Captcha required)
      */
     @PostMapping("authenticate")
     @EnforceNothing
-    public ResponseEntity<Map<String, String>> authorize(@Valid @RequestBody LoginVM loginVM, @RequestHeader("User-Agent") String userAgent,
-            @RequestParam(name = "tool", required = false) ToolTokenType tool, HttpServletResponse response) {
+    public ResponseEntity<Map<String, String>> authorize(@Valid @RequestBody LoginVM loginVM, @RequestHeader(HttpHeaders.USER_AGENT) String userAgent,
+            @RequestParam(name = "tool", required = false) ToolTokenType tool, HttpServletResponse response, HttpServletRequest request) {
 
         var username = loginVM.getUsername();
         var password = loginVM.getPassword();
@@ -90,6 +100,7 @@ public class PublicUserJwtResource {
 
             ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(rememberMe, tool);
             response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
+            artemisSuccessfulLoginService.sendLoginEmail(username, AuthenticationMethod.PASSWORD, HttpRequestUtils.getClientEnvironment(request));
 
             return ResponseEntity.ok(Map.of("access_token", responseCookie.getValue()));
         }
@@ -104,11 +115,12 @@ public class PublicUserJwtResource {
      *
      * @param body     the body of the request. "true" to remember the user.
      * @param response HTTP response
+     * @param request  HTTP request
      * @return the ResponseEntity with status 200 (ok), 401 (unauthorized) or 403 (user not activated)
      */
     @PostMapping("saml2")
     @EnforceNothing
-    public ResponseEntity<Void> authorizeSAML2(@RequestBody final String body, HttpServletResponse response) {
+    public ResponseEntity<Void> authorizeSAML2(@RequestBody final String body, HttpServletResponse response, HttpServletRequest request) {
         if (saml2Service.isEmpty()) {
             throw new AccessForbiddenException("SAML2 is disabled");
         }
@@ -121,11 +133,11 @@ public class PublicUserJwtResource {
         log.debug("SAML2 authentication: {}", authentication);
 
         try {
-            authentication = saml2Service.get().handleAuthentication(authentication, principal);
+            authentication = saml2Service.get().handleAuthentication(authentication, principal, request);
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
         catch (UserNotActivatedException e) {
-            // If the exception is not caught a 401 is returned.
+            // If the exception is not caught, a 401 is returned.
             // That does not match the actual reason and would trigger authentication in the client
             return ResponseEntity.status(HttpStatus.FORBIDDEN).header("X-artemisApp-error", e.getMessage()).build();
         }
@@ -149,7 +161,7 @@ public class PublicUserJwtResource {
     @EnforceNothing
     public ResponseEntity<Void> logout(HttpServletRequest request, HttpServletResponse response) throws ServletException {
         request.logout();
-        // Logout needs to build the same cookie (secure, httpOnly and sameSite='Lax') or browsers will ignore the header and not unset the cookie
+        // Logout needs to build the same cookie (secure, httpOnly and sameSite='Lax'), or browsers will ignore the header and not unset the cookie
         ResponseCookie responseCookie = jwtCookieService.buildLogoutCookie();
         response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
         return ResponseEntity.ok().build();

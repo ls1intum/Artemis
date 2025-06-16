@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -22,12 +23,13 @@ import de.tum.cit.aet.artemis.text.domain.TextBlock;
  * THE FOLLOWING METHODS ARE USED FOR CLEANUP PURPOSES AND SHOULD NOT BE USED IN OTHER CASES
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Repository
 public interface TextBlockCleanupRepository extends ArtemisJpaRepository<TextBlock, Long> {
 
     /**
      * Deletes {@link TextBlock} entries linked to {@link Feedback} where the associated {@link Result}
-     * has no submission and no participation.
+     * has no submission or its submission has no participation.
      *
      * @return the number of deleted entities
      */
@@ -35,32 +37,36 @@ public interface TextBlockCleanupRepository extends ArtemisJpaRepository<TextBlo
     @Transactional // ok because of delete
     @Query("""
             DELETE FROM TextBlock tb
-            WHERE tb.feedback IN (
-                SELECT f
+            WHERE tb.feedback.id IN (
+                SELECT f.id
                 FROM Feedback f
                     LEFT JOIN f.result r
-                WHERE r.submission IS NULL
-                    AND r.participation IS NULL
-                )
+                    LEFT JOIN r.submission s
+                    LEFT JOIN s.participation p
+                WHERE s IS NULL
+                    OR p IS NULL
+            )
             """)
     int deleteTextBlockForOrphanResults();
 
     /**
      * Counts {@link TextBlock} entries linked to {@link Feedback} where the associated {@link Result}
-     * has no submission and no participation.
+     * has no submission or its submission has no participation.
      *
      * @return the number of entities that would be deleted
      */
     @Query("""
             SELECT COUNT(tb)
             FROM TextBlock tb
-            WHERE tb.feedback IN (
-                SELECT f
-                FROM Feedback f
-                    LEFT JOIN f.result r
-                WHERE r.submission IS NULL
-                    AND r.participation IS NULL
-                )
+               WHERE tb.feedback.id IN (
+                   SELECT f.id
+                   FROM Feedback f
+                       LEFT JOIN f.result r
+                       LEFT JOIN r.submission s
+                       LEFT JOIN s.participation p
+                   WHERE s IS NULL
+                       OR p IS NULL
+            )
             """)
     int countTextBlockForOrphanResults();
 
@@ -77,7 +83,7 @@ public interface TextBlockCleanupRepository extends ArtemisJpaRepository<TextBlo
                 SELECT f
                 FROM Feedback f
                 WHERE f.result IS NULL
-                )
+            )
             """)
     int deleteTextBlockForEmptyFeedback();
 
@@ -93,7 +99,7 @@ public interface TextBlockCleanupRepository extends ArtemisJpaRepository<TextBlo
                 SELECT f
                 FROM Feedback f
                 WHERE f.result IS NULL
-                )
+            )
             """)
     int countTextBlockForEmptyFeedback();
 
@@ -113,13 +119,16 @@ public interface TextBlockCleanupRepository extends ArtemisJpaRepository<TextBlo
                 SELECT f
                 FROM Feedback f
                     LEFT JOIN f.result r
-                    LEFT JOIN r.participation p
+                    LEFT JOIN r.submission s
+                    LEFT JOIN s.participation p
                     LEFT JOIN p.exercise e
                     LEFT JOIN e.course c
                 WHERE f.result.id NOT IN (
                     SELECT MAX(r2.id)
                     FROM Result r2
-                    WHERE r2.participation.id = p.id
+                    LEFT JOIN r2.submission s2
+                    LEFT JOIN s2.participation p2
+                    WHERE p2.id = p.id
                         AND r2.rated = TRUE
                 )
                     AND r.rated = TRUE
@@ -144,13 +153,16 @@ public interface TextBlockCleanupRepository extends ArtemisJpaRepository<TextBlo
                 SELECT f
                 FROM Feedback f
                     LEFT JOIN f.result r
-                    LEFT JOIN r.participation p
+                    LEFT JOIN r.submission s
+                    LEFT JOIN s.participation p
                     LEFT JOIN p.exercise e
                     LEFT JOIN e.course c
                 WHERE f.result.id NOT IN (
                     SELECT MAX(r2.id)
                     FROM Result r2
-                    WHERE r2.participation.id = p.id
+                    LEFT JOIN r2.submission s2
+                    LEFT JOIN s2.participation p2
+                    WHERE p2.id = p.id
                         AND r2.rated = TRUE
                 )
                     AND r.rated = TRUE
@@ -179,19 +191,22 @@ public interface TextBlockCleanupRepository extends ArtemisJpaRepository<TextBlo
                 SELECT f
                 FROM Feedback f
                     LEFT JOIN f.result r
-                    LEFT JOIN r.participation p
+                    LEFT JOIN r.submission s
+                    LEFT JOIN s.participation p
                     LEFT JOIN p.exercise e
                     LEFT JOIN e.course c
                 WHERE f.result.id NOT IN (
                     SELECT MAX(r2.id)
                     FROM Result r2
-                    WHERE r2.participation.id = p.id
+                    LEFT JOIN r2.submission s2
+                    LEFT JOIN s2.participation p2
+                    WHERE p2.id = p.id
                         AND r2.rated = FALSE
-                    )
+                )
                     AND r.rated = FALSE
                     AND c.endDate < :deleteTo
                     AND c.startDate > :deleteFrom
-                )
+            )
             """)
     int deleteTextBlockForNonRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
 
@@ -211,19 +226,22 @@ public interface TextBlockCleanupRepository extends ArtemisJpaRepository<TextBlo
                 SELECT f
                 FROM Feedback f
                     LEFT JOIN f.result r
-                    LEFT JOIN r.participation p
+                    LEFT JOIN r.submission s
+                    LEFT JOIN s.participation p
                     LEFT JOIN p.exercise e
                     LEFT JOIN e.course c
                 WHERE f.result.id NOT IN (
                     SELECT MAX(r2.id)
                     FROM Result r2
-                    WHERE r2.participation.id = p.id
+                    LEFT JOIN r2.submission s2
+                    LEFT JOIN s2.participation p2
+                    WHERE p2.id = p.id
                         AND r2.rated = FALSE
-                    )
+                )
                     AND r.rated = FALSE
                     AND c.endDate < :deleteTo
                     AND c.startDate > :deleteFrom
-                )
+            )
             """)
     int countTextBlockForNonRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
 }

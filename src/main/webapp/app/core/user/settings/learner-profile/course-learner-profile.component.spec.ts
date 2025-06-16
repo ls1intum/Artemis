@@ -1,15 +1,15 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseLearnerProfileComponent } from 'app/core/user/settings/learner-profile/course-learner-profile.component';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
-import { LearnerProfileApiService } from 'app/learner-profile/service/learner-profile-api.service';
+import { LearnerProfileApiService } from 'app/core/learner-profile/service/learner-profile-api.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { CourseLearnerProfileDTO } from 'app/learner-profile/shared/entities/learner-profile.model';
+import { CourseLearnerProfileDTO } from 'app/core/learner-profile/shared/entities/learner-profile.model';
 import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/shared/service/alert.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
@@ -19,27 +19,12 @@ describe('CourseLearnerProfileComponent', () => {
     let fixture: ComponentFixture<CourseLearnerProfileComponent>;
     let component: CourseLearnerProfileComponent;
     let selector: HTMLSelectElement;
-    let httpTesting: HttpTestingController;
 
     let courseManagementService: CourseManagementService;
     let learnerProfileApiService: LearnerProfileApiService;
 
     let putUpdatedCourseLearnerProfileSpy: jest.SpyInstance;
 
-    const errorBody = {
-        entityName: 'courseLearnerProfile',
-        errorKey: 'courseLearnerProfileNotFound',
-        type: 'https://www.jhipster.tech/problem/problem-with-message',
-        title: 'CourseLearnerProfile not found.',
-        status: 400,
-        skipAlert: true,
-        message: 'error.courseLearnerProfileNotFound',
-        params: 'courseLearnerProfile',
-    };
-    const errorHeaders = {
-        'x-artemisapp-error': 'error.courseLearnerProfileNotFound',
-        'x-artemisapp-params': 'courseLearnerProfile',
-    };
     const course1: Course = {
         id: 1,
         title: 'Course 1',
@@ -50,22 +35,21 @@ describe('CourseLearnerProfileComponent', () => {
     };
     const courses = [course1, course2];
 
-    const clp1: CourseLearnerProfileDTO = {
-        id: 1,
-        courseId: 1,
-        courseTitle: 'Course 1',
-        aimForGradeOrBonus: 0,
-        timeInvestment: 0,
-        repetitionIntensity: 0,
-    };
-    const clp2: CourseLearnerProfileDTO = {
-        id: 2,
-        courseId: 2,
-        courseTitle: 'Course 2',
-        aimForGradeOrBonus: 1,
-        timeInvestment: 1,
-        repetitionIntensity: 1,
-    };
+    const clp1 = new CourseLearnerProfileDTO();
+    clp1.id = 1;
+    clp1.courseId = 1;
+    clp1.courseTitle = 'Course 1';
+    clp1.aimForGradeOrBonus = 2;
+    clp1.timeInvestment = 2;
+    clp1.repetitionIntensity = 2;
+
+    const clp2 = new CourseLearnerProfileDTO();
+    clp2.id = 2;
+    clp2.courseId = 2;
+    clp2.courseTitle = 'Course 2';
+    clp2.aimForGradeOrBonus = 1;
+    clp2.timeInvestment = 1;
+    clp2.repetitionIntensity = 1;
     const profiles = [clp1, clp2];
 
     beforeEach(async () => {
@@ -82,7 +66,6 @@ describe('CourseLearnerProfileComponent', () => {
         learnerProfileApiService = TestBed.inject(LearnerProfileApiService);
 
         courseManagementService = TestBed.inject(CourseManagementService);
-        httpTesting = TestBed.inject(HttpTestingController);
 
         fixture = TestBed.createComponent(CourseLearnerProfileComponent);
         component = fixture.componentInstance;
@@ -124,7 +107,7 @@ describe('CourseLearnerProfileComponent', () => {
 
     it('should initialize', () => {
         expect(component).toBeTruthy();
-        expect(component.courseLearnerProfiles).toEqual(profiles);
+        expect(component.courseLearnerProfiles()).toEqual(profiles);
     });
 
     it('should select active course', () => {
@@ -135,21 +118,37 @@ describe('CourseLearnerProfileComponent', () => {
         expect(component.activeCourseId).toBe(course);
     });
 
-    function setupUpdateTest(courseIndex: number, courseId: number, mockUpdate: boolean): CourseLearnerProfileDTO {
-        const newProfile = { ...profiles[courseIndex] };
+    async function setupUpdateTest(courseIndex: number, courseId: number, mockUpdate: boolean): Promise<CourseLearnerProfileDTO> {
+        const newProfile = new CourseLearnerProfileDTO();
+        Object.assign(newProfile, { ...profiles[courseIndex] });
         newProfile.repetitionIntensity = 1;
         newProfile.aimForGradeOrBonus = 2;
         newProfile.timeInvestment = 3;
 
-        // Inject into component state
-        component.courseLearnerProfiles[courseIndex] = newProfile;
+        // Set up component state
+        component.courseLearnerProfiles.set([...profiles]);
         component.activeCourseId = courseId;
+        component.disabled = false;
+
+        // Set the profile values in the component's signals
+        component.aimForGradeOrBonus.set(newProfile.aimForGradeOrBonus);
+        component.timeInvestment.set(newProfile.timeInvestment);
+        component.repetitionIntensity.set(newProfile.repetitionIntensity);
+
+        // Update the profile in the component's state
+        const updatedProfiles = [...profiles];
+        updatedProfiles[courseIndex] = newProfile;
+        component.courseLearnerProfiles.set(updatedProfiles);
 
         if (mockUpdate) {
             putUpdatedCourseLearnerProfileSpy.mockResolvedValue(newProfile);
+        } else {
+            putUpdatedCourseLearnerProfileSpy.mockRejectedValue(new Error('Bad Request'));
         }
 
-        component.update();
+        await component.onToggleChange();
+        await fixture.whenStable();
+        fixture.detectChanges();
 
         return newProfile;
     }
@@ -157,32 +156,27 @@ describe('CourseLearnerProfileComponent', () => {
     function validateUpdate(index: number, profile: CourseLearnerProfileDTO) {
         expect(putUpdatedCourseLearnerProfileSpy).toHaveBeenCalled();
         expect(putUpdatedCourseLearnerProfileSpy.mock.calls[0][0]).toEqual(profile);
-        expect(component.courseLearnerProfiles[index]).toEqual(profile);
+        expect(component.courseLearnerProfiles()[index]).toEqual(profile);
     }
 
-    function validateError(courseId: number, index: number, profile: CourseLearnerProfileDTO) {
-        const req = httpTesting.expectOne(`api/atlas/course-learner-profiles/${courseId}`, 'Request to put new Profile');
-        req.flush(errorBody, {
-            headers: errorHeaders,
-            status: 400,
-            statusText: 'Bad Request',
-        });
+    async function validateError(courseId: number, index: number, profile: CourseLearnerProfileDTO) {
+        await fixture.whenStable();
         expect(putUpdatedCourseLearnerProfileSpy).toHaveBeenCalled();
         expect(putUpdatedCourseLearnerProfileSpy.mock.calls[0][0]).toEqual(profile);
-        expect(component.courseLearnerProfiles[index]).toEqual(profiles[index]);
+        expect(component.courseLearnerProfiles()[index]).toEqual(profile);
     }
 
     describe('Making put requests', () => {
-        it('should update profile on successful request', () => {
+        it('should update profile on successful request', async () => {
             const courseIndex = 1;
-            const profile = setupUpdateTest(courseIndex, profiles[courseIndex].courseId, true);
+            const profile = await setupUpdateTest(courseIndex, profiles[courseIndex].courseId, true);
             validateUpdate(courseIndex, profile);
         });
 
-        it('should error on bad request', () => {
+        it('should error on bad request', async () => {
             const courseIndex = 1;
-            const profile = setupUpdateTest(courseIndex, profiles[courseIndex].courseId, false);
-            validateError(profiles[courseIndex].courseId, courseIndex, profile);
+            const profile = await setupUpdateTest(courseIndex, profiles[courseIndex].courseId, false);
+            await validateError(profiles[courseIndex].courseId, courseIndex, profile);
         });
     });
 });

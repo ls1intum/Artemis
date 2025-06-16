@@ -9,13 +9,15 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import jakarta.annotation.Nullable;
-import jakarta.annotation.PostConstruct;
+import jakarta.validation.constraints.NotNull;
 
 import javax.crypto.SecretKey;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -24,10 +26,12 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 import de.tum.cit.aet.artemis.core.management.SecurityMetersService;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.UnsupportedJwtException;
@@ -38,11 +42,16 @@ import tech.jhipster.config.JHipsterProperties;
 
 @Profile(PROFILE_CORE)
 @Component
+@Lazy
 public class TokenProvider {
 
     private static final Logger log = LoggerFactory.getLogger(TokenProvider.class);
 
     private static final String AUTHORITIES_KEY = "auth";
+
+    private static final String AUTHENTICATION_METHOD = "auth-method";
+
+    private static final String TOOLS_KEY = "tools";
 
     private SecretKey key;
 
@@ -62,7 +71,7 @@ public class TokenProvider {
     /**
      * initializes the token provider based on the yml config file
      */
-    @PostConstruct
+    @EventListener(FullStartupEvent.class)
     public void init() {
         byte[] keyBytes;
         String secret = jHipsterProperties.getSecurity().getAuthentication().getJwt().getSecret();
@@ -83,7 +92,7 @@ public class TokenProvider {
      * Gets the validity for the generated tokens.
      *
      * @param rememberMe Determines Token lifetime
-     * @return long The validity of the generated tokens
+     * @return long The validity of the generated tokens in milliseconds
      */
     public long getTokenValidity(boolean rememberMe) {
         return rememberMe ? this.tokenValidityInMillisecondsForRememberMe : this.tokenValidityInMilliseconds;
@@ -96,6 +105,7 @@ public class TokenProvider {
      * @param rememberMe     Determines Token lifetime
      * @return JWT Token
      */
+    @NotNull
     public String createToken(Authentication authentication, boolean rememberMe) {
         return createToken(authentication, getTokenValidity(rememberMe), null);
     }
@@ -104,20 +114,48 @@ public class TokenProvider {
      * Create JWT Token a fully populated <code>Authentication</code> object.
      *
      * @param authentication Authentication Object
-     * @param duration       the Token lifetime in milli seconds
+     * @param duration       the Token lifetime in milliseconds
      * @param tool           tool this token is used for. If null, it's a general access token
      * @return JWT Token
      */
+    @NotNull
     public String createToken(Authentication authentication, long duration, @Nullable ToolTokenType tool) {
+        long validity = System.currentTimeMillis() + duration;
+        return createToken(authentication, null, new Date(validity), tool, null);
+    }
+
+    /**
+     * Create JWT Token a fully populated {@link Authentication} object.
+     *
+     * @param authentication           Authentication Object
+     * @param issuedAt                 Date when the token was issued, if null set to now
+     * @param expiration               Date when the token expires
+     * @param tool                     tool this token is used for. If null, it's a general access token
+     * @param authenticatedWithPasskey can be manually set to true if the token was created with a passkey but for performance reasons, no actual WebAuthnAuthentication was created
+     * @return JWT Token
+     */
+    @NotNull
+    public String createToken(Authentication authentication, @Nullable Date issuedAt, Date expiration, @Nullable ToolTokenType tool, @Nullable Boolean authenticatedWithPasskey) {
         String authorities = authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.joining(","));
 
-        var validity = System.currentTimeMillis() + duration;
-        var jwtBuilder = Jwts.builder().subject(authentication.getName()).claim(AUTHORITIES_KEY, authorities);
-        if (tool != null) {
-            jwtBuilder.claim("tools", tool);
+        AuthenticationMethod authenticationMethod = AuthenticationMethod.fromAuthentication(authentication);
+        if (authenticatedWithPasskey != null && authenticatedWithPasskey) {
+            authenticationMethod = AuthenticationMethod.PASSKEY;
         }
 
-        return jwtBuilder.signWith(key, Jwts.SIG.HS512).expiration(new Date(validity)).compact();
+        // @formatter:off
+        JwtBuilder jwtBuilder = Jwts.builder()
+            .subject(authentication.getName())
+            .claim(AUTHORITIES_KEY, authorities)
+            .claim(AUTHENTICATION_METHOD, authenticationMethod)
+            .issuedAt(issuedAt != null ? issuedAt : new Date());
+        // @formatter:on
+
+        if (tool != null) {
+            jwtBuilder.claim(TOOLS_KEY, tool);
+        }
+
+        return jwtBuilder.signWith(key, Jwts.SIG.HS512).expiration(expiration).compact();
     }
 
     /**
@@ -126,6 +164,7 @@ public class TokenProvider {
      * @param token JWT Authorization Token
      * @return UsernamePasswordAuthenticationToken with principal, token and authorities that were stored in the token or null if no authorities were found
      */
+    @Nullable
     public Authentication getAuthentication(String token) {
         Claims claims = parseClaims(token);
         var authorityClaim = claims.get(AUTHORITIES_KEY);
@@ -185,16 +224,56 @@ public class TokenProvider {
         return false;
     }
 
+    @NotNull
     private Claims parseClaims(String authToken) {
         return Jwts.parser().verifyWith(key).build().parseSignedClaims(authToken).getPayload();
     }
 
+    @NotNull
     public <T> T getClaim(String token, String claimName, Class<T> claimType) {
         Claims claims = parseClaims(token);
         return claims.get(claimName, claimType);
     }
 
+    @NotNull
     public Date getExpirationDate(String authToken) {
         return parseClaims(authToken).getExpiration();
+    }
+
+    @NotNull
+    public Date getIssuedAtDate(String authToken) {
+        return parseClaims(authToken).getIssuedAt();
+    }
+
+    /**
+     * @param authToken of which the tools should be extracted
+     * @return {@link ToolTokenType} if the token contains a tool, null otherwise
+     */
+    @Nullable
+    public ToolTokenType getTools(String authToken) {
+        Claims claims = parseClaims(authToken);
+        String toolString = claims.get(TOOLS_KEY, String.class);
+
+        if (toolString == null) {
+            return null;
+        }
+
+        return ToolTokenType.valueOf(toolString);
+    }
+
+    /**
+     * @param authToken of which the authentication type on login should be extracted
+     * @return {@link AuthenticationMethod} that was used to create the token
+     */
+    @Nullable
+    public AuthenticationMethod getAuthenticationMethod(String authToken) {
+        try {
+            String method = parseClaims(authToken).get(AUTHENTICATION_METHOD, String.class);
+            return method != null ? AuthenticationMethod.fromMethod(method) : null;
+        }
+        catch (UnsupportedJwtException | IllegalArgumentException e) {
+            log.warn("Failed to parse authentication method from token: {}", e.getMessage());
+            return null;
+        }
     }
 }

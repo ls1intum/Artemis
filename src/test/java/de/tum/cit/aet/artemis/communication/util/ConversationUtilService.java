@@ -13,6 +13,7 @@ import java.util.Set;
 import jakarta.validation.constraints.NotNull;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -27,6 +28,7 @@ import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 import de.tum.cit.aet.artemis.communication.domain.conversation.GroupChat;
 import de.tum.cit.aet.artemis.communication.domain.conversation.OneToOneChat;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
+import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.ConversationParticipantTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.ConversationTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.OneToOneChatTestRepository;
@@ -38,11 +40,10 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
-import de.tum.cit.aet.artemis.core.util.CourseUtilService;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
-import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
-import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
+import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureFactory;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
@@ -53,6 +54,7 @@ import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 /**
  * Service responsible for initializing the database with specific testdata related to conversations for use in integration tests.
  */
+@Lazy
 @Service
 @Profile(SPRING_PROFILE_TEST)
 public class ConversationUtilService {
@@ -70,7 +72,7 @@ public class ConversationUtilService {
     private ExerciseTestRepository exerciseRepo;
 
     @Autowired
-    private LectureRepository lectureRepo;
+    private LectureTestRepository lectureRepo;
 
     @Autowired
     private PlagiarismCaseRepository plagiarismCaseRepository;
@@ -94,16 +96,13 @@ public class ConversationUtilService {
     private ConversationTestRepository conversationRepository;
 
     @Autowired
-    private CourseUtilService courseUtilService;
-
-    @Autowired
     private UserUtilService userUtilService;
 
     @Autowired
-    private ExerciseUtilService exerciseUtilService;
+    private LectureUtilService lectureUtilService;
 
     @Autowired
-    private LectureUtilService lectureUtilService;
+    private ChannelRepository channelRepository;
 
     /**
      * Creates and saves a Course with disabled posts.
@@ -121,30 +120,30 @@ public class ConversationUtilService {
      * TextExercise.
      * Creates and saves Posts for each of the created entities.
      *
+     * @param course     The Course to create the Posts within
      * @param userPrefix The prefix of the author's login
      * @return A List of the created Posts
      */
-    public List<Post> createPostsWithinCourse(String userPrefix) {
+    public List<Post> createPostsWithinCourse(Course course, String userPrefix) {
 
         List<Channel> testExerciseChannels = new ArrayList<>();
         List<Channel> testLectureChannels = new ArrayList<>();
 
-        Course course1 = courseUtilService.createCourse();
         for (int i = 0; i < 2; i++) {
-            TextExercise textExercise = TextExerciseFactory.generateTextExercise(PAST_TIMESTAMP, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, course1);
-            course1.addExercises(textExercise);
+            TextExercise textExercise = TextExerciseFactory.generateTextExercise(PAST_TIMESTAMP, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, course);
+            course.addExercises(textExercise);
             textExercise = exerciseRepo.save(textExercise);
-            Channel exerciseChannel = exerciseUtilService.addChannelToExercise(textExercise);
+            Channel exerciseChannel = addChannelToExercise(textExercise);
             testExerciseChannels.add(exerciseChannel);
 
-            Lecture lecture = LectureFactory.generateLecture(PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, course1);
-            course1.addLectures(lecture);
+            Lecture lecture = LectureFactory.generateLecture(PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, course);
+            course.addLectures(lecture);
             lecture = lectureRepo.save(lecture);
             Channel lectureChannel = lectureUtilService.addLectureChannel(lecture);
             testLectureChannels.add(lectureChannel);
         }
 
-        courseRepo.save(course1);
+        courseRepo.save(course);
 
         PlagiarismCase plagiarismCase = new PlagiarismCase();
         plagiarismCase.setExercise(testExerciseChannels.getFirst().getExercise());
@@ -162,9 +161,9 @@ public class ConversationUtilService {
         // add post to plagiarismCase
         posts.add(createBasicPost(plagiarismCase, userPrefix));
 
-        posts.addAll(createBasicPosts(createOneToOneChat(course1, userPrefix), userPrefix, "tutor"));
-        posts.addAll(createBasicPosts(createCourseWideChannel(course1, userPrefix), userPrefix, "student"));
-        posts.addAll(createBasicPosts(createCourseWideChannel(course1, userPrefix), userPrefix, "student"));
+        posts.addAll(createBasicPosts(createOneToOneChat(course, userPrefix), userPrefix, "tutor"));
+        posts.addAll(createBasicPosts(createCourseWideChannel(course, userPrefix), userPrefix, "student"));
+        posts.addAll(createBasicPosts(createCourseWideChannel(course, userPrefix), userPrefix, "student"));
 
         return posts;
     }
@@ -235,11 +234,12 @@ public class ConversationUtilService {
      * Creates and saves a Course. It also creates and saves two TextExercises and two Lectures. It also creates and saves a PlagiarismCase for the first TextExercise.
      * Creates and saves a Post with an AnswerPost for each of the created entities.
      *
+     * @param course     The Course to create the Posts within
      * @param userPrefix The prefix of the author's login (the login is appended with "student1")
      * @return A List of the created Posts
      */
-    public List<Post> createPostsWithAnswerPostsWithinCourse(String userPrefix) {
-        List<Post> posts = createPostsWithinCourse(userPrefix);
+    public List<Post> createPostsWithAnswerPostsWithinCourse(Course course, String userPrefix) {
+        List<Post> posts = createPostsWithinCourse(course, userPrefix);
 
         // add answer for one post in each context (lecture, exercise, course-wide, conversation)
         Post lecturePost = posts.stream().filter(coursePost -> coursePost.getConversation() instanceof Channel channel && channel.getLecture() != null).findFirst().orElseThrow();
@@ -519,14 +519,13 @@ public class ConversationUtilService {
      * @param login       The login of the User the Post and AnswerPost belong to
      * @param course      The Course the GroupChat belongs to
      * @param messageText The content of the Post
-     * @return The created GroupChat as a Conversation
      */
-    public Conversation addMessageWithReplyAndReactionInGroupChatOfCourseForUser(String login, Course course, String messageText) {
+    public void addMessageWithReplyAndReactionInGroupChatOfCourseForUser(String login, Course course, String messageText) {
         Conversation groupChat = new GroupChat();
         groupChat.setCourse(course);
         var message = createMessageWithReactionForUser(login, messageText, groupChat);
         addThreadReplyWithReactionForUserToPost(login, message);
-        return conversationRepository.save(groupChat);
+        conversationRepository.save(groupChat);
     }
 
     /**
@@ -546,14 +545,13 @@ public class ConversationUtilService {
      * @param login       The login of the User the Post and AnswerPost belong to
      * @param course      The Course the OneToOneChat belongs to
      * @param messageText The content of the Post
-     * @return The created OneToOneChat as a Conversation
      */
-    public Conversation addMessageWithReplyAndReactionInOneToOneChatOfCourseForUser(String login, Course course, String messageText) {
+    public void addMessageWithReplyAndReactionInOneToOneChatOfCourseForUser(String login, Course course, String messageText) {
         Conversation oneToOneChat = new OneToOneChat();
         oneToOneChat.setCourse(course);
         var message = createMessageWithReactionForUser(login, messageText, oneToOneChat);
         addThreadReplyWithReactionForUserToPost(login, message);
-        return conversationRepository.save(oneToOneChat);
+        conversationRepository.save(oneToOneChat);
     }
 
     /**
@@ -606,9 +604,8 @@ public class ConversationUtilService {
      * @param login       The login of the User the Post, AnswerPost and Reaction belong to
      * @param course      The Course the Channel belongs to
      * @param messageText The content of the Post
-     * @return The created Channel as a Conversation
      */
-    public Conversation addMessageInChannelOfCourseForUser(String login, Course course, String messageText) {
+    public void addMessageInChannelOfCourseForUser(String login, Course course, String messageText) {
         Channel channel = new Channel();
         channel.setIsPublic(true);
         channel.setIsAnnouncementChannel(false);
@@ -617,7 +614,7 @@ public class ConversationUtilService {
         channel.setCourse(course);
         var message = createMessageWithReactionForUser(login, messageText, channel);
         addThreadReplyWithReactionForUserToPost(login, message);
-        return conversationRepository.save(channel);
+        conversationRepository.save(channel);
     }
 
     /**
@@ -626,9 +623,8 @@ public class ConversationUtilService {
      * @param login       The login of the User the Post and Reaction belong to
      * @param course      The Course the Channel belongs to
      * @param messageText The content of the Post
-     * @return The created Channel as a Conversation
      */
-    public Conversation addOneMessageForUserInCourse(String login, Course course, String messageText) {
+    public void addOneMessageForUserInCourse(String login, Course course, String messageText) {
         Post message = new Post();
         Channel channel = new Channel();
         channel.setIsPublic(true);
@@ -644,7 +640,7 @@ public class ConversationUtilService {
         addReactionForUserToPost(login, message);
         conversationRepository.save(channel);
         postRepository.save(message);
-        return conversationRepository.save(channel);
+        conversationRepository.save(channel);
     }
 
     /**
@@ -666,5 +662,17 @@ public class ConversationUtilService {
         conversationRepository.save(conversation);
 
         return postRepository.save(message);
+    }
+
+    /**
+     * Creates a channel and adds it to an exercise.
+     *
+     * @param exercise The exercise to which a channel should be added.
+     * @return The newly created and saved channel.
+     */
+    public Channel addChannelToExercise(Exercise exercise) {
+        Channel channel = ConversationFactory.generateCourseWideChannel(exercise.getCourseViaExerciseGroupOrCourseMember());
+        channel.setExercise(exercise);
+        return channelRepository.save(channel);
     }
 }

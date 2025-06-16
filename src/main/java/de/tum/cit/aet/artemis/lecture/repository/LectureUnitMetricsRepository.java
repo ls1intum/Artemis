@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Set;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -17,6 +18,7 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
  * Spring Data JPA repository to fetch lecture unit related metrics.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Repository
 public interface LectureUnitMetricsRepository extends ArtemisJpaRepository<LectureUnit, Long> {
 
@@ -29,7 +31,7 @@ public interface LectureUnitMetricsRepository extends ArtemisJpaRepository<Lectu
     @Query("""
             SELECT new de.tum.cit.aet.artemis.atlas.dto.metrics.LectureUnitInformationDTO(lu.id, lu.lecture.id, lu.lecture.title, COALESCE(lu.name, a.name), lu.releaseDate, TYPE(lu))
             FROM LectureUnit lu
-                LEFT JOIN Attachment a ON a.attachmentUnit.id = lu.id
+                LEFT JOIN Attachment a ON a.attachmentVideoUnit.id = lu.id
             WHERE lu.lecture.course.id = :courseId
             """)
     Set<LectureUnitInformationDTO> findAllLectureUnitInformationByCourseId(@Param("courseId") long courseId);

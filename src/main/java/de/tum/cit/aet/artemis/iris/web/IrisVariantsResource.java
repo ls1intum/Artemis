@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,6 +25,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisVariantDTO;
  * REST controller for managing the variants Pyris provides.
  */
 @Profile(PROFILE_IRIS)
+@Lazy
 @RestController
 @RequestMapping("api/iris/")
 public class IrisVariantsResource {
@@ -47,7 +49,7 @@ public class IrisVariantsResource {
     public ResponseEntity<List<PyrisVariantDTO>> getAllVariants(@PathVariable("feature") String featureRaw) {
         var feature = IrisSubSettingsType.valueOf(featureRaw.toUpperCase().replace("-", "_"));
         try {
-            var variants = pyrisConnectorService.getOfferedVariants(feature);
+            var variants = pyrisConnectorService.getAvailableVariants(feature);
             return ResponseEntity.ok(variants);
         }
         catch (PyrisConnectorException e) {
