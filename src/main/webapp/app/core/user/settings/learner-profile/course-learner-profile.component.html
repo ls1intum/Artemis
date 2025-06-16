@@ -66,6 +66,8 @@
                     [initialValue]="initialProficiency"
                     [(currentValue)]="proficiency"
                     (currentValueChange)="this.editing = true"
+                    [min_label]="'artemisApp.learnerProfile.courseLearnerProfile.proficiency.minLabel' | artemisTranslate"
+                    [max_label]="'artemisApp.learnerProfile.courseLearnerProfile.proficiency.maxLabel' | artemisTranslate"
                 />
             </div>
         </div>

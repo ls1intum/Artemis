@@ -10,6 +10,8 @@ export class DoubleSliderComponent {
     min = input<number>(1);
     max = input<number>(5);
     step = input<number>(1);
+    min_label = input<string>(String(this.min()));
+    max_label = input<string>(String(this.max()));
 
     currentValue = model.required<number>();
 

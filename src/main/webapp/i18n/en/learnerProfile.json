@@ -24,6 +24,8 @@
                 "proficiency": {
                     "label": "Proficiency",
                     "description": "Artemis' estimation of your proficiency in this course.",
+                    "minLabel": "Beginner",
+                    "maxLabel": "Expert",
                     "tooltip": "The initial value of the calculation is displayed by the grey dot. If you disagree with Artemis' calculation, you can manually set it with the blue button."
                 },
                 "profileSaved": "Learner profile saved",
