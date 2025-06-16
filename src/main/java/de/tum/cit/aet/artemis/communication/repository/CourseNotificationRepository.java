@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.time.ZonedDateTime;
 import java.util.List;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -21,6 +22,7 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
  * Repository for the {@link CourseNotification} entity.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Repository
 public interface CourseNotificationRepository extends ArtemisJpaRepository<CourseNotification, Long> {
 
