@@ -153,10 +153,6 @@ public class IrisChatSessionResource {
         if (user.hasAcceptedExternalLLMUsage()) {
             var allChatSessions = Stream.of(getAllSessionsForCourseChat(courseId), getAllSessionsForLectureChat(courseId), getAllSessionsForProgrammingExerciseChat(courseId),
                     getAllSessionsForTextExerciseChat(courseId)).filter(Objects::nonNull).flatMap(List::stream).toList();
-            allChatSessions.forEach(s -> {
-                System.out.println(s.getEntityId());
-            });
-
             return ResponseEntity.ok(allChatSessions);
         }
         else {
