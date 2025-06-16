@@ -15,6 +15,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -44,6 +45,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
  * Spring Data JPA repository for the Result entity.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Repository
 public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
 
@@ -858,5 +860,17 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                )
             """)
     Optional<Result> findLatestResultWithFeedbacksAndTestcasesForSubmission(@Param("submissionId") long submissionId);
+
+    @Query("""
+            SELECT r
+            FROM Result r
+            WHERE r.submission.id IN :submissionIds
+            AND r.id = (
+                 SELECT MAX(r2.id)
+                 FROM Result r2
+                 WHERE r2.submission.id = r.submission.id
+               )
+            """)
+    Set<Result> findLatestResultsBySubmissionIds(@Param("submissionIds") Set<Long> submissionIds);
 
 }

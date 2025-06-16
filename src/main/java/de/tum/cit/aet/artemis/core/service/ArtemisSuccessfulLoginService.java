@@ -13,9 +13,12 @@ import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.communication.domain.GlobalNotificationType;
+import de.tum.cit.aet.artemis.communication.repository.GlobalNotificationSettingRepository;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -31,6 +34,7 @@ import de.tum.cit.aet.artemis.core.util.ClientEnvironment;
  */
 @Profile(PROFILE_CORE)
 @Service
+@Lazy
 public class ArtemisSuccessfulLoginService {
 
     private static final Logger log = LoggerFactory.getLogger(ArtemisSuccessfulLoginService.class);
@@ -48,6 +52,12 @@ public class ArtemisSuccessfulLoginService {
 
     private final MailSendingService mailSendingService;
 
+    private final GlobalNotificationSettingRepository globalNotificationSettingRepository;
+
+    /**
+     * Ensures that the password reset links for both English and German are initialized properly.
+     * If the configured links are empty or set to a placeholder, it uses the default link, the ArtemisServerURL/account/reset/request.
+     */
     @PostConstruct
     public void ensurePasswordResetLinksAreInitializedProperly() {
         String defaultPasswordResetLink = artemisServerUrl + "/account/reset/request";
@@ -62,20 +72,29 @@ public class ArtemisSuccessfulLoginService {
         }
     }
 
-    public ArtemisSuccessfulLoginService(UserRepository userRepository, MailSendingService mailSendingService) {
+    public ArtemisSuccessfulLoginService(UserRepository userRepository, MailSendingService mailSendingService,
+            GlobalNotificationSettingRepository globalNotificationSettingRepository) {
         this.userRepository = userRepository;
         this.mailSendingService = mailSendingService;
+        this.globalNotificationSettingRepository = globalNotificationSettingRepository;
     }
 
     /**
      * Handles successful authentication events.
      * Sends a login notification email to users when they successfully authenticate.
      *
-     * @param username the username of the user who has successfully logged in
+     * @param username             the username of the user who has successfully logged in
+     * @param authenticationMethod the method used for authentication
+     * @param clientEnvironment    the environment information of the client (optional)
+     * @see AuthenticationMethod for available authentication methods
      */
     public void sendLoginEmail(String username, AuthenticationMethod authenticationMethod, @Nullable ClientEnvironment clientEnvironment) {
         try {
             User recipient = userRepository.getUserByLoginElseThrow(username);
+
+            if (!globalNotificationSettingRepository.isNotificationEnabled(recipient.getId(), GlobalNotificationType.NEW_LOGIN)) {
+                return;
+            }
 
             String localeKey = recipient.getLangKey();
             if (localeKey == null) {

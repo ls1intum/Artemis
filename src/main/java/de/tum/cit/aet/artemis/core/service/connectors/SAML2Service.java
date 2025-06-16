@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -57,6 +58,7 @@ import de.tum.cit.aet.artemis.core.util.HttpRequestUtils;
  * The service creates a {@link UsernamePasswordAuthenticationToken} which can then be used by the client to authenticate.
  * This is needed, since the client "does not know" that he is already authenticated via SAML2.
  */
+@Lazy
 @Service
 @Profile(PROFILE_SAML2)
 public class SAML2Service {
@@ -118,6 +120,7 @@ public class SAML2Service {
      *
      * @param originalAuth the original authentication with details
      * @param principal    the principal, containing the user information
+     * @param request      the HTTP request, used to extract the client environment
      * @return a new {@link UsernamePasswordAuthenticationToken} matching the SAML2 user
      */
     public Authentication handleAuthentication(final Authentication originalAuth, final Saml2AuthenticatedPrincipal principal, final HttpServletRequest request) {

@@ -19,6 +19,7 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpHeaders;
@@ -101,6 +102,7 @@ import io.jsonwebtoken.lang.Arrays;
  * REST controller for managing ProgrammingExercise.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @RestController
 @RequestMapping("api/programming/")
 public class ProgrammingExerciseResource {
@@ -445,7 +447,7 @@ public class ProgrammingExerciseResource {
         log.debug("REST request to get all ProgrammingExercises for the course with id : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
-        List<ProgrammingExercise> exercises = programmingExerciseRepository.findByCourseIdWithLatestResultForTemplateSolutionParticipations(courseId);
+        List<ProgrammingExercise> exercises = programmingExerciseService.findByCourseIdWithCategoriesLatestSubmissionResultForTemplateAndSolutionParticipation(courseId);
         for (ProgrammingExercise exercise : exercises) {
             // not required in the returned json body
             exercise.setStudentParticipations(null);

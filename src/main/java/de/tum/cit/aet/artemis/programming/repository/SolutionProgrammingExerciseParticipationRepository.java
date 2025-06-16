@@ -6,9 +6,11 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 
 import java.util.Collection;
 import java.util.Optional;
+import java.util.Set;
 
 import jakarta.validation.constraints.NotNull;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -29,6 +31,7 @@ import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExercisePart
  * Spring Data JPA repository for the Participation entity.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Repository
 public interface SolutionProgrammingExerciseParticipationRepository
         extends DynamicSpecificationRepository<SolutionProgrammingExerciseParticipation, Long, SolutionParticipationFetchOptions> {
@@ -66,10 +69,10 @@ public interface SolutionProgrammingExerciseParticipationRepository
 
     @Query("""
              SELECT DISTINCT sp
-               FROM SolutionProgrammingExerciseParticipation sp
+             FROM SolutionProgrammingExerciseParticipation sp
                LEFT JOIN FETCH sp.submissions s
-              WHERE sp.programmingExercise.id = :exerciseId
-                AND (
+             WHERE sp.programmingExercise.id = :exerciseId
+             AND (
                   s.id = (
                     SELECT MAX(s2.id)
                       FROM Submission s2
@@ -79,6 +82,22 @@ public interface SolutionProgrammingExerciseParticipationRepository
                 )
             """)
     Optional<SolutionProgrammingExerciseParticipation> findWithLatestSubmissionByExerciseId(@Param("exerciseId") long exerciseId);
+
+    @Query("""
+            SELECT DISTINCT sp
+            FROM SolutionProgrammingExerciseParticipation sp
+              LEFT JOIN FETCH sp.submissions s
+            WHERE sp.programmingExercise.id IN :exerciseIds
+            AND (
+                 s.id = (
+                   SELECT MAX(s2.id)
+                   FROM Submission s2
+                   WHERE s2.participation.id = sp.id
+                 )
+                 OR s.id IS NULL
+               )
+            """)
+    Set<SolutionProgrammingExerciseParticipation> findAllWithLatestSubmissionByExerciseIds(@Param("exerciseIds") Set<Long> exerciseIds);
 
     @NotNull
     default SolutionProgrammingExerciseParticipation findByExerciseIdElseThrow(final Specification<SolutionProgrammingExerciseParticipation> specification, long exerciseId) {
