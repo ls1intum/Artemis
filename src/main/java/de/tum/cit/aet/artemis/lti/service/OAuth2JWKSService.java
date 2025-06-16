@@ -77,7 +77,9 @@ public class OAuth2JWKSService {
     }
 
     /**
-     * Updates the JWK associated with the clientRegistrationId receives. Can either remove, replace, or add a new one.
+     * Updates the JWK associated with the clientRegistrationId receives.
+     * If the clientRegistrationId does not exist, the key for it is deleted.
+     * Otherwise, a new key is generated and stored in the Hazelcast map.
      *
      * @param clientRegistrationId the client registrationId
      */
@@ -85,10 +87,10 @@ public class OAuth2JWKSService {
         ClientRegistration clientRegistration = onlineCourseConfigurationService.findByRegistrationId(clientRegistrationId);
 
         if (clientRegistration == null) {
-            clientRegistrationIdToJwk.delete(clientRegistrationId);  // Delete only
+            clientRegistrationIdToJwk.delete(clientRegistrationId);
         }
         else {
-            generateAndAddKey(clientRegistration);  // Replace or Add
+            clientRegistrationIdToJwk.put(clientRegistrationId, generateKey(clientRegistration));
         }
     }
 
@@ -106,30 +108,25 @@ public class OAuth2JWKSService {
      * This method is called once during initialization to ensure all existing ClientRegistrations have a key.
      */
     private void generateOAuth2ClientKeys() {
-        onlineCourseConfigurationService.getAllClientRegistrations().forEach(this::generateAndAddKey);
+        onlineCourseConfigurationService.getAllClientRegistrations().forEach(cr -> clientRegistrationIdToJwk.computeIfAbsent(cr.getRegistrationId(), id -> generateKey(cr)));
     }
 
     /**
-     * Generates a new RSAKey for the given ClientRegistration and adds it to the Hazelcast map.
-     * If the ClientRegistration is null, no action is taken.
+     * Generates a new RSAKey for the given ClientRegistration.
      *
      * @param clientRegistration the ClientRegistration for which to generate a key
      */
-    private void generateAndAddKey(ClientRegistration clientRegistration) {
-        if (clientRegistration == null) {
-            return;
-        }
+    private RSAKey generateKey(ClientRegistration clientRegistration) {
         try {
             KeyPair keyPair = KeyPairGenerator.getInstance("RSA").generateKeyPair();
             String kid = kidGenerator.generateKey();
 
-            RSAKey rsaKey = new RSAKey.Builder((RSAPublicKey) keyPair.getPublic()).keyUse(KeyUse.SIGNATURE).algorithm(JWSAlgorithm.RS256).privateKey(keyPair.getPrivate())
-                    .keyID(kid).build();
-
-            clientRegistrationIdToJwk.put(clientRegistration.getRegistrationId(), rsaKey);
+            return new RSAKey.Builder((RSAPublicKey) keyPair.getPublic()).keyUse(KeyUse.SIGNATURE).algorithm(JWSAlgorithm.RS256).privateKey(keyPair.getPrivate()).keyID(kid)
+                    .build();
         }
         catch (NoSuchAlgorithmException e) {
             log.error("Failed to generate key for clientRegistrationId {}", clientRegistration.getRegistrationId(), e);
+            return null;
         }
     }
 }
