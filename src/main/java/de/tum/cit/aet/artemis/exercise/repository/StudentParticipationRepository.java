@@ -779,8 +779,15 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             WHERE p.testRun = FALSE
                 AND p.student.id = :studentId
                 AND p.exercise IN :exercises
+                AND (
+                    s.id = (
+                        SELECT MAX(s2.id)
+                        FROM p.submissions s2
+                    )
+                    OR s.id IS NULL
+                )
             """)
-    List<StudentParticipation> findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(@Param("studentId") long studentId,
+    List<StudentParticipation> findByStudentIdAndIndividualExercisesWithEagerLatestSubmissionsResultIgnoreTestRuns(@Param("studentId") long studentId,
             @Param("exercises") Collection<Exercise> exercises);
 
     @Query("""
@@ -803,8 +810,15 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             WHERE p.testRun = FALSE
                 AND p.student.id = :studentId
                 AND p.exercise IN :exercises
+                AND (
+                    s.id = (
+                        SELECT MAX(s2.id)
+                        FROM p.submissions s2
+                    )
+                    OR s.id IS NULL
+                )
             """)
-    List<StudentParticipation> findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultAndAssessorIgnoreTestRuns(@Param("studentId") long studentId,
+    List<StudentParticipation> findByStudentIdAndIndividualExercisesWithEagerLatestSubmissionResultAndAssessorIgnoreTestRuns(@Param("studentId") long studentId,
             @Param("exercises") List<Exercise> exercises);
 
     @Query("""
@@ -818,8 +832,15 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             WHERE p.testRun = FALSE
                 AND se.id IN :studentExamId
                 AND e.testExam = TRUE
+                AND (
+                    s.id = (
+                        SELECT MAX(s2.id)
+                        FROM p.submissions s2
+                    )
+                    OR s.id IS NULL
+                )
             """)
-    List<StudentParticipation> findTestExamParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResultAndAssessorIgnoreTestRuns(
+    List<StudentParticipation> findTestExamParticipationsByStudentIdAndIndividualExercisesWithEagerLatestSubmissionResultAndAssessorIgnoreTestRuns(
             @Param("studentExamId") long studentExamId);
 
     @Query("""
@@ -832,8 +853,15 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 WHERE p.testRun = FALSE
                     AND se.id IN :studentExamId
                     AND e.testExam = TRUE
+                    AND (
+                    s.id = (
+                        SELECT MAX(s2.id)
+                        FROM p.submissions s2
+                    )
+                    OR s.id IS NULL
+                )
             """)
-    List<StudentParticipation> findTestExamParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(@Param("studentExamId") long studentExamId);
+    List<StudentParticipation> findTestExamParticipationsByStudentIdAndIndividualExercisesWithEagerLatestSubmissionResultIgnoreTestRuns(@Param("studentExamId") long studentExamId);
 
     @Query("""
             SELECT DISTINCT p
@@ -1014,32 +1042,32 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     }
 
     /**
-     * Get all participations for the given studentExam and exercises combined with their submissions with a result.
+     * Get all participations for the given studentExam and exercises combined with their latest submissions with result.
      * Distinguishes between real exams, test exams and test runs and only loads the respective participations
      *
      * @param studentExam  studentExam with exercises loaded
      * @param withAssessor (only for non-test runs) if assessor should be loaded with the result
      * @return student's participations with submissions and results
      */
-    default List<StudentParticipation> findByStudentExamWithEagerSubmissionsResult(StudentExam studentExam, boolean withAssessor) {
+    default List<StudentParticipation> findByStudentExamWithEagerLatestSubmissionsResult(StudentExam studentExam, boolean withAssessor) {
         if (studentExam.isTestRun()) {
             return findTestRunParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(studentExam.getUser().getId(), studentExam.getExercises());
         }
 
         if (studentExam.isTestExam()) {
             if (withAssessor) {
-                return findTestExamParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResultAndAssessorIgnoreTestRuns(studentExam.getId());
+                return findTestExamParticipationsByStudentIdAndIndividualExercisesWithEagerLatestSubmissionResultAndAssessorIgnoreTestRuns(studentExam.getId());
             }
             else {
-                return findTestExamParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(studentExam.getId());
+                return findTestExamParticipationsByStudentIdAndIndividualExercisesWithEagerLatestSubmissionResultIgnoreTestRuns(studentExam.getId());
             }
         }
         else {
             if (withAssessor) {
-                return findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultAndAssessorIgnoreTestRuns(studentExam.getUser().getId(), studentExam.getExercises());
+                return findByStudentIdAndIndividualExercisesWithEagerLatestSubmissionResultAndAssessorIgnoreTestRuns(studentExam.getUser().getId(), studentExam.getExercises());
             }
             else {
-                return findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(studentExam.getUser().getId(), studentExam.getExercises());
+                return findByStudentIdAndIndividualExercisesWithEagerLatestSubmissionsResultIgnoreTestRuns(studentExam.getUser().getId(), studentExam.getExercises());
             }
         }
     }

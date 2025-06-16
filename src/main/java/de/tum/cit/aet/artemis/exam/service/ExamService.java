@@ -231,7 +231,7 @@ public class ExamService {
     }
 
     /**
-     * Helper method which attaches the result to its participation's latest submission..
+     * Helper method which attaches the result to its participation's latest submission.
      * For direct automatic feedback during the exam conduction for {@link ProgrammingExercise}, we need to attach the results.
      * We also attach the result if the results are already published for the exam.
      * If no suitable Result is found for StudentParticipation, an empty Result set is assigned to prevent LazyInitializationException on future reads.
@@ -376,7 +376,7 @@ public class ExamService {
      * Includes the corresponding grade and grade type as well if a GradingScale is set for the relevant exam.
      *
      * @param studentExam             a StudentExam instance that will have its points and grades calculated if it is assessed
-     * @param participationsOfStudent StudentParticipation list for the given studentExam
+     * @param participationsOfStudent StudentParticipation list for the given studentExam with eagerly loaded latest submission and result
      * @return Student Exam results with exam grade calculated if applicable
      */
     @NotNull
@@ -539,7 +539,7 @@ public class ExamService {
 
     /**
      * Loads the quiz questions as is not possible to load them in a generic way with the entity graph used.
-     * See {@link StudentParticipationRepository#findByStudentExamWithEagerSubmissionsResult}
+     * See {@link StudentParticipationRepository#findByStudentExamWithEagerLatestSubmissionsResult}
      *
      * @param studentExam the studentExam for which to load exercises
      */
@@ -566,8 +566,8 @@ public class ExamService {
      */
     public void fetchParticipationsSubmissionsAndResultsForExam(StudentExam studentExam, User currentUser) {
 
-        // 1st: fetch participations, submissions and results (a distinction for test runs, real exams and test exams is done within the following method)
-        var participations = studentParticipationRepository.findByStudentExamWithEagerSubmissionsResult(studentExam, false);
+        // 1st: fetch participations, with latest submissions and results (a distinction for test runs, real exams and test exams is done within the following method)
+        var participations = studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionsResult(studentExam, false);
 
         // 2nd: fetch all submitted answers for quizzes
         submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(participations);
@@ -591,7 +591,7 @@ public class ExamService {
      *
      * @param studentExam         the given student exam
      * @param exercise            the exercise for which the user participation should be filtered
-     * @param participations      the set of participations, wherein to search for the relevant participation
+     * @param participations      the set of participations with eagerly loaded latest submission and result, wherein to search for the relevant participation
      * @param isAtLeastInstructor flag for instructor access privileges
      */
     public void filterParticipationForExercise(StudentExam studentExam, Exercise exercise, List<StudentParticipation> participations, boolean isAtLeastInstructor) {
@@ -623,12 +623,11 @@ public class ExamService {
             // we might need this information for programming exercises with submission policy
             participation.setSubmissionCount(participation.getSubmissions().size());
 
-            // only include the latest submission
-            Optional<Submission> optionalLatestSubmission = participation.findLatestLegalOrIllegalSubmission();
+            // only loaded the latest submission
+            Optional<Submission> optionalLatestSubmission = participation.getSubmissions().stream().findFirst();
             if (optionalLatestSubmission.isPresent()) {
                 Submission latestSubmission = optionalLatestSubmission.get();
                 latestSubmission.setParticipation(null);
-                participation.setSubmissions(Set.of(latestSubmission));
                 setResultIfNecessary(studentExam, participation, isAtLeastInstructor);
 
                 if (exercise instanceof QuizExercise && latestSubmission instanceof QuizSubmission quizSubmission) {
@@ -651,7 +650,7 @@ public class ExamService {
      * Calculates the corresponding grade if a GradingScale is given.
      *
      * @param studentExam                    a StudentExam instance that will have its points and grades calculated if it is assessed
-     * @param participationsOfStudent        StudentParticipation list for the given studentExam
+     * @param participationsOfStudent        StudentParticipation list for the given studentExam with eagerly loaded latest submission and results
      * @param exam                           the relevant exam
      * @param gradingScale                   optional GradingScale that will be used to set the grade type and the achieved grade if present
      * @param calculateFirstCorrectionPoints flag to determine whether to calculate the first correction results or not
