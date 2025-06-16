@@ -94,7 +94,7 @@ public class RepositoryAccessService {
         boolean hasStarted = exerciseDateService.hasExerciseStarted(programmingExercise);
 
         if (!hasStarted) {
-            // Only teaching assistants have access to the repository before the exercise has started.
+            // Only teaching assistants have access to their own repository before the exercise has started.
             return isTeachingAssistant;
         }
 

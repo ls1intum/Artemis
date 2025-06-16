@@ -98,6 +98,7 @@ public class ExerciseDateService {
                 return api.isIndividualExerciseWorkingPeriodOver(exercise.getExam(), studentParticipation);
             }
             else {
+                // NOTE: this code is not really reachable, but kept for having a plausible implementation
                 return api.isExamWithGracePeriodOver(exercise.getExam());
             }
         }
