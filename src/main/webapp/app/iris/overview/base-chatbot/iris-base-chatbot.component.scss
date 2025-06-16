@@ -272,10 +272,9 @@ pre {
 }
 
 .chat-container {
-    height: 100%;
+    height: calc(100% - 2.5rem);
+    overflow-y: hidden;
     display: flex;
-    grid-template-columns: 20rem 1fr;
-    grid-template-rows: 1fr;
 }
 
 .chat-history {
