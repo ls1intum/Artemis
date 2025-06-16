@@ -74,8 +74,8 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
     @Column(name = "allow_branching", columnDefinition = "boolean default false", nullable = false)
     private boolean allowBranching = false; // default value
 
-    @Column(name = "branch_regex")
-    private String branchRegex;
+    @Column(name = "branch_regex", columnDefinition = "varchar(255) default '.*'", nullable = false)
+    private String branchRegex = ".*"; // default value
 
     @Size(max = 36)
     @Nullable

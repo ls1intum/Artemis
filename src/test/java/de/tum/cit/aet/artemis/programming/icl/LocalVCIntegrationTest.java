@@ -27,7 +27,10 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
@@ -40,6 +43,9 @@ import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
 
     private static final String TEST_PREFIX = "localvcint";
+
+    @Autowired
+    private PlatformTransactionManager platformTransactionManager;
 
     private LocalRepository assignmentRepository;
 
@@ -316,7 +322,7 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testUserCreatesNewBranch() throws Exception {
+    void testUserCreatesNewBranchBranchingDisallowed() throws Exception {
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
         // Users cannot create new branches.
@@ -329,6 +335,52 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         RemoteRefUpdate remoteRefUpdate = pushResult.getRemoteUpdates().iterator().next();
         assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
         assertThat(remoteRefUpdate.getMessage()).isEqualTo("You cannot push to a branch other than the default branch.");
+    }
+
+    void customBranchTestHelper(boolean allowBranching, String regex, boolean shouldSucceed) throws Exception {
+        TransactionTemplate template = new TransactionTemplate(platformTransactionManager);
+        template.execute(status -> {
+            programmingExercise.getBuildConfig().setAllowBranching(allowBranching);
+            programmingExercise.getBuildConfig().setBranchRegex(regex);
+            programmingExerciseRepository.saveAndFlush(programmingExercise);
+            programmingExerciseBuildConfigRepository.saveAndFlush(programmingExercise.getBuildConfig());
+            return null;
+        });
+
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+        assignmentRepository.localGit.branchCreate().setName("new-branch").setStartPoint("refs/heads/" + defaultBranch).call();
+        String repositoryUri = localVCLocalCITestService.constructLocalVCUrl(student1Login, projectKey1, assignmentRepositorySlug);
+
+        // Push the new branch.
+        PushResult pushResult = assignmentRepository.localGit.push().setRemote(repositoryUri).setRefSpecs(new RefSpec("refs/heads/new-branch:refs/heads/new-branch")).call()
+                .iterator().next();
+        RemoteRefUpdate remoteRefUpdate = pushResult.getRemoteUpdates().iterator().next();
+
+        if (shouldSucceed) {
+            assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.OK);
+        }
+        else {
+            assertThat(remoteRefUpdate.getStatus()).isNotEqualTo(RemoteRefUpdate.Status.OK);
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testUserCreatesCustomBranchAllowedMatchesRegex() throws Exception {
+        customBranchTestHelper(true, "^new-branch$", true);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testUserCreatesCustomBranchDisallowedDoesntMatchRegex() throws Exception {
+        customBranchTestHelper(true, "^old-branch$", false);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testUserCreatesCustomBranchDisallowedBranchingDisabled() throws Exception {
+        customBranchTestHelper(false, ".*", false);
     }
 
     @Test
