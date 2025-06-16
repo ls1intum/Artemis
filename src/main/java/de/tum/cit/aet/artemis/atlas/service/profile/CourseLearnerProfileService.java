@@ -170,7 +170,7 @@ public class CourseLearnerProfileService {
 
         // Calculates point on sigmoid.
         // Flips and scales curve to match to Likert scale.
-        return -4 * (1 / (Math.exp(exp))) + 5;
+        return -4 * (1 / (1 + Math.exp(exp))) + 5;
     }
 
     /**
