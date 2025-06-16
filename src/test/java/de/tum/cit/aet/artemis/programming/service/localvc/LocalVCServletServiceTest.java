@@ -30,7 +30,6 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
-import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -129,13 +128,8 @@ class LocalVCServletServiceTest {
         mockRepositories.put("test/repo", mockRepository);
         ReflectionTestUtils.setField(localVCServletService, "repositories", mockRepositories);
 
-        // Setup the optional VCS access log service
-        localVCServletService = new LocalVCServletService(authenticationManager, userRepository, programmingExerciseRepository, repositoryAccessService, authorizationCheckService,
-                programmingExerciseParticipationService, auxiliaryRepositoryService, ciTriggerService, programmingSubmissionService, programmingMessagingService,
-                programmingTriggerService, participationVCSAccessTokenRepository, Optional.of(vcsAccessLogService));
-
-        // Re-set the repositories field after recreation of the service
-        ReflectionTestUtils.setField(localVCServletService, "repositories", mockRepositories);
+        // Setup the VcsAccessLogService as an Optional containing the mock
+        ReflectionTestUtils.setField(localVCServletService, "vcsAccessLogService", Optional.of(vcsAccessLogService));
     }
 
     @Test
@@ -169,12 +163,8 @@ class LocalVCServletServiceTest {
 
         AuthenticationContext.Session context = new AuthenticationContext.Session(session);
 
-        // Use reflection to call the private method for testing
-        java.lang.reflect.Method method = LocalVCServletService.class.getDeclaredMethod("saveFailedAccessVcsAccessLog", AuthenticationContext.class, String.class, Exercise.class,
-                LocalVCRepositoryUri.class, User.class, RepositoryActionType.class);
-        method.setAccessible(true);
-
-        method.invoke(localVCServletService, context, "student1", testExercise, testRepositoryUri, testUser, RepositoryActionType.READ);
+        // Call the public method directly (no reflection needed)
+        localVCServletService.saveFailedAccessVcsAccessLog(context, "student1", testExercise, testRepositoryUri, testUser, RepositoryActionType.READ);
 
         verify(vcsAccessLogService).saveAccessLog(eq(testUser), any(), eq(RepositoryActionType.CLONE_FAIL), eq(AuthenticationMechanism.SSH), anyString(), anyString());
     }
