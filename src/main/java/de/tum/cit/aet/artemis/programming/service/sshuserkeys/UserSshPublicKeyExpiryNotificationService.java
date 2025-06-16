@@ -12,10 +12,13 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.communication.domain.GlobalNotificationType;
+import de.tum.cit.aet.artemis.communication.repository.GlobalNotificationSettingRepository;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -23,6 +26,7 @@ import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
 import de.tum.cit.aet.artemis.programming.repository.UserSshPublicKeyRepository;
 
 @Profile(PROFILE_CORE_AND_SCHEDULING)
+@Lazy
 @Service
 public class UserSshPublicKeyExpiryNotificationService {
 
@@ -32,10 +36,14 @@ public class UserSshPublicKeyExpiryNotificationService {
 
     private final MailSendingService mailSendingService;
 
-    public UserSshPublicKeyExpiryNotificationService(UserSshPublicKeyRepository userSshPublicKeyRepository, UserRepository userRepository, MailSendingService mailSendingService) {
+    private final GlobalNotificationSettingRepository globalNotificationSettingRepository;
+
+    public UserSshPublicKeyExpiryNotificationService(UserSshPublicKeyRepository userSshPublicKeyRepository, UserRepository userRepository, MailSendingService mailSendingService,
+            GlobalNotificationSettingRepository globalNotificationSettingRepository) {
         this.userSshPublicKeyRepository = userSshPublicKeyRepository;
         this.userRepository = userRepository;
         this.mailSendingService = mailSendingService;
+        this.globalNotificationSettingRepository = globalNotificationSettingRepository;
     }
 
     /**
@@ -75,16 +83,18 @@ public class UserSshPublicKeyExpiryNotificationService {
      * @param key       the key which was added
      */
     public void notifyUserAboutExpiredSshKey(User recipient, UserSshPublicKey key) {
-        var contextVariables = new HashMap<String, Object>();
+        if (globalNotificationSettingRepository.isNotificationEnabled(recipient.getId(), GlobalNotificationType.SSH_KEY_EXPIRED)) {
+            var contextVariables = new HashMap<String, Object>();
 
-        contextVariables.put("sshKey", key);
-        if (key.getExpiryDate() != null) {
-            contextVariables.put("expiryDate", key.getExpiryDate().format(DateTimeFormatter.ofPattern("dd.MM.yyyy - HH:mm:ss")));
-        }
-        else {
-            contextVariables.put("expiryDate", "-");
-        }
+            contextVariables.put("sshKey", key);
+            if (key.getExpiryDate() != null) {
+                contextVariables.put("expiryDate", key.getExpiryDate().format(DateTimeFormatter.ofPattern("dd.MM.yyyy - HH:mm:ss")));
+            }
+            else {
+                contextVariables.put("expiryDate", "-");
+            }
 
-        mailSendingService.buildAndSendSync(recipient, "email.notification.sshKeyExpiry.sshKeysHasExpiredWarning", "mail/notification/sshKeyHasExpiredEmail", contextVariables);
+            mailSendingService.buildAndSendSync(recipient, "email.notification.sshKeyExpiry.sshKeysHasExpiredWarning", "mail/notification/sshKeyHasExpiredEmail", contextVariables);
+        }
     }
 }
