@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.exam.api;
 
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -13,6 +14,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 
 @Conditional(ExamEnabled.class)
 @Controller
+@Lazy
 public class ExamAccessApi extends AbstractExamApi {
 
     private final ExamAccessService examAccessService;

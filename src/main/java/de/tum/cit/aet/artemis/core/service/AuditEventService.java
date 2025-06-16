@@ -6,6 +6,7 @@ import java.time.Instant;
 import java.util.Optional;
 
 import org.springframework.boot.actuate.audit.AuditEvent;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -20,6 +21,7 @@ import de.tum.cit.aet.artemis.core.repository.PersistenceAuditEventRepository;
  * This is the default implementation to support SpringBoot Actuator AuditEventRepository
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class AuditEventService {
 

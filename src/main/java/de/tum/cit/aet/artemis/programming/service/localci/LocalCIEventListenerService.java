@@ -6,7 +6,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -20,6 +20,7 @@ import com.hazelcast.map.listener.EntryUpdatedListener;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
+import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.dto.SubmissionProcessingDTO;
@@ -37,6 +38,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
  * feedback to users.
  * New event listeners should be added here to ensure consistent handling of CI-related events.
  */
+@Lazy
 @Service
 @Profile("localci & scheduling")
 public class LocalCIEventListenerService {
@@ -62,7 +64,7 @@ public class LocalCIEventListenerService {
     /**
      * Add listeners for build job, build agent changes.
      */
-    @EventListener(ApplicationReadyEvent.class)
+    @EventListener(FullStartupEvent.class)
     public void init() {
         distributedDataAccessService.getDistributedBuildJobQueue().addItemListener(new QueuedBuildJobItemListener(), true);
         distributedDataAccessService.getDistributedProcessingJobs().addEntryListener(new ProcessingBuildJobItemListener(), true);
