@@ -9,7 +9,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
-import { StarRatingComponent } from 'app/assessment/manage/rating/star-rating/star-rating.component';
 import { of, throwError } from 'rxjs';
 
 describe('JudgementOfLearningRatingComponent', () => {
@@ -91,7 +90,7 @@ describe('JudgementOfLearningRatingComponent', () => {
         component.courseId = 1;
 
         const newRating = 4;
-        const event = { oldValue: 3, newValue: newRating, starRating: {} as StarRatingComponent };
+        const event = { oldValue: 3, newValue: newRating };
         jest.spyOn(courseCompetencyService, 'setJudgementOfLearning').mockReturnValue(of(new HttpResponse<void>({ status: 200 })));
         const emitSpy = jest.spyOn(component.ratingChange, 'emit');
 
@@ -106,7 +105,7 @@ describe('JudgementOfLearningRatingComponent', () => {
         component.courseId = 1;
 
         const newRating = 4;
-        const event = { oldValue: 3, newValue: newRating, starRating: {} as StarRatingComponent };
+        const event = { oldValue: 3, newValue: newRating };
         jest.spyOn(courseCompetencyService, 'setJudgementOfLearning').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
         const errorSpy = jest.spyOn(alertService, 'error');
 
