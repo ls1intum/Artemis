@@ -9,6 +9,7 @@ import java.util.List;
 
 import org.springframework.boot.actuate.info.Info;
 import org.springframework.boot.actuate.info.InfoContributor;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
@@ -22,6 +23,7 @@ import org.springframework.stereotype.Component;
  */
 @Profile(PROFILE_CORE)
 @Component
+@Lazy
 public class ModuleFeatureInfoContributor implements InfoContributor {
 
     private final Environment environment;
