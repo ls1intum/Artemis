@@ -11,9 +11,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import jakarta.annotation.Nullable;
 
@@ -266,7 +268,9 @@ public class CourseScoreCalculationService {
         // Get participation results (used in course-statistics.component).
         Set<ParticipationResultDTO> participationResults = new HashSet<>();
         for (StudentParticipation studentParticipation : gradedStudentParticipations) {
-            if (studentParticipation.getResults() != null && !studentParticipation.getResults().isEmpty()) {
+            Set<Result> results = Stream.ofNullable(studentParticipation.getSubmissions()).flatMap(Collection::stream)
+                    .flatMap(submission -> Stream.ofNullable(submission.getResults()).flatMap(Collection::stream)).filter(Objects::nonNull).collect(Collectors.toSet());
+            if (!results.isEmpty()) {
                 Result result = getResultForParticipation(studentParticipation, studentParticipation.getIndividualDueDate());
                 var participationResult = new ParticipationResultDTO(result.getScore(), result.isRated(), studentParticipation.getId());
                 participationResults.add(participationResult);
@@ -408,13 +412,14 @@ public class CourseScoreCalculationService {
         if (participation == null) {
             return null;
         }
-        var resultsSet = participation.getResults();
+        Set<Result> resultsSet = Stream.ofNullable(participation.getSubmissions()).flatMap(Collection::stream)
+                .flatMap(submission -> Stream.ofNullable(submission.getResults()).flatMap(Collection::stream)).filter(Objects::nonNull).collect(Collectors.toSet());
 
         Result emptyResult = new Result();
         // TODO: Check if you can just instantiate Result.score with 0.0.
         emptyResult.setScore(0.0);
 
-        if (resultsSet == null || resultsSet.isEmpty()) {
+        if (resultsSet.isEmpty()) {
             return emptyResult;
         }
 

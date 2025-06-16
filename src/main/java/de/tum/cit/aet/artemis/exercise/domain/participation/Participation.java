@@ -1,14 +1,11 @@
 package de.tum.cit.aet.artemis.exercise.domain.participation;
 
 import java.time.ZonedDateTime;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import jakarta.annotation.Nullable;
 import jakarta.persistence.Column;
@@ -242,18 +239,6 @@ public abstract class Participation extends DomainObject implements Participatio
     @Nullable
     public Result findLatestResult() {
         return findLatestResult(false);
-    }
-
-    /**
-     * @deprecated This method is deprecated and will be removed in the future.
-     *             We will investigate options to delete this method in a follow-up PR.
-     * @return all results of the participation, including illegal submissions
-     */
-    @Deprecated(forRemoval = true)
-    @JsonIgnore
-    public Set<Result> getResults() {
-        return Stream.ofNullable(this.submissions).flatMap(Collection::stream).flatMap(submission -> Stream.ofNullable(submission.getResults()).flatMap(Collection::stream))
-                .filter(Objects::nonNull).collect(Collectors.toSet());
     }
 
     /**

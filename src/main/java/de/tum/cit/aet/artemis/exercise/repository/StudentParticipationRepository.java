@@ -940,7 +940,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
         var participations = findByExamIdWithEagerLegalSubmissionsRatedResults(examId); // without test run participations
         // filter out the participations of test runs which can only be made by instructors
         participations = participations.stream().filter(studentParticipation -> !studentParticipation.isTestRun()).toList();
-        return filterParticipationsWithRelevantResults(participations, true);
+        return filterParticipationsWithRelevantResults(participations);
     }
 
     /**
@@ -952,7 +952,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      */
     default List<StudentParticipation> findByCourseIdAndStudentIdWithRelevantResult(long courseId, long studentId) {
         List<StudentParticipation> participations = findByCourseIdAndStudentIdWithEagerRatedResults(courseId, studentId);
-        return filterParticipationsWithRelevantResults(participations, false);
+        return filterParticipationsWithRelevantResults(participations);
     }
 
     /**
@@ -963,17 +963,16 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      */
     default List<StudentParticipation> findByCourseIdWithRelevantResult(long courseId) {
         List<StudentParticipation> participations = findByCourseIdWithEagerRatedResults(courseId);
-        return filterParticipationsWithRelevantResults(participations, false);
+        return filterParticipationsWithRelevantResults(participations);
     }
 
     /**
      * filters the relevant results by removing all irrelevant ones
      *
-     * @param participations     the participations to get filtered
-     * @param resultInSubmission flag to indicate if the results are represented in the submission or participation
+     * @param participations the participations to get filtered
      * @return an unmodifiable list of filtered participations
      */
-    private List<StudentParticipation> filterParticipationsWithRelevantResults(List<StudentParticipation> participations, boolean resultInSubmission) {
+    private List<StudentParticipation> filterParticipationsWithRelevantResults(List<StudentParticipation> participations) {
         return participations.stream()
                 // Filter out participations without Students
                 // These participations are used e.g. to store template and solution build plans in programming exercises
@@ -983,14 +982,9 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 .peek(participation -> {
                     List<Result> relevantResults = new ArrayList<>();
 
-                    // Get the results over the participation or over submissions
-                    Set<Result> resultsOfParticipation;
-                    if (resultInSubmission) {
-                        resultsOfParticipation = participation.getSubmissions().stream().map(Submission::getLatestResult).collect(Collectors.toSet());
-                    }
-                    else {
-                        resultsOfParticipation = participation.getResults();
-                    }
+                    Set<Result> resultsOfParticipation = participation.getSubmissions().stream().map(Submission::getLatestResult).collect(Collectors.toSet());
+                    ;
+
                     // search for the relevant result by filtering out irrelevant results using the continue keyword
                     // this for loop is optimized for performance and thus not very easy to understand ;)
                     for (Result result : resultsOfParticipation) {
