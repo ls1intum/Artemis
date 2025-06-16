@@ -1,0 +1,13 @@
+{
+    "artemisApp": {
+        "calendar": {
+            "mondayShort": "Mo",
+            "tuesdayShort": "Di",
+            "wednesdayShort": "Mi",
+            "thursdayShort": "Do",
+            "fridayShort": "Fr",
+            "saturdayShort": "Sa",
+            "sundayShort": "So"
+        }
+    }
+}

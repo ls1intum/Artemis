@@ -23,6 +23,7 @@ export enum CourseOverviewRoutePath {
     SETTINGS = 'settings',
     PRACTICE = 'practice',
     PRACTICE_QUIZ = 'practice/quiz',
+    CALENDAR = 'calendar',
 }
 
 export const routes: Routes = [
@@ -353,6 +354,16 @@ export const routes: Routes = [
                 path: '',
                 redirectTo: CourseOverviewRoutePath.DASHBOARD, // dashboard will redirect to exercises if not enabled
                 pathMatch: 'full',
+            },
+            {
+                path: CourseOverviewRoutePath.CALENDAR,
+                loadComponent: () => import('app/calendar/desktop/calendar-desktop-month/calendar-desktop-month.component').then((m) => m.CalendarDesktopMonthComponent),
+                data: {
+                    authorities: [Authority.USER],
+                    pageTitle: 'overview.calendar',
+                    hasSidebar: false,
+                    showRefreshButton: true,
+                },
             },
         ],
     },

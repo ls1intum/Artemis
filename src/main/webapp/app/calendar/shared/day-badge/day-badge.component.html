@@ -1,0 +1,11 @@
+<div
+    class="day-badge"
+    [ngClass]="{
+        today: isToday() && !minimalTodayIndication,
+        'today-minimal': isToday() && minimalTodayIndication,
+        other: !isToday(),
+        selected: selected,
+    }"
+>
+    {{ day }}
+</div>

@@ -1,0 +1,32 @@
+.day-badge {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    font-weight: 600;
+    font-size: 14px;
+    text-align: center;
+}
+
+.day-badge.today {
+    background-color: var(--primary);
+    color: var(--white);
+}
+
+.day-badge.today-minimal {
+    background-color: var(--body-bg);
+    color: var(--primary);
+}
+
+.day-badge.other {
+    background-color: var(--body-bg);
+    color: var(--black);
+}
+
+.day-badge.selected {
+    background-color: #c1c4c6;
+}

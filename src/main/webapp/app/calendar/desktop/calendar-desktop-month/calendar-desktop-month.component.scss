@@ -1,0 +1,63 @@
+.frame {
+    display: flex;
+    flex-direction: column;
+    height: 744px;
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+}
+
+.header {
+    height: 40px;
+    display: flex;
+    align-items: center;
+    font-size: 14;
+    font-weight: 600;
+    border-bottom: 2px solid var(--border-color);
+
+    .day-name {
+        flex: 1;
+        text-align: center;
+        font-size: 14;
+        font-weight: 600;
+    }
+}
+
+.week-row {
+    display: flex;
+    height: 140px;
+
+    .day-cell {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: baseline;
+        gap: 4px;
+        padding: 8px;
+
+        .event-cell {
+            width: 100%;
+            background-color: var(--body-bg);
+            border-radius: 4px;
+            padding: 2px 4px;
+            font-size: 10px;
+
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .more-events-info {
+            width: 100%;
+            font-size: 8;
+            text-align: center;
+        }
+    }
+
+    .day-cell:not(:last-child) {
+        border-right: 2px solid var(--border-color);
+    }
+}
+
+.week-row:not(:last-child) {
+    border-bottom: 2px solid var(--border-color);
+}

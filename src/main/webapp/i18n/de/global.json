@@ -374,7 +374,8 @@
         "archive": "Kursarchiv",
         "faq": "FAQ",
         "plagiarismCases": "Plagiatsfälle",
-        "settings": "Einstellungen"
+        "settings": "Einstellungen",
+        "calendar": "Kalender"
     },
     "connectionStatus": {
         "connected": "Verbunden",

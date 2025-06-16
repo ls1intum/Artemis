@@ -114,7 +114,8 @@
                 "plagiarismCases": "Plagiarism Cases",
                 "gradingSystem": "Grading System",
                 "faq": "FAQ",
-                "settings": "Settings"
+                "settings": "Settings",
+                "calendar": "Calendar"
             },
             "exerciseFilter": {
                 "filter": "Filter",
