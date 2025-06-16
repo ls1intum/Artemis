@@ -13,8 +13,7 @@ public abstract class IrisChatSession extends IrisSession {
     private long userId;
 
     @Transient
-    @JsonProperty
-    private String irisChatMode;
+    private long entityId;
 
     public IrisChatSession(User user) {
         this.userId = user.getId();
@@ -31,11 +30,12 @@ public abstract class IrisChatSession extends IrisSession {
         this.userId = userId;
     }
 
-    public String getIrisChatMode() {
-        return this.irisChatMode;
+    public void setEntityId(long entityId) {
+        this.entityId = entityId;
     }
 
-    public void setIrisChatMode(String irisChatMode) {
-        this.irisChatMode = irisChatMode;
+    @JsonProperty
+    public long getEntityId() {
+        return entityId;
     }
 }

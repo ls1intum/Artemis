@@ -153,12 +153,15 @@ public class IrisChatSessionResource {
         if (user.hasAcceptedExternalLLMUsage()) {
             var allChatSessions = Stream.of(getAllSessionsForCourseChat(courseId), getAllSessionsForLectureChat(courseId), getAllSessionsForProgrammingExerciseChat(courseId),
                     getAllSessionsForTextExerciseChat(courseId)).filter(Objects::nonNull).flatMap(List::stream).toList();
+            allChatSessions.forEach(s -> {
+                System.out.println(s.getEntityId());
+            });
+
             return ResponseEntity.ok(allChatSessions);
         }
         else {
             return ResponseEntity.ok(List.of());
         }
-
     }
 
     private List<IrisChatSession> getAllSessionsForCourseChat(Long courseId) {
@@ -170,7 +173,7 @@ public class IrisChatSessionResource {
                 var sessions = irisCourseChatSessionRepository.findLatestByCourseIdAndUserIdWithMessages(course.get().getId(), user.getId(), Pageable.unpaged());
                 sessions.forEach(s -> {
                     irisSessionService.checkHasAccessToIrisSession(s, user);
-                    s.setIrisChatMode(IrisChatMode.COURSE.getValue());
+                    s.setEntityId(s.getCourseId());
                 });
                 return new ArrayList<>(sessions);
             }
@@ -191,7 +194,7 @@ public class IrisChatSessionResource {
                         .toList();
                 sessions.forEach(s -> {
                     irisSessionService.checkHasAccessToIrisSession(s, user);
-                    s.setIrisChatMode(IrisChatMode.COURSE.getValue());
+                    s.setEntityId(s.getLectureId());
                 });
                 return new ArrayList<>(sessions);
             }
@@ -210,7 +213,7 @@ public class IrisChatSessionResource {
                         .flatMap(e -> irisExerciseChatSessionRepository.findLatestByExerciseIdAndUserIdWithMessages(e.getId(), user.getId(), Pageable.unpaged()).stream()).toList();
                 sessions.forEach(s -> {
                     irisSessionService.checkHasAccessToIrisSession(s, user);
-                    s.setIrisChatMode(IrisChatMode.COURSE.getValue());
+                    s.setEntityId(s.getExerciseId());
                 });
                 return new ArrayList<>(sessions);
             }
@@ -230,7 +233,7 @@ public class IrisChatSessionResource {
                         .toList();
                 sessions.forEach(s -> {
                     irisSessionService.checkHasAccessToIrisSession(s, user);
-                    s.setIrisChatMode(IrisChatMode.COURSE.getValue());
+                    s.setEntityId(s.getExerciseId());
                 });
                 return new ArrayList<>(sessions);
             }
