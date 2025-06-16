@@ -848,7 +848,6 @@ public class ExamService {
         return participationsOfStudent.stream().collect(Collectors.toMap(participation -> participation.getExercise().getId(), participation -> {
             PlagiarismCase plagiarismCase = plagiarismMapping.getPlagiarismCase(participation.getStudent().orElseThrow().getId(), participation.getExercise().getId());
             double plagiarismPointDeductionPercentage = plagiarismCase != null ? plagiarismCase.getVerdictPointDeduction() : 0.0;
-            Result result = participation.getSubmissions().stream().findFirst().map(Submission::getFirstResult).orElse(null);
             Result result = participation.getSubmissions().stream().findFirst().flatMap(submission -> submission.getResults().stream().findFirst()).orElse(null);
             return calculateAchievedPoints(participation.getExercise(), result, course, plagiarismPointDeductionPercentage);
         }));
