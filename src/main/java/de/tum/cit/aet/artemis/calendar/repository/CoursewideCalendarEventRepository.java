@@ -4,6 +4,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -12,6 +13,7 @@ import de.tum.cit.aet.artemis.calendar.config.CalendarEnabled;
 import de.tum.cit.aet.artemis.calendar.domain.CoursewideCalendarEvent;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 
+@Lazy
 @Conditional(CalendarEnabled.class)
 @Repository
 public interface CoursewideCalendarEventRepository extends ArtemisJpaRepository<CoursewideCalendarEvent, Long> {

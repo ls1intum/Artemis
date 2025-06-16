@@ -7,6 +7,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -14,6 +15,7 @@ import de.tum.cit.aet.artemis.calendar.domain.CoursewideCalendarEvent;
 import de.tum.cit.aet.artemis.calendar.repository.CoursewideCalendarEventRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 
+@Lazy
 @Service
 @Profile(SPRING_PROFILE_TEST)
 public class CoursewideCalendarEventUtilService {
