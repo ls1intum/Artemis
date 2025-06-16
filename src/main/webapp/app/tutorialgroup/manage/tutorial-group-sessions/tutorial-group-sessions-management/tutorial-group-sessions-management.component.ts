@@ -87,6 +87,8 @@ export class TutorialGroupSessionsManagementComponent implements OnDestroy {
                         this.tutorialGroup = tutorialGroup;
                         if (tutorialGroup.tutorialGroupSessions) {
                             this.sessions = tutorialGroup.tutorialGroupSessions;
+                        } else {
+                            this.sessions = [];
                         }
                         if (tutorialGroup.tutorialGroupSchedule) {
                             this.tutorialGroupSchedule = tutorialGroup.tutorialGroupSchedule;

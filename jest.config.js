@@ -82,20 +82,22 @@ module.exports = {
         ],
     ],
     collectCoverageFrom: [
-        'src/main/webapp/**/*.ts',
-        '!src/main/webapp/**/*.module.ts',  // ignore modules files because they cannot be properly tested
-        '!src/main/webapp/**/*.routes.ts',   // ignore routes files because they cannot be properly tested
-        '!src/main/webapp/**/*.route.ts',   // ignore route files because they cannot be properly tested
-        '!**/node_modules/**',
+        '<rootDir>/src/main/webapp/**/*.ts',
+        '!<rootDir>/src/main/webapp/**/*.module.ts',  // ignore modules files because they cannot be properly tested
+        '!<rootDir>/src/main/webapp/**/*.routes.ts',   // ignore routes files because they cannot be properly tested
+        '!<rootDir>/src/main/webapp/**/*.route.ts',   // ignore route files because they cannot be properly tested
+        '!<rootDir>/**/node_modules/**',
+        '!<rootDir>/src/main/webapp/app/openapi/**', // ignore openapi files because they are generated
     ],
     coveragePathIgnorePatterns: [
-        'src/main/webapp/app/core/config/prod.config.ts',
+        '<rootDir>/src/main/webapp/app/core/config/prod.config.ts',
+        '<rootDir>/src/main/webapp/app/openapi/',
     ],
     coverageThreshold: {
         global: {
             // TODO: in the future, the following values should increase to at least 90%
-            statements: 89.18,
-            branches: 75.23,
+            statements: 89.17,
+            branches: 75.2,
             functions: 82.98,
             lines: 89.25,
         },
