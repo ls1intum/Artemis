@@ -1,13 +1,29 @@
-import { Injectable, inject } from '@angular/core';
-import { WebauthnApiService } from 'app/core/user/settings/passkey-settings/webauthn-api.service';
+import { Injectable } from '@angular/core';
 import { decodeBase64url } from 'app/shared/util/base64.util';
+// import { PasskeyAbortError } from 'app/core/user/settings/passkey-settings/entities/passkey-abort-error';
 
 @Injectable({ providedIn: 'root' })
 export class WebauthnService {
-    private webauthnApiService = inject(WebauthnApiService);
+    private authAbortController = new AbortController();
 
-    async getCredential(): Promise<PublicKeyCredential | undefined> {
-        const publicKeyCredentialOptions = await this.webauthnApiService.getAuthenticationOptions();
+    /**
+     * To support passkey autocomplete, we need to have a pending getCredential request with conditional mediation.
+     * If we tried to use the "Sign in with Passkey" button, without aborting the pending conditional request,
+     * we would get an error as we cannot have multiple credential requests at the same time.
+     */
+    // private ensureAtMostOneCredentialRequestIsActive() {
+    //     this.authAbortController.abort(new PasskeyAbortError());
+    //     this.authAbortController = new AbortController();
+    // }
+
+    /**
+     * Retrieves a credential from the client, according to the options provided by the server.
+     *
+     * @param isConditional true if credential shall be requested with <a href="https://www.corbado.com/blog/webauthn-conditional-ui-passkeys-autofill">conditional mediation</a>
+     * @returns the credential or undefined if no credential was selected or retrievable
+     */
+    async getCredential(publicKeyCredentialOptions: PublicKeyCredentialRequestOptions, isConditional: boolean): Promise<PublicKeyCredential | undefined> {
+        // this.ensureAtMostOneCredentialRequestIsActive();
 
         const assertionOptions: PublicKeyCredentialRequestOptions = {
             challenge: decodeBase64url(publicKeyCredentialOptions.challenge),
@@ -28,6 +44,10 @@ export class WebauthnService {
 
         const credentialRequestOptions: CredentialRequestOptions = {
             publicKey: assertionOptions,
+            signal: this.authAbortController.signal,
+            ...(isConditional && {
+                mediation: 'conditional',
+            }),
         };
 
         const credential = (await navigator.credentials.get(credentialRequestOptions)) ?? undefined;
