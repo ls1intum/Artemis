@@ -142,6 +142,7 @@ export class ProfileInfo {
     public defaultContainerCpuCount: number;
     public defaultContainerMemoryLimitInMB: number;
     public defaultContainerMemorySwapLimitInMB: number;
+    public enableSeasonalFeatures?: boolean;
     public externalCredentialProvider: string;
     public externalPasswordResetLinkMap: { [key: string]: string };
     public features: ActiveFeatureToggles;

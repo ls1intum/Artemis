@@ -165,6 +165,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     standardizedCompetenciesEnabled = false;
     agentName?: string;
     isExamStarted = false;
+    enableSeasonalFeatures: boolean;
 
     courseTitle?: string;
     exerciseTitle?: string;
@@ -233,6 +234,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this.irisEnabled = profileInfo.activeProfiles.includes(PROFILE_IRIS);
         this.localCIActive = profileInfo?.activeProfiles.includes(PROFILE_LOCALCI);
         this.ltiEnabled = profileInfo?.activeProfiles.includes(PROFILE_LTI);
+        this.enableSeasonalFeatures = profileInfo?.enableSeasonalFeatures ?? false;
 
         this.standardizedCompetencySubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.StandardizedCompetencies).subscribe((isActive) => {
             this.standardizedCompetenciesEnabled = isActive;
@@ -799,6 +801,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
     isAuthenticated() {
         return this.accountService.isAuthenticated();
+    }
+
+    isPrideMonth() {
+        return new Date().getMonth() === 5;
     }
 
     logout() {
