@@ -20,8 +20,8 @@
         }
         <div class="toolbox">
             @if (this.messages.length >= 1) {
-                <button id="clear-chat-button" (click)="onClearSession(clearConfirmModal)" class="header-icon">
-                    <fa-icon [icon]="faTrash" />
+                <button id="clear-chat-button" (click)="openNewSession()" class="header-icon">
+                    <fa-icon [icon]="faPenToSquare" />
                 </button>
             }
 

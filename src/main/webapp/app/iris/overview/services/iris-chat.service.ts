@@ -222,6 +222,7 @@ export class IrisChatService implements OnDestroy {
                 this.messages.next(r.messages || []);
                 this.parseLatestSuggestions(r.latestSuggestions);
                 this.ws.subscribeToSession(this.sessionId).subscribe((m) => this.handleWebsocketMessage(m));
+                this.loadChatSessions();
             },
             error: (e: IrisErrorMessageKey) => {
                 this.error.next(e as IrisErrorMessageKey);
@@ -348,8 +349,7 @@ export class IrisChatService implements OnDestroy {
         }
 
         this.close();
-        const newIdentifier = session.chatMode.toString() && session.entityId ? session.chatMode.toString() + '/' + session.entityId : undefined;
-        this.sessionCreationIdentifier = newIdentifier;
+        // const newIdentifier = session.chatMode.toString() && session.entityId ? session.chatMode.toString() + '/' + session.entityId : undefined;
 
         const requiresAcceptance = this.sessionCreationIdentifier ? this.modeRequiresLLMAcceptance.get(session.chatMode) : true;
 

@@ -1,4 +1,17 @@
-import { faArrowDown, faCircle, faCircleInfo, faCompress, faExpand, faPaperPlane, faRedo, faThumbsDown, faThumbsUp, faTrash, faXmark } from '@fortawesome/free-solid-svg-icons';
+import {
+    faArrowDown,
+    faCircle,
+    faCircleInfo,
+    faCompress,
+    faExpand,
+    faPaperPlane,
+    faPenToSquare,
+    faRedo,
+    faThumbsDown,
+    faThumbsUp,
+    faTrash,
+    faXmark,
+} from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild, inject } from '@angular/core';
 import { IrisAssistantMessage, IrisMessage, IrisSender } from 'app/iris/shared/entities/iris-message.model';
@@ -118,6 +131,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     faThumbsUp = faThumbsUp;
     faThumbsDown = faThumbsDown;
     faRedo = faRedo;
+    faPenToSquare = faPenToSquare;
 
     // State variables
     sessionIdSubscription: Subscription;
@@ -504,5 +518,9 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
                 return isAfterOrOnStartDate && isBeforeOrOnEndDate;
             }
         });
+    }
+
+    openNewSession() {
+        this.chatService.clearChat();
     }
 }
