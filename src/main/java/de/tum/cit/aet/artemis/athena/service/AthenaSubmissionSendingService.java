@@ -10,6 +10,7 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -30,6 +31,7 @@ import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
  * Service for sending submissions to the Athena service for further processing
  * so that Athena can later give feedback suggestions on new submissions.
  */
+@Lazy
 @Service
 @Profile(PROFILE_ATHENA)
 public class AthenaSubmissionSendingService {

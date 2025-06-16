@@ -5,6 +5,7 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 import java.util.Optional;
 
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -22,6 +23,7 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
  * Important: For fetching a learning path with its competencies, use the {@link LearningPathRepositoryService} instead of this repository.
  */
 @Conditional(AtlasEnabled.class)
+@Lazy
 @Repository
 public interface LearningPathRepository extends ArtemisJpaRepository<LearningPath, Long> {
 
