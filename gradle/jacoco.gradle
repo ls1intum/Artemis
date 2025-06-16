@@ -68,7 +68,7 @@ jacocoTestReport {
             task.mustRunAfter(sortedTasks[index - 1])
         }
     }
-    finalizedBy sortedTasks
+    dependsOn sortedTasks
 }
 
 jacocoTestCoverageVerification {
@@ -86,9 +86,10 @@ jacocoTestCoverageVerification {
                 task.mustRunAfter(sortedTasks[index - 1])
             }
         }
-        finalizedBy sortedTasks
+        dependsOn sortedTasks
     }
 }
+jacocoTestCoverageVerification.dependsOn jacocoTestReport
 check.dependsOn jacocoTestCoverageVerification
 
 /**
