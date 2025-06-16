@@ -6,6 +6,7 @@ import java.util.Locale;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -19,6 +20,7 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
  * Authenticate a user from the database.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Service("userDetailsService")
 public class DomainUserDetailsService implements UserDetailsService {
 
