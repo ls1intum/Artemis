@@ -29,6 +29,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import de.tum.cit.aet.artemis.athena.dto.ResponseMetaDTO;
+
 @Component
 @Profile(PROFILE_ATHENA)
 @Lazy
@@ -54,15 +56,28 @@ public class AthenaRequestMockProvider {
 
     private AutoCloseable closeable;
 
+    // _suggestions_ and _preliminary_ modules are only relevant for get suggestions service call
     public static final String ATHENA_MODULE_TEXT_TEST = "module_text_test";
+
+    public static final String ATHENA_MODULE_TEXT_SUGGESTIONS_TEST = "module_text_suggestions_test";
+
+    public static final String ATHENA_MODULE_TEXT_PRELIMINARY_TEST = "module_text_preliminary_test";
 
     public static final String ATHENA_RESTRICTED_MODULE_TEXT_TEST = "module_text_test_restricted";
 
     public static final String ATHENA_MODULE_PROGRAMMING_TEST = "module_programming_test";
 
+    public static final String ATHENA_MODULE_PROGRAMMING_SUGGESTIONS_TEST = "module_programming_suggestions_test";
+
+    public static final String ATHENA_MODULE_PROGRAMMING_PRELIMINARY_TEST = "module_programming_preliminary_test";
+
     public static final String ATHENA_RESTRICTED_MODULE_PROGRAMMING_TEST = "module_programming_test_restricted";
 
     public static final String ATHENA_MODULE_MODELING_TEST = "module_modeling_test";
+
+    public static final String ATHENA_MODULE_MODELING_SUGGESTIONS_TEST = "module_modeling_suggestions_test";
+
+    public static final String ATHENA_MODULE_MODELING_PRELIMINARY_TEST = "module_modeling_preliminary_test";
 
     public static final String ATHENA_RESTRICTED_MODULE_MODELING_TEST = "module_modeling_test_restricted";
 
@@ -96,6 +111,16 @@ public class AthenaRequestMockProvider {
         if (closeable != null) {
             closeable.close();
         }
+    }
+
+    /**
+     * Returns the name of the test module for the given module type
+     *
+     * @param moduleType    The type of the module: "text" or "programming"
+     * @param isPreliminary The type of the module: feedback suggestions or preliminary feedback
+     */
+    private static String getTestModuleName(String moduleType, boolean isPreliminary) {
+        return "module_" + moduleType + (isPreliminary ? "_preliminary" : "_suggestions") + "_test";
     }
 
     /**
@@ -186,11 +211,12 @@ public class AthenaRequestMockProvider {
      * Makes the endpoint return one example feedback suggestion.
      *
      * @param moduleType       The type of the module: "text" or "programming"
+     * @param isPreliminary    Is part of graded assessment or not
      * @param expectedContents The expected contents of the request
      */
-    public void mockGetFeedbackSuggestionsAndExpect(String moduleType, RequestMatcher... expectedContents) {
+    public void mockGetFeedbackSuggestionsAndExpect(String moduleType, boolean isPreliminary, ResponseMetaDTO meta, RequestMatcher... expectedContents) {
         ResponseActions responseActions = mockServer
-                .expect(ExpectedCount.once(), requestTo(athenaUrl + "/modules/" + moduleType + "/" + getTestModuleName(moduleType) + "/feedback_suggestions"))
+                .expect(ExpectedCount.once(), requestTo(athenaUrl + "/modules/" + moduleType + "/" + getTestModuleName(moduleType, isPreliminary) + "/feedback_suggestions"))
                 .andExpect(method(HttpMethod.POST)).andExpect(content().contentType(MediaType.APPLICATION_JSON));
 
         for (RequestMatcher matcher : expectedContents) {
@@ -215,6 +241,10 @@ public class AthenaRequestMockProvider {
         final ObjectNode node = mapper.createObjectNode().put("module_name", getTestModuleName(moduleType)).put("status", 200).set("data",
                 mapper.createArrayNode().add(suggestion));
 
+        if (meta != null) {
+            node.set("meta", mapper.valueToTree(meta));
+        }
+
         responseActions.andRespond(withSuccess(node.toString(), MediaType.APPLICATION_JSON));
     }
 
@@ -223,11 +253,12 @@ public class AthenaRequestMockProvider {
      * Makes the endpoint fail
      *
      * @param moduleType       The type of the module: "text" or "programming"
+     * @param isPreliminary    Is part of graded assessment or not
      * @param expectedContents The expected contents of the request
      */
-    public void mockGetFeedbackSuggestionsWithFailure(String moduleType, RequestMatcher... expectedContents) {
+    public void mockGetFeedbackSuggestionsWithFailure(String moduleType, boolean isPreliminary, RequestMatcher... expectedContents) {
         ResponseActions responseActions = mockServer
-                .expect(ExpectedCount.once(), requestTo(athenaUrl + "/modules/" + moduleType + "/" + getTestModuleName(moduleType) + "/feedback_suggestions"))
+                .expect(ExpectedCount.once(), requestTo(athenaUrl + "/modules/" + moduleType + "/" + getTestModuleName(moduleType, isPreliminary) + "/feedback_suggestions"))
                 .andExpect(method(HttpMethod.POST)).andExpect(content().contentType(MediaType.APPLICATION_JSON));
 
         for (RequestMatcher matcher : expectedContents) {
