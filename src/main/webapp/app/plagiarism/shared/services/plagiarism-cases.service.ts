@@ -8,6 +8,7 @@ import { PlagiarismSubmissionElement } from 'app/plagiarism/shared/entities/Plag
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 import { PlagiarismCaseInfo } from 'app/plagiarism/shared/entities/PlagiarismCaseInfo';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { AlertService } from 'app/shared/service/alert.service';
 
 export type EntityResponseType = HttpResponse<PlagiarismCase>;
 export type EntityArrayResponseType = HttpResponse<PlagiarismCase[]>;
@@ -16,7 +17,7 @@ export type Comparison = PlagiarismComparison<PlagiarismSubmissionElement>;
 @Injectable({ providedIn: 'root' })
 export class PlagiarismCasesService {
     private http = inject(HttpClient);
-
+    private alertService = inject(AlertService);
     private resourceUrl = 'api/plagiarism/courses';
     private resourceUrlExercises = 'api/plagiarism/exercises';
 
@@ -114,7 +115,7 @@ export class PlagiarismCasesService {
      */
     public updatePlagiarismComparisonStatus(courseId: number | undefined, plagiarismComparisonId: number, status: PlagiarismStatus): Observable<HttpResponse<void>> {
         if (courseId === undefined) {
-            throw new Error('Course ID must be defined');
+            this.alertService.error('error.courseIdUndefined');
         }
         return this.http.put<void>(`${this.resourceUrl}/${courseId}/plagiarism-comparisons/${plagiarismComparisonId}/status`, { status }, { observe: 'response' });
     }
