@@ -31,7 +31,7 @@
                         class="ms-3"
                         [ngClass]="{ 'text-body-secondary': !this.lectureUnit().completed, 'text-success': this.lectureUnit().completed }"
                         size="lg"
-                        [icon]="this.lectureUnit().completed ? faSquareCheck : faSquare"
+                        [icon]="this.lectureUnit().completed ? faCheckCircle : faCircle"
                         [ngbTooltip]="(this.lectureUnit().completed ? 'artemisApp.lectureUnit.completedTooltip' : 'artemisApp.lectureUnit.uncompletedTooltip') | artemisTranslate"
                         (click)="toggleCompletion($event)"
                     />
