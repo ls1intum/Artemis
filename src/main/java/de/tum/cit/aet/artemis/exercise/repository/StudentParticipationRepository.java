@@ -639,11 +639,12 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 LEFT JOIN FETCH p.team t
                 LEFT JOIN FETCH t.students
             WHERE p.id = :participationId
-                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
                 AND (
                     s.id = (
-                    SELECT MAX(s2.id)
-                    FROM p.submissions s2
+                        SELECT MAX(s2.id)
+                        FROM p.submissions s2
+                        WHERE s2.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL
+                            OR s2.type IS NULL
                     )
                     OR s.id IS NULL
                 )
