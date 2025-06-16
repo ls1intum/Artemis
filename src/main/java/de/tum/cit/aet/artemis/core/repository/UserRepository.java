@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 
 import jakarta.validation.constraints.NotNull;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -61,6 +62,7 @@ import de.tum.cit.aet.artemis.core.security.SecurityUtils;
  * </p>
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Repository
 public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpecificationExecutor<User> {
 
@@ -786,9 +788,9 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
         var noRegistrationNumber = userSearch.getRegistrationNumbers().contains(FILTER_WITHOUT_REG_NO);
         var withRegistrationNumber = userSearch.getRegistrationNumbers().contains(FILTER_WITH_REG_NO);
 
-        Specification<User> specification = Specification.where(distinct()).and(notSoftDeleted()).and(getSearchTermSpecification(searchTerm))
-                .and(getInternalOrExternalSpecification(internal, external)).and(getActivatedOrDeactivatedSpecification(activated, deactivated))
-                .and(getAuthoritySpecification(modifiedAuthorities)).and(getWithOrWithoutRegistrationNumberSpecification(noRegistrationNumber, withRegistrationNumber));
+        Specification<User> specification = distinct().and(notSoftDeleted()).and(getSearchTermSpecification(searchTerm)).and(getInternalOrExternalSpecification(internal, external))
+                .and(getActivatedOrDeactivatedSpecification(activated, deactivated)).and(getAuthoritySpecification(modifiedAuthorities))
+                .and(getWithOrWithoutRegistrationNumberSpecification(noRegistrationNumber, withRegistrationNumber));
 
         if (userSearch.isFindWithoutUserGroups()) {
             specification = specification.and(getAllUsersWithoutUserGroups());
@@ -1267,4 +1269,58 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                     OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
             """)
     boolean isAtLeastInstructorInLectureUnit(@Param("login") String login, @Param("lectureUnitId") long lectureUnitId);
+
+    @Query("""
+            SELECT COUNT(user) > 0
+            FROM User user
+            INNER JOIN Lecture lecture
+            ON user.login = :login
+                AND lecture.id = :lectureId
+            LEFT JOIN lecture.course course
+            WHERE (course.studentGroupName MEMBER OF user.groups)
+                    OR (course.teachingAssistantGroupName MEMBER OF user.groups)
+                    OR (course.editorGroupName MEMBER OF user.groups)
+                    OR (course.instructorGroupName MEMBER OF user.groups)
+                    OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
+            """)
+    boolean isAtLeastStudentInLecture(@Param("login") String login, @Param("lectureId") long lectureId);
+
+    @Query("""
+            SELECT COUNT(user) > 0
+            FROM User user
+            INNER JOIN Lecture lecture
+            ON user.login = :login
+                AND lecture.id = :lectureId
+            LEFT JOIN lecture.course course
+            WHERE (course.teachingAssistantGroupName MEMBER OF user.groups)
+                    OR (course.editorGroupName MEMBER OF user.groups)
+                    OR (course.instructorGroupName MEMBER OF user.groups)
+                    OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
+            """)
+    boolean isAtLeastTeachingAssistantInLecture(@Param("login") String login, @Param("lectureId") long lectureId);
+
+    @Query("""
+            SELECT COUNT(user) > 0
+            FROM User user
+            INNER JOIN Lecture lecture
+            ON user.login = :login
+                AND lecture.id = :lectureId
+            LEFT JOIN lecture.course course
+            WHERE (course.editorGroupName MEMBER OF user.groups)
+                    OR (course.instructorGroupName MEMBER OF user.groups)
+                    OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
+            """)
+    boolean isAtLeastEditorInLecture(@Param("login") String login, @Param("lectureId") long lectureId);
+
+    @Query("""
+            SELECT COUNT(user) > 0
+            FROM User user
+            INNER JOIN Lecture lecture
+            ON user.login = :login
+                AND lecture.id = :lectureId
+            LEFT JOIN lecture.course course
+            WHERE (course.instructorGroupName MEMBER OF user.groups)
+                    OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
+            """)
+    boolean isAtLeastInstructorInLecture(@Param("login") String login, @Param("lectureId") long lectureId);
 }

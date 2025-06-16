@@ -20,6 +20,7 @@ import java.util.Set;
 
 import jakarta.annotation.Nullable;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -38,6 +39,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
  * Spring Data JPA repository for the statistics pages
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Repository
 public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
 
@@ -330,8 +332,8 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
                     OR r.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.SEMI_AUTOMATIC
                 ) AND r.assessor.login NOT LIKE '%test%'
                 AND (
-                    r.participation.exercise.exerciseGroup IS NOT NULL
-                    OR EXISTS (SELECT c FROM Course c WHERE r.participation.exercise.course.testCourse = FALSE)
+                    r.submission.participation.exercise.exerciseGroup IS NOT NULL
+                    OR EXISTS (SELECT c FROM Course c WHERE r.submission.participation.exercise.course.testCourse = FALSE)
                 )
             """)
     List<StatisticsEntry> getActiveTutors(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
@@ -348,7 +350,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
                     r.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.MANUAL
                     OR r.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.SEMI_AUTOMATIC
                 ) AND r.assessor.login NOT LIKE '%test%'
-                AND r.participation.exercise.id IN :exerciseIds
+                AND r.submission.participation.exercise.id IN :exerciseIds
             """)
     List<StatisticsEntry> getActiveTutorsForCourse(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate,
             @Param("exerciseIds") List<Long> exerciseIds);
@@ -365,7 +367,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
                     r.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.MANUAL
                     OR r.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.SEMI_AUTOMATIC
                 ) AND r.assessor.login NOT LIKE '%test%'
-                AND r.participation.exercise.id = :exerciseId
+                AND r.submission.participation.exercise.id = :exerciseId
             """)
     List<StatisticsEntry> getActiveTutorsForExercise(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("exerciseId") long exerciseId);
 
@@ -377,8 +379,8 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
             WHERE r.completionDate >= :startDate
                 AND r.completionDate <= :endDate
                 AND (
-                    r.participation.exercise.exerciseGroup IS NOT NULL
-                    OR EXISTS (SELECT c FROM Course c WHERE r.participation.exercise.course.testCourse = FALSE)
+                    r.submission.participation.exercise.exerciseGroup IS NOT NULL
+                    OR EXISTS (SELECT c FROM Course c WHERE r.submission.participation.exercise.course.testCourse = FALSE)
                 )
             GROUP BY r.completionDate
             ORDER BY r.completionDate
@@ -392,7 +394,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
             FROM Result r
             WHERE r.completionDate >= :startDate
                 AND r.completionDate <= :endDate
-                AND r.participation.exercise.id IN :exerciseIds
+                AND r.submission.participation.exercise.id IN :exerciseIds
             GROUP BY r.completionDate
             ORDER BY r.completionDate
             """)
@@ -406,7 +408,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
             FROM Result r
             WHERE r.completionDate >= :startDate
                 AND r.completionDate <= :endDate
-                AND r.participation.exercise.id = :exerciseId
+                AND r.submission.participation.exercise.id = :exerciseId
             GROUP BY r.completionDate
             ORDER BY r.completionDate
             """)
@@ -420,8 +422,8 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
             WHERE r.completionDate >= :startDate
                 AND r.completionDate <= :endDate
                 AND (
-                    r.participation.exercise.exerciseGroup IS NOT NULL
-                    OR EXISTS(SELECT c FROM Course c WHERE r.participation.exercise.course.testCourse = FALSE ))
+                    r.submission.participation.exercise.exerciseGroup IS NOT NULL
+                    OR EXISTS(SELECT c FROM Course c WHERE r.submission.participation.exercise.course.testCourse = FALSE ))
             GROUP BY r.completionDate
             ORDER BY r.completionDate
             """)
@@ -434,7 +436,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
             FROM Result r
             WHERE r.completionDate >= :startDate
                 AND r.completionDate <= :endDate
-                AND r.participation.exercise.id IN :exerciseIds
+                AND r.submission.participation.exercise.id IN :exerciseIds
             GROUP BY r.completionDate
             ORDER BY r.completionDate
             """)
@@ -448,7 +450,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
             FROM Result r
             WHERE r.completionDate >= :startDate
                 AND r.completionDate <= :endDate
-                AND r.participation.exercise.id = :exerciseId
+                AND r.submission.participation.exercise.id = :exerciseId
             GROUP BY r.completionDate
             ORDER BY r.completionDate
             """)

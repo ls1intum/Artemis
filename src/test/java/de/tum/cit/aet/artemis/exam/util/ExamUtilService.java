@@ -13,6 +13,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -77,6 +78,7 @@ import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 /**
  * Service responsible for initializing the database with specific testdata related to exams for use in integration tests.
  */
+@Lazy
 @Service
 @Profile(SPRING_PROFILE_TEST)
 public class ExamUtilService {
@@ -1127,7 +1129,6 @@ public class ExamUtilService {
         submissionRepository.save(submission);
         Result result = participationUtilService.generateResultWithScore(submission, studentExam.getUser(), 3.0);
         submission.addResult(result);
-        participation.addResult(result);
         studentParticipationRepo.save(participation);
         submissionRepository.save(submission);
 
@@ -1144,7 +1145,6 @@ public class ExamUtilService {
         submissionRepository.save(submission);
         result = participationUtilService.generateResultWithScore(submission, studentExam.getUser(), 3.0);
         submission.addResult(result);
-        participation.addResult(result);
         studentParticipationRepo.save(participation);
         submissionRepository.save(submission);
         exerciseRepository.save(exercise);
@@ -1160,7 +1160,6 @@ public class ExamUtilService {
         submissionRepository.save(submission);
         result = participationUtilService.generateResultWithScore(submission, studentExam.getUser(), 3.0);
         submission.addResult(result);
-        participation.addResult(result);
         studentParticipationRepo.save(participation);
         submissionRepository.save(submission);
         exerciseRepository.save(exercise);
@@ -1177,7 +1176,6 @@ public class ExamUtilService {
         exerciseRepository.save(exercise);
         result = participationUtilService.generateResultWithScore(submission, studentExam.getUser(), 3.0);
         submission.addResult(result);
-        participation.addResult(result);
         studentParticipationRepo.save(participation);
         submissionRepository.save(submission);
         // programming
@@ -1193,7 +1191,6 @@ public class ExamUtilService {
         submissionRepository.save(submission);
         result = participationUtilService.generateResultWithScore(submission, studentExam.getUser(), 3.0);
         submission.addResult(result);
-        participation.addResult(result);
         studentParticipationRepo.save(participation);
         submissionRepository.save(submission);
         exerciseRepository.save(exercise);

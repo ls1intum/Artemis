@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -60,6 +61,7 @@ import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPoli
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
+import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
@@ -72,6 +74,7 @@ import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExe
 /**
  * Service responsible for initializing the database with specific testdata related to programming exercises for use in integration tests.
  */
+@Lazy
 @Service
 @Profile(SPRING_PROFILE_TEST)
 public class ProgrammingExerciseUtilService {
@@ -145,6 +148,9 @@ public class ProgrammingExerciseUtilService {
 
     @Autowired
     private GitService gitService;
+
+    @Autowired
+    private SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
     public ProgrammingExercise createSampleProgrammingExercise() {
         return createSampleProgrammingExercise("Title", "Shortname");
@@ -678,15 +684,14 @@ public class ProgrammingExerciseUtilService {
      */
     public Result addProgrammingSubmissionWithResult(ProgrammingExercise exercise, ProgrammingSubmission submission, String login) {
         StudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, login);
-        submission = programmingSubmissionRepo.save(submission);
-        Result result = resultRepo.save(new Result().participation(participation));
+        // TODO check if it needs to be persisted
+        Result result = new Result();
         participation.addSubmission(submission);
         submission.setParticipation(participation);
         submission.addResult(result);
-        submission = programmingSubmissionRepo.save(submission);
         result.setSubmission(submission);
-        result = resultRepo.save(result);
-        participation.addResult(result);
+        programmingSubmissionRepo.save(submission);
+        resultRepo.save(result);
         studentParticipationRepo.save(participation);
         return result;
     }
@@ -695,22 +700,44 @@ public class ProgrammingExerciseUtilService {
      * Adds a template submission with a result to the given programming exercise.
      * The method will make sure that all necessary entities are connected.
      *
-     * @param exerciseId The id of the programming exercise to which the submission should be added.
+     * @param programmingExercise The ProgrammingExercise of the programming exercise to which the submission should be added.
      * @return the newly created result
      */
-    public Result addTemplateSubmissionWithResult(long exerciseId) {
-        var templateParticipation = templateProgrammingExerciseParticipationTestRepo.findWithEagerResultsAndSubmissionsByProgrammingExerciseIdElseThrow(exerciseId);
+    public Result addTemplateSubmissionWithResult(ProgrammingExercise programmingExercise) {
+        var templateParticipation = programmingExercise.getTemplateParticipation();
         ProgrammingSubmission submission = new ProgrammingSubmission();
         submission = submissionRepository.save(submission);
-        Result result = resultRepo.save(new Result().participation(templateParticipation));
+        // TODO check if it needs to be persisted like before
+        Result result = new Result();
         templateParticipation.addSubmission(submission);
         submission.setParticipation(templateParticipation);
         submission.addResult(result);
         submission = submissionRepository.save(submission);
         result.setSubmission(submission);
         result = resultRepo.save(result);
-        templateParticipation.addResult(result);
         templateProgrammingExerciseParticipationTestRepo.save(templateParticipation);
+        return result;
+    }
+
+    /**
+     * Adds a solution submission with a result to the given programming exercise.
+     * The method will make sure that all necessary entities are connected.
+     *
+     * @param programmingExercise The ProgrammingExercise of the programming exercise to which the submission should be added.
+     * @return the newly created result
+     */
+    public Result addSolutionSubmissionWithResult(ProgrammingExercise programmingExercise) {
+        var templateParticipation = programmingExercise.getSolutionParticipation();
+        ProgrammingSubmission submission = new ProgrammingSubmission();
+        submission = submissionRepository.save(submission);
+        Result result = new Result();
+        templateParticipation.addSubmission(submission);
+        submission.setParticipation(templateParticipation);
+        submission.addResult(result);
+        submission = submissionRepository.save(submission);
+        result.setSubmission(submission);
+        result = resultRepo.save(result);
+        solutionProgrammingExerciseParticipationRepository.save(templateParticipation);
         return result;
     }
 
@@ -740,10 +767,9 @@ public class ProgrammingExerciseUtilService {
         programmingSubmissionRepo.save(submission);
 
         submission.setParticipation(participation);
-        result.setParticipation(participation);
 
-        result = resultRepo.save(result);
         result.setSubmission(submission);
+        result = resultRepo.save(result);
         submission.addResult(result);
         // Manual results are always rated
         if (assessmentType == AssessmentType.SEMI_AUTOMATIC) {
@@ -765,8 +791,8 @@ public class ProgrammingExerciseUtilService {
         ProgrammingSubmission submission = createProgrammingSubmission(participation, false);
         submission.addResult(result);
         submission.setCommitHash(commitHash);
-        resultRepo.save(result);
         result.setSubmission(submission);
+        resultRepo.save(result);
         participation.addSubmission(submission);
         studentParticipationRepo.save(participation);
         return submissionRepository.save(submission);

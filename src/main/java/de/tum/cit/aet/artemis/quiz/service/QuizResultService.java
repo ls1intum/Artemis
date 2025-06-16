@@ -13,6 +13,7 @@ import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -31,6 +32,7 @@ import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class QuizResultService {
 
@@ -151,7 +153,7 @@ public class QuizResultService {
                 }
                 else {
                     // No rated result exists; create a new one
-                    Result result = new Result().participation(participation).rated(true).assessmentType(AssessmentType.AUTOMATIC).completionDate(ZonedDateTime.now());
+                    Result result = new Result().rated(true).assessmentType(AssessmentType.AUTOMATIC).completionDate(ZonedDateTime.now());
 
                     // Associate submission with result
                     result.setSubmission(quizSubmission);
@@ -160,19 +162,10 @@ public class QuizResultService {
                     quizSubmission.calculateAndUpdateScores(quizExercise.getQuizQuestions());
                     result.evaluateQuizSubmission(quizExercise);
 
-                    // Detach submission to maintain proper save order
-                    result.setSubmission(null);
-
                     // Save entities individually
                     submissionRepository.save(quizSubmission);
                     result = resultRepository.save(result);
 
-                    // Update participation with new result
-                    participation.addResult(result);
-                    studentParticipationRepository.save(participation);
-
-                    // Re-associate result with submission and save
-                    result.setSubmission(quizSubmission);
                     quizSubmission.addResult(result);
                     submissionRepository.save(quizSubmission);
 

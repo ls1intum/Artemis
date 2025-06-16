@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +19,7 @@ import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
  * Service Implementation for managing {@link Rating}.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class RatingService {
 
@@ -47,7 +49,7 @@ public class RatingService {
      * @return List of Ratings for the course
      */
     public List<Rating> getAllRatingsByCourse(long courseId) {
-        return ratingRepository.findAllByResult_Participation_Exercise_Course_Id(courseId);
+        return ratingRepository.findAllByResult_Submission_Participation_Exercise_Course_Id(courseId);
     }
 
     /**
@@ -57,7 +59,7 @@ public class RatingService {
      * @return number of ratings for the exercise
      */
     public long countRatingsByExerciseId(long exerciseId) {
-        return ratingRepository.countByResult_Participation_Exercise_Id(exerciseId);
+        return ratingRepository.countByResult_Submission_Participation_Exercise_Id(exerciseId);
     }
 
     /**
