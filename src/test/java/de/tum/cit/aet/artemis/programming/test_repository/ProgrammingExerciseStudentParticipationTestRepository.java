@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.programming.test_repository;
 
 import java.util.List;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -15,6 +16,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentP
 /**
  * Spring Data JPA testing repository for the ProgrammingExerciseStudentParticipation entity.
  */
+@Lazy
 @Repository
 @Primary
 public interface ProgrammingExerciseStudentParticipationTestRepository extends ProgrammingExerciseStudentParticipationRepository {

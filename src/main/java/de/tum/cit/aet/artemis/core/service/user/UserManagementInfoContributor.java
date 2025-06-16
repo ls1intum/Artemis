@@ -8,6 +8,7 @@ import java.util.regex.Pattern;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.info.Info;
 import org.springframework.boot.actuate.info.InfoContributor;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
@@ -15,6 +16,7 @@ import de.tum.cit.aet.artemis.core.config.Constants;
 
 @Profile(PROFILE_CORE)
 @Component
+@Lazy
 public class UserManagementInfoContributor implements InfoContributor {
 
     @Value("${artemis.user-management.accept-terms:#{null}}")
