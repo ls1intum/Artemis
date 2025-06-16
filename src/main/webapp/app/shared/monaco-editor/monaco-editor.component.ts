@@ -507,4 +507,22 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
                 editor.setSelection(new monaco.Range(lineNumber, newCursorPosition, lineNumber, newCursorPosition));
             }) || undefined;
     }
+
+    /**
+     * Registers a keydown listener on the Monaco editor.
+     * @param listener The listener function to call on keydown.
+     */
+    public onKeyDown(listener: (event: monaco.IKeyboardEvent) => void): monaco.IDisposable {
+        return this._editor.onKeyDown(listener);
+    }
+
+    /**
+     * Gets the scrolled visible position for a given position in the editor.
+     * @param position The position with lineNumber and column.
+     * @returns The coordinates or undefined.
+     */
+    public getScrolledVisiblePosition(position: { lineNumber: number; column: number }): { left: number; top: number; height: number } | undefined {
+        const coords = this._editor.getScrolledVisiblePosition(position);
+        return coords ? { left: coords.left, top: coords.top, height: coords.height } : undefined;
+    }
 }
