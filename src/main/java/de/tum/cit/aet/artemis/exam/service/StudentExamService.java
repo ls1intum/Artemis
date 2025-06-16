@@ -478,7 +478,7 @@ public class StudentExamService {
                     exercisesOfUser.get(user));
 
             for (final var studentParticipation : studentParticipations) {
-                var latestSubmission = studentParticipation.getSubmissions().stream().findFirst();
+                var latestSubmission = studentParticipation.findLatestSubmission();
                 latestSubmission = prepareProgrammingSubmission(latestSubmission, studentParticipation);
                 if (latestSubmission.isPresent()) {
                     for (int correctionRound = 0; correctionRound < exam.getNumberOfCorrectionRoundsInExam(); correctionRound++) {
