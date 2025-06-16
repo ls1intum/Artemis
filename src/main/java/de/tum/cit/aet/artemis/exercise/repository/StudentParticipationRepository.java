@@ -5,7 +5,6 @@ import static java.util.stream.Collectors.toMap;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -27,7 +26,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
-import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackAffectedStudentDTO;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackDetailDTO;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -36,7 +34,6 @@ import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
-import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.IdToPresentationScoreSum;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -1013,37 +1010,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
         return participations.stream()
                 // Filter out participations without Students
                 // These participations are used e.g. to store template and solution build plans in programming exercises
-                .filter(participation -> participation.getParticipant() != null)
-                // TODO jfr investigate this more, but seems like the whole block does not do anything?
-                // filter all irrelevant results, i.e. rated = false or no completion date or no score
-                .peek(participation -> {
-                    List<Result> relevantResults = new ArrayList<>();
-
-                    Set<Result> resultsOfParticipation = participation.getSubmissions().stream().map(Submission::getLatestResult).collect(Collectors.toSet());
-                    ;
-
-                    // search for the relevant result by filtering out irrelevant results using the continue keyword
-                    // this for loop is optimized for performance and thus not very easy to understand ;)
-                    for (Result result : resultsOfParticipation) {
-                        // this should not happen because the database call above only retrieves rated results
-                        if (Boolean.FALSE.equals(result.isRated())) {
-                            continue;
-                        }
-                        if (result.getCompletionDate() == null || result.getScore() == null) {
-                            // we are only interested in results with completion date and with score
-                            continue;
-                        }
-                        relevantResults.add(result);
-                    }
-                    // we take the last rated result
-                    if (!relevantResults.isEmpty()) {
-                        // make sure to take the latest result
-                        relevantResults.sort((r1, r2) -> r2.getCompletionDate().compareTo(r1.getCompletionDate()));
-                        Result correctResult = relevantResults.getFirst();
-                        relevantResults.clear();
-                        relevantResults.add(correctResult);
-                    }
-                }).toList();
+                .filter(participation -> participation.getParticipant() != null).toList();
     }
 
     /**
