@@ -20,7 +20,6 @@ import java.util.Optional;
 import java.util.OptionalDouble;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
@@ -303,7 +302,7 @@ public class ExamService {
     public ExamScoresDTO calculateExamScores(Long examId) {
         Exam exam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
 
-        List<StudentParticipation> studentParticipations = studentParticipationRepository.findByExamIdWithSubmissionRelevantResult(examId); // without test run participations
+        List<StudentParticipation> studentParticipations = studentParticipationRepository.findByExamIdWithLatestSubmissionRelevantResult(examId); // without test run participations
         log.info("Try to find quiz submitted answer counts");
         List<QuizSubmittedAnswerCount> submittedAnswerCounts = studentParticipationRepository.findSubmittedAnswerCountForQuizzesInExam(examId);
         log.info("Found {} quiz submitted answer counts", submittedAnswerCounts.size());
@@ -686,10 +685,10 @@ public class ExamService {
                 continue;
             }
             // Relevant Result is already calculated
-            Set<Result> results = Stream.ofNullable(studentParticipation.getSubmissions()).flatMap(Collection::stream)
-                    .flatMap(submission -> Stream.ofNullable(submission.getResults()).flatMap(Collection::stream)).filter(Objects::nonNull).collect(Collectors.toSet());
-            if (!results.isEmpty()) {
-                Result relevantResult = studentParticipation.findLatestResult();
+            Optional<Result> optionalRelevantResult = studentParticipation.getSubmissions().stream().findFirst()
+                    .flatMap(submission -> Optional.ofNullable(submission.getLatestResult()));
+            if (optionalRelevantResult.isPresent()) {
+                Result relevantResult = optionalRelevantResult.get();
                 PlagiarismCase plagiarismCase = plagiarismCasesForStudent.get(exercise.getId());
                 double plagiarismPointDeductionPercentage = plagiarismCase != null ? plagiarismCase.getVerdictPointDeduction() : 0.0;
                 double achievedPoints = calculateAchievedPoints(exercise, relevantResult, exam.getCourse(), plagiarismPointDeductionPercentage);
@@ -702,7 +701,7 @@ public class ExamService {
                 // Collect points of first correction, if a second correction exists
                 if (calculateFirstCorrectionPoints && exam.getNumberOfCorrectionRoundsInExam() == 2
                         && !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)) {
-                    var latestSubmission = studentParticipation.findLatestSubmission();
+                    var latestSubmission = studentParticipation.getSubmissions().stream().findFirst();
                     if (latestSubmission.isPresent()) {
                         Submission submission = latestSubmission.get();
                         // Check if second correction already started
@@ -850,6 +849,7 @@ public class ExamService {
             PlagiarismCase plagiarismCase = plagiarismMapping.getPlagiarismCase(participation.getStudent().orElseThrow().getId(), participation.getExercise().getId());
             double plagiarismPointDeductionPercentage = plagiarismCase != null ? plagiarismCase.getVerdictPointDeduction() : 0.0;
             Result result = participation.getSubmissions().stream().findFirst().map(Submission::getFirstResult).orElse(null);
+            Result result = participation.getSubmissions().stream().findFirst().flatMap(submission -> submission.getResults().stream().findFirst()).orElse(null);
             return calculateAchievedPoints(participation.getExercise(), result, course, plagiarismPointDeductionPercentage);
         }));
     }

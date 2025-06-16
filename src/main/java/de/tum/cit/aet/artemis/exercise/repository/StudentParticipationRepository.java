@@ -110,16 +110,23 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
 
     @Query("""
             SELECT DISTINCT p
-            FROM StudentParticipation p
-                LEFT JOIN FETCH p.submissions s
-                LEFT JOIN FETCH s.results r
-            WHERE p.testRun = FALSE
-                AND p.exercise.exerciseGroup.exam.id = :examId
-                AND r.rated = TRUE
-                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL
-                    OR s.type IS NULL)
+             FROM StudentParticipation p
+             LEFT JOIN FETCH p.submissions s
+             LEFT JOIN FETCH s.results r
+             WHERE p.testRun = FALSE
+               AND p.exercise.exerciseGroup.exam.id = :examId
+               AND r.rated = TRUE
+               AND (
+                 s.id = (
+                   SELECT MAX(s2.id)
+                   FROM p.submissions s2
+                   WHERE s2.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL
+                      OR s2.type IS NULL
+                 )
+                 OR s.id IS NULL
+               )
             """)
-    List<StudentParticipation> findByExamIdWithEagerLegalSubmissionsRatedResults(@Param("examId") long examId);
+    List<StudentParticipation> findByExamIdWithEagerLatestLegalSubmissionsRatedResultAndIgnoreTestRunParticipation(@Param("examId") long examId);
 
     @Query("""
             SELECT DISTINCT p
@@ -963,16 +970,14 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     }
 
     /**
-     * Get all participations belonging to exam with submissions and their relevant results.
+     * Get all participations belonging to exam with latest submission and relevant results
      *
      * @param examId the id of the exam
      * @return an unmodifiable list of participations belonging to course
      */
-    default List<StudentParticipation> findByExamIdWithSubmissionRelevantResult(long examId) {
-        var participations = findByExamIdWithEagerLegalSubmissionsRatedResults(examId); // without test run participations
-        // filter out the participations of test runs which can only be made by instructors
-        participations = participations.stream().filter(studentParticipation -> !studentParticipation.isTestRun()).toList();
-        return filterParticipationsWithRelevantResults(participations);
+    default List<StudentParticipation> findByExamIdWithLatestSubmissionRelevantResult(long examId) {
+        var participations = findByExamIdWithEagerLatestLegalSubmissionsRatedResultAndIgnoreTestRunParticipation(examId); // without test run participations
+        return filterParticipationsWithoutStudent(participations);
     }
 
     /**
@@ -984,7 +989,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      */
     default List<StudentParticipation> findByCourseIdAndStudentIdWithRelevantResult(long courseId, long studentId) {
         List<StudentParticipation> participations = findByCourseIdAndStudentIdWithEagerRatedResults(courseId, studentId);
-        return filterParticipationsWithRelevantResults(participations);
+        return filterParticipationsWithoutStudent(participations);
     }
 
     /**
@@ -995,7 +1000,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      */
     default List<StudentParticipation> findByCourseIdWithRelevantResult(long courseId) {
         List<StudentParticipation> participations = findByCourseIdWithEagerRatedResults(courseId);
-        return filterParticipationsWithRelevantResults(participations);
+        return filterParticipationsWithoutStudent(participations);
     }
 
     /**
@@ -1004,12 +1009,12 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      * @param participations the participations to get filtered
      * @return an unmodifiable list of filtered participations
      */
-    private List<StudentParticipation> filterParticipationsWithRelevantResults(List<StudentParticipation> participations) {
+    private List<StudentParticipation> filterParticipationsWithoutStudent(List<StudentParticipation> participations) {
         return participations.stream()
                 // Filter out participations without Students
                 // These participations are used e.g. to store template and solution build plans in programming exercises
                 .filter(participation -> participation.getParticipant() != null)
-
+                // TODO jfr investigate this more, but seems like the whole block does not do anything?
                 // filter all irrelevant results, i.e. rated = false or no completion date or no score
                 .peek(participation -> {
                     List<Result> relevantResults = new ArrayList<>();
