@@ -12,6 +12,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { RouterModule } from '@angular/router';
 import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { AlertService } from 'app/shared/service/alert.service';
 
 @Component({
     selector: 'jhi-plagiarism-header',
@@ -22,6 +23,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 export class PlagiarismHeaderComponent {
     private plagiarismCasesService = inject(PlagiarismCasesService);
     private modalService = inject(NgbModal);
+    private alertService = inject(AlertService);
 
     readonly comparison = input<PlagiarismComparison<TextSubmissionElement> | undefined>(undefined);
     readonly exercise = input.required<Exercise>();
@@ -67,7 +69,13 @@ export class PlagiarismHeaderComponent {
         // store comparison in variable in case comparison changes while request is made
         const comparison = this.comparison();
         if (comparison && comparison.id) {
-            this.plagiarismCasesService.updatePlagiarismComparisonStatus(getCourseId(this.exercise()), comparison.id, status).subscribe(() => {
+            const courseId = getCourseId(this.exercise());
+            if (courseId === undefined) {
+                this.alertService.error('error.courseIdUndefined');
+                this.isLoading = false;
+                return;
+            }
+            this.plagiarismCasesService.updatePlagiarismComparisonStatus(courseId, comparison.id, status).subscribe(() => {
                 comparison.status = status;
                 this.isLoading = false;
             });
