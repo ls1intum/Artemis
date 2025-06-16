@@ -12,6 +12,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.eclipse.jgit.api.errors.CheckoutConflictException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -47,28 +48,24 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryAccessService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
-import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCGitBranchService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCServletService;
 
 /**
  * Executes requested actions on the auxiliary repository of a programming exercise. Only available to TAs, Instructors and Admins.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @RestController
 @RequestMapping("api/programming/auxiliary-repository/")
 public class AuxiliaryRepositoryResource extends RepositoryResource {
 
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
-    private final Optional<LocalVCGitBranchService> localVCGitBranchService;
-
     public AuxiliaryRepositoryResource(ProfileService profileService, UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService,
             RepositoryService repositoryService, ProgrammingExerciseRepository programmingExerciseRepository, RepositoryAccessService repositoryAccessService,
-            Optional<LocalVCServletService> localVCServletService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
-            Optional<LocalVCGitBranchService> localVCGitBranchService) {
+            Optional<LocalVCServletService> localVCServletService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository) {
         super(profileService, userRepository, authCheckService, gitService, repositoryService, programmingExerciseRepository, repositoryAccessService, localVCServletService);
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
-        this.localVCGitBranchService = localVCGitBranchService;
     }
 
     @Override
@@ -100,9 +97,7 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
 
     @Override
     String getOrRetrieveBranchOfDomainObject(Long auxiliaryRepositoryId) {
-        AuxiliaryRepository auxiliaryRepo = auxiliaryRepositoryRepository.findByIdElseThrow(auxiliaryRepositoryId);
-        ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(auxiliaryRepo.getExercise().getId());
-        return localVCGitBranchService.orElseThrow().getOrRetrieveBranchOfExercise(exercise);
+        return auxiliaryRepositoryRepository.findBranchByRepoId(auxiliaryRepositoryId);
     }
 
     @Override

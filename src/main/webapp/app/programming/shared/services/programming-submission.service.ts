@@ -8,7 +8,7 @@ import { createRequestOption } from 'app/shared/util/request.util';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
-import { SubmissionType, getLatestSubmissionResult, setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
+import { SubmissionType, getAllResultsOfAllSubmissions, getLatestSubmissionResult, setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { findLatestResult } from 'app/shared/util/utils';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
@@ -399,12 +399,12 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         // If the timer runs out and the fallback fails we will emit an error as we assume the result is lost
         const timerObservable = this.resultTimerSubjects.get(participationId)!.pipe(
             // Fallback: Try to fetch the latest result from the server as the websocket connection might have failed
-            switchMap(() => this.participationService.getLatestResultWithFeedback(participationId, true)),
+            switchMap(() => this.participationService.getLatestResultWithFeedback(participationId)),
             tap((result: Result) => {
                 if (this.isResultOfLatestSubmission(result, exerciseId, participationId)) {
                     // Notify all result subscribers with the latest result if it belongs to the latest submission
                     // This will also trigger the resultObservable above, which emits that the submission is no longer pending
-                    this.participationWebsocketService.notifyAllResultSubscribers({ ...result, participation: { id: participationId } });
+                    this.participationWebsocketService.notifyAllResultSubscribers(result);
                 } else {
                     // Otherwise, notify that submission subscribers that the result could not be retrieved
                     this.emitFailedSubmission(participationId, exerciseId);
@@ -531,7 +531,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             .forEach((exercise) => {
                 const participation = exercise.studentParticipations![0] as ProgrammingExerciseStudentParticipation;
                 const latestSubmission = participation.submissions!.reduce((current, next) => (current.id! > next.id! ? current : next)) as ProgrammingSubmission;
-                const latestResult = findLatestResult(participation.results);
+                const latestResult = findLatestResult(getAllResultsOfAllSubmissions(participation.submissions));
                 const isPendingSubmission = !!latestSubmission && (!latestResult || (latestResult.submission && latestResult.submission.id !== latestSubmission.id));
                 // This needs to be done to clear the cache if exists and to prepare the subject for the later notification of the subscribers.
                 this.submissionSubjects[participation.id!] = new BehaviorSubject<ProgrammingSubmissionStateObj | undefined>(undefined);

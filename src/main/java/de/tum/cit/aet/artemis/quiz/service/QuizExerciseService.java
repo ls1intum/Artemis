@@ -25,6 +25,7 @@ import jakarta.validation.constraints.NotNull;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.domain.Specification;
@@ -61,6 +62,7 @@ import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
 import de.tum.cit.aet.artemis.quiz.repository.ShortAnswerMappingRepository;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class QuizExerciseService extends QuizService<QuizExercise> {
 
@@ -106,7 +108,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      */
     private void updateResultsOnQuizChanges(QuizExercise quizExercise) {
         // change existing results if an answer or and question was deleted
-        List<Result> results = resultRepository.findByParticipationExerciseIdOrderByCompletionDateAsc(quizExercise.getId());
+        List<Result> results = resultRepository.findBySubmissionParticipationExerciseIdOrderByCompletionDateAsc(quizExercise.getId());
         log.info("Found {} results to update for quiz re-evaluate", results.size());
         List<QuizSubmission> submissions = new ArrayList<>();
         for (Result result : results) {
@@ -127,7 +129,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             // recalculate existing score
             quizSubmission.calculateAndUpdateScores(quizExercise.getQuizQuestions());
             // update Successful-Flag in Result
-            StudentParticipation studentParticipation = (StudentParticipation) result.getParticipation();
+            StudentParticipation studentParticipation = (StudentParticipation) result.getSubmission().getParticipation();
             studentParticipation.setExercise(quizExercise);
             result.evaluateQuizSubmission(quizExercise);
 
