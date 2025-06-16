@@ -1,4 +1,4 @@
-export enum ModuleType {
+export enum AthenaModuleMode {
     FEEDBACK_SUGGESTIONS = 'FEEDBACK_SUGGESTIONS',
     PRELIMINARY_FEEDBACK = 'PRELIMINARY_FEEDBACK',
 }

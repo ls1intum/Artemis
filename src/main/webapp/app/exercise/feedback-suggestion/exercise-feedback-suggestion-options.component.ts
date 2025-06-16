@@ -10,7 +10,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgStyle } from '@angular/common';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { FormsModule } from '@angular/forms';
-import { ModuleType } from 'app/assessment/shared/entities/athena.model';
+import { AthenaModuleMode } from 'app/assessment/shared/entities/athena.model';
 
 @Component({
     selector: 'jhi-exercise-feedback-suggestion-options',
@@ -40,7 +40,7 @@ export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit, OnCha
 
     ngOnInit(): void {
         const courseId = Number(this.activatedRoute.snapshot.paramMap.get('courseId'));
-        this.athenaService.getAvailableModules(courseId, this.exercise, ModuleType.FEEDBACK_SUGGESTIONS).subscribe((modules) => {
+        this.athenaService.getAvailableModules(courseId, this.exercise, AthenaModuleMode.FEEDBACK_SUGGESTIONS).subscribe((modules) => {
             this.availableAthenaModules = modules;
             this.modulesAvailable = modules.length > 0;
             this.cdr.detectChanges();
