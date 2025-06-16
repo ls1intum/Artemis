@@ -152,7 +152,7 @@ const evaluateAndPrintMetrics = (module, aggregatedMetrics, thresholds) => {
         const pass = twoDigitPercentage >= twoDigitThreshold;
         const higherThanExpected = twoDigitPercentage > twoDigitThreshold && twoDigitThreshold < AIMED_FOR_COVERAGE;
 
-        const status = `${higherThanExpected ? ' ⬆️' : ''} ${pass ? '✅' : '❌'}`;
+        const status = `${higherThanExpected ? '⬆️' : ''} ${pass ? '✅' : '❌'}`;
         console.log(`${status.padStart(6)} ${metric.padEnd(12)}: ${String(twoDigitPercentage).padStart(6)}%  (need ≥ ${twoDigitThreshold}%)`);
         if (!pass) failed = true;
     }
