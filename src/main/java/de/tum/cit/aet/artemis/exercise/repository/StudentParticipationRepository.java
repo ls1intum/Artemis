@@ -617,6 +617,35 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             """)
     Optional<StudentParticipation> findWithEagerLegalSubmissionsResultsFeedbacksById(@Param("participationId") long participationId);
 
+    /**
+     * Find the participation with the given id. Additionally, load the latest submissions and corresponding results from the database.
+     * Further, load the exercise and its course. Returns an empty Optional if the participation could not be found.
+     * <p>
+     * Note: Does NOT load illegal submissions!
+     *
+     * @param participationId the id of the participation
+     * @return the participation with eager latest submission, it's results, exercise and course or an empty Optional
+     */
+    @Query("""
+            SELECT p
+            FROM StudentParticipation p
+                LEFT JOIN FETCH p.submissions s
+                LEFT JOIN FETCH s.results sr
+                LEFT JOIN FETCH sr.feedbacks
+                LEFT JOIN FETCH p.team t
+                LEFT JOIN FETCH t.students
+            WHERE p.id = :participationId
+                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
+                AND (
+                    s.id = (
+                    SELECT MAX(s2.id)
+                    FROM p.submissions s2
+                    )
+                    OR s.id IS NULL
+                )
+            """)
+    Optional<StudentParticipation> findWithEagerLatestLegalSubmissionResultsFeedbacksById(@Param("participationId") long participationId);
+
     @EntityGraph(type = LOAD, attributePaths = { "submissions", "submissions.results", "submissions.results.assessor" })
     List<StudentParticipation> findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(long exerciseId);
 
@@ -916,6 +945,11 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     @NotNull
     default StudentParticipation findByIdWithLegalSubmissionsResultsFeedbackElseThrow(long participationId) {
         return getValueElseThrow(findWithEagerLegalSubmissionsResultsFeedbacksById(participationId), participationId);
+    }
+
+    @NotNull
+    default StudentParticipation findByIdWithLatestLegalSubmissionResultFeedbackElseThrow(long participationId) {
+        return getValueElseThrow(findWithEagerLatestLegalSubmissionResultsFeedbacksById(participationId), participationId);
     }
 
     @NotNull
