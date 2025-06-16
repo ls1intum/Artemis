@@ -139,19 +139,21 @@ const metrics = ['statements', 'branches', 'functions', 'lines'];
 
 const AIMED_FOR_COVERAGE = 90;
 
+const truncateToTwoDigits = (value) => parseFloat(value.toFixed(2));
+
 const evaluateAndPrintMetrics = (module, aggregatedMetrics, thresholds) => {
     let failed = false;
     console.log(`\nModule: ${module}`);
     for (const metric of metrics) {
         const { total, covered } = aggregatedMetrics[metric];
         const percentage = total > 0 ? (covered / total) * 100 : 0;
-        const roundedPercentage = Math.round(percentage * 100) / 100;
-        const threshold = thresholds[metric];
+        const roundedPercentage = truncateToTwoDigits(Math.round(percentage * 100) / 100);
+        const threshold = truncateToTwoDigits(thresholds[metric]);
         const pass = roundedPercentage >= threshold;
         const higherThanExpected = roundedPercentage > threshold && threshold < AIMED_FOR_COVERAGE;
 
         const status = `${higherThanExpected ? ' ⬆️' : ''} ${pass ? '✅' : '❌'}`;
-        console.log(`${status.padStart(6)} ${metric.padEnd(12)}: ${percentage.toFixed(2).padStart(6)}%  (need ≥ ${threshold.toFixed(2)}%)`);
+        console.log(`${status.padStart(6)} ${metric.padEnd(12)}: ${percentage.padStart(6)}%  (need ≥ ${threshold}%)`);
         if (!pass) failed = true;
     }
     return failed;
