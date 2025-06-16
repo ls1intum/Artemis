@@ -12,18 +12,18 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.config.InstantiationAwareBeanPostProcessor;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
+import de.tum.cit.aet.artemis.core.PrintStartupBeansEvent;
 import de.tum.cit.aet.artemis.core.util.Pair;
 
 @Component
 @Profile(SPRING_PROFILE_DEVELOPMENT)
 @Lazy
-public class BeanInstantiationTracer implements InstantiationAwareBeanPostProcessor, ApplicationListener<ApplicationReadyEvent> {
+public class BeanInstantiationTracer implements InstantiationAwareBeanPostProcessor {
 
     private static final Logger log = LoggerFactory.getLogger(BeanInstantiationTracer.class);
 
@@ -58,19 +58,22 @@ public class BeanInstantiationTracer implements InstantiationAwareBeanPostProces
         return bean;
     }
 
-    @Override
-    public void onApplicationEvent(ApplicationReadyEvent event) {
-        // e.g. write to src/main/resources/beans.dot
-        try (PrintWriter out = new PrintWriter("beans.dot")) {
+    /**
+     * Prints the bean instantiation graph for the startup to a DOT file.
+     * This file can be used to visualize the dependencies between beans using tools like Graphviz.
+     */
+    @EventListener(PrintStartupBeansEvent.class)
+    public void printDependencyGraph() {
+        try (PrintWriter out = new PrintWriter("startupBeans.dot")) {
             out.println("digraph beans {");
             for (Pair<String, String> edge : edges) {
                 out.printf("  \"%s\" -> \"%s\";%n", edge.first(), edge.second());
             }
             out.println("}");
-            log.info("Bean instantiation graph exported to beans.dot ({} edges)", edges.size());
+            log.info("Bean instantiation graph exported to startupBeans.dot ({} edges)", edges.size());
         }
         catch (IOException e) {
-            log.error("Failed to write beans.dot", e);
+            log.error("Failed to write startupBeans.dot", e);
         }
     }
 }
