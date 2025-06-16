@@ -18,7 +18,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { NgbModal, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
-import { UserService } from '../../../../user/shared/user.service';
+import { UserService } from 'app/core/user/shared/user.service';
 import { MockUserService } from 'test/helpers/mocks/service/mock-user.service';
 
 describe('RequestFeedbackButtonComponent', () => {

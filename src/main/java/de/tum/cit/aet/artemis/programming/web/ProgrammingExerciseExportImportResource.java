@@ -42,7 +42,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.athena.api.AthenaApi;
-import de.tum.cit.aet.artemis.athena.domain.ModuleType;
+import de.tum.cit.aet.artemis.athena.domain.AthenaModuleMode;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -247,14 +247,14 @@ public class ProgrammingExerciseExportImportResource {
         // Athena: Check that only allowed athena modules are used, if not we catch the exception and disable feedback suggestions or preliminary feedback for the imported exercise
         // If Athena is disabled and the service is not present, we also disable corresponding functionality
         try {
-            athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(newExercise, course, ModuleType.FEEDBACK_SUGGESTIONS, ENTITY_NAME),
+            athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(newExercise, course, AthenaModuleMode.FEEDBACK_SUGGESTIONS, ENTITY_NAME),
                     () -> newExercise.setFeedbackSuggestionModule(null));
         }
         catch (BadRequestAlertException e) {
             newExercise.setFeedbackSuggestionModule(null);
         }
         try {
-            athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(newExercise, course, ModuleType.PRELIMINARY_FEEDBACK, ENTITY_NAME),
+            athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(newExercise, course, AthenaModuleMode.PRELIMINARY_FEEDBACK, ENTITY_NAME),
                     () -> newExercise.setPreliminaryFeedbackModule(null));
         }
         catch (BadRequestAlertException e) {

@@ -2,11 +2,11 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { MockProvider } from 'ng-mocks';
-import { Exercise, ExerciseType } from '../../../exercise/shared/entities/exercise/exercise.model';
-import { AssessmentType } from '../../../assessment/shared/entities/assessment-type.model';
-import { AthenaService } from '../../../assessment/shared/services/athena.service';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { AthenaService } from 'app/assessment/shared/services/athena.service';
 import dayjs from 'dayjs/esm';
 import { ExercisePreliminaryFeedbackOptionsComponent } from './exercise-preliminary-feedback-options.component';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 
 describe('ExercisePreliminaryFeedbackOptionsComponent', () => {
     let component: ExercisePreliminaryFeedbackOptionsComponent;
@@ -87,8 +87,7 @@ describe('ExercisePreliminaryFeedbackOptionsComponent', () => {
     });
 
     it('should toggle preliminary feedback module and set the module for any exercise', () => {
-        const modules = ['Module1', 'Module2'];
-        component.availableAthenaModules = modules;
+        component.availableAthenaModules = ['Module1', 'Module2'];
         fixture.componentRef.setInput('exercise', { type: ExerciseType.PROGRAMMING } as Exercise);
 
         expect(component.showDropdownList).toBeFalse();

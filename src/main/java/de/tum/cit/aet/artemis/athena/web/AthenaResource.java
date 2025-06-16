@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.athena.domain.ModuleType;
+import de.tum.cit.aet.artemis.athena.domain.AthenaModuleMode;
 import de.tum.cit.aet.artemis.athena.dto.ModelingFeedbackDTO;
 import de.tum.cit.aet.artemis.athena.dto.ProgrammingFeedbackDTO;
 import de.tum.cit.aet.artemis.athena.dto.TextFeedbackDTO;
@@ -147,14 +147,14 @@ public class AthenaResource {
         }
     }
 
-    private ResponseEntity<List<String>> getAvailableModules(long courseId, ExerciseType exerciseType, @Nullable ModuleType moduleType) {
+    private ResponseEntity<List<String>> getAvailableModules(long courseId, ExerciseType exerciseType, @Nullable AthenaModuleMode athenaModuleMode) {
         Course course = courseRepository.findByIdElseThrow(courseId);
         log.debug("REST request to get available Athena modules for {} exercises in course {}", exerciseType.getExerciseTypeAsReadableString(), course.getTitle());
 
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
         try {
-            List<String> modules = athenaModuleService.getAthenaModulesForCourse(course, exerciseType, moduleType);
+            List<String> modules = athenaModuleService.getAthenaModulesForCourse(course, exerciseType, athenaModuleMode);
             return ResponseEntity.ok(modules);
         }
         catch (NetworkingException e) {
@@ -210,40 +210,40 @@ public class AthenaResource {
     /**
      * GET courses/{courseId}/text-exercises/available-modules : Get all available Athena modules for a text exercise in the course
      *
-     * @param courseId   the id of the course the text exercise belongs to
-     * @param moduleType the optional module type to filter the available modules
+     * @param courseId         the id of the course the text exercise belongs to
+     * @param athenaModuleMode the optional module type to filter the available modules
      * @return 200 Ok if successful with the modules as body
      */
     @GetMapping("courses/{courseId}/text-exercises/available-modules")
     @EnforceAtLeastEditor
-    public ResponseEntity<List<String>> getAvailableModulesForTextExercises(@PathVariable long courseId, @RequestParam(required = false) ModuleType moduleType) {
-        return this.getAvailableModules(courseId, ExerciseType.TEXT, moduleType);
+    public ResponseEntity<List<String>> getAvailableModulesForTextExercises(@PathVariable long courseId, @RequestParam(required = false) AthenaModuleMode athenaModuleMode) {
+        return this.getAvailableModules(courseId, ExerciseType.TEXT, athenaModuleMode);
     }
 
     /**
      * GET courses/{courseId}/programming-exercises/available-modules : Get all available Athena modules for a programming exercise in the course
      *
-     * @param courseId   the id of the course the programming exercise belongs to
-     * @param moduleType the optional module type to filter the available modules
+     * @param courseId         the id of the course the programming exercise belongs to
+     * @param athenaModuleMode the optional module type to filter the available modules
      * @return 200 Ok if successful with the modules as body
      */
     @GetMapping("courses/{courseId}/programming-exercises/available-modules")
     @EnforceAtLeastEditor
-    public ResponseEntity<List<String>> getAvailableModulesForProgrammingExercises(@PathVariable long courseId, @RequestParam(required = false) ModuleType moduleType) {
-        return this.getAvailableModules(courseId, ExerciseType.PROGRAMMING, moduleType);
+    public ResponseEntity<List<String>> getAvailableModulesForProgrammingExercises(@PathVariable long courseId, @RequestParam(required = false) AthenaModuleMode athenaModuleMode) {
+        return this.getAvailableModules(courseId, ExerciseType.PROGRAMMING, athenaModuleMode);
     }
 
     /**
      * GET courses/{courseId}/modeling-exercises/available-modules : Get all available Athena modules for a modeling exercise in the course
      *
-     * @param courseId   the id of the course the modeling exercise belongs to
-     * @param moduleType the optional module type to filter the available modules
+     * @param courseId         the id of the course the modeling exercise belongs to
+     * @param athenaModuleMode the optional module type to filter the available modules
      * @return 200 Ok if successful with the modules as body
      */
     @GetMapping("courses/{courseId}/modeling-exercises/available-modules")
     @EnforceAtLeastEditor
-    public ResponseEntity<List<String>> getAvailableModulesForModelingExercises(@PathVariable long courseId, @RequestParam(required = false) ModuleType moduleType) {
-        return this.getAvailableModules(courseId, ExerciseType.MODELING, moduleType);
+    public ResponseEntity<List<String>> getAvailableModulesForModelingExercises(@PathVariable long courseId, @RequestParam(required = false) AthenaModuleMode athenaModuleMode) {
+        return this.getAvailableModules(courseId, ExerciseType.MODELING, athenaModuleMode);
     }
 
     /**
