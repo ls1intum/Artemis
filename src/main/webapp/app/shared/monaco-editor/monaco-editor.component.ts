@@ -110,6 +110,13 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * Replaces emoticon-like text (e.g., ":)", ":D") with their corresponding emoji characters.
+     * Only words that start with ":" are processed for conversion.
+     *
+     * @param text The raw input text to be scanned for emoji patterns.
+     * @returns The transformed string with applicable emoticons replaced by emojis.
+     */
     convertTextToEmoji(text: string): string {
         const words = text.split(' ');
         const convertedWords = words.map((word) => {
