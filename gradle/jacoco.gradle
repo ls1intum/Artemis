@@ -89,7 +89,6 @@ jacocoTestCoverageVerification {
         finalizedBy sortedTasks
     }
 }
-jacocoTestCoverageVerification.dependsOn(jacocoTestReport)
 check.dependsOn jacocoTestCoverageVerification
 
 /**
@@ -145,6 +144,12 @@ private JacocoCoverageVerification registerJacocoTestCoverageVerification(String
 
     prepareJacocoReportTask(task, moduleName, rootTask)
     applyVerificationRule(task, minInstructionCoveredRatio, maxNumberUncoveredClasses)
+
+    // Ensure the verification waits for its own report
+    def reportTaskName = "jacocoCoverageReport-$moduleName"
+    if (project.tasks.names.contains(reportTaskName)) {
+        task.dependsOn(project.tasks.named(reportTaskName))
+    }
 
     return task
 }
