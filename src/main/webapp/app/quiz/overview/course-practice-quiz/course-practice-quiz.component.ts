@@ -50,7 +50,7 @@ export class CoursePracticeQuizComponent {
     result: Result;
     showingResult = false;
     submitted = false;
-    questionScores: { [id: number]: number } = {};
+    questionScores: number = 0;
     selectedAnswerOptions: AnswerOption[] = [];
     dragAndDropMappings: DragAndDropMapping[] = [];
     shortAnswerSubmittedTexts: ShortAnswerSubmittedText[] = [];
@@ -216,11 +216,9 @@ export class CoursePracticeQuizComponent {
         this.result = result;
         if (this.result) {
             this.showingResult = true;
-
-            this.questionScores = {};
             const submittedAnswers = this.submission.submittedAnswers?.[0];
             if (submittedAnswers) {
-                this.questionScores[submittedAnswers.quizQuestion!.id!] = round(submittedAnswers.scoreInPoints);
+                this.questionScores = round(submittedAnswers.scoreInPoints);
             }
         }
     }

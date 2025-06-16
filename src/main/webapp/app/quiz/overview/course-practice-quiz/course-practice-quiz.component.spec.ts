@@ -115,9 +115,9 @@ describe('CoursePracticeQuizComponent', () => {
 
     it('should navigate to practice when on last question', () => {
         component.currentIndex.set(2);
-        const navigateSpy = jest.spyOn(component, 'navigateToPractice');
+        const spy = jest.spyOn(component, 'navigateToPractice');
         component.nextQuestion();
-        expect(navigateSpy).toHaveBeenCalledOnce();
+        expect(spy).toHaveBeenCalledOnce();
     });
 
     it('should init the current question', () => {
