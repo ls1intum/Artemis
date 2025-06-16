@@ -182,6 +182,7 @@ describe('Plagiarism Header Component', () => {
         comp.updatePlagiarismStatus(PlagiarismStatus.CONFIRMED);
 
         expect(alertSpy).toHaveBeenCalledWith('error.courseIdUndefined');
+        expect(alertSpy).toHaveBeenCalledOnce();
         expect(updateSpy).not.toHaveBeenCalled();
         expect(comp.isLoading).toBeFalse();
     });
