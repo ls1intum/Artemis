@@ -150,8 +150,8 @@ const evaluateAndPrintMetrics = (module, aggregatedMetrics, thresholds) => {
         const pass = roundedPercentage >= threshold;
         const higherThanExpected = roundedPercentage > threshold && threshold < AIMED_FOR_COVERAGE;
 
-        const status = `${higherThanExpected ? ' ⬆️' : ''} ${pass ? '✅' : '❌'}`.padStart(4);
-        console.log(`  ${status} ${metric.padEnd(10)}: ${percentage.toFixed(2).padStart(6)}%  (need ≥ ${threshold.toFixed(2)}%)`);
+        const status = `${higherThanExpected ? ' ⬆️' : ''} ${pass ? '✅' : '❌'}`.padStart(6);
+        console.log(`  ${status} ${metric.padEnd(12)}: ${percentage.toFixed(2).padStart(6)}%  (need ≥ ${threshold.toFixed(2)}%)`);
         if (!pass) failed = true;
     }
     return failed;
