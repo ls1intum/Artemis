@@ -11,6 +11,7 @@ import { Observable } from 'rxjs';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { SubmissionPatch } from 'app/exercise/shared/entities/submission/submission-patch.model';
 import { SubmissionPatchPayload, isSubmissionPatchPayload } from 'app/exercise/shared/entities/submission/submission-patch-payload.model';
+import { ApollonEditor } from '@tumaet/apollon';
 
 @Component({
     selector: 'jhi-team-submission-sync',
@@ -70,16 +71,23 @@ export class TeamSubmissionSyncComponent implements OnInit {
      * updated submissions or submission patches based on those own changes via websockets
      */
     private setupSender() {
-        this.submissionObservable?.pipe(throttleTime(this.THROTTLE_TIME, undefined, { leading: true, trailing: true })).subscribe({
-            next: (submission: Submission) => {
-                if (submission.participation) {
-                    submission.participation.exercise = undefined;
-                    submission.participation.submissions = [];
-                }
-                this.teamSubmissionWebsocketService.send<Submission>(this.buildWebsocketTopic('/update'), submission);
-            },
-            error: (error) => this.onError(error),
-        });
+        this.submissionObservable
+            ?.pipe(
+                throttleTime(this.THROTTLE_TIME, undefined, {
+                    leading: true,
+                    trailing: true,
+                }),
+            )
+            .subscribe({
+                next: (submission: Submission) => {
+                    if (submission.participation) {
+                        submission.participation.exercise = undefined;
+                        submission.participation.submissions = [];
+                    }
+                    this.teamSubmissionWebsocketService.send<Submission>(this.buildWebsocketTopic('/update'), submission);
+                },
+                error: (error) => this.onError(error),
+            });
 
         this.submissionPatchObservable?.subscribe({
             next: (submissionPatch: SubmissionPatch) => {
@@ -87,6 +95,10 @@ export class TeamSubmissionSyncComponent implements OnInit {
             },
             error: (error) => this.onError(error),
         });
+
+        const initialSyncMessage = ApollonEditor.generateInitialSyncMessage();
+        const newSubmissionPatch = new SubmissionPatch(initialSyncMessage);
+        this.teamSubmissionWebsocketService.send<SubmissionPatch>(this.buildWebsocketTopic('/patch'), newSubmissionPatch);
     }
 
     private isSelf(user: User) {
