@@ -40,6 +40,8 @@ jacoco {
 }
 
 jacocoTestReport {
+    dependsOn tasks.named("test"), tasks.named("compileJava"), tasks.named("processResources")
+
     // For the aggregated report
     reports {
         xml.required = true
