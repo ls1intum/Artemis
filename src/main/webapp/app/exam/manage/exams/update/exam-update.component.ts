@@ -137,7 +137,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Returns the exma working time in minutes, rounded to one decimal place.
+     * Returns the exam working time in minutes, rounded to one decimal place.
      * Used for display purposes.
      */
     get workingTimeInMinutesRounded(): number {
