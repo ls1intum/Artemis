@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.atlas.test_repository;
 
 import java.util.Optional;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -12,6 +13,7 @@ import de.tum.cit.aet.artemis.atlas.repository.CourseLearnerProfileRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 
 @Repository
+@Lazy
 @Primary
 public interface CourseLearnerProfileTestRepository extends CourseLearnerProfileRepository {
 
