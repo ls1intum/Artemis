@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.exercise.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -11,7 +10,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -335,9 +333,7 @@ public class ExerciseResource {
         for (StudentParticipation participation : participations) {
             // By filtering the results available yet, they can become null for the exercise.
             exercise.filterResultsForStudents(participation);
-            Stream.ofNullable(participation.getSubmissions()).flatMap(Collection::stream)
-                    .flatMap(submission -> Stream.ofNullable(submission.getResults()).flatMap(Collection::stream)).filter(Objects::nonNull)
-                    .forEach(Result::filterSensitiveInformation);
+            participation.getSubmissions().stream().flatMap(submission -> submission.getResults().stream().filter(Objects::nonNull)).forEach(Result::filterSensitiveInformation);
             exercise.addParticipation(participation);
         }
 
