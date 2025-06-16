@@ -240,12 +240,15 @@ public class SecurityConfiguration {
                     .requestMatchers("/websocket/**").permitAll()
                     .requestMatchers("/.well-known/jwks.json").permitAll()
                     .requestMatchers("/.well-known/assetlinks.json").permitAll()
+                    //nebula transcipt endpoint
+                    .requestMatchers("/api/lecture/*/lecture-unit/*/nebula-transcriber").permitAll()
                     .requestMatchers("/.well-known/apple-app-site-association").permitAll()
                     // Prometheus endpoint protected by IP address.
                     .requestMatchers("/management/prometheus/**").access((authentication, context) -> new AuthorizationDecision(monitoringIpAddresses.contains(context.getRequest().getRemoteAddr())));
 
                     // LocalVC related URLs: LocalVCPushFilter and LocalVCFetchFilter handle authentication on their own
                     if (profileService.isLocalVCActive()) {
+
                         requests.requestMatchers("/git/**").permitAll();
                     }
 
