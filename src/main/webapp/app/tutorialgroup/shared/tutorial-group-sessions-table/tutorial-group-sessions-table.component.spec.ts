@@ -1,4 +1,4 @@
-import { Component, Input, QueryList, SimpleChange, SimpleChanges, viewChild, viewChildren } from '@angular/core';
+import { Component, Input, SimpleChange, SimpleChanges, viewChild, viewChildren } from '@angular/core';
 import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TutorialGroupSessionRowStubComponent } from 'test/helpers/stubs/tutorialgroup/tutorial-group-sessions-table-stub.component';

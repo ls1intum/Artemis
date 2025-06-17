@@ -1,6 +1,6 @@
 import '@angular/localize/init';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockComponent, MockInstance, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/shared/service/alert.service';
 import { Router } from '@angular/router';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
@@ -18,7 +18,7 @@ import { TutorialGroupFormData } from '../tutorial-group-form/tutorial-group-for
 import { LoadingIndicatorContainerComponent } from '../../../../../shared/loading-indicator-container/loading-indicator-container.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { Component, EventEmitter, Output, input, output, signal } from '@angular/core';
+import { Component, EventEmitter, input, output } from '@angular/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -69,8 +69,8 @@ describe('CreateTutorialGroupComponent', () => {
                 fixture = TestBed.createComponent(CreateTutorialGroupComponent);
                 component = fixture.componentInstance;
                 tutorialGroupService = TestBed.inject(TutorialGroupsService);
-                jest.spyOn(tutorialGroupService, 'getUniqueCampusValues').mockReturnValue(of([]));
-                jest.spyOn(tutorialGroupService, 'getUniqueLanguageValues').mockReturnValue(of([]));
+                jest.spyOn(tutorialGroupService, 'getUniqueCampusValues').mockReturnValue(of(new HttpResponse<string[]>({ body: [] })));
+                jest.spyOn(tutorialGroupService, 'getUniqueLanguageValues').mockReturnValue(of(new HttpResponse<string[]>({ body: [] })));
                 global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
                     return new MockResizeObserver(callback);
                 });

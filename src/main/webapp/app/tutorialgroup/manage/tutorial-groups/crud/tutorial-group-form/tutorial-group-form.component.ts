@@ -77,7 +77,6 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy 
     campusAreLoading = false;
     campus: string[];
     readonly campusTypeAhead = viewChild.required<NgbTypeahead>('campusInput');
-
     campusFocus$ = new Subject<string>();
     campusClick$ = new Subject<string>();
 
