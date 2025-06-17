@@ -89,12 +89,12 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     isProduction = true;
     isTestServer = false;
     irisEnabled = false;
+    informationBoxData: InformationBox[] = [];
 
     readonly LectureUnitType = LectureUnitType;
     readonly isCommunicationEnabled = isCommunicationEnabled;
     readonly isMessagingEnabled = isMessagingEnabled;
     readonly ChatServiceMode = ChatServiceMode;
-    readonly informationBoxData: InformationBox[] = [];
 
     readonly faSpinner = faSpinner;
     readonly faChalkboardTeacher = faChalkboardTeacher;
@@ -154,6 +154,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
                                 this.irisSettings = irisSettings;
                             });
                         }
+                        this.informationBoxData = [];
                         if (this.lecture?.startDate) {
                             const startDateInfoBoxTitle = 'artemisApp.courseOverview.lectureDetails.startDate';
                             const infoBoxStartDate = this.createDateInfoBox(this.lecture!.startDate, startDateInfoBoxTitle);
