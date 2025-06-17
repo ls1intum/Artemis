@@ -66,6 +66,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
+import de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
@@ -118,6 +119,9 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
     @Autowired
     private ParticipationService participationService;
+
+    @Autowired
+    private ParticipationDeletionService participationDeletionService;
 
     @Autowired
     private QuizBatchService quizBatchService;
@@ -1589,7 +1593,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var actualParticipation = request.get("/api/exercise/exercises/" + exercise.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
         assertThat(actualParticipation).isEqualTo(participation);
 
-        participationService.deleteAllByTeamId(team.getId());
+        participationDeletionService.deleteAllByTeamId(team.getId());
 
         var participations = participationRepo.findByTeamId(team.getId());
         assertThat(participations).isEmpty();
