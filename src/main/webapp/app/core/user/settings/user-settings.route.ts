@@ -94,6 +94,14 @@ export const routes: Routes = [
                     pageTitle: 'artemisApp.userSettings.categories.IDE_PREFERENCES',
                 },
             },
+            {
+                path: 'notifications',
+                loadComponent: () =>
+                    import('app/core/user/settings/global-notifications-settings/global-notifications-settings.component').then((m) => m.GlobalNotificationsSettingsComponent),
+                data: {
+                    pageTitle: 'artemisApp.userSettings.categories.GLOBAL_NOTIFICATIONS',
+                },
+            },
         ],
     },
 ];

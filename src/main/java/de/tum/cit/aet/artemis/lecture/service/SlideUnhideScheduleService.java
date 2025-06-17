@@ -8,11 +8,12 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 import de.tum.cit.aet.artemis.core.service.ScheduleService;
 import de.tum.cit.aet.artemis.lecture.domain.SlideLifecycle;
 import de.tum.cit.aet.artemis.lecture.dto.SlideUnhideDTO;
@@ -24,6 +25,7 @@ import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
  * and the integrated ScheduleService.
  */
 @Profile(PROFILE_CORE_AND_SCHEDULING)
+@Lazy
 @Service
 public class SlideUnhideScheduleService {
 
@@ -45,7 +47,7 @@ public class SlideUnhideScheduleService {
      * Method called when the application is ready.
      * It loads all hidden slides and schedules tasks to unhide them at their expiration time.
      */
-    @EventListener(ApplicationReadyEvent.class)
+    @EventListener(FullStartupEvent.class)
     public void onApplicationReady() {
         scheduleAllHiddenSlides();
     }
