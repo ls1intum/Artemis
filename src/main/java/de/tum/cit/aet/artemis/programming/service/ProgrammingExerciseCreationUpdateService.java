@@ -29,11 +29,9 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
-import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
@@ -99,9 +97,8 @@ public class ProgrammingExerciseCreationUpdateService {
     public ProgrammingExerciseCreationUpdateService(ProgrammingExerciseRepositoryService programmingExerciseRepositoryService,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, ProgrammingSubmissionService programmingSubmissionService,
             UserRepository userRepository, ExerciseService exerciseService, ProgrammingExerciseRepository programmingExerciseRepository, ChannelService channelService,
-            ProfileService profileService, GroupNotificationScheduleService groupNotificationScheduleService, ProgrammingExerciseTaskService programmingExerciseTaskService,
-            ProgrammingExerciseBuildPlanService programmingExerciseBuildPlanService, ProgrammingExerciseCreationScheduleService programmingExerciseCreationScheduleService,
-            ProgrammingExerciseAtlasIrisService programmingExerciseAtlasIrisService,
+            ProgrammingExerciseTaskService programmingExerciseTaskService, ProgrammingExerciseBuildPlanService programmingExerciseBuildPlanService,
+            ProgrammingExerciseCreationScheduleService programmingExerciseCreationScheduleService, ProgrammingExerciseAtlasIrisService programmingExerciseAtlasIrisService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
             Optional<VersionControlService> versionControlService, ParticipationRepository participationRepository, GitService gitService) {
@@ -207,7 +204,7 @@ public class ProgrammingExerciseCreationUpdateService {
         programmingExerciseTaskService.updateTasksFromProblemStatement(savedProgrammingExercise);
 
         programmingExerciseCreationScheduleService.performScheduleOperationsAndCheckNotifications(savedProgrammingExercise);
-        programmingExerciseAtlasIrisService.updateCompetencyProgressAndEnableIris(savedProgrammingExercise);
+        programmingExerciseAtlasIrisService.updateCompetencyProgressOnCreationAndEnableIris(savedProgrammingExercise);
 
         return programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
     }
@@ -298,7 +295,7 @@ public class ProgrammingExerciseCreationUpdateService {
 
         exerciseService.notifyAboutExerciseChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise, notificationText);
 
-        programmingExerciseAtlasIrisService.updateCompetencyProgressAndEnableIris(updatedProgrammingExercise);
+        programmingExerciseAtlasIrisService.updateCompetencyProgressOnExerciseUpdateAndEnableIris(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
 
         return savedProgrammingExercise;
     }

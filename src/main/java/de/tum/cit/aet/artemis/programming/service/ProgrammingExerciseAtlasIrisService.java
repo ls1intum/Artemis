@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,9 +32,22 @@ public class ProgrammingExerciseAtlasIrisService {
         this.irisSettingsApi = irisSettingsApi;
     }
 
-    public void updateCompetencyProgressAndEnableIris(ProgrammingExercise exercise) {
+    public void updateCompetencyProgressOnCreationAndEnableIris(ProgrammingExercise exercise) {
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(exercise));
-        irisSettingsApi.ifPresent(settingsApi -> settingsApi.setEnabledForExerciseByCategories(exercise, new HashSet<>()));
+        enableIrisForExercise(exercise);
+    }
+
+    public void updateCompetencyProgressOnExerciseUpdateAndEnableIris(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise programmingExerciseAfterUpdate) {
+        competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(programmingExerciseBeforeUpdate, Optional.of(programmingExerciseAfterUpdate)));
+        enableIrisForExercise(programmingExerciseAfterUpdate, programmingExerciseBeforeUpdate.getCategories());
+    }
+
+    public void enableIrisForExercise(ProgrammingExercise exercise) {
+        enableIrisForExercise(exercise, new HashSet<>());
+    }
+
+    public void enableIrisForExercise(ProgrammingExercise exercise, Set<String> categories) {
+        irisSettingsApi.ifPresent(settingsApi -> settingsApi.setEnabledForExerciseByCategories(exercise, categories));
     }
 
 }
