@@ -47,10 +47,16 @@ describe('Exercise Update Plagiarism Component', () => {
         expect(comp.exercise()?.plagiarismDetectionConfig).toEqual(DEFAULT_PLAGIARISM_DETECTION_CONFIG);
     });
 
-    it('should set minimumSizeTooltip on init', () => {
+    it('should set minimumSizeTooltip on init for programming', () => {
         fixture.componentRef.setInput('exercise', { type: ExerciseType.PROGRAMMING } as Exercise);
         comp.ngOnInit();
         expect(comp.minimumSizeTooltip).toBe('artemisApp.plagiarism.minimumSizeTooltipProgrammingExercise');
+    });
+
+    it('should set minimumSizeTooltip on init for text', () => {
+        fixture.componentRef.setInput('exercise', { type: ExerciseType.TEXT } as Exercise);
+        comp.ngOnInit();
+        expect(comp.minimumSizeTooltip).toBe('artemisApp.plagiarism.minimumSizeTooltipTextExercise');
     });
 
     it('should set default plagiarism detection config on init if not set', () => {
