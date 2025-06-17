@@ -1,77 +1,88 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, input, viewChild } from '@angular/core';
+import { Component, OnInit, Signal, computed, effect, input } from '@angular/core';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DEFAULT_PLAGIARISM_DETECTION_CONFIG, Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
-import { FormsModule, NgModel } from '@angular/forms';
-import { Subject, Subscription } from 'rxjs';
+import { Subject } from 'rxjs';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 @Component({
     selector: 'jhi-exercise-update-plagiarism',
     templateUrl: './exercise-update-plagiarism.component.html',
-    imports: [TranslateDirective, FaIconComponent, NgbTooltip, FormsModule, ArtemisTranslatePipe],
+    standalone: true,
+    imports: [ReactiveFormsModule, TranslateDirective, FaIconComponent, NgbTooltip, ArtemisTranslatePipe],
 })
-export class ExerciseUpdatePlagiarismComponent implements OnInit, OnDestroy, AfterViewInit {
+export class ExerciseUpdatePlagiarismComponent implements OnInit {
     readonly exercise = input.required<Exercise>();
-    readonly fieldCPCEnabled = viewChild<NgModel>('continuous_plagiarism_control_enabled');
-    readonly fieldThreshold = viewChild<NgModel>('exercise.plagiarismDetectionConfig!.similarityThreshol');
-    readonly fieldMinScore = viewChild<NgModel>('exercise.plagiarismDetectionConfig.minimumScore');
-    readonly fieldMinSize = viewChild<NgModel>('exercise.plagiarismDetectionConfig.minimumSize');
-    readonly fieldResponsePeriod = viewChild<NgModel>('exercise.plagiarismDetectionConfig!.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod');
-    fieldCPCEnabledSubscription?: Subscription;
-    fieldThresholdSubscription?: Subscription;
-    fieldMinScoreSubscription?: Subscription;
-    fieldMinSizeSubscription?: Subscription;
-    fieldResponsePeriodSubscription?: Subscription;
 
-    isCPCCollapsed = true;
+    form: FormGroup;
 
-    minimumSizeTooltip?: string;
+    private formStatus: Signal<string>;
+
+    isFormValid: Signal<boolean>;
+
     formValid: boolean;
     formValidChanges = new Subject<boolean>();
-
+    isCPCCollapsed = true;
+    minimumSizeTooltip?: string;
     readonly faQuestionCircle = faQuestionCircle;
 
+    constructor(private fb: FormBuilder) {
+        this.form = this.fb.group({
+            continuousPlagiarismControlEnabled: [false],
+            continuousPlagiarismControlPostDueDateChecksEnabled: [false],
+            similarityThreshold: [null, [Validators.required, Validators.min(0), Validators.max(100)]],
+            minimumScore: [null, [Validators.required, Validators.min(0), Validators.max(100)]],
+            minimumSize: [null, [Validators.required, Validators.min(0), Validators.max(100)]],
+            continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod: [null, [Validators.required, Validators.min(7), Validators.max(31)]],
+        });
+
+        this.formStatus = toSignal(this.form.statusChanges, { initialValue: this.form.status });
+
+        this.isFormValid = computed(() => this.formStatus() === 'VALID');
+
+        this.form.get('continuousPlagiarismControlEnabled')!.valueChanges.subscribe((enabled: boolean) => {
+            const fields = [
+                'continuousPlagiarismControlPostDueDateChecksEnabled',
+                'similarityThreshold',
+                'minimumScore',
+                'minimumSize',
+                'continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod',
+            ];
+            fields.forEach((key) => {
+                const ctrl = this.form.get(key);
+                if (enabled) {
+                    ctrl?.enable();
+                } else {
+                    ctrl?.disable();
+                }
+            });
+        });
+
+        effect(() => {
+            this.formValid = this.isFormValid();
+            this.formValidChanges.next(this.formValid);
+        });
+    }
+
     ngOnInit(): void {
-        this.minimumSizeTooltip = this.getMinimumSizeTooltip();
-        const exercise = this.exercise();
-        if (exercise != undefined && !exercise.plagiarismDetectionConfig) {
-            // Create the default plagiarism configuration if there is none (e.g. importing an old exercise from a file)
-            exercise.plagiarismDetectionConfig = DEFAULT_PLAGIARISM_DETECTION_CONFIG;
+        const ex = this.exercise();
+        if (ex && !ex.plagiarismDetectionConfig) {
+            ex.plagiarismDetectionConfig = DEFAULT_PLAGIARISM_DETECTION_CONFIG;
         }
-    }
+        this.minimumSizeTooltip = this.getMinimumSizeTooltip();
 
-    ngAfterViewInit(): void {
-        this.fieldCPCEnabledSubscription = this.fieldCPCEnabled()?.valueChanges?.subscribe(() => this.calculateFormValid());
-        this.fieldThresholdSubscription = this.fieldThreshold()?.valueChanges?.subscribe(() => this.calculateFormValid());
-        this.fieldMinScoreSubscription = this.fieldMinScore()?.valueChanges?.subscribe(() => this.calculateFormValid());
-        this.fieldMinSizeSubscription = this.fieldMinSize()?.valueChanges?.subscribe(() => this.calculateFormValid());
-        this.fieldResponsePeriodSubscription = this.fieldResponsePeriod()?.valueChanges?.subscribe(() => this.calculateFormValid());
-    }
-
-    ngOnDestroy() {
-        this.fieldCPCEnabledSubscription?.unsubscribe();
-        this.fieldThresholdSubscription?.unsubscribe();
-        this.fieldMinScoreSubscription?.unsubscribe();
-        this.fieldMinSizeSubscription?.unsubscribe();
-        this.fieldResponsePeriodSubscription?.unsubscribe();
-    }
-
-    calculateFormValid(): void {
-        this.formValid = Boolean(
-            !this.exercise()?.plagiarismDetectionConfig?.continuousPlagiarismControlEnabled ||
-                (this.fieldThreshold()?.valid && this.fieldMinScore()?.valid && this.fieldMinSize()?.valid && this.fieldResponsePeriod()?.valid),
-        );
-        this.formValidChanges.next(this.formValid);
-    }
-
-    toggleCPCEnabled() {
-        const config = this.exercise()?.plagiarismDetectionConfig!;
-        const newValue = !config.continuousPlagiarismControlEnabled;
-        config.continuousPlagiarismControlEnabled = newValue;
-        config.continuousPlagiarismControlPostDueDateChecksEnabled = newValue;
+        this.form.patchValue({
+            continuousPlagiarismControlEnabled: ex?.plagiarismDetectionConfig?.continuousPlagiarismControlEnabled ?? false,
+            continuousPlagiarismControlPostDueDateChecksEnabled: ex?.plagiarismDetectionConfig?.continuousPlagiarismControlPostDueDateChecksEnabled ?? false,
+            similarityThreshold: ex?.plagiarismDetectionConfig?.similarityThreshold ?? null,
+            minimumScore: ex?.plagiarismDetectionConfig?.minimumScore ?? null,
+            minimumSize: ex?.plagiarismDetectionConfig?.minimumSize ?? null,
+            continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod: ex?.plagiarismDetectionConfig?.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod ?? null,
+        });
     }
 
     /**
@@ -79,12 +90,10 @@ export class ExerciseUpdatePlagiarismComponent implements OnInit, OnDestroy, Aft
      */
     getMinimumSizeTooltip(): string | undefined {
         switch (this.exercise()?.type) {
-            case ExerciseType.PROGRAMMING: {
+            case ExerciseType.PROGRAMMING:
                 return 'artemisApp.plagiarism.minimumSizeTooltipProgrammingExercise';
-            }
-            case ExerciseType.TEXT: {
+            case ExerciseType.TEXT:
                 return 'artemisApp.plagiarism.minimumSizeTooltipTextExercise';
-            }
         }
     }
 }
