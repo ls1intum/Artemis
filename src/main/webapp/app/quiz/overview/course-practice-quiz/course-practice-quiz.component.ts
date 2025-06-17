@@ -12,14 +12,15 @@ import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mappi
 import { ShortAnswerSubmittedText } from 'app/quiz/shared/entities/short-answer-submitted-text.model';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { EMPTY } from 'rxjs';
+import { EMPTY, map } from 'rxjs';
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { MultipleChoiceSubmittedAnswer } from 'app/quiz/shared/entities/multiple-choice-submitted-answer.model';
 import { QuizParticipationService } from 'app/quiz/overview/service/quiz-participation.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { DragAndDropSubmittedAnswer } from 'app/quiz/shared/entities/drag-and-drop-submitted-answer.model';
 import { ShortAnswerSubmittedAnswer } from 'app/quiz/shared/entities/short-answer-submitted-answer.model';
-import { round } from 'app/shared/util/utils';
+import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 
 @Component({
     selector: 'jhi-course-practice-quiz',
@@ -30,6 +31,7 @@ export class CoursePracticeQuizComponent {
     readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
     readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
     readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
+    readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
 
     private route = inject(ActivatedRoute);
     private router = inject(Router);
@@ -38,12 +40,15 @@ export class CoursePracticeQuizComponent {
     currentIndex = signal(0);
     private quizParticipationService = inject(QuizParticipationService);
     private alertService = inject(AlertService);
+    private courseService = inject(CourseManagementService);
 
     // Reactive chain for loading quiz questions based on the current route
     paramsSignal = toSignal(this.route.parent?.params ?? EMPTY);
     courseId = computed(() => this.paramsSignal()?.['courseId']);
     questionsSignal = toSignal(this.quizService.getQuizQuestions(this.courseId()) ?? EMPTY, { initialValue: [] });
     questions = computed(() => this.questionsSignal());
+    courseSignal = toSignal(this.courseService.find(this.courseId()).pipe(map((res) => res.body ?? undefined)), { initialValue: undefined });
+    course = computed(() => this.courseSignal());
 
     submission = new QuizSubmission();
     isSubmitting = false;
@@ -218,7 +223,7 @@ export class CoursePracticeQuizComponent {
             this.showingResult = true;
             const submittedAnswers = this.submission.submittedAnswers?.[0];
             if (submittedAnswers) {
-                this.questionScores = round(submittedAnswers.scoreInPoints);
+                this.questionScores = roundValueSpecifiedByCourseSettings(submittedAnswers.scoreInPoints, this.course());
             }
         }
     }

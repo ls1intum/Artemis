@@ -14,6 +14,7 @@ import { SessionStorageService } from 'ngx-webstorage';
 import { Result } from '../../../exercise/shared/entities/result/result.model';
 import { QuizParticipationService } from '../service/quiz-participation.service';
 import { AlertService } from '../../../shared/service/alert.service';
+import { CourseManagementService } from '../../../core/course/manage/services/course-management.service';
 
 const question1: QuizQuestion = {
     id: 1,
@@ -39,6 +40,8 @@ const question3: QuizQuestion = {
     invalid: false,
     exportQuiz: false,
 };
+
+const course = { id: 1, title: 'Test Course' };
 
 describe('CoursePracticeQuizComponent', () => {
     let component: CoursePracticeQuizComponent;
@@ -66,6 +69,7 @@ describe('CoursePracticeQuizComponent', () => {
             ]);
         quizService = TestBed.inject(CoursePracticeQuizService);
         jest.spyOn(quizService, 'getQuizQuestions').mockReturnValue(of([question1, question2, question3]));
+        jest.spyOn(TestBed.inject(CourseManagementService), 'find').mockReturnValue(of(new HttpResponse({ body: course })));
 
         fixture = TestBed.createComponent(CoursePracticeQuizComponent);
         component = fixture.componentInstance;
@@ -78,6 +82,10 @@ describe('CoursePracticeQuizComponent', () => {
 
     it('should extract courseId from route params', () => {
         expect(component.courseId()).toBe(1);
+    });
+
+    it('should load course from quizManagementService', async () => {
+        expect(component.course()).toEqual(course);
     });
 
     it('should load questions from service', () => {

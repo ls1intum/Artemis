@@ -9,7 +9,7 @@
                     [questionIndex]="currentIndex() + 1"
                     [showResult]="showingResult"
                     [submittedResult]="result"
-                    [score]="questionScores[question.id!]"
+                    [score]="questionScores"
                 />
             }
             @if (question.type === SHORT_ANSWER) {
@@ -19,7 +19,7 @@
                     (submittedTextsChange)="shortAnswerSubmittedTexts = $event"
                     [questionIndex]="currentIndex() + 1"
                     [showResult]="showingResult"
-                    [score]="questionScores[question.id!]"
+                    [score]="questionScores"
                 />
             }
             @if (question.type === DRAG_AND_DROP) {
@@ -29,7 +29,7 @@
                     (mappingsChange)="dragAndDropMappings = $event"
                     [questionIndex]="currentIndex() + 1"
                     [showResult]="showingResult"
-                    [score]="questionScores[question.id!]"
+                    [score]="questionScores"
                 />
             }
         }
