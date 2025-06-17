@@ -1,10 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Subject } from 'rxjs';
 import { PlagiarismDetailsComponent } from './plagiarism-details.component';
-import { PlagiarismComparison } from '../shared/entities/PlagiarismComparison';
-import { Exercise } from '../../exercise/shared/entities/exercise.model';
-import { TextSubmissionElement } from '../shared/entities/text/TextSubmissionElement';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { PlagiarismComparison } from '../../shared/entities/PlagiarismComparison';
+import { TextSubmissionElement } from '../../shared/entities/text/TextSubmissionElement';
+import { Exercise } from '../../../exercise/shared/entities/exercise/exercise.model';
 
 describe('PlagiarismDetailsComponent', () => {
     let component: PlagiarismDetailsComponent;
