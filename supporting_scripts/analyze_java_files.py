@@ -9,14 +9,14 @@ def extract_module(path, base_dir):
     parts = relative_path.split(os.sep)
     return parts[0] if parts else "root"
 
-def analyze_java_files(base_dir, max_lines=1000, max_params=10, exclude_repo_deps=False):
+def analyze_java_files(base_dir, max_lines=1000, max_params=10, include_repo_deps=False):
     large_classes = []
     complex_beans = []
     large_class_counts = defaultdict(int)
     complex_bean_counts = defaultdict(int)
 
     # Static annotation pattern without Repository inclusion
-    bean_annotations = ['Component', 'Service', 'Controller', 'Bean', 'RestController']
+    bean_annotations = ['Component', 'Service', 'Controller', 'Bean', 'RestController', 'Repository']
     annotation_pattern = re.compile(r'@(?:' + '|'.join(bean_annotations) + r')')
 
     for root, _, files in os.walk(base_dir):
@@ -42,7 +42,7 @@ def analyze_java_files(base_dir, max_lines=1000, max_params=10, exclude_repo_dep
                 for params in constructors:
                     # split parameters and strip whitespace
                     param_list = [p.strip() for p in params.split(',') if p.strip()]
-                    if exclude_repo_deps:
+                    if not include_repo_deps:
                         # remove parameters whose type ends with 'Repository'
                         param_list = [p for p in param_list if not re.search(r'\b\w+Repository\b', p)]
                     if len(param_list) > max_params:
@@ -79,10 +79,10 @@ if __name__ == '__main__':
         help='Maximum allowed constructor parameters'
     )
     parser.add_argument(
-        '--exclude-repo-deps',
+        '--include-repo-deps',
         action='store_true',
-        default=True,
-        help='Exclude constructor parameters whose type ends with "Repository" from the dependency count'
+        help='Include constructor parameters whose type ends with "Repository" in the dependency count',
+        dest='include_repo_deps'
     )
     args = parser.parse_args()
 
@@ -90,7 +90,7 @@ if __name__ == '__main__':
         args.dir,
         max_lines=args.max_lines,
         max_params=args.max_params,
-        exclude_repo_deps=args.exclude_repo_deps
+        include_repo_deps=args.include_repo_deps
     )
 
     # Print summary
