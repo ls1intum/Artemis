@@ -10,12 +10,14 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.eclipse.jgit.diff.DiffEntry;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseGitDiffEntry;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class GitDiffReportParserService {
 
