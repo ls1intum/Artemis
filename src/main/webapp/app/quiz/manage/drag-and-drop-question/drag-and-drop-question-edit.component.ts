@@ -116,7 +116,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
     private fileService = inject(FileService);
 
     private readonly clickLayer = viewChild.required<ElementRef>('clickLayer');
-    private readonly backgroundImage = viewChild.required<SecuredImageComponent>('backgroundImage ');
+    private readonly backgroundImage = viewChild.required<SecuredImageComponent>('backgroundImage');
     private readonly markdownEditor = viewChild.required<MarkdownEditorMonacoComponent>('markdownEditor');
 
     @Input() question: DragAndDropQuestion;

@@ -366,9 +366,8 @@ describe('ShortAnswerQuestionEditComponent', () => {
                 return true;
             },
         } as unknown as HTMLElement;
-        (component as any).questionElement = () => ({
-            nativeElement: questionElement,
-        });
+        const questionElementMock = { nativeElement: questionElement };
+        jest.spyOn(component, 'questionElement').mockReturnValue(questionElementMock);
 
         const range = {
             cloneRange(): Range {

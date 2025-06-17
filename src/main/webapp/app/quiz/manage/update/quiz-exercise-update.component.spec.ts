@@ -1016,6 +1016,7 @@ describe('QuizExerciseUpdateComponent', () => {
                 if (comp.courseId) {
                     const childFixture = TestBed.createComponent(QuizQuestionListEditComponent);
                     (comp as any).quizQuestionListEditComponent = () => childFixture.componentInstance;
+                    jest.spyOn(comp, 'quizQuestionListEditComponent').mockReturnValue(childFixture.componentInstance);
                     jest.spyOn(comp.quizQuestionListEditComponent(), 'parseAllQuestions').mockImplementation();
                 }
                 comp.save();
