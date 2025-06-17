@@ -95,6 +95,12 @@ public class ProgrammingExerciseBuildPlanService {
         continuousIntegrationTriggerService.orElseThrow().triggerBuild(programmingExercise.getSolutionParticipation());
     }
 
+    /**
+     * Adds a default build plan config if LocalCI is active and no build plan exists
+     *
+     * @param programmingExercise the programming exercise the default build config should be added
+     * @throws JsonProcessingException when the default build config cannot be written as JSON string
+     */
     public void addDefaultBuildPlanConfigForLocalCI(ProgrammingExercise programmingExercise) throws JsonProcessingException {
         // For LocalCI and Aeolus, we store the build plan definition in the database as a windfile, we don't do that for Jenkins as
         // we want to use the default approach of Jenkinsfiles and Build Plans if no customizations are made
