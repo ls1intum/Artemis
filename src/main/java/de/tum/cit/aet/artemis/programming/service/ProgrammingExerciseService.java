@@ -17,8 +17,6 @@ import java.util.stream.Collectors;
 
 import jakarta.validation.constraints.NotNull;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -44,25 +42,19 @@ import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExercisePart
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTaskRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
-import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
-import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 
 @Profile(PROFILE_CORE)
 @Lazy
 @Service
 public class ProgrammingExerciseService {
 
-    private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseService.class);
+    private final ProgrammingExerciseTaskService programmingExerciseTaskService;
+
+    private final ExerciseSpecificationService exerciseSpecificationService;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
-
-    private final Optional<VersionControlService> versionControlService;
-
-    private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
     private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
 
@@ -72,32 +64,18 @@ public class ProgrammingExerciseService {
 
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
-    private final ProgrammingExerciseTaskRepository programmingExerciseTaskRepository;
-
-    private final ProgrammingExerciseTaskService programmingExerciseTaskService;
-
-    private final ExerciseSpecificationService exerciseSpecificationService;
-
-    private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
-
-    public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, Optional<VersionControlService> versionControlService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService,
+    public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ResultRepository resultRepository,
-            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository,
-            ProgrammingExerciseTaskService programmingExerciseTaskService, ExerciseSpecificationService exerciseSpecificationService,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository) {
+            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
+            ExerciseSpecificationService exerciseSpecificationService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
-        this.versionControlService = versionControlService;
-        this.continuousIntegrationService = continuousIntegrationService;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.resultRepository = resultRepository;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
-        this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.exerciseSpecificationService = exerciseSpecificationService;
-        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
     }
 
     public static Path getProgrammingLanguageProjectTypePath(ProgrammingLanguage programmingLanguage, ProjectType projectType) {

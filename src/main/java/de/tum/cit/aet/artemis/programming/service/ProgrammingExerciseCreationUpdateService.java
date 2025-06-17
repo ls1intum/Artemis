@@ -62,15 +62,9 @@ public class ProgrammingExerciseCreationUpdateService {
 
     private final ProgrammingExerciseRepositoryService programmingExerciseRepositoryService;
 
-    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
-
     private final ProgrammingSubmissionService programmingSubmissionService;
 
-    private final UserRepository userRepository;
-
     private final ExerciseService exerciseService;
-
-    private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final ChannelService channelService;
 
@@ -82,17 +76,23 @@ public class ProgrammingExerciseCreationUpdateService {
 
     private final ProgrammingExerciseAtlasIrisService programmingExerciseAtlasIrisService;
 
+    private final Optional<VersionControlService> versionControlService;
+
+    private final GitService gitService;
+
+    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
+    private final UserRepository userRepository;
+
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
     private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
 
     private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
-    private final Optional<VersionControlService> versionControlService;
-
     private final ParticipationRepository participationRepository;
-
-    private final GitService gitService;
 
     public ProgrammingExerciseCreationUpdateService(ProgrammingExerciseRepositoryService programmingExerciseRepositoryService,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, ProgrammingSubmissionService programmingSubmissionService,

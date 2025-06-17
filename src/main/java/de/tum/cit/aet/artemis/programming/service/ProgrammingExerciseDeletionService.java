@@ -33,17 +33,17 @@ public class ProgrammingExerciseDeletionService {
 
     private final ProgrammingExerciseRepositoryService programmingExerciseRepositoryService;
 
-    private final ProgrammingExerciseRepository programmingExerciseRepository;
-
     private final ParticipationDeletionService participationDeletionService;
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
+    private final InstanceMessageSendService instanceMessageSendService;
+
     private final Optional<IrisSettingsApi> irisSettingsApi;
 
-    private final ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository;
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private final InstanceMessageSendService instanceMessageSendService;
+    private final ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository;
 
     private final ProgrammingExerciseTaskRepository programmingExerciseTaskRepository;
 

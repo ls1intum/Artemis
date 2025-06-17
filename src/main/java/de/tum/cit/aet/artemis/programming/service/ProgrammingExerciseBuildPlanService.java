@@ -38,11 +38,11 @@ public class ProgrammingExerciseBuildPlanService {
 
     private final Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService;
 
-    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
-
     private final Optional<AeolusTemplateService> aeolusTemplateService;
 
     private final ProfileService profileService;
+
+    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 

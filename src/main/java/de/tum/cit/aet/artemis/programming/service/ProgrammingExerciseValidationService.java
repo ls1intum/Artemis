@@ -73,8 +73,6 @@ public class ProgrammingExerciseValidationService {
 
     private final AuxiliaryRepositoryService auxiliaryRepositoryService;
 
-    private final ProgrammingExerciseRepository programmingExerciseRepository;
-
     private final SubmissionPolicyService submissionPolicyService;
 
     private final Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService;
@@ -84,6 +82,8 @@ public class ProgrammingExerciseValidationService {
     private final ProgrammingExerciseBuildConfigService programmingExerciseBuildConfigService;
 
     private final Optional<VersionControlService> versionControlService;
+
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     public ProgrammingExerciseValidationService(AuxiliaryRepositoryService auxiliaryRepositoryService, ProgrammingExerciseRepository programmingExerciseRepository,
             SubmissionPolicyService submissionPolicyService, Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService,
