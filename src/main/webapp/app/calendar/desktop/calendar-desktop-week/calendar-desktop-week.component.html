@@ -1,15 +1,15 @@
 <div class="frame">
     <div class="header">
         <div class="header-spacer"></div>
-        @for (day of weekDays; track utils.identify(day)) {
+        @for (day of weekDays(); track utils.identify(day)) {
             <div class="day-info">
                 <div class="fs-6 fw-semibold">
-                    {{ getDayName(day) }}
+                    {{ utils.getWeekDayNameKey(day) | artemisTranslate }}
                 </div>
                 <day-badge [date]="day" />
             </div>
         }
     </div>
-    <all-day-event-section [days]="weekDays" />
-    <timed-event-section [days]="weekDays" />
+    <all-day-event-section [days]="weekDays()" />
+    <timed-event-section [days]="weekDays()" />
 </div>

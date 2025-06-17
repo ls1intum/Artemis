@@ -2,7 +2,7 @@
     <div class="header">
         <span class="h2">{{ firstDayOfCurrentMonth().format('MMMM YYYY') }}</span>
         <div class="spacer"></div>
-        <button type="button" class="btn btn-outline-primary" (click)="goToMonthOfToday()">Today</button>
+        <button type="button" class="btn btn-outline-primary" (click)="goToToday()">Today</button>
         <div class="btn-group" role="group">
             <div
                 class="btn"
@@ -27,15 +27,17 @@
             </div>
         </div>
         <div class="btn-group" role="group" aria-label="Navigation controls">
-            <button type="button" class="btn btn-outline-primary" (click)="goToPreviousMonth()">
+            <button type="button" class="btn btn-outline-primary" (click)="goToPrevious()">
                 <fa-icon [icon]="faChevronLeft" />
             </button>
-            <button type="button" class="btn btn-outline-primary" (click)="goToNextMonth()">
+            <button type="button" class="btn btn-outline-primary" (click)="goToNext()">
                 <fa-icon [icon]="faChevronRight" />
             </button>
         </div>
     </div>
     @if (viewMode() === 'month') {
         <calendar-desktop-month [firstDayOfCurrentMonth]="firstDayOfCurrentMonth()" />
+    } @else {
+        <calendar-desktop-week [firstDayOfCurrentMonth]="firstDayOfCurrentMonth()" [firstDayOfCurrentWeek]="firstDayOfCurrentWeek()" />
     }
 </div>

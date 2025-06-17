@@ -24,6 +24,11 @@ export function getWeekDayNameKeys(): string[] {
     ];
 }
 
+export function getWeekDayNameKey(day: Dayjs): string {
+    const keys = getWeekDayNameKeys();
+    return keys[day.isoWeekday() - 1];
+}
+
 export function getWeeksOfMonthFor(dayInMonth: Dayjs): Dayjs[][] {
     const start = dayInMonth.startOf('month').startOf('isoWeek');
     const end = dayInMonth.endOf('month').endOf('isoWeek');
