@@ -40,8 +40,6 @@ jacoco {
 }
 
 jacocoTestReport {
-    dependsOn tasks.named("test"), tasks.named("compileJava"), tasks.named("processResources")
-
     // For the aggregated report
     reports {
         xml.required = true
@@ -70,7 +68,7 @@ jacocoTestReport {
             task.mustRunAfter(sortedTasks[index - 1])
         }
     }
-    dependsOn sortedTasks
+    finalizedBy sortedTasks
 }
 
 jacocoTestCoverageVerification {
@@ -88,10 +86,9 @@ jacocoTestCoverageVerification {
                 task.mustRunAfter(sortedTasks[index - 1])
             }
         }
-        dependsOn sortedTasks
+        finalizedBy sortedTasks
     }
 }
-jacocoTestCoverageVerification.dependsOn jacocoTestReport
 check.dependsOn jacocoTestCoverageVerification
 
 /**
@@ -202,6 +199,8 @@ private static void applyVerificationRule(JacocoCoverageVerification task, doubl
         }
     }
 
+    def reportsFile = task.project.file("${task.project.layout.buildDirectory.get().asFile}/reports/jacoco/${task.name.replace('jacocoTestCoverageVerification-', '')}/jacocoTestReport.xml")
+
     task.doLast {
         def moduleName = task.name.replace('jacocoTestCoverageVerification-', '')
 
@@ -210,7 +209,6 @@ private static void applyVerificationRule(JacocoCoverageVerification task, doubl
             moduleName = "Aggregated Code Coverage"
         }
 
-        def reportsFile = task.project.file("${task.project.layout.buildDirectory.get().asFile}/reports/jacoco/${task.name.replace('jacocoTestCoverageVerification-', '')}/jacocoTestReport.xml")
         if (!reportsFile.exists() || reportsFile.length() == 0) {
             println "⚠️ Jacoco report not found for ${task.name.replace('jacocoTestCoverageVerification-', '')} at ${reportsFile.absolutePath}"
             return
