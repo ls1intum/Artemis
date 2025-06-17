@@ -8,7 +8,7 @@ import { SortService } from 'app/shared/service/sort.service';
 import { generateExampleTutorialGroup } from 'test/helpers/sample/tutorialgroup/tutorialGroupExampleModels';
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
-import { Component, Input, QueryList, SimpleChange, ViewChild, ViewChildren } from '@angular/core';
+import { Component, Input, QueryList, SimpleChange, viewChild, viewChildren } from '@angular/core';
 import { TutorialGroupRowStubComponent } from 'test/helpers/stubs/tutorialgroup/tutorial-groups-table-stub.component';
 import { Course, Language } from 'app/core/course/shared/entities/course.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -42,8 +42,9 @@ class MockWrapperComponent {
     @Input() tutorialGroups: TutorialGroup[];
     @Input() course: Course;
 
-    @ViewChild(TutorialGroupsTableComponent) tutorialGroupTableInstance: TutorialGroupsTableComponent;
-    @ViewChildren(MockExtraColumnComponent) mockExtraColumns: QueryList<MockExtraColumnComponent>;
+    tutorialGroupTableInstance = viewChild.required(TutorialGroupsTableComponent);
+
+    mockExtraColumns = viewChildren(MockExtraColumnComponent);
 }
 
 describe('TutorialGroupTableWrapperTest', () => {
@@ -91,8 +92,8 @@ describe('TutorialGroupTableWrapperTest', () => {
                 component.tutorialGroups = [tutorialGroupOne, tutorialGroupTwo];
                 component.course = course;
                 fixture.detectChanges();
-                tableInstance = component.tutorialGroupTableInstance;
-                mockExtraColumns = component.mockExtraColumns.toArray();
+                tableInstance = component.tutorialGroupTableInstance();
+                mockExtraColumns = [...component.mockExtraColumns()]; // spread to make mutable
             });
     });
 

@@ -1,4 +1,4 @@
-import { Component, Input, QueryList, SimpleChange, SimpleChanges, ViewChild, ViewChildren } from '@angular/core';
+import { Component, Input, QueryList, SimpleChange, SimpleChanges, viewChild, viewChildren } from '@angular/core';
 import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TutorialGroupSessionRowStubComponent } from 'test/helpers/stubs/tutorialgroup/tutorial-group-sessions-table-stub.component';
@@ -43,11 +43,9 @@ class MockWrapperComponent {
     @Input()
     timeZone: string;
 
-    @ViewChild(TutorialGroupSessionsTableComponent)
-    sessionTableInstance: TutorialGroupSessionsTableComponent;
+    sessionTableInstance = viewChild.required(TutorialGroupSessionsTableComponent);
 
-    @ViewChildren(MockExtraColumnComponent)
-    mockExtraColumns: QueryList<MockExtraColumnComponent>;
+    mockExtraColumns = viewChildren(MockExtraColumnComponent);
 }
 
 describe('TutorialGroupSessionsTableWrapperTest', () => {
@@ -83,8 +81,8 @@ describe('TutorialGroupSessionsTableWrapperTest', () => {
                 component.timeZone = 'Europe/Berlin';
                 component.tutorialGroup = tutorialGroup;
                 fixture.detectChanges();
-                tableInstance = component.sessionTableInstance;
-                mockExtraColumns = component.mockExtraColumns.toArray();
+                tableInstance = component.sessionTableInstance();
+                mockExtraColumns = [...component.mockExtraColumns()]; // spread to make mutable
             });
     });
 

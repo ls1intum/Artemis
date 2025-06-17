@@ -3,7 +3,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { generateExampleTutorialGroup } from 'test/helpers/sample/tutorialgroup/tutorialGroupExampleModels';
-import { ChangeDetectorRef, Component, Input, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, viewChild } from '@angular/core';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -43,11 +43,8 @@ class MockWrapperComponent {
     @Input()
     tutorialGroup: TutorialGroup;
 
-    @ViewChild(TutorialGroupDetailComponent)
-    tutorialGroupDetailInstance: TutorialGroupDetailComponent;
-
-    @ViewChild(MockHeaderComponent)
-    mockHeaderInstance: MockHeaderComponent;
+    tutorialGroupDetailInstance = viewChild.required(TutorialGroupDetailComponent);
+    mockHeaderInstance = viewChild.required(MockHeaderComponent);
 }
 
 describe('TutorialGroupDetailWrapperTest', () => {
@@ -89,8 +86,8 @@ describe('TutorialGroupDetailWrapperTest', () => {
                 exampleTutorialGroup = generateExampleTutorialGroup({});
                 component.tutorialGroup = exampleTutorialGroup;
                 fixture.detectChanges();
-                detailInstance = component.tutorialGroupDetailInstance;
-                headerInstance = component.mockHeaderInstance;
+                detailInstance = component.tutorialGroupDetailInstance();
+                headerInstance = component.mockHeaderInstance();
             });
     });
 
