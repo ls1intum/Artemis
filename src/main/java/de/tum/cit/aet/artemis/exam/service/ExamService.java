@@ -304,7 +304,8 @@ public class ExamService {
     public ExamScoresDTO calculateExamScores(Long examId) {
         Exam exam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
 
-        List<StudentParticipation> studentParticipations = studentParticipationRepository.findByExamIdWithLatestSubmissionRelevantResult(examId); // without test run participations
+        List<StudentParticipation> studentParticipations = studentParticipationRepository.findByExamIdWithLatestSubmissionWithRelevantResult(examId); // without test run
+                                                                                                                                                      // participations
         log.info("Try to find quiz submitted answer counts");
         List<QuizSubmittedAnswerCount> submittedAnswerCounts = studentParticipationRepository.findSubmittedAnswerCountForQuizzesInExam(examId);
         log.info("Found {} quiz submitted answer counts", submittedAnswerCounts.size());
