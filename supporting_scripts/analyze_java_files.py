@@ -17,7 +17,7 @@ def analyze_java_files(base_dir, max_lines=1000, max_params=10, include_repo_dep
 
     # Static annotation pattern without Repository inclusion
     bean_annotations = ['Component', 'Service', 'Controller', 'Bean', 'RestController', 'Repository']
-    annotation_pattern = re.compile(r'@(?:' + '|'.join(bean_annotations) + r')')
+    annotation_pattern = re.compile(r'@(?:' + '|'.join(bean_annotations) + r')\b')
 
     for root, _, files in os.walk(base_dir):
         for file in files:
