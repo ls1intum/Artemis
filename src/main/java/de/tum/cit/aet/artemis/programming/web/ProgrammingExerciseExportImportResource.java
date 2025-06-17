@@ -25,6 +25,7 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.InputStreamResource;
@@ -99,6 +100,7 @@ import de.tum.cit.aet.artemis.programming.service.SubmissionPolicyService;
  */
 @Profile(PROFILE_CORE)
 @FeatureToggle(Feature.ProgrammingExercises)
+@Lazy
 @RestController
 @RequestMapping("api/programming/")
 public class ProgrammingExerciseExportImportResource {

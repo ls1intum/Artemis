@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 import java.time.ZonedDateTime;
 import java.util.Objects;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +17,7 @@ import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 /**
  * Service for the rate limit of the iris chatbot.
  */
+@Lazy
 @Service
 @Profile(PROFILE_IRIS)
 public class IrisRateLimitService {

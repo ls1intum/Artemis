@@ -10,6 +10,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.hibernate.Hibernate;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -29,6 +30,7 @@ import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
 /**
  * This service is responsible for sending websocket notifications when a new result got created.
  */
+@Lazy
 @Service
 @Profile(PROFILE_CORE)
 public class ResultWebsocketService {
