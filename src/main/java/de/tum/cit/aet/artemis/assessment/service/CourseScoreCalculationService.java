@@ -15,7 +15,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import jakarta.annotation.Nullable;
 
@@ -268,8 +267,8 @@ public class CourseScoreCalculationService {
         // Get participation results (used in course-statistics.component).
         Set<ParticipationResultDTO> participationResults = new HashSet<>();
         for (StudentParticipation studentParticipation : gradedStudentParticipations) {
-            Set<Result> results = Stream.ofNullable(studentParticipation.getSubmissions()).flatMap(Collection::stream)
-                    .flatMap(submission -> submission.getResults().stream().filter(Objects::nonNull)).collect(Collectors.toSet());
+            Set<Result> results = studentParticipation.getSubmissions().stream().flatMap(submission -> submission.getResults().stream().filter(Objects::nonNull))
+                    .collect(Collectors.toSet());
             if (!results.isEmpty()) {
                 Result result = getResultForParticipation(studentParticipation, studentParticipation.getIndividualDueDate());
                 var participationResult = new ParticipationResultDTO(result.getScore(), result.isRated(), studentParticipation.getId());

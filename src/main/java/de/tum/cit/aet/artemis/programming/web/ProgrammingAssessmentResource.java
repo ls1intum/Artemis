@@ -2,10 +2,8 @@ package de.tum.cit.aet.artemis.programming.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.Objects;
-import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -137,9 +135,8 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // based on the locking mechanism we take the most recent manual result
-        Result existingManualResult = Stream.ofNullable(participation.getSubmissions()).flatMap(Collection::stream)
-                .flatMap(submission -> Stream.ofNullable(submission.getResults()).flatMap(Collection::stream)).filter(Objects::nonNull).filter(Result::isManual)
-                .max(Comparator.comparing(Result::getId))
+        Result existingManualResult = participation.getSubmissions().stream()
+                .flatMap(submission -> submission.getResults().stream().filter(Objects::nonNull).filter(Result::isManual)).max(Comparator.comparing(Result::getId))
                 .orElseThrow(() -> new EntityNotFoundException("Manual result for participation with id " + participationId + " does not exist"));
 
         // prevent that tutors create multiple manual results
