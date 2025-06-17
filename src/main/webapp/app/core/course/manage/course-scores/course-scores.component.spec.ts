@@ -14,7 +14,7 @@ import {
     PRESENTATION_SCORE_KEY,
     USERNAME_KEY,
 } from 'app/shared/export/export-constants';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { CourseGradeInformationDTO, CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
@@ -49,7 +49,7 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { ExerciseTypeStatisticsMap } from 'app/core/course/manage/course-scores/exercise-type-statistics-map';
 import { MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MockProfileService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { ProfileInfo } from '../../../layouts/profiles/profile-info.model';
 
 describe('CourseScoresComponent', () => {
@@ -252,6 +252,126 @@ describe('CourseScoresComponent', () => {
         participation11,
         participation12,
     ];
+
+    const courseGradeInformation: CourseGradeInformationDTO = {
+        gradeScores: [
+            // participation1
+            {
+                participationId: 1,
+                userId: 1,
+                exerciseId: 1,
+                score: 200,
+                presentationScore: 100,
+            },
+            // participation2
+            {
+                participationId: 2,
+                userId: 1,
+                exerciseId: 4,
+                score: 100,
+                presentationScore: 0,
+            },
+            // participation3
+            {
+                participationId: 3,
+                userId: 1,
+                exerciseId: 3,
+                score: 100,
+                presentationScore: 0,
+            },
+            // participation4
+            {
+                participationId: 4,
+                userId: 1,
+                exerciseId: 4,
+                score: 100,
+                presentationScore: 0,
+            },
+            // participation5 (no results → score 0)
+            {
+                participationId: 5,
+                userId: 2,
+                exerciseId: 1,
+                score: 0,
+                presentationScore: 0,
+            },
+            // participation6
+            {
+                participationId: 6,
+                userId: 2,
+                exerciseId: 4,
+                score: 50,
+                presentationScore: 0,
+            },
+            // participation7
+            {
+                participationId: 7,
+                userId: 2,
+                exerciseId: 3,
+                score: 100,
+                presentationScore: 0,
+            },
+            // participation8
+            {
+                participationId: 8,
+                userId: 2,
+                exerciseId: 4,
+                score: 50,
+                presentationScore: 0,
+            },
+            // participation9
+            {
+                participationId: 9,
+                userId: 1,
+                exerciseId: 5,
+                score: 100,
+                presentationScore: 0,
+            },
+            // participation10
+            {
+                participationId: 10,
+                userId: 2,
+                exerciseId: 5,
+                score: 100,
+                presentationScore: 0,
+            },
+            // participation11
+            {
+                participationId: 11,
+                userId: 1,
+                exerciseId: 6,
+                score: 100,
+                presentationScore: 100,
+            },
+            // participation12
+            {
+                participationId: 12,
+                userId: 2,
+                exerciseId: 6,
+                score: 100,
+                presentationScore: 0,
+            },
+        ],
+
+        students: [
+            {
+                id: 1,
+                login: 'user1login',
+                firstName: 'user1',
+                lastName: '',
+                name: 'user1',
+                email: 'user1mail',
+            },
+            {
+                id: 2,
+                login: 'user2login',
+                firstName: 'user2',
+                lastName: '',
+                name: 'user2',
+                email: 'user2mail',
+            },
+        ],
+    };
     const pointsOfStudent1 = new ExerciseTypeStatisticsMap();
     const pointsOfStudent2 = new ExerciseTypeStatisticsMap();
 
@@ -364,7 +484,7 @@ describe('CourseScoresComponent', () => {
 
     it('should not log error on sentry when correct participant score calculation', () => {
         jest.spyOn(courseService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
-        jest.spyOn(courseService, 'findAllParticipationsWithResults').mockReturnValue(of(participations));
+        jest.spyOn(courseService, 'findGradeScores').mockReturnValue(of(courseGradeInformation));
         const errorSpy = jest.spyOn(component, 'logErrorOnSentry');
         fixture.detectChanges();
         expect(errorSpy).not.toHaveBeenCalled();
@@ -372,7 +492,7 @@ describe('CourseScoresComponent', () => {
 
     it('should log error on sentry when missing participant score calculation', () => {
         jest.spyOn(courseService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
-        jest.spyOn(courseService, 'findAllParticipationsWithResults').mockReturnValue(of(participations));
+        jest.spyOn(courseService, 'findGradeScores').mockReturnValue(of(courseGradeInformation));
         jest.spyOn(gradingSystemService, 'findGradingScaleForCourse').mockReturnValue(of(new HttpResponse<GradingScale>({ status: 404 })));
         jest.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForInstructor').mockReturnValue(of(new HttpResponse<PlagiarismCase[]>({ body: [] })));
         findCourseScoresSpy.mockReturnValue(of(new HttpResponse({ body: [] })));
@@ -383,7 +503,7 @@ describe('CourseScoresComponent', () => {
 
     it('should log error on sentry when wrong points score calculation', () => {
         jest.spyOn(courseService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
-        jest.spyOn(courseService, 'findAllParticipationsWithResults').mockReturnValue(of(participations));
+        jest.spyOn(courseService, 'findGradeScores').mockReturnValue(of(courseGradeInformation));
         jest.spyOn(gradingSystemService, 'findGradingScaleForCourse').mockReturnValue(of(new HttpResponse<GradingScale>({ status: 404 })));
         jest.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForInstructor').mockReturnValue(of(new HttpResponse<PlagiarismCase[]>({ body: [] })));
         const cs1 = new ScoresDTO();
@@ -404,7 +524,7 @@ describe('CourseScoresComponent', () => {
 
     it('should log error on sentry when wrong score calculation', () => {
         jest.spyOn(courseService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
-        jest.spyOn(courseService, 'findAllParticipationsWithResults').mockReturnValue(of(participations));
+        jest.spyOn(courseService, 'findGradeScores').mockReturnValue(of(courseGradeInformation));
         jest.spyOn(gradingSystemService, 'findGradingScaleForCourse').mockReturnValue(of(new HttpResponse<GradingScale>({ status: 404 })));
         jest.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForInstructor').mockReturnValue(of(new HttpResponse<PlagiarismCase[]>({ body: [] })));
         const cs1 = new ScoresDTO();
@@ -444,18 +564,18 @@ describe('CourseScoresComponent', () => {
 
     it('should group exercises and calculate exercise max score', () => {
         jest.spyOn(courseService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
-        jest.spyOn(courseService, 'findAllParticipationsWithResults').mockReturnValue(of(participations));
+        jest.spyOn(courseService, 'findGradeScores').mockReturnValue(of(courseGradeInformation));
         jest.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForInstructor').mockReturnValue(of(new HttpResponse<PlagiarismCase[]>({ body: [] })));
         fixture.detectChanges();
 
-        expect(component.gradeScores).toEqual(participations);
+        expect(component.gradeScores).toEqual(courseGradeInformation.gradeScores);
         expect(component.maxNumberOfOverallPoints).toEqual(overallPoints);
         expect(component.exerciseMaxPointsPerType).toEqual(exerciseMaxPointsPerType);
     });
 
     it('should calculate per student score', () => {
         jest.spyOn(courseService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
-        jest.spyOn(courseService, 'findAllParticipationsWithResults').mockReturnValue(of(participations));
+        jest.spyOn(courseService, 'findGradeScores').mockReturnValue(of(courseGradeInformation));
         jest.spyOn(gradingSystemService, 'findGradingScaleForCourse').mockReturnValue(of(new HttpResponse<GradingScale>({ body: gradingScaleWithGradedPresentations })));
         jest.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForInstructor').mockReturnValue(of(new HttpResponse<PlagiarismCase[]>({ body: [] })));
         fixture.detectChanges();
@@ -480,7 +600,7 @@ describe('CourseScoresComponent', () => {
 
     it('should omit student statistics with no participations', () => {
         jest.spyOn(courseService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
-        jest.spyOn(courseService, 'findAllParticipationsWithResults').mockReturnValue(of([]));
+        jest.spyOn(courseService, 'findGradeScores').mockReturnValue(of({} as CourseGradeInformationDTO));
         jest.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForInstructor').mockReturnValue(of(new HttpResponse<PlagiarismCase[]>({ body: [] })));
 
         fixture.detectChanges();
@@ -490,7 +610,7 @@ describe('CourseScoresComponent', () => {
 
     it('should assign plagiarism grade if there is a PLAGIARISM verdict', () => {
         jest.spyOn(courseService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
-        jest.spyOn(courseService, 'findAllParticipationsWithResults').mockReturnValue(of(participations));
+        jest.spyOn(courseService, 'findGradeScores').mockReturnValue(of(courseGradeInformation));
         jest.spyOn(gradingSystemService, 'findGradingScaleForCourse').mockReturnValue(of(new HttpResponse<GradingScale>({ body: { ...gradingScale } })));
         jest.spyOn(gradingSystemService, 'sortGradeSteps').mockReturnValue(gradingScale.gradeSteps);
         const matchingGradeStep = gradingScale.gradeSteps[0];
@@ -519,7 +639,7 @@ describe('CourseScoresComponent', () => {
 
     it('should generate excel row correctly', () => {
         jest.spyOn(courseService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
-        jest.spyOn(courseService, 'findAllParticipationsWithResults').mockReturnValue(of(participations));
+        jest.spyOn(courseService, 'findGradeScores').mockReturnValue(of(courseGradeInformation));
         jest.spyOn(gradingSystemService, 'findGradingScaleForCourse').mockReturnValue(of(new HttpResponse<GradingScale>({ body: gradingScaleWithGradedPresentations })));
         jest.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForInstructor').mockReturnValue(of(new HttpResponse<PlagiarismCase[]>({ body: [] })));
         fixture.detectChanges();
@@ -572,7 +692,7 @@ describe('CourseScoresComponent', () => {
 
     it('should generate csv correctly', () => {
         jest.spyOn(courseService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
-        jest.spyOn(courseService, 'findAllParticipationsWithResults').mockReturnValue(of(participations));
+        jest.spyOn(courseService, 'findGradeScores').mockReturnValue(of(courseGradeInformation));
         jest.spyOn(gradingSystemService, 'findGradingScaleForCourse').mockReturnValue(of(new HttpResponse<GradingScale>({ body: gradingScaleWithGradedPresentations })));
         jest.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForInstructor').mockReturnValue(of(new HttpResponse<PlagiarismCase[]>({ body: [] })));
         fixture.detectChanges();

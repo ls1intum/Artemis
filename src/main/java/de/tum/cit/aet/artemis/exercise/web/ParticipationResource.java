@@ -675,7 +675,7 @@ public class ParticipationResource {
      * @param courseId The id of the course
      * @return a {@link CourseGradeInformationDTO}
      */
-    @GetMapping("courses/{courseId}/grade-information")
+    @GetMapping("courses/{courseId}/grade-scores")
     @EnforceAtLeastInstructor
     public ResponseEntity<CourseGradeInformationDTO> getGradeInformationForCourse(@PathVariable long courseId) {
         log.info("REST request to get grade information for Course {}", courseId);

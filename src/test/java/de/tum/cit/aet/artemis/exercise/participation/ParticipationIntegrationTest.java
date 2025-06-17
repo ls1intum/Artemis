@@ -1111,7 +1111,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void getGradeInformationForCourse() throws Exception {
+    void getGradeScoresForCourse() throws Exception {
         // we only consider participations that have no due date or where the due date has passed
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
         programmingExercise = exerciseRepository.save(programmingExercise);
@@ -1147,7 +1147,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         Result quizResult = participationUtilService.addResultToSubmission(quizParticipation, quizSubmission);
         quizResult.setCompletionDate(quizExercise.getDueDate().minusMinutes(2));
         resultRepository.save(quizResult);
-        CourseGradeInformationDTO courseGradeInformationDTO = request.get("/api/exercise/courses/" + course.getId() + "/grade-information", HttpStatus.OK,
+        CourseGradeInformationDTO courseGradeInformationDTO = request.get("/api/exercise/courses/" + course.getId() + "/grade-scores", HttpStatus.OK,
                 CourseGradeInformationDTO.class);
         assertThat(courseGradeInformationDTO).isNotNull();
         List<GradeScoreDTO> gradeScoreDTOs = courseGradeInformationDTO.gradeScores();
