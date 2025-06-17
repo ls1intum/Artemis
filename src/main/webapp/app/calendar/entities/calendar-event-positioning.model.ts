@@ -7,7 +7,7 @@ export interface PositionInfo {
     width: number;
 }
 
-export interface CalendarEventPositioning {
+export interface CalendarEventAndPositioning {
     event: CalendarEvent;
     position: PositionInfo;
 }

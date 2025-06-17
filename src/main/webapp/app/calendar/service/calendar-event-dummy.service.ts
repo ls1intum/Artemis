@@ -9,13 +9,13 @@ export class CalendarEventDummyService {
     private dayToEventMap = new Map<string, CalendarEvent[]>();
 
     private readonly dummyEvents: CalendarEvent[] = [
-        { id: '1', name: 'Meeting', start: dayjs('2025-05-02'), end: dayjs('2025-05-02') },
-        { id: '2', name: 'Review', start: dayjs('2025-05-15'), end: dayjs('2025-05-15') },
-        { id: '3', name: 'Call', start: dayjs('2025-05-15'), end: dayjs('2025-05-15') },
-        { id: '4', name: 'Workshop', start: dayjs('2025-05-15'), end: dayjs('2025-05-15') },
-        { id: '5', name: 'Workshop', start: dayjs('2025-05-15'), end: dayjs('2025-05-15') },
-        { id: '6', name: 'Workshop', start: dayjs('2025-05-15'), end: dayjs('2025-05-15') },
-        { id: '7', name: 'Deadline', start: dayjs('2025-05-26'), end: dayjs('2025-05-26') },
+        { id: '1', name: 'Meeting', start: dayjs('2025-05-02 10:00'), end: dayjs('2025-05-02 12:00') },
+        { id: '2', name: 'Review', start: dayjs('2025-05-15 13:00'), end: dayjs('2025-05-15 14:00') },
+        { id: '3', name: 'Call', start: dayjs('2025-05-15 13:30'), end: dayjs('2025-05-15 16:00') },
+        { id: '4', name: 'Workshop', start: dayjs('2025-05-15 15:00'), end: dayjs('2025-05-15 16:00') },
+        { id: '5', name: 'Workshop', start: dayjs('2025-05-15 14:00'), end: dayjs('2025-05-15 17:00') },
+        { id: '6', name: 'Workshop', start: dayjs('2025-05-15 19:00'), end: dayjs('2025-05-15 20:00') },
+        { id: '7', name: 'Deadline', start: dayjs('2025-05-26 11:30'), end: dayjs('2025-05-26 13:30') },
     ];
 
     constructor() {

@@ -1,8 +1,10 @@
-import { AfterViewInit, Component, ElementRef, Input, OnInit } from '@angular/core';
-import dayjs from 'dayjs/esm';
+import { AfterViewInit, Component, ElementRef, computed, input } from '@angular/core';
+import { Dayjs } from 'dayjs/esm';
 import { CalendarEvent } from '../../entities/calendar-event.model';
-import { CalendarEventPositioning, PositionInfo } from '../../entities/calendar-event-positioning.model';
+import { CalendarEventAndPositioning, PositionInfo } from '../../entities/calendar-event-positioning.model';
 import { NgStyle } from '@angular/common';
+import { CalendarEventDummyService } from 'app/calendar/service/calendar-event-dummy.service';
+import * as Utils from 'app/calendar/util/calendar-util';
 
 @Component({
     selector: 'timed-event-section',
@@ -10,56 +12,33 @@ import { NgStyle } from '@angular/common';
     templateUrl: './timed-event-section.component.html',
     styleUrl: './timed-event-section.component.scss',
 })
-export class TimedEventSectionComponent implements OnInit, AfterViewInit {
-    @Input() days: dayjs.Dayjs[] = [];
+export class TimedEventSectionComponent implements AfterViewInit {
+    days = input.required<Dayjs[]>();
 
-    dayEventMap = new Map<string, CalendarEventPositioning[]>();
-    hours = Array.from({ length: 23 }, (_, i) => `${(i + 1).toString().padStart(2, '0')}:00`);
+    readonly utils = Utils;
+    private dayEventMap = computed(() => this.computePositionedEventsFor(this.days()));
 
-    private events: CalendarEvent[] = [
-        {
-            id: '1',
-            name: 'Team Meeting',
-            start: dayjs().hour(9).minute(0),
-            end: dayjs().hour(10).minute(30),
-        },
-        {
-            id: '2',
-            name: 'Design Review',
-            start: dayjs().hour(10).minute(0),
-            end: dayjs().hour(11).minute(0),
-        },
-        {
-            id: '3',
-            name: 'Design Review 2',
-            start: dayjs().hour(10).minute(0),
-            end: dayjs().hour(11).minute(0),
-        },
-        {
-            id: '4',
-            name: 'Lunch Break',
-            start: dayjs().hour(12).minute(0),
-            end: dayjs().hour(14).minute(30),
-        },
-    ];
-    private static HOUR_SEGMENT_HIGHT = 40;
+    private static HOUR_SEGMENT_HEIGHT = 40;
 
-    constructor(private hostRef: ElementRef<HTMLElement>) {}
-
-    ngOnInit(): void {
-        this.computePositionedEvents();
-    }
+    constructor(
+        private eventService: CalendarEventDummyService,
+        private hostRef: ElementRef<HTMLElement>,
+    ) {}
 
     ngAfterViewInit(): void {
-        const scrollTop = 7.5 * TimedEventSectionComponent.HOUR_SEGMENT_HIGHT;
-        this.hostRef.nativeElement.scrollTop = scrollTop;
+        this.hostRef.nativeElement.scrollTop = 7.5 * TimedEventSectionComponent.HOUR_SEGMENT_HEIGHT;
     }
 
-    private computePositionedEvents(): void {
-        const pixelsPerMinute = TimedEventSectionComponent.HOUR_SEGMENT_HIGHT / 60;
+    getEventsAndPositionings(day: Dayjs): CalendarEventAndPositioning[] {
+        return this.dayEventMap().get(day.format('YYYY-MM-DD')) ?? [];
+    }
 
-        const sorted = [...this.events].sort((a, b) => a.start.diff(b.start));
-        const positionedEvents: CalendarEventPositioning[] = [];
+    private computePositionedEventsFor(days: Dayjs[]): Map<string, CalendarEventAndPositioning[]> {
+        const pixelsPerMinute = TimedEventSectionComponent.HOUR_SEGMENT_HEIGHT / 60;
+
+        const events = days.flatMap((day) => this.eventService.getEventsOfDay(day));
+        const sorted = events.sort((a, b) => a.start.diff(b.start));
+        const positionedEvents: CalendarEventAndPositioning[] = [];
 
         let currentGroup: CalendarEvent[] = [];
 
@@ -95,21 +74,20 @@ export class TimedEventSectionComponent implements OnInit, AfterViewInit {
 
         flushGroup();
 
-        this.dayEventMap.clear();
+        const dayEventMap = new Map<string, CalendarEventAndPositioning[]>();
         for (const item of positionedEvents) {
             const key = item.event.start.format('YYYY-MM-DD');
-            if (!this.dayEventMap.has(key)) {
-                this.dayEventMap.set(key, []);
+            if (!dayEventMap.has(key)) {
+                dayEventMap.set(key, []);
             }
-            this.dayEventMap.get(key)!.push(item);
+            dayEventMap.get(key)!.push(item);
         }
+
+        return dayEventMap;
     }
 
+    // TODO: verify that this does what it claims
     private overlaps(a: CalendarEvent, b: CalendarEvent): boolean {
         return a.start.isBefore(b.end) && b.start.isBefore(a.end);
-    }
-
-    range(n: number): number[] {
-        return Array.from({ length: n }, (_, i) => i);
     }
 }
