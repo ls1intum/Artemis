@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnInit, Output, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnChanges, OnInit, inject, output } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { NgbTimeAdapter, NgbTimepicker } from '@ng-bootstrap/ng-bootstrap';
 import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
@@ -37,7 +37,7 @@ export class TutorialGroupSessionFormComponent implements OnInit, OnChanges {
 
     @Input() timeZone: string;
     @Input() isEditMode = false;
-    @Output() formSubmitted: EventEmitter<TutorialGroupSessionFormData> = new EventEmitter<TutorialGroupSessionFormData>();
+    readonly formSubmitted = output<TutorialGroupSessionFormData>();
     faCalendarAlt = faCalendarAlt;
 
     form: FormGroup;

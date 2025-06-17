@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, HostBinding, Input, OnChanges, Output, TemplateRef, ViewEncapsulation, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostBinding, Input, OnChanges, TemplateRef, ViewEncapsulation, inject, output } from '@angular/core';
 import { faUmbrellaBeach } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroupSession, TutorialGroupSessionStatus } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
@@ -43,7 +43,7 @@ export class TutorialGroupSessionRowComponent implements OnChanges {
 
     @Input() isReadOnly = false;
 
-    @Output() attendanceChanged = new EventEmitter<TutorialGroupSession>();
+    readonly attendanceChanged = output<TutorialGroupSession>();
 
     persistedAttendanceCount?: number = undefined;
     attendanceDiffersFromPersistedValue = false;

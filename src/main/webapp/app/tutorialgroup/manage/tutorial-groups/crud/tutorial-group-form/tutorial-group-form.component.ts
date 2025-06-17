@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, ViewChild, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnChanges, OnDestroy, OnInit, ViewChild, inject, output } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { Course, CourseGroup } from 'app/core/course/shared/entities/course.model';
@@ -62,7 +62,7 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy 
     };
     @Input() course: Course;
     @Input() isEditMode = false;
-    @Output() formSubmitted: EventEmitter<TutorialGroupFormData> = new EventEmitter<TutorialGroupFormData>();
+    readonly formSubmitted = output<TutorialGroupFormData>();
 
     form: FormGroup;
     // not included in reactive form

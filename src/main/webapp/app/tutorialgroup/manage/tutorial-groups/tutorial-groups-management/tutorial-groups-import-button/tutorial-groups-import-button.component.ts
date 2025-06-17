@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, OnDestroy, Output, TemplateRef, ViewChild, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, TemplateRef, ViewChild, inject, input, output } from '@angular/core';
 import { NgbDropdownButtonItem, NgbDropdownItem, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { EMPTY, Subject, from } from 'rxjs';
 import { catchError, takeUntil } from 'rxjs/operators';
@@ -21,7 +21,7 @@ export class TutorialGroupsImportButtonComponent implements OnDestroy {
 
     courseId = input.required<number>();
 
-    @Output() importFinished: EventEmitter<void> = new EventEmitter();
+    readonly importFinished = output<void>();
 
     openTutorialGroupImportDialog(event: MouseEvent) {
         event.stopPropagation();
