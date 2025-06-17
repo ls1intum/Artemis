@@ -73,7 +73,8 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 
 @Profile(PROFILE_CORE)
 @Configuration
-@Lazy
+// We cannot make this lazy as the client then fails to subscribe to team participation topics
+@Lazy(value = false)
 // See https://stackoverflow.com/a/34337731/3802758
 public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConfiguration {
 
