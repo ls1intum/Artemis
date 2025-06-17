@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.programming.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doReturn;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -22,7 +24,7 @@ import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTheiaConfigDTO;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
+import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
@@ -33,9 +35,6 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
 class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "programmingexerciseresource";
-
-    @Autowired
-    private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     @Autowired
     private UserUtilService userUtilService;
@@ -60,6 +59,9 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationIndepende
 
     @Autowired
     private ProgrammingExerciseTestRepository programmingExerciseRepository;
+
+    @Autowired
+    private GitService gitService;
 
     protected Course course;
 
@@ -117,6 +119,9 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationIndepende
         templateProgrammingExerciseParticipationTestRepo.save(templateParticipation);
 
         programmingExercise = programmingExerciseRepository.findByIdWithTemplateParticipationElseThrow(programmingExercise.getId());
+
+        // Mock the getBareRepository call to return a proper repository
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.localRepoFile.toPath(), null)).when(gitService).getBareRepository(any());
 
         byte[] result = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repository-memory-test/" + RepositoryType.TEMPLATE.name(),
                 HttpStatus.OK, byte[].class);

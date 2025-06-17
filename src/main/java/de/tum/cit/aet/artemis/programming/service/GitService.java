@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.programming.service;
 import static de.tum.cit.aet.artemis.core.config.BinaryFileExtensionConfiguration.isBinaryFile;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.URI;
@@ -35,6 +36,7 @@ import jakarta.validation.constraints.NotNull;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.jgit.api.ArchiveCommand;
 import org.eclipse.jgit.api.CommitCommand;
 import org.eclipse.jgit.api.FetchCommand;
 import org.eclipse.jgit.api.Git;
@@ -52,6 +54,7 @@ import org.eclipse.jgit.api.errors.InvalidRefNameException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.api.errors.NoHeadException;
 import org.eclipse.jgit.api.errors.TransportException;
+import org.eclipse.jgit.archive.ZipFormat;
 import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
@@ -158,6 +161,8 @@ public class GitService extends AbstractGitService {
             log.info("GitService will use username + password as authentication method to interact with remote git repositories");
             CredentialsProvider.setDefault(new UsernamePasswordCredentialsProvider(gitUser, gitPassword));
         }
+
+        ArchiveCommand.registerFormat("zip", new ZipFormat());
     }
 
     @PreDestroy
@@ -1371,84 +1376,30 @@ public class GitService extends AbstractGitService {
      * @return ByteArrayResource containing the zipped repository content
      * @throws GitAPIException if the git operation fails
      * @throws IOException     if IO operations fail
-     * @throws GitException    if repository access fails
      */
-    public ByteArrayResource exportRepositorySnapshot(VcsRepositoryUri repositoryUri, String filename) throws GitAPIException, IOException, GitException {
+    public ByteArrayResource exportRepositorySnapshot(VcsRepositoryUri repositoryUri, String filename) throws GitAPIException, IOException {
+        // Get the bare repository
+        Repository repository = getBareRepository(repositoryUri);
 
-        if (profileService.isLocalVCorCIActive()) {
-            return exportRepositorySnapshotFromBareRepo(repositoryUri, filename);
-        }
+        try (Git git = new Git(repository)) {
+            // Create a ByteArrayOutputStream to hold the archive data
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
-        return exportRepositorySnapshotFromRemote(repositoryUri, filename);
-    }
+            // Use ArchiveCommand to create a zip archive directly to memory
+            ArchiveCommand archiveCommand = git.archive().setFormat("zip").setTree(git.getRepository().resolve("HEAD")).setOutputStream(outputStream);
 
-    /**
-     * Export snapshot from a bare repository (Local VCS)
-     */
-    private ByteArrayResource exportRepositorySnapshotFromBareRepo(VcsRepositoryUri repositoryUri, String filename) throws GitAPIException, IOException {
+            // Execute the archive command
+            archiveCommand.call();
 
-        // For bare repositories, we need to checkout to a temporary directory first
-        Path tempDir = Path.of(repoClonePath, "temp-bare-export-" + System.currentTimeMillis());
+            // Create a ByteArrayResource from the output
+            byte[] zipData = outputStream.toByteArray();
+            return new ByteArrayResource(zipData) {
 
-        try {
-            // Clone the bare repository to a temporary working directory
-            org.eclipse.jgit.api.CloneCommand cloneCommand = cloneCommand().setURI(getGitUriAsString(repositoryUri)).setDirectory(tempDir.toFile()).setDepth(1)
-                    .setCloneAllBranches(false).setBare(false);
-
-            try (Git git = cloneCommand.call()) {
-                // Use the existing zipDirectoryToMemory method
-                return zipDirectoryToMemory(tempDir, filename,
-                        path -> StreamSupport.stream(path.spliterator(), false).noneMatch(pathPart -> ".git".equalsIgnoreCase(pathPart.toString())));
-            }
-        }
-        catch (URISyntaxException e) {
-            throw new GitException("Invalid repository URI: " + repositoryUri, e);
-        }
-        finally {
-            try {
-                if (Files.exists(tempDir)) {
-                    FileUtils.deleteDirectory(tempDir.toFile());
-                    log.debug("Cleaned up temporary directory: {}", tempDir);
+                @Override
+                public String getFilename() {
+                    return filename + ".zip";
                 }
-            }
-            catch (IOException e) {
-                log.warn("Failed to clean up temporary directory {}: {}", tempDir, e.getMessage());
-            }
-        }
-    }
-
-    /**
-     * Export snapshot from a remote repository with minimal cloning
-     */
-    private ByteArrayResource exportRepositorySnapshotFromRemote(VcsRepositoryUri repositoryUri, String filename) throws GitAPIException, IOException, GitException {
-
-        Path tempDir = Path.of(repoClonePath, "temp-export-" + System.currentTimeMillis());
-
-        try {
-            log.debug("Performing shallow clone of {} for in-memory export", repositoryUri);
-
-            org.eclipse.jgit.api.CloneCommand cloneCommand = cloneCommand().setURI(getGitUriAsString(repositoryUri)).setDirectory(tempDir.toFile()).setDepth(1)
-                    .setCloneAllBranches(false).setBare(false);
-
-            try (Git git = cloneCommand.call()) {
-                // Use the existing zipDirectoryToMemory method
-                return zipDirectoryToMemory(tempDir, filename,
-                        path -> StreamSupport.stream(path.spliterator(), false).noneMatch(pathPart -> ".git".equalsIgnoreCase(pathPart.toString())));
-            }
-        }
-        catch (URISyntaxException e) {
-            throw new GitException("Invalid repository URI: " + repositoryUri, e);
-        }
-        finally {
-            try {
-                if (Files.exists(tempDir)) {
-                    FileUtils.deleteDirectory(tempDir.toFile());
-                    log.debug("Cleaned up temporary directory: {}", tempDir);
-                }
-            }
-            catch (IOException e) {
-                log.warn("Failed to clean up temporary directory {}: {}", tempDir, e.getMessage());
-            }
+            };
         }
     }
 }
