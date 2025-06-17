@@ -14,8 +14,8 @@
                         @if (events.length > 4) {
                             @for (event of utils.limitToLengthThree(events); track event.id) {
                                 <div class="event-cell">{{ event.name }}</div>
-                                <div class="more-events-info">+{{ events.length - 3 }} more</div>
                             }
+                            <div class="more-events-info">+{{ events.length - 3 }} more</div>
                         } @else {
                             @for (event of events; track event.id) {
                                 <div class="event-cell">{{ event.name }}</div>

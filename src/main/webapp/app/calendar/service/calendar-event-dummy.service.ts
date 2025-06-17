@@ -14,7 +14,8 @@ export class CalendarEventDummyService {
         { id: '3', name: 'Call', start: dayjs('2025-05-15'), end: dayjs('2025-05-15') },
         { id: '4', name: 'Workshop', start: dayjs('2025-05-15'), end: dayjs('2025-05-15') },
         { id: '5', name: 'Workshop', start: dayjs('2025-05-15'), end: dayjs('2025-05-15') },
-        { id: '6', name: 'Deadline', start: dayjs('2025-05-26'), end: dayjs('2025-05-26') },
+        { id: '6', name: 'Workshop', start: dayjs('2025-05-15'), end: dayjs('2025-05-15') },
+        { id: '7', name: 'Deadline', start: dayjs('2025-05-26'), end: dayjs('2025-05-26') },
     ];
 
     constructor() {

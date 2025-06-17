@@ -14,9 +14,9 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     styleUrls: ['./calendar-desktop-month.component.scss'],
 })
 export class CalendarDesktopMonthComponent {
-    readonly utils = Utils;
     firstDayOfCurrentMonth = input.required<Dayjs>();
 
+    readonly utils = Utils;
     readonly weeks = computed(() => this.computeWeeksFrom(this.firstDayOfCurrentMonth()));
     readonly eventMap = computed(() => this.generateEventMap(this.weeks().flat()));
 

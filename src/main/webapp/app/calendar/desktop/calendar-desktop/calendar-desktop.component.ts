@@ -24,4 +24,8 @@ export class CalendarDesktopComponent {
     goToNextMonth(): void {
         this.firstDayOfCurrentMonth.update((current) => current.add(1, 'month'));
     }
+
+    goToMonthOfToday(): void {
+        this.firstDayOfCurrentMonth.set(dayjs().startOf('month'));
+    }
 }
