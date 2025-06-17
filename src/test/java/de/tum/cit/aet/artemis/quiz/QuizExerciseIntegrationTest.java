@@ -1701,6 +1701,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetQuizQuestionsForPractice() throws Exception {
+
         Course course = quizExerciseUtilService.addCourseWithOneQuizExercise();
         QuizExercise quizExercise = (QuizExercise) course.getExercises().stream().findFirst().get();
         quizExercise.setIsOpenForPractice(true);

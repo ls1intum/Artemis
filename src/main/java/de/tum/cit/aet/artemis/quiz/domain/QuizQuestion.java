@@ -81,6 +81,11 @@ public abstract class QuizQuestion extends DomainObject {
     @JsonIgnore
     private QuizExercise exercise;
 
+    @JsonProperty("exerciseId")
+    public Long getExerciseId() {
+        return exercise != null ? exercise.getId() : null;
+    }
+
     public String getTitle() {
         return title;
     }
@@ -222,11 +227,6 @@ public abstract class QuizQuestion extends DomainObject {
     public Boolean isValid() {
         // check title and score
         return getTitle() != null && !getTitle().isEmpty() && Double.compare(getPoints(), 0.0) > 0;
-    }
-
-    @JsonProperty("exerciseId")
-    public Long getExerciseId() {
-        return exercise != null ? exercise.getId() : null;
     }
 
     /**
