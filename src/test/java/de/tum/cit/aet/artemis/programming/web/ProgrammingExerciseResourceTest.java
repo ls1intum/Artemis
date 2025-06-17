@@ -4,8 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doReturn;
 
+import java.io.ByteArrayInputStream;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -134,5 +137,113 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationIndepende
 
         // Clean up
         localRepo.resetLocalRepo();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void testExportRepositoryWithFullHistory() throws Exception {
+        userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
+        var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        course.setInstructorGroupName(instructor.getGroups().iterator().next());
+        courseRepository.save(course);
+
+        var localRepo = new LocalRepository(defaultBranch);
+        var originRepoPath = java.nio.file.Files.createTempDirectory("testOriginRepo");
+        localRepo.configureRepos("testLocalRepo", originRepoPath);
+
+        programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+
+        var templateParticipation = templateProgrammingExerciseParticipationTestRepo.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        templateParticipation.setRepositoryUri(ParticipationFactory.getMockFileRepositoryUri(localRepo).getURI().toString());
+        templateProgrammingExerciseParticipationTestRepo.save(templateParticipation);
+
+        programmingExercise = programmingExerciseRepository.findByIdWithTemplateParticipationElseThrow(programmingExercise.getId());
+
+        // Mock the getBareRepository and getOrCheckoutRepository calls
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.localRepoFile.toPath(), null)).when(gitService).getBareRepository(any());
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(any(), any());
+
+        byte[] result = request.get(
+                "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repository-with-full-history/" + RepositoryType.TEMPLATE.name(), HttpStatus.OK,
+                byte[].class);
+
+        assertThat(result).isNotNull();
+        assertThat(result.length).isGreaterThan(0);
+
+        // Verify it's a valid ZIP file
+        assertThat(result[0]).isEqualTo((byte) 0x50); // 'P'
+        assertThat(result[1]).isEqualTo((byte) 0x4B); // 'K'
+
+        // Verify that the zip contains the .git directory
+        verifyZipContainsGitDirectory(result);
+
+        // Clean up
+        localRepo.resetLocalRepo();
+    }
+
+    private void verifyZipContainsGitDirectory(byte[] zipContent) throws Exception {
+        boolean foundGitDirectory = false;
+        boolean foundOtherFiles = false;
+        boolean foundGitConfig = false;
+        boolean foundGitHead = false;
+        boolean foundGitRefs = false;
+        boolean foundGitObjects = false;
+
+        Set<String> gitFiles = new HashSet<>();
+        Set<String> repositoryFiles = new HashSet<>();
+
+        try (ZipInputStream zipInputStream = new ZipInputStream(new ByteArrayInputStream(zipContent))) {
+            ZipEntry entry;
+            while ((entry = zipInputStream.getNextEntry()) != null) {
+                String entryName = entry.getName();
+
+                if (entryName.contains(".git/")) {
+                    foundGitDirectory = true;
+                    gitFiles.add(entryName);
+
+                    // Check for specific important git files
+                    if (entryName.endsWith(".git/config")) {
+                        foundGitConfig = true;
+                        // Validate git config content
+                        String configContent = new String(zipInputStream.readAllBytes());
+                        assertThat(configContent).as("Git config should contain repository information").containsAnyOf("[core]", "[remote", "repositoryformatversion");
+                    }
+                    else if (entryName.endsWith(".git/HEAD")) {
+                        foundGitHead = true;
+                        // Validate HEAD content
+                        String headContent = new String(zipInputStream.readAllBytes());
+                        assertThat(headContent).as("Git HEAD should reference a branch").containsAnyOf("ref: refs/heads/", "refs/heads/main", "refs/heads/master");
+                    }
+                    else if (entryName.contains(".git/refs/")) {
+                        foundGitRefs = true;
+                    }
+                    else if (entryName.contains(".git/objects/")) {
+                        foundGitObjects = true;
+                    }
+                }
+                else if (!entryName.endsWith("/")) {
+                    foundOtherFiles = true;
+                    repositoryFiles.add(entryName);
+                }
+            }
+        }
+
+        // Assertions for git directory structure
+        assertThat(foundGitDirectory).as("Zip should contain .git directory files").isTrue();
+        assertThat(foundGitConfig).as("Zip should contain .git/config file").isTrue();
+        assertThat(foundGitHead).as("Zip should contain .git/HEAD file").isTrue();
+        assertThat(foundGitRefs).as("Zip should contain .git/refs/ directory with references").isTrue();
+        assertThat(foundGitObjects).as("Zip should contain .git/objects/ directory with git objects").isTrue();
+
+        // Assertions for repository content
+        assertThat(foundOtherFiles).as("Zip should contain other repository files").isTrue();
+
+        // Additional validations
+        assertThat(gitFiles).as("Should have multiple git-related files").hasSizeGreaterThan(3);
+        assertThat(repositoryFiles).as("Should have some repository files").isNotEmpty();
+
+        // Log the found files for debugging
+        System.out.println("Found git files: " + gitFiles.size());
+        System.out.println("Found repository files: " + repositoryFiles.size());
     }
 }

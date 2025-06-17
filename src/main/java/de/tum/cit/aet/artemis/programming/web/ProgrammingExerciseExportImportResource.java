@@ -670,4 +670,49 @@ public class ProgrammingExerciseExportImportResource {
                     "Failed to export repository using in-memory method: " + e.getMessage())).body(null);
         }
     }
+
+    /**
+     * GET /programming-exercises/:exerciseId/export-repository-with-full-history/:repositoryType : Exports a repository with full history including .git directory
+     * This endpoint exports the repository including the .git directory with full commit history to memory without writing to disk.
+     *
+     * @param exerciseId     The id of the programming exercise
+     * @param repositoryType The type of repository to export (TEMPLATE, SOLUTION, TESTS)
+     * @return ResponseEntity with the zipped repository content including .git directory
+     * @throws IOException if something during the zip process went wrong
+     */
+    @GetMapping("programming-exercises/{exerciseId}/export-repository-with-full-history/{repositoryType}")
+    @EnforceAtLeastInstructor
+    @FeatureToggle(Feature.Exports)
+    public ResponseEntity<Resource> exportRepositoryWithFullHistory(@PathVariable long exerciseId, @PathVariable RepositoryType repositoryType) throws IOException {
+        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
+
+        long start = System.nanoTime();
+
+        VcsRepositoryUri repositoryUri = programmingExercise.getRepositoryURL(repositoryType);
+        if (repositoryUri == null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
+                    "Failed to export repository because the repository URI is not defined.")).body(null);
+        }
+
+        try {
+            String filename = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-" + programmingExercise.getTitle() + "-" + repositoryType.getName()
+                    + "-with-history";
+            filename = FileUtil.sanitizeFilename(filename);
+
+            ByteArrayResource zipResource = gitService.exportRepositoryWithFullHistoryToMemory(repositoryUri, filename);
+
+            log.info("Successfully exported repository with full history for programming exercise {} with title {} in {} ms", programmingExercise.getId(),
+                    programmingExercise.getTitle(), (System.nanoTime() - start) / 1000000);
+
+            return ResponseEntity.ok().contentType(MediaType.APPLICATION_OCTET_STREAM).contentLength(zipResource.contentLength())
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + zipResource.getFilename() + "\"").body(zipResource);
+        }
+        catch (GitAPIException | GitException e) {
+            log.error("Failed to export repository with full history: {}", e.getMessage());
+            return ResponseEntity.badRequest().headers(
+                    HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError", "Failed to export repository with full history: " + e.getMessage()))
+                    .body(null);
+        }
+    }
 }

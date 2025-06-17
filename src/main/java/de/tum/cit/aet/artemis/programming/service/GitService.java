@@ -1405,4 +1405,34 @@ public class GitService extends AbstractGitService {
             };
         }
     }
+
+    /**
+     * Exports a repository with full history including the .git directory directly to memory.
+     * This method checks out the repository locally and then creates a zip archive of the entire
+     * directory including the .git folder with full history.
+     *
+     * @param repositoryUri the URI of the repository to export
+     * @param filename      the desired filename for the export (without extension)
+     * @return ByteArrayResource containing the zipped repository content with full history
+     * @throws GitAPIException if the git operation fails
+     * @throws IOException     if IO operations fail
+     */
+    public ByteArrayResource exportRepositoryWithFullHistoryToMemory(VcsRepositoryUri repositoryUri, String filename) throws GitAPIException, IOException {
+        log.debug("Exporting repository with full history to memory: {}", repositoryUri);
+
+        // Check out the repository to get access to the .git directory
+        Repository repository = getOrCheckoutRepository(repositoryUri, true);
+
+        try {
+            // Reset to origin head to ensure we have the latest state
+            resetToOriginHead(repository);
+
+            // Use zipDirectoryToMemory without any content filter to include everything (including .git)
+            return zipDirectoryToMemory(repository.getLocalPath(), filename, null);
+        }
+        finally {
+            // Note: We don't close/delete the repository here as it might be cached and used elsewhere
+            // The repository cleanup is handled by the cleanup() method in the service lifecycle
+        }
+    }
 }
