@@ -670,19 +670,20 @@ public class ParticipationResource {
     }
 
     /**
-     * GET /courses/:courseId/participations : get all the participations for a course
+     * GET /courses/:courseId/grade-information : get all grade information (scores) for a course
      *
-     * @param courseId The participationId of the course
-     * @return A list of all participations for the given course
+     * @param courseId The id of the course
+     * @return a {@link CourseGradeInformationDTO}
      */
-    @GetMapping("courses/{courseId}/participations")
+    @GetMapping("courses/{courseId}/grade-information")
     @EnforceAtLeastInstructor
-    public ResponseEntity<CourseGradeInformationDTO> getAllParticipationsForCourse(@PathVariable Long courseId) {
-        log.info("REST request to get all participations for Course {}", courseId);
+    public ResponseEntity<CourseGradeInformationDTO> getGradeInformationForCourse(@PathVariable long courseId) {
+        log.info("REST request to get grade information for Course {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
 
         long startNew = System.nanoTime();
+        var all = studentParticipationRepository.findAll();
         // Distinguish between individual and team participations for performance reasons
         List<GradeScoreDTO> individualGradeScores = studentParticipationRepository.findIndividualGradesByCourseId(courseId);
         log.info("New: Found {} individual grades", individualGradeScores.size());

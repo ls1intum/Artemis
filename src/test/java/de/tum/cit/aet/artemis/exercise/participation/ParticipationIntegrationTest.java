@@ -16,8 +16,10 @@ import java.net.URI;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.IntStream;
@@ -63,6 +65,8 @@ import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.CourseGradeInformationDTO;
+import de.tum.cit.aet.artemis.exercise.dto.GradeScoreDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
@@ -1107,48 +1111,69 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void getAllParticipationsForCourse() throws Exception {
-        participationUtilService.createAndSaveParticipationForExercise(programmingExercise, TEST_PREFIX + "student1");
-        participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student2");
-        participationUtilService.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "student1");
-        var quizEx = QuizExerciseFactory.generateQuizExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1), QuizMode.SYNCHRONIZED, course);
-        exerciseRepository.save(quizEx);
-        participationUtilService.createAndSaveParticipationForExercise(quizEx, TEST_PREFIX + "student2");
+    void getGradeInformationForCourse() throws Exception {
+        // we only consider participations that have no due date or where the due date has passed
+        programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        programmingExercise = exerciseRepository.save(programmingExercise);
+        textExercise.setDueDate(null);
+        textExercise = exerciseRepository.save(textExercise);
 
-        var participations = request.getList("/api/exercise/courses/" + course.getId() + "/participations", HttpStatus.OK, StudentParticipation.class);
-        assertThat(participations).hasSize(4);
-        participations.forEach(participation -> {
-            var exercise = participation.getExercise();
-            assertThat(exercise.getCourseViaExerciseGroupOrCourseMember()).isNull();
-            assertThat(exercise.getStudentParticipations()).isEmpty();
-            assertThat(exercise.getTutorParticipations()).isEmpty();
-            assertThat(exercise.getExampleSubmissions()).isEmpty();
-            assertThat(exercise.getAttachments()).isEmpty();
-            assertThat(exercise.getCategories()).isEmpty();
-            assertThat(exercise.getProblemStatement()).isNull();
-            assertThat(exercise.getGradingInstructions()).isNull();
-            assertThat(exercise.getDifficulty()).isNull();
-            assertThat(exercise.getMode()).isEqualTo(ExerciseMode.INDIVIDUAL);
-            switch (exercise) {
-                case ProgrammingExercise aProgrammingExercise -> {
-                    assertThat(aProgrammingExercise.getSolutionParticipation()).isNull();
-                    assertThat(aProgrammingExercise.getTemplateParticipation()).isNull();
-                    assertThat(aProgrammingExercise.getTestRepositoryUri()).isNull();
-                    assertThat(aProgrammingExercise.getShortName()).isNull();
-                    assertThat(aProgrammingExercise.getProgrammingLanguage()).isNull();
-                    assertThat(aProgrammingExercise.getPackageName()).isNull();
-                    assertThat(aProgrammingExercise.isAllowOnlineEditor()).isNull();
-                }
-                case QuizExercise quizExercise -> assertThat(quizExercise.getQuizQuestions()).isEmpty();
-                case TextExercise aTextExercise -> assertThat(aTextExercise.getExampleSolution()).isNull();
-                case ModelingExercise aModelingExercise -> {
-                    assertThat(aModelingExercise.getExampleSolutionModel()).isNull();
-                    assertThat(aModelingExercise.getExampleSolutionExplanation()).isNull();
-                }
-                default -> {
-                }
-            }
+        StudentParticipation programmingParticipation = participationUtilService.createAndSaveParticipationForExercise(programmingExercise, TEST_PREFIX + "student1");
+        Submission programmingSubmission = new ProgrammingSubmission();
+        programmingSubmission.setSubmissionDate(programmingExercise.getDueDate().minusMinutes(2));
+        programmingSubmission = participationUtilService.addSubmission(programmingParticipation, programmingSubmission);
+        Result programmingResult = participationUtilService.addResultToSubmission(programmingParticipation, programmingSubmission);
+        programmingResult.setCompletionDate(programmingExercise.getDueDate().minusMinutes(2));
+        resultRepository.save(programmingResult);
+
+        StudentParticipation textParticipation = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student2");
+        Submission textSubmission = new TextSubmission();
+        textSubmission.setSubmissionDate(ZonedDateTime.now().minusMinutes(2));
+        textSubmission = participationUtilService.addSubmission(textParticipation, textSubmission);
+        Result textResult = participationUtilService.addResultToSubmission(textParticipation, textSubmission);
+        textResult.setCompletionDate(ZonedDateTime.now().minusHours(2));
+        resultRepository.save(textResult);
+
+        StudentParticipation modelingParticipation = participationUtilService.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "student1");
+        Submission modelingSubmission = participationUtilService.addSubmission(modelingParticipation, new ModelingSubmission());
+        participationUtilService.addResultToSubmission(modelingParticipation, modelingSubmission);
+
+        QuizExercise quizExercise = QuizExerciseFactory.generateQuizExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().minusHours(1), QuizMode.SYNCHRONIZED, course);
+        quizExercise = exerciseRepository.save(quizExercise);
+        StudentParticipation quizParticipation = participationUtilService.createAndSaveParticipationForExercise(quizExercise, TEST_PREFIX + "student2");
+        Submission quizSubmission = new QuizSubmission();
+        quizSubmission.setSubmissionDate(ZonedDateTime.now().minusHours(3));
+        quizSubmission = participationUtilService.addSubmission(programmingParticipation, quizSubmission);
+        Result quizResult = participationUtilService.addResultToSubmission(quizParticipation, quizSubmission);
+        quizResult.setCompletionDate(quizExercise.getDueDate().minusMinutes(2));
+        resultRepository.save(quizResult);
+        CourseGradeInformationDTO courseGradeInformationDTO = request.get("/api/exercise/courses/" + course.getId() + "/grade-information", HttpStatus.OK,
+                CourseGradeInformationDTO.class);
+        assertThat(courseGradeInformationDTO).isNotNull();
+        List<GradeScoreDTO> gradeScoreDTOs = courseGradeInformationDTO.gradeScores();
+        // text,quiz and programming should be included. Modeling should be excluded because it has a due date in the future
+        assertThat(gradeScoreDTOs).hasSize(3);
+
+        Map<Long, IdsMapValue> expectedValuesMap = new HashMap<>();
+        expectedValuesMap.put(programmingParticipation.getId(), new IdsMapValue(programmingExercise.getId(), programmingParticipation.getParticipant().getId(), 100.00));
+        expectedValuesMap.put(textParticipation.getId(), new IdsMapValue(textExercise.getId(), textParticipation.getParticipant().getId(), 100.00));
+        expectedValuesMap.put(modelingParticipation.getId(), new IdsMapValue(modelingExercise.getId(), modelingParticipation.getParticipant().getId(), 100.00));
+        expectedValuesMap.put(quizParticipation.getId(), new IdsMapValue(quizExercise.getId(), quizParticipation.getParticipant().getId(), 100.00));
+
+        gradeScoreDTOs.forEach(gradeScoreDTO -> {
+            long participationId = gradeScoreDTO.participationId();
+            long exerciseId = gradeScoreDTO.exerciseId();
+            long userId = gradeScoreDTO.userId();
+            double score = gradeScoreDTO.score();
+            assertThat(expectedValuesMap).containsKey(participationId);
+            var expectedValuesForParticipation = expectedValuesMap.get(participationId);
+            assertThat(exerciseId).isEqualTo(expectedValuesForParticipation.exerciseId());
+            assertThat(userId).isEqualTo(expectedValuesForParticipation.studentId());
+            assertThat(score).isEqualTo(expectedValuesForParticipation.score());
         });
+    }
+
+    private record IdsMapValue(long exerciseId, long studentId, double score) {
     }
 
     @Test
