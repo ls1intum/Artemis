@@ -521,7 +521,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             }
             else {
                 // All other exercises have no visible result, and therefore no submission to transmit the result
-                assertThat(participation.getSubmissions()).isNull();
+                assertThat(participation.getSubmissions()).isEmpty();
                 assertThat(results).isEmpty();
             }
         }
