@@ -8,7 +8,7 @@
         <div class="week-row">
             @for (day of week; track utils.identify(day)) {
                 <div class="day-cell">
-                    @if (utils.areDaysInSameMonth(day, firstDayOfCurrentMonth)) {
+                    @if (utils.areDaysInSameMonth(day, firstDayOfCurrentMonth())) {
                         <day-badge [date]="day" />
                         @let events = getEventsOf(day);
                         @if (events.length > 4) {

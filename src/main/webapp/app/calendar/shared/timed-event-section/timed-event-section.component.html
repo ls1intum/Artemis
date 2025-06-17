@@ -1,0 +1,29 @@
+<div class="frame">
+    <div class="info-column">
+        <div class="info-column-spacer"></div>
+        @for (hour of hours; track hour) {
+            <div class="time-label">{{ hour }}</div>
+        }
+        <div class="info-column-spacer"></div>
+    </div>
+    @for (day of days; track day.toISOString()) {
+        <div class="day-column">
+            @for (hour of range(24); track hour) {
+                <div class="hour-segment"></div>
+            }
+            @for (item of dayEventMap.get(day.format('YYYY-MM-DD')) || []; track item.event.id) {
+                <div
+                    class="event"
+                    [ngStyle]="{
+                        top: item.position.top + 'px',
+                        height: item.position.height + 'px',
+                        left: item.position.left + '%',
+                        width: item.position.width + '%',
+                    }"
+                >
+                    {{ item.event.name }}
+                </div>
+            }
+        </div>
+    }
+</div>

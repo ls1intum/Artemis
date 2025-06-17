@@ -1,0 +1,23 @@
+.frame {
+    height: 40px;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    border-bottom: 2px solid var(--border-color);
+
+    .info-cell {
+        width: 70px;
+        display: flex;
+        flex-direction: row;
+        justify-content: flex-end;
+        align-items: center;
+        padding-right: 4px;
+        font-size: 10px;
+        font-weight: 550;
+    }
+
+    .event-stack-cell {
+        flex: 1;
+        border-left: 2px solid var(--border-color);
+    }
+}

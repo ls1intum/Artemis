@@ -1,0 +1,40 @@
+<div class="frame">
+    <div class="header">
+        <span class="h2">{{ firstDayOfCurrentMonth().format('MMMM YYYY') }}</span>
+        <div class="spacer"></div>
+        <div class="btn-group" role="group">
+            <div
+                class="btn"
+                [ngClass]="{
+                    'btn-primary selected': viewMode() === 'week',
+                    'btn-outline-primary': viewMode() !== 'week',
+                }"
+                (click)="viewMode.set('week')"
+            >
+                Week
+            </div>
+
+            <div
+                class="btn"
+                [ngClass]="{
+                    'btn-primary selected': viewMode() === 'month',
+                    'btn-outline-primary': viewMode() !== 'month',
+                }"
+                (click)="viewMode.set('month')"
+            >
+                Month
+            </div>
+        </div>
+        <div class="btn-group" role="group" aria-label="Navigation controls">
+            <button type="button" class="btn btn-outline-primary" (click)="goToPreviousMonth()">
+                <fa-icon [icon]="faChevronLeft" />
+            </button>
+            <button type="button" class="btn btn-outline-primary" (click)="goToNextMonth()">
+                <fa-icon [icon]="faChevronRight" />
+            </button>
+        </div>
+    </div>
+    @if (viewMode() === 'month') {
+        <calendar-desktop-month [firstDayOfCurrentMonth]="firstDayOfCurrentMonth()" />
+    }
+</div>
