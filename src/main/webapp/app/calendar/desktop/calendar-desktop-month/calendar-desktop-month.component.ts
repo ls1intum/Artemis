@@ -1,4 +1,4 @@
-import { Component, effect, input } from '@angular/core';
+import { Component, computed, input } from '@angular/core';
 import { Dayjs } from 'dayjs/esm';
 import * as Utils from 'app/calendar/util/calendar-util';
 import { DayBadgeComponent } from '../../shared/day-badge/day-badge.component';
@@ -16,22 +16,23 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 export class CalendarDesktopMonthComponent {
     readonly utils = Utils;
     firstDayOfCurrentMonth = input.required<Dayjs>();
-    weeks: Dayjs[][] = [];
 
-    constructor(private eventService: CalendarEventDummyService) {
-        effect(() => this.generateCalendar());
-    }
+    readonly weeks = computed(() => this.computeWeeksFrom(this.firstDayOfCurrentMonth()));
+    readonly eventMap = computed(() => this.generateEventMap(this.weeks().flat()));
+
+    constructor(private eventService: CalendarEventDummyService) {}
 
     getEventsOf(day: Dayjs): CalendarEvent[] {
-        return this.eventService.getEventsOfDay(day);
+        const key = day.format('YYYY-MM-DD');
+        return this.eventMap().get(key) ?? [];
     }
 
-    generateCalendar(): void {
-        const startOfMonth = this.firstDayOfCurrentMonth().startOf('month');
-        const endOfMonth = this.firstDayOfCurrentMonth().endOf('month');
+    private computeWeeksFrom(startDate: Dayjs): Dayjs[][] {
+        const startOfMonth = startDate.startOf('month');
+        const endOfMonth = startOfMonth.endOf('month');
         const startDay = startOfMonth.startOf('isoWeek');
 
-        const weeks: Dayjs[][] = [];
+        const calendar: Dayjs[][] = [];
         let current = startDay;
 
         while (current.isBefore(endOfMonth) || current.isSame(endOfMonth, 'day')) {
@@ -40,9 +41,18 @@ export class CalendarDesktopMonthComponent {
                 week.push(current.clone());
                 current = current.add(1, 'day');
             }
-            weeks.push(week);
+            calendar.push(week);
         }
 
-        this.weeks = weeks;
+        return calendar;
+    }
+
+    private generateEventMap(days: Dayjs[]): Map<string, CalendarEvent[]> {
+        const map = new Map<string, CalendarEvent[]>();
+        for (const day of days) {
+            const key = day.format('YYYY-MM-DD');
+            map.set(key, this.eventService.getEventsOfDay(day));
+        }
+        return map;
     }
 }

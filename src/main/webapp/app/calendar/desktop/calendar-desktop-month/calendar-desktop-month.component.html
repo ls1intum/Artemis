@@ -4,7 +4,7 @@
             <div class="day-name">{{ dayNameKey | artemisTranslate }}</div>
         }
     </div>
-    @for (week of weeks; track utils.identify(week)) {
+    @for (week of weeks(); track utils.identify(week)) {
         <div class="week-row">
             @for (day of week; track utils.identify(day)) {
                 <div class="day-cell">
