@@ -15,6 +15,7 @@ import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
@@ -39,11 +40,12 @@ import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
-import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
+import de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService;
 import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
 @Conditional(ExamEnabled.class)
+@Lazy
 @Service
 public class ExamDeletionService {
 
@@ -51,7 +53,7 @@ public class ExamDeletionService {
 
     private final ExerciseDeletionService exerciseDeletionService;
 
-    private final ParticipationService participationService;
+    private final ParticipationDeletionService participationDeletionService;
 
     private final CacheManager cacheManager;
 
@@ -83,13 +85,13 @@ public class ExamDeletionService {
 
     private final ExamUserRepository examUserRepository;
 
-    public ExamDeletionService(ExerciseDeletionService exerciseDeletionService, ParticipationService participationService, CacheManager cacheManager, UserRepository userRepository,
-            ExamRepository examRepository, AuditEventRepository auditEventRepository, StudentExamRepository studentExamRepository, GradingScaleRepository gradingScaleRepository,
-            StudentParticipationRepository studentParticipationRepository, ChannelRepository channelRepository, ChannelService channelService,
-            ExamLiveEventRepository examLiveEventRepository, BuildJobRepository buildJobRepository, PostRepository postRepository, AnswerPostRepository answerPostRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository, ExamUserRepository examUserRepository) {
+    public ExamDeletionService(ExerciseDeletionService exerciseDeletionService, ParticipationDeletionService participationDeletionService, CacheManager cacheManager,
+            UserRepository userRepository, ExamRepository examRepository, AuditEventRepository auditEventRepository, StudentExamRepository studentExamRepository,
+            GradingScaleRepository gradingScaleRepository, StudentParticipationRepository studentParticipationRepository, ChannelRepository channelRepository,
+            ChannelService channelService, ExamLiveEventRepository examLiveEventRepository, BuildJobRepository buildJobRepository, PostRepository postRepository,
+            AnswerPostRepository answerPostRepository, ProgrammingExerciseRepository programmingExerciseRepository, ExamUserRepository examUserRepository) {
         this.exerciseDeletionService = exerciseDeletionService;
-        this.participationService = participationService;
+        this.participationDeletionService = participationDeletionService;
         this.cacheManager = cacheManager;
         this.userRepository = userRepository;
         this.examRepository = examRepository;
@@ -246,7 +248,7 @@ public class ExamDeletionService {
         for (final Exercise exercise : exercisesWithParticipationsToBeDeleted) {
             // Only delete participations that exist (and were not deleted in some other way)
             if (!exercise.getStudentParticipations().isEmpty()) {
-                participationService.delete(exercise.getStudentParticipations().iterator().next().getId(), true);
+                participationDeletionService.delete(exercise.getStudentParticipations().iterator().next().getId(), true);
             }
         }
 

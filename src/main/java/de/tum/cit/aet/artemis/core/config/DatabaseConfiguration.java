@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.core.config;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
@@ -12,6 +13,7 @@ import de.tum.cit.aet.artemis.core.repository.base.RepositoryImpl;
 
 @Profile(PROFILE_CORE)
 @Configuration
+@Lazy
 @EnableJpaRepositories(basePackages = { "de.tum.cit.aet.artemis.assessment.repository", "de.tum.cit.aet.artemis.atlas.repository",
         "de.tum.cit.aet.artemis.communication.repository", "de.tum.cit.aet.artemis.core.repository", "de.tum.cit.aet.artemis.exam.repository",
         "de.tum.cit.aet.artemis.exercise.repository", "de.tum.cit.aet.artemis.fileupload.repository", "de.tum.cit.aet.artemis.iris.repository",

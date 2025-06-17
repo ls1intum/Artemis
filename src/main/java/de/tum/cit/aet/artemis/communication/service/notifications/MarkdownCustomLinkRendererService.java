@@ -10,6 +10,7 @@ import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -19,6 +20,7 @@ import org.springframework.web.util.UriComponentsBuilder;
  * It takes the tag, transforms it into an <a></a> tag, and sets the corresponding href.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class MarkdownCustomLinkRendererService implements MarkdownCustomRendererService {
 
