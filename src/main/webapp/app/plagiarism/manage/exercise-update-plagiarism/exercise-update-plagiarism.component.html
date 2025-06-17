@@ -1,5 +1,4 @@
 <form [formGroup]="form" class="form-group col-auto border border-warning p-3">
-    <!-- collapse / expand -->
     <button
         type="button"
         class="btn btn-secondary me-1"
@@ -10,9 +9,7 @@
     <fa-icon [icon]="faQuestionCircle" placement="bottom auto" [ngbTooltip]="'artemisApp.plagiarism.continuousPlagiarismControlTooltip' | artemisTranslate" />
     <span class="badge rounded-pill text-bg-warning ms-1">BETA</span>
 
-    <!-- settings panel -->
     <div class="row" [hidden]="isCPCCollapsed">
-        <!-- master enable toggle -->
         <div class="plagiarism-option">
             <div class="form-check form-check-inline">
                 <input
@@ -25,7 +22,6 @@
             </div>
         </div>
 
-        <!-- post-due-date toggle -->
         <div class="plagiarism-option">
             <div class="form-check form-check-inline">
                 <input
@@ -38,7 +34,6 @@
             </div>
         </div>
 
-        <!-- numeric fields -->
         <div class="row">
             <div class="col">
                 <div class="form-group">
