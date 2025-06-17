@@ -94,7 +94,7 @@ export class CoursePracticeQuizComponent {
     }
 
     /**
-     * loads the quiz question
+     * initializes a new question with default values
      * @param question
      */
     initQuestion(question: QuizQuestion): void {
