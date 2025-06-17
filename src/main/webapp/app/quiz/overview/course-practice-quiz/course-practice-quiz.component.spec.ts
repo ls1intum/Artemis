@@ -9,6 +9,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { CoursePracticeQuizService } from 'app/quiz/overview/service/course-practice-quiz.service';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
+import { ArtemisQuizService } from '../../shared/service/quiz.service';
 
 const question1: DragAndDropQuestion = {
     id: 1,
@@ -38,7 +39,8 @@ const question3: QuizQuestion = {
 describe('CoursePracticeQuizComponent', () => {
     let component: CoursePracticeQuizComponent;
     let fixture: ComponentFixture<CoursePracticeQuizComponent>;
-    let quizService: CoursePracticeQuizService;
+    let coursePracticeQuizService: CoursePracticeQuizService;
+    let quizService: ArtemisQuizService;
 
     const mockQuestions = [question1, question2, question3];
 
@@ -58,8 +60,10 @@ describe('CoursePracticeQuizComponent', () => {
                     },
                 },
             ]);
-        quizService = TestBed.inject(CoursePracticeQuizService);
-        jest.spyOn(quizService, 'getQuizQuestions').mockReturnValue(of([question1, question2, question3]));
+        coursePracticeQuizService = TestBed.inject(CoursePracticeQuizService);
+        jest.spyOn(coursePracticeQuizService, 'getQuizQuestions').mockReturnValue(of([question1, question2, question3]));
+        quizService = TestBed.inject(ArtemisQuizService);
+        jest.spyOn(quizService, 'randomizeOrder');
 
         fixture = TestBed.createComponent(CoursePracticeQuizComponent);
         component = fixture.componentInstance;
@@ -77,6 +81,11 @@ describe('CoursePracticeQuizComponent', () => {
     it('should load questions from service', () => {
         expect(component.questionsSignal()).toEqual(mockQuestions);
         expect(component.questions()).toEqual(mockQuestions);
+    });
+
+    it('should randomize the question order', () => {
+        expect(quizService.randomizeOrder).toHaveBeenCalledOnce();
+        expect(quizService.randomizeOrder).toHaveBeenCalledWith(expect.any(Array), true);
     });
 
     it('should check if questions is empty', () => {
