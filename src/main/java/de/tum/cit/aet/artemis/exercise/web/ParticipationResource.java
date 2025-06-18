@@ -7,7 +7,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
 import java.time.ZonedDateTime;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -17,7 +16,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
@@ -63,6 +61,7 @@ import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
@@ -676,22 +675,11 @@ public class ParticipationResource {
      * @return a {@link CourseGradeInformationDTO}
      */
     @GetMapping("courses/{courseId}/grade-scores")
-    @EnforceAtLeastInstructor
-    public ResponseEntity<CourseGradeInformationDTO> getGradeInformationForCourse(@PathVariable long courseId) {
-        log.info("REST request to get grade information for Course {}", courseId);
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<CourseGradeInformationDTO> getGradeScoresForCourse(@PathVariable long courseId) {
+        log.info("REST request to get grade scores for Course {}", courseId);
         long startNew = System.nanoTime();
-        var all = studentParticipationRepository.findAll();
-        // Distinguish between individual and team participations for performance reasons
-        List<GradeScoreDTO> individualGradeScores = studentParticipationRepository.findIndividualGradesByCourseId(courseId);
-        log.info("New: Found {} individual grades", individualGradeScores.size());
-        List<GradeScoreDTO> individualQuizGradeScores = studentParticipationRepository.findIndividualQuizGradesByCourseId(courseId);
-        log.info("New: Found {} individual quiz grades", individualQuizGradeScores.size());
-        List<GradeScoreDTO> teamGradeScores = studentParticipationRepository.findTeamGradesByCourseId(courseId);
-        log.info("New: Found {} team grades", teamGradeScores.size());
-        List<GradeScoreDTO> gradeScores = Stream.of(individualGradeScores, individualQuizGradeScores, teamGradeScores).flatMap(Collection::stream).toList();
+        List<GradeScoreDTO> gradeScores = studentParticipationRepository.findGradeScoresForAllExercisesForCourse(courseId);
         Set<Long> userIds = gradeScores.stream().map(GradeScoreDTO::userId).collect(Collectors.toSet());
         List<StudentDTO> students = userRepository.findAllStudentsByIdIn(userIds);
         log.info("New: Found {} grade scores, {} students, in {}", gradeScores.size(), students.size(), TimeLogUtil.formatDurationFrom(startNew));

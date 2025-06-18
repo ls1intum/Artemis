@@ -1505,4 +1505,18 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     List<String> findAffectedLoginsByFeedbackDetailText(@Param("exerciseId") long exerciseId, @Param("detailTexts") List<String> detailTexts,
             @Param("testCaseName") String testCaseName);
 
+    /**
+     * Finds all grade scores for all exercises in a course, including individual and team exercises.
+     * Need special handling for quiz exercises, as the submission date is stored in reverse order compared to all other exercise types.
+     *
+     * @param courseId the id of the course for which to find all grade scores
+     * @return a list of {@link GradeScoreDTO}
+     */
+    default List<GradeScoreDTO> findGradeScoresForAllExercisesForCourse(long courseId) {
+        // Distinguish between individual and team participations for performance reasons
+        List<GradeScoreDTO> individualGradeScores = findIndividualGradesByCourseId(courseId);
+        List<GradeScoreDTO> individualQuizGradeScores = findIndividualQuizGradesByCourseId(courseId);
+        List<GradeScoreDTO> teamGradeScores = findTeamGradesByCourseId(courseId);
+        return Stream.of(individualGradeScores, individualQuizGradeScores, teamGradeScores).flatMap(Collection::stream).toList();
+    }
 }
