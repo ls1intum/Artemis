@@ -1157,7 +1157,6 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         Map<Long, IdsMapValue> expectedValuesMap = new HashMap<>();
         expectedValuesMap.put(programmingParticipation.getId(), new IdsMapValue(programmingExercise.getId(), programmingParticipation.getParticipant().getId(), 100.00));
         expectedValuesMap.put(textParticipation.getId(), new IdsMapValue(textExercise.getId(), textParticipation.getParticipant().getId(), 100.00));
-        expectedValuesMap.put(modelingParticipation.getId(), new IdsMapValue(modelingExercise.getId(), modelingParticipation.getParticipant().getId(), 100.00));
         expectedValuesMap.put(quizParticipation.getId(), new IdsMapValue(quizExercise.getId(), quizParticipation.getParticipant().getId(), 100.00));
 
         gradeScoreDTOs.forEach(gradeScoreDTO -> {
