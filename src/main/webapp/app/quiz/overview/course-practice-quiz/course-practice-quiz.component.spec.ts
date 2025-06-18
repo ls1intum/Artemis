@@ -3,8 +3,8 @@ import { CoursePracticeQuizComponent } from './course-practice-quiz.component';
 import { ActivatedRoute, Router } from '@angular/router';
 import { QuizQuestion, QuizQuestionType } from '../../shared/entities/quiz-question.model';
 import { MockBuilder } from 'ng-mocks';
-import { of } from 'rxjs';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { of, throwError } from 'rxjs';
+import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { CoursePracticeQuizService } from 'app/quiz/overview/service/course-practice-quiz.service';
@@ -15,6 +15,10 @@ import { Result } from '../../../exercise/shared/entities/result/result.model';
 import { QuizParticipationService } from '../service/quiz-participation.service';
 import { AlertService } from '../../../shared/service/alert.service';
 import { CourseManagementService } from '../../../core/course/manage/services/course-management.service';
+import { MultipleChoiceSubmittedAnswer } from '../../shared/entities/multiple-choice-submitted-answer.model';
+import { DragAndDropSubmittedAnswer } from '../../shared/entities/drag-and-drop-submitted-answer.model';
+import { ShortAnswerSubmittedAnswer } from '../../shared/entities/short-answer-submitted-answer.model';
+import * as Utils from 'app/shared/util/utils';
 
 const question1: QuizQuestion = {
     id: 1,
@@ -42,6 +46,8 @@ const question3: QuizQuestion = {
 };
 
 const course = { id: 1, title: 'Test Course' };
+
+const result: Result = { id: 1, submission: { submittedAnswers: [{ scoreInPoints: 2 }] } as any };
 
 describe('CoursePracticeQuizComponent', () => {
     let component: CoursePracticeQuizComponent;
@@ -84,7 +90,7 @@ describe('CoursePracticeQuizComponent', () => {
         expect(component.courseId()).toBe(1);
     });
 
-    it('should load course from quizManagementService', async () => {
+    it('should load course from quizManagementService', () => {
         expect(component.course()).toEqual(course);
     });
 
@@ -140,128 +146,85 @@ describe('CoursePracticeQuizComponent', () => {
         expect(component.shortAnswerSubmittedTexts).toEqual([]);
     });
 
-    describe('onSubmit', () => {
-        it('should submit drag and drop question and apply selection', () => {
-            component.currentIndex.set(0);
-            component.dragAndDropMappings = [{ id: 100 } as any];
-
-            const mockResult: Result = {
-                id: 1,
-                score: 100,
-                submission: {
-                    submittedAnswers: [
-                        {
-                            quizQuestion: question1,
-                            scoreInPoints: 1,
-                            mappings: [{ id: 100 }],
-                        },
-                    ],
-                } as any,
-            } as Result;
-
-            const submitSpy = jest.spyOn(TestBed.inject(QuizParticipationService), 'submitForPractice').mockReturnValue(of(new HttpResponse({ body: mockResult })));
-
-            component.onSubmit();
-
-            expect(submitSpy).toHaveBeenCalledOnce();
-        });
-
-        it('should submit multiple choice question and apply selection', () => {
-            component.currentIndex.set(1);
-            component.selectedAnswerOptions = [{ id: 200 } as any];
-
-            const mockResult: Result = {
-                id: 2,
-                score: 100,
-                submission: {
-                    submittedAnswers: [
-                        {
-                            quizQuestion: question2,
-                            scoreInPoints: 2,
-                            selectedOptions: [{ id: 200 }],
-                        },
-                    ],
-                } as any,
-            } as Result;
-
-            const submitSpy = jest.spyOn(TestBed.inject(QuizParticipationService), 'submitForPractice').mockReturnValue(of(new HttpResponse({ body: mockResult })));
-
-            component.onSubmit();
-
-            expect(submitSpy).toHaveBeenCalledOnce();
-        });
-
-        it('should submit short answer question and apply selection', () => {
-            component.currentIndex.set(2);
-            component.shortAnswerSubmittedTexts = [{ id: 300 } as any];
-
-            const mockResult: Result = {
-                id: 3,
-                score: 100,
-                submission: {
-                    submittedAnswers: [
-                        {
-                            quizQuestion: question3,
-                            scoreInPoints: 3,
-                            submittedTexts: [{ id: 300 }],
-                        },
-                    ],
-                } as any,
-            } as Result;
-
-            const submitSpy = jest.spyOn(TestBed.inject(QuizParticipationService), 'submitForPractice').mockReturnValue(of(new HttpResponse({ body: mockResult })));
-
-            component.onSubmit();
-
-            expect(submitSpy).toHaveBeenCalledOnce();
-        });
-
-        it('should handle submit error and call onSubmitError', () => {
-            const error: any = {
-                message: 'Fehler beim Absenden',
-                headers: {
-                    get: (key: string) => (key === 'X-artemisApp-message' ? 'Fehler beim Absenden' : null),
-                },
-            };
-
-            const submitSpy = jest.spyOn(TestBed.inject(QuizParticipationService), 'submitForPractice').mockImplementation(
-                () =>
-                    ({
-                        subscribe: ({ error: errorCallback }: any) => errorCallback(error),
-                    }) as any,
-            );
-
-            const onSubmitErrorSpy = jest.spyOn(component, 'onSubmitError');
-
-            component.onSubmit();
-
-            expect(submitSpy).toHaveBeenCalledOnce();
-            expect(onSubmitErrorSpy).toHaveBeenCalledWith(error);
-        });
+    it('should submit quiz and handle success', () => {
+        const submitSpy = jest.spyOn(TestBed.inject(QuizParticipationService), 'submitForPractice').mockReturnValue(of(new HttpResponse({ body: result })));
+        const showResultSpy = jest.spyOn(component, 'showResult');
+        // Drag and Drop
+        component.currentIndex.set(0);
+        component.onSubmit();
+        expect(submitSpy).toHaveBeenCalledOnce();
+        expect(component.isSubmitting).toBeFalse();
+        expect(component.submitted).toBeTrue();
+        expect(showResultSpy).toHaveBeenCalledWith(result);
+        jest.clearAllMocks();
+        // Multiple Choice
+        component.currentIndex.set(1);
+        component.onSubmit();
+        expect(submitSpy).toHaveBeenCalledOnce();
+        expect(component.isSubmitting).toBeFalse();
+        expect(component.submitted).toBeTrue();
+        expect(showResultSpy).toHaveBeenCalledWith(result);
+        jest.clearAllMocks();
+        // Short Answer
+        component.currentIndex.set(2);
+        component.onSubmit();
+        expect(submitSpy).toHaveBeenCalledOnce();
+        expect(component.isSubmitting).toBeFalse();
+        expect(component.submitted).toBeTrue();
+        expect(showResultSpy).toHaveBeenCalledWith(result);
     });
 
-    it('should handle submit error and show alert', () => {
-        const alertService = TestBed.inject(AlertService);
-        const addAlertSpy = jest.spyOn(alertService, 'addAlert');
-        component.isSubmitting = true;
+    it('should handle submit error', () => {
+        const alertSpy = jest.spyOn(TestBed.inject(AlertService), 'addAlert');
+        const error = new HttpErrorResponse({
+            error: 'error',
+            status: 400,
+            headers: new HttpHeaders({ 'X-artemisApp-message': 'Fehler beim Absenden' }),
+            statusText: 'Bad Request',
+        });
+        jest.spyOn(TestBed.inject(QuizParticipationService), 'submitForPractice').mockReturnValue(throwError(() => error));
+        component.currentIndex.set(2);
+        component.onSubmit();
+        expect(alertSpy).toHaveBeenCalled();
+        expect(component.isSubmitting).toBeFalse();
+    });
 
-        const error: any = {
-            message: 'Some error',
-            headers: {
-                get: (key: string) => (key === 'X-artemisApp-message' ? 'Fehler beim Absenden' : null),
-            },
-        };
+    it('should applySubmission for multiple choice', () => {
+        component.currentIndex.set(1);
+        const answer = new MultipleChoiceSubmittedAnswer();
+        answer.selectedOptions = [{ id: 1 } as any];
+        component.submission.submittedAnswers = [answer];
+        component.applySubmission();
+        expect(component.selectedAnswerOptions).toEqual([{ id: 1 }]);
+    });
 
-        component.onSubmitError(error);
+    it('should applySubmission for drag and drop', () => {
+        component.currentIndex.set(0);
+        const answer = new DragAndDropSubmittedAnswer();
+        answer.mappings = [{ id: 2 } as any];
+        component.submission.submittedAnswers = [answer];
+        component.applySubmission();
+        expect(component.dragAndDropMappings).toEqual([{ id: 2 }]);
+    });
 
-        expect(component.isSubmitting).toBeFalsy();
-        expect(addAlertSpy).toHaveBeenCalledWith(
-            expect.objectContaining({
-                type: expect.anything(),
-                message: expect.stringContaining('Fehler beim Absenden'),
-                disableTranslation: true,
-            }),
-        );
+    it('should applySubmission for short answer', () => {
+        component.currentIndex.set(2);
+        const answer = new ShortAnswerSubmittedAnswer();
+        answer.submittedTexts = [{ id: 3 } as any];
+        component.submission.submittedAnswers = [answer];
+        component.applySubmission();
+        expect(component.shortAnswerSubmittedTexts).toEqual([{ id: 3 }]);
+    });
+
+    it('should show result and calculate score', () => {
+        const result: Result = { id: 1, submission: { submittedAnswers: [{ scoreInPoints: 1 }] } as any };
+        component.submission.submittedAnswers = [{ scoreInPoints: 1 }];
+        const roundSpy = jest.spyOn(Utils, 'roundValueSpecifiedByCourseSettings');
+        component.showResult(result);
+        expect(component.result).toBe(result);
+        expect(component.showingResult).toBeTrue();
+        expect(roundSpy).toHaveBeenCalledOnce();
+        expect(roundSpy).toHaveBeenCalledWith(1, course);
     });
 
     it('should navigate to practice', () => {
