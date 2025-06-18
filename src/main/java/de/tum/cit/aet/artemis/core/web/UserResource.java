@@ -17,6 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -24,6 +25,7 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.AcceptExternalLLMUsageDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.UserInitializationDTO;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -132,12 +134,14 @@ public class UserResource {
      */
     @PutMapping("users/accept-external-llm-usage")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> setExternalLLMUsageAcceptedToTimestamp() {
+    public ResponseEntity<Void> setExternalLLMUsageAcceptedToTimestamp(@RequestBody AcceptExternalLLMUsageDTO acceptExternalLLMUsageDTO) {
         User user = userRepository.getUser();
         if (user.getExternalLLMUsageAcceptedTimestamp() != null) {
             return ResponseEntity.badRequest().build();
         }
-        userRepository.updateExternalLLMUsageAcceptedToDate(user.getId(), ZonedDateTime.now());
+
+        ZonedDateTime hasAcceptedTimestamp = acceptExternalLLMUsageDTO.accepted() ? ZonedDateTime.now() : null;
+        userRepository.updateExternalLLMUsageAcceptedToDate(user.getId(), hasAcceptedTimestamp);
         return ResponseEntity.ok().build();
     }
 }

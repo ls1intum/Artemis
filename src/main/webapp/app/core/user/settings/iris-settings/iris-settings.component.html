@@ -2,3 +2,13 @@
     <h2 jhiTranslate="artemisApp.userSettings.categories.iris"></h2>
 </div>
 <hr />
+
+<!--TODO add proper translation-->
+<div class="row align-items-center">
+    <div class="col"><span jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.description"></span><br /></div>
+</div>
+
+<div class="button-container">
+    <button type="button" class="btn btn-primary" (click)="updateExternalLLMUsageConsent(true)" #acceptButton jhiTranslate="artemisApp.exerciseChatbot.accept"></button>
+    <button type="button" class="btn btn-secondary" (click)="updateExternalLLMUsageConsent(false)" jhiTranslate="artemisApp.exerciseChatbot.decline"></button>
+</div>

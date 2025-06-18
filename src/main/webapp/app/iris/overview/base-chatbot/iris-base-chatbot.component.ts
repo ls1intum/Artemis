@@ -329,7 +329,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
      * Accepts the permission to use the chat widget.
      */
     acceptPermission() {
-        this.chatService.setUserAccepted();
+        this.chatService.updateExternalLLMUsageConsent(true);
         this.userAccepted = true;
     }
 

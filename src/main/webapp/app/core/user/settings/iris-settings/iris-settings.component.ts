@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 
 @Component({
     selector: 'jhi-iris-settings',
@@ -7,4 +8,10 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     templateUrl: './iris-settings.component.html',
     styleUrl: './iris-settings.component.scss',
 })
-export class IrisSettingsComponent {}
+export class IrisSettingsComponent {
+    private readonly irisChatService = inject(IrisChatService);
+
+    updateExternalLLMUsageConsent(accepted: boolean) {
+        this.irisChatService.updateExternalLLMUsageConsent(accepted);
+    }
+}
