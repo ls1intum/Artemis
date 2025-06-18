@@ -678,11 +678,11 @@ public class ParticipationResource {
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<CourseGradeInformationDTO> getGradeScoresForCourse(@PathVariable long courseId) {
         log.info("REST request to get grade scores for Course {}", courseId);
-        long startNew = System.nanoTime();
+        long start = System.nanoTime();
         List<GradeScoreDTO> gradeScores = studentParticipationRepository.findGradeScoresForAllExercisesForCourse(courseId);
         Set<Long> userIds = gradeScores.stream().map(GradeScoreDTO::userId).collect(Collectors.toSet());
-        List<StudentDTO> students = userRepository.findAllStudentsByIdIn(userIds);
-        log.info("New: Found {} grade scores, {} students, in {}", gradeScores.size(), students.size(), TimeLogUtil.formatDurationFrom(startNew));
+        List<StudentDTO> students = userIds.isEmpty() ? List.of() : userRepository.findAllStudentsByIdIn(userIds);
+        log.info("Found {} grade scores, {} students, in {}", gradeScores.size(), students.size(), TimeLogUtil.formatDurationFrom(start));
 
         return ResponseEntity.ok().body(new CourseGradeInformationDTO(gradeScores, students));
     }

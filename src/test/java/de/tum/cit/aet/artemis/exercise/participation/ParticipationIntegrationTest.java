@@ -1143,7 +1143,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         StudentParticipation quizParticipation = participationUtilService.createAndSaveParticipationForExercise(quizExercise, TEST_PREFIX + "student2");
         Submission quizSubmission = new QuizSubmission();
         quizSubmission.setSubmissionDate(ZonedDateTime.now().minusHours(3));
-        quizSubmission = participationUtilService.addSubmission(programmingParticipation, quizSubmission);
+        quizSubmission = participationUtilService.addSubmission(quizParticipation, quizSubmission);
         Result quizResult = participationUtilService.addResultToSubmission(quizParticipation, quizSubmission);
         quizResult.setCompletionDate(quizExercise.getDueDate().minusMinutes(2));
         resultRepository.save(quizResult);
