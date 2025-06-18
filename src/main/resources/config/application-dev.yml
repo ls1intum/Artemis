@@ -65,8 +65,6 @@ server:
 springdoc:
   api-docs:
     enabled: true
-  swagger-ui:
-    enabled: false
   pre-loading-enabled: true
 
 # ===================================================================

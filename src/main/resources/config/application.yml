@@ -24,7 +24,6 @@ logging:
         de.jplag.Submission: ERROR
         de.jplag.logging: WARN
         de.jplag.reporting: WARN
-        org.springdoc: TRACE
     logback:
         rollingpolicy:
             max-history: 90
@@ -280,9 +279,8 @@ hazelcast:
             enabled: false
 
 springdoc:
-  api-docs:
+  api-docs: # Having these endpoints publicly available is a security risk, so we disable them by default
     path: /api-docs
-    # Having these endpoints publicly available is a security risk, so we disable them by default
     enabled: false
   swagger-ui:
     path: api.html

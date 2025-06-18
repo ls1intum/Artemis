@@ -2,7 +2,7 @@ import { Project } from "ts-morph";
 import { join } from "path";
 import { readdirSync, statSync } from "fs";
 
-const getAllTSFiles = (dir: string): string[] => {
+const getAllTypescriptFiles = (dir: string): string[] => {
     let results: string[] = [];
     for (const file of readdirSync(dir)) {
         const fullPath = join(dir, file);
@@ -16,9 +16,27 @@ const getAllTSFiles = (dir: string): string[] => {
     return results;
 };
 
+const stripLeadingUnderscoresAndTrailingDigitsFromAllMethods = (sourceFile: any, renamedMethodsInFile: number) => {
+    for (const clazz of sourceFile.getClasses()) {
+        for (const method of clazz.getMethods()) {
+            const oldName = method.getName();
+            // remove all leading '_' then remove any digits at the end
+            const newName = oldName
+                .replace(/^_+/, "")
+                .replace(/\d+$/, "");
+            if (newName !== oldName) {
+                method.getNameNode().rename(newName);
+                renamedMethodsInFile++;
+                console.log(`🔄 [${sourceFile.getBaseName()}] ${oldName} → ${newName}`);
+            }
+        }
+    }
+    return renamedMethodsInFile;
+};
+
 const main = async () => {
     const directory = "src/main/webapp/app/openapi";
-    const files = getAllTSFiles(directory);
+    const files = getAllTypescriptFiles(directory);
 
     const project = new Project({
         tsConfigFilePath: "tsconfig.json",
@@ -44,10 +62,10 @@ const main = async () => {
                 }
 
                 const refs = id.findReferences();
-                const isUsed = refs.some(r =>
-                    r.getReferences().some(r2 =>
-                        r2.getNode().getSourceFile() === sourceFile &&
-                        r2.getNode() !== id
+                const isUsed = refs.some(referenceGroup =>
+                    referenceGroup.getReferences().some(usage =>
+                        usage.getNode().getSourceFile() === sourceFile &&
+                        usage.getNode() !== id
                     )
                 );
 
@@ -57,30 +75,15 @@ const main = async () => {
                 }
             }
 
-            if (
-                importDeclaration.getNamedImports().length === 0 &&
+            const emptyImportDeclaration = importDeclaration.getNamedImports().length === 0 &&
                 !importDeclaration.getDefaultImport() &&
-                !importDeclaration.getNamespaceImport()
-            ) {
+                !importDeclaration.getNamespaceImport();
+            if (emptyImportDeclaration) {
                 importDeclaration.remove();
             }
         }
 
-        // 2) Strip leading underscores and trailing digits from every class‐method name:
-        for (const clazz of sourceFile.getClasses()) {
-            for (const method of clazz.getMethods()) {
-                const oldName = method.getName();
-                // remove all leading '_' then remove any digits at the end
-                const newName = oldName
-                    .replace(/^_+/, "")
-                    .replace(/\d+$/, "");
-                if (newName !== oldName) {
-                    method.getNameNode().rename(newName);
-                    renamedMethodsInFile++;
-                    console.log(`🔄 [${sourceFile.getBaseName()}] ${oldName} → ${newName}`);
-                }
-            }
-        }
+        renamedMethodsInFile = stripLeadingUnderscoresAndTrailingDigitsFromAllMethods(sourceFile, renamedMethodsInFile);
 
         if (removedImportsInFile + renamedMethodsInFile > 0) {
             await sourceFile.save();

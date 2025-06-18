@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.util.Collections;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -14,8 +13,12 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
+import io.swagger.v3.oas.models.Components;
+import io.swagger.v3.oas.models.Operation;
+import io.swagger.v3.oas.models.Paths;
 import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.media.Content;
 import io.swagger.v3.oas.models.media.MediaType;
 import io.swagger.v3.oas.models.media.Schema;
 import io.swagger.v3.oas.models.media.StringSchema;
@@ -48,85 +51,28 @@ public class OpenAPIConfiguration {
     @Bean
     public OpenApiCustomizer schemaCustomizer() {
         return openApi -> {
-            var components = openApi.getComponents();
+            Components components = openApi.getComponents();
             openApi.info(new Info().title("Artemis Application Server API").version(version).contact(new Contact().email("krusche@tum.de").name("Stephan Krusche")));
 
             if (components != null && components.getSchemas() != null) {
-                // Only include schemas with DTO suffix and remove the suffix
-                var schemas = components.getSchemas().entrySet().stream().filter(entry -> entry.getKey().endsWith("DTO"))
-                        .collect(Collectors.toMap(entry -> entry.getKey().substring(0, entry.getKey().length() - DTO_NUMBER_OF_CHARACTERS), entry -> {
-                            var schema = entry.getValue();
-                            schema.setName(entry.getKey().substring(0, entry.getKey().length() - DTO_NUMBER_OF_CHARACTERS));
-                            return schema;
-                        }));
-
-                // Remove DTO suffix from attribute names
-                schemas.forEach((key, value) -> {
-                    @SuppressWarnings("unchecked")
-                    Map<String, Schema<?>> properties = value.getProperties();
-                    if (properties != null) {
-                        properties.forEach((propertyKey, propertyValue) -> {
-                            removeDTOSuffixesFromSchemaRecursively(propertyValue);
-                        });
-                    }
-                });
+                Map<String, Schema> schemas = filterForSchemasWithDtoSuffixAndStripSuffix(components);
+                removeDtoSuffixFromAttributeNames(schemas);
 
                 components.setSchemas(schemas);
-                if (!components.getSchemas().containsKey("EmptyResponse")) {
-                    Schema<?> emptySchema = new Schema<>().type("object").description("An empty response (no content)").properties(Collections.emptyMap());
-                    components.addSchemas("EmptyResponse", emptySchema);
-                }
             }
             else {
                 log.warn("Components or Schemas are null in OpenAPI configuration.");
             }
 
-            var paths = openApi.getPaths();
+            Paths paths = openApi.getPaths();
             if (paths != null) {
                 paths.forEach((path, pathItem) -> {
-                    log.info("Processing path: {}", path);
                     pathItem.readOperations().forEach(operation -> {
-                        String id = operation.getOperationId();
-                        // strip any trailing "_<digit>" suffix
-                        operation.setOperationId(id.replaceAll("_\\d+$", "")); // Remove DTO suffix from response schemas
-                        var responses = operation.getResponses();
-                        if (responses != null) {
-                            responses.forEach((responseCode, response) -> {
-                                var content = response.getContent();
-                                if (content != null) {
-                                    content.forEach((contentType, mediaType) -> {
-                                        if (mediaType != null && mediaType.getSchema() != null) {
-                                            removeDTOSuffixesFromSchemaRecursively(mediaType.getSchema());
-                                        }
-                                        else {
-                                            log.warn("MediaType or Schema is null for content type: {}", contentType);
-                                        }
-                                    });
-                                }
-                                else {
-                                    log.warn("Response with code {} has no content.", responseCode);
-                                }
-                            });
-                        }
-                        if (operation.getRequestBody() != null) {
-                            var requestBodyContent = operation.getRequestBody().getContent();
-                            requestBodyContent.forEach((contentType, mediaType) -> {
-                                removeDTOSuffixesFromSchemaRecursively(mediaType.getSchema());
-                            });
-                        }
+                        stripTrailingUnderscoreDigitCharacter(operation);
+                        removeDtoSuffixFromResponseSchemas(operation);
+                        removeDtoSuffixFromRequestBodyIfExisting(operation);
 
-                        // Remove -resource suffix from tags
-                        if (operation.getTags() != null) {
-                            operation.setTags(operation.getTags().stream().filter(tag -> {
-                                if (tag.length() > RESOURCE_NUMBER_OF_CHARACTERS) {
-                                    return true;
-                                }
-                                else {
-                                    log.warn("Tag '{}' is shorter than expected and cannot be trimmed.", tag);
-                                    return false;
-                                }
-                            }).map(tag -> tag.substring(0, tag.length() - RESOURCE_NUMBER_OF_CHARACTERS)).toList());
-                        }
+                        removeResourceSuffixFromTags(operation);
                     });
                 });
             }
@@ -134,6 +80,78 @@ public class OpenAPIConfiguration {
                 log.warn("Paths are null in OpenAPI configuration.");
             }
         };
+    }
+
+    private static void stripTrailingUnderscoreDigitCharacter(Operation operation) {
+        String id = operation.getOperationId();
+        operation.setOperationId(id.replaceAll("_\\d+$", ""));
+    }
+
+    private void removeDtoSuffixFromResponseSchemas(Operation operation) {
+        ApiResponses responses = operation.getResponses();
+        if (responses != null) {
+            responses.forEach((responseCode, response) -> {
+                Content content = response.getContent();
+                if (content != null) {
+                    content.forEach((contentType, mediaType) -> {
+                        if (mediaType != null && mediaType.getSchema() != null) {
+                            removeDTOSuffixesFromSchemaRecursively(mediaType.getSchema());
+                        }
+                        else {
+                            log.warn("MediaType or Schema is null for content type: {}", contentType);
+                        }
+                    });
+                }
+                else {
+                    log.warn("Response with code {} has no content.", responseCode);
+                }
+            });
+        }
+    }
+
+    private void removeDtoSuffixFromAttributeNames(Map<String, Schema> schemas) {
+        schemas.forEach((key, value) -> {
+            @SuppressWarnings("unchecked")
+            Map<String, Schema<?>> properties = value.getProperties();
+            if (properties != null) {
+                properties.forEach((propertyKey, propertyValue) -> {
+                    removeDTOSuffixesFromSchemaRecursively(propertyValue);
+                });
+            }
+        });
+    }
+
+    private static Map<String, Schema> filterForSchemasWithDtoSuffixAndStripSuffix(Components components) {
+        Map<String, Schema> schemas = components.getSchemas().entrySet().stream().filter(entry -> entry.getKey().endsWith("DTO"))
+                .collect(Collectors.toMap(entry -> entry.getKey().substring(0, entry.getKey().length() - DTO_NUMBER_OF_CHARACTERS), entry -> {
+                    Schema<?> schema = entry.getValue();
+                    schema.setName(entry.getKey().substring(0, entry.getKey().length() - DTO_NUMBER_OF_CHARACTERS));
+                    return schema;
+                }));
+        return schemas;
+    }
+
+    private void removeDtoSuffixFromRequestBodyIfExisting(Operation operation) {
+        if (operation.getRequestBody() != null) {
+            var requestBodyContent = operation.getRequestBody().getContent();
+            requestBodyContent.forEach((contentType, mediaType) -> {
+                removeDTOSuffixesFromSchemaRecursively(mediaType.getSchema());
+            });
+        }
+    }
+
+    private static void removeResourceSuffixFromTags(Operation operation) {
+        if (operation.getTags() != null) {
+            operation.setTags(operation.getTags().stream().filter(tag -> {
+                if (tag.length() > RESOURCE_NUMBER_OF_CHARACTERS) {
+                    return true;
+                }
+                else {
+                    log.warn("Tag '{}' is shorter than expected and cannot be trimmed.", tag);
+                    return false;
+                }
+            }).map(tag -> tag.substring(0, tag.length() - RESOURCE_NUMBER_OF_CHARACTERS)).toList());
+        }
     }
 
     private void removeDTOSuffixesFromSchemaRecursively(Schema<?> schema) {
@@ -179,9 +197,9 @@ public class OpenAPIConfiguration {
     public OpenApiCustomizer binaryFormatCustomizer() {
         return openApi -> openApi.getPaths().values().forEach(pathItem -> pathItem.readOperations().forEach(op -> {
             ApiResponses responses = op.getResponses();
-            ApiResponse resp200 = responses.get(OK_STATUS_CODE);
-            if (resp200 != null && resp200.getContent() != null) {
-                MediaType media = resp200.getContent().get("text/csv");
+            ApiResponse okResponse = responses.get(OK_STATUS_CODE);
+            if (okResponse != null && okResponse.getContent() != null) {
+                MediaType media = okResponse.getContent().get("text/csv");
                 if (media != null) {
                     // replace schema with a binary string so clients treat CSV as a file download
                     media.setSchema(new StringSchema().type("string").format("binary"));

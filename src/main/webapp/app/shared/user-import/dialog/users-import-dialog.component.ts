@@ -274,10 +274,10 @@ export class UsersImportDialogComponent implements OnDestroy {
      * @param response The HttpResponse containing the DTOs converted to @link{StudentDTO}
      */
     private convertGeneratedDtoToNonGenerated(response: HttpResponse<Array<Student>>): HttpResponse<Partial<StudentDTO>[]> {
-        const dtosToReturn: Partial<StudentDTO>[] = [];
+        const nonGeneratedDtos: Partial<StudentDTO>[] = [];
         if (response.body) {
             for (const student of response.body) {
-                dtosToReturn.push({
+                nonGeneratedDtos.push({
                     login: student.login,
                     firstName: student.firstName,
                     lastName: student.lastName,
@@ -287,7 +287,7 @@ export class UsersImportDialogComponent implements OnDestroy {
             }
         }
         return new HttpResponse<Partial<StudentDTO>[]>({
-            body: dtosToReturn,
+            body: nonGeneratedDtos,
             headers: response.headers,
             status: response.status,
             statusText: response.statusText,

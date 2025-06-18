@@ -6,7 +6,6 @@
             mavenCentral()
         }
         dependencies {
-            // reuse the same version from your root project
             classpath "org.yaml:snakeyaml:${rootProject.property('snakeyaml_version')}"
             classpath "org.openapitools:openapi-generator-gradle-plugin:7.13.0"
         }
@@ -31,7 +30,7 @@
         }
     }
 
-    // 1.TODO Detect if any resources have changed
+    // 1. TODO Detect if any resources have changed
     // 2. TODO If so, modify the packages to scan accordingly in the task above
     // 3. TODO Replace the existing OpenAPI spec with the new part. Keep the rest as is.
     // 4. Run the OpenAPI generator to generate the complete TypeScript files for the Angular client
@@ -56,98 +55,128 @@
             serviceFileSuffix: "Api.service"
         ]
     }
+
     tasks.register('pruneOpenApiSpec') {
         description = 'Prune invalid $ref nodes and drop operations (and empty paths) with missing schemas'
 
         doLast {
-            def root = project.rootDir
-            def inputFile = file("$root/openapi/openapi.yaml")
-            def outputFile = file("$root/openapi/openapi.yaml")
-            def yaml = new Yaml()
-            def spec = yaml.load(inputFile.text) as Map<String, Object>
-            def components = (spec.components ?: [:]) as Map<String, Map<String, Object>>
+            def projectRoot = project.rootDir
+            def inputFile = file("${projectRoot}/openapi/openapi.yaml")
+            def outputFile = file("${projectRoot}/openapi/openapi.yaml")
+            def yamlParser = new Yaml()
 
-            // 1) Define a recursive function to prune invalid $ref nodes in the spec
-            Closure pruneRec
-            pruneRec = { obj ->
-                // If the object is a Map with only a $ref key
-                if (obj instanceof Map && obj.size() == 1 && obj.containsKey('$ref')) {
-                    def ref = obj['$ref'] as String
+            Map<String, Object> specificationMap =
+                yamlParser.load(inputFile.text) as Map<String, Object>
 
-                    // Match references of the form "#/components/{type}/{name}"
-                    def matcher = (ref =~ /^#\/components\/([^\/]+)\/(.+)$/)
+            Map<String, Map<String, Object>> componentsMap =
+                (specificationMap.components ?: [:]) as Map<String, Map<String, Object>>
 
-                    // If it's a valid match but the referenced component is missing, prune it (return null)
-                    if (matcher.matches() && !components[matcher[0][1]]?.containsKey(matcher[0][2])) {
-                        return null
-                    }
+            Map<String, Object> prunedSpecificationMap =
+                pruneInvalidReferences(specificationMap, componentsMap)
 
-                    // Otherwise, keep the reference as is
-                    return obj
-                }
+            removeOperationsWithNullSchemas(prunedSpecificationMap)
 
-                // Recursively process maps: build a new map with only non-null values
-                if (obj instanceof Map) {
-                    obj.collectEntries { key, val ->
-                        def prunedVal = pruneRec(val)
-                        prunedVal != null ? [(key): prunedVal] : [:]
-                    }
-                }
-                // Recursively process lists: remove any null entries after pruning
-                else if (obj instanceof List) {
-                    obj.collect { pruneRec(it) }.findAll { it != null }
-                }
-                // If it's not a map or list, return the object unchanged
-                else {
-                    obj
-                }
-            }
-
-// Apply the recursive pruning function to the OpenAPI spec
-            def prunedSpec = pruneRec(spec) as Map<String, Object>
-
-// 2) Remove operations from paths that have invalid request/response schemas
-            prunedSpec.paths?.with { pathsMap ->
-                pathsMap.each { pathName, ops ->
-                    // Collect operation keys (e.g., get, post) that need to be removed
-                    def toRemoveOps = ops.keySet().findAll { opName ->
-                        def op = ops[opName] as Map
-
-                        // Determine if the request body has a content type with a null schema
-                        def badReq = op.requestBody?.content?.values()?.any { mt -> mt.schema == null }
-
-                        // Determine if any response media type has a null schema
-                        def badResp = op.responses?.values()?.any { resp ->
-                            resp.content?.values()?.any { mt -> mt.schema == null }
-                        }
-
-                        // Mark the operation for removal if either request or response is bad
-                        badReq || badResp
-                    }
-
-                    // Actually remove the invalid operations from the map
-                    toRemoveOps.each { badOpName ->
-                        ops.remove(badOpName)
-                    }
-                }
-
-                // 3) After removing bad operations, remove any path that has no remaining operations
-                def emptyPaths = pathsMap.keySet().findAll { pn ->
-                    (pathsMap[pn] as Map).isEmpty()
-                }
-
-                // Remove the empty paths from the paths map
-                emptyPaths.each { ep ->
-                    pathsMap.remove(ep)
-                }
-            }
-
-// 4) Write the cleaned and pruned spec to an output YAML file
-            outputFile.text = yaml.dump(prunedSpec)
-            println "✔ Pruned spec written to $outputFile"
-
+            outputFile.text = yamlParser.dump(prunedSpecificationMap)
+            println "✔ Pruned specification written to ${outputFile}"
         }
     }
+
+    private Map<String, Object> pruneInvalidReferences(
+        Map<String, Object> originalMap,
+        Map<String, Map<String, Object>> componentsMap
+    ) {
+        originalMap.collectEntries { String entryKey, Object entryValue ->
+            Object prunedValue = pruneNode(entryValue, componentsMap)
+            prunedValue != null ? [(entryKey): prunedValue] : [:]
+        }
+    }
+
+    private Object pruneNode(
+        Object node,
+        Map<String, Map<String, Object>> componentsMap
+    ) {
+        if (node instanceof Map) {
+            return pruneMapEntries(node as Map<String, Object>, componentsMap)
+        } else if (node instanceof List) {
+            return pruneListEntries(node as List<?>, componentsMap)
+        } else {
+            return node
+        }
+    }
+
+    private Map<String, Object> pruneMapEntries(
+        Map<String, Object> mapValue,
+        Map<String, Map<String, Object>> componentsMap
+    ) {
+        if (mapValue.size() == 1 && mapValue.containsKey('$ref')) {
+            String referenceString = mapValue['$ref'] as String
+        // Matches strings like "#/components/{componentType}/{componentName}",
+        // capturing the component type in group 1 and the component name in group 2
+        def componentMatcher = (referenceString =~ /^#\/components\/([^\/]+)\/(.+)$/)
+            if (componentMatcher.matches()) {
+                String componentCategory   = componentMatcher[0][1]
+                String componentIdentifier = componentMatcher[0][2]
+                if (!componentsMap[componentCategory]?.containsKey(componentIdentifier)) {
+                    return null
+                }
+            }
+            return mapValue
+        }
+
+        mapValue.collectEntries { String nestedKey, Object nestedValue ->
+            Object prunedNestedValue = pruneNode(nestedValue, componentsMap)
+            prunedNestedValue != null ? [(nestedKey): prunedNestedValue] : [:]
+        }
+    }
+
+    private List<?> pruneListEntries(
+        List<?> listValue,
+        Map<String, Map<String, Object>> componentsMap
+    ) {
+        listValue
+            .collect { pruneNode(it, componentsMap) }
+            .findAll { it != null }
+    }
+
+    private static void removeOperationsWithNullSchemas(Map<String, Object> specificationMap) {
+        Map<String, Map<String, Object>> pathsMap =
+            specificationMap.paths as Map<String, Map<String, Object>>
+        if (pathsMap == null) {
+            return
+        }
+
+        pathsMap.each { String pathName, Map<String, Object> operationsMap ->
+            List<String> operationsToRemove = operationsMap.findAll { String operationName, Object operationValue ->
+                operationContainsNullSchema(operationValue as Map<String, Object>)
+            }.keySet().toList()
+
+            operationsToRemove.each { operationsMap.remove(it) }
+        }
+
+        List<String> emptyPathNames = pathsMap.findAll { String pathName, Map<String, Object> operationsMap ->
+            operationsMap.isEmpty()
+        }.keySet().toList()
+
+        emptyPathNames.each { pathsMap.remove(it) }
+    }
+
+    private static boolean operationContainsNullSchema(Map<String, Object> operationDefinition) {
+        boolean requestHasNullSchema = operationDefinition.requestBody
+            ?.content
+            ?.values()
+            ?.any { mediaType -> mediaType.schema == null }
+
+        boolean responseHasNullSchema = operationDefinition.responses
+            ?.values()
+            ?.any { responseObject ->
+                responseObject.content
+                    ?.values()
+                    ?.any { mediaType -> mediaType.schema == null }
+            }
+
+        return requestHasNullSchema || responseHasNullSchema
+    }
+
 
 
     tasks.named('openApiGenerate') {
