@@ -367,13 +367,15 @@ export class AccountService implements IAccountService {
     }
 
     /**
-     * Sets externalLLMUsageAccepted to current timestamp locally, to omit accepting external LLM usage
-     * popup appearing multiple time before user refreshes the page.
+     * Sets externalLLMUsageAccepted to current timestamp locally if the users accepted the conditions,
+     * to omit accepting external LLM usage popup appearing multiple time before user refreshes the page.
      */
-    setUserAcceptedExternalLLMUsage(): void {
-        if (this.userIdentity) {
-            this.userIdentity.externalLLMUsageAccepted = dayjs();
+    setUserAcceptedExternalLLMUsage(accepted: boolean = true): void {
+        if (!this.userIdentity) {
+            return;
         }
+
+        this.userIdentity.externalLLMUsageAccepted = accepted ? dayjs() : undefined;
     }
 
     /**
