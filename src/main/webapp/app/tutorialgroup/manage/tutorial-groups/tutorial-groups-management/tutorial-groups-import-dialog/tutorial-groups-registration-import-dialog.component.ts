@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnDestroy, OnInit, inject, input, viewChild } from '@angular/core';
+import { Component, ElementRef, Input, OnDestroy, OnInit, inject, viewChild } from '@angular/core';
 import { faBan, faCheck, faCircleNotch, faFileImport, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroupRegistrationImportDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-import-dto.model';
 import { cleanString } from 'app/shared/util/utils';
@@ -59,7 +59,8 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
     fileInput = viewChild.required<ElementRef<HTMLInputElement>>('fileInput');
     selectedFile?: File;
 
-    courseId = input.required<number>();
+    // Need to stick to @Input due to modelRef see https://github.com/ng-bootstrap/ng-bootstrap/issues/4688
+    @Input() courseId: number;
 
     registrationsDisplayedInTable: TutorialGroupRegistrationImportDTO[] = [];
     allRegistrations: TutorialGroupRegistrationImportDTO[] = [];
@@ -277,7 +278,7 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
 
     import() {
         this.isImporting = true;
-        this.tutorialGroupService.import(this.courseId(), this.registrationsDisplayedInTable).subscribe({
+        this.tutorialGroupService.import(this.courseId, this.registrationsDisplayedInTable).subscribe({
             next: (res) => this.onSaveSuccess(res),
             error: () => this.onSaveError(),
         });

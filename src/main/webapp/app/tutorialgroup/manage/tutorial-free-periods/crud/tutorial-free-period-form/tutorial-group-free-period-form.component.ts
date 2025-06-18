@@ -55,7 +55,7 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
 
     readonly isEditMode = input(false);
 
-    readonly timeZone = input<string>(undefined!);
+    readonly timeZone = input<string>();
 
     @Output() formSubmitted: EventEmitter<TutorialGroupFreePeriodFormData> = new EventEmitter<TutorialGroupFreePeriodFormData>();
 

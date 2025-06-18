@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, ViewEncapsulation, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, ViewEncapsulation, inject } from '@angular/core';
 import { AlertService } from 'app/shared/service/alert.service';
 import { EMPTY, Subject, from } from 'rxjs';
 import { catchError, finalize, map, takeUntil } from 'rxjs/operators';
@@ -50,9 +50,9 @@ export class TutorialGroupSessionsManagementComponent implements OnDestroy {
     isLoading = false;
 
     faPlus = faPlus;
-
-    readonly tutorialGroupId = input.required<number>();
-    readonly course = input.required<Course>();
+    // Need to stick to @Input due to modelRef see https://github.com/ng-bootstrap/ng-bootstrap/issues/4688
+    @Input() tutorialGroupId: number;
+    @Input() course: Course;
     tutorialGroup: TutorialGroup;
     sessions: TutorialGroupSession[] = [];
     tutorialGroupSchedule: TutorialGroupSchedule;
@@ -61,7 +61,7 @@ export class TutorialGroupSessionsManagementComponent implements OnDestroy {
     isInitialized = false;
 
     initialize() {
-        if (!this.tutorialGroupId() || !this.course()) {
+        if (!this.tutorialGroupId || !this.course) {
             captureException('Error: Component not fully configured');
         } else {
             this.isInitialized = true;
@@ -73,7 +73,7 @@ export class TutorialGroupSessionsManagementComponent implements OnDestroy {
     loadAll() {
         this.isLoading = true;
         return this.tutorialGroupService
-            .getOneOfCourse(this.course().id!, this.tutorialGroupId())
+            .getOneOfCourse(this.course.id!, this.tutorialGroupId)
             .pipe(
                 finalize(() => (this.isLoading = false)),
                 map((res: HttpResponse<TutorialGroup>) => {
@@ -98,7 +98,6 @@ export class TutorialGroupSessionsManagementComponent implements OnDestroy {
             .add(() => this.cdr.detectChanges());
     }
 
-    // TODO ModalRef checken
     openCreateSessionDialog(event: MouseEvent) {
         event.stopPropagation();
         const modalRef: NgbModalRef = this.modalService.open(CreateTutorialGroupSessionComponent, { size: 'xl', scrollable: false, backdrop: 'static', animation: false });

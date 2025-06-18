@@ -26,7 +26,7 @@
         }
     </td>
     <td>
-        <button type="button" class="btn btn-outline-info" placement="top" [ngbPopover]="session.location" [animation]="false" [autoClose]="'outside'">
+        <button type="button" class="btn btn-outline-info" placement="top" [ngbPopover]="session().location" [animation]="false" [autoClose]="'outside'">
             <span class="d-inline-block text-truncate" style="max-width: 150px">
                 {{ session().location }}
             </span>
@@ -38,7 +38,7 @@
                 <input
                     type="number"
                     class="form-control attendance-input"
-                    [ngModel]="session.attendanceCount"
+                    [ngModel]="session().attendanceCount"
                     (ngModelChange)="onAttendanceInput($event)"
                     name="attendance"
                     #attendance="ngModel"

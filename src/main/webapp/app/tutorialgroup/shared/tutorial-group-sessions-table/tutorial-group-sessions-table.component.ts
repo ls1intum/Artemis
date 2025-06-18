@@ -34,7 +34,7 @@ export class TutorialGroupSessionsTableComponent implements OnChanges {
 
     @ContentChild(TemplateRef, { static: true }) extraColumn: TemplateRef<any>;
 
-    readonly tutorialGroup = input<TutorialGroup>(undefined!);
+    readonly tutorialGroup = input.required<TutorialGroup>();
 
     readonly sessions = input<TutorialGroupSession[]>([]);
 

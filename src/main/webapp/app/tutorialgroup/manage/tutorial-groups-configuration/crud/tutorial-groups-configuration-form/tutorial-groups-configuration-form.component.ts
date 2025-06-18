@@ -33,7 +33,7 @@ export class TutorialGroupsConfigurationFormComponent implements OnInit, OnChang
     readonly isEditMode = input(false);
     readonly formSubmitted = output<TutorialGroupsConfigurationFormData>();
 
-    readonly course = input<Course>(undefined!);
+    readonly course = input.required<Course>();
 
     faCalendarAlt = faCalendarAlt;
 
