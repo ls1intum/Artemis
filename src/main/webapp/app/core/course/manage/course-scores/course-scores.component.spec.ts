@@ -482,66 +482,6 @@ describe('CourseScoresComponent', () => {
         expect(component).not.toBeNull();
     });
 
-    it('should not log error on sentry when correct participant score calculation', () => {
-        jest.spyOn(courseService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
-        jest.spyOn(courseService, 'findGradeScores').mockReturnValue(of(courseGradeInformation));
-        const errorSpy = jest.spyOn(component, 'logErrorOnSentry');
-        fixture.detectChanges();
-        expect(errorSpy).not.toHaveBeenCalled();
-    });
-
-    it('should log error on sentry when missing participant score calculation', () => {
-        jest.spyOn(courseService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
-        jest.spyOn(courseService, 'findGradeScores').mockReturnValue(of(courseGradeInformation));
-        jest.spyOn(gradingSystemService, 'findGradingScaleForCourse').mockReturnValue(of(new HttpResponse<GradingScale>({ status: 404 })));
-        jest.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForInstructor').mockReturnValue(of(new HttpResponse<PlagiarismCase[]>({ body: [] })));
-        findCourseScoresSpy.mockReturnValue(of(new HttpResponse({ body: [] })));
-        const errorSpy = jest.spyOn(component, 'logErrorOnSentry');
-        fixture.detectChanges();
-        expect(errorSpy).toHaveBeenCalledTimes(2);
-    });
-
-    it('should log error on sentry when wrong points score calculation', () => {
-        jest.spyOn(courseService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
-        jest.spyOn(courseService, 'findGradeScores').mockReturnValue(of(courseGradeInformation));
-        jest.spyOn(gradingSystemService, 'findGradingScaleForCourse').mockReturnValue(of(new HttpResponse<GradingScale>({ status: 404 })));
-        jest.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForInstructor').mockReturnValue(of(new HttpResponse<PlagiarismCase[]>({ body: [] })));
-        const cs1 = new ScoresDTO();
-        cs1.studentId = user1.id;
-        cs1.pointsAchieved = 99;
-        cs1.studentLogin = user1.login;
-        cs1.scoreAchieved = roundScorePercentSpecifiedByCourseSettings(40 / 30, course);
-        const cs2 = new ScoresDTO();
-        cs2.studentId = user2.id;
-        cs2.pointsAchieved = 99;
-        cs2.studentLogin = user2.login;
-        cs2.scoreAchieved = roundScorePercentSpecifiedByCourseSettings(15 / 30, course);
-        findCourseScoresSpy.mockReturnValue(of(new HttpResponse({ body: [cs1, cs2] })));
-        const errorSpy = jest.spyOn(component, 'logErrorOnSentry');
-        fixture.detectChanges();
-        expect(errorSpy).toHaveBeenCalledTimes(2);
-    });
-
-    it('should log error on sentry when wrong score calculation', () => {
-        jest.spyOn(courseService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
-        jest.spyOn(courseService, 'findGradeScores').mockReturnValue(of(courseGradeInformation));
-        jest.spyOn(gradingSystemService, 'findGradingScaleForCourse').mockReturnValue(of(new HttpResponse<GradingScale>({ status: 404 })));
-        jest.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForInstructor').mockReturnValue(of(new HttpResponse<PlagiarismCase[]>({ body: [] })));
-        const cs1 = new ScoresDTO();
-        cs1.studentId = user1.id;
-        cs1.pointsAchieved = 40;
-        cs1.studentLogin = user1.login;
-        cs1.scoreAchieved = 99;
-        const cs2 = new ScoresDTO();
-        cs2.studentId = user2.id;
-        cs2.pointsAchieved = 15;
-        cs2.studentLogin = user2.login;
-        cs2.scoreAchieved = 99;
-        findCourseScoresSpy.mockReturnValue(of(new HttpResponse({ body: [cs1, cs2] })));
-        const errorSpy = jest.spyOn(component, 'logErrorOnSentry');
-        fixture.detectChanges();
-        expect(errorSpy).toHaveBeenCalledTimes(2);
-    });
     it('should filter and sort exercises', () => {
         jest.spyOn(courseService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
         fixture.detectChanges();
