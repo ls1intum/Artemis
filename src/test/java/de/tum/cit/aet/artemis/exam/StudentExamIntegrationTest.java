@@ -97,7 +97,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionVersionRepository;
-import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
+import de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
@@ -177,7 +177,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
     private QuizSubmissionTestRepository quizSubmissionTestRepository;
 
     @Autowired
-    private ParticipationService participationService;
+    private ParticipationDeletionService participationDeletionService;
 
     @Autowired
     private StudentExamService studentExamService;
@@ -272,7 +272,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         doReturn(new Repository("ab", new VcsRepositoryUri("uri"))).when(gitService).getExistingCheckedOutRepositoryByLocalPath(any(), any(), any());
 
         // TODO: all parts using programmingExerciseTestService should also be provided for LocalVC+Jenkins
-        programmingExerciseTestService.setup(this, versionControlService, localVCGitBranchService);
+        programmingExerciseTestService.setup(this, versionControlService);
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
     }
 
@@ -2354,7 +2354,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         var testRun = examUtilService.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
         var participations = studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerLegalSubmissions(testRun.getExercises().getFirst().getId(), instructor.getId());
         assertThat(participations).isNotEmpty();
-        participationService.delete(participations.getFirst().getId(), true);
+        participationDeletionService.delete(participations.getFirst().getId(), true);
         request.delete("/api/exam/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-run/" + testRun.getId(), HttpStatus.OK);
     }
 

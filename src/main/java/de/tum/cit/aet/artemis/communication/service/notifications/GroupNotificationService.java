@@ -6,6 +6,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Set;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -26,6 +27,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class GroupNotificationService {
 
