@@ -12,7 +12,7 @@ import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mappi
 import { ShortAnswerSubmittedText } from 'app/quiz/shared/entities/short-answer-submitted-text.model';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { EMPTY, map } from 'rxjs';
+import { EMPTY, filter, map, switchMap } from 'rxjs';
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { MultipleChoiceSubmittedAnswer } from 'app/quiz/shared/entities/multiple-choice-submitted-answer.model';
 import { QuizParticipationService } from 'app/quiz/overview/service/quiz-participation.service';
@@ -45,9 +45,24 @@ export class CoursePracticeQuizComponent {
     // Reactive chain for loading quiz questions based on the current route
     paramsSignal = toSignal(this.route.parent?.params ?? EMPTY);
     courseId = computed(() => this.paramsSignal()?.['courseId']);
-    questionsSignal = toSignal(this.courseId() ? this.quizService.getQuizQuestions(this.courseId()) : EMPTY, { initialValue: [] });
+    questionsSignal = toSignal(
+        this.route.parent!.params.pipe(
+            map((p) => p['courseId'] as number | undefined),
+            filter((id): id is number => id !== undefined),
+            switchMap((id) => this.quizService.getQuizQuestions(id)),
+        ),
+        { initialValue: [] },
+    );
     questions = computed(() => this.questionsSignal());
-    courseSignal = toSignal(this.courseId() ? this.courseService.find(this.courseId()).pipe(map((res) => res.body ?? undefined)) : EMPTY, { initialValue: undefined });
+    courseSignal = toSignal(
+        this.route.parent!.params.pipe(
+            map((p) => p['courseId'] as number | undefined),
+            filter((id): id is number => id !== undefined),
+            switchMap((id) => this.courseService.find(id)),
+            map((res) => res.body ?? undefined),
+        ),
+        { initialValue: undefined },
+    );
     course = computed(() => this.courseSignal());
 
     submission = new QuizSubmission();
