@@ -5,6 +5,8 @@ import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doReturn;
 
 import java.io.ByteArrayInputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.zip.ZipEntry;
@@ -245,5 +247,98 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationIndepende
         // Log the found files for debugging
         System.out.println("Found git files: " + gitFiles.size());
         System.out.println("Found repository files: " + repositoryFiles.size());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void testExportRepositoryBundle() throws Exception {
+        userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
+        var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        course.setInstructorGroupName(instructor.getGroups().iterator().next());
+        courseRepository.save(course);
+
+        var localRepo = new LocalRepository(defaultBranch);
+        var originRepoPath = java.nio.file.Files.createTempDirectory("testOriginRepo");
+        localRepo.configureRepos("testLocalRepo", originRepoPath);
+
+        programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+
+        var templateParticipation = templateProgrammingExerciseParticipationTestRepo.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        templateParticipation.setRepositoryUri(ParticipationFactory.getMockFileRepositoryUri(localRepo).getURI().toString());
+        templateProgrammingExerciseParticipationTestRepo.save(templateParticipation);
+
+        programmingExercise = programmingExerciseRepository.findByIdWithTemplateParticipationElseThrow(programmingExercise.getId());
+
+        // Mock the getBareRepository call to return a proper repository
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.localRepoFile.toPath(), null)).when(gitService).getBareRepository(any());
+
+        byte[] result = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repository-bundle/" + RepositoryType.TEMPLATE.name(),
+                HttpStatus.OK, byte[].class);
+
+        assertThat(result).isNotNull();
+        assertThat(result.length).isGreaterThan(0);
+
+        // Git bundles start with specific signature
+        // Check for Git bundle signature "# v2 git bundle"
+        String bundleHeader = new String(result, 0, Math.min(result.length, 20));
+        assertThat(bundleHeader).startsWith("# v2 git bundle");
+
+        // Additional validation: check that bundle contains more than just header
+        assertThat(result.length).isGreaterThan(100); // Bundle should be substantial
+
+        // Clean up
+        localRepo.resetLocalRepo();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void testExportRepositoryBundleWithHistory() throws Exception {
+        userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
+        var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        course.setInstructorGroupName(instructor.getGroups().iterator().next());
+        courseRepository.save(course);
+
+        var localRepo = new LocalRepository(defaultBranch);
+        var originRepoPath = java.nio.file.Files.createTempDirectory("testOriginRepo");
+        localRepo.configureRepos("testLocalRepo", originRepoPath);
+
+        // Add multiple commits to create history
+        createAndCommitFile(localRepo, "file1.txt", "Initial content", "Initial commit");
+        createAndCommitFile(localRepo, "file2.txt", "Second file", "Second commit");
+        createAndCommitFile(localRepo, "file1.txt", "Modified content", "Third commit");
+
+        programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+
+        var templateParticipation = templateProgrammingExerciseParticipationTestRepo.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        templateParticipation.setRepositoryUri(ParticipationFactory.getMockFileRepositoryUri(localRepo).getURI().toString());
+        templateProgrammingExerciseParticipationTestRepo.save(templateParticipation);
+
+        programmingExercise = programmingExerciseRepository.findByIdWithTemplateParticipationElseThrow(programmingExercise.getId());
+
+        // Mock the getBareRepository call to return a proper repository
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.localRepoFile.toPath(), null)).when(gitService).getBareRepository(any());
+
+        byte[] result = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repository-bundle/" + RepositoryType.TEMPLATE.name(),
+                HttpStatus.OK, byte[].class);
+
+        assertThat(result).isNotNull();
+        assertThat(result.length).isGreaterThan(0);
+
+        // Git bundles start with specific signature
+        String bundleHeader = new String(result, 0, Math.min(result.length, 20));
+        assertThat(bundleHeader).startsWith("# v2 git bundle");
+
+        // Bundle should be larger when it contains history
+        assertThat(result.length).isGreaterThan(200); // Should be substantial with history
+
+        // Clean up
+        localRepo.resetLocalRepo();
+    }
+
+    private void createAndCommitFile(LocalRepository localRepository, String filename, String content, String commitMessage) throws Exception {
+        var file = Path.of(localRepository.localRepoFile.toPath().toString(), filename);
+        Files.writeString(file, content);
+        localRepository.localGit.add().addFilepattern(filename).call();
+        GitService.commit(localRepository.localGit).setMessage(commitMessage).call();
     }
 }

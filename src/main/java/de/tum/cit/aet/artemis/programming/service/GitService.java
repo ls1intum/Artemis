@@ -63,6 +63,7 @@ import org.eclipse.jgit.lib.RefUpdate;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.filter.CommitTimeRevFilter;
 import org.eclipse.jgit.revwalk.filter.RevFilter;
+import org.eclipse.jgit.transport.BundleWriter;
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.RemoteConfig;
 import org.eclipse.jgit.transport.URIish;
@@ -1420,19 +1421,61 @@ public class GitService extends AbstractGitService {
     public ByteArrayResource exportRepositoryWithFullHistoryToMemory(VcsRepositoryUri repositoryUri, String filename) throws GitAPIException, IOException {
         log.debug("Exporting repository with full history to memory: {}", repositoryUri);
 
-        // Check out the repository to get access to the .git directory
         Repository repository = getOrCheckoutRepository(repositoryUri, true);
 
-        try {
-            // Reset to origin head to ensure we have the latest state
-            resetToOriginHead(repository);
+        resetToOriginHead(repository);
 
-            // Use zipDirectoryToMemory without any content filter to include everything (including .git)
-            return zipDirectoryToMemory(repository.getLocalPath(), filename, null);
-        }
-        finally {
-            // Note: We don't close/delete the repository here as it might be cached and used elsewhere
-            // The repository cleanup is handled by the cleanup() method in the service lifecycle
+        // Use zipDirectoryToMemory without any content filter to include everything (including .git)
+        return zipDirectoryToMemory(repository.getLocalPath(), filename, null);
+    }
+
+    /**
+     * Exports a complete repository bundle (including full history and metadata) directly to memory.
+     * This method uses JGit's BundleWriter to create a Git bundle containing all repository data.
+     * Unlike exportRepositorySnapshot(), this exports the complete repository with all branches, tags, and history.
+     *
+     * @param repositoryUri the URI of the repository to export
+     * @param filename      the desired filename for the export (without extension)
+     * @return ByteArrayResource containing the bundled repository content
+     * @throws GitAPIException if the git operation fails
+     * @throws IOException     if IO operations fail
+     */
+    public ByteArrayResource exportRepositoryBundle(VcsRepositoryUri repositoryUri, String filename) throws GitAPIException, IOException {
+        Repository repository = getBareRepository(repositoryUri);
+
+        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+            BundleWriter bundleWriter = new BundleWriter(repository);
+
+            // Include all refs (branches, tags, etc.) in the bundle
+            Map<String, Ref> refs = repository.getAllRefs();
+            for (Map.Entry<String, Ref> refEntry : refs.entrySet()) {
+                String refName = refEntry.getKey();
+                Ref ref = refEntry.getValue();
+
+                // Include all branches, tags, and other refs
+                if (ref.getObjectId() != null) {
+                    bundleWriter.include(refName, ref.getObjectId());
+                }
+            }
+
+            if (refs.isEmpty()) {
+                // If no refs exist, try to include HEAD
+                ObjectId headId = repository.resolve("HEAD");
+                if (headId != null) {
+                    bundleWriter.include("HEAD", headId);
+                }
+            }
+
+            bundleWriter.writeBundle(null, outputStream);
+
+            byte[] bundleData = outputStream.toByteArray();
+            return new ByteArrayResource(bundleData) {
+
+                @Override
+                public String getFilename() {
+                    return filename + ".bundle";
+                }
+            };
         }
     }
 }

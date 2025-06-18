@@ -673,7 +673,8 @@ public class ProgrammingExerciseExportImportResource {
 
     /**
      * GET /programming-exercises/:exerciseId/export-repository-with-full-history/:repositoryType : Exports a repository with full history including .git directory
-     * This endpoint exports the repository including the .git directory with full commit history to memory without writing to disk.
+     * This endpoint exports the repository including the .git directory with full commit history to memory.
+     * It creates the zip file in memory and does not write intermediate files to disk.
      *
      * @param exerciseId     The id of the programming exercise
      * @param repositoryType The type of repository to export (TEMPLATE, SOLUTION, TESTS)
@@ -712,6 +713,51 @@ public class ProgrammingExerciseExportImportResource {
             log.error("Failed to export repository with full history: {}", e.getMessage());
             return ResponseEntity.badRequest().headers(
                     HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError", "Failed to export repository with full history: " + e.getMessage()))
+                    .body(null);
+        }
+    }
+
+    /**
+     * GET /programming-exercises/:exerciseId/export-repository-bundle/:repositoryType : Export complete repository bundle (including history)
+     * This endpoint exports the complete repository as a Git bundle containing all branches, tags, and history.
+     *
+     * @param exerciseId     The id of the programming exercise
+     * @param repositoryType The type of repository to export (TEMPLATE, SOLUTION, TESTS)
+     * @return ResponseEntity with the bundled repository content
+     * @throws IOException if something during the bundle creation went wrong
+     */
+    @GetMapping("programming-exercises/{exerciseId}/export-repository-bundle/{repositoryType}")
+    @EnforceAtLeastInstructor
+    @FeatureToggle(Feature.Exports)
+    public ResponseEntity<Resource> exportRepositoryBundle(@PathVariable long exerciseId, @PathVariable RepositoryType repositoryType) throws IOException {
+        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
+
+        long start = System.nanoTime();
+
+        VcsRepositoryUri repositoryUri = programmingExercise.getRepositoryURL(repositoryType);
+        if (repositoryUri == null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
+                    "Failed to export repository because the repository URI is not defined.")).body(null);
+        }
+
+        try {
+            String filename = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-" + programmingExercise.getTitle() + "-" + repositoryType.getName()
+                    + "-bundle";
+            filename = FileUtil.sanitizeFilename(filename);
+
+            ByteArrayResource bundleResource = gitService.exportRepositoryBundle(repositoryUri, filename);
+
+            log.info("Successfully exported complete repository bundle for programming exercise {} with title {} in {} ms", programmingExercise.getId(),
+                    programmingExercise.getTitle(), (System.nanoTime() - start) / 1000000);
+
+            return ResponseEntity.ok().contentType(MediaType.APPLICATION_OCTET_STREAM).contentLength(bundleResource.contentLength())
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + bundleResource.getFilename() + "\"").body(bundleResource);
+        }
+        catch (GitAPIException | GitException e) {
+            log.error("Failed to export repository bundle: {}", e.getMessage());
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError", "Failed to export repository bundle: " + e.getMessage()))
                     .body(null);
         }
     }
