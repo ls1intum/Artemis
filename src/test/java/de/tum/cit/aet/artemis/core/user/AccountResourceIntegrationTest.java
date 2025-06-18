@@ -18,6 +18,7 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.AcceptExternalLLMUsageDTO;
 import de.tum.cit.aet.artemis.core.dto.PasswordChangeDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.KeyAndPasswordVM;
@@ -497,7 +498,8 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         user.setExternalLLMUsageAcceptedTimestamp(null);
         userTestRepository.save(user);
 
-        request.put("/api/core/users/accept-external-llm-usage", null, HttpStatus.OK);
+        AcceptExternalLLMUsageDTO acceptExternalLLMUsageDTO = new AcceptExternalLLMUsageDTO(true);
+        request.put("/api/core/users/accept-external-llm-usage", acceptExternalLLMUsageDTO, HttpStatus.OK);
 
         // Verify timestamp was set
         Optional<User> updatedUser = userTestRepository.findOneByLogin(AUTHENTICATEDUSER);
