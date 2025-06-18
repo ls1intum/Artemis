@@ -16,12 +16,18 @@ export class IrisSettingsComponent implements OnInit {
     externalLLMUsageAccepted = signal<dayjs.Dayjs | undefined>(undefined);
 
     ngOnInit() {
-        this.externalLLMUsageAccepted.set(this.accountService.userIdentity?.externalLLMUsageAccepted);
+        this.updateExternalLLMUsageAccepted();
+    }
+
+    private updateExternalLLMUsageAccepted() {
+        this.externalLLMUsageAccepted.set(
+            this.accountService.userIdentity?.externalLLMUsageAccepted ? dayjs(this.accountService.userIdentity.externalLLMUsageAccepted) : undefined,
+        );
     }
 
     updateExternalLLMUsageConsent(accepted: boolean) {
         this.irisChatService.updateExternalLLMUsageConsent(accepted);
         this.accountService.setUserAcceptedExternalLLMUsage(accepted);
-        this.externalLLMUsageAccepted.set(this.accountService.userIdentity?.externalLLMUsageAccepted);
+        this.updateExternalLLMUsageAccepted();
     }
 }
