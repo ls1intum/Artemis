@@ -7,7 +7,6 @@ import { AccountService } from 'app/core/auth/account.service';
     selector: 'jhi-iris-settings',
     imports: [TranslateDirective],
     templateUrl: './iris-settings.component.html',
-    styleUrl: './iris-settings.component.scss',
 })
 export class IrisSettingsComponent {
     private readonly irisChatService = inject(IrisChatService);
