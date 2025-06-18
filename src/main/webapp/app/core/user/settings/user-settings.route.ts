@@ -26,6 +26,13 @@ export const routes: Routes = [
                 },
             },
             {
+                path: 'iris',
+                loadComponent: () => import('app/core/user/settings/iris-settings/iris-settings.component').then((m) => m.IrisSettingsComponent),
+                data: {
+                    pageTitle: 'artemisApp.userSettings.iris',
+                },
+            },
+            {
                 path: 'profile',
                 loadComponent: () => import('app/core/user/settings/learner-profile/learner-profile.component').then((m) => m.LearnerProfileComponent),
                 data: {
