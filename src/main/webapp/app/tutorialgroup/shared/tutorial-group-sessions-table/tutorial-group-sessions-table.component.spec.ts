@@ -1,4 +1,4 @@
-import { Component, Input, QueryList, SimpleChange, SimpleChanges, ViewChild, ViewChildren, input } from '@angular/core';
+import { Component, SimpleChange, SimpleChanges, input, viewChild, viewChildren } from '@angular/core';
 import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TutorialGroupSessionRowStubComponent } from 'test/helpers/stubs/tutorialgroup/tutorial-group-sessions-table-stub.component';
@@ -38,11 +38,9 @@ class MockWrapperComponent {
     readonly sessions = input.required<TutorialGroupSession[]>();
     readonly timeZone = input.required<string>();
 
-    @ViewChild(TutorialGroupSessionsTableComponent)
-    sessionTableInstance: TutorialGroupSessionsTableComponent;
+    sessionTableInstance = viewChild.required(TutorialGroupSessionsTableComponent);
 
-    @ViewChildren(MockExtraColumnComponent)
-    mockExtraColumns: QueryList<MockExtraColumnComponent>;
+    mockExtraColumns = viewChildren(MockExtraColumnComponent);
 }
 
 describe('TutorialGroupSessionsTableWrapperTest', () => {
@@ -78,8 +76,8 @@ describe('TutorialGroupSessionsTableWrapperTest', () => {
                 fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
                 fixture.componentRef.setInput('sessions', [sessionOne, sessionTwo]);
                 fixture.detectChanges();
-                tableInstance = component.sessionTableInstance;
-                mockExtraColumns = component.mockExtraColumns.toArray();
+                tableInstance = component.sessionTableInstance();
+                mockExtraColumns = [...component.mockExtraColumns()]; // spread to make mutable
             });
     });
 
