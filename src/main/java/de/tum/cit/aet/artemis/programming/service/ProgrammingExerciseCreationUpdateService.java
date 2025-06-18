@@ -162,45 +162,35 @@ public class ProgrammingExerciseCreationUpdateService {
 
         savedProgrammingExercise.getBuildConfig().setProgrammingExercise(savedProgrammingExercise);
         programmingExerciseBuildConfigRepository.save(savedProgrammingExercise.getBuildConfig());
-        // Step 1: Setting constant facts for a programming exercise
         savedProgrammingExercise.generateAndSetProjectKey();
         savedProgrammingExercise.getBuildConfig().setBranch(defaultBranch);
 
-        // Step 2: Creating repositories for new exercise
         programmingExerciseRepositoryService.createRepositoriesForNewExercise(savedProgrammingExercise);
-        // Step 3: Initializing solution and template participation
         initParticipations(savedProgrammingExercise);
 
-        // Step 4a: Setting build plan IDs and URLs for template and solution participation
         setURLsAndBuildPlanIDsForNewExercise(savedProgrammingExercise);
 
-        // Step 4b: Connecting base participations with the exercise
         connectBaseParticipationsToExerciseAndSave(savedProgrammingExercise);
 
         programmingExerciseBuildConfigRepository.saveAndFlush(savedProgrammingExercise.getBuildConfig());
         savedProgrammingExercise = programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
 
-        // Step 4c: Connect auxiliary repositories
         connectAuxiliaryRepositoriesToExercise(savedProgrammingExercise);
 
-        // Step 5: Setup exercise template
         programmingExerciseRepositoryService.setupExerciseTemplate(savedProgrammingExercise, exerciseCreator);
 
-        // Step 6: Create initial submission
         programmingSubmissionService.createInitialSubmissions(savedProgrammingExercise);
 
-        // Step 7: Make sure that plagiarism detection config does not use existing id
+        // Make sure that plagiarism detection config does not use existing id
         Optional.ofNullable(savedProgrammingExercise.getPlagiarismDetectionConfig()).ifPresent(it -> it.setId(null));
 
         programmingExerciseBuildPlanService.addDefaultBuildPlanConfigForLocalCI(savedProgrammingExercise);
-        // Step 9: Create exercise channel
+
         channelService.createExerciseChannel(savedProgrammingExercise, Optional.ofNullable(programmingExercise.getChannelName()));
 
-        // Step 10: Setup build plans for template and solution participation
         programmingExerciseBuildPlanService.setupBuildPlansForNewExercise(savedProgrammingExercise);
         savedProgrammingExercise = programmingExerciseRepository.findForCreationByIdElseThrow(savedProgrammingExercise.getId());
 
-        // Step 11: Update task from problem statement
         programmingExerciseTaskService.updateTasksFromProblemStatement(savedProgrammingExercise);
 
         programmingExerciseCreationScheduleService.performScheduleOperationsAndCheckNotifications(savedProgrammingExercise);
