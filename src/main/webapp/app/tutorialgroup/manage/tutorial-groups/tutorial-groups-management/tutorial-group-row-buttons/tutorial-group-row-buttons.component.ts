@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnDestroy, Output, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnDestroy, inject, input, output } from '@angular/core';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { faCalendarAlt, faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { EMPTY, Subject, from } from 'rxjs';
@@ -36,9 +36,9 @@ export class TutorialGroupRowButtonsComponent implements OnDestroy {
     //  and migrating would break narrowing currently.
     @Input() tutorialGroup: TutorialGroup;
 
-    @Output() tutorialGroupDeleted = new EventEmitter<void>();
-    @Output() registrationsChanged = new EventEmitter<void>();
-    @Output() attendanceUpdated = new EventEmitter<void>();
+    readonly tutorialGroupDeleted = output<void>();
+    readonly registrationsChanged = output<void>();
+    readonly attendanceUpdated = output<void>();
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();

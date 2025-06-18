@@ -3,14 +3,13 @@ import {
     ChangeDetectorRef,
     Component,
     ContentChild,
-    EventEmitter,
     OnChanges,
-    Output,
     SimpleChanges,
     TemplateRef,
     ViewEncapsulation,
     inject,
     input,
+    output,
 } from '@angular/core';
 import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
@@ -47,7 +46,7 @@ export class TutorialGroupSessionsTableComponent implements OnChanges {
 
     readonly isReadOnly = input(false);
 
-    @Output() attendanceUpdated = new EventEmitter<void>();
+    readonly attendanceUpdated = output<void>();
 
     upcomingSessions: TutorialGroupSession[] = [];
     pastSessions: TutorialGroupSession[] = [];

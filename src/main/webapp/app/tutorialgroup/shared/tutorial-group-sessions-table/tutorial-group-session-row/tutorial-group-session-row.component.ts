@@ -1,18 +1,4 @@
-import {
-    ChangeDetectionStrategy,
-    ChangeDetectorRef,
-    Component,
-    EventEmitter,
-    HostBinding,
-    Input,
-    Output,
-    TemplateRef,
-    ViewEncapsulation,
-    effect,
-    inject,
-    input,
-    signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostBinding, Input, TemplateRef, ViewEncapsulation, effect, inject, input, output, signal } from '@angular/core';
 import { faUmbrellaBeach } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroupSession, TutorialGroupSessionStatus } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
@@ -59,7 +45,7 @@ export class TutorialGroupSessionRowComponent {
     readonly timeZone = input<string>();
     readonly isReadOnly = input(false);
 
-    @Output() attendanceChanged = new EventEmitter<TutorialGroupSession>();
+    readonly attendanceChanged = output<TutorialGroupSession>();
     constructor() {
         effect(() => {
             const session = this.session();

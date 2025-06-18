@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, OnChanges, OnInit, Output, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnChanges, OnInit, inject, input, output } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
 import { Course, isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
@@ -31,7 +31,7 @@ export class TutorialGroupsConfigurationFormComponent implements OnInit, OnChang
         useTutorialGroupChannels: false,
     });
     readonly isEditMode = input(false);
-    @Output() formSubmitted: EventEmitter<TutorialGroupsConfigurationFormData> = new EventEmitter<TutorialGroupsConfigurationFormData>();
+    readonly formSubmitted = output<TutorialGroupsConfigurationFormData>();
 
     readonly course = input<Course>(undefined!);
 
