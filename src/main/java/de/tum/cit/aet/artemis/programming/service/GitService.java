@@ -1447,10 +1447,9 @@ public class GitService extends AbstractGitService {
             BundleWriter bundleWriter = new BundleWriter(repository);
 
             // Include all refs (branches, tags, etc.) in the bundle
-            Map<String, Ref> refs = repository.getAllRefs();
-            for (Map.Entry<String, Ref> refEntry : refs.entrySet()) {
-                String refName = refEntry.getKey();
-                Ref ref = refEntry.getValue();
+            List<Ref> refs = repository.getRefDatabase().getRefsByPrefix("");
+            for (Ref ref : refs) {
+                String refName = ref.getName();
 
                 // Include all branches, tags, and other refs
                 if (ref.getObjectId() != null) {
