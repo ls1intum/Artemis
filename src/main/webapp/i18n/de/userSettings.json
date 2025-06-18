@@ -133,6 +133,7 @@
                 "sshKey": "Öffentlicher SSH-Schlüssel"
             },
             "categories": {
+                "iris": "Iris Einstellungen",
                 "NOTIFICATION_SETTINGS": "Benachrichtigungseinstellungen",
                 "SCIENCE_SETTINGS": "Forschungseinstellungen",
                 "SSH_SETTINGS": "SSH Einstellungen",
