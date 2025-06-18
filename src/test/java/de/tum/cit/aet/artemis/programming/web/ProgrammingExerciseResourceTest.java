@@ -128,7 +128,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationIndepende
         // Mock the getBareRepository call to return a proper repository
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.localRepoFile.toPath(), null)).when(gitService).getBareRepository(any());
 
-        byte[] result = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repository-memory-test/" + RepositoryType.TEMPLATE.name(),
+        byte[] result = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repository-snapshot/" + RepositoryType.TEMPLATE.name(),
                 HttpStatus.OK, byte[].class);
 
         assertThat(result).isNotNull();

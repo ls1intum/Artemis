@@ -628,7 +628,7 @@ public class ProgrammingExerciseExportImportResource {
     }
 
     /**
-     * GET /programming-exercises/:exerciseId/export-repository-memory-test/:repositoryType : Test endpoint for in-memory repository export
+     * GET /programming-exercises/:exerciseId/export-repository-snapshot/:repositoryType : Test endpoint for in-memory repository export
      * This endpoint demonstrates the new in-memory zip functionality without creating temporary files.
      *
      * @param exerciseId     The id of the programming exercise
@@ -636,10 +636,10 @@ public class ProgrammingExerciseExportImportResource {
      * @return ResponseEntity with the zipped repository content
      * @throws IOException if something during the zip process went wrong
      */
-    @GetMapping("programming-exercises/{exerciseId}/export-repository-memory-test/{repositoryType}")
+    @GetMapping("programming-exercises/{exerciseId}/export-repository-snapshot/{repositoryType}")
     @EnforceAtLeastInstructor
     @FeatureToggle(Feature.Exports)
-    public ResponseEntity<Resource> exportRepositoryMemoryTest(@PathVariable long exerciseId, @PathVariable RepositoryType repositoryType) throws IOException {
+    public ResponseEntity<Resource> exportRepositorySnapshot(@PathVariable long exerciseId, @PathVariable RepositoryType repositoryType) throws IOException {
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
 
