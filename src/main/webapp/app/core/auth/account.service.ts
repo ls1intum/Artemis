@@ -36,11 +36,11 @@ export interface IAccountService {
 
 @Injectable({ providedIn: 'root' })
 export class AccountService implements IAccountService {
-    private translateService = inject(TranslateService);
-    private sessionStorage = inject(SessionStorageService);
-    private http = inject(HttpClient);
-    private websocketService = inject(WebsocketService);
-    private featureToggleService = inject(FeatureToggleService);
+    private readonly translateService = inject(TranslateService);
+    private readonly sessionStorage = inject(SessionStorageService);
+    private readonly http = inject(HttpClient);
+    private readonly websocketService = inject(WebsocketService);
+    private readonly featureToggleService = inject(FeatureToggleService);
 
     // cached value of the user to avoid unnecessary requests to the server
     private userIdentityValue?: User;
