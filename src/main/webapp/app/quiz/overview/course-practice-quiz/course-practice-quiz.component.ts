@@ -156,6 +156,15 @@ export class CoursePracticeQuizComponent {
     onSubmit() {
         this.applySelection();
         this.isSubmitting = true;
+        const exerciseId = this.currentQuestion()?.exerciseId;
+        if (!exerciseId) {
+            this.alertService.addAlert({
+                type: AlertType.WARNING,
+                message: 'No exercise ID found for current question.',
+            });
+            this.isSubmitting = false;
+            return;
+        }
         this.quizParticipationService.submitForPractice(this.submission, this.currentQuestion()!.exerciseId!).subscribe({
             next: (response: HttpResponse<Result>) => {
                 this.onSubmitSuccess(response.body!);
@@ -177,7 +186,7 @@ export class CoursePracticeQuizComponent {
      * @param error
      */
     onSubmitError(error: HttpErrorResponse) {
-        const errorMessage = 'Submitting the quiz was not possible. ' + error.headers?.get('X-artemisApp-message') || error.message;
+        const errorMessage = 'Submitting the quiz was not possible. ' + (error.headers?.get('X-artemisApp-message') || error.message);
         this.alertService.addAlert({
             type: AlertType.DANGER,
             message: errorMessage,

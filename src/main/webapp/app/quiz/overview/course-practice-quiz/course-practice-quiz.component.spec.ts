@@ -150,6 +150,7 @@ describe('CoursePracticeQuizComponent', () => {
         const submitSpy = jest.spyOn(TestBed.inject(QuizParticipationService), 'submitForPractice').mockReturnValue(of(new HttpResponse({ body: result })));
         const showResultSpy = jest.spyOn(component, 'showResult');
         // Drag and Drop
+        jest.spyOn(component, 'currentQuestion').mockReturnValue({ ...question1, exerciseId: 1 } as any);
         component.currentIndex.set(0);
         component.onSubmit();
         expect(submitSpy).toHaveBeenCalledOnce();
@@ -158,6 +159,7 @@ describe('CoursePracticeQuizComponent', () => {
         expect(showResultSpy).toHaveBeenCalledWith(result);
         jest.clearAllMocks();
         // Multiple Choice
+        jest.spyOn(component, 'currentQuestion').mockReturnValue({ ...question2, exerciseId: 2 } as any);
         component.currentIndex.set(1);
         component.onSubmit();
         expect(submitSpy).toHaveBeenCalledOnce();
@@ -166,6 +168,7 @@ describe('CoursePracticeQuizComponent', () => {
         expect(showResultSpy).toHaveBeenCalledWith(result);
         jest.clearAllMocks();
         // Short Answer
+        jest.spyOn(component, 'currentQuestion').mockReturnValue({ ...question3, exerciseId: 3 } as any);
         component.currentIndex.set(2);
         component.onSubmit();
         expect(submitSpy).toHaveBeenCalledOnce();
@@ -174,8 +177,21 @@ describe('CoursePracticeQuizComponent', () => {
         expect(showResultSpy).toHaveBeenCalledWith(result);
     });
 
+    it('should show a warning if no exerciseId is present', () => {
+        const alertSpy = jest.spyOn(TestBed.inject(AlertService), 'addAlert');
+        jest.spyOn(component, 'currentQuestion').mockReturnValue({ id: 1 } as any);
+        component.onSubmit();
+        expect(alertSpy).toHaveBeenCalledWith(
+            expect.objectContaining({
+                message: 'No exercise ID found for current question.',
+            }),
+        );
+        expect(component.isSubmitting).toBeFalse();
+    });
+
     it('should handle submit error', () => {
         const alertSpy = jest.spyOn(TestBed.inject(AlertService), 'addAlert');
+        jest.spyOn(component, 'currentQuestion').mockReturnValue({ ...question1, exerciseId: 1 } as any);
         const error = new HttpErrorResponse({
             error: 'error',
             status: 400,
