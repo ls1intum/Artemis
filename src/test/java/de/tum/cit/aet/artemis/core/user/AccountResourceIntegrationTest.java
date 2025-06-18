@@ -518,7 +518,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         AcceptExternalLLMUsageDTO acceptExternalLLMUsageDTO = new AcceptExternalLLMUsageDTO(false);
         request.put("/api/core/users/accept-external-llm-usage", acceptExternalLLMUsageDTO, HttpStatus.OK);
 
-        // Verify timestamp was set
+        // Verify no timestamp was set
         Optional<User> updatedUser = userTestRepository.findOneByLogin(AUTHENTICATEDUSER);
         assertThat(updatedUser).isPresent();
         assertThat(updatedUser.get().getExternalLLMUsageAcceptedTimestamp()).isNull();
