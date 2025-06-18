@@ -292,7 +292,7 @@ describe('Course Management Service', () => {
             .findGradeScores(course.id!)
             .pipe(take(1))
             .subscribe((res) => expect(res).toEqual(participations));
-        const req = httpMock.expectOne({ method: 'GET', url: `api/exercise/courses/${course.id}/participations` });
+        const req = httpMock.expectOne({ method: 'GET', url: `api/exercise/courses/${course.id}/grade-scores` });
         req.flush(returnedFromService);
         tick();
     }));
