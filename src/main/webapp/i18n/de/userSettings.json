@@ -20,6 +20,12 @@
                 "default": "Standard",
                 "jetbrainsHelp": "Um JetBrains IDEs zu verwenden, installiere bitte die JetBrains Toolbox."
             },
+            "irisSettingsPage": {
+                "externalLLMUsage": {
+                    "accepted": "Du hast die Nutzung von externen LLMs am {{acceptedDate}} akzeptiert.",
+                    "declined": "Du hast die Nutzung von externen LLMs nicht akzeptiert."
+                }
+            },
             "sshSettingsPage": {
                 "sshSettingsInfoText": "Hier kannst du einen öffentlichen SSH-Schlüssel festlegen, um Git-Repositories über SSH zu klonen. Weitere Einzelheiten findest du in der Dokumentation.",
                 "deleteSshKeyQuestion": "Möchtest du deinen öffentlichen SSH-Schlüssel wirklich löschen?",

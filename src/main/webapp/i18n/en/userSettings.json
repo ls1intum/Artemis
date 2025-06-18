@@ -20,6 +20,12 @@
                 "default": "Default",
                 "jetbrainsHelp": "To use JetBrains IDEs, please install the JetBrains Toolbox."
             },
+            "irisSettingsPage": {
+                "externalLLMUsage": {
+                    "accepted": "You have accepted the usage of external LLMs on {{acceptedDate}}.",
+                    "declined": "You have not accepted the usage of external LLMs."
+                }
+            },
             "sshSettingsPage": {
                 "sshSettingsInfoText": "Here you can set a public SSH key to clone git repositories via SSH. For more details see the documentation.",
                 "deleteSshKeyQuestion": "Are you sure you want to delete your public SSH key?",
