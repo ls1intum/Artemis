@@ -67,7 +67,7 @@ export class CoursePracticeQuizComponent {
 
     submission = new QuizSubmission();
     isSubmitting = false;
-    result: Result;
+    result = new Result();
     showingResult = false;
     submitted = false;
     questionScores: number = 0;
