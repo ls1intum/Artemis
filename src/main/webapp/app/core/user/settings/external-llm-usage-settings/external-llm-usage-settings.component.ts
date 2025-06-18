@@ -6,11 +6,11 @@ import dayjs from 'dayjs/esm';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 @Component({
-    selector: 'jhi-iris-settings',
+    selector: 'jhi-external-llm-usage-settings',
     imports: [TranslateDirective, ArtemisDatePipe],
-    templateUrl: './iris-settings.component.html',
+    templateUrl: './external-llm-usage-settings.component.html',
 })
-export class IrisSettingsComponent implements OnInit {
+export class ExternalLlmUsageSettingsComponent implements OnInit {
     private readonly irisChatService = inject(IrisChatService);
     private readonly accountService = inject(AccountService);
 

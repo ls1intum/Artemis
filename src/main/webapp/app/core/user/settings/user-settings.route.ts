@@ -26,10 +26,11 @@ export const routes: Routes = [
                 },
             },
             {
-                path: 'iris',
-                loadComponent: () => import('app/core/user/settings/iris-settings/iris-settings.component').then((m) => m.IrisSettingsComponent),
+                path: 'externalLLMUsage',
+                loadComponent: () =>
+                    import('app/core/user/settings/external-llm-usage-settings/external-llm-usage-settings.component').then((m) => m.ExternalLlmUsageSettingsComponent),
                 data: {
-                    pageTitle: 'artemisApp.userSettings.categories.iris',
+                    pageTitle: 'artemisApp.userSettings.categories.externalLLMUsage',
                 },
             },
             {
