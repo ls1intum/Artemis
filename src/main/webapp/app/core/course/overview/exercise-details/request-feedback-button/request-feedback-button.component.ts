@@ -107,7 +107,6 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
     acceptExternalLLMUsage(modal: any) {
         this.acceptSubscription?.unsubscribe();
         this.acceptSubscription = this.userService.updateExternalLLMUsageConsent(true).subscribe(() => {
-            // TODO fix logic in this duplicate
             this.hasUserAcceptedExternalLLMUsage = true;
             this.accountService.setUserAcceptedExternalLLMUsage();
             modal.close();
