@@ -1178,7 +1178,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "INSTRUCTOR")
     void getAllParticipationsForCourse_noInstructorInCourse() throws Exception {
-        request.getList("/api/exercise/courses/" + course.getId() + "/participations", HttpStatus.FORBIDDEN, StudentParticipation.class);
+        request.getList("/api/exercise/courses/" + course.getId() + "/grade-scores", HttpStatus.FORBIDDEN, StudentParticipation.class);
     }
 
     @Test
