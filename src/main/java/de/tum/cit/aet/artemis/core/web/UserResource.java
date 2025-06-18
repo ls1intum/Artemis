@@ -136,9 +136,6 @@ public class UserResource {
     @EnforceAtLeastStudent
     public ResponseEntity<Void> setExternalLLMUsageAcceptedToTimestamp(@RequestBody AcceptExternalLLMUsageDTO acceptExternalLLMUsageDTO) {
         User user = userRepository.getUser();
-        if (user.getExternalLLMUsageAcceptedTimestamp() != null) {
-            return ResponseEntity.badRequest().build();
-        }
 
         ZonedDateTime hasAcceptedTimestamp = acceptExternalLLMUsageDTO.accepted() ? ZonedDateTime.now() : null;
         userRepository.updateExternalLLMUsageAcceptedToDate(user.getId(), hasAcceptedTimestamp);
