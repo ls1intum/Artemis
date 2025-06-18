@@ -11,6 +11,7 @@ import java.util.Optional;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -52,6 +53,7 @@ import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTrigge
 /**
  * Service for triggering builds on the local CI system.
  */
+@Lazy
 @Service
 @Profile(PROFILE_LOCALCI)
 public class LocalCITriggerService implements ContinuousIntegrationTriggerService {
@@ -211,7 +213,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         // This prevents potential race conditions where a build agent pulls the job from the queue very quickly before it is persisted,
         // leading to a failed update operation due to a missing record.
         buildJobRepository.save(new BuildJob(buildJobQueueItem, BuildStatus.QUEUED, null));
-        distributedDataAccessService.getDistributedQueuedJobs().add(buildJobQueueItem);
+        distributedDataAccessService.getDistributedBuildJobQueue().add(buildJobQueueItem);
         log.info("Added build job {} for exercise {} and participation {} with priority {} to the queue", buildJobId, programmingExercise.getShortName(), participation.getId(),
                 priority);
 
