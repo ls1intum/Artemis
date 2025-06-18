@@ -27,7 +27,7 @@ Please prepare for the meeting and enter your PR and a short description of the 
 - **Joins Limitation:** Limit the number of ``LEFT JOIN`` operations to a maximum of 5, unless proven that the resulting dataset remains small and performant.
 - **Indexed Columns:** ``WHERE`` clauses must leverage appropriate indices to optimize query performance.
 - **Nullable Fields:** Use nullable fields sparingly and only when explicitly necessary.
-- **Optimized Data Types:** Minimize the size of ``VARCHAR`` and ``DATETIME`` fields (e.g., ``DATETIME(3)`` precision). For enumeration fields, use actual ENUM types in MySQL and ``VARCHAR`` types in PostgreSQL.
+- **Optimized Data Types:** Minimize the size of ``VARCHAR`` and ``DATETIME`` fields (e.g., ``DATETIME(3)`` precision). For enumeration fields, use actual ENUM types in MySQL and ``TEXT`` types in PostgreSQL.
 - **Atomic Changesets:** Implement small, atomic database changesets that are easy to roll back in case of issues.
 - **Redundancy and Cleanup:** Identify and avoid unnecessary redundancy; implement periodic cleanup services to manage and remove obsolete data.
 - **Rollback Procedures:** Ensure robust and sensible rollback procedures are always available and tested.
