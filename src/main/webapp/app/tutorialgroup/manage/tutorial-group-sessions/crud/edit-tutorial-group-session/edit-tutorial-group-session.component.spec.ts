@@ -52,9 +52,9 @@ describe('EditTutorialGroupSessionComponent', () => {
         sessionService = TestBed.inject(TutorialGroupSessionService);
         exampleSession = generateExampleTutorialGroupSession({});
         exampleTutorialGroup = generateExampleTutorialGroup({});
-        component.course = course;
-        component.tutorialGroupSession = exampleSession;
-        component.tutorialGroup = exampleTutorialGroup;
+        fixture.componentRef.setInput('course', course);
+        fixture.componentRef.setInput('tutorialGroupSession', exampleSession);
+        fixture.componentRef.setInput('tutorialGroup', exampleTutorialGroup);
         component.initialize();
         fixture.detectChanges();
     });
@@ -68,9 +68,13 @@ describe('EditTutorialGroupSessionComponent', () => {
     });
 
     it('should set form data correctly', () => {
-        const formStub: TutorialGroupSessionFormComponent = fixture.debugElement.query(By.directive(TutorialGroupSessionFormComponent)).componentInstance;
+        expect(fixture.nativeElement.innerHTML).toContain('jhi-tutorial-group-session-form');
+        const tutorialGroupElement = fixture.debugElement.query(By.css('jhi-tutorial-group-session-form'));
+        expect(tutorialGroupElement).not.toBeNull();
+        const formStub: TutorialGroupSessionFormComponent = tutorialGroupElement.componentInstance;
+        fixture.detectChanges();
         expect(component.formData).toEqual(tutorialGroupSessionToTutorialGroupSessionFormData(exampleSession, timeZone));
-        expect(formStub.formData).toEqual(component.formData);
+        expect(formStub.formData()).toEqual(component.formData);
     });
 
     it('should send PUT request upon form submission and navigate', () => {

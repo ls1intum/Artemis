@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, ViewChild, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, OnChanges, OnDestroy, OnInit, Output, ViewChild, inject, input } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { Course, CourseGroup } from 'app/core/course/shared/entities/course.model';
@@ -50,8 +50,7 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy 
     private tutorialGroupService = inject(TutorialGroupsService);
     private alertService = inject(AlertService);
 
-    @Input()
-    formData: TutorialGroupFormData = {
+    readonly formData = input<TutorialGroupFormData>({
         title: undefined,
         teachingAssistant: undefined,
         additionalInformation: undefined,
@@ -59,9 +58,9 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy 
         isOnline: undefined,
         language: undefined,
         campus: undefined,
-    };
-    @Input() course: Course;
-    @Input() isEditMode = false;
+    });
+    readonly course = input.required<Course>();
+    readonly isEditMode = input(false);
     @Output() formSubmitted: EventEmitter<TutorialGroupFormData> = new EventEmitter<TutorialGroupFormData>();
 
     form: FormGroup;
@@ -147,7 +146,7 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy 
     }
 
     get showUpdateChannelNameCheckbox() {
-        if (!this.isEditMode) {
+        if (!this.isEditMode()) {
             return false;
         }
         if (!this.existingTitle) {
@@ -160,7 +159,7 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy 
     }
 
     get showScheduledChangedWarning() {
-        if (!this.isEditMode) {
+        if (!this.isEditMode()) {
             return false;
         }
         const originalHasSchedule = !!this.existingScheduleFormDate;
@@ -199,8 +198,9 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy 
 
     ngOnChanges() {
         this.initializeForm();
-        if (this.isEditMode && this.formData) {
-            this.setFormValues(this.formData);
+        const formData = this.formData();
+        if (this.isEditMode() && formData) {
+            this.setFormValues(formData);
         }
     }
 
@@ -261,7 +261,7 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy 
             campus: [undefined, Validators.maxLength(255)],
         });
 
-        if (this.isEditMode) {
+        if (this.isEditMode()) {
             this.form.addControl('notificationText', new FormControl(undefined, [Validators.maxLength(1000)]));
             this.form.addControl('updateTutorialGroupChannelName', new FormControl(true));
         }
@@ -298,7 +298,7 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy 
 
     private getTeachingAssistantsInCourse() {
         const generateUserObservable = (group: CourseGroup) => {
-            return this.courseManagementService.getAllUsersInCourseGroup(this.course.id!, group).pipe(
+            return this.courseManagementService.getAllUsersInCourseGroup(this.course().id!, group).pipe(
                 catchError((res: HttpErrorResponse) => {
                     onError(this.alertService, res);
                     return of([]);
@@ -336,7 +336,7 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy 
     private getUniqueCampusValuesOfCourse() {
         return concat(
             of([]), // default items
-            this.tutorialGroupService.getUniqueCampusValues(this.course.id!).pipe(
+            this.tutorialGroupService.getUniqueCampusValues(this.course().id!).pipe(
                 catchError((res: HttpErrorResponse) => {
                     onError(this.alertService, res);
                     return of([]);
@@ -355,7 +355,7 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy 
     private getUniqueLanguageValuesOfCourse() {
         return concat(
             of([]), // default items
-            this.tutorialGroupService.getUniqueLanguageValues(this.course.id!).pipe(
+            this.tutorialGroupService.getUniqueLanguageValues(this.course().id!).pipe(
                 catchError((res: HttpErrorResponse) => {
                     onError(this.alertService, res);
                     return of([]);

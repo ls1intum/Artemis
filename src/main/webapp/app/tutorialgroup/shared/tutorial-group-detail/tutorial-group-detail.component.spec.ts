@@ -88,6 +88,7 @@ describe('TutorialGroupDetailWrapperTest', () => {
                 component = fixture.componentInstance;
                 exampleTutorialGroup = generateExampleTutorialGroup({});
                 component.tutorialGroup = exampleTutorialGroup;
+                fixture.componentRef.setInput('tutorialGroup', exampleTutorialGroup);
                 fixture.detectChanges();
                 detailInstance = component.tutorialGroupDetailInstance;
                 headerInstance = component.mockHeaderInstance;
@@ -178,7 +179,7 @@ describe('TutorialGroupDetailComponent', () => {
             24,
         ],
     ])('should calculate average attendance correctly', (tutorialGroup: TutorialGroup, expectedAttendance: number) => {
-        component.tutorialGroup = tutorialGroup;
+        fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
         component.recalculateAttendanceDetails();
         expect(component.tutorialGroup.averageAttendance).toBe(expectedAttendance);
     });

@@ -60,7 +60,7 @@ export class TutorialGroupSessionRowButtonsComponent implements OnDestroy {
     openCancellationDialog(session: TutorialGroupSession): void {
         const modalRef = this.modalService.open(CancellationModalComponent, { size: 'lg', scrollable: false, backdrop: 'static', animation: false });
         modalRef.componentInstance.tutorialGroupSession = session;
-        modalRef.componentInstance.course = this.course();
+        modalRef.componentInstance.course = this.course;
         modalRef.componentInstance.tutorialGroupId = this.tutorialGroup().id!;
 
         from(modalRef.result)
@@ -78,9 +78,9 @@ export class TutorialGroupSessionRowButtonsComponent implements OnDestroy {
     openEditSessionDialog(event: MouseEvent) {
         event.stopPropagation();
         const modalRef: NgbModalRef = this.modalService.open(EditTutorialGroupSessionComponent, { size: 'lg', scrollable: false, backdrop: 'static', animation: false });
-        modalRef.componentInstance.course = this.course();
-        modalRef.componentInstance.tutorialGroup = this.tutorialGroup();
-        modalRef.componentInstance.tutorialGroupSession = this.tutorialGroupSession();
+        modalRef.componentInstance.course = this.course;
+        modalRef.componentInstance.tutorialGroup = this.tutorialGroup;
+        modalRef.componentInstance.tutorialGroupSession = this.tutorialGroupSession;
         modalRef.componentInstance.initialize();
         from(modalRef.result)
             .pipe(

@@ -36,10 +36,10 @@ describe('TutorialGroupSessionRowComponent', () => {
         component = fixture.componentInstance;
         session = generateExampleTutorialGroupSession({});
         tutorialGroup = generateExampleTutorialGroup({});
-        component.session = session;
-        component.tutorialGroup = tutorialGroup;
-        component.timeZone = 'Europe/Berlin';
-        component.showIdColumn = true;
+        fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
+        fixture.componentRef.setInput('session', session);
+        fixture.componentRef.setInput('timeZone', 'Europe/Berlin');
+        fixture.componentRef.setInput('showIdColumn', true);
         fixture.detectChanges();
     });
 
@@ -48,8 +48,7 @@ describe('TutorialGroupSessionRowComponent', () => {
     });
 
     it('should display session canceled button when sessions are cancelled', () => {
-        component.session = { ...session, status: TutorialGroupSessionStatus.CANCELLED };
-        component.ngOnChanges();
+        fixture.componentRef.setInput('session', { ...session, status: TutorialGroupSessionStatus.CANCELLED });
         fixture.detectChanges();
 
         const sessionCanceledButton = fixture.debugElement.query(By.css('button.btn-outline-danger'));
@@ -70,7 +69,7 @@ describe('TutorialGroupSessionRowComponent', () => {
             expect(attendanceChangedSpy).toHaveBeenCalledOnce();
             expect(attendanceChangedSpy).toHaveBeenCalledWith({ ...session, attendanceCount: 5 });
             expect(component.attendanceDiffersFromPersistedValue).toBeFalse();
-            expect(component.session.attendanceCount).toBe(5);
+            expect(component.localSession().attendanceCount).toBe(5);
         });
     }));
 
@@ -85,7 +84,7 @@ describe('TutorialGroupSessionRowComponent', () => {
             expect(updateAttendanceCountSpy).toHaveBeenCalledWith(tutorialGroup.course?.id, tutorialGroup.id, session.id, 5);
             expect(attendanceChangedSpy).not.toHaveBeenCalled();
             expect(component.attendanceDiffersFromPersistedValue).toBeFalse();
-            expect(component.session.attendanceCount).toBe(component.persistedAttendanceCount);
+            expect(component.localSession().attendanceCount).toBe(component.persistedAttendanceCount);
         });
     }));
     function changeAttendanceInputAndSave() {
@@ -94,7 +93,7 @@ describe('TutorialGroupSessionRowComponent', () => {
         attendanceCountInput.nativeElement.dispatchEvent(new Event('input'));
         attendanceCountInput.nativeElement.dispatchEvent(new Event('change'));
         runOnPushChangeDetection(fixture);
-        expect(component.session.attendanceCount).toBe(5);
+        expect(component.localSession().attendanceCount).toBe(5);
         expect(component.attendanceDiffersFromPersistedValue).toBeTrue();
 
         const saveButton = fixture.debugElement.query(By.css('.input-group button')).nativeElement;

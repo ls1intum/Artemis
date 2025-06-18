@@ -4,13 +4,13 @@ import {
     Component,
     ContentChild,
     EventEmitter,
-    Input,
     OnChanges,
     Output,
     SimpleChanges,
     TemplateRef,
     ViewEncapsulation,
     inject,
+    input,
 } from '@angular/core';
 import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
@@ -35,22 +35,17 @@ export class TutorialGroupSessionsTableComponent implements OnChanges {
 
     @ContentChild(TemplateRef, { static: true }) extraColumn: TemplateRef<any>;
 
-    @Input()
-    tutorialGroup: TutorialGroup;
+    readonly tutorialGroup = input<TutorialGroup>(undefined!);
 
-    @Input()
-    sessions: TutorialGroupSession[] = [];
+    readonly sessions = input<TutorialGroupSession[]>([]);
 
-    @Input()
-    timeZone?: string = undefined;
+    readonly timeZone = input<string>();
 
     timeZoneUsedForDisplay = dayjs.tz.guess();
 
-    @Input()
-    showIdColumn = false;
+    readonly showIdColumn = input(false);
 
-    @Input()
-    isReadOnly = false;
+    readonly isReadOnly = input(false);
 
     @Output() attendanceUpdated = new EventEmitter<void>();
 
@@ -61,11 +56,11 @@ export class TutorialGroupSessionsTableComponent implements OnChanges {
 
     isCollapsed = true;
     get numberOfColumns(): number {
-        let numberOfColumns = this.tutorialGroup.tutorialGroupSchedule ? 4 : 3;
+        let numberOfColumns = this.tutorialGroup().tutorialGroupSchedule ? 4 : 3;
         if (this.extraColumn) {
             numberOfColumns++;
         }
-        if (this.showIdColumn) {
+        if (this.showIdColumn()) {
             numberOfColumns++;
         }
         return numberOfColumns;

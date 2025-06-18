@@ -19,7 +19,7 @@
             @if (tutorialGroup.teachingAssistantName) {
                 <div jhiTranslate="artemisApp.tutorialGroupCard.teachingAssistant" [translateValues]="{ name: tutorialGroup.teachingAssistantName }"></div>
             }
-            @if (showChannelLink && tutorialGroup.channel && isMessagingEnabled(course)) {
+            @if (showChannelLink() && tutorialGroup.channel && isMessagingEnabled(course)) {
                 <div class="mt-2">
                     @if (tutorialGroup.channel.isMember) {
                         <a

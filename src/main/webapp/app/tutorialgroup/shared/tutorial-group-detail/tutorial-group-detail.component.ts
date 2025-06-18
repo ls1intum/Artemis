@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, ContentChild, Input, OnChanges, SimpleChanges, TemplateRef, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, ContentChild, Input, OnChanges, SimpleChanges, TemplateRef, inject, input } from '@angular/core';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { Course, isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
 import { SafeHtml } from '@angular/platform-browser';
@@ -48,9 +48,12 @@ export class TutorialGroupDetailComponent implements OnChanges {
 
     @ContentChild(TemplateRef, { static: true }) header: TemplateRef<any>;
 
-    @Input() timeZone?: string = undefined;
+    readonly timeZone = input<string>();
+    // TODO: Skipped for migration because:
+    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
+    //  and migrating would break narrowing currently.
     @Input() tutorialGroup: TutorialGroup;
-    @Input() course: Course;
+    readonly course = input<Course>(undefined!);
 
     formattedAdditionalInformation?: SafeHtml;
 
@@ -106,7 +109,7 @@ export class TutorialGroupDetailComponent implements OnChanges {
     getTutorialDetail() {
         const tutorialGroup = this.tutorialGroup;
 
-        this.isMessagingEnabled = isMessagingEnabled(this.course);
+        this.isMessagingEnabled = isMessagingEnabled(this.course());
         if (tutorialGroup.averageAttendance && tutorialGroup.capacity) {
             this.utilization = Math.round((tutorialGroup.averageAttendance / tutorialGroup.capacity) * 100);
         } else {

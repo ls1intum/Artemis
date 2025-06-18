@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, input } from '@angular/core';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { faPersonChalkboard } from '@fortawesome/free-solid-svg-icons';
 import { Course, isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
@@ -16,13 +16,18 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
     imports: [RouterLink, FaIconComponent, TranslateDirective, ArtemisDatePipe],
 })
 export class CourseTutorialGroupCardComponent {
+    // TODO: Skipped for migration because:
+    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
+    //  and migrating would break narrowing currently.
     @Input()
     course: Course;
+    // TODO: Skipped for migration because:
+    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
+    //  and migrating would break narrowing currently.
     @Input()
     tutorialGroup: TutorialGroup;
 
-    @Input()
-    showChannelLink = false;
+    readonly showChannelLink = input(false);
 
     // icons
     faPersonChalkboard = faPersonChalkboard;

@@ -1,4 +1,18 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, HostBinding, Input, OnChanges, Output, TemplateRef, ViewEncapsulation, inject } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    EventEmitter,
+    HostBinding,
+    Input,
+    Output,
+    TemplateRef,
+    ViewEncapsulation,
+    effect,
+    inject,
+    input,
+    signal,
+} from '@angular/core';
 import { faUmbrellaBeach } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroupSession, TutorialGroupSessionStatus } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
@@ -24,26 +38,37 @@ import { TutorialGroupSessionService } from 'app/tutorialgroup/shared/service/tu
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [NgbPopover, FaIconComponent, FormsModule, TranslateDirective, NgTemplateOutlet, ArtemisDatePipe, ArtemisTranslatePipe],
 })
-export class TutorialGroupSessionRowComponent implements OnChanges {
+export class TutorialGroupSessionRowComponent {
     private changeDetectorRef = inject(ChangeDetectorRef);
     private tutorialGroupSessionService = inject(TutorialGroupSessionService);
     private alertService = inject(AlertService);
 
     @HostBinding('class') class = 'tutorial-group-session-row';
 
-    @Input()
-    showIdColumn = false;
+    readonly showIdColumn = input(false);
+
+    // TODO: Skipped for migration because:
+    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
+    //  and migrating would break narrowing currently.
 
     @Input() extraColumn: TemplateRef<any>;
 
-    @Input() session: TutorialGroupSession;
-    @Input() tutorialGroup: TutorialGroup;
-
-    @Input() timeZone?: string = undefined;
-
-    @Input() isReadOnly = false;
+    readonly session = input.required<TutorialGroupSession>();
+    readonly localSession = signal<TutorialGroupSession>({} as TutorialGroupSession);
+    readonly tutorialGroup = input.required<TutorialGroup>();
+    readonly timeZone = input<string>();
+    readonly isReadOnly = input(false);
 
     @Output() attendanceChanged = new EventEmitter<TutorialGroupSession>();
+    constructor() {
+        effect(() => {
+            const session = this.session();
+            if (session) {
+                this.localSession.set({ ...session });
+                this.updateSomethingBasedOnSession();
+            }
+        });
+    }
 
     persistedAttendanceCount?: number = undefined;
     attendanceDiffersFromPersistedValue = false;
@@ -59,33 +84,33 @@ export class TutorialGroupSessionRowComponent implements OnChanges {
 
     hasSchedule = false;
 
-    ngOnChanges() {
-        if (this.session) {
-            this.isCancelled = this.session.status === TutorialGroupSessionStatus.CANCELLED;
-            this.hasSchedule = !!this.session.tutorialGroupSchedule;
-            this.overlapsWithFreePeriod = !!this.session.tutorialGroupFreePeriod;
+    updateSomethingBasedOnSession() {
+        if (this.localSession()) {
+            this.isCancelled = this.localSession().status === TutorialGroupSessionStatus.CANCELLED;
+            this.hasSchedule = !!this.localSession().tutorialGroupSchedule;
+            this.overlapsWithFreePeriod = !!this.localSession().tutorialGroupFreePeriod;
             if (this.isCancelled) {
                 if (this.overlapsWithFreePeriod) {
-                    this.cancellationReason = this.session.tutorialGroupFreePeriod?.reason ? this.session.tutorialGroupFreePeriod.reason : undefined;
+                    this.cancellationReason = this.localSession().tutorialGroupFreePeriod?.reason ? this.localSession().tutorialGroupFreePeriod!.reason : undefined;
                 } else {
-                    this.cancellationReason = this.session.statusExplanation ? this.session.statusExplanation : undefined;
+                    this.cancellationReason = this.localSession().statusExplanation ? this.localSession().statusExplanation : undefined;
                 }
             }
-            this.persistedAttendanceCount = this.session.attendanceCount;
+            this.persistedAttendanceCount = this.localSession().attendanceCount;
             this.attendanceDiffersFromPersistedValue = false;
             this.changeDetectorRef.detectChanges();
         }
     }
 
     onAttendanceInput(newAttendanceCount: number | null) {
-        this.session.attendanceCount = newAttendanceCount === null ? undefined : newAttendanceCount;
-        this.attendanceDiffersFromPersistedValue = this.persistedAttendanceCount !== this.session.attendanceCount;
+        this.localSession().attendanceCount = newAttendanceCount === null ? undefined : newAttendanceCount;
+        this.attendanceDiffersFromPersistedValue = this.persistedAttendanceCount !== this.localSession().attendanceCount;
     }
 
     saveAttendanceCount() {
         this.isUpdatingAttendance = true;
         this.tutorialGroupSessionService
-            .updateAttendanceCount(this.tutorialGroup.course!.id!, this.tutorialGroup.id!, this.session.id!, this.session.attendanceCount!)
+            .updateAttendanceCount(this.tutorialGroup().course!.id!, this.tutorialGroup().id!, this.localSession().id!, this.localSession().attendanceCount!)
             .pipe(
                 map((res: HttpResponse<TutorialGroupSession>) => {
                     return res.body!;
@@ -93,14 +118,14 @@ export class TutorialGroupSessionRowComponent implements OnChanges {
             )
             .subscribe({
                 next: (tutorialGroupSession: TutorialGroupSession) => {
-                    this.session = tutorialGroupSession;
-                    this.persistedAttendanceCount = this.session.attendanceCount;
+                    this.localSession.set(tutorialGroupSession);
+                    this.persistedAttendanceCount = this.localSession().attendanceCount;
                     this.attendanceDiffersFromPersistedValue = false;
-                    this.attendanceChanged.emit(this.session);
+                    this.attendanceChanged.emit(this.localSession());
                 },
                 error: (res: HttpErrorResponse) => {
                     onError(this.alertService, res);
-                    this.session.attendanceCount = this.persistedAttendanceCount;
+                    this.localSession().attendanceCount = this.persistedAttendanceCount;
                     this.attendanceDiffersFromPersistedValue = false;
                 },
             })

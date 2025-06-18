@@ -30,7 +30,7 @@
                         <div>
                             <span class="text-secondary" jhiTranslate="artemisApp.entities.tutorialGroup.channel"></span><span class="text-secondary">:</span>
                             @if (tutorialGroup.channel.isMember) {
-                                <a [routerLink]="['/courses', course.id!, 'communication']" [queryParams]="{ conversationId: tutorialGroup.channel.id }">
+                                <a [routerLink]="['/courses', course().id!, 'communication']" [queryParams]="{ conversationId: tutorialGroup.channel.id }">
                                     {{ tutorialGroup.channel.name }}
                                 </a>
                             } @else {
@@ -150,11 +150,11 @@
     @if (sessions && sessions.length) {
         <div class="scrollbar table-wrapper-scroll-y border border-lightgrey p-3">
             <jhi-tutorial-group-sessions-table
-                [timeZone]="timeZone"
+                [timeZone]="timeZone()"
                 [sessions]="sessions"
                 [tutorialGroup]="tutorialGroup"
                 [showIdColumn]="false"
-                [isReadOnly]="!course.isAtLeastTutor"
+                [isReadOnly]="!course().isAtLeastTutor"
                 (attendanceUpdated)="recalculateAttendanceDetails()"
             />
         </div>

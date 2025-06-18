@@ -18,6 +18,7 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { EditTutorialGroupFreePeriodComponent } from 'app/tutorialgroup/manage/tutorial-free-periods/crud/edit-tutorial-group-free-period/edit-tutorial-group-free-period.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { signal } from '@angular/core';
 
 describe('TutorialGroupFreePeriodRowButtonsComponent', () => {
     let fixture: ComponentFixture<TutorialGroupFreePeriodRowButtonsComponent>;
@@ -69,9 +70,9 @@ describe('TutorialGroupFreePeriodRowButtonsComponent', () => {
         const modalService = TestBed.inject(NgbModal);
         const mockModalRef = {
             componentInstance: {
-                course: undefined,
-                tutorialGroupFreePeriod: undefined,
-                tutorialGroupsConfiguration: undefined,
+                course: signal(undefined),
+                tutorialGroupFreePeriod: signal(undefined),
+                tutorialGroupsConfiguration: signal(undefined),
 
                 initialize: () => {},
             },
@@ -89,7 +90,7 @@ describe('TutorialGroupFreePeriodRowButtonsComponent', () => {
             expect(modalOpenSpy).toHaveBeenCalledWith(EditTutorialGroupFreePeriodComponent, { backdrop: 'static', scrollable: false, size: 'lg', animation: false });
             expect(mockModalRef.componentInstance.tutorialGroupFreePeriod).toEqual(tutorialFreePeriod);
             expect(mockModalRef.componentInstance.tutorialGroupsConfiguration).toEqual(configuration);
-            expect(mockModalRef.componentInstance.course).toEqual(course);
+            expect(mockModalRef.componentInstance.course()).toEqual(course);
         });
     }));
 

@@ -1,12 +1,12 @@
 <ng-container>
-    @if (showIdColumn) {
-        <td>{{ session.id }}</td>
+    @if (showIdColumn()) {
+        <td>{{ session().id }}</td>
     }
     <td>
         <span>
-            {{ session.start | artemisDate: 'short-date' : false : timeZone! : true }}
-            {{ session.start | artemisDate: 'time' : false : timeZone! }} -
-            {{ session.end | artemisDate: 'time' : false : timeZone! }}
+            {{ session().start | artemisDate: 'short-date' : false : timeZone() : true }}
+            {{ session().start | artemisDate: 'time' : false : timeZone() }} -
+            {{ session().end | artemisDate: 'time' : false : timeZone() }}
         </span>
         @if (isCancelled) {
             <button
@@ -28,12 +28,12 @@
     <td>
         <button type="button" class="btn btn-outline-info" placement="top" [ngbPopover]="session.location" [animation]="false" [autoClose]="'outside'">
             <span class="d-inline-block text-truncate" style="max-width: 150px">
-                {{ session.location }}
+                {{ session().location }}
             </span>
         </button>
     </td>
     <td class="attendance-column">
-        @if (!isReadOnly) {
+        @if (!isReadOnly()) {
             <div class="input-group">
                 <input
                     type="number"
@@ -61,10 +61,10 @@
                 </button>
             </div>
         } @else {
-            {{ session.attendanceCount ?? '' }}
+            {{ session().attendanceCount ?? '' }}
         }
     </td>
-    @if (tutorialGroup.tutorialGroupSchedule) {
+    @if (tutorialGroup().tutorialGroupSchedule) {
         <td>
             @if (!hasSchedule) {
                 <div class="alert alert-info" role="alert" jhiTranslate="artemisApp.pages.tutorialGroupSessionManagement.differsFromSchedule"></div>

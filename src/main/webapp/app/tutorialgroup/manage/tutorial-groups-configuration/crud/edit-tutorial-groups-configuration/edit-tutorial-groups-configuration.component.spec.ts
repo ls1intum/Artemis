@@ -70,14 +70,17 @@ describe('EditTutorialGroupsConfigurationComponent', () => {
     });
 
     it('should set form data correctly', () => {
-        const formStub: TutorialGroupsConfigurationFormComponent = fixture.debugElement.query(By.directive(TutorialGroupsConfigurationFormComponent)).componentInstance;
+        expect(fixture.nativeElement.innerHTML).toContain('jhi-tutorial-groups-configuration-form');
+        const tutorialGroupElement = fixture.debugElement.query(By.css('jhi-tutorial-groups-configuration-form'));
+        expect(tutorialGroupElement).not.toBeNull();
+        const formStub = tutorialGroupElement.componentInstance;
 
         expect(component.tutorialGroupsConfiguration).toEqual(exampleConfiguration);
         expect(findConfigurationSpy).toHaveBeenCalledOnce();
         expect(findConfigurationSpy).toHaveBeenCalledWith(course.id);
-
+        fixture.detectChanges();
         expect(component.formData.period).toEqual([exampleConfiguration.tutorialPeriodStartInclusive?.toDate(), exampleConfiguration.tutorialPeriodEndInclusive?.toDate()]);
-        expect(formStub.formData).toEqual(component.formData);
+        expect(formStub.formData()).toEqual(component.formData);
     });
 
     it('should send PUT request upon form submission and navigate', () => {

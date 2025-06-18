@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input, OnDestroy, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, inject, input } from '@angular/core';
 import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -28,11 +28,11 @@ export class EditTutorialGroupFreePeriodComponent implements OnDestroy {
     private tutorialGroupFreePeriodService = inject(TutorialGroupFreePeriodService);
     private alertService = inject(AlertService);
 
-    @Input() tutorialGroupFreePeriod: TutorialGroupFreePeriod;
+    readonly tutorialGroupFreePeriod = input<TutorialGroupFreePeriod>();
 
-    @Input() tutorialGroupsConfiguration: TutorialGroupsConfiguration;
+    readonly tutorialGroupsConfiguration = input<TutorialGroupsConfiguration>();
 
-    @Input() course: Course;
+    readonly course = input<Course>();
 
     isLoading = false;
 
@@ -48,30 +48,32 @@ export class EditTutorialGroupFreePeriodComponent implements OnDestroy {
      * Based on these determinations, it sets up the form data accordingly.
      */
     initialize() {
-        if (!this.tutorialGroupFreePeriod || !this.course || !this.tutorialGroupsConfiguration) {
+        const tutorialGroupFreePeriod = this.tutorialGroupFreePeriod();
+        const course = this.course();
+        if (!tutorialGroupFreePeriod || !course || !this.tutorialGroupsConfiguration()) {
             captureException('Error: Component not fully configured');
             return;
         }
 
-        const isFreePeriod = TutorialGroupFreePeriodsManagementComponent.isFreePeriod(this.tutorialGroupFreePeriod);
-        const isFreePeriodWithinDay = TutorialGroupFreePeriodsManagementComponent.isFreePeriodWithinDay(this.tutorialGroupFreePeriod);
+        const isFreePeriod = TutorialGroupFreePeriodsManagementComponent.isFreePeriod(tutorialGroupFreePeriod);
+        const isFreePeriodWithinDay = TutorialGroupFreePeriodsManagementComponent.isFreePeriodWithinDay(tutorialGroupFreePeriod);
 
         this.formData = {
-            startDate: this.tutorialGroupFreePeriod.start?.tz(this.course.timeZone).toDate(),
-            endDate: isFreePeriod ? this.tutorialGroupFreePeriod.end?.tz(this.course.timeZone).toDate() : undefined,
-            startTime: isFreePeriodWithinDay ? this.tutorialGroupFreePeriod.start?.tz(this.course.timeZone).toDate() : undefined,
-            endTime: isFreePeriodWithinDay ? this.tutorialGroupFreePeriod.end?.tz(this.course.timeZone).toDate() : undefined,
-            reason: this.tutorialGroupFreePeriod.reason,
+            startDate: tutorialGroupFreePeriod.start?.tz(course.timeZone).toDate(),
+            endDate: isFreePeriod ? tutorialGroupFreePeriod.end?.tz(course.timeZone).toDate() : undefined,
+            startTime: isFreePeriodWithinDay ? tutorialGroupFreePeriod.start?.tz(course.timeZone).toDate() : undefined,
+            endTime: isFreePeriodWithinDay ? tutorialGroupFreePeriod.end?.tz(course.timeZone).toDate() : undefined,
+            reason: tutorialGroupFreePeriod.reason,
         };
 
         if (isFreePeriodWithinDay) {
-            const tutorialGroupFreePeriodStart = this.tutorialGroupFreePeriod.start;
-            const tutorialGroupFreePeriodEnd = this.tutorialGroupFreePeriod.end;
+            const tutorialGroupFreePeriodStart = tutorialGroupFreePeriod.start;
+            const tutorialGroupFreePeriodEnd = tutorialGroupFreePeriod.end;
             if (this.formData.startTime && tutorialGroupFreePeriodStart) {
-                this.formData.startTime.setHours(tutorialGroupFreePeriodStart.tz(this.course.timeZone).hour());
+                this.formData.startTime.setHours(tutorialGroupFreePeriodStart.tz(course.timeZone).hour());
             }
             if (this.formData.endTime && tutorialGroupFreePeriodEnd) {
-                this.formData.endTime.setHours(tutorialGroupFreePeriodEnd.tz(this.course.timeZone).hour());
+                this.formData.endTime.setHours(tutorialGroupFreePeriodEnd.tz(course.timeZone).hour());
             }
         }
 
@@ -87,9 +89,15 @@ export class EditTutorialGroupFreePeriodComponent implements OnDestroy {
         tutorialGroupFreePeriodDto.reason = reason;
 
         this.isLoading = true;
-
+        const tutorialGroupFreePeriod = this.tutorialGroupFreePeriod();
+        const tutorialGroupsConfiguration = this.tutorialGroupsConfiguration();
+        const course = this.course();
+        if (!tutorialGroupFreePeriod || !course || !tutorialGroupsConfiguration) {
+            captureException('Error: Component not fully configured');
+            return;
+        }
         this.tutorialGroupFreePeriodService
-            .update(this.course.id!, this.tutorialGroupsConfiguration.id!, this.tutorialGroupFreePeriod.id!, tutorialGroupFreePeriodDto)
+            .update(course.id!, tutorialGroupsConfiguration.id!, tutorialGroupFreePeriod.id!, tutorialGroupFreePeriodDto)
             .pipe(
                 finalize(() => {
                     this.isLoading = false;
