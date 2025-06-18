@@ -154,8 +154,6 @@ export class CoursePracticeQuizComponent {
      * Submits the quiz for practice
      */
     onSubmit() {
-        this.applySelection();
-        this.isSubmitting = true;
         const exerciseId = this.currentQuestion()?.exerciseId;
         if (!exerciseId) {
             this.alertService.addAlert({
@@ -165,7 +163,9 @@ export class CoursePracticeQuizComponent {
             this.isSubmitting = false;
             return;
         }
-        this.quizParticipationService.submitForPractice(this.submission, this.currentQuestion()!.exerciseId!).subscribe({
+        this.applySelection();
+        this.isSubmitting = true;
+        this.quizParticipationService.submitForPractice(this.submission, exerciseId).subscribe({
             next: (response: HttpResponse<Result>) => {
                 this.onSubmitSuccess(response.body!);
             },
