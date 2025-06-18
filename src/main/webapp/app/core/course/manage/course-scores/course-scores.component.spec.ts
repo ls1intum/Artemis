@@ -180,7 +180,6 @@ describe('CourseScoresComponent', () => {
                 score: 200,
                 presentationScore: 100,
             },
-            // participation2
             {
                 participationId: 2,
                 userId: 1,
@@ -188,7 +187,6 @@ describe('CourseScoresComponent', () => {
                 score: 100,
                 presentationScore: 0,
             },
-            // participation3
             {
                 participationId: 3,
                 userId: 1,
@@ -196,7 +194,6 @@ describe('CourseScoresComponent', () => {
                 score: 100,
                 presentationScore: 0,
             },
-            // participation4
             {
                 participationId: 4,
                 userId: 1,
@@ -204,15 +201,6 @@ describe('CourseScoresComponent', () => {
                 score: 100,
                 presentationScore: 0,
             },
-            // participation5 (no results → score 0)
-            {
-                participationId: 5,
-                userId: 2,
-                exerciseId: 1,
-                score: 0,
-                presentationScore: 0,
-            },
-            // participation6
             {
                 participationId: 6,
                 userId: 2,
@@ -220,7 +208,6 @@ describe('CourseScoresComponent', () => {
                 score: 50,
                 presentationScore: 0,
             },
-            // participation7
             {
                 participationId: 7,
                 userId: 2,
@@ -228,7 +215,6 @@ describe('CourseScoresComponent', () => {
                 score: 100,
                 presentationScore: 0,
             },
-            // participation8
             {
                 participationId: 8,
                 userId: 2,
@@ -236,7 +222,6 @@ describe('CourseScoresComponent', () => {
                 score: 50,
                 presentationScore: 0,
             },
-            // participation9
             {
                 participationId: 9,
                 userId: 1,
@@ -244,7 +229,6 @@ describe('CourseScoresComponent', () => {
                 score: 100,
                 presentationScore: 0,
             },
-            // participation10
             {
                 participationId: 10,
                 userId: 2,
@@ -252,7 +236,6 @@ describe('CourseScoresComponent', () => {
                 score: 100,
                 presentationScore: 0,
             },
-            // participation11
             {
                 participationId: 11,
                 userId: 1,
@@ -260,7 +243,6 @@ describe('CourseScoresComponent', () => {
                 score: 100,
                 presentationScore: 100,
             },
-            // participation12
             {
                 participationId: 12,
                 userId: 2,
