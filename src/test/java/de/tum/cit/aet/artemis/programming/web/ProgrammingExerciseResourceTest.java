@@ -134,11 +134,56 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationIndepende
         assertThat(result).isNotNull();
         assertThat(result.length).isGreaterThan(0);
 
+        // Verify that file is a valid ZIP file
         assertThat(result[0]).isEqualTo((byte) 0x50); // 'P'
         assertThat(result[1]).isEqualTo((byte) 0x4B); // 'K'
 
+        verifyZipStructureAndContent(result);
+
         // Clean up
         localRepo.resetLocalRepo();
+    }
+
+    private void verifyZipStructureAndContent(byte[] zipContent) throws Exception {
+        boolean foundFiles = false;
+        int fileCount = 0;
+        Set<String> repositoryFiles = new HashSet<>();
+
+        try (ZipInputStream zipInputStream = new ZipInputStream(new ByteArrayInputStream(zipContent))) {
+            ZipEntry entry;
+            while ((entry = zipInputStream.getNextEntry()) != null) {
+                String entryName = entry.getName();
+
+                if (!entry.isDirectory()) {
+                    foundFiles = true;
+                    fileCount++;
+                    repositoryFiles.add(entryName);
+
+                    // Validate that we can read the file content (ensures ZIP is not corrupted)
+                    byte[] fileContent = zipInputStream.readAllBytes();
+                    assertThat(fileContent).as("File content should be readable for: " + entryName).isNotNull();
+
+                    // For text files, verify they contain reasonable content
+                    if (entryName.endsWith(".java") || entryName.endsWith(".md") || entryName.endsWith(".txt") || entryName.endsWith(".xml")) {
+                        String textContent = new String(fileContent);
+                        assertThat(textContent).as("Text file should have actual content: " + entryName).isNotBlank();
+                    }
+                }
+            }
+        }
+
+        assertThat(foundFiles).as("ZIP should contain actual files, not just directories").isTrue();
+        assertThat(fileCount).as("ZIP should contain multiple files from the repository").isGreaterThan(1);
+        assertThat(repositoryFiles).as("Should have repository files").isNotEmpty();
+
+        // Verify ZIP is substantial (not just empty structure)
+        assertThat(zipContent.length).as("ZIP file should be substantial in size").isGreaterThan(200);
+
+        // Verify filename structure is reasonable (no null filenames)
+        for (String filename : repositoryFiles) {
+            assertThat(filename).as("Filename should not be null or empty").isNotBlank();
+            assertThat(filename).as("Filename should not contain invalid characters").doesNotContain("\0");
+        }
     }
 
     @Test
