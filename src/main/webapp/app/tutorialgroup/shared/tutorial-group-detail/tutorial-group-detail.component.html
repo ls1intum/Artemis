@@ -154,7 +154,7 @@
                 [sessions]="sessions"
                 [tutorialGroup]="tutorialGroup"
                 [showIdColumn]="false"
-                [isReadOnly]="!course().isAtLeastTutor"
+                [isReadOnly]="!course()?.isAtLeastTutor"
                 (attendanceUpdated)="recalculateAttendanceDetails()"
             />
         </div>
