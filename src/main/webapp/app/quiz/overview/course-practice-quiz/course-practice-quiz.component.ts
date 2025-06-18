@@ -45,9 +45,9 @@ export class CoursePracticeQuizComponent {
     // Reactive chain for loading quiz questions based on the current route
     paramsSignal = toSignal(this.route.parent?.params ?? EMPTY);
     courseId = computed(() => this.paramsSignal()?.['courseId']);
-    questionsSignal = toSignal(this.quizService.getQuizQuestions(this.courseId()) ?? EMPTY, { initialValue: [] });
+    questionsSignal = toSignal(this.courseId() ? this.quizService.getQuizQuestions(this.courseId()) : EMPTY, { initialValue: [] });
     questions = computed(() => this.questionsSignal());
-    courseSignal = toSignal(this.courseService.find(this.courseId()).pipe(map((res) => res.body ?? undefined)), { initialValue: undefined });
+    courseSignal = toSignal(this.courseId() ? this.courseService.find(this.courseId()).pipe(map((res) => res.body ?? undefined)) : EMPTY, { initialValue: undefined });
     course = computed(() => this.courseSignal());
 
     submission = new QuizSubmission();
