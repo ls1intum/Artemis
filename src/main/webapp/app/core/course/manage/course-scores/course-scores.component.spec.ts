@@ -172,7 +172,6 @@ describe('CourseScoresComponent', () => {
     courseScoreStudent2.scoreAchieved = roundScorePercentSpecifiedByCourseSettings(15 / 40, course);
     const courseGradeInformation: CourseGradeInformationDTO = {
         gradeScores: [
-            // participation1
             {
                 participationId: 1,
                 userId: 1,
@@ -357,11 +356,6 @@ describe('CourseScoresComponent', () => {
                 courseService = TestBed.inject(CourseManagementService);
                 gradingSystemService = TestBed.inject(GradingSystemService);
                 plagiarismCasesService = TestBed.inject(PlagiarismCasesService);
-
-                const participationScoreService = TestBed.inject(ParticipantScoresService);
-                findCourseScoresSpy = jest
-                    .spyOn(participationScoreService, 'findCourseScores')
-                    .mockReturnValue(of(new HttpResponse({ body: [courseScoreStudent1, courseScoreStudent2] })));
 
                 profileService = fixture.debugElement.injector.get(ProfileService);
                 const profileInfo = { activeModuleFeatures: [MODULE_FEATURE_PLAGIARISM] } as ProfileInfo;
