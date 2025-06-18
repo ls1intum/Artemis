@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import dayjs, { Dayjs } from 'dayjs/esm';
-import { CalendarEvent } from '../entities/calendar-event.model';
+import { CalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
 
 @Injectable({
     providedIn: 'root',

@@ -1,10 +1,10 @@
 import { AfterViewInit, Component, ElementRef, computed, input } from '@angular/core';
 import { Dayjs } from 'dayjs/esm';
-import { CalendarEvent } from '../../entities/calendar-event.model';
-import { CalendarEventAndPositioning, PositionInfo } from '../../entities/calendar-event-positioning.model';
+import { CalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
+import { CalendarEventAndPositioning, PositionInfo } from 'app/calendar/shared/entities/calendar-event-positioning.model';
 import { NgStyle } from '@angular/common';
-import { CalendarEventDummyService } from 'app/calendar/service/calendar-event-dummy.service';
-import * as Utils from 'app/calendar/util/calendar-util';
+import { CalendarEventDummyService } from 'app/calendar/shared/service/calendar-event-dummy.service';
+import * as Utils from 'app/calendar/shared/util/calendar-util';
 
 @Component({
     selector: 'timed-event-section',

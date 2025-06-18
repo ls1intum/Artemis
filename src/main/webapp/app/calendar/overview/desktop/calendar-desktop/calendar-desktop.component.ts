@@ -3,8 +3,8 @@ import { NgClass } from '@angular/common';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
-import { CalendarDesktopMonthComponent } from 'app/calendar/desktop/calendar-desktop-month/calendar-desktop-month.component';
-import { CalendarDesktopWeekComponent } from 'app/calendar/desktop/calendar-desktop-week/calendar-desktop-week.component';
+import { CalendarDesktopMonthComponent } from 'app/calendar/overview/desktop/calendar-desktop-month/calendar-desktop-month.component';
+import { CalendarDesktopWeekComponent } from 'app/calendar/overview/desktop/calendar-desktop-week/calendar-desktop-week.component';
 
 @Component({
     selector: 'jhi-calendar-desktop',

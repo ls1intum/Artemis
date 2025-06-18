@@ -1,9 +1,9 @@
 import { Component, computed, input } from '@angular/core';
 import { Dayjs } from 'dayjs/esm';
-import * as Utils from 'app/calendar/util/calendar-util';
-import { DayBadgeComponent } from '../../shared/day-badge/day-badge.component';
-import { CalendarEventDummyService } from '../../service/calendar-event-dummy.service';
-import { CalendarEvent } from '../../entities/calendar-event.model';
+import * as Utils from 'app/calendar/shared/util/calendar-util';
+import { DayBadgeComponent } from '../../../shared/day-badge/day-badge.component';
+import { CalendarEventDummyService } from 'app/calendar/shared/service/calendar-event-dummy.service';
+import { CalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({

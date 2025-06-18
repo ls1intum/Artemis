@@ -1,11 +1,11 @@
 import { Component, computed, input } from '@angular/core';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import isoWeek from 'dayjs/plugin/isoWeek';
-import * as Utils from '../../util/calendar-util';
+import * as Utils from 'app/calendar/shared/util/calendar-util';
 
-import { AllDayEventSectionComponent } from '../../shared/all-day-event-section/all-day-event-section.component';
-import { TimedEventSectionComponent } from '../../shared/timed-event-section/timed-event-section.component';
-import { DayBadgeComponent } from '../../shared/day-badge/day-badge.component';
+import { AllDayEventSectionComponent } from '../../../shared/all-day-event-section/all-day-event-section.component';
+import { TimedEventSectionComponent } from '../../../shared/timed-event-section/timed-event-section.component';
+import { DayBadgeComponent } from '../../../shared/day-badge/day-badge.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 // TODO: where to  move this?

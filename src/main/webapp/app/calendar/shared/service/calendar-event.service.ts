@@ -1,5 +1,5 @@
 import { Injectable, Signal, computed, signal } from '@angular/core';
-import { CalendarEvent } from '../entities/calendar-event.model';
+import { CalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
 import { HttpClient } from '@angular/common/http';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
