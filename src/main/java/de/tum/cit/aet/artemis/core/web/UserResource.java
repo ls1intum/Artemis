@@ -127,7 +127,8 @@ public class UserResource {
     }
 
     /**
-     * PUT users/accept-external-llm-usage : sets the externalLLMUsageAccepted flag for the user to ZonedDateTime.now()
+     * PUT users/accept-external-llm-usage : sets the externalLLMUsageAccepted flag for the user to ZonedDateTime.now() or null,
+     * depending on whether the user accepted or declined the usage of external LLMs.
      *
      * @return the ResponseEntity with status 200 (OK), with status 404 (Not Found),
      *         or with status 400 (Bad Request) if external LLM usage was already accepted
