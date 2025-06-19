@@ -40,7 +40,6 @@ class CourseLearnerProfileServiceTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        courseLearnerProfileService = new CourseLearnerProfileService(courseLearnerProfileRepository, learnerProfileRepository, learnerProfileService);
     }
 
     @Test

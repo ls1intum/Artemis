@@ -36,7 +36,6 @@ class LearnerProfileServiceTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        learnerProfileService = new LearnerProfileService(userRepository, learnerProfileRepository);
     }
 
     @Test
