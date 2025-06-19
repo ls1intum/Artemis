@@ -12,16 +12,18 @@
         <div class="card-body pt-3 pb-0 mb-0">
             <div class="row g-4">
                 <div class="col-md-12">
-                    <p class="fs-5 lh-lg" style="white-space: pre-line" [jhiTranslate]="description()"></p>
+                    <p class="fs-5 lh-md" style="white-space: pre-line" [jhiTranslate]="description()"></p>
                 </div>
             </div>
         </div>
 
-        <div class="card-footer bg-transparent border-top-0 pt-0 mt-0 pb-4 d-flex flex-wrap gap-2">
-            <jhi-button [title]="activateButtonText()" [isLoading]="isLoading()" (onClick)="enable.emit()" />
-            @if (secondActivateButtonText()) {
-                <jhi-button [btnType]="ButtonType.SECONDARY" [title]="secondActivateButtonText()!" [isLoading]="isLoading()" (onClick)="enableWithSecondButton.emit()" />
-            }
+        <div class="card-footer bg-transparent border-top-0 pt-0 mt-0 pb-4">
+            <div class="d-flex flex-wrap ms-auto gap-2 justify-content-center">
+                <jhi-button [title]="activateButtonText()" [isLoading]="isLoading()" (onClick)="enable.emit()" />
+                @if (secondActivateButtonText()) {
+                    <jhi-button [btnType]="ButtonType.SECONDARY" [title]="secondActivateButtonText()!" [isLoading]="isLoading()" (onClick)="enableWithSecondButton.emit()" />
+                }
+            </div>
         </div>
     </div>
 </div>
