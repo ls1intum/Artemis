@@ -1,0 +1,81 @@
+package de.tum.cit.aet.artemis.atlas.service;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
+
+import java.util.Optional;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+
+import de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile;
+import de.tum.cit.aet.artemis.atlas.repository.LearnerProfileRepository;
+import de.tum.cit.aet.artemis.atlas.service.profile.LearnerProfileService;
+import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
+
+class LearnerProfileServiceTest {
+
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private LearnerProfileRepository learnerProfileRepository;
+
+    @InjectMocks
+    private LearnerProfileService learnerProfileService;
+
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
+        learnerProfileService = new LearnerProfileService(userRepository, learnerProfileRepository);
+    }
+
+    @Test
+    void createProfile_shouldCreateAndSaveProfile() {
+        User user = new User();
+        user.setId(1L);
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        LearnerProfile profile = learnerProfileService.createProfile(user);
+
+        assertThat(profile).isNotNull();
+        assertThat(profile.getUser()).isEqualTo(user);
+        assertThat(user.getLearnerProfile()).isEqualTo(profile);
+        verify(userRepository).save(user);
+    }
+
+    @Test
+    void getOrCreateLearnerProfile_shouldReturnExistingProfile() {
+        User user = new User();
+        user.setId(2L);
+        LearnerProfile existingProfile = new LearnerProfile();
+        existingProfile.setUser(user);
+        when(learnerProfileRepository.findByUser(user)).thenReturn(Optional.of(existingProfile));
+
+        LearnerProfile result = learnerProfileService.getOrCreateLearnerProfile(user);
+        assertThat(result).isEqualTo(existingProfile);
+        verify(learnerProfileRepository).findByUser(user);
+        verifyNoInteractions(userRepository);
+    }
+
+    @Test
+    void getOrCreateLearnerProfile_shouldCreateProfileIfNotExists() {
+        User user = new User();
+        user.setId(3L);
+        when(learnerProfileRepository.findByUser(user)).thenReturn(Optional.empty());
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        LearnerProfile result = learnerProfileService.getOrCreateLearnerProfile(user);
+        assertThat(result).isNotNull();
+        assertThat(result.getUser()).isEqualTo(user);
+        assertThat(user.getLearnerProfile()).isEqualTo(result);
+        verify(userRepository).save(user);
+    }
+}
