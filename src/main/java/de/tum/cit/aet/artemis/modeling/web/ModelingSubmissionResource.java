@@ -403,10 +403,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
             // We want to have the preliminary feedback before the assessment due date too
             List<Result> athenaResults = modelingSubmission.getResults().stream().filter(result -> result != null && result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA)
                     .toList();
-
-            if (!athenaResults.isEmpty()) {
-                modelingSubmission.setResults(athenaResults);
-            }
+            modelingSubmission.setResults(athenaResults);
         }
 
         if (modelingSubmission.getLatestResult() != null && !authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
