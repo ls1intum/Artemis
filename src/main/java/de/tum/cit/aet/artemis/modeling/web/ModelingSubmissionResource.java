@@ -380,8 +380,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         var studentParticipation = validationResult.studentParticipation;
         var exercise = validationResult.modelingExercise;
 
-        // only loaded latest submission
-        Optional<Submission> optionalSubmission = studentParticipation.getSubmissions().stream().findFirst();
+        Optional<Submission> optionalLatestSubmission = studentParticipation.getSubmissions().stream().findFirst();
         ModelingSubmission modelingSubmission;
         if (optionalSubmission.isEmpty()) {
             // this should never happen as the submission is initialized along with the participation when the exercise is started
