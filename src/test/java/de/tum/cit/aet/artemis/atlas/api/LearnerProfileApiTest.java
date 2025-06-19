@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.api;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -42,7 +43,7 @@ class LearnerProfileApiTest {
         LearnerProfile profile = new LearnerProfile();
         when(learnerProfileService.getOrCreateLearnerProfile(user)).thenReturn(profile);
         LearnerProfile result = learnerProfileApi.getOrCreateLearnerProfile(user);
-        assert result == profile;
+        assertThat(result).isEqualTo(profile);
         verify(learnerProfileService).getOrCreateLearnerProfile(user);
     }
 

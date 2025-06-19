@@ -15,15 +15,16 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile;
+import de.tum.cit.aet.artemis.atlas.dto.LearnerProfileDTO;
 import de.tum.cit.aet.artemis.atlas.repository.LearnerProfileRepository;
 import de.tum.cit.aet.artemis.atlas.service.profile.LearnerProfileService;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 
 class LearnerProfileServiceTest {
 
     @Mock
-    private UserRepository userRepository;
+    private UserTestRepository userRepository;
 
     @Mock
     private LearnerProfileRepository learnerProfileRepository;
@@ -77,5 +78,25 @@ class LearnerProfileServiceTest {
         assertThat(result.getUser()).isEqualTo(user);
         assertThat(user.getLearnerProfile()).isEqualTo(result);
         verify(userRepository).save(user);
+    }
+
+    @Test
+    void learnerProfileDTO_of_shouldReturnNullForNullInput() {
+        assertThat(LearnerProfileDTO.of(null)).isNull();
+    }
+
+    @Test
+    void learnerProfileDTO_of_shouldClampValuesWithinRange() {
+        LearnerProfile profile = new LearnerProfile();
+        profile.setId(42L);
+        profile.setFeedbackAlternativeStandard(0); // below min
+        profile.setFeedbackFollowupSummary(5);    // above max
+        profile.setFeedbackBriefDetailed(2);      // within range
+
+        LearnerProfileDTO dto = LearnerProfileDTO.of(profile);
+        assertThat(dto.id()).isEqualTo(42L);
+        assertThat(dto.feedbackAlternativeStandard()).isEqualTo(LearnerProfile.MIN_PROFILE_VALUE);
+        assertThat(dto.feedbackFollowupSummary()).isEqualTo(LearnerProfile.MAX_PROFILE_VALUE);
+        assertThat(dto.feedbackBriefDetailed()).isEqualTo(2);
     }
 }
