@@ -1,5 +1,5 @@
 import { NgClass } from '@angular/common';
-import { ChangeDetectorRef, Component, EventEmitter, OnDestroy, OnInit, Output, ViewEncapsulation, computed, inject, signal, viewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, OnDestroy, OnInit, ViewEncapsulation, computed, inject, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
@@ -61,6 +61,7 @@ import { LinkPreviewService } from 'app/communication/link-preview/services/link
 import { ConversationGlobalSearchComponent, ConversationGlobalSearchConfig } from 'app/communication/shared/conversation-global-search/conversation-global-search.component';
 import { FeatureActivationComponent } from 'app/shared/feature-activation/feature-activation.component';
 import { AlertService } from 'app/shared/service/alert.service';
+import { EventManager } from 'app/shared/service/event-manager.service';
 
 const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
     favoriteChannels: { entityData: [] },
@@ -152,6 +153,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     private modalService = inject(NgbModal);
     private profileService = inject(ProfileService);
     private alertService = inject(AlertService);
+    private eventManager = inject(EventManager);
 
     private ngUnsubscribe = new Subject<void>();
     private closeSidebarEventSubscription: Subscription;
@@ -159,7 +161,6 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     private toggleSidebarEventSubscription: Subscription;
     private breakpointSubscription: Subscription;
     course = signal<Course | undefined>(undefined);
-    @Output() courseUpdated = new EventEmitter<Course>();
     isLoading = false;
     isServiceSetUp = false;
     messagingEnabled = false;
@@ -666,7 +667,10 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                 };
                 this.course.set(updatedCourse);
 
-                this.courseUpdated.emit(updatedCourse);
+                this.eventManager.broadcast({
+                    name: 'courseModification',
+                    content: 'Changed course communication settings',
+                });
             } catch (error) {
                 this.alertService.error('artemisApp.metis.communicationDisabled.enableError');
             }

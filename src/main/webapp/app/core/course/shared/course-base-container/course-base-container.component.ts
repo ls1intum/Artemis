@@ -3,9 +3,7 @@ import {
     ChangeDetectorRef,
     Component,
     EmbeddedViewRef,
-    EventEmitter,
     HostListener,
-    Injector,
     OnDestroy,
     OnInit,
     QueryList,
@@ -16,7 +14,6 @@ import {
     ViewContainerRef,
     effect,
     inject,
-    runInInjectionContext,
     signal,
 } from '@angular/core';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
@@ -38,7 +35,7 @@ import { CourseStorageService } from 'app/core/course/manage/services/course-sto
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { CourseAccessStorageService } from '../services/course-access-storage.service';
 import { CourseSidebarService } from 'app/core/course/overview/services/course-sidebar.service';
-import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
+import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
 import { toSignal } from '@angular/core/rxjs-interop';
 
 /**
@@ -67,8 +64,6 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     protected ltiSubscription: Subscription;
     protected loadCourseSubscription?: Subscription;
     dashboardSubscription: Subscription;
-
-    private readonly injector = inject(Injector);
 
     courseId = signal<number>(0);
     course = signal<Course | undefined>(undefined);
@@ -117,13 +112,20 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     protected readonly CachingStrategy = CachingStrategy;
 
     constructor() {
-        // Use effect to react to navigation changes
         effect(() => {
-            // This effect will run whenever navigationEnd signal changes
             const navEvent = this.navigationEnd();
 
             if (navEvent) {
                 this.handleNavigationEndActions();
+            }
+        });
+
+        effect(() => {
+            const updatedCourse = this.course();
+            if (!updatedCourse?.courseInformationSharingConfiguration || updatedCourse?.courseInformationSharingConfiguration === CourseInformationSharingConfiguration.DISABLED) {
+                this.disableConversationService();
+            } else {
+                this.setupConversationService();
             }
         });
     }
@@ -207,6 +209,11 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
         this.ngUnsubscribe.complete();
     }
 
+    private disableConversationService() {
+        this.conversationServiceInstantiated.set(false);
+        this.metisConversationService.disableConversationService();
+    }
+
     /** Initialize courses attribute by retrieving all courses from the server */
     async updateRecentlyAccessedCourses() {
         this.dashboardSubscription = this.courseManagementService.findAllForDropdown().subscribe({
@@ -249,32 +256,6 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
                 this.tryRenderControls();
                 await firstValueFrom(provider.controlsRendered);
                 this.tryRenderControls();
-            });
-        }
-
-        // eslint-disable-next-line no-undef
-        console.log(componentRef.courseUpdated);
-        // eslint-disable-next-line no-undef
-        console.log('courseUpdated emitter is:', typeof componentRef.courseUpdated);
-        // eslint-disable-next-line no-undef
-        console.log('is real EventEmitter?', componentRef.courseUpdated instanceof EventEmitter);
-        if (componentRef.courseUpdated instanceof EventEmitter) {
-            // Wrap both toSignal() *and* effect() in runInInjectionContext
-            runInInjectionContext(this.injector, () => {
-                // 1) Turn the child emitter into a Signal
-                this.courseUpdatedSignal = toSignal(componentRef.courseUpdated, {
-                    initialValue: undefined,
-                    rejectErrors: false,
-                });
-
-                // 2) Wire up an effect on that signal
-                effect(() => {
-                    const updated = this.courseUpdatedSignal();
-                    if (updated) {
-                        this.course.set(updated);
-                        this.setupConversationService();
-                    }
-                });
             });
         }
 
