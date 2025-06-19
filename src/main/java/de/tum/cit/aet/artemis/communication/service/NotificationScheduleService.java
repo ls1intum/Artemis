@@ -10,7 +10,7 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.TaskScheduler;
@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationService;
 import de.tum.cit.aet.artemis.communication.service.notifications.SingleUserNotificationService;
+import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.ScheduleService;
@@ -26,6 +27,7 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseLifecycle;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 
+@Lazy
 @Service
 @Profile(PROFILE_CORE_AND_SCHEDULING)
 public class NotificationScheduleService {
@@ -54,7 +56,7 @@ public class NotificationScheduleService {
         this.scheduler = scheduler;
     }
 
-    @EventListener(ApplicationReadyEvent.class)
+    @EventListener(FullStartupEvent.class)
     public void applicationReady() {
         // schedule the task after the application has started to avoid delaying the start of the application
         scheduler.schedule(this::scheduleRunningNotificationProcessesOnStartup, Instant.now().plusSeconds(NOTIFICATION_SCHEDULE_DELAY_SEC));

@@ -163,8 +163,7 @@ spring:
     main:
         allow-bean-definition-overriding: false
         allow-circular-references: false
-        # TODO: implement a deferred initialization strategy where only core beans are initialized at startup and the all other module beans are initialized eager directly after startup
-        lazy-initialization: false
+        lazy-initialization: true
     messages:
         basename: i18n/messages
         cache-duration: PT1S # 1 second, see the ISO 8601 standard
