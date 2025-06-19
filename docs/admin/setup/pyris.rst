@@ -91,11 +91,12 @@ Local Environment Setup
 
         cp llm_config.example.yml llm_config.local.yml
 
-     **Example OpenAI Configuration**
 
      .. warning::
 
-         The OpenAI configuration example is only intended to be used for development and testing purposes, not for production environments. For production environments we recommend setting up an GDPR conformant Azure OpenAI configuration.
+         The OpenAI configuration examples are intended solely for development and testing purposes and should not be used in production environments. For production use, we recommend configuring a GDPR-compliant solution.
+
+     **Example OpenAI Configuration**
 
      .. code-block:: yaml
 
@@ -154,7 +155,7 @@ Local Environment Setup
             - The model can process 128,000 tokens in a single request. So, we set the context_length to 128000.
             - The models is supposed to be better than GPT-4 in terms of its capabilities. So, we set the gpt_version_equivalent to 4.5.
             - The model is developed by OpenAI. So, we set the vendor to OpenAI.
-            - We can not assume the if the service that provides the model, e.g. official OpenAI API or Azure, is compatible with the privacy regulations of the organisation. So, we set the privacy_compliance to false.
+            - We can not assume the if the service that provides the model, e.g. official OpenAI API or Azure OpenAI, is compatible with the privacy regulations of the organisation. So, we set the privacy_compliance to false.
             - The model is not self-hosted. So, we set the self_hosted to false.
             - The model supports image recognition. So, we set the image_recognition to true.
             - The model supports structured JSON output mode. So, we set the json_mode to true.

@@ -3,7 +3,7 @@ Iris Service
 
 Iris is an intelligent virtual tutor integrated into the Artemis platform.
 It is designed to provide one-on-one programming assistance without human tutors.
-The core technology of Iris is based on Generative AI and Large Language Models, like Azure OpenAI's GPT.
+The core technology of Iris is based on Generative AI and Large Language Models, like OpenAI's GPT and Meta's LLaMA.
 
 Iris also powers other smart features in Artemis, like the automatic generation of descriptions for hints.
 
