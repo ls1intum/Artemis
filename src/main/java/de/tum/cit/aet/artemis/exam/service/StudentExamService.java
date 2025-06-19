@@ -520,7 +520,7 @@ public class StudentExamService {
                     studentParticipation.setInitializationState(InitializationState.FINISHED);
                     studentParticipationRepository.save(studentParticipation);
                 }
-                var latestSubmission = studentParticipation.getSubmissions().stream().findFirst();
+                Optional<Submission> latestSubmission = studentParticipation.getSubmissions().stream().findFirst();
                 boolean wasEmptyProgrammingParticipation = false;
                 if (latestSubmission.isEmpty() && studentParticipation.getExercise() instanceof ProgrammingExercise) {
                     wasEmptyProgrammingParticipation = true;

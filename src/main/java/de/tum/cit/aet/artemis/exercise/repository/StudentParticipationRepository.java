@@ -998,12 +998,12 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     }
 
     /**
-     * Get all participations belonging to exam with latest submission and relevant results
+     * Get all participations belonging to exam with latest submission and relevant results ignoring test run participations.
      *
      * @param examId the id of the exam
      * @return an unmodifiable list of participations belonging to course
      */
-    default List<StudentParticipation> findByExamIdWithLatestSubmissionWithRelevantResult(long examId) {
+    default List<StudentParticipation> findByExamIdWithLatestSubmissionWithRelevantResultIgnoreTestRunParticipations(long examId) {
         var participations = findByExamIdWithEagerLatestLegalSubmissionsRatedResultAndIgnoreTestRunParticipation(examId); // without test run participations
         return filterParticipationsWithoutStudent(participations);
     }

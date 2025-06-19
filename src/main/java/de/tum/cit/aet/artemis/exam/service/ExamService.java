@@ -304,8 +304,7 @@ public class ExamService {
     public ExamScoresDTO calculateExamScores(Long examId) {
         Exam exam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
 
-        List<StudentParticipation> studentParticipations = studentParticipationRepository.findByExamIdWithLatestSubmissionWithRelevantResult(examId); // without test run
-                                                                                                                                                      // participations
+        List<StudentParticipation> studentParticipations = studentParticipationRepository.findByExamIdWithLatestSubmissionWithRelevantResultIgnoreTestRunParticipations(examId);
         log.info("Try to find quiz submitted answer counts");
         List<QuizSubmittedAnswerCount> submittedAnswerCounts = studentParticipationRepository.findSubmittedAnswerCountForQuizzesInExam(examId);
         log.info("Found {} quiz submitted answer counts", submittedAnswerCounts.size());
@@ -703,7 +702,7 @@ public class ExamService {
                 // Collect points of first correction, if a second correction exists
                 if (calculateFirstCorrectionPoints && exam.getNumberOfCorrectionRoundsInExam() == 2
                         && !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)) {
-                    var latestSubmission = studentParticipation.getSubmissions().stream().findFirst();
+                    Optional<Submission> latestSubmission = studentParticipation.getSubmissions().stream().findFirst();
                     if (latestSubmission.isPresent()) {
                         Submission submission = latestSubmission.get();
                         // Check if second correction already started
