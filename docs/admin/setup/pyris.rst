@@ -6,7 +6,7 @@ Pyris Setup Guide
 .. contents::
 
 .. important::
-   Pyris is now part of the EduTelligence suite. Please check the `compatibility matrix <https://github.com/ls1intum/edutelligence#-artemis-compatibility>`_ 
+   Pyris is now part of the EduTelligence suite. Please check the `compatibility matrix <https://github.com/ls1intum/edutelligence#-artemis-compatibility>`_
    to ensure you're using compatible versions of Artemis and EduTelligence.
 
 Prerequisites
@@ -92,6 +92,10 @@ Local Environment Setup
         cp llm_config.example.yml llm_config.local.yml
 
      **Example OpenAI Configuration**
+
+     .. warning::
+
+         The OpenAI configuration example is only intended to be used for development and testing purposes, not for production environments. For production environments we recommend setting up an GDPR conformant Azure OpenAI configuration.
 
      .. code-block:: yaml
 
