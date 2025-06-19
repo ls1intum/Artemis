@@ -267,17 +267,13 @@ public class CourseScoreCalculationService {
         // Get participation results (used in course-statistics.component).
         Set<ParticipationResultDTO> participationResults = new HashSet<>();
         for (StudentParticipation studentParticipation : gradedStudentParticipations) {
-            Set<Result> results = studentParticipation.getSubmissions().stream().flatMap(submission -> submission.getResults().stream().filter(Objects::nonNull))
-                    .collect(Collectors.toSet());
-            if (!results.isEmpty()) {
-                Result result = getResultForParticipation(studentParticipation, studentParticipation.getIndividualDueDate());
-                var participationResult = new ParticipationResultDTO(result.getScore(), result.isRated(), studentParticipation.getId());
-                participationResults.add(participationResult);
-                // this line is an important workaround. It prevents that the whole tree
-                // "result -> participation -> exercise -> course -> exercises -> studentParticipations -> submissions -> results" is sent again to the client which is useless
-                // TODO: in the future, we need a better solution to prevent this
-                studentParticipation.setExercise(null);
-            }
+            Result result = getResultForParticipation(studentParticipation, studentParticipation.getIndividualDueDate());
+            var participationResult = new ParticipationResultDTO(result.getScore(), result.isRated(), studentParticipation.getId());
+            participationResults.add(participationResult);
+            // this line is an important workaround. It prevents that the whole tree
+            // "result -> participation -> exercise -> course -> exercises -> studentParticipations -> submissions -> results" is sent again to the client which is useless
+            // TODO: in the future, we need a better solution to prevent this
+            studentParticipation.setExercise(null);
         }
 
         return new CourseForDashboardDTO(course, totalScores, scoresPerExerciseType.get(ExerciseType.TEXT), scoresPerExerciseType.get(ExerciseType.PROGRAMMING),
