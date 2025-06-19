@@ -18,6 +18,7 @@ import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
 import de.tum.cit.aet.artemis.core.config.Constants;
@@ -79,8 +80,8 @@ public class UserCreationService {
      * @param isInternal         true if the actual password gets saved in the database
      * @return newly created user
      */
-    public User createUser(String login, @Nullable String password, @Nullable Set<String> groups, String firstName, String lastName, String email, String registrationNumber,
-            String imageUrl, String langKey, boolean isInternal) {
+    public User createUser(String login, @Nullable String password, @Nullable Set<String> groups, String firstName, String lastName, String email,
+            @Nullable String registrationNumber, String imageUrl, String langKey, boolean isInternal) {
         User newUser = new User();
 
         if (isInternal) {
@@ -99,7 +100,10 @@ public class UserCreationService {
         // needs to be mutable --> new HashSet<>(Set.of())
         newUser.setGroups(groups != null ? new HashSet<>(groups) : new HashSet<>());
         newUser.setEmail(email);
-        newUser.setRegistrationNumber(registrationNumber);
+        // an empty string is considered as null to satisfy the unique constraint on registration number
+        if (StringUtils.hasText(registrationNumber)) {
+            newUser.setRegistrationNumber(registrationNumber);
+        }
         newUser.setImageUrl(imageUrl);
         newUser.setLangKey(langKey);
         // new user is not active
@@ -164,7 +168,10 @@ public class UserCreationService {
         user.setGroups(userDTO.getGroups());
         user.setActivated(true);
         user.setInternal(true);
-        user.setRegistrationNumber(userDTO.getVisibleRegistrationNumber());
+        // an empty string is considered as null to satisfy the unique constraint on registration number
+        if (StringUtils.hasText(userDTO.getVisibleRegistrationNumber())) {
+            user.setRegistrationNumber(userDTO.getVisibleRegistrationNumber());
+        }
         saveUser(user);
 
         optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.createUser(user, password));
@@ -232,7 +239,10 @@ public class UserCreationService {
         user.setFirstName(updatedUserDTO.getFirstName());
         user.setLastName(updatedUserDTO.getLastName());
         user.setEmail(updatedUserDTO.getEmail().toLowerCase());
-        user.setRegistrationNumber(updatedUserDTO.getVisibleRegistrationNumber());
+        // an empty string is considered as null to satisfy the unique constraint on registration number
+        if (StringUtils.hasText(updatedUserDTO.getVisibleRegistrationNumber())) {
+            user.setRegistrationNumber(updatedUserDTO.getVisibleRegistrationNumber());
+        }
         user.setImageUrl(updatedUserDTO.getImageUrl());
         user.setActivated(updatedUserDTO.isActivated());
         user.setLangKey(updatedUserDTO.getLangKey());

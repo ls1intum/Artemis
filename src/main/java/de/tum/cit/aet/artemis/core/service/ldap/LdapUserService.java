@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.ldap.query.SearchScope;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.ldap.LdapUserRepository;
@@ -114,7 +115,8 @@ public class LdapUserService {
             if (ldapUserDto.getEmail() != null) {
                 user.setEmail(ldapUserDto.getEmail());
             }
-            if (ldapUserDto.getRegistrationNumber() != null) {
+            // an empty string is considered as null to satisfy the unique constraint on registration number
+            if (StringUtils.hasText(ldapUserDto.getRegistrationNumber())) {
                 user.setRegistrationNumber(ldapUserDto.getRegistrationNumber());
             }
         }
