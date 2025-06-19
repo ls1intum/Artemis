@@ -9,6 +9,11 @@
 .hover-effect {
     &:hover {
         background-color: var(--hover-slightly-darker-body-bg);
+        border-color: var(--hover-slightly-darker-body-bg) !important;
+
+        &.border-module {
+            border-color: var(--hover-slightly-darker-body-bg) !important;
+        }
     }
 }
 
@@ -18,4 +23,10 @@
     &.border-module {
         border-color: var(--sidebar-card-selected-bg) !important;
     }
+}
+
+.item-border {
+    border-width: 2px !important;
+    border-style: solid;
+    border-color: var(--body-bg) !important;
 }

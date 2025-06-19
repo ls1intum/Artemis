@@ -9,7 +9,14 @@
 .bg-selected {
     background-color: var(--sidebar-card-selected-bg);
 
-    &.border-module {
+    &.border-module,
+    &.item-border {
         border-color: var(--sidebar-card-selected-bg) !important;
     }
+}
+
+.item-border {
+    border-width: 2px !important;
+    border-style: solid;
+    border-color: var(--body-bg) !important;
 }
