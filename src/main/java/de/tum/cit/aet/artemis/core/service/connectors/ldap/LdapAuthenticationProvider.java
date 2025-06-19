@@ -19,6 +19,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.codec.Utf8;
 import org.springframework.security.ldap.SpringSecurityLdapTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -146,8 +147,11 @@ public class LdapAuthenticationProvider extends ArtemisAuthenticationProviderImp
                 saveNeeded = true;
             }
             if (!Objects.equals(user.getRegistrationNumber(), ldapUserDto.getRegistrationNumber())) {
-                user.setRegistrationNumber(ldapUserDto.getRegistrationNumber());
-                saveNeeded = true;
+                // an empty string is considered as null to satisfy the unique constraint on registration number
+                if (StringUtils.hasText(ldapUserDto.getRegistrationNumber())) {
+                    user.setRegistrationNumber(ldapUserDto.getRegistrationNumber());
+                    saveNeeded = true;
+                }
             }
             // only save the user in the database in case it has changed
             if (saveNeeded) {
