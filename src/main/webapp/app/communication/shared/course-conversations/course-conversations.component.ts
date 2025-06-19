@@ -1,5 +1,5 @@
 import { NgClass } from '@angular/common';
-import { ChangeDetectorRef, Component, EventEmitter, OnDestroy, OnInit, ViewEncapsulation, computed, inject, signal, viewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, OnDestroy, OnInit, Output, ViewEncapsulation, computed, inject, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
@@ -20,7 +20,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
-import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
+import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
 import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { Post } from 'app/communication/shared/entities/post.model';
@@ -42,8 +42,8 @@ import { MetisConversationService } from 'app/communication/service/metis-conver
 import { MetisService } from 'app/communication/service/metis.service';
 import { PageType, SortDirection } from 'app/communication/metis.util';
 import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
-import { EMPTY, Observable, Subject, Subscription, from, take, takeUntil } from 'rxjs';
-import { catchError, debounceTime, distinctUntilChanged, map } from 'rxjs/operators';
+import { EMPTY, Observable, Subject, Subscription, firstValueFrom, from, take, takeUntil } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { CourseConversationsCodeOfConductComponent } from 'app/communication/course-conversations-components/code-of-conduct/course-conversations-code-of-conduct.component';
 import { ConversationHeaderComponent } from 'app/communication/course-conversations-components/layout/conversation-header/conversation-header.component';
 import { ConversationMessagesComponent } from 'app/communication/course-conversations-components/layout/conversation-messages/conversation-messages.component';
@@ -60,7 +60,8 @@ import { LinkifyService } from 'app/communication/link-preview/services/linkify.
 import { LinkPreviewService } from 'app/communication/link-preview/services/link-preview.service';
 import { ConversationGlobalSearchComponent, ConversationGlobalSearchConfig } from 'app/communication/shared/conversation-global-search/conversation-global-search.component';
 import { FeatureActivationComponent } from 'app/shared/feature-activation/feature-activation.component';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { AlertService } from 'app/shared/service/alert.service';
+
 const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
     favoriteChannels: { entityData: [] },
     recents: { entityData: [] },
@@ -150,7 +151,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     private courseOverviewService = inject(CourseOverviewService);
     private modalService = inject(NgbModal);
     private profileService = inject(ProfileService);
-    readonly courseId = toSignal(this.activatedRoute.parent!.params.pipe(map((params) => Number(params.courseId))), { requireSync: true });
+    private alertService = inject(AlertService);
 
     private ngUnsubscribe = new Subject<void>();
     private closeSidebarEventSubscription: Subscription;
@@ -158,6 +159,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     private toggleSidebarEventSubscription: Subscription;
     private breakpointSubscription: Subscription;
     course = signal<Course | undefined>(undefined);
+    @Output() courseUpdated = new EventEmitter<Course>();
     isLoading = false;
     isServiceSetUp = false;
     messagingEnabled = false;
@@ -651,9 +653,23 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         this.metisConversationService.setActiveConversation(id);
         this.changeDetector.detectChanges();
     }
-    enableCommunication(withMessaging = true) {
-        if (this.course()?.id) {
-            this.metisService.enableCommunication(this.course()!.id!, withMessaging);
+    async enableCommunication(withMessaging = true) {
+        const id = this.course()?.id;
+        if (id) {
+            try {
+                await firstValueFrom(this.metisService.enableCommunication(id, withMessaging));
+                const updatedCourse = {
+                    ...this.course()!,
+                    courseInformationSharingConfiguration: withMessaging
+                        ? CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING
+                        : CourseInformationSharingConfiguration.COMMUNICATION_ONLY,
+                };
+                this.course.set(updatedCourse);
+
+                this.courseUpdated.emit(updatedCourse);
+            } catch (error) {
+                this.alertService.error('artemisApp.metis.communicationDisabled.enableError');
+            }
         }
     }
 }

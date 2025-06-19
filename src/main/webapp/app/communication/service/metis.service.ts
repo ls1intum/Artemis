@@ -29,7 +29,7 @@ import { Post } from 'app/communication/shared/entities/post.model';
 import { Posting, PostingType, SavedPostStatus } from 'app/communication/shared/entities/posting.model';
 import { Reaction } from 'app/communication/shared/entities/reaction.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { Course, CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
 import { WebsocketService } from 'app/shared/service/websocket.service';
@@ -37,7 +37,6 @@ import dayjs from 'dayjs/esm';
 import { cloneDeep } from 'lodash-es';
 import { BehaviorSubject, Observable, ReplaySubject, Subscription, catchError, forkJoin, map, of, switchMap, tap, throwError } from 'rxjs';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
-import { AlertService } from 'app/shared/service/alert.service';
 
 @Injectable()
 export class MetisService implements OnDestroy {
@@ -51,8 +50,6 @@ export class MetisService implements OnDestroy {
     private savedPostService = inject(SavedPostService);
     private metisConversationService = inject(MetisConversationService);
     private http = inject(HttpClient);
-    private alertService = inject(AlertService);
-
     private posts$: ReplaySubject<Post[]> = new ReplaySubject<Post[]>(1);
     private tags$: BehaviorSubject<string[]> = new BehaviorSubject<string[]>([]);
     private totalNumberOfPosts$: ReplaySubject<number> = new ReplaySubject<number>(1);
@@ -982,22 +979,8 @@ export class MetisService implements OnDestroy {
         }
     }
 
-    enableCommunication(courseId: number, withMessaging: boolean): void {
-        if (!courseId) {
-            return;
-        }
+    enableCommunication(courseId: number, withMessaging: boolean): Observable<void> {
         const httpParams = new HttpParams().set('withMessaging', withMessaging);
-        this.http.put('api/communication/courses/' + courseId + '/enable', undefined, { params: httpParams }).subscribe({
-            next: () => {
-                if (withMessaging) {
-                    this.course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
-                } else {
-                    this.course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_ONLY;
-                }
-            },
-            error: () => {
-                this.alertService.error('artemisApp.metis.communicationDisabled.enableError');
-            },
-        });
+        return this.http.put<void>('api/communication/courses/' + courseId + '/enable', undefined, { params: httpParams });
     }
 }

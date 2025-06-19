@@ -3,16 +3,20 @@ import {
     ChangeDetectorRef,
     Component,
     EmbeddedViewRef,
+    EventEmitter,
     HostListener,
+    Injector,
     OnDestroy,
     OnInit,
     QueryList,
+    Signal,
     TemplateRef,
     ViewChild,
     ViewChildren,
     ViewContainerRef,
     effect,
     inject,
+    runInInjectionContext,
     signal,
 } from '@angular/core';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
@@ -64,6 +68,8 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     protected loadCourseSubscription?: Subscription;
     dashboardSubscription: Subscription;
 
+    private readonly injector = inject(Injector);
+
     courseId = signal<number>(0);
     course = signal<Course | undefined>(undefined);
     courses = signal<Course[] | undefined>(undefined);
@@ -84,6 +90,8 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     isExamStarted = signal<boolean>(false);
     isShownViaLti = signal<boolean>(false);
     hasSidebar = signal<boolean>(false);
+
+    courseUpdatedSignal!: Signal<Course | undefined>;
 
     private navigationEnd$ = this.router.events.pipe(filter((event) => event instanceof NavigationEnd));
 
@@ -241,6 +249,32 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
                 this.tryRenderControls();
                 await firstValueFrom(provider.controlsRendered);
                 this.tryRenderControls();
+            });
+        }
+
+        // eslint-disable-next-line no-undef
+        console.log(componentRef.courseUpdated);
+        // eslint-disable-next-line no-undef
+        console.log('courseUpdated emitter is:', typeof componentRef.courseUpdated);
+        // eslint-disable-next-line no-undef
+        console.log('is real EventEmitter?', componentRef.courseUpdated instanceof EventEmitter);
+        if (componentRef.courseUpdated instanceof EventEmitter) {
+            // Wrap both toSignal() *and* effect() in runInInjectionContext
+            runInInjectionContext(this.injector, () => {
+                // 1) Turn the child emitter into a Signal
+                this.courseUpdatedSignal = toSignal(componentRef.courseUpdated, {
+                    initialValue: undefined,
+                    rejectErrors: false,
+                });
+
+                // 2) Wire up an effect on that signal
+                effect(() => {
+                    const updated = this.courseUpdatedSignal();
+                    if (updated) {
+                        this.course.set(updated);
+                        this.setupConversationService();
+                    }
+                });
             });
         }
 
