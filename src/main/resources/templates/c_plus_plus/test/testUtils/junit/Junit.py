@@ -29,6 +29,10 @@ class Junit:
         root: Et.Element = Et.Element("testsuites")
         root.append(suiteXml)
         root.extend(self.additionalSuites)
+        # add another empty test suite
+        # to make sure the tests have consistent names
+        # independent of whether there are additional suites or not
+        root.append(TestSuite("empty-suite").toXml())
         tree: Et.ElementTree = Et.ElementTree(root)
         self.createOutputPath(outputPath)
         tree.write(outputPath, xml_declaration=True)
