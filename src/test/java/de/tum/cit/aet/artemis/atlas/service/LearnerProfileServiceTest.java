@@ -14,6 +14,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import de.tum.cit.aet.artemis.atlas.domain.profile.CourseLearnerProfile;
 import de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile;
 import de.tum.cit.aet.artemis.atlas.dto.LearnerProfileDTO;
 import de.tum.cit.aet.artemis.atlas.repository.LearnerProfileRepository;
@@ -98,5 +99,34 @@ class LearnerProfileServiceTest {
         assertThat(dto.feedbackAlternativeStandard()).isEqualTo(LearnerProfile.MIN_PROFILE_VALUE);
         assertThat(dto.feedbackFollowupSummary()).isEqualTo(LearnerProfile.MAX_PROFILE_VALUE);
         assertThat(dto.feedbackBriefDetailed()).isEqualTo(2);
+    }
+
+    @Test
+    void learnerProfile_addAndRemoveCourseLearnerProfiles_shouldWork() {
+        LearnerProfile learnerProfile = new LearnerProfile();
+        CourseLearnerProfile clp1 = new CourseLearnerProfile();
+        CourseLearnerProfile clp2 = new CourseLearnerProfile();
+        // add single
+        assertThat(learnerProfile.addCourseLearnerProfile(clp1)).isTrue();
+        // add duplicate
+        assertThat(learnerProfile.addCourseLearnerProfile(clp1)).isFalse();
+        // add all
+        java.util.Set<CourseLearnerProfile> set = new java.util.HashSet<>();
+        set.add(clp2);
+        assertThat(learnerProfile.addAllCourseLearnerProfiles(set)).isTrue();
+        // addAll with already present
+        assertThat(learnerProfile.addAllCourseLearnerProfiles(set)).isFalse();
+        // remove
+        assertThat(learnerProfile.removeCourseLearnerProfile(clp1)).isTrue();
+        // remove non-existent
+        assertThat(learnerProfile.removeCourseLearnerProfile(clp1)).isFalse();
+    }
+
+    @Test
+    void courseLearnerProfile_getLearnerProfile_shouldReturnSetValue() {
+        CourseLearnerProfile clp = new CourseLearnerProfile();
+        LearnerProfile lp = new LearnerProfile();
+        clp.setLearnerProfile(lp);
+        assertThat(clp.getLearnerProfile()).isEqualTo(lp);
     }
 }
