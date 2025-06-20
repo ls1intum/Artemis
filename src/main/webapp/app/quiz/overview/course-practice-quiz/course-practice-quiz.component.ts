@@ -104,7 +104,10 @@ export class CoursePracticeQuizComponent {
             this.navigateToPractice();
         } else {
             this.currentIndex.set(this.currentIndex() + 1);
-            this.initQuestion(this.currentQuestion()!);
+            const question = this.currentQuestion();
+            if (question) {
+                this.initQuestion(question);
+            }
         }
     }
 
@@ -173,7 +176,7 @@ export class CoursePracticeQuizComponent {
         if (!exerciseId) {
             this.alertService.addAlert({
                 type: AlertType.WARNING,
-                message: 'No exercise ID found for current question.',
+                message: 'error.noExerciseIdForQuestion',
             });
             this.isSubmitting = false;
             return;
@@ -182,7 +185,9 @@ export class CoursePracticeQuizComponent {
         this.isSubmitting = true;
         this.quizParticipationService.submitForPractice(this.submission, exerciseId).subscribe({
             next: (response: HttpResponse<Result>) => {
-                this.onSubmitSuccess(response.body!);
+                if (response.body) {
+                    this.onSubmitSuccess(response.body!);
+                }
             },
             error: (error: HttpErrorResponse) => this.onSubmitError(error),
         });
