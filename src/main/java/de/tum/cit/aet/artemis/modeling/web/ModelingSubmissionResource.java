@@ -382,14 +382,14 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
         Optional<Submission> optionalLatestSubmission = studentParticipation.getSubmissions().stream().findFirst();
         ModelingSubmission modelingSubmission;
-        if (optionalSubmission.isEmpty()) {
+        if (optionalLatestSubmission.isEmpty()) {
             // this should never happen as the submission is initialized along with the participation when the exercise is started
             modelingSubmission = new ModelingSubmission();
             modelingSubmission.setParticipation(studentParticipation);
         }
         else {
             // only try to get and set the model if the modelingSubmission existed before
-            modelingSubmission = (ModelingSubmission) optionalSubmission.get();
+            modelingSubmission = (ModelingSubmission) optionalLatestSubmission.get();
         }
 
         // do not send the result to the client if the assessment is not finished
