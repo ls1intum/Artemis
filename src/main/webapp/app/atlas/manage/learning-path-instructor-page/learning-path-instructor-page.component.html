@@ -22,7 +22,7 @@
             <jhi-learning-paths-analytics [courseId]="courseId()" />
         </div>
     </div>
-} @else {
+} @else if (course()?.isAtLeastInstructor) {
     <jhi-feature-activation
         [headerTitle]="'artemisApp.learningPathManagement.learningPathsDisabled.title'"
         [description]="'artemisApp.learningPathManagement.learningPathsDisabled.description'"

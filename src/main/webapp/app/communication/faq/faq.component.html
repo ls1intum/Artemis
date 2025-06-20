@@ -146,7 +146,7 @@
             </table>
         </div>
     </div>
-} @else {
+} @else if (course.isAtLeastInstructor) {
     <jhi-feature-activation
         [headerTitle]="'artemisApp.faq.faqDisabled.title'"
         [headerIcon]="faQuestion"

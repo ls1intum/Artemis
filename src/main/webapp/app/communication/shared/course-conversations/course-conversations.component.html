@@ -90,7 +90,7 @@
             </div>
         }
     </jhi-loading-indicator-container>
-} @else if (isManagementView && !isCommunicationEnabled()) {
+} @else if (isManagementView && !isCommunicationEnabled() && course()?.isAtLeastInstructor) {
     <div class="module-bg p-3 rounded rounded-3 scrollable-content">
         <jhi-feature-activation
             [headerTitle]="'artemisApp.communicationDisabled.title'"

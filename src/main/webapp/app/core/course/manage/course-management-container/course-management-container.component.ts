@@ -50,7 +50,7 @@ import { LectureComponent } from 'app/lecture/manage/lecture/lecture.component';
 import { CourseManagementStatisticsComponent } from 'app/core/course/manage/statistics/course-management-statistics.component';
 import { CourseConversationsComponent } from 'app/communication/shared/course-conversations/course-conversations.component';
 import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course, CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
 import { CourseDeletionSummaryDTO } from 'app/core/course/shared/entities/course-deletion-summary.model';
 
 @Component({
@@ -284,7 +284,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         }
         const nonInstructorItems: SidebarItem[] = [];
 
-        const communicationItem = this.addCommunicationsItem();
+        const communicationItem = this.addCommunicationItem(currentCourse);
         const tutorialGroupItem = this.addTutorialGroupsItem(currentCourse, isInstructor);
         this.addAssessmentItem(nonInstructorItems);
         this.addFaqItem(currentCourse, nonInstructorItems);
@@ -321,7 +321,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     }
 
     private addFaqItem(currentCourse: Course, sidebarItems: SidebarItem[]) {
-        if (currentCourse.isAtLeastTutor) {
+        if (currentCourse.isAtLeastInstructor || currentCourse.faqEnabled) {
             sidebarItems.push(this.sidebarItemService.getFaqManagementItem(this.courseId()));
         }
     }
@@ -353,9 +353,15 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         return tutorialGroupsItem;
     }
 
-    private addCommunicationsItem() {
+    private addCommunicationItem(currentCourse: Course) {
         const communicationItem: SidebarItem[] = [];
-        communicationItem.push(this.sidebarItemService.getCommunicationsItem(this.courseId()));
+        if (
+            currentCourse.isAtLeastInstructor ||
+            currentCourse.courseInformationSharingConfiguration === CourseInformationSharingConfiguration.COMMUNICATION_ONLY ||
+            currentCourse.courseInformationSharingConfiguration === CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING
+        ) {
+            communicationItem.push(this.sidebarItemService.getCommunicationsItem(this.courseId()));
+        }
         return communicationItem;
     }
 

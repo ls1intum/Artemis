@@ -29,7 +29,7 @@ export class LearningPathInstructorPageComponent {
     private readonly courseManagementService = inject(CourseManagementService);
 
     readonly courseId = toSignal(this.activatedRoute.parent!.params.pipe(map((params) => Number(params.courseId))), { requireSync: true });
-    private readonly course = signal<Course | undefined>(undefined);
+    readonly course = signal<Course | undefined>(undefined);
     readonly learningPathsEnabled = computed(() => this.course()?.learningPathsEnabled ?? false);
 
     readonly isLoading = signal<boolean>(false);
