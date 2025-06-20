@@ -208,7 +208,7 @@ describe('TextExercise Management Update Component', () => {
             const calculateValidSpy = jest.spyOn(comp, 'calculateFormSectionStatus');
             comp.exerciseTitleChannelNameComponent = { titleChannelNameComponent: { formValidChanges: new Subject() } } as ExerciseTitleChannelNameComponent;
             (comp as any).exercisePlagiarismComponent = signal<ExerciseUpdatePlagiarismComponent>({
-                isFormValid: () => true,
+                isFormValid: signal<boolean>(false),
             }).asReadonly();
             comp.teamConfigFormGroupComponent = { formValidChanges: new Subject() } as TeamConfigFormGroupComponent;
             comp.bonusPoints = { valueChanges: new Subject(), valid: true } as unknown as NgModel;

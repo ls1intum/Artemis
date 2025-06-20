@@ -1203,7 +1203,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         } as ProgrammingExerciseGradingComponent;
 
         (comp as any).exercisePlagiarismComponent = signal<ExerciseUpdatePlagiarismComponent>({
-            isFormValid: () => true,
+            isFormValid: signal<boolean>(false),
         }).asReadonly();
 
         comp.ngAfterViewInit();
