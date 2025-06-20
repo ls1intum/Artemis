@@ -113,17 +113,17 @@ public class HazelcastDistributedMap<K, V> implements DistributedMap<K, V> {
         class HazelcastMapEntryListener implements EntryAddedListener<K, V>, EntryRemovedListener<K, V>, EntryUpdatedListener<K, V> {
 
             @Override
-            public void entryAdded(EntryEvent event) {
+            public void entryAdded(EntryEvent<K, V> event) {
                 listener.entryAdded();
             }
 
             @Override
-            public void entryRemoved(EntryEvent event) {
+            public void entryRemoved(EntryEvent<K, V> event) {
                 listener.entryRemoved();
             }
 
             @Override
-            public void entryUpdated(EntryEvent event) {
+            public void entryUpdated(EntryEvent<K, V> event) {
                 listener.entryUpdated();
             }
         }
