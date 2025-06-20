@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 import { NgClass, NgStyle } from '@angular/common';
 import { EmojiSearch } from '@ctrl/ngx-emoji-mart';
 import { EmojiData, EmojiService } from '@ctrl/ngx-emoji-mart/ngx-emoji';
@@ -16,10 +16,12 @@ const emojiSearch = new EmojiSearch(emojiService);
     providers: [EmojiSearch, EmojiService],
 })
 export class EmojiSuggestionDropdownComponent {
-    @Input() suggestions: { name: string; emoji: string }[] = [];
-    @Input() dropdownStyle: { [key: string]: string } = {};
-    @Output() onSelect = new EventEmitter<{ name: string; emoji: string }>();
-    @Input() activeIndex: number = 0;
+    suggestions = input<{ name: string; emoji: string }[]>([]);
+    dropdownStyle = input<{ [key: string]: string }>({});
+    activeIndex = input<number>(0);
+    activeIndexChange = output<number>();
+
+    onSelect = output<{ name: string; emoji: string }>();
 
     constructor() {}
 }

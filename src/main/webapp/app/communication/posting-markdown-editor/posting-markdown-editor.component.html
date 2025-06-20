@@ -37,12 +37,13 @@
         </ng-container>
         <!-- End of Preview-->
     </jhi-markdown-editor-monaco>
-    @if (showEmojiDropdown) {
+    @if (showEmojiDropdown()) {
         <jhi-emoji-suggestion-dropdown
-            [suggestions]="emojiSuggestions"
-            [dropdownStyle]="emojiDropdownStyle"
-            [activeIndex]="emojiActiveIndex"
+            [suggestions]="emojiSuggestions()"
+            [dropdownStyle]="emojiDropdownStyle()"
+            [activeIndex]="emojiActiveIndex()"
             (onSelect)="onEmojiSuggestionSelect($event)"
+            (activeIndexChange)="emojiActiveIndex.set($event)"
         />
     }
 </div>

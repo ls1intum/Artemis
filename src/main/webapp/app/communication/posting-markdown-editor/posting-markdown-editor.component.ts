@@ -17,6 +17,7 @@ import {
     inject,
     input,
     output,
+    signal,
 } from '@angular/core';
 import * as monaco from 'monaco-editor';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
@@ -107,11 +108,11 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
     private overlay = inject(Overlay);
 
     // --- Emoji dropdown state ---
-    emojiSuggestions: { name: string; emoji: string }[] = [];
-    showEmojiDropdown = false;
-    emojiDropdownStyle: { [key: string]: string } = {};
-    lastEmojiMatch: { match: string; index: number } | null = null;
-    emojiActiveIndex = 0;
+    emojiSuggestions = signal<{ name: string; emoji: string }[]>([]);
+    showEmojiDropdown = signal<boolean>(false);
+    emojiDropdownStyle = signal<{ [key: string]: string }>({});
+    lastEmojiMatch = signal<{ match: string; index: number } | null>(null);
+    emojiActiveIndex = signal<number>(0);
     // Vertical offset in pixels to position the dropdown below the cursor
     private EMOJI_DROPDOWN_VERTICAL_OFFSET = 28;
 
@@ -244,12 +245,12 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
         // Emoji suggestion logic
         const matches = newValue.match(/:([a-zA-Z0-9_+-]*)/g);
         let query = '';
-        this.showEmojiDropdown = false;
-        this.emojiSuggestions = [];
-        this.emojiDropdownStyle = {};
-        this.lastEmojiMatch = null;
+        this.showEmojiDropdown.set(false);
+        this.emojiSuggestions.set([]);
+        this.emojiDropdownStyle.set({});
+        this.lastEmojiMatch.set(null);
         // Update emojiActiveIndex
-        this.emojiActiveIndex = 0;
+        this.emojiActiveIndex.set(0);
         if (matches) {
             const lastMatch = matches[matches.length - 1];
             const lastIndex = newValue.lastIndexOf(lastMatch);
@@ -261,18 +262,21 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
                     const line = lines.length;
                     const column = lines[lines.length - 1].length + 1;
                     // Use the new public getScrolledVisiblePosition API
-                    const coords = this.markdownEditor.monacoEditor.getScrolledVisiblePosition({ lineNumber: line, column });
+                    const coords = this.markdownEditor.monacoEditor.getScrolledVisiblePosition({
+                        lineNumber: line,
+                        column,
+                    });
                     if (coords) {
-                        this.emojiDropdownStyle = {
+                        this.emojiDropdownStyle.set({
                             display: 'block',
                             position: 'absolute',
                             left: `${coords.left}px`,
                             top: `${coords.top + coords.height + this.EMOJI_DROPDOWN_VERTICAL_OFFSET}px`,
                             zIndex: '1000',
-                        };
-                        this.emojiSuggestions = suggestions;
-                        this.showEmojiDropdown = true;
-                        this.lastEmojiMatch = { match: lastMatch, index: lastIndex };
+                        });
+                        this.emojiSuggestions.set(suggestions);
+                        this.showEmojiDropdown.set(true);
+                        this.lastEmojiMatch.set({ match: lastMatch, index: lastIndex });
                     }
                 }
             }
@@ -284,12 +288,13 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
     ngOnDestroy(): void {
         window.removeEventListener('resize', this.handleResize);
     }
+
     handleResize = () => {
-        if (this.showEmojiDropdown && this.lastEmojiMatch && this.content != null) {
+        if (this.showEmojiDropdown() && this.lastEmojiMatch() && this.content != null) {
             // Only reposition, do not change content or suggestions
             const newValue = this.content;
-            const lastIndex = this.lastEmojiMatch.index;
-            const suggestions = this.emojiSuggestions;
+            const lastIndex = this.lastEmojiMatch()?.index;
+            const suggestions = this.emojiSuggestions();
             if (suggestions.length > 0 && this.markdownEditor && this.markdownEditor.monacoEditor && (this.markdownEditor.monacoEditor as any)._editor) {
                 const editor = (this.markdownEditor.monacoEditor as any)._editor;
                 const lines = newValue.substring(0, lastIndex).split('\n');
@@ -297,29 +302,29 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
                 const column = lines[lines.length - 1].length + 1;
                 const coords = editor.getScrolledVisiblePosition({ lineNumber: line, column });
                 if (coords) {
-                    this.emojiDropdownStyle = {
+                    this.emojiDropdownStyle.set({
                         display: 'block',
                         position: 'absolute',
                         left: `${coords.left}px`,
                         top: `${coords.top + coords.height + this.EMOJI_DROPDOWN_VERTICAL_OFFSET}px`,
                         zIndex: '1000',
-                    };
+                    });
                 }
             }
         }
     };
 
     onEmojiSuggestionSelect(selected: { name: string; emoji: string }) {
-        if (!this.lastEmojiMatch) return;
-        const { match, index } = this.lastEmojiMatch;
+        if (!this.lastEmojiMatch()) return;
+        const { match, index } = this.lastEmojiMatch()!;
         const before = this.content?.substring(0, index) ?? '';
         const after = this.content?.substring(index + match.length) ?? '';
         const newText = before + selected.emoji + after;
         this.content = newText;
-        this.showEmojiDropdown = false;
-        this.emojiSuggestions = [];
-        this.emojiDropdownStyle = {};
-        this.lastEmojiMatch = null;
+        this.showEmojiDropdown.set(false);
+        this.emojiSuggestions.set([]);
+        this.emojiDropdownStyle.set({});
+        this.lastEmojiMatch.set(null);
         if (this.markdownEditor && this.markdownEditor.monacoEditor && (this.markdownEditor.monacoEditor as any)._editor) {
             const editor = (this.markdownEditor.monacoEditor as any)._editor;
             const model = this.markdownEditor.monacoEditor.getModel();
@@ -336,25 +341,25 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
 
     // Add keyboard navigation for emoji suggestion dropdown
     onEmojiSuggestionKeyDown(event: KeyboardEvent) {
-        if (!this.showEmojiDropdown || !this.emojiSuggestions.length) return;
+        if (!this.showEmojiDropdown() || !this.emojiSuggestions().length) return;
         if (event.key === 'ArrowDown') {
             event.preventDefault();
-            this.emojiActiveIndex = (this.emojiActiveIndex + 1) % this.emojiSuggestions.length;
+            this.emojiActiveIndex.set((this.emojiActiveIndex() + 1) % this.emojiSuggestions().length);
         } else if (event.key === 'ArrowUp') {
             event.preventDefault();
-            this.emojiActiveIndex = (this.emojiActiveIndex - 1 + this.emojiSuggestions.length) % this.emojiSuggestions.length;
+            this.emojiActiveIndex.set((this.emojiActiveIndex() - 1 + this.emojiSuggestions().length) % this.emojiSuggestions().length);
         } else if (event.key === 'Enter') {
             event.preventDefault();
-            if (this.emojiSuggestions[this.emojiActiveIndex]) {
-                this.onEmojiSuggestionSelect(this.emojiSuggestions[this.emojiActiveIndex]);
+            if (this.emojiSuggestions()[this.emojiActiveIndex()]) {
+                this.onEmojiSuggestionSelect(this.emojiSuggestions()[this.emojiActiveIndex()]);
             }
         } else if (event.key === 'Escape') {
-            this.showEmojiDropdown = false;
+            this.showEmojiDropdown.set(false);
         }
     }
 
     onKeyDown(event: KeyboardEvent) {
-        if (this.showEmojiDropdown && ['ArrowDown', 'ArrowUp', 'Enter', 'Escape'].includes(event.key)) {
+        if (this.showEmojiDropdown() && ['ArrowDown', 'ArrowUp', 'Enter', 'Escape'].includes(event.key)) {
             this.onEmojiSuggestionKeyDown(event);
             // Prevent further handling of Enter when dropdown is open
             if (event.key === 'Enter') {
