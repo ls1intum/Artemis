@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +21,7 @@ import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.ma
 import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.queue.DistributedQueue;
 import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.topic.DistributedTopic;
 
+@Lazy
 @Service
 @Profile({ PROFILE_LOCALCI, PROFILE_BUILDAGENT })
 public class HazelcastDistributedDataProviderService implements DistributedDataProvider {
