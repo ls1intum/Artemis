@@ -106,7 +106,7 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
     fallbackConversationId = computed<number | undefined>(() => this.activeConversation()?.id);
 
     protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
-    private overlay = inject(Overlay);
+    private readonly overlay = inject(Overlay);
 
     // --- Emoji dropdown state ---
     emojiSuggestions = signal<{ name: string; emoji: string }[]>([]);
@@ -235,7 +235,9 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
     /**
      * upon touching the element, this method gets triggered (required)
      */
-    registerOnTouched(): void {}
+    registerOnTouched(): void {
+        // Required by ControlValueAccessor interface
+    }
 
     /**
      * changes in bound markdown content
@@ -269,11 +271,8 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
                     });
                     if (coords) {
                         this.emojiDropdownStyle.set({
-                            display: 'block',
-                            position: 'absolute',
                             left: `${coords.left}px`,
                             top: `${coords.top + coords.height + this.EMOJI_DROPDOWN_VERTICAL_OFFSET}px`,
-                            zIndex: '1000',
                         });
                         this.emojiSuggestions.set(suggestions);
                         this.showEmojiDropdown.set(true);
@@ -290,31 +289,39 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
         window.removeEventListener('resize', this.handleResize);
     }
 
+    /**
+     * Handles repositioning of the emoji dropdown when the window is resized.
+     * Only updates position coordinates while maintaining the open state of the dropdown
+     * when it's currently visible and there's an active emoji match.
+     */
     handleResize = () => {
         if (this.showEmojiDropdown() && this.lastEmojiMatch() && this.content != null) {
             // Only reposition, do not change content or suggestions
             const newValue = this.content;
             const lastIndex = this.lastEmojiMatch()?.index;
             const suggestions = this.emojiSuggestions();
-            if (suggestions.length > 0 && this.markdownEditor && this.markdownEditor.monacoEditor && (this.markdownEditor.monacoEditor as any)._editor) {
-                const editor = (this.markdownEditor.monacoEditor as any)._editor;
+            if (suggestions.length > 0 && this.markdownEditor?.monacoEditor) {
                 const lines = newValue.substring(0, lastIndex).split('\n');
                 const line = lines.length;
                 const column = lines[lines.length - 1].length + 1;
-                const coords = editor.getScrolledVisiblePosition({ lineNumber: line, column });
+                const coords = this.markdownEditor.monacoEditor.getScrolledVisiblePosition({ lineNumber: line, column });
                 if (coords) {
                     this.emojiDropdownStyle.set({
-                        display: 'block',
-                        position: 'absolute',
                         left: `${coords.left}px`,
                         top: `${coords.top + coords.height + this.EMOJI_DROPDOWN_VERTICAL_OFFSET}px`,
-                        zIndex: '1000',
                     });
                 }
             }
         }
     };
 
+    /**
+     * Processes the selection of an emoji from the dropdown.
+     * Replaces the original emoji shortcode (e.g. ":smile:") with the actual emoji character,
+     * updates the editor content, and positions the cursor after the inserted emoji.
+     *
+     * @param selected The selected emoji object with the properties 'name' and 'emoji'
+     */
     onEmojiSuggestionSelect(selected: { name: string; emoji: string }) {
         if (!this.lastEmojiMatch()) return;
         const { match, index } = this.lastEmojiMatch()!;
@@ -326,21 +333,29 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
         this.emojiSuggestions.set([]);
         this.emojiDropdownStyle.set({});
         this.lastEmojiMatch.set(null);
-        if (this.markdownEditor && this.markdownEditor.monacoEditor && (this.markdownEditor.monacoEditor as any)._editor) {
-            const editor = (this.markdownEditor.monacoEditor as any)._editor;
+        if (this.markdownEditor?.monacoEditor) {
             const model = this.markdownEditor.monacoEditor.getModel();
-            if (editor && model) {
+            if (model) {
                 model.setValue(newText);
                 const pos = before.length + selected.emoji.length;
                 const { lineNumber, column } = model.getPositionAt(pos);
-                editor.setPosition({ lineNumber, column });
+                this.markdownEditor.monacoEditor.setPosition({ lineNumber, column });
             }
         }
         this.onChange(this.content);
         this.valueChanged();
     }
 
-    // Add keyboard navigation for emoji suggestion dropdown
+    /**
+     * Handles keyboard inputs for emoji dropdown navigation.
+     * Enables controlling the dropdown via arrow keys, Enter, and Escape:
+     * - ArrowDown: Moves selection to the next emoji
+     * - ArrowUp: Moves selection to the previous emoji
+     * - Enter: Selects the currently highlighted emoji
+     * - Escape: Closes the dropdown
+     *
+     * @param event The keyboard event with the pressed key
+     */
     onEmojiSuggestionKeyDown(event: KeyboardEvent) {
         if (!this.showEmojiDropdown() || !this.emojiSuggestions().length) return;
         if (event.key === 'ArrowDown') {

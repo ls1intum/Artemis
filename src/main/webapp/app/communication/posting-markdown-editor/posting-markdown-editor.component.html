@@ -40,6 +40,7 @@
     @if (showEmojiDropdown()) {
         <jhi-emoji-suggestion-dropdown
             #emojiDropdown
+            class="emoji-dropdown-positioned"
             [suggestions]="emojiSuggestions()"
             [dropdownStyle]="emojiDropdownStyle()"
             [activeIndex]="emojiActiveIndex()"
