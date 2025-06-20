@@ -139,8 +139,11 @@ export class CoursePracticeQuizComponent {
     applySelection() {
         this.submission.submittedAnswers = [];
         const question = this.currentQuestion();
+        if (!question) {
+            return;
+        }
 
-        switch (question!.type) {
+        switch (question.type) {
             case QuizQuestionType.MULTIPLE_CHOICE: {
                 const answerOptions = this.selectedAnswerOptions;
                 const mcSubmittedAnswer = new MultipleChoiceSubmittedAnswer();
