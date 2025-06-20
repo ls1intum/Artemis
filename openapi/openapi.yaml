@@ -375,9 +375,6 @@ components:
         endTime: {type: string}
         location: {type: string, maxLength: 2000, minLength: 1}
       required: [date, endTime, startTime]
-    EmptyResponse:
-      description: An empty response (no content)
-      properties: {}
     StudentExport:
       type: object
       properties:

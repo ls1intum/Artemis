@@ -8,7 +8,7 @@ const getAllTypescriptFiles = (dir: string): string[] => {
         const fullPath = join(dir, file);
         const stat = statSync(fullPath);
         if (stat.isDirectory()) {
-            results = results.concat(getAllTSFiles(fullPath));
+            results = results.concat(getAllTypescriptFiles(fullPath));
         } else if (file.endsWith(".ts")) {
             results.push(fullPath);
         }
