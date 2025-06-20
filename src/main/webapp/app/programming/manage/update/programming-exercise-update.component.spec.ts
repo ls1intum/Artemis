@@ -1204,7 +1204,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
         (comp as any).exercisePlagiarismComponent = signal<ExerciseUpdatePlagiarismComponent>({
             isFormValid: signal<boolean>(true),
-        }).asReadonly();
+        } as unknown as ExerciseUpdatePlagiarismComponent).asReadonly();
 
         comp.ngAfterViewInit();
         // we migrate from subscriptions to signals eventually

@@ -209,7 +209,7 @@ describe('TextExercise Management Update Component', () => {
             comp.exerciseTitleChannelNameComponent = { titleChannelNameComponent: { formValidChanges: new Subject() } } as ExerciseTitleChannelNameComponent;
             (comp as any).exercisePlagiarismComponent = signal<ExerciseUpdatePlagiarismComponent>({
                 isFormValid: signal<boolean>(false),
-            }).asReadonly();
+            } as unknown as ExerciseUpdatePlagiarismComponent).asReadonly();
             comp.teamConfigFormGroupComponent = { formValidChanges: new Subject() } as TeamConfigFormGroupComponent;
             comp.bonusPoints = { valueChanges: new Subject(), valid: true } as unknown as NgModel;
             comp.points = { valueChanges: new Subject(), valid: true } as unknown as NgModel;
