@@ -221,7 +221,7 @@ export class CoursePracticeQuizComponent {
         this.shortAnswerSubmittedTexts = [];
         const question = this.currentQuestion();
         if (question) {
-            const submittedAnswer = this.submission.submittedAnswers?.[0];
+            const submittedAnswer = this.submission.submittedAnswers?.find((answer) => answer.quizQuestion?.id === question.id);
 
             switch (question.type) {
                 case QuizQuestionType.MULTIPLE_CHOICE:
@@ -245,9 +245,9 @@ export class CoursePracticeQuizComponent {
         this.result = result;
         if (this.result) {
             this.showingResult = true;
-            const submittedAnswers = this.submission.submittedAnswers?.[0];
-            if (submittedAnswers) {
-                this.questionScores = roundValueSpecifiedByCourseSettings(submittedAnswers.scoreInPoints, this.course());
+            const submittedAnswer = this.submission.submittedAnswers?.find((answer) => answer.quizQuestion?.id === this.currentQuestion()?.id);
+            if (submittedAnswer) {
+                this.questionScores = roundValueSpecifiedByCourseSettings(submittedAnswer.scoreInPoints, this.course());
             }
         }
     }
