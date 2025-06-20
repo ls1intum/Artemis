@@ -18,6 +18,7 @@ import {
     input,
     output,
     signal,
+    viewChild,
 } from '@angular/core';
 import * as monaco from 'monaco-editor';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
@@ -78,7 +79,7 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
     private positionBuilder = inject(OverlayPositionBuilder);
 
     @ViewChild(MarkdownEditorMonacoComponent, { static: true }) markdownEditor: MarkdownEditorMonacoComponent;
-    @ViewChild('emojiDropdown') emojiDropdown: EmojiSuggestionDropdownComponent;
+    emojiDropdown = viewChild<EmojiSuggestionDropdownComponent>('emojiDropdown');
 
     @Input() maxContentLength: number;
     @Input() editorHeight: MarkdownEditorHeight = MarkdownEditorHeight.INLINE;
@@ -379,11 +380,10 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
         if (this.showEmojiDropdown() && ['ArrowDown', 'ArrowUp', 'Enter', 'Escape'].includes(event.key)) {
             // Prevent default behavior for arrow keys when dropdown is open
             event.preventDefault();
-            event.stopPropagation();
-
             // Set keyboard navigation mode in the emoji dropdown component to disable hover effects
-            if (this.emojiDropdown && (event.key === 'ArrowDown' || event.key === 'ArrowUp')) {
-                this.emojiDropdown.setKeyboardNavigation();
+            event.stopPropagation();
+            if (this.emojiDropdown() && (event.key === 'ArrowDown' || event.key === 'ArrowUp')) {
+                this.emojiDropdown()!.setKeyboardNavigation();
             }
 
             // Manually handle emoji dropdown navigation
