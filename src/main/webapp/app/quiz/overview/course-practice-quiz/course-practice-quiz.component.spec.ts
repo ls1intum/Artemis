@@ -183,7 +183,7 @@ describe('CoursePracticeQuizComponent', () => {
         component.onSubmit();
         expect(alertSpy).toHaveBeenCalledWith(
             expect.objectContaining({
-                message: 'No exercise ID found for current question.',
+                message: 'error.noExerciseIdForQuestion',
             }),
         );
         expect(component.isSubmitting).toBeFalse();
@@ -209,6 +209,7 @@ describe('CoursePracticeQuizComponent', () => {
         component.currentIndex.set(1);
         const answer = new MultipleChoiceSubmittedAnswer();
         answer.selectedOptions = [{ id: 1 } as any];
+        answer.quizQuestion = question2;
         component.submission.submittedAnswers = [answer];
         component.applySubmission();
         expect(component.selectedAnswerOptions).toEqual([{ id: 1 }]);
@@ -218,6 +219,7 @@ describe('CoursePracticeQuizComponent', () => {
         component.currentIndex.set(0);
         const answer = new DragAndDropSubmittedAnswer();
         answer.mappings = [{ id: 2 } as any];
+        answer.quizQuestion = question1;
         component.submission.submittedAnswers = [answer];
         component.applySubmission();
         expect(component.dragAndDropMappings).toEqual([{ id: 2 }]);
@@ -227,14 +229,16 @@ describe('CoursePracticeQuizComponent', () => {
         component.currentIndex.set(2);
         const answer = new ShortAnswerSubmittedAnswer();
         answer.submittedTexts = [{ id: 3 } as any];
+        answer.quizQuestion = question3;
         component.submission.submittedAnswers = [answer];
         component.applySubmission();
         expect(component.shortAnswerSubmittedTexts).toEqual([{ id: 3 }]);
     });
 
     it('should show result and calculate score', () => {
-        const result: Result = { id: 1, submission: { submittedAnswers: [{ scoreInPoints: 1 }] } as any };
-        component.submission.submittedAnswers = [{ scoreInPoints: 1 }];
+        const result: Result = { id: 1, submission: { submittedAnswers: [{ scoreInPoints: 1, quizQuestion: question1 }] } as any };
+        component.currentIndex.set(0);
+        component.submission.submittedAnswers = [{ scoreInPoints: 1, quizQuestion: question1 }];
         const roundSpy = jest.spyOn(Utils, 'roundValueSpecifiedByCourseSettings');
         component.showResult(result);
         expect(component.result).toBe(result);
