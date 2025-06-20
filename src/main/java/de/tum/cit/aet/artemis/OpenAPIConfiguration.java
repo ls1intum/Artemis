@@ -67,20 +67,19 @@ public class OpenAPIConfiguration {
             }
 
             Paths paths = openApi.getPaths();
-            if (paths != null) {
-                paths.forEach((path, pathItem) -> {
-                    pathItem.readOperations().forEach(operation -> {
-                        stripTrailingUnderscoreDigitCharacter(operation);
-                        removeDtoSuffixFromResponseSchemas(operation);
-                        removeDtoSuffixFromRequestBodyIfExisting(operation);
-
-                        removeResourceSuffixFromTags(operation);
-                    });
-                });
-            }
-            else {
+            if (paths == null) {
                 log.warn("Paths are null in OpenAPI configuration.");
+                return;
             }
+            paths.forEach((path, pathItem) -> {
+                pathItem.readOperations().forEach(operation -> {
+                    stripTrailingUnderscoreDigitCharacter(operation);
+                    removeDtoSuffixFromResponseSchemas(operation);
+                    removeDtoSuffixFromRequestBodyIfExisting(operation);
+
+                    removeResourceSuffixFromTags(operation);
+                });
+            });
         };
     }
 
@@ -91,46 +90,48 @@ public class OpenAPIConfiguration {
 
     private void removeDtoSuffixFromResponseSchemas(Operation operation) {
         ApiResponses responses = operation.getResponses();
-        if (responses != null) {
-            responses.forEach((responseCode, response) -> {
-                Content content = response.getContent();
-                if (content != null) {
-                    content.forEach((contentType, mediaType) -> {
-                        if (mediaType != null && mediaType.getSchema() != null) {
-                            removeDTOSuffixesFromSchemaRecursively(mediaType.getSchema());
-                        }
-                        else {
-                            log.warn("MediaType or Schema is null for content type: {}", contentType);
-                        }
-                    });
-                }
-                else {
-                    log.warn("Response with code {} has no content.", responseCode);
-                }
-            });
+        if (responses == null) {
+            return;
         }
+        responses.forEach((responseCode, response) -> {
+            Content content = response.getContent();
+            if (content != null) {
+                content.forEach((contentType, mediaType) -> {
+                    if (mediaType != null && mediaType.getSchema() != null) {
+                        removeDTOSuffixesFromSchemaRecursively(mediaType.getSchema());
+                    }
+                    else {
+                        log.warn("MediaType or Schema is null for content type: {}", contentType);
+                    }
+                });
+            }
+            else {
+                log.warn("Response with code {} has no content.", responseCode);
+            }
+        });
     }
 
     private void removeDtoSuffixFromAttributeNames(Map<String, Schema> schemas) {
         schemas.forEach((key, value) -> {
             @SuppressWarnings("unchecked")
             Map<String, Schema<?>> properties = value.getProperties();
-            if (properties != null) {
-                properties.forEach((propertyKey, propertyValue) -> {
-                    removeDTOSuffixesFromSchemaRecursively(propertyValue);
-                });
+
+            if (properties == null) {
+                return;
             }
+            properties.forEach((propertyKey, propertyValue) -> {
+                removeDTOSuffixesFromSchemaRecursively(propertyValue);
+            });
         });
     }
 
     private static Map<String, Schema> filterForSchemasWithDtoSuffixAndStripSuffix(Components components) {
-        Map<String, Schema> schemas = components.getSchemas().entrySet().stream().filter(entry -> entry.getKey().endsWith("DTO"))
+        return components.getSchemas().entrySet().stream().filter(entry -> entry.getKey().endsWith("DTO"))
                 .collect(Collectors.toMap(entry -> entry.getKey().substring(0, entry.getKey().length() - DTO_NUMBER_OF_CHARACTERS), entry -> {
                     Schema<?> schema = entry.getValue();
                     schema.setName(entry.getKey().substring(0, entry.getKey().length() - DTO_NUMBER_OF_CHARACTERS));
                     return schema;
                 }));
-        return schemas;
     }
 
     private void removeDtoSuffixFromRequestBodyIfExisting(Operation operation) {

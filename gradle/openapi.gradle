@@ -15,7 +15,9 @@
         apiDocsUrl.set("http://localhost:8080/api-docs.yaml")
         outputDir.set(file("$rootDir/openapi"))
         outputFileName.set("openapi.yaml")
-        waitTimeInSeconds.set(180)
+        // This is the time we wait for the Artemis server to start. The default is 30s, which might not suffice on less powerful machines.
+        def waitTimeSeconds = 180;
+        waitTimeInSeconds.set(waitTimeSeconds)
         customBootRun {
 
             jvmArgs = ["-Dspring.profiles.active=test,artemis,core,atlas,scheduling,athena,apollon,iris,aeolus,theia,lti," +
@@ -81,6 +83,19 @@
         }
     }
 
+    /**
+     * Recursively traverses the given map and prunes any entries that resolve to an invalid $ref.
+     *
+     * <p>For each key/value pair in {@code originalMap}, this method invokes {@link #pruneNode(Object, Map)}
+     * on the value. If the result is non-null, the entry is retained with its original key;
+     * otherwise the entry is dropped.</p>
+     * This is needed as we only include DTOs in the OpenAPI spec.
+     * Not all our endpoints use DTOs, currently, so we get some invalid $ref entries and they need to be pruned.
+     *
+     * @param originalMap   the OpenAPI spec (or sub-map) to prune
+     * @param componentsMap a map of component category → (component name → definition)
+     * @return a new map containing only entries whose values did not prune to null
+     */
     private Map<String, Object> pruneInvalidReferences(
         Map<String, Object> originalMap,
         Map<String, Map<String, Object>> componentsMap
@@ -111,11 +126,12 @@
         if (mapValue.size() == 1 && mapValue.containsKey('$ref')) {
             String referenceString = mapValue['$ref'] as String
         // Matches strings like "#/components/{componentType}/{componentName}",
-        // capturing the component type in group 1 and the component name in group 2
         def componentMatcher = (referenceString =~ /^#\/components\/([^\/]+)\/(.+)$/)
             if (componentMatcher.matches()) {
-                String componentCategory   = componentMatcher[0][1]
-                String componentIdentifier = componentMatcher[0][2]
+                def componentTypeIndex = 1
+                def componentNameIndex = 2
+                String componentCategory   = componentMatcher[0][componentTypeIndex]
+                String componentIdentifier = componentMatcher[0][componentNameIndex]
                 if (!componentsMap[componentCategory]?.containsKey(componentIdentifier)) {
                     return null
                 }
