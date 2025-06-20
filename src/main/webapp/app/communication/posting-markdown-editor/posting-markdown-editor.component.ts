@@ -115,7 +115,9 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
     lastEmojiMatch = signal<{ match: string; index: number } | null>(null);
     emojiActiveIndex = signal<number>(0);
     // Vertical offset in pixels to position the dropdown below the cursor
-    private EMOJI_DROPDOWN_VERTICAL_OFFSET = 28;
+    private readonly EMOJI_DROPDOWN_VERTICAL_OFFSET = 28;
+    // Regex pattern to match emoji shortcodes (e.g., :smile:, :heart:)
+    private readonly EMOJI_SHORTCODE_PATTERN = /:([a-zA-Z0-9_+-]*)/g;
 
     /**
      * on initialization: sets commands that will be available as formatting buttons during creation/editing of postings
@@ -154,10 +156,9 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
     ngAfterViewInit(): void {
         this.markdownEditor.enableTextFieldMode();
         const editor = this.markdownEditor.monacoEditor;
-        if (editor && (editor as any)._editor) {
-            (editor as any)._editor.onKeyDown((event: any) => {
-                const domEvent = event.browserEvent as KeyboardEvent;
-                this.onKeyDown(domEvent);
+        if (editor) {
+            editor.onKeyDown((event: monaco.IKeyboardEvent) => {
+                this.onKeyDown(event.browserEvent);
             });
         }
         if (editor) {
@@ -246,7 +247,7 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
     updateField(newValue: string) {
         this.content = newValue;
         // Emoji suggestion logic
-        const matches = newValue.match(/:([a-zA-Z0-9_+-]*)/g);
+        const matches = newValue.match(this.EMOJI_SHORTCODE_PATTERN);
         let query = '';
         this.showEmojiDropdown.set(false);
         this.emojiSuggestions.set([]);
