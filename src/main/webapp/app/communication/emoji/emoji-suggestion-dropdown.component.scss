@@ -14,12 +14,18 @@
     z-index: 1000;
 }
 .emoji-suggestion-item.active,
-.emoji-suggestion-item:hover {
+.emoji-suggestion-item:hover:not(.keyboard-navigation .emoji-suggestion-item:hover) {
     background: var(--dropdown-link-hover-bg, var(--bs-secondary-bg, #e9ecef));
     color: var(--bs-body-color, #222);
     transition:
         background 0.15s,
         color 0.15s;
+}
+
+/* Disable hover effects during keyboard navigation */
+.keyboard-navigation .emoji-suggestion-item:hover:not(.active) {
+    background: transparent;
+    color: var(--bs-body-color, #eee);
 }
 
 .emoji-suggestion-item {

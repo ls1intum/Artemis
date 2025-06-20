@@ -39,6 +39,7 @@
     </jhi-markdown-editor-monaco>
     @if (showEmojiDropdown()) {
         <jhi-emoji-suggestion-dropdown
+            #emojiDropdown
             [suggestions]="emojiSuggestions()"
             [dropdownStyle]="emojiDropdownStyle()"
             [activeIndex]="emojiActiveIndex()"

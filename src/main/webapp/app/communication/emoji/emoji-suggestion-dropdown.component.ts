@@ -20,10 +20,25 @@ export class EmojiSuggestionDropdownComponent {
     dropdownStyle = input<{ [key: string]: string }>({});
     activeIndex = input<number>(0);
     activeIndexChange = output<number>();
+    isKeyboardNavigation = false;
 
     onSelect = output<{ name: string; emoji: string }>();
 
     constructor() {}
+
+    /**
+     * Set keyboard navigation mode when active index changes via keyboard
+     */
+    setKeyboardNavigation() {
+        this.isKeyboardNavigation = true;
+    }
+
+    /**
+     * Reset keyboard navigation mode when mouse moves
+     */
+    resetKeyboardNavigation() {
+        this.isKeyboardNavigation = false;
+    }
 }
 
 /**

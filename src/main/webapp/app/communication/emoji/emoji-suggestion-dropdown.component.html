@@ -1,11 +1,18 @@
-<div class="emoji-suggestion-dropdown" [ngStyle]="dropdownStyle()" role="listbox" aria-label="Emoji suggestions">
+<div
+    class="emoji-suggestion-dropdown"
+    [ngStyle]="dropdownStyle()"
+    role="listbox"
+    aria-label="Emoji suggestions"
+    [class.keyboard-navigation]="isKeyboardNavigation"
+    (mousemove)="resetKeyboardNavigation()"
+>
     @if (suggestions()?.length) {
         @for (s of suggestions(); track $index; let i = $index) {
             <div
                 class="emoji-suggestion-item"
                 [ngClass]="{ active: i === activeIndex() }"
                 (mousedown)="onSelect.emit(s)"
-                (mouseenter)="activeIndexChange.emit(i)"
+                (mouseenter)="resetKeyboardNavigation(); activeIndexChange.emit(i)"
                 (mouseleave)="activeIndexChange.emit(-1)"
                 [attr.aria-selected]="i === activeIndex()"
                 role="option"
