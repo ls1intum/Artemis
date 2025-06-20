@@ -9,6 +9,7 @@ import java.security.MessageDigest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
@@ -29,6 +30,7 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
  * REST controller for providing Athena access to the repositories of programming exercises.
  */
 @Profile(PROFILE_ATHENA)
+@Lazy
 @RestController
 @RequestMapping("api/athena/public/")
 public class PublicAthenaResource {
