@@ -22,7 +22,7 @@ export class ExerciseUpdatePlagiarismComponent implements OnInit {
 
     private formStatus: Signal<string>;
 
-    isFormValid: Signal<boolean>;
+    isFormValid = computed(() => this.formStatus() === 'VALID');
 
     formValid: boolean;
     formValidChanges = new Subject<boolean>();
