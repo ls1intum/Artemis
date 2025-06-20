@@ -2,13 +2,9 @@ package de.tum.cit.aet.artemis.programming.service.localci.distributedData.api;
 
 import java.util.Set;
 
-import com.hazelcast.config.Config;
-
-import de.tum.cit.aet.artemis.core.config.CacheConfiguration;
 import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.queue.DistributedQueue;
 import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.topic.DistributedTopic;
-import tech.jhipster.config.JHipsterProperties;
 
 public interface DistributedDataProvider {
 
@@ -16,7 +12,7 @@ public interface DistributedDataProvider {
 
     /**
      * Returns a priority queue with the given name.<br>
-     * For internal Hazelcast IQueue usage the comparator needs to be set in the config at startup, see {@link CacheConfiguration#configureQueueCluster(Config, JHipsterProperties)}
+     * For internal Hazelcast IQueue usage the comparator needs to be set in the config at startup, see {@link CacheConfiguration#}
      * for an example*
      *
      * @param name the name of the priority queue
