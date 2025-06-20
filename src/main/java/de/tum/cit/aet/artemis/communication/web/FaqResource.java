@@ -10,8 +10,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.ws.rs.BadRequestException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -253,9 +251,6 @@ public class FaqResource {
     public ResponseEntity<Void> enableFaqForCourse(@PathVariable long courseId) {
         log.debug("REST request to enable faq for course with id: {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        if (course.isFaqEnabled()) {
-            throw new BadRequestException("FAQ is already enabled for this course.");
-        }
         course.setFaqEnabled(true);
         courseRepository.save(course);
         return ResponseEntity.ok().build();

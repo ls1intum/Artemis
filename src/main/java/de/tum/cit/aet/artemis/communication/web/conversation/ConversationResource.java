@@ -7,8 +7,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.ws.rs.BadRequestException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -308,11 +306,8 @@ public class ConversationResource extends ConversationManagementResource {
 
     @PutMapping("{courseId}/enable")
     @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<Void> enableConversation(@PathVariable long courseId, @RequestParam boolean withMessaging) {
+    public ResponseEntity<Void> enableConversation(@PathVariable long courseId, @RequestParam(required = false) boolean withMessaging) {
         Course course = courseRepository.findByIdElseThrow(courseId);
-        if (course.getCourseInformationSharingConfiguration() != null && course.getCourseInformationSharingConfiguration() != CourseInformationSharingConfiguration.DISABLED) {
-            throw new BadRequestException("Communication already enabled for this course.");
-        }
         if (withMessaging) {
             course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
         }
