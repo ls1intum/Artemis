@@ -189,7 +189,7 @@ export class CoursePracticeQuizComponent {
         this.quizParticipationService.submitForPractice(this.submission, exerciseId).subscribe({
             next: (response: HttpResponse<Result>) => {
                 if (response.body) {
-                    this.onSubmitSuccess(response.body!);
+                    this.onSubmitSuccess(response.body);
                 }
             },
             error: (error: HttpErrorResponse) => this.onSubmitError(error),
