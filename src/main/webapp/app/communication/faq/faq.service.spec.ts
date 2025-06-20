@@ -272,4 +272,8 @@ describe('Faq Service', () => {
             expect(req.request.method).toBe('POST');
         });
     });
+    it('should make PUT request to enable FAQ', () => {
+        service.enable(1).subscribe((resp) => expect(resp).toEqual(of(EMPTY)));
+        httpMock.expectOne({ method: 'PUT', url: `api/communication/courses/1/faqs/enable` });
+    });
 });
