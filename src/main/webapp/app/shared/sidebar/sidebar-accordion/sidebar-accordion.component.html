@@ -40,7 +40,7 @@
                                     }}
                                 </div>
                             }
-                            <div class="p-2">
+                            <div>
                                 @for (sidebarItem of weekGroup.items | searchFilter: ['title', 'type'] : searchValue; let last = $last; track sidebarItem.id) {
                                     <div [ngClass]="{ 'mb-2': !last }">
                                         <!-- loading sidebarCard with help of a directive depending on its size input-->
@@ -60,7 +60,7 @@
                     </div>
                 </div>
             }
-            <hr class="sidebar-divider" />
+            <hr class="sidebar-divider my-1" />
         </div>
     }
 }

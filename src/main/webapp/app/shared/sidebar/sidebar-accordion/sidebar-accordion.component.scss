@@ -26,8 +26,8 @@ hr {
 }
 
 .sidebar-divider {
-    border: none;
-    border-top: 2px solid var(--overview-light-border-color);
-    margin: 0;
+    border-width: 1px !important;
+    border-style: solid;
+    border-top: var(--overview-light-border-color);
     transition: border-color 0.2s ease;
 }
