@@ -50,6 +50,29 @@ public class OpenAPIConfiguration {
     @Value("${artemis.version}")
     private String version;
 
+    /**
+     * Creates an {@link OpenApiCustomizer} that applies a series of schema and operation name transformations
+     * to the generated OpenAPI definition for the Artemis Application Server API.
+     *
+     * <p>
+     * The customizer will:
+     * </p>
+     * <ul>
+     * <li>Set the API title, version, and contact information on the OpenAPI {@link Info} object.</li>
+     * <li>Filter component schemas to only include those ending in “Dto”, strip the “Dto” suffix
+     * from their schema names, and remove the “Dto” suffix from all property names within those schemas.</li>
+     * <li>Iterate over all paths and operations to:
+     * <ul>
+     * <li>Remove any trailing underscore plus digit characters from operation IDs.</li>
+     * <li>Remove the “Dto” suffix from any response schemas.</li>
+     * <li>Remove the “Dto” suffix from any request-body schemas, if present.</li>
+     * <li>Remove any resource-name suffix from operation tags.</li>
+     * </ul>
+     * </li>
+     * </ul>
+     *
+     * @return an {@link OpenApiCustomizer} that will apply the above transformations
+     */
     @Bean
     public OpenApiCustomizer schemaCustomizer() {
         return openApi -> {
