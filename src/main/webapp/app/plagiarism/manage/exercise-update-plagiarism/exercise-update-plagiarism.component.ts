@@ -1,8 +1,8 @@
-import { Component, OnInit, Signal, computed, effect, input } from '@angular/core';
+import { Component, OnDestroy, OnInit, Signal, computed, inject, model } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DEFAULT_PLAGIARISM_DETECTION_CONFIG, Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
-import { Subject } from 'rxjs';
+import { Subscription, tap } from 'rxjs';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -15,22 +15,22 @@ import { toSignal } from '@angular/core/rxjs-interop';
     standalone: true,
     imports: [ReactiveFormsModule, TranslateDirective, FaIconComponent, NgbTooltip, ArtemisTranslatePipe],
 })
-export class ExerciseUpdatePlagiarismComponent implements OnInit {
-    readonly exercise = input.required<Exercise>();
+export class ExerciseUpdatePlagiarismComponent implements OnInit, OnDestroy {
+    readonly exercise = model.required<Exercise>();
+    readonly fb = inject(FormBuilder);
 
     form: FormGroup;
 
     private formStatus: Signal<string>;
+    private formSubscription: Subscription;
 
     isFormValid = computed(() => this.formStatus() === 'VALID');
 
-    formValid: boolean;
-    formValidChanges = new Subject<boolean>();
     isCPCCollapsed = true;
     minimumSizeTooltip?: string;
     readonly faQuestionCircle = faQuestionCircle;
 
-    constructor(private fb: FormBuilder) {
+    constructor() {
         this.form = this.fb.group({
             continuousPlagiarismControlEnabled: [false],
             continuousPlagiarismControlPostDueDateChecksEnabled: [false],
@@ -42,46 +42,41 @@ export class ExerciseUpdatePlagiarismComponent implements OnInit {
 
         this.formStatus = toSignal(this.form.statusChanges, { initialValue: this.form.status });
 
-        this.isFormValid = computed(() => this.formStatus() === 'VALID');
-
-        this.form.get('continuousPlagiarismControlEnabled')!.valueChanges.subscribe((enabled: boolean) => {
-            const fields = [
-                'continuousPlagiarismControlPostDueDateChecksEnabled',
-                'similarityThreshold',
-                'minimumScore',
-                'minimumSize',
-                'continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod',
-            ];
-            fields.forEach((key) => {
-                const ctrl = this.form.get(key);
-                if (enabled) {
-                    ctrl?.enable();
-                } else {
-                    ctrl?.disable();
-                }
+        this.formSubscription = this.form.valueChanges
+            .pipe(
+                tap((form) => {
+                    const enabled = form.continuousPlagiarismControlEnabled;
+                    [
+                        'continuousPlagiarismControlPostDueDateChecksEnabled',
+                        'similarityThreshold',
+                        'minimumScore',
+                        'minimumSize',
+                        'continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod',
+                    ].forEach((k) => this.form.get(k)?.[enabled ? 'enable' : 'disable']({ emitEvent: false }));
+                }),
+            )
+            .subscribe((cfg) => {
+                this.exercise?.update((old) => ({
+                    ...old,
+                    plagiarismDetectionConfig: { ...cfg },
+                }));
             });
-        });
-
-        effect(() => {
-            this.formValid = this.isFormValid();
-            this.formValidChanges.next(this.formValid);
-        });
     }
 
     ngOnInit(): void {
-        const ex = this.exercise();
-        if (ex && !ex.plagiarismDetectionConfig) {
-            ex.plagiarismDetectionConfig = DEFAULT_PLAGIARISM_DETECTION_CONFIG;
+        if (this.exercise() && !this.exercise()?.plagiarismDetectionConfig) {
+            this.exercise().plagiarismDetectionConfig = DEFAULT_PLAGIARISM_DETECTION_CONFIG;
         }
         this.minimumSizeTooltip = this.getMinimumSizeTooltip();
 
         this.form.patchValue({
-            continuousPlagiarismControlEnabled: ex?.plagiarismDetectionConfig?.continuousPlagiarismControlEnabled ?? false,
-            continuousPlagiarismControlPostDueDateChecksEnabled: ex?.plagiarismDetectionConfig?.continuousPlagiarismControlPostDueDateChecksEnabled ?? false,
-            similarityThreshold: ex?.plagiarismDetectionConfig?.similarityThreshold ?? null,
-            minimumScore: ex?.plagiarismDetectionConfig?.minimumScore ?? null,
-            minimumSize: ex?.plagiarismDetectionConfig?.minimumSize ?? null,
-            continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod: ex?.plagiarismDetectionConfig?.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod ?? null,
+            continuousPlagiarismControlEnabled: this.exercise()?.plagiarismDetectionConfig?.continuousPlagiarismControlEnabled ?? false,
+            continuousPlagiarismControlPostDueDateChecksEnabled: this.exercise()?.plagiarismDetectionConfig?.continuousPlagiarismControlPostDueDateChecksEnabled ?? false,
+            similarityThreshold: this.exercise()?.plagiarismDetectionConfig?.similarityThreshold ?? null,
+            minimumScore: this.exercise()?.plagiarismDetectionConfig?.minimumScore ?? null,
+            minimumSize: this.exercise()?.plagiarismDetectionConfig?.minimumSize ?? null,
+            continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod:
+                this.exercise()?.plagiarismDetectionConfig?.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod ?? null,
         });
     }
 
@@ -95,5 +90,9 @@ export class ExerciseUpdatePlagiarismComponent implements OnInit {
             case ExerciseType.TEXT:
                 return 'artemisApp.plagiarism.minimumSizeTooltipTextExercise';
         }
+    }
+
+    ngOnDestroy(): void {
+        this.formSubscription.unsubscribe();
     }
 }

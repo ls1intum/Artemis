@@ -27,6 +27,7 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { ExerciseUpdatePlagiarismComponent } from 'app/plagiarism/manage/exercise-update-plagiarism/exercise-update-plagiarism.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
+import { signal } from '@angular/core';
 
 describe('TextExercise Management Update Component', () => {
     let comp: TextExerciseUpdateComponent;
@@ -206,10 +207,9 @@ describe('TextExercise Management Update Component', () => {
         it('should calculate valid sections', () => {
             const calculateValidSpy = jest.spyOn(comp, 'calculateFormSectionStatus');
             comp.exerciseTitleChannelNameComponent = { titleChannelNameComponent: { formValidChanges: new Subject() } } as ExerciseTitleChannelNameComponent;
-            comp.exerciseUpdatePlagiarismComponent = {
-                formValidChanges: new Subject(),
-                formValid: true,
-            } as ExerciseUpdatePlagiarismComponent;
+            (comp as any).exercisePlagiarismComponent = signal<ExerciseUpdatePlagiarismComponent>({
+                isFormValid: () => true,
+            }).asReadonly();
             comp.teamConfigFormGroupComponent = { formValidChanges: new Subject() } as TeamConfigFormGroupComponent;
             comp.bonusPoints = { valueChanges: new Subject(), valid: true } as unknown as NgModel;
             comp.points = { valueChanges: new Subject(), valid: true } as unknown as NgModel;

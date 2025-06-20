@@ -96,8 +96,6 @@ describe('Exercise Update Plagiarism Component', () => {
     });
 
     it('should aggregate aggregate input changes', () => {
-        const nextSpy = jest.spyOn(comp.formValidChanges, 'next');
-
         fixture.componentRef.setInput('exercise', {
             plagiarismDetectionConfig: {
                 continuousPlagiarismControlEnabled: false,
@@ -118,7 +116,5 @@ describe('Exercise Update Plagiarism Component', () => {
         fixture.detectChanges();
 
         expect(comp.isFormValid()).toBeTrue();
-        expect(nextSpy).toHaveBeenCalledOnce();
-        expect(nextSpy).toHaveBeenNthCalledWith(1, true);
     });
 });
