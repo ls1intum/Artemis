@@ -58,8 +58,7 @@ export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestion
 
     /** Set default preview of the markdown editor as preview for the multiple choice question **/
     get showPreview(): boolean {
-        const markdownEditor = this.markdownEditor();
-        return markdownEditor && markdownEditor.inPreviewMode;
+        return this.markdownEditor()?.inPreviewMode;
     }
     showMultipleChoiceQuestionPreview = true;
     showMultipleChoiceQuestionVisual = true;
