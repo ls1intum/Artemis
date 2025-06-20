@@ -360,13 +360,16 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
 
     onKeyDown(event: KeyboardEvent) {
         if (this.showEmojiDropdown() && ['ArrowDown', 'ArrowUp', 'Enter', 'Escape'].includes(event.key)) {
+            // Prevent default behavior for arrow keys when dropdown is open
+            event.preventDefault();
+            event.stopPropagation();
+
+            // Manually handle emoji dropdown navigation
             this.onEmojiSuggestionKeyDown(event);
-            // Prevent further handling of Enter when dropdown is open
-            if (event.key === 'Enter') {
-                event.stopPropagation();
-                return;
-            }
-            return;
+
+            // Completely block further event processing by returning false
+            // This prevents Monaco editor from handling the event
+            return false;
         }
         // Prevent a newline from being added to the text when pressing enter
         if (this.suppressNewlineOnEnter && event.key === 'Enter' && !event.shiftKey) {
