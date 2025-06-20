@@ -71,10 +71,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 { provide: ActivatedRoute, useValue: route },
                 { provide: Router, useClass: MockRouter },
                 { provide: NgbModal, useClass: MockNgbModalService },
-                {
-                    provide: ProgrammingExerciseInstructionAnalysisService,
-                    useClass: ProgrammingExerciseInstructionAnalysisService,
-                },
+                { provide: ProgrammingExerciseInstructionAnalysisService, useClass: ProgrammingExerciseInstructionAnalysisService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: ProfileService, useClass: MockProfileService },

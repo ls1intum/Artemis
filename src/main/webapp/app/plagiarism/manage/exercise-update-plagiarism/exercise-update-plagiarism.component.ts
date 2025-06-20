@@ -8,7 +8,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { toSignal } from '@angular/core/rxjs-interop';
-
 @Component({
     selector: 'jhi-exercise-update-plagiarism',
     templateUrl: './exercise-update-plagiarism.component.html',
@@ -55,11 +54,11 @@ export class ExerciseUpdatePlagiarismComponent implements OnInit, OnDestroy {
                     ].forEach((k) => this.form.get(k)?.[enabled ? 'enable' : 'disable']({ emitEvent: false }));
                 }),
             )
-            .subscribe((cfg) => {
-                this.exercise?.update((old) => ({
-                    ...old,
-                    plagiarismDetectionConfig: { ...cfg },
-                }));
+            .subscribe((plagiarismDetectionConfig) => {
+                this.exercise.update((exercise) => {
+                    exercise.plagiarismDetectionConfig = { ...plagiarismDetectionConfig };
+                    return exercise;
+                });
             });
     }
 
