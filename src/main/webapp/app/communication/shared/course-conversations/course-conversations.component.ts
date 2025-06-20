@@ -140,7 +140,7 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
     ],
 })
 export class CourseConversationsComponent implements OnInit, OnDestroy {
-    protected readonly isCommunicationEnabled = computed(() => {
+    readonly isCommunicationEnabled = computed(() => {
         const currentCourse = this.course();
         return currentCourse ? isCommunicationEnabled(currentCourse) : false;
     });

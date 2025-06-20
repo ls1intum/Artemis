@@ -35,7 +35,7 @@ import { CourseStorageService } from 'app/core/course/manage/services/course-sto
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { CourseAccessStorageService } from '../services/course-access-storage.service';
 import { CourseSidebarService } from 'app/core/course/overview/services/course-sidebar.service';
-import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
+import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
 import { toSignal } from '@angular/core/rxjs-interop';
 
 /**
@@ -122,10 +122,10 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
 
         effect(() => {
             const updatedCourse = this.course();
-            if (!updatedCourse?.courseInformationSharingConfiguration || updatedCourse?.courseInformationSharingConfiguration === CourseInformationSharingConfiguration.DISABLED) {
-                this.disableConversationService();
-            } else {
+            if (isCommunicationEnabled(updatedCourse)) {
                 this.setupConversationService();
+            } else {
+                this.disableConversationService();
             }
         });
     }

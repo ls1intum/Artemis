@@ -50,7 +50,7 @@ import { LectureComponent } from 'app/lecture/manage/lecture/lecture.component';
 import { CourseManagementStatisticsComponent } from 'app/core/course/manage/statistics/course-management-statistics.component';
 import { CourseConversationsComponent } from 'app/communication/shared/course-conversations/course-conversations.component';
 import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
-import { Course, CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
+import { Course, isCommunicationEnabled } from 'app/core/course/shared/entities/course.model';
 import { CourseDeletionSummaryDTO } from 'app/core/course/shared/entities/course-deletion-summary.model';
 
 @Component({
@@ -355,11 +355,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
 
     private addCommunicationItem(currentCourse: Course) {
         const communicationItem: SidebarItem[] = [];
-        if (
-            currentCourse.isAtLeastInstructor ||
-            currentCourse.courseInformationSharingConfiguration === CourseInformationSharingConfiguration.COMMUNICATION_ONLY ||
-            currentCourse.courseInformationSharingConfiguration === CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING
-        ) {
+        if (currentCourse.isAtLeastInstructor || isCommunicationEnabled(currentCourse)) {
             communicationItem.push(this.sidebarItemService.getCommunicationsItem(this.courseId()));
         }
         return communicationItem;

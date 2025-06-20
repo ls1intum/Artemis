@@ -369,6 +369,19 @@ describe('CourseManagementContainerComponent', () => {
 
         expect(sidebarItems.find((item) => item.title === 'FAQs')).toBeTruthy();
     });
+    it('should not include sidebar items for disabled features for non-instructors', async () => {
+        const courseWithDisabledFeatures = {
+            ...course1,
+            isAtLeastEditor: true,
+            isAtLeastInstructor: false,
+            faqEnabled: false,
+            courseInformationSharingConfiguration: CourseInformationSharingConfiguration.DISABLED,
+        };
+        component.course.set(courseWithDisabledFeatures);
+        const sidebarItems = component.getSidebarItems();
+        expect(sidebarItems.find((item) => item.title === 'Communication')).toBeUndefined();
+        expect(sidebarItems.find((item) => item.title === 'FAQs')).toBeUndefined();
+    });
 
     it('should subscribe to course updates when handleCourseIdChange is called', () => {
         component.handleCourseIdChange(2);
