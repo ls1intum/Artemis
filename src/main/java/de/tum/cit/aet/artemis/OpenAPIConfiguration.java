@@ -95,19 +95,18 @@ public class OpenAPIConfiguration {
         }
         responses.forEach((responseCode, response) -> {
             Content content = response.getContent();
-            if (content != null) {
-                content.forEach((contentType, mediaType) -> {
-                    if (mediaType != null && mediaType.getSchema() != null) {
-                        removeDTOSuffixesFromSchemaRecursively(mediaType.getSchema());
-                    }
-                    else {
-                        log.warn("MediaType or Schema is null for content type: {}", contentType);
-                    }
-                });
-            }
-            else {
+            if (content == null) {
                 log.warn("Response with code {} has no content.", responseCode);
+                return;
             }
+            content.forEach((contentType, mediaType) -> {
+                if (mediaType != null && mediaType.getSchema() != null) {
+                    removeDTOSuffixesFromSchemaRecursively(mediaType.getSchema());
+                }
+                else {
+                    log.warn("MediaType or Schema is null for content type: {}", contentType);
+                }
+            });
         });
     }
 
@@ -201,13 +200,18 @@ public class OpenAPIConfiguration {
         return openApi -> openApi.getPaths().values().forEach(pathItem -> pathItem.readOperations().forEach(op -> {
             ApiResponses responses = op.getResponses();
             ApiResponse okResponse = responses.get(OK_STATUS_CODE);
-            if (okResponse != null && okResponse.getContent() != null) {
-                MediaType media = okResponse.getContent().get("text/csv");
-                if (media != null) {
-                    // replace schema with a binary string so clients treat CSV as a file download
-                    media.setSchema(new StringSchema().type("string").format("binary"));
-                }
+            if (okResponse == null) {
+                return;
             }
+            if (okResponse.getContent() == null) {
+                return;
+            }
+            MediaType media = okResponse.getContent().get("text/csv");
+            if (media == null) {
+                return;
+            }
+            // replace schema with a binary string so clients treat CSV as a file download
+            media.setSchema(new StringSchema().type("string").format("binary"));
         }));
     }
 
