@@ -198,7 +198,7 @@ public class CourseLearnerProfileService {
             courseLearnerProfile.setProficiency(currentProficiency + CORRECTION_PERCENTAGE * (estimatedProficiency - currentProficiency));
             courseLearnerProfileRepository.save(courseLearnerProfile);
 
-            log.debug("Update proficiency: LC {}, LCTemplate {}, Score {}. Previous proficiency: {}; Current proficiency: {}", linesChanged, linesChangedInTemplate, score,
+            log.error("Update proficiency: LC {}, LCTemplate {}, Score {}. Previous proficiency: {}; Current proficiency: {}", linesChanged, linesChangedInTemplate, score,
                     currentProficiency, courseLearnerProfile.getProficiency());
         });
 
