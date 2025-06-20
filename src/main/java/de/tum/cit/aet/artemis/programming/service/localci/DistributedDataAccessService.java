@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -26,6 +27,7 @@ import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.to
  * This service is used to access the distributed data structures.
  * All data structures are created lazily, meaning they are only created when they are first accessed.
  */
+@Lazy
 @Service
 @Profile({ PROFILE_LOCALCI, PROFILE_BUILDAGENT })
 public class DistributedDataAccessService {
