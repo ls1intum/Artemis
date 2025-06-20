@@ -4,6 +4,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
@@ -19,6 +20,7 @@ import de.tum.cit.aet.artemis.atlas.repository.PrerequisiteRepository;
  */
 @Conditional(AtlasEnabled.class)
 @Service
+@Lazy
 public class LearningPathRepositoryService {
 
     private final LearningPathRepository learningPathRepository;

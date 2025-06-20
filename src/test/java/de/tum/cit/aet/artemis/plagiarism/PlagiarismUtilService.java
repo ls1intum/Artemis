@@ -9,6 +9,7 @@ import java.util.Set;
 import jakarta.validation.constraints.NotNull;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
@@ -37,6 +38,7 @@ import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 /**
  * Service responsible for initializing the database with specific testdata related to plagiarisms for use in integration tests.
  */
+@Lazy
 @Service
 @Profile(SPRING_PROFILE_TEST)
 public class PlagiarismUtilService {

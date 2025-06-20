@@ -139,10 +139,10 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
             this.isExamStarted.set(isStarted);
         });
 
-        await this.initAfterCourseLoad();
         this.courseActionItems.set(this.getCourseActionItems());
         this.isSidebarCollapsed.set(this.activatedComponentReference()?.isCollapsed ?? false);
         this.sidebarItems.set(this.getSidebarItems());
+        await this.initAfterCourseLoad();
     }
 
     /**
