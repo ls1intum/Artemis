@@ -19,3 +19,9 @@ export class PlagiarismCase {
     public verdictPointDeduction?: number;
     public createdByContinuousPlagiarismControl?: boolean;
 }
+
+export class PlagiarismCaseDTO {
+    public id: number;
+    public verdict?: PlagiarismVerdict;
+    public studentId?: number;
+}

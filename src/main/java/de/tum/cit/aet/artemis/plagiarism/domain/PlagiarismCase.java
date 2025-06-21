@@ -34,6 +34,7 @@ public class PlagiarismCase extends AbstractAuditingEntity {
     @ManyToOne
     private User student;
 
+    // TODO: double check if this is actually supported or if it can be removed
     @ManyToOne
     private Team team;
 

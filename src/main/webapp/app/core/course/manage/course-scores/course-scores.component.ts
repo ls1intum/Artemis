@@ -39,7 +39,7 @@ import {
 } from 'app/shared/export/export-constants';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
 import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
-import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
+import { PlagiarismCaseDTO } from 'app/plagiarism/shared/entities/PlagiarismCase';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -270,12 +270,9 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         // find grading scale if it exists for course
         const gradingScaleObservable = this.gradingSystemService.findGradingScaleForCourse(courseId).pipe(catchError(() => of(new HttpResponse<GradingScale>())));
 
-        let plagiarismCasesObservable;
-        if (this.plagiarismEnabled) {
-            plagiarismCasesObservable = this.plagiarismCasesService.getCoursePlagiarismCasesForInstructor(courseId);
-        } else {
-            plagiarismCasesObservable = of(new HttpResponse<PlagiarismCase[]>());
-        }
+        const plagiarismCasesObservable = this.plagiarismEnabled
+            ? this.plagiarismCasesService.getCoursePlagiarismCasesForScores(courseId)
+            : of(new HttpResponse<PlagiarismCaseDTO[]>());
 
         forkJoin([findGradeScoresObservable, gradingScaleObservable, plagiarismCasesObservable]).subscribe(([courseGradeInformation, gradingScaleResponse, plagiarismCases]) => {
             this.gradeScores = courseGradeInformation.gradeScores;
@@ -488,7 +485,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
      * Sets grading scale related properties
      * @param plagiarismCases the list of plagiarism cases involving the students of the course
      */
-    calculateGradingScaleInformation(plagiarismCases?: PlagiarismCase[]) {
+    calculateGradingScaleInformation(plagiarismCases?: PlagiarismCaseDTO[]) {
         if (this.maxNumberOfOverallPoints >= 0 && this.gradingScale) {
             const plagiarismMap = this.createStudentPlagiarismMap(plagiarismCases);
             const overallPercentage = this.maxNumberOfOverallPoints > 0 ? (this.averageNumberOfOverallPoints / this.maxNumberOfOverallPoints) * 100 : 0;
@@ -503,32 +500,33 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
 
     /**
      * Finds the correct grade step for the student according to the given gradingScale, also handles special grades.
-     * @param student The student for which the grade should be determined.
+     * @param studentStatistics The student for which the grade should be determined.
      * @param gradingScale The grading scale of the course.
      * @param plagiarismMap An object which has value true for a student id if the student has at least one PlagiarismVerdict.PLAGIARISM verdict assigned in the course.
      */
-    findStudentGradeStep(student: CourseScoresStudentStatistics, gradingScale: GradingScale, plagiarismMap: { [id: number]: boolean }): GradeStep | undefined {
-        if (!student.gradeScores.length) {
+    findStudentGradeStep(studentStatistics: CourseScoresStudentStatistics, gradingScale: GradingScale, plagiarismMap: { [id: number]: boolean }): GradeStep | undefined {
+        if (!studentStatistics.gradeScores.length) {
             // Currently the server does not return CourseScoresStudentStatistics for users without participations,
             // but this should handle noParticipation grade if the server response changes.
             return {
                 gradeName: gradingScale.noParticipationGrade || GradingScale.DEFAULT_NO_PARTICIPATION_GRADE,
             } as GradeStep;
-        } else if (plagiarismMap[student.student.id!]) {
+        } else if (plagiarismMap[studentStatistics.student.id!]) {
             return {
                 gradeName: gradingScale.plagiarismGrade || GradingScale.DEFAULT_PLAGIARISM_GRADE,
             } as GradeStep;
         } else {
-            const overallPercentageForStudent = student.overallPoints && this.maxNumberOfOverallPoints ? (student.overallPoints / this.maxNumberOfOverallPoints) * 100 : 0;
+            const overallPercentageForStudent =
+                studentStatistics.overallPoints && this.maxNumberOfOverallPoints ? (studentStatistics.overallPoints / this.maxNumberOfOverallPoints) * 100 : 0;
             return this.gradingSystemService.findMatchingGradeStep(gradingScale.gradeSteps, overallPercentageForStudent);
         }
     }
 
-    private createStudentPlagiarismMap(plagiarismCases?: PlagiarismCase[]): { [id: number]: boolean } {
+    private createStudentPlagiarismMap(plagiarismCases?: PlagiarismCaseDTO[]): { [id: number]: boolean } {
         const plagiarismMap: { [id: number]: boolean } = {};
         plagiarismCases?.forEach((plagiarismCase) => {
-            if (plagiarismCase.verdict === PlagiarismVerdict.PLAGIARISM && plagiarismCase.student?.id) {
-                plagiarismMap[plagiarismCase.student.id] = true;
+            if (plagiarismCase.verdict === PlagiarismVerdict.PLAGIARISM && plagiarismCase.studentId) {
+                plagiarismMap[plagiarismCase.studentId] = true;
             }
         });
         return plagiarismMap;
