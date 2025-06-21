@@ -275,7 +275,7 @@ describe('FaqComponent', () => {
     });
 
     it('should call faq service to enable faq', () => {
-        const enableFaqSpy = jest.spyOn(faqService, 'enable').mockReturnValue(EMPTY);
+        const enableFaqSpy = jest.spyOn(faqService, 'enable').mockReturnValue(of(new HttpResponse()));
         faqComponentFixture.detectChanges();
         faqComponent.enableFaq();
         expect(enableFaqSpy).toHaveBeenCalledExactlyOnceWith(courseId);

@@ -53,7 +53,7 @@ export class LearningPathInstructorPageComponent {
         }
     }
 
-    protected async enableLearningPaths(): Promise<void> {
+    async enableLearningPaths(): Promise<void> {
         try {
             this.isLoading.set(true);
             await this.learningPathApiService.enableLearningPaths(this.courseId());

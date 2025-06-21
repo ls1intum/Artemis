@@ -532,8 +532,8 @@ describe('CourseManagementContainerComponent', () => {
             courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING,
         });
         jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/1/communication');
-
         component.onSubRouteActivate({});
+        fixture.detectChanges();
 
         expect(component.communicationRouteLoaded()).toBeTrue();
         expect(setUpConversationServiceSpy).toHaveBeenCalled();
@@ -678,7 +678,6 @@ describe('CourseManagementContainerComponent', () => {
 
     it('should handle component activation with controls', () => {
         const getPageTitleSpy = jest.spyOn(component, 'getPageTitle');
-        const setUpConversationServiceSpy = jest.spyOn(component as any, 'setupConversationService');
         const tryRenderControlsSpy = jest.spyOn(component as any, 'tryRenderControls');
 
         const controlsComponent = {
@@ -691,7 +690,6 @@ describe('CourseManagementContainerComponent', () => {
         component.onSubRouteActivate(controlsComponent);
 
         expect(getPageTitleSpy).toHaveBeenCalled();
-        expect(setUpConversationServiceSpy).toHaveBeenCalled();
         expect(component.controlConfiguration()).toBe(controlsComponent.controlConfiguration);
 
         const template = {} as TemplateRef<any>;

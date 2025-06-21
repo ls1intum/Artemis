@@ -7,7 +7,6 @@ import {
     OnDestroy,
     OnInit,
     QueryList,
-    Signal,
     TemplateRef,
     ViewChild,
     ViewChildren,
@@ -86,8 +85,6 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     isShownViaLti = signal<boolean>(false);
     hasSidebar = signal<boolean>(false);
 
-    courseUpdatedSignal!: Signal<Course | undefined>;
-
     private navigationEnd$ = this.router.events.pipe(filter((event) => event instanceof NavigationEnd));
 
     // Create a signal from the observable
@@ -122,7 +119,8 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
 
         effect(() => {
             const updatedCourse = this.course();
-            if (isCommunicationEnabled(updatedCourse)) {
+            const communicationRouteLoaded = this.communicationRouteLoaded();
+            if (isCommunicationEnabled(updatedCourse) && communicationRouteLoaded) {
                 this.setupConversationService();
             } else {
                 this.disableConversationService();

@@ -372,18 +372,20 @@ describe('CourseOverviewComponent', () => {
         const spy = jest.spyOn(metisConversationService, 'checkForUnreadMessages');
         metisConversationService._hasUnreadMessages$.next(hasNewMessages);
         jest.spyOn(metisConversationService, 'setUpConversationService').mockReturnValue(of());
+        jest.spyOn(router, 'url', 'get').mockReturnValue('/courses/1/communication');
 
         await component.ngOnInit();
 
         route.snapshot.firstChild!.routeConfig!.path = 'exercises';
         component.onSubRouteActivate({ controlConfiguration: undefined });
-
+        fixture.detectChanges();
         expect(component.hasUnreadMessages()).toBe(hasNewMessages);
 
         const tabs = ['communication', 'exercises', 'communication'];
         tabs.forEach((tab) => {
             route.snapshot.firstChild!.routeConfig!.path = tab;
             component.onSubRouteActivate({ controlConfiguration: undefined });
+            fixture.detectChanges();
 
             expect(spy).toHaveBeenCalledOnce();
         });

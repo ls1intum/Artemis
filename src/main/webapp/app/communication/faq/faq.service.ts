@@ -170,7 +170,7 @@ export class FaqService {
             observe: 'response',
         });
     }
-    enable(courseId: number): Observable<void> {
-        return this.http.put<void>(`${this.resourceUrl}/${courseId}/faqs/enable`, null);
+    enable(courseId: number): Observable<HttpResponse<void>> {
+        return this.http.put<void>(`${this.resourceUrl}/${courseId}/faqs/enable`, null, { observe: 'response' });
     }
 }

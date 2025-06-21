@@ -276,7 +276,7 @@ examples.forEach((activeConversation) => {
                 tick();
 
                 expect(spy).toHaveBeenCalledExactlyOnceWith(ChannelsCreateDialogComponent, expect.anything());
-                expect(mockModalRef.componentInstance.course()).toEqual(course);
+                expect(mockModalRef.componentInstance.course).toEqual(course);
                 expect(mockModalRef.componentInstance.initialize).toHaveBeenCalled();
             }));
         });
