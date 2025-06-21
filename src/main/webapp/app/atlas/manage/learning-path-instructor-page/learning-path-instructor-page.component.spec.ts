@@ -135,15 +135,4 @@ describe('LearningPathInstructorPageComponent', () => {
         expect(isLoadingSpy).toHaveBeenNthCalledWith(1, true);
         expect(isLoadingSpy).toHaveBeenNthCalledWith(2, false);
     });
-
-    async function clickEnableLearningPathsButton(): Promise<void> {
-        fixture.detectChanges();
-        await fixture.whenStable();
-
-        const enableLearningPathsButton = fixture.nativeElement.querySelector('#enable-learning-paths-button');
-        enableLearningPathsButton.click();
-
-        fixture.detectChanges();
-        await fixture.whenStable();
-    }
 });
