@@ -30,7 +30,7 @@ Please prepare for the meeting and enter your PR and a short description of the 
 - **Optimized Data Types:** Minimize the size of ``VARCHAR`` and ``DATETIME`` fields (e.g., ``DATETIME(3)`` precision). For enumeration fields, use actual ENUM types in MySQL and ``VARCHAR`` types in PostgreSQL.
 - **Atomic Changesets:** Implement small, atomic database changesets that are easy to roll back in case of issues.
 - **Redundancy and Cleanup:** Identify and avoid unnecessary redundancy; implement periodic cleanup services to manage and remove obsolete data.
-- **Rollback Procedures:** Ensure robust and sensible rollback procedures are always available and tested.
+- **Rollback Procedures:** Ensure robust and sensible rollback procedures are always available and tested. Rollbacks can be performed and tested using the corresponding rollback Gradle tasks provided by Liquibase. Information about this can be found in the `Liquibase documentation <https://docs.liquibase.com/workflows/liquibase-community/automatic-custom-rollbacks.html>`__.
 - **Delete Policy:** Adopt a rename-first approach before deleting database objects, enabling safer rollback.
 - **Major Migrations:** Major database migrations should only occur during ``X.X.0`` releases.
 - **Hibernate Fetching Strategies:** Carefully handle Hibernate fetching strategies (``ManyToOne``, ``OneToMany``, etc.), always preferring lazy loading over eager loading.
