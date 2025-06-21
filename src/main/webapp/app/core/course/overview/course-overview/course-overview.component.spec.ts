@@ -363,9 +363,9 @@ describe('CourseOverviewComponent', () => {
         tabs.forEach((tab) => {
             jest.spyOn(router, 'url', 'get').mockReturnValue(baseUrl + '/' + tab);
             component.onSubRouteActivate({ controlConfiguration: undefined });
-
-            expect(metisConversationServiceStub).toHaveBeenCalledOnce();
+            fixture.detectChanges();
         });
+        expect(metisConversationServiceStub).toHaveBeenCalledOnce();
     });
 
     it.each([true, false])('should determine once if there are unread messages', async (hasNewMessages: boolean) => {

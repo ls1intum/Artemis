@@ -122,7 +122,7 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
             const communicationRouteLoaded = this.communicationRouteLoaded();
             if (isCommunicationEnabled(updatedCourse) && communicationRouteLoaded) {
                 this.setupConversationService();
-            } else {
+            } else if (!isCommunicationEnabled(updatedCourse) && this.conversationServiceInstantiated()) {
                 this.disableConversationService();
             }
         });
