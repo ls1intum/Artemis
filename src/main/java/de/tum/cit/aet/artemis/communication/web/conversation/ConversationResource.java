@@ -304,6 +304,13 @@ public class ConversationResource extends ConversationManagementResource {
         });
     }
 
+    /**
+     * Enables the conversation feature for a course. If withMessaging is true, the course will also allow direct messages.
+     *
+     * @param courseId      the id of the course
+     * @param withMessaging if true, the course will allow direct messages, otherwise only communication in channels
+     * @return ResponseEntity with status 200 (OK)
+     */
     @PutMapping("{courseId}/enable")
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<Void> enableConversation(@PathVariable long courseId, @RequestParam(required = false) boolean withMessaging) {
