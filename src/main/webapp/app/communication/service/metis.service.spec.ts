@@ -53,6 +53,7 @@ import { ForwardedMessage } from 'app/communication/shared/entities/forwarded-me
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
 import { HttpTestingController } from '@angular/common/http/testing';
+import { EMPTY } from 'rxjs';
 
 describe('Metis Service', () => {
     let metisService: MetisService;

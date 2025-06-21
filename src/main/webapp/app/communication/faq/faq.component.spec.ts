@@ -24,7 +24,7 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 import { FaqCategory } from 'app/communication/shared/entities/faq-category.model';
-
+import { EMPTY } from 'rxjs';
 function createFaq(id: number, category: string, color: string): Faq {
     const faq = new Faq();
     faq.id = id;
@@ -275,7 +275,7 @@ describe('FaqComponent', () => {
     });
 
     it('should call faq service to enable faq', () => {
-        const enableFaqSpy = jest.spyOn(faqService, 'enable').mockReturnValue(of(undefined));
+        const enableFaqSpy = jest.spyOn(faqService, 'enable').mockReturnValue(EMPTY);
         faqComponentFixture.detectChanges();
         faqComponent.enableFaq();
         expect(enableFaqSpy).toHaveBeenCalledExactlyOnceWith(courseId);

@@ -10,6 +10,7 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import { Faq, FaqState } from 'app/communication/shared/entities/faq.model';
 import { FaqService } from 'app/communication/faq/faq.service';
 import { FaqCategory } from 'app/communication/shared/entities/faq-category.model';
+import { EMPTY, of } from 'rxjs';
 
 describe('Faq Service', () => {
     let httpMock: HttpTestingController;

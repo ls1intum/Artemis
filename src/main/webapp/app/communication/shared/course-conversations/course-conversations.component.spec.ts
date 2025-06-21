@@ -46,8 +46,7 @@ import {
 } from 'app/communication/course-conversations-components/dialogs/channels-overview-dialog/channels-overview-dialog.component';
 import { ConversationGlobalSearchComponent } from 'app/communication/shared/conversation-global-search/conversation-global-search.component';
 import { AlertService } from 'app/shared/service/alert.service';
-import { FeatureActivationComponent } from 'app/shared/feature-activation/feature-activation.component';
-import { By } from '@angular/platform-browser';
+
 const examples: (ConversationDTO | undefined)[] = [
     undefined,
     generateOneToOneChatDTO({} as OneToOneChatDTO),
