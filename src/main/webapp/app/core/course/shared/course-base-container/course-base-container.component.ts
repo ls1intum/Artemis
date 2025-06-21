@@ -245,8 +245,6 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
         this.communicationRouteLoaded.set(urlSegments.length > 3 && urlSegments[3] === 'communication');
 
         this.hasSidebar.set(this.getHasSidebar());
-        this.setupConversationService();
-
         if (componentRef.controlConfiguration) {
             const provider = componentRef;
             this.controlConfiguration.set(provider.controlConfiguration);

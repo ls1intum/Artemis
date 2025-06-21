@@ -214,7 +214,6 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
                 if (res.body) {
                     this.course.set(res.body);
                 }
-                this.setupConversationService();
             }),
         );
     }

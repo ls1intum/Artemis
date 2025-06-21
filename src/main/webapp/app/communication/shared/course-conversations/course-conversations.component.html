@@ -29,7 +29,7 @@
                         (onSelectConversation)="onConversationSelected($event)"
                         (onUpdateSidebar)="prepareSidebarData()"
                         [itemSelected]="conversationSelected"
-                        [courseId]="course()!.id"
+                        [courseId]="course()?.id"
                         [sidebarData]="sidebarData"
                         (onCreateChannelPressed)="openCreateChannelDialog()"
                         (onMarkAllChannelsAsRead)="markAllChannelAsRead()"

@@ -288,18 +288,20 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                 this.metisConversationService.checkIsCodeOfConductAccepted(this.course()!);
                 this.isServiceSetUp = true;
                 this.isLoading = false;
+                this.channelActions$
+                    .pipe(
+                        debounceTime(500),
+                        distinctUntilChanged(
+                            (prev, curr) =>
+                                curr.action !== 'create' && prev.action === curr.action && prev.channel.id === curr.channel.id && prev.channel.name === curr.channel.name,
+                        ),
+                        takeUntil(this.ngUnsubscribe),
+                    )
+                    .subscribe((channelAction) => {
+                        this.performChannelAction(channelAction);
+                    });
             }
-            this.channelActions$
-                .pipe(
-                    debounceTime(500),
-                    distinctUntilChanged(
-                        (prev, curr) => curr.action !== 'create' && prev.action === curr.action && prev.channel.id === curr.channel.id && prev.channel.name === curr.channel.name,
-                    ),
-                    takeUntil(this.ngUnsubscribe),
-                )
-                .subscribe((channelAction) => {
-                    this.performChannelAction(channelAction);
-                });
+
             this.createChannelFn = (channel: ChannelDTO) => this.metisConversationService.createChannel(channel);
         });
 
@@ -533,7 +535,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
     openCreateGroupChatDialog() {
         const modalRef: NgbModalRef = this.modalService.open(GroupChatCreateDialogComponent, defaultFirstLayerDialogOptions);
-        modalRef.componentInstance.course = this.course;
+        modalRef.componentInstance.course = this.course();
         modalRef.componentInstance.initialize();
         from(modalRef.result)
             .pipe(
@@ -551,7 +553,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
     openCreateOneToOneChatDialog() {
         const modalRef: NgbModalRef = this.modalService.open(OneToOneChatCreateDialogComponent, defaultFirstLayerDialogOptions);
-        modalRef.componentInstance.course = this.course;
+        modalRef.componentInstance.course = this.course();
         modalRef.componentInstance.initialize();
         from(modalRef.result)
             .pipe(
@@ -571,7 +573,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
     openCreateChannelDialog() {
         const modalRef: NgbModalRef = this.modalService.open(ChannelsCreateDialogComponent, defaultSecondLayerDialogOptions);
-        modalRef.componentInstance.course = this.course;
+        modalRef.componentInstance.course = this.course();
         modalRef.componentInstance.initialize();
         from(modalRef.result)
             .pipe(
@@ -599,7 +601,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     openChannelOverviewDialog() {
         const subType = undefined;
         const modalRef: NgbModalRef = this.modalService.open(ChannelsOverviewDialogComponent, defaultFirstLayerDialogOptions);
-        modalRef.componentInstance.course = this.course;
+        modalRef.componentInstance.course = this.course();
         modalRef.componentInstance.createChannelFn = subType === ChannelSubType.GENERAL ? this.metisConversationService.createChannel : undefined;
         modalRef.componentInstance.channelSubType = subType;
         modalRef.componentInstance.initialize();
