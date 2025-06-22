@@ -47,7 +47,7 @@ public class PlagiarismComparison extends DomainObject implements Comparable<Pla
      * which would leave empty references from other plagiarism comparisons. Comparisons are
      * always deleted all at once, so we can also cascade deletion.
      */
-    @JsonIgnoreProperties("plagiarismComparison")
+    @JsonIgnoreProperties(value = "plagiarismComparison", allowSetters = true)
     @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "submission_a_id")
     private PlagiarismSubmission submissionA;
@@ -59,7 +59,7 @@ public class PlagiarismComparison extends DomainObject implements Comparable<Pla
      * which would leave empty references from other plagiarism comparisons. Comparisons are
      * always deleted all at once, so we can also cascade deletion.
      */
-    @JsonIgnoreProperties("plagiarismComparison")
+    @JsonIgnoreProperties(value = "plagiarismComparison", allowSetters = true)
     @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "submission_b_id")
     private PlagiarismSubmission submissionB;

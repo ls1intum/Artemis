@@ -60,7 +60,7 @@ public class PlagiarismSubmission extends DomainObject {
     /**
      * List of elements the related submission consists of.
      */
-    @JsonIgnoreProperties("plagiarismSubmission")
+    @JsonIgnoreProperties(value = "plagiarismSubmission", allowSetters = true)
     @OneToMany(mappedBy = "plagiarismSubmission", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<PlagiarismSubmissionElement> elements;
 
