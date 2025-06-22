@@ -85,6 +85,16 @@ artemis:
     url: http://localhost:5100
     secret: abcdef12345
     restricted-modules: module_text_llm,module_programming_llm
+  hyperion:
+    host: localhost
+    port: 50051
+    use-tls: false  # Set to true for production environments with mTLS
+    # mTLS client certificate authentication (required when TLS is enabled)
+    client-cert-path: ""    # Path to client certificate (.crt or .pem)
+    client-key-path: ""     # Path to client private key (.key or .pem)
+    server-ca-path: ""      # Path to server CA certificate for validation
+    default-timeout-seconds: 60
+    consistency-check-timeout-seconds: 300
   apollon:
     conversion-service-url: http://localhost:8080
 

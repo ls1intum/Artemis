@@ -125,7 +125,6 @@ configurations.configureEach {
     exclude group: "org.apache.lucene", module: "lucene-queryparser"
     exclude group: "org.apache.lucene", module: "lucene-core"
     exclude group: "org.apache.lucene", module: "lucene-analyzers-common"
-    exclude group: "com.google.protobuf", module: "protobuf-java"
 
     exclude group: "org.jasypt", module: "jasypt"
 
@@ -402,6 +401,13 @@ dependencies {
 
     implementation "com.google.errorprone:error_prone_annotations:2.38.0"
 
+    // Hyperion gRPC client dependencies
+    implementation "de.tum.cit.aet.edutelligence:hyperion:${hyperion_version}"
+    implementation "io.grpc:grpc-netty-shaded:1.71.0"
+    implementation "io.grpc:grpc-protobuf:1.71.0"
+    implementation "io.grpc:grpc-services:1.71.0"
+    implementation "io.grpc:grpc-stub:1.71.0"
+
     // NOTE: we want to keep the same unique version for all configurations, implementation and annotationProcessor
     implementation("net.bytebuddy:byte-buddy") { version {              strictly byte_buddy_version } }
     annotationProcessor("net.bytebuddy:byte-buddy") { version {         strictly byte_buddy_version } }
@@ -443,6 +449,10 @@ dependencies {
     testImplementation "org.gradle:gradle-tooling-api:8.14.2"
     testImplementation "org.apache.maven.surefire:surefire-report-parser:3.5.3"
     testImplementation "io.zonky.test:embedded-database-spring-test:2.6.0"
+
+    // gRPC testing dependencies
+    testImplementation "io.grpc:grpc-inprocess:1.71.0"
+    testImplementation "io.grpc:grpc-services:1.71.0"
 
     testImplementation "com.tngtech.archunit:archunit:1.4.1"
     testImplementation "org.skyscreamer:jsonassert:1.5.3"

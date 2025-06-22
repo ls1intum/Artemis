@@ -118,7 +118,7 @@ Naming Conventions for GitHub Pull Requests
 
     1. Possible feature tags are: ``Programming exercises``, ``Integrated code lifecycle``, ``Quiz exercises``, ``Modeling exercises``, ``Text exercises``, ``File upload exercises``, ``Exam mode``,
        ``Grading``, ``Assessment``, ``Communication``, ``Notifications``, ``Team exercises``, ``Lectures``, ``Integrated markdown editor``, ``Plagiarism checks``, ``Learning analytics``,
-       ``Adaptive learning``, ``Learning path``, ``Tutorial groups``, ``Iris``, ``Scalability``, ``Usability``, ``Performance``, ``Infrastructure``, ``Mobile apps``.
+       ``Adaptive learning``, ``Learning path``, ``Tutorial groups``, ``Iris``, ``Hyperion``, ``Scalability``, ``Usability``, ``Performance``, ``Infrastructure``, ``Mobile apps``.
     2. If the change is not visible to end users, or it is a pure development or test improvement, we use the term ``Development``:.
     3. Everything else belongs to the ``General`` category.
 
