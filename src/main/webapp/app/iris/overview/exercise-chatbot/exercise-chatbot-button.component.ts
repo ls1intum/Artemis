@@ -44,6 +44,10 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
     imports: [NgClass, TranslateDirective, FaIconComponent, IrisLogoComponent, HtmlForMarkdownPipe],
 })
 export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
+    protected readonly faCircle = faCircle;
+    protected readonly faChevronDown = faChevronDown;
+    protected readonly faAngleDoubleDown = faAngleDoubleDown;
+
     dialog = inject(MatDialog);
     protected overlay = inject(Overlay);
     protected readonly chatService = inject(IrisChatService);
@@ -63,11 +67,6 @@ export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
     private paramsSubscription: Subscription;
     private latestIrisMessageSubscription: Subscription;
     private queryParamsSubscription: Subscription;
-
-    // Icons
-    faCircle = faCircle;
-    faChevronDown = faChevronDown;
-    faAngleDoubleDown = faAngleDoubleDown;
 
     @ViewChild('chatBubble') chatBubble: ElementRef;
 
