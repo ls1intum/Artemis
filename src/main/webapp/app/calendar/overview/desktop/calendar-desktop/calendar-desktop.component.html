@@ -1,16 +1,16 @@
 <div class="frame">
     <div class="header">
-        <span class="h2">{{ firstDayOfCurrentMonth().format('MMMM YYYY') }}</span>
+        <span class="h2">{{ getMonthDescription() }}</span>
         <div class="spacer"></div>
         <button type="button" class="btn btn-outline-primary" (click)="goToToday()">Today</button>
         <div class="btn-group" role="group">
             <div
                 class="btn"
                 [ngClass]="{
-                    'btn-primary selected': viewMode() === 'week',
-                    'btn-outline-primary': viewMode() !== 'week',
+                    'btn-primary selected': presentation() === 'week',
+                    'btn-outline-primary': presentation() !== 'week',
                 }"
-                (click)="viewMode.set('week')"
+                (click)="presentation.set('week')"
             >
                 Week
             </div>
@@ -18,10 +18,10 @@
             <div
                 class="btn"
                 [ngClass]="{
-                    'btn-primary selected': viewMode() === 'month',
-                    'btn-outline-primary': viewMode() !== 'month',
+                    'btn-primary selected': presentation() === 'month',
+                    'btn-outline-primary': presentation() !== 'month',
                 }"
-                (click)="viewMode.set('month')"
+                (click)="presentation.set('month')"
             >
                 Month
             </div>
@@ -35,7 +35,7 @@
             </button>
         </div>
     </div>
-    @if (viewMode() === 'month') {
+    @if (presentation() === 'month') {
         <calendar-desktop-month [firstDayOfCurrentMonth]="firstDayOfCurrentMonth()" />
     } @else {
         <calendar-desktop-week [firstDayOfCurrentMonth]="firstDayOfCurrentMonth()" [firstDayOfCurrentWeek]="firstDayOfCurrentWeek()" />

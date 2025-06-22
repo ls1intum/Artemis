@@ -15,21 +15,17 @@ import { CalendarDesktopWeekComponent } from 'app/calendar/overview/desktop/cale
 export class CalendarDesktopComponent {
     readonly faChevronRight = faChevronRight;
     readonly faChevronLeft = faChevronLeft;
-    viewMode = signal<'week' | 'month'>('month');
+    presentation = signal<'week' | 'month'>('month');
     firstDayOfCurrentMonth = signal<Dayjs>(dayjs().startOf('month'));
     firstDayOfCurrentWeek = signal<Dayjs>(dayjs().startOf('isoWeek'));
 
     goToPrevious(): void {
-        if (this.viewMode() === 'week') {
+        if (this.presentation() === 'week') {
+            this.firstDayOfCurrentWeek.update((current) => current.subtract(1, 'week'));
             const firstDayOfCurrentWeek = this.firstDayOfCurrentWeek();
             const firstDayOfCurrentMonth = this.firstDayOfCurrentMonth();
             if (firstDayOfCurrentWeek.isBefore(firstDayOfCurrentMonth)) {
                 this.firstDayOfCurrentMonth.update((current) => current.subtract(1, 'month'));
-            } else if (firstDayOfCurrentWeek.isSame(firstDayOfCurrentMonth, 'day')) {
-                this.firstDayOfCurrentMonth.update((current) => current.subtract(1, 'month'));
-                this.firstDayOfCurrentWeek.update((current) => current.subtract(1, 'week'));
-            } else {
-                this.firstDayOfCurrentWeek.update((current) => current.subtract(1, 'week'));
             }
         } else {
             this.firstDayOfCurrentMonth.update((current) => current.subtract(1, 'month'));
@@ -38,16 +34,12 @@ export class CalendarDesktopComponent {
     }
 
     goToNext(): void {
-        if (this.viewMode() === 'week') {
+        if (this.presentation() === 'week') {
+            this.firstDayOfCurrentWeek.update((current) => current.add(1, 'week'));
             const endOfCurrentWeek = this.firstDayOfCurrentWeek().endOf('isoWeek');
             const endOfCurrentMonth = this.firstDayOfCurrentMonth().endOf('month');
             if (endOfCurrentWeek.isAfter(endOfCurrentMonth)) {
                 this.firstDayOfCurrentMonth.update((current) => current.add(1, 'month'));
-            } else if (endOfCurrentWeek.isSame(endOfCurrentMonth, 'day')) {
-                this.firstDayOfCurrentMonth.update((current) => current.add(1, 'month'));
-                this.firstDayOfCurrentWeek.update((current) => current.add(1, 'week'));
-            } else {
-                this.firstDayOfCurrentWeek.update((current) => current.add(1, 'week'));
             }
         } else {
             this.firstDayOfCurrentMonth.update((current) => current.add(1, 'month'));
@@ -58,5 +50,19 @@ export class CalendarDesktopComponent {
     goToToday(): void {
         this.firstDayOfCurrentMonth.set(dayjs().startOf('month'));
         this.firstDayOfCurrentWeek.set(dayjs().startOf('isoWeek'));
+    }
+
+    getMonthDescription(): string {
+        if (this.presentation() === 'month') {
+            return this.firstDayOfCurrentMonth().format('MMMM YYYY');
+        } else {
+            const firstDayOfCurrentWeek = this.firstDayOfCurrentWeek();
+            const lastDayOfCurrentWeek = this.firstDayOfCurrentWeek().endOf('isoWeek');
+            if (lastDayOfCurrentWeek.isSame(firstDayOfCurrentWeek, 'month')) {
+                return firstDayOfCurrentWeek.format('MMMM YYYY');
+            } else {
+                return firstDayOfCurrentWeek.format('MMMM') + ' | ' + lastDayOfCurrentWeek.format('MMMM YYYY');
+            }
+        }
     }
 }

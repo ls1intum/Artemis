@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import dayjs from 'dayjs/esm';
+import { Dayjs } from 'dayjs/esm';
 
 @Component({
     selector: 'all-day-event-section',
@@ -8,5 +8,5 @@ import dayjs from 'dayjs/esm';
     styleUrl: './all-day-event-section.component.scss',
 })
 export class AllDayEventSectionComponent {
-    @Input() days: dayjs.Dayjs[] = [];
+    @Input() days: Dayjs[] = [];
 }
