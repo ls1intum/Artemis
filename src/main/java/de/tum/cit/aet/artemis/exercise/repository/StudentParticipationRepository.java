@@ -89,7 +89,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
 
     // NOTE: we have an edge case for quizzes where we need to take the first submission and not the last one
     @Query("""
-            SELECT DISTINCT NEW de.tum.cit.aet.artemis.exercise.dto.GradeScoreDTO(p.id, u.id, ex.id, r.score)
+            SELECT DISTINCT NEW de.tum.cit.aet.artemis.exercise.dto.GradeScoreDTO(p.id, u.id, ex.id, r.score, p.presentationScore)
             FROM StudentParticipation p
                 JOIN p.student u
                 JOIN p.exercise ex
@@ -106,8 +106,9 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             """)
     List<GradeScoreDTO> findIndividualQuizGradesByCourseId(@Param("courseId") long courseId);
 
+    // NOTE: we add a minimal grace period of 1 second because processing a commit can take a bit of time
     @Query("""
-            SELECT DISTINCT NEW de.tum.cit.aet.artemis.exercise.dto.GradeScoreDTO(p.id, u.id, ex.id, r.score)
+            SELECT DISTINCT NEW de.tum.cit.aet.artemis.exercise.dto.GradeScoreDTO(p.id, u.id, ex.id, r.score, p.presentationScore)
             FROM StudentParticipation p
                 JOIN p.student u
                 JOIN p.exercise ex
@@ -117,7 +118,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND TYPE(ex) <> QuizExercise
                 AND p.testRun = FALSE
                 AND p.student IS NOT NULL
-                AND (ex.dueDate IS NULL OR s.submissionDate <= ex.dueDate)
+                AND (ex.dueDate IS NULL OR s.submissionDate <= FUNCTION('timestampadd', SECOND, 1, ex.dueDate))
                 AND r.rated = TRUE
                 AND r.completionDate IS NOT NULL
                 AND r.score IS NOT NULL
@@ -128,7 +129,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
 
     // Quizzes do not support team exercises, so we can safely ignore them here
     @Query("""
-            SELECT DISTINCT NEW de.tum.cit.aet.artemis.exercise.dto.GradeScoreDTO(p.id, u.id, ex.id, r.score)
+            SELECT DISTINCT NEW de.tum.cit.aet.artemis.exercise.dto.GradeScoreDTO(p.id, u.id, ex.id, r.score, p.presentationScore)
             FROM StudentParticipation p
                 JOIN p.team t
                 JOIN t.students u
@@ -138,7 +139,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             WHERE ex.course.id = :courseId
                 AND p.testRun = FALSE
                 AND p.team IS NOT NULL
-                AND (ex.dueDate IS NULL OR s.submissionDate <= ex.dueDate)
+                AND (ex.dueDate IS NULL OR s.submissionDate <= FUNCTION('timestampadd', SECOND, 1, ex.dueDate))
                 AND r.rated = TRUE
                 AND r.completionDate IS NOT NULL
                 AND r.score IS NOT NULL

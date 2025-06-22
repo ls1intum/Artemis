@@ -395,16 +395,16 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
 
     /**
      * Updates the students statistics with the presentation points.
-     * @param student
+     * @param studentStatistics
      */
-    private addPresentationPointsForStudent(student: CourseScoresStudentStatistics) {
+    private addPresentationPointsForStudent(studentStatistics: CourseScoresStudentStatistics) {
         const presentationsNumber = this.gradingScale?.presentationsNumber ?? 0;
-        if (student.presentationScore > 0 && presentationsNumber > 0 && this.maxNumberOfPresentationPoints > 0) {
-            const presentationPointAvg = student.presentationScore / presentationsNumber!;
+        if (studentStatistics.presentationScore > 0 && presentationsNumber > 0 && this.maxNumberOfPresentationPoints > 0) {
+            const presentationPointAvg = studentStatistics.presentationScore / presentationsNumber!;
             const presentationPoints = (this.maxNumberOfPresentationPoints * presentationPointAvg) / 100.0;
 
-            student.presentationPoints = roundValueSpecifiedByCourseSettings(presentationPoints, this.course);
-            student.overallPoints += student.presentationPoints;
+            studentStatistics.presentationPoints = roundValueSpecifiedByCourseSettings(presentationPoints, this.course);
+            studentStatistics.overallPoints += studentStatistics.presentationPoints;
         }
     }
 
