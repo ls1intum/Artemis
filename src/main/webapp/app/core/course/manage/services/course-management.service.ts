@@ -266,7 +266,7 @@ export class CourseManagementService {
      * @param courseId - the id of the course
      */
     findGradeScores(courseId: number): Observable<CourseGradeInformationDTO> {
-        return this.http.get<CourseGradeInformationDTO>(`api/exercise/courses/${courseId}/grade-scores`);
+        return this.http.get<CourseGradeInformationDTO>(`api/assessment/courses/${courseId}/grade-scores`);
     }
 
     /**

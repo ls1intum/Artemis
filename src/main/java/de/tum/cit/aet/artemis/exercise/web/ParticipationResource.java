@@ -53,7 +53,6 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
@@ -61,7 +60,6 @@ import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
-import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
@@ -69,7 +67,6 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
-import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
@@ -78,9 +75,6 @@ import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.exercise.dto.CourseGradeInformationDTO;
-import de.tum.cit.aet.artemis.exercise.dto.GradeScoreDTO;
-import de.tum.cit.aet.artemis.exercise.dto.StudentDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
@@ -138,8 +132,6 @@ public class ParticipationResource {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private final CourseRepository courseRepository;
-
     private final AuthorizationCheckService authCheckService;
 
     private final ParticipationAuthorizationCheckService participationAuthCheckService;
@@ -184,8 +176,8 @@ public class ParticipationResource {
     private String applicationName;
 
     public ParticipationResource(ParticipationService participationService, ParticipationDeletionService participationDeletionService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, CourseRepository courseRepository, QuizExerciseRepository quizExerciseRepository,
-            ExerciseRepository exerciseRepository, ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, QuizExerciseRepository quizExerciseRepository, ExerciseRepository exerciseRepository,
+            ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
             ParticipationAuthorizationCheckService participationAuthCheckService, UserRepository userRepository, StudentParticipationRepository studentParticipationRepository,
             AuditEventRepository auditEventRepository, TeamRepository teamRepository, FeatureToggleService featureToggleService,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, SubmissionRepository submissionRepository,
@@ -197,7 +189,6 @@ public class ParticipationResource {
         this.participationDeletionService = participationDeletionService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.quizExerciseRepository = quizExerciseRepository;
-        this.courseRepository = courseRepository;
         this.exerciseRepository = exerciseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.authCheckService = authCheckService;
@@ -666,25 +657,6 @@ public class ParticipationResource {
         }).collect(Collectors.toSet());
 
         return ResponseEntity.ok(participations);
-    }
-
-    /**
-     * GET /courses/:courseId/grade-information : get all grade information (scores) for a course
-     *
-     * @param courseId The id of the course
-     * @return a {@link CourseGradeInformationDTO}
-     */
-    @GetMapping("courses/{courseId}/grade-scores")
-    @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<CourseGradeInformationDTO> getGradeScoresForCourse(@PathVariable long courseId) {
-        log.info("REST request to get grade scores for Course {}", courseId);
-        long start = System.nanoTime();
-        List<GradeScoreDTO> gradeScores = studentParticipationRepository.findGradeScoresForAllExercisesForCourse(courseId);
-        Set<Long> userIds = gradeScores.stream().map(GradeScoreDTO::userId).collect(Collectors.toSet());
-        List<StudentDTO> students = userIds.isEmpty() ? List.of() : userRepository.findAllStudentsByIdIn(userIds);
-        log.info("Found {} grade scores, {} students, in {}", gradeScores.size(), students.size(), TimeLogUtil.formatDurationFrom(start));
-
-        return ResponseEntity.ok().body(new CourseGradeInformationDTO(gradeScores, students));
     }
 
     /**
