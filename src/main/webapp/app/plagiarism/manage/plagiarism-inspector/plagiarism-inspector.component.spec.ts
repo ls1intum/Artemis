@@ -23,6 +23,8 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { PlagiarismInspectorComponent } from 'app/plagiarism/manage/plagiarism-inspector/plagiarism-inspector.component';
 import { PlagiarismInspectorService } from 'app/plagiarism/manage/plagiarism-inspector/plagiarism-inspector.service';
+import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
+import { PlagiarismResult } from 'app/plagiarism/shared/entities/PlagiarismResult';
 
 jest.mock('app/shared/util/download.util', () => ({
     downloadFile: jest.fn(),
@@ -244,7 +246,7 @@ describe('Plagiarism Inspector Component', () => {
 
         it('should return the selected comparison', () => {
             comp.selectedComparisonId = 2;
-            comp.visibleComparisons = comparisons as PlagiarismSubmission[];
+            comp.visibleComparisons = comparisons as PlagiarismComparison[];
             const expected = {
                 id: 2,
                 submissionA: { studentLogin: 'student2A' },

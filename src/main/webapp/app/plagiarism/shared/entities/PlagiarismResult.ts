@@ -5,7 +5,7 @@ import dayjs from 'dayjs/esm';
 /**
  * Base result of any automatic plagiarism detection.
  */
-export abstract class PlagiarismResult {
+export class PlagiarismResult {
     id?: number;
 
     /**

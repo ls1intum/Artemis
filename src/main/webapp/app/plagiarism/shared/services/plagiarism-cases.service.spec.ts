@@ -9,6 +9,7 @@ import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
 import { PlagiarismSubmission } from 'app/plagiarism/shared/entities/PlagiarismSubmission';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 import { provideHttpClient } from '@angular/common/http';
+import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
 
 describe('Plagiarism Cases Service', () => {
     let service: PlagiarismCasesService;
@@ -37,7 +38,7 @@ describe('Plagiarism Cases Service', () => {
         submissionB: plagiarismSubmission2,
         similarity: 0.5,
         status: PlagiarismStatus.CONFIRMED,
-    } as PlagiarismSubmission;
+    } as PlagiarismComparison;
 
     const textExercise = {
         id: 1,

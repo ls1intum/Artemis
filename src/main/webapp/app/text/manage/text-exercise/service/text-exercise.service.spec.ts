@@ -15,6 +15,7 @@ import { PlagiarismOptions } from 'app/plagiarism/shared/entities/PlagiarismOpti
 import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { TutorEffort } from 'app/assessment/shared/entities/tutor-effort.model';
+import { PlagiarismResult } from 'app/plagiarism/shared/entities/PlagiarismResult';
 
 describe('TextExercise Service', () => {
     let service: TextExerciseService;

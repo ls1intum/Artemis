@@ -2,7 +2,7 @@ import { SimpleChange } from '@angular/core';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
-import { FromToElement } from 'app/plagiarism/shared/entities/PlagiarismSubmissionElement';
+import { FromToElement, PlagiarismSubmissionElement } from 'app/plagiarism/shared/entities/PlagiarismSubmissionElement';
 import { Subject, of } from 'rxjs';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { PlagiarismSplitViewComponent } from 'app/plagiarism/manage/plagiarism-split-view/plagiarism-split-view.component';
