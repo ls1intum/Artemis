@@ -3,7 +3,6 @@ import { Subject } from 'rxjs';
 import { PlagiarismDetailsComponent } from './plagiarism-details.component';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { PlagiarismComparison } from '../../shared/entities/PlagiarismComparison';
-import { TextSubmissionElement } from '../../shared/entities/text/TextSubmissionElement';
 import { Exercise } from '../../../exercise/shared/entities/exercise/exercise.model';
 
 describe('PlagiarismDetailsComponent', () => {
@@ -34,7 +33,7 @@ describe('PlagiarismDetailsComponent', () => {
     });
 
     it('should accept comparison input and update the signal', () => {
-        const mockComparison: PlagiarismComparison<TextSubmissionElement> = {} as PlagiarismComparison<TextSubmissionElement>;
+        const mockComparison: PlagiarismComparison = {} as PlagiarismComparison;
         fixture.componentRef.setInput('comparison', mockComparison);
         expect(component.comparison()).toBe(mockComparison);
     });

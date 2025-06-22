@@ -17,9 +17,9 @@ import { provideHttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { PlagiarismSubmissionElement } from 'app/plagiarism/shared/entities/PlagiarismSubmissionElement';
-import { TextPlagiarismFileElement } from '../../../shared/entities/text/TextPlagiarismFileElement';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { PlagiarismFileElement } from '../../../shared/entities/PlagiarismFileElement';
 
 describe('Text Submission Viewer Component', () => {
     let comp: TextSubmissionViewerComponent;
@@ -55,9 +55,9 @@ describe('Text Submission Viewer Component', () => {
 
         fixture.componentRef.setInput('plagiarismSubmission', { submissionId: 1 } as PlagiarismSubmission);
         fixture.componentRef.setInput('exercise', { type: ExerciseType.TEXT } as Exercise);
-        fixture.componentRef.setInput('fileSelectedSubject', new Subject<TextPlagiarismFileElement>());
+        fixture.componentRef.setInput('fileSelectedSubject', new Subject<PlagiarismFileElement>());
         fixture.componentRef.setInput('showFilesSubject', new Subject<boolean>());
-        fixture.componentRef.setInput('dropdownHoverSubject', new Subject<TextPlagiarismFileElement>());
+        fixture.componentRef.setInput('dropdownHoverSubject', new Subject<PlagiarismFileElement>());
         fixture.componentRef.setInput('matches', new Map());
 
         await fixture.whenStable();
