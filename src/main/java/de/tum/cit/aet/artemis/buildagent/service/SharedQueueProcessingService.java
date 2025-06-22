@@ -138,7 +138,7 @@ public class SharedQueueProcessingService {
 
         // Remove listener if already present
         if (this.listenerId != null) {
-            distributedDataAccessService.getDistributedBuildJobQueue().removeItemListener(this.listenerId);
+            distributedDataAccessService.getDistributedBuildJobQueue().removeListener(this.listenerId);
         }
         this.listenerId = this.distributedDataAccessService.getDistributedBuildJobQueue().addItemListener(new QueuedBuildJobItemListener());
 
@@ -171,7 +171,7 @@ public class SharedQueueProcessingService {
 
     private void removeListener() {
         if (distributedDataAccessService.isInstanceRunning()) {
-            distributedDataAccessService.getDistributedBuildJobQueue().removeItemListener(this.listenerId);
+            distributedDataAccessService.getDistributedBuildJobQueue().removeListener(this.listenerId);
         }
     }
 

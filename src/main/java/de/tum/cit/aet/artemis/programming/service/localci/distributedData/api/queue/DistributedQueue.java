@@ -96,9 +96,9 @@ public interface DistributedQueue<T> {
     UUID addListener(QueueListener listener);
 
     /**
-     * Removes a previously registered item listener using its unique identifier.
+     * Removes a previously registered listener using its unique identifier.
      *
      * @param registrationId the unique identifier of the listener to remove
      */
-    void removeItemListener(UUID registrationId);
+    void removeListener(UUID registrationId);
 }

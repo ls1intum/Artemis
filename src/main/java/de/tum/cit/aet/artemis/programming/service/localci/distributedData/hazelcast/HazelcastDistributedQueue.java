@@ -110,7 +110,7 @@ public class HazelcastDistributedQueue<T> implements DistributedQueue<T> {
     }
 
     @Override
-    public void removeItemListener(UUID registrationId) {
+    public void removeListener(UUID registrationId) {
         try {
             queue.removeItemListener(registrationId);
         }
