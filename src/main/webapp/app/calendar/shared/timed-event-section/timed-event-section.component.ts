@@ -18,7 +18,7 @@ export class TimedEventSectionComponent implements AfterViewInit {
     readonly utils = Utils;
     private dayEventMap = computed(() => this.computePositionedEventsFor(this.days()));
 
-    private static HOUR_SEGMENT_HEIGHT = 40;
+    private static HOUR_SEGMENT_HEIGHT = 36;
 
     constructor(
         private eventService: CalendarEventDummyService,

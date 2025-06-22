@@ -25,6 +25,10 @@ export function getHoursOfDay(): string[] {
     return Array.from({ length: 23 }, (_, i) => `${(i + 1).toString().padStart(2, '0')}:00`);
 }
 
+export function range(n: number): number[] {
+    return Array.from({ length: n }, (_, i) => i);
+}
+
 export function areDaysInSameMonth(firstDay: Dayjs, secondDay: Dayjs): boolean {
     return firstDay.month() === secondDay.month();
 }

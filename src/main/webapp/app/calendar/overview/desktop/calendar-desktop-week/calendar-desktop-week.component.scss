@@ -1,5 +1,5 @@
 .frame {
-    height: 744px;
+    height: 600px;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
@@ -9,7 +9,7 @@
 }
 
 .header {
-    height: 40px;
+    height: 36px;
     display: flex;
     flex-direction: row;
     justify-content: flex-start;
@@ -30,7 +30,7 @@
     }
 
     .day-name {
-        font-size: 14;
+        font-size: 14px;
         font-weight: 600;
     }
 }

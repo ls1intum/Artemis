@@ -16,11 +16,11 @@
         justify-content: flex-start;
 
         .info-column-spacer {
-            height: 20px;
+            height: 18px;
         }
 
         .time-label {
-            height: 40px;
+            height: 36px;
             display: flex;
             flex-direction: row;
             justify-content: flex-end;
@@ -40,7 +40,7 @@
         border-left: 2px solid var(--border-color);
 
         .hour-segment {
-            height: 40px;
+            height: 36px;
         }
         .hour-segment:not(:first-child) {
             border-top: 2px solid var(--border-color);
