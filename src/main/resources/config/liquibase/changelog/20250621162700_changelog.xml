@@ -12,88 +12,117 @@
             </sqlCheck>
         </preConditions>
 
-        <!-- 1  delete plagiarism submission elements -->
+        <!-- ──────────────── 1. collect IDs (no deletes yet) ──────────── -->
         <sql>
-            DELETE FROM plagiarism_submission_element
-                USING plagiarism_submission_element pse,
-			          plagiarism_submission         ps,
-			          plagiarism_comparison         pc,
-			          plagiarism_result             pr
-            WHERE pse.id                         = plagiarism_submission_element.id
-                AND pse.plagiarism_submission_id = ps.id
-                AND (pc.submission_a_id          = ps.id OR pc.submission_b_id = ps.id)
-                AND pr.id                        = pc.plagiarism_result_id
-                AND pr.discriminator             = 'ModelingPlagiarismResult';
-        </sql>
-
-        <!-- 2  delete posts belonging to cases that have lost all submissions -->
-        <sql>
-            DELETE FROM post
-                USING post                  po,
-			          plagiarism_case       plc,
-			          plagiarism_submission ps,
-			          plagiarism_comparison pc,
-			          plagiarism_result     pr
-            WHERE   po.id                 = post.id
-                AND po.plagiarism_case_id = plc.id
-                AND ps.plagiarism_case_id = plc.id
-                AND (pc.submission_a_id   = ps.id OR pc.submission_b_id = ps.id)
-                AND pr.id                 = pc.plagiarism_result_id
-                AND pr.discriminator      = 'ModelingPlagiarismResult';
-        </sql>
-
-        <!-- 3  delete plagiarism comparisons -->
-        <sql>
-            DELETE FROM plagiarism_comparison
-                USING plagiarism_comparison pc,
-			          plagiarism_result     pr
-            WHERE   pc.id            = plagiarism_comparison.id
-                AND pr.id            = pc.plagiarism_result_id
-                AND pr.discriminator = 'ModelingPlagiarismResult';
-        </sql>
-
-        <!-- 4  delete plagiarism submissions -->
-        <sql>
-            DELETE FROM plagiarism_submission
-                USING plagiarism_submission  ps,
-			          plagiarism_comparison  pc,
-			          plagiarism_result      pr
-            WHERE   ps.id            = plagiarism_submission.id
-                AND (pc.submission_a_id = ps.id OR pc.submission_b_id = ps.id)
-                AND pr.id            = pc.plagiarism_result_id
-                AND pr.discriminator = 'ModelingPlagiarismResult';
-        </sql>
-
-        <!-- 5  delete  plagiarism cases -->
-        <sql>
-            DELETE FROM plagiarism_case
-                USING plagiarism_case        plc,
-			          plagiarism_submission  ps,
-			          plagiarism_comparison  pc,
-			          plagiarism_result      pr
-            WHERE   plc.id              = plagiarism_case.id
-                AND plc.id              = ps.plagiarism_case_id
-                AND (pc.submission_a_id = ps.id OR pc.submission_b_id = ps.id)
-                AND pr.id               = pc.plagiarism_result_id
-                AND pr.discriminator    = 'ModelingPlagiarismResult';
-        </sql>
-
-        <!-- 6  delete plagiarism similarity-distribution buckets -->
-        <sql>
-            DELETE FROM plagiarism_result_similarity_distribution
-                USING plagiarism_result_similarity_distribution prsd,
-			          plagiarism_result                         pr
-            WHERE   prsd.plagiarism_result_id = plagiarism_result_similarity_distribution.plagiarism_result_id
-                AND prsd.plagiarism_result_id = pr.id
-                AND pr.discriminator          = 'ModelingPlagiarismResult';
-        </sql>
-
-        <!-- 7  delete plagiarism modeling result rows themselves -->
-        <sql>
-            DELETE FROM plagiarism_result
+            /* modeling results */
+            CREATE TEMPORARY TABLE tmp_modeling_results AS
+            SELECT id
+            FROM plagiarism_result
             WHERE discriminator = 'ModelingPlagiarismResult';
+
+            /* comparisons of those results */
+            CREATE TEMPORARY TABLE tmp_comparisons AS
+            SELECT id,
+                   submission_a_id,
+                   submission_b_id
+            FROM plagiarism_comparison
+            WHERE plagiarism_result_id IN (SELECT id FROM tmp_modeling_results);
+
+            /* submissions referenced by the comparisons */
+            CREATE TEMPORARY TABLE tmp_submissions (id BIGINT PRIMARY KEY);
+
+            INSERT INTO tmp_submissions (id)
+            SELECT submission_a_id
+            FROM   tmp_comparisons;
+
+            INSERT INTO tmp_submissions (id)
+            SELECT submission_b_id
+            FROM   tmp_comparisons;
+
+            /* plagiarism cases of those submissions */
+            CREATE TEMPORARY TABLE tmp_cases AS
+            SELECT DISTINCT plagiarism_case_id AS id
+            FROM plagiarism_submission
+            WHERE plagiarism_case_id IS NOT NULL
+              AND id IN (SELECT id FROM tmp_submissions);
+
+            /* posts inside those cases */
+            CREATE TEMPORARY TABLE tmp_posts AS
+            SELECT id
+            FROM post
+            WHERE plagiarism_case_id IN (SELECT id FROM tmp_cases);
+
+            /* answer-posts of those posts */
+            CREATE TEMPORARY TABLE tmp_answer_posts AS
+            SELECT id
+            FROM answer_post
+            WHERE post_id IN (SELECT id FROM tmp_posts);
+
+            /* reactions belonging to posts or answer-posts */
+            CREATE TEMPORARY TABLE tmp_reactions AS
+            SELECT id
+            FROM reaction
+            WHERE post_id IN (SELECT id FROM tmp_posts)
+               OR answer_post_id IN (SELECT id FROM tmp_answer_posts);
+        </sql>
+
+        <!-- ──────────────── 2. delete in dependency order ─────────────── -->
+        <sql>
+            /* reactions */
+            DELETE FROM reaction
+            WHERE id IN (SELECT id FROM tmp_reactions);
+
+            /* answer-posts */
+            DELETE FROM answer_post
+            WHERE id IN (SELECT id FROM tmp_answer_posts);
+
+            /* posts */
+            DELETE FROM post
+            WHERE id IN (SELECT id FROM tmp_posts);
+
+            /* submission elements */
+            DELETE FROM plagiarism_submission_element
+            WHERE plagiarism_submission_id IN (SELECT id FROM tmp_submissions);
+
+            /* ──► BREAK the circular FK before any row is removed */
+            UPDATE plagiarism_submission
+            SET    plagiarism_comparison_id = NULL
+            WHERE  plagiarism_comparison_id IN (SELECT id FROM tmp_comparisons);
+
+            /* comparisons */
+            DELETE FROM plagiarism_comparison
+            WHERE id IN (SELECT id FROM tmp_comparisons);
+
+            /* submissions */
+            DELETE FROM plagiarism_submission
+            WHERE id IN (SELECT id FROM tmp_submissions);
+
+            /* cases */
+            DELETE FROM plagiarism_case
+            WHERE id IN (SELECT id FROM tmp_cases);
+
+            /* similarity-distribution */
+            DELETE FROM plagiarism_result_similarity_distribution
+            WHERE plagiarism_result_id IN (SELECT id FROM tmp_modeling_results);
+
+            /* modeling results themselves */
+            DELETE FROM plagiarism_result
+            WHERE id IN (SELECT id FROM tmp_modeling_results);
+        </sql>
+
+        <!-- ──────────────── 3. tidy up temp tables (optional) ─────────── -->
+        <sql>
+            DROP TABLE IF EXISTS
+                tmp_reactions,
+                tmp_answer_posts,
+                tmp_posts,
+                tmp_cases,
+                tmp_submissions,
+                tmp_comparisons,
+                tmp_modeling_results;
         </sql>
     </changeSet>
+
     <changeSet id="20250621162700-02" author="krusche">
         <!-- delete unnecessary database columns -->
         <preConditions onFail="MARK_RAN">
@@ -110,6 +139,5 @@
 
         <!-- plagiarism_submission_element.discriminator -->
         <dropColumn tableName="plagiarism_submission_element" columnName="discriminator"/>
-
     </changeSet>
 </databaseChangeLog>
