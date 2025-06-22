@@ -60,7 +60,13 @@ public class HazelcastDistributedDataProviderService implements DistributedDataP
      */
     @Override
     public boolean isInstanceRunning() {
-        return hazelcastInstance != null && hazelcastInstance.getLifecycleService().isRunning();
+        try {
+            return hazelcastInstance != null && hazelcastInstance.getLifecycleService().isRunning();
+        }
+        catch (HazelcastInstanceNotActiveException e) {
+            return false;
+        }
+
     }
 
     /**
