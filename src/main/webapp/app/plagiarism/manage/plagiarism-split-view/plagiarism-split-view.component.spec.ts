@@ -225,9 +225,9 @@ describe('Plagiarism Split View Component', () => {
         ] as SimpleMatch[];
         const mappedElements = new Map();
         mappedElements.set('none', [
-            new FromToElement({ file: '', column: 1, line: 1, length: 1, id: 1 } as PlagiarismSubmissionElement, { file: '', column: 2, line: 2 } as PlagiarismSubmissionElement),
+            new FromToElement({ file: '', column: 1, line: 1 } as PlagiarismSubmissionElement, { file: '', column: 2, line: 2 } as PlagiarismSubmissionElement),
             new FromToElement(undefined as unknown as PlagiarismSubmissionElement, undefined as unknown as PlagiarismSubmissionElement),
-            new FromToElement({ file: '', column: 4, line: 4, length: 1, id: 1 } as PlagiarismSubmissionElement, { file: '', column: 6, line: 6 } as PlagiarismSubmissionElement),
+            new FromToElement({ file: '', column: 4, line: 4 } as PlagiarismSubmissionElement, { file: '', column: 6, line: 6 } as PlagiarismSubmissionElement),
         ]);
 
         const result = comp.mapMatchesToElements(matches, submissionA);
