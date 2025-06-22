@@ -90,7 +90,7 @@ import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseExportService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseImportFromFileService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseImportService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseValidationService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeature;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeatureService;
 import de.tum.cit.aet.artemis.programming.service.SubmissionPolicyService;
@@ -147,7 +147,7 @@ public class ProgrammingExerciseExportImportResource {
 
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
-    private final ProgrammingExerciseService programmingExerciseService;
+    private final ProgrammingExerciseValidationService programmingExerciseValidationService;
 
     private final FileService fileService;
 
@@ -159,7 +159,8 @@ public class ProgrammingExerciseExportImportResource {
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, SubmissionPolicyService submissionPolicyService,
             ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, Optional<ExamAccessApi> examAccessApi, CourseRepository courseRepository,
             ProgrammingExerciseImportFromFileService programmingExerciseImportFromFileService, ConsistencyCheckService consistencyCheckService, Optional<AthenaApi> athenaApi,
-            Optional<CompetencyProgressApi> competencyProgressApi, ProgrammingExerciseService programmingExerciseService, FileService fileService, GitService gitService) {
+            Optional<CompetencyProgressApi> competencyProgressApi, ProgrammingExerciseValidationService programmingExerciseValidationService, FileService fileService,
+            GitService gitService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -176,7 +177,7 @@ public class ProgrammingExerciseExportImportResource {
         this.consistencyCheckService = consistencyCheckService;
         this.athenaApi = athenaApi;
         this.competencyProgressApi = competencyProgressApi;
-        this.programmingExerciseService = programmingExerciseService;
+        this.programmingExerciseValidationService = programmingExerciseValidationService;
         this.fileService = fileService;
         this.gitService = gitService;
     }
@@ -225,7 +226,7 @@ public class ProgrammingExerciseExportImportResource {
         newExercise.validateGeneralSettings();
         newExercise.validateProgrammingSettings();
         newExercise.validateSettingsForFeedbackRequest();
-        programmingExerciseService.validateDockerFlags(newExercise);
+        programmingExerciseValidationService.validateDockerFlags(newExercise);
         validateStaticCodeAnalysisSettings(newExercise);
 
         final User user = userRepository.getUserWithGroupsAndAuthorities();
