@@ -4,6 +4,9 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.time.ZonedDateTime;
 
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -14,9 +17,9 @@ import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
 // in the future are migrated or cleared. Changes should be communicated in release notes as potentially breaking changes.
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record BuildJobQueueItem(String id, String name, BuildAgentDTO buildAgent, long participationId, long courseId, long exerciseId, int retryCount, int priority,
-        BuildStatus status, RepositoryInfo repositoryInfo, JobTimingInfo jobTimingInfo, BuildConfig buildConfig, ResultDTO submissionResult)
-        implements Serializable, Comparable<BuildJobQueueItem> {
+public record BuildJobQueueItem(@NotNull String id, @NotNull String name, @NotNull BuildAgentDTO buildAgent, long participationId, long courseId, long exerciseId, int retryCount,
+        int priority, @Nullable BuildStatus status, @NotNull RepositoryInfo repositoryInfo, @NotNull JobTimingInfo jobTimingInfo, @NotNull BuildConfig buildConfig,
+        @Nullable ResultDTO submissionResult) implements Serializable, Comparable<BuildJobQueueItem> {
 
     @Serial
     private static final long serialVersionUID = 1L;
