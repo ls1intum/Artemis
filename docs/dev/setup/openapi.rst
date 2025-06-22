@@ -18,6 +18,7 @@ You need to follow these steps to generate the OpenAPI spec and client files:
     ./gradlew generateApiDocs -x webapp
 
 This will generate an ``openapi.yaml`` file in the ``openapi`` directory.
+
 2. To generate the client files, run the following command in the root directory:
 
 .. code-block:: bash
