@@ -125,7 +125,6 @@ configurations.configureEach {
     exclude group: "org.apache.lucene", module: "lucene-queryparser"
     exclude group: "org.apache.lucene", module: "lucene-core"
     exclude group: "org.apache.lucene", module: "lucene-analyzers-common"
-    exclude group: "com.google.protobuf", module: "protobuf-java"
 
     exclude group: "org.jasypt", module: "jasypt"
 
