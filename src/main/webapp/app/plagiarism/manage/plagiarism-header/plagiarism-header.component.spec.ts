@@ -12,6 +12,7 @@ import { MockDirective } from 'ng-mocks';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { PlagiarismHeaderComponent } from 'app/plagiarism/manage/plagiarism-header/plagiarism-header.component';
+import { PlagiarismSubmission } from 'app/plagiarism/shared/entities/PlagiarismSubmission';
 
 describe('Plagiarism Header Component', () => {
     let comp: PlagiarismHeaderComponent;
@@ -37,7 +38,7 @@ describe('Plagiarism Header Component', () => {
             submissionA: { studentLogin: 'studentA' },
             submissionB: { studentLogin: 'studentB' },
             status: PlagiarismStatus.NONE,
-        } as PlagiarismSubmission;
+        } as unknown as PlagiarismSubmission;
         comp.exercise = { course: { id: 1 } } as Exercise;
         comp.splitControlSubject = new Subject<string>();
     });
