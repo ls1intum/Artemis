@@ -347,4 +347,10 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
     private record IdsMapValue(long exerciseId, long studentId, double score) {
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "INSTRUCTOR")
+    void getAllParticipationsForCourse_noInstructorInCourse() throws Exception {
+        request.get("/api/assessment/courses/" + course.getId() + "/grade-scores", HttpStatus.FORBIDDEN, CourseGradeInformationDTO.class);
+    }
 }
