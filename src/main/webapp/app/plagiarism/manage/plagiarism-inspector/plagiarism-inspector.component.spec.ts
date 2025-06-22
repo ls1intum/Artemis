@@ -10,10 +10,7 @@ import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/ex
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
-import { TextPlagiarismResult } from 'app/plagiarism/shared/entities/text/TextPlagiarismResult';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
-import { TextSubmissionElement } from 'app/plagiarism/shared/entities/text/TextSubmissionElement';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { PlagiarismResultDTO } from 'app/plagiarism/shared/entities/PlagiarismResultDTO';
@@ -81,11 +78,11 @@ describe('Plagiarism Inspector Component', () => {
     const textPlagiarismResult = {
         id: 123,
         comparisons,
-    } as TextPlagiarismResult;
+    } as PlagiarismResult;
     const textPlagiarismResultDTO = {
         plagiarismResult: textPlagiarismResult,
         plagiarismResultStats: {},
-    } as PlagiarismResultDTO<TextPlagiarismResult>;
+    } as PlagiarismResultDTO;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -247,7 +244,7 @@ describe('Plagiarism Inspector Component', () => {
 
         it('should return the selected comparison', () => {
             comp.selectedComparisonId = 2;
-            comp.visibleComparisons = comparisons as PlagiarismComparison<TextSubmissionElement>[];
+            comp.visibleComparisons = comparisons as PlagiarismSubmission[];
             const expected = {
                 id: 2,
                 submissionA: { studentLogin: 'student2A' },

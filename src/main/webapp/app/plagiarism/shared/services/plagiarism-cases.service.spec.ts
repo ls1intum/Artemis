@@ -5,8 +5,6 @@ import { take } from 'rxjs/operators';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { PlagiarismStatus } from 'app/plagiarism/shared/entities/PlagiarismStatus';
-import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
-import { TextSubmissionElement } from 'app/plagiarism/shared/entities/text/TextSubmissionElement';
 import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
 import { PlagiarismSubmission } from 'app/plagiarism/shared/entities/PlagiarismSubmission';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
@@ -23,15 +21,15 @@ describe('Plagiarism Cases Service', () => {
     const plagiarismSubmission1 = {
         id: 1,
         studentLogin: studentLoginA,
-    } as PlagiarismSubmission<TextSubmissionElement>;
+    } as PlagiarismSubmission;
     const plagiarismSubmission2 = {
         id: 2,
         studentLogin: studentLoginB,
-    } as PlagiarismSubmission<TextSubmissionElement>;
+    } as PlagiarismSubmission;
     const plagiarismSubmission3 = {
         id: 3,
         studentLogin: studentLoginC,
-    } as PlagiarismSubmission<TextSubmissionElement>;
+    } as PlagiarismSubmission;
 
     const plagiarismComparison1 = {
         id: 1,
@@ -39,7 +37,7 @@ describe('Plagiarism Cases Service', () => {
         submissionB: plagiarismSubmission2,
         similarity: 0.5,
         status: PlagiarismStatus.CONFIRMED,
-    } as PlagiarismComparison<TextSubmissionElement>;
+    } as PlagiarismSubmission;
 
     const textExercise = {
         id: 1,

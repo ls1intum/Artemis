@@ -41,8 +41,8 @@ public class PlagiarismCase extends AbstractAuditingEntity {
     private Post post;
 
     @JsonIgnoreProperties("plagiarismCase")
-    @OneToMany(mappedBy = "plagiarismCase", targetEntity = PlagiarismSubmission.class, fetch = FetchType.LAZY)
-    private Set<PlagiarismSubmission<?>> plagiarismSubmissions;
+    @OneToMany(mappedBy = "plagiarismCase", fetch = FetchType.LAZY)
+    private Set<PlagiarismSubmission> plagiarismSubmissions;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "verdict")
@@ -115,11 +115,11 @@ public class PlagiarismCase extends AbstractAuditingEntity {
         this.post = post;
     }
 
-    public Set<PlagiarismSubmission<?>> getPlagiarismSubmissions() {
+    public Set<PlagiarismSubmission> getPlagiarismSubmissions() {
         return plagiarismSubmissions;
     }
 
-    public void setPlagiarismSubmissions(Set<PlagiarismSubmission<?>> plagiarismSubmissions) {
+    public void setPlagiarismSubmissions(Set<PlagiarismSubmission> plagiarismSubmissions) {
         this.plagiarismSubmissions = plagiarismSubmissions;
     }
 

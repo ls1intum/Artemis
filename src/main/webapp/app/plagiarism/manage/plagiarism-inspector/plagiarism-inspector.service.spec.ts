@@ -1,13 +1,11 @@
 import { TestBed } from '@angular/core/testing';
-import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
-import { TextSubmissionElement } from 'app/plagiarism/shared/entities/text/TextSubmissionElement';
 import { Range } from 'app/shared/util/utils';
 import { PlagiarismInspectorService } from 'app/plagiarism/manage/plagiarism-inspector/plagiarism-inspector.service';
 
 describe('PlagiarismInspectorService', () => {
     let service: PlagiarismInspectorService;
 
-    let result: PlagiarismComparison<TextSubmissionElement>[];
+    let result: PlagiarismSubmission[];
     let range: Range;
 
     beforeEach(() => {
@@ -64,7 +62,7 @@ describe('PlagiarismInspectorService', () => {
         comparison19,
         comparison20,
         comparison21,
-    ] as PlagiarismComparison<TextSubmissionElement>[];
+    ] as PlagiarismSubmission[];
 
     const borderValues = [
         comparison11,
@@ -78,7 +76,7 @@ describe('PlagiarismInspectorService', () => {
         comparison19,
         comparison20,
         comparison21,
-    ] as PlagiarismComparison<TextSubmissionElement>[];
+    ] as PlagiarismSubmission[];
 
     it.each([0, 10, 20, 30, 40, 50, 60, 70, 80])('should filter comparisons correctly for range < 100%', (minimumSimilarity: number) => {
         range = { lowerBound: minimumSimilarity, upperBound: minimumSimilarity + 10 };
