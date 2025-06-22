@@ -9,7 +9,6 @@ import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/ex
 import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { DomainChange, DomainType, FileType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { PlagiarismSubmission } from 'app/plagiarism/shared/entities/PlagiarismSubmission';
-import { TextSubmissionElement } from 'app/plagiarism/shared/entities/text/TextSubmissionElement';
 import { SplitPaneHeaderComponent } from 'app/plagiarism/manage/plagiarism-split-view/split-pane-header/split-pane-header.component';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -17,6 +16,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { PlagiarismSubmissionElement } from 'app/plagiarism/shared/entities/PlagiarismSubmissionElement';
 import { TextPlagiarismFileElement } from '../../../shared/entities/text/TextPlagiarismFileElement';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -53,7 +53,7 @@ describe('Text Submission Viewer Component', () => {
         repositoryService = TestBed.inject(CodeEditorRepositoryFileService);
         textSubmissionService = TestBed.inject(TextSubmissionService);
 
-        fixture.componentRef.setInput('plagiarismSubmission', { submissionId: 1 } as PlagiarismSubmission<TextSubmissionElement>);
+        fixture.componentRef.setInput('plagiarismSubmission', { submissionId: 1 } as PlagiarismSubmission);
         fixture.componentRef.setInput('exercise', { type: ExerciseType.TEXT } as Exercise);
         fixture.componentRef.setInput('fileSelectedSubject', new Subject<TextPlagiarismFileElement>());
         fixture.componentRef.setInput('showFilesSubject', new Subject<boolean>());
@@ -74,7 +74,6 @@ describe('Text Submission Viewer Component', () => {
         comp.ngOnChanges({
             plagiarismSubmission: { currentValue: { submissionId: 2 } } as SimpleChange,
         });
-
         expect(textSubmissionService.getTextSubmission).toHaveBeenCalledWith(2);
         expect(comp.isProgrammingExercise).toBeFalse();
     });
@@ -128,8 +127,8 @@ describe('Text Submission Viewer Component', () => {
             e: FileType.FILE,
         };
 
-        comp.matches()?.set('e', [{ from: new TextSubmissionElement(), to: new TextSubmissionElement() }]);
-        comp.matches()?.set('kContinuedName', [{ from: new TextSubmissionElement(), to: new TextSubmissionElement() }]);
+        comp.matches()?.set('e', [{ from: new PlagiarismSubmissionElement(), to: new PlagiarismSubmissionElement() }]);
+        comp.matches()?.set('kContinuedName', [{ from: new PlagiarismSubmissionElement(), to: new PlagiarismSubmissionElement() }]);
 
         jest.spyOn(repositoryService, 'getRepositoryContentForPlagiarismView').mockReturnValue(of(filesUnordered));
 
@@ -178,7 +177,7 @@ describe('Text Submission Viewer Component', () => {
 
     it('handles binary file selection', () => {
         fixture.componentRef.setInput('exercise', { type: ExerciseType.PROGRAMMING } as Exercise);
-        fixture.componentRef.setInput('plagiarismSubmission', { submissionId: 1 } as PlagiarismSubmission<TextSubmissionElement>);
+        fixture.componentRef.setInput('plagiarismSubmission', { submissionId: 1 } as PlagiarismSubmission);
         fixture.detectChanges();
         const fileName = Object.keys(files)[4];
         jest.spyOn(repositoryService, 'getFileForPlagiarismView').mockReturnValue(of({ fileContent: 'Test' }));
@@ -196,24 +195,24 @@ describe('Text Submission Viewer Component', () => {
                     column: 1,
                     line: 1,
                     length: 5,
-                } as TextSubmissionElement,
+                } as PlagiarismSubmissionElement,
                 to: {
                     column: 13,
                     line: 1,
                     length: 5,
-                } as TextSubmissionElement,
+                } as PlagiarismSubmissionElement,
             },
             {
                 from: {
                     column: 1,
                     line: 2,
                     length: 10,
-                } as TextSubmissionElement,
+                } as PlagiarismSubmissionElement,
                 to: {
                     column: 23,
                     line: 2,
                     length: 5,
-                } as TextSubmissionElement,
+                } as PlagiarismSubmissionElement,
             },
         ];
         jest.spyOn(comp, 'getMatchesForCurrentFile').mockReturnValue(mockMatches);
@@ -234,24 +233,24 @@ describe('Text Submission Viewer Component', () => {
                     column: 1,
                     line: 1,
                     length: 5,
-                } as TextSubmissionElement,
+                } as PlagiarismSubmissionElement,
                 to: {
                     column: 13,
                     line: 1,
                     length: 5,
-                } as TextSubmissionElement,
+                } as PlagiarismSubmissionElement,
             },
             {
                 from: {
                     column: 1,
                     line: 2,
                     length: 10,
-                } as TextSubmissionElement,
+                } as PlagiarismSubmissionElement,
                 to: {
                     column: 23,
                     line: 2,
                     length: 5,
-                } as TextSubmissionElement,
+                } as PlagiarismSubmissionElement,
             },
         ];
         jest.spyOn(comp, 'getMatchesForCurrentFile').mockReturnValue(mockMatches);
@@ -282,24 +281,24 @@ describe('Text Submission Viewer Component', () => {
                     column: 6,
                     line: 1,
                     length: 5,
-                } as TextSubmissionElement,
+                } as PlagiarismSubmissionElement,
                 to: {
                     column: 13,
                     line: 1,
                     length: 5,
-                } as TextSubmissionElement,
+                } as PlagiarismSubmissionElement,
             },
             {
                 from: {
                     column: 1,
                     line: 2,
                     length: 10,
-                } as TextSubmissionElement,
+                } as PlagiarismSubmissionElement,
                 to: {
                     column: 23,
                     line: 2,
                     length: 5,
-                } as TextSubmissionElement,
+                } as PlagiarismSubmissionElement,
             },
         ];
         jest.spyOn(comp, 'getMatchesForCurrentFile').mockReturnValue(mockMatches);
@@ -321,24 +320,24 @@ describe('Text Submission Viewer Component', () => {
                     column: 6,
                     line: 1,
                     length: 5,
-                } as TextSubmissionElement,
+                } as PlagiarismSubmissionElement,
                 to: {
                     column: 13,
                     line: 1,
                     length: 5,
-                } as TextSubmissionElement,
+                } as PlagiarismSubmissionElement,
             },
             {
                 from: {
                     column: 1,
                     line: 2,
                     length: 10,
-                } as TextSubmissionElement,
+                } as PlagiarismSubmissionElement,
                 to: {
                     column: 23,
                     line: 2,
                     length: 5,
-                } as TextSubmissionElement,
+                } as PlagiarismSubmissionElement,
             },
         ];
         jest.spyOn(comp, 'getMatchesForCurrentFile').mockReturnValue(mockMatches);
@@ -360,24 +359,24 @@ describe('Text Submission Viewer Component', () => {
                     column: 20,
                     line: 1,
                     length: 10,
-                } as TextSubmissionElement,
+                } as PlagiarismSubmissionElement,
                 to: {
                     column: 30,
                     line: 1,
                     length: 5,
-                } as TextSubmissionElement,
+                } as PlagiarismSubmissionElement,
             },
             {
                 from: {
                     column: 1,
                     line: 1,
                     length: 5,
-                } as TextSubmissionElement,
+                } as PlagiarismSubmissionElement,
                 to: {
                     column: 5,
                     line: 1,
                     length: 5,
-                } as TextSubmissionElement,
+                } as PlagiarismSubmissionElement,
             },
         ];
         jest.spyOn(comp, 'getMatchesForCurrentFile').mockReturnValue(mockMatches);
@@ -397,24 +396,24 @@ describe('Text Submission Viewer Component', () => {
                     column: 20,
                     line: 1,
                     length: 10,
-                } as TextSubmissionElement,
+                } as PlagiarismSubmissionElement,
                 to: {
                     column: 30,
                     line: 1,
                     length: 5,
-                } as TextSubmissionElement,
+                } as PlagiarismSubmissionElement,
             },
             {
                 from: {
                     column: 1,
                     line: 1,
                     length: 5,
-                } as TextSubmissionElement,
+                } as PlagiarismSubmissionElement,
                 to: {
                     column: 5,
                     line: 1,
                     length: 5,
-                } as TextSubmissionElement,
+                } as PlagiarismSubmissionElement,
             },
         ];
         jest.spyOn(comp, 'getMatchesForCurrentFile').mockReturnValue(mockMatches);
@@ -434,12 +433,12 @@ describe('Text Submission Viewer Component', () => {
                     column: 20,
                     line: 1,
                     length: 10,
-                } as TextSubmissionElement,
+                } as PlagiarismSubmissionElement,
                 to: {
                     column: 30,
                     line: 2,
                     length: 5,
-                } as TextSubmissionElement,
+                } as PlagiarismSubmissionElement,
             },
         ];
         jest.spyOn(comp, 'getMatchesForCurrentFile').mockReturnValue(mockMatches);
@@ -455,20 +454,20 @@ describe('Text Submission Viewer Component', () => {
     it('should return a non-empty string even if matches have undefined "from" and "to" values for exact matches', () => {
         const mockMatches = [
             {
-                from: undefined as unknown as TextSubmissionElement,
+                from: undefined as unknown as PlagiarismSubmissionElement,
                 to: {
                     column: 13,
                     line: 1,
                     length: 5,
-                } as TextSubmissionElement,
+                } as PlagiarismSubmissionElement,
             },
             {
                 from: {
                     column: 1,
                     line: 2,
                     length: 10,
-                } as TextSubmissionElement,
-                to: undefined as unknown as TextSubmissionElement,
+                } as PlagiarismSubmissionElement,
+                to: undefined as unknown as PlagiarismSubmissionElement,
             },
         ];
         jest.spyOn(comp, 'getMatchesForCurrentFile').mockReturnValue(mockMatches);
@@ -486,20 +485,20 @@ describe('Text Submission Viewer Component', () => {
     it('should return a non-empty string even if matches have undefined "from" and "to" values for full line matches', () => {
         const mockMatches = [
             {
-                from: undefined as unknown as TextSubmissionElement,
+                from: undefined as unknown as PlagiarismSubmissionElement,
                 to: {
                     column: 13,
                     line: 1,
                     length: 5,
-                } as TextSubmissionElement,
+                } as PlagiarismSubmissionElement,
             },
             {
                 from: {
                     column: 1,
                     line: 2,
                     length: 10,
-                } as TextSubmissionElement,
-                to: undefined as unknown as TextSubmissionElement,
+                } as PlagiarismSubmissionElement,
+                to: undefined as unknown as PlagiarismSubmissionElement,
             },
         ];
         jest.spyOn(comp, 'getMatchesForCurrentFile').mockReturnValue(mockMatches);

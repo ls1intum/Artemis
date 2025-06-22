@@ -2,7 +2,6 @@ import { Component, input } from '@angular/core';
 import { Subject } from 'rxjs';
 import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { TextSubmissionElement } from 'app/plagiarism/shared/entities/text/TextSubmissionElement';
 import { PlagiarismHeaderComponent } from '../plagiarism-header/plagiarism-header.component';
 import { PlagiarismSplitViewComponent } from '../plagiarism-split-view/plagiarism-split-view.component';
 
@@ -13,7 +12,7 @@ import { PlagiarismSplitViewComponent } from '../plagiarism-split-view/plagiaris
     imports: [PlagiarismHeaderComponent, PlagiarismSplitViewComponent],
 })
 export class PlagiarismDetailsComponent {
-    readonly comparison = input<PlagiarismComparison<TextSubmissionElement> | undefined>();
+    readonly comparison = input<PlagiarismComparison | undefined>();
     readonly exercise = input.required<Exercise>();
 
     /**

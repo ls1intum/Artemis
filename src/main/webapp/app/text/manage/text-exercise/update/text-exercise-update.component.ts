@@ -77,20 +77,20 @@ import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/f
     ],
 })
 export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
-    private activatedRoute = inject(ActivatedRoute);
-    private alertService = inject(AlertService);
-    private textExerciseService = inject(TextExerciseService);
-    private modalService = inject(NgbModal);
-    private popupService = inject(ExerciseUpdateWarningService);
-    private exerciseService = inject(ExerciseService);
-    private exerciseGroupService = inject(ExerciseGroupService);
-    private courseService = inject(CourseManagementService);
-    private eventManager = inject(EventManager);
-    private navigationUtilService = inject(ArtemisNavigationUtilService);
-    private profileService = inject(ProfileService);
+    private readonly activatedRoute = inject(ActivatedRoute);
+    private readonly alertService = inject(AlertService);
+    private readonly textExerciseService = inject(TextExerciseService);
+    private readonly modalService = inject(NgbModal);
+    private readonly popupService = inject(ExerciseUpdateWarningService);
+    private readonly exerciseService = inject(ExerciseService);
+    private readonly exerciseGroupService = inject(ExerciseGroupService);
+    private readonly courseService = inject(CourseManagementService);
+    private readonly eventManager = inject(EventManager);
+    private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
+    private readonly profileService = inject(ProfileService);
 
-    readonly IncludedInOverallScore = IncludedInOverallScore;
-    readonly documentationType: DocumentationType = 'Text';
+    protected readonly IncludedInOverallScore = IncludedInOverallScore;
+    protected readonly documentationType: DocumentationType = 'Text';
 
     @ViewChild('editForm') editForm: NgForm;
     @ViewChild('bonusPoints') bonusPoints: NgModel;
@@ -100,8 +100,8 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     @ViewChild('startDate') startDateField?: FormDateTimePickerComponent;
     @ViewChild('dueDate') dueDateField?: FormDateTimePickerComponent;
     @ViewChild('assessmentDueDate') assessmentDateField?: FormDateTimePickerComponent;
-    @ViewChild(ExerciseTitleChannelNameComponent) exerciseTitleChannelNameComponent: ExerciseTitleChannelNameComponent;
     exerciseUpdatePlagiarismComponent = viewChild(ExerciseUpdatePlagiarismComponent);
+    exerciseTitleChannelNameComponent = viewChild.required(ExerciseTitleChannelNameComponent);
     @ViewChild(TeamConfigFormGroupComponent) teamConfigFormGroupComponent: TeamConfigFormGroupComponent;
 
     examCourseId?: number;
@@ -122,8 +122,6 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
 
     formSectionStatus: FormSectionStatus[];
 
-    // subcriptions
-    titleChannelNameComponentSubscription?: Subscription;
     pointsSubscription?: Subscription;
     bonusPointsSubscription?: Subscription;
     teamSubscription?: Subscription;
@@ -131,6 +129,7 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     constructor() {
         effect(() => {
             this.updateFormSectionOnIsValidPlagiarismChange();
+            this.updateFormSectionsOnIsValidChange();
         });
     }
 
@@ -142,10 +141,16 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
         return this.textExercise.id == undefined ? EditType.CREATE : EditType.UPDATE;
     }
 
+    /**
+     * Triggers {@link calculateFormSectionStatus} whenever a relevant signal changes
+     */
+    private updateFormSectionsOnIsValidChange() {
+        this.exerciseTitleChannelNameComponent().titleChannelNameComponent().isValid(); // trigger the effect
+
+        this.calculateFormSectionStatus();
+    }
+
     ngAfterViewInit() {
-        this.titleChannelNameComponentSubscription = this.exerciseTitleChannelNameComponent.titleChannelNameComponent.formValidChanges.subscribe(() =>
-            this.calculateFormSectionStatus(),
-        );
         this.pointsSubscription = this.points?.valueChanges?.subscribe(() => this.calculateFormSectionStatus());
         this.bonusPointsSubscription = this.bonusPoints?.valueChanges?.subscribe(() => this.calculateFormSectionStatus());
         this.teamSubscription = this.teamConfigFormGroupComponent.formValidChanges.subscribe(() => this.calculateFormSectionStatus());
@@ -220,7 +225,6 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     }
 
     ngOnDestroy() {
-        this.titleChannelNameComponentSubscription?.unsubscribe();
         this.pointsSubscription?.unsubscribe();
         this.bonusPointsSubscription?.unsubscribe();
         this.teamSubscription?.unsubscribe();
@@ -231,7 +235,7 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
             this.formSectionStatus = [
                 {
                     title: 'artemisApp.exercise.sections.general',
-                    valid: this.exerciseTitleChannelNameComponent.titleChannelNameComponent.formValid,
+                    valid: this.exerciseTitleChannelNameComponent().titleChannelNameComponent().isValid(),
                 },
                 { title: 'artemisApp.exercise.sections.mode', valid: this.teamConfigFormGroupComponent.formValid },
                 { title: 'artemisApp.exercise.sections.problem', valid: true, empty: !this.textExercise.problemStatement },

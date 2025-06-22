@@ -8,9 +8,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
-import de.tum.cit.aet.artemis.plagiarism.domain.text.TextPlagiarismResult;
-import de.tum.cit.aet.artemis.plagiarism.domain.text.TextSubmissionElement;
 import de.tum.cit.aet.artemis.plagiarism.web.PlagiarismResultResponseBuilder;
 
 class PlagiarismResultResponseBuilderTest {
@@ -62,25 +61,25 @@ class PlagiarismResultResponseBuilderTest {
         assertThat(response.getBody().plagiarismResultStats().maximalSimilarity()).isEqualTo(0.78);
     }
 
-    private static TextPlagiarismResult createPlagiarismResult() {
-        var submissionA = new PlagiarismSubmission<>();
+    private static PlagiarismResult createPlagiarismResult() {
+        var submissionA = new PlagiarismSubmission();
         submissionA.setSubmissionId(1L);
-        var submissionB = new PlagiarismSubmission<>();
+        var submissionB = new PlagiarismSubmission();
         submissionB.setSubmissionId(2L);
-        var submissionC = new PlagiarismSubmission<>();
+        var submissionC = new PlagiarismSubmission();
         submissionC.setSubmissionId(3L);
 
-        var comparison1 = new PlagiarismComparison<TextSubmissionElement>();
+        var comparison1 = new PlagiarismComparison();
         comparison1.setSimilarity(0.78);
         comparison1.setSubmissionA(submissionA);
         comparison1.setSubmissionB(submissionB);
 
-        var comparison2 = new PlagiarismComparison<TextSubmissionElement>();
+        var comparison2 = new PlagiarismComparison();
         comparison2.setSimilarity(0.78);
         comparison2.setSubmissionA(submissionA);
         comparison2.setSubmissionB(submissionC);
 
-        var plagiarismResult = new TextPlagiarismResult();
+        var plagiarismResult = new PlagiarismResult();
         plagiarismResult.setComparisons(Set.of(comparison1, comparison2));
         return plagiarismResult;
     }

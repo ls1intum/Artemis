@@ -1,8 +1,6 @@
 import { Component, inject, input } from '@angular/core';
 import { Subject } from 'rxjs';
 import { PlagiarismStatus } from 'app/plagiarism/shared/entities/PlagiarismStatus';
-import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
-import { TextSubmissionElement } from 'app/plagiarism/shared/entities/text/TextSubmissionElement';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -13,6 +11,7 @@ import { RouterModule } from '@angular/router';
 import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AlertService } from 'app/shared/service/alert.service';
+import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
 
 @Component({
     selector: 'jhi-plagiarism-header',
@@ -25,7 +24,7 @@ export class PlagiarismHeaderComponent {
     private modalService = inject(NgbModal);
     private alertService = inject(AlertService);
 
-    readonly comparison = input<PlagiarismComparison<TextSubmissionElement> | undefined>(undefined);
+    readonly comparison = input<PlagiarismComparison | undefined>(undefined);
     readonly exercise = input.required<Exercise>();
     readonly splitControlSubject = input.required<Subject<string>>();
 

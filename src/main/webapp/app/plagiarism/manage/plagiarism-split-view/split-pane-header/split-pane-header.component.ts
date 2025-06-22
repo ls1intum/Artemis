@@ -1,7 +1,7 @@
 import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges, input, output } from '@angular/core';
 import { faChevronDown } from '@fortawesome/free-solid-svg-icons';
 import { Subject, Subscription } from 'rxjs';
-import { TextPlagiarismFileElement } from 'app/plagiarism/shared/entities/text/TextPlagiarismFileElement';
+import { PlagiarismFileElement } from 'app/plagiarism/shared/entities/PlagiarismFileElement';
 import { NgbDropdown, NgbDropdownItem } from '@ng-bootstrap/ng-bootstrap';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -25,10 +25,10 @@ export type FileWithHasMatch = {
 export class SplitPaneHeaderComponent implements OnChanges, OnInit, OnDestroy {
     readonly files = input<FileWithHasMatch[]>([]);
     readonly studentLogin = input.required<string>();
-    fileSelectedSubject = input<Subject<TextPlagiarismFileElement>>();
+    fileSelectedSubject = input<Subject<PlagiarismFileElement>>();
     isLockFilesEnabled = input<boolean>();
     showFilesSubject = input<Subject<boolean>>();
-    dropdownHoverSubject = input<Subject<TextPlagiarismFileElement>>();
+    dropdownHoverSubject = input<Subject<PlagiarismFileElement>>();
 
     readonly selectFile = output<string>();
 

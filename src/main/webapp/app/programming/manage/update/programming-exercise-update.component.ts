@@ -77,31 +77,31 @@ export const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
     ],
 })
 export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDestroy, OnInit {
-    private programmingExerciseService = inject(ProgrammingExerciseService);
-    private modalService = inject(NgbModal);
-    private popupService = inject(ExerciseUpdateWarningService);
-    private courseService = inject(CourseManagementService);
-    private alertService = inject(AlertService);
-    private exerciseService = inject(ExerciseService);
-    private fileService = inject(FileService);
-    private activatedRoute = inject(ActivatedRoute);
-    private translateService = inject(TranslateService);
-    private profileService = inject(ProfileService);
-    private exerciseGroupService = inject(ExerciseGroupService);
-    private programmingLanguageFeatureService = inject(ProgrammingLanguageFeatureService);
-    private navigationUtilService = inject(ArtemisNavigationUtilService);
-    private aeolusService = inject(AeolusService);
+    private readonly programmingExerciseService = inject(ProgrammingExerciseService);
+    private readonly modalService = inject(NgbModal);
+    private readonly popupService = inject(ExerciseUpdateWarningService);
+    private readonly courseService = inject(CourseManagementService);
+    private readonly alertService = inject(AlertService);
+    private readonly exerciseService = inject(ExerciseService);
+    private readonly fileService = inject(FileService);
+    private readonly activatedRoute = inject(ActivatedRoute);
+    private readonly translateService = inject(TranslateService);
+    private readonly profileService = inject(ProfileService);
+    private readonly exerciseGroupService = inject(ExerciseGroupService);
+    private readonly programmingLanguageFeatureService = inject(ProgrammingLanguageFeatureService);
+    private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
+    private readonly aeolusService = inject(AeolusService);
 
-    protected readonly documentationType: DocumentationType = 'Programming';
-    protected readonly maxPenaltyPattern = MAX_PENALTY_PATTERN;
-    protected readonly invalidRepositoryNamePattern = INVALID_REPOSITORY_NAME_PATTERN;
-    protected readonly invalidDirectoryNamePattern = INVALID_DIRECTORY_NAME_PATTERN;
-    protected readonly shortNamePattern = PROGRAMMING_EXERCISE_SHORT_NAME_PATTERN;
     private readonly packageNameRegexForJavaKotlin = RegExp(PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN);
     private readonly packageNameRegexForJavaBlackbox = RegExp(PACKAGE_NAME_PATTERN_FOR_JAVA_BLACKBOX);
     private readonly appNameRegexForSwift = RegExp(APP_NAME_PATTERN_FOR_SWIFT);
     private readonly packageNameRegexForGo = RegExp(PACKAGE_NAME_PATTERN_FOR_GO);
     private readonly packageNameRegexForDart = RegExp(PACKAGE_NAME_PATTERN_FOR_DART);
+    protected readonly documentationType: DocumentationType = 'Programming';
+    protected readonly maxPenaltyPattern = MAX_PENALTY_PATTERN;
+    protected readonly invalidRepositoryNamePattern = INVALID_REPOSITORY_NAME_PATTERN;
+    protected readonly invalidDirectoryNamePattern = INVALID_DIRECTORY_NAME_PATTERN;
+    protected readonly shortNamePattern = PROGRAMMING_EXERCISE_SHORT_NAME_PATTERN;
 
     @ViewChild(ProgrammingExerciseInformationComponent) exerciseInfoComponent?: ProgrammingExerciseInformationComponent;
     @ViewChild(ProgrammingExerciseModeComponent) exerciseDifficultyComponent?: ProgrammingExerciseModeComponent;
@@ -1014,7 +1014,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                 translateKey: 'artemisApp.exercise.form.title.pattern',
                 translateValues: {},
             });
-        } else if (this.exerciseInfoComponent?.titleComponent?.titleChannelNameComponent?.field_title?.control?.errors?.disallowedValue) {
+        } else if (this.exerciseInfoComponent?.exerciseTitleChannelComponent().titleChannelNameComponent().field_title?.control?.errors?.disallowedValue) {
             validationErrorReasons.push({
                 translateKey: 'artemisApp.exercise.form.title.disallowedValue',
                 translateValues: {},
