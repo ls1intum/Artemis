@@ -108,7 +108,6 @@ public class LocalCIResultProcessingService {
      */
     @PreDestroy
     public void removeListener() {
-        // check if Hazelcast is still active, before invoking this
         if (distributedDataAccessService.isInstanceRunning()) {
             distributedDataAccessService.getDistributedBuildResultQueue().removeItemListener(this.listenerId);
         }
