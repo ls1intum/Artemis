@@ -13,13 +13,16 @@ public record StudentDTO(long id, String login, String firstName, String lastNam
     }
 
     private static String createName(@Nullable String firstName, @Nullable String lastName) {
-        if (firstName != null && !firstName.isEmpty() && lastName != null && !lastName.isEmpty()) {
+        boolean hasFirst = firstName != null && !firstName.isEmpty();
+        boolean hasLast = lastName != null && !lastName.isEmpty();
+
+        if (hasFirst && hasLast) {
             return firstName + " " + lastName;
         }
-        else if (firstName != null && !firstName.isEmpty()) {
+        else if (hasFirst) {
             return firstName;
         }
-        else if (lastName != null && !lastName.isEmpty()) {
+        else if (hasLast) {
             return lastName;
         }
         else {
