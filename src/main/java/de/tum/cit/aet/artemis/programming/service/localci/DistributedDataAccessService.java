@@ -51,8 +51,8 @@ public class DistributedDataAccessService {
     private DistributedTopic<String> resumeBuildAgentTopic;
 
     public DistributedDataAccessService(Optional<DistributedDataProvider> distributedDataProvider) {
-        this.distributedDataProvider = distributedDataProvider.orElseThrow(() -> new IllegalStateException(
-                "DistributedDataProvider is not available. " + "Please ensure that the application is running with the correct profile (e.g., hazelcast or redisson)."));
+        this.distributedDataProvider = distributedDataProvider.orElseThrow(
+                () -> new IllegalStateException("DistributedDataProvider is not available. " + "Please ensure that the application is running with the correct profile"));
     }
 
     /**
