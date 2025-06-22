@@ -136,47 +136,68 @@ function getDiffInformation(originalFileContentByPath: Map<string, string>, modi
  * @returns Promise resolving to the line change object containing added and removed line counts
  */
 function computeDiffsMonaco(originalFileContent: string, modifiedFileContent: string): Promise<LineChange> {
-    return new Promise((resolve) => {
-        const originalModel = monaco.editor.createModel(originalFileContent, 'plaintext');
-        const modifiedModel = monaco.editor.createModel(modifiedFileContent, 'plaintext');
+    return new Promise((resolve, reject) => {
+        try {
+            const originalModel = monaco.editor.createModel(originalFileContent, 'plaintext');
+            const modifiedModel = monaco.editor.createModel(modifiedFileContent, 'plaintext');
 
-        const diffEditor = monaco.editor.createDiffEditor(document.createElement('div'), {
-            readOnly: true,
-            automaticLayout: false,
-        });
+            const diffEditor = monaco.editor.createDiffEditor(document.createElement('div'), {
+                readOnly: true,
+                automaticLayout: false,
+            });
 
-        diffEditor.setModel({ original: originalModel, modified: modifiedModel });
+            diffEditor.setModel({ original: originalModel, modified: modifiedModel });
 
-        // Set up a one-time listener for diff updates
-        const diffListener = diffEditor.onDidUpdateDiff(() => {
-            const changes = diffEditor.getLineChanges();
-            let added = 0,
-                removed = 0;
+            // Set up a one-time listener for diff updates
+            const diffListener = diffEditor.onDidUpdateDiff(() => {
+                try {
+                    const changes = diffEditor.getLineChanges();
+                    let added = 0,
+                        removed = 0;
 
-            if (changes) {
-                changes.forEach((change) => {
-                    const origCount = change.originalEndLineNumber - change.originalStartLineNumber + 1;
-                    const modCount = change.modifiedEndLineNumber - change.modifiedStartLineNumber + 1;
+                    if (changes) {
+                        changes.forEach((change, index) => {
+                            const origCount = change.originalEndLineNumber - change.originalStartLineNumber + 1;
+                            const modCount = change.modifiedEndLineNumber - change.modifiedStartLineNumber + 1;
 
-                    if (change.originalEndLineNumber === 0) {
-                        added += modCount;
-                    } else if (change.modifiedEndLineNumber === 0) {
-                        removed += origCount;
-                    } else {
-                        added += modCount;
-                        removed += origCount;
+                            if (change.originalEndLineNumber === 0) {
+                                added += modCount;
+                            } else if (change.modifiedEndLineNumber === 0) {
+                                removed += origCount;
+                            } else {
+                                added += modCount;
+                                removed += origCount;
+                            }
+                        });
                     }
-                });
-            }
 
-            // Clean up
-            diffListener.dispose();
-            originalModel.dispose();
-            modifiedModel.dispose();
-            diffEditor.dispose();
+                    // Clean up - dispose in reverse order of creation
+                    diffListener.dispose();
 
-            resolve({ addedLineCount: added, removedLineCount: removed });
-        });
+                    try {
+                        diffEditor.dispose();
+                    } catch (error) {
+                        // Disposal may fail but continue anyway
+                    }
+
+                    // Small delay to allow Monaco's internal cleanup
+                    setTimeout(() => {
+                        try {
+                            originalModel.dispose();
+                            modifiedModel.dispose();
+                        } catch (error) {
+                            // Disposal may fail but continue anyway
+                        }
+
+                        resolve({ addedLineCount: added, removedLineCount: removed });
+                    }, 10);
+                } catch (error) {
+                    resolve({ addedLineCount: 0, removedLineCount: 0 });
+                }
+            });
+        } catch (error) {
+            resolve({ addedLineCount: 0, removedLineCount: 0 });
+        }
     });
 }
 
