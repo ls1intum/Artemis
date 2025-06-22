@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { PlagiarismResult } from 'app/plagiarism/shared/entities/PlagiarismResult';
 import { take } from 'rxjs/operators';
 import { TextExerciseService } from 'app/text/manage/text-exercise/service/text-exercise.service';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
