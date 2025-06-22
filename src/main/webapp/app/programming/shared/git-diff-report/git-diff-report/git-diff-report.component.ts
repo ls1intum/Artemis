@@ -60,14 +60,14 @@ export class GitDiffReportComponent {
      * @param path The path of the file whose diff this event refers to.
      * @param ready Whether the diff is ready to be displayed or not.
      */
-    onDiffReady(path: string, ready: boolean) {
+    onDiffReady(title: string, ready: boolean) {
         const diffInformation = this.repositoryDiffInformation().diffInformations;
-        const index = diffInformation.findIndex((info) => info.modifiedPath === path);
+        const index = diffInformation.findIndex((info) => info.title === title);
 
         if (index !== -1) {
             diffInformation[index].diffReady = ready;
         } else {
-            captureException(`Received diff ready event for unknown path: ${path}`);
+            captureException(`Received diff ready event for unknown title: ${title}`);
         }
 
         this.allDiffsReady.set(diffInformation.every((info) => info.diffReady));
@@ -75,10 +75,10 @@ export class GitDiffReportComponent {
 
     /**
      * Handles the diff ready event from a GitDiffFileComponent
-     * @param path The path of the file whose diff this event refers to
+     * @param title The title of the file whose diff this event refers to
      * @param ready Whether the diff is ready to be displayed or not
      */
-    handleDiffReady(path: string, ready: boolean): void {
-        this.onDiffReady(path, ready);
+    handleDiffReady(title: string, ready: boolean): void {
+        this.onDiffReady(title, ready);
     }
 }
