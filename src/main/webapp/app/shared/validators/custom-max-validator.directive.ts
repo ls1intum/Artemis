@@ -4,6 +4,8 @@ import { FormControl, NG_VALIDATORS, Validator } from '@angular/forms';
 /**
  * Custom max validator as angular offers no such validator for template driven forms
  * See: https://github.com/angular/angular/issues/16352
+ *
+ * @deprecated use `max` instead
  */
 @Directive({
     selector: '[customMax][formControlName],[customMax][formControl],[customMax][ngModel]',
