@@ -218,7 +218,7 @@ describe('ProgrammingExerciseGitDiffReport Component', () => {
         comp.onDiffReady('unknown-path.java', true);
 
         // Verify that captureException was called
-        expect(captureException).toHaveBeenCalledWith('Received diff ready event for unknown path: unknown-path.java');
+        expect(captureException).toHaveBeenCalledWith('Received diff ready event for unknown title: unknown-path.java');
 
         // Verify that allDiffsReady is still false since we have valid files that are not ready
         expect(comp.allDiffsReady()).toBeFalse();

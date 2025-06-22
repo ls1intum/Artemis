@@ -38,7 +38,7 @@ describe('Exercise Update Plagiarism Component', () => {
     it('should set minimumSizeTooltip on init', () => {
         comp.exercise = { type: ExerciseType.PROGRAMMING } as Exercise;
         comp.ngOnInit();
-        expect(comp.minimumSizeTooltip).toBe('artemisApp.plagiarism.minimumTokenCountTooltipProgrammingExercise');
+        expect(comp.getMinimumSizeTooltip()).toBe('artemisApp.plagiarism.minimumTokenCountTooltipProgrammingExercise');
     });
 
     it('should set default plagiarism detection config on init if not set', () => {
