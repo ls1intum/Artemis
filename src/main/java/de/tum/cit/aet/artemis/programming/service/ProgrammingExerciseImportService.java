@@ -47,7 +47,11 @@ public class ProgrammingExerciseImportService {
 
     private final ProgrammingExerciseRepositoryService programmingExerciseRepositoryService;
 
-    private final ProgrammingExerciseService programmingExerciseService;
+    private final ProgrammingExerciseValidationService programmingExerciseValidationService;
+
+    private final ProgrammingExerciseBuildPlanService programmingExerciseBuildPlanService;
+
+    private final ProgrammingExerciseCreationScheduleService programmingExerciseCreationScheduleService;
 
     private final ProgrammingExerciseTaskService programmingExerciseTaskService;
 
@@ -65,7 +69,8 @@ public class ProgrammingExerciseImportService {
 
     public ProgrammingExerciseImportService(Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
             Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, ProgrammingExerciseRepositoryService programmingExerciseRepositoryService,
-            ProgrammingExerciseService programmingExerciseService, ProgrammingExerciseTaskService programmingExerciseTaskService,
+            ProgrammingExerciseValidationService programmingExerciseValidationService, ProgrammingExerciseBuildPlanService programmingExerciseBuildPlanService,
+            ProgrammingExerciseCreationScheduleService programmingExerciseCreationScheduleService, ProgrammingExerciseTaskService programmingExerciseTaskService,
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, UriService uriService, TemplateUpgradePolicyService templateUpgradePolicyService,
             ProgrammingExerciseImportBasicService programmingExerciseImportBasicService, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
             ProgrammingExerciseRepository programmingExerciseRepository) {
@@ -73,7 +78,9 @@ public class ProgrammingExerciseImportService {
         this.continuousIntegrationService = continuousIntegrationService;
         this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
         this.programmingExerciseRepositoryService = programmingExerciseRepositoryService;
-        this.programmingExerciseService = programmingExerciseService;
+        this.programmingExerciseValidationService = programmingExerciseValidationService;
+        this.programmingExerciseBuildPlanService = programmingExerciseBuildPlanService;
+        this.programmingExerciseCreationScheduleService = programmingExerciseCreationScheduleService;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.uriService = uriService;
@@ -221,7 +228,7 @@ public class ProgrammingExerciseImportService {
         // remove all non-alphanumeric characters from the short name. This gets already done in the client, but we do it again here to be sure
         newProgrammingExercise.setShortName(newProgrammingExercise.getShortName().replaceAll("[^a-zA-Z0-9]", ""));
         newProgrammingExercise.generateAndSetProjectKey();
-        programmingExerciseService.checkIfProjectExists(newProgrammingExercise);
+        programmingExerciseValidationService.checkIfProjectExists(newProgrammingExercise);
 
         if (newProgrammingExercise.isExamExercise()) {
             // Disable feedback suggestions on exam exercises (currently not supported)
@@ -248,7 +255,7 @@ public class ProgrammingExerciseImportService {
 
         if (recreateBuildPlans) {
             // Create completely new build plans for the exercise
-            programmingExerciseService.setupBuildPlansForNewExercise(newProgrammingExercise);
+            programmingExerciseBuildPlanService.setupBuildPlansForNewExercise(newProgrammingExercise);
         }
         else {
             // We have removed the automatic build trigger from test to base for new programming exercises.
@@ -257,7 +264,7 @@ public class ProgrammingExerciseImportService {
             importBuildPlans(originalProgrammingExercise, newProgrammingExercise);
         }
 
-        programmingExerciseService.scheduleOperations(newProgrammingExercise.getId());
+        programmingExerciseCreationScheduleService.scheduleOperations(newProgrammingExercise.getId());
 
         programmingExerciseTaskService.replaceTestIdsWithNames(newProgrammingExercise);
         return newProgrammingExercise;
