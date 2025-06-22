@@ -11,6 +11,20 @@
         }
     }
 
+    def detectChangedWebPackages() {
+        def diff = "git diff --name-only HEAD".execute(null, project.rootDir).text.readLines()
+        return diff
+            .findAll { it.startsWith('src/main/java/') && it.contains('/web/') && it.endsWith('.java') }
+            .collect { path ->
+                def rel = path - 'src/main/java/'
+                rel.substring(0, rel.lastIndexOf('.')).replace('/', '.')
+            }
+            .collect { pkgClass ->
+                pkgClass.substring(0, pkgClass.lastIndexOf('.'))
+            }
+            .toSet()
+    }
+
     openApi {
         apiDocsUrl.set("http://localhost:8080/api-docs.yaml")
         outputDir.set(file("$rootDir/openapi"))
@@ -21,9 +35,16 @@
         customBootRun {
 
             jvmArgs = ["-Dspring.profiles.active=test,artemis,core,atlas,scheduling,athena,apollon,iris,aeolus,theia,lti," +
-
-                           "dev","-Dspringdoc.packages-to-scan=de.tum.cit.aet.artemis.tutorialgroup.web"
+                           "dev",
             ]
+            def changed = detectChangedWebPackages()
+            if (!changed.isEmpty()) {
+                def scanArg = changed.join(',')
+                logger.lifecycle("✅ Springdoc packages-to-scan: $scanArg")
+                // inject as a real -D JVM arg
+                jvmArgs.addAll(["-Dspringdoc.packages-to-scan=$scanArg"])
+            }
+
 
 // TODO add package later add ${System.getProperty("springdoc.packages-to-scan")} package via cli property
             args.set(["--artemis.user-management.use-external=false","--artemis.iris.url=http://iris.fake=",
@@ -31,7 +52,17 @@
 
         }
     }
-
+    tasks.named("generateOpenApiDocs") {
+        doFirst {
+            def changed = detectChangedWebPackages()
+            if (changed.isEmpty()) {
+                logger.lifecycle("⏭ No changed web packages detected; skipping OpenAPI generation.")
+                // abort just this task, but mark it as SUCCESS
+                throw new StopExecutionException()
+            }
+            // else: do nothing—our jvmArgs are already set above
+        }
+    }
     // 1. TODO Detect if any resources have changed
     // 2. TODO If so, modify the packages to scan accordingly in the task above
     // 3. TODO Replace the existing OpenAPI spec with the new part. Keep the rest as is.
