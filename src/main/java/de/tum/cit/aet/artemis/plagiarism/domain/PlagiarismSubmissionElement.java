@@ -3,14 +3,14 @@ package de.tum.cit.aet.artemis.plagiarism.domain;
 import java.io.File;
 
 import jakarta.persistence.Column;
-import jakarta.persistence.DiscriminatorColumn;
-import jakarta.persistence.DiscriminatorType;
-import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
-import jakarta.persistence.Inheritance;
-import jakarta.persistence.InheritanceType;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.jplag.Token;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
@@ -18,10 +18,9 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 @Entity
-@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-@DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
-@DiscriminatorValue("PSE")
 @Table(name = "plagiarism_submission_element")
+@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class PlagiarismSubmissionElement extends DomainObject {
 
     @ManyToOne
@@ -33,10 +32,6 @@ public class PlagiarismSubmissionElement extends DomainObject {
     private int line;
 
     private String file;
-
-    // TODO: remove this column, we don't really need it
-    @Column(name = "token_type")
-    private int type;
 
     private int length;
 
@@ -110,14 +105,6 @@ public class PlagiarismSubmissionElement extends DomainObject {
         this.file = file;
     }
 
-    public int getType() {
-        return type;
-    }
-
-    public void setType(int type) {
-        this.type = type;
-    }
-
     public int getLength() {
         return length;
     }
@@ -128,6 +115,6 @@ public class PlagiarismSubmissionElement extends DomainObject {
 
     @Override
     public String toString() {
-        return "PlagiarismSubmissionElement{" + "column=" + column + ", line=" + line + ", file='" + file + '\'' + ", type=" + type + ", length=" + length + '}';
+        return "PlagiarismSubmissionElement{" + "column=" + column + ", line=" + line + ", file='" + file + '\'' + ", length=" + length + '}';
     }
 }

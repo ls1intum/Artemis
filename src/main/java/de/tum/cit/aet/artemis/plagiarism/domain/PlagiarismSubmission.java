@@ -16,10 +16,13 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.jplag.Submission;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
@@ -27,6 +30,8 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 @Entity
 @Table(name = "plagiarism_submission")
+@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class PlagiarismSubmission extends DomainObject {
 
     private static final Logger log = LoggerFactory.getLogger(PlagiarismSubmission.class);

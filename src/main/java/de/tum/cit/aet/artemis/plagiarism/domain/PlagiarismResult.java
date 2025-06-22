@@ -24,6 +24,11 @@ import jakarta.persistence.MapKeyColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.jplag.JPlagResult;
 import de.tum.cit.aet.artemis.core.domain.AbstractAuditingEntity;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -33,7 +38,8 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
  */
 @Entity
 @Table(name = "plagiarism_result")
-// Annotation necessary to distinguish between concrete implementations of PlagiarismResults when deserializing from JSON
+@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class PlagiarismResult extends AbstractAuditingEntity {
 
     private static final int ORIGINAL_SIZE = 100;

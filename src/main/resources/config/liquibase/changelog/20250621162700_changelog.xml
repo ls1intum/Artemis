@@ -2,7 +2,7 @@
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
-    <changeSet id="20250621162700" author="krusche">
+    <changeSet id="20250621162700-01" author="krusche">
         <!-- run only when data exists -->
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="1">
@@ -12,84 +12,104 @@
             </sqlCheck>
         </preConditions>
 
-        <!-- 1  delete plagiarism comparison matches -->
-        <sql>
-            DELETE FROM plagiarism_comparison_matches
-            USING plagiarism_comparison pc,
-                  plagiarism_result     pr
-            WHERE plagiarism_comparison_matches.plagiarism_comparison_id = pc.id
-                AND pr.id = pc.plagiarism_result_id
-                AND pr.discriminator = 'ModelingPlagiarismResult';
-        </sql>
-
-        <!-- 2  delete plagiarism submission elements -->
+        <!-- 1  delete plagiarism submission elements -->
         <sql>
             DELETE FROM plagiarism_submission_element
-            USING plagiarism_submission  ps,
-                  plagiarism_comparison  pc,
-                  plagiarism_result      pr
-            WHERE plagiarism_submission_element.plagiarism_submission_id = ps.id
-                AND (pc.submission_a_id = ps.id OR pc.submission_b_id = ps.id)
-                AND pr.id = pc.plagiarism_result_id
-                AND pr.discriminator = 'ModelingPlagiarismResult';
+                USING plagiarism_submission_element pse,
+			          plagiarism_submission         ps,
+			          plagiarism_comparison         pc,
+			          plagiarism_result             pr
+            WHERE pse.id                         = plagiarism_submission_element.id
+                AND pse.plagiarism_submission_id = ps.id
+                AND (pc.submission_a_id          = ps.id OR pc.submission_b_id = ps.id)
+                AND pr.id                        = pc.plagiarism_result_id
+                AND pr.discriminator             = 'ModelingPlagiarismResult';
         </sql>
 
-        <!-- 3  delete posts belonging to cases that have lost all submissions -->
+        <!-- 2  delete posts belonging to cases that have lost all submissions -->
         <sql>
             DELETE FROM post
-            USING plagiarism_case       plc,
-                  plagiarism_submission ps,
-                  plagiarism_comparison pc,
-                  plagiarism_result     pr
-            WHERE post.plagiarism_case_id = plc.id
-                AND plc.id = ps.plagiarism_case_id
-                AND (pc.submission_a_id = ps.id OR pc.submission_b_id = ps.id)
-                AND pr.id = pc.plagiarism_result_id
-                AND pr.discriminator = 'ModelingPlagiarismResult';
+                USING post                  po,
+			          plagiarism_case       plc,
+			          plagiarism_submission ps,
+			          plagiarism_comparison pc,
+			          plagiarism_result     pr
+            WHERE   po.id                 = post.id
+                AND po.plagiarism_case_id = plc.id
+                AND ps.plagiarism_case_id = plc.id
+                AND (pc.submission_a_id   = ps.id OR pc.submission_b_id = ps.id)
+                AND pr.id                 = pc.plagiarism_result_id
+                AND pr.discriminator      = 'ModelingPlagiarismResult';
         </sql>
 
-        <!-- 4  delete plagiarism comparisons -->
+        <!-- 3  delete plagiarism comparisons -->
         <sql>
             DELETE FROM plagiarism_comparison
-            USING plagiarism_result pr
-            WHERE plagiarism_comparison.plagiarism_result_id = pr.id
+                USING plagiarism_comparison pc,
+			          plagiarism_result     pr
+            WHERE   pc.id            = plagiarism_comparison.id
+                AND pr.id            = pc.plagiarism_result_id
                 AND pr.discriminator = 'ModelingPlagiarismResult';
         </sql>
 
-        <!-- 5  delete now-orphan plagiarism submissions -->
+        <!-- 4  delete plagiarism submissions -->
         <sql>
             DELETE FROM plagiarism_submission
-            USING plagiarism_comparison pc,
-                  plagiarism_result    pr
-            WHERE (pc.submission_a_id = plagiarism_submission.id OR pc.submission_b_id = plagiarism_submission.id)
-                AND pr.id = pc.plagiarism_result_id
+                USING plagiarism_submission  ps,
+			          plagiarism_comparison  pc,
+			          plagiarism_result      pr
+            WHERE   ps.id            = plagiarism_submission.id
+                AND (pc.submission_a_id = ps.id OR pc.submission_b_id = ps.id)
+                AND pr.id            = pc.plagiarism_result_id
                 AND pr.discriminator = 'ModelingPlagiarismResult';
         </sql>
 
-        <!-- 6  Remove those now-orphaned plagiarism cases -->
+        <!-- 5  delete  plagiarism cases -->
         <sql>
             DELETE FROM plagiarism_case
-            USING plagiarism_submission ps,
-                  plagiarism_comparison pc,
-                  plagiarism_result     pr
-            WHERE plagiarism_case.id = ps.plagiarism_case_id
+                USING plagiarism_case        plc,
+			          plagiarism_submission  ps,
+			          plagiarism_comparison  pc,
+			          plagiarism_result      pr
+            WHERE   plc.id              = plagiarism_case.id
+                AND plc.id              = ps.plagiarism_case_id
                 AND (pc.submission_a_id = ps.id OR pc.submission_b_id = ps.id)
-                AND pr.id = pc.plagiarism_result_id
-                AND pr.discriminator = 'ModelingPlagiarismResult';
+                AND pr.id               = pc.plagiarism_result_id
+                AND pr.discriminator    = 'ModelingPlagiarismResult';
         </sql>
 
-        <!-- 7  delete plagiarism similarity-distribution buckets -->
+        <!-- 6  delete plagiarism similarity-distribution buckets -->
         <sql>
             DELETE FROM plagiarism_result_similarity_distribution
-            USING plagiarism_result pr
-            WHERE plagiarism_result_similarity_distribution.plagiarism_result_id = pr.id
-                AND pr.discriminator = 'ModelingPlagiarismResult';
+                USING plagiarism_result_similarity_distribution prsd,
+			          plagiarism_result                         pr
+            WHERE   prsd.plagiarism_result_id = plagiarism_result_similarity_distribution.plagiarism_result_id
+                AND prsd.plagiarism_result_id = pr.id
+                AND pr.discriminator          = 'ModelingPlagiarismResult';
         </sql>
 
-        <!-- 8  delete plagiarism modeling result rows themselves -->
+        <!-- 7  delete plagiarism modeling result rows themselves -->
         <sql>
             DELETE FROM plagiarism_result
             WHERE discriminator = 'ModelingPlagiarismResult';
         </sql>
+    </changeSet>
+    <changeSet id="20250621162700-02" author="krusche">
+        <!-- delete unnecessary database columns -->
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="plagiarism_result"             columnName="discriminator"/>
+            <columnExists tableName="plagiarism_submission_element" columnName="token_type"/>
+            <columnExists tableName="plagiarism_submission_element" columnName="discriminator"/>
+        </preConditions>
+
+        <!-- plagiarism_result.discriminator -->
+        <dropColumn tableName="plagiarism_result" columnName="discriminator"/>
+
+        <!-- plagiarism_submission_element.token_type -->
+        <dropColumn tableName="plagiarism_submission_element" columnName="token_type"/>
+
+        <!-- plagiarism_submission_element.discriminator -->
+        <dropColumn tableName="plagiarism_submission_element" columnName="discriminator"/>
+
     </changeSet>
 </databaseChangeLog>
