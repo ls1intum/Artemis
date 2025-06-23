@@ -61,78 +61,80 @@
 </ng-template>
 <!-- main chat section -->
 <div class="chat-container">
-    <div class="chat-history" [ngClass]="{ 'chat-history-open': isChatHistoryOpen }">
-        @if (isChatHistoryOpen) {
-            <div class="chat-history-container">
-                <div class="chat-history-close-btn-row">
-                    <h6 jhiTranslate="artemisApp.iris.chatHistory.title"></h6>
-                    <div class="chat-history-close-btn" (click)="setChatHistoryVisibility(false)">
-                        <div class="double-arrow-icon">
-                            <fa-icon class="icon-negative fa-xs" [icon]="faChevronRight" />
-                            <fa-icon class="fa-xs" [icon]="faChevronRight" />
+    @if (isChatHistoryAvailable()) {
+        <div class="chat-history" [ngClass]="{ 'chat-history-open': isChatHistoryOpen }">
+            @if (isChatHistoryOpen) {
+                <div class="chat-history-container">
+                    <div class="chat-history-close-btn-row">
+                        <h6 jhiTranslate="artemisApp.iris.chatHistory.title"></h6>
+                        <div class="chat-history-close-btn" (click)="setChatHistoryVisibility(false)">
+                            <div class="double-arrow-icon">
+                                <fa-icon class="icon-negative fa-xs" [icon]="faChevronRight" />
+                                <fa-icon class="fa-xs" [icon]="faChevronRight" />
+                            </div>
                         </div>
                     </div>
+
+                    @let todaySessions = getSessionsBetween(0, 0);
+                    @if (todaySessions.length > 0) {
+                        <div class="chat-history-label">
+                            <p jhiTranslate="artemisApp.iris.chatHistory.today"></p>
+                        </div>
+                        @for (session of todaySessions; track session.id; let i = $index) {
+                            <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId" (sessionClicked)="onSessionClick(session)" />
+                        }
+                    }
+
+                    @let yesterdaySessions = getSessionsBetween(1, 1);
+                    @if (yesterdaySessions.length > 0) {
+                        <div class="chat-history-label">
+                            <p jhiTranslate="artemisApp.iris.chatHistory.yesterday"></p>
+                        </div>
+                        @for (session of yesterdaySessions; track session.id; let i = $index) {
+                            <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId" (sessionClicked)="onSessionClick(session)" />
+                        }
+                    }
+
+                    @let last7DaysSessions = getSessionsBetween(2, 6);
+                    @if (last7DaysSessions.length > 0) {
+                        <div class="chat-history-label">
+                            <p jhiTranslate="artemisApp.iris.chatHistory.last7Days"></p>
+                        </div>
+                        @for (session of last7DaysSessions; track session.id; let i = $index) {
+                            <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId" (sessionClicked)="onSessionClick(session)" />
+                        }
+                    }
+
+                    @let last30DaysSessions = getSessionsBetween(7, 29);
+                    @if (last30DaysSessions.length > 0) {
+                        <div class="chat-history-label">
+                            <p jhiTranslate="artemisApp.iris.chatHistory.last30Days"></p>
+                        </div>
+                        @for (session of last30DaysSessions; track session.id; let i = $index) {
+                            <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId" (sessionClicked)="onSessionClick(session)" />
+                        }
+                    }
+
+                    @let olderSessions = getSessionsBetween(30, undefined, true);
+                    @if (olderSessions.length > 0) {
+                        <div class="chat-history-label">
+                            <p jhiTranslate="artemisApp.iris.chatHistory.older"></p>
+                        </div>
+                        @for (session of olderSessions; track session.id; let i = $index) {
+                            <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId" (sessionClicked)="onSessionClick(session)" />
+                        }
+                    }
                 </div>
-
-                @let todaySessions = getSessionsBetween(0, 0);
-                @if (todaySessions.length > 0) {
-                    <div class="chat-history-label">
-                        <p jhiTranslate="artemisApp.iris.chatHistory.today"></p>
+            } @else {
+                <div class="chat-history-open-btn" (click)="setChatHistoryVisibility(true)">
+                    <div class="double-arrow-icon history-closed">
+                        <fa-icon class="icon-negative fa-xs" [icon]="faChevronRight" />
+                        <fa-icon class="fa-xs" [icon]="faChevronRight" />
                     </div>
-                    @for (session of todaySessions; track session.id; let i = $index) {
-                        <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId" (sessionClicked)="onSessionClick(session)" />
-                    }
-                }
-
-                @let yesterdaySessions = getSessionsBetween(1, 1);
-                @if (yesterdaySessions.length > 0) {
-                    <div class="chat-history-label">
-                        <p jhiTranslate="artemisApp.iris.chatHistory.yesterday"></p>
-                    </div>
-                    @for (session of yesterdaySessions; track session.id; let i = $index) {
-                        <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId" (sessionClicked)="onSessionClick(session)" />
-                    }
-                }
-
-                @let last7DaysSessions = getSessionsBetween(2, 6);
-                @if (last7DaysSessions.length > 0) {
-                    <div class="chat-history-label">
-                        <p jhiTranslate="artemisApp.iris.chatHistory.last7Days"></p>
-                    </div>
-                    @for (session of last7DaysSessions; track session.id; let i = $index) {
-                        <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId" (sessionClicked)="onSessionClick(session)" />
-                    }
-                }
-
-                @let last30DaysSessions = getSessionsBetween(7, 29);
-                @if (last30DaysSessions.length > 0) {
-                    <div class="chat-history-label">
-                        <p jhiTranslate="artemisApp.iris.chatHistory.last30Days"></p>
-                    </div>
-                    @for (session of last30DaysSessions; track session.id; let i = $index) {
-                        <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId" (sessionClicked)="onSessionClick(session)" />
-                    }
-                }
-
-                @let olderSessions = getSessionsBetween(30, undefined, true);
-                @if (olderSessions.length > 0) {
-                    <div class="chat-history-label">
-                        <p jhiTranslate="artemisApp.iris.chatHistory.older"></p>
-                    </div>
-                    @for (session of olderSessions; track session.id; let i = $index) {
-                        <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId" (sessionClicked)="onSessionClick(session)" />
-                    }
-                }
-            </div>
-        } @else {
-            <div class="chat-history-open-btn" (click)="setChatHistoryVisibility(true)">
-                <div class="double-arrow-icon history-closed">
-                    <fa-icon class="icon-negative fa-xs" [icon]="faChevronRight" />
-                    <fa-icon class="fa-xs" [icon]="faChevronRight" />
                 </div>
-            </div>
-        }
-    </div>
+            }
+        </div>
+    }
     <div class="chat-body" [class.not-accepted]="!userAccepted" #chatBody>
         @if (messages?.length) {
             <div class="messages" #messagesElement (scroll)="checkChatScroll()">

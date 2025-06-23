@@ -174,6 +174,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     public ButtonType = ButtonType;
 
     showDeclineButton = input<boolean>(true);
+    isChatHistoryAvailable = input<boolean>(false);
     @Input() fullSize: boolean | undefined;
     @Input() showCloseButton = false;
     @Input() isChatGptWrapper = false;
