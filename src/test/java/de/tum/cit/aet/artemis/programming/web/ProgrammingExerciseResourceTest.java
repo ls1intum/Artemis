@@ -5,15 +5,17 @@ import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doReturn;
 
 import java.io.ByteArrayInputStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -38,6 +40,8 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationIndependentTest {
+
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseResourceTest.class);
 
     private static final String TEST_PREFIX = "programmingexerciseresource";
 
@@ -291,8 +295,8 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationIndepende
         assertThat(repositoryFiles).as("Should have some repository files").isNotEmpty();
 
         // Log the found files for debugging
-        System.out.println("Found git files: " + gitFiles.size());
-        System.out.println("Found repository files: " + repositoryFiles.size());
+        log.info("Found git files: " + gitFiles.size());
+        log.info("Found repository files: " + repositoryFiles.size());
     }
 
     @Test
@@ -383,7 +387,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationIndepende
 
     private void createAndCommitFile(LocalRepository localRepository, String filename, String content, String commitMessage) throws Exception {
         var file = Path.of(localRepository.localRepoFile.toPath().toString(), filename);
-        Files.writeString(file, content);
+        FileUtils.writeStringToFile(file.toFile(), content, "UTF-8");
         localRepository.localGit.add().addFilepattern(filename).call();
         GitService.commit(localRepository.localGit).setMessage(commitMessage).call();
     }
