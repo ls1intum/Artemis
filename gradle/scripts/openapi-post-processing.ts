@@ -1,18 +1,19 @@
 import { Project } from "ts-morph";
 import { join } from "path";
-import { readdirSync, statSync } from "fs";
+import { readdirSync, statSync, writeFileSync } from "fs";
 
-const getAllTypescriptFiles = (dir: string): string[] => {
+const getAllOpenApiFiles = (dir: string): string[] => {
     let results: string[] = [];
     for (const file of readdirSync(dir)) {
         const fullPath = join(dir, file);
         const stat = statSync(fullPath);
         if (stat.isDirectory()) {
-            results = results.concat(getAllTypescriptFiles(fullPath));
-        } else if (file.endsWith(".ts")) {
+            results = results.concat(getAllOpenApiFiles(fullPath));
+        } else {
             results.push(fullPath);
         }
     }
+    results.push('openapi/openapi.yaml')
     return results;
 };
 
@@ -20,10 +21,7 @@ const stripLeadingUnderscoresAndTrailingDigitsFromAllMethods = (sourceFile: any,
     for (const clazz of sourceFile.getClasses()) {
         for (const method of clazz.getMethods()) {
             const oldName = method.getName();
-            // remove all leading '_' then remove any digits at the end
-            const newName = oldName
-                .replace(/^_+/, "")
-                .replace(/\d+$/, "");
+            const newName = oldName.replace(/^_+/, "").replace(/\d+$/, "");
             if (newName !== oldName) {
                 method.getNameNode().rename(newName);
                 renamedMethodsInFile++;
@@ -34,13 +32,19 @@ const stripLeadingUnderscoresAndTrailingDigitsFromAllMethods = (sourceFile: any,
     return renamedMethodsInFile;
 };
 
+const normalizeLineEndings = (text: string, lineEnding: "CRLF" | "LF" = "CRLF") => {
+    return lineEnding === "CRLF"
+        ? text.replace(/\r?\n/g, "\r\n")
+        : text.replace(/\r?\n/g, "\n");
+};
+
 const main = async () => {
+    const isWindows = process.platform === "win32";
     const directory = "src/main/webapp/app/openapi";
-    const files = getAllTypescriptFiles(directory);
+    const files = getAllOpenApiFiles(directory);
 
     const project = new Project({
         tsConfigFilePath: "tsconfig.json",
-        // we don't want to add files from tsconfig.json, as we only need the openapi files and not all ts files
         skipAddingFilesFromTsConfig: true,
     });
     project.addSourceFilesAtPaths(files);
@@ -57,13 +61,11 @@ const main = async () => {
             for (const namedImport of importDeclaration.getNamedImports()) {
                 const id = namedImport.getNameNode();
                 const symbol = typeChecker.getSymbolAtLocation(id);
-                if (!symbol) {
-                    continue;
-                }
+                if (!symbol) continue;
 
                 const refs = id.findReferences();
-                const isUsed = refs.some(referenceGroup =>
-                    referenceGroup.getReferences().some(usage =>
+                const isUsed = refs.some(refGroup =>
+                    refGroup.getReferences().some(usage =>
                         usage.getNode().getSourceFile() === sourceFile &&
                         usage.getNode() !== id
                     )
@@ -75,18 +77,21 @@ const main = async () => {
                 }
             }
 
-            const emptyImportDeclaration = importDeclaration.getNamedImports().length === 0 &&
+            const isEmpty = importDeclaration.getNamedImports().length === 0 &&
                 !importDeclaration.getDefaultImport() &&
                 !importDeclaration.getNamespaceImport();
-            if (emptyImportDeclaration) {
+            if (isEmpty) {
                 importDeclaration.remove();
             }
         }
 
         renamedMethodsInFile = stripLeadingUnderscoresAndTrailingDigitsFromAllMethods(sourceFile, renamedMethodsInFile);
+        const path = sourceFile.getFilePath();
+        const content = sourceFile.getFullText();
+        const fixedContent = isWindows ? normalizeLineEndings(content, "CRLF") : content;
 
+        writeFileSync(path, fixedContent, "utf8");
         if (removedImportsInFile + renamedMethodsInFile > 0) {
-            await sourceFile.save();
             totalRemovedImports += removedImportsInFile;
             totalRenamedMethods += renamedMethodsInFile;
             console.log(

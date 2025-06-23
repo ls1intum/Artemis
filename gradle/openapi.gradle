@@ -215,5 +215,9 @@
     tasks.register('postProcessTsFiles', Exec) {
         description = "Removes unused imports from generated OpenAPI TypeScript files and cleans numeric suffixes from method names"
 
-        commandLine "npx", "tsx", "gradle/scripts/openapi-post-processing.ts"
+        if (System.getProperty("os.name").toLowerCase().contains("win")) {
+            commandLine "cmd", "/c", "npx tsx gradle/scripts/openapi-post-processing.ts"
+        } else {
+            commandLine "npx", "tsx", "gradle/scripts/openapi-post-processing.ts"
+        }
     }
