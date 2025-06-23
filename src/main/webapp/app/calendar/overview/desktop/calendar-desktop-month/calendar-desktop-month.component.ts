@@ -46,10 +46,6 @@ export class CalendarDesktopMonthComponent {
         this.popover = undefined;
     }
 
-    getDateString(timestamp: Dayjs): string {
-        return timestamp.format('DD.MM.YYYY');
-    }
-
     getTimeString(timestamp: Dayjs): string {
         return timestamp.format('HH:mm');
     }
