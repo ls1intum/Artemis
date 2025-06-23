@@ -135,7 +135,7 @@
             }
         </div>
     }
-    <div class="chat-body" [class.not-accepted]="!userAccepted" #chatBody>
+    <div class="chat-body chat-body-history" [class.not-accepted]="!userAccepted" [class.chat-body-history]="isChatHistoryAvailable()" #chatBody>
         @if (messages?.length) {
             <div class="messages" #messagesElement (scroll)="checkChatScroll()">
                 @if (

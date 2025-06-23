@@ -152,6 +152,10 @@
     }
 }
 
+.chat-body-history {
+    padding: 0 1rem 10px 0;
+}
+
 .empty-chat-message {
     width: 100%;
     display: flex;
@@ -338,7 +342,7 @@ pre {
 
 .chat-history.chat-history-open {
     width: 20rem;
-    height: calc(100% - 2rem);
+    height: calc(100% - 25px);
 }
 
 .chat-input textarea {
