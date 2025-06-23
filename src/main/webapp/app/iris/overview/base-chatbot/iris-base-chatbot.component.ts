@@ -43,6 +43,7 @@ import { ActivatedRoute } from '@angular/router';
 import { ChatHistoryItemComponent } from './chat-history-item/chat-history-item.component';
 import { IrisSession } from 'app/iris/shared/entities/iris-session.model';
 import { NgClass } from '@angular/common';
+import { facSidebar } from 'app/shared/icons/icons';
 
 @Component({
     selector: 'jhi-iris-base-chatbot',
@@ -136,6 +137,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     faRedo = faRedo;
     faPenToSquare = faPenToSquare;
     faChevronRight = faChevronRight;
+    facSidebar = facSidebar;
 
     // State variables
     sessionIdSubscription: Subscription;
