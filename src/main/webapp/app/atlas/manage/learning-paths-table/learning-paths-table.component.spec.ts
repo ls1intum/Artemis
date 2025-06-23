@@ -8,7 +8,7 @@ import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service'
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { LearningPathInformationDTO } from 'app/atlas/shared/entities/learning-path.model';
+import { LearningPathAverageProgressDTO, LearningPathInformationDTO } from 'app/atlas/shared/entities/learning-path.model';
 import { SearchResult, SearchTermPageableSearch } from 'app/shared/table/pageable-table';
 import { By } from '@angular/platform-browser';
 import { ScienceService } from 'app/shared/science/science.service';
@@ -128,6 +128,23 @@ describe('LearningPathsTableComponent', () => {
         await fixture.whenStable();
 
         expect(alertServiceErrorSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should load and set average progress for the course', async () => {
+        const mockAverageProgress: LearningPathAverageProgressDTO = {
+            averageProgress: 42,
+            courseId: 1,
+            totalStudents: 5,
+        };
+
+        const getAverageProgressForCourseSpy = jest.spyOn(learningPathApiService, 'getAverageProgressForCourse').mockResolvedValue(mockAverageProgress);
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        expect(getAverageProgressForCourseSpy).toHaveBeenCalledWith(courseId);
+        expect(component.averageProgress()).toBe(42);
     });
 
     it('should set isLoading correctly', async () => {
