@@ -47,7 +47,7 @@ public class PlagiarismAccessService {
                 && wasUserNotifiedByInstructor(userLogin, comparisonOptional.get());
     }
 
-    private boolean isOwnSubmissionOrIsAfterExerciseDueDate(Long submissionId, String userLogin, Set<PlagiarismComparison<?>> comparisons, Participation participation) {
+    private boolean isOwnSubmissionOrIsAfterExerciseDueDate(Long submissionId, String userLogin, Set<PlagiarismComparison> comparisons, Participation participation) {
         var isOwnSubmission = comparisons.stream().flatMap(it -> Stream.of(it.getSubmissionA(), it.getSubmissionB())).filter(Objects::nonNull)
                 .filter(it -> it.getSubmissionId() == submissionId).findFirst().map(PlagiarismSubmission::getStudentLogin).filter(isEqual(userLogin)).isPresent();
         return isOwnSubmission || exerciseDateService.isAfterDueDate(participation);
@@ -66,7 +66,7 @@ public class PlagiarismAccessService {
         return comparisonOptional.filter(not(Set::isEmpty)).isPresent() && wasUserNotifiedByInstructor(userLogin, comparisonOptional.get());
     }
 
-    private boolean wasUserNotifiedByInstructor(String userLogin, Set<PlagiarismComparison<?>> comparisons) {
+    private boolean wasUserNotifiedByInstructor(String userLogin, Set<PlagiarismComparison> comparisons) {
         // disallow requests from users who are not notified about this case:
         return comparisons.stream()
                 .anyMatch(comparison -> (comparison.getSubmissionA().getPlagiarismCase() != null

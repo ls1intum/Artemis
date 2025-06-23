@@ -41,7 +41,6 @@ import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
-import de.tum.cit.aet.artemis.plagiarism.domain.text.TextSubmissionElement;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismComparisonRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -146,8 +145,8 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getTextSubmissionWithResult_involved_allowed() throws Exception {
         textSubmission = textExerciseUtilService.saveTextSubmission(finishedTextExercise, textSubmission, TEST_PREFIX + "student1");
-        PlagiarismComparison<TextSubmissionElement> plagiarismComparison = new PlagiarismComparison<>();
-        PlagiarismSubmission<TextSubmissionElement> submissionA = new PlagiarismSubmission<>();
+        PlagiarismComparison plagiarismComparison = new PlagiarismComparison();
+        PlagiarismSubmission submissionA = new PlagiarismSubmission();
         submissionA.setStudentLogin(TEST_PREFIX + "student1");
         submissionA.setSubmissionId(this.textSubmission.getId());
         plagiarismComparison.setSubmissionA(submissionA);
