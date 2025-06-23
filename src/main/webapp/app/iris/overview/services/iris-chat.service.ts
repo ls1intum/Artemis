@@ -28,6 +28,12 @@ export enum ChatServiceMode {
  */
 @Injectable({ providedIn: 'root' })
 export class IrisChatService implements OnDestroy {
+    private readonly http = inject(IrisChatHttpService);
+    private readonly ws = inject(IrisWebsocketService);
+    private readonly status = inject(IrisStatusService);
+    private readonly userService = inject(UserService);
+    private readonly accountService = inject(AccountService);
+
     private modeRequiresLLMAcceptance = new Map<ChatServiceMode, boolean>([
         [ChatServiceMode.TEXT_EXERCISE, true],
         [ChatServiceMode.PROGRAMMING_EXERCISE, true],
@@ -35,11 +41,6 @@ export class IrisChatService implements OnDestroy {
         [ChatServiceMode.LECTURE, true],
         [ChatServiceMode.TUTOR_SUGGESTION, false],
     ]);
-    http = inject(IrisChatHttpService);
-    ws = inject(IrisWebsocketService);
-    status = inject(IrisStatusService);
-    private userService = inject(UserService);
-    private accountService = inject(AccountService);
 
     private sessionIdSubject = new BehaviorSubject<number | undefined>(undefined);
     public sessionId$ = this.sessionIdSubject.asObservable();
@@ -191,11 +192,11 @@ export class IrisChatService implements OnDestroy {
         this.newIrisMessage.next(undefined);
     }
 
-    public setUserAccepted(): void {
+    public updateExternalLLMUsageConsent(accepted: boolean): void {
         this.acceptSubscription?.unsubscribe();
-        this.acceptSubscription = this.userService.acceptExternalLLMUsage().subscribe(() => {
-            this.hasJustAcceptedExternalLLMUsage = true;
-            this.accountService.setUserAcceptedExternalLLMUsage();
+        this.acceptSubscription = this.userService.updateExternalLLMUsageConsent(accepted).subscribe(() => {
+            this.hasJustAcceptedExternalLLMUsage = accepted;
+            this.accountService.setUserAcceptedExternalLLMUsage(accepted);
             this.closeAndStart();
         });
     }

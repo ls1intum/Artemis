@@ -9,6 +9,7 @@ import java.util.function.Predicate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -35,6 +36,7 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 /**
  * Manages continuous plagiarism control.
  */
+@Lazy
 @Service
 @Profile(PROFILE_SCHEDULING)
 @Conditional(PlagiarismEnabled.class)
@@ -100,7 +102,7 @@ public class ContinuousPlagiarismControlService {
      * @param exercise the exercise to perform plagiarism checks on
      * @return result of plagiarism checks or null if any exception was thrown
      */
-    private PlagiarismResult<?> executeChecksForExerciseSilencingExceptions(Exercise exercise) {
+    private PlagiarismResult executeChecksForExerciseSilencingExceptions(Exercise exercise) {
         try {
             return executeChecksForExercise(exercise);
         }
@@ -121,7 +123,7 @@ public class ContinuousPlagiarismControlService {
         }
     }
 
-    private PlagiarismResult<?> executeChecksForExercise(Exercise exercise) throws Exception {
+    private PlagiarismResult executeChecksForExercise(Exercise exercise) throws Exception {
         return switch (exercise.getExerciseType()) {
             case TEXT -> plagiarismDetectionService.checkTextExercise((TextExercise) exercise);
             case PROGRAMMING -> plagiarismDetectionService.checkProgrammingExercise((ProgrammingExercise) exercise);
@@ -129,14 +131,14 @@ public class ContinuousPlagiarismControlService {
         };
     }
 
-    private void updatePlagiarismCases(PlagiarismResult<?> result, Exercise exercise) {
+    private void updatePlagiarismCases(PlagiarismResult result, Exercise exercise) {
         if (result != null) {
             addCurrentComparisonsToPlagiarismCases(result);
         }
         removeStalePlagiarismCases(exercise.getId());
     }
 
-    private <E extends PlagiarismSubmissionElement> void addCurrentComparisonsToPlagiarismCases(PlagiarismResult<E> result) {
+    private <E extends PlagiarismSubmissionElement> void addCurrentComparisonsToPlagiarismCases(PlagiarismResult result) {
         result.getComparisons().forEach(comparison -> {
             comparison.setPlagiarismResult(result);
             plagiarismComparisonRepository.updatePlagiarismComparisonStatus(comparison.getId(), PlagiarismStatus.CONFIRMED);
@@ -144,7 +146,7 @@ public class ContinuousPlagiarismControlService {
         });
     }
 
-    private void createOrUpdatePlagiarismCases(PlagiarismComparison<?> comparison) {
+    private void createOrUpdatePlagiarismCases(PlagiarismComparison comparison) {
         var plagiarismCases = Set.of(plagiarismCaseService.createOrAddToPlagiarismCaseForStudent(comparison, comparison.getSubmissionA(), true),
                 plagiarismCaseService.createOrAddToPlagiarismCaseForStudent(comparison, comparison.getSubmissionB(), true));
 
