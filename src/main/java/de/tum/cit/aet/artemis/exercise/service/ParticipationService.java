@@ -162,10 +162,6 @@ public class ParticipationService {
                 // Only for quiz exercises, the participation status FINISHED should not be overwritten since the user must not change his submission once submitted
                 participation.setInitializationState(InitializationState.INITIALIZED);
             }
-
-            if (Optional.ofNullable(participation.getInitializationDate()).isEmpty()) {
-                participation.setInitializationDate(ZonedDateTime.now());
-            }
             // TODO: load submission with exercise for exam edge case:
             // clients creates missing participation for exercise, call on server succeeds, but response to client is lost
             // -> client tries to create participation again. In this case the submission is not loaded from db -> client errors
@@ -175,6 +171,9 @@ public class ParticipationService {
                     submissionRepository.initializeSubmission(participation, exercise, null);
                 }
             }
+        }
+        if (Optional.ofNullable(participation.getInitializationDate()).isEmpty()) {
+            participation.setInitializationDate(ZonedDateTime.now());
         }
         return studentParticipationRepository.saveAndFlush(participation);
     }

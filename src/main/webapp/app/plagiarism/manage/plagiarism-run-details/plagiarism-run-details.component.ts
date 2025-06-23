@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, inject } from '@angular/core';
-import { TextPlagiarismResult } from 'app/plagiarism/shared/entities/text/TextPlagiarismResult';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
+import { PlagiarismResult } from 'app/plagiarism/shared/entities/PlagiarismResult';
 import { Range, round } from 'app/shared/util/utils';
 import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
 import { PlagiarismStatus } from 'app/plagiarism/shared/entities/PlagiarismStatus';
@@ -31,7 +31,7 @@ export class PlagiarismRunDetailsComponent extends PlagiarismAndTutorEffortDirec
     /**
      * Result of the automated plagiarism detection
      */
-    @Input() plagiarismResult?: TextPlagiarismResult;
+    @Input() plagiarismResult?: PlagiarismResult;
     /**
      * Statistics for the automated plagiarism detection result
      */
@@ -84,7 +84,7 @@ export class PlagiarismRunDetailsComponent extends PlagiarismAndTutorEffortDirec
      * to show the number of confirmed, denied and open plagiarism cases
      * @param comparisons the pairs identified by the detection tool
      */
-    private setBucketDTOs(comparisons: PlagiarismComparison<any>[]): void {
+    private setBucketDTOs(comparisons: PlagiarismComparison[]): void {
         this.bucketDTOs = [];
         // we use this array as minimum similarities for the filtering
         const steps = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90];

@@ -36,11 +36,11 @@ export interface IAccountService {
 
 @Injectable({ providedIn: 'root' })
 export class AccountService implements IAccountService {
-    private translateService = inject(TranslateService);
-    private sessionStorage = inject(SessionStorageService);
-    private http = inject(HttpClient);
-    private websocketService = inject(WebsocketService);
-    private featureToggleService = inject(FeatureToggleService);
+    private readonly translateService = inject(TranslateService);
+    private readonly sessionStorage = inject(SessionStorageService);
+    private readonly http = inject(HttpClient);
+    private readonly websocketService = inject(WebsocketService);
+    private readonly featureToggleService = inject(FeatureToggleService);
 
     // cached value of the user to avoid unnecessary requests to the server
     private userIdentityValue?: User;
@@ -367,13 +367,15 @@ export class AccountService implements IAccountService {
     }
 
     /**
-     * Sets externalLLMUsageAccepted to current timestamp locally, to omit accepting external LLM usage
-     * popup appearing multiple time before user refreshes the page.
+     * Sets externalLLMUsageAccepted to current timestamp locally if the users accepted the conditions,
+     * to omit accepting external LLM usage popup appearing multiple time before user refreshes the page.
      */
-    setUserAcceptedExternalLLMUsage(): void {
-        if (this.userIdentity) {
-            this.userIdentity.externalLLMUsageAccepted = dayjs();
+    setUserAcceptedExternalLLMUsage(accepted: boolean = true): void {
+        if (!this.userIdentity) {
+            return;
         }
+
+        this.userIdentity.externalLLMUsageAccepted = accepted ? dayjs() : undefined;
     }
 
     /**
