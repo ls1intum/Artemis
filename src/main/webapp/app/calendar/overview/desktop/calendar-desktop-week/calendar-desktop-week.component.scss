@@ -1,15 +1,15 @@
 .frame {
-    height: 600px;
+    height: 33.75rem;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
 
     border: 2px solid var(--border-color);
-    border-radius: 12px;
+    border-radius: 0.75rem;
 }
 
 .header {
-    height: 36px;
+    height: 2.25rem;
     display: flex;
     flex-direction: row;
     justify-content: flex-start;
@@ -17,7 +17,7 @@
     border-bottom: 2px solid var(--border-color);
 
     .header-spacer {
-        width: 70px;
+        width: 4.5rem;
     }
 
     .day-info {
@@ -26,11 +26,11 @@
         flex-direction: row;
         justify-content: center;
         align-items: center;
-        gap: 10px;
+        gap: 0.5rem;
     }
 
     .day-name {
-        font-size: 14px;
+        font-size: 1rem;
         font-weight: 600;
     }
 }

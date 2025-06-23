@@ -41,6 +41,6 @@ export function identify(dateObject: Dayjs | Dayjs[]): string {
     }
 }
 
-export function limitToLengthThree(events: CalendarEvent[]): CalendarEvent[] {
-    return events.slice(0, 3);
+export function limitToLengthTwo(events: CalendarEvent[]): CalendarEvent[] {
+    return events.slice(0, 2);
 }

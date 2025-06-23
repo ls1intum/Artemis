@@ -1,6 +1,7 @@
-import { Component, computed, input } from '@angular/core';
+import { Component, computed, input, viewChild } from '@angular/core';
 import { Dayjs } from 'dayjs/esm';
 import * as Utils from 'app/calendar/shared/util/calendar-util';
+import { Popover } from 'primeng/popover';
 import { DayBadgeComponent } from '../../../shared/day-badge/day-badge.component';
 import { CalendarEventDummyService } from 'app/calendar/shared/service/calendar-event-dummy.service';
 import { CalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
@@ -9,12 +10,15 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 @Component({
     selector: 'calendar-desktop-month',
     standalone: true,
-    imports: [DayBadgeComponent, ArtemisTranslatePipe],
+    imports: [Popover, DayBadgeComponent, ArtemisTranslatePipe],
     templateUrl: './calendar-desktop-month.component.html',
     styleUrls: ['./calendar-desktop-month.component.scss'],
 })
 export class CalendarDesktopMonthComponent {
     firstDayOfCurrentMonth = input.required<Dayjs>();
+    selectedEvent?: CalendarEvent;
+
+    eventPopover = viewChild<Popover>('eventPopover');
 
     readonly utils = Utils;
     readonly weeks = computed(() => this.computeWeeksFrom(this.firstDayOfCurrentMonth()));
@@ -25,6 +29,11 @@ export class CalendarDesktopMonthComponent {
     getEventsOf(day: Dayjs): CalendarEvent[] {
         const key = day.format('YYYY-MM-DD');
         return this.eventMap().get(key) ?? [];
+    }
+
+    selectEvent(calendarEvent: CalendarEvent, clickEvent: Event) {
+        this.selectedEvent = calendarEvent;
+        this.eventPopover()?.show(clickEvent);
     }
 
     private computeWeeksFrom(startDate: Dayjs): Dayjs[][] {

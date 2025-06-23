@@ -10,23 +10,23 @@
     justify-content: flex-start;
 
     .info-column {
-        width: 70px;
+        width: 4.5rem;
         display: flex;
         flex-direction: column;
         justify-content: flex-start;
 
         .info-column-spacer {
-            height: 18px;
+            height: 1.125rem;
         }
 
         .time-label {
-            height: 36px;
+            height: 2.25rem;
             display: flex;
             flex-direction: row;
             justify-content: flex-end;
             align-items: center;
-            padding-right: 4px;
-            font-size: 10px;
+            padding-right: 0.25rem;
+            font-size: 0.5rem;
             font-weight: 550;
         }
     }
@@ -40,7 +40,7 @@
         border-left: 2px solid var(--border-color);
 
         .hour-segment {
-            height: 36px;
+            height: 2.25rem;
         }
         .hour-segment:not(:first-child) {
             border-top: 2px solid var(--border-color);
@@ -50,9 +50,9 @@
             position: absolute;
             z-index: 1;
             background-color: var(--body-bg);
-            border-radius: 4px;
-            padding: 4px;
-            font-size: 14px;
+            border-radius: 0.25rem;
+            padding: 0.25rem;
+            font-size: 0.75rem;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;

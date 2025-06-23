@@ -11,14 +11,16 @@
                     @if (utils.areDaysInSameMonth(day, firstDayOfCurrentMonth())) {
                         <day-badge [date]="day" />
                         @let events = getEventsOf(day);
-                        @if (events.length > 4) {
-                            @for (event of utils.limitToLengthThree(events); track event.id) {
-                                <div class="event-cell">{{ event.name }}</div>
+                        @if (events.length > 3) {
+                            @for (event of utils.limitToLengthTwo(events); track event.id) {
+                                <div class="event-cell" (click)="selectEvent(event, $event)">
+                                    {{ event.name }}
+                                </div>
                             }
-                            <div class="more-events-info">+{{ events.length - 3 }} more</div>
+                            <div class="more-events-info">+{{ events.length - 2 }} more</div>
                         } @else {
                             @for (event of events; track event.id) {
-                                <div class="event-cell">{{ event.name }}</div>
+                                <div class="event-cell" (click)="selectEvent(event, $event)">{{ event.name }}</div>
                             }
                         }
                     }
@@ -27,3 +29,21 @@
         </div>
     }
 </div>
+
+<p-popover #eventPopover [dismissable]="true">
+    @if (selectedEvent) {
+        <div class="d-flex flex-column p-3 gap-2" style="min-width: 15rem; max-width: 22rem">
+            <div class="fw-semibold fs-6 text-dark">
+                {{ selectedEvent.name }}
+            </div>
+            <div class="text-muted small">
+                {{ selectedEvent.start }}
+            </div>
+            @if (selectedEvent.end) {
+                <div class="text-muted small">
+                    {{ selectedEvent.end }}
+                </div>
+            }
+        </div>
+    }
+</p-popover>

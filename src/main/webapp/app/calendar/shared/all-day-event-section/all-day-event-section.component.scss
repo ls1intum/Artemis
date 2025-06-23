@@ -1,18 +1,18 @@
 .frame {
-    height: 36px;
+    height: 2.25rem;
     display: flex;
     flex-direction: row;
     justify-content: flex-start;
     border-bottom: 2px solid var(--border-color);
 
     .info-cell {
-        width: 70px;
+        width: 4.5rem;
         display: flex;
         flex-direction: row;
         justify-content: flex-end;
         align-items: center;
-        padding-right: 4px;
-        font-size: 10px;
+        padding-right: 0.25rem;
+        font-size: 0.5rem;
         font-weight: 550;
     }
 
