@@ -1,0 +1,9 @@
+{
+    "artemisApp": {
+        "examRooms": {
+            "adminExamRoomUpload": {
+                "pageTitle": "Admin Exam Raum Hochlade Seiten-Titel"
+            }
+        }
+    }
+}

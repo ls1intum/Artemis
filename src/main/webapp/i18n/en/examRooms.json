@@ -1,0 +1,9 @@
+{
+    "artemisApp": {
+        "examRooms": {
+            "adminExamRoomUpload": {
+                "pageTitle": "Admin Exam Room Upload Page Title"
+            }
+        }
+    }
+}

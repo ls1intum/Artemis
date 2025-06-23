@@ -38,7 +38,7 @@ export class ExamRoomsComponent {
         this.uploadError = null;
 
         this.http
-            .post('/api/admin/exam-rooms/upload', formData, {
+            .post('/api/exam/admin/exam-rooms/upload', formData, {
                 reportProgress: true,
                 observe: 'events',
             })

@@ -50,8 +50,12 @@ public class AdminExamResource {
         return ResponseEntity.ok(upcomingExams);
     }
 
+    /**
+     * POST /exams
+     *
+     */
     @PostMapping("exam-rooms/upload")
-    public ResponseEntity<String> uploadRoomZip(@RequestParam("file") MultipartFile zipFile) {
-        return ResponseEntity.ok().body(zipFile.getName());
+    public ResponseEntity<Void> uploadRoomZip(@RequestParam("file") MultipartFile zipFile) {
+        return ResponseEntity.ok().build();
     }
 }
