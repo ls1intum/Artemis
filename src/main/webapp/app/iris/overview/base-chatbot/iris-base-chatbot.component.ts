@@ -14,7 +14,7 @@ import {
     faXmark,
 } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild, inject } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild, inject, input } from '@angular/core';
 import { IrisAssistantMessage, IrisMessage, IrisSender } from 'app/iris/shared/entities/iris-message.model';
 import { Subscription } from 'rxjs';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
@@ -173,6 +173,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     resendAnimationActive: boolean;
     public ButtonType = ButtonType;
 
+    showDeclineButton = input<boolean>(true);
     @Input() fullSize: boolean | undefined;
     @Input() showCloseButton = false;
     @Input() isChatGptWrapper = false;
@@ -364,7 +365,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
      * Accepts the permission to use the chat widget.
      */
     acceptPermission() {
-        this.chatService.setUserAccepted();
+        this.chatService.updateExternalLLMUsageConsent(true);
         this.userAccepted = true;
     }
 
