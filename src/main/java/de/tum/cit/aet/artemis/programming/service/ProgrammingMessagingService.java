@@ -126,7 +126,7 @@ public class ProgrammingMessagingService {
             // do not try to report results for template or solution participations
             ltiApi.ifPresent(api -> api.onNewResult(studentParticipation));
             // Inform Iris about the submission status (when certain conditions are met)
-            notifyIrisAboutSubmissionStatus(result, studentParticipation);
+            notifyIrisAboutSubmissionStatus(result);
         }
     }
 
@@ -137,10 +137,9 @@ public class ProgrammingMessagingService {
      * If the submission failed, Iris will be informed about the submission failure.
      * Iris will only be informed about the submission status if the participant is a user.
      *
-     * @param result               the result for which Iris should be informed about the submission status
-     * @param studentParticipation the student participation for which Iris should be informed about the submission status
+     * @param result the result for which Iris should be informed about the submission status
      */
-    private void notifyIrisAboutSubmissionStatus(Result result, ProgrammingExerciseStudentParticipation studentParticipation) {
+    private void notifyIrisAboutSubmissionStatus(Result result) {
         pyrisEventApi.ifPresent(eventApi -> {
             // Inform event service about the new result
             try {
