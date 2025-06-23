@@ -1,0 +1,179 @@
+name: Validate OpenAPI Spec and Generated Client Code
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+    paths-ignore:
+      - 'README.md'
+      - 'CODE_OF_CONDUCT.md'
+      - 'CONTRIBUTING.md'
+      - 'LICENSE'
+      - 'SECURITY.md'
+      - 'docs/**'
+      - '.github/**'
+      - '!.github/workflows/test.yml'
+  release:
+    types:
+      - created
+
+jobs:
+  validate-openapi:
+    name: Validate OpenAPI Spec
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    env:
+      # Check whether server changes, openapi.yaml changes, or client openapi folder changes
+      PATHS_TO_CHECK: |
+        src/main/java/
+        openapi/openapi.yaml
+        src/main/webapp/app/openapi
+    outputs:
+      CHANGE_DETECTED: ${{ steps.check_changes.outputs.CHANGE_DETECTED }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fetch all branches
+        run: |
+          git fetch origin ${{ github.base_ref }}:refs/remotes/origin/${{ github.base_ref }}
+          git fetch origin ${{ github.head_ref }}:refs/remotes/origin/${{ github.head_ref }}
+
+      - name: Check for changes in specified paths
+        id: check_changes
+        run: |
+          CHANGED_PATHS=$(git diff --name-only origin/${{ github.base_ref }} origin/${{ github.head_ref }} | grep -E "^($(echo "$PATHS_TO_CHECK" | tr '\n' '|'))")
+
+          if [[ -z "$CHANGED_PATHS" ]]; then
+            echo "CHANGE_DETECTED=false" >> "$GITHUB_OUTPUT"
+            echo "No OpenAPI changes detected."
+          else
+            echo "CHANGE_DETECTED=true" >> "$GITHUB_OUTPUT"
+            echo "OpenAPI changes detected in the following paths:"
+            echo "$CHANGED_PATHS"
+          fi
+
+      - name: Set up Java
+        if: steps.check_changes.outputs.CHANGE_DETECTED == 'true'
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Run Gradle to generate OpenAPI docs
+        if: steps.check_changes.outputs.CHANGE_DETECTED == 'true'
+        run: ./gradlew generateApiDocs -x webapp
+
+      - name: Check for OpenAPI spec differences
+        if: steps.check_changes.outputs.CHANGE_DETECTED == 'true'
+        id: check_openapi_spec
+        run: |
+          if git diff --exit-code ./openapi/openapi.yaml; then
+            echo "OpenAPI spec is up-to-date."
+          else
+            echo "OpenAPI specs in openapi.yaml differ from the generated version."
+            exit 1
+          fi
+
+      - name: Post comment about OpenAPI validation failure
+        if: failure() && steps.check_changes.outputs.CHANGE_DETECTED == 'true'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: openapi-validation-yml
+          message: |
+            🚨 **OpenAPI Validation Failed** 🚨
+
+            The OpenAPI specs in `openapi.yaml` differ from the generated version.
+            Please update the OpenAPI specs by running:
+            ```bash
+            cd .
+            ./gradlew generateApiDocs -x webapp
+            ```
+            Commit and push the updated file.
+
+      - name: Remove sticky comment on OpenAPI validation success
+        if: success() || steps.check_changes.outputs.CHANGE_DETECTED == 'false'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: openapi-validation-yml
+          delete: true
+
+  validate-client-code:
+    name: Validate Client Code
+    runs-on: ubuntu-latest
+    needs: validate-openapi
+    permissions:
+      contents: read
+      pull-requests: write
+    env:
+      CHANGE_DETECTED: ${{needs.validate-openapi.outputs.CHANGE_DETECTED}}
+    steps:
+      - name: Checkout code
+        if: env.CHANGE_DETECTED == 'true'
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        if: env.CHANGE_DETECTED == 'true'
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Set up Node.js
+        if: env.CHANGE_DETECTED == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Enable Corepack
+        if: env.CHANGE_DETECTED == 'true'
+        working-directory: .
+        run: corepack enable
+
+      - name: Install Dependencies
+        if: env.CHANGE_DETECTED == 'true'
+        working-directory: .
+        run: yarn install --frozen-lockfile
+
+      - name: Generate client code
+        if: env.CHANGE_DETECTED == 'true'
+        run: ./gradlew openApiGenerate
+
+      - name: Check for client code differences
+        if: env.CHANGE_DETECTED == 'true'
+        id: check_client_code
+        run: |
+          if git diff --exit-code ./src/main/webapp/app/openapi; then
+            echo "Client code is up-to-date."
+          else
+            echo "Client code in /src/main/webapp/app/openapi is not up-to-date."
+            exit 1
+          fi
+
+      - name: Post comment about client code validation failure
+        if: failure() && env.CHANGE_DETECTED == 'true'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: client-code-validation
+          message: |
+            🚨 **Client Code Validation Failed** 🚨
+
+            The client code in `/src/main/webapp/app/openapi` is not up-to-date.
+            Please regenerate the client code by running:
+            ```bash
+            cd .
+            ./gradlew openApiGenerate
+            ```
+            Commit and push the updated files.
+
+      - name: Remove sticky comment on client code validation success
+        if: success() || env.CHANGE_DETECTED == 'false'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: client-code-validation
+          delete: true
