@@ -222,7 +222,9 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         courseRepository.save(course);
 
         athenaRequestMockProvider.mockGetAvailableModulesSuccess();
-        List<String> response = request.getList("/api/athena/courses/" + course.getId() + "/modeling-exercises/available-modules", HttpStatus.OK, String.class);
+        List<String> response = request.getList(
+                "/api/athena/courses/" + course.getId() + "/modeling-exercises/available-modules?athenaModuleMode=" + AthenaModuleMode.PRELIMINARY_FEEDBACK, HttpStatus.OK,
+                String.class);
         assertThat(response).containsExactlyInAnyOrder(ATHENA_MODULE_MODELING_TEST, ATHENA_RESTRICTED_MODULE_MODELING_TEST);
     }
 
