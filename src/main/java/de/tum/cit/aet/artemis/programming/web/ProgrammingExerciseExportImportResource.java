@@ -27,7 +27,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -585,12 +584,12 @@ public class ProgrammingExerciseExportImportResource {
                     + repositoryType.getName();
             zippedRepoName = FileUtil.sanitizeFilename(zippedRepoName);
 
-            ByteArrayResource zipResource = gitService.zipDirectoryToMemory(repository.getLocalPath(), zippedRepoName, gitDirFilter);
+            InputStreamResource zipResource = gitService.zipDirectoryToMemory(repository.getLocalPath(), zippedRepoName, gitDirFilter);
 
             log.info("Successfully exported repository for programming exercise {} with title {} in {} ms", programmingExercise.getId(), programmingExercise.getTitle(),
                     (System.nanoTime() - start) / 1000000);
 
-            return ResponseEntity.ok().contentType(MediaType.APPLICATION_OCTET_STREAM).contentLength(zipResource.contentLength())
+            return ResponseEntity.ok().contentType(MediaType.APPLICATION_OCTET_STREAM)
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + zippedRepoName + ".zip\"").body(zipResource);
         }
         catch (GitAPIException e) {
@@ -657,12 +656,12 @@ public class ProgrammingExerciseExportImportResource {
                     + "-memory-test";
             filename = FileUtil.sanitizeFilename(filename);
 
-            ByteArrayResource zipResource = gitService.exportRepositorySnapshot(repositoryUri, filename);
+            InputStreamResource zipResource = gitService.exportRepositorySnapshot(repositoryUri, filename);
 
             log.info("Successfully exported repository using in-memory method for programming exercise {} with title {} in {} ms", programmingExercise.getId(),
                     programmingExercise.getTitle(), (System.nanoTime() - start) / 1000000);
 
-            return ResponseEntity.ok().contentType(MediaType.APPLICATION_OCTET_STREAM).contentLength(zipResource.contentLength())
+            return ResponseEntity.ok().contentType(MediaType.APPLICATION_OCTET_STREAM)
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + zipResource.getFilename() + "\"").body(zipResource);
         }
         catch (GitAPIException | GitException e) {
@@ -702,12 +701,12 @@ public class ProgrammingExerciseExportImportResource {
                     + "-with-history";
             filename = FileUtil.sanitizeFilename(filename);
 
-            ByteArrayResource zipResource = gitService.exportRepositoryWithFullHistoryToMemory(repositoryUri, filename);
+            InputStreamResource zipResource = gitService.exportRepositoryWithFullHistoryToMemory(repositoryUri, filename);
 
             log.info("Successfully exported repository with full history for programming exercise {} with title {} in {} ms", programmingExercise.getId(),
                     programmingExercise.getTitle(), (System.nanoTime() - start) / 1000000);
 
-            return ResponseEntity.ok().contentType(MediaType.APPLICATION_OCTET_STREAM).contentLength(zipResource.contentLength())
+            return ResponseEntity.ok().contentType(MediaType.APPLICATION_OCTET_STREAM)
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + zipResource.getFilename() + "\"").body(zipResource);
         }
         catch (GitAPIException | GitException e) {
@@ -747,12 +746,12 @@ public class ProgrammingExerciseExportImportResource {
                     + "-bundle";
             filename = FileUtil.sanitizeFilename(filename);
 
-            ByteArrayResource bundleResource = gitService.exportRepositoryBundle(repositoryUri, filename);
+            InputStreamResource bundleResource = gitService.exportRepositoryBundle(repositoryUri, filename);
 
             log.info("Successfully exported complete repository bundle for programming exercise {} with title {} in {} ms", programmingExercise.getId(),
                     programmingExercise.getTitle(), (System.nanoTime() - start) / 1000000);
 
-            return ResponseEntity.ok().contentType(MediaType.APPLICATION_OCTET_STREAM).contentLength(bundleResource.contentLength())
+            return ResponseEntity.ok().contentType(MediaType.APPLICATION_OCTET_STREAM)
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + bundleResource.getFilename() + "\"").body(bundleResource);
         }
         catch (GitAPIException | GitException e) {

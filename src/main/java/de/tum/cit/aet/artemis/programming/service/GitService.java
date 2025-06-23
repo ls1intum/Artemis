@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.programming.service;
 import static de.tum.cit.aet.artemis.core.config.BinaryFileExtensionConfiguration.isBinaryFile;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -75,6 +76,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
@@ -1276,17 +1278,30 @@ public class GitService extends AbstractGitService {
      * @param contentRootPath the root path of the content to zip
      * @param zipFilename     the name of the zipped file (for metadata)
      * @param contentFilter   path filter to exclude some files, can be null to include everything
-     * @return ByteArrayResource containing the zipped content
+     * @return InputStreamResource containing the zipped content
      * @throws IOException if the zipping process failed.
      */
-    public ByteArrayResource zipDirectoryToMemory(Path contentRootPath, String zipFilename, @Nullable Predicate<Path> contentFilter) throws IOException, UncheckedIOException {
+    public InputStreamResource zipDirectoryToMemory(Path contentRootPath, String zipFilename, @Nullable Predicate<Path> contentFilter) throws IOException, UncheckedIOException {
         var zipFilenameWithoutSlash = zipFilename.replaceAll("\\s", "");
 
         if (!zipFilenameWithoutSlash.endsWith(".zip")) {
             zipFilenameWithoutSlash += ".zip";
         }
 
-        return zipFileService.createZipFileWithFolderContentInMemory(contentRootPath, zipFilenameWithoutSlash, contentFilter);
+        ByteArrayResource byteArrayResource = zipFileService.createZipFileWithFolderContentInMemory(contentRootPath, zipFilenameWithoutSlash, contentFilter);
+
+        return new InputStreamResource(new ByteArrayInputStream(byteArrayResource.getByteArray())) {
+
+            @Override
+            public String getFilename() {
+                return byteArrayResource.getFilename();
+            }
+
+            @Override
+            public long contentLength() {
+                return byteArrayResource.getByteArray().length;
+            }
+        };
     }
 
     /**
@@ -1377,11 +1392,11 @@ public class GitService extends AbstractGitService {
      *
      * @param repositoryUri the URI of the repository to export
      * @param filename      the desired filename for the export (without extension)
-     * @return ByteArrayResource containing the zipped repository content
+     * @return InputStreamResource containing the zipped repository content
      * @throws GitAPIException if the git operation fails
      * @throws IOException     if IO operations fail
      */
-    public ByteArrayResource exportRepositorySnapshot(VcsRepositoryUri repositoryUri, String filename) throws GitAPIException, IOException {
+    public InputStreamResource exportRepositorySnapshot(VcsRepositoryUri repositoryUri, String filename) throws GitAPIException, IOException {
         // Get the bare repository
         Repository repository = getBareRepository(repositoryUri);
 
@@ -1395,13 +1410,18 @@ public class GitService extends AbstractGitService {
             // Execute the archive command
             archiveCommand.call();
 
-            // Create a ByteArrayResource from the output
+            // Create an InputStreamResource from the output
             byte[] zipData = outputStream.toByteArray();
-            return new ByteArrayResource(zipData) {
+            return new InputStreamResource(new ByteArrayInputStream(zipData)) {
 
                 @Override
                 public String getFilename() {
                     return filename + ".zip";
+                }
+
+                @Override
+                public long contentLength() {
+                    return zipData.length;
                 }
             };
         }
@@ -1414,11 +1434,11 @@ public class GitService extends AbstractGitService {
      *
      * @param repositoryUri the URI of the repository to export
      * @param filename      the desired filename for the export (without extension)
-     * @return ByteArrayResource containing the zipped repository content with full history
+     * @return InputStreamResource containing the zipped repository content with full history
      * @throws GitAPIException if the git operation fails
      * @throws IOException     if IO operations fail
      */
-    public ByteArrayResource exportRepositoryWithFullHistoryToMemory(VcsRepositoryUri repositoryUri, String filename) throws GitAPIException, IOException {
+    public InputStreamResource exportRepositoryWithFullHistoryToMemory(VcsRepositoryUri repositoryUri, String filename) throws GitAPIException, IOException {
         log.debug("Exporting repository with full history to memory: {}", repositoryUri);
 
         Repository repository = getOrCheckoutRepository(repositoryUri, true);
@@ -1436,11 +1456,11 @@ public class GitService extends AbstractGitService {
      *
      * @param repositoryUri the URI of the repository to export
      * @param filename      the desired filename for the export (without extension)
-     * @return ByteArrayResource containing the bundled repository content
+     * @return InputStreamResource containing the bundled repository content
      * @throws GitAPIException if the git operation fails
      * @throws IOException     if IO operations fail
      */
-    public ByteArrayResource exportRepositoryBundle(VcsRepositoryUri repositoryUri, String filename) throws GitAPIException, IOException {
+    public InputStreamResource exportRepositoryBundle(VcsRepositoryUri repositoryUri, String filename) throws GitAPIException, IOException {
         Repository repository = getBareRepository(repositoryUri);
 
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
@@ -1468,11 +1488,16 @@ public class GitService extends AbstractGitService {
             bundleWriter.writeBundle(null, outputStream);
 
             byte[] bundleData = outputStream.toByteArray();
-            return new ByteArrayResource(bundleData) {
+            return new InputStreamResource(new ByteArrayInputStream(bundleData)) {
 
                 @Override
                 public String getFilename() {
                     return filename + ".bundle";
+                }
+
+                @Override
+                public long contentLength() {
+                    return bundleData.length;
                 }
             };
         }
