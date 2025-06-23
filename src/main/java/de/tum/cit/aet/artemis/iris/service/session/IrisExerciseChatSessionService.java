@@ -256,6 +256,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
             return;
         }
 
+        // TODO: Reduce this call to the last 5 submissions or sth
         var recentSubmissions = submissionRepository.findAllWithResultsByParticipationIdOrderBySubmissionDateAsc(studentParticipation.getId());
 
         double successThreshold = 100.0; // TODO: Retrieve configuration from Iris settings
