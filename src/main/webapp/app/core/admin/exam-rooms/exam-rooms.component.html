@@ -1,0 +1,17 @@
+<div class="upload-container">
+    <h2>Upload Room Data</h2>
+    <input type="file" (change)="onFileSelected($event)" accept=".zip" />
+    <button class="upload-btn" (click)="upload()" [disabled]="!selectedFile">Upload</button>
+
+    @if (uploading) {
+        <div>Uploading...</div>
+    }
+
+    @if (uploadSuccess) {
+        <div class="success">Upload successful!</div>
+    }
+
+    @if (uploadError) {
+        <div class="error">Upload failed. {{ uploadError }}</div>
+    }
+</div>

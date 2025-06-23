@@ -8,8 +8,11 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
@@ -45,5 +48,10 @@ public class AdminExamResource {
 
         List<Exam> upcomingExams = examRepository.findAllCurrentAndUpcomingExams();
         return ResponseEntity.ok(upcomingExams);
+    }
+
+    @PostMapping("exam-rooms/upload")
+    public ResponseEntity<String> uploadRoomZip(@RequestParam("file") MultipartFile zipFile) {
+        return ResponseEntity.ok().body(zipFile.getName());
     }
 }
