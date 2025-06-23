@@ -40,7 +40,7 @@ export class MockUserService {
         return of({ headers: new HttpHeaders(), body: { password: '' } } as HttpResponse<{ password: string }>);
     }
 
-    acceptExternalLLMUsage(): Observable<HttpResponse<void>> {
+    updateExternalLLMUsageConsent(): Observable<HttpResponse<void>> {
         return of(new HttpResponse<void>({ status: 200 }));
     }
 }

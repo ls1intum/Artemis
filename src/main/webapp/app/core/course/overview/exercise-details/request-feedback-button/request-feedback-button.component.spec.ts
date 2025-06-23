@@ -303,7 +303,7 @@ describe('RequestFeedbackButtonComponent', () => {
         fixture.componentRef.setInput('pendingChanges', false);
         component.hasUserAcceptedExternalLLMUsage = false;
 
-        const acceptSpy = jest.spyOn(userService, 'acceptExternalLLMUsage').mockReturnValue(of(new HttpResponse<void>({ status: 200 })));
+        const acceptSpy = jest.spyOn(userService, 'updateExternalLLMUsageConsent').mockReturnValue(of(new HttpResponse<void>({ status: 200 })));
         const setAcceptedSpy = jest.spyOn(accountService, 'setUserAcceptedExternalLLMUsage');
         const requestFeedbackSpy = jest.spyOn(courseExerciseService, 'requestFeedback').mockReturnValue(of({} as StudentParticipation));
         const mockModal = {
@@ -315,7 +315,7 @@ describe('RequestFeedbackButtonComponent', () => {
         component.acceptExternalLLMUsage(mockModal);
         tick();
 
-        expect(acceptSpy).toHaveBeenCalled();
+        expect(acceptSpy).toHaveBeenCalledWith(true);
         expect(component.hasUserAcceptedExternalLLMUsage).toBeTrue();
         expect(setAcceptedSpy).toHaveBeenCalled();
         expect(mockModal.close).toHaveBeenCalled();
