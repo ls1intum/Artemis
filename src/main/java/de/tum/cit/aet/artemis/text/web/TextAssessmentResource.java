@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
@@ -70,6 +71,7 @@ import de.tum.cit.aet.artemis.text.service.TextSubmissionService;
  * REST controller for managing TextAssessment.
  */
 @Conditional(TextEnabled.class)
+@Lazy
 @RestController
 @RequestMapping("api/text/")
 public class TextAssessmentResource extends AssessmentResource {
@@ -138,11 +140,11 @@ public class TextAssessmentResource extends AssessmentResource {
                     "feedbackReferenceTooLong");
         }
         Result result = resultRepository.findByIdElseThrow(resultId);
-        if (!result.getParticipation().getId().equals(participationId)) {
+        if (!result.getSubmission().getParticipation().getId().equals(participationId)) {
             throw new BadRequestAlertException("participationId in Result of resultId " + resultId + " doesn't match the paths participationId!", "feedbackList",
                     "participationIdMismatch");
         }
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, result.getParticipation().getExercise(), null);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, result.getSubmission().getParticipation().getExercise(), null);
         final var textSubmission = textSubmissionRepository.getTextSubmissionWithResultAndTextBlocksAndFeedbackByResultIdElseThrow(resultId);
         ResponseEntity<Result> response = super.saveAssessment(textSubmission, false, textAssessment.getFeedbacks(), resultId, textAssessment.getAssessmentNote());
 
@@ -248,10 +250,10 @@ public class TextAssessmentResource extends AssessmentResource {
                     "feedbackReferenceTooLong");
         }
         Result result = resultRepository.findByIdElseThrow(resultId);
-        if (!(result.getParticipation().getExercise() instanceof final TextExercise exercise)) {
+        if (!(result.getSubmission().getParticipation().getExercise() instanceof final TextExercise exercise)) {
             throw new BadRequestAlertException("This exercise isn't a TextExercise!", "Exercise", "wrongExerciseType");
         }
-        else if (!result.getParticipation().getId().equals(participationId)) {
+        else if (!result.getSubmission().getParticipation().getId().equals(participationId)) {
             throw new BadRequestAlertException("participationId in Result of resultId " + resultId + " doesn't match the paths participationId!", "participationId",
                     "participationIdMismatch");
         }
@@ -295,8 +297,9 @@ public class TextAssessmentResource extends AssessmentResource {
         Result result = textAssessmentService.updateAssessmentAfterComplaint(textSubmission.getLatestResult(), textExercise, assessmentUpdate);
         saveTextBlocks(assessmentUpdate.textBlocks(), textSubmission, result.getFeedbacks());
 
-        if (result.getParticipation() != null && result.getParticipation() instanceof StudentParticipation && !authCheckService.isAtLeastInstructorForExercise(textExercise)) {
-            ((StudentParticipation) result.getParticipation()).setParticipant(null);
+        if (result.getSubmission().getParticipation() != null && result.getSubmission().getParticipation() instanceof StudentParticipation
+                && !authCheckService.isAtLeastInstructorForExercise(textExercise)) {
+            ((StudentParticipation) result.getSubmission().getParticipation()).setParticipant(null);
         }
 
         return ResponseEntity.ok(result);
@@ -416,7 +419,6 @@ public class TextAssessmentResource extends AssessmentResource {
         }
 
         textSubmission.removeNotNeededResults(correctionRound, resultId);
-        participation.setResults(Set.copyOf(textSubmission.getResults()));
 
         return ResponseEntity.ok().body(participation);
     }

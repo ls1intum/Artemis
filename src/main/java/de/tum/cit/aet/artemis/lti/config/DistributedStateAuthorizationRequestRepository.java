@@ -8,19 +8,22 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
-import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
 import org.springframework.security.oauth2.client.web.AuthorizationRequestRepository;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
 import com.hazelcast.core.HazelcastInstance;
+
+import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 
 /**
  * A specialized {@link AuthorizationRequestRepository} that uses Hazelcast to store OAuth2 authorization requests.
@@ -29,8 +32,9 @@ import com.hazelcast.core.HazelcastInstance;
  * This is based on a copy of {@link uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.StateAuthorizationRequestRepository}.
  */
 @Component
+@Lazy
 @Profile(PROFILE_LTI)
-class DistributedStateAuthorizationRequestRepository implements AuthorizationRequestRepository<OAuth2AuthorizationRequest> {
+public class DistributedStateAuthorizationRequestRepository implements AuthorizationRequestRepository<OAuth2AuthorizationRequest> {
 
     private static final Logger log = LoggerFactory.getLogger(DistributedStateAuthorizationRequestRepository.class);
 
@@ -53,7 +57,7 @@ class DistributedStateAuthorizationRequestRepository implements AuthorizationReq
         this.hazelcastInstance = hazelcastInstance;
     }
 
-    @PostConstruct
+    @EventListener(FullStartupEvent.class)
     void init() {
         this.store = hazelcastInstance.getMap("ltiStateAuthorizationRequestStore");
     }

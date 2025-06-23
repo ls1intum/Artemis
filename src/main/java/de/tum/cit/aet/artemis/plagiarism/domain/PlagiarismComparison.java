@@ -15,25 +15,30 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.jplag.JPlagComparison;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.plagiarism.domain.text.TextSubmissionElement;
 
 /**
  * Pair of compared student submissions whose similarity is above a certain threshold.
  */
 @Entity
 @Table(name = "plagiarism_comparison")
-public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends DomainObject implements Comparable<PlagiarismComparison<E>> {
+@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public class PlagiarismComparison extends DomainObject implements Comparable<PlagiarismComparison> {
 
     /**
      * The result this comparison belongs to.
      */
     @ManyToOne(targetEntity = PlagiarismResult.class)
-    private PlagiarismResult<E> plagiarismResult;
+    private PlagiarismResult plagiarismResult;
 
     /**
      * First submission compared. We maintain a bidirectional relationship manually with #PlagiarismSubmission.plagiarismComparison.
@@ -42,10 +47,10 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
      * which would leave empty references from other plagiarism comparisons. Comparisons are
      * always deleted all at once, so we can also cascade deletion.
      */
-    @JsonIgnoreProperties("plagiarismComparison")
-    @ManyToOne(targetEntity = PlagiarismSubmission.class, cascade = CascadeType.ALL)
+    @JsonIgnoreProperties(value = "plagiarismComparison", allowSetters = true)
+    @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "submission_a_id")
-    private PlagiarismSubmission<E> submissionA;
+    private PlagiarismSubmission submissionA;
 
     /**
      * Second submission compared. We maintain a bidirectional relationship manually with #PlagiarismSubmission.plagiarismComparison.
@@ -54,10 +59,10 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
      * which would leave empty references from other plagiarism comparisons. Comparisons are
      * always deleted all at once, so we can also cascade deletion.
      */
-    @JsonIgnoreProperties("plagiarismComparison")
-    @ManyToOne(targetEntity = PlagiarismSubmission.class, cascade = CascadeType.ALL)
+    @JsonIgnoreProperties(value = "plagiarismComparison", allowSetters = true)
+    @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "submission_b_id")
-    private PlagiarismSubmission<E> submissionB;
+    private PlagiarismSubmission submissionB;
 
     /**
      * List of matches between both submissions involved in this comparison.
@@ -86,8 +91,8 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
      * @param submissionDirectory the directory to which all student submissions have been downloaded / stored
      * @return a new instance with the content of the JPlagComparison
      */
-    public static PlagiarismComparison<TextSubmissionElement> fromJPlagComparison(JPlagComparison jplagComparison, Exercise exercise, File submissionDirectory) {
-        PlagiarismComparison<TextSubmissionElement> comparison = new PlagiarismComparison<>();
+    public static PlagiarismComparison fromJPlagComparison(JPlagComparison jplagComparison, Exercise exercise, File submissionDirectory) {
+        PlagiarismComparison comparison = new PlagiarismComparison();
 
         comparison.setSubmissionA(PlagiarismSubmission.fromJPlagSubmission(jplagComparison.firstSubmission(), exercise, submissionDirectory));
         comparison.setSubmissionB(PlagiarismSubmission.fromJPlagSubmission(jplagComparison.secondSubmission(), exercise, submissionDirectory));
@@ -104,8 +109,8 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
      *
      * @param submissionA the new submission which will be attached to the comparison
      */
-    public void setSubmissionA(PlagiarismSubmission<?> submissionA) {
-        this.submissionA = (PlagiarismSubmission<E>) submissionA;
+    public void setSubmissionA(PlagiarismSubmission submissionA) {
+        this.submissionA = submissionA;
         if (this.submissionA != null) {
             // Important: make sure to maintain the custom bidirectional association
             this.submissionA.setPlagiarismComparison(this);
@@ -117,27 +122,27 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
      *
      * @param submissionB the new submission which will be attached to the comparison
      */
-    public void setSubmissionB(PlagiarismSubmission<?> submissionB) {
-        this.submissionB = (PlagiarismSubmission<E>) submissionB;
+    public void setSubmissionB(PlagiarismSubmission submissionB) {
+        this.submissionB = submissionB;
         if (this.submissionB != null) {
             // Important: make sure to maintain the custom bidirectional association
             this.submissionB.setPlagiarismComparison(this);
         }
     }
 
-    public PlagiarismSubmission<E> getSubmissionA() {
+    public PlagiarismSubmission getSubmissionA() {
         return submissionA;
     }
 
-    public PlagiarismSubmission<E> getSubmissionB() {
+    public PlagiarismSubmission getSubmissionB() {
         return this.submissionB;
     }
 
-    public PlagiarismResult<E> getPlagiarismResult() {
+    public PlagiarismResult getPlagiarismResult() {
         return plagiarismResult;
     }
 
-    public void setPlagiarismResult(PlagiarismResult<E> plagiarismResult) {
+    public void setPlagiarismResult(PlagiarismResult plagiarismResult) {
         this.plagiarismResult = plagiarismResult;
     }
 
@@ -166,7 +171,7 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
     }
 
     @Override
-    public int compareTo(@NotNull PlagiarismComparison<E> otherComparison) {
+    public int compareTo(@NotNull PlagiarismComparison otherComparison) {
         return Double.compare(similarity, otherComparison.similarity);
     }
 
