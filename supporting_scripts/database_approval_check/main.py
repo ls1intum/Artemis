@@ -3,6 +3,8 @@ import sys
 
 from github import Github
 from github.Commit import Commit
+from github.GithubObject import _ValuedAttribute
+from github.IssueEvent import IssueEvent
 from github.NamedUser import NamedUser
 
 MIGRATION_DIRECTORY = "src/main/resources/config/liquibase"
@@ -48,7 +50,15 @@ else:
     sys.exit(0)
 
 
-reviews = pr.get_reviews()
+reviews = [review for review in pr.get_reviews()]
+events = pr.get_issue_events()
+
+for event in events:
+    if event.event == "review_dismissed":
+        for review in reviews:
+            if review.id == event.dismissed_review["review_id"]:
+                review._state = _ValuedAttribute(event.dismissed_review["state"].upper())
+
 approvals = [review for review in reviews if review.state == "APPROVED"]
 approvals_from_db_maintainers = [
     approval for approval in approvals if is_db_maintainer(approval.user)
