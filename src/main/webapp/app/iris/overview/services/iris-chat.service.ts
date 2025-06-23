@@ -335,12 +335,11 @@ export class IrisChatService implements OnDestroy {
 
     switchTo(mode: ChatServiceMode, id?: number): void {
         const newIdentifier = mode && id ? mode + '/' + id : undefined;
+        const isDifferent = this.sessionCreationIdentifier !== newIdentifier;
         this.sessionCreationIdentifier = newIdentifier;
-        this.getCurrentSessionOrCreate().subscribe((session) => {
-            if (this.chatSessions.getValue()) {
-                this.closeAndStart();
-            }
-        });
+        if (isDifferent) {
+            this.closeAndStart();
+        }
     }
 
     switchToSession(session: IrisSession): void {

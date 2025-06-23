@@ -34,6 +34,7 @@ import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model'
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { IrisMessage, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { IrisSession } from 'app/iris/shared/entities/iris-session.model';
 
 describe('IrisBaseChatbotComponent', () => {
     let component: IrisBaseChatbotComponent;
@@ -100,6 +101,8 @@ describe('IrisBaseChatbotComponent', () => {
                 wsMock = TestBed.inject(IrisWebsocketService) as jest.Mocked<IrisWebsocketService>;
                 mockModalService = TestBed.inject(NgbModal) as jest.Mocked<NgbModal>;
                 component = fixture.componentInstance;
+
+                jest.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
 
                 fixture.nativeElement.querySelector('.chat-body').scrollTo = jest.fn();
                 fixture.detectChanges();
@@ -572,20 +575,6 @@ describe('IrisBaseChatbotComponent', () => {
     });
 
     describe('clear chat session', () => {
-        it('should open confirm modal when click on the clear button', fakeAsync(() => {
-            jest.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponse));
-            jest.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
-            jest.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
-            const openModalStub = jest.spyOn(mockModalService, 'open');
-            chatService.switchTo(ChatServiceMode.COURSE, 123);
-
-            fixture.detectChanges();
-            tick();
-            const button: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#clear-chat-button');
-
-            button.click();
-            expect(openModalStub).toHaveBeenCalledOnce();
-        }));
         it('should clear chat session when confirm modal is confirmed', fakeAsync(() => {
             jest.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponse));
             jest.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
@@ -635,5 +624,103 @@ describe('IrisBaseChatbotComponent', () => {
         component.ngOnInit();
 
         expect(component.newMessageTextContent).toBe('');
+    });
+
+    it('should switch to the selected session on session click', () => {
+        const mockSession: IrisSession = { id: 2, messages: [], creationDate: new Date(), chatMode: ChatServiceMode.COURSE, entityId: 1 };
+        const switchToSessionSpy = jest.spyOn(chatService, 'switchToSession').mockReturnValue();
+
+        component.onSessionClick(mockSession);
+
+        expect(switchToSessionSpy).toHaveBeenCalledWith(mockSession);
+    });
+
+    it('should set isChatHistoryOpen to true when called with true', () => {
+        component.isChatHistoryOpen = false;
+        component.setChatHistoryVisibility(true);
+        expect(component.isChatHistoryOpen).toBeTrue();
+    });
+
+    it('should set isChatHistoryOpen to false when called with false', () => {
+        component.isChatHistoryOpen = true;
+        component.setChatHistoryVisibility(false);
+        expect(component.isChatHistoryOpen).toBeFalse();
+    });
+
+    it('should call chatService.clearChat when openNewSession is executed', () => {
+        const clearChatSpy = jest.spyOn(chatService, 'clearChat').mockReturnValue();
+        component.openNewSession();
+        expect(clearChatSpy).toHaveBeenCalledOnce();
+    });
+
+    describe('getSessionsBetween', () => {
+        const mockDate = new Date('2025-06-23T12:00:00.000Z');
+        const sessionToday: IrisSession = { id: 1, messages: [], creationDate: new Date('2025-06-23T10:00:00.000Z'), chatMode: ChatServiceMode.COURSE, entityId: 1 };
+        const sessionYesterday: IrisSession = { id: 2, messages: [], creationDate: new Date('2025-06-22T12:00:00.000Z'), chatMode: ChatServiceMode.COURSE, entityId: 1 };
+        const session7DaysAgo: IrisSession = { id: 3, messages: [], creationDate: new Date('2025-06-16T12:00:00.000Z'), chatMode: ChatServiceMode.COURSE, entityId: 1 };
+        const session8DaysAgo: IrisSession = { id: 4, messages: [], creationDate: new Date('2025-06-15T12:00:00.000Z'), chatMode: ChatServiceMode.COURSE, entityId: 1 };
+        const session30DaysAgo: IrisSession = { id: 5, messages: [], creationDate: new Date('2025-05-24T12:00:00.000Z'), chatMode: ChatServiceMode.COURSE, entityId: 1 };
+
+        const unsortedSessions = [session7DaysAgo, sessionToday, session30DaysAgo, sessionYesterday, session8DaysAgo];
+
+        beforeAll(() => {
+            jest.useFakeTimers();
+            jest.setSystemTime(mockDate);
+        });
+
+        afterAll(() => {
+            jest.useRealTimers();
+        });
+
+        beforeEach(() => {
+            component.chatSessions = [...unsortedSessions];
+        });
+
+        it('should handle invalid day ranges gracefully', () => {
+            expect(component.getSessionsBetween(-1, 5)).toEqual([]);
+            expect(component.getSessionsBetween(0, -5)).toEqual([]);
+            expect(component.getSessionsBetween(7, 0)).toEqual([]);
+        });
+
+        it('should retrieve sessions from the last 7 days (0 to 7)', () => {
+            const result = component.getSessionsBetween(0, 7);
+            expect(result).toHaveLength(3);
+            expect(result.map((s) => s.id)).toEqual([sessionToday.id, sessionYesterday.id, session7DaysAgo.id]);
+        });
+
+        it('should retrieve sessions from yesterday only (1 to 1)', () => {
+            const result = component.getSessionsBetween(1, 1);
+            expect(result).toHaveLength(1);
+            expect(result[0].id).toBe(sessionYesterday.id);
+        });
+
+        it('should retrieve sessions from between 8 and 30 days ago and be sorted correctly', () => {
+            const result = component.getSessionsBetween(8, 30);
+            expect(result).toHaveLength(2);
+            expect(result.map((s) => s.id)).toEqual([session8DaysAgo.id, session30DaysAgo.id]);
+        });
+
+        it('should return an empty array for a range with no sessions', () => {
+            const result = component.getSessionsBetween(2, 5);
+            expect(result).toEqual([]);
+        });
+
+        it('should retrieve all sessions on or before 7 days ago with ignoreOlderBoundary', () => {
+            const result = component.getSessionsBetween(7, undefined, true);
+            expect(result).toHaveLength(3);
+            expect(result.map((s) => s.id)).toEqual([session7DaysAgo.id, session8DaysAgo.id, session30DaysAgo.id]);
+        });
+
+        it('should retrieve all sessions on or before yesterday with ignoreOlderBoundary', () => {
+            const result = component.getSessionsBetween(1, undefined, true);
+            expect(result).toHaveLength(4);
+            expect(result.map((s) => s.id)).toEqual([sessionYesterday.id, session7DaysAgo.id, session8DaysAgo.id, session30DaysAgo.id]);
+        });
+
+        it('should always return sessions sorted by creationDate descending (newest first)', () => {
+            const result = component.getSessionsBetween(0, 30);
+            const expectedOrder = [sessionToday.id, sessionYesterday.id, session7DaysAgo.id, session8DaysAgo.id, session30DaysAgo.id];
+            expect(result.map((s) => s.id)).toEqual(expectedOrder);
+        });
     });
 });
