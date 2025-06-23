@@ -41,7 +41,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
-import de.tum.cit.aet.artemis.plagiarism.domain.text.TextPlagiarismResult;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismResultRepository;
 import de.tum.cit.aet.artemis.text.domain.TextAssessmentEvent;
 import de.tum.cit.aet.artemis.text.domain.TextBlock;
@@ -452,13 +452,13 @@ public class TextExerciseUtilService {
     }
 
     /**
-     * Creates and saves a TextPlagiarismResult for the given Exercise.
+     * Creates and saves a PlagiarismResult for the given Exercise.
      *
-     * @param exercise The Exercise the TextPlagiarismResult belongs to
-     * @return The created TextPlagiarismResult
+     * @param exercise The Exercise the PlagiarismResult belongs to
+     * @return The created PlagiarismResult
      */
-    public TextPlagiarismResult createTextPlagiarismResultForExercise(Exercise exercise) {
-        TextPlagiarismResult result = new TextPlagiarismResult();
+    public PlagiarismResult createPlagiarismResultForExercise(Exercise exercise) {
+        PlagiarismResult result = new PlagiarismResult();
         result.setExercise(exercise);
         result.setSimilarityDistribution(new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
         result.setDuration(4);
