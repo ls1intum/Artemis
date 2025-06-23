@@ -354,7 +354,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
      * @returns {boolean} `true` if the exam's number of exercises is valid, `false` otherwise.
      */
     get isValidNumberOfExercises(): boolean {
-        return this.exam.numberOfExercisesInExam === undefined || this.exam.numberOfExercisesInExam >= 1;
+        return this.exam.numberOfExercisesInExam === undefined || this.exam.numberOfExercisesInExam === null || this.exam.numberOfExercisesInExam! >= 1;
     }
 
     /**
