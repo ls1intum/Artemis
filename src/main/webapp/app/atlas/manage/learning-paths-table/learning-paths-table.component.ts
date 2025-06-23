@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { LearningPathApiService } from 'app/atlas/shared/services/learning-path-api.service';
 import { AlertService } from 'app/shared/service/alert.service';
-import { LearningPathInformationDTO } from 'app/atlas/shared/entities/learning-path.model';
+import { LearningPathAverageProgressDTO, LearningPathInformationDTO } from 'app/atlas/shared/entities/learning-path.model';
 import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
 import { onError } from 'app/shared/util/global.utils';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
@@ -47,14 +47,17 @@ export class LearningPathsTableComponent {
     readonly pageSize = signal<number>(100).asReadonly();
     readonly collectionSize = computed(() => (this.searchResults()?.numberOfPages ?? 1) * this.pageSize());
 
-    // Debounce the loadLearningPaths function to prevent multiple requests when the user types quickly
     private readonly debounceLoadLearningPaths = BaseApiHttpService.debounce(this.loadLearningPaths.bind(this), 300);
+
+    readonly averageProgress = signal<number | undefined>(undefined);
 
     constructor() {
         effect(() => {
-            // Load learning paths whenever the courseId changes
             const courseId = this.courseId();
-            untracked(() => this.loadLearningPaths(courseId));
+            untracked(() => {
+                this.loadLearningPaths(courseId);
+                this.loadAverageProgress(courseId);
+            });
         });
     }
 
@@ -77,15 +80,26 @@ export class LearningPathsTableComponent {
         }
     }
 
+    private async loadAverageProgress(courseId: number): Promise<void> {
+        try {
+            const dto: LearningPathAverageProgressDTO = await this.learningPathApiService.getAverageProgressForCourse(courseId);
+            this.averageProgress.set(dto.averageProgress);
+        } catch (error) {
+            this.averageProgress.set(undefined);
+        }
+    }
+
     search(searchTerm: string): void {
         this.searchTerm.set(searchTerm);
         this.page.set(1);
         this.debounceLoadLearningPaths(this.courseId());
+        this.loadAverageProgress(this.courseId());
     }
 
     async setPage(pageNumber: number): Promise<void> {
         this.page.set(pageNumber);
         await this.loadLearningPaths(this.courseId());
+        await this.loadAverageProgress(this.courseId());
     }
 
     openCompetencyGraph(learningPathId: number, name: string | undefined): void {
