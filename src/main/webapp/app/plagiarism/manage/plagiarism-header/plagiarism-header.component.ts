@@ -1,8 +1,7 @@
 import { Component, Input, inject } from '@angular/core';
+import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
 import { Subject } from 'rxjs';
 import { PlagiarismStatus } from 'app/plagiarism/shared/entities/PlagiarismStatus';
-import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
-import { TextSubmissionElement } from 'app/plagiarism/shared/entities/text/TextSubmissionElement';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -23,7 +22,7 @@ export class PlagiarismHeaderComponent {
     private plagiarismCasesService = inject(PlagiarismCasesService);
     private modalService = inject(NgbModal);
 
-    @Input() comparison: PlagiarismComparison<TextSubmissionElement>;
+    @Input() comparison: PlagiarismComparison;
     @Input() exercise: Exercise;
     @Input() splitControlSubject: Subject<string>;
 
