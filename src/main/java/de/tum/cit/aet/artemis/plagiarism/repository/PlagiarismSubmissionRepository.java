@@ -19,7 +19,7 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
 @Conditional(PlagiarismEnabled.class)
 @Lazy
 @Repository
-public interface PlagiarismSubmissionRepository extends ArtemisJpaRepository<PlagiarismSubmission<?>, Long> {
+public interface PlagiarismSubmissionRepository extends ArtemisJpaRepository<PlagiarismSubmission, Long> {
 
     @Modifying
     @Transactional // ok because of modifying query
