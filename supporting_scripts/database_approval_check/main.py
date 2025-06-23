@@ -74,10 +74,9 @@ for approval in approvals_from_db_maintainers:
             f"after the last commit with database changes."
         )
         sys.exit(0)
-else:
-    print(
-        f"PR #{pr_number} has not been approved by a database maintainer after the last commit with database changes."
-    )
-    sys.exit(1)
+print(
+    f"PR #{pr_number} has not been approved by a database maintainer after the last commit with database changes."
+)
+sys.exit(1)
 
 
