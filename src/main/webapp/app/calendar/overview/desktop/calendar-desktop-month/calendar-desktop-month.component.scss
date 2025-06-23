@@ -60,3 +60,21 @@
 .week-row:not(:last-child) {
     border-bottom: 2px solid var(--border-color);
 }
+
+.popover-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 12rem;
+
+    .event-popover-header {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+
+        .close-button:hover {
+            color: var(--primary);
+        }
+    }
+}
