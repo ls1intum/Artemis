@@ -131,7 +131,7 @@ jobs:
 
   docker-build:
     name: Build Docker Image for ls1intum/artemis
-    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == 'ls1intum/Artemis' }}
+    if: ${{ github.event_name != 'pull_request' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == 'ls1intum/Artemis') }}
     strategy:
       fail-fast: false
       matrix:
@@ -152,7 +152,7 @@ jobs:
         uses: docker/setup-qemu-action@v3
         with:
           platforms: all
-  
+
       - name: Install Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
@@ -199,8 +199,8 @@ jobs:
         run: |
           mkdir -p ${{ runner.temp }}/digests
           digest="${{ steps.build.outputs.digest }}"
-          touch "${{ runner.temp }}/digests/${digest#sha256:}"          
-  
+          touch "${{ runner.temp }}/digests/${digest#sha256:}"
+
       - name: Upload digest
         uses: actions/upload-artifact@v4
         with:
@@ -211,11 +211,11 @@ jobs:
 
   docker-merge:
     runs-on: ubuntu-latest
-    outputs: 
+    outputs:
       image_tag: ${{ steps.output-image-tag.outputs.image_tag }}
     needs:
       - docker-build
-    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == 'ls1intum/Artemis' }}
+    if: ${{ github.event_name != 'pull_request' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == 'ls1intum/Artemis') }}
     steps:
       - name: Prepare
         run: |
@@ -245,13 +245,13 @@ jobs:
         run: |
           # Use TAGS_CONFIG environment variable to store tags configuration
           echo "TAGS_CONFIG<<EOF" >> $GITHUB_ENV
-          
+
           # Default tagging configuration
           echo "type=raw,value=latest,enable={{is_default_branch}}" >> $GITHUB_ENV
           echo "type=ref,event=branch" >> $GITHUB_ENV
           echo "type=ref,event=pr" >> $GITHUB_ENV
           echo "type=ref,event=tag" >> $GITHUB_ENV
-          
+
           echo "EOF" >> $GITHUB_ENV
 
       - name: Extract metadata (tags, labels) for Docker
@@ -266,12 +266,12 @@ jobs:
         working-directory: ${{ runner.temp }}/digests
         run: |
           docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
-            $(printf 'ghcr.io/ls1intum/artemis@sha256:%s ' *)          
+            $(printf 'ghcr.io/ls1intum/artemis@sha256:%s ' *)
 
       - name: Inspect image
         run: |
           docker buildx imagetools inspect ghcr.io/ls1intum/artemis:${{ steps.meta.outputs.version }}
-          
+
       - id: output-image-tag
         run: |
           echo "image_tag=${{ steps.meta.outputs.version }}" >> "$GITHUB_OUTPUT"
@@ -280,7 +280,7 @@ jobs:
   save-docker-tag:
     name: Save Docker Image Tag
     needs: docker-merge
-    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == 'ls1intum/Artemis' }}
+    if: ${{ github.event_name != 'pull_request' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == 'ls1intum/Artemis') }}
     runs-on: ubuntu-latest
     steps:
       - name: Save Docker Tag to File
