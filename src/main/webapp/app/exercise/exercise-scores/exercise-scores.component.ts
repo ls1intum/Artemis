@@ -103,7 +103,6 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     protected readonly faFilter = faFilter;
     protected readonly faComment = faComment;
     protected readonly RepositoryType = RepositoryType;
-    protected readonly FilterProp = FilterProp;
     protected readonly ExerciseType = ExerciseType;
     protected readonly FeatureToggle = FeatureToggle;
     protected readonly AssessmentType = AssessmentType;
@@ -116,6 +115,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     protected readonly completionDateSortFieldProperty = 'submissions?.last()?.results?.last()?.completionDate';
     protected readonly resultSortFieldProperty = 'submissions?.last()?.results?.last()?.score';
     protected readonly assessmentTypeSortFieldProperty = 'submissions?.last()?.results?.last()?.assessmentType';
+    readonly FilterProp = FilterProp;
 
     private route = inject(ActivatedRoute);
     private courseService = inject(CourseManagementService);
