@@ -10,6 +10,41 @@
             </div>
         }
     </div>
-    <all-day-event-section [days]="weekDays()" />
-    <timed-event-section [days]="weekDays()" />
+    <div class="all-day-event-section">
+        <div class="all-day-info-cell">ganztags</div>
+        @for (day of weekDays(); track utils.identify(day)) {
+            <div class="all-day-event-cell"></div>
+        }
+    </div>
+    <div class="scroll-container" #scrollContainer>
+        <div class="specific-time-event-section">
+            <div class="info-column">
+                <div class="info-column-spacer"></div>
+                @for (hour of utils.getHoursOfDay(); track hour) {
+                    <div class="time-label">{{ hour }}</div>
+                }
+                <div class="info-column-spacer"></div>
+            </div>
+            @for (day of weekDays(); track utils.identify(day)) {
+                <div class="event-column">
+                    @for (index of utils.range(24); track index) {
+                        <div class="hour-segment"></div>
+                    }
+                    @for (item of getEventsAndPositionings(day); track item.event.id) {
+                        <div
+                            class="event"
+                            [ngStyle]="{
+                                top: item.position.top + 'px',
+                                height: item.position.height + 'px',
+                                left: item.position.left + '%',
+                                width: item.position.width + '%',
+                            }"
+                        >
+                            {{ item.event.name }}
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
 </div>

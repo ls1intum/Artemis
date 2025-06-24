@@ -6,31 +6,111 @@
 
     border: 2px solid var(--border-color);
     border-radius: 0.75rem;
-}
 
-.header {
-    height: 2.25rem;
-    display: flex;
-    flex-direction: row;
-    justify-content: flex-start;
-
-    border-bottom: 2px solid var(--border-color);
-
-    .header-spacer {
-        width: 4.5rem;
-    }
-
-    .day-info {
-        flex: 1;
+    .header {
+        height: 2.25rem;
         display: flex;
         flex-direction: row;
-        justify-content: center;
-        align-items: center;
-        gap: 0.5rem;
+        justify-content: flex-start;
+
+        border-bottom: 2px solid var(--border-color);
+
+        .header-spacer {
+            width: 4.5rem;
+        }
+
+        .day-info {
+            flex: 1;
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .day-name {
+            font-size: 1rem;
+            font-weight: 600;
+        }
     }
 
-    .day-name {
-        font-size: 1rem;
-        font-weight: 600;
+    .all-day-event-section {
+        height: 2.25rem;
+        display: flex;
+        flex-direction: row;
+        justify-content: flex-start;
+        border-bottom: 2px solid var(--border-color);
+
+        .all-day-info-cell {
+            width: 4.5rem;
+            display: flex;
+            flex-direction: row;
+            justify-content: flex-end;
+            align-items: center;
+            padding-right: 0.25rem;
+            font-size: 0.5rem;
+            font-weight: 550;
+        }
+
+        .all-day-event-cell {
+            flex: 1;
+            border-left: 2px solid var(--border-color);
+        }
+    }
+
+    .scroll-container {
+        flex: 1;
+        overflow: auto;
+
+        .specific-time-event-section {
+            width: 100%;
+            display: flex;
+            flex-direction: row;
+
+            .info-column {
+                width: 4.5rem;
+
+                .info-column-spacer {
+                    height: 1.125rem;
+                }
+
+                .time-label {
+                    height: 2.25rem;
+                    display: flex;
+                    flex-direction: row;
+                    justify-content: flex-end;
+                    align-items: center;
+                    padding-right: 0.25rem;
+                    font-size: 0.5rem;
+                    font-weight: 550;
+                }
+            }
+
+            .event-column {
+                flex: 1;
+                position: relative;
+                border-left: 2px solid var(--border-color);
+
+                .hour-segment {
+                    height: 2.25rem;
+                }
+
+                .hour-segment:not(:first-child) {
+                    border-top: 2px solid var(--border-color);
+                }
+
+                .event {
+                    position: absolute;
+                    z-index: 1;
+                    background-color: var(--body-bg);
+                    border-radius: 0.25rem;
+                    padding: 0.25rem;
+                    font-size: 0.75rem;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                }
+            }
+        }
     }
 }

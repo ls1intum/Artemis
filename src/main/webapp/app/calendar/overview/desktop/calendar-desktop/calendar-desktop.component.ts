@@ -1,10 +1,13 @@
 import { Component, signal } from '@angular/core';
 import { NgClass } from '@angular/common';
 import dayjs, { Dayjs } from 'dayjs/esm';
+import isoWeek from 'dayjs/plugin/isoWeek';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { CalendarDesktopMonthComponent } from 'app/calendar/overview/desktop/calendar-desktop-month/calendar-desktop-month.component';
 import { CalendarDesktopWeekComponent } from 'app/calendar/overview/desktop/calendar-desktop-week/calendar-desktop-week.component';
+
+dayjs.extend(isoWeek);
 
 @Component({
     selector: 'jhi-calendar-desktop',
