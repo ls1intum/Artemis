@@ -601,7 +601,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                       )
                 )
                 AND s.submitted = TRUE
-                AND s.id = (SELECT MAX(s3.submissionDate) FROM p.submissions s3)
+                AND s.submissionDate = (SELECT MAX(s3.submissionDate) FROM p.submissions s3)
             """)
     List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResultsWithPassedIndividualDueDateIgnoreTestRuns(@Param("exerciseId") long exerciseId,
             @Param("now") ZonedDateTime now);
