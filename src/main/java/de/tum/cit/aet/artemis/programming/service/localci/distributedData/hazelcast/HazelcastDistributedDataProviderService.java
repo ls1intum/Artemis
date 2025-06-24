@@ -1,19 +1,21 @@
 package de.tum.cit.aet.artemis.programming.service.localci.distributedData.hazelcast;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
+
 import java.util.ArrayList;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import com.hazelcast.cluster.Member;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 
-import de.tum.cit.aet.artemis.core.config.LocalCiBuildAgentNotLocalDataCondition;
 import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.queue.DistributedQueue;
@@ -21,7 +23,7 @@ import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.to
 
 @Lazy
 @Service
-@Conditional(LocalCiBuildAgentNotLocalDataCondition.class)
+@Profile({ PROFILE_LOCALCI, PROFILE_BUILDAGENT })
 public class HazelcastDistributedDataProviderService implements DistributedDataProvider {
 
     private final HazelcastInstance hazelcastInstance;
