@@ -289,7 +289,7 @@ public class LocalCIResultProcessingService {
 
         @Override
         public void itemRemoved(ResultQueueItem item) {
-
+            log.debug("Result of build job with id {} removed from queue", item.buildJobQueueItem().id());
         }
     }
 
