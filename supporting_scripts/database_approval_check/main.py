@@ -4,7 +4,6 @@ import sys
 from github import Github
 from github.Commit import Commit
 from github.GithubObject import _ValuedAttribute
-from github.IssueEvent import IssueEvent
 from github.NamedUser import NamedUser
 
 MIGRATION_DIRECTORY = "src/main/resources/config/liquibase"
