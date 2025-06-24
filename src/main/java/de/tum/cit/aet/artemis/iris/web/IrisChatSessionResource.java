@@ -10,6 +10,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -20,7 +21,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.lecture.domain.Lecture;
  * REST controller for managing {@link IrisChatSession}.
  */
 @Profile(PROFILE_IRIS)
+@Lazy
 @RestController
 @RequestMapping("api/iris/chat-history/")
 public class IrisChatSessionResource {
@@ -105,7 +106,6 @@ public class IrisChatSessionResource {
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body a list of the iris sessions for the course or {@code 404 (Not Found)} if no session exists
      */
     @GetMapping("{courseId}/{chatMode}/session/{sessionId}")
-    @EnforceAtLeastStudentInCourse
     public ResponseEntity<Optional<IrisSessionDTO>> getSessionsForSessionId(@PathVariable Long courseId, @PathVariable Long sessionId, @PathVariable String chatMode) {
         var chatModeEnum = IrisChatMode.valueOf(chatMode);
         var course = courseRepository.findById(courseId);
@@ -147,7 +147,6 @@ public class IrisChatSessionResource {
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body a list of the iris sessions for the course or {@code 404 (Not Found)} if no session exists
      */
     @GetMapping("{courseId}/sessions")
-    @EnforceAtLeastStudentInCourse
     public ResponseEntity<List<IrisChatSession>> getAllSessionsForCourse(@PathVariable Long courseId) {
         var user = userRepository.getUserWithGroupsAndAuthorities();
         if (user.hasAcceptedExternalLLMUsage()) {
