@@ -21,16 +21,6 @@ artemis:
         enabled: true # Disable sending any telemetry information to the telemetry service by setting this to false
         sendAdminDetails: true # Include personal identifiable information of the admin, including email and name in the telemetry data
         destination: https://telemetry.artemis.cit.tum.de
-  # TODO: REMOVE!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  hyperion:
-    host: hyperion.aet.cit.tum.de
-    port: 8080
-    use-tls: false
-    client-cert-path: ""
-    client-key-path: ""
-    server-ca-path: ""
-    default-timeout-seconds: 60
-    consistency-check-timeout-seconds: 300
 
 spring:
     devtools:
