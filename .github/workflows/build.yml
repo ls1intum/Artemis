@@ -129,34 +129,164 @@ jobs:
           asset_name: Artemis.war
           asset_content_type: application/x-webarchive
 
-  docker:
-    name: Build and Push Docker Image
+  docker-build:
+    name: Build Docker Image for ls1intum/artemis
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == 'ls1intum/Artemis' }}
-    uses: ls1intum/.github/.github/workflows/build-and-push-docker-image.yml@v1.1.0
-    with:
-      # Checkout pull request HEAD commit instead of merge commit to include the correct branch and git information inside the build
-      # Or use the push event ref name
-      ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
-      image-name: ls1intum/artemis
-      docker-file: ./docker/artemis/Dockerfile
-      build-args: |
-        GITHUB_ACTOR=${{ github.actor }}
-        GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}
-      tags: |
-        type=ref,event=tag
-    secrets: inherit
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-24.04
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner || 'ubuntu-latest' }}
+    steps:
+      # Git Checkout
+      - name: Git Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: all
+  
+      - name: Install Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: "network=default"
+          buildkitd-config-inline: |
+            [registry."docker.io"]
+              mirrors = ["https://docker-mirror.ase.in.tum.de:8765"]
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/ls1intum/artemis
+
+      - name: Build and push Docker Image
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./docker/artemis/Dockerfile
+          tags: ghcr.io/ls1intum/artemis
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            GITHUB_ACTOR=${{ github.actor }}
+            GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}
+          network: default
+          outputs: type=image,"name=ghcr.io/ls1intum/artemis",push-by-digest=true,name-canonical=true,push=true
+
+      - name: Prepare
+        run: |
+          platform=${{ matrix.platform }}
+          echo "PLATFORM_PAIR=${platform//\//-}" >> $GITHUB_ENV
+          image="ls1intum/artemis"
+          echo "IMAGE_NAME=${image//\//-}" >> $GITHUB_ENV
+
+      - name: Export digest
+        run: |
+          mkdir -p ${{ runner.temp }}/digests
+          digest="${{ steps.build.outputs.digest }}"
+          touch "${{ runner.temp }}/digests/${digest#sha256:}"          
+  
+      - name: Upload digest
+        uses: actions/upload-artifact@v4
+        with:
+          name: digests-${{ env.IMAGE_NAME }}-${{ env.PLATFORM_PAIR }}
+          path: ${{ runner.temp }}/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  docker-merge:
+    runs-on: ubuntu-latest
+    outputs: 
+      image_tag: ${{ steps.output-image-tag.outputs.image_tag }}
+    needs:
+      - docker-build
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == 'ls1intum/Artemis' }}
+    steps:
+      - name: Prepare
+        run: |
+          image="ls1intum/artemis"
+          echo "IMAGE_NAME=${image//\//-}" >> $GITHUB_ENV
+
+      - name: Download digests
+        uses: actions/download-artifact@v4
+        with:
+          path: ${{ runner.temp }}/digests
+          pattern: digests-${{ env.IMAGE_NAME }}-*
+          merge-multiple: true
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Process tags input to support both simple tags and advanced configuration
+      - name: Prepare tag configuration
+        id: tag_config
+        run: |
+          # Use TAGS_CONFIG environment variable to store tags configuration
+          echo "TAGS_CONFIG<<EOF" >> $GITHUB_ENV
+          
+          # Default tagging configuration
+          echo "type=raw,value=latest,enable={{is_default_branch}}" >> $GITHUB_ENV
+          echo "type=ref,event=branch" >> $GITHUB_ENV
+          echo "type=ref,event=pr" >> $GITHUB_ENV
+          echo "type=ref,event=tag" >> $GITHUB_ENV
+          
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/ls1intum/artemis
+          tags: |
+            ${{ env.TAGS_CONFIG }}
+
+      - name: Create manifest list and push
+        working-directory: ${{ runner.temp }}/digests
+        run: |
+          docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+            $(printf 'ghcr.io/ls1intum/artemis@sha256:%s ' *)          
+
+      - name: Inspect image
+        run: |
+          docker buildx imagetools inspect ghcr.io/ls1intum/artemis:${{ steps.meta.outputs.version }}
+          
+      - id: output-image-tag
+        run: |
+          echo "image_tag=${{ steps.meta.outputs.version }}" >> "$GITHUB_OUTPUT"
 
   # Save Docker image tag as an artifact
   save-docker-tag:
     name: Save Docker Image Tag
-    needs: docker
+    needs: docker-merge
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == 'ls1intum/Artemis' }}
     runs-on: ubuntu-latest
     steps:
       - name: Save Docker Tag to File
         run: |
-          echo "${{ needs.docker.outputs.image_tag }}" > docker-tag.txt
-          echo "Using Docker tag: ${{ needs.docker.outputs.image_tag }}"
+          echo "${{ needs.docker-merge.outputs.image_tag }}" > docker-tag.txt
+          echo "Using Docker tag: ${{ needs.docker-merge.outputs.image_tag }}"
 
       - name: Upload Docker Tag as Artifact
         uses: actions/upload-artifact@v4
