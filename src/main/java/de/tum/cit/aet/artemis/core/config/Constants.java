@@ -437,6 +437,11 @@ public final class Constants {
     public static final String TUTORIAL_GROUP_ENABLED_PROPERTY_NAME = "artemis.tutorialgroup.enabled";
 
     /**
+     * The name of the property used to enable or disable calendar functionality.
+     */
+    public static final String CALENDAR_ENABLED_PROPERTY_NAME = "artemis.calendar.enabled";
+
+    /**
      * The name of the property used to enable or disable the passkey authentication functionality.
      */
     public static final String PASSKEY_ENABLED_PROPERTY_NAME = "artemis.user-management.passkey.enabled";

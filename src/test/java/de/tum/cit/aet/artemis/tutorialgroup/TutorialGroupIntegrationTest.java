@@ -311,7 +311,6 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         this.averageAttendanceTestScaffold(new Integer[] { 99, 99, null, 8, 5 }, 37, useSingleEndpoint);
         this.averageAttendanceTestScaffold(new Integer[] { 99, 99, 8, null, 5 }, 37, useSingleEndpoint);
         this.averageAttendanceTestScaffold(new Integer[] { 99, 99, 8, 5, null }, 37, useSingleEndpoint);
-
     }
 
     @ParameterizedTest

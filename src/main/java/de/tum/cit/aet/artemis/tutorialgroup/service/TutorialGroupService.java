@@ -5,6 +5,8 @@ import static jakarta.persistence.Persistence.getPersistenceUtil;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -31,11 +33,11 @@ import org.springframework.util.StringUtils;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.calendar.dto.CalendarEventDTO;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.DeregisteredFromTutorialGroupNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.RegisteredToTutorialGroupNotification;
 import de.tum.cit.aet.artemis.communication.service.CourseNotificationService;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationDTOService;
-import de.tum.cit.aet.artemis.communication.service.notifications.SingleUserNotificationService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -61,8 +63,6 @@ import de.tum.cit.aet.artemis.tutorialgroup.web.TutorialGroupResource.TutorialGr
 @Service
 public class TutorialGroupService {
 
-    private final SingleUserNotificationService singleUserNotificationService;
-
     private final TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository;
 
     private final UserRepository userRepository;
@@ -79,15 +79,14 @@ public class TutorialGroupService {
 
     private final CourseNotificationService courseNotificationService;
 
-    public TutorialGroupService(SingleUserNotificationService singleUserNotificationService, TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository,
-            TutorialGroupRepository tutorialGroupRepository, UserRepository userRepository, AuthorizationCheckService authorizationCheckService,
-            TutorialGroupSessionRepository tutorialGroupSessionRepository, TutorialGroupChannelManagementService tutorialGroupChannelManagementService,
-            ConversationDTOService conversationDTOService, CourseNotificationService courseNotificationService) {
+    public TutorialGroupService(TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository, TutorialGroupRepository tutorialGroupRepository,
+            UserRepository userRepository, AuthorizationCheckService authorizationCheckService, TutorialGroupSessionRepository tutorialGroupSessionRepository,
+            TutorialGroupChannelManagementService tutorialGroupChannelManagementService, ConversationDTOService conversationDTOService,
+            CourseNotificationService courseNotificationService) {
         this.tutorialGroupRegistrationRepository = tutorialGroupRegistrationRepository;
         this.tutorialGroupRepository = tutorialGroupRepository;
         this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
-        this.singleUserNotificationService = singleUserNotificationService;
         this.tutorialGroupSessionRepository = tutorialGroupSessionRepository;
         this.tutorialGroupChannelManagementService = tutorialGroupChannelManagementService;
         this.conversationDTOService = conversationDTOService;
@@ -937,5 +936,31 @@ public class TutorialGroupService {
             }
         }
         return students;
+    }
+
+    /**
+     * Retrieves {@link TutorialGroupSession}s as {@link CalendarEventDTO}s fulfilling the following criteria:
+     *
+     * <ol>
+     * <li>User is registered for the course of the tutorial group of the session</li>
+     * <li>The course of the tutorial group of the session is active</li>
+     * <li>User participates in the tutorial group of the session (either as student or tutor)</li>
+     * </ol>
+     *
+     * @param user           the user for which the DTOs should be retrieved
+     * @param clientTimeZone the client's time zone
+     * @return the retrieved events
+     */
+    public Set<CalendarEventDTO> getTutorialEventsForUser(User user, ZoneId clientTimeZone) {
+        ZonedDateTime now = ZonedDateTime.now(clientTimeZone).withZoneSameInstant(ZoneOffset.UTC);
+        Set<Long> participatedTutorialGroupIds = tutorialGroupRepository.findTutorialGroupIdsWhereUserParticipatesFromActiveCourses(user.getId(), user.getGroups(), now);
+        if (participatedTutorialGroupIds.isEmpty()) {
+            return Set.of();
+        }
+
+        Set<TutorialGroupSession> activeSessionsFromParticipatedGroups = tutorialGroupSessionRepository
+                .findAllActiveByTutorialGroupIdsWithGroupAndCourseAndAssistant(participatedTutorialGroupIds);
+
+        return activeSessionsFromParticipatedGroups.stream().map(session -> new CalendarEventDTO(session, clientTimeZone)).collect(Collectors.toSet());
     }
 }
