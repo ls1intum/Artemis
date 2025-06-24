@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.modeling.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -14,6 +13,7 @@ import jakarta.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -61,6 +61,7 @@ import de.tum.cit.aet.artemis.modeling.service.ModelingSubmissionService;
  * REST controller for managing ModelingSubmission.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @RestController
 @RequestMapping("api/modeling/")
 public class ModelingSubmissionResource extends AbstractSubmissionResource {
@@ -333,14 +334,13 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      * </ul>
      * Upon successful validation, it returns a {@link ValidationResult} containing the participation, the modeling exercise, and the permission flag.
      *
-     * @param participationId the ID of the student participation to validate
+     * @param studentParticipation the student participation to validate
      * @return a {@link ValidationResult} containing the validated participation, modeling exercise, and permission flag
      * @throws BadRequestAlertException   if the participation has a null exercise or if the exercise is not a {@link ModelingExercise}
      * @throws AccessForbiddenException   if the user does not have the required access rights to view the participation
      * @throws ExamApiNotPresentException if the exam access API is required but not present
      */
-    private ValidationResult validateParticipation(long participationId) {
-        var studentParticipation = studentParticipationRepository.findByIdWithLegalSubmissionsResultsFeedbackElseThrow(participationId);
+    private ValidationResult validateParticipation(StudentParticipation studentParticipation) {
         var user = userRepository.getUserWithGroupsAndAuthorities();
         var exercise = studentParticipation.getExercise();
 
@@ -376,39 +376,33 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     @EnforceAtLeastStudent
     public ResponseEntity<ModelingSubmission> getLatestModelingSubmission(@PathVariable long participationId) {
         log.debug("REST request to get latest modeling submission for participation: {}", participationId);
-
-        var validationResult = validateParticipation(participationId);
+        var validationResult = validateParticipation(studentParticipationRepository.findByIdWithLatestLegalSubmissionResultFeedbackElseThrow(participationId));
         var studentParticipation = validationResult.studentParticipation;
         var exercise = validationResult.modelingExercise;
 
-        Optional<Submission> optionalSubmission = studentParticipation.findLatestSubmission();
+        Optional<Submission> optionalLatestSubmission = studentParticipation.getSubmissions().stream().findFirst();
         ModelingSubmission modelingSubmission;
-        if (optionalSubmission.isEmpty()) {
+        if (optionalLatestSubmission.isEmpty()) {
             // this should never happen as the submission is initialized along with the participation when the exercise is started
             modelingSubmission = new ModelingSubmission();
             modelingSubmission.setParticipation(studentParticipation);
         }
         else {
             // only try to get and set the model if the modelingSubmission existed before
-            modelingSubmission = (ModelingSubmission) optionalSubmission.get();
+            modelingSubmission = (ModelingSubmission) optionalLatestSubmission.get();
         }
 
-        // make sure only the latest submission and latest result is sent to the client
-        studentParticipation.setSubmissions(null);
-
         // do not send the result to the client if the assessment is not finished
-        if (modelingSubmission.getLatestResult() != null
-                && (modelingSubmission.getLatestResult().getCompletionDate() == null || modelingSubmission.getLatestResult().getAssessor() == null)) {
-            modelingSubmission.setResults(new ArrayList<>());
+        Result latestResult = modelingSubmission.getLatestResult();
+        if (latestResult != null && (latestResult.getCompletionDate() == null || latestResult.getAssessor() == null)) {
+            modelingSubmission.setResults(List.of());
         }
 
         if (!ExerciseDateService.isAfterAssessmentDueDate(exercise)) {
             // We want to have the preliminary feedback before the assessment due date too
-            Set<Result> participationResults = studentParticipation.getResults();
-            if (participationResults != null) {
-                List<Result> athenaResults = participationResults.stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA).toList();
-                modelingSubmission.setResults(athenaResults);
-            }
+            List<Result> athenaResults = modelingSubmission.getResults().stream().filter(result -> result != null && result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA)
+                    .toList();
+            modelingSubmission.setResults(athenaResults);
         }
 
         if (modelingSubmission.getLatestResult() != null && !authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
@@ -438,7 +432,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     public ResponseEntity<List<Submission>> getSubmissionsWithResultsForParticipation(@PathVariable long participationId) {
         log.debug("REST request to get submissions with results for participation: {}", participationId);
 
-        var validationResult = validateParticipation(participationId);
+        var validationResult = validateParticipation(studentParticipationRepository.findByIdWithLegalSubmissionsResultsFeedbackElseThrow(participationId));
         var studentParticipation = validationResult.studentParticipation;
 
         // Get the submissions associated with the participation

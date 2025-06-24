@@ -19,6 +19,7 @@ import java.util.stream.StreamSupport;
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -46,6 +47,7 @@ import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExe
  * <p>
  * In the future this service will be extended to make testing of the code hint generation easier.
  */
+@Lazy
 @Service
 @Profile(SPRING_PROFILE_TEST)
 public class ProgrammingUtilTestService {
@@ -299,6 +301,10 @@ public class ProgrammingUtilTestService {
                 eq(true), any());
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(eq(testRepoUri),
                 eq(false), any());
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(eq(testRepoUri), eq(true),
+                any());
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(eq(testRepoUri), eq(false),
+                any());
 
         return exerciseRepository.save(exercise);
     }

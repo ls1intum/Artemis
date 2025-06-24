@@ -490,7 +490,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
         studentParticipation = programmingExerciseStudentParticipationRepository
                 .findByIdWithLatestResultAndFeedbacksAndRelatedSubmissions(studentParticipation.getId(), ZonedDateTime.now()).orElseThrow();
-        var result = studentParticipation.getResults().iterator().next();
+        var result = participationUtilService.getResultsForParticipation(studentParticipation).iterator().next();
 
         var noPrintTest = result.getFeedbacks().stream().filter(feedback -> feedback.getTestCase().getTestName().equals("testMergeSort()")).findFirst().orElseThrow();
         assertThat(noPrintTest.getDetailText()).isEqualTo("Deine Einreichung enthält keine Ausgabe. (67cac2)");
@@ -543,7 +543,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
         studentParticipation = programmingExerciseStudentParticipationRepository
                 .findByIdWithLatestResultAndFeedbacksAndRelatedSubmissions(studentParticipation.getId(), ZonedDateTime.now()).orElseThrow();
-        var result = studentParticipation.getResults().iterator().next();
+        var result = participationUtilService.getResultsForParticipation(studentParticipation).iterator().next();
 
         var buildLogs = buildLogEntryService.getLatestBuildLogs((ProgrammingSubmission) result.getSubmission());
 

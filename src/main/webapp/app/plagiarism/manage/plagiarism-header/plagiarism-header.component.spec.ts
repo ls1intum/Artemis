@@ -1,9 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { TextSubmissionElement } from 'app/plagiarism/shared/entities/text/TextSubmissionElement';
 import { Observable, Subject, of } from 'rxjs';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
 import { PlagiarismStatus } from 'app/plagiarism/shared/entities/PlagiarismStatus';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
@@ -14,6 +12,7 @@ import { MockDirective } from 'ng-mocks';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { PlagiarismHeaderComponent } from 'app/plagiarism/manage/plagiarism-header/plagiarism-header.component';
+import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
 
 describe('Plagiarism Header Component', () => {
     let comp: PlagiarismHeaderComponent;
@@ -39,7 +38,7 @@ describe('Plagiarism Header Component', () => {
             submissionA: { studentLogin: 'studentA' },
             submissionB: { studentLogin: 'studentB' },
             status: PlagiarismStatus.NONE,
-        } as PlagiarismComparison<TextSubmissionElement>;
+        } as PlagiarismComparison;
         comp.exercise = { course: { id: 1 } } as Exercise;
         comp.splitControlSubject = new Subject<string>();
     });

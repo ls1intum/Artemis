@@ -4,33 +4,25 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
-import de.tum.cit.aet.artemis.assessment.repository.StudentScoreRepository;
-import de.tum.cit.aet.artemis.assessment.repository.TeamScoreRepository;
-import de.tum.cit.aet.artemis.assessment.service.ResultService;
-import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
-import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
@@ -42,18 +34,13 @@ import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
-import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
-import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.ParticipationVcsAccessTokenService;
 import de.tum.cit.aet.artemis.programming.service.UriService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
-import de.tum.cit.aet.artemis.programming.service.localci.SharedQueueManagementService;
-import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCGitBranchService;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 
@@ -61,6 +48,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
  * Service Implementation for managing Participation.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class ParticipationService {
 
@@ -69,15 +57,9 @@ public class ParticipationService {
     @Value("${artemis.version-control.default-branch:main}")
     protected String defaultBranch;
 
-    private final GitService gitService;
-
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
     private final Optional<VersionControlService> versionControlService;
-
-    private final Optional<LocalVCGitBranchService> localVCGitBranchService;
-
-    private final BuildLogEntryService buildLogEntryService;
 
     private final ParticipationRepository participationRepository;
 
@@ -93,32 +75,15 @@ public class ParticipationService {
 
     private final UriService uriService;
 
-    private final ResultService resultService;
-
-    private final ParticipantScoreRepository participantScoreRepository;
-
-    private final StudentScoreRepository studentScoreRepository;
-
-    private final TeamScoreRepository teamScoreRepository;
-
-    private final Optional<SharedQueueManagementService> localCISharedBuildJobQueueService;
-
     private final ParticipationVcsAccessTokenService participationVCSAccessTokenService;
 
-    private final Optional<CompetencyProgressApi> competencyProgressApi;
-
-    public ParticipationService(GitService gitService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
-            Optional<LocalVCGitBranchService> localVCGitBranchService, BuildLogEntryService buildLogEntryService, ParticipationRepository participationRepository,
-            StudentParticipationRepository studentParticipationRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository, SubmissionRepository submissionRepository, TeamRepository teamRepository, UriService uriService,
-            ResultService resultService, ParticipantScoreRepository participantScoreRepository, StudentScoreRepository studentScoreRepository,
-            TeamScoreRepository teamScoreRepository, Optional<SharedQueueManagementService> localCISharedBuildJobQueueService,
-            ParticipationVcsAccessTokenService participationVCSAccessTokenService, Optional<CompetencyProgressApi> competencyProgressApi) {
-        this.gitService = gitService;
+    public ParticipationService(Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
+            ParticipationRepository participationRepository, StudentParticipationRepository studentParticipationRepository,
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            SubmissionRepository submissionRepository, TeamRepository teamRepository, UriService uriService,
+            ParticipationVcsAccessTokenService participationVCSAccessTokenService) {
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
-        this.localVCGitBranchService = localVCGitBranchService;
-        this.buildLogEntryService = buildLogEntryService;
         this.participationRepository = participationRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -126,13 +91,7 @@ public class ParticipationService {
         this.submissionRepository = submissionRepository;
         this.teamRepository = teamRepository;
         this.uriService = uriService;
-        this.resultService = resultService;
-        this.participantScoreRepository = participantScoreRepository;
-        this.studentScoreRepository = studentScoreRepository;
-        this.teamScoreRepository = teamScoreRepository;
-        this.localCISharedBuildJobQueueService = localCISharedBuildJobQueueService;
         this.participationVCSAccessTokenService = participationVCSAccessTokenService;
-        this.competencyProgressApi = competencyProgressApi;
     }
 
     /**
@@ -203,10 +162,6 @@ public class ParticipationService {
                 // Only for quiz exercises, the participation status FINISHED should not be overwritten since the user must not change his submission once submitted
                 participation.setInitializationState(InitializationState.INITIALIZED);
             }
-
-            if (Optional.ofNullable(participation.getInitializationDate()).isEmpty()) {
-                participation.setInitializationDate(ZonedDateTime.now());
-            }
             // TODO: load submission with exercise for exam edge case:
             // clients creates missing participation for exercise, call on server succeeds, but response to client is lost
             // -> client tries to create participation again. In this case the submission is not loaded from db -> client errors
@@ -216,6 +171,9 @@ public class ParticipationService {
                     submissionRepository.initializeSubmission(participation, exercise, null);
                 }
             }
+        }
+        if (Optional.ofNullable(participation.getInitializationDate()).isEmpty()) {
+            participation.setInitializationDate(ZonedDateTime.now());
         }
         return studentParticipationRepository.saveAndFlush(participation);
     }
@@ -453,7 +411,7 @@ public class ParticipationService {
             // NOTE: we have to get the repository slug of the template participation here, because not all exercises (in particular old ones) follow the naming conventions
             final var templateRepoName = uriService.getRepositorySlugFromRepositoryUri(sourceURL);
             VersionControlService vcs = versionControlService.orElseThrow();
-            String templateBranch = localVCGitBranchService.orElseThrow().getOrRetrieveBranchOfExercise(programmingExercise);
+            String templateBranch = programmingExerciseRepository.findBranchByExerciseId(programmingExercise.getId());
             // the next action includes recovery, which means if the repository has already been copied, we simply retrieve the repository uri and do not copy it again
             var newRepoUri = vcs.copyRepository(projectKey, templateRepoName, templateBranch, projectKey, repoName, participation.getAttempt());
             // add the userInfo part to the repoUri only if the participation belongs to a single student (and not a team of students)
@@ -695,48 +653,6 @@ public class ParticipationService {
     }
 
     /**
-     * Deletes the build plan on the continuous integration server and sets the initialization state of the participation to inactive.
-     * This means the participation can be resumed in the future
-     *
-     * @param participation that will be set to inactive
-     */
-    public void cleanupBuildPlan(ProgrammingExerciseStudentParticipation participation) {
-        // ignore participations without build plan id
-        if (participation.getBuildPlanId() != null) {
-            final var projectKey = ((ProgrammingExercise) participation.getExercise()).getProjectKey();
-            continuousIntegrationService.orElseThrow().deleteBuildPlan(projectKey, participation.getBuildPlanId());
-
-            // If a graded participation gets cleaned up after the due date set the state back to finished. Otherwise, the participation is initialized
-            var dueDate = ExerciseDateService.getDueDate(participation);
-            if (!participation.isPracticeMode() && dueDate.isPresent() && ZonedDateTime.now().isAfter(dueDate.get())) {
-                participation.setInitializationState(InitializationState.FINISHED);
-            }
-            else {
-                participation.setInitializationState(InitializationState.INACTIVE);
-            }
-            participation.setBuildPlanId(null);
-            programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
-        }
-    }
-
-    /**
-     * NOTICE: be careful with this method because it deletes the students code on the version control server Deletes the repository on the version control server and sets the
-     * initialization state of the participation to finished. This means the participation cannot be resumed in the future and would need to be restarted
-     *
-     * @param participation to be stopped
-     */
-    public void cleanupRepository(ProgrammingExerciseStudentParticipation participation) {
-        // ignore participations without repository URI
-        if (participation.getRepositoryUri() != null) {
-            versionControlService.orElseThrow().deleteRepository(participation.getVcsRepositoryUri());
-            gitService.deleteLocalRepository(participation.getVcsRepositoryUri());
-            participation.setRepositoryUri(null);
-            participation.setInitializationState(InitializationState.FINISHED);
-            programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
-        }
-    }
-
-    /**
      * Updates the individual due date for each given participation.
      * <p>
      * Only sets individual due dates if the exercise has a due date and the
@@ -775,116 +691,4 @@ public class ParticipationService {
         return changedParticipations;
     }
 
-    /**
-     * Delete the participation by participationId.
-     *
-     * @param participationId         the participationId of the entity
-     * @param deleteParticipantScores false if the participant scores have already been bulk deleted, true by default otherwise
-     */
-    public void delete(long participationId, boolean deleteParticipantScores) {
-        StudentParticipation participation = studentParticipationRepository.findByIdElseThrow(participationId);
-        log.info("Request to delete Participation : {}", participation);
-
-        if (participation instanceof ProgrammingExerciseStudentParticipation programmingExerciseParticipation) {
-            var repositoryUri = programmingExerciseParticipation.getVcsRepositoryUri();
-            String buildPlanId = programmingExerciseParticipation.getBuildPlanId();
-
-            if (buildPlanId != null) {
-                final var projectKey = programmingExerciseParticipation.getProgrammingExercise().getProjectKey();
-                continuousIntegrationService.orElseThrow().deleteBuildPlan(projectKey, buildPlanId);
-            }
-            if (programmingExerciseParticipation.getRepositoryUri() != null) {
-                try {
-                    versionControlService.orElseThrow().deleteRepository(repositoryUri);
-                }
-                catch (Exception ex) {
-                    log.error("Could not delete repository: {}", ex.getMessage());
-                }
-            }
-            // delete local repository cache
-            gitService.deleteLocalRepository(repositoryUri);
-
-            participationVCSAccessTokenService.deleteByParticipationId(participationId);
-        }
-
-        // If local CI is active, remove all queued jobs for participation
-        localCISharedBuildJobQueueService.ifPresent(service -> service.cancelAllJobsForParticipation(participationId));
-
-        deleteResultsAndSubmissionsOfParticipation(participationId, deleteParticipantScores);
-        studentParticipationRepository.delete(participation);
-    }
-
-    /**
-     * Remove all results and submissions of the given participation. Will do nothing if invoked with a participation without results/submissions.
-     *
-     * @param participationId         the id of the participation to delete results/submissions from.
-     * @param deleteParticipantScores false if the participant scores have already been bulk deleted, true by default otherwise
-     */
-    public void deleteResultsAndSubmissionsOfParticipation(Long participationId, boolean deleteParticipantScores) {
-        log.debug("Request to delete all results and submissions of participation with id : {}", participationId);
-        var participation = participationRepository.findByIdWithSubmissionsResults(participationId)
-                .orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
-
-        // delete the participant score with the combination (exerciseId, studentId) or (exerciseId, teamId)
-        if (deleteParticipantScores && participation instanceof StudentParticipation studentParticipation) {
-            studentParticipation.getStudent().ifPresent(student -> studentScoreRepository.deleteByExerciseAndUser(participation.getExercise(), student));
-            studentParticipation.getTeam().ifPresent(team -> teamScoreRepository.deleteByExerciseAndTeam(participation.getExercise(), team));
-        }
-
-        Set<Submission> submissions = participation.getSubmissions();
-        // Delete all results for this participation
-        Set<Result> resultsToBeDeleted = submissions.stream().flatMap(submission -> submission.getResults().stream()).collect(Collectors.toSet());
-        resultsToBeDeleted.addAll(participation.getResults());
-        // By removing the participation, the ResultListener will ignore this result instead of scheduling a participant score update
-        // This is okay here, because we delete the whole participation (no older results will exist for the score)
-        resultsToBeDeleted.forEach(result -> resultService.deleteResult(result, false));
-        // Delete all submissions for this participation
-        submissions.forEach(submission -> {
-            // We have to set the results to an empty list because otherwise clearing the build log entries does not work correctly
-            submission.setResults(Collections.emptyList());
-            if (submission instanceof ProgrammingSubmission programmingSubmission) {
-                buildLogEntryService.deleteBuildLogEntriesForProgrammingSubmission(programmingSubmission);
-            }
-            submissionRepository.deleteById(submission.getId());
-        });
-    }
-
-    /**
-     * Delete all participations belonging to the given exercise
-     *
-     * @param exercise                      the exercise
-     * @param recalculateCompetencyProgress specify if the competency progress should be recalculated
-     */
-    public void deleteAllByExercise(Exercise exercise, boolean recalculateCompetencyProgress) {
-        var participationsToDelete = studentParticipationRepository.findByExerciseId(exercise.getId());
-        log.info("Request to delete all {} participations of exercise with id : {}", participationsToDelete.size(), exercise.getId());
-
-        // First remove all participant scores, as we are deleting all participations for the exercise
-        participantScoreRepository.deleteAllByExerciseId(exercise.getId());
-
-        for (StudentParticipation participation : participationsToDelete) {
-            delete(participation.getId(), false);
-        }
-
-        if (recalculateCompetencyProgress) {
-            competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(exercise));
-        }
-    }
-
-    /**
-     * Delete all participations belonging to the given team
-     *
-     * @param teamId the id of the team
-     */
-    public void deleteAllByTeamId(Long teamId) {
-        log.info("Request to delete all participations of Team with id : {}", teamId);
-
-        // First remove all participant scores, as we are deleting all participations for the team
-        teamScoreRepository.deleteAllByTeamId(teamId);
-
-        List<StudentParticipation> participationsToDelete = studentParticipationRepository.findByTeamId(teamId);
-        for (StudentParticipation participation : participationsToDelete) {
-            delete(participation.getId(), false);
-        }
-    }
 }

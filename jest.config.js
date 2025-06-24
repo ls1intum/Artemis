@@ -94,13 +94,14 @@ module.exports = {
     coverageThreshold: {
         global: {
             // TODO: in the future, the following values should increase to at least 90%
-            statements: 89.14,
-            branches: 75.18,
-            functions: 82.94,
-            lines: 89.22,
+            statements: 89.19,
+            branches: 75.19,
+            functions: 83.0,
+            lines: 89.27,
         },
     },
-    coverageReporters: ['clover', 'json', 'lcov', 'text-summary'],
+    // 'json-summary' reporter is used by supporting_scripts/code-coverage/module-coverage-client/check-client-module-coverage.mjs
+    coverageReporters: ['clover', 'json', 'lcov', 'text-summary','json-summary'],
     setupFilesAfterEnv: ['<rootDir>/src/test/javascript/spec/jest-test-setup.ts', 'jest-extended/all'],
     moduleFileExtensions: ['ts', 'html', 'js', 'json', 'mjs'],
     transformIgnorePatterns: [`/node_modules/(?!${esModules})`],

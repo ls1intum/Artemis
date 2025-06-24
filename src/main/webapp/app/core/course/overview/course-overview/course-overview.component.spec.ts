@@ -856,4 +856,14 @@ describe('CourseOverviewComponent', () => {
         expect((component as any).selectableSettingPresets).toBeDefined();
         expect((component as any).selectedSettingPreset).toBeDefined();
     }));
+
+    it('should only show practice tab on test server', () => {
+        component.isTestServer = true;
+        const sidebarItems = component.getSidebarItems();
+        expect(sidebarItems.some((item) => item.title.includes('Practice'))).toBeTruthy();
+
+        component.isTestServer = false;
+        const sidebarItemsProd = component.getSidebarItems();
+        expect(sidebarItemsProd.some((item) => item.title.includes('Practice'))).toBeFalsy();
+    });
 });

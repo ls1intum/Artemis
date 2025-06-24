@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
@@ -33,7 +34,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTaskRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseImportService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseValidationService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseImportService;
@@ -41,6 +42,7 @@ import de.tum.cit.aet.artemis.text.api.TextExerciseImportApi;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 @Conditional(ExamEnabled.class)
+@Lazy
 @Service
 public class ExamImportService {
 
@@ -60,7 +62,7 @@ public class ExamImportService {
 
     private final CourseRepository courseRepository;
 
-    private final ProgrammingExerciseService programmingExerciseService;
+    private final ProgrammingExerciseValidationService programmingExerciseValidationService;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
@@ -77,7 +79,7 @@ public class ExamImportService {
     public ExamImportService(Optional<TextExerciseImportApi> textExerciseImportApi, ModelingExerciseImportService modelingExerciseImportService,
             ModelingExerciseRepository modelingExerciseRepository, ExamRepository examRepository, ExerciseGroupRepository exerciseGroupRepository,
             QuizExerciseRepository quizExerciseRepository, QuizExerciseImportService importQuizExercise, CourseRepository courseRepository,
-            ProgrammingExerciseService programmingExerciseService1, ProgrammingExerciseRepository programmingExerciseRepository,
+            ProgrammingExerciseValidationService programmingExerciseValidationService, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingExerciseImportService programmingExerciseImportService, Optional<FileUploadImportApi> fileUploadImportApi,
             GradingCriterionRepository gradingCriterionRepository, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ChannelService channelService) {
         this.textExerciseImportApi = textExerciseImportApi;
@@ -88,7 +90,7 @@ public class ExamImportService {
         this.quizExerciseRepository = quizExerciseRepository;
         this.quizExerciseImportService = importQuizExercise;
         this.courseRepository = courseRepository;
-        this.programmingExerciseService = programmingExerciseService1;
+        this.programmingExerciseValidationService = programmingExerciseValidationService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseImportService = programmingExerciseImportService;
         this.fileUploadImportApi = fileUploadImportApi;
@@ -190,7 +192,7 @@ public class ExamImportService {
         // Iterate over all programming exercises
         return programmingExercises.stream().mapToInt(exercise -> {
             // Method to check, if the project already exists.
-            boolean projectExists = programmingExerciseService.preCheckProjectExistsOnVCSOrCI((ProgrammingExercise) exercise, courseShortName);
+            boolean projectExists = programmingExerciseValidationService.preCheckProjectExistsOnVCSOrCI((ProgrammingExercise) exercise, courseShortName);
             if (projectExists) {
                 // If the project already exists the short name and title are removed. It has to be set in the client again
                 exercise.setShortName("");
