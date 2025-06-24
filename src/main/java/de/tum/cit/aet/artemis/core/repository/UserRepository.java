@@ -52,6 +52,7 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.exercise.dto.StudentDTO;
 
 /**
  * Spring Data JPA repository for the User entity.<br>
@@ -596,7 +597,14 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     Set<User> findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndLoginIn(Set<String> logins);
 
-    List<User> findAllByIdIn(List<Long> ids);
+    List<User> findAllByIdIn(Collection<Long> ids);
+
+    @Query("""
+            SELECT DISTINCT NEW de.tum.cit.aet.artemis.exercise.dto.StudentDTO(u.id, u.login, u.firstName, u.lastName, u.registrationNumber, u.email)
+            FROM User u
+            WHERE u.id IN :ids
+            """)
+    List<StudentDTO> findAllStudentsByIdIn(@Param("ids") Collection<Long> ids);
 
     /**
      * Searches for users by their login or full name.
