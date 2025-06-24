@@ -141,7 +141,7 @@ jobs:
       docker-file: ./docker/artemis/Dockerfile
       build-args: |
         GITHUB_ACTOR=${{ github.actor }}
-        GITHUB_TOKEN=${{ github.token }}
+        GITHUB_TOKEN=${{ github.GITHUB_TOKEN }}
       tags: |
         type=ref,event=tag
     secrets: inherit
