@@ -19,6 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
@@ -310,8 +311,8 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(finishedTextExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
 
         ExerciseDetailsDTO returnedExerciseDetails = request.get("/api/exercise/exercises/" + finishedTextExercise.getId() + "/details", HttpStatus.OK, ExerciseDetailsDTO.class);
-
-        assertThat(returnedExerciseDetails.exercise().getStudentParticipations().iterator().next().getResults().iterator().next().getAssessor()).as("assessor is null").isNull();
+        StudentParticipation studentParticipation = returnedExerciseDetails.exercise().getStudentParticipations().iterator().next();
+        assertThat(participationUtilService.getResultsForParticipation(studentParticipation).iterator().next().getAssessor()).as("assessor is null").isNull();
     }
 
     @Test
@@ -323,8 +324,9 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
 
         StudentParticipation participation = request.get("/api/text/text-editor/" + participationId, HttpStatus.OK, StudentParticipation.class);
 
-        assertThat(participation.getResults()).isNotNull();
-        assertThat(participation.getResults()).hasSize(1);
+        Set<Result> results = participationUtilService.getResultsForParticipation(participation);
+        assertThat(results).isNotNull();
+        assertThat(results).hasSize(1);
 
         assertThat(participation.getSubmissions()).isNotNull();
     }
@@ -484,7 +486,7 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     private void checkDetailsHidden(TextSubmission submission, boolean isStudent) {
-        assertThat(submission.getParticipation().getResults()).as("results are hidden in participation").isNullOrEmpty();
+        assertThat(participationUtilService.getResultsForParticipation(submission.getParticipation())).as("results are hidden in participation").isNullOrEmpty();
         if (isStudent) {
             assertThat(submission.getLatestResult()).as("result is hidden").isNull();
         }
