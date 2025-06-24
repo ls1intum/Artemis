@@ -332,7 +332,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             FROM StudentParticipation p
               LEFT JOIN FETCH p.submissions s
               LEFT JOIN FETCH s.results r
-              LEFT JOIN FETCH r.assessmentNote an
+              LEFT JOIN FETCH r.assessmentNote
             WHERE p.exercise.id = :exerciseId
               AND ( s.id IS NULL
                     OR s.id = (

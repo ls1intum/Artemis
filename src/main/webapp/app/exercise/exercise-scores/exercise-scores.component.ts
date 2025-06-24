@@ -95,6 +95,28 @@ export enum FilterProp {
     ],
 })
 export class ExerciseScoresComponent implements OnInit, OnDestroy {
+    protected readonly faDownload = faDownload;
+    protected readonly faSync = faSync;
+    protected readonly faFolderOpen = faFolderOpen;
+    protected readonly faListAlt = faListAlt;
+    protected readonly farFileCode = faFileCode;
+    protected readonly faFilter = faFilter;
+    protected readonly faComment = faComment;
+    protected readonly RepositoryType = RepositoryType;
+    protected readonly FilterProp = FilterProp;
+    protected readonly ExerciseType = ExerciseType;
+    protected readonly FeatureToggle = FeatureToggle;
+    protected readonly AssessmentType = AssessmentType;
+    protected readonly assessmentNoteSortFieldProperty = 'submissions?.last()?.results?.last()?.assessmentNote?.note';
+    protected readonly durationSortFieldProperty = 'submissions?.last()?.results?.last()?.durationInMinutes';
+    protected readonly submissionCountSortFieldProperty = 'submissionCount';
+    protected readonly testRunSortFieldProperty = 'testRun';
+    protected readonly teamShortNameSortFieldProperty = 'team.shortName';
+    protected readonly studentLoginSortFieldProperty = 'student.login';
+    protected readonly completionDateSortFieldProperty = 'submissions?.last()?.results?.last()?.completionDate';
+    protected readonly resultSortFieldProperty = 'submissions?.last()?.results?.last()?.score';
+    protected readonly assessmentTypeSortFieldProperty = 'submissions?.last()?.results?.last()?.assessmentType';
+
     private route = inject(ActivatedRoute);
     private courseService = inject(CourseManagementService);
     private exerciseService = inject(ExerciseService);
@@ -102,13 +124,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     private programmingSubmissionService = inject(ProgrammingSubmissionService);
     private participationService = inject(ParticipationService);
     private profileService = inject(ProfileService);
-
-    // make constants available to html for comparison
-    readonly FilterProp = FilterProp;
-    readonly ExerciseType = ExerciseType;
-    readonly FeatureToggle = FeatureToggle;
-    readonly AssessmentType = AssessmentType;
-    protected readonly RepositoryType = RepositoryType;
+    protected nameSortFieldProperty: string;
 
     // represents all intervals selectable in the score distribution on the exercise statistics
     readonly scoreRanges = [
@@ -145,15 +161,6 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
 
     localCIEnabled = true;
 
-    // Icons
-    faDownload = faDownload;
-    faSync = faSync;
-    faFolderOpen = faFolderOpen;
-    faListAlt = faListAlt;
-    farFileCode = faFileCode;
-    faFilter = faFilter;
-    faComment = faComment;
-
     /**
      * Fetches the course and exercise from the server
      */
@@ -171,6 +178,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             forkJoin([findCourse, findExercise]).subscribe(([courseRes, exerciseRes]) => {
                 this.course = courseRes.body!;
                 this.exercise = exerciseRes.body!;
+                this.nameSortFieldProperty = this.exercise.teamMode ? 'team.name' : 'student.name';
                 this.afterDueDate = !!this.exercise.dueDate && dayjs().isAfter(this.exercise.dueDate);
                 // After both calls are done, the loading flag is removed. If the exercise is not a programming exercise, only the result call is needed.
                 this.participationService.findAllParticipationsByExercise(this.exercise.id!, true).subscribe((participationsResponse) => {
