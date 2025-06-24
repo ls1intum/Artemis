@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { CalendarDesktopMonthComponent } from './calendar-desktop-month.component';
+import { CalendarMonthPresentationComponent } from './calendar-month-presentation.component';
 import { CalendarEventDummyService } from 'app/calendar/shared/service/calendar-event-dummy.service';
 import { CalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
 import dayjs, { Dayjs } from 'dayjs/esm';
@@ -7,8 +7,8 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
 
 describe('CalendarDesktopMonthComponent', () => {
-    let fixture: ComponentFixture<CalendarDesktopMonthComponent>;
-    let component: CalendarDesktopMonthComponent;
+    let fixture: ComponentFixture<CalendarMonthPresentationComponent>;
+    let component: CalendarMonthPresentationComponent;
 
     const testDate: Dayjs = dayjs('2025-06-01 10:30');
     const testEvent: CalendarEvent = {
@@ -20,12 +20,12 @@ describe('CalendarDesktopMonthComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [CalendarDesktopMonthComponent],
+            imports: [CalendarMonthPresentationComponent],
             declarations: [MockPipe(ArtemisTranslatePipe)],
             providers: [CalendarEventDummyService],
         }).compileComponents();
 
-        fixture = TestBed.createComponent(CalendarDesktopMonthComponent);
+        fixture = TestBed.createComponent(CalendarMonthPresentationComponent);
         component = fixture.componentInstance;
 
         const eventService = TestBed.inject(CalendarEventDummyService);

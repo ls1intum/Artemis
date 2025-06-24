@@ -4,18 +4,18 @@ import dayjs, { Dayjs } from 'dayjs/esm';
 import isoWeek from 'dayjs/plugin/isoWeek';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
-import { CalendarDesktopMonthComponent } from 'app/calendar/overview/desktop/calendar-desktop-month/calendar-desktop-month.component';
-import { CalendarDesktopWeekComponent } from 'app/calendar/overview/desktop/calendar-desktop-week/calendar-desktop-week.component';
+import { CalendarMonthPresentationComponent } from 'app/calendar/overview/calendar-month-presentation/calendar-month-presentation.component';
+import { CalendarWeekPresentationComponent } from 'app/calendar/overview/calendar-week-presentation/calendar-week-presentation.component';
 
 dayjs.extend(isoWeek);
 
 @Component({
     selector: 'jhi-calendar-desktop',
-    imports: [CalendarDesktopMonthComponent, CalendarDesktopWeekComponent, NgClass, FaIconComponent],
-    templateUrl: './calendar-desktop.component.html',
-    styleUrl: './calendar-desktop.component.scss',
+    imports: [CalendarMonthPresentationComponent, CalendarWeekPresentationComponent, NgClass, FaIconComponent],
+    templateUrl: './calendar-overview.component.html',
+    styleUrl: './calendar-overview.component.scss',
 })
-export class CalendarDesktopComponent {
+export class CalendarOverviewComponent {
     readonly faChevronRight = faChevronRight;
     readonly faChevronLeft = faChevronLeft;
     presentation = signal<'week' | 'month'>('month');

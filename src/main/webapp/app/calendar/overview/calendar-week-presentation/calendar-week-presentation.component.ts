@@ -2,7 +2,7 @@ import { AfterViewInit, Component, ElementRef, computed, input, viewChild } from
 import { NgStyle } from '@angular/common';
 import { Dayjs } from 'dayjs/esm';
 import * as Utils from 'app/calendar/shared/util/calendar-util';
-import { DayBadgeComponent } from '../../../shared/day-badge/day-badge.component';
+import { DayBadgeComponent } from '../../shared/day-badge/day-badge.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CalendarEventDummyService } from 'app/calendar/shared/service/calendar-event-dummy.service';
 import { CalendarEventAndPositioning, PositionInfo } from 'app/calendar/shared/entities/calendar-event-positioning.model';
@@ -13,10 +13,10 @@ import { CalendarEvent } from 'app/calendar/shared/entities/calendar-event.model
 @Component({
     selector: 'calendar-desktop-week',
     imports: [DayBadgeComponent, ArtemisTranslatePipe, NgStyle],
-    templateUrl: './calendar-desktop-week.component.html',
-    styleUrl: './calendar-desktop-week.component.scss',
+    templateUrl: './calendar-week-presentation.component.html',
+    styleUrl: './calendar-week-presentation.component.scss',
 })
-export class CalendarDesktopWeekComponent implements AfterViewInit {
+export class CalendarWeekPresentationComponent implements AfterViewInit {
     firstDayOfCurrentMonth = input.required<Dayjs>();
     firstDayOfCurrentWeek = input.required<Dayjs>();
 
@@ -32,7 +32,7 @@ export class CalendarDesktopWeekComponent implements AfterViewInit {
     ngAfterViewInit(): void {
         const container = this.scrollContainer();
         if (container) {
-            container.nativeElement.scrollTop = 7.5 * CalendarDesktopWeekComponent.HOUR_SEGMENT_HEIGHT;
+            container.nativeElement.scrollTop = 7.5 * CalendarWeekPresentationComponent.HOUR_SEGMENT_HEIGHT;
         }
     }
 
@@ -45,7 +45,7 @@ export class CalendarDesktopWeekComponent implements AfterViewInit {
     }
 
     private computePositionedEventsFor(days: Dayjs[]): Map<string, CalendarEventAndPositioning[]> {
-        const pixelsPerMinute = CalendarDesktopWeekComponent.HOUR_SEGMENT_HEIGHT / 60;
+        const pixelsPerMinute = CalendarWeekPresentationComponent.HOUR_SEGMENT_HEIGHT / 60;
 
         const events = days.flatMap((day) => this.eventService.getEventsOfDay(day));
         const sorted = events.sort((a, b) => a.start.diff(b.start));

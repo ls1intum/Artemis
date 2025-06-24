@@ -4,7 +4,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faXmark } from '@fortawesome/free-solid-svg-icons';
 import { Dayjs } from 'dayjs/esm';
 import * as Utils from 'app/calendar/shared/util/calendar-util';
-import { DayBadgeComponent } from '../../../shared/day-badge/day-badge.component';
+import { DayBadgeComponent } from '../../shared/day-badge/day-badge.component';
 import { CalendarEventDummyService } from 'app/calendar/shared/service/calendar-event-dummy.service';
 import { CalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -13,10 +13,10 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     selector: 'calendar-desktop-month',
     standalone: true,
     imports: [FaIconComponent, NgbPopover, DayBadgeComponent, ArtemisTranslatePipe],
-    templateUrl: './calendar-desktop-month.component.html',
-    styleUrls: ['./calendar-desktop-month.component.scss'],
+    templateUrl: './calendar-month-presentation.component.html',
+    styleUrls: ['./calendar-month-presentation.component.scss'],
 })
-export class CalendarDesktopMonthComponent {
+export class CalendarMonthPresentationComponent {
     firstDayOfCurrentMonth = input.required<Dayjs>();
     selectedEvent?: CalendarEvent;
 
