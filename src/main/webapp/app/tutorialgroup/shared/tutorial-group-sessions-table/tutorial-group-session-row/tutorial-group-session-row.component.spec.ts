@@ -68,7 +68,7 @@ describe('TutorialGroupSessionRowComponent', () => {
             expect(updateAttendanceCountSpy).toHaveBeenCalledWith(tutorialGroup.course?.id, tutorialGroup.id, session.id, 5);
             expect(attendanceChangedSpy).toHaveBeenCalledOnce();
             expect(attendanceChangedSpy).toHaveBeenCalledWith({ ...session, attendanceCount: 5 });
-            expect(component.attendanceDiffersFromPersistedValue).toBeFalse();
+            expect(component.attendanceDiffersFromPersistedValue()).toBeFalse();
             expect(component.localSession().attendanceCount).toBe(5);
         });
     }));
@@ -83,7 +83,7 @@ describe('TutorialGroupSessionRowComponent', () => {
             expect(updateAttendanceCountSpy).toHaveBeenCalledOnce();
             expect(updateAttendanceCountSpy).toHaveBeenCalledWith(tutorialGroup.course?.id, tutorialGroup.id, session.id, 5);
             expect(attendanceChangedSpy).not.toHaveBeenCalled();
-            expect(component.attendanceDiffersFromPersistedValue).toBeFalse();
+            expect(component.attendanceDiffersFromPersistedValue()).toBeFalse();
             expect(component.localSession().attendanceCount).toBe(component.persistedAttendanceCount);
         });
     }));
@@ -94,7 +94,7 @@ describe('TutorialGroupSessionRowComponent', () => {
         attendanceCountInput.nativeElement.dispatchEvent(new Event('change'));
         runOnPushChangeDetection(fixture);
         expect(component.localSession().attendanceCount).toBe(5);
-        expect(component.attendanceDiffersFromPersistedValue).toBeTrue();
+        expect(component.attendanceDiffersFromPersistedValue()).toBeTrue();
 
         const saveButton = fixture.debugElement.query(By.css('.input-group button')).nativeElement;
         saveButton.click();

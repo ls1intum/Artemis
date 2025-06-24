@@ -1,4 +1,19 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostBinding, Input, TemplateRef, ViewEncapsulation, effect, inject, input, output, signal } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    HostBinding,
+    Input,
+    Signal,
+    TemplateRef,
+    ViewEncapsulation,
+    computed,
+    effect,
+    inject,
+    input,
+    output,
+    signal,
+} from '@angular/core';
 import { faUmbrellaBeach } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroupSession, TutorialGroupSessionStatus } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
@@ -46,19 +61,10 @@ export class TutorialGroupSessionRowComponent {
     readonly isReadOnly = input(false);
 
     readonly attendanceChanged = output<TutorialGroupSession>();
-    constructor() {
-        effect(() => {
-            const session = this.session();
-            if (session) {
-                this.localSession.set({ ...session });
-                this.updateSomethingBasedOnSession();
-            }
-        });
-    }
 
     persistedAttendanceCount?: number = undefined;
-    attendanceDiffersFromPersistedValue = false;
 
+    readonly attendanceDiffersFromPersistedValue: Signal<boolean>;
     isUpdatingAttendance = false;
 
     cancellationReason?: string;
@@ -69,6 +75,28 @@ export class TutorialGroupSessionRowComponent {
     faUmbrellaBeach = faUmbrellaBeach;
 
     hasSchedule = false;
+
+    private initialized = false;
+    constructor() {
+        this.attendanceDiffersFromPersistedValue = computed(() => this.localSession().attendanceCount !== this.persistedAttendanceCount);
+
+        effect(() => {
+            const session = this.session();
+            if (session) {
+                if (!this.initialized) {
+                    this.initialized = true;
+                    this.updateSomethingBasedOnSession();
+                }
+                this.localSession.set({ ...session });
+                this.persistedAttendanceCount = session.attendanceCount ?? 0;
+            }
+        });
+
+        effect(() => {
+            this.localSession();
+            this.updateSomethingBasedOnSession();
+        });
+    }
 
     updateSomethingBasedOnSession() {
         if (this.localSession()) {
@@ -82,15 +110,14 @@ export class TutorialGroupSessionRowComponent {
                     this.cancellationReason = this.localSession().statusExplanation ? this.localSession().statusExplanation : undefined;
                 }
             }
-            this.persistedAttendanceCount = this.localSession().attendanceCount;
-            this.attendanceDiffersFromPersistedValue = false;
-            this.changeDetectorRef.detectChanges();
         }
     }
 
     onAttendanceInput(newAttendanceCount: number | null) {
-        this.localSession().attendanceCount = newAttendanceCount === null ? undefined : newAttendanceCount;
-        this.attendanceDiffersFromPersistedValue = this.persistedAttendanceCount !== this.localSession().attendanceCount;
+        this.localSession.update((session) => ({
+            ...session,
+            attendanceCount: newAttendanceCount === null ? undefined : newAttendanceCount,
+        }));
     }
 
     saveAttendanceCount() {
@@ -106,13 +133,14 @@ export class TutorialGroupSessionRowComponent {
                 next: (tutorialGroupSession: TutorialGroupSession) => {
                     this.localSession.set(tutorialGroupSession);
                     this.persistedAttendanceCount = this.localSession().attendanceCount;
-                    this.attendanceDiffersFromPersistedValue = false;
                     this.attendanceChanged.emit(this.localSession());
                 },
                 error: (res: HttpErrorResponse) => {
                     onError(this.alertService, res);
-                    this.localSession().attendanceCount = this.persistedAttendanceCount;
-                    this.attendanceDiffersFromPersistedValue = false;
+                    this.localSession.update((session) => ({
+                        ...session,
+                        attendanceCount: this.persistedAttendanceCount,
+                    }));
                 },
             })
             .add(() => {
