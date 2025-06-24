@@ -9,13 +9,13 @@ export class CalendarEventDummyService {
     private dayToEventMap = new Map<string, CalendarEvent[]>();
 
     private readonly dummyEvents: CalendarEvent[] = [
-        { id: '1', name: 'Meeting', start: dayjs('2025-05-02 10:00'), end: dayjs('2025-05-02 12:00') },
-        { id: '2', name: 'Review', start: dayjs('2025-05-15 13:00'), end: dayjs('2025-05-15 14:00') },
-        { id: '3', name: 'Call', start: dayjs('2025-05-15 13:30'), end: dayjs('2025-05-15 16:00') },
-        { id: '4', name: 'Workshop', start: dayjs('2025-05-15 15:00'), end: dayjs('2025-05-15 16:00') },
-        { id: '5', name: 'Workshop', start: dayjs('2025-05-15 14:00'), end: dayjs('2025-05-15 17:00') },
-        { id: '6', name: 'Workshop', start: dayjs('2025-05-15 19:00'), end: dayjs('2025-05-15 20:00') },
-        { id: '7', name: 'Deadline', start: dayjs('2025-05-26 11:30'), end: dayjs('2025-05-26 13:30') },
+        { id: '1', title: 'Meeting', startDate: dayjs('2025-06-02 10:00'), endDate: dayjs('2025-06-02 12:00') },
+        { id: '2', title: 'Review', startDate: dayjs('2025-06-15 13:00'), endDate: dayjs('2025-06-15 14:00') },
+        { id: '3', title: 'Call', startDate: dayjs('2025-06-15 13:30'), endDate: dayjs('2025-06-15 16:00') },
+        { id: '4', title: 'Workshop', startDate: dayjs('2025-06-15 15:00'), endDate: dayjs('2025-06-15 16:00') },
+        { id: '5', title: 'Workshop', startDate: dayjs('2025-06-15 14:00'), endDate: undefined },
+        { id: '6', title: 'Workshop', startDate: dayjs('2025-06-15 19:00'), endDate: dayjs('2025-06-15 20:00') },
+        { id: '7', title: 'Deadline', startDate: dayjs('2025-06-26 11:30'), endDate: dayjs('2025-06-26 13:30') },
     ];
 
     constructor() {
@@ -24,7 +24,7 @@ export class CalendarEventDummyService {
 
     private populateDayToEventMap(): void {
         for (const event of this.dummyEvents) {
-            const dateKey = event.start.format('YYYY-MM-DD');
+            const dateKey = event.startDate.format('YYYY-MM-DD');
             const existing = this.dayToEventMap.get(dateKey);
             if (existing) {
                 existing.push(event);

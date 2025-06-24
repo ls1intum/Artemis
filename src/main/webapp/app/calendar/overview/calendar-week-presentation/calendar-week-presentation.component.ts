@@ -8,8 +8,6 @@ import { CalendarEventDummyService } from 'app/calendar/shared/service/calendar-
 import { CalendarEventAndPositioning, PositionInfo } from 'app/calendar/shared/entities/calendar-event-positioning.model';
 import { CalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
 
-// TODO: where to  move this?
-
 @Component({
     selector: 'calendar-desktop-week',
     imports: [DayBadgeComponent, ArtemisTranslatePipe, NgStyle],
@@ -24,8 +22,8 @@ export class CalendarWeekPresentationComponent implements AfterViewInit {
     readonly weekDays = computed(() => this.computeWeekDaysFrom(this.firstDayOfCurrentWeek()));
     readonly scrollContainer = viewChild<ElementRef>('scrollContainer');
 
-    private dayEventMap = computed(() => this.computePositionedEventsFor(this.weekDays()));
-    private static HOUR_SEGMENT_HEIGHT = 36;
+    private dayToEventAndPositioningMap = computed(() => this.computeDayToEventAndPositioningMap(this.weekDays()));
+    private static HOUR_SEGMENT_HEIGHT = 16 * 3.5;
 
     constructor(private eventService: CalendarEventDummyService) {}
 
@@ -36,58 +34,36 @@ export class CalendarWeekPresentationComponent implements AfterViewInit {
         }
     }
 
+    getEventsAndPositioningsFor(day: Dayjs): CalendarEventAndPositioning[] {
+        return this.dayToEventAndPositioningMap().get(day.format('YYYY-MM-DD')) ?? [];
+    }
+
     private computeWeekDaysFrom(firstDayOfWeek: Dayjs): Dayjs[] {
         return Array.from({ length: 7 }, (_, i) => firstDayOfWeek.add(i, 'day'));
     }
 
-    getEventsAndPositionings(day: Dayjs): CalendarEventAndPositioning[] {
-        return this.dayEventMap().get(day.format('YYYY-MM-DD')) ?? [];
-    }
-
-    private computePositionedEventsFor(days: Dayjs[]): Map<string, CalendarEventAndPositioning[]> {
-        const pixelsPerMinute = CalendarWeekPresentationComponent.HOUR_SEGMENT_HEIGHT / 60;
-
+    private computeDayToEventAndPositioningMap(days: Dayjs[]): Map<string, CalendarEventAndPositioning[]> {
         const events = days.flatMap((day) => this.eventService.getEventsOfDay(day));
-        const sorted = events.sort((a, b) => a.start.diff(b.start));
+        if (events.length === 0) {
+            return new Map<string, CalendarEventAndPositioning[]>();
+        }
+        const sorted = events.sort((a, b) => a.startDate.diff(b.startDate));
+
         const positionedEvents: CalendarEventAndPositioning[] = [];
-
         let currentGroup: CalendarEvent[] = [];
-
-        const flushGroup = () => {
-            if (currentGroup.length === 0) return;
-
-            const outerPadding = 2;
-            const gapBetweenEvents = currentGroup.length > 1 ? outerPadding * (currentGroup.length - 1) : 0;
-
-            const availableWidth = 100 - outerPadding * 2 - gapBetweenEvents;
-            const eventWidth = availableWidth / currentGroup.length;
-
-            currentGroup.forEach((event, index) => {
-                const top = event.start.diff(event.start.startOf('day'), 'minute') * pixelsPerMinute;
-                const height = event.end.diff(event.start, 'minute') * pixelsPerMinute;
-                const left = outerPadding + index * (eventWidth + outerPadding);
-
-                const pos: PositionInfo = { top, height, left, width: eventWidth };
-                positionedEvents.push({ event, position: pos });
-            });
-
-            currentGroup = [];
-        };
-
         for (const event of sorted) {
             if (currentGroup.length === 0 || currentGroup.some((e) => this.overlaps(e, event))) {
                 currentGroup.push(event);
             } else {
-                flushGroup();
-                currentGroup.push(event);
+                positionedEvents.push(...this.calculatePositioningsForEventGroup(currentGroup));
+                currentGroup = [event];
             }
         }
-
-        flushGroup();
+        positionedEvents.push(...this.calculatePositioningsForEventGroup(currentGroup));
 
         const dayEventMap = new Map<string, CalendarEventAndPositioning[]>();
         for (const item of positionedEvents) {
-            const key = item.event.start.format('YYYY-MM-DD');
+            const key = item.event.startDate.format('YYYY-MM-DD');
             if (!dayEventMap.has(key)) {
                 dayEventMap.set(key, []);
             }
@@ -97,8 +73,42 @@ export class CalendarWeekPresentationComponent implements AfterViewInit {
         return dayEventMap;
     }
 
-    // TODO: verify that this does what it claims
-    private overlaps(a: CalendarEvent, b: CalendarEvent): boolean {
-        return a.start.isBefore(b.end) && b.start.isBefore(a.end);
+    private calculatePositioningsForEventGroup(currentGroup: CalendarEvent[]): CalendarEventAndPositioning[] {
+        const pixelsPerMinute = CalendarWeekPresentationComponent.HOUR_SEGMENT_HEIGHT / 60;
+
+        const gapBetweenEvents = 2;
+        const totalGapBetweenEvents = currentGroup.length > 1 ? gapBetweenEvents * (currentGroup.length - 1) : 0;
+
+        const availableWidth = 100 - totalGapBetweenEvents;
+        const eventWidth = availableWidth / currentGroup.length;
+
+        return currentGroup.map((event, index) => {
+            const top = event.startDate.diff(event.startDate.startOf('day'), 'minute') * pixelsPerMinute;
+            const height = event.endDate ? event.endDate.diff(event.startDate, 'minute') * pixelsPerMinute : 28;
+            const left = index * (eventWidth + gapBetweenEvents);
+
+            const pos: PositionInfo = { top, height, left, width: eventWidth };
+            return { event, position: pos };
+        });
+    }
+
+    private overlaps(firstEvent: CalendarEvent, secondEvent: CalendarEvent): boolean {
+        const firstStartDate = firstEvent.startDate;
+        const firstEndDate = firstEvent.endDate;
+        const secondStartDate = secondEvent.startDate;
+        const secondEndDate = secondEvent.endDate;
+
+        if (!firstEndDate && !secondEndDate) {
+            return firstStartDate.isSame(secondStartDate, 'minute');
+        } else if (!firstEndDate) {
+            return firstStartDate.isSameOrBefore(secondEndDate!, 'minute') && secondStartDate.isSameOrBefore(firstStartDate, 'minute');
+        } else if (!secondEndDate) {
+            return secondStartDate.isSameOrBefore(firstEndDate, 'minute') && firstStartDate.isSameOrBefore(secondStartDate, 'minute');
+        } else {
+            const firstStartFallsInSecondRange = firstStartDate.isSameOrBefore(secondEndDate, 'minute') && secondStartDate.isSameOrBefore(firstStartDate, 'minute');
+            const firstEndFallsInSecondRange = firstEndDate.isSameOrBefore(secondEndDate, 'minute') && secondStartDate.isSameOrBefore(firstEndDate, 'minute');
+            const firstEventHugsSecondEvent = firstStartDate.isSameOrBefore(secondStartDate, 'minute') && secondEndDate.isSameOrBefore(firstEndDate, 'minute');
+            return firstStartFallsInSecondRange || firstEndFallsInSecondRange || firstEventHugsSecondEvent;
+        }
     }
 }

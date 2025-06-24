@@ -22,7 +22,7 @@
                                     (click)="openPopover(event, popover)"
                                     #popover="ngbPopover"
                                 >
-                                    {{ event.name }}
+                                    {{ event.title }}
                                 </div>
                             }
                             <div class="more-events-info">+{{ events.length - 2 }} more</div>
@@ -37,7 +37,7 @@
                                     (click)="openPopover(event, popover)"
                                     #popover="ngbPopover"
                                 >
-                                    {{ event.name }}
+                                    {{ event.title }}
                                 </div>
                             }
                         }
@@ -52,11 +52,11 @@
     @if (selectedEvent) {
         <div class="popover-content">
             <div class="event-popover-header">
-                <div>{{ selectedEvent.name }}</div>
+                <div>{{ selectedEvent.title }}</div>
                 <fa-icon [icon]="faXmark" class="close-button" (click)="closePopover()" />
             </div>
-            @if (selectedEvent.end) {
-                <div>time: {{ getTimeString(selectedEvent!.start) }}-{{ getTimeString(selectedEvent!.end) }}</div>
+            @if (selectedEvent.endDate) {
+                <div>time: {{ getTimeString(selectedEvent!.startDate) }}-{{ getTimeString(selectedEvent!.endDate) }}</div>
             }
         </div>
     }

@@ -30,7 +30,7 @@
                     @for (index of utils.range(24); track index) {
                         <div class="hour-segment"></div>
                     }
-                    @for (item of getEventsAndPositionings(day); track item.event.id) {
+                    @for (item of getEventsAndPositioningsFor(day); track item.event.id) {
                         <div
                             class="event"
                             [ngStyle]="{
@@ -40,7 +40,7 @@
                                 width: item.position.width + '%',
                             }"
                         >
-                            {{ item.event.name }}
+                            {{ item.event.title }}
                         </div>
                     }
                 </div>

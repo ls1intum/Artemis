@@ -13,9 +13,9 @@ describe('CalendarDesktopMonthComponent', () => {
     const testDate: Dayjs = dayjs('2025-06-01 10:30');
     const testEvent: CalendarEvent = {
         id: 'course-1',
-        name: 'Test Event',
-        start: testDate,
-        end: testDate.add(1, 'hour'),
+        title: 'Test Event',
+        startDate: testDate,
+        endDate: testDate.add(1, 'hour'),
     };
 
     beforeEach(async () => {
@@ -53,7 +53,7 @@ describe('CalendarDesktopMonthComponent', () => {
     });
 
     it('should compute correct time string', () => {
-        const timeString = component.getTimeString(testEvent.start);
+        const timeString = component.getTimeString(testEvent.startDate);
         expect(timeString).toBe('10:30');
     });
 });
