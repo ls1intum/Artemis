@@ -83,27 +83,13 @@ public class ProgrammingUtilTestService {
     private String localVCRepoPath;
 
     /**
-     * Sets up the template repository of a programming exercise with a single file
-     *
-     * @param fileName     The name of the file
-     * @param content      The content of the file
-     * @param exercise     The programming exercise
-     * @param templateRepo The repository
-     * @return The programming exercise
-     */
-    public ProgrammingExercise setupTemplate(String fileName, String content, ProgrammingExercise exercise, LocalRepository templateRepo) throws Exception {
-        return setupTemplate(Collections.singletonMap(fileName, content), exercise, templateRepo);
-    }
-
-    /**
      * Sets up the template repository of a programming exercise with specified files
      *
      * @param files        The fileNames mapped to the content of the files
      * @param exercise     The programming exercise
      * @param templateRepo The repository
-     * @return The programming exercise
      */
-    public ProgrammingExercise setupTemplate(Map<String, String> files, ProgrammingExercise exercise, LocalRepository templateRepo) throws Exception {
+    public void setupTemplate(Map<String, String> files, ProgrammingExercise exercise, LocalRepository templateRepo) throws Exception {
         templateRepo.configureRepos(Path.of(localVCRepoPath), "templateLocalRepo", "templateOriginRepo");
 
         for (Map.Entry<String, String> entry : files.entrySet()) {
@@ -140,20 +126,6 @@ public class ProgrammingUtilTestService {
         templateSubmission.setCommitHash(String.valueOf(files.hashCode()));
         programmingSubmissionRepository.save(templateSubmission);
 
-        return savedExercise;
-    }
-
-    /**
-     * Sets up the solution repository of a programming exercise with a single file
-     *
-     * @param fileName     The name of the file
-     * @param content      The content of the file
-     * @param exercise     The programming exercise
-     * @param solutionRepo The repository
-     * @return The programming exercise
-     */
-    public ProgrammingExercise setupSolution(String fileName, String content, ProgrammingExercise exercise, LocalRepository solutionRepo) throws Exception {
-        return setupSolution(Collections.singletonMap(fileName, content), exercise, solutionRepo);
     }
 
     /**
@@ -162,9 +134,8 @@ public class ProgrammingUtilTestService {
      * @param files        The fileNames mapped to the content of the files
      * @param exercise     The programming exercise
      * @param solutionRepo The repository
-     * @return The programming exercise
      */
-    public ProgrammingExercise setupSolution(Map<String, String> files, ProgrammingExercise exercise, LocalRepository solutionRepo) throws Exception {
+    public void setupSolution(Map<String, String> files, ProgrammingExercise exercise, LocalRepository solutionRepo) throws Exception {
         solutionRepo.configureRepos(Path.of(localVCRepoPath), "solutionLocalRepo", "solutionOriginRepo");
 
         for (Map.Entry<String, String> entry : files.entrySet()) {
@@ -202,20 +173,6 @@ public class ProgrammingUtilTestService {
         solutionSubmission.setParticipation(solutionParticipation);
         solutionSubmission.setCommitHash(String.valueOf(files.hashCode()));
         programmingSubmissionRepository.save(solutionSubmission);
-        return savedExercise;
-    }
-
-    public ProgrammingSubmission setupSubmission(String fileName, String content, ProgrammingExercise exercise, LocalRepository participationRepo, String login) throws Exception {
-        return setupSubmission(Collections.singletonMap(fileName, content), exercise, participationRepo, login);
-    }
-
-    public ProgrammingSubmission deleteFileAndSetupSubmission(String oldFileName, String newFileName, String content, ProgrammingExercise exercise,
-            LocalRepository participationRepo, String login) throws Exception {
-        Path oldFilePath = Path.of(participationRepo.workingCopyGitRepoFile + "/" + oldFileName);
-        Files.delete(oldFilePath);
-        // Ensure JGit realizes the file has been removed
-        participationRepo.workingCopyGitRepo.rm().addFilepattern(oldFileName).call();
-        return setupSubmission(newFileName, content, exercise, participationRepo, login);
     }
 
     public ProgrammingSubmission setupSubmission(Map<String, String> files, ProgrammingExercise exercise, LocalRepository participationRepo, String login) throws Exception {
@@ -254,58 +211,5 @@ public class ProgrammingUtilTestService {
         participation = programmingExerciseStudentParticipationRepository
                 .findWithSubmissionsByExerciseIdAndParticipationIds(exercise.getId(), Collections.singletonList(participation.getId())).getFirst();
         return (ProgrammingSubmission) participationUtilService.addSubmission(participation, submission);
-    }
-
-    /**
-     * Sets up the test repository of a programming exercise with a single file
-     *
-     * @param fileName The name of the file
-     * @param content  The content of the file
-     * @param exercise The programming exercise
-     * @param testRepo The repository
-     * @return The programming exercise
-     */
-    public ProgrammingExercise setupTests(String fileName, String content, ProgrammingExercise exercise, LocalRepository testRepo) throws Exception {
-        return setupTests(Collections.singletonMap(fileName, content), exercise, testRepo);
-    }
-
-    /**
-     * Sets up the test repository of a programming exercise with specified files
-     *
-     * @param files    The fileNames mapped to the content of the files
-     * @param exercise The programming exercise
-     * @param testRepo The repository
-     * @return The programming exercise
-     */
-    public ProgrammingExercise setupTests(Map<String, String> files, ProgrammingExercise exercise, LocalRepository testRepo) throws Exception {
-        testRepo.configureRepos(Path.of(localVCRepoPath), "testLocalRepo", "testOriginRepo");
-
-        for (Map.Entry<String, String> entry : files.entrySet()) {
-            String fileName = entry.getKey();
-            String content = entry.getValue();
-            // add file to the repository folder
-            Path filePath = Path.of(testRepo.workingCopyGitRepoFile + "/" + fileName);
-            Files.createDirectories(filePath.getParent());
-            File solutionFile = Files.createFile(filePath).toFile();
-            // write content to the created file
-            FileUtils.write(solutionFile, content, Charset.defaultCharset());
-        }
-
-        var testRepoUri = new LocalVCRepositoryUri(testRepo.workingCopyGitRepoFile.getPath());
-        exercise.setTestRepositoryUri(testRepoUri.toString());
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(testRepoUri, true);
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(testRepoUri,
-                false);
-
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(eq(testRepoUri),
-                eq(true), any());
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(eq(testRepoUri),
-                eq(false), any());
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(eq(testRepoUri), eq(true),
-                any());
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(eq(testRepoUri), eq(false),
-                any());
-
-        return exerciseRepository.save(exercise);
     }
 }
