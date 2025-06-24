@@ -21,6 +21,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.security.jwt.AuthenticationMethod;
 import de.tum.cit.aet.artemis.core.service.ArtemisSuccessfulLoginService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -39,13 +40,13 @@ class ArtemisSuccessfulLoginServiceTest extends AbstractSpringIntegrationIndepen
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "INSTRUCTOR")
-    void shouldSendEmailToUserOnSuccessfulAuthentication() throws EntityNotFoundException {
+    void shouldSendEmailToUserWhenServiceMethodIsInvoked() throws EntityNotFoundException {
         String username = TEST_PREFIX + "student1";
 
         User user = userTestRepository.findOneByLogin(username).get();
 
         doNothing().when(javaMailSender).send(any(MimeMessage.class));
-        artemisSuccessfulLoginService.sendLoginEmail(username);
+        artemisSuccessfulLoginService.sendLoginEmail(username, AuthenticationMethod.PASSWORD, null);
         await().atMost(5, SECONDS)
                 .untilAsserted(() -> verify(mailSendingService).buildAndSendAsync(eq(user), eq("email.notification.login.title"), eq("mail/notification/newLoginEmail"), anyMap()));
     }
@@ -56,8 +57,8 @@ class ArtemisSuccessfulLoginServiceTest extends AbstractSpringIntegrationIndepen
         String username = "nonexistentuser";
         doNothing().when(javaMailSender).send(any(MimeMessage.class));
 
-        artemisSuccessfulLoginService.sendLoginEmail(username);
+        artemisSuccessfulLoginService.sendLoginEmail(username, AuthenticationMethod.PASSWORD, null);
 
-        verify(mailSendingService, never()).buildAndSendAsync(any(User.class), anyString(), anyString(), anyMap());
+        await().atMost(5, SECONDS).untilAsserted(() -> verify(mailSendingService, never()).buildAndSendAsync(any(User.class), anyString(), anyString(), anyMap()));
     }
 }

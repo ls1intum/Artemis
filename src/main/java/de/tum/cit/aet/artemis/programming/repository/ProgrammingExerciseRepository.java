@@ -16,6 +16,7 @@ import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 
 import org.hibernate.Hibernate;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
@@ -41,31 +42,9 @@ import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExercisePart
  * Spring Data JPA repository for the ProgrammingExercise entity.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Repository
 public interface ProgrammingExerciseRepository extends DynamicSpecificationRepository<ProgrammingExercise, Long, ProgrammingExerciseFetchOptions> {
-
-    /**
-     * Does a max join on the result table for each participation by result id (the newer the result id, the newer the result).
-     * This makes sure that we only receive the latest result for the template and the solution participation if they exist.
-     *
-     * @param courseId the course the returned programming exercises belong to.
-     * @return all exercises for the given course with only the latest results for solution and template each (if present).
-     */
-    @Query("""
-            SELECT DISTINCT pe
-            FROM ProgrammingExercise pe
-                LEFT JOIN FETCH pe.templateParticipation tp
-                LEFT JOIN FETCH pe.solutionParticipation sp
-                LEFT JOIN FETCH tp.submissions tps
-                LEFT JOIN FETCH sp.submissions s
-                LEFT JOIN FETCH tps.results tpr
-                LEFT JOIN FETCH s.results spr
-                LEFT JOIN FETCH pe.categories
-            WHERE pe.course.id = :courseId
-                AND (tpr.id = (SELECT MAX(r1.id) FROM Submission stp JOIN stp.results r1 WHERE stp.participation = tp) OR tpr.id IS NULL)
-                AND (spr.id = (SELECT MAX(r2.id) FROM Submission s2 JOIN s2.results r2 WHERE s2.participation = sp) OR spr.id IS NULL)
-            """)
-    List<ProgrammingExercise> findByCourseIdWithLatestResultForTemplateSolutionParticipations(@Param("courseId") long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation" })
     Optional<ProgrammingExercise> findWithTemplateParticipationById(long exerciseId);
@@ -121,8 +100,6 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
 
     List<ProgrammingExercise> findAllByProjectKey(String projectKey);
 
-    List<ProgrammingExercise> findAllByCourseId(Long courseId);
-
     @EntityGraph(type = LOAD, attributePaths = { "categories" })
     List<ProgrammingExercise> findAllWithCategoriesByCourseId(Long courseId);
 
@@ -152,9 +129,7 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     }
 
     /**
-     * Get a programmingExercise with template participation, each with the latest result and feedbacks.
-     * NOTICE: this query is quite expensive because it loads all feedback and test cases, and it includes sub queries to retrieve the latest result
-     * IMPORTANT: you should generally avoid using this query except you really need all information!!
+     * Get a programmingExercise with template participation and the latest submission
      *
      * @param exerciseId the id of the exercise that should be fetched.
      * @return the exercise with the given ID, if found.
@@ -162,38 +137,19 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     @Query("""
             SELECT DISTINCT pe
             FROM ProgrammingExercise pe
-                LEFT JOIN FETCH pe.templateParticipation tp
-                LEFT JOIN FETCH tp.submissions tps
-                LEFT JOIN FETCH tps.results tpr
-                LEFT JOIN FETCH tpr.feedbacks tf
-                LEFT JOIN FETCH tf.testCase
-                LEFT JOIN FETCH tpr.submission
+                 LEFT JOIN FETCH pe.templateParticipation tp
+                 LEFT JOIN FETCH tp.submissions s
             WHERE pe.id = :exerciseId
-                AND (tpr.id = (SELECT MAX(r1.id) FROM Submission stp JOIN stp.results r1 WHERE stp.participation = tp) OR tpr.id IS NULL)
+            AND (
+            s.id = (
+                 SELECT MAX(s2.id)
+                 FROM Submission s2
+                 WHERE s2.participation.id = tp.id
+                    )
+                 OR s.id IS NULL
+                )
             """)
-    Optional<ProgrammingExercise> findWithTemplateParticipationLatestResultFeedbackTestCasesById(@Param("exerciseId") long exerciseId);
-
-    /**
-     * Get a programmingExercise with solution participation, each with the latest result and feedbacks.
-     * NOTICE: this query is quite expensive because it loads all feedback and test cases, and it includes sub queries to retrieve the latest result
-     * IMPORTANT: you should generally avoid using this query except you really need all information!!
-     *
-     * @param exerciseId the id of the exercise that should be fetched.
-     * @return the exercise with the given ID, if found.
-     */
-    @Query("""
-            SELECT DISTINCT pe
-            FROM ProgrammingExercise pe
-                LEFT JOIN FETCH pe.solutionParticipation sp
-                LEFT JOIN FETCH sp.submissions s
-                LEFT JOIN FETCH s.results spr
-                LEFT JOIN FETCH spr.feedbacks sf
-                LEFT JOIN FETCH sf.testCase
-                LEFT JOIN FETCH spr.submission
-            WHERE pe.id = :exerciseId
-                AND (spr.id = (SELECT MAX(r2.id) FROM Submission s2 JOIN s2.results r2 WHERE s2.participation = sp) OR spr.id IS NULL)
-            """)
-    Optional<ProgrammingExercise> findWithSolutionParticipationLatestResultFeedbackTestCasesById(@Param("exerciseId") long exerciseId);
+    Optional<ProgrammingExercise> findWithTemplateParticipationAndLatestSubmissionById(@Param("exerciseId") long exerciseId);
 
     /**
      * Get all programming exercises that need to be scheduled: Those must satisfy one of the following requirements:
@@ -535,6 +491,20 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     long countByTitleAndExerciseGroupExamCourse(String shortName, Course course);
 
     /**
+     * Finds the branch for the given exercise id.
+     *
+     * @param exerciseId the exercise id to find the branch for
+     * @return the branch name, potentially null if no branch is set or if the exercise does not exist
+     */
+    @Nullable
+    @Query("""
+            SELECT DISTINCT b.branch
+            FROM ProgrammingExerciseBuildConfig b
+            WHERE b.programmingExercise.id = :exerciseId
+            """)
+    String findBranchByExerciseId(@Param("exerciseId") long exerciseId);
+
+    /**
      * Find a programming exercise by its id, with grading criteria loaded, and throw an EntityNotFoundException if it cannot be found
      *
      * @param exerciseId of the programming exercise.
@@ -773,34 +743,6 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
         return this.findForCreationByIdElseThrow(exercise.getId());
     }
 
-    /**
-     * Find a programming exercise by its id, with eagerly loaded template and solution participation,
-     * including the latest result with feedback and test cases.
-     * <p>
-     * NOTICE: this query is quite expensive because it loads all feedback and test cases,
-     * and it includes sub queries to retrieve the latest result
-     * IMPORTANT: you should generally avoid using this query except you really need all information!!
-     *
-     * @param programmingExerciseId of the programming exercise.
-     * @return The programming exercise related to the given id
-     * @throws EntityNotFoundException the programming exercise could not be found.
-     */
-    @NotNull
-    default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationAndAuxiliaryReposAndLatestResultFeedbackTestCasesElseThrow(long programmingExerciseId)
-            throws EntityNotFoundException {
-        // TODO: This is a dark hack. Move this into a service where we properly load only the solution participation in the second step
-        ProgrammingExercise programmingExerciseWithTemplate = getValueElseThrow(findWithTemplateParticipationLatestResultFeedbackTestCasesById(programmingExerciseId),
-                programmingExerciseId);
-        ProgrammingExercise programmingExerciseWithSolution = getValueElseThrow(findWithSolutionParticipationLatestResultFeedbackTestCasesById(programmingExerciseId),
-                programmingExerciseId);
-        ProgrammingExercise programmingExerciseWithAuxiliaryRepositories = findByIdWithAuxiliaryRepositoriesElseThrow(programmingExerciseId);
-
-        programmingExerciseWithTemplate.setSolutionParticipation(programmingExerciseWithSolution.getSolutionParticipation());
-        programmingExerciseWithTemplate.setAuxiliaryRepositories(programmingExerciseWithAuxiliaryRepositories.getAuxiliaryRepositories());
-
-        return programmingExerciseWithTemplate;
-    }
-
     @NotNull
     default ProgrammingExercise findWithEagerStudentParticipationsByIdElseThrow(long programmingExerciseId) {
         return getValueElseThrow(findWithEagerStudentParticipationsById(programmingExerciseId), programmingExerciseId);
@@ -1015,5 +957,9 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
      */
     default ProgrammingExercise findWithTestCasesByIdElseThrow(Long exerciseId) {
         return getArbitraryValueElseThrow(findWithTestCasesById(exerciseId), Long.toString(exerciseId));
+    }
+
+    default ProgrammingExercise findWithTemplateParticipationAndLatestSubmissionByIdElseThrow(long exerciseId) {
+        return getValueElseThrow(findWithTemplateParticipationAndLatestSubmissionById(exerciseId), exerciseId);
     }
 }

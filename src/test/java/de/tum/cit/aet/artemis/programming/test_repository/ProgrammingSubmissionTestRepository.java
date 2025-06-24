@@ -7,6 +7,7 @@ import java.util.Optional;
 
 import jakarta.validation.constraints.NotNull;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
@@ -19,6 +20,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionReposi
 /**
  * Spring Data JPA repository for the ProgrammingSubmission entity tests.
  */
+@Lazy
 @Repository
 @Primary
 public interface ProgrammingSubmissionTestRepository extends ProgrammingSubmissionRepository {

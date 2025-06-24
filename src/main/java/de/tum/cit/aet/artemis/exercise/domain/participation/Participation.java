@@ -1,14 +1,10 @@
 package de.tum.cit.aet.artemis.exercise.domain.participation;
 
 import java.time.ZonedDateTime;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorColumn;
@@ -238,18 +234,6 @@ public abstract class Participation extends DomainObject implements Participatio
     }
 
     /**
-     * @deprecated This method is deprecated and will be removed in the future.
-     *             We will investigate options to delete this method in a follow-up PR.
-     * @return all results of the participation, including illegal submissions
-     */
-    @Deprecated(forRemoval = true)
-    @JsonIgnore
-    public Set<Result> getResults() {
-        return Stream.ofNullable(this.submissions).flatMap(Collection::stream).flatMap(submission -> Stream.ofNullable(submission.getResults()).flatMap(Collection::stream))
-                .filter(Objects::nonNull).collect(Collectors.toSet());
-    }
-
-    /**
      * Finds the latest legal submission for the participation. Checks if the participation has any submissions. If there are no submissions, return null.
      * Otherwise sort the submissions by submission date and return the first. WARNING: The submissions of the participation might not be loaded because of Hibernate and
      * therefore, the function might return null, although the participation has submissions. This might not be high-performance, so use it at your own risk.
@@ -257,13 +241,13 @@ public abstract class Participation extends DomainObject implements Participatio
      * @param <T> submission type
      * @return the latest submission or null
      */
+    @SuppressWarnings("unchecked")
     @Override
     public <T extends Submission> Optional<T> findLatestSubmission() {
         Set<Submission> submissions = this.submissions;
         if (submissions == null || submissions.isEmpty()) {
             return Optional.empty();
         }
-
         return (Optional<T>) submissions.stream().max(Comparator.naturalOrder());
     }
 

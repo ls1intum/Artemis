@@ -63,7 +63,7 @@ class RepositoryProgrammingExerciseParticipationJenkinsIntegrationTest extends A
         jenkinsRequestMockProvider.mockGetJob(programmingExercise.getProjectKey(), buildPlanId, jobWithDetails, false);
         jenkinsRequestMockProvider.mockGetBuildStatus(programmingExercise.getProjectKey(), buildPlanId, true, true, false, true);
 
-        var url = "/api/programming/repository/" + programmingExerciseParticipation.getId() + "/buildlogs";
+        var url = "/api/programming/participations/" + programmingExerciseParticipation.getId() + "/buildlogs";
         var buildLogs = request.getList(url, HttpStatus.OK, BuildLogEntry.class);
         assertThat(buildLogs).hasSize(3);
     }

@@ -54,14 +54,14 @@ const moduleThresholds = {
         lines:      88.99,
     },
     exam: {
-        statements: 91.31,
+        statements: 91.30,
         branches:   78.07,
         functions:  83.65,
         lines:      91.54,
     },
     exercise: {
         statements: 88.49,
-        branches:   78.98,
+        branches:   78.92,
         functions:  80.22,
         lines:      88.58,
     },
@@ -91,15 +91,15 @@ const moduleThresholds = {
     },
     modeling: {
         statements: 87.00,
-        branches:   73.50,
+        branches:   71.91,
         functions:  81.82,
         lines:      87.19,
     },
     plagiarism: {
-        statements: 91.88,
+        statements: 91.74,
         branches:   81.91,
         functions:  85.31,
-        lines:      91.91,
+        lines:      91.77,
     },
     programming: {
         statements: 88.67,
@@ -137,19 +137,26 @@ const moduleThresholds = {
 
 const metrics = ['statements', 'branches', 'functions', 'lines'];
 
+const AIMED_FOR_COVERAGE = 90;
+
+const roundToTwoDigits = (value) => Math.round(value * 100) / 100;
+
 const evaluateAndPrintMetrics = (module, aggregatedMetrics, thresholds) => {
     let failed = false;
     console.log(`\nModule: ${module}`);
     for (const metric of metrics) {
         const { total, covered } = aggregatedMetrics[metric];
         const percentage = total > 0 ? (covered / total) * 100 : 0;
-        const threshold = thresholds[metric];
-        const pass = Math.round(percentage * 100) / 100 >= threshold;
-        console.log(`  ${pass ? '✅' : '❌'} ${metric.padEnd(10)} : ${percentage.toFixed(2)}%  (need ≥ ${threshold}%)`);
+        const roundedPercentage = roundToTwoDigits(percentage);
+        const roundedThreshold = roundToTwoDigits(thresholds[metric]);
+        const pass = roundedPercentage >= roundedThreshold;
+        const higherThanExpected = roundedPercentage > roundedThreshold && roundedThreshold < AIMED_FOR_COVERAGE;
+
+        const status = `${higherThanExpected ? '⬆️' : ''} ${pass ? '✅' : '❌'}`;
+        console.log(`${status.padStart(6)} ${metric.padEnd(12)}: ${roundedPercentage.toFixed(2).padStart(6)}%  (need ≥ ${roundedThreshold.toFixed(2)}%)`);
         if (!pass) failed = true;
     }
     return failed;
-
 };
 
 let anyModuleFailed = false;

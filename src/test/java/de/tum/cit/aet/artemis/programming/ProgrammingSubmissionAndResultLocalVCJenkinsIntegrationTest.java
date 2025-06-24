@@ -195,7 +195,7 @@ class ProgrammingSubmissionAndResultLocalVCJenkinsIntegrationTest extends Abstra
 
         userUtilService.changeUser(userLogin);
         // Assert that the build logs can be retrieved from the REST API from the database
-        var receivedLogs = request.get("/api/programming/repository/" + participationId + "/buildlogs", HttpStatus.OK, List.class);
+        var receivedLogs = request.get("/api/programming/participations/" + participationId + "/buildlogs", HttpStatus.OK, List.class);
         assertThat(receivedLogs).isNotNull().isNotEmpty();
 
         return result;
