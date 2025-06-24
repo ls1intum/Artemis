@@ -40,7 +40,7 @@ import { ExportButtonComponent } from 'app/shared/export/button/export-button.co
 import { CommonSpreadsheetCellObject } from 'app/shared/export/row-builder/excel-export-row-builder';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
-import { PlagiarismCase, PlagiarismCaseDTO } from 'app/plagiarism/shared/entities/PlagiarismCase';
+import { PlagiarismCaseDTO } from 'app/plagiarism/shared/entities/PlagiarismCase';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -292,6 +292,13 @@ describe('CourseScoresComponent', () => {
         presentationsWeight: 25,
     };
 
+    const setupMocks = () => {
+        jest.spyOn(courseManagementService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
+        jest.spyOn(gradingSystemService, 'findGradingScaleForCourse').mockReturnValue(of(new HttpResponse<GradingScale>({ body: gradingScaleWithGradedPresentations })));
+        jest.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForScores').mockReturnValue(of(new HttpResponse<PlagiarismCaseDTO[]>({ body: [] })));
+        fixture.detectChanges();
+    };
+
     beforeEach(() => {
         exerciseMaxPointsPerType.setValue(ExerciseType.QUIZ, quizIncludedWith10Points0BonusPoints, 10);
         exerciseMaxPointsPerType.setValue(ExerciseType.FILE_UPLOAD, fileBonusWith10Points0BonusPoints, 10);
@@ -406,10 +413,7 @@ describe('CourseScoresComponent', () => {
     });
 
     it('should calculate per student score', () => {
-        jest.spyOn(courseManagementService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
-        jest.spyOn(gradingSystemService, 'findGradingScaleForCourse').mockReturnValue(of(new HttpResponse<GradingScale>({ body: gradingScaleWithGradedPresentations })));
-        jest.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForScores').mockReturnValue(of(new HttpResponse<PlagiarismCaseDTO[]>({ body: [] })));
-        fixture.detectChanges();
+        setupMocks();
 
         expect(component.studentStatistics[0].pointsPerExerciseType).toEqual(pointsOfStudent1);
         expect(component.studentStatistics[0].numberOfParticipatedExercises).toBe(3);
@@ -452,7 +456,7 @@ describe('CourseScoresComponent', () => {
                         {
                             id: 10,
                             verdict: PlagiarismVerdict.PLAGIARISM,
-                            studentId: participation1.student.id,
+                            studentId: participation1.student!.id,
                         },
                     ],
                 }),
@@ -467,10 +471,7 @@ describe('CourseScoresComponent', () => {
     });
 
     it('should generate excel row correctly', () => {
-        jest.spyOn(courseManagementService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
-        jest.spyOn(gradingSystemService, 'findGradingScaleForCourse').mockReturnValue(of(new HttpResponse<GradingScale>({ body: gradingScaleWithGradedPresentations })));
-        jest.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForScores').mockReturnValue(of(new HttpResponse<PlagiarismCaseDTO[]>({ body: [] })));
-        fixture.detectChanges();
+        setupMocks();
         const exportAsExcelStub = jest.spyOn(component, 'exportAsExcel').mockImplementation();
         component.exportResults();
         const generatedRows = exportAsExcelStub.mock.calls[0][1];
@@ -519,10 +520,7 @@ describe('CourseScoresComponent', () => {
     });
 
     it('should generate csv correctly', () => {
-        jest.spyOn(courseManagementService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
-        jest.spyOn(gradingSystemService, 'findGradingScaleForCourse').mockReturnValue(of(new HttpResponse<GradingScale>({ body: gradingScaleWithGradedPresentations })));
-        jest.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForScores').mockReturnValue(of(new HttpResponse<PlagiarismCaseDTO[]>({ body: [] })));
-        fixture.detectChanges();
+        setupMocks();
         const exportAsCsvStub = jest.spyOn(component, 'exportAsCsv').mockImplementation();
         const testOptions: CsvExportOptions = {
             fieldSeparator: CsvFieldSeparator.SEMICOLON,
