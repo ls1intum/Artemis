@@ -54,9 +54,8 @@ export class LearningPathsTableComponent {
     constructor() {
         effect(() => {
             const courseId = this.courseId();
-            untracked(() => {
-                this.loadLearningPaths(courseId);
-                this.loadAverageProgress(courseId);
+            untracked(async () => {
+                await Promise.all([this.loadLearningPaths(courseId), this.loadAverageProgress(courseId)]);
             });
         });
     }
@@ -85,6 +84,7 @@ export class LearningPathsTableComponent {
             const dto: LearningPathAverageProgressDTO = await this.learningPathApiService.getAverageProgressForCourse(courseId);
             this.averageProgress.set(dto.averageProgress);
         } catch (error) {
+            onError(this.alertService, error);
             this.averageProgress.set(undefined);
         }
     }
@@ -93,7 +93,6 @@ export class LearningPathsTableComponent {
         this.searchTerm.set(searchTerm);
         this.page.set(1);
         this.debounceLoadLearningPaths(this.courseId());
-        this.loadAverageProgress(this.courseId());
     }
 
     async setPage(pageNumber: number): Promise<void> {

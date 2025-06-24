@@ -8,7 +8,7 @@ import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service'
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { LearningPathAverageProgressDTO, LearningPathInformationDTO } from 'app/atlas/shared/entities/learning-path.model';
+import { LearningPathInformationDTO } from 'app/atlas/shared/entities/learning-path.model';
 import { SearchResult, SearchTermPageableSearch } from 'app/shared/table/pageable-table';
 import { By } from '@angular/platform-browser';
 import { ScienceService } from 'app/shared/science/science.service';
@@ -94,6 +94,7 @@ describe('LearningPathsTableComponent', () => {
 
     it('should change page', async () => {
         const onPageChangeSpy = jest.spyOn(component, 'setPage');
+        const getAverageProgressSpy = jest.spyOn(learningPathApiService, 'getAverageProgressForCourse').mockResolvedValue({ averageProgress: 42, courseId: 1, totalStudents: 5 });
 
         fixture.detectChanges();
         await fixture.whenStable();
@@ -102,6 +103,7 @@ describe('LearningPathsTableComponent', () => {
 
         expect(onPageChangeSpy).toHaveBeenLastCalledWith(2);
         expect(getLearningPathInformationSpy).toHaveBeenLastCalledWith(courseId, { ...pageable, page: 2 });
+        expect(getAverageProgressSpy).toHaveBeenCalledWith(courseId);
     });
 
     it('should search for learning paths when the search term changes', async () => {
