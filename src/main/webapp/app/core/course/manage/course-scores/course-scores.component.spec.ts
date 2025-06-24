@@ -170,85 +170,27 @@ describe('CourseScoresComponent', () => {
     courseScoreStudent2.pointsAchieved = 15;
     courseScoreStudent2.studentLogin = user2.login;
     courseScoreStudent2.scoreAchieved = roundScorePercentSpecifiedByCourseSettings(15 / 40, course);
+
+    const createGradeScore = (participationId: number, userId: number, exerciseId: number, score: number, presentationScore = 0) => ({
+        participationId,
+        userId,
+        exerciseId,
+        score,
+        presentationScore,
+    });
     const courseGradeInformation: CourseGradeInformationDTO = {
         gradeScores: [
-            {
-                participationId: 1,
-                userId: 1,
-                exerciseId: 1,
-                score: 200,
-                presentationScore: 100,
-            },
-            {
-                participationId: 2,
-                userId: 1,
-                exerciseId: 4,
-                score: 100,
-                presentationScore: 0,
-            },
-            {
-                participationId: 3,
-                userId: 1,
-                exerciseId: 3,
-                score: 100,
-                presentationScore: 0,
-            },
-            {
-                participationId: 4,
-                userId: 1,
-                exerciseId: 4,
-                score: 100,
-                presentationScore: 0,
-            },
-            {
-                participationId: 6,
-                userId: 2,
-                exerciseId: 4,
-                score: 50,
-                presentationScore: 0,
-            },
-            {
-                participationId: 7,
-                userId: 2,
-                exerciseId: 3,
-                score: 100,
-                presentationScore: 0,
-            },
-            {
-                participationId: 8,
-                userId: 2,
-                exerciseId: 4,
-                score: 50,
-                presentationScore: 0,
-            },
-            {
-                participationId: 9,
-                userId: 1,
-                exerciseId: 5,
-                score: 100,
-                presentationScore: 0,
-            },
-            {
-                participationId: 10,
-                userId: 2,
-                exerciseId: 5,
-                score: 100,
-                presentationScore: 0,
-            },
-            {
-                participationId: 11,
-                userId: 1,
-                exerciseId: 6,
-                score: 100,
-                presentationScore: 100,
-            },
-            {
-                participationId: 12,
-                userId: 2,
-                exerciseId: 6,
-                score: 100,
-                presentationScore: 0,
-            },
+            createGradeScore(1, 1, 1, 200, 100),
+            createGradeScore(2, 1, 4, 100, 0),
+            createGradeScore(3, 1, 3, 100, 0),
+            createGradeScore(4, 1, 4, 100, 0),
+            createGradeScore(6, 2, 4, 50, 0),
+            createGradeScore(7, 2, 3, 100, 0),
+            createGradeScore(8, 2, 4, 50, 0),
+            createGradeScore(9, 1, 5, 100, 0),
+            createGradeScore(10, 2, 5, 100, 0),
+            createGradeScore(11, 1, 6, 100, 100),
+            createGradeScore(12, 2, 6, 100, 0),
         ],
 
         students: [
