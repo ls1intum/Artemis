@@ -211,7 +211,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         this.participations = participationsResponse.body ?? [];
         this.participations.forEach((participation) => {
             const results = getAllResultsOfAllSubmissions(participation.submissions);
-            results?.forEach((result, index) => {
+            results?.forEach((result) => {
                 result.durationInMinutes = dayjs(result.completionDate).diff(participation.initializationDate, 'seconds');
             });
             // sort the results from old to new.
@@ -220,10 +220,8 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             results?.sort((result1, result2) => (result1.id ?? 0) - (result2.id ?? 0));
             const resultsWithoutAthena = results?.filter((result) => result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA);
             if (resultsWithoutAthena?.length != 0) {
-                if (resultsWithoutAthena?.[0].submission) {
-                    participation.submissions = [resultsWithoutAthena?.[0].submission];
-                } else if (results?.[0].submission) {
-                    participation.submissions = [results?.[0].submission];
+                if (participation && participation.submissions && participation?.submissions[0]) {
+                    participation!.submissions[0]!.results = results;
                 }
             }
         });

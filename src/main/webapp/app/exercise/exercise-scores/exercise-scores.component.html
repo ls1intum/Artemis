@@ -200,51 +200,54 @@
                     </ngx-datatable-column>
                     <ngx-datatable-column prop="" [sortable]="true" [minWidth]="130" [width]="140">
                         <ng-template ngx-datatable-header-template>
-                            <span class="datatable-header-cell-wrapper" (click)="controls.onSort('results?.last()?.completionDate')">
+                            <span class="datatable-header-cell-wrapper" (click)="controls.onSort('submissions?.last()?.results?.last()?.completionDate')">
                                 <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.exercise.completionDate"></span>
-                                <fa-icon [icon]="controls.iconForSortPropField('results?.last()?.completionDate')" />
+                                <fa-icon [icon]="controls.iconForSortPropField('submissions?.last()?.results?.last()?.completionDate')" />
                             </span>
                         </ng-template>
                         <ng-template ngx-datatable-cell-template let-value="value">
-                            {{ value.results?.last()?.completionDate | artemisDate }}
+                            {{ value.submissions?.last()?.results?.last()?.completionDate | artemisDate }}
                         </ng-template>
                     </ngx-datatable-column>
                     <ngx-datatable-column prop="" [sortable]="true" [minWidth]="250" [width]="260">
                         <ng-template ngx-datatable-header-template>
-                            <span class="datatable-header-cell-wrapper" (click)="controls.onSort('results?.last()?.score')">
+                            <span class="datatable-header-cell-wrapper" (click)="controls.onSort('submissions?.last()?.results?.last()')">
                                 <span class="datatable-header-cell-label bold" jhiTranslate="artemisApp.exercise.lastResult"></span>
-                                <fa-icon [icon]="controls.iconForSortPropField('results?.last()?.score')" />
+                                <fa-icon [icon]="controls.iconForSortPropField('submissions?.last()?.results?.last()')" />
                             </span>
                         </ng-template>
                         <ng-template ngx-datatable-cell-template let-value="value">
-                            @if (value.results?.last()) {
-                                <jhi-result [exercise]="exercise" [result]="value.results?.last()" [participation]="value" />
+                            @if (value.submissions?.last()?.results?.last()) {
+                                <jhi-result [exercise]="exercise" [result]="value.submissions?.last()?.results?.last()" [participation]="value" />
                             }
                         </ng-template>
                     </ngx-datatable-column>
                     @if (newManualResultAllowed || exercise.allowComplaintsForAutomaticAssessments) {
                         <ngx-datatable-column prop="" [sortable]="true" [minWidth]="130" [width]="140">
                             <ng-template ngx-datatable-header-template>
-                                <span class="datatable-header-cell-wrapper" (click)="controls.onSort('results?.last().assessmentType')">
+                                <span class="datatable-header-cell-wrapper" (click)="controls.onSort('submissions?.last()?.results?.last().assessmentType')">
                                     <span class="datatable-header-cell-label bold" jhiTranslate="artemisApp.exercise.type"></span>
                                     <fa-icon [icon]="controls.iconForSortPropField('results?.last().assessmentType')" />
                                 </span>
                             </ng-template>
                             <ng-template ngx-datatable-cell-template let-value="value">
-                                {{ value.results?.last().assessmentType }}
+                                {{ value.submissions?.last()?.results?.last().assessmentType }}
                             </ng-template>
                         </ngx-datatable-column>
                     }
                     @if (exercise.assessmentType === AssessmentType.MANUAL || exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC) {
                         <ngx-datatable-column prop="" [sortable]="true" [minWidth]="100" [width]="100">
                             <ng-template ngx-datatable-header-template>
-                                <span class="datatable-header-cell-wrapper d-inline-block w-100 text-center" (click)="controls.onSort('results?.last()?.assessmentNote?.note')">
+                                <span
+                                    class="datatable-header-cell-wrapper d-inline-block w-100 text-center"
+                                    (click)="controls.onSort('submissions?.last()?.results?.last()?.assessmentNote?.note')"
+                                >
                                     <fa-icon [icon]="faComment" [ngbTooltip]="'artemisApp.assessment.assessmentNote' | artemisTranslate" />
                                     <fa-icon [icon]="controls.iconForSortPropField('results?.last()?.assessmentNote?.note')" />
                                 </span>
                             </ng-template>
                             <ng-template ngx-datatable-cell-template let-value="value">
-                                @if (value.results?.last()?.assessmentNote?.note?.trim()) {
+                                @if (value?.submissions?.last()?.results?.last()?.assessmentNote?.note?.trim()) {
                                     <span class="w-100 text-center">
                                         <fa-icon
                                             [ngbPopover]="value.results?.last()?.assessmentNote.note"
@@ -292,13 +295,17 @@
                     </ngx-datatable-column>
                     <ngx-datatable-column prop="" [sortable]="true" [minWidth]="80" [width]="90">
                         <ng-template ngx-datatable-header-template>
-                            <span class="datatable-header-cell-wrapper" (click)="controls.onSort('results?.last()?.durationInMinutes')">
+                            <span class="datatable-header-cell-wrapper" (click)="controls.onSort('submissions?.last()?.results?.last()?.durationInMinutes')">
                                 <span class="datatable-header-cell-label bold" jhiTranslate="artemisApp.exercise.duration"></span>
                                 <fa-icon [icon]="controls.iconForSortPropField('results?.last()?.durationInMinutes')" />
                             </span>
                         </ng-template>
                         <ng-template ngx-datatable-cell-template let-value="value">
-                            {{ value.results?.last()?.durationInMinutes ? (value.results?.last()?.durationInMinutes | artemisDurationFromSeconds: true) : '-' }}
+                            {{
+                                value?.submissions?.last()?.results?.last()?.durationInMinutes
+                                    ? (value?.submissions?.last()?.results?.last()?.durationInMinutes | artemisDurationFromSeconds: true)
+                                    : '-'
+                            }}
                         </ng-template>
                     </ngx-datatable-column>
                     @if (exercise.isAtLeastInstructor) {
