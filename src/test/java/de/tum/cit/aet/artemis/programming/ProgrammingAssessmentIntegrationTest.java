@@ -876,7 +876,8 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
 
         assertThat(fetchedParticipation.getSubmissions()).hasSize(3);
         assertThat(fetchedParticipation.findLatestSubmission()).contains(submissionWithoutSecondAssessment);
-        assertThat(fetchedParticipation.getResults().stream().filter(x -> x.getCompletionDate() == null).findFirst()).contains(submissionWithoutSecondAssessment.getLatestResult());
+        assertThat(participationUtilService.getResultsForParticipation(fetchedParticipation).stream().filter(result -> result.getCompletionDate() == null).findFirst())
+                .contains(submissionWithoutSecondAssessment.getLatestResult());
 
         databaseRelationshipStateOfResultsOverSubmission = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exercise.getId());
         assertThat(databaseRelationshipStateOfResultsOverSubmission).hasSize(1);
@@ -1012,7 +1013,8 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         programmingExerciseStudentParticipation.setIndividualDueDate(individualDueDate);
         studentParticipationRepository.save(programmingExerciseStudentParticipation);
 
-        Result result = programmingExerciseStudentParticipation.getResults().stream().findFirst().orElseThrow();
+        Result result = programmingExerciseStudentParticipation.getSubmissions().stream().findFirst().orElseThrow().getFirstResult();
+        assertThat(result).isNotNull();
         result.setScore(100D);
         resultRepository.save(result);
 

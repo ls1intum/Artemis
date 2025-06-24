@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.plagiarism.api;
 
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
@@ -9,6 +10,7 @@ import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismResultRepository;
 
 @Conditional(PlagiarismEnabled.class)
 @Controller
+@Lazy
 public class PlagiarismResultApi extends AbstractPlagiarismApi {
 
     private final PlagiarismResultRepository plagiarismResultRepository;
@@ -21,11 +23,11 @@ public class PlagiarismResultApi extends AbstractPlagiarismApi {
         plagiarismResultRepository.deletePlagiarismResultsByExerciseId(exerciseId);
     }
 
-    public PlagiarismResult<?> findFirstWithComparisonsByExerciseIdOrderByLastModifiedDateDescOrNull(long exerciseId) {
+    public PlagiarismResult findFirstWithComparisonsByExerciseIdOrderByLastModifiedDateDescOrNull(long exerciseId) {
         return plagiarismResultRepository.findFirstWithComparisonsByExerciseIdOrderByLastModifiedDateDescOrNull(exerciseId);
     }
 
-    public void prepareResultForClient(PlagiarismResult<?> plagiarismResult) {
+    public void prepareResultForClient(PlagiarismResult plagiarismResult) {
         plagiarismResultRepository.prepareResultForClient(plagiarismResult);
     }
 }
