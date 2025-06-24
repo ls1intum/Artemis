@@ -7,7 +7,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
 import java.time.ZonedDateTime;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -17,7 +16,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
@@ -48,7 +46,6 @@ import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.GradingScaleService;
-import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -56,7 +53,6 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
@@ -136,8 +132,6 @@ public class ParticipationResource {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private final CourseRepository courseRepository;
-
     private final AuthorizationCheckService authCheckService;
 
     private final ParticipationAuthorizationCheckService participationAuthCheckService;
@@ -178,26 +172,23 @@ public class ParticipationResource {
 
     private final Optional<StudentExamApi> studentExamApi;
 
-    private final ResultService resultService;
-
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
     public ParticipationResource(ParticipationService participationService, ParticipationDeletionService participationDeletionService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, CourseRepository courseRepository, QuizExerciseRepository quizExerciseRepository,
-            ExerciseRepository exerciseRepository, ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, QuizExerciseRepository quizExerciseRepository, ExerciseRepository exerciseRepository,
+            ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
             ParticipationAuthorizationCheckService participationAuthCheckService, UserRepository userRepository, StudentParticipationRepository studentParticipationRepository,
             AuditEventRepository auditEventRepository, TeamRepository teamRepository, FeatureToggleService featureToggleService,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, SubmissionRepository submissionRepository,
             ResultRepository resultRepository, ExerciseDateService exerciseDateService, InstanceMessageSendService instanceMessageSendService, QuizBatchService quizBatchService,
             SubmittedAnswerRepository submittedAnswerRepository, QuizSubmissionService quizSubmissionService, GradingScaleService gradingScaleService,
             ProgrammingExerciseCodeReviewFeedbackService programmingExerciseCodeReviewFeedbackService, Optional<TextFeedbackApi> textFeedbackApi,
-            ModelingExerciseFeedbackService modelingExerciseFeedbackService, ResultService resultService, Optional<StudentExamApi> studentExamApi) {
+            ModelingExerciseFeedbackService modelingExerciseFeedbackService, Optional<StudentExamApi> studentExamApi) {
         this.participationService = participationService;
         this.participationDeletionService = participationDeletionService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.quizExerciseRepository = quizExerciseRepository;
-        this.courseRepository = courseRepository;
         this.exerciseRepository = exerciseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.authCheckService = authCheckService;
@@ -219,7 +210,6 @@ public class ParticipationResource {
         this.programmingExerciseCodeReviewFeedbackService = programmingExerciseCodeReviewFeedbackService;
         this.textFeedbackApi = textFeedbackApi;
         this.modelingExerciseFeedbackService = modelingExerciseFeedbackService;
-        this.resultService = resultService;
         this.studentExamApi = studentExamApi;
     }
 
@@ -667,73 +657,6 @@ public class ParticipationResource {
         }).collect(Collectors.toSet());
 
         return ResponseEntity.ok(participations);
-    }
-
-    /**
-     * GET /courses/:courseId/participations : get all the participations for a course
-     *
-     * @param courseId The participationId of the course
-     * @return A list of all participations for the given course
-     */
-    @GetMapping("courses/{courseId}/participations")
-    @EnforceAtLeastInstructor
-    public ResponseEntity<List<StudentParticipation>> getAllParticipationsForCourse(@PathVariable Long courseId) {
-        long start = System.currentTimeMillis();
-        log.debug("REST request to get all Participations for Course {}", courseId);
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        List<StudentParticipation> participations = studentParticipationRepository.findByCourseIdWithRelevantResult(courseId);
-        long resultCount = 0;
-        for (StudentParticipation participation : participations) {
-            // make sure the registration number is explicitly shown in the client
-            participation.getStudents().forEach(student -> student.setVisibleRegistrationNumber(student.getRegistrationNumber()));
-            // we only need participationId, title, dates and max points
-            // remove unnecessary elements
-            final var exercise = getExercise(participation);
-            switch (exercise) {
-                case ProgrammingExercise programmingExercise -> {
-                    programmingExercise.setSolutionParticipation(null);
-                    programmingExercise.setTemplateParticipation(null);
-                    programmingExercise.setTestRepositoryUri(null);
-                    programmingExercise.setShortName(null);
-                    programmingExercise.setProgrammingLanguage(null);
-                    programmingExercise.setPackageName(null);
-                    programmingExercise.setAllowOnlineEditor(null);
-                }
-                case QuizExercise quizExercise -> {
-                    quizExercise.setQuizQuestions(null);
-                    quizExercise.setQuizPointStatistic(null);
-                }
-                case TextExercise textExercise -> textExercise.setExampleSolution(null);
-                case ModelingExercise modelingExercise -> {
-                    modelingExercise.setExampleSolutionModel(null);
-                    modelingExercise.setExampleSolutionExplanation(null);
-                }
-                default -> {
-                }
-            }
-            long participationResultCount = Stream.of(participation.getSubmissions()).flatMap(Collection::stream)
-                    .flatMap(submission -> Stream.of(submission.getResults()).flatMap(Collection::stream)).count();
-            resultCount += participationResultCount;
-        }
-        long end = System.currentTimeMillis();
-        log.info("Found {} participations with {} results in {}ms", participations.size(), resultCount, end - start);
-        return ResponseEntity.ok().body(participations);
-    }
-
-    private static Exercise getExercise(StudentParticipation participation) {
-        Exercise exercise = participation.getExercise();
-        exercise.setCourse(null);
-        exercise.setStudentParticipations(null);
-        exercise.setTutorParticipations(null);
-        exercise.setExampleSubmissions(null);
-        exercise.setAttachments(null);
-        exercise.setCategories(null);
-        exercise.setProblemStatement(null);
-        exercise.setGradingInstructions(null);
-        exercise.setDifficulty(null);
-        exercise.setMode(null);
-        return exercise;
     }
 
     /**
