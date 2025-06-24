@@ -350,8 +350,7 @@ export class IrisChatService implements OnDestroy {
         this.close();
         // const newIdentifier = session.chatMode.toString() && session.entityId ? session.chatMode.toString() + '/' + session.entityId : undefined;
 
-        const requiresAcceptance = this.sessionCreationIdentifier ? this.modeRequiresLLMAcceptance.get(session.chatMode) : true;
-
+        const requiresAcceptance = this.modeRequiresLLMAcceptance.get(session.chatMode);
         if (requiresAcceptance === false || this.accountService.userIdentity?.externalLLMUsageAccepted || this.hasJustAcceptedExternalLLMUsage) {
             this.handleNewSession().next(session);
             this.loadChatSessions();
