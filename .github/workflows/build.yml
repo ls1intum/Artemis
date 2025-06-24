@@ -144,6 +144,7 @@ jobs:
         GITHUB_TOKEN=${{ github.token }}
       tags: |
         type=ref,event=tag
+    secrets: inherit
 
   # Save Docker image tag as an artifact
   save-docker-tag:
