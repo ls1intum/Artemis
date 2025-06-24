@@ -97,7 +97,7 @@ describe('TutorialGroupSessionRowButtonsComponent', () => {
             expect(modalOpenSpy).toHaveBeenCalledOnce();
             expect(modalOpenSpy).toHaveBeenCalledWith(CancellationModalComponent, { animation: false, backdrop: 'static', scrollable: false, size: 'lg' });
             expect(mockModalRef.componentInstance.tutorialGroupSession).toEqual(tutorialGroupSession);
-            expect(mockModalRef.componentInstance.course()).toEqual(course);
+            expect(mockModalRef.componentInstance.course).toEqual(course);
             expect(mockModalRef.componentInstance.tutorialGroupId).toEqual(tutorialGroup.id);
         });
     }));
