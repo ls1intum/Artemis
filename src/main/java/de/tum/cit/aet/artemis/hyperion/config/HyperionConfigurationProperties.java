@@ -105,6 +105,8 @@ public class HyperionConfigurationProperties {
     /**
      * Validates that when TLS is enabled, all certificate paths are configured.
      * For production, mTLS with client certificates is required when TLS is enabled.
+     *
+     * @return true if TLS configuration is valid, false otherwise
      */
     public boolean isValidTlsConfiguration() {
         if (!useTls) {
