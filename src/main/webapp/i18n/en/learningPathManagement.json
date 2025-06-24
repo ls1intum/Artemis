@@ -50,6 +50,7 @@
                 },
                 "noResults": "No learning paths found!"
             },
+            "averageProgress": "Average Progress",
             "learningPathsAnalytics": {
                 "title": "Analytics",
                 "graphSelection": {
