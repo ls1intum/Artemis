@@ -131,19 +131,13 @@ describe('LearningPathsTableComponent', () => {
     });
 
     it('should load and set average progress for the course', async () => {
-        const mockAverageProgress: LearningPathAverageProgressDTO = {
-            averageProgress: 42,
-            courseId: 1,
-            totalStudents: 5,
-        };
-
-        const getAverageProgressForCourseSpy = jest.spyOn(learningPathApiService, 'getAverageProgressForCourse').mockResolvedValue(mockAverageProgress);
+        const mockAverageProgress = { averageProgress: 42, courseId: 1, totalStudents: 5 };
+        jest.spyOn(learningPathApiService, 'getAverageProgressForCourse').mockResolvedValue(mockAverageProgress);
 
         fixture.detectChanges();
         await fixture.whenStable();
-        fixture.detectChanges();
 
-        expect(getAverageProgressForCourseSpy).toHaveBeenCalledWith(courseId);
+        expect(learningPathApiService.getAverageProgressForCourse).toHaveBeenCalledWith(courseId);
         expect(component.averageProgress()).toBe(42);
     });
 
