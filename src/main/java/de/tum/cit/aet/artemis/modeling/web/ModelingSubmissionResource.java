@@ -341,7 +341,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      * @throws ExamApiNotPresentException if the exam access API is required but not present
      */
     private ValidationResult validateParticipation(long participationId) {
-        var studentParticipation = studentParticipationRepository.findByIdWithSubmissionsResultsFeedbackElseThrow(participationId);
+        var studentParticipation = studentParticipationRepository.findByIdWithLatestSubmissionsResultsFeedbackElseThrow(participationId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
         var exercise = studentParticipation.getExercise();
 
@@ -377,7 +377,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     @EnforceAtLeastStudent
     public ResponseEntity<ModelingSubmission> getLatestModelingSubmission(@PathVariable long participationId) {
         log.debug("REST request to get latest modeling submission for participation: {}", participationId);
-        var validationResult = validateParticipation(studentParticipationRepository.findByIdWithLatestSubmissionResultFeedbackElseThrow(participationId));
+        var validationResult = validateParticipation(participationId);
         var studentParticipation = validationResult.studentParticipation;
         var exercise = validationResult.modelingExercise;
 
