@@ -6,6 +6,18 @@ import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.ma
 import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.queue.DistributedQueue;
 import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.topic.DistributedTopic;
 
+/**
+ * The DistributedDataProvider acts as an abstraction layer for accessing distributed data structures
+ * like queues, maps, and topics across nodes. It enables nodes (e.g. build agents with core node) to communicate and share data.
+ * <p>
+ * <ul>
+ * <li>Provides a unified API for accessing distributed data structures regardless of the underlying implementation</li>
+ * <li>Abstracts implementation details (like e.g. Hazelcast) for extensibility and flexibility</li>
+ * </ul>
+ * <p>
+ * This interface is currently used for the Local CI system to manage build job queues, process results,
+ * and track build agent information.
+ */
 public interface DistributedDataProvider {
 
     <T> DistributedQueue<T> getQueue(String name);
