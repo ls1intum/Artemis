@@ -1,6 +1,10 @@
 name: Build
 # The name of this workflow (Build) should be in sync with the test-e2e.yml workflow's workflow_run listener.
 
+permissions:
+  contents: read
+  packages: read  # Required for downloading from GitHub Packages
+
 on:
   pull_request:
     paths-ignore:
@@ -89,6 +93,9 @@ jobs:
   build:
     name: Build .war artifact
     runs-on: ubuntu-latest
+    env:
+      GITHUB_ACTOR: ${{ github.actor }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v4
       - name: Setup Node.js

@@ -93,6 +93,14 @@ repositories {
     maven {
         url = "https://build.shibboleth.net/maven/releases"
     }
+    // required for Edutelligence Hyperion Java Client snapshots
+    maven {
+        url = "https://maven.pkg.github.com/ls1intum/edutelligence"
+        credentials {
+            username = project.findProperty("gpr.user") ?: System.getenv("GITHUB_ACTOR")
+            password = project.findProperty("gpr.key") ?: System.getenv("GITHUB_TOKEN")
+        }
+    }
 }
 
 configurations.configureEach {
@@ -280,6 +288,9 @@ dependencies {
 
     // Avoid outdated version of netty to prevent security issues
     implementation("net.minidev:json-smart") { version {strictly "2.5.2" } }
+
+    // Edutelligence Hyperion Java Client - using property for consistent versioning
+    implementation "de.tum.cit.aet.edutelligence:hyperion:${hyperion_version}"
 
 
     // Required for synchronization between nodes and build agents (LocalCI)
