@@ -3,7 +3,7 @@ name: Build
 
 permissions:
   contents: read
-  packages: read  # Required for downloading from GitHub Packages
+  packages: write  # Required for downloading from and pushing to GitHub Packages
 
 on:
   pull_request:
@@ -132,50 +132,19 @@ jobs:
   docker:
     name: Build and Push Docker Image
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == 'ls1intum/Artemis' }}
-    runs-on: ubuntu-latest
-    outputs:
-      tags: ${{ steps.meta.outputs.tags }}
-      image_tag: ${{ steps.meta.outputs.version }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract metadata for Docker
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/ls1intum/artemis
-          tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=ref,event=tag
-
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: ./docker/artemis/Dockerfile
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          build-args: |
-            GITHUB_ACTOR=${{ github.actor }}
-            GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+    uses: ls1intum/.github/.github/workflows/build-and-push-docker-image.yml@v1.1.0
+    with:
+      # Checkout pull request HEAD commit instead of merge commit to include the correct branch and git information inside the build
+      # Or use the push event ref name
+      ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
+      image-name: ls1intum/artemis
+      docker-file: ./docker/artemis/Dockerfile
+      build-args: |
+        GITHUB_ACTOR=${{ github.actor }}
+        GITHUB_TOKEN=${{ github.token }}
+      tags: |
+        type=ref,event=tag
+    secrets: inherit
 
   # Save Docker image tag as an artifact
   save-docker-tag:
