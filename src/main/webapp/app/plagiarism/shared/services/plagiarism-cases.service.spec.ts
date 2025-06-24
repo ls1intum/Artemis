@@ -171,4 +171,21 @@ describe('Plagiarism Cases Service', () => {
             tick();
         }),
     );
+
+    it('should handle error when saving verdict', fakeAsync(() => {
+        const errorResponse = { status: 400, statusText: 'Bad Request' };
+        service
+            .saveVerdict(1, 1, { verdict: PlagiarismVerdict.WARNING })
+            .pipe(take(1))
+            .subscribe({
+                next: () => {
+                    throw new Error('expected an error');
+                },
+                error: (error) => expect(error.status).toBe(400),
+            });
+
+        const req = httpMock.expectOne({ method: 'PUT' });
+        req.flush('Invalid data', errorResponse);
+        tick();
+    }));
 });

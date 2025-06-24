@@ -395,6 +395,27 @@ describe('ProgrammingExercise Service', () => {
         })(),
     );
 
+    it('should handle error when importing from file', fakeAsync(() => {
+        const course = new Course();
+        course.id = 1;
+        const request = new ProgrammingExercise(course, undefined);
+        const dummyFile = new File([''], 'dummyFile');
+        request.zipFileForImport = dummyFile;
+
+        const errorResponse = { status: 422, statusText: 'Unprocessable Entity' };
+        service.importFromFile(request, course.id).subscribe({
+            next: () => {
+                throw new Error('expected an error');
+            },
+            error: (error) => expect(error.status).toBe(422),
+        });
+
+        const url = `api/programming/courses/1/programming-exercises/import-from-file`;
+        const req = httpMock.expectOne({ method: 'POST', url: url });
+        req.flush('Import failed', errorResponse);
+        tick();
+    }));
+
     afterEach(() => {
         httpMock.verify();
     });

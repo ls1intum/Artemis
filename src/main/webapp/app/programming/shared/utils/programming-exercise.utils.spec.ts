@@ -26,6 +26,16 @@ describe('ProgrammingExerciseUtils', () => {
         expect(generatedUrl).toBe(expectedUrl);
     });
 
+    it('createBuildPlanUrl returns undefined for empty template', () => {
+        const template = '';
+        const buildPlanId = 'BPID';
+        const projectKey = 'PK';
+
+        const generatedUrl = createBuildPlanUrl(template, projectKey, buildPlanId);
+
+        expect(generatedUrl).toBeUndefined();
+    });
+
     describe('isProgrammingExerciseStudentParticipation', () => {
         it('returns true for a programming exercise participation', () => {
             const participation = new ProgrammingExerciseStudentParticipation();
