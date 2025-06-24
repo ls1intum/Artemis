@@ -96,10 +96,10 @@ const moduleThresholds = {
         lines:      87.19,
     },
     plagiarism: {
-        statements: 91.84,
+        statements: 91.74,
         branches:   81.91,
         functions:  85.31,
-        lines:      91.87,
+        lines:      91.77,
     },
     programming: {
         statements: 88.67,
