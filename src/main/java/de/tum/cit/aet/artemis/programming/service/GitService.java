@@ -28,6 +28,9 @@ import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 import jakarta.annotation.Nullable;
 import jakarta.annotation.PreDestroy;
@@ -1429,8 +1432,8 @@ public class GitService extends AbstractGitService {
 
     /**
      * Exports a repository with full history including the .git directory directly to memory.
-     * This method checks out the repository locally and then creates a zip archive of the entire
-     * directory including the .git folder with full history.
+     * This method uses JGit's ArchiveCommand to create a zip of the working tree and combines it
+     * with the .git directory for full history, all done in memory without disk checkout.
      *
      * @param repositoryUri the URI of the repository to export
      * @param filename      the desired filename for the export (without extension)
@@ -1439,14 +1442,94 @@ public class GitService extends AbstractGitService {
      * @throws IOException     if IO operations fail
      */
     public InputStreamResource exportRepositoryWithFullHistoryToMemory(VcsRepositoryUri repositoryUri, String filename) throws GitAPIException, IOException {
-        log.debug("Exporting repository with full history to memory: {}", repositoryUri);
+        log.debug("Exporting repository with full history to memory using JGit archive: {}", repositoryUri);
 
-        Repository repository = getOrCheckoutRepository(repositoryUri, true);
+        Repository repository = getBareRepository(repositoryUri);
+        String branch = getOriginHead(repository);
 
-        resetToOriginHead(repository);
+        if (branch == null) {
+            // Empty repository case - just return the .git directory
+            return zipDirectoryToMemory(repository.getDirectory().toPath(), filename, null);
+        }
 
-        // Use zipDirectoryToMemory without any content filter to include everything (including .git)
-        return zipDirectoryToMemory(repository.getLocalPath(), filename, null);
+        String treeish = "refs/heads/" + branch;
+
+        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream)) {
+
+            // Step 1: Add the .git directory (full history)
+            Path bareRepoPath = repository.getDirectory().toPath();
+            addDirectoryToZip(zipOutputStream, bareRepoPath, bareRepoPath, ".git");
+
+            // Step 2: Add the working tree snapshot using ArchiveCommand
+            try (ByteArrayOutputStream archiveStream = new ByteArrayOutputStream()) {
+                try (Git git = new Git(repository)) {
+                    ArchiveCommand archiveCommand = git.archive().setTree(repository.resolve(treeish)).setFormat("zip").setOutputStream(archiveStream);
+
+                    archiveCommand.call();
+                }
+
+                // Extract the archive contents and add them to our main zip
+                try (ZipInputStream zipInputStream = new ZipInputStream(new ByteArrayInputStream(archiveStream.toByteArray()))) {
+                    ZipEntry entry;
+                    while ((entry = zipInputStream.getNextEntry()) != null) {
+                        zipOutputStream.putNextEntry(new ZipEntry(entry.getName()));
+                        zipInputStream.transferTo(zipOutputStream);
+                        zipOutputStream.closeEntry();
+                    }
+                }
+            }
+
+            zipOutputStream.finish();
+            byte[] zipData = outputStream.toByteArray();
+
+            return new InputStreamResource(new ByteArrayInputStream(zipData)) {
+
+                @Override
+                public String getFilename() {
+                    return filename + ".zip";
+                }
+
+                @Override
+                public long contentLength() {
+                    return zipData.length;
+                }
+            };
+        }
+    }
+
+    /**
+     * Helper method to add a directory and its contents to a ZIP output stream.
+     *
+     * @param zipOutputStream the ZIP output stream to write to
+     * @param rootPath        the root path for calculating relative paths
+     * @param pathToAdd       the path to add to the ZIP
+     * @param prefix          the prefix to use in the ZIP entry names
+     * @throws IOException if an I/O error occurs
+     */
+    private void addDirectoryToZip(ZipOutputStream zipOutputStream, Path rootPath, Path pathToAdd, String prefix) throws IOException {
+        Files.walk(pathToAdd).forEach(path -> {
+            try {
+                String relativePath = rootPath.relativize(path).toString().replace("\\", "/");
+                String zipEntryName = prefix + "/" + relativePath;
+
+                if (Files.isDirectory(path)) {
+                    // Add directory entry (with trailing slash)
+                    if (!zipEntryName.endsWith("/")) {
+                        zipEntryName += "/";
+                    }
+                    zipOutputStream.putNextEntry(new ZipEntry(zipEntryName));
+                }
+                else if (Files.isRegularFile(path)) {
+                    // Add file entry
+                    zipOutputStream.putNextEntry(new ZipEntry(zipEntryName));
+                    Files.copy(path, zipOutputStream);
+                }
+                zipOutputStream.closeEntry();
+            }
+            catch (IOException e) {
+                throw new UncheckedIOException("Failed to add path to zip: " + path, e);
+            }
+        });
     }
 
     /**
