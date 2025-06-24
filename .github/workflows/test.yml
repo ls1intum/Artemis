@@ -167,6 +167,9 @@ jobs:
   server-style:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      GITHUB_ACTOR: ${{ github.actor }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
     - uses: actions/checkout@v4
     - name: Setup Java

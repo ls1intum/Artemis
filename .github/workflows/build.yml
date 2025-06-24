@@ -139,6 +139,9 @@ jobs:
       ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
       image-name: ls1intum/artemis
       docker-file: ./docker/artemis/Dockerfile
+      build-args: |
+        GITHUB_ACTOR=${{ github.actor }}
+        GITHUB_TOKEN=${{ github.token }}
       tags: |
         type=ref,event=tag
 
