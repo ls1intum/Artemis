@@ -226,7 +226,6 @@ class BuildLogEntryServiceTest extends AbstractProgrammingIntegrationIndependent
             Running pre-build action: VCS Version Collector
             Running pre-build action: Build Log Labeller Pre Build Action
             Starting task 'Tests' of type 'com.atlassian.jenkins.plugins.maven:task.builder.mvn3'
-            Beginning to execute external process for build 'mtc Test Maven - ARTEMISADMIN - Default Job #7 (MTCTSTMVN-ARTEMISADMIN-JOB1-7)'\\n ... running command line: \\n/artemis/bin/mvn --batch-mode -Djava.io.tmpdir=/opt/atlassian/jenkins/temp/MTCTSTMVN-ARTEMISADMIN-JOB1 clean test\\n ... in: /var/atlassian/application-data/jenkins/local-working-dir/MTCTSTMVN-ARTEMISADMIN-JOB1\\n
             NOTE: Picked up JDK_JAVA_OPTIONS:  --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.util.concurrent=ALL-UNNAMED --add-opens=java.rmi/sun.rmi.transport=ALL-UNNAMED
             [INFO] Scanning for projects...
             [INFO]
@@ -266,11 +265,9 @@ class BuildLogEntryServiceTest extends AbstractProgrammingIntegrationIndependent
             [ERROR]
             [ERROR] For more information about the errors and possible solutions, please read the following articles:
             [ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException
-            Failing task since return code of [/artemis/bin/mvn --batch-mode -Djava.io.tmpdir=/opt/atlassian/jenkins/temp/MTCTSTMVN-ARTEMISADMIN-JOB1 clean test] was 1 while expected 0
             Parsing test results under /var/atlassian/application-data/jenkins/local-working-dir/MTCTSTMVN-ARTEMISADMIN-JOB1...
             Finished task 'Tests' with result: Failed
             Starting task 'Static Code Analysis' of type 'com.atlassian.jenkins.plugins.maven:task.builder.mvn3'
-            Beginning to execute external process for build 'mtc Test Maven - ARTEMISADMIN - Default Job #7 (MTCTSTMVN-ARTEMISADMIN-JOB1-7)'\\n ... running command line: \\n/artemis/bin/mvn --batch-mode -Djava.io.tmpdir=/opt/atlassian/jenkins/temp/MTCTSTMVN-ARTEMISADMIN-JOB1 spotbugs:spotbugs checkstyle:checkstyle pmd:pmd pmd:cpd\\n ... in: /var/atlassian/application-data/jenkins/local-working-dir/MTCTSTMVN-ARTEMISADMIN-JOB1\\n
             NOTE: Picked up JDK_JAVA_OPTIONS:  --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.util.concurrent=ALL-UNNAMED --add-opens=java.rmi/sun.rmi.transport=ALL-UNNAMED
             [INFO] Scanning for projects...
             [INFO]
@@ -295,7 +292,6 @@ class BuildLogEntryServiceTest extends AbstractProgrammingIntegrationIndependent
             [ERROR]
             [ERROR] For more information about the errors and possible solutions, please read the following articles:
             [ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoExecutionException
-            Failing task since return code of [/artemis/bin/mvn --batch-mode -Djava.io.tmpdir=/opt/atlassian/jenkins/temp/MTCTSTMVN-ARTEMISADMIN-JOB1 spotbugs:spotbugs checkstyle:checkstyle pmd:pmd pmd:cpd] was 1 while expected 0
             Finished task 'Static Code Analysis' with result: Failed
             Running post build plugin 'Artifact Copier'
             Publishing an artifact: spotbugs

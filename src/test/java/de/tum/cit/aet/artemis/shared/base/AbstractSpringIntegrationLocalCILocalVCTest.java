@@ -79,13 +79,12 @@ import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExe
         PROFILE_AEOLUS, PROFILE_THEIA, PROFILE_IRIS, PROFILE_ATHENA, "local" })
 // Note: the server.port property must correspond to the port used in the artemis.version-control.url property.
 @TestPropertySource(properties = { "server.port=49152", "artemis.version-control.url=http://localhost:49152", "artemis.user-management.use-external=false",
-        "artemis.version-control.local-vcs-repo-path=${java.io.tmpdir}", "artemis.build-logs-path=${java.io.tmpdir}/build-logs",
         "artemis.continuous-integration.specify-concurrent-builds=true", "artemis.continuous-integration.concurrent-build-size=1",
         "artemis.continuous-integration.asynchronous=false", "artemis.continuous-integration.build.images.java.default=dummy-docker-image",
         "artemis.continuous-integration.image-cleanup.enabled=true", "artemis.continuous-integration.image-cleanup.disk-space-threshold-mb=1000000000",
-        "spring.liquibase.enabled=true", "artemis.iris.health-ttl=500", "artemis.version-control.ssh-private-key-folder-path=${java.io.tmpdir}", "info.contact=test@localhost",
-        "artemis.version-control.ssh-port=1236", "artemis.version-control.ssh-template-clone-url=ssh://git@localhost:1236/",
-        "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_localci_localvc", "artemis.version-control.build-agent-use-ssh=true" })
+        "spring.liquibase.enabled=true", "artemis.iris.health-ttl=500", "info.contact=test@localhost", "artemis.version-control.ssh-port=1236",
+        "artemis.version-control.ssh-template-clone-url=ssh://git@localhost:1236/", "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_localci_localvc",
+        "artemis.version-control.build-agent-use-ssh=true" })
 @ContextConfiguration(classes = TestBuildAgentConfiguration.class)
 public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends AbstractArtemisIntegrationTest {
 

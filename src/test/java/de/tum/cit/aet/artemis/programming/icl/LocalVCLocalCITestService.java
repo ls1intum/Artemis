@@ -176,7 +176,7 @@ public class LocalVCLocalCITestService {
      * @return the configured LocalRepository that contains Git handles to the remote and local repository.
      */
     public LocalRepository createAndConfigureLocalRepository(String projectKey, String repositorySlug) throws GitAPIException, IOException, URISyntaxException {
-        Path localRepositoryFolder = createRepositoryFolderInTempDirectory(projectKey, repositorySlug);
+        Path localRepositoryFolder = createRepositoryFolder(projectKey, repositorySlug);
         LocalRepository repository = new LocalRepository(defaultBranch);
         repository.configureRepos(localVCRepoPath, "localRepo", localRepositoryFolder);
         return repository;
@@ -191,10 +191,9 @@ public class LocalVCLocalCITestService {
      * @param repositorySlug the repository slug of the repository.
      * @return the path to the repository folder.
      */
-    private Path createRepositoryFolderInTempDirectory(String projectKey, String repositorySlug) throws IOException {
-        String tempDir = System.getProperty("java.io.tmpdir");
+    private Path createRepositoryFolder(String projectKey, String repositorySlug) throws IOException {
 
-        Path projectFolder = Path.of(tempDir, projectKey);
+        Path projectFolder = localVCRepoPath.resolve(projectKey);
 
         // Create the project folder if it does not exist.
         if (!Files.exists(projectFolder)) {
