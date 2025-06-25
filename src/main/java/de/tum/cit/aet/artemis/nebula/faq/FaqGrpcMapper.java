@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.nebula.faq;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -12,7 +13,7 @@ public class FaqGrpcMapper {
     }
 
     public static List<faqservice.Faq.FAQ> mapToProto(List<Faq> faqs) {
-        return faqs.stream().map(FaqGrpcMapper::mapToProto).collect(Collectors.toList());
+        return faqs.stream().map(FaqGrpcMapper::mapToProto).collect(Collectors.toCollection(ArrayList::new));
     }
 
 }
