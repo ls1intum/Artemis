@@ -11,8 +11,8 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
 
 /**
  * Special tests for ExerciseSharingService focusing on validation failures.
- * Most of the functionality is tested via {@link de.tum.cit.aet.artemis.programming.web.rest.ExerciseSharingResourceImportTest}
- * and {@link de.tum.cit.aet.artemis.programming.web.rest.ExerciseSharingResourceExportTest}
+ * Most of the functionality is tested via {@link ExerciseSharingResourceImportTest}
+ * and {@link ExerciseSharingResourceExportTest}
  */
 class ExerciseSharingServiceTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -33,9 +33,36 @@ class ExerciseSharingServiceTest extends AbstractSpringIntegrationIndependentTes
     }
 
     @Test
-    void testValidationFailure() {
+    void shouldReturnFalseForInvalidTokenAndSecurityString() {
         assertThat(exerciseSharingService.validate("invalidToken", "invalid sec")).isFalse();
         assertThat(exerciseSharingService.getExportedExerciseByToken("invalidToken")).isNull();
     }
 
+    @Test
+    void shouldReturnFalseForNullTokenAndSecurityString() {
+        assertThat(exerciseSharingService.validate(null, null)).isFalse();
+        assertThat(exerciseSharingService.getExportedExerciseByToken(null)).isNull();
+    }
+
+    @Test
+    void shouldReturnFalseForEmptyTokenAndSecurityString() {
+        assertThat(exerciseSharingService.validate("", "")).isFalse();
+        assertThat(exerciseSharingService.getExportedExerciseByToken("")).isNull();
+    }
+
+    @Test
+    void shouldReturnFalseForExceedingTokenAndSecurityString() {
+        String extraHugeToken = "Something" + "x".repeat(ExerciseSharingService.MAX_EXPORTTOKEN_LENGTH);
+        assertThat(exerciseSharingService.validate(extraHugeToken, "")).isFalse();
+        assertThat(exerciseSharingService.getExportedExerciseByToken(extraHugeToken)).isNull();
+    }
+
+    @Test
+    void shouldReturnEmptyBasketInfoOnNullToken() {
+        assertThat(exerciseSharingService.getBasketInfo(null, "unused")).isEmpty();
+    }
+
+    void shouldReturnEmptyBasketInfoOnInvalidToken() {
+        assertThat(exerciseSharingService.getBasketInfo("&%$!äöü", "unused")).isEmpty();
+    }
 }

@@ -8,25 +8,26 @@ import java.util.Optional;
 import org.codeability.sharing.plugins.api.SharingPluginConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.programming.service.sharing.SharingConnectorService;
 
 /**
  * REST controller for the exchange of configuration data between artemis and the sharing platform.
  */
-@Validated
 @RestController
 @RequestMapping("api/core/sharing/")
-@Profile("sharing")
+@Profile(Constants.PROFILE_SHARING)
+@Lazy
 public class SharingSupportResource {
 
     /**
@@ -77,15 +78,15 @@ public class SharingSupportResource {
             @RequestParam Optional<String> installationName) {
         if (sharingApiKey.isPresent() && sharingConnectorService.validate(sharingApiKey.get())) {
             log.info("Delivered Sharing Config ");
-            URL apiBaseUrl1;
+            URL parsedApiBaseUrl;
             try {
-                apiBaseUrl1 = URI.create(apiBaseUrl).toURL();
+                parsedApiBaseUrl = URI.create(apiBaseUrl).toURL();
             }
             catch (IllegalArgumentException | MalformedURLException e) {
                 log.error("Bad URL", e);
                 return ResponseEntity.badRequest().build();
             }
-            return ResponseEntity.ok(sharingConnectorService.getPluginConfig(apiBaseUrl1, installationName));
+            return ResponseEntity.ok(sharingConnectorService.getPluginConfig(parsedApiBaseUrl, installationName));
         }
         log.warn("Received wrong or missing api key");
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);

@@ -250,7 +250,7 @@ public class SecurityConfiguration {
                     .requestMatchers(("/api-docs")).permitAll()
                     .requestMatchers(("/api-docs.yaml")).permitAll()
                     .requestMatchers("/swagger-ui/**").permitAll();
-                    // LocalVCS related URLs: LocalVCPushFilter and LocalVCFetchFilter handle authentication on their own
+                    // LocalVC related URLs: LocalVCPushFilter and LocalVCFetchFilter handle authentication on their own
                     if (profileService.isLocalVCActive()) {
                         requests.requestMatchers("/git/**").permitAll();
                     }

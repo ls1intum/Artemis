@@ -1,12 +1,11 @@
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, flushMicrotasks, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { StaticContentService } from 'app/shared/service/static-content.service';
 import { MockDirective, MockModule, MockProvider } from 'ng-mocks';
 import { SharingComponent } from 'app/sharing/sharing.component';
-import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { ReactiveFormsModule } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { SessionStorageService } from 'ngx-webstorage';
@@ -26,6 +25,7 @@ describe('SharingComponent', () => {
     let httpMock: HttpTestingController;
     let accountService: AccountService;
     let alertService: AlertService;
+    let router: jest.Mocked<Router>;
 
     const route = {
         params: of({ basketToken: 'someBasketToken' }),
@@ -33,6 +33,9 @@ describe('SharingComponent', () => {
     } as any as ActivatedRoute;
 
     beforeEach(() => {
+        const routerMock = {
+            navigate: jest.fn().mockResolvedValue(true), // mock a successful navigation
+        };
         TestBed.configureTestingModule({
             imports: [MockModule(ReactiveFormsModule)],
             declarations: [SharingComponent, TranslatePipeMock, MockDirective(TranslateDirective)],
@@ -42,7 +45,7 @@ describe('SharingComponent', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: AlertService, useClass: MockAlertService },
                 { provide: ActivatedRoute, useValue: route },
-                { provide: Router, useClass: MockRouter },
+                { provide: Router, useValue: routerMock },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
 
@@ -57,6 +60,7 @@ describe('SharingComponent', () => {
                 httpMock = TestBed.inject(HttpTestingController);
                 accountService = TestBed.inject(AccountService);
                 alertService = TestBed.inject(AlertService);
+                router = TestBed.inject(Router) as jest.Mocked<Router>;
             });
     });
 
@@ -68,14 +72,18 @@ describe('SharingComponent', () => {
     const testBasket: ShoppingBasket = { exerciseInfo: [], userInfo: { email: 'test@banana.com' }, tokenValidUntil: new Date(Date.now() + 60 * 60 * 1000) };
 
     const courses: Course[] = [
-        { id: 1, title: 'testCouse 1' },
-        { id: 2, title: 'testCouse 2' },
+        { id: 1, title: 'testCourse 1' },
+        { id: 2, title: 'testCourse 2' },
     ];
 
     it('loads baskets and courses, selects one, and navigates to import page', fakeAsync(() => {
+        // given
         jest.spyOn(accountService, 'hasAnyAuthority').mockReturnValue(Promise.resolve(true));
+        jest.spyOn(alertService, 'error');
         fixture.detectChanges();
         tick();
+
+        // when
         const basketUrl = `api/programming/sharing/import/basket?basketToken=${fixture.componentInstance.sharingInfo.basketToken}&returnURL=${fixture.componentInstance.sharingInfo.returnURL}&apiBaseURL=${fixture.componentInstance.sharingInfo.apiBaseURL}&checksum=${fixture.componentInstance.sharingInfo.checksum}`;
         const req = httpMock.expectOne({
             method: 'GET',
@@ -88,6 +96,7 @@ describe('SharingComponent', () => {
 
         courseReq.flush(courses);
 
+        // then
         expect(fixture.componentInstance.getTokenExpiryDate()).toStrictEqual(testBasket.tokenValidUntil);
 
         // course not yet selected
@@ -100,13 +109,54 @@ describe('SharingComponent', () => {
         expect(fixture.componentInstance.trackId(0, courses[0])).toBe(1);
         fixture.componentInstance.sortRows(); // just for coverage ;-)
 
-        // further actions -> select exercise
+        // WHEN further actions -> select exercise
 
         fixture.componentInstance.onExerciseSelected(1);
+
+        // THEN
         expect(fixture.componentInstance.sharingInfo.selectedExercise).toBe(1);
 
-        // finally navigate to exercise import  page
+        // WHEN finally navigate to exercise import  page
         fixture.componentInstance.navigateToImportFromSharing();
+
+        flushMicrotasks();
+
+        // THEN
+        expect(router.navigate).toHaveBeenCalledOnce();
+
+        flushMicrotasks();
+
+        // WHEN unsuccessful navigation
+        router.navigate = jest.fn().mockResolvedValue(false);
+
+        fixture.componentInstance.navigateToImportFromSharing();
+
+        flushMicrotasks();
+
+        // THEN
+
+        expect(alertService.error).toHaveBeenCalledOnce();
+
+        // WHEN unsuccessful navigation
+        // alertService.error.mockClear();
+        router.navigate = jest.fn().mockRejectedValue(false);
+
+        fixture.componentInstance.navigateToImportFromSharing();
+
+        flushMicrotasks();
+
+        // THEN
+        expect(alertService.error).toHaveBeenCalled();
+    }));
+
+    it('test formatted ExpiryDate', fakeAsync(() => {
+        const someValidityDate = new Date('1.1.2025 17:30');
+        fixture.componentInstance.shoppingBasket = {
+            exerciseInfo: [],
+            userInfo: { email: 'test@banana.com' },
+            tokenValidUntil: someValidityDate,
+        };
+        expect(fixture.componentInstance.formattedExpiryDate).toBe(someValidityDate.toLocaleString());
     }));
 
     it('failed init basket error', fakeAsync(() => {
@@ -143,7 +193,8 @@ describe('SharingComponent', () => {
     it('failed init course load error', fakeAsync(() => {
         jest.spyOn(accountService, 'hasAnyAuthority').mockReturnValue(Promise.resolve(true));
         // token expiry date not yet set
-        expect(fixture.componentInstance.getTokenExpiryDate()).toBeBetween(new Date(Date.now() - 1000), new Date(Date.now() + 1000));
+        expect(fixture.componentInstance.getTokenExpiryDate().getTime()).toBeGreaterThanOrEqual(Date.now() - 1000);
+        expect(fixture.componentInstance.getTokenExpiryDate().getTime()).toBeLessThanOrEqual(Date.now() + 1000);
 
         fixture.detectChanges();
         tick();

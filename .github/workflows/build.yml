@@ -41,7 +41,6 @@ on:
     - develop
     - main
     - release/*
-    - feature/connecting-to-sharing-platform
     tags: '[0-9]+.[0-9]+.[0-9]+'
   release:
     types:

@@ -10,7 +10,7 @@ export class SharingInfo {
     public apiBaseURL = '';
     /** ID of the currently selected exercise */
     public selectedExercise = 0;
-    /** checksum fo apiBaseURL and returnURL */
+    /** checksum for apiBaseURL and returnURL */
     public checksum = '';
 
     /**
@@ -48,9 +48,9 @@ export class SharingInfo {
  * Represents a shopping basket containing exercises to be shared
  */
 export interface ShoppingBasket {
-    exerciseInfo: Array<SearchResultDTO>;
-    userInfo: UserInfo;
-    tokenValidUntil: Date;
+    readonly exerciseInfo: Array<SearchResultDTO>;
+    readonly userInfo: UserInfo;
+    readonly tokenValidUntil: Date;
 }
 /**
  * Represents user information for sharing operations

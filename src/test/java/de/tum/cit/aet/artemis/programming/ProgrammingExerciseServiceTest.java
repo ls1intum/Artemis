@@ -88,15 +88,4 @@ class ProgrammingExerciseServiceTest extends AbstractProgrammingIntegrationIndep
         assertThat(fetchedExercise.getSolutionParticipation().getSubmissions()).isNotEmpty();
         fetchedExercise.getSolutionParticipation().getSubmissions().forEach(submission -> assertThat(submission.getResults()).isEmpty());
     }
-
-    /**
-     * This method is solely added to circumvent problem from open pull request
-     * https://github.com/ls1intum/Artemis/pull/10997 :-(.
-     * It can be deleted after resolving this issue
-     */
-    @Test
-    void findAllByCourseId() {
-        assertThat(programmingExerciseService.findAllByCourseId(9999L)).describedAs("course with id 9999 should not exist").isEmpty();
-    }
-
 }

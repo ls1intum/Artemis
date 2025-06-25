@@ -7,7 +7,11 @@ import de.tum.cit.aet.artemis.core.dto.SharingInfoDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
- * the sharing info, wrapping the original sharing Info from the sharing platform and adding course and exercise info.
+ * Data wrapper that combines sharing information from the sharing platform with additional context.
+ *
+ * @param exercise    the programming exercise to be shared or imported
+ * @param course      the course context for the exercise
+ * @param sharingInfo the original sharing information from the sharing platform
  */
 @Profile("sharing")
 public record SharingSetupInfo(ProgrammingExercise exercise, Course course, SharingInfoDTO sharingInfo) {
