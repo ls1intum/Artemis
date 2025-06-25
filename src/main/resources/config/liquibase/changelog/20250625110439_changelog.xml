@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet id="20250625110439" author="MoritzSpengler">
+        <createTable tableName="quiz_question_progress">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="bigint">
+                <constraints nullable="false" foreignKeyName="fk_quiz_question_progress_user" referencedTableName="jhi_user" referencedColumnNames="id"/>
+            </column>
+            <column name="quiz_question_id" type="bigint">
+                <constraints nullable="false" foreignKeyName="fk_quiz_question_progress_quiz_question" referencedTableName="quiz_question" referencedColumnNames="id"/>
+            </column>
+            <column name="answered_correctly" type="boolean"/>
+            <column name="times_answered" type="int"/>
+            <column name="times_answered_correct" type="int"/>
+            <column name="times_answered_wrong" type="int"/>
+            <column name="last_answered_at" type="datetime(3)"/>
+            <column name="last_answered_correct_at" type="datetime(3)"/>
+        </createTable>
+    </changeSet>
+</databaseChangeLog>
