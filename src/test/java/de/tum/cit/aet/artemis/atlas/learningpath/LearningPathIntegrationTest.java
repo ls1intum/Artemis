@@ -337,11 +337,20 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
         }
 
         var response = request.get("/api/atlas/courses/" + course.getId() + "/learning-path/average-progress", HttpStatus.OK, LearningPathAverageProgressDTO.class);
-
         double expectedAverage = Arrays.stream(progresses).average().orElse(0);
 
         assertThat(response).isNotNull();
         assertThat(response.averageProgress()).isEqualTo(expectedAverage);
+
+        course = courseUtilService.createCourse();
+        response = request.get("/api/atlas/courses/" + course.getId() + "/learning-path/average-progress", HttpStatus.OK, LearningPathAverageProgressDTO.class);
+
+        assertThat(response).isNotNull();
+        assertThat(response.averageProgress()).isEqualTo(0.0);
+
+        response = request.get("/api/atlas/courses/99999/learning-path/average-progress", HttpStatus.FORBIDDEN, LearningPathAverageProgressDTO.class);
+
+        assertThat(response).isNull();
     }
 
     /**
