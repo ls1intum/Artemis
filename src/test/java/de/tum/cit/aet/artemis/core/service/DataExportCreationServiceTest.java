@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
@@ -309,7 +308,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
         createPlagiarismData(userLogin, programmingExercise, modelingExercises);
         // Mock student repo
         Repository studentRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(programmingExerciseTestService.studentRepo.workingCopyGitRepoFile.toPath(), null);
-        doReturn(studentRepository).when(gitService).getOrCheckoutRepository(eq(participation.getVcsRepositoryUri()), anyString(), anyBoolean());
+        doReturn(studentRepository).when(gitService).getOrCheckoutRepositoryWithTargetPath(eq(participation.getVcsRepositoryUri()), any(Path.class), anyBoolean());
         return course1;
     }
 
@@ -359,7 +358,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
         feedback.setText("feedback");
         participationUtilService.addFeedbackToResult(feedback, submission.getFirstResult());
         Repository studentRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(programmingExerciseTestService.studentRepo.workingCopyGitRepoFile.toPath(), null);
-        doReturn(studentRepository).when(gitService).getOrCheckoutRepository(any(), anyString(), anyBoolean());
+        doReturn(studentRepository).when(gitService).getOrCheckoutRepositoryWithTargetPath(any(), any(Path.class), anyBoolean());
         return exam;
     }
 

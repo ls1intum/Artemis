@@ -206,7 +206,7 @@ public class ProgrammingUtilTestService {
                 anyBoolean());
 
         var participation = participationUtilService.addStudentParticipationForProgrammingExerciseForLocalRepo(exercise, login, participationRepo.workingCopyGitRepoFile.toURI());
-        doReturn(linkRepositoryForExistingGit(participationRepo.bareGitRepoFile.toPath(), null, "main", true)).when(gitService).getBareRepository(any());
+        doReturn(linkRepositoryForExistingGit(participationRepo.remoteBareGitRepoFile.toPath(), null, "main", true)).when(gitService).getBareRepository(any());
         var submission = ParticipationFactory.generateProgrammingSubmission(true, commitsList.getFirst().getId().getName(), SubmissionType.MANUAL);
         participation = programmingExerciseStudentParticipationRepository
                 .findWithSubmissionsByExerciseIdAndParticipationIds(exercise.getId(), Collections.singletonList(participation.getId())).getFirst();

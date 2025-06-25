@@ -170,7 +170,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
         ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
-        localVCServletService.processNewPush(commitHash, studentAssignmentRepository.bareGitRepo.getRepository());
+        localVCServletService.processNewPush(commitHash, studentAssignmentRepository.remoteBareGitRepo.getRepository());
 
         await().until(() -> {
             Optional<BuildJob> buildJobOptional = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(studentParticipation.getId());
@@ -240,7 +240,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
             ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
-            localVCServletService.processNewPush(commitHash, studentAssignmentRepository.bareGitRepo.getRepository());
+            localVCServletService.processNewPush(commitHash, studentAssignmentRepository.remoteBareGitRepo.getRepository());
 
             await().until(() -> {
                 Optional<BuildJob> buildJobOptional = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(studentParticipation.getId());
@@ -282,7 +282,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
         ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
-        localVCServletService.processNewPush(commitHash, studentAssignmentRepository.bareGitRepo.getRepository());
+        localVCServletService.processNewPush(commitHash, studentAssignmentRepository.remoteBareGitRepo.getRepository());
 
         await().until(() -> {
             Optional<BuildJob> buildJobOptional = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(studentParticipation.getId());
@@ -332,7 +332,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         participationVcsAccessTokenService.deleteByParticipationId(studentParticipation.getId());
         programmingExerciseStudentParticipationRepository.delete(studentParticipation);
         assertThatExceptionOfType(VersionControlException.class)
-                .isThrownBy(() -> localVCServletService.processNewPush(commitHash, studentAssignmentRepository.bareGitRepo.getRepository()))
+                .isThrownBy(() -> localVCServletService.processNewPush(commitHash, studentAssignmentRepository.remoteBareGitRepo.getRepository()))
                 .withMessageContaining(expectedErrorMessage);
 
         // solution participation
@@ -343,7 +343,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         programmingExerciseRepository.save(programmingExercise);
         solutionProgrammingExerciseParticipationRepository.delete(solutionParticipation);
         assertThatExceptionOfType(VersionControlException.class)
-                .isThrownBy(() -> localVCServletService.processNewPush(solutionCommitHash, solutionRepository.bareGitRepo.getRepository()))
+                .isThrownBy(() -> localVCServletService.processNewPush(solutionCommitHash, solutionRepository.remoteBareGitRepo.getRepository()))
                 .withMessageContaining(expectedErrorMessage);
 
         // template participation
@@ -355,7 +355,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         templateProgrammingExerciseParticipationRepository.delete(templateParticipation);
 
         assertThatExceptionOfType(VersionControlException.class)
-                .isThrownBy(() -> localVCServletService.processNewPush(templateCommitHash, templateRepository.bareGitRepo.getRepository()))
+                .isThrownBy(() -> localVCServletService.processNewPush(templateCommitHash, templateRepository.remoteBareGitRepo.getRepository()))
                 .withMessageContaining(expectedErrorMessage);
 
         // team participation
@@ -374,7 +374,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         String teamCommitHash = localVCLocalCITestService.commitFile(teamLocalRepository.workingCopyGitRepoFile.toPath(), teamLocalRepository.workingCopyGitRepo);
         teamLocalRepository.workingCopyGitRepo.push().call();
         assertThatExceptionOfType(VersionControlException.class)
-                .isThrownBy(() -> localVCServletService.processNewPush(teamCommitHash, teamLocalRepository.bareGitRepo.getRepository()))
+                .isThrownBy(() -> localVCServletService.processNewPush(teamCommitHash, teamLocalRepository.remoteBareGitRepo.getRepository()))
                 .withMessageContaining(expectedErrorMessage);
 
         // Cleanup
@@ -390,7 +390,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
         // Should still work because in that case the latest commit should be retrieved from the repository.
-        localVCServletService.processNewPush(null, studentAssignmentRepository.bareGitRepo.getRepository());
+        localVCServletService.processNewPush(null, studentAssignmentRepository.remoteBareGitRepo.getRepository());
         // ToDo: Investigate why specifically this test requires so much time (all other << 5s)
         localVCLocalCITestService.testLatestSubmission(studentParticipation.getId(), commitHash, 1, false, 120);
     }
@@ -403,7 +403,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
         // Call processNewPush with a wrong commit hash. This should throw an exception.
         assertThatExceptionOfType(VersionControlException.class)
-                .isThrownBy(() -> localVCServletService.processNewPush(DUMMY_COMMIT_HASH, studentAssignmentRepository.bareGitRepo.getRepository()))
+                .isThrownBy(() -> localVCServletService.processNewPush(DUMMY_COMMIT_HASH, studentAssignmentRepository.remoteBareGitRepo.getRepository()))
                 .withMessageContaining("Could not resolve commit hash");
 
     }
@@ -417,7 +417,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
         programmingExerciseRepository.save(programmingExercise);
 
-        localVCServletService.processNewPush(commitHash, studentAssignmentRepository.bareGitRepo.getRepository());
+        localVCServletService.processNewPush(commitHash, studentAssignmentRepository.remoteBareGitRepo.getRepository());
         localVCLocalCITestService.testLatestSubmission(participation.getId(), commitHash, 1, false);
     }
 
@@ -433,7 +433,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         doReturn(copyArchiveFromContainerCmd).when(dockerClient).copyArchiveFromContainerCmd(anyString(), argThat(expectedPathMatcher));
         when(copyArchiveFromContainerCmd.exec()).thenThrow(new NotFoundException("Cannot find results"));
 
-        localVCServletService.processNewPush(commitHash, studentAssignmentRepository.bareGitRepo.getRepository());
+        localVCServletService.processNewPush(commitHash, studentAssignmentRepository.remoteBareGitRepo.getRepository());
         // Should return a build result that indicates that the build failed.
         localVCLocalCITestService.testLatestSubmission(studentParticipation.getId(), commitHash, 0, true, false, 0, 20);
     }
@@ -459,7 +459,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
             }
         });
 
-        localVCServletService.processNewPush(commitHash, studentAssignmentRepository.bareGitRepo.getRepository());
+        localVCServletService.processNewPush(commitHash, studentAssignmentRepository.remoteBareGitRepo.getRepository());
 
         await().untilAsserted(() -> verify(programmingMessagingService).notifyUserAboutNewResult(any(), Mockito.eq(studentParticipation)));
 
@@ -474,7 +474,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
         dockerClientTestService.mockTestResults(dockerClient, FAULTY_FILES_TEST_RESULTS_PATH, LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + LOCAL_CI_RESULTS_DIRECTORY);
-        localVCServletService.processNewPush(commitHash, studentAssignmentRepository.bareGitRepo.getRepository());
+        localVCServletService.processNewPush(commitHash, studentAssignmentRepository.remoteBareGitRepo.getRepository());
         localVCLocalCITestService.testLatestSubmission(studentParticipation.getId(), commitHash, 0, true);
     }
 
@@ -485,7 +485,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
         dockerClientTestService.mockTestResults(dockerClient, OLD_REPORT_FORMAT_TEST_RESULTS_PATH, LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + LOCAL_CI_RESULTS_DIRECTORY);
-        localVCServletService.processNewPush(commitHash, studentAssignmentRepository.bareGitRepo.getRepository());
+        localVCServletService.processNewPush(commitHash, studentAssignmentRepository.remoteBareGitRepo.getRepository());
         localVCLocalCITestService.testLatestSubmission(studentParticipation.getId(), commitHash, 0, false);
 
         studentParticipation = programmingExerciseStudentParticipationRepository
@@ -526,7 +526,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
         dockerClientTestService.mockTestResults(dockerClient, resultPaths, LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + LOCAL_CI_RESULTS_DIRECTORY);
 
-        localVCServletService.processNewPush(commitHash, studentAssignmentRepository.bareGitRepo.getRepository());
+        localVCServletService.processNewPush(commitHash, studentAssignmentRepository.remoteBareGitRepo.getRepository());
 
         localVCLocalCITestService.testLatestSubmission(studentParticipation.getId(), commitHash, 1, false, true, 15, null);
     }
@@ -538,7 +538,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
         dockerClientTestService.mockTestResults(dockerClient, EMPTY_TEST_RESULTS_PATH, LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + LOCAL_CI_RESULTS_DIRECTORY);
-        localVCServletService.processNewPush(commitHash, studentAssignmentRepository.bareGitRepo.getRepository());
+        localVCServletService.processNewPush(commitHash, studentAssignmentRepository.remoteBareGitRepo.getRepository());
         localVCLocalCITestService.testLatestSubmission(studentParticipation.getId(), commitHash, 0, true);
 
         studentParticipation = programmingExerciseStudentParticipationRepository
@@ -580,7 +580,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
         try {
-            localVCServletService.processNewPush(commitHash, studentAssignmentRepository.bareGitRepo.getRepository());
+            localVCServletService.processNewPush(commitHash, studentAssignmentRepository.remoteBareGitRepo.getRepository());
             localVCLocalCITestService.testLatestSubmission(studentParticipation.getId(), commitHash, 1, false);
 
             var submissionOptional = programmingSubmissionRepository.findFirstByParticipationIdWithResultsOrderByLegalSubmissionDateDesc(studentParticipation.getId());
@@ -631,7 +631,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         ProgrammingExerciseStudentParticipation participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
         programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
 
-        localVCServletService.processNewPush(commitHash, studentAssignmentRepository.bareGitRepo.getRepository());
+        localVCServletService.processNewPush(commitHash, studentAssignmentRepository.remoteBareGitRepo.getRepository());
         localVCLocalCITestService.testLatestSubmission(participation.getId(), commitHash, 1, false);
 
         buildConfig.setAssignmentCheckoutPath("");
@@ -646,7 +646,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         ProgrammingExerciseStudentParticipation participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
         programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
 
-        localVCServletService.processNewPush(commitHash, studentAssignmentRepository.bareGitRepo.getRepository());
+        localVCServletService.processNewPush(commitHash, studentAssignmentRepository.remoteBareGitRepo.getRepository());
         localVCLocalCITestService.testLatestSubmission(participation.getId(), commitHash, 1, false);
     }
 
@@ -659,7 +659,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         ProgrammingExerciseStudentParticipation participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
         programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
 
-        localVCServletService.processNewPush(commitHash, studentAssignmentRepository.bareGitRepo.getRepository());
+        localVCServletService.processNewPush(commitHash, studentAssignmentRepository.remoteBareGitRepo.getRepository());
         localVCLocalCITestService.testLatestSubmission(participation.getId(), commitHash, 1, false);
         verify(AbstractProgrammingIntegrationLocalCILocalVCTestBase.dockerClientMock.createContainerCmd(anyString())).withHostConfig(argThat(hostConfig -> {
             assertThat(hostConfig.getCpuQuota()).isEqualTo(4L * 100000);
@@ -678,7 +678,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
         ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
-        localVCServletService.processNewPush(commitHash, studentAssignmentRepository.bareGitRepo.getRepository());
+        localVCServletService.processNewPush(commitHash, studentAssignmentRepository.remoteBareGitRepo.getRepository());
         await().until(() -> {
             IQueue<BuildJobQueueItem> buildQueue = hazelcastInstance.getQueue("buildJobQueue");
             IMap<String, BuildJobQueueItem> buildJobMap = hazelcastInstance.getMap("processingJobs");
@@ -702,7 +702,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
         ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
-        localVCServletService.processNewPush(commitHash, studentAssignmentRepository.bareGitRepo.getRepository());
+        localVCServletService.processNewPush(commitHash, studentAssignmentRepository.remoteBareGitRepo.getRepository());
 
         await().until(() -> queuedJobs.stream().anyMatch(buildJobQueueItem -> buildJobQueueItem.buildConfig().commitHashToBuild().equals(commitHash)
                 && buildJobQueueItem.participationId() == studentParticipation.getId()));

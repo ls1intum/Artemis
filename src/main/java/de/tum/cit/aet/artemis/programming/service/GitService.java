@@ -109,11 +109,11 @@ public class GitService extends AbstractGitService {
 
     private final ProfileService profileService;
 
-    @Value("${artemis.version-control.local-vcs-repo-path:#{null}}")
-    private String localVCBasePath;
+    @Value("${artemis.version-control.local-vcs-repo-path}")
+    private Path localVCBasePath;
 
     @Value("${artemis.repo-clone-path}")
-    private String repoClonePath;
+    private Path repoClonePath;
 
     @Value("${artemis.git.name}")
     private String artemisGitName;
@@ -218,9 +218,9 @@ public class GitService extends AbstractGitService {
      * @throws GitAPIException if the repository could not be checked out.
      * @throws GitException    if the same repository is attempted to be cloned multiple times.
      */
-    public Repository getOrCheckoutRepository(ProgrammingExerciseParticipation participation, String targetPath) throws GitAPIException, GitException {
+    public Repository getOrCheckoutRepository(ProgrammingExerciseParticipation participation, Path targetPath) throws GitAPIException, GitException {
         var repoUri = participation.getVcsRepositoryUri();
-        Repository repository = getOrCheckoutRepository(repoUri, targetPath, true);
+        Repository repository = getOrCheckoutRepositoryWithTargetPath(repoUri, targetPath, true);
         repository.setParticipation(participation);
         return repository;
     }
@@ -238,16 +238,16 @@ public class GitService extends AbstractGitService {
      * @throws GitAPIException      if the repository could not be checked out.
      * @throws InvalidPathException if the repository could not be checked out Because it contains unmappable characters.
      */
-    public Repository getOrCheckoutRepositoryForJPlag(ProgrammingExerciseParticipation participation, String targetPath) throws GitAPIException, InvalidPathException {
+    public Repository getOrCheckoutRepositoryForJPlag(ProgrammingExerciseParticipation participation, Path targetPath) throws GitAPIException, InvalidPathException {
         var repoUri = participation.getVcsRepositoryUri();
         String repoFolderName = repoUri.folderNameForRepositoryUri();
 
         // Replace the exercise name in the repository folder name with the participation ID.
         // This is necessary to be able to refer back to the correct participation after the JPlag detection run.
         String updatedRepoFolderName = repoFolderName.replaceAll("/[a-zA-Z0-9]*-", "/" + participation.getId() + "-");
-        Path localPath = Path.of(targetPath, updatedRepoFolderName);
+        Path localPath = targetPath.resolve(updatedRepoFolderName);
 
-        Repository repository = getOrCheckoutRepository(repoUri, localPath, true);
+        Repository repository = getOrCheckoutRepositoryWithLocalPath(repoUri, localPath, true);
         repository.setParticipation(participation);
 
         return repository;
@@ -263,7 +263,7 @@ public class GitService extends AbstractGitService {
      * @throws GitAPIException if the repository could not be checked out.
      */
     public Repository getOrCheckoutRepository(VcsRepositoryUri repoUri, boolean pullOnGet) throws GitAPIException {
-        return getOrCheckoutRepository(repoUri, repoClonePath, pullOnGet);
+        return getOrCheckoutRepositoryWithTargetPath(repoUri, repoClonePath, pullOnGet);
     }
 
     /**
@@ -276,9 +276,9 @@ public class GitService extends AbstractGitService {
      * @throws GitAPIException if the repository could not be checked out.
      * @throws GitException    if the same repository is attempted to be cloned multiple times.
      */
-    public Repository getOrCheckoutRepository(VcsRepositoryUri repoUri, String targetPath, boolean pullOnGet) throws GitAPIException, GitException {
+    public Repository getOrCheckoutRepositoryWithTargetPath(VcsRepositoryUri repoUri, Path targetPath, boolean pullOnGet) throws GitAPIException, GitException {
         Path localPath = getLocalPathOfRepo(targetPath, repoUri);
-        return getOrCheckoutRepository(repoUri, localPath, pullOnGet);
+        return getOrCheckoutRepositoryWithLocalPath(repoUri, localPath, pullOnGet);
     }
 
     /**
@@ -336,7 +336,7 @@ public class GitService extends AbstractGitService {
         return getOrCheckoutRepository(repoUri, targetUri, localPath, pullOnGet);
     }
 
-    public Repository getOrCheckoutRepository(VcsRepositoryUri repoUri, Path localPath, boolean pullOnGet) throws GitAPIException, GitException, InvalidPathException {
+    public Repository getOrCheckoutRepositoryWithLocalPath(VcsRepositoryUri repoUri, Path localPath, boolean pullOnGet) throws GitAPIException, GitException, InvalidPathException {
         return getOrCheckoutRepository(repoUri, repoUri, localPath, pullOnGet);
     }
 
@@ -482,11 +482,11 @@ public class GitService extends AbstractGitService {
      * @param targetUrl  url of the repository
      * @return path of the local file system
      */
-    public Path getLocalPathOfRepo(String targetPath, VcsRepositoryUri targetUrl) {
+    public Path getLocalPathOfRepo(Path targetPath, VcsRepositoryUri targetUrl) {
         if (targetUrl == null) {
             return null;
         }
-        return Path.of(targetPath.replaceAll("^\\." + Pattern.quote(java.io.File.separator), ""), targetUrl.folderNameForRepositoryUri());
+        return Path.of(targetPath.toString().replaceAll("^\\." + Pattern.quote(java.io.File.separator), ""), targetUrl.folderNameForRepositoryUri());
     }
 
     /**
@@ -1312,7 +1312,7 @@ public class GitService extends AbstractGitService {
      * @param programmingExercise contains the project key which is used as the folder name
      */
     public void deleteLocalProgrammingExerciseReposFolder(ProgrammingExercise programmingExercise) {
-        var folderPath = Path.of(repoClonePath, programmingExercise.getProjectKey());
+        var folderPath = repoClonePath.resolve(programmingExercise.getProjectKey());
         try {
             FileUtils.deleteDirectory(folderPath.toFile());
         }

@@ -47,7 +47,7 @@ public class ParticipationFactory {
      * @return The generated LocalVCRepositoryUri
      */
     public static LocalVCRepositoryUri getRepositoryUri(LocalRepository repository) {
-        return new LocalVCRepositoryUri(repository.bareGitRepoFile.getPath());
+        return new LocalVCRepositoryUri(repository.remoteBareGitRepoFile.getPath());
     }
 
     /**

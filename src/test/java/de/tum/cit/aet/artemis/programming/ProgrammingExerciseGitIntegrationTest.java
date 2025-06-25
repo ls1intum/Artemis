@@ -59,7 +59,7 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractProgrammingIntegrati
         GitService.commit(localGit).setMessage("add test3.json").setAuthor("test", "test@test.com").call();
 
         var repository = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoPath, null);
-        doReturn(repository).when(gitService).getOrCheckoutRepository(any(VcsRepositoryUri.class), anyString(), anyBoolean());
+        doReturn(repository).when(gitService).getOrCheckoutRepositoryWithTargetPath(any(VcsRepositoryUri.class), any(Path.class), anyBoolean());
         doNothing().when(gitService).fetchAll(any());
         var objectId = localGit.reflog().call().iterator().next().getNewId();
         doReturn(objectId).when(gitService).getLastCommitHash(any());

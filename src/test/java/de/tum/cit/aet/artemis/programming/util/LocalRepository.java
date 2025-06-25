@@ -40,11 +40,11 @@ public class LocalRepository {
 
     public File workingCopyGitRepoFile;
 
-    public File bareGitRepoFile;
+    public File remoteBareGitRepoFile;
 
     public Git workingCopyGitRepo;
 
-    public Git bareGitRepo;
+    public Git remoteBareGitRepo;
 
     private final String defaultBranch;
 
@@ -56,7 +56,7 @@ public class LocalRepository {
 
         Files.createDirectories(gitFilePath);
 
-        // Create a bare local repository with JGit.
+        // Create a local repository with JGit, potentially as a bare repository.
         Git git = Git.init().setDirectory(gitFilePath.toFile()).setInitialBranch(defaultBranch).setBare(bare).call();
 
         // Change the default branch to the Artemis default branch.
@@ -102,10 +102,10 @@ public class LocalRepository {
         workingCopyGitRepo = initialize(workingCopyGitRepoPath, defaultBranch, false);
 
         var bareGitRepoPath = getRepoPath(repoBasePath, originRepoFileName);
-        bareGitRepoFile = bareGitRepoPath.toFile();
-        bareGitRepo = initialize(bareGitRepoPath, defaultBranch, originIsBare);
+        remoteBareGitRepoFile = bareGitRepoPath.toFile();
+        remoteBareGitRepo = initialize(bareGitRepoPath, defaultBranch, originIsBare);
 
-        workingCopyGitRepo.remoteAdd().setName("origin").setUri(new URIish(bareGitRepoFile.toURI().toString())).call();
+        workingCopyGitRepo.remoteAdd().setName("origin").setUri(new URIish(remoteBareGitRepoFile.toURI().toString())).call();
 
         // Add an initial commit directly in the local working copy
         File readme = new File(workingCopyGitRepoFile, "README.md");
@@ -117,13 +117,13 @@ public class LocalRepository {
         workingCopyGitRepo.push().setRemote("origin").setPushAll().call();
 
         // Reopen to avoid potential caching issues
-        bareGitRepo.close();
-        bareGitRepo = Git.wrap(new FileRepositoryBuilder().setGitDir(bareGitRepoFile).build());
+        remoteBareGitRepo.close();
+        remoteBareGitRepo = Git.wrap(new FileRepositoryBuilder().setGitDir(remoteBareGitRepoFile).build());
 
         workingCopyGitRepo.close();
         workingCopyGitRepo = Git.wrap(new FileRepositoryBuilder().setGitDir(workingCopyGitRepoFile).build());
 
-        log.info("Configured local repository with one commit, working copy at {} and origin repository at {}", workingCopyGitRepoFile, bareGitRepoFile);
+        log.info("Configured local repository with one commit, working copy at {} and origin repository at {}", workingCopyGitRepoFile, remoteBareGitRepoFile);
     }
 
     /**
@@ -153,14 +153,14 @@ public class LocalRepository {
         workingCopyGitRepoFile = localRepoPath.toFile();
         workingCopyGitRepo = initialize(localRepoPath, defaultBranch, false);
 
-        bareGitRepoFile = originRepositoryFolder.toFile();
+        remoteBareGitRepoFile = originRepositoryFolder.toFile();
         // Create a bare remote repository.
-        bareGitRepo = initialize(bareGitRepoFile.toPath(), defaultBranch, true);
+        remoteBareGitRepo = initialize(remoteBareGitRepoFile.toPath(), defaultBranch, true);
 
-        workingCopyGitRepo.remoteAdd().setName("origin").setUri(new URIish(String.valueOf(bareGitRepoFile))).call();
+        workingCopyGitRepo.remoteAdd().setName("origin").setUri(new URIish(String.valueOf(remoteBareGitRepoFile))).call();
 
         // Modify the HEAD file to contain the correct branch. Otherwise, cloning the repository does not work.
-        Repository repository = bareGitRepo.getRepository();
+        Repository repository = remoteBareGitRepo.getRepository();
         RefUpdate refUpdate = repository.getRefDatabase().newUpdate(Constants.HEAD, false);
         refUpdate.setForceUpdate(true);
         refUpdate.link("refs/heads/" + defaultBranch);
@@ -200,11 +200,11 @@ public class LocalRepository {
             FileUtils.deleteDirectory(workingCopyGitRepoFile);
         }
 
-        if (bareGitRepo != null) {
-            bareGitRepo.close();
+        if (remoteBareGitRepo != null) {
+            remoteBareGitRepo.close();
         }
-        if (bareGitRepoFile != null && bareGitRepoFile.exists()) {
-            FileUtils.deleteDirectory(bareGitRepoFile);
+        if (remoteBareGitRepoFile != null && remoteBareGitRepoFile.exists()) {
+            FileUtils.deleteDirectory(remoteBareGitRepoFile);
         }
     }
 
@@ -213,6 +213,6 @@ public class LocalRepository {
     }
 
     public List<RevCommit> getAllOriginCommits() throws Exception {
-        return StreamSupport.stream(bareGitRepo.log().call().spliterator(), false).toList();
+        return StreamSupport.stream(remoteBareGitRepo.log().call().spliterator(), false).toList();
     }
 }

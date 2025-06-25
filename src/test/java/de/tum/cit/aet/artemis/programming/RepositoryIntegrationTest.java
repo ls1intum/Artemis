@@ -84,6 +84,7 @@ import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
+import de.tum.cit.aet.artemis.programming.util.LocalRepositoryUrlUtil;
 import de.tum.cit.aet.artemis.programming.web.repository.FileSubmission;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
@@ -188,7 +189,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         Path folderPath = Path.of(studentRepository.workingCopyGitRepoFile + "/" + currentLocalFolderName);
         Files.createDirectory(folderPath);
 
-        var localRepoUri = new LocalVCRepositoryUri(studentRepository.workingCopyGitRepoFile.getPath());
+        var localRepoUri = new LocalVCRepositoryUri(LocalRepositoryUrlUtil.convertToLocalVcUriString(studentRepository.workingCopyGitRepoFile, localVCBasePath));
         participation = participationUtilService.addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, TEST_PREFIX + "student1", localRepoUri.getURI());
         programmingExercise.setTestRepositoryUri(localRepoUri.toString());
 
@@ -818,7 +819,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         // Create assignment repository and participation for the instructor.
         tempRepository = new LocalRepository(defaultBranch);
         tempRepository.configureRepos(localVCBasePath, "localInstructorAssignmentRepo", "remoteInstructorAssignmentRepo");
-        var instructorAssignmentRepoUri = new LocalVCRepositoryUri(tempRepository.workingCopyGitRepoFile.getPath());
+        var instructorAssignmentRepoUri = new LocalVCRepositoryUri(LocalRepositoryUrlUtil.convertToLocalVcUriString(tempRepository.workingCopyGitRepoFile, localVCBasePath));
         ProgrammingExerciseStudentParticipation instructorAssignmentParticipation = participationUtilService
                 .addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, TEST_PREFIX + "instructor1", instructorAssignmentRepoUri.getURI());
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(tempRepository.workingCopyGitRepoFile.toPath(), null)).when(gitService)
@@ -843,19 +844,19 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
 
         // Create a commit for the local and the remote repository
         request.postWithoutLocation(studentRepoBaseUrl + participation.getId() + "/commit", null, HttpStatus.OK, null);
-        try (var remoteRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository.bareGitRepoFile.toPath(), null)) {
+        try (var remoteRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository.remoteBareGitRepoFile.toPath(), null)) {
 
             // Create file in the remote repository
-            Path filePath = studentRepository.bareGitRepoFile.toPath().resolve(fileName);
+            Path filePath = studentRepository.remoteBareGitRepoFile.toPath().resolve(fileName);
             Files.createFile(filePath);
 
             // Check if the file exists in the remote repository and that it doesn't yet exist in the local repository
-            assertThat(studentRepository.bareGitRepoFile.toPath().resolve(fileName)).exists();
+            assertThat(studentRepository.remoteBareGitRepoFile.toPath().resolve(fileName)).exists();
             assertThat(studentRepository.workingCopyGitRepoFile.toPath().resolve(fileName)).doesNotExist();
 
             // Stage all changes and make a second commit in the remote repository
             gitService.stageAllChanges(remoteRepository);
-            GitService.commit(studentRepository.bareGitRepo).setMessage("TestCommit").setAllowEmpty(true).setCommitter("testname", "test@email").call();
+            GitService.commit(studentRepository.remoteBareGitRepo).setMessage("TestCommit").setAllowEmpty(true).setCommitter("testname", "test@email").call();
 
             // Checks if the current commit is not equal on the local and the remote repository
             assertThat(studentRepository.getAllLocalCommits().getFirst()).isNotEqualTo(studentRepository.getAllOriginCommits().getFirst());
@@ -875,7 +876,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     void testResetToLastCommit() throws Exception {
         String fileName = "testFile";
         try (var localRepo = gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository.workingCopyGitRepoFile.toPath(), null);
-                var remoteRepo = gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository.bareGitRepoFile.toPath(), null)) {
+                var remoteRepo = gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository.remoteBareGitRepoFile.toPath(), null)) {
 
             // Check status of git before the commit
             var receivedStatusBeforeCommit = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
@@ -897,12 +898,12 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
             GitService.commit(studentRepository.workingCopyGitRepo).setMessage("local").call();
 
             // Create file in the remote repository and commit it
-            Path remoteFilePath = Path.of(studentRepository.bareGitRepoFile + "/" + fileName);
+            Path remoteFilePath = Path.of(studentRepository.remoteBareGitRepoFile + "/" + fileName);
             var remoteFile = Files.createFile(remoteFilePath).toFile();
             // write content to the created file
             FileUtils.write(remoteFile, "remote", Charset.defaultCharset());
             gitService.stageAllChanges(remoteRepo);
-            GitService.commit(studentRepository.bareGitRepo).setMessage("remote").call();
+            GitService.commit(studentRepository.remoteBareGitRepo).setMessage("remote").call();
 
             // Merge the two and a conflict will occur
             studentRepository.workingCopyGitRepo.fetch().setRemote("origin").call();

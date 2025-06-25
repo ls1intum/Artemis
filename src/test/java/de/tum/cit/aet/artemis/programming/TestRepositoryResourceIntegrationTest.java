@@ -377,19 +377,19 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
 
         // Create a commit for the local and the remote repository
         request.postWithoutLocation(testRepoBaseUrl + programmingExercise.getId() + "/commit", null, HttpStatus.OK, null);
-        try (var remoteRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.bareGitRepoFile.toPath(), null)) {
+        try (var remoteRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.remoteBareGitRepoFile.toPath(), null)) {
 
             // Create file in the remote repository
-            Path filePath = Path.of(testRepo.bareGitRepoFile + "/" + fileName);
+            Path filePath = Path.of(testRepo.remoteBareGitRepoFile + "/" + fileName);
             Files.createFile(filePath);
 
             // Check if the file exists in the remote repository and that it doesn't yet exist in the local repository
-            assertThat(Path.of(testRepo.bareGitRepoFile + "/" + fileName)).exists();
+            assertThat(Path.of(testRepo.remoteBareGitRepoFile + "/" + fileName)).exists();
             assertThat(Path.of(testRepo.workingCopyGitRepoFile + "/" + fileName)).doesNotExist();
 
             // Stage all changes and make a second commit in the remote repository
             gitService.stageAllChanges(remoteRepository);
-            GitService.commit(testRepo.bareGitRepo).setMessage("TestCommit").setAllowEmpty(true).setCommitter("testname", "test@email").call();
+            GitService.commit(testRepo.remoteBareGitRepo).setMessage("TestCommit").setAllowEmpty(true).setCommitter("testname", "test@email").call();
 
             // Checks if the current commit is not equal on the local and the remote repository
             assertThat(testRepo.getAllLocalCommits().getFirst()).isNotEqualTo(testRepo.getAllOriginCommits().getFirst());
@@ -410,7 +410,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
         programmingExerciseRepository.save(programmingExercise);
         String fileName = "testFile";
         try (var localRepo = gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.workingCopyGitRepoFile.toPath(), null);
-                var remoteRepo = gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.bareGitRepoFile.toPath(), null)) {
+                var remoteRepo = gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.remoteBareGitRepoFile.toPath(), null)) {
 
             // Check status of git before the commit
             var receivedStatusBeforeCommit = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
@@ -432,12 +432,12 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
             GitService.commit(testRepo.workingCopyGitRepo).setMessage("local").call();
 
             // Create file in the remote repository and commit it
-            Path remoteFilePath = Path.of(testRepo.bareGitRepoFile + "/" + fileName);
+            Path remoteFilePath = Path.of(testRepo.remoteBareGitRepoFile + "/" + fileName);
             var remoteFile = Files.createFile(remoteFilePath).toFile();
             // write content to the created file
             FileUtils.write(remoteFile, "remote", Charset.defaultCharset());
             gitService.stageAllChanges(remoteRepo);
-            GitService.commit(testRepo.bareGitRepo).setMessage("remote").call();
+            GitService.commit(testRepo.remoteBareGitRepo).setMessage("remote").call();
 
             // Merge the two and a conflict will occur
             testRepo.workingCopyGitRepo.fetch().setRemote("origin").call();

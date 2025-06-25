@@ -85,9 +85,9 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         LocalRepository someRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, repositorySlug);
 
         // Delete the remote repository.
-        someRepository.bareGitRepo.close();
+        someRepository.remoteBareGitRepo.close();
         try {
-            FileUtils.deleteDirectory(someRepository.bareGitRepoFile);
+            FileUtils.deleteDirectory(someRepository.remoteBareGitRepoFile);
         }
         catch (IOException exception) {
             // JGit creates a lock file in each repository that could cause deletion problems.
