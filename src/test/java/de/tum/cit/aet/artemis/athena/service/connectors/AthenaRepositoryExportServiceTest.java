@@ -53,7 +53,7 @@ class AthenaRepositoryExportServiceTest extends AbstractSpringIntegrationLocalCI
     void initTestCase() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
 
-        testRepo.configureRepos(Path.of(localVCBasePath), "testLocalRepo", "testOriginRepo");
+        testRepo.configureRepos(localVCBasePath, "testLocalRepo", "testOriginRepo");
 
         // add test file to the repository folder
         Path filePath = Path.of(testRepo.workingCopyGitRepoFile + "/Test.java");

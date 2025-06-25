@@ -87,7 +87,7 @@ public class ProgrammingExerciseUtilService {
     protected String defaultBranch;
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
-    private String localVCRepoPath;
+    private Path localVCRepoPath;
 
     @Autowired
     private TemplateProgrammingExerciseParticipationTestRepository templateProgrammingExerciseParticipationTestRepo;
@@ -844,7 +844,7 @@ public class ProgrammingExerciseUtilService {
     public void createGitRepository() throws Exception {
         // Create repository
         var testRepo = new LocalRepository(defaultBranch);
-        testRepo.configureRepos(Path.of(localVCRepoPath), "testLocalRepo", "testOriginRepo");
+        testRepo.configureRepos(localVCRepoPath, "testLocalRepo", "testOriginRepo");
         // Add test file to the repository folder
         Path filePath = Path.of(testRepo.workingCopyGitRepoFile + "/Test.java");
         var file = Files.createFile(filePath).toFile();

@@ -68,7 +68,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
         programmingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig()));
 
         // Instantiate the remote repository as non-bare so its files can be manipulated
-        testRepo.configureRepos(Path.of(localVCRepoPath), "testLocalRepo", "testOriginRepo", false);
+        testRepo.configureRepos(localVCRepoPath, "testLocalRepo", "testOriginRepo", false);
 
         // add file to the repository folder
         Path filePath = Path.of(testRepo.workingCopyGitRepoFile + "/" + currentLocalFileName);

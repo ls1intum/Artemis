@@ -80,7 +80,7 @@ public class ProgrammingUtilTestService {
     private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
-    private String localVCRepoPath;
+    private Path localVCRepoPath;
 
     /**
      * Sets up the template repository of a programming exercise with specified files
@@ -90,7 +90,7 @@ public class ProgrammingUtilTestService {
      * @param templateRepo The repository
      */
     public void setupTemplate(Map<String, String> files, ProgrammingExercise exercise, LocalRepository templateRepo) throws Exception {
-        templateRepo.configureRepos(Path.of(localVCRepoPath), "templateLocalRepo", "templateOriginRepo");
+        templateRepo.configureRepos(localVCRepoPath, "templateLocalRepo", "templateOriginRepo");
 
         for (Map.Entry<String, String> entry : files.entrySet()) {
             String fileName = entry.getKey();
@@ -136,7 +136,7 @@ public class ProgrammingUtilTestService {
      * @param solutionRepo The repository
      */
     public void setupSolution(Map<String, String> files, ProgrammingExercise exercise, LocalRepository solutionRepo) throws Exception {
-        solutionRepo.configureRepos(Path.of(localVCRepoPath), "solutionLocalRepo", "solutionOriginRepo");
+        solutionRepo.configureRepos(localVCRepoPath, "solutionLocalRepo", "solutionOriginRepo");
 
         for (Map.Entry<String, String> entry : files.entrySet()) {
             String fileName = entry.getKey();

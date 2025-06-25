@@ -14,6 +14,7 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
+import java.nio.file.Path;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
@@ -47,7 +48,7 @@ public abstract class AbstractSpringIntegrationLocalVCSamlTest extends AbstractA
     protected PasswordService passwordService;
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
-    protected String localVCRepoPath;
+    protected Path localVCRepoPath;
 
     // NOTE: this has to be a MockitoBean, because the class cannot be instantiated in the tests
     @MockitoBean

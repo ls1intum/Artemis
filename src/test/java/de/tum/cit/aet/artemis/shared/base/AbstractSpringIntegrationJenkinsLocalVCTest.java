@@ -22,6 +22,7 @@ import static org.mockito.Mockito.doReturn;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -98,7 +99,7 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTest extends Abstra
     protected GroupNotificationScheduleService groupNotificationScheduleService;
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
-    protected String localVCRepoPath;
+    protected Path localVCRepoPath;
 
     @AfterEach
     @Override

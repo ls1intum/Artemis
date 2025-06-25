@@ -44,7 +44,7 @@ public class ContinuousIntegrationTestService {
     private String defaultBranch;
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
-    private String localVCRepoPath;
+    private Path localVCRepoPath;
 
     private final LocalRepository localRepo = new LocalRepository(defaultBranch);
 
@@ -83,7 +83,7 @@ public class ContinuousIntegrationTestService {
         String currentLocalFileName = "currentFileName";
         String currentLocalFileContent = "testContent";
         String currentLocalFolderName = "currentFolderName";
-        localRepo.configureRepos(Path.of(localVCRepoPath), "testLocalRepo", "testOriginRepo");
+        localRepo.configureRepos(localVCRepoPath, "testLocalRepo", "testOriginRepo");
         // add file to the repository folder
         Path filePath = Path.of(localRepo.workingCopyGitRepoFile + "/" + currentLocalFileName);
         File file = Files.createFile(filePath).toFile();

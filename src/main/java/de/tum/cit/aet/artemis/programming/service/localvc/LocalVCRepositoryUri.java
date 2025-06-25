@@ -278,8 +278,20 @@ public class LocalVCRepositoryUri extends VcsRepositoryUri {
      * @return The full Path to the repository, which includes the base path, project key, and repository slug with a ".git" suffix.
      */
     public Path getLocalRepositoryPath(String localVCBasePath) {
+        return getLocalRepositoryPath(Path.of(localVCBasePath));
+    }
+
+    /**
+     * Computes and returns the full path to the repository stored within the local version control system.
+     * This path is constructed using the base path of the local VC system, combined with the project key and repository slug.
+     * The result is a Path object that represents the directory where the repository is stored or should be stored locally.
+     *
+     * @param localVCBasePath The base path of the local VC system, typically defined in an environment variable or a configuration setting.
+     * @return The full Path to the repository, which includes the base path, project key, and repository slug with a ".git" suffix.
+     */
+    public Path getLocalRepositoryPath(Path localVCBasePath) {
         Path relativeRepositoryPath = getRelativeRepositoryPath();
-        return Path.of(localVCBasePath).resolve(relativeRepositoryPath);
+        return localVCBasePath.resolve(relativeRepositoryPath);
     }
 
     /**

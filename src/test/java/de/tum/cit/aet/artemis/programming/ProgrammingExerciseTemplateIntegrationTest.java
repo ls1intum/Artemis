@@ -192,10 +192,10 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
         exercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
 
-        exerciseRepo.configureRepos(Path.of(localVCRepoPath), "exerciseLocalRepo", "exerciseOriginRepo");
-        testRepo.configureRepos(Path.of(localVCRepoPath), "testLocalRepo", "testOriginRepo");
-        solutionRepo.configureRepos(Path.of(localVCRepoPath), "solutionLocalRepo", "solutionOriginRepo");
-        auxRepo.configureRepos(Path.of(localVCRepoPath), "auxLocalRepo", "auxOriginRepo");
+        exerciseRepo.configureRepos(localVCRepoPath, "exerciseLocalRepo", "exerciseOriginRepo");
+        testRepo.configureRepos(localVCRepoPath, "testLocalRepo", "testOriginRepo");
+        solutionRepo.configureRepos(localVCRepoPath, "solutionLocalRepo", "solutionOriginRepo");
+        auxRepo.configureRepos(localVCRepoPath, "auxLocalRepo", "auxOriginRepo");
 
         programmingExerciseTestService.setup(this, versionControlService);
         programmingExerciseTestService.setupRepositoryMocks(exercise, exerciseRepo, solutionRepo, testRepo, auxRepo);

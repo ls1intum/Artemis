@@ -17,7 +17,6 @@ import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
-import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -523,7 +522,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         var programmingExercise = (ProgrammingExercise) exam.getExerciseGroups().get(6).getExercises().iterator().next();
         programmingExerciseTestService.setupRepositoryMocks(programmingExercise);
         var repo = new LocalRepository(defaultBranch);
-        repo.configureRepos(Path.of(localVCRepoPath), "studentRepo", "studentOriginRepo");
+        repo.configureRepos(localVCRepoPath, "studentRepo", "studentOriginRepo");
         programmingExerciseTestService.setupRepositoryMocksParticipant(programmingExercise, student1.getLogin(), repo);
         mockConnectorRequestsForStartParticipation(programmingExercise, student1.getLogin(), Set.of(student1), true);
 
@@ -615,7 +614,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         var programmingExercise = (ProgrammingExercise) exam.getExerciseGroups().get(2).getExercises().iterator().next();
         programmingExerciseTestService.setupRepositoryMocks(programmingExercise);
         var repo = new LocalRepository(defaultBranch);
-        repo.configureRepos(Path.of(localVCRepoPath), "instructorRepo", "instructorOriginRepo");
+        repo.configureRepos(localVCRepoPath, "instructorRepo", "instructorOriginRepo");
         programmingExerciseTestService.setupRepositoryMocksParticipant(programmingExercise, instructor.getLogin(), repo);
         mockConnectorRequestsForStartParticipation(programmingExercise, instructor.getLogin(), Set.of(instructor), true);
 

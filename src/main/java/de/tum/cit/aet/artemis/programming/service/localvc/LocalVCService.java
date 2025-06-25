@@ -50,7 +50,7 @@ public class LocalVCService extends AbstractVersionControlService {
     private URI localVCBaseUri;
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
-    private String localVCBasePath;
+    private Path localVCBasePath;
 
     public LocalVCService(UriService uriService, GitService gitService, ProgrammingExerciseStudentParticipationRepository studentParticipationRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
@@ -68,7 +68,7 @@ public class LocalVCService extends AbstractVersionControlService {
     @Override
     public void deleteProject(String projectKey) {
         try {
-            Path projectPath = Path.of(localVCBasePath, projectKey);
+            Path projectPath = localVCBasePath.resolve(projectKey);
             FileUtils.deleteDirectory(projectPath.toFile());
         }
         catch (IOException e) {
@@ -119,7 +119,7 @@ public class LocalVCService extends AbstractVersionControlService {
     @Override
     public boolean checkIfProjectExists(String projectKey, String projectName) {
         // Try to find the folder in the file system. If it is not found, return false.
-        Path projectPath = Path.of(localVCBasePath, projectKey);
+        Path projectPath = localVCBasePath.resolve(projectKey);
         return Files.exists(projectPath);
     }
 
@@ -135,7 +135,7 @@ public class LocalVCService extends AbstractVersionControlService {
         String projectKey = programmingExercise.getProjectKey();
         try {
             // Create a directory that will contain all repositories.
-            Path projectPath = Path.of(localVCBasePath, projectKey);
+            Path projectPath = localVCBasePath.resolve(projectKey);
             Files.createDirectories(projectPath);
             log.debug("Created folder for local git project at {}", projectPath);
         }

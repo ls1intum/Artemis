@@ -10,7 +10,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
-import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -55,7 +54,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
 
     @BeforeEach
     void init() throws Exception {
-        studentRepository.configureRepos(Path.of(localVCRepoPath), "studentLocalRepo", "studentOriginRepo");
+        studentRepository.configureRepos(localVCRepoPath, "studentLocalRepo", "studentOriginRepo");
         doReturn(ObjectId.fromString("fffb09455885349da6e19d3ad7fd9c3404c5a0df")).when(gitService).getLastCommitHash(any());
 
         userUtilService.addUsers(TEST_PREFIX, 3, 1, 0, 1);

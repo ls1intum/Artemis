@@ -119,7 +119,7 @@ public class LocalVCServletService {
     }
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
-    private String localVCBasePath;
+    private Path localVCBasePath;
 
     @Value("${artemis.version-control.build-agent-git-username}")
     private String buildAgentGitUsername;
@@ -172,7 +172,7 @@ public class LocalVCServletService {
 
         long timeNanoStart = System.nanoTime();
         // Find the local repository depending on the name.
-        Path repositoryDir = Path.of(localVCBasePath, repositoryPath);
+        Path repositoryDir = localVCBasePath.resolve(repositoryPath);
 
         log.debug("Path to resolve repository from: {}", repositoryDir);
         if (!Files.exists(repositoryDir)) {

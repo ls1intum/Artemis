@@ -172,7 +172,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     protected URI localVCBaseUri;
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
-    protected String localVCBasePath;
+    protected Path localVCBasePath;
 
     protected static final String DUMMY_COMMIT_HASH = "1234567890abcdef";
 

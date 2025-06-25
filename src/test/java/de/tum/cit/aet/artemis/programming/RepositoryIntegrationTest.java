@@ -170,7 +170,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         programmingExerciseRepository.save(programmingExercise);
 
         // Instantiate the remote repository as non-bare so its files can be manipulated
-        studentRepository.configureRepos(Path.of(localVCBasePath), "studentLocalRepo", "studentOriginRepo", false);
+        studentRepository.configureRepos(localVCBasePath, "studentLocalRepo", "studentOriginRepo", false);
 
         // add file to the repository folder
         studentFilePath = Path.of(studentRepository.workingCopyGitRepoFile + "/" + currentLocalFileName);
@@ -194,7 +194,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
 
         // Create template repo
         templateRepository = new LocalRepository(defaultBranch);
-        templateRepository.configureRepos(Path.of(localVCBasePath), "templateLocalRepo", "templateOriginRepo");
+        templateRepository.configureRepos(localVCBasePath, "templateLocalRepo", "templateOriginRepo");
 
         // add files to the template repo folder
         var templateFilePath = Path.of(templateRepository.workingCopyGitRepoFile + "/" + currentLocalFileName);
@@ -471,7 +471,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     void testGetFiles_solutionParticipation() throws Exception {
         // Create template repo
         tempRepository = new LocalRepository(defaultBranch);
-        tempRepository.configureRepos(Path.of(localVCBasePath), "solutionLocalRepo", "solutionOriginRepo");
+        tempRepository.configureRepos(localVCBasePath, "solutionLocalRepo", "solutionOriginRepo");
 
         // add file to the template repo folder
         var solutionFilePath = Path.of(tempRepository.workingCopyGitRepoFile + "/" + currentLocalFileName);
@@ -817,7 +817,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
 
         // Create assignment repository and participation for the instructor.
         tempRepository = new LocalRepository(defaultBranch);
-        tempRepository.configureRepos(Path.of(localVCBasePath), "localInstructorAssignmentRepo", "remoteInstructorAssignmentRepo");
+        tempRepository.configureRepos(localVCBasePath, "localInstructorAssignmentRepo", "remoteInstructorAssignmentRepo");
         var instructorAssignmentRepoUri = new LocalVCRepositoryUri(tempRepository.workingCopyGitRepoFile.getPath());
         ProgrammingExerciseStudentParticipation instructorAssignmentParticipation = participationUtilService
                 .addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, TEST_PREFIX + "instructor1", instructorAssignmentRepoUri.getURI());

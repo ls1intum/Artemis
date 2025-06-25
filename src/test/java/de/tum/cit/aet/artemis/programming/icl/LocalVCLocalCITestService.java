@@ -85,7 +85,7 @@ public class LocalVCLocalCITestService {
     private URL localVCBaseUrl;
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
-    private String localVCRepoPath;
+    private Path localVCRepoPath;
 
     @Value("${artemis.version-control.default-branch:main}")
     protected String defaultBranch;
@@ -178,7 +178,7 @@ public class LocalVCLocalCITestService {
     public LocalRepository createAndConfigureLocalRepository(String projectKey, String repositorySlug) throws GitAPIException, IOException, URISyntaxException {
         Path localRepositoryFolder = createRepositoryFolderInTempDirectory(projectKey, repositorySlug);
         LocalRepository repository = new LocalRepository(defaultBranch);
-        repository.configureRepos(Path.of(localVCRepoPath), "localRepo", localRepositoryFolder);
+        repository.configureRepos(localVCRepoPath, "localRepo", localRepositoryFolder);
         return repository;
     }
 
@@ -488,7 +488,7 @@ public class LocalVCLocalCITestService {
      * @param programmingExercise the programming exercise.
      * @param localVCBasePath     the base path for the local repositories taken from the artemis.version-control.local-vcs-repo-path environment variable.
      */
-    public void verifyRepositoryFoldersExist(ProgrammingExercise programmingExercise, String localVCBasePath) {
+    public void verifyRepositoryFoldersExist(ProgrammingExercise programmingExercise, Path localVCBasePath) {
         LocalVCRepositoryUri templateRepositoryUri = new LocalVCRepositoryUri(programmingExercise.getTemplateRepositoryUri());
         assertThat(templateRepositoryUri.getLocalRepositoryPath(localVCBasePath)).exists();
         LocalVCRepositoryUri solutionRepositoryUri = new LocalVCRepositoryUri(programmingExercise.getSolutionRepositoryUri());

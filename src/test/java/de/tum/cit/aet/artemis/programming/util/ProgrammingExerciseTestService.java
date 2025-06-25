@@ -28,7 +28,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -165,7 +164,7 @@ public class ProgrammingExerciseTestService {
     protected String defaultBranch;
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
-    private String localVCRepoPath;
+    private Path localVCRepoPath;
 
     @Value("${artemis.course-archives-path}")
     private Path courseArchivesDirPath;
@@ -340,16 +339,16 @@ public class ProgrammingExerciseTestService {
         examExercise = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup);
         exercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
 
-        exerciseRepo.configureRepos(Path.of(localVCRepoPath), "exerciseLocalRepo", "exerciseOriginRepo");
-        testRepo.configureRepos(Path.of(localVCRepoPath), "testLocalRepo", "testOriginRepo");
-        solutionRepo.configureRepos(Path.of(localVCRepoPath), "solutionLocalRepo", "solutionOriginRepo");
-        auxRepo.configureRepos(Path.of(localVCRepoPath), "auxLocalRepo", "auxOriginRepo");
-        sourceExerciseRepo.configureRepos(Path.of(localVCRepoPath), "sourceExerciseLocalRepo", "sourceExerciseOriginRepo");
-        sourceTestRepo.configureRepos(Path.of(localVCRepoPath), "sourceTestLocalRepo", "sourceTestOriginRepo");
-        sourceSolutionRepo.configureRepos(Path.of(localVCRepoPath), "sourceSolutionLocalRepo", "sourceSolutionOriginRepo");
-        sourceAuxRepo.configureRepos(Path.of(localVCRepoPath), "sourceAuxLocalRepo", "sourceAuxOriginRepo");
-        studentRepo.configureRepos(Path.of(localVCRepoPath), "studentRepo", "studentOriginRepo");
-        studentTeamRepo.configureRepos(Path.of(localVCRepoPath), "studentTeamRepo", "studentTeamOriginRepo");
+        exerciseRepo.configureRepos(localVCRepoPath, "exerciseLocalRepo", "exerciseOriginRepo");
+        testRepo.configureRepos(localVCRepoPath, "testLocalRepo", "testOriginRepo");
+        solutionRepo.configureRepos(localVCRepoPath, "solutionLocalRepo", "solutionOriginRepo");
+        auxRepo.configureRepos(localVCRepoPath, "auxLocalRepo", "auxOriginRepo");
+        sourceExerciseRepo.configureRepos(localVCRepoPath, "sourceExerciseLocalRepo", "sourceExerciseOriginRepo");
+        sourceTestRepo.configureRepos(localVCRepoPath, "sourceTestLocalRepo", "sourceTestOriginRepo");
+        sourceSolutionRepo.configureRepos(localVCRepoPath, "sourceSolutionLocalRepo", "sourceSolutionOriginRepo");
+        sourceAuxRepo.configureRepos(localVCRepoPath, "sourceAuxLocalRepo", "sourceAuxOriginRepo");
+        studentRepo.configureRepos(localVCRepoPath, "studentRepo", "studentOriginRepo");
+        studentTeamRepo.configureRepos(localVCRepoPath, "studentTeamRepo", "studentTeamOriginRepo");
 
         setupRepositoryMocks(exercise, exerciseRepo, solutionRepo, testRepo, auxRepo);
         setupRepositoryMocksParticipant(exercise, userPrefix + STUDENT_LOGIN, studentRepo);
@@ -386,21 +385,21 @@ public class ProgrammingExerciseTestService {
         return convertToLocalVcUriString(localRepository.bareGitRepoFile, localVCRepoPath);
     }
 
-    public static String convertToLocalVcUriString(File repoFile, String localVCRepoPath) {
+    public static String convertToLocalVcUriString(File repoFile, Path localVCRepoPath) {
         try {
             // we basically add a "git" in the middle of the URI to make it a valid LocalVC URI to avoid exceptions due to strict checks
-            Path originalPath = repoFile.toPath().toAbsolutePath().normalize();
-            Path prefixPath = Paths.get(localVCRepoPath).toAbsolutePath().normalize();
+            Path originalAbsolutePath = repoFile.toPath().toAbsolutePath().normalize();
+            Path prefixAbsolutePath = localVCRepoPath.toAbsolutePath().normalize();
 
-            if (!originalPath.startsWith(prefixPath)) {
-                throw new IllegalArgumentException("Path " + repoFile.getPath() + " does not start with configured localVCRepoPath: " + prefixPath);
+            if (!originalAbsolutePath.startsWith(prefixAbsolutePath)) {
+                throw new IllegalArgumentException("Path '" + repoFile.getPath() + "' does not start with configured localVCRepoPath '" + prefixAbsolutePath + "'");
             }
 
             // Relative path after the configured prefix
-            Path relativePath = prefixPath.relativize(originalPath);
+            Path relativePath = prefixAbsolutePath.relativize(originalAbsolutePath);
 
             // Construct modified path with inserted 'git' segment
-            Path modifiedPath = prefixPath.resolve("git").resolve(relativePath);
+            Path modifiedPath = prefixAbsolutePath.resolve("git").resolve(relativePath);
 
             return modifiedPath.toUri().toURL().toString();
         }
@@ -1984,7 +1983,7 @@ public class ProgrammingExerciseTestService {
             setupRepositoryMocks(exercise);
             for (var ignored : exam.getExamUsers()) {
                 var repo = new LocalRepository(defaultBranch);
-                repo.configureRepos(Path.of(localVCRepoPath), "studentRepo", "studentOriginRepo");
+                repo.configureRepos(localVCRepoPath, "studentRepo", "studentOriginRepo");
                 // setupRepositoryMocksParticipant(exercise, examUser.getUser().getLogin(), repo);
                 studentRepos.add(repo);
             }

@@ -141,7 +141,7 @@ public class ProgrammingExerciseIntegrationTestService {
     private String defaultBranch;
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
-    private String localVCRepoPath;
+    private Path localVCRepoPath;
 
     @Autowired
     // this will be a MockitoSpyBean because it was configured as MockitoSpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
@@ -2262,7 +2262,7 @@ public class ProgrammingExerciseIntegrationTestService {
             LocalRepository localRepository = new LocalRepository("main");
             var studentLogin = testPrefix + "student1";
             try {
-                localRepository.configureRepos(Path.of(localVCRepoPath), "testLocalRepo", "testOriginRepo");
+                localRepository.configureRepos(localVCRepoPath, "testLocalRepo", "testOriginRepo");
                 return programmingUtilTestService.setupSubmission(files, exercise, localRepository, studentLogin);
             }
             catch (Exception e) {
@@ -2292,7 +2292,7 @@ public class ProgrammingExerciseIntegrationTestService {
 
             var studentLogin = testPrefix + "student1";
             try {
-                localRepository.configureRepos(Path.of(localVCRepoPath), "testLocalRepo", "testOriginRepo");
+                localRepository.configureRepos(localVCRepoPath, "testLocalRepo", "testOriginRepo");
                 return programmingUtilTestService.setupSubmission(files, exercise, localRepository, studentLogin);
             }
             catch (Exception e) {
