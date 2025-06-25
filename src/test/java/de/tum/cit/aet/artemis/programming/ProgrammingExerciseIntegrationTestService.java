@@ -2267,7 +2267,7 @@ public class ProgrammingExerciseIntegrationTestService {
                 return programmingUtilTestService.setupSubmission(files, exercise, localRepository, studentLogin);
             }
             catch (Exception e) {
-                fail("Test setup failed");
+                fail("Test setup failed", e);
             }
             return null;
         });

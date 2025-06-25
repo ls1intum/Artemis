@@ -9,6 +9,7 @@ import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
 import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
+import de.tum.cit.aet.artemis.programming.util.ShortNameGenerator;
 
 /**
  * Factory for creating Courses and related objects.
@@ -130,10 +131,13 @@ public class CourseFactory {
             int maxComplaintTextLimit, int maxComplaintResponseTextLimit, boolean communicationEnabled, boolean messagingEnabled, int requestMoreFeedbackTimeDays) {
         Course course = new Course();
         course.setId(id);
-        course.setTitle("Course title " + UUID.randomUUID());
+
+        String randomName = ShortNameGenerator.generateRandomShortName(8);
+
+        course.setTitle("Course title " + randomName);
 
         // must start with a letter
-        course.setShortName(shortName + UUID.randomUUID().toString().replace("-", "0"));
+        course.setShortName(shortName + randomName);
         course.setMaxComplaints(maxComplaints);
         course.setMaxTeamComplaints(maxTeamComplaints);
         course.setMaxComplaintTimeDays(maxComplaintTimeDays);
