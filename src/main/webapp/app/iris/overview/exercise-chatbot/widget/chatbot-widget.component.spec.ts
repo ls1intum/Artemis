@@ -82,4 +82,28 @@ describe('IrisChatbotWidgetComponent', () => {
         expect(document.body.classList.contains('cdk-global-scroll')).toBeFalse();
         expect(spy).toHaveBeenCalledWith(false);
     });
+
+    it('should set isMobile to true when overlay container width is less than 600', () => {
+        // Setup DOM
+        const overlay = document.createElement('div');
+        overlay.className = 'cdk-overlay-container';
+        overlay.getBoundingClientRect = jest.fn(() => ({ width: 500, height: 600 }));
+        document.body.appendChild(overlay);
+
+        const widget = document.createElement('div');
+        widget.className = 'chat-widget';
+        document.body.appendChild(widget);
+
+        component.setPositionAndScale();
+
+        expect(component.isMobile).toBeTrue();
+
+        // Clean up
+        document.body.removeChild(overlay);
+        document.body.removeChild(widget);
+    });
+
+    it('should not throw if cdk-overlay-container or chat-widget is missing in setPositionAndScale', () => {
+        expect(() => component.setPositionAndScale()).not.toThrow();
+    });
 });
