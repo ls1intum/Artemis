@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.atlas.api;
 import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
@@ -13,6 +14,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 
 @Controller
 @Conditional(AtlasEnabled.class)
+@Lazy
 public class LearnerProfileApi extends AbstractAtlasApi {
 
     private final LearnerProfileService learnerProfileService;
@@ -29,11 +31,11 @@ public class LearnerProfileApi extends AbstractAtlasApi {
     }
 
     public void createCourseLearnerProfile(Course course, User user) {
-        courseLearnerProfileService.createCourseLearnerProfile(course, user);
+        courseLearnerProfileService.getOrCreateCourseLearnerProfile(course, user);
     }
 
     public void createCourseLearnerProfiles(Course course, Set<User> students) {
-        courseLearnerProfileService.createCourseLearnerProfiles(course, students);
+        courseLearnerProfileService.getOrCreateCourseLearnerProfiles(course, students);
     }
 
     public void deleteCourseLearnerProfile(Course course, User user) {
@@ -46,5 +48,9 @@ public class LearnerProfileApi extends AbstractAtlasApi {
 
     public void deleteProfile(User user) {
         learnerProfileService.deleteProfile(user);
+    }
+
+    public void updateProficiency(Set<User> users, Course course, int linesChanged, int linesChangedInTemplate, double score) {
+        courseLearnerProfileService.updateProficiency(users, course, linesChanged, linesChangedInTemplate, score);
     }
 }

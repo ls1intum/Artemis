@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.plagiarism.repository;
 
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,8 +17,9 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
  * Spring Data JPA repository for the PlagiarismCase entity.
  */
 @Conditional(PlagiarismEnabled.class)
+@Lazy
 @Repository
-public interface PlagiarismSubmissionRepository extends ArtemisJpaRepository<PlagiarismSubmission<?>, Long> {
+public interface PlagiarismSubmissionRepository extends ArtemisJpaRepository<PlagiarismSubmission, Long> {
 
     @Modifying
     @Transactional // ok because of modifying query

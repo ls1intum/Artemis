@@ -3,10 +3,12 @@ package de.tum.cit.aet.artemis.exercise.repository;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -39,6 +41,7 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
  * Spring Data repository for the Submission entity.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Repository
 public interface SubmissionRepository extends ArtemisJpaRepository<Submission, Long> {
 
@@ -72,6 +75,15 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
     Long countByParticipationId(long participationId);
 
     Optional<Submission> findByParticipationIdOrderBySubmissionDateDesc(long participationId);
+
+    /**
+     * Get last submission before date for a participation
+     *
+     * @param participationId the id of the participation
+     * @param submissionDate  cutoff time for submissions
+     * @return the last submission before the cutoff
+     */
+    Optional<Submission> findFirstByParticipationIdAndSubmissionDateBeforeOrderBySubmissionDateDesc(long participationId, ZonedDateTime submissionDate);
 
     /**
      * Get all submissions of a participation and eagerly load results

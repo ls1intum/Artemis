@@ -317,7 +317,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
         FileUploadSubmission submission = fileUploadExerciseUtilService.addFileUploadSubmission(releasedFileUploadExercise, submittedFileUploadSubmission,
                 TEST_PREFIX + "student1");
         fileUploadExerciseUtilService.addFileUploadSubmission(releasedFileUploadExercise, lateFileUploadSubmission, TEST_PREFIX + "student2"); // tests prioritizing in-time
-                                                                                                                                               // submissions over late
+        // submissions over late
         // submissions
 
         exerciseUtilService.updateExerciseDueDate(releasedFileUploadExercise.getId(), ZonedDateTime.now().minusHours(1));
@@ -434,7 +434,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
         assertThat(submission).isNotNull();
         assertThat(submission.getLatestResult()).isNull();
         assertThat(submission.isSubmitted()).isTrue();
-        assertThat(submission.getParticipation().getResults()).isEmpty();
+        assertThat(participationUtilService.getResultsForParticipation(submission.getParticipation())).isEmpty();
     }
 
     @Test
@@ -449,7 +449,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
         assertThat(submission).isNotNull();
         assertThat(submission.getLatestResult()).isNull();
         assertThat(submission.isSubmitted()).isTrue();
-        assertThat(submission.getParticipation().getResults()).isEmpty();
+        assertThat(participationUtilService.getResultsForParticipation(submission.getParticipation())).isEmpty();
     }
 
     @Test
@@ -464,7 +464,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
         FileUploadSubmission submission = request.get("/api/fileupload/participations/" + fileUploadSubmission.getParticipation().getId() + "/file-upload-editor", HttpStatus.OK,
                 FileUploadSubmission.class);
         assertThat(submission.getLatestResult()).isNull();
-        assertThat(submission.getParticipation().getResults()).isEmpty();
+        assertThat(participationUtilService.getResultsForParticipation(submission.getParticipation())).isEmpty();
     }
 
     @Test
@@ -636,7 +636,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
     }
 
     private void checkDetailsHidden(FileUploadSubmission submission, boolean isStudent) {
-        assertThat(submission.getParticipation().getResults()).isNullOrEmpty();
+        assertThat(participationUtilService.getResultsForParticipation(submission.getParticipation())).isNullOrEmpty();
         if (isStudent) {
             assertThat(submission.getLatestResult()).isNull();
         }

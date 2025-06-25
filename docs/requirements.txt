@@ -1,10 +1,10 @@
 alabaster==1.0.0
 docutils==0.21.2
 Jinja2==3.1.6
-requests==2.32.3
+requests==2.32.4
 Sphinx==8.2.3
 sphinx-rtd-theme==3.0.2
 sphinx-autobuild==2024.10.3
-sphinxcontrib-bibtex==2.6.3
-urllib3==2.4.0
-zipp==3.22.0
+sphinxcontrib-bibtex==2.6.4
+urllib3==2.5.0
+zipp==3.23.0

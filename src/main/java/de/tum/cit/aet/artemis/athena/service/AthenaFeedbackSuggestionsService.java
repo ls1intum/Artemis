@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -44,6 +45,7 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
  * Service for receiving feedback suggestions from the Athena service.
  * Assumes that submissions and already given feedback have already been sent to Athena or that the feedback is non-graded.
  */
+@Lazy
 @Service
 @Profile(PROFILE_ATHENA)
 public class AthenaFeedbackSuggestionsService {
@@ -201,7 +203,8 @@ public class AthenaFeedbackSuggestionsService {
      * @throws BadRequestAlertException if the maximum number of Athena feedback requests is exceeded
      */
     public void checkRateLimitOrThrow(StudentParticipation participation) {
-        List<Result> athenaResults = participation.getResults().stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA).toList();
+        List<Result> athenaResults = participation.getSubmissions().stream()
+                .flatMap(submission -> submission.getResults().stream().filter(result -> result != null && result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA)).toList();
 
         long countOfSuccessfulRequests = athenaResults.stream().filter(result -> result.isSuccessful() == Boolean.TRUE).count();
 

@@ -13,6 +13,7 @@ import jakarta.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
@@ -66,6 +67,7 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
  * </ul>
  */
 @Conditional(AtlasEnabled.class)
+@Lazy
 @Service
 public class LearningPathService {
 
@@ -122,7 +124,7 @@ public class LearningPathService {
     public void enableLearningPathsForCourse(@NotNull Course course) {
         course.setLearningPathsEnabled(true);
         Set<User> students = userRepository.getStudentsWithLearnerProfile(course);
-        courseLearnerProfileService.createCourseLearnerProfiles(course, students);
+        courseLearnerProfileService.getOrCreateCourseLearnerProfiles(course, students);
         generateLearningPaths(course, students);
         courseRepository.save(course);
         log.debug("Enabled learning paths for course (id={})", course.getId());
@@ -135,7 +137,7 @@ public class LearningPathService {
      */
     public void generateLearningPaths(@NotNull Course course) {
         Set<User> students = userRepository.getStudentsWithLearnerProfile(course);
-        courseLearnerProfileService.createCourseLearnerProfiles(course, students);
+        courseLearnerProfileService.getOrCreateCourseLearnerProfiles(course, students);
         generateLearningPaths(course, students);
     }
 
@@ -381,7 +383,7 @@ public class LearningPathService {
         LearningPath learningPath;
         if (optionalLearningPath.isEmpty()) {
             LearningPath learningPathWithCourse = learningPathRepository.findWithEagerCourseByIdElseThrow(learningPathId);
-            courseLearnerProfileService.createCourseLearnerProfile(learningPathWithCourse.getCourse(), learningPathWithCourse.getUser());
+            courseLearnerProfileService.getOrCreateCourseLearnerProfile(learningPathWithCourse.getCourse(), learningPathWithCourse.getUser());
             learningPath = learningPathRepositoryService.findWithCompetenciesAndLectureUnitsAndExercisesAndLearnerProfileByIdElseThrow(learningPathId);
         }
         else {

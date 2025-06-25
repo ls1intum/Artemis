@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.atlas.web;
 import static de.tum.cit.aet.artemis.atlas.domain.profile.CourseLearnerProfile.MAX_PROFILE_VALUE;
 import static de.tum.cit.aet.artemis.atlas.domain.profile.CourseLearnerProfile.MIN_PROFILE_VALUE;
 
-import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -11,6 +10,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.course.CourseAtlasService;
 
 @Conditional(AtlasEnabled.class)
+@Lazy
 @RestController
 @RequestMapping("api/atlas/")
 public class LearnerProfileResource {
@@ -65,17 +66,13 @@ public class LearnerProfileResource {
     public ResponseEntity<Set<CourseLearnerProfileDTO>> getCourseLearnerProfiles() {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get all CourseLearnerProfiles of user {}", user.getLogin());
-        Set<CourseLearnerProfile> courseLearnerProfiles = courseLearnerProfileRepository.findAllByLoginAndCourseActive(user.getLogin(), ZonedDateTime.now()).stream()
-                .filter(profile -> user.getGroups().contains(profile.getCourse().getStudentGroupName())).collect(Collectors.toSet());
 
         Set<Course> coursesWithLearningPaths = courseAtlasService.findAllActiveForUserAndLearningPathsEnabled(user);
 
-        // This is needed, as there is no method that is executed everytime a user is added to a new course
-        Set<CourseLearnerProfile> newProfiles = coursesWithLearningPaths.stream()
-                .filter(course -> courseLearnerProfiles.stream().map(CourseLearnerProfile::getCourse).noneMatch(existingCourse -> existingCourse.equals(course)))
-                .map(course -> courseLearnerProfileService.createCourseLearnerProfile(course, user)).collect(Collectors.toSet());
+        Set<CourseLearnerProfile> courseLearnerProfiles = courseLearnerProfileService.getOrCreateByCourses(user, coursesWithLearningPaths)
+                // Only display profiles for courses a user is currently a student in
 
-        courseLearnerProfiles.addAll(newProfiles);
+                .stream().filter(courseLearnerProfile -> user.getGroups().contains(courseLearnerProfile.getCourse().getStudentGroupName())).collect(Collectors.toSet());
 
         Set<CourseLearnerProfileDTO> returnSet = courseLearnerProfiles.stream().map(CourseLearnerProfileDTO::of).collect(Collectors.toSet());
 
@@ -88,9 +85,9 @@ public class LearnerProfileResource {
      * @param value     Value of the field
      * @param fieldName Field name
      */
-    private void validateProfileField(int value, String fieldName) {
+    private void validateProfileField(double value, String fieldName) {
         if (value < MIN_PROFILE_VALUE || value > MAX_PROFILE_VALUE) {
-            String message = String.format("%s (%d) is outside valid bounds [%d, %d]", fieldName, value, MIN_PROFILE_VALUE, MAX_PROFILE_VALUE);
+            String message = String.format("%s (%f) is outside valid bounds [%d, %d]", fieldName, value, MIN_PROFILE_VALUE, MAX_PROFILE_VALUE);
             throw new BadRequestAlertException(message, CourseLearnerProfile.ENTITY_NAME, fieldName.toLowerCase() + "OutOfBounds", true);
         }
     }
@@ -114,7 +111,7 @@ public class LearnerProfileResource {
                     true);
         }
 
-        Optional<CourseLearnerProfile> optionalCourseLearnerProfile = courseLearnerProfileRepository.findByLoginAndId(user.getLogin(), courseLearnerProfileId);
+        Optional<CourseLearnerProfile> optionalCourseLearnerProfile = courseLearnerProfileRepository.findByLoginAndIdWithCourse(user.getLogin(), courseLearnerProfileId);
 
         if (optionalCourseLearnerProfile.isEmpty()) {
             throw new BadRequestAlertException("CourseLearnerProfile not found.", CourseLearnerProfile.ENTITY_NAME, "courseLearnerProfileNotFound", true);
@@ -123,11 +120,19 @@ public class LearnerProfileResource {
         validateProfileField(courseLearnerProfileDTO.aimForGradeOrBonus(), "AimForGradeOrBonus");
         validateProfileField(courseLearnerProfileDTO.timeInvestment(), "TimeInvestment");
         validateProfileField(courseLearnerProfileDTO.repetitionIntensity(), "RepetitionIntensity");
+        validateProfileField(courseLearnerProfileDTO.proficiency(), "Proficiency");
+        validateProfileField(courseLearnerProfileDTO.initialProficiency(), "Initial Proficiency");
 
         CourseLearnerProfile updateProfile = optionalCourseLearnerProfile.get();
         updateProfile.setAimForGradeOrBonus(courseLearnerProfileDTO.aimForGradeOrBonus());
         updateProfile.setTimeInvestment(courseLearnerProfileDTO.timeInvestment());
         updateProfile.setRepetitionIntensity(courseLearnerProfileDTO.repetitionIntensity());
+
+        double sentProficiency = courseLearnerProfileDTO.proficiency();
+        if (Math.abs(updateProfile.getProficiency() - sentProficiency) >= 0.1) {
+            updateProfile.setProficiency(sentProficiency);
+            updateProfile.setInitialProficiency(sentProficiency);
+        }
 
         courseLearnerProfileRepository.save(updateProfile);
         return ResponseEntity.ok(CourseLearnerProfileDTO.of(updateProfile));

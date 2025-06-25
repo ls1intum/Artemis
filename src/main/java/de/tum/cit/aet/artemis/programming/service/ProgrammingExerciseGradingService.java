@@ -25,6 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
@@ -36,6 +37,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
+import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -49,6 +51,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseGitDiffReport;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
@@ -70,6 +73,7 @@ import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExercise
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationResultService;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class ProgrammingExerciseGradingService {
 
@@ -109,13 +113,21 @@ public class ProgrammingExerciseGradingService {
 
     private final FeedbackService feedbackService;
 
+    private final Optional<LearnerProfileApi> learnerProfileApi;
+
+    private final ProgrammingSubmissionService programmingSubmissionService;
+
+    private final ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService;
+
     public ProgrammingExerciseGradingService(StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
             Optional<ContinuousIntegrationResultService> continuousIntegrationResultService, ProgrammingExerciseTestCaseRepository testCaseRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository, FeedbackService feedbackService,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             AuditEventRepository auditEventRepository, GroupNotificationService groupNotificationService, ResultService resultService, ExerciseDateService exerciseDateService,
             SubmissionPolicyService submissionPolicyService, ProgrammingExerciseRepository programmingExerciseRepository, BuildLogEntryService buildLogService,
-            StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository, ProgrammingExerciseFeedbackCreationService feedbackCreationService) {
+            StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository, ProgrammingExerciseFeedbackCreationService feedbackCreationService,
+            Optional<LearnerProfileApi> learnerProfileApi, ProgrammingSubmissionService programmingSubmissionService,
+            ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.continuousIntegrationResultService = continuousIntegrationResultService;
         this.resultRepository = resultRepository;
@@ -133,6 +145,9 @@ public class ProgrammingExerciseGradingService {
         this.staticCodeAnalysisCategoryRepository = staticCodeAnalysisCategoryRepository;
         this.feedbackCreationService = feedbackCreationService;
         this.feedbackService = feedbackService;
+        this.learnerProfileApi = learnerProfileApi;
+        this.programmingSubmissionService = programmingSubmissionService;
+        this.programmingExerciseGitDiffReportService = programmingExerciseGitDiffReportService;
     }
 
     /**
@@ -301,9 +316,27 @@ public class ProgrammingExerciseGradingService {
                 submissionPolicyService.handleLockRepositoryPolicy(processedResult, (Participation) participation, policy);
             }
 
+            if (learnerProfileApi.isPresent()) {
+                // Update course learner profile with received score and lines changed
+                int linesChangedInSubmission = programmingSubmissionService.calculateLinesChangedToPreviousSubmission(programmingSubmission);
+                ProgrammingExerciseGitDiffReport exerciseGitDiffReport = programmingExerciseGitDiffReportService.getOrCreateReportOfExercise(programmingExercise);
+
+                // Diff report might be null if it can't be created
+                if (exerciseGitDiffReport != null) {
+
+                    int linesChangedInSolution = exerciseGitDiffReport.getEntries().stream().mapToInt(
+                            (entry) -> ((entry.getPreviousLineCount() != null) ? entry.getPreviousLineCount() : 0) + ((entry.getLineCount() != null) ? entry.getLineCount() : 0))
+                            .sum();
+                    double score = processedResult.getScore();
+
+                    learnerProfileApi.get().updateProficiency(((StudentParticipation) participation).getStudents(),
+                            participation.getProgrammingExercise().getCourseViaExerciseGroupOrCourseMember(), linesChangedInSubmission, linesChangedInSolution, score);
+                }
+            }
             if (programmingSubmission.getLatestResult() != null && programmingSubmission.getLatestResult().isManual() && !((Participation) participation).isPracticeMode()) {
                 // Note: in this case, we do not want to save the processedResult, but we only want to update the latest semi-automatic one
                 Result updatedLatestSemiAutomaticResult = updateLatestSemiAutomaticResultWithNewAutomaticFeedback(programmingSubmission.getLatestResult().getId(), processedResult);
+
                 // Adding back dropped submission
                 updatedLatestSemiAutomaticResult.setSubmission(programmingSubmission);
                 programmingSubmissionRepository.save(programmingSubmission);
