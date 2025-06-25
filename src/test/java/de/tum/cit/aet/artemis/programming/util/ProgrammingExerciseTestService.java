@@ -349,6 +349,7 @@ public class ProgrammingExerciseTestService {
         studentRepo.configureRepos(localVCRepoPath, "studentRepo", "studentOriginRepo");
         studentTeamRepo.configureRepos(localVCRepoPath, "studentTeamRepo", "studentTeamOriginRepo");
 
+        // TODO: we should not mock repositories any more now that everything works with LocalVC
         setupRepositoryMocks(exercise, exerciseRepo, solutionRepo, testRepo, auxRepo);
         setupRepositoryMocksParticipant(exercise, userPrefix + STUDENT_LOGIN, studentRepo);
         setupRepositoryMocksParticipant(exercise, userPrefix + TEAM_SHORT_NAME, studentTeamRepo);
@@ -366,10 +367,14 @@ public class ProgrammingExerciseTestService {
         studentTeamRepo.resetLocalRepo();
     }
 
+    // TODO: we should not mock repositories any more now that everything works with LocalVC
+    @Deprecated
     public void setupRepositoryMocks(ProgrammingExercise exercise) throws Exception {
         setupRepositoryMocks(exercise, exerciseRepo, solutionRepo, testRepo, auxRepo);
     }
 
+    // TODO: we should not mock repositories any more now that everything works with LocalVC
+    @Deprecated
     public void setupRepositoryMocks(ProgrammingExercise exercise, LocalRepository exerciseRepository, LocalRepository solutionRepository, LocalRepository testRepository,
             LocalRepository auxRepository) throws Exception {
         final var projectKey = exercise.getProjectKey();
@@ -398,6 +403,8 @@ public class ProgrammingExerciseTestService {
      * @param auxRepoName        the name of the auxiliary repository
      * @throws Exception in case any repository uri is malformed or the GitService fails
      */
+    // TODO: we should not mock repositories any more now that everything works with LocalVC
+    @Deprecated
     public void setupRepositoryMocks(String projectKey, LocalRepository exerciseRepository, String exerciseRepoName, LocalRepository solutionRepository, String solutionRepoName,
             LocalRepository testRepository, String testRepoName, LocalRepository auxRepository, String auxRepoName) throws Exception {
         var exerciseRepoTestUrl = new LocalVCRepositoryUri(convertToLocalVcUriString(exerciseRepository));
@@ -1360,8 +1367,6 @@ public class ProgrammingExerciseTestService {
         // We need to mock the call again because we are triggering the build twice in order to verify that the submission isn't re-created
         mockDelegate.mockTriggerParticipationBuild(participation);
 
-        mockDelegate.mockDefaultBranch(participation.getProgrammingExercise());
-
         // These will be updated when triggering a build
         participation.setInitializationState(InitializationState.INACTIVE);
         participation.setBuildPlanId(null);
@@ -1392,7 +1397,6 @@ public class ProgrammingExerciseTestService {
         mockDelegate.mockTriggerFailedBuild(participation);
         // We need to mock the call again because we are triggering the build twice in order to verify that the submission isn't re-created
         mockDelegate.mockTriggerFailedBuild(participation);
-        mockDelegate.mockDefaultBranch(participation.getProgrammingExercise());
 
         // These will be updated triggering a failed build
         participation.setInitializationState(InitializationState.INACTIVE);
@@ -1429,8 +1433,6 @@ public class ProgrammingExerciseTestService {
         mockDelegate.mockTriggerInstructorBuildAll(participation);
         // We need to mock the call again because we are triggering the build twice in order to verify that the submission isn't re-created
         mockDelegate.mockTriggerInstructorBuildAll(participation);
-
-        mockDelegate.mockDefaultBranch(participation.getProgrammingExercise());
 
         // These will be updated triggering a failed build
         participation.setInitializationState(InitializationState.INACTIVE);
@@ -2082,9 +2084,6 @@ public class ProgrammingExerciseTestService {
         newStudent = userRepo.save(newStudent);
         team.addStudents(newStudent);
 
-        // Mock repository write permission give call
-        mockDelegate.mockRepositoryWritePermissionsForTeam(team, newStudent, exercise, HttpStatus.OK);
-
         // Start participation with original team
         participationService.startExercise(exercise, team, false);
 
@@ -2172,9 +2171,6 @@ public class ProgrammingExerciseTestService {
 
         assertThat(team.getStudents()).as("Student1 was correctly added to team").hasSize(1);
 
-        // test for internal server error
-        mockDelegate.mockCopyRepositoryForParticipation(exercise, team.getParticipantIdentifier());
-        mockDelegate.mockRepositoryWritePermissionsForTeam(team, student1, exercise, HttpStatus.BAD_REQUEST);
         return team;
     }
 
@@ -2547,17 +2543,8 @@ public class ProgrammingExerciseTestService {
     private void setupMocksForConsistencyChecksOnImport(ProgrammingExercise sourceExercise) throws Exception {
         var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(sourceExercise.getId()).orElseThrow();
 
-        mockDelegate.mockCheckIfProjectExistsInVcs(programmingExercise, true);
-        mockDelegate.mockRepositoryUriIsValid(programmingExercise.getVcsTemplateRepositoryUri(),
-                uriService.getProjectKeyFromRepositoryUri(programmingExercise.getVcsTemplateRepositoryUri()), true);
-        mockDelegate.mockRepositoryUriIsValid(programmingExercise.getVcsSolutionRepositoryUri(),
-                uriService.getProjectKeyFromRepositoryUri(programmingExercise.getVcsSolutionRepositoryUri()), true);
-        mockDelegate.mockRepositoryUriIsValid(programmingExercise.getVcsTestRepositoryUri(),
-                uriService.getProjectKeyFromRepositoryUri(programmingExercise.getVcsTestRepositoryUri()), true);
         for (var auxiliaryRepository : programmingExercise.getAuxiliaryRepositories()) {
             mockDelegate.mockGetRepositorySlugFromRepositoryUri(sourceExercise.generateRepositoryName("auxrepo"), auxiliaryRepository.getVcsRepositoryUri());
-            mockDelegate.mockRepositoryUriIsValid(auxiliaryRepository.getVcsRepositoryUri(), uriService.getProjectKeyFromRepositoryUri(auxiliaryRepository.getVcsRepositoryUri()),
-                    true);
         }
         mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), true, false);
         mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getSolutionBuildPlanId(), true, false);

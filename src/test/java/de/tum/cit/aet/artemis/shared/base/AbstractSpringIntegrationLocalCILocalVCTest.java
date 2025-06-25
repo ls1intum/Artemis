@@ -44,7 +44,6 @@ import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserService;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
-import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisEventService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisCourseChatSessionService;
@@ -52,7 +51,6 @@ import de.tum.cit.aet.artemis.iris.service.session.IrisExerciseChatSessionServic
 import de.tum.cit.aet.artemis.programming.domain.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.icl.DockerClientTestService;
 import de.tum.cit.aet.artemis.programming.icl.LocalVCLocalCITestService;
 import de.tum.cit.aet.artemis.programming.icl.TestBuildAgentConfiguration;
@@ -269,26 +267,6 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     }
 
     @Override
-    public void mockCopyRepositoryForParticipation(ProgrammingExercise exercise, String username) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
-    public void mockRepositoryWritePermissionsForTeam(Team team, User newStudent, ProgrammingExercise exercise, HttpStatus status) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
-    public void mockRepositoryWritePermissionsForStudent(User student, ProgrammingExercise exercise, HttpStatus status) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
-    public void mockFetchCommitInfo(String projectKey1, String repositorySlug, String hash) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
     public void mockCopyBuildPlan(ProgrammingExerciseStudentParticipation participation) {
         // Not implemented for local VC and local CI
     }
@@ -370,16 +348,6 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     }
 
     @Override
-    public void mockDeleteRepository(String projectKey1, String repositoryName, boolean shouldFail) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
-    public void mockDeleteProjectInVcs(String projectKey1, boolean shouldFail) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
     public void mockDeleteBuildPlan(String projectKey1, String planName, boolean shouldFail) throws Exception {
         // Not implemented for local VC and local CI
     }
@@ -405,11 +373,6 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     }
 
     @Override
-    public void mockCheckIfProjectExistsInVcs(ProgrammingExercise exercise, boolean existsInVcs) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
     public void mockCheckIfProjectExistsInCi(ProgrammingExercise exercise, boolean existsInCi, boolean shouldFail) {
         // Not implemented for local VC and local CI
     }
@@ -420,22 +383,12 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     }
 
     @Override
-    public void mockRepositoryUriIsValid(VcsRepositoryUri vcsTemplateRepositoryUri, String projectKey1, boolean b) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
     public void mockTriggerBuild(AbstractBaseProgrammingExerciseParticipation solutionParticipation) {
         // Not implemented for local VC and local CI
     }
 
     @Override
     public void mockTriggerBuildFailed(AbstractBaseProgrammingExerciseParticipation solutionParticipation) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
-    public void mockDefaultBranch(ProgrammingExercise programmingExercise) {
         // Not implemented for local VC and local CI
     }
 

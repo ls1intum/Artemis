@@ -96,8 +96,6 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationLocalCI
         doNothing().when(continuousIntegrationService).deleteProject(any());
         doNothing().when(continuousIntegrationService).updatePlanRepository(any(), any(), any(), any(), any(), any(), any());
 
-        mockDefaultBranch(programmingExercise1);
-        mockDefaultBranch(programmingExercise2);
         mockTriggerFailedBuild(participation);
 
         // Try to access 5 different endpoints with programming feature toggle enabled

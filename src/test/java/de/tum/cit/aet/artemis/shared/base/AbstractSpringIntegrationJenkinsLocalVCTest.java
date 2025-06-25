@@ -44,7 +44,6 @@ import de.tum.cit.aet.artemis.core.connector.JenkinsRequestMockProvider;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
-import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.programming.domain.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.AeolusTarget;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -277,7 +276,6 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTest extends Abstra
         final String slug = "test201904bprogrammingexercise6-exercise-testuser";
         final String hash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
         final String projectKey = participation.getProgrammingExercise().getProjectKey();
-        mockFetchCommitInfo(projectKey, slug, hash);
         jenkinsRequestMockProvider.mockTriggerBuild(projectKey, participation.getBuildPlanId(), false);
     }
 
@@ -417,57 +415,12 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTest extends Abstra
     }
 
     @Override
-    public void mockCopyRepositoryForParticipation(ProgrammingExercise exercise, String username) {
-        // Not needed for this test
-    }
-
-    @Override
-    public void mockRepositoryWritePermissionsForTeam(Team team, User newStudent, ProgrammingExercise exercise, HttpStatus status) {
-        // Not needed for this test
-    }
-
-    @Override
-    public void mockRepositoryWritePermissionsForStudent(User student, ProgrammingExercise exercise, HttpStatus status) {
-        // Not needed for this test
-    }
-
-    @Override
-    public void mockFetchCommitInfo(String projectKey, String repositorySlug, String hash) {
-        // Not needed for this test
-    }
-
-    @Override
     public void mockCreateGroupInUserManagement(String groupName) {
         // Not needed for this test
     }
 
     @Override
     public void mockDeleteGroupInUserManagement(String groupName) {
-        // Not needed for this test
-    }
-
-    @Override
-    public void mockDeleteRepository(String projectKey, String repositoryName, boolean shouldFail) {
-        // Not needed for this test
-    }
-
-    @Override
-    public void mockDeleteProjectInVcs(String projectKey, boolean shouldFail) {
-        // Not needed for this test
-    }
-
-    @Override
-    public void mockCheckIfProjectExistsInVcs(ProgrammingExercise exercise, boolean existsInVcs) {
-        // Not needed for this test
-    }
-
-    @Override
-    public void mockRepositoryUriIsValid(VcsRepositoryUri vcsTemplateRepositoryUri, String projectKey, boolean b) {
-        // Not needed for this test
-    }
-
-    @Override
-    public void mockDefaultBranch(ProgrammingExercise programmingExercise) {
         // Not needed for this test
     }
 

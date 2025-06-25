@@ -614,13 +614,6 @@ public class ProgrammingExerciseIntegrationTestService {
             mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(), false);
         }
         mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
-
-        for (final var repoName : List.of(userPrefix + "student1", userPrefix + "student2", RepositoryType.TEMPLATE.getName(), RepositoryType.SOLUTION.getName(),
-                RepositoryType.TESTS.getName())) {
-            mockDelegate.mockDeleteRepository(projectKey, (projectKey + "-" + repoName).toLowerCase(), false);
-        }
-        mockDelegate.mockDeleteProjectInVcs(projectKey, false);
-
         request.delete(path, HttpStatus.OK, params);
     }
 
@@ -681,11 +674,6 @@ public class ProgrammingExerciseIntegrationTestService {
         }
         mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
 
-        for (final var repoName : List.of("student1", "student2", RepositoryType.TEMPLATE.getName(), RepositoryType.SOLUTION.getName(), RepositoryType.TESTS.getName())) {
-            mockDelegate.mockDeleteRepository(projectKey, (projectKey + "-" + repoName).toLowerCase(), false);
-        }
-        mockDelegate.mockDeleteProjectInVcs(projectKey, true);
-
         request.delete(path, HttpStatus.INTERNAL_SERVER_ERROR, params);
     }
 
@@ -700,11 +688,6 @@ public class ProgrammingExerciseIntegrationTestService {
             mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(), false);
         }
         mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
-
-        for (final var repoName : List.of("student1", "student2", RepositoryType.TEMPLATE.getName(), RepositoryType.SOLUTION.getName(), RepositoryType.TESTS.getName())) {
-            mockDelegate.mockDeleteRepository(projectKey, (projectKey + "-" + repoName).toLowerCase(), true);
-        }
-        mockDelegate.mockDeleteProjectInVcs(projectKey, false);
 
         request.delete(path, HttpStatus.INTERNAL_SERVER_ERROR, params);
     }
@@ -865,9 +848,6 @@ public class ProgrammingExerciseIntegrationTestService {
     private void mockBuildPlanAndRepositoryCheck(ProgrammingExercise programmingExercise) throws Exception {
         mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), true, false);
         mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getSolutionBuildPlanId(), true, false);
-        mockDelegate.mockRepositoryUriIsValid(programmingExercise.getVcsTemplateRepositoryUri(), programmingExercise.getProjectKey(), true);
-        mockDelegate.mockRepositoryUriIsValid(programmingExercise.getVcsSolutionRepositoryUri(), programmingExercise.getProjectKey(), true);
-        mockDelegate.mockRepositoryUriIsValid(programmingExercise.getVcsTestRepositoryUri(), programmingExercise.getProjectKey(), true);
     }
 
     void updateProgrammingExercise_staticCodeAnalysisMustNotChange_falseToTrue_badRequest() throws Exception {
@@ -892,8 +872,6 @@ public class ProgrammingExerciseIntegrationTestService {
     void updateProgrammingExercise_invalidTemplateVcs_badRequest() throws Exception {
         programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
         mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), true, false);
-        mockDelegate.mockRepositoryUriIsValid(programmingExercise.getVcsTemplateRepositoryUri(), programmingExercise.getProjectKey(), false);
-
         request.putAndExpectError("/api/programming/programming-exercises", programmingExercise, HttpStatus.BAD_REQUEST, INVALID_TEMPLATE_REPOSITORY_URL);
     }
 
@@ -901,7 +879,6 @@ public class ProgrammingExerciseIntegrationTestService {
         programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
         programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
         mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), true, false);
-        mockDelegate.mockRepositoryUriIsValid(programmingExercise.getVcsTemplateRepositoryUri(), programmingExercise.getProjectKey(), true);
         mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getSolutionBuildPlanId(), false, false);
 
         request.putAndExpectError("/api/programming/programming-exercises", programmingExercise, HttpStatus.BAD_REQUEST, INVALID_SOLUTION_BUILD_PLAN_ID);
@@ -912,16 +889,12 @@ public class ProgrammingExerciseIntegrationTestService {
         programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
         mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), true, false);
         mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getSolutionBuildPlanId(), true, false);
-        mockDelegate.mockRepositoryUriIsValid(programmingExercise.getVcsTemplateRepositoryUri(), programmingExercise.getProjectKey(), true);
-        mockDelegate.mockRepositoryUriIsValid(programmingExercise.getVcsSolutionRepositoryUri(), programmingExercise.getProjectKey(), false);
-
         request.putAndExpectError("/api/programming/programming-exercises", programmingExercise, HttpStatus.BAD_REQUEST, INVALID_SOLUTION_REPOSITORY_URL);
     }
 
     void updateProgrammingExercise_checkIfBuildPlanExistsFails_badRequest() throws Exception {
         programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
         mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), true, true);
-        mockDelegate.mockRepositoryUriIsValid(programmingExercise.getVcsTemplateRepositoryUri(), programmingExercise.getProjectKey(), true);
         request.putAndExpectError("/api/programming/programming-exercises", programmingExercise, HttpStatus.BAD_REQUEST, INVALID_TEMPLATE_BUILD_PLAN_ID);
     }
 
@@ -1209,7 +1182,6 @@ public class ProgrammingExerciseIntegrationTestService {
         programmingExercise.setId(null);
         programmingExercise.setTitle("testTitle");
         programmingExercise.setShortName("testShortName");
-        mockDelegate.mockCheckIfProjectExistsInVcs(programmingExercise, true);
         request.post("/api/programming/programming-exercises/setup", programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
@@ -1217,7 +1189,6 @@ public class ProgrammingExerciseIntegrationTestService {
         programmingExercise.setId(null);
         programmingExercise.setTitle("testTitle");
         programmingExercise.setShortName("testShortName");
-        mockDelegate.mockCheckIfProjectExistsInVcs(programmingExercise, true);
         request.post("/api/programming/programming-exercises/setup", programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
@@ -1225,7 +1196,6 @@ public class ProgrammingExerciseIntegrationTestService {
         programmingExercise.setId(null);
         programmingExercise.setTitle("unique-title");
         programmingExercise.setShortName("testuniqueshortname");
-        mockDelegate.mockCheckIfProjectExistsInVcs(programmingExercise, false);
         mockDelegate.mockCheckIfProjectExistsInCi(programmingExercise, true, true);
         request.post("/api/programming/programming-exercises/setup", programmingExercise, HttpStatus.BAD_REQUEST);
     }
@@ -1393,14 +1363,12 @@ public class ProgrammingExerciseIntegrationTestService {
     void importProgrammingExercise_vcsProjectWithSameKeyAlreadyExists_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setShortName("testShortName");
-        mockDelegate.mockCheckIfProjectExistsInVcs(programmingExercise, true);
         request.post("/api/programming/programming-exercises/import/" + NON_EXISTING_ID, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
     void importProgrammingExercise_vcsProjectWithSameTitleAlreadyExists_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setShortName("testShortName");
-        mockDelegate.mockCheckIfProjectExistsInVcs(programmingExercise, true);
         request.post("/api/programming/programming-exercises/import/" + NON_EXISTING_ID, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
@@ -1423,7 +1391,6 @@ public class ProgrammingExerciseIntegrationTestService {
         ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", programmingExercise, course);
         exerciseToBeImported.setProblemStatement(problemStatement);
 
-        mockDelegate.mockCheckIfProjectExistsInVcs(programmingExercise, true);
         mockDelegate.mockConnectorRequestsForImport(programmingExercise, exerciseToBeImported, false, false);
         mockDelegate.mockConnectorRequestsForSetup(exerciseToBeImported, false, false, false);
         mockBuildPlanAndRepositoryCheck(programmingExercise);
@@ -1956,10 +1923,6 @@ public class ProgrammingExerciseIntegrationTestService {
             mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(), false);
         }
 
-        for (final var repoName : List.of(userPrefix + "student1", userPrefix + "student2")) {
-            mockDelegate.mockDeleteRepository(projectKey, (projectKey + "-" + repoName).toLowerCase(), false);
-        }
-
         // Two participations exist with build plans and repositories before reset
         var participations = programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId());
         assertThat(participations).hasSize(2);
@@ -1984,10 +1947,6 @@ public class ProgrammingExerciseIntegrationTestService {
         final var projectKey = programmingExercise.getProjectKey();
         for (final var planName : List.of(userPrefix + "student1", userPrefix + "student2")) {
             mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(), false);
-        }
-
-        for (final var repoName : List.of(userPrefix + "student1", userPrefix + "student2")) {
-            mockDelegate.mockDeleteRepository(projectKey, (projectKey + "-" + repoName).toLowerCase(), false);
         }
 
         // Two participations exist before reset
@@ -2318,17 +2277,8 @@ public class ProgrammingExerciseIntegrationTestService {
     private void setupMocksForConsistencyChecksOnImport(ProgrammingExercise sourceExercise) throws Exception {
         var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(sourceExercise.getId()).orElseThrow();
 
-        mockDelegate.mockCheckIfProjectExistsInVcs(programmingExercise, true);
-        mockDelegate.mockRepositoryUriIsValid(programmingExercise.getVcsTemplateRepositoryUri(),
-                uriService.getProjectKeyFromRepositoryUri(programmingExercise.getVcsTemplateRepositoryUri()), true);
-        mockDelegate.mockRepositoryUriIsValid(programmingExercise.getVcsSolutionRepositoryUri(),
-                uriService.getProjectKeyFromRepositoryUri(programmingExercise.getVcsSolutionRepositoryUri()), true);
-        mockDelegate.mockRepositoryUriIsValid(programmingExercise.getVcsTestRepositoryUri(),
-                uriService.getProjectKeyFromRepositoryUri(programmingExercise.getVcsTestRepositoryUri()), true);
         for (var auxiliaryRepository : programmingExercise.getAuxiliaryRepositories()) {
             mockDelegate.mockGetRepositorySlugFromRepositoryUri(sourceExercise.generateRepositoryName("auxrepo"), auxiliaryRepository.getVcsRepositoryUri());
-            mockDelegate.mockRepositoryUriIsValid(auxiliaryRepository.getVcsRepositoryUri(), uriService.getProjectKeyFromRepositoryUri(auxiliaryRepository.getVcsRepositoryUri()),
-                    true);
         }
         mockDelegate.mockCheckIfBuildPlanExists(uriService.getProjectKeyFromRepositoryUri(programmingExercise.getVcsTemplateRepositoryUri()),
                 programmingExercise.getTemplateBuildPlanId(), true, false);
