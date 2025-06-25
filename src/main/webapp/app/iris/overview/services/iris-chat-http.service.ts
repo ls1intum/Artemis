@@ -112,23 +112,19 @@ export class IrisChatHttpService {
         return this.httpClient.post<T>(`${this.apiPrefix}/${identifier}/sessions/current`, null, { observe: 'response' });
     }
 
-    getSessionById<T extends IrisSession>(sessionId: number): Response<T> {
-        return this.httpClient.get<T>(`${this.apiPrefix}/sessions/${sessionId}`, { observe: 'response' });
-    }
-
     createSession<T extends IrisSession>(identifier: string): Response<T> {
         return this.httpClient.post<T>(`${this.apiPrefix}/${identifier}/sessions`, null, { observe: 'response' });
     }
 
     getChatSessions(courseId: number): Observable<IrisSession[]> {
         return this.httpClient
-            .get<any[]>(`api/iris/chat-history/${courseId}/sessions`)
+            .get<any[]>(`${this.apiPrefix}/chat-history/${courseId}/sessions`)
             .pipe(map((sessionsArray) => sessionsArray.map((sessionData) => new IrisSession(sessionData))));
     }
 
     getChatSessionById(courseId: number, sessionId: number, chatServiceMode: ChatServiceMode): Observable<IrisSession> {
         return this.httpClient
-            .get<IrisSession>(`api/iris/chat-history/${courseId}/${chatServiceMode}/session/${sessionId}`)
+            .get<IrisSession>(`${this.apiPrefix}/chat-history/${courseId}/${chatServiceMode}/session/${sessionId}`)
             .pipe(map((sessionData) => new IrisSession(sessionData)));
     }
 }

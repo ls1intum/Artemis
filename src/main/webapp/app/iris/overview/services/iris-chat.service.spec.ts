@@ -277,6 +277,7 @@ describe('IrisChatService', () => {
     describe('switchToSession', () => {
         it('should not switch if session id is the same', () => {
             const closeSpy = jest.spyOn(service as any, 'close');
+            jest.spyOn(httpService, 'getChatSessionById').mockReturnValue(of());
             const session = { id: id } as IrisSession;
             service.sessionId = id;
 
@@ -286,11 +287,13 @@ describe('IrisChatService', () => {
         });
 
         it('should switch to a different session if llm usage is accepted', fakeAsync(() => {
+            const newSession = { ...mockConversation, id: 456, chatMode: ChatServiceMode.COURSE };
+
             const closeSpy = jest.spyOn(service as any, 'close');
-            const loadChatSessionsSpy = jest.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+            jest.spyOn(httpService, 'getChatSessionById').mockReturnValue(of(newSession));
+
             const wsStub = jest.spyOn(wsMock, 'subscribeToSession').mockReturnValue(of());
 
-            const newSession = { ...mockConversation, id: 456, chatMode: ChatServiceMode.COURSE };
             service.sessionId = id;
 
             service.switchToSession(newSession);
@@ -301,7 +304,6 @@ describe('IrisChatService', () => {
                 expect(messages).toEqual(newSession.messages);
             });
             expect(wsStub).toHaveBeenCalledWith(newSession.id);
-            expect(loadChatSessionsSpy).toHaveBeenCalled();
         }));
 
         it('should not switch if LLM usage is required but not accepted', () => {
@@ -332,11 +334,13 @@ describe('IrisChatService', () => {
             service['hasJustAcceptedExternalLLMUsage'] = false;
             service['sessionCreationIdentifier'] = 'tutor-suggestion/1';
 
+            const newSession = { id: 12, chatMode: ChatServiceMode.TUTOR_SUGGESTION, messages: [], creationDate: new Date(), entityId: 1 } as IrisSession;
+
             const closeSpy = jest.spyOn(service as any, 'close');
             const wsStub = jest.spyOn(wsMock, 'subscribeToSession').mockReturnValue(of());
             jest.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+            jest.spyOn(httpService, 'getChatSessionById').mockReturnValue(of(newSession));
 
-            const newSession = { id: 12, chatMode: ChatServiceMode.TUTOR_SUGGESTION, messages: [], creationDate: new Date(), entityId: 1 } as IrisSession;
             service.sessionId = id;
 
             service.switchToSession(newSession);
@@ -354,11 +358,13 @@ describe('IrisChatService', () => {
             service['hasJustAcceptedExternalLLMUsage'] = true;
             service['sessionCreationIdentifier'] = 'course/1';
 
+            const newSession = { id: 12, chatMode: ChatServiceMode.COURSE, messages: [], creationDate: new Date(), entityId: 1 } as IrisSession;
+
             const closeSpy = jest.spyOn(service as any, 'close');
             const wsStub = jest.spyOn(wsMock, 'subscribeToSession').mockReturnValue(of());
             jest.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+            jest.spyOn(httpService, 'getChatSessionById').mockReturnValue(of(newSession));
 
-            const newSession = { id: 12, chatMode: ChatServiceMode.COURSE, messages: [], creationDate: new Date(), entityId: 1 } as IrisSession;
             service.sessionId = id;
 
             service.switchToSession(newSession);
