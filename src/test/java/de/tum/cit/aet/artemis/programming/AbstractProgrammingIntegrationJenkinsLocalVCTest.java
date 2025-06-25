@@ -25,8 +25,10 @@ import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
+import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.ConsistencyCheckTestService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseValidationService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeatureService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsAuthorizationInterceptor;
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsInternalUrlService;
@@ -77,6 +79,9 @@ public abstract class AbstractProgrammingIntegrationJenkinsLocalVCTest extends A
     @Autowired
     protected ProgrammingSubmissionTestRepository submissionRepository;
 
+    @Autowired
+    protected SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
+
     // External Repositories
     @Autowired
     protected ChannelRepository channelRepository;
@@ -119,6 +124,9 @@ public abstract class AbstractProgrammingIntegrationJenkinsLocalVCTest extends A
 
     @Autowired
     protected ProgrammingExerciseService programmingExerciseService;
+
+    @Autowired
+    protected ProgrammingExerciseValidationService programmingExerciseValidationService;
 
     @Autowired
     protected ProgrammingLanguageFeatureService programmingLanguageFeatureService;

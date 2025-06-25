@@ -355,7 +355,7 @@ public class PyrisPipelineService {
         course.setPrerequisites(prerequisites);
         course.setExams(visibleExams);
 
-        List<StudentParticipation> participations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(studentId,
+        List<StudentParticipation> participations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerLatestSubmissionsResultIgnoreTestRuns(studentId,
                 course.getExercises());
 
         Map<Long, Set<StudentParticipation>> participationMap = new HashMap<>();

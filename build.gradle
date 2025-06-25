@@ -32,7 +32,7 @@ plugins {
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "8.1.4"
+version = "8.2.0"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -129,7 +129,6 @@ configurations.configureEach {
     exclude group: "org.apache.lucene", module: "lucene-queryparser"
     exclude group: "org.apache.lucene", module: "lucene-core"
     exclude group: "org.apache.lucene", module: "lucene-analyzers-common"
-    exclude group: "com.google.protobuf", module: "protobuf-java"
 
     exclude group: "org.jasypt", module: "jasypt"
 
@@ -266,6 +265,9 @@ dependencies {
     implementation "io.micrometer:micrometer-observation:${micrometer_version}"
     implementation "io.micrometer:micrometer-jakarta9:${micrometer_version}"
 
+    // Prometheus requires the protobuf-java dependency, but we explicitly use the latest version to avoid security vulnerabilities
+    implementation "com.google.protobuf:protobuf-java:4.31.1"
+
     implementation "tech.jhipster:jhipster-framework:${jhipster_dependencies_version}"
 
     // Defines low-level streaming API, and includes JSON-specific implementations
@@ -317,7 +319,6 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-actuator:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-aop:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-data-jpa:${spring_boot_version}"
-    implementation "org.springframework.data:spring-data-jpa:3.5.1"
     implementation "org.springframework.boot:spring-boot-starter-security:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-web:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-tomcat:${spring_boot_version}"
@@ -332,6 +333,7 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-oauth2-client:${spring_boot_version}"
 
+    implementation "org.springframework.data:spring-data-jpa:3.5.1"
     implementation "org.springframework.data:spring-data-ldap:3.5.1"
     implementation "org.springframework.ldap:spring-ldap-core:3.3.1"
 
@@ -390,7 +392,7 @@ dependencies {
     implementation "org.apache.maven:maven-model:3.9.10"
     implementation "org.apache.pdfbox:pdfbox:3.0.5"
     implementation "org.apache.commons:commons-csv:1.14.0"
-    implementation "org.commonmark:commonmark:0.24.0"
+    implementation "org.commonmark:commonmark:0.25.0"
     implementation "commons-fileupload:commons-fileupload:1.6.0"
     implementation "net.lingala.zip4j:zip4j:2.11.5"
 
@@ -403,7 +405,7 @@ dependencies {
     implementation "com.google.code.gson:gson:2.13.1"
 
     // explicitly only use this at runtime (required by liquibase, because developers should prefer org.apache.commons:csv
-    runtimeOnly "com.opencsv:opencsv:5.11.1"
+    runtimeOnly "com.opencsv:opencsv:5.11.2"
     // make sure to use the latest version to avoid security vulnerabilities
     runtimeOnly "commons-beanutils:commons-beanutils:1.11.0"
     checkstyle "commons-beanutils:commons-beanutils:1.11.0"
