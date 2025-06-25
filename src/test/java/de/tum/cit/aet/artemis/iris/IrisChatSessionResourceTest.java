@@ -1,30 +1,18 @@
 package de.tum.cit.aet.artemis.iris;
 
-import static de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState.DONE;
-import static de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState.IN_PROGRESS;
-import static de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState.NOT_STARTED;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatNoException;
-import static org.awaitility.Awaitility.await;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentMatcher;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -36,22 +24,14 @@ import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilServi
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
-import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
-import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
-import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisLectureChatSession;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTextExerciseChatSession;
-import de.tum.cit.aet.artemis.iris.dto.IrisChatWebsocketDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisSessionDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState;
 import de.tum.cit.aet.artemis.iris.service.session.IrisExerciseChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisLectureChatSessionService;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -155,17 +135,16 @@ class IrisChatSessionResourceTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
     void getAllSessionsForCourseWithoutSessions() throws Exception {
-        List<IrisChatSession> irisChatSessions = request.getList("api/iris/chat-history/" + course.getId() + "/sessions", HttpStatus.OK, IrisChatSession.class);
+        List<IrisChatSession> irisChatSessions = request.getList("/api/iris/chat-history/" + course.getId() + "/sessions", HttpStatus.OK, IrisChatSession.class);
         assertThat(irisChatSessions).hasSize(0);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "ADMIN")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getSessionForSessionId() throws Exception {
         System.out.println(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         var courseSession = createCourseChatSessionForUser("student1");
-        IrisSessionDTO irisChatSessions = request.get("api/iris/chat-history/" + course.getId() + "/course-chat/session/" + courseSession.getId(), HttpStatus.OK,
-                IrisSessionDTO.class);
+        IrisSessionDTO irisChatSessions = request.get("/api/iris/chat-history/" + course.getId() + "/COURSE/session/" + courseSession.getId(), HttpStatus.OK, IrisSessionDTO.class);
         assertThat(irisChatSessions.id()).isEqualTo(courseSession.getId());
     }
 
@@ -178,145 +157,12 @@ class IrisChatSessionResourceTest extends AbstractIrisIntegrationTest {
         var programmingExerciseSession = irisExerciseChatSessionService.createChatSessionForProgrammingExercise(soloExercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
 
-        List<IrisChatSession> irisChatSessions = request.getList("api/iris/chat-history/" + course.getId() + "/sessions", HttpStatus.OK, IrisChatSession.class);
+        List<IrisChatSession> irisChatSessions = request.getList("/api/iris/chat-history/" + course.getId() + "/sessions", HttpStatus.OK, IrisChatSession.class);
         assertThat(irisChatSessions).hasSize(4);
-    }
-
-    private void sendOneExerciseChatMessage(ProgrammingExercise exercise, String studentLogin, long submissionId) throws Exception {
-        var irisSession = irisExerciseChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + studentLogin));
-        var messageToSend = createDefaultMockMessage(irisSession);
-        messageToSend.setMessageDifferentiator(1453);
-
-        irisRequestMockProvider.mockProgrammingExerciseChatResponseExpectingSubmissionId(dto -> {
-            assertThat(dto.settings().authenticationToken()).isNotNull();
-
-            assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World", dto.initialStages(), null));
-
-            pipelineDone.set(true);
-        }, submissionId);
-
-        request.postWithoutResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, HttpStatus.CREATED);
-
-        await().until(pipelineDone::get);
-
-        var user = userTestRepository.findByIdElseThrow(irisSession.getUserId());
-        verifyWebsocketActivityWasExactly(user.getLogin(), String.valueOf(irisSession.getId()), messageDTO(messageToSend.getContent()), statusDTO(IN_PROGRESS, NOT_STARTED),
-                statusDTO(DONE, IN_PROGRESS), messageDTO("Hello World"));
-    }
-
-    private void sendOneLectureChatMessage() throws Exception {
-        IrisLectureChatSession lectureChatSession = createLectureSessionForUser("student1");
-        var messageToSend = createDefaultMockMessage(lectureChatSession);
-        messageToSend.setMessageDifferentiator(1453);
-
-        irisRequestMockProvider.mockLectureChatResponse(dto -> {
-            assertThat(dto.settings().authenticationToken()).isNotNull();
-
-            assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World", dto.initialStages(), null));
-
-            pipelineDone.set(true);
-        });
-
-        request.postWithoutResponseBody("/api/iris/sessions/" + lectureChatSession.getId() + "/messages", messageToSend, HttpStatus.CREATED);
-
-        await().until(pipelineDone::get);
-    }
-
-    private void sendOneCourseChatMessage() throws Exception {
-        IrisCourseChatSession courseChatSession = createCourseChatSessionForUser("student1");
-        var messageToSend = createDefaultMockMessage(courseChatSession);
-        messageToSend.setMessageDifferentiator(1453);
-
-        request.postWithoutResponseBody("/api/iris/sessions/" + courseChatSession.getId() + "/messages", messageToSend, HttpStatus.CREATED);
-
-        await().until(pipelineDone::get);
-    }
-
-    private void sendOneTextExerciseChatMessage() throws Exception {
-        IrisTextExerciseChatSession textExerciseChatSession = createTextExerciseChatSessionForUser("student1");
-        var messageToSend = createDefaultMockMessage(textExerciseChatSession);
-        messageToSend.setMessageDifferentiator(1453);
-
-        request.postWithoutResponseBody("/api/iris/sessions/" + textExerciseChatSession.getId() + "/messages", messageToSend, HttpStatus.CREATED);
-
-        await().until(pipelineDone::get);
-    }
-
-    private IrisMessage createDefaultMockMessage(IrisSession irisSession) {
-        var messageToSend = irisSession.newMessage();
-        messageToSend.addContent(createMockTextContent(), createMockTextContent(), createMockTextContent());
-        return messageToSend;
-    }
-
-    private IrisMessageContent createMockTextContent() {
-        String[] adjectives = { "happy", "sad", "angry", "funny", "silly", "crazy", "beautiful", "smart" };
-        String[] nouns = { "dog", "cat", "house", "car", "book", "computer", "phone", "shoe" };
-
-        var rdm = ThreadLocalRandom.current();
-        String randomAdjective = adjectives[rdm.nextInt(adjectives.length)];
-        String randomNoun = nouns[rdm.nextInt(nouns.length)];
-
-        var text = "The " + randomAdjective + " " + randomNoun + " jumped over the lazy dog.";
-        return new IrisTextMessageContent(text);
-    }
-
-    private ArgumentMatcher<Object> messageDTO(String message) {
-        return messageDTO(List.of(new IrisTextMessageContent(message)));
-    }
-
-    private ArgumentMatcher<Object> messageDTO(List<IrisMessageContent> content) {
-        return new ArgumentMatcher<>() {
-
-            @Override
-            public boolean matches(Object argument) {
-                if (!(argument instanceof IrisChatWebsocketDTO websocketDTO)) {
-                    return false;
-                }
-                if (websocketDTO.type() != IrisChatWebsocketDTO.IrisWebsocketMessageType.MESSAGE) {
-                    return false;
-                }
-                return Objects.equals(websocketDTO.message().getContent().stream().map(IrisMessageContent::getContentAsString).toList(),
-                        content.stream().map(IrisMessageContent::getContentAsString).toList());
-            }
-
-            @Override
-            public String toString() {
-                return "IrisChatWebsocketService.IrisWebsocketDTO with type MESSAGE and content " + content;
-            }
-        };
-    }
-
-    private ArgumentMatcher<Object> statusDTO(PyrisStageState... stageStates) {
-        return new ArgumentMatcher<>() {
-
-            @Override
-            public boolean matches(Object argument) {
-                if (!(argument instanceof IrisChatWebsocketDTO websocketDTO)) {
-                    return false;
-                }
-                if (websocketDTO.type() != IrisChatWebsocketDTO.IrisWebsocketMessageType.STATUS) {
-                    return false;
-                }
-                if (websocketDTO.stages() == null) {
-                    return stageStates == null;
-                }
-                if (websocketDTO.stages().size() != stageStates.length) {
-                    return false;
-                }
-                return websocketDTO.stages().stream().map(PyrisStageDTO::state).toList().equals(List.of(stageStates));
-            }
-
-            @Override
-            public String toString() {
-                return "IrisChatWebsocketService.IrisWebsocketDTO with type STATUS and stage states " + Arrays.toString(stageStates);
-            }
-        };
-    }
-
-    private void sendStatus(String jobId, String result, List<PyrisStageDTO> stages, List<String> suggestions) throws Exception {
-        var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of("Authorization", List.of("Bearer " + jobId))));
-        request.postWithoutResponseBody("/api/iris/public/pyris/pipelines/programming-exercise-chat/runs/" + jobId + "/status",
-                new PyrisChatStatusUpdateDTO(result, stages, suggestions, null), HttpStatus.OK, headers);
+        assertThat(irisChatSessions.contains(courseSession)).isTrue();
+        assertThat(irisChatSessions.contains(programmingExerciseSession)).isTrue();
+        assertThat(irisChatSessions.contains(textExerciseSession)).isTrue();
+        assertThat(irisChatSessions.contains(lectureSession)).isTrue();
     }
 
     private IrisLectureChatSession createLectureSessionForUser(String userLogin) {

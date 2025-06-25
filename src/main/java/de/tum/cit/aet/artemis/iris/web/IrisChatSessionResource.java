@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
@@ -106,6 +107,7 @@ public class IrisChatSessionResource {
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the iris sessions for the sessionId or {@code 404 (Not Found)} if no session exists
      */
     @GetMapping("{courseId}/{chatMode}/session/{sessionId}")
+    @EnforceAtLeastStudentInCourse
     public ResponseEntity<Optional<IrisSessionDTO>> getSessionsForSessionId(@PathVariable Long courseId, @PathVariable Long sessionId, @PathVariable String chatMode) {
         var chatModeEnum = IrisChatMode.valueOf(chatMode);
         var course = courseRepository.findById(courseId);
@@ -147,6 +149,7 @@ public class IrisChatSessionResource {
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body a list of the iris sessions for the course or {@code 404 (Not Found)} if no session exists
      */
     @GetMapping("{courseId}/sessions")
+    @EnforceAtLeastStudentInCourse
     public ResponseEntity<List<IrisChatSession>> getAllSessionsForCourse(@PathVariable Long courseId) {
         var user = userRepository.getUserWithGroupsAndAuthorities();
         if (user.hasAcceptedExternalLLMUsage()) {
