@@ -119,9 +119,9 @@ public class LearningMetricsService {
         // Compute average relative submission times for all exercises with a due date.
         final Set<ResourceTimestampDTO> latestSubmissions = !exerciseIdsWithDueDate.isEmpty() ? exerciseMetricsRepository.findLatestSubmissionDates(exerciseIdsWithDueDate)
                 : Set.of();
-        final ToDoubleFunction<ResourceTimestampDTO> relativeTime = dto -> toRelativeTime(exerciseInfoMap.get(dto.id()).start(), exerciseInfoMap.get(dto.id()).due(),
-                dto.timestamp());
-        final var averageLatestSubmissionMap = latestSubmissions.stream().collect(groupingBy(ResourceTimestampDTO::id, averagingDouble(relativeTime)));
+        final ToDoubleFunction<ResourceTimestampDTO> relativeTime = dto -> toRelativeTime(exerciseInfoMap.get(dto.exerciseId()).start(),
+                exerciseInfoMap.get(dto.exerciseId()).due(), dto.timestamp());
+        final var averageLatestSubmissionMap = latestSubmissions.stream().collect(groupingBy(ResourceTimestampDTO::exerciseId, averagingDouble(relativeTime)));
 
         // Partition exercises into individual and team, with due date.
         final var individualExerciseIdsWithDueDate = exerciseInfo.stream().filter(ExerciseInformationDTO::isIndividual).filter(hasDueDate).map(ExerciseInformationDTO::id)
@@ -137,7 +137,7 @@ public class LearningMetricsService {
                 : Set.of();
         // Combine individual and team latest submissions for the user.
         final var latestSubmissionOfUser = Sets.union(latestIndividualSubmissionOfUser, latestTeamSubmissionOfUser);
-        final var latestSubmissionMap = latestSubmissionOfUser.stream().collect(toMap(ResourceTimestampDTO::id, relativeTime::applyAsDouble));
+        final var latestSubmissionMap = latestSubmissionOfUser.stream().collect(toMap(ResourceTimestampDTO::exerciseId, relativeTime::applyAsDouble));
 
         // Find all completed exercises for the user, based on a minimum score threshold.
         final Set<Long> completedExerciseIds = !exerciseIds.isEmpty()

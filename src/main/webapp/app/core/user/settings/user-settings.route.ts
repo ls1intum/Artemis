@@ -26,6 +26,14 @@ export const routes: Routes = [
                 },
             },
             {
+                path: 'external-data',
+                loadComponent: () =>
+                    import('app/core/user/settings/external-llm-usage-settings/external-llm-usage-settings.component').then((m) => m.ExternalLlmUsageSettingsComponent),
+                data: {
+                    pageTitle: 'artemisApp.userSettings.categories.externalLLMUsage',
+                },
+            },
+            {
                 path: 'profile',
                 loadComponent: () => import('app/core/user/settings/learner-profile/learner-profile.component').then((m) => m.LearnerProfileComponent),
                 data: {

@@ -61,7 +61,7 @@ public class ProgrammingExerciseImportBasicService {
 
     private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
-    private final ProgrammingExerciseService programmingExerciseService;
+    private final ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService;
 
     private final StaticCodeAnalysisService staticCodeAnalysisService;
 
@@ -80,16 +80,16 @@ public class ProgrammingExerciseImportBasicService {
     public ProgrammingExerciseImportBasicService(Optional<VersionControlService> versionControlService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
             StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            ProgrammingExerciseService programmingExerciseService, StaticCodeAnalysisService staticCodeAnalysisService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
-            SubmissionPolicyRepository submissionPolicyRepository, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository,
-            ProgrammingExerciseTaskService programmingExerciseTaskService, ChannelService channelService,
+            ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService, StaticCodeAnalysisService staticCodeAnalysisService,
+            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, SubmissionPolicyRepository submissionPolicyRepository,
+            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ProgrammingExerciseTaskService programmingExerciseTaskService, ChannelService channelService,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, ExerciseService exerciseService) {
         this.versionControlService = versionControlService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
         this.staticCodeAnalysisCategoryRepository = staticCodeAnalysisCategoryRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
-        this.programmingExerciseService = programmingExerciseService;
+        this.programmingExerciseCreationUpdateService = programmingExerciseCreationUpdateService;
         this.staticCodeAnalysisService = staticCodeAnalysisService;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.submissionPolicyRepository = submissionPolicyRepository;
@@ -127,7 +127,7 @@ public class ProgrammingExerciseImportBasicService {
         programmingExerciseParticipationService.setupInitialTemplateParticipation(newProgrammingExercise);
         programmingExerciseParticipationService.setupInitialSolutionParticipation(newProgrammingExercise);
         setupTestRepository(newProgrammingExercise);
-        programmingExerciseService.initParticipations(newProgrammingExercise);
+        programmingExerciseCreationUpdateService.initParticipations(newProgrammingExercise);
 
         newProgrammingExercise.getBuildConfig().setBranch(defaultBranch);
         if (newProgrammingExercise.getBuildConfig().getBuildPlanConfiguration() == null) {

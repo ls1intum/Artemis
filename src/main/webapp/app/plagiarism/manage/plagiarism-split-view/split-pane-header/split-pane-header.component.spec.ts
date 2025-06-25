@@ -1,7 +1,7 @@
 import { EventEmitter, SimpleChange } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SplitPaneHeaderComponent } from 'app/plagiarism/manage/plagiarism-split-view/split-pane-header/split-pane-header.component';
-import { TextPlagiarismFileElement } from 'app/plagiarism/shared/entities/text/TextPlagiarismFileElement';
+import { PlagiarismFileElement } from 'app/plagiarism/shared/entities/PlagiarismFileElement';
 import { Subject } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -25,9 +25,9 @@ describe('SplitPaneHeaderComponent', () => {
         })
             .compileComponents()
             .then(() => {
-                const fileSelectedSubject = new Subject<TextPlagiarismFileElement>();
+                const fileSelectedSubject = new Subject<PlagiarismFileElement>();
                 const showFilesSubject = new Subject<boolean>();
-                const dropdownHoverSubject = new Subject<TextPlagiarismFileElement>();
+                const dropdownHoverSubject = new Subject<PlagiarismFileElement>();
                 fixture1 = TestBed.createComponent(SplitPaneHeaderComponent);
                 comp1 = fixture1.componentInstance;
                 fixture2 = TestBed.createComponent(SplitPaneHeaderComponent);
@@ -125,7 +125,7 @@ describe('SplitPaneHeaderComponent', () => {
 
     it('should emit selected file through fileSelectedSubject', () => {
         const selectedFile = { idx: 0, file: files[0] };
-        let emittedFile: TextPlagiarismFileElement | undefined;
+        let emittedFile: PlagiarismFileElement | undefined;
         comp1.fileSelectedSubject()!.subscribe((file) => {
             emittedFile = file;
         });
