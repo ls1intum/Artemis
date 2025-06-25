@@ -1220,7 +1220,6 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         comp.exerciseLanguageComponent.formValidChanges.next(false);
         comp.exerciseGradingComponent.formValidChanges.next(false);
         comp.exerciseDifficultyComponent.teamConfigComponent.formValidChanges.next(false);
-        // comp.exercisePlagiarismComponent()?.setInput()
 
         expect(calculateFormValidSectionsSpy).toHaveBeenCalledTimes(5);
 

@@ -128,7 +128,6 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
 
     constructor() {
         effect(() => {
-            this.updateFormSectionOnIsValidPlagiarismChange();
             this.updateFormSectionsOnIsValidChange();
         });
     }
@@ -146,7 +145,7 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
      */
     private updateFormSectionsOnIsValidChange() {
         this.exerciseTitleChannelNameComponent().titleChannelNameComponent().isValid(); // trigger the effect
-
+        this.exerciseUpdatePlagiarismComponent()?.isFormValid();
         this.calculateFormSectionStatus();
     }
 
@@ -329,10 +328,5 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
             onError(this.alertService, errorRes);
         }
         this.isSaving = false;
-    }
-
-    private updateFormSectionOnIsValidPlagiarismChange() {
-        this.exerciseUpdatePlagiarismComponent()?.isFormValid(); // registers signal and triggers effect
-        this.calculateFormSectionStatus();
     }
 }

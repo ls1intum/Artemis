@@ -23,13 +23,11 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { ExerciseUpdatePlagiarismComponent } from 'app/plagiarism/manage/exercise-update-plagiarism/exercise-update-plagiarism.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { ActivatedRouteSnapshot } from '@angular/router';
-import { signal } from '@angular/core';
 
 describe('TextExercise Management Update Component', () => {
     let comp: TextExerciseUpdateComponent;
@@ -219,11 +217,7 @@ describe('TextExercise Management Update Component', () => {
         it('should calculate valid sections', () => {
             const calculateValidSpy = jest.spyOn(comp, 'calculateFormSectionStatus');
             comp.exerciseTitleChannelNameComponent().titleChannelNameComponent().isValid.set(false);
-
-            (comp as any).exercisePlagiarismComponent = signal<ExerciseUpdatePlagiarismComponent>({
-                isFormValid: signal<boolean>(false),
-            } as unknown as ExerciseUpdatePlagiarismComponent).asReadonly();
-
+            comp.exerciseUpdatePlagiarismComponent()?.isFormValid.set(true);
             comp.teamConfigFormGroupComponent = { formValidChanges: new Subject() } as TeamConfigFormGroupComponent;
             comp.bonusPoints = { valueChanges: new Subject(), valid: true } as unknown as NgModel;
             comp.points = { valueChanges: new Subject(), valid: true } as unknown as NgModel;
@@ -232,16 +226,15 @@ describe('TextExercise Management Update Component', () => {
             comp.ngAfterViewInit();
 
             comp.exerciseTitleChannelNameComponent().titleChannelNameComponent().isValid.set(true);
+
             fixture.detectChanges();
 
-            // effect triggers once on component construction and once due to isValid set to true (another round of effect trigger)
-            // hence 4 times in total (2x exerciseTitleChannelNameComponent and 2x exercisePlagiarismComponent)
-            expect(calculateValidSpy).toHaveBeenCalledTimes(4);
+            expect(calculateValidSpy).toHaveBeenCalledTimes(2);
             expect(comp.formSectionStatus).toBeDefined();
             expect(comp.formSectionStatus[0].valid).toBeTrue();
 
             comp.validateDate();
-            expect(calculateValidSpy).toHaveBeenCalledTimes(5);
+            expect(calculateValidSpy).toHaveBeenCalledTimes(3);
 
             comp.ngOnDestroy();
         });

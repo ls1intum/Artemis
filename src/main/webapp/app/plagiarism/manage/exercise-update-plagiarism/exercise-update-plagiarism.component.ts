@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, Signal, computed, inject, model } from '@angular/core';
+import { Component, OnDestroy, OnInit, Signal, effect, inject, model, signal } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DEFAULT_PLAGIARISM_DETECTION_CONFIG, Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
@@ -23,11 +23,10 @@ export class ExerciseUpdatePlagiarismComponent implements OnInit, OnDestroy {
     private formStatus: Signal<string>;
     private formSubscription: Subscription;
 
-    isFormValid = computed(() => this.formStatus() === 'VALID');
-
     isCPCCollapsed = true;
     minimumSizeTooltip?: string;
     readonly faQuestionCircle = faQuestionCircle;
+    isFormValid = signal(false);
 
     constructor() {
         this.form = this.fb.group({
@@ -40,6 +39,8 @@ export class ExerciseUpdatePlagiarismComponent implements OnInit, OnDestroy {
         });
 
         this.formStatus = toSignal(this.form.statusChanges, { initialValue: this.form.status });
+
+        effect(() => this.isFormValid.set(this.formStatus() === 'VALID'));
 
         this.formSubscription = this.form.valueChanges
             .pipe(
