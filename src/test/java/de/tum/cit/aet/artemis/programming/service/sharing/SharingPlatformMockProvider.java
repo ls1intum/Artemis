@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import org.codeability.sharing.plugins.api.SharingPluginConfig;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -18,10 +19,13 @@ import org.springframework.test.web.servlet.MvcResult;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
- * provides infrastructure to set up and shutdown
+ * Test utility class that provides infrastructure to mock the sharing platform
+ * for testing purposes. This mock provider simulates connections between Artemis
+ * and the sharing platform, allowing for isolated testing of sharing functionality.
  */
 @Component
 @Profile(PROFILE_SHARING)
+@Lazy
 public class SharingPlatformMockProvider {
 
     protected static final String TEST_INSTALLATION_NAME = "ArtemisTestInstance";
@@ -74,9 +78,12 @@ public class SharingPlatformMockProvider {
     }
 
     /**
-     * registers or shuts down the required
+     * Mocks the sharing platform connection status.
+     * When success is true, establishes a connection to simulate a successful platform state.
+     * When success is false, resets the connection to simulate platform unavailability.
      *
-     * @param success Successful response or timeout.
+     * @param success true to simulate successful connection, false to simulate failure/timeout
+     * @throws Exception if the mock operation fails
      */
     public void mockStatus(boolean success) throws Exception {
         if (success) {

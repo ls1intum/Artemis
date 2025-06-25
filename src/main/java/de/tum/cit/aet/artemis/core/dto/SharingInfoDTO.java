@@ -4,14 +4,12 @@ import java.util.Map;
 import java.util.Objects;
 
 import org.codeability.sharing.plugins.api.util.SecretChecksumCalculator;
-import org.springframework.context.annotation.Profile;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
  * the sharing info to request a specific exercise from the sharing platform.
  */
-@Profile("sharing")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record SharingInfoDTO(
 
