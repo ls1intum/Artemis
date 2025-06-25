@@ -12,7 +12,7 @@ import { PlagiarismSplitViewComponent } from '../plagiarism-split-view/plagiaris
     imports: [PlagiarismHeaderComponent, PlagiarismSplitViewComponent],
 })
 export class PlagiarismDetailsComponent {
-    readonly comparison = input<PlagiarismComparison | undefined>();
+    readonly comparison = input<PlagiarismComparison>();
     readonly exercise = input.required<Exercise>();
 
     /**

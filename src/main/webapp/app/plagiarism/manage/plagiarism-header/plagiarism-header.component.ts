@@ -24,7 +24,7 @@ export class PlagiarismHeaderComponent {
     private modalService = inject(NgbModal);
     private alertService = inject(AlertService);
 
-    readonly comparison = input<PlagiarismComparison | undefined>(undefined);
+    readonly comparison = input<PlagiarismComparison>();
     readonly exercise = input.required<Exercise>();
     readonly splitControlSubject = input.required<Subject<string>>();
 
