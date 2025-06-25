@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.task.TaskExecutor;
@@ -31,9 +32,18 @@ import de.tum.cit.aet.artemis.core.service.ProfileService;
  */
 @Service
 @Profile("sharing")
+@Lazy
 public class SharingConnectorService {
 
-    public static final String UNKNOWN_INSTALLATIONAME = "unknown installationame";
+    /**
+     * just to signal a missing/inconsistent sharing configuration to the sharing connector service.
+     */
+    public static final String UNKNOWN_INSTALLATION_NAME = "unknown installationame";
+
+    /**
+     * just a maximum check length for validation limiting
+     */
+    private static final int MAX_API_KEY_LENGTH = 200;
 
     public static class HealthStatus {
 
@@ -191,7 +201,7 @@ public class SharingConnectorService {
      * @return true if sharing api base url is present
      */
     public boolean isSharingApiBaseUrlPresent() {
-        return this.profileService.isSharingActive() && sharingApiBaseUrl != null;
+        return sharingApiBaseUrl != null;
     }
 
     /**
@@ -208,7 +218,7 @@ public class SharingConnectorService {
         }
         catch (UnknownHostException e) {
             log.warn("Failed to determine hostname", e);
-            this.installationName = UNKNOWN_INSTALLATIONAME;
+            this.installationName = UNKNOWN_INSTALLATION_NAME;
         }
         SharingPluginConfig.Action action = new SharingPluginConfig.Action("Import", "/sharing/import", actionName,
                 "metadata.format.stream().anyMatch(entry->entry=='artemis' || entry=='Artemis').get()");
@@ -216,11 +226,6 @@ public class SharingConnectorService {
         lastHealthStati.setLastConnect();
         return new SharingPluginConfig("Artemis Sharing Connector", new SharingPluginConfig.Action[] { action });
     }
-
-    /**
-     * just a maximum check length for validation limiting
-     */
-    private static final int MAX_API_KEY_LENGTH = 200;
 
     /**
      * Method used to validate the given authorizaion apiKey from Sharing
@@ -261,7 +266,7 @@ public class SharingConnectorService {
      * shuts down the service.
      * currently just for test purposes
      */
-    public void shutDown() {
+    void shutDown() {
         sharingApiBaseUrl = null;
         this.lastHealthStati.add(new HealthStatus("shutdown requested"));
         this.lastHealthStati.resetLastConnect();
@@ -270,14 +275,17 @@ public class SharingConnectorService {
     /**
      * request a reinitialization of the sharing platform
      */
-    public void triggerReinit() {
+    private void triggerReinit() {
         if (sharingUrl != null) {
             log.info("Requesting reinitialization from Sharing Platform");
             lastHealthStati.add(new HealthStatus("Requested reinitialization from Sharing Platform via " + sharingUrl));
             String reInitUrlWithApiKey = UriComponentsBuilder.fromUriString(sharingUrl).pathSegment("api", "pluginIF", "v0.1", "reInitialize").queryParam("apiKey", sharingApiKey)
                     .encode().toUriString();
             try {
-                restTemplate.getForObject(reInitUrlWithApiKey, Boolean.class);
+                boolean success = restTemplate.getForObject(reInitUrlWithApiKey, Boolean.class);
+                if (!success) {
+                    log.warn("The request for connector reinitialization from Sharing Platform was not successful");
+                }
             }
             catch (Exception e) {
                 log.warn("Failed to request reinitialization from Sharing Platform", e);

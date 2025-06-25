@@ -14,16 +14,19 @@ public class SharingException extends Exception {
     private static final long serialVersionUID = 1L;
 
     /**
-     * Creates a SharingException for connection failures.
+     * Creates a SharingException with the specified message.
+     *
+     * @param message the detail message
      */
     public SharingException(String message) {
         super(message);
     }
 
     /**
-     * Creates a SharingException for connection failures.
+     * Creates a SharingException with the specified message and cause.
      *
-     * @param cause The underlying cause
+     * @param message the detail message
+     * @param cause   the underlying cause
      */
     public SharingException(String message, Throwable cause) {
         super(message, cause);
@@ -36,7 +39,7 @@ public class SharingException extends Exception {
      * @param cause    The underlying cause
      * @return A new SharingException
      */
-    public static SharingException connectionError(String endpoint, Throwable cause) {
+    public static SharingException withEndpoint(String endpoint, Throwable cause) {
         return new SharingException("Failed to connect to sharing platform at " + endpoint, cause);
     }
 }

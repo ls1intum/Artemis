@@ -8,14 +8,16 @@ import java.time.temporal.ChronoUnit;
 
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 /**
- * health indicator that shows the status of the sharing platform connector.
+ * Health indicator that shows the status of the sharing platform connector.
  */
 @Component
 @Profile("sharing")
+@Lazy
 public class SharingHealthIndicator implements HealthIndicator {
 
     private static final ZoneId UTC = ZoneId.of("UTC");
@@ -25,13 +27,12 @@ public class SharingHealthIndicator implements HealthIndicator {
     protected final SharingConnectorService sharingConnectorService;
 
     public SharingHealthIndicator(SharingConnectorService sharingConnectorService) {
-        super();
         this.sharingConnectorService = sharingConnectorService;
     }
 
     /**
-     * returns the main health status (up/down or unknown if config request from sharing platform is to long ago), together
-     * with a list of the 10 last log events for the sharing connector.
+     * Returns the main health status (up/down or unknown if config request from sharing platform is too long ago), together
+     * with a list of the 10 most recent log events for the sharing connector.
      */
     @Override
     public Health health() {

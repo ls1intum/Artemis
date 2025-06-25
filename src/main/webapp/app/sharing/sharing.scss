@@ -5,6 +5,20 @@
     display: flex;
 }
 
+.sharing-table {
+    border-spacing: 50px 0;
+    border-collapse: separate;
+}
+
+.vertical-align-top {
+    vertical-align: top;
+}
+
+.course-color-indicator {
+    width: 15px;
+    height: 20px;
+}
+
 .header {
     position: relative;
     text-align: center;
