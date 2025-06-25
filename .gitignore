@@ -225,3 +225,4 @@ data-exports/
 /legal
 /src/test/resources/config/application-local.yml
 startupBeans.dot
+/junit.xml
