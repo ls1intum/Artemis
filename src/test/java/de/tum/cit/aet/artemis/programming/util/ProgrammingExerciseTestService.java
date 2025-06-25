@@ -382,14 +382,18 @@ public class ProgrammingExerciseTestService {
         setupRepositoryMocks(projectKey, exerciseRepository, exerciseRepoName, solutionRepository, solutionRepoName, testRepository, testRepoName, auxRepository, auxRepoName);
     }
 
-    private String convertToLocalVcUriString(File repoFile) {
+    private String convertToLocalVcUriString(LocalRepository localRepository) {
+        return convertToLocalVcUriString(localRepository.bareGitRepoFile, localVCRepoPath);
+    }
+
+    public static String convertToLocalVcUriString(File repoFile, String localVCRepoPath) {
         try {
-            // we basically add a "git" in the middle of the URI to make it a valid LocalVC URI
-            Path originalPath = repoFile.toPath();
+            // we basically add a "git" in the middle of the URI to make it a valid LocalVC URI to avoid exceptions due to strict checks
+            Path originalPath = repoFile.toPath().toAbsolutePath().normalize();
             Path prefixPath = Paths.get(localVCRepoPath).toAbsolutePath().normalize();
 
             if (!originalPath.startsWith(prefixPath)) {
-                throw new IllegalArgumentException("Path does not start with configured localVCRepoPath: " + repoFile.getPath());
+                throw new IllegalArgumentException("Path " + repoFile.getPath() + " does not start with configured localVCRepoPath: " + prefixPath);
             }
 
             // Relative path after the configured prefix
@@ -421,10 +425,10 @@ public class ProgrammingExerciseTestService {
      */
     public void setupRepositoryMocks(String projectKey, LocalRepository exerciseRepository, String exerciseRepoName, LocalRepository solutionRepository, String solutionRepoName,
             LocalRepository testRepository, String testRepoName, LocalRepository auxRepository, String auxRepoName) throws Exception {
-        var exerciseRepoTestUrl = new LocalVCRepositoryUri(convertToLocalVcUriString(exerciseRepository.bareGitRepoFile));
-        var testRepoTestUrl = new LocalVCRepositoryUri(convertToLocalVcUriString(testRepository.bareGitRepoFile));
-        var solutionRepoTestUrl = new LocalVCRepositoryUri(convertToLocalVcUriString(solutionRepository.bareGitRepoFile));
-        var auxRepoTestUrl = new LocalVCRepositoryUri(convertToLocalVcUriString(auxRepository.bareGitRepoFile));
+        var exerciseRepoTestUrl = new LocalVCRepositoryUri(convertToLocalVcUriString(exerciseRepository));
+        var testRepoTestUrl = new LocalVCRepositoryUri(convertToLocalVcUriString(testRepository));
+        var solutionRepoTestUrl = new LocalVCRepositoryUri(convertToLocalVcUriString(solutionRepository));
+        var auxRepoTestUrl = new LocalVCRepositoryUri(convertToLocalVcUriString(auxRepository));
 
         doReturn(exerciseRepoTestUrl).when(versionControlService).getCloneRepositoryUri(projectKey, exerciseRepoName);
         doReturn(testRepoTestUrl).when(versionControlService).getCloneRepositoryUri(projectKey, testRepoName);
@@ -468,7 +472,7 @@ public class ProgrammingExerciseTestService {
     public void setupRepositoryMocksParticipant(ProgrammingExercise exercise, String participantName, LocalRepository studentRepo, boolean practiceMode) throws Exception {
         final var projectKey = exercise.getProjectKey();
         String participantRepoName = projectKey.toLowerCase() + "-" + (practiceMode ? "practice-" : "") + participantName;
-        var participantRepoTestUrl = ParticipationFactory.getRepositoryUri(studentRepo);
+        var participantRepoTestUrl = new LocalVCRepositoryUri(convertToLocalVcUriString(studentRepo));
         doReturn(participantRepoTestUrl).when(versionControlService).getCloneRepositoryUri(projectKey, participantRepoName);
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(participantRepoTestUrl, true);
@@ -769,7 +773,7 @@ public class ProgrammingExerciseTestService {
 
     private AuxiliaryRepository addAuxiliaryRepositoryToProgrammingExercise(ProgrammingExercise sourceExercise) {
         AuxiliaryRepository repository = programmingExerciseUtilService.addAuxiliaryRepositoryToExercise(sourceExercise);
-        var url = versionControlService.getCloneRepositoryUri(sourceExercise.getProjectKey(), new LocalVCRepositoryUri(sourceAuxRepo.bareGitRepoFile.getPath()).toString());
+        var url = versionControlService.getCloneRepositoryUri(sourceExercise.getProjectKey(), new LocalVCRepositoryUri(convertToLocalVcUriString(sourceAuxRepo)).toString());
         repository.setRepositoryUri(url.toString());
         return auxiliaryRepositoryRepository.save(repository);
     }
@@ -2051,12 +2055,14 @@ public class ProgrammingExerciseTestService {
             var team = setupTeam(user);
             participation = participationUtilService.addTeamParticipationForProgrammingExercise(exercise, team);
             // prepare for the mock scenario, so that the empty commit will work properly
-            participation.setRepositoryUri(ParticipationFactory.getRepositoryUri(studentTeamRepo).getURI().toString());
+            var localVCRepositoryUri = new LocalVCRepositoryUri(convertToLocalVcUriString(studentTeamRepo)).getURI().toString();
+            participation.setRepositoryUri(localVCRepositoryUri);
         }
         else {
             participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, user.getParticipantIdentifier());
             // prepare for the mock scenario, so that the empty commit will work properly
-            participation.setRepositoryUri(ParticipationFactory.getRepositoryUri(studentRepo).getURI().toString());
+            var localVCRepositoryUri = new LocalVCRepositoryUri(convertToLocalVcUriString(studentRepo)).getURI().toString();
+            participation.setRepositoryUri(localVCRepositoryUri);
         }
 
         ProgrammingSubmission submission = new ProgrammingSubmission();
@@ -2162,7 +2168,7 @@ public class ProgrammingExerciseTestService {
     public void copyRepository_testNotCreatedError() throws Exception {
         Team team = setupTeamForBadRequestForStartExercise();
 
-        var participantRepoTestUrl = ParticipationFactory.getRepositoryUri(studentTeamRepo);
+        var participantRepoTestUrl = new LocalVCRepositoryUri(convertToLocalVcUriString(studentTeamRepo));
         final var teamLocalPath = studentTeamRepo.workingCopyGitRepoFile.toPath();
         doReturn(teamLocalPath).when(gitService).getDefaultLocalPathOfRepo(participantRepoTestUrl);
         doThrow(new CanceledException("Checkout got interrupted!")).when(gitService).getOrCheckoutRepositoryIntoTargetDirectory(any(), any(), anyBoolean());

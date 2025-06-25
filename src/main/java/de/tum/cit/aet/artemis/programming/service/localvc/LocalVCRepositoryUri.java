@@ -74,7 +74,7 @@ public class LocalVCRepositoryUri extends VcsRepositoryUri {
         var uriPath = Path.of(this.uri.getPath());
 
         // Find index of "git" in the path. This is needed in case the base URI contains a path.
-        final var startIndex = getGitPartStartIndex(uriString, uriPath);
+        final var startIndex = getGitPartStartIndexElseThrow(uriString, uriPath);
 
         this.projectKey = uriPath.getName(startIndex + 1).toString();
         this.repositorySlug = uriPath.getName(startIndex + 2).toString().replace(".git", "");
@@ -111,7 +111,7 @@ public class LocalVCRepositoryUri extends VcsRepositoryUri {
      * @throws LocalVCInternalException If the "git" segment is missing, if there are insufficient segments after "git",
      *                                      or if the repository slug does not end with ".git".
      */
-    private static int getGitPartStartIndex(String uriString, Path uriPath) throws LocalVCInternalException {
+    private static int getGitPartStartIndexElseThrow(String uriString, Path uriPath) throws LocalVCInternalException {
         var startIndex = -1;
         for (int i = 0; i < uriPath.getNameCount(); i++) {
             if ("git".equals(uriPath.getName(i).toString())) {

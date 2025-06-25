@@ -134,7 +134,7 @@ public class LocalRepository {
      * @param originRepoFileName The name of the directory in which the origin repository will be created
      */
     public void configureRepos(Path repoBasePath, String localRepoFileName, String originRepoFileName) throws Exception {
-        this.configureRepos(repoBasePath, localRepoFileName, originRepoFileName, true);
+        configureRepos(repoBasePath, localRepoFileName, originRepoFileName, true);
     }
 
     /**
