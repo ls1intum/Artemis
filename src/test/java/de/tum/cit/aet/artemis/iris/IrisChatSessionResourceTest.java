@@ -45,6 +45,7 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisLectureChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTextExerciseChatSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatWebsocketDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisSessionDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
@@ -62,7 +63,7 @@ import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
 class IrisChatSessionResourceTest extends AbstractIrisIntegrationTest {
 
-    private static final String TEST_PREFIX = "irischatsessionintegration";
+    private static final String TEST_PREFIX = "iristextchatmessageintegration";
 
     @Autowired
     private IrisExerciseChatSessionService irisExerciseChatSessionService;
@@ -152,10 +153,20 @@ class IrisChatSessionResourceTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    public void getAllSessionsForCourseWithoutSessions() throws Exception {
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    void getAllSessionsForCourseWithoutSessions() throws Exception {
         List<IrisChatSession> irisChatSessions = request.getList("api/iris/chat-history/" + course.getId() + "/sessions", HttpStatus.OK, IrisChatSession.class);
         assertThat(irisChatSessions).hasSize(0);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "ADMIN")
+    void getSessionForSessionId() throws Exception {
+        System.out.println(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        var courseSession = createCourseChatSessionForUser("student1");
+        IrisSessionDTO irisChatSessions = request.get("api/iris/chat-history/" + course.getId() + "/course-chat/session/" + courseSession.getId(), HttpStatus.OK,
+                IrisSessionDTO.class);
+        assertThat(irisChatSessions.id()).isEqualTo(courseSession.getId());
     }
 
     @Test
