@@ -103,7 +103,7 @@ public class IrisChatSessionResource {
      *
      * @param courseId  of the course
      * @param sessionId of the session
-     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body a list of the iris sessions for the course or {@code 404 (Not Found)} if no session exists
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the iris sessions for the sessionId or {@code 404 (Not Found)} if no session exists
      */
     @GetMapping("{courseId}/{chatMode}/session/{sessionId}")
     public ResponseEntity<Optional<IrisSessionDTO>> getSessionsForSessionId(@PathVariable Long courseId, @PathVariable Long sessionId, @PathVariable String chatMode) {
