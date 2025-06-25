@@ -79,7 +79,7 @@ export class LearningPathsTableComponent {
         }
     }
 
-    async loadAverageProgress(courseId: number): Promise<void> {
+    private async loadAverageProgress(courseId: number): Promise<void> {
         try {
             const dto: LearningPathAverageProgressDTO = await this.learningPathApiService.getAverageProgressForCourse(courseId);
             this.averageProgress.set(dto.averageProgress);
