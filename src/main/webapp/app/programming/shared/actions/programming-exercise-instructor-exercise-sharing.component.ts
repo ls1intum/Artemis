@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
@@ -17,7 +17,7 @@ import { AlertService } from 'app/shared/service/alert.service';
             [featureToggle]="[FeatureToggle.ProgrammingExercises, FeatureToggle.Exports]"
             [icon]="faDownload"
             [title]="'artemisApp.programmingExercise.sharing.export'"
-            (onClick)="exportExerciseToSharing(exerciseId)"
+            (onClick)="exportExerciseToSharing()"
         />
     `,
     imports: [ButtonComponent],
@@ -28,8 +28,7 @@ export class ProgrammingExerciseInstructorExerciseSharingComponent {
     readonly FeatureToggle = FeatureToggle;
     sharingTab: WindowProxy | null = null;
 
-    @Input()
-    exerciseId: number;
+    exerciseId = input<number>();
 
     // Icons
     faDownload = faDownload;
@@ -45,29 +44,30 @@ export class ProgrammingExerciseInstructorExerciseSharingComponent {
      * Results in a redirect containing a callback-link to exposed exercise
      * @param programmingExerciseId the id of the exercise to export
      */
-    exportExerciseToSharing(programmingExerciseId: number) {
-        this.sharingService.exportProgrammingExerciseToSharing(programmingExerciseId, window.location.href).subscribe({
-            next: (redirect: HttpResponse<string>) => {
-                const redirectURL = redirect?.body;
-                if (redirectURL) {
-                    if (this.sharingTab) {
-                        if (!window.name) {
-                            window.name = 'artemis';
+    exportExerciseToSharing() {
+        const programmingExerciseId = this.exerciseId();
+        if (programmingExerciseId)
+            this.sharingService.exportProgrammingExerciseToSharing(programmingExerciseId, window.location.href).subscribe({
+                next: (redirect: HttpResponse<string>) => {
+                    const redirectURL = redirect?.body;
+                    if (redirectURL) {
+                        if (this.sharingTab) {
+                            if (!window.name) {
+                                window.name = 'artemis';
+                            }
+                            this.sharingTab.location.href = `${redirectURL}&window=${window.name}`;
+                            this.sharingTab.focus();
+                        } else {
+                            window.location.href = redirectURL;
                         }
-                        this.sharingTab.location.href = `${redirectURL}&window=${window.name}`;
-                        this.sharingTab.focus();
-                        //                    const sharingWindow = window.open(redirectURL, 'sharing');
                     } else {
-                        window.location.href = redirectURL;
+                        this.alertService.error('artemisApp.programmingExercise.sharing.error.noRedirect');
                     }
-                } else {
-                    this.alertService.error('artemisApp.programmingExercise.sharing.error.noRedirect');
-                }
-            },
-            error: (errorResponse) => {
-                const errorMessage = errorResponse?.error?.message || errorResponse?.error || 'Unknown error';
-                this.alertService.error('artemisApp.programmingExercise.sharing.error.export', { message: errorMessage });
-            },
-        });
+                },
+                error: (errorResponse) => {
+                    const errorMessage = errorResponse?.error?.message || errorResponse?.error || 'Unknown error';
+                    this.alertService.error('artemisApp.programmingExercise.sharing.error.export', { message: errorMessage });
+                },
+            });
     }
 }
