@@ -100,7 +100,6 @@ class IrisChatSessionResourceTest extends AbstractIrisIntegrationTest {
     @BeforeEach
     void initTestCase() throws Exception {
         List<User> users = userUtilService.addUsers(TEST_PREFIX, 3, 1, 0, 1);
-        System.out.println(users);
         List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, true, 1);
         course = courses.getFirst();
         textExercise = textExerciseUtilService.createIndividualTextExercise(course, ZonedDateTime.now(), ZonedDateTime.of(2040, 9, 9, 12, 12, 0, 0, ZoneId.of("Europe/Berlin")),
@@ -133,7 +132,7 @@ class IrisChatSessionResourceTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getAllSessionsForCourseWithoutSessions() throws Exception {
         List<IrisChatSession> irisChatSessions = request.getList("/api/iris/chat-history/" + course.getId() + "/sessions", HttpStatus.OK, IrisChatSession.class);
         assertThat(irisChatSessions).hasSize(0);
@@ -142,7 +141,6 @@ class IrisChatSessionResourceTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getSessionForSessionId() throws Exception {
-        System.out.println(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         var courseSession = createCourseChatSessionForUser("student1");
         IrisSessionDTO irisChatSessions = request.get("/api/iris/chat-history/" + course.getId() + "/COURSE/session/" + courseSession.getId(), HttpStatus.OK, IrisSessionDTO.class);
         assertThat(irisChatSessions.id()).isEqualTo(courseSession.getId());

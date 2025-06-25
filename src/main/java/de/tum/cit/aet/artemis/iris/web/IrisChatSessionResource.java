@@ -103,12 +103,13 @@ public class IrisChatSessionResource {
      * GET chat-history/{courseId}/session/{sessionId}: Retrieve an Iris Session for a sessionId
      *
      * @param courseId  of the course
+     * @param chatMode  of the session
      * @param sessionId of the session
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the iris sessions for the sessionId or {@code 404 (Not Found)} if no session exists
      */
     @GetMapping("{courseId}/{chatMode}/session/{sessionId}")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<Optional<IrisSessionDTO>> getSessionsForSessionId(@PathVariable Long courseId, @PathVariable Long sessionId, @PathVariable String chatMode) {
+    public ResponseEntity<Optional<IrisSessionDTO>> getSessionById(@PathVariable Long courseId, @PathVariable Long sessionId, @PathVariable String chatMode) {
         var chatModeEnum = IrisChatMode.valueOf(chatMode);
         var course = courseRepository.findById(courseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
