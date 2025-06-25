@@ -1405,6 +1405,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void importProgrammingExercise_updatesTestCaseIds() throws Exception {
+        // TODO: we should not mock this and instead use the real urls for LocalVC
         doReturn(new LocalVCRepositoryUri(remoteRepoPath.toString())).when(versionControlService).getCloneRepositoryUri(anyString(), anyString());
 
         programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(programmingExercise.getId());

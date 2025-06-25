@@ -103,7 +103,7 @@ public class ProgrammingUtilTestService {
             FileUtils.write(solutionFile, content, Charset.defaultCharset());
         }
 
-        var templateRepoUri = new LocalVCRepositoryUri(templateRepo.workingCopyGitRepoFile.getPath());
+        var templateRepoUri = new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(templateRepo.workingCopyGitRepoFile, localVCRepoPath));
         exercise.setTemplateRepositoryUri(templateRepoUri.toString());
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(templateRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(templateRepoUri, true);
@@ -149,7 +149,7 @@ public class ProgrammingUtilTestService {
             FileUtils.write(solutionFile, content, Charset.defaultCharset());
         }
 
-        var solutionRepoUri = new LocalVCRepositoryUri(solutionRepo.workingCopyGitRepoFile.getPath());
+        var solutionRepoUri = new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(solutionRepo.workingCopyGitRepoFile, localVCRepoPath));
         exercise.setSolutionRepositoryUri(solutionRepoUri.toString());
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(solutionRepoUri, true);
@@ -191,7 +191,7 @@ public class ProgrammingUtilTestService {
         var commits = participationRepo.workingCopyGitRepo.log().call();
         var commitsList = StreamSupport.stream(commits.spliterator(), false).toList();
 
-        var participationRepoUri = new LocalVCRepositoryUri(participationRepo.workingCopyGitRepoFile.getPath());
+        var participationRepoUri = new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(participationRepo.workingCopyGitRepoFile, localVCRepoPath));
 
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(participationRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(participationRepoUri, true);

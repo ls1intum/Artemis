@@ -30,8 +30,6 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
-import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
-import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
@@ -39,16 +37,6 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
  * Factory for creating Participations and related objects.
  */
 public class ParticipationFactory {
-
-    /**
-     * Generates a LocalVCRepositoryUri for the given repository.
-     *
-     * @param repository The repository to generate the LocalVCRepositoryUri for
-     * @return The generated LocalVCRepositoryUri
-     */
-    public static LocalVCRepositoryUri getRepositoryUri(LocalRepository repository) {
-        return new LocalVCRepositoryUri(repository.remoteBareGitRepoFile.getPath());
-    }
 
     /**
      * Generates a TextSubmission with the given arguments.

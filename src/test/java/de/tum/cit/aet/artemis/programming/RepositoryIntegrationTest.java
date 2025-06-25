@@ -84,7 +84,7 @@ import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
-import de.tum.cit.aet.artemis.programming.util.LocalRepositoryUrlUtil;
+import de.tum.cit.aet.artemis.programming.util.LocalRepositoryUriUtil;
 import de.tum.cit.aet.artemis.programming.web.repository.FileSubmission;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
@@ -189,7 +189,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         Path folderPath = Path.of(studentRepository.workingCopyGitRepoFile + "/" + currentLocalFolderName);
         Files.createDirectory(folderPath);
 
-        var localRepoUri = new LocalVCRepositoryUri(LocalRepositoryUrlUtil.convertToLocalVcUriString(studentRepository.workingCopyGitRepoFile, localVCBasePath));
+        var localRepoUri = new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(studentRepository.workingCopyGitRepoFile, localVCBasePath));
         participation = participationUtilService.addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, TEST_PREFIX + "student1", localRepoUri.getURI());
         programmingExercise.setTestRepositoryUri(localRepoUri.toString());
 
@@ -819,7 +819,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         // Create assignment repository and participation for the instructor.
         tempRepository = new LocalRepository(defaultBranch);
         tempRepository.configureRepos(localVCBasePath, "localInstructorAssignmentRepo", "remoteInstructorAssignmentRepo");
-        var instructorAssignmentRepoUri = new LocalVCRepositoryUri(LocalRepositoryUrlUtil.convertToLocalVcUriString(tempRepository.workingCopyGitRepoFile, localVCBasePath));
+        var instructorAssignmentRepoUri = new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(tempRepository.workingCopyGitRepoFile, localVCBasePath));
         ProgrammingExerciseStudentParticipation instructorAssignmentParticipation = participationUtilService
                 .addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, TEST_PREFIX + "instructor1", instructorAssignmentRepoUri.getURI());
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(tempRepository.workingCopyGitRepoFile.toPath(), null)).when(gitService)

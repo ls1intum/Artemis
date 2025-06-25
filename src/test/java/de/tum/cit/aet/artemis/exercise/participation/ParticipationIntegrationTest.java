@@ -79,7 +79,9 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
+import de.tum.cit.aet.artemis.programming.util.LocalRepositoryUriUtil;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService;
@@ -681,7 +683,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var localRepo = new LocalRepository(defaultBranch);
         localRepo.configureRepos(localVCRepoPath, "testLocalRepo", "testOriginRepo");
 
-        participation.setRepositoryUri(ParticipationFactory.getRepositoryUri(localRepo).getURI().toString());
+        var localVcsRepositoryUri = new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(localRepo.remoteBareGitRepoFile, localVCRepoPath));
+        participation.setRepositoryUri(localVcsRepositoryUri);
         participationRepo.save(participation);
 
         gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUri());
@@ -727,7 +730,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var localRepo = new LocalRepository(defaultBranch);
         localRepo.configureRepos(localVCRepoPath, "testLocalRepo", "testOriginRepo");
 
-        participation.setRepositoryUri(ParticipationFactory.getRepositoryUri(localRepo).getURI().toString());
+        var localVcsRepositoryUri = new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(localRepo.remoteBareGitRepoFile, localVCRepoPath));
+        participation.setRepositoryUri(localVcsRepositoryUri);
         participationRepo.save(participation);
 
         gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUri());
@@ -849,7 +853,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var localRepo = new LocalRepository(defaultBranch);
         localRepo.configureRepos(localVCRepoPath, "testLocalRepo", "testOriginRepo");
 
-        participation.setRepositoryUri(ParticipationFactory.getRepositoryUri(localRepo).getURI().toString());
+        var localVcsRepositoryUri = new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(localRepo.remoteBareGitRepoFile, localVCRepoPath));
+        participation.setRepositoryUri(localVcsRepositoryUri);
         participationRepo.save(participation);
 
         gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUri());
@@ -957,7 +962,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         var localRepo = new LocalRepository(defaultBranch);
         localRepo.configureRepos(localVCRepoPath, "testLocalRepo", "testOriginRepo");
-        participation.setRepositoryUri(ParticipationFactory.getRepositoryUri(localRepo).getURI().toString());
+        var localVcsRepositoryUri = new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(localRepo.remoteBareGitRepoFile, localVCRepoPath));
+        participation.setRepositoryUri(localVcsRepositoryUri);
         participationRepo.save(participation);
         gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUri());
         var updatedParticipation = request.putWithResponseBody(
@@ -1693,7 +1699,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var localRepo = new LocalRepository(defaultBranch);
         localRepo.configureRepos(localVCRepoPath, "testLocalRepo", "testOriginRepo");
 
-        participation.setRepositoryUri(ParticipationFactory.getRepositoryUri(localRepo).getURI().toString());
+        var localVcsRepositoryUri = new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(localRepo.remoteBareGitRepoFile, localVCRepoPath));
+        participation.setRepositoryUri(localVcsRepositoryUri);
         participationRepo.save(participation);
 
         var submission = participationUtilService.addSubmission(participation, new ProgrammingSubmission());
@@ -1722,7 +1729,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var localRepo = new LocalRepository(defaultBranch);
         localRepo.configureRepos(localVCRepoPath, "testLocalRepo", "testOriginRepo");
 
-        participation.setRepositoryUri(ParticipationFactory.getRepositoryUri(localRepo).getURI().toString());
+        var localVcsRepositoryUri = new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(localRepo.remoteBareGitRepoFile, localVCRepoPath));
+        participation.setRepositoryUri(localVcsRepositoryUri);
         participationRepo.save(participation);
         var submission = participationUtilService.addSubmission(participation, new ProgrammingSubmission());
 
@@ -1750,7 +1758,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var localRepo = new LocalRepository(defaultBranch);
         localRepo.configureRepos(localVCRepoPath, "testLocalRepo", "testOriginRepo");
 
-        participation.setRepositoryUri(ParticipationFactory.getRepositoryUri(localRepo).getURI().toString());
+        var localVcsRepositoryUri = new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(localRepo.remoteBareGitRepoFile, localVCRepoPath));
+        participation.setRepositoryUri(localVcsRepositoryUri);
         participationRepo.save(participation);
         var submission = participationUtilService.addSubmission(participation, new ProgrammingSubmission());
 

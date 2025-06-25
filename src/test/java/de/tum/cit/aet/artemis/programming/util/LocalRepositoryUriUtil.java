@@ -3,7 +3,7 @@ package de.tum.cit.aet.artemis.programming.util;
 import java.io.File;
 import java.nio.file.Path;
 
-public class LocalRepositoryUrlUtil {
+public class LocalRepositoryUriUtil {
 
     public static String convertToLocalVcUriString(File repoFile, Path localVCRepoPath) {
         try {
