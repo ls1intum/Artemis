@@ -54,7 +54,7 @@ class CourseLearnerProfileServiceTest {
         when(learnerProfileRepository.findByUserElseThrow(user)).thenReturn(learnerProfile);
         when(courseLearnerProfileRepository.save(any(CourseLearnerProfile.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        courseLearnerProfileService.createCourseLearnerProfile(course, user);
+        courseLearnerProfileService.getOrCreateCourseLearnerProfile(course, user);
         verify(courseLearnerProfileRepository).save(any(CourseLearnerProfile.class));
     }
 
@@ -86,7 +86,7 @@ class CourseLearnerProfileServiceTest {
             return list;
         });
 
-        courseLearnerProfileService.createCourseLearnerProfiles(course, users);
+        courseLearnerProfileService.getOrCreateCourseLearnerProfiles(course, users);
         verify(courseLearnerProfileRepository).saveAll(any());
     }
 

@@ -23,7 +23,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 @Component({
     selector: 'jhi-course-learner-profile',
     templateUrl: './course-learner-profile.component.html',
-    styleUrls: ['./course-learner-profile.component.scss'],
+    styleUrls: ['../learner-profile.component.scss'],
     imports: [TranslateDirective, NgClass, SegmentedToggleComponent, DoubleSliderComponent, FaIconComponent, HelpIconComponent, NgbTooltip, ArtemisTranslatePipe],
 })
 export class CourseLearnerProfileComponent implements OnInit {
