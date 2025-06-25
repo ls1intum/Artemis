@@ -134,6 +134,9 @@ describe('LearningPathsTableComponent', () => {
 
     it('should load and set average progress for the course', async () => {
         const mockAverageProgress = { averageProgress: 42, courseId: 1, totalStudents: 5 };
+        const error = new Error('Error loading average progress');
+        const alertServiceErrorSpy = jest.spyOn(alertService, 'addAlert');
+
         jest.spyOn(learningPathApiService, 'getAverageProgressForCourse').mockResolvedValue(mockAverageProgress);
 
         fixture.detectChanges();
@@ -141,6 +144,13 @@ describe('LearningPathsTableComponent', () => {
 
         expect(learningPathApiService.getAverageProgressForCourse).toHaveBeenCalledWith(courseId);
         expect(component.averageProgress()).toBe(42);
+
+        jest.spyOn(learningPathApiService, 'getAverageProgressForCourse').mockRejectedValue(error);
+
+        await component.loadAverageProgress(courseId);
+
+        expect(alertServiceErrorSpy).toHaveBeenCalledOnce();
+        expect(component.averageProgress()).toBeUndefined();
     });
 
     it('should set isLoading correctly', async () => {
