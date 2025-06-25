@@ -6,7 +6,7 @@
 artemis:
   sharing:
     # the shared common secret
-    apikey: acdd-erdf-asd2-234f-234d-32eb
+    apikey: <placeholder>
     # a url used to force reinitialization of Sharing Platform configuration
     # if not set, you have to wait for the next scheduled reinitialization request from the sharing platform
     # (typically every 10 minutes)

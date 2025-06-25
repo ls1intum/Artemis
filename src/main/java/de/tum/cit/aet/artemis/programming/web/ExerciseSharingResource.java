@@ -18,6 +18,7 @@ import org.codeability.sharing.plugins.api.util.SecretChecksumCalculator;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
@@ -32,6 +33,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.dto.SharingInfoDTO;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.service.sharing.ExerciseSharingService;
 import de.tum.cit.aet.artemis.programming.service.sharing.ProgrammingExerciseImportFromSharingService;
@@ -46,16 +48,17 @@ import tech.jhipster.web.util.ResponseUtil;
 @RestController
 @RequestMapping("api/programming/sharing/")
 @Profile("sharing")
+@Lazy
 public class ExerciseSharingResource {
 
     /*
      * Customized FileInputStream to delete and therefore clean up the returned files
      */
-    static class NewFileInputStream extends FileInputStream {
+    private static class AutoDeletingFileInputStream extends FileInputStream {
 
-        final File file;
+        private final File file;
 
-        public NewFileInputStream(@NotNull File file) throws FileNotFoundException {
+        private AutoDeletingFileInputStream(@NotNull File file) throws FileNotFoundException {
             super(file);
             this.file = file;
         }
@@ -63,14 +66,19 @@ public class ExerciseSharingResource {
         @Override
         public void close() throws IOException {
             super.close();
-            Files.delete(this.file.toPath());
+            try {
+                Files.delete(this.file.toPath());
+            }
+            catch (IOException e) {
+                log.error("Cannot delete {}", this.file.toPath());
+            }
         }
     }
 
     /**
-     * sharing configuration resource path for sharing config export request
+     * a sharing configuration resource path for sharing config export request
      */
-    public static final String SHARINGEXPORT_RESOURCE_PATH = "export";
+    public static final String SHARING_EXPORT_RESOURCE_PATH = "export";
 
     private static final Logger log = LoggerFactory.getLogger(ExerciseSharingResource.class);
 
@@ -95,7 +103,7 @@ public class ExerciseSharingResource {
     }
 
     /**
-     * GET .../sharing-import/basket
+     * GET .../sharing/import/basket
      *
      * @param basketToken the token of the shopping basket
      * @param returnURL   the URL to return to after the basket is loaded
@@ -104,6 +112,7 @@ public class ExerciseSharingResource {
      * @return the ResponseEntity with status 200 (OK) and with body the Shopping Basket, or with status 404 (Not Found)
      */
     @GetMapping("import/basket")
+    @EnforceAtLeastEditor
     public ResponseEntity<ShoppingBasket> loadShoppingBasket(@RequestParam String basketToken, @RequestParam String returnURL, @RequestParam String apiBaseURL,
             @RequestParam String checksum) {
         if (SecretChecksumCalculator.checkChecksum(Map.of("returnURL", returnURL, "apiBaseURL", apiBaseURL), sharingConnectorService.getSharingApiKeyOrNull(), checksum)) {
@@ -125,6 +134,7 @@ public class ExerciseSharingResource {
      * @return the ResponseEntity with status 200 (OK) and with body the programming exercise, or with status 404 (Not Found)
      */
     @PostMapping("setup-import")
+    @EnforceAtLeastEditor
     public ResponseEntity<ProgrammingExercise> setUpFromSharingImport(@RequestBody SharingSetupInfo sharingSetupInfo)
             throws GitAPIException, SharingException, IOException, URISyntaxException {
         ProgrammingExercise exercise = programmingExerciseImportFromSharingService.importProgrammingExerciseFromSharing(sharingSetupInfo);
@@ -132,12 +142,13 @@ public class ExerciseSharingResource {
     }
 
     /**
-     * GET .../sharing/import/basket/problem-statement : get problem statement of the exercise defined in sharingInfo.
+     * GET .../sharing/import/basket/problem-statement get the problem statement of the exercise defined in sharingInfo.
      *
-     * @param sharingInfo the sharing info (with exercise position in basket)
+     * @param sharingInfo the sharing info (with exercise position in the basket)
      * @return the ResponseEntity with status 200 (OK) and with body the problem statement, or with status 404 (Not Found)
      */
     @PostMapping("import/basket/problem-statement")
+    @EnforceAtLeastEditor
     public ResponseEntity<String> getProblemStatement(@RequestBody SharingInfoDTO sharingInfo) {
         if (!sharingInfo.checkChecksum(sharingConnectorService.getSharingApiKeyOrNull())) {
             return ResponseEntity.badRequest().build();
@@ -147,15 +158,16 @@ public class ExerciseSharingResource {
     }
 
     /**
-     * GET .../sharing/import/basket/exercise-details : get exercise details of the exercise defined in sharingInfo.
+     * GET .../sharing/import/basket/exercise-details: get exercise details of the exercise defined in sharingInfo.
      *
-     * @param sharingInfo the sharing info (with exercise position in basket)
+     * @param sharingInfo the sharing info (with exercise position in the basket)
      * @return the ResponseEntity with status 200 (OK) and with body the problem statement, or with status 404 (Not Found)
      */
     @PostMapping("import/basket/exercise-details")
-    public ResponseEntity<ProgrammingExercise> getExerciseDetails(@RequestBody SharingInfoDTO sharingInfo) throws IOException {
+    @EnforceAtLeastEditor
+    public ResponseEntity<ProgrammingExercise> getExerciseDetails(@RequestBody SharingInfoDTO sharingInfo) {
         if (!sharingInfo.checkChecksum(sharingConnectorService.getSharingApiKeyOrNull())) {
-            return ResponseEntity.badRequest().body(null);
+            return ResponseEntity.badRequest().build();
         }
         ProgrammingExercise exerciseDetails = this.exerciseSharingService.getExerciseDetailsFromBasket(sharingInfo);
         return ResponseEntity.ok().body(exerciseDetails);
@@ -166,10 +178,11 @@ public class ExerciseSharingResource {
      * by generating a unique URL token exposing the exercise
      *
      * @param exerciseId  the id of the exercise to export
-     * @param callBackUrl the call back url returned to client after export has finished
+     * @param callBackUrl the call back url returned to the client after export has finished
      * @return the URL to Sharing
      */
-    @PostMapping(SHARINGEXPORT_RESOURCE_PATH + "/{exerciseId}")
+    @PostMapping(SHARING_EXPORT_RESOURCE_PATH + "/{exerciseId}")
+    @EnforceAtLeastEditor
     public ResponseEntity<String> exportExerciseToSharing(@RequestBody String callBackUrl, @PathVariable("exerciseId") Long exerciseId) {
         try {
             URI uriRedirect = exerciseSharingService.exportExerciseToSharing(exerciseId).toURI();
@@ -178,23 +191,23 @@ public class ExerciseSharingResource {
         }
         catch (SharingException | URISyntaxException e) {
             log.error("Error exporting exercise to sharing platform", e);
-            return ResponseEntity.internalServerError().body("An error occurred while exporting the exercise!");
+            return ResponseEntity.internalServerError().body("An error occurred while exporting the exercise");
         }
-
     }
 
     /**
      * GET /sharing/export/{exerciseToken}: Endpoint exposing an exported exercise zip to Sharing
      *
      * @param token in base64 format and used to retrieve the exercise
-     * @param sec   digeset of shared key
+     * @param sec   digest of the shared key
      * @return a stream of the zip file
-     * @throws FileNotFoundException if zip file does not exist anymore
+     * @throws FileNotFoundException if the zip file does not exist anymore
      */
-    @GetMapping(SHARINGEXPORT_RESOURCE_PATH + "/{token}")
+    @GetMapping(SHARING_EXPORT_RESOURCE_PATH + "/{token}")
+    @EnforceAtLeastEditor
     // Custom Key validation is applied
     public ResponseEntity<Resource> exportExerciseToSharing(@PathVariable("token") String token, @RequestParam("sec") String sec) throws FileNotFoundException {
-        if (sec.isEmpty() || !exerciseSharingService.validate(token, sec)) {
+        if (!exerciseSharingService.validate(token, sec)) {
             log.warn("Security Token {} is not valid", sec);
             return ResponseEntity.status(401).build();
         }
@@ -204,7 +217,7 @@ public class ExerciseSharingResource {
             return ResponseEntity.notFound().build();
         }
 
-        InputStreamResource resource = new InputStreamResource(new NewFileInputStream(zipFile));
+        InputStreamResource resource = new InputStreamResource(new AutoDeletingFileInputStream(zipFile));
 
         return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
     }
