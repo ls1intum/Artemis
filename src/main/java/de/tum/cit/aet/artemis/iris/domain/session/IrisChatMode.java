@@ -17,6 +17,13 @@ public enum IrisChatMode {
         return value;
     }
 
+    /**
+     * Returns the {@code IrisChatMode} matching the given string value.
+     *
+     * @param value the string value to match
+     * @return the corresponding {@code IrisChatMode}
+     * @throws IllegalArgumentException if no matching mode is found
+     */
     public static IrisChatMode fromValue(String value) {
         for (IrisChatMode mode : values()) {
             if (mode.getValue().equals(value)) {
