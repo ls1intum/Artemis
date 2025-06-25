@@ -13,4 +13,13 @@ public enum IrisChatMode {
     public String getValue() {
         return value;
     }
+
+    public static IrisChatMode fromValue(String value) {
+        for (IrisChatMode mode : values()) {
+            if (mode.getValue().equals(value)) {
+                return mode;
+            }
+        }
+        throw new IllegalArgumentException("Unknown chat mode: " + value);
+    }
 }

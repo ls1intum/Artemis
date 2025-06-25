@@ -222,7 +222,6 @@ export class IrisChatService implements OnDestroy {
                 this.messages.next(r.messages || []);
                 this.parseLatestSuggestions(r.latestSuggestions);
                 this.ws.subscribeToSession(this.sessionId).subscribe((m) => this.handleWebsocketMessage(m));
-                this.loadChatSessions();
             },
             error: (e: IrisErrorMessageKey) => {
                 this.error.next(e as IrisErrorMessageKey);
@@ -247,7 +246,10 @@ export class IrisChatService implements OnDestroy {
 
     public clearChat(): void {
         this.close();
-        this.createNewSession().subscribe(this.handleNewSession());
+        this.createNewSession().subscribe({
+            ...this.handleNewSession(),
+            complete: () => this.loadChatSessions(),
+        });
     }
 
     private handleWebsocketMessage(payload: IrisChatWebsocketDTO) {
@@ -348,12 +350,11 @@ export class IrisChatService implements OnDestroy {
         }
 
         this.close();
-        // const newIdentifier = session.chatMode.toString() && session.entityId ? session.chatMode.toString() + '/' + session.entityId : undefined;
 
-        const requiresAcceptance = this.modeRequiresLLMAcceptance.get(session.chatMode);
+        const requiresAcceptance = this.sessionCreationIdentifier ? this.modeRequiresLLMAcceptance.get(session.chatMode) : true;
+
         if (requiresAcceptance === false || this.accountService.userIdentity?.externalLLMUsageAccepted || this.hasJustAcceptedExternalLLMUsage) {
-            this.handleNewSession().next(session);
-            this.loadChatSessions();
+            this.http.getChatSessionById(this.courseId, session.id, session.chatMode).subscribe((session) => this.handleNewSession().next(session));
         }
     }
 

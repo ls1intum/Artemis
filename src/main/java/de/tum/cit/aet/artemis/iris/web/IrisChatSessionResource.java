@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -24,9 +23,11 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisLectureChatSession;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisProgrammingExerciseChatSession;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisTextExerciseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
-import de.tum.cit.aet.artemis.iris.dto.IrisSessionDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisCourseChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisExerciseChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisLectureChatSessionRepository;
@@ -106,38 +107,45 @@ public class IrisChatSessionResource {
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the iris sessions for the sessionId or {@code 404 (Not Found)} if no session exists
      */
     @GetMapping("{courseId}/{chatMode}/session/{sessionId}")
-    public ResponseEntity<Optional<IrisSessionDTO>> getSessionsForSessionId(@PathVariable Long courseId, @PathVariable Long sessionId, @PathVariable String chatMode) {
-        var chatModeEnum = IrisChatMode.valueOf(chatMode);
-        var course = courseRepository.findById(courseId);
+    public ResponseEntity<IrisChatSession> getSessionsForSessionId(@PathVariable Long courseId, @PathVariable Long sessionId, @PathVariable String chatMode) {
+        var chatModeEnum = IrisChatMode.fromValue(chatMode);
+        var course = courseRepository.findByIdElseThrow(courseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
 
         user.hasAcceptedExternalLLMUsageElseThrow();
 
+        IrisChatSession session = null;
+
         if (chatModeEnum.equals(IrisChatMode.COURSE)) {
-            if (irisSettingsService.isEnabledFor(IrisSubSettingsType.COURSE_CHAT, course.get())) {
-                return ResponseEntity.ok(irisCourseChatSessionRepository.findById(sessionId)
-                        .map(s -> new IrisSessionDTO(s.getId(), s.getUserId(), s.getMessages(), s.getCreationDate(), IrisChatMode.COURSE.getValue(), s.getCourseId())));
+            if (irisSettingsService.isEnabledFor(IrisSubSettingsType.COURSE_CHAT, course)) {
+                IrisCourseChatSession courseChatSession = irisCourseChatSessionRepository.findSessionWithMessagesById(sessionId).orElseThrow();
+                courseChatSession.setEntityId(courseChatSession.getCourseId());
+                session = courseChatSession;
             }
         }
         else if (chatModeEnum.equals(IrisChatMode.LECTURE)) {
-            if (irisSettingsService.isEnabledFor(IrisSubSettingsType.LECTURE_CHAT, course.get())) {
-                return ResponseEntity.ok(irisLectureChatSessionRepository.findById(sessionId)
-                        .map(s -> new IrisSessionDTO(s.getId(), s.getUserId(), s.getMessages(), s.getCreationDate(), IrisChatMode.LECTURE.getValue(), s.getLectureId())));
+            if (irisSettingsService.isEnabledFor(IrisSubSettingsType.LECTURE_CHAT, course)) {
+                IrisLectureChatSession lectureChatSession = irisLectureChatSessionRepository.findSessionWithMessagesById(sessionId).orElseThrow();
+                lectureChatSession.setEntityId(lectureChatSession.getLectureId());
+                session = lectureChatSession;
             }
         }
         else if (chatModeEnum.equals(IrisChatMode.TEXT_EXERCISE)) {
-            if (irisSettingsService.isEnabledFor(IrisSubSettingsType.TEXT_EXERCISE_CHAT, course.get())) {
-                return ResponseEntity.ok(irisTextExerciseChatSessionRepository.findById(sessionId)
-                        .map(s -> new IrisSessionDTO(s.getId(), s.getUserId(), s.getMessages(), s.getCreationDate(), IrisChatMode.TEXT_EXERCISE.getValue(), s.getExerciseId())));
+            if (irisSettingsService.isEnabledFor(IrisSubSettingsType.TEXT_EXERCISE_CHAT, course)) {
+                IrisTextExerciseChatSession textExerciseChatSession = irisTextExerciseChatSessionRepository.findSessionWithMessagesById(sessionId).orElseThrow();
+                textExerciseChatSession.setEntityId(textExerciseChatSession.getExerciseId());
+                session = textExerciseChatSession;
             }
         }
         else if (chatModeEnum.equals(IrisChatMode.PROGRAMMING_EXERCISE)) {
-            if (irisSettingsService.isEnabledFor(IrisSubSettingsType.PROGRAMMING_EXERCISE_CHAT, course.get())) {
-                return ResponseEntity.ok(irisExerciseChatSessionRepository.findById(sessionId).map(
-                        s -> new IrisSessionDTO(s.getId(), s.getUserId(), s.getMessages(), s.getCreationDate(), IrisChatMode.PROGRAMMING_EXERCISE.getValue(), s.getExerciseId())));
+            if (irisSettingsService.isEnabledFor(IrisSubSettingsType.PROGRAMMING_EXERCISE_CHAT, course)) {
+                IrisProgrammingExerciseChatSession programmingExerciseChatSession = irisExerciseChatSessionRepository.findSessionWithMessagesById(sessionId).orElseThrow();
+                programmingExerciseChatSession.setEntityId(programmingExerciseChatSession.getExerciseId());
+                session = programmingExerciseChatSession;
             }
         }
-        return ResponseEntity.badRequest().build();
+
+        return ResponseEntity.ok(session);
     }
 
     /**
