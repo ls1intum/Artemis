@@ -602,16 +602,6 @@ public class ParticipationResource {
         return ResponseEntity.ok().body(updatedParticipations);
     }
 
-    private Set<StudentParticipation> findParticipationsWithLatestSubmissionAndResult(Exercise exercise) {
-
-        // TODO: we should reduce the amount of data fetched here and sent to the client: double check which data is actually required in the exercise scores page
-        if (exercise.isTeamMode()) {
-            // For team exercises the students need to be eagerly fetched
-            return studentParticipationRepository.findByExerciseIdWithLatestSubmissionResultWithTeamInformation(exercise.getId());
-        }
-        return studentParticipationRepository.findByExerciseIdWithLatestSubmissionResultAndAssessmentNote(exercise.getId());
-    }
-
     /**
      * GET /exercises/:exerciseId/participations : get all the participations for an exercise
      *
@@ -628,7 +618,7 @@ public class ParticipationResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
         Set<StudentParticipation> participations;
         if (withLatestResults) {
-            participations = findParticipationsWithLatestSubmissionAndResult(exercise);
+            participations = participationService.findByExerciseIdWithLatestSubmissionResultAndAssessmentNote(exercise.getId(), exercise.isTeamMode());
         }
         else {
             if (exercise.isTeamMode()) {
