@@ -17,7 +17,7 @@ import io.grpc.ManagedChannelBuilder;
 @Service
 public class FaqGrpcService {
 
-    @Value("${nebula.host:host.docker.internal}")
+    @Value("${nebula.url:host.docker.internal}")
     private String nebulaUrl;
 
     @Value("${nebula.port:50051}")

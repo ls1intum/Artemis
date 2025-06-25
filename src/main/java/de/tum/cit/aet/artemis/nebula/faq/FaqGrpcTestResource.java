@@ -9,8 +9,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
+
 @RestController
-@RequestMapping("/api/nebula")
+@RequestMapping("/api/nebula/")
 public class FaqGrpcTestResource {
 
     private static final Logger log = LoggerFactory.getLogger(FaqGrpcTestResource.class);
@@ -23,7 +25,8 @@ public class FaqGrpcTestResource {
         this.faqGrpcService = faqGrpcService;
     }
 
-    @PostMapping("/rewrite-faq/{courseId}")
+    @EnforceAtLeastTutorInCourse
+    @PostMapping("rewrite-faq/{courseId}")
     public ResponseEntity<String> rewriteFaqInNebula(@PathVariable Long courseId, @RequestBody String inputText) {
 
         log.debug("REST request to rewrite the following FAQ input text : {}", inputText);
