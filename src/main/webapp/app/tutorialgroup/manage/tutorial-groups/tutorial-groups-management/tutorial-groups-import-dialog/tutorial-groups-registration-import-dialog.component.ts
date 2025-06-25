@@ -413,7 +413,9 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
 
         uniqueRegistrationNumbers.forEach((registrationNumber) => {
             if (registrationNumbers.filter((rn) => rn === registrationNumber).length > 1) {
-                duplicatedRegistrationNumbers.push(registrationNumber!);
+                if (registrationNumber) {
+                    duplicatedRegistrationNumbers.push(registrationNumber);
+                }
             }
         });
 
@@ -430,7 +432,9 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
 
         uniqueLogins.forEach((login) => {
             if (logins.filter((l) => l === login).length > 1) {
-                duplicatedLogins.push(login!);
+                if (login) {
+                    duplicatedLogins.push(login);
+                }
             }
         });
 
