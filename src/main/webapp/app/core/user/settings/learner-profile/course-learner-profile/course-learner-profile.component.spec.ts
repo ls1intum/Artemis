@@ -43,6 +43,8 @@ describe('CourseLearnerProfileComponent', () => {
     clp1.aimForGradeOrBonus = 2;
     clp1.timeInvestment = 2;
     clp1.repetitionIntensity = 2;
+    clp1.proficiency = 2;
+    clp1.initialProficiency = 2;
 
     const clp2 = new CourseLearnerProfileDTO();
     clp2.id = 2;
@@ -51,6 +53,8 @@ describe('CourseLearnerProfileComponent', () => {
     clp2.aimForGradeOrBonus = 1;
     clp2.timeInvestment = 1;
     clp2.repetitionIntensity = 1;
+    clp2.proficiency = 3;
+    clp2.initialProficiency = 3;
     const profiles = [clp1, clp2];
 
     beforeEach(async () => {
@@ -155,6 +159,39 @@ describe('CourseLearnerProfileComponent', () => {
         return newProfile;
     }
 
+    async function setupUpdateTestProficiency(courseIndex: number, courseId: number, mockUpdate: boolean): Promise<CourseLearnerProfileDTO> {
+        const newProfile = new CourseLearnerProfileDTO();
+        Object.assign(newProfile, { ...profiles[courseIndex] });
+        newProfile.proficiency = 3.1;
+        newProfile.initialProficiency = 3.1;
+
+        // Set up component state
+        component.courseLearnerProfiles.set([...profiles]);
+        component.activeCourseId = courseId;
+        component.disabled = false;
+        component.editing = true;
+
+        // Set the profile values in the component's signals
+        component.proficiency.set(newProfile.proficiency);
+
+        // Update the profile in the component's state
+        const updatedProfiles = [...profiles];
+        updatedProfiles[courseIndex] = newProfile;
+        component.courseLearnerProfiles.set(updatedProfiles);
+
+        if (mockUpdate) {
+            putUpdatedCourseLearnerProfileSpy.mockResolvedValue(newProfile);
+        } else {
+            putUpdatedCourseLearnerProfileSpy.mockRejectedValue(new Error('Bad Request'));
+        }
+
+        await component.onProfileSave();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        return newProfile;
+    }
+
     function validateUpdate(index: number, profile: CourseLearnerProfileDTO) {
         expect(putUpdatedCourseLearnerProfileSpy).toHaveBeenCalled();
         expect(putUpdatedCourseLearnerProfileSpy.mock.calls[0][0]).toEqual(profile);
@@ -178,6 +215,18 @@ describe('CourseLearnerProfileComponent', () => {
         it('should error on bad request', async () => {
             const courseIndex = 1;
             const profile = await setupUpdateTest(courseIndex, profiles[courseIndex].courseId, false);
+            await validateError(profiles[courseIndex].courseId, courseIndex, profile);
+        });
+
+        it('should update profile on successful request after updating proficiency', async () => {
+            const courseIndex = 1;
+            const profile = await setupUpdateTestProficiency(courseIndex, profiles[courseIndex].courseId, true);
+            validateUpdate(courseIndex, profile);
+        });
+
+        it('should error profile on bad request after updating proficiency', async () => {
+            const courseIndex = 1;
+            const profile = await setupUpdateTestProficiency(courseIndex, profiles[courseIndex].courseId, false);
             await validateError(profiles[courseIndex].courseId, courseIndex, profile);
         });
 
@@ -342,6 +391,15 @@ describe('CourseLearnerProfileComponent', () => {
             expect(component.disabled).toBeTrue();
         });
 
+        it('should be disabled when no profile is selected', async () => {
+            const course = -1;
+            selectCourse(course);
+            const changeEvent = new Event('change', { bubbles: true, cancelable: false });
+            selector.dispatchEvent(changeEvent);
+            expect(component.activeCourseId).toBeNull();
+            expect(component.disabled).toBeTrue();
+        });
+
         it('should load profile when course is selected', () => {
             // Arrange
             const courseId = 1;
@@ -375,6 +433,25 @@ describe('CourseLearnerProfileComponent', () => {
             expect(component.aimForGradeOrBonus()).toBe(3);
             expect(component.timeInvestment()).toBe(4);
             expect(component.repetitionIntensity()).toBe(5);
+        });
+
+        it('should update profile values including proficiency correctly', () => {
+            // Arrange
+            const profile = new CourseLearnerProfileDTO();
+            profile.aimForGradeOrBonus = 3;
+            profile.timeInvestment = 4;
+            profile.repetitionIntensity = 5;
+            profile.proficiency = 3.5;
+            profile.initialProficiency = 3.5;
+
+            // Act
+            component['updateProfileValues'](profile);
+
+            // Assert
+            expect(component.aimForGradeOrBonus()).toBe(3);
+            expect(component.timeInvestment()).toBe(4);
+            expect(component.repetitionIntensity()).toBe(5);
+            expect(component.proficiency()).toBe(3.5);
         });
 
         it('should get course learner profile by course ID', () => {
@@ -503,6 +580,31 @@ describe('CourseLearnerProfileComponent', () => {
             expect(component.aimForGradeOrBonus()).toBe(newProfile.aimForGradeOrBonus);
             expect(component.timeInvestment()).toBe(newProfile.timeInvestment);
             expect(component.repetitionIntensity()).toBe(newProfile.repetitionIntensity);
+        });
+
+        it('should handle onProfileSave method', async () => {
+            // Arrange
+            const courseIndex = 1;
+            const courseId = profiles[courseIndex].courseId;
+            component.courseLearnerProfiles.set([...profiles]);
+            component.activeCourseId = courseId;
+            component.disabled = false;
+            component.editing = true;
+
+            const newProfile = new CourseLearnerProfileDTO();
+            Object.assign(newProfile, { ...profiles[courseIndex] });
+            newProfile.proficiency = 3.5;
+
+            component.proficiency.set(newProfile.proficiency);
+            putUpdatedCourseLearnerProfileSpy.mockResolvedValue(newProfile);
+
+            // Act
+            await component.onProfileSave();
+            await fixture.whenStable();
+
+            // Assert
+            expect(putUpdatedCourseLearnerProfileSpy).toHaveBeenCalled();
+            expect(component.proficiency()).toBe(newProfile.proficiency);
         });
     });
 });
