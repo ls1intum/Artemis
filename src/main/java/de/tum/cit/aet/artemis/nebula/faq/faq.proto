@@ -3,7 +3,7 @@ syntax = "proto3";
 package faqservice;
 
 service FAQService {
-  rpc ProcessInput(FaqRewritingRequest) returns (FaqRewritingResponse);
+  rpc RewriteFAQ(FaqRewritingRequest) returns (FaqRewritingResponse);
 }
 
 message FAQ {

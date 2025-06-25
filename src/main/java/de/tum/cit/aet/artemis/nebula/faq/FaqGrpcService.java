@@ -17,10 +17,10 @@ import io.grpc.ManagedChannelBuilder;
 @Service
 public class FaqGrpcService {
 
-    @Value("${nebula.faq.host:host.docker.internal}")
+    @Value("${nebula.host:host.docker.internal}")
     private String nebulaUrl;
 
-    @Value("${nebula.faq.port:50051}")
+    @Value("${nebula.port:50051}")
     private int faqPort;
 
     private final FaqRepository faqRepository;
@@ -46,7 +46,7 @@ public class FaqGrpcService {
 
         faqservice.Faq.FaqRewritingRequest request = faqservice.Faq.FaqRewritingRequest.newBuilder().addAllFaqs(protoFaqs).setInputText(inputText).build();
 
-        faqservice.Faq.FaqRewritingResponse response = faqStub.processInput(request);
+        faqservice.Faq.FaqRewritingResponse response = faqStub.rewriteFAQ(request);
         return response.getResult();
     }
 
