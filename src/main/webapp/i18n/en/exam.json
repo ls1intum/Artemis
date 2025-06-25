@@ -474,6 +474,7 @@
             },
             "numberOfExerciseGroups": "Number of exercise groups:",
             "numberOfExercisesInExam": "Number of exercises in exam",
+            "numberOfExercisesInExamTooltip": "The number of exercises must be equal to the number of exercise groups",
             "numberOfCorrectionRoundsInExam": "Number of correction rounds in exam",
             "randomizeQuestionOrder": "Randomize order of exercise groups",
             "examWithAttendanceCheck": "Exam with attendance check",
