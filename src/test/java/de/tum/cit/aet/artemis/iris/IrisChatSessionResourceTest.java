@@ -27,8 +27,8 @@ import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisLectureChatSession;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTextExerciseChatSession;
-import de.tum.cit.aet.artemis.iris.dto.IrisSessionDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
@@ -142,8 +142,8 @@ class IrisChatSessionResourceTest extends AbstractIrisIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getSessionForSessionId() throws Exception {
         var courseSession = createCourseChatSessionForUser("student1");
-        IrisSessionDTO irisChatSessions = request.get("/api/iris/chat-history/" + course.getId() + "/COURSE/session/" + courseSession.getId(), HttpStatus.OK, IrisSessionDTO.class);
-        assertThat(irisChatSessions.id()).isEqualTo(courseSession.getId());
+        IrisSession irisChatSessions = request.get("/api/iris/chat-history/" + course.getId() + "/course-chat/session/" + courseSession.getId(), HttpStatus.OK, IrisSession.class);
+        assertThat(irisChatSessions.getId()).isEqualTo(courseSession.getId());
     }
 
     @Test
