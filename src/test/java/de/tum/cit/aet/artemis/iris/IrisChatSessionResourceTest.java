@@ -148,7 +148,7 @@ class IrisChatSessionResourceTest extends AbstractIrisIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    public void getAllSessionsForCourseWithSessions() throws Exception {
+    void getAllSessionsForCourseWithSessions() throws Exception {
         var courseSession = createCourseChatSessionForUser("student1");
         var lectureSession = createLectureSessionForUser("student1");
         var textExerciseSession = createTextExerciseChatSessionForUser("student1");
