@@ -228,7 +228,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             results?.sort((result1, result2) => (result1.id ?? 0) - (result2.id ?? 0));
             const resultsWithoutAthena = results?.filter((result) => result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA);
             if (resultsWithoutAthena?.length != 0) {
-                if (participation && participation.submissions && participation?.submissions[0]) {
+                if (participation?.submissions?.[0]) {
                     participation!.submissions[0]!.results = results;
                 }
             }
