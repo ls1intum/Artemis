@@ -41,6 +41,7 @@ import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTOType;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
+import de.tum.cit.aet.artemis.programming.util.LocalRepositoryUriUtil;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.web.repository.FileSubmission;
 
@@ -80,7 +81,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
         filePath = Path.of(testRepo.workingCopyGitRepoFile + "/" + currentLocalFolderName);
         Files.createDirectory(filePath);
 
-        var testRepoUri = new LocalVCRepositoryUri(testRepo.workingCopyGitRepoFile.getPath());
+        var testRepoUri = new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(testRepo.workingCopyGitRepoFile, localVCRepoPath));
         programmingExercise.setTestRepositoryUri(testRepoUri.toString());
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(testRepoUri, true);
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(testRepoUri,
