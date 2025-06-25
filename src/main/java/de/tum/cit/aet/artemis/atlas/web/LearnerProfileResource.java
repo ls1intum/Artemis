@@ -46,7 +46,7 @@ public class LearnerProfileResource {
      * @param value     Value of the field
      * @param fieldName Field name
      */
-    private void validateProfileField(int value, String fieldName) {
+    private void validateProfileField(double value, String fieldName) {
         if (value < MIN_PROFILE_VALUE || value > MAX_PROFILE_VALUE) {
             String message = String.format("%s (%d) is outside valid bounds [%d, %d]", fieldName, value, MIN_PROFILE_VALUE, MAX_PROFILE_VALUE);
             throw new BadRequestAlertException(message, LearnerProfile.ENTITY_NAME, fieldName.toLowerCase() + "OutOfBounds", true);

@@ -10,7 +10,8 @@ import de.tum.cit.aet.artemis.atlas.domain.profile.CourseLearnerProfile;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public record CourseLearnerProfileDTO(long id, long courseId, String courseTitle, int aimForGradeOrBonus, int timeInvestment, int repetitionIntensity) {
+public record CourseLearnerProfileDTO(long id, long courseId, String courseTitle, int aimForGradeOrBonus, int timeInvestment, int repetitionIntensity, double proficiency,
+        double initialProficiency) {
 
     /**
      * Creates CourseLearnerProfileDTO from given CourseLearnerProfile.
@@ -20,8 +21,9 @@ public record CourseLearnerProfileDTO(long id, long courseId, String courseTitle
      */
     public static CourseLearnerProfileDTO of(CourseLearnerProfile courseLearnerProfile) {
         var course = courseLearnerProfile.getCourse();
-        return new CourseLearnerProfileDTO(courseLearnerProfile.getId(), course.getId(), course.getTitle(), clamp(courseLearnerProfile.getAimForGradeOrBonus()),
-                clamp(courseLearnerProfile.getTimeInvestment()), clamp(courseLearnerProfile.getRepetitionIntensity()));
+        return new CourseLearnerProfileDTO(courseLearnerProfile.getId(), course.getId(), course.getTitle(), (int) clamp(courseLearnerProfile.getAimForGradeOrBonus()),
+                (int) clamp(courseLearnerProfile.getTimeInvestment()), (int) clamp(courseLearnerProfile.getRepetitionIntensity()), clamp(courseLearnerProfile.getProficiency()),
+                clamp(courseLearnerProfile.getInitialProficiency()));
     }
 
     /**
@@ -30,7 +32,7 @@ public record CourseLearnerProfileDTO(long id, long courseId, String courseTitle
      * @param value The value to clamp
      * @return The clamped value
      */
-    private static int clamp(int value) {
+    private static double clamp(double value) {
         return Math.max(MIN_PROFILE_VALUE, Math.min(MAX_PROFILE_VALUE, value));
     }
 }
