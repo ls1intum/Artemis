@@ -367,13 +367,20 @@ public class ProgrammingExerciseExportImportResource {
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.Exports)
     public ResponseEntity<Resource> exportInstructorRepository(@PathVariable long exerciseId, @PathVariable RepositoryType repositoryType) throws IOException {
-        var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exerciseId)
+                .orElseThrow(() -> new EntityNotFoundException("Programming Exercise", exerciseId));
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
 
         long start = System.nanoTime();
-        Optional<File> zipFile = programmingExerciseExportService.exportInstructorRepositoryForExercise(programmingExercise.getId(), repositoryType, new ArrayList<>());
 
-        return returnZipFileForRepositoryExport(zipFile, repositoryType.getName(), programmingExercise, start);
+        InputStreamResource resource = programmingExerciseExportService.exportInstructorRepositoryForExerciseInMemory(programmingExercise, repositoryType,
+                Collections.synchronizedList(new ArrayList<>()));
+
+        log.info("Export of the repository of type {} programming exercise {} with title '{}' was successful in {}.", resource.getFilename(), programmingExercise.getId(),
+                programmingExercise.getTitle(), formatDurationFrom(start));
+
+        return ResponseEntity.ok().contentLength(resource.contentLength()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", resource.getFilename())
+                .body(resource);
     }
 
     /**

@@ -45,6 +45,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.stereotype.Service;
 import org.w3c.dom.Document;
@@ -388,6 +389,28 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         String zippedRepoName = getZippedRepoName(exercise, repositoryType.getName());
         var repositoryUri = exercise.getRepositoryURL(repositoryType);
         return exportRepository(repositoryUri, repositoryType.getName(), zippedRepoName, exercise, workingDir, outputDir, null, exportErrors);
+    }
+
+    /**
+     * Exports an instructor repository (template, solution, or tests) directly to memory as an InputStreamResource.
+     *
+     * @param programmingExercise the programming exercise that has the repository
+     * @param repositoryType      the type of repository to export (template, solution, or tests)
+     * @param exportErrors        list of failures that occurred during the export
+     * @return an InputStreamResource containing the zipped repository, or null if export failed
+     */
+    public InputStreamResource exportInstructorRepositoryForExerciseInMemory(ProgrammingExercise programmingExercise, RepositoryType repositoryType, List<String> exportErrors) {
+        String zippedRepoName = getZippedRepoName(programmingExercise, repositoryType.getName());
+        try {
+            return gitService.exportRepositoryWithFullHistoryToMemory(programmingExercise.getRepositoryURL(repositoryType), zippedRepoName);
+        }
+        catch (IOException | GitAPIException ex) {
+            var error = "Failed to export instructor repository " + repositoryType.getName() + " for programming exercise '" + programmingExercise.getTitle() + "' (id: "
+                    + programmingExercise.getId() + ")";
+            log.error("{}: {}", error, ex.getMessage());
+            exportErrors.add(error);
+            return null;
+        }
     }
 
     /**

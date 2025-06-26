@@ -1408,10 +1408,7 @@ public class GitService extends AbstractGitService {
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
             // Use ArchiveCommand to create a zip archive directly to memory
-            ArchiveCommand archiveCommand = git.archive().setFormat("zip").setTree(git.getRepository().resolve("HEAD")).setOutputStream(outputStream);
-
-            // Execute the archive command
-            archiveCommand.call();
+            git.archive().setFormat("zip").setTree(git.getRepository().resolve("HEAD")).setOutputStream(outputStream).call();
 
             // Create an InputStreamResource from the output
             byte[] zipData = outputStream.toByteArray();
@@ -1431,6 +1428,63 @@ public class GitService extends AbstractGitService {
     }
 
     /**
+     * Determines the default branch name for a repository using multiple fallback strategies.
+     * This method is particularly useful for bare repositories or repositories without proper remote configuration.
+     *
+     * @param repository the repository to analyze
+     * @return the branch name, or null if no branches are found
+     */
+    private String determineDefaultBranch(Repository repository) {
+        // Try to find the default branch - first try origin/HEAD, then just HEAD, then any branch
+        String branch = null;
+
+        try {
+            // Try to get origin head first
+            branch = getOriginHead(repository);
+        }
+        catch (Exception e) {
+            log.debug("Could not get origin head, trying alternative methods: {}", e.getMessage());
+        }
+
+        // If origin head failed, try to resolve HEAD directly
+        if (branch == null) {
+            try {
+                ObjectId headId = repository.resolve("HEAD");
+                if (headId != null) {
+                    Ref headRef = repository.exactRef("HEAD");
+                    if (headRef != null && headRef.isSymbolic()) {
+                        String targetRef = headRef.getTarget().getName();
+                        if (targetRef.startsWith("refs/heads/")) {
+                            branch = targetRef.substring("refs/heads/".length());
+                        }
+                    }
+                }
+            }
+            catch (Exception e) {
+                log.debug("Could not resolve HEAD: {}", e.getMessage());
+            }
+        }
+
+        // If still no branch, try to find any branch
+        if (branch == null) {
+            try {
+                Map<String, Ref> branches = repository.getAllRefs();
+                for (Map.Entry<String, Ref> entry : branches.entrySet()) {
+                    if (entry.getKey().startsWith("refs/heads/")) {
+                        branch = entry.getKey().substring("refs/heads/".length());
+                        break;
+                    }
+                }
+            }
+            catch (Exception e) {
+                log.debug("Could not find any branches: {}", e.getMessage());
+            }
+        }
+
+        return branch;
+    }
+
+    /**
      * Exports a repository with full history including the .git directory directly to memory.
      * This method uses JGit's ArchiveCommand to create a zip of the working tree and combines it
      * with the .git directory for full history, all done in memory without disk checkout.
@@ -1445,14 +1499,16 @@ public class GitService extends AbstractGitService {
         log.debug("Exporting repository with full history to memory using JGit archive: {}", repositoryUri);
 
         Repository repository = getBareRepository(repositoryUri);
-        String branch = getOriginHead(repository);
+        String branch = determineDefaultBranch(repository);
 
         if (branch == null) {
             // Empty repository case - just return the .git directory
+            log.debug("No branches found, returning .git directory only");
             return zipDirectoryToMemory(repository.getDirectory().toPath(), filename, null);
         }
 
         String treeish = "refs/heads/" + branch;
+        log.debug("Using branch '{}' for export", branch);
 
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream)) {
 
@@ -1461,22 +1517,32 @@ public class GitService extends AbstractGitService {
             addDirectoryToZip(zipOutputStream, bareRepoPath, bareRepoPath, ".git");
 
             // Step 2: Add the working tree snapshot using ArchiveCommand
-            try (ByteArrayOutputStream archiveStream = new ByteArrayOutputStream()) {
-                try (Git git = new Git(repository)) {
-                    ArchiveCommand archiveCommand = git.archive().setTree(repository.resolve(treeish)).setFormat("zip").setOutputStream(archiveStream);
+            try {
+                ObjectId treeId = repository.resolve(treeish);
+                if (treeId != null) {
+                    try (ByteArrayOutputStream archiveStream = new ByteArrayOutputStream()) {
+                        try (Git git = new Git(repository)) {
+                            git.archive().setTree(treeId).setFormat("zip").setOutputStream(archiveStream).call();
+                        }
 
-                    archiveCommand.call();
-                }
-
-                // Extract the archive contents and add them to our main zip
-                try (ZipInputStream zipInputStream = new ZipInputStream(new ByteArrayInputStream(archiveStream.toByteArray()))) {
-                    ZipEntry entry;
-                    while ((entry = zipInputStream.getNextEntry()) != null) {
-                        zipOutputStream.putNextEntry(new ZipEntry(entry.getName()));
-                        zipInputStream.transferTo(zipOutputStream);
-                        zipOutputStream.closeEntry();
+                        // Extract the archive contents and add them to our main zip
+                        try (ZipInputStream zipInputStream = new ZipInputStream(new ByteArrayInputStream(archiveStream.toByteArray()))) {
+                            ZipEntry entry;
+                            while ((entry = zipInputStream.getNextEntry()) != null) {
+                                zipOutputStream.putNextEntry(new ZipEntry(entry.getName()));
+                                zipInputStream.transferTo(zipOutputStream);
+                                zipOutputStream.closeEntry();
+                            }
+                        }
                     }
                 }
+                else {
+                    log.debug("Could not resolve tree for branch '{}', repository might be empty", branch);
+                }
+            }
+            catch (Exception e) {
+                log.debug("Could not create archive for branch '{}': {}", branch, e.getMessage());
+                // Continue without the working tree content, just include .git directory
             }
 
             zipOutputStream.finish();

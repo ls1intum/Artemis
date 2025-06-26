@@ -1776,6 +1776,7 @@ public class ProgrammingExerciseTestService {
         createAndCommitDummyFileInLocalRepository(localRepo, fileName);
         doReturn(repository).when(gitService).getOrCheckoutRepository(eq(vcsUrl), anyString(), anyBoolean());
         doReturn(repository).when(gitService).getOrCheckoutRepository(eq(vcsUrl), (Path) any(), anyBoolean());
+        doReturn(repository).when(gitService).getBareRepository(eq(vcsUrl));
     }
 
     // Test
