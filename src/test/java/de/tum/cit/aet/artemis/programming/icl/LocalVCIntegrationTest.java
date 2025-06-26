@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.programming.icl;
 
 import static de.tum.cit.aet.artemis.core.user.util.UserFactory.USER_PASSWORD;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
@@ -34,8 +35,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseBuildConfigTestRepository;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 
 /**
@@ -48,7 +49,7 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     private static final String TEST_PREFIX = "localvcint";
 
     @Autowired
-    private ProgrammingExerciseBuildConfigTestRepository programmingExerciseBuildConfigTestRepository;
+    private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     private LocalRepository assignmentRepository;
 
@@ -340,21 +341,17 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     }
 
     void customBranchTestHelper(boolean allowBranching, String regex, boolean shouldSucceed) throws Exception {
-        if (allowBranching) {
-            programmingExerciseBuildConfigTestRepository.allowBranching(programmingExercise.getId(), regex);
-        }
-        else {
-            programmingExerciseBuildConfigTestRepository.disallowBranching(programmingExercise.getId());
-        }
+        var buildConfig = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        buildConfig.setAllowBranching(allowBranching);
+        buildConfig.setBranchRegex(regex);
+        programmingExerciseBuildConfigRepository.save(buildConfig);
 
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
+        await().until(() -> programmingExerciseStudentParticipationRepository.findByExerciseIdAndStudentLogin(programmingExercise.getId(), student1Login).isPresent());
+
         assignmentRepository.localGit.branchCreate().setName("new-branch").setStartPoint("refs/heads/" + defaultBranch).call();
         String repositoryUri = localVCLocalCITestService.constructLocalVCUrl(student1Login, projectKey1, assignmentRepositorySlug);
-
-        var buildConfig = programmingExerciseBuildConfigTestRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
-        log.info("Exercise, id: {}, key: {}; repo: {}", programmingExercise.getId(), programmingExercise.getProjectKey(), repositoryUri);
-        log.info("Wanted config: allowBranching={}, regex={}; Actual config: {}", allowBranching, regex, buildConfig);
 
         // Push the new branch.
         PushResult pushResult = assignmentRepository.localGit.push().setRemote(repositoryUri).setRefSpecs(new RefSpec("refs/heads/new-branch:refs/heads/new-branch")).call()
