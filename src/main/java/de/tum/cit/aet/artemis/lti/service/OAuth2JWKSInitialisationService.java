@@ -18,10 +18,13 @@ public class OAuth2JWKSInitialisationService {
 
     private final OAuth2JWKSService oAuth2JWKSService;
 
+    private final OnlineCourseConfigurationService onlineCourseConfigurationService;
+
     private static final Logger log = LoggerFactory.getLogger(OAuth2JWKSInitialisationService.class);
 
-    public OAuth2JWKSInitialisationService(OAuth2JWKSService oAuth2JWKSService) {
+    public OAuth2JWKSInitialisationService(OAuth2JWKSService oAuth2JWKSService, OnlineCourseConfigurationService onlineCourseConfigurationService) {
         this.oAuth2JWKSService = oAuth2JWKSService;
+        this.onlineCourseConfigurationService = onlineCourseConfigurationService;
     }
 
     /**
@@ -32,7 +35,16 @@ public class OAuth2JWKSInitialisationService {
     public void init() {
         if (oAuth2JWKSService.getClientRegistrationIdToJwk().isEmpty()) {
             log.info("Initializing JWKSet for OAuth2 ClientRegistrations");
-            oAuth2JWKSService.generateOAuth2ClientKeys();
+            generateOAuth2ClientKeys();
         }
+    }
+
+    /**
+     * Generates a new JWK for each OAuth2 ClientRegistration, if it is not present in the Hazelcast map and stores it.
+     * This method is called once during initialization to ensure all existing ClientRegistrations have a key.
+     */
+    private void generateOAuth2ClientKeys() {
+        onlineCourseConfigurationService.getAllClientRegistrations()
+                .forEach(cr -> oAuth2JWKSService.getClientRegistrationIdToJwk().computeIfAbsent(cr.getRegistrationId(), id -> oAuth2JWKSService.generateKey(cr)));
     }
 }

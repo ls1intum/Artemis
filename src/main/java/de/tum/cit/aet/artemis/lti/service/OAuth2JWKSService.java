@@ -101,19 +101,11 @@ public class OAuth2JWKSService {
     }
 
     /**
-     * Generates a new JWK for each OAuth2 ClientRegistration, if it is not present in the Hazelcast map and stores it.
-     * This method is called once during initialization to ensure all existing ClientRegistrations have a key.
-     */
-    public void generateOAuth2ClientKeys() {
-        onlineCourseConfigurationService.getAllClientRegistrations().forEach(cr -> getClientRegistrationIdToJwk().computeIfAbsent(cr.getRegistrationId(), id -> generateKey(cr)));
-    }
-
-    /**
      * Generates a new RSAKey for the given ClientRegistration.
      *
      * @param clientRegistration the ClientRegistration for which to generate a key
      */
-    private RSAKey generateKey(ClientRegistration clientRegistration) {
+    public RSAKey generateKey(ClientRegistration clientRegistration) {
         try {
             KeyPair keyPair = KeyPairGenerator.getInstance("RSA").generateKeyPair();
             String kid = kidGenerator.generateKey();
