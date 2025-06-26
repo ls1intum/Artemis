@@ -31,7 +31,7 @@ public class OAuth2JWKSInitialisationService {
     @EventListener(FullStartupEvent.class)
     public void init() {
         if (oAuth2JWKSService.getClientRegistrationIdToJwk().isEmpty()) {
-            log.debug("Initializing JWKSet for OAuth2 ClientRegistrations");
+            log.info("Initializing JWKSet for OAuth2 ClientRegistrations");
             oAuth2JWKSService.generateOAuth2ClientKeys();
         }
     }
