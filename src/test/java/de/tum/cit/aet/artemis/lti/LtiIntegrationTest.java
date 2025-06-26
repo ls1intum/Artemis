@@ -103,7 +103,7 @@ class LtiIntegrationTest extends AbstractLtiIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void deleteLtiPlatformConfigurationByIdAsAdmin() throws Exception {
-        Long platformId = 1L;
+        long platformId = 1L;
 
         LtiPlatformConfiguration platformToDelete = new LtiPlatformConfiguration();
         platformToDelete.setId(platformId);
