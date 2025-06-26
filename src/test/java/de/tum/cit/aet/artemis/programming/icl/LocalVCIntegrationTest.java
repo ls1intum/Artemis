@@ -349,9 +349,15 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
         await().until(() -> programmingExerciseStudentParticipationRepository.findByExerciseIdAndStudentLogin(programmingExercise.getId(), student1Login).isPresent());
+        await().until(() -> assignmentRepository.originRepoFile.exists());
+        await().until(() -> assignmentRepository.localRepoFile.exists());
 
         assignmentRepository.localGit.branchCreate().setName("new-branch").setStartPoint("refs/heads/" + defaultBranch).call();
         String repositoryUri = localVCLocalCITestService.constructLocalVCUrl(student1Login, projectKey1, assignmentRepositorySlug);
+
+        var debugBuildConfig = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        log.info("Exercise, id: {}, key: {}; repo: {}", programmingExercise.getId(), programmingExercise.getProjectKey(), repositoryUri);
+        log.info("Wanted config: allowBranching={}, regex={}; Actual config: {}", allowBranching, regex, debugBuildConfig);
 
         // Push the new branch.
         PushResult pushResult = assignmentRepository.localGit.push().setRemote(repositoryUri).setRefSpecs(new RefSpec("refs/heads/new-branch:refs/heads/new-branch")).call()
