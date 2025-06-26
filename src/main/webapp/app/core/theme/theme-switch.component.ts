@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, vi
 
 import { TranslateModule } from '@ngx-translate/core';
 import { NgbModule, NgbPopover } from '@ng-bootstrap/ng-bootstrap';
-import { PlacementArray } from '@ng-bootstrap/ng-bootstrap/util/positioning';
+import { Placement } from '@ng-bootstrap/ng-bootstrap';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import { fromEvent } from 'rxjs';
 import { faSync } from '@fortawesome/free-solid-svg-icons';
@@ -26,7 +26,7 @@ export class ThemeSwitchComponent implements OnInit {
 
     private readonly themeService = inject(ThemeService);
 
-    popoverPlacement = input.required<PlacementArray>();
+    popoverPlacement = input.required<Placement>();
     popover = viewChild.required<NgbPopover>('popover');
 
     isDarkTheme = computed(() => this.themeService.currentTheme() === Theme.DARK);

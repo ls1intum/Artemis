@@ -41,7 +41,7 @@ describe('GradingKeyOverviewComponent', () => {
             imports: [
                 GradingKeyOverviewComponent,
                 MockComponent(GradingKeyTableComponent),
-                MockComponent(FaIconComponent),
+                FaIconComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(TranslateDirective),
                 MockPipe(SafeHtmlPipe),

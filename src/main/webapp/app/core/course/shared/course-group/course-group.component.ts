@@ -66,7 +66,7 @@ export class CourseGroupComponent implements OnDestroy {
     searchFailed = false;
     searchNoResults = false;
     isTransitioning = false;
-    rowClass: string | undefined = undefined;
+    rowClass: string;
 
     // Icons
     faDownload = faDownload;
@@ -217,7 +217,7 @@ export class CourseGroupComponent implements OnDestroy {
      */
     flashRowClass = (className: string) => {
         this.rowClass = className;
-        setTimeout(() => (this.rowClass = undefined));
+        setTimeout(() => (this.rowClass = ''));
     };
 
     /**
