@@ -2,7 +2,7 @@
     <div class="card shadow border-0 bg-light">
         <div class="card-header d-flex align-items-center border-bottom-0 bg-transparent pb-2">
             @if (headerIcon()) {
-                <div class="bg-primary text-white rounded-circle p-2 me-3">
+                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center p-2 me-3 square-2-5">
                     <fa-icon [icon]="headerIcon()!" />
                 </div>
             }
@@ -12,7 +12,7 @@
         <div class="card-body pt-3 pb-0 mb-0">
             <div class="row g-4">
                 <div class="col-md-12">
-                    <p class="fs-5 lh-md" style="white-space: pre-line" [jhiTranslate]="description()"></p>
+                    <p class="fs-5 lh-md pre-line" [jhiTranslate]="description()"></p>
                 </div>
             </div>
         </div>
