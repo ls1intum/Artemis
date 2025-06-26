@@ -362,7 +362,7 @@ public final class Constants {
     public static final String PROFILE_CORE_AND_SCHEDULING = PROFILE_CORE + " & " + PROFILE_SCHEDULING;
 
     /**
-     * Profile combination for one primary node, where LTI AND scheduling AND core is active
+     * Profile combination for one primary node, where LTI AND scheduling is active
      */
     public static final String PROFILE_LTI_AND_SCHEDULING = PROFILE_LTI + " & " + PROFILE_SCHEDULING;
 
