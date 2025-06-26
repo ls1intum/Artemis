@@ -41,8 +41,6 @@ class OAuth2JWKSServiceTest {
 
     private OAuth2JWKSService oAuth2JWKSService;
 
-    private OAuth2JWKSInitialisationService oAuth2JWKSInitialisationService;
-
     private ClientRegistration clientRegistration;
 
     private final String clientRegistrationId = "regId";
@@ -62,6 +60,7 @@ class OAuth2JWKSServiceTest {
         when(hazelcastInstance.getMap("ltiJwkMap")).thenAnswer(invocation -> clientRegistrationIdToJwk);
 
         oAuth2JWKSService = new OAuth2JWKSService(onlineCourseConfigurationService, hazelcastInstance);
+        OAuth2JWKSInitialisationService oAuth2JWKSInitialisationService = new OAuth2JWKSInitialisationService(oAuth2JWKSService);
         oAuth2JWKSInitialisationService.init();  // Manually call the initialization method to populate the JWKs
     }
 
