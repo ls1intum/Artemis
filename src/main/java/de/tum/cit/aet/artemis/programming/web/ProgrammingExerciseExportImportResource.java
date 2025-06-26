@@ -15,9 +15,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 import jakarta.validation.constraints.NotNull;
 
@@ -66,7 +64,6 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.course.CourseService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
@@ -78,7 +75,6 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
-import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
@@ -110,9 +106,6 @@ public class ProgrammingExerciseExportImportResource {
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
-
-    @Value("${artemis.repo-download-clone-path}")
-    private Path repoDownloadClonePath;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
@@ -148,8 +141,6 @@ public class ProgrammingExerciseExportImportResource {
 
     private final ProgrammingExerciseValidationService programmingExerciseValidationService;
 
-    private final FileService fileService;
-
     private final GitService gitService;
 
     public ProgrammingExerciseExportImportResource(ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository,
@@ -158,8 +149,7 @@ public class ProgrammingExerciseExportImportResource {
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, SubmissionPolicyService submissionPolicyService,
             ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, Optional<ExamAccessApi> examAccessApi, CourseRepository courseRepository,
             ProgrammingExerciseImportFromFileService programmingExerciseImportFromFileService, ConsistencyCheckService consistencyCheckService, Optional<AthenaApi> athenaApi,
-            Optional<CompetencyProgressApi> competencyProgressApi, ProgrammingExerciseValidationService programmingExerciseValidationService, FileService fileService,
-            GitService gitService) {
+            Optional<CompetencyProgressApi> competencyProgressApi, ProgrammingExerciseValidationService programmingExerciseValidationService, GitService gitService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -177,7 +167,6 @@ public class ProgrammingExerciseExportImportResource {
         this.athenaApi = athenaApi;
         this.competencyProgressApi = competencyProgressApi;
         this.programmingExerciseValidationService = programmingExerciseValidationService;
-        this.fileService = fileService;
         this.gitService = gitService;
     }
 
@@ -572,19 +561,12 @@ public class ProgrammingExerciseExportImportResource {
                     "Failed to export repository because the repository URI is not defined.")).body(null);
         }
 
-        Path clonePath = fileService.getTemporaryUniquePathWithoutPathCreation(repoDownloadClonePath, 5);
-
         try {
-            Repository repository = gitService.getOrCheckoutRepository(repositoryUri, clonePath, true);
-            gitService.resetToOriginHead(repository);
-
-            Predicate<Path> gitDirFilter = path -> StreamSupport.stream(path.spliterator(), false).noneMatch(pathPart -> ".git".equalsIgnoreCase(pathPart.toString()));
-
             String zippedRepoName = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-" + programmingExercise.getTitle() + "-"
                     + repositoryType.getName();
             zippedRepoName = FileUtil.sanitizeFilename(zippedRepoName);
 
-            InputStreamResource zipResource = gitService.zipDirectoryToMemory(repository.getLocalPath(), zippedRepoName, gitDirFilter);
+            InputStreamResource zipResource = gitService.exportRepositorySnapshot(repositoryUri, zippedRepoName);
 
             log.info("Successfully exported repository for programming exercise {} with title {} in {} ms", programmingExercise.getId(), programmingExercise.getTitle(),
                     (System.nanoTime() - start) / 1000000);
