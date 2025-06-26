@@ -8,10 +8,9 @@ import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPublicKey;
 import java.util.ArrayList;
 
-import jakarta.annotation.PostConstruct;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.keygen.Base64StringKeyGenerator;
@@ -46,24 +45,22 @@ public class OAuth2JWKSService {
 
     private IMap<String, JWK> clientRegistrationIdToJwk;
 
-    public OAuth2JWKSService(OnlineCourseConfigurationService onlineCourseConfigurationService, HazelcastInstance hazelcastInstance) {
+    public OAuth2JWKSService(OnlineCourseConfigurationService onlineCourseConfigurationService, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
         this.onlineCourseConfigurationService = onlineCourseConfigurationService;
         this.hazelcastInstance = hazelcastInstance;
     }
 
     /**
-     * Initializes the clientRegistration to JWK Map for OAuth2 ClientRegistrations.
-     * This method is called once when the application starts, and it generates keys for all existing ClientRegistrations.
+     * Returns the Hazelcast map that stores the JWKs for each OAuth2 ClientRegistration.
+     * The map is lazily initialized when it is first accessed.
+     *
+     * @return the Hazelcast map containing JWKs
      */
-    @PostConstruct
-    public void init() {
-        clientRegistrationIdToJwk = hazelcastInstance.getMap("ltiJwkMap");
-
-        // Only one node should initialize the JWKSet
-        if (clientRegistrationIdToJwk.isEmpty()) {
-            log.debug("Initializing JWKSet for OAuth2 ClientRegistrations");
-            generateOAuth2ClientKeys();
+    public IMap<String, JWK> getClientRegistrationIdToJwk() {
+        if (this.clientRegistrationIdToJwk == null) {
+            this.clientRegistrationIdToJwk = this.hazelcastInstance.getMap("ltiJwkMap");
         }
+        return this.clientRegistrationIdToJwk;
     }
 
     /**
@@ -73,7 +70,7 @@ public class OAuth2JWKSService {
      * @return the JWK found for the client registrationId
      */
     public JWK getJWK(String clientRegistrationId) {
-        return clientRegistrationIdToJwk.get(clientRegistrationId);
+        return getClientRegistrationIdToJwk().get(clientRegistrationId);
     }
 
     /**
@@ -87,10 +84,10 @@ public class OAuth2JWKSService {
         ClientRegistration clientRegistration = onlineCourseConfigurationService.findByRegistrationId(clientRegistrationId);
 
         if (clientRegistration == null) {
-            clientRegistrationIdToJwk.delete(clientRegistrationId);
+            getClientRegistrationIdToJwk().delete(clientRegistrationId);
         }
         else {
-            clientRegistrationIdToJwk.put(clientRegistrationId, generateKey(clientRegistration));
+            getClientRegistrationIdToJwk().put(clientRegistrationId, generateKey(clientRegistration));
         }
     }
 
@@ -100,15 +97,15 @@ public class OAuth2JWKSService {
      * @return a JWKSet containing all JWKs
      */
     public JWKSet getJwkSet() {
-        return new JWKSet(new ArrayList<>(clientRegistrationIdToJwk.values()));
+        return new JWKSet(new ArrayList<>(getClientRegistrationIdToJwk().values()));
     }
 
     /**
-     * Generates a new JWK for each OAuth2 ClientRegistration and stores it in the Hazelcast map.
+     * Generates a new JWK for each OAuth2 ClientRegistration, if it is not present in the Hazelcast map and stores it.
      * This method is called once during initialization to ensure all existing ClientRegistrations have a key.
      */
-    private void generateOAuth2ClientKeys() {
-        onlineCourseConfigurationService.getAllClientRegistrations().forEach(cr -> clientRegistrationIdToJwk.computeIfAbsent(cr.getRegistrationId(), id -> generateKey(cr)));
+    public void generateOAuth2ClientKeys() {
+        onlineCourseConfigurationService.getAllClientRegistrations().forEach(cr -> getClientRegistrationIdToJwk().computeIfAbsent(cr.getRegistrationId(), id -> generateKey(cr)));
     }
 
     /**
