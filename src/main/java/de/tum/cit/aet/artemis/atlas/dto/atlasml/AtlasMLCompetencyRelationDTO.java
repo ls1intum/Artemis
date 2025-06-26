@@ -7,15 +7,15 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.RelationType;
 
 /**
  * DTO for AtlasML API communication representing a competency relation.
- * This maps the AtlasML relation types to the domain relation types.
+ * This contains only IDs and matches the Python AtlasML API structure.
  */
 public class AtlasMLCompetencyRelationDTO {
 
-    @JsonProperty("tail_competency_id")
-    private String tailCompetencyId;
+    @JsonProperty("tail_id")
+    private String tailId;
 
-    @JsonProperty("head_competency_id")
-    private String headCompetencyId;
+    @JsonProperty("head_id")
+    private String headId;
 
     @JsonProperty("relation_type")
     private String relationType;
@@ -24,26 +24,26 @@ public class AtlasMLCompetencyRelationDTO {
     public AtlasMLCompetencyRelationDTO() {
     }
 
-    public AtlasMLCompetencyRelationDTO(String tailCompetencyId, String headCompetencyId, String relationType) {
-        this.tailCompetencyId = tailCompetencyId;
-        this.headCompetencyId = headCompetencyId;
+    public AtlasMLCompetencyRelationDTO(String tailId, String headId, String relationType) {
+        this.tailId = tailId;
+        this.headId = headId;
         this.relationType = relationType;
     }
 
-    public String getTailCompetencyId() {
-        return tailCompetencyId;
+    public String getTailId() {
+        return tailId;
     }
 
-    public void setTailCompetencyId(String tailCompetencyId) {
-        this.tailCompetencyId = tailCompetencyId;
+    public void setTailId(String tailId) {
+        this.tailId = tailId;
     }
 
-    public String getHeadCompetencyId() {
-        return headCompetencyId;
+    public String getHeadId() {
+        return headId;
     }
 
-    public void setHeadCompetencyId(String headCompetencyId) {
-        this.headCompetencyId = headCompetencyId;
+    public void setHeadId(String headId) {
+        this.headId = headId;
     }
 
     public String getRelationType() {
@@ -56,66 +56,44 @@ public class AtlasMLCompetencyRelationDTO {
 
     /**
      * Convert from domain CompetencyRelation to AtlasML DTO.
-     * Maps domain relation types to AtlasML relation types.
      */
     public static AtlasMLCompetencyRelationDTO fromDomain(CompetencyRelation relation) {
         if (relation == null) {
             return null;
         }
 
-        String atlasMLRelationType = mapRelationTypeToAtlasML(relation.getType());
         String tailId = relation.getTailCompetency() != null ? relation.getTailCompetency().getId().toString() : null;
         String headId = relation.getHeadCompetency() != null ? relation.getHeadCompetency().getId().toString() : null;
+        String relationType = relation.getType() != null ? relation.getType().name() : RelationType.ASSUMES.name();
 
-        return new AtlasMLCompetencyRelationDTO(tailId, headId, atlasMLRelationType);
+        return new AtlasMLCompetencyRelationDTO(tailId, headId, relationType);
     }
 
     /**
      * Convert to domain CompetencyRelation.
-     * Note: This creates a basic relation without the full domain objects.
+     * Note: This creates a basic relation without full competency objects.
      */
     public CompetencyRelation toDomain() {
-        RelationType domainRelationType = mapAtlasMLToRelationType(this.relationType);
+        RelationType type = RelationType.ASSUMES; // Default
+        if (this.relationType != null) {
+            try {
+                type = RelationType.valueOf(this.relationType);
+            }
+            catch (IllegalArgumentException e) {
+                // Use default if relation type is invalid
+            }
+        }
 
         CompetencyRelation relation = new CompetencyRelation();
-        relation.setType(domainRelationType);
-        // Note: tailCompetency and headCompetency would need to be set with actual domain objects
+        relation.setType(type);
+        // Note: tailCompetency and headCompetency would need to be set separately
+        // as they require full CourseCompetency objects
+
         return relation;
-    }
-
-    /**
-     * Maps domain RelationType to AtlasML relation type string.
-     */
-    private static String mapRelationTypeToAtlasML(RelationType domainType) {
-        if (domainType == null) {
-            return "SUPERSET"; // Default
-        }
-
-        return switch (domainType) {
-            case ASSUMES -> "SUPERSET"; // Assumes means tail requires head, so tail is superset of head
-            case EXTENDS -> "SUBSET";   // Extends means tail builds on head, so tail is subset of head
-            case MATCHES -> "SUPERSET"; // Matches could be considered superset for AtlasML
-        };
-    }
-
-    /**
-     * Maps AtlasML relation type string to domain RelationType.
-     */
-    private static RelationType mapAtlasMLToRelationType(String atlasMLType) {
-        if (atlasMLType == null) {
-            return RelationType.ASSUMES; // Default
-        }
-
-        return switch (atlasMLType.toUpperCase()) {
-            case "SUPERSET" -> RelationType.ASSUMES;
-            case "SUBSET" -> RelationType.EXTENDS;
-            default -> RelationType.ASSUMES; // Default fallback
-        };
     }
 
     @Override
     public String toString() {
-        return "AtlasMLCompetencyRelationDTO{" + "tailCompetencyId='" + tailCompetencyId + '\'' + ", headCompetencyId='" + headCompetencyId + '\'' + ", relationType='"
-                + relationType + '\'' + '}';
+        return "AtlasMLCompetencyRelationDTO{" + "tailId='" + tailId + '\'' + ", headId='" + headId + '\'' + ", relationType='" + relationType + '\'' + '}';
     }
 }

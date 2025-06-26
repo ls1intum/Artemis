@@ -86,9 +86,10 @@ class AtlasMLServiceTest {
         SuggestCompetencyRequestDTO request = new SuggestCompetencyRequestDTO("test-id", "test description");
 
         List<String> competencyIds = List.of("comp-001", "comp-002");
-        AtlasMLCompetencyRelationDTO relationDTO = new AtlasMLCompetencyRelationDTO("tail-id", "head-id", "SUPERSET");
+        CompetencyRelation relation = new CompetencyRelation();
+        relation.setType(RelationType.SUPERSET);
 
-        SuggestCompetencyResponseDTO expectedResponse = new SuggestCompetencyResponseDTO(competencyIds, List.of(relationDTO));
+        SuggestCompetencyResponseDTO expectedResponse = new SuggestCompetencyResponseDTO(competencyIds, List.of(relation));
 
         ResponseEntity<SuggestCompetencyResponseDTO> response = new ResponseEntity<>(expectedResponse, HttpStatus.OK);
 
@@ -103,26 +104,80 @@ class AtlasMLServiceTest {
         assertThat(result.getCompetencies()).hasSize(2);
         assertThat(result.getCompetencyRelations()).hasSize(1);
         assertThat(result.getCompetencies()).contains("comp-001", "comp-002");
-        assertThat(result.getCompetencyRelations().get(0).getRelationType()).isEqualTo("SUPERSET");
+        assertThat(result.getCompetencyRelations().get(0).getType()).isEqualTo(RelationType.SUPERSET);
     }
 
     @Test
     void testSaveCompetencies() {
         // Given
         AtlasMLCompetencyDTO competencyDTO = new AtlasMLCompetencyDTO("Test Competency", "Test Description", "APPLY");
-        AtlasMLCompetencyRelationDTO relationDTO = new AtlasMLCompetencyRelationDTO("tail-id", "head-id", "SUBSET");
+        CompetencyRelation relation = new CompetencyRelation();
+        relation.setType(RelationType.SUBSET);
 
-        SaveCompetencyRequestDTO request = new SaveCompetencyRequestDTO("test-id", "test description", List.of(competencyDTO), List.of(relationDTO));
+        SaveCompetencyRequestDTO request = new SaveCompetencyRequestDTO("test-id", "test description", List.of(competencyDTO), List.of(relation));
 
         ResponseEntity<Void> response = new ResponseEntity<>(HttpStatus.OK);
 
         when(atlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/competency/save"), eq(HttpMethod.POST), any(HttpEntity.class), eq(Void.class))).thenReturn(response);
 
         // When
-        boolean result = atlasMLService.saveCompetencies(request);
+        atlasMLService.saveCompetencies(request);
 
-        // Then
-        assertThat(result).isTrue();
+        // Then - no exception should be thrown
+        // The method is void, so we just verify it completes successfully
+    }
+
+    @Test
+    void testSaveCompetencies_WithDomainObjects() {
+        // Given
+        Competency competency = new Competency();
+        competency.setTitle("Test Competency");
+        competency.setDescription("Test Description");
+        competency.setTaxonomy(CompetencyTaxonomy.APPLY);
+        competency.setOptional(false);
+
+        CompetencyRelation relation = new CompetencyRelation();
+        relation.setType(RelationType.EXTENDS);
+
+        SaveCompetencyRequestDTO request = SaveCompetencyRequestDTO.fromDomain("test-id", "test description", List.of(competency), List.of(relation));
+
+        ResponseEntity<Void> response = new ResponseEntity<>(HttpStatus.OK);
+
+        when(atlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/competency/save"), eq(HttpMethod.POST), any(HttpEntity.class), eq(Void.class))).thenReturn(response);
+
+        // When
+        atlasMLService.saveCompetencies(request);
+
+        // Then - no exception should be thrown
+        // The method is void, so we just verify it completes successfully
+    }
+
+    @Test
+    void testSaveCompetencies_WhenServiceThrowsException() {
+        // Given
+        SaveCompetencyRequestDTO request = new SaveCompetencyRequestDTO();
+
+        when(atlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/competency/save"), eq(HttpMethod.POST), any(HttpEntity.class), eq(Void.class)))
+                .thenThrow(new HttpClientErrorException(HttpStatus.INTERNAL_SERVER_ERROR));
+
+        // When & Then
+        org.junit.jupiter.api.Assertions.assertThrows(AtlasMLServiceException.class, () -> {
+            atlasMLService.saveCompetencies(request);
+        });
+    }
+
+    @Test
+    void testSuggestCompetencies_WhenServiceThrowsException() {
+        // Given
+        SuggestCompetencyRequestDTO request = new SuggestCompetencyRequestDTO("test-id", "test description");
+
+        when(atlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/competency/suggest"), eq(HttpMethod.POST), any(HttpEntity.class),
+                eq(SuggestCompetencyResponseDTO.class))).thenThrow(new HttpClientErrorException(HttpStatus.INTERNAL_SERVER_ERROR));
+
+        // When & Then
+        org.junit.jupiter.api.Assertions.assertThrows(AtlasMLServiceException.class, () -> {
+            atlasMLService.suggestCompetencies(request);
+        });
     }
 
     @Test
@@ -175,44 +230,6 @@ class AtlasMLServiceTest {
         // Then
         assertThat(result).hasSize(2);
         assertThat(result).contains("comp-001", "comp-002");
-    }
-
-    @Test
-    void testSaveCompetenciesWithDomainObjects() {
-        // Given
-        Competency competency = new Competency();
-        competency.setTitle("Test Competency");
-        competency.setDescription("Test Description");
-        competency.setTaxonomy(CompetencyTaxonomy.APPLY);
-        competency.setOptional(false);
-
-        CompetencyRelation relation = new CompetencyRelation();
-        relation.setType(RelationType.EXTENDS);
-
-        ResponseEntity<Void> response = new ResponseEntity<>(HttpStatus.OK);
-
-        when(atlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/competency/save"), eq(HttpMethod.POST), any(HttpEntity.class), eq(Void.class))).thenReturn(response);
-
-        // When
-        boolean result = atlasMLService.saveCompetencies("test-id", "test description", List.of(competency), List.of(relation));
-
-        // Then
-        assertThat(result).isTrue();
-    }
-
-    @Test
-    void testSaveCompetenciesFailure() {
-        // Given
-        SaveCompetencyRequestDTO request = new SaveCompetencyRequestDTO();
-
-        when(atlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/competency/save"), eq(HttpMethod.POST), any(HttpEntity.class), eq(Void.class)))
-                .thenThrow(new HttpClientErrorException(HttpStatus.INTERNAL_SERVER_ERROR));
-
-        // When
-        boolean result = atlasMLService.saveCompetencies(request);
-
-        // Then
-        assertThat(result).isFalse();
     }
 
     @Test

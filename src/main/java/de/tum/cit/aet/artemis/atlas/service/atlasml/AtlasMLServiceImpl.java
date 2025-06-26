@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.atlas.service.atlasml;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -121,7 +120,7 @@ public class AtlasMLServiceImpl implements AtlasMLService {
     }
 
     @Override
-    public boolean saveCompetencies(SaveCompetencyRequestDTO request) {
+    public void saveCompetencies(SaveCompetencyRequestDTO request) {
         try {
             log.debug("Saving competencies for id: {}", request.getId());
 
@@ -129,35 +128,48 @@ public class AtlasMLServiceImpl implements AtlasMLService {
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<SaveCompetencyRequestDTO> entity = new HttpEntity<>(request, headers);
 
-            ResponseEntity<Void> response = atlasmlRestTemplate.exchange(config.getAtlasmlBaseUrl() + SAVE_ENDPOINT, HttpMethod.POST, entity, Void.class);
+            atlasmlRestTemplate.exchange(config.getAtlasmlBaseUrl() + SAVE_ENDPOINT, HttpMethod.POST, entity, Void.class);
 
             log.debug("Received successful response for saving competencies for id: {}", request.getId());
-            return response.getStatusCode().is2xxSuccessful();
         }
         catch (HttpClientErrorException | HttpServerErrorException e) {
             log.error("HTTP error while saving competencies for id {}: {}", request.getId(), e.getMessage());
-            return false;
+            throw new AtlasMLServiceException("Failed to save competencies due to client error", e);
         }
         catch (ResourceAccessException e) {
             log.error("Connection error while saving competencies for id {}: {}", request.getId(), e.getMessage());
-            return false;
+            throw new AtlasMLServiceException("Failed to save competencies due to connection issue", e);
         }
         catch (Exception e) {
             log.error("Unexpected error while saving competencies for id {}", request.getId(), e);
+            throw new AtlasMLServiceException("Unexpected error while saving competencies", e);
+        }
+    }
+
+    @Override
+    public SuggestCompetencyResponseDTO suggestCompetencies(String id, String description) {
+        SuggestCompetencyRequestDTO request = new SuggestCompetencyRequestDTO(id, description);
+        return suggestCompetencies(request);
+    }
+
+    @Override
+    public boolean saveCompetencies(String id, String description, List<Competency> competencies, List<CompetencyRelation> competencyRelations) {
+        try {
+            SaveCompetencyRequestDTO request = SaveCompetencyRequestDTO.fromDomain(id, description, competencies, competencyRelations);
+            saveCompetencies(request);
+            return true;
+        }
+        catch (Exception e) {
+            log.error("Failed to save competencies with domain objects for id {}", id, e);
             return false;
         }
     }
 
     @Override
     public List<Competency> suggestCompetenciesAsDomain(String id, String description) {
-        return suggestCompetenciesAsDomain(new SuggestCompetencyRequestDTO(id, description));
-    }
-
-    @Override
-    public List<Competency> suggestCompetenciesAsDomain(SuggestCompetencyRequestDTO request) {
-        SuggestCompetencyResponseDTO response = suggestCompetencies(request);
-        if (response == null || response.getCompetencies() == null || response.getCompetencies().isEmpty()) {
-            return Collections.emptyList();
+        SuggestCompetencyResponseDTO response = suggestCompetencies(id, description);
+        if (response.getCompetencies() == null || response.getCompetencies().isEmpty()) {
+            return List.of();
         }
 
         List<Long> competencyIds = response.getCompetencies().stream().map(Long::parseLong).collect(Collectors.toList());
@@ -166,27 +178,28 @@ public class AtlasMLServiceImpl implements AtlasMLService {
     }
 
     @Override
-    public SuggestCompetencyResponseDTO suggestCompetencies(String id, String description) {
-        return suggestCompetencies(new SuggestCompetencyRequestDTO(id, description));
-    }
-
-    @Override
-    public boolean saveCompetencies(String id, String description, List<Competency> competencies, List<CompetencyRelation> competencyRelations) {
-        return saveCompetencies(SaveCompetencyRequestDTO.fromDomain(id, description, competencies, competencyRelations));
+    public List<Competency> suggestCompetenciesAsDomain(SuggestCompetencyRequestDTO request) {
+        return suggestCompetenciesAsDomain(request.getId(), request.getDescription());
     }
 
     @Override
     public CompetencySuggestionResult suggestCompetenciesWithRelations(String id, String description) {
         SuggestCompetencyResponseDTO response = suggestCompetencies(id, description);
-        return new CompetencySuggestionResult(suggestCompetenciesAsDomain(id, description), response.toDomainCompetencyRelations());
+
+        List<Competency> competencies = List.of();
+        if (response.getCompetencies() != null && !response.getCompetencies().isEmpty()) {
+            List<Long> competencyIds = response.getCompetencies().stream().map(Long::parseLong).collect(Collectors.toList());
+            competencies = competencyRepository.findAllById(competencyIds);
+        }
+
+        List<CompetencyRelation> relations = response.toDomainCompetencyRelations();
+
+        return new CompetencySuggestionResult(competencies, relations);
     }
 
     @Override
     public List<String> suggestCompetencyIds(String id, String description) {
         SuggestCompetencyResponseDTO response = suggestCompetencies(id, description);
-        if (response == null || response.getCompetencies() == null) {
-            return Collections.emptyList();
-        }
-        return response.getCompetencies();
+        return response.getCompetencies() != null ? response.getCompetencies() : List.of();
     }
 }

@@ -30,6 +30,7 @@ import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
+import de.tum.cit.aet.artemis.atlas.service.atlasml.AtlasMLService;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyService;
 import de.tum.cit.aet.artemis.atlas.service.competency.CourseCompetencyService;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -71,9 +72,11 @@ public class CompetencyResource {
 
     private final CourseCompetencyService courseCompetencyService;
 
+    private final AtlasMLService atlasMLService;
+
     public CompetencyResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             CompetencyRepository competencyRepository, CompetencyService competencyService, CourseCompetencyRepository courseCompetencyRepository,
-            CourseCompetencyService courseCompetencyService) {
+            CourseCompetencyService courseCompetencyService, AtlasMLService atlasMLService) {
         this.courseRepository = courseRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.userRepository = userRepository;
@@ -81,6 +84,7 @@ public class CompetencyResource {
         this.competencyService = competencyService;
         this.courseCompetencyRepository = courseCompetencyRepository;
         this.courseCompetencyService = courseCompetencyService;
+        this.atlasMLService = atlasMLService;
     }
 
     /**
@@ -322,6 +326,54 @@ public class CompetencyResource {
         courseCompetencyService.deleteCourseCompetency(competency, course);
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, competency.getTitle())).build();
+    }
+
+    /**
+     * POST atlas/competencies/suggest : suggests competencies using AtlasML.
+     * Will be removed after testing.
+     *
+     * @return the ResponseEntity with status 200 (OK) and with body the suggested competencies
+     */
+    @PostMapping("competencies/suggest")
+    public ResponseEntity<Object> suggestCompetencies() {
+        log.debug("REST request to suggest competencies using AtlasML");
+
+        try {
+            // Using a simple test request - in a real scenario, you might want to accept parameters
+            String testId = "test-suggestion-" + System.currentTimeMillis();
+            String testDescription = "Test competency suggestion request";
+
+            var result = atlasMLService.suggestCompetencies(testId, testDescription);
+            return ResponseEntity.ok(result);
+        }
+        catch (Exception e) {
+            log.error("Error while suggesting competencies", e);
+            return ResponseEntity.internalServerError().body("Error suggesting competencies: " + e.getMessage());
+        }
+    }
+
+    /**
+     * POST atlas/competencies/save : saves competencies using AtlasML.
+     * Will be removed after testing.
+     *
+     * @return the ResponseEntity with status 200 (OK) if successful
+     */
+    @PostMapping("competencies/save")
+    public ResponseEntity<Object> saveCompetencies() {
+        log.debug("REST request to save competencies using AtlasML");
+
+        try {
+            // Using a simple test request - in a real scenario, you might want to accept parameters
+            String testId = "test-save-" + System.currentTimeMillis();
+            String testDescription = "Test competency save request";
+
+            atlasMLService.saveCompetencies(testId, testDescription, List.of(), List.of());
+            return ResponseEntity.ok().body("Competencies saved successfully");
+        }
+        catch (Exception e) {
+            log.error("Error while saving competencies", e);
+            return ResponseEntity.internalServerError().body("Error saving competencies: " + e.getMessage());
+        }
     }
 
     private void checkCompetencyAttributesForCreation(Competency competency) {

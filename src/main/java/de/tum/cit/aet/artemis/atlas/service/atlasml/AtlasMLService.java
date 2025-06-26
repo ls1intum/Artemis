@@ -35,7 +35,7 @@ public interface AtlasMLService {
      * @param request the save request containing competencies and relations
      * @return true if the save operation was successful, false otherwise
      */
-    boolean saveCompetencies(SaveCompetencyRequestDTO request);
+    void saveCompetencies(SaveCompetencyRequestDTO request);
 
     /**
      * Suggests competencies using simplified parameters.

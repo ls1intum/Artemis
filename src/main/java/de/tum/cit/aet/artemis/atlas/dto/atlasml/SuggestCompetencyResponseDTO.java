@@ -47,6 +47,7 @@ public class SuggestCompetencyResponseDTO {
 
     /**
      * Convert the AtlasML response to domain relation objects.
+     * Note: This creates basic relations without full competency objects.
      */
     public List<CompetencyRelation> toDomainCompetencyRelations() {
         if (competencyRelations == null) {
