@@ -27,14 +27,15 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseBuildConfigTestRepository;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 
 /**
@@ -42,10 +43,12 @@ import de.tum.cit.aet.artemis.programming.util.LocalRepository;
  */
 class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
 
+    private static final Logger log = LoggerFactory.getLogger(LocalVCIntegrationTest.class);
+
     private static final String TEST_PREFIX = "localvcint";
 
     @Autowired
-    private PlatformTransactionManager platformTransactionManager;
+    private ProgrammingExerciseBuildConfigTestRepository programmingExerciseBuildConfigTestRepository;
 
     private LocalRepository assignmentRepository;
 
@@ -319,7 +322,6 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         return remoteRefUpdate;
     }
 
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUserCreatesNewBranchBranchingDisallowed() throws Exception {
@@ -338,19 +340,21 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     }
 
     void customBranchTestHelper(boolean allowBranching, String regex, boolean shouldSucceed) throws Exception {
-        TransactionTemplate template = new TransactionTemplate(platformTransactionManager);
-        template.execute(status -> {
-            programmingExercise.getBuildConfig().setAllowBranching(allowBranching);
-            programmingExercise.getBuildConfig().setBranchRegex(regex);
-            programmingExerciseRepository.saveAndFlush(programmingExercise);
-            programmingExerciseBuildConfigRepository.saveAndFlush(programmingExercise.getBuildConfig());
-            return null;
-        });
+        if (allowBranching) {
+            programmingExerciseBuildConfigTestRepository.allowBranching(programmingExercise.getId(), regex);
+        }
+        else {
+            programmingExerciseBuildConfigTestRepository.disallowBranching(programmingExercise.getId());
+        }
 
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
         assignmentRepository.localGit.branchCreate().setName("new-branch").setStartPoint("refs/heads/" + defaultBranch).call();
         String repositoryUri = localVCLocalCITestService.constructLocalVCUrl(student1Login, projectKey1, assignmentRepositorySlug);
+
+        var buildConfig = programmingExerciseBuildConfigTestRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        log.info("Exercise, id: {}, key: {}; repo: {}", programmingExercise.getId(), programmingExercise.getProjectKey(), repositoryUri);
+        log.info("Wanted config: allowBranching={}, regex={}; Actual config: {}", allowBranching, regex, buildConfig);
 
         // Push the new branch.
         PushResult pushResult = assignmentRepository.localGit.push().setRemote(repositoryUri).setRefSpecs(new RefSpec("refs/heads/new-branch:refs/heads/new-branch")).call()
@@ -385,7 +389,6 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
     @Test
     void testRepositoryFolderName() {
-
         // we specifically choose logins containing "git" to test it does not accidentally get replaced
         String login1 = "ab123git";
         String login2 = "git123ab";
