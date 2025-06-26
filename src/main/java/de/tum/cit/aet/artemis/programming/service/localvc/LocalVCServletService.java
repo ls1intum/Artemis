@@ -249,6 +249,7 @@ public class LocalVCServletService {
         LocalVCRepositoryUri localVCRepositoryUri = parseRepositoryUri(request);
         String projectKey = localVCRepositoryUri.getProjectKey();
         String repositoryTypeOrUserName = localVCRepositoryUri.getRepositoryTypeOrUserName();
+        log.info("Parsed repository Uri: {}, project: {}, user: {}", localVCRepositoryUri, projectKey, repositoryTypeOrUserName);
 
         ProgrammingExercise exercise = getProgrammingExerciseOrThrow(projectKey);
 
@@ -682,7 +683,7 @@ public class LocalVCServletService {
             return HttpStatus.FORBIDDEN.value();
         }
         else {
-            log.error("Internal server error while trying to access repository {}: {}", repositoryUri, exception.getMessage());
+            log.error("Internal server error while trying to access repository {}: {}", repositoryUri, exception.getMessage(), exception);
             return HttpStatus.INTERNAL_SERVER_ERROR.value();
         }
     }
