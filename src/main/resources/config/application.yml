@@ -351,6 +351,7 @@ eureka:
         register-with-eureka: true
         instance-info-replication-interval-seconds: 10
         registry-fetch-interval-seconds: 10
+        initial-instance-info-replication-interval-seconds: 20
     instance:
         prefer-ip-address: true
         appname: Artemis
