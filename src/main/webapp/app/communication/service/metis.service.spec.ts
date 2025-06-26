@@ -1131,12 +1131,12 @@ describe('Metis Service', () => {
     }));
 
     it('should make PUT request to enable communication with messaging', () => {
-        metisService.enableCommunication(1, true).subscribe((resp) => expect(resp).toEqual(of()));
+        metisService.enable(1, true).subscribe((resp) => expect(resp).toEqual(of()));
         httpMock.expectOne({ method: 'PUT', url: `api/communication/courses/1/enable?withMessaging=true` });
     });
 
     it('should make PUT request to enable communication without messaging', () => {
-        metisService.enableCommunication(1, false).subscribe((resp) => expect(resp).toEqual(of()));
+        metisService.enable(1, false).subscribe((resp) => expect(resp).toEqual(of()));
         httpMock.expectOne({ method: 'PUT', url: `api/communication/courses/1/enable?withMessaging=false` });
     });
 });

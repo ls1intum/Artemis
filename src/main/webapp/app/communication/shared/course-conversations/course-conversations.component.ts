@@ -660,7 +660,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         const id = this.course()?.id;
         if (id) {
             try {
-                await firstValueFrom(this.metisService.enableCommunication(id, withMessaging));
+                await firstValueFrom(this.metisService.enable(id, withMessaging));
                 const updatedCourse = {
                     ...this.course()!,
                     courseInformationSharingConfiguration: withMessaging
