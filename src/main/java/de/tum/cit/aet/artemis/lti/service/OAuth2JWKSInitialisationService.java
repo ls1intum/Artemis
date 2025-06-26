@@ -16,11 +16,11 @@ import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 @Profile({ PROFILE_LTI_AND_SCHEDULING })
 public class OAuth2JWKSInitialisationService {
 
+    private static final Logger log = LoggerFactory.getLogger(OAuth2JWKSInitialisationService.class);
+
     private final OAuth2JWKSService oAuth2JWKSService;
 
     private final OnlineCourseConfigurationService onlineCourseConfigurationService;
-
-    private static final Logger log = LoggerFactory.getLogger(OAuth2JWKSInitialisationService.class);
 
     public OAuth2JWKSInitialisationService(OAuth2JWKSService oAuth2JWKSService, OnlineCourseConfigurationService onlineCourseConfigurationService) {
         this.oAuth2JWKSService = oAuth2JWKSService;
