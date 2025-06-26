@@ -716,10 +716,10 @@ public class ParticipationService {
             return participations;
         }
         Set<Result> results = resultRepository.findLatestResultsWithAssessmentNoteBySubmissionIds(submissionIds);
-        Map<Long, Result> resultBySubmissionId = results.stream().collect(Collectors.toMap(r -> r.getSubmission().getId(), Function.identity()));
-        for (StudentParticipation p : participations) {
-            if (!p.getSubmissions().isEmpty()) {
-                Submission latestSubmission = p.getSubmissions().iterator().next();
+        Map<Long, Result> resultBySubmissionId = results.stream().collect(Collectors.toMap(result -> result.getSubmission().getId(), Function.identity()));
+        for (StudentParticipation participation : participations) {
+            if (!participation.getSubmissions().isEmpty()) {
+                Submission latestSubmission = participation.getSubmissions().iterator().next();
                 Result latest = resultBySubmissionId.get(latestSubmission.getId());
                 if (latest != null) {
                     latestSubmission.setResults(List.of(latest));

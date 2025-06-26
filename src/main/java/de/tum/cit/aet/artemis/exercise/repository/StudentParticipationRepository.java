@@ -351,7 +351,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      * @return participations for exercise.
      */
     @Query("""
-                SELECT DISTINCT p
+             SELECT DISTINCT p
             FROM StudentParticipation p
                 LEFT  JOIN FETCH p.team t
                 LEFT  JOIN FETCH t.students

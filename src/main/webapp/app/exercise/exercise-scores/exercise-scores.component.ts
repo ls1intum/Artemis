@@ -227,10 +227,8 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             // the result of a complaints or the second correction at index 1.
             results?.sort((result1, result2) => (result1.id ?? 0) - (result2.id ?? 0));
             const resultsWithoutAthena = results?.filter((result) => result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA);
-            if (resultsWithoutAthena?.length != 0) {
-                if (participation?.submissions?.[0]) {
-                    participation!.submissions[0]!.results = results;
-                }
+            if (resultsWithoutAthena?.length != 0 && participation?.submissions?.[0]) {
+                participation!.submissions[0]!.results = results;
             }
         });
         this.filteredParticipations = this.filterByScoreRange(this.participations);
