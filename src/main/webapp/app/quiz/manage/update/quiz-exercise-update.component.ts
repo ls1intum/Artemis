@@ -243,6 +243,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         if (!this.quizExercise) {
             this.quizExercise = this.initializeNewQuizExercise();
         } else {
+            this.prepareEntity(this.quizExercise);
             this.quizExercise.isEditable = isQuizEditable(this.quizExercise);
         }
 
@@ -583,6 +584,11 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
             quizExercise.releaseDate = quizExercise.releaseDate ? dayjs(quizExercise.releaseDate) : dayjs();
             quizExercise.duration = Number(quizExercise.duration);
             quizExercise.duration = isNaN(quizExercise.duration) ? 10 : quizExercise.duration;
+        }
+        for (const question of quizExercise.quizQuestions ?? []) {
+            if (question.type === QuizQuestionType.SHORT_ANSWER) {
+                this.shortAnswerQuestionUtil.prepareShortAnswerQuestion(question as ShortAnswerQuestion);
+            }
         }
     }
 
