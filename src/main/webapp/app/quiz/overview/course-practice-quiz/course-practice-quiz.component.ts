@@ -11,6 +11,7 @@ import { ShortAnswerSubmittedText } from 'app/quiz/shared/entities/short-answer-
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { EMPTY } from 'rxjs';
+import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
 
 @Component({
     selector: 'jhi-course-practice-quiz',
@@ -24,15 +25,20 @@ export class CoursePracticeQuizComponent {
 
     private route = inject(ActivatedRoute);
     private router = inject(Router);
-    private quizService = inject(CoursePracticeQuizService);
+    private coursePracticeQuizService = inject(CoursePracticeQuizService);
+    private quizService = inject(ArtemisQuizService);
 
     currentIndex = signal(0);
 
     // Reactive chain for loading quiz questions based on the current route
     paramsSignal = toSignal(this.route.parent?.params ?? EMPTY);
     courseId = computed(() => this.paramsSignal()?.['courseId']);
-    questionsSignal = toSignal(this.quizService.getQuizQuestions(this.courseId()) ?? EMPTY, { initialValue: [] });
-    questions = computed(() => this.questionsSignal());
+    questionsSignal = toSignal(this.coursePracticeQuizService.getQuizQuestions(this.courseId()) ?? EMPTY, { initialValue: [] });
+    questions = computed(() => {
+        const toRandomizeQuestions = this.questionsSignal();
+        this.quizService.randomizeOrder(toRandomizeQuestions, true);
+        return toRandomizeQuestions;
+    });
 
     selectedAnswerOptions = new Map<number, AnswerOption[]>();
     dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
