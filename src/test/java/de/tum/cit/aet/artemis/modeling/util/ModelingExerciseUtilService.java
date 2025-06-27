@@ -113,6 +113,16 @@ public class ModelingExerciseUtilService {
         return course;
     }
 
+    public ModelingExercise addModelingExerciseToCourse(Course course) {
+        ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram,
+                course);
+        modelingExercise.setTitle("ClassDiagram");
+        course.addExercises(modelingExercise);
+        courseRepo.save(course);
+        modelingExercise = exerciseRepository.save(modelingExercise);
+        return modelingExercise;
+    }
+
     /**
      * Updates an existing ModelingExercise in the database.
      *
