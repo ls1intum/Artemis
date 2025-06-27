@@ -104,6 +104,7 @@ public class OAuth2JWKSService {
      * Generates a new RSAKey for the given ClientRegistration.
      *
      * @param clientRegistration the ClientRegistration for which to generate a key
+     * @return a new RSAKey with a generated key ID (kid)
      */
     public RSAKey generateKey(ClientRegistration clientRegistration) {
         try {
