@@ -12,23 +12,67 @@
     }
 
     def detectChangedWebPackages() {
-        def diff = "git diff --name-only HEAD".execute(null, project.rootDir).text.readLines()
-        return diff
-            .findAll { it.startsWith('src/main/java/') && it.contains('/web/') && it.endsWith('.java') }
-            .collect { path ->
-                def rel = path - 'src/main/java/'
-                rel.substring(0, rel.lastIndexOf('.')).replace('/', '.')
-            }
-            .collect { pkgClass ->
-                pkgClass.substring(0, pkgClass.lastIndexOf('.'))
-            }
-            .toSet()
-    }
+        // 1) candidate base branches: override → develop → main → master
+        def candidates = []
+        project.findProperty('openApiBaseBranch')?.with { candidates << it }
+        candidates += ['develop', 'main', 'master']
 
+        // 2) also try your upstream tracking branch, if any (e.g. origin/feature)
+        def upProc = ['git', 'rev-parse', '--abbrev-ref', '--symbolic-full-name', '@{u}']
+            .execute(null, project.rootDir)
+        upProc.waitFor()
+        if (upProc.exitValue() == 0) {
+            candidates << upProc.in.text.trim()
+        }
+
+        // 3) pick the first branch/ref that actually exists
+        def baseBranch = candidates.find { br ->
+            ['git', 'rev-parse', '--verify', br]
+                .execute(null, project.rootDir)
+                .waitFor() == 0
+        } ?: 'HEAD~1'  // fallback to last commit if nothing else
+
+        // 4) compute merge-base if baseBranch is a real ref
+        def mergeBase = baseBranch
+        if (!baseBranch.startsWith('HEAD~')) {
+            def mbProc = ['git', 'merge-base', 'HEAD', baseBranch]
+                .execute(null, project.rootDir)
+            mbProc.waitFor()
+            if (mbProc.exitValue() == 0) {
+                mergeBase = mbProc.in.text.trim()
+            } else {
+                logger.lifecycle("ℹ️  git merge-base failed for '${baseBranch}', diffing directly against it")
+            }
+        }
+
+        // 5) collect all changed files: committed on your branch + uncommitted
+        def committed = ['git', 'diff', '--name-only', mergeBase, 'HEAD']
+            .execute(null, project.rootDir)
+            .text
+            .readLines()
+        def uncommitted = ['git', 'diff', '--name-only', 'HEAD']
+            .execute(null, project.rootDir)
+            .text
+            .readLines()
+
+        // 6) filter for Java files under /web/, then map to package names
+        return (committed + uncommitted).findAll {
+            it.startsWith('src/main/java/') && it.contains('/web/') && it.endsWith('.java')
+        }.collect { path ->
+            // strip leading dir and .java suffix
+            def rel    = path - 'src/main/java/'
+            def noExt  = rel.replaceAll(/\.java$/, '')
+            // turn slashes into dots
+            def fqn    = noExt.replace('/', '.')
+            // drop the class name, leaving just the package
+            def idx    = fqn.lastIndexOf('.')
+            idx >= 0 ? fqn.substring(0, idx) : null
+        }.findAll { it != null }.toSet()
+    }
     openApi {
         apiDocsUrl.set("http://localhost:8080/api-docs.yaml")
         outputDir.set(file("$rootDir/openapi"))
-        outputFileName.set("openapi.yaml")
+        outputFileName.set("openapi-fragment.yaml")
         // This is the time we wait for the Artemis server to start. The default is 30s, which might not suffice on less powerful machines.
         def waitTimeSeconds = 180;
         waitTimeInSeconds.set(waitTimeSeconds)
@@ -52,15 +96,13 @@
             def changed = detectChangedWebPackages()
             if (changed.isEmpty()) {
                 logger.lifecycle("⏭ No changed web packages detected; skipping OpenAPI generation.")
-                // abort just this task, but mark it as SUCCESS
                 throw new StopExecutionException()
             }
-            // else: do nothing—our jvmArgs are already set above
         }
     }
     // 1. Detect if any resources have changed
     // 2. If so, modify the packages to scan accordingly in the task above
-    // 3. TODO Replace the existing OpenAPI spec with the new part. Keep the rest as is.
+    // 3. Replace the existing OpenAPI spec with the new part. Keep the rest as is.
     // 4. Run the OpenAPI generator to generate the complete TypeScript files for the Angular client
     // 5. Post-process the generated files to remove leading underscores and numeric suffixes from method names
     // 6. Remove unused imports from the generated TypeScript files to satisfy our tsconfig.
@@ -89,8 +131,8 @@
 
         doLast {
             def projectRoot = project.rootDir
-            def inputFile = file("${projectRoot}/openapi/openapi.yaml")
-            def outputFile = file("${projectRoot}/openapi/openapi.yaml")
+            def inputFile = file("${projectRoot}/openapi/openapi-fragment.yaml")
+            def outputFile = file("${projectRoot}/openapi/openapi-fragment.yaml")
             def yamlParser = new Yaml()
 
             Map<String, Object> specificationMap =
@@ -219,13 +261,58 @@
         return requestHasNullSchema || responseHasNullSchema
     }
 
+    import org.yaml.snakeyaml.Yaml
+    import org.yaml.snakeyaml.DumperOptions
+
+    tasks.register('mergeOpenApiSpec') {
+        description = 'Merge updated fragment into the master openapi.yaml'
+        dependsOn 'pruneOpenApiSpec'
+
+        doLast {
+            def yaml = new Yaml()
+            File masterFile   = file("$rootDir/openapi/openapi.yaml")
+            File fragmentFile = file("$rootDir/openapi/openapi-fragment.yaml")
+            if (!fragmentFile.exists()) {
+                println "⚠️  No fragment to merge; skipping."
+                return
+            }
+
+            // 1) Load both specs
+            Map masterSpec   = yaml.load(masterFile.text)   as Map
+            Map fragmentSpec = yaml.load(fragmentFile.text) as Map
+
+            // 2) Merge top-level `paths`
+            masterSpec.paths = (masterSpec.paths ?: [:]) + (fragmentSpec.paths ?: [:])
+
+            // 3) Merge components (schemas, parameters, etc)
+            masterSpec.components = masterSpec.components ?: [:]
+            fragmentSpec.components?.each { componentType, definitions ->
+                masterSpec.components[componentType] =
+                    (masterSpec.components[componentType] ?: [:]) + definitions
+            }
+
+            // 4) (Optional) if you want to drop fragment afterwards:
+            fragmentFile.delete()
+
+            // 5) Dump back with nice formatting
+            //    (ensure we preserve block style rather than inline maps)
+            def options = new DumperOptions()
+            options.defaultFlowStyle = DumperOptions.FlowStyle.FLOW
+            options.prettyFlow = true
+            def printer = new Yaml(options)
+            masterFile.text = printer.dump(masterSpec)
+
+            println "✔️  Merged fragment into openapi.yaml"
+        }
+    }
+    tasks.named("generateOpenApiDocs") {
+        finalizedBy 'pruneOpenApiSpec', 'mergeOpenApiSpec'
+    }
+
 
 
     tasks.named('openApiGenerate') {
         finalizedBy 'postProcessTsFiles'
-    }
-    tasks.named('openApiGenerate') {
-        dependsOn 'pruneOpenApiSpec'
     }
     tasks.named("openApiGenerate") {
         doFirst {
