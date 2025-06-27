@@ -66,14 +66,14 @@ class LearnerProfileApiTest {
         Course course = new Course();
         User user = new User();
         learnerProfileApi.createCourseLearnerProfile(course, user);
-        verify(courseLearnerProfileService).getOrCreateCourseLearnerProfile(course, user);
+        verify(courseLearnerProfileService).createCourseLearnerProfile(course, user);
     }
 
     @Test
     void createCourseLearnerProfiles_shouldDelegateToService() {
         Course course = new Course();
         learnerProfileApi.createCourseLearnerProfiles(course, java.util.Set.of());
-        verify(courseLearnerProfileService).getOrCreateCourseLearnerProfiles(course, java.util.Set.of());
+        verify(courseLearnerProfileService).createCourseLearnerProfiles(course, java.util.Set.of());
     }
 
     @Test
