@@ -14,17 +14,16 @@ import de.tum.cit.aet.artemis.atlas.repository.CompetencyJolRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
+import de.tum.cit.aet.artemis.atlas.repository.CourseLearnerProfileRepository;
 import de.tum.cit.aet.artemis.atlas.repository.KnowledgeAreaRepository;
 import de.tum.cit.aet.artemis.atlas.repository.ScienceSettingRepository;
 import de.tum.cit.aet.artemis.atlas.repository.SourceRepository;
 import de.tum.cit.aet.artemis.atlas.repository.StandardizedCompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.atlas.service.learningpath.LearningPathRepositoryService;
-import de.tum.cit.aet.artemis.atlas.service.profile.CourseLearnerProfileService;
 import de.tum.cit.aet.artemis.atlas.test_repository.CompetencyExerciseLinkTestRepository;
 import de.tum.cit.aet.artemis.atlas.test_repository.CompetencyLectureUnitLinkTestRepository;
 import de.tum.cit.aet.artemis.atlas.test_repository.CompetencyProgressTestRepository;
-import de.tum.cit.aet.artemis.atlas.test_repository.CourseLearnerProfileTestRepository;
 import de.tum.cit.aet.artemis.atlas.test_repository.LearningPathTestRepository;
 import de.tum.cit.aet.artemis.atlas.test_repository.PrerequisiteTestRepository;
 import de.tum.cit.aet.artemis.atlas.test_repository.ScienceEventTestRepository;
@@ -43,7 +42,6 @@ import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
-import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
@@ -93,7 +91,7 @@ public abstract class AbstractAtlasIntegrationTest extends AbstractSpringIntegra
     protected CompetencyLectureUnitLinkTestRepository competencyLectureUnitLinkRepository;
 
     @Autowired
-    protected CourseLearnerProfileTestRepository courseLearnerProfileRepository;
+    protected CourseLearnerProfileRepository courseLearnerProfileRepository;
 
     // External Repositories
     @Autowired
@@ -133,9 +131,6 @@ public abstract class AbstractAtlasIntegrationTest extends AbstractSpringIntegra
     @Autowired
     protected LearningPathRepositoryService learningPathRepositoryService;
 
-    @Autowired
-    protected CourseLearnerProfileService courseLearnerProfileService;
-
     // External Services
     @Autowired
     protected LectureUnitService lectureUnitService;
@@ -161,9 +156,6 @@ public abstract class AbstractAtlasIntegrationTest extends AbstractSpringIntegra
 
     @Autowired
     protected LearnerProfileUtilService learnerProfileUtilService;
-
-    @Autowired
-    protected ProgrammingExerciseUtilService programmingExerciseUtilService;
 
     // External Util Services
     @Autowired

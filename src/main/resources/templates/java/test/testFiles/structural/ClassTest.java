@@ -13,7 +13,7 @@ import de.tum.in.test.api.jupiter.Public;
 import de.tum.in.test.api.structural.ClassTestProvider;
 
 /**
- * @author Stephan Krusche (krusche@in.tum.de)
+ * @author Stephan Krusche
  * @version 5.1 (11.06.2021)
  * <br><br>
  * This test evaluates the hierarchy of the class, i.e. if the class is abstract or an interface or an enum and also if the class extends another superclass and if
