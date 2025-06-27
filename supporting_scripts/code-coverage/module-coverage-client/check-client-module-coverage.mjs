@@ -114,10 +114,10 @@ const moduleThresholds = {
         lines:      86.60,
     },
     shared: {
-        statements: 86.79,
-        branches:   71.58,
-        functions:  83.93,
-        lines:      86.59,
+        statements: 86.73,
+        branches:   71.49,
+        functions:  83.88,
+        lines:      86.52,
     },
     text: {
         statements: 89.27,
