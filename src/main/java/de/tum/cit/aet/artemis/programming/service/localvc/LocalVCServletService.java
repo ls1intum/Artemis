@@ -249,7 +249,7 @@ public class LocalVCServletService {
         LocalVCRepositoryUri localVCRepositoryUri = parseRepositoryUri(request);
         String projectKey = localVCRepositoryUri.getProjectKey();
         String repositoryTypeOrUserName = localVCRepositoryUri.getRepositoryTypeOrUserName();
-        log.info("Parsed repository Uri: {}, project: {}, user: {}", localVCRepositoryUri, projectKey, repositoryTypeOrUserName);
+        log.warn("Parsed repository Uri: {}, project: {}, user: {}", localVCRepositoryUri, projectKey, repositoryTypeOrUserName);
 
         ProgrammingExercise exercise = getProgrammingExerciseOrThrow(projectKey);
 

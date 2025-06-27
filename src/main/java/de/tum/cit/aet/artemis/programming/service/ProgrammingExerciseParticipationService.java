@@ -272,6 +272,18 @@ public class ProgrammingExerciseParticipationService {
      */
     public ProgrammingExerciseParticipation fetchParticipationWithSubmissionsByRepository(String repositoryTypeOrUserName, String repositoryURI, ProgrammingExercise exercise) {
         var repositoryURL = repositoryURI.replace("/git-upload-pack", "").replace("/git-receive-pack", "");
+
+        // TODO: Revert before merge
+        log.warn("Fetching participation for user {} and uri {} in exercise {}", repositoryTypeOrUserName, repositoryURL, exercise.getId());
+        var participation = studentParticipationRepository.findByExerciseIdAndStudentLogin(exercise.getId(), repositoryTypeOrUserName);
+        if (participation.isEmpty()) {
+            log.warn("Database contains no participation for user {} in exercise {}", repositoryTypeOrUserName, exercise.getId());
+        }
+        else {
+            log.warn("Database contains repo uri {}", participation.get().getRepositoryUri());
+        }
+        // TODO: end
+
         if (repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString()) || repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString())) {
             return solutionParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseIdElseThrow(exercise.getId());
         }
