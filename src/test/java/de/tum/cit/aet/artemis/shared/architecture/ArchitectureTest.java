@@ -235,8 +235,6 @@ class ArchitectureTest extends AbstractArchitectureTest {
 
     @Test
     void testNoHazelcastUsageInConstructors() {
-        // CacheHandler and QuizCache are exceptions because these classes are not created during startup
-        var exceptions = or(declaredClassSimpleName("QuizCache"), declaredClassSimpleName("CacheHandler"));
         var notUseHazelcastInConstructor = methods().that().areDeclaredIn(HazelcastInstance.class).should().onlyBeCalled().byCodeUnitsThat(is(not(constructor())))
                 .because("Calling Hazelcast during Application startup might be slow since the Network gets used. Use @PostConstruct-methods instead.");
         notUseHazelcastInConstructor.check(allClassesWithHazelcast);
