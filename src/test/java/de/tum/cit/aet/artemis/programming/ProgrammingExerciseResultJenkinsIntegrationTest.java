@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.programming;
 
 import static de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory.DEFAULT_BRANCH;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 
 import java.io.IOException;
@@ -171,6 +172,7 @@ class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractProgrammin
         String folderName = getFolderName(exercise, repoName);
         var notification = ProgrammingExerciseFactory.generateTestResultDTO(folderName, repoName, null, ProgrammingLanguage.JAVA, false, List.of("test1", "test2"),
                 List.of("test3"), List.of(), List.of(commit), null);
+        doReturn(1).when(programmingSubmissionService).calculateLinesChangedToPreviousSubmission(any());
         programmingExerciseResultTestService.shouldCorrectlyNotifyStudentsAboutNewResults(notification, websocketMessagingService);
     }
 
@@ -184,6 +186,7 @@ class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractProgrammin
         String folderName = getFolderName(exercise, repoName);
         var notification = ProgrammingExerciseFactory.generateTestResultDTO(folderName, repoName, null, ProgrammingLanguage.JAVA, false, List.of("test1", "test2"),
                 List.of("test3"), List.of(), List.of(commit), null);
+        doReturn(1).when(programmingSubmissionService).calculateLinesChangedToPreviousSubmission(any());
         programmingExerciseResultTestService.shouldCorrectlyNotifyStudentsAboutNewResults(notification, websocketMessagingService);
     }
 
@@ -197,6 +200,7 @@ class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractProgrammin
         String folderName = getFolderName(exercise, repoName);
         var notification = ProgrammingExerciseFactory.generateTestResultDTO(folderName, repoName, null, ProgrammingLanguage.JAVA, false, List.of("test1", "test2"),
                 List.of("test3"), List.of(), List.of(commit), null);
+        doReturn(1).when(programmingSubmissionService).calculateLinesChangedToPreviousSubmission(any());
         programmingExerciseResultTestService.shouldNotNotifyStudentsAboutNewResults(notification, websocketMessagingService);
     }
 
@@ -209,6 +213,7 @@ class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractProgrammin
         String folderName = getFolderName(exercise, repoName);
         var notification = ProgrammingExerciseFactory.generateTestResultDTO(folderName, repoName, null, ProgrammingLanguage.JAVA, false, List.of("test1", "test2"),
                 List.of("test3", "test4"), List.of(), List.of(commit), null);
+        doReturn(1).when(programmingSubmissionService).calculateLinesChangedToPreviousSubmission(any());
         programmingExerciseResultTestService.shouldRemoveTestCaseNamesFromWebsocketNotification(notification, websocketMessagingService);
     }
 
