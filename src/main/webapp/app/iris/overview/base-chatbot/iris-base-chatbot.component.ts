@@ -44,6 +44,8 @@ import { ChatHistoryItemComponent } from './chat-history-item/chat-history-item.
 import { IrisSession } from 'app/iris/shared/entities/iris-session.model';
 import { NgClass } from '@angular/common';
 import { facSidebar } from 'app/shared/icons/icons';
+import { distinctUntilChanged } from 'rxjs';
+import { User } from 'app/core/user/user.model';
 
 @Component({
     selector: 'jhi-iris-base-chatbot',
@@ -169,6 +171,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     isChatHistoryOpen = true;
 
     // User preferences
+    user: User | undefined;
     userAccepted: boolean;
     isScrolledToBottom = true;
     rows = 1;
@@ -197,6 +200,8 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     protected readonly IrisTextMessageContent = IrisTextMessageContent;
     protected readonly IrisSender = IrisSender;
     protected readonly IrisErrorMessageKey = IrisErrorMessageKey;
+
+    private userIdentitySubscription: Subscription;
 
     ngOnInit() {
         this.routeSubscription = this.route.queryParams?.subscribe((params: any) => {
@@ -247,6 +252,15 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
             this.suggestions = suggestions;
         });
 
+        this.userIdentitySubscription = this.accountService
+            .getAuthenticationState()
+            .pipe(distinctUntilChanged())
+            .subscribe((user) => {
+                if (!user) {
+                    this.chatService.clearChat();
+                }
+            });
+
         this.checkIfUserAcceptedExternalLLMUsage();
 
         // Focus on message textarea
@@ -280,6 +294,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
         this.suggestionsSubscription.unsubscribe();
         this.routeSubscription?.unsubscribe();
         this.chatSessionsSubscription.unsubscribe();
+        this.userIdentitySubscription?.unsubscribe();
     }
 
     checkIfUserAcceptedExternalLLMUsage(): void {

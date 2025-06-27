@@ -292,6 +292,12 @@ export class IrisChatService implements OnDestroy {
         this.error.next(undefined);
     }
 
+    public clearState(): void {
+        this.close();
+        this.chatSessions.next([]);
+        this.sessionCreationIdentifier = undefined;
+    }
+
     /**
      * Retrieves the current session or creates a new one if it doesn't exist.
      */
