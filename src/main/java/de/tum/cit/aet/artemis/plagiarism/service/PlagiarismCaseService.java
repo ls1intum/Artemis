@@ -146,7 +146,7 @@ public class PlagiarismCaseService {
      * @param createdByContinuousPlagiarismControl true is the plagiarism comparison was created by the continuous plagiarism control
      * @return the created or updated plagiarism case
      */
-    public PlagiarismCase createOrAddToPlagiarismCaseForStudent(PlagiarismComparison<?> plagiarismComparison, PlagiarismSubmission<?> plagiarismSubmission,
+    public PlagiarismCase createOrAddToPlagiarismCaseForStudent(PlagiarismComparison plagiarismComparison, PlagiarismSubmission plagiarismSubmission,
             boolean createdByContinuousPlagiarismControl) {
         var plagiarismCase = plagiarismCaseRepository.findByStudentLoginAndExerciseIdWithPlagiarismSubmissions(plagiarismSubmission.getStudentLogin(),
                 plagiarismComparison.getPlagiarismResult().getExercise().getId());
