@@ -241,13 +241,14 @@ public abstract class Participation extends DomainObject implements Participatio
      * @param <T> submission type
      * @return the latest submission or null
      */
+    @SuppressWarnings("unchecked")
     @Override
-    public Optional<Submission> findLatestSubmission() {
+    public <T extends Submission> Optional<T> findLatestSubmission() {
         Set<Submission> submissions = this.submissions;
         if (submissions == null || submissions.isEmpty()) {
             return Optional.empty();
         }
-        return submissions.stream().max(Comparator.naturalOrder()).stream().findFirst();
+        return (Optional<T>) submissions.stream().max(Comparator.naturalOrder());
     }
 
     /**
