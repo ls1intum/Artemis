@@ -8,6 +8,7 @@
             "vcsAccessTokenSettings": "VCS Token",
             "passkeys": "Passkeys",
             "accountInformation": "Account Informationen",
+            "externalLLMUsage": "Externe LLM-Nutzung",
             "learnerProfile": "Lernprofil",
             "notificationSettings": "Benachrichtigungen",
             "notificationSettingsFilterInfo": "Diese Einstellungen filtern auch die Seitenleiste für Mitteilungen",
@@ -18,6 +19,10 @@
                 "description": "Wähle die IDEs, die du für das Öffnen von Programmieraufgaben verwenden möchtest.",
                 "default": "Standard",
                 "jetbrainsHelp": "Um JetBrains IDEs zu verwenden, installiere bitte die JetBrains Toolbox."
+            },
+            "externalLLMUsageSettingsPage": {
+                "accepted": "Du hast die Nutzung von externen LLMs am {{acceptedDate}} akzeptiert.",
+                "declined": "Du hast die Nutzung von externen LLMs nicht akzeptiert."
             },
             "sshSettingsPage": {
                 "sshSettingsInfoText": "Hier kannst du einen öffentlichen SSH-Schlüssel festlegen, um Git-Repositories über SSH zu klonen. Weitere Einzelheiten findest du in der Dokumentation.",
@@ -132,6 +137,7 @@
                 "sshKey": "Öffentlicher SSH-Schlüssel"
             },
             "categories": {
+                "externalLLMUsage": "Externe LLM-Nutzungseinstellungen",
                 "NOTIFICATION_SETTINGS": "Benachrichtigungseinstellungen",
                 "SCIENCE_SETTINGS": "Forschungseinstellungen",
                 "SSH_SETTINGS": "SSH Einstellungen",
