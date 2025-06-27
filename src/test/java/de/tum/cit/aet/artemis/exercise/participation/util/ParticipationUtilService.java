@@ -13,8 +13,13 @@ import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import jakarta.validation.constraints.NotNull;
 
@@ -975,5 +980,15 @@ public class ParticipationUtilService {
     private void mockCreationOfExerciseParticipationInternal(ContinuousIntegrationService continuousIntegrationService) {
         doReturn("buildPlanId").when(continuousIntegrationService).copyBuildPlan(any(), any(), any(), any(), any(), anyBoolean());
         doNothing().when(continuousIntegrationService).configureBuildPlan(any());
+    }
+
+    /**
+     * Gets all Results of all submissions for the given Participation.
+     *
+     * @return A Set of Results that belong to the Participation's submissions
+     */
+    public Set<Result> getResultsForParticipation(Participation participation) {
+        return Stream.ofNullable(participation.getSubmissions()).flatMap(Collection::stream)
+                .flatMap(submission -> Stream.ofNullable(submission.getResults()).flatMap(Collection::stream)).filter(Objects::nonNull).collect(Collectors.toSet());
     }
 }
