@@ -137,6 +137,17 @@ class LtiIntegrationTest extends AbstractLtiIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void updateLtiPlatformConfigurationWithoutId_badRequest() throws Exception {
+        LtiPlatformConfiguration platformToUpdate = new LtiPlatformConfiguration();
+        fillLtiPlatformConfig(platformToUpdate);
+
+        request.put("/api/lti/admin/lti-platform", platformToUpdate, HttpStatus.BAD_REQUEST);
+
+        verify(ltiPlatformConfigurationRepository, never()).save(platformToUpdate);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void updateLtiPlatformConfigurationWithDifferentRegistrationIds_badRequest() throws Exception {
         Long platformId = 1L;
 
