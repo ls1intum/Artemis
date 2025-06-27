@@ -61,7 +61,6 @@ import de.tum.cit.aet.artemis.modeling.service.ModelingSubmissionService;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.repository.UserSshPublicKeyRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGitDiffReportService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseScheduleService;
@@ -159,9 +158,6 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
 
     @MockitoSpyBean
     protected TextBlockService textBlockService;
-
-    @MockitoSpyBean
-    protected ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService;
 
     @Autowired
     protected RequestUtilService request;
