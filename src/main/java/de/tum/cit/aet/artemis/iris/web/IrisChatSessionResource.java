@@ -5,7 +5,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -163,7 +162,7 @@ public class IrisChatSessionResource {
         var user = userRepository.getUserWithGroupsAndAuthorities();
         if (user.hasAcceptedExternalLLMUsage()) {
             var allChatSessions = Stream.of(getAllSessionsForCourseChat(courseId), getAllSessionsForLectureChat(courseId), getAllSessionsForProgrammingExerciseChat(courseId),
-                    getAllSessionsForTextExerciseChat(courseId)).filter(Objects::nonNull).flatMap(List::stream).toList();
+                    getAllSessionsForTextExerciseChat(courseId)).flatMap(List::stream).toList();
             return ResponseEntity.ok(allChatSessions);
         }
         else {
@@ -206,7 +205,7 @@ public class IrisChatSessionResource {
                 return new ArrayList<>(sessions);
             }
         }
-        return null;
+        return Collections.emptyList();
     }
 
     private List<IrisChatSession> getAllSessionsForProgrammingExerciseChat(Long courseId) {
@@ -225,7 +224,7 @@ public class IrisChatSessionResource {
                 return new ArrayList<>(sessions);
             }
         }
-        return null;
+        return Collections.emptyList();
     }
 
     private List<IrisChatSession> getAllSessionsForTextExerciseChat(Long courseId) {
@@ -245,7 +244,7 @@ public class IrisChatSessionResource {
                 return new ArrayList<>(sessions);
             }
         }
-        return null;
+        return Collections.emptyList();
     }
 
 }
