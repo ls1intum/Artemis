@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
+import { PlagiarismCase, PlagiarismCaseDTO } from 'app/plagiarism/shared/entities/PlagiarismCase';
 import { PlagiarismStatus } from 'app/plagiarism/shared/entities/PlagiarismStatus';
 import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
@@ -20,6 +20,14 @@ export class PlagiarismCasesService {
     private resourceUrlExercises = 'api/plagiarism/exercises';
 
     /* Instructor */
+
+    /**
+     * Get all plagiarism cases for the instructor of the course with the given id
+     * @param courseId id of the course
+     */
+    public getCoursePlagiarismCasesForScores(courseId: number): Observable<HttpResponse<PlagiarismCaseDTO[]>> {
+        return this.http.get<PlagiarismCaseDTO[]>(`${this.resourceUrl}/${courseId}/plagiarism-cases/for-scores`, { observe: 'response' });
+    }
 
     /**
      * Get all plagiarism cases for the instructor of the course with the given id
