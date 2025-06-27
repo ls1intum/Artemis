@@ -55,12 +55,14 @@ describe('IrisBaseChatbotComponent', () => {
     let accountMock = {
         userIdentity: { externalLLMUsageAccepted: dayjs() },
         setUserAcceptedExternalLLMUsage: jest.fn(),
+        getAuthenticationState: jest.fn(),
     } as any;
 
     beforeEach(async () => {
         accountMock = {
             userIdentity: { externalLLMUsageAccepted: dayjs() },
             setUserAcceptedExternalLLMUsage: jest.fn(),
+            getAuthenticationState: jest.fn(),
         } as any;
 
         await TestBed.configureTestingModule({
@@ -103,6 +105,7 @@ describe('IrisBaseChatbotComponent', () => {
                 component = fixture.componentInstance;
 
                 jest.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+                jest.spyOn(accountMock, 'getAuthenticationState').mockReturnValue(of());
 
                 fixture.nativeElement.querySelector('.chat-body').scrollTo = jest.fn();
                 fixture.detectChanges();
