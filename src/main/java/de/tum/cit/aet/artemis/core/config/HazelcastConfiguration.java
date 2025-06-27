@@ -69,20 +69,16 @@ public class HazelcastConfiguration {
      */
     @Scheduled(fixedRate = 2, initialDelay = 1, timeUnit = TimeUnit.MINUTES)
     public void connectToAllMembers() {
-        if (env.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
+        if (registration == null || env.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
             return;
         }
-        if (registration == null) {
-            return;
-        }
-        String serviceId = registration.getServiceId();
-        var hazelcastInstance = Hazelcast.getHazelcastInstanceByName(instanceName);
-        if (hazelcastInstance == null) {
+        var thisHazelcastInstance = Hazelcast.getHazelcastInstanceByName(instanceName);
+        if (thisHazelcastInstance == null) {
             log.warn("Hazelcast instance not found, cannot connect to cluster members");
             return;
         }
 
-        var hazelcastMemberAddresses = hazelcastInstance.getCluster().getMembers().stream().map(member -> {
+        var hazelcastMemberAddresses = thisHazelcastInstance.getCluster().getMembers().stream().map(member -> {
             try {
                 return member.getAddress().getInetAddress().getHostAddress();
             }
@@ -91,18 +87,15 @@ public class HazelcastConfiguration {
             }
         }).toList();
 
-        log.debug("Current Registry members: {}", discoveryClient.getInstances(serviceId).stream().map(ServiceInstance::getHost).toList());
-        log.debug("Current Hazelcast members: {}", hazelcastMemberAddresses);
+        var instances = discoveryClient.getInstances(registration.getServiceId());
+        log.debug("Current {} Registry members: {}", instances.size(), instances.stream().map(ServiceInstance::getHost).toList());
+        log.debug("Current {} Hazelcast members: {}", hazelcastMemberAddresses.size(), hazelcastMemberAddresses);
 
-        for (ServiceInstance instance : discoveryClient.getInstances(serviceId)) {
-            var instanceHost = instance.getHost();
+        for (ServiceInstance instance : instances) {
             // Workaround for IPv6 addresses, as they are enclosed in brackets
-            var instanceHostClean = instanceHost.replace("[", "").replace("]", "");
+            var instanceHostClean = instance.getHost().replace("[", "").replace("]", "");
             if (hazelcastMemberAddresses.stream().noneMatch(member -> member.equals(instanceHostClean))) {
-                var clusterMemberPort = instance.getMetadata().getOrDefault("hazelcast.port", String.valueOf(hazelcastPort));
-                var clusterMemberAddress = instanceHost + ":" + clusterMemberPort;
-                log.info("Adding Hazelcast cluster member {}", clusterMemberAddress);
-                hazelcastInstance.getConfig().getNetworkConfig().getJoin().getTcpIpConfig().addMember(clusterMemberAddress);
+                addHazelcastClusterMember(instance, thisHazelcastInstance.getConfig());
             }
         }
     }
@@ -142,10 +135,7 @@ public class HazelcastConfiguration {
                 registration.getMetadata().put("hazelcast.port", String.valueOf(serverProperties.getPort() + hazelcastPort));
 
                 for (ServiceInstance instance : discoveryClient.getInstances(serviceId)) {
-                    var clusterMemberPort = instance.getMetadata().getOrDefault("hazelcast.port", String.valueOf(serverProperties.getPort() + hazelcastPort));
-                    String clusterMemberAddress = instance.getHost() + ":" + clusterMemberPort; // Address where the other instance is expected
-                    log.info("Adding Hazelcast (dev) cluster member {}", clusterMemberAddress);
-                    config.getNetworkConfig().getJoin().getTcpIpConfig().addMember(clusterMemberAddress);
+                    addHazelcastClusterMember(instance, config);
                 }
             }
             else { // Production configuration, one host per instance all using the configured port
@@ -155,13 +145,17 @@ public class HazelcastConfiguration {
                 registration.getMetadata().put("hazelcast.port", String.valueOf(hazelcastPort));
 
                 for (ServiceInstance instance : discoveryClient.getInstances(serviceId)) {
-                    var clusterMemberPort = instance.getMetadata().getOrDefault("hazelcast.port", String.valueOf(hazelcastPort));
-                    String clusterMemberAddress = instance.getHost() + ":" + clusterMemberPort; // Address where the other instance is expected
-                    log.info("Adding Hazelcast (prod) cluster member {}", clusterMemberAddress);
-                    config.getNetworkConfig().getJoin().getTcpIpConfig().addMember(clusterMemberAddress);
+                    addHazelcastClusterMember(instance, config);
                 }
             }
         }
+    }
+
+    private void addHazelcastClusterMember(ServiceInstance instance, Config config) {
+        var clusterMemberPort = instance.getMetadata().getOrDefault("hazelcast.port", String.valueOf(hazelcastPort));
+        var clusterMemberAddress = instance.getHost() + ":" + clusterMemberPort; // Address where the other instance is expected
+        log.info("Adding Hazelcast cluster member {}", clusterMemberAddress);
+        config.getNetworkConfig().getJoin().getTcpIpConfig().addMember(clusterMemberAddress);
     }
 
     private void hazelcastBindOnlyOnInterface(String hazelcastInterface, Config config) {
