@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Optional;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.AuditorAware;
 import org.springframework.stereotype.Component;
@@ -15,6 +16,7 @@ import de.tum.cit.aet.artemis.core.config.Constants;
  */
 @Profile(PROFILE_CORE)
 @Component
+@Lazy
 public class SpringSecurityAuditorAware implements AuditorAware<String> {
 
     @Override

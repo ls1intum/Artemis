@@ -344,8 +344,8 @@
         "dateMissingOrNotValid": "'{{labelName}}' is missing/invalid",
         "startDateError": "'Start of working time' should be between 'Visible from' and 'End of working time'",
         "endDateError": "'End of working time' should be later than 'Start of working time'",
-        "warningError": "'Visible from' is set too early. We recommend setting it within 4 hours before the 'Start of working time'.",
-        "warningToolTip": "Setting the date too early may cause confusion and lead to premature access to exam materials. It is recommended to make the exam visible only a few hours before the start time."
+        "visibleDateWarningError": "'Visible from' is set too early. We recommend setting it within 4 hours before the 'Start of working time'.",
+        "visibleDateWarningToolTip": "Setting the date too early may cause confusion and lead to premature access to exam materials. It is recommended to make the exam visible only a few hours before the start time."
     },
     "aboutUs": "About",
     "contact": "Contact us",
@@ -357,6 +357,7 @@
     "justNow": "just now",
     "pendingChanges": "WARNING: You have unsaved changes. Press Cancel to go back and save these changes, or OK to lose these changes.",
     "overview": {
+        "practice": "Practice",
         "title": "Course overview",
         "aboutUs": "About",
         "course": "Course details",

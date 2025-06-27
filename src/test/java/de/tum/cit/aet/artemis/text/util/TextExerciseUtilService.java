@@ -10,6 +10,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -40,7 +41,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
-import de.tum.cit.aet.artemis.plagiarism.domain.text.TextPlagiarismResult;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismResultRepository;
 import de.tum.cit.aet.artemis.text.domain.TextAssessmentEvent;
 import de.tum.cit.aet.artemis.text.domain.TextBlock;
@@ -54,6 +55,7 @@ import de.tum.cit.aet.artemis.text.test_repository.TextSubmissionTestRepository;
 /**
  * Service responsible for initializing the database with specific testdata related to text exercises for use in integration tests.
  */
+@Lazy
 @Service
 @Profile(SPRING_PROFILE_TEST)
 public class TextExerciseUtilService {
@@ -450,13 +452,13 @@ public class TextExerciseUtilService {
     }
 
     /**
-     * Creates and saves a TextPlagiarismResult for the given Exercise.
+     * Creates and saves a PlagiarismResult for the given Exercise.
      *
-     * @param exercise The Exercise the TextPlagiarismResult belongs to
-     * @return The created TextPlagiarismResult
+     * @param exercise The Exercise the PlagiarismResult belongs to
+     * @return The created PlagiarismResult
      */
-    public TextPlagiarismResult createTextPlagiarismResultForExercise(Exercise exercise) {
-        TextPlagiarismResult result = new TextPlagiarismResult();
+    public PlagiarismResult createPlagiarismResultForExercise(Exercise exercise) {
+        PlagiarismResult result = new PlagiarismResult();
         result.setExercise(exercise);
         result.setSimilarityDistribution(new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
         result.setDuration(4);
