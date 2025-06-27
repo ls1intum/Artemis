@@ -308,7 +308,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
 
         AttachmentVideoUnit testUnit = lectureUtilService.createAttachmentVideoUnit(true);
         testUnit.setLecture(lecture1);
-        testUnit.getAttachment().setLink("lecture/123/test-document.pdf");
+        testUnit.getAttachment().setLink("attachments/attachment-unit/%s/student/test.pdf".formatted(testUnit.getId()));
         lecture1.getLectureUnits().add(testUnit);
 
         String expectedBaseUrl = "http://localhost:8080"; // Default test server URL
