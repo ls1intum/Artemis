@@ -120,28 +120,30 @@ public class IrisChatSessionResource {
 
         if (chatModeEnum.equals(IrisChatMode.COURSE)) {
             if (irisSettingsService.isEnabledFor(IrisSubSettingsType.COURSE_CHAT, course)) {
-                IrisCourseChatSession courseChatSession = irisCourseChatSessionRepository.findSessionWithMessagesById(sessionId).orElseThrow();
+                IrisCourseChatSession courseChatSession = irisCourseChatSessionRepository.findSessionWithMessagesByIdAndUserId(sessionId, user.getId()).orElseThrow();
                 courseChatSession.setEntityId(courseChatSession.getCourseId());
                 session = courseChatSession;
             }
         }
         else if (chatModeEnum.equals(IrisChatMode.LECTURE)) {
             if (irisSettingsService.isEnabledFor(IrisSubSettingsType.LECTURE_CHAT, course)) {
-                IrisLectureChatSession lectureChatSession = irisLectureChatSessionRepository.findSessionWithMessagesById(sessionId).orElseThrow();
+                IrisLectureChatSession lectureChatSession = irisLectureChatSessionRepository.findSessionWithMessagesByIdAndUserId(sessionId, user.getId()).orElseThrow();
                 lectureChatSession.setEntityId(lectureChatSession.getLectureId());
                 session = lectureChatSession;
             }
         }
         else if (chatModeEnum.equals(IrisChatMode.TEXT_EXERCISE)) {
             if (irisSettingsService.isEnabledFor(IrisSubSettingsType.TEXT_EXERCISE_CHAT, course)) {
-                IrisTextExerciseChatSession textExerciseChatSession = irisTextExerciseChatSessionRepository.findSessionWithMessagesById(sessionId).orElseThrow();
+                IrisTextExerciseChatSession textExerciseChatSession = irisTextExerciseChatSessionRepository.findSessionWithMessagesByIdAndUserId(sessionId, user.getId())
+                        .orElseThrow();
                 textExerciseChatSession.setEntityId(textExerciseChatSession.getExerciseId());
                 session = textExerciseChatSession;
             }
         }
         else if (chatModeEnum.equals(IrisChatMode.PROGRAMMING_EXERCISE)) {
             if (irisSettingsService.isEnabledFor(IrisSubSettingsType.PROGRAMMING_EXERCISE_CHAT, course)) {
-                IrisProgrammingExerciseChatSession programmingExerciseChatSession = irisExerciseChatSessionRepository.findSessionWithMessagesById(sessionId).orElseThrow();
+                IrisProgrammingExerciseChatSession programmingExerciseChatSession = irisExerciseChatSessionRepository.findSessionWithMessagesByIdAndUserId(sessionId, user.getId())
+                        .orElseThrow();
                 programmingExerciseChatSession.setEntityId(programmingExerciseChatSession.getExerciseId());
                 session = programmingExerciseChatSession;
             }

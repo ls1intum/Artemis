@@ -56,7 +56,7 @@ public interface IrisCourseChatSessionRepository extends ArtemisJpaRepository<Ir
     List<IrisCourseChatSession> findSessionsByCourseIdAndUserId(@Param("courseId") long courseId, @Param("userId") long userId, Pageable pageable);
 
     @EntityGraph(type = LOAD, attributePaths = "messages")
-    Optional<IrisCourseChatSession> findSessionWithMessagesById(Long id);
+    Optional<IrisCourseChatSession> findSessionWithMessagesByIdAndUserId(Long id, Long userId);
 
     @EntityGraph(type = LOAD, attributePaths = "messages")
     List<IrisCourseChatSession> findSessionsWithMessagesByIdIn(List<Long> ids);

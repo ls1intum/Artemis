@@ -57,7 +57,7 @@ public interface IrisTextExerciseChatSessionRepository extends ArtemisJpaReposit
     List<IrisTextExerciseChatSession> findSessionsByExerciseIdAndUserId(@Param("exerciseId") Long exerciseId, @Param("userId") Long userId, Pageable pageable);
 
     @EntityGraph(type = LOAD, attributePaths = "messages")
-    Optional<IrisTextExerciseChatSession> findSessionWithMessagesById(Long id);
+    Optional<IrisTextExerciseChatSession> findSessionWithMessagesByIdAndUserId(Long id, Long userId);
 
     @EntityGraph(type = LOAD, attributePaths = "messages")
     List<IrisTextExerciseChatSession> findSessionsWithMessagesByIdIn(List<Long> ids);

@@ -27,7 +27,7 @@ public interface IrisLectureChatSessionRepository extends ArtemisJpaRepository<I
     List<IrisLectureChatSession> findByLectureIdAndUserIdOrderByCreationDateDesc(Long lectureId, Long userId, Pageable pageable);
 
     @EntityGraph(type = LOAD, attributePaths = "messages")
-    Optional<IrisLectureChatSession> findSessionWithMessagesById(Long id);
+    Optional<IrisLectureChatSession> findSessionWithMessagesByIdAndUserId(Long id, Long userId);
 
     @EntityGraph(type = LOAD, attributePaths = "messages")
     List<IrisLectureChatSession> findSessionsWithMessagesByIdIn(List<Long> ids);
