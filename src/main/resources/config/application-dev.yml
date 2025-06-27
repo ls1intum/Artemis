@@ -61,12 +61,6 @@ spring:
 server:
     port: 8080
     url: http://localhost
-
-springdoc:
-  api-docs:
-    enabled: true
-  pre-loading-enabled: true
-
 # ===================================================================
 # JHipster specific properties
 #

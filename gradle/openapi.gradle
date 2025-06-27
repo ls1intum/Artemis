@@ -22,7 +22,7 @@
 
             jvmArgs = ["-Dspring.profiles.active=test,artemis,core,atlas,scheduling,athena,apollon,iris,aeolus,theia,lti," +
 
-                           "dev","-Dspringdoc.packages-to-scan=de.tum.cit.aet.artemis.tutorialgroup.web"
+                           "dev","-Dspringdoc.packages-to-scan=de.tum.cit.aet.artemis.tutorialgroup.web", "-Dspringdoc.api-docs.enabled=true" ,"-Dspringdoc.pre-loading-enabled=true",
             ]
 
 // TODO add package later add ${System.getProperty("springdoc.packages-to-scan")} package via cli property
