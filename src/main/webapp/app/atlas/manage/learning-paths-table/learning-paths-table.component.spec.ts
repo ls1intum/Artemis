@@ -139,6 +139,7 @@ describe('LearningPathsTableComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
+        expect(learningPathApiService.getAverageProgressForCourse).toHaveBeenCalledOnce();
         expect(learningPathApiService.getAverageProgressForCourse).toHaveBeenCalledWith(courseId);
         expect(component.averageProgress()).toBe(42);
     });
