@@ -8,10 +8,10 @@
 
 .hover-effect {
     &:hover {
-        background-color: var(--hover-slightly-darker-body-bg);
+        background-color: var(--link-item-bg);
 
         &.border-module {
-            border-color: var(--hover-slightly-darker-body-bg) !important;
+            border-color: var(--link-item-bg) !important;
         }
 
         &.item-border {
