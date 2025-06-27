@@ -972,7 +972,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
             List<String> exportErrors) {
         String zippedRepoName = getZippedRepoName(programmingExercise, auxiliaryRepository.getRepositoryName());
         try {
-            return gitService.exportRepositorySnapshot(auxiliaryRepository.getVcsRepositoryUri(), zippedRepoName);
+            return gitService.exportRepositoryWithFullHistoryToMemory(auxiliaryRepository.getVcsRepositoryUri(), zippedRepoName);
         }
         catch (IOException | GitAPIException ex) {
             var error = "Failed to export auxiliary repository " + auxiliaryRepository.getName() + " for programming exercise '" + programmingExercise.getTitle() + "' (id: "
